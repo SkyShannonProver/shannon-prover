@@ -1,0 +1,21 @@
+{
+  "turn": 19,
+  "handled_intent": {
+    "intent": "commit_tactic",
+    "payload": {
+      "tactic": "move: Hinv => [Hi Hr Hjb Hss Hsx]."
+    }
+  },
+  "ok": true,
+  "manager_note": "Commit attempt did not change the committed EasyCrypt proof state; use the returned result and latest view before trying the next proof intent.",
+  "manager_actions": [
+    {
+      "action": "tactic commit",
+      "outcome": "EasyCrypt rejected the committed tactic. Use the error summary and current goal to revise the proof step.",
+      "timing": "859 ms",
+      "error_summary": "[error] nothing to introduce"
+    }
+  ],
+  "view_refreshed": true,
+  "surface_turn_hash": "d65f51f78274c5aa02eb41120684b74e1288325e"
+}

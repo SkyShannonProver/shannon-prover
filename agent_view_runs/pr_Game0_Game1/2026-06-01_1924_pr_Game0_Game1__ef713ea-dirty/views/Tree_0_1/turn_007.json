@@ -1,0 +1,121 @@
+{
+  "last_result": {
+    "intent": "undo_to_checkpoint",
+    "kind": "checkpoint_selection",
+    "message": "Choose the committed tactic you want to rewind before.",
+    "checkpoint_options": [
+      {
+        "checkpoint_id": "cp_3_e7af3196b620a0de",
+        "semantic_id": "last_call_site_boundary",
+        "semantic_ids": [
+          "last_call_site_boundary"
+        ],
+        "label": "Before inline expansion #3",
+        "committed_tactic": "inline BR93(LRO).keygen BR93(LRO).enc.",
+        "tactic_index": 3,
+        "committed_step_index": 3,
+        "restored_proof_layer": "pre_inline_frontier",
+        "restored_affordances": {
+          "call_site_handles": "as_before_inline"
+        },
+        "undo_scope": "call_site_boundary",
+        "why_checkpoint": "inline boundary; selecting it restores the proof state before this expansion",
+        "repair_use_when": "Use this when broad inlining exposed too much code, hid a call handle, or a targeted inline would keep the proof frontier cleaner.",
+        "after_rewind_next": "Probe targeted `inline{1}`/`inline{2}` or inspect `call_site_options` before expanding more code.",
+        "effect_if_selected": "This will undo committed tactic #3 and every committed tactic after it in this node.",
+        "submit": {
+          "intent": "undo_to_checkpoint",
+          "payload": {
+            "checkpoint_id": "cp_3_e7af3196b620a0de"
+          }
+        }
+      },
+      {
+        "checkpoint_id": "cp_2_e7af3196b620a0de",
+        "label": "Rewind to before committed tactic #2",
+        "committed_tactic": "proc.",
+        "tactic_index": 2,
+        "committed_step_index": 2,
+        "restored_proof_layer": "previous_committed_state",
+        "undo_scope": "recent_step",
+        "why_checkpoint": "procedure entry point",
+        "repair_use_when": "Use this only when the chosen procedure-level route was wrong, not for a local invariant or branch-surgery problem.",
+        "after_rewind_next": "Re-enter the procedure with a different high-level route or inspect `goal_info` first.",
+        "effect_if_selected": "This will undo committed tactic #2 and every committed tactic after it in this node.",
+        "submit": {
+          "intent": "undo_to_checkpoint",
+          "payload": {
+            "checkpoint_id": "cp_2_e7af3196b620a0de"
+          }
+        }
+      },
+      {
+        "checkpoint_id": "cp_1_e7af3196b620a0de",
+        "label": "Rewind to before committed tactic #1",
+        "committed_tactic": "byequiv (_ : ={glob A, glob LRO} ==> ={res} \\/ (Game1.r \\in Log.qs){2}) => //.",
+        "tactic_index": 1,
+        "committed_step_index": 1,
+        "restored_proof_layer": "previous_committed_state",
+        "undo_scope": "recent_step",
+        "why_checkpoint": "recent committed tactic",
+        "repair_use_when": "Use this when the recent local step appears to have introduced the current blocker.",
+        "after_rewind_next": "Probe a smaller replacement step or inspect the current goal before recommitting.",
+        "effect_if_selected": "This will undo committed tactic #1 and every committed tactic after it in this node.",
+        "submit": {
+          "intent": "undo_to_checkpoint",
+          "payload": {
+            "checkpoint_id": "cp_1_e7af3196b620a0de"
+          }
+        }
+      }
+    ]
+  },
+  "current_goal": {
+    "lines": [
+      "Current goal (remaining: 2)",
+      "",
+      "Type variables: <none>",
+      "",
+      "&m: {}",
+      "------------------------------------------------------------------------",
+      "&1 (left ) : {b, b' : bool, m0, m1, m, h : ptxt, r : rand, c : rand * ptxt,",
+      "             pk, pk0 : pkey, sk : skey, kp : pkey * skey}",
+      "&2 (right) : {b, b' : bool, m0, m1, h : ptxt, c : rand * ptxt, pk : pkey,",
+      "             sk : skey}",
+      "",
+      "pre = (glob A){1} = (glob A){2} /\\ LRO.m{1} = LRO.m{2}",
+      "",
+      "Log(LRO).init()                 ( 1)  Log(LRO).init()               ",
+      "kp <$ dkeys                     ( 2)  (pk, sk) <$ dkeys             ",
+      "(pk, sk) <- kp                  ( 3)  (m0, m1) <@ A(Log(LRO)).a1(pk)",
+      "(m0, m1) <@ A(Log(LRO)).a1(pk)  ( 4)  b <$ {0,1}                    ",
+      "b <$ {0,1}                      ( 5)  Game1.r <$ drand              ",
+      "pk0 <- pk                       ( 6)  h <$ dptxt                    ",
+      "m <- if b then m0 else m1       ( 7)  c <-                          ",
+      "                                (  )    (f pk Game1.r,              ",
+      "                                (  )     h +^ if b then m0 else m1) ",
+      "r <$ drand                      ( 8)  b' <@ A(Log(LRO)).a2(c)       ",
+      "h <@ LRO.o(r)                   ( 9)                                ",
+      "c <- (f pk0 r, h +^ m)          (10)                                ",
+      "b' <@ A(Log(LRO)).a2(c)         (11)                                ",
+      "",
+      "post = (b'{1} = b{1}) = (b'{2} = b{2}) \\/ (Game1.r{2} \\in Log.qs{2})"
+    ],
+    "text_fully_shown": true,
+    "truncated": false,
+    "goal_type": "pRHL",
+    "view_focus": "relational_program",
+    "source": {
+      "label": "Parsed from EasyCrypt pretty goal text",
+      "ground_truth": false
+    }
+  },
+  "proof_status": {
+    "status": "open",
+    "remaining_goals": 2,
+    "remaining_goals_known": true,
+    "goal_type": "pRHL",
+    "view_focus": "relational_program",
+    "current_layer": "call_site"
+  }
+}

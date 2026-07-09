@@ -1,0 +1,74 @@
+# Python-generated files
+__pycache__/
+*.py[oc]
+build/
+dist/
+wheels/
+*.egg-info
+
+# Virtual environments
+.venv
+
+# Secrets (do not commit)
+.env
+.env.local
+
+# Generated output and run artifacts — not versioned
+transcripts/
+artifacts/
+# Bundle-browser manifest is generated locally and LISTS private/CMAC bundles —
+# never commit it. The server builds it live; public deploys use --public.
+bundle_browser/manifest.json
+.worktrees/
+worktrees/
+tmp/
+.codex-slide-review/
+
+# Ephemeral notes and planning docs
+current.md
+PLAN-*.md
+
+# Claude project memory — ignore local settings/state, but ship the slash commands
+.claude/*
+!.claude/commands/
+
+# Expert trace output — session data, not versioned
+knowledge/expert_trace/data/
+
+# Session trace raw sessions (large, copied from ~/.claude/)
+knowledge/session_trace/data/*.jsonl
+
+# Session trace AI classification (intermediate, regenerable)
+knowledge/session_trace/classified/
+
+# Human-written proofs (from EasyCrypt examples, never commit)
+knowledge/base/sources/human_proofs/
+knowledge/base/sources/human_proof_bank.jsonl
+
+# Diff analysis notes (contain human proof details, never commit)
+knowledge/base/sources/diff_notes/*
+!knowledge/base/sources/diff_notes/SUMMARY.md
+knowledge/base/sources/diff_results.jsonl
+
+# EasyCrypt compiled output
+*.eco
+
+# EasyCrypt interactive session directories and state files
+.ec_session/
+.ec_session_*/
+.easycrypt_session/
+.ec_*.cli.lock
+.ec_*/
+current.out
+prev.out
+history.ec
+
+# macOS metadata
+.DS_Store
+workflow/runs/
+.ec_session_*
+.easycrypt_session*
+tools/panel_audit/_inspect_samples.json
+# regenerable analysis outputs / local playground sessions
+tools/compiler_metrics/stuck_out/
+playground/node_memory/

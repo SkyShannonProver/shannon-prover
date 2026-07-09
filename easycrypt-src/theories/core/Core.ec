@@ -1,0 +1,315 @@
+(* -------------------------------------------------------------------- *)
+lemma pw_eq ['a 'b] (x x' : 'a) (y y' : 'b):
+  x = x' => y = y' => (x, y) = (x', y').
+proof. by move=> -> ->. qed.
+
+lemma pairS (x : 'a * 'b): x = (fst x, snd x).
+proof. by case: x. qed.
+
+lemma fst_pair ['a 'b] (x : 'a) (y : 'b) : fst (x, y) = x by done.
+lemma snd_pair ['a 'b] (x : 'a) (y : 'b) : snd (x, y) = y by done.
+
+(* -------------------------------------------------------------------- *)
+lemma oget_none: oget None<:'a> = witness.
+proof. by done. qed.
+
+lemma oget_some (x : 'a): oget (Some x) = x.
+proof. by done. qed.
+hint simplify oget_some, oget_none.
+
+
+lemma some_oget (x : 'a option): x <> None => x = Some (oget x).
+proof. by case: x. qed.
+
+lemma someI (x y:'a): Some x = Some y => x = y.
+proof. by done. qed.
+
+lemma none_omap ['a 'b] (f : 'a -> 'b) ox :
+  omap f ox = None <=> ox = None.
+proof. by case: ox. qed.
+
+lemma oget_omap_some ['a 'b] (f : 'a -> 'b) ox :
+  ox <> None => oget (omap f ox) = f (oget ox).
+proof. by case: ox. qed.
+
+(* -------------------------------------------------------------------- *)
+lemma frefl  (f     : 'a -> 'b): f == f by [].
+
+lemma fsym   (f g   : 'a -> 'b): f == g => g == f.
+proof. by move=> + x - /(_ x) ->. qed.
+
+lemma ftrans (f g h : 'a -> 'b): f == g => g == h => f == h.
+proof. by move=> + + x - /(_ x) -> /(_ x). qed.
+
+(* -------------------------------------------------------------------- *)
+lemma econgr1 ['a 'b] (f g : 'a -> 'b) x y: f == g => x = y => f x = g y.
+proof. by move/fun_ext=> -> ->. qed.
+
+(* -------------------------------------------------------------------- *)
+lemma f2refl  (f     : 'a -> 'b -> 'c): f === f by [].
+
+lemma f2sym   (f g   : 'a -> 'b -> 'c): f === g => g === f.
+proof. by move=> + x y - /(_ x y) ->. qed.
+
+lemma f2trans (f g h : 'a -> 'b -> 'c): f === g => g === h => f === h.
+proof. by move=> + + x y - /(_ x y) -> /(_ x y). qed.
+
+lemma rel_ext (f g : 'a -> 'b -> 'c) : f = g <=> f === g.
+proof.
+by split=> //= fg; apply/fun_ext=> x; apply/fun_ext=> y; rewrite fg.
+qed.
+
+(* -------------------------------------------------------------------- *)
+lemma eqL (x:'a): (fun y => x = y) = (=) x.
+proof. by apply fun_ext. qed.
+
+lemma eqR (y:'a): (fun x => x = y) = (=) y.
+proof. by apply fun_ext=> x; rewrite (eq_sym x). qed.
+
+(* -------------------------------------------------------------------- *)
+lemma etaP (f : 'a -> 'b): eta_ f = f.
+proof. by apply/fun_ext; rewrite etaE. qed.
+
+(* -------------------------------------------------------------------- *)
+lemma comp_eqE ['a 'b 'c] (f f' : 'b -> 'a) (g g' : 'c -> 'b):
+  f == f' => g == g' => (f \o g) == (f' \o g').
+proof. by do 2! (move/fun_ext=> ->). qed.
+
+(* -------------------------------------------------------------------- *)
+op fixfinfun ['t 'u] (dom : 't -> bool) (codom : 'u -> bool) (f : 't -> 'u) =
+  forall x, (if dom x then codom (f x) else f x = witness).
+
+lemma fixfinfun0 ['t 'u] (codom : 'u -> bool) (f : 't -> 'u) :
+  fixfinfun pred0 codom f => forall x, f x = witness.
+proof. by move=> + x - /(_ x). qed.
+
+lemma eqL_fixfinfun ['t 'u] r1 r2 s (f : 't -> 'u) :
+  r1 == r2 => fixfinfun r2 s f <=> fixfinfun r1 s f.
+proof. by move/fun_ext => ->. qed.
+
+lemma eqR_fixfinfun ['t 'u] r s1 s2 (f : 't -> 'u) :
+  s1 == s2 => fixfinfun r s1 f <=> fixfinfun r s2 f.
+proof. by move/fun_ext => ->. qed.
+
+(* -------------------------------------------------------------------- *)
+op swap_codom ['t 'u] x y1 y2 (f : 't -> 'u) =
+  fun x' => if x = x' then
+    (if f x = y1 then y2 else if f x = y2 then y1 else f x)
+  else f x'.
+
+lemma swap_codom_neq ['t 'u] x y1 y2 (f : 't -> 'u) z :
+  x <> z => swap_codom x y1 y2 f z = f z.
+proof. by move=> ne_xz @/swap_codom; rewrite ne_xz. qed.
+
+lemma bij_swap_codom ['t 'u] x y1 y2 :
+  bijective (swap_codom<:'t, 'u> x y1 y2).
+proof.
+exists (swap_codom x y1 y2); rewrite andbb => f.
+apply/fun_ext=> x' @/swap_codom /=.
+case: (x = x') => // <<-; case: (f x = y1) => /= [->|].
+- by case: (y2 = y1).
+- move=> ne_fx_y1; case: (f x = y2) => //=.
+  by move/negbTE=> ->; move/negbTE: ne_fx_y1=> ->.
+qed.
+
+(* -------------------------------------------------------------------- *)
+lemma can_pcan (f:'a -> 'b) g: cancel f g => pcancel f (Some \o g).
+proof. by move=> fK x; rewrite /(\o) fK. qed.
+
+lemma pcan_inj (f:'a -> 'b) g: pcancel f g => injective f.
+proof. by move=> fK x y /(congr1 g); rewrite !fK. qed.
+
+lemma can_inj (f : 'a -> 'b) g: cancel f g => injective f.
+proof. by move/can_pcan/pcan_inj. qed.
+
+lemma canLR (f:'a -> 'b) g x y: cancel f g => x = f y => g x = y.
+proof. by move=> fK ->; rewrite fK. qed.
+
+lemma canRL (f:'a -> 'b) g x y: cancel f g => f x = y => x = g y.
+proof. by move=> fK <-; rewrite fK. qed.
+
+lemma inj_eq (f : 'a -> 'b):
+  injective f => forall x y, (f x = f y) <=> (x = y).
+proof. by move=> inj_f x y; split=> [| -> //]; apply inj_f. qed.
+
+lemma can_eq (f : 'a -> 'b) g:
+  cancel f g => forall x y, (f x = f y) <=> (x = y).
+proof. by move=> can_fg; apply inj_eq; apply (can_inj f g). qed.
+
+lemma can2_eq (f : 'a -> 'b) g:
+  cancel f g => cancel g f => forall x y, (f x = y) <=> (x = g y).
+proof. by move=> fK gK x y; rewrite -{1}[y]gK; apply (can_eq f g). qed.
+
+(* -------------------------------------------------------------------- *)
+lemma inj_idfun: injective (idfun<:'a>).
+proof. by []. qed.
+
+lemma inj_can_sym (f:'a -> 'b) f':
+  cancel f f' => injective f' => cancel f' f.
+proof. by move=> fK injf' x; apply injf'; rewrite fK. qed.
+
+lemma inj_comp (f:'b -> 'a) (h:'c -> 'b):
+  injective f => injective h => injective (f \o h).
+proof. by move=> injf injh x y /injf /injh. qed.
+
+lemma can_comp (f:'b -> 'a) (h:'c -> 'b) f' h':
+  cancel f f' => cancel h h' => cancel (f \o h) (h' \o f').
+proof. by move=> fK hK x; rewrite /(\o) fK hK. qed.
+
+lemma pcan_pcomp (f:'b -> 'a) (h:'c -> 'b) f' h':
+  pcancel f f' => pcancel h h' => pcancel (f \o h) (h' \c f').
+proof. by move=> fK hK x; rewrite /(\o) /(\c) fK /= hK. qed.
+
+lemma eq_inj (f g:'a -> 'b):
+  injective f => f == g => injective g.
+proof. by move=> injf eqfg x y; rewrite -2!eqfg; apply injf. qed.
+
+lemma eq_can (f g:'a -> 'b) f' g':
+  cancel f f' => f == g => f' == g' => cancel g g'.
+proof. by move=> fK eqfg eqfg' x; rewrite -eqfg -eqfg' fK. qed.
+
+lemma inj_can_eq (f g:'a -> 'b) f':
+  cancel f f' => injective f' => cancel g f' => f == g.
+proof. by move=> fK injf' gK x; apply injf'; rewrite fK gK. qed.
+
+(* -------------------------------------------------------------------- *)
+lemma bij_inj (f:'b -> 'a): bijective f => injective f.
+proof. by case=> g [fK _]; apply (can_inj f g). qed.
+
+lemma bij_can_sym (f:'b -> 'a) f':
+  bijective f => (cancel f' f <=> cancel f f').
+proof.
+move=> bij_f; have /bij_inj inj_f := bij_f.
+split=> fK; 1: by apply/inj_can_sym.
+by case: bij_f=> h [_ hK] x; rewrite -[x]hK fK.
+qed.
+
+lemma bij_can_eq (f:'b -> 'a) f' f'':
+  bijective f => cancel f f' => cancel f f'' => f' == f''.
+proof.
+move=> big_j fK fK'; apply/(inj_can_eq _ _ f);
+  by rewrite 1?bij_can_sym //; apply/bij_inj.
+qed.
+
+(* -------------------------------------------------------------------- *)
+lemma eq_bij (f:'b -> 'a):
+  bijective f => forall g, f == g => bijective g.
+proof.
+case=> f' [fK f'K] g eqfg; exists f'; split.
+by apply (eq_can f _ f'). by apply (eq_can f' _ f).
+qed.
+
+lemma bij_comp (f:'b -> 'a) (h:'c -> 'b):
+  bijective f => bijective h => bijective (f \o h).
+proof.
+move=> [f' [fK f'K]] [h' [hK h'K]].
+by exists (h' \o f'); split; apply can_comp.
+qed.
+
+lemma bij_can_bij (f:'b -> 'a):
+  bijective f => forall f', cancel f f' => bijective f'.
+proof. by move=> bij_f f' can_ff'; exists f; rewrite bij_can_sym. qed.
+
+(* -------------------------------------------------------------------- *)
+lemma inv_inj (f:'a -> 'a): involutive f => injective f.
+proof. by apply can_inj. qed.
+
+lemma inv_bij (f:'a -> 'a): involutive f => bijective f.
+proof. by move=> invf; exists f. qed.
+
+lemma inv_eq ['a] (f : 'a -> 'a) :
+  involutive f => forall x y, (f x = y) <=> (x = f y).
+proof. by move=> fK; apply/can2_eq. qed.
+
+(* -------------------------------------------------------------------- *)
+(* Any extensional equality can be used to rewrite *)
+lemma ext_rewrite (ext : 'a -> 'a -> bool) (a1 a2 : 'a) P:
+   (forall x y, ext x y => x = y) => ext a1 a2 => P a1 <=> P a2.
+proof. by move=> ext_eq /ext_eq ->. qed.
+
+(* -------------------------------------------------------------------- *)
+lemma pred_ext (P Q : 'a -> bool):
+  P = Q <=> forall x, P x <=> Q x.
+proof. by split=> //= h; apply/fun_ext=> x; rewrite h. qed.
+
+(* -------------------------------------------------------------------- *)
+pred (<=) (p q:'a -> bool) = (* subpred *)
+  forall a, p a => q a.
+
+pred (< ) (p q:'a -> bool) = (* proper *)
+  p <= q /\ !(q <= p).
+
+(* -------------------------------------------------------------------- *)
+lemma subpred_eqP (p1 p2 : 'a -> bool):
+  (forall x, p1 x <=> p2 x) <=> (p1 <= p2 /\ p2 <= p1).
+proof.
+split=> [PQ|[] + + x].
++ by split=> x /PQ.
+by move=> /(_ x) + /(_ x).
+qed.
+
+lemma subpred_refl (X : 'a -> bool): X <= X
+by [].
+
+lemma subpred_asym (X Y:'a -> bool):
+  X <= Y => Y <= X => X = Y.
+proof. by rewrite pred_ext subpred_eqP. qed.
+
+lemma subpred_trans (X Y Z:'a -> bool):
+  X <= Y => Y <= Z => X <= Z.
+proof. by move=> + + x - /(_ x) Xx /(_ x) Yx /Xx /Yx. qed.
+
+(* -------------------------------------------------------------------- *)
+lemma pred1E (c : 'a) : pred1 c = ((=) c).
+proof. by apply fun_ext=> x; rewrite (eq_sym c). qed.
+
+lemma predU1l (x y : 'a) b : x = y => (x = y) \/ b by [].
+lemma predU1r (x y : 'a) b : b => (x = y) \/ b by case: b.
+lemma eqVneq (x y : 'a) : x = y \/ x <> y by case: (x = y).
+
+lemma predT_comp ['a 'b] (p : 'a -> 'b) : predT \o p = predT by [].
+
+lemma predIC (p1 p2 : 'a -> bool) : predI p1 p2 = predI p2 p1.
+proof. by apply fun_ext=> x; rewrite /predI andbC. qed.
+
+lemma predIT ['a] p : predI<:'a> p predT = p by [].
+
+lemma predTI ['a] p : predI<:'a> predT p = p by [].
+
+lemma predCI (p : 'a -> bool) : predI (predC p) p = pred0.
+proof. by apply/fun_ext=> x /=; delta => /=; rewrite andNb. qed.
+
+lemma predCU (p : 'a -> bool) : predU (predC p) p = predT.
+proof. by apply/fun_ext=> x /=; delta => /=; case: (p x). qed.
+
+lemma subpredUl (p1 p2 : 'a -> bool):
+  p1 <= predU p1 p2.
+proof. by move=> x @/predU ->. qed.
+
+lemma subpredUr (p1 p2 : 'a -> bool):
+  p2 <= predU p1 p2.
+proof. by move=> x @/predU ->. qed.
+
+lemma predIsubpredl (p1 p2 : 'a -> bool):
+  predI p1 p2 <= p1.
+proof. by move=> x @/predI [] ->. qed.
+
+lemma predIsubpredr (p1 p2 : 'a -> bool):
+  predI p1 p2 <= p2.
+proof. by move=> x @/predI [] _ ->. qed.
+
+lemma predTofV (f : 'a -> 'b): predT \o f = predT.
+proof. by apply/fun_ext=> x. qed.
+
+lemma pred_0Vmem (p : 'a -> bool) : p = pred0 \/ exists x, p x by smt().
+
+(* -------------------------------------------------------------------- *)
+lemma choicebW (P : 'a -> bool) (x0 : 'a) (I : 'a -> bool) :
+     ((exists x, P x) => forall x, P x => I x)
+  => ((forall x, !P x) => I x0)
+  => I (choiceb P x0).
+proof.
+rewrite -negb_exists; case: (exists x, P x) => /=.
+- by move/choicebP=> /(_ x0) ?; apply.
+- by rewrite negb_exists => /choiceb_dfl ->.
+qed.

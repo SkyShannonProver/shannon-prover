@@ -1,0 +1,46 @@
+## 🎯 Current Goal
+```
+Current goal (remaining: 5)
+
+Type variables: <none>
+
+&m: {}
+------------------------------------------------------------------------
+Context : hr: {b : bool, i : int, n : nonce, ns, ns1, ns2 : nonce list,
+              r : poly_in, t : poly_out}
+
+pre = true
+
+(1)  UFCMA.bad1 <- false                                         
+(2)  UFCMA.cbad1 <- 0                                            
+(3)  UFCMA.bad2 <- false                                         
+(4)  UFCMA.cbad2 <- 0                                            
+(5)  b <@ CPA_game(CCA_CPA_Adv(BNR_Adv(A)), UFCMA3(LRO).O).main()
+(6)  UF.forged <- false                                          
+
+post = true
+
+[391|check]>
+```
+
+## Status
+remaining **5** · phase `procedure_frontier` / `procedure_body`
+
+_Need richer context? `inspect_context` topics: `goal_info` · `call_site_options` · `call_subgoals` (+invariant) · `tactic_forms` (+name) — submit `{"intent": "inspect_context", "payload": {"topic": "<one>", …}}` (topics marked `(+arg)` need that extra field)._
+
+**Last action:** `seq 6 : (UF.forged = false /\ UFCMA.bad2 = false /\ ROIN.RO.m = empty) (1%r) (q…` — EasyCrypt accepted the committed tactic. (The committed EasyCrypt proof state changed.)
+
+---
+
+Submit exactly ONE proof intent via the `submit_proof_intent` MCP tool (only `intent` + `payload`; no node ids, hashes, request ids, or reasoning fields).
+
+### Legal Node Memory Anchor
+
+LEGAL_NODE_MEMORY_DIR: `artifacts/eval_suite/cc_step4_bad2_fable_l4np/l4_checked_action_surface/cc_step4_bad2_l4np/r01/2026-06-10_2344_step4_bad2/iteration_1/node_memory/Tree_0_0`
+LEGAL_LATEST_WORKSPACE_VIEW: `artifacts/eval_suite/cc_step4_bad2_fable_l4np/l4_checked_action_surface/cc_step4_bad2_l4np/r01/2026-06-10_2344_step4_bad2/iteration_1/node_memory/Tree_0_0/latest_workspace_view.json`
+LEGAL_LATEST_MANAGER_RESULT: `artifacts/eval_suite/cc_step4_bad2_fable_l4np/l4_checked_action_surface/cc_step4_bad2_l4np/r01/2026-06-10_2344_step4_bad2/iteration_1/node_memory/Tree_0_0/latest_manager_result.json`
+LEGAL_LATEST_FOLLOWUP: `artifacts/eval_suite/cc_step4_bad2_fable_l4np/l4_checked_action_surface/cc_step4_bad2_l4np/r01/2026-06-10_2344_step4_bad2/iteration_1/node_memory/Tree_0_0/latest_followup.md`
+
+Compaction recovery: if these exact paths are missing from your context, refresh through `submit_proof_intent` with `{"intent":"inspect_context","payload":{"topic":"goal_info"}}` instead of using shell directory discovery for proof-state artifacts.
+
+The current goal is shown in full above. Only-if-needed: the complete structured view (every collapsed panel) is in `LEGAL_LATEST_WORKSPACE_VIEW`.

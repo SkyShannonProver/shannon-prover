@@ -1,0 +1,51 @@
+{
+ "current_goal": {
+  "lines": [
+   "Current goal (remaining: 6)",
+   "",
+   "Type variables: <none>",
+   "",
+   "&m: {}",
+   "------------------------------------------------------------------------",
+   "&1 (left ) : {c : ciphertext, p : plaintext option} [programs are in sync]",
+   "&2 (right) : {c : ciphertext, p : plaintext option}",
+   "",
+   "pre =",
+   "  (p{2} = None<:plaintext> /\\",
+   "   p{1} = None<:plaintext> /\\",
+   "   !UFCMA.bad1{2} /\\",
+   "   c{1} = c{2} /\\",
+   "   inv SplitC2.I1.RO.m{1} RO.m{2} SplitC2.I2.RO.m{1} SplitC2.I2.RO.m{2}",
+   "     Mem.log{1} Mem.log{2} Mem.lc{1} Mem.lc{2} BNR.lenc{1} BNR.lenc{2}",
+   "     BNR.ndec{1} BNR.ndec{2} UFCMA.log{2}) /\\",
+   "  ! check_cipher BNR.ndec{1} c{1}",
+   "",
+   "",
+   "post =",
+   "  !UFCMA.bad1{2} =>",
+   "  p{1} = p{2} /\\",
+   "  inv SplitC2.I1.RO.m{1} RO.m{2} SplitC2.I2.RO.m{1} SplitC2.I2.RO.m{2}",
+   "    Mem.log{1} Mem.log{2} Mem.lc{1} Mem.lc{2} BNR.lenc{1} BNR.lenc{2}",
+   "    BNR.ndec{1} BNR.ndec{2} UFCMA.log{2}",
+   "[465|check]>"
+  ],
+  "view_focus": "relational_program",
+  "goal_type": "pRHL"
+ },
+ "proof_status": {
+  "status": "open",
+  "remaining_goals": 6,
+  "remaining_goals_known": true,
+  "goal_type": "pRHL",
+  "view_focus": "relational_program",
+  "current_layer": "verification_residue"
+ },
+ "last_result": {
+  "intent": "commit_tactic",
+  "tactic": "move=> &1 &2 [#] h1 h2 h3 h4 hinv hcc hbad; move: hinv hcc; rewrite /inv /inv_cpa /check_cipher /=; smt().",
+  "payload": {
+   "tactic": "move=> &1 &2 [#] h1 h2 h3 h4 hinv hcc hbad; move: hinv hcc; rewrite /inv /inv_cpa /check_cipher /=; smt()."
+  },
+  "result": "EasyCrypt accepted the committed tactic."
+ }
+}

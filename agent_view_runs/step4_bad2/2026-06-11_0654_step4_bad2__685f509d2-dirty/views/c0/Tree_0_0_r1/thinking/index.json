@@ -1,0 +1,73 @@
+{
+  "node": "Tree-0.0.r1",
+  "discovery": "recorded_session_id",
+  "transcripts": [
+    "~/.claude/projects/<PROJECT>--worktrees-s23-l4np-resume/2a0eeb3a-1090-42b1-b6d6-1588e2ec19f6.jsonl"
+  ],
+  "turns": [
+    {
+      "turn": 1,
+      "intent": "commit_tactic",
+      "payload_key": "move=> z; inline *; auto => />; smt(dpoly_in_ll).",
+      "thinking_chars": 0,
+      "text_chars": 68,
+      "tokens": {
+        "output_tokens": 3346,
+        "input_tokens": 3,
+        "cache_read_input_tokens": 29155,
+        "cache_creation_input_tokens": 95614
+      },
+      "session_id": "2a0eeb3a-1090-42b1-b6d6-1588e2ec19f6",
+      "timestamp": "2026-06-11T07:15:40.118Z",
+      "file": "thinking/turn_001.md"
+    },
+    {
+      "turn": 2,
+      "intent": "undo_to_checkpoint",
+      "payload_key": "{\"checkpoint_id\": \"cp_15_5ab41d41a69ed809\"}",
+      "thinking_chars": 0,
+      "text_chars": 0,
+      "tokens": {
+        "output_tokens": 11048,
+        "input_tokens": 2,
+        "cache_read_input_tokens": 66335,
+        "cache_creation_input_tokens": 3376
+      },
+      "session_id": "2a0eeb3a-1090-42b1-b6d6-1588e2ec19f6",
+      "timestamp": "2026-06-11T07:18:30.527Z",
+      "file": ""
+    },
+    {
+      "turn": 3,
+      "intent": "inspect_context",
+      "payload_key": "goal_info",
+      "thinking_chars": 0,
+      "text_chars": 152,
+      "tokens": {
+        "output_tokens": 1308,
+        "input_tokens": 2,
+        "cache_read_input_tokens": 69711,
+        "cache_creation_input_tokens": 12693
+      },
+      "session_id": "2a0eeb3a-1090-42b1-b6d6-1588e2ec19f6",
+      "timestamp": "2026-06-11T07:18:53.746Z",
+      "file": "thinking/turn_003.md"
+    },
+    {
+      "turn": 4,
+      "intent": "inspect_context",
+      "payload_key": "tactic_forms",
+      "thinking_chars": 0,
+      "text_chars": 69,
+      "tokens": {
+        "output_tokens": 4810,
+        "input_tokens": 8,
+        "cache_read_input_tokens": 342054,
+        "cache_creation_input_tokens": 10617
+      },
+      "session_id": "2a0eeb3a-1090-42b1-b6d6-1588e2ec19f6",
+      "timestamp": "2026-06-11T07:20:28.183Z",
+      "file": "thinking/turn_004.md"
+    }
+  ]
+}

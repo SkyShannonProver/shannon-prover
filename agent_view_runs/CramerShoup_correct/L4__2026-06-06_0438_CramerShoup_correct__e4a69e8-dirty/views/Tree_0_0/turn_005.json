@@ -1,0 +1,412 @@
+{
+  "last_result": {
+    "intent": "probe_tactic",
+    "payload": {
+      "tactic": "move=> &hr _ x1 hx1 x2 hx2 y1 hy1 y2 hy2 z1 hz1 z2 hz2 w hw k hk /= u hu /=."
+    },
+    "manager_action": "probe_tactic",
+    "result": "EasyCrypt accepted this read-only probe. The committed proof state was not changed; `goal_after_probe` shows the goal that would be visible if this tactic were committed.",
+    "effect": "This is a read-only probe; it asks EasyCrypt what would happen without changing the committed proof state.",
+    "proof_state": "The committed EasyCrypt proof state was not changed.",
+    "probe_preview": {
+      "tactic": "move=> &hr _ x1 hx1 x2 hx2 y1 hy1 y2 hy2 z1 hz1 z2 hz2 w hw k hk /= u hu /=.",
+      "outcome": "EasyCrypt accepted this read-only probe.",
+      "goal_after_remaining": 1,
+      "effect": "This preview is speculative only; the committed EasyCrypt proof state was not changed.",
+      "goal_after_probe": {
+        "lines": [
+          "Current goal",
+          "Type variables: <none>",
+          "&hr: {g_, g, g_0, e, f, h, a, a_, c0, d, g0, g_1, a0, a_0, c1, d0 : group,",
+          "     x1, x2, y1, y2, z1, z2, w, u, v, x10, x20, y10, y20, z10, z20, v0 :",
+          "     ZModE.exp, k, k0, k1 : K,",
+          "     pk0 : K * group * group * group * group * group,",
+          "     sk0 : K * group * group * ZModE.exp * ZModE.exp * ZModE.exp *",
+          "     ZModE.exp * ZModE.exp * ZModE.exp, pk, pk1 : PKE_.pkey,",
+          "     sk, sk1 : PKE_.skey, m, m0 : PKE_.plaintext, c, ci : PKE_.ciphertext,",
+          "     m' : PKE_.plaintext option}",
+          "x1: ZModE.exp",
+          "hx1: x1 \\in dt",
+          "x2: ZModE.exp",
+          "hx2: x2 \\in dt",
+          "y1: ZModE.exp",
+          "hy1: y1 \\in dt",
+          "y2: ZModE.exp",
+          "hy2: y2 \\in dt",
+          "z1: ZModE.exp",
+          "hz1: z1 \\in dt",
+          "z2: ZModE.exp",
+          "hz2: z2 \\in dt",
+          "w: ZModE.exp",
+          "hw: w \\in dt \\ pred1 zero",
+          "k: K",
+          "hk: k \\in dk",
+          "u: ZModE.exp",
+          "hu: u \\in dt",
+          "------------------------------------------------------------------------",
+          "(if (DH.G.g ^ x1 * DH.G.g ^ w ^ x2) ^ u *",
+          "    (DH.G.g ^ y1 * DH.G.g ^ w ^ y2) ^",
+          "    (u *",
+          "     H k",
+          "       (DH.G.g ^ u, DH.G.g ^ w ^ u,",
+          "        (DH.G.g ^ z1 * DH.G.g ^ w ^ z2) ^ u * m{hr})) =",
+          "    DH.G.g ^ u ^",
+          "    (x1 +",
+          "     H k",
+          "       (DH.G.g ^ u, DH.G.g ^ w ^ u,",
+          "        (DH.G.g ^ z1 * DH.G.g ^ w ^ z2) ^ u * m{hr}) *",
+          "     y1) *",
+          "    DH.G.g ^ w ^ u ^",
+          "    (x2 +",
+          "     H k",
+          "       (DH.G.g ^ u, DH.G.g ^ w ^ u,",
+          "        (DH.G.g ^ z1 * DH.G.g ^ w ^ z2) ^ u * m{hr}) *",
+          "     y2) then",
+          "   Some",
+          "     ((DH.G.g ^ z1 * DH.G.g ^ w ^ z2) ^ u * m{hr} /",
+          "      (DH.G.g ^ u ^ z1 * DH.G.g ^ w ^ u ^ z2))",
+          " else None) =",
+          "Some m{hr}",
+          "[53|check]>"
+        ],
+        "text_fully_shown": true,
+        "truncated": false,
+        "source": {
+          "label": "[TRY] goal_after_raw",
+          "ground_truth": false
+        }
+      }
+    },
+    "kind": "accepted_structural_transition",
+    "message": "This structural transition probe was accepted.",
+    "accepted_tactic": "move=> &hr _ x1 hx1 x2 hx2 y1 hy1 y2 hy2 z1 hz1 z2 hz2 w hw k hk /= u hu /=.",
+    "structural_transition": {
+      "id": "post_tactic",
+      "kind": "structural_transition",
+      "status": "accepted_checkpoint",
+      "tactic": "move=> &hr _ x1 hx1 x2 hx2 y1 hy1 y2 hy2 z1 hz1 z2 hz2 w hw k hk /= u hu /=.",
+      "phase": "post-tactic",
+      "valid_for": "current_view_only",
+      "decision": "Commit this exact accepted tactic only if you want to enter the post-tactic phase.",
+      "recommended_next": {
+        "label": "Enter this transition",
+        "submit": {
+          "intent": "commit_tactic",
+          "payload": {
+            "tactic": "move=> &hr _ x1 hx1 x2 hx2 y1 hy1 y2 hy2 z1 hz1 z2 hz2 w hw k hk /= u hu /=."
+          }
+        }
+      },
+      "after_commit": "The next authoritative view will show the real workbench after this tactic is committed.",
+      "if_wrong_after_commit": "Use `undo_last_step` or `undo_to_checkpoint` if the committed route is wrong."
+    },
+    "question": "Do you want to enter the post-tactic workbench?",
+    "recommended_next": {
+      "label": "Enter this transition",
+      "submit": {
+        "intent": "commit_tactic",
+        "payload": {
+          "tactic": "move=> &hr _ x1 hx1 x2 hx2 y1 hy1 y2 hy2 z1 hz1 z2 hz2 w hw k hk /= u hu /=."
+        }
+      }
+    },
+    "guidance": "If yes, commit this exact tactic and read the real post-commit workbench. If no, choose another probe or inspect the current state. Do not solve the speculative preview in your mental model.",
+    "if_route_wrong": "Use `undo_last_step` or `undo_to_checkpoint` if the committed route is wrong.",
+    "preview_summary": {
+      "remaining_goals": 1,
+      "truncated": false
+    },
+    "tactic": "move=> &hr _ x1 hx1 x2 hx2 y1 hy1 y2 hy2 z1 hz1 z2 hz2 w hw k hk /= u hu /=."
+  },
+  "current_goal": {
+    "lines": [
+      "Current goal",
+      "",
+      "Type variables: <none>",
+      "",
+      "------------------------------------------------------------------------",
+      "forall &hr,",
+      "  true =>",
+      "  forall (x1_0 : ZModE.exp),",
+      "    x1_0 \\in dt =>",
+      "    forall (x2_0 : ZModE.exp),",
+      "      x2_0 \\in dt =>",
+      "      forall (y1_0 : ZModE.exp),",
+      "        y1_0 \\in dt =>",
+      "        forall (y2_0 : ZModE.exp),",
+      "          y2_0 \\in dt =>",
+      "          forall (z1_0 : ZModE.exp),",
+      "            z1_0 \\in dt =>",
+      "            forall (z2_0 : ZModE.exp),",
+      "              z2_0 \\in dt =>",
+      "              forall (w0 : ZModE.exp),",
+      "                w0 \\in dt \\ pred1 zero =>",
+      "                forall (k2 : K),",
+      "                  k2 \\in dk =>",
+      "                  let g_2 = DH.G.g ^ w0 in",
+      "                  let sk2 =",
+      "                    (k2, DH.G.g, g_2, x1_0, x2_0, y1_0, y2_0, z1_0, z2_0) in",
+      "                  forall (u0 : ZModE.exp),",
+      "                    u0 \\in dt =>",
+      "                    let a1 = DH.G.g ^ u0 in",
+      "                    let a_1 = g_2 ^ u0 in",
+      "                    let c0_0 = (DH.G.g ^ z1_0 * g_2 ^ z2_0) ^ u0 * m{hr} in",
+      "                    let v0_0 = H sk2.`1 (a1, a_1, c0_0) in",
+      "                    (if (DH.G.g ^ x1_0 * g_2 ^ x2_0) ^ u0 *",
+      "                        (DH.G.g ^ y1_0 * g_2 ^ y2_0) ^",
+      "                        (u0 * H k2 (a1, a_1, c0_0)) =",
+      "                        a1 ^ (sk2.`4 + v0_0 * sk2.`6) *",
+      "                        a_1 ^ (sk2.`5 + v0_0 * sk2.`7) then",
+      "                       Some (c0_0 / (a1 ^ sk2.`8 * a_1 ^ sk2.`9))",
+      "                     else None) =",
+      "                    Some m{hr}",
+      "[52|check]>"
+    ],
+    "text_fully_shown": true,
+    "truncated": false,
+    "goal_type": "ambient",
+    "view_focus": "ambient_logic",
+    "source": {
+      "label": "Parsed from EasyCrypt pretty goal text",
+      "ground_truth": false
+    }
+  },
+  "proof_status": {
+    "status": "open",
+    "remaining_goals": 1,
+    "remaining_goals_known": true,
+    "goal_type": "ambient",
+    "view_focus": "ambient_logic",
+    "current_layer": "ambient_logic"
+  },
+  "candidate_moves": {
+    "moves": [
+      {
+        "title": "Read-only tactic probe",
+        "category": "probe",
+        "tactic": "move=> &hr H.",
+        "applicability": "This tactic-shaped option should be checked with a read-only probe before committing it.",
+        "effect": "This is a read-only probe; it asks EasyCrypt what would happen without changing the committed proof state.",
+        "source": "proof-state analysis",
+        "derivation": "read-only probe surfaced from proof-state analysis",
+        "verified": "read_only_probe_suggestion",
+        "guarantee": "read-only probe shape; proof state unchanged; probe then decide; reversible"
+      },
+      {
+        "title": "Residual closing tactic",
+        "category": "probe",
+        "tactic": "auto => />.",
+        "applicability": "This tactic-shaped option should be checked with a read-only probe before committing it.",
+        "effect": "This is a read-only probe; it asks EasyCrypt what would happen without changing the committed proof state.",
+        "source": "proof-state analysis",
+        "derivation": "read-only probe surfaced from proof-state analysis",
+        "verified": "read_only_probe_suggestion",
+        "guarantee": "read-only probe shape; proof state unchanged; probe then decide; reversible"
+      },
+      {
+        "title": "Read-only tactic probe",
+        "category": "probe",
+        "tactic": "smt().",
+        "applicability": "This tactic-shaped option should be checked with a read-only probe before committing it.",
+        "effect": "This is a read-only probe; it asks EasyCrypt what would happen without changing the committed proof state.",
+        "source": "proof-state analysis",
+        "derivation": "read-only probe surfaced from proof-state analysis",
+        "verified": "read_only_probe_suggestion",
+        "guarantee": "read-only probe shape; proof state unchanged; probe then decide; reversible"
+      }
+    ],
+    "probe_alternatives": [
+      {
+        "tactic": "move=> &hr _ x1 hx1 x2 hx2 y1 hy1 y2 hy2 z1 hz1 z2 hz2 w hw k hk /= u hu /=.",
+        "probe_result": "accepted",
+        "status": "verified_on_current_state",
+        "how_to_use": "This tactic was accepted by a read-only probe on the current proof state. The transition record describes the checked effect and any visible limitations.",
+        "structural_transition": {
+          "id": "post_tactic",
+          "kind": "structural_transition",
+          "status": "accepted_checkpoint",
+          "tactic": "move=> &hr _ x1 hx1 x2 hx2 y1 hy1 y2 hy2 z1 hz1 z2 hz2 w hw k hk /= u hu /=.",
+          "phase": "post-tactic",
+          "valid_for": "current_view_only",
+          "decision": "Commit this exact accepted tactic only if you want to enter the post-tactic phase.",
+          "recommended_next": {
+            "label": "Enter this transition",
+            "submit": {
+              "intent": "commit_tactic",
+              "payload": {
+                "tactic": "move=> &hr _ x1 hx1 x2 hx2 y1 hy1 y2 hy2 z1 hz1 z2 hz2 w hw k hk /= u hu /=."
+              }
+            }
+          },
+          "after_commit": "The next authoritative view will show the real workbench after this tactic is committed.",
+          "if_wrong_after_commit": "Use `undo_last_step` or `undo_to_checkpoint` if the committed route is wrong."
+        },
+        "goal_after_probe_summary": {
+          "remaining_goals": 1,
+          "first_lines": [
+            "Current goal",
+            "Type variables: <none>",
+            "&hr: {g_, g, g_0, e, f, h, a, a_, c0, d, g0, g_1, a0, a_0, c1, d0 : group,",
+            "     x1, x2, y1, y2, z1, z2, w, u, v, x10, x20, y10, y20, z10, z20, v0 :"
+          ],
+          "truncated": false
+        }
+      }
+    ]
+  },
+  "program_frontier": {
+    "authority": "proof-state analysis",
+    "view_focus": "ambient_logic"
+  },
+  "call_site_surface": {},
+  "pure_tail_surface": {
+    "state": "quantified_ambient_tail",
+    "goal_operators": [
+      "hr",
+      "ZModE.exp",
+      "dt",
+      "pred1",
+      "zero",
+      "dk",
+      "g_2",
+      "DH.G.g"
+    ],
+    "obligation_families": [
+      {
+        "family": "constructor_projection",
+        "selectors": [
+          ".`1",
+          ".`4",
+          ".`5",
+          ".`6"
+        ],
+        "tuple_equality_count": 1,
+        "effect": "The pure goal exposes tuple/record projections or constructor equalities that can connect program variables to map/list keys.",
+        "limitations": "Projection equalities are reported only when visible in the current text."
+      },
+      {
+        "family": "quantified_residual_logic",
+        "evidence": [
+          "universal quantifier visible",
+          "implication residual visible"
+        ],
+        "effect": "The current proof point is dominated by local logical obligations rather than program-frontier movement.",
+        "limitations": "Quantifier names are not normalized across EasyCrypt pretty-printer variants."
+      }
+    ],
+    "effect": "Summarizes verifier-visible pure-goal structure after program frontier actions have been discharged or hidden by local proof steps.",
+    "limitations": [
+      "This panel records syntactic and proof-state facts from the current view.",
+      "It does not choose a tactic or instantiate a lemma."
+    ]
+  },
+  "application_context": {
+    "selected_handles": [
+      {
+        "title": "Concrete tactic candidate",
+        "tactic": "move=> &hr _ x1 hx1 x2 hx2 y1 hy1 y2 hy2 z1 hz1 z2 hz2 w hw k hk /= u hu /=.",
+        "why_relevant": "Daemon probe accepted this tactic and it would leave 1 subgoal(s); commit it if that is the intended decomposition.",
+        "derivation": "surfaced from current-state analysis; not daemon-checked on this goal",
+        "verified": "unverified_suggestion",
+        "guarantee": "not verified on the current goal; probe before committing; reversible"
+      }
+    ]
+  },
+  "facts_and_diagnostics": {
+    "facts": {
+      "unfoldable_goal_head_count": 0
+    },
+    "fact_note": "Only current-frontier facts are shown here; the full proof context artifact keeps the compiler/internal details.",
+    "notes": [
+      {
+        "message": "proof-state analysis sees no live call sites after a prior `inline *` at tactic 2. Continue at procedure/ambient layer, or undo if a call lemma is needed.",
+        "severity": "info"
+      }
+    ]
+  },
+  "recovery_diagnosis_surface": {
+    "kind": "recovery_diagnosis_surface",
+    "recovery_class": "local_pure_surgery_available",
+    "confidence": "medium",
+    "checkpoint_policy": "current_state_local_work_visible",
+    "evidence": [
+      "pure_tail_surface is visible for the current goal",
+      "current proof state has no program-frontier work before the logical residual"
+    ],
+    "available_local_work": [
+      {
+        "kind": "pure_tail_obligation_families",
+        "items": [
+          "constructor_projection",
+          "quantified_residual_logic"
+        ]
+      }
+    ],
+    "related_surfaces": [
+      "pure_tail_surface",
+      "structural_checkpoints"
+    ],
+    "limitations": [
+      "does not select a destructor, witness, rewrite, or SMT lemma",
+      "reported checkpoints are recovery references, not a default route"
+    ]
+  },
+  "inspect_lookup_handles": {
+    "effect": "All handles here are read-only manager requests; the committed EasyCrypt proof state stays unchanged.",
+    "manager_note": "Some requests may ask EasyCrypt or name resolution; wait for the manager result before choosing the next proof intent.",
+    "ask_manager_for": [
+      {
+        "intent": "inspect_context",
+        "payload": {
+          "topic": "goal_info"
+        },
+        "use_when": "Need parsed goal shape, resolved names, or KB pattern hints.",
+        "returns": "parsed goal structure and names"
+      },
+      {
+        "intent": "inspect_context",
+        "payload": {
+          "topic": "lemma_hints"
+        },
+        "use_when": "Need local or standard-library lemma names before rewriting a pure goal.",
+        "returns": "nearby lemma hints and qualified-name lookup guidance"
+      },
+      {
+        "intent": "inspect_context",
+        "payload": {
+          "topic": "tactic_forms",
+          "name": "rewrite"
+        },
+        "use_when": "Need the valid EasyCrypt form for rewrite, apply, conseq, while, or SMT setup.",
+        "returns": "valid tactic forms and common traps"
+      }
+    ]
+  },
+  "structural_checkpoints": {
+    "items": [
+      {
+        "checkpoint_id": "cp_2_d50b30dd5180619c",
+        "semantic_id": "last_call_site_boundary",
+        "semantic_ids": [
+          "last_call_site_boundary"
+        ],
+        "label": "Before inline expansion #2",
+        "committed_step_index": 2,
+        "committed_tactic": "inline *; auto.",
+        "restored_proof_layer": "pre_inline_frontier",
+        "restored_affordances": {
+          "call_site_handles": "as_before_inline"
+        },
+        "undo_scope": "call_site_boundary",
+        "why_checkpoint": "inline boundary; selecting it restores the proof state before this expansion",
+        "effect_if_selected": "Undo committed tactic #2 and every committed tactic after it in this node.",
+        "submit": {
+          "intent": "undo_to_checkpoint",
+          "payload": {
+            "checkpoint_id": "cp_2_d50b30dd5180619c"
+          }
+        }
+      }
+    ]
+  }
+}

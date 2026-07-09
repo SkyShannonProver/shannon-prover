@@ -1,0 +1,20 @@
+{
+  "turn": 14,
+  "handled_intent": {
+    "intent": "commit_tactic",
+    "payload": {
+      "tactic": "apply/(CBCa.Conclusion (<: RCPAa(RCPA_WUF_RCPA.RCPAa(MAC, A))) &m _)."
+    }
+  },
+  "ok": true,
+  "manager_note": "Commit attempt did not change the committed EasyCrypt proof state; use the returned result and latest view before trying the next proof intent.",
+  "manager_actions": [
+    {
+      "action": "tactic commit",
+      "outcome": "EasyCrypt rejected the committed tactic. Use the error summary and current goal to revise the proof step.",
+      "timing": "2.6 s",
+      "error_summary": "[error] the given proof-term proves:"
+    }
+  ],
+  "view_refreshed": true
+}

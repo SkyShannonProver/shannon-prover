@@ -1,0 +1,19 @@
+{
+  "turn": 10,
+  "handled_intent": {
+    "intent": "commit_tactic",
+    "payload": {
+      "tactic": "byphoare => //."
+    }
+  },
+  "ok": true,
+  "manager_note": "Committed tactic accepted; the EasyCrypt proof state changed.",
+  "manager_actions": [
+    {
+      "action": "tactic commit",
+      "outcome": "EasyCrypt accepted the committed tactic.",
+      "timing": "250 ms"
+    }
+  ],
+  "view_refreshed": true
+}

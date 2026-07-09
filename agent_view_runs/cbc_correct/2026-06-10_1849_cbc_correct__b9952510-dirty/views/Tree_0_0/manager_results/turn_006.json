@@ -1,0 +1,20 @@
+{
+  "turn": 6,
+  "handled_intent": {
+    "intent": "probe_tactic",
+    "payload": {
+      "tactic": "by rewrite xorbA (xorbC pi st) -xorbA xorbK xorbC xorb0."
+    }
+  },
+  "ok": true,
+  "manager_note": "Read-only tactic probe. Use any goal-after-probe text as a preview only; there is no probe step to undo.",
+  "manager_actions": [
+    {
+      "action": "tactic probe",
+      "outcome": "EasyCrypt rejected this probe. The committed proof state was not changed; the EasyCrypt error tells you why.",
+      "timing": "1.2 s",
+      "error_summary": "nothing to rewrite"
+    }
+  ],
+  "view_refreshed": true
+}

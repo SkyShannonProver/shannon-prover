@@ -1,0 +1,24 @@
+{
+  "turn": 13,
+  "handled_intent": {
+    "intent": "inspect_context",
+    "payload": {
+      "topic": "call_subgoals",
+      "invariant": "inv_cpa SplitC2.I1.RO.m{1} SplitC2.I2.RO.m{1} Mem.log{1} Mem.log{2} Mem.lc{1} Mem.lc{2} BNR.lenc{1} BNR.lenc{2} BNR.ndec{1} BNR.ndec{2} /\\ (forall n c, (n,c) \\in SplitC1.I2.RO.m{1} => n \\in BNR.lenc{1}) /\\ (forall n c, (n,c) \\in SplitD.ROF.RO.m{1} => n \\in BNR.lenc{1})"
+    }
+  },
+  "ok": true,
+  "manager_note": "Read-only context. Accepted/rejected tactic or call text inside a preview is route-selection information, not the current proof-state error.",
+  "manager_actions": [
+    {
+      "action": "call-obligation preview",
+      "outcome": "The previewed call typechecked against the daemon; no tactic was committed.",
+      "timing": "174 ms",
+      "content": {
+        "title": "Call Obligation Preview",
+        "preview": "=== Call subgoal preview === Speculative `call (_: ...).` accepted by daemon. 3 subgoal(s) will be queued post-commit. Recommended next step: \u2022 Examine the active subgoal preview below \u2014 it tells you what proc this subgoal verifies and the post you must prove. \u2022 For the remaining subgoals, commit the call and navigate with `-status` between each. Each subgoal is one oracle equiv with the SAME invariant `I` you supplied. Active subgoal preview (first 20 lines): Current goal (remaining: 3) Type variables: <none> &m: {} ------------------------------------------------------------------------ pre = arg{1} = arg{2} /\\ inv_cpa SplitC2.I1.RO.m{1} SplitC2.I2.RO.m{1} Mem.log{1} Mem.log{2} Mem. lc{1} Mem.lc{2} BNR.lenc{1} BNR.lenc{2} BNR.ndec{1} BNR.ndec{2} /\\ (forall (n : nonce) (c : C.counter), (n, c) \\in SplitC1.I2.RO.m{1} => n \\in BNR.lenc{1}) /\\ forall (n : nonce) (c : C.counter), (n, c) \\in SplitD.ROF.RO.m{1} => n \\in BNR.lenc{1} BNR( CPA_CCA_Orcls( RealOrcls( GenChaChaPoly( CCRO(SplitD."
+      }
+    }
+  ],
+  "view_refreshed": true
+}

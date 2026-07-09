@@ -1,0 +1,249 @@
+{
+  "node": "Tree-0.0",
+  "discovery": "content_match",
+  "transcripts": [
+    "~/.claude/projects/<PROJECT>/d871435c-e4e9-44a3-8f8c-3eaa94466208.jsonl"
+  ],
+  "turns": [
+    {
+      "turn": 1,
+      "intent": "commit_tactic",
+      "payload_key": "move=> A_run_ll.",
+      "thinking_chars": 0,
+      "text_chars": 103,
+      "tokens": {
+        "output_tokens": 8055,
+        "input_tokens": 9,
+        "cache_read_input_tokens": 125692,
+        "cache_creation_input_tokens": 56672
+      },
+      "session_id": "d871435c-e4e9-44a3-8f8c-3eaa94466208",
+      "timestamp": "2026-06-12T00:15:33.366Z",
+      "file": "thinking/turn_001.md"
+    },
+    {
+      "turn": 2,
+      "intent": "commit_tactic",
+      "payload_key": "have QBll: forall (O <: RCPA_Oracles{-QueryBounder(A)}), islossless O.enc => islossless QueryBounder(A, O).distinguish.",
+      "thinking_chars": 0,
+      "text_chars": 91,
+      "tokens": {
+        "output_tokens": 232,
+        "input_tokens": 2,
+        "cache_read_input_tokens": 46896,
+        "cache_creation_input_tokens": 1334
+      },
+      "session_id": "d871435c-e4e9-44a3-8f8c-3eaa94466208",
+      "timestamp": "2026-06-12T00:15:43.448Z",
+      "file": "thinking/turn_002.md"
+    },
+    {
+      "turn": 3,
+      "intent": "commit_tactic",
+      "payload_key": "move=> O O_ll; proc.",
+      "thinking_chars": 0,
+      "text_chars": 0,
+      "tokens": {
+        "output_tokens": 111,
+        "input_tokens": 2,
+        "cache_read_input_tokens": 48230,
+        "cache_creation_input_tokens": 1339
+      },
+      "session_id": "d871435c-e4e9-44a3-8f8c-3eaa94466208",
+      "timestamp": "2026-06-12T00:15:50.646Z",
+      "file": ""
+    },
+    {
+      "turn": 4,
+      "intent": "commit_tactic",
+      "payload_key": "call (A_run_ll (<: QueryBounder(A, O).O') _).",
+      "thinking_chars": 0,
+      "text_chars": 0,
+      "tokens": {
+        "output_tokens": 179,
+        "input_tokens": 2,
+        "cache_read_input_tokens": 49569,
+        "cache_creation_input_tokens": 1251
+      },
+      "session_id": "d871435c-e4e9-44a3-8f8c-3eaa94466208",
+      "timestamp": "2026-06-12T00:16:04.023Z",
+      "file": ""
+    },
+    {
+      "turn": 5,
+      "intent": "commit_tactic",
+      "payload_key": "proc; sp; if=> //.",
+      "thinking_chars": 0,
+      "text_chars": 0,
+      "tokens": {
+        "output_tokens": 196,
+        "input_tokens": 2,
+        "cache_read_input_tokens": 50820,
+        "cache_creation_input_tokens": 1443
+      },
+      "session_id": "d871435c-e4e9-44a3-8f8c-3eaa94466208",
+      "timestamp": "2026-06-12T00:16:13.627Z",
+      "file": ""
+    },
+    {
+      "turn": 6,
+      "intent": "commit_tactic",
+      "payload_key": "by wp; call O_ll.",
+      "thinking_chars": 0,
+      "text_chars": 0,
+      "tokens": {
+        "output_tokens": 109,
+        "input_tokens": 2,
+        "cache_read_input_tokens": 52263,
+        "cache_creation_input_tokens": 1364
+      },
+      "session_id": "d871435c-e4e9-44a3-8f8c-3eaa94466208",
+      "timestamp": "2026-06-12T00:16:20.667Z",
+      "file": ""
+    },
+    {
+      "turn": 7,
+      "intent": "commit_tactic",
+      "payload_key": "by while true (size p + 1 - i); auto=> /#.",
+      "thinking_chars": 0,
+      "text_chars": 0,
+      "tokens": {
+        "output_tokens": 167,
+        "input_tokens": 2,
+        "cache_read_input_tokens": 53627,
+        "cache_creation_input_tokens": 1310
+      },
+      "session_id": "d871435c-e4e9-44a3-8f8c-3eaa94466208",
+      "timestamp": "2026-06-12T00:16:27.260Z",
+      "file": ""
+    },
+    {
+      "turn": 8,
+      "intent": "commit_tactic",
+      "payload_key": "by auto.",
+      "thinking_chars": 0,
+      "text_chars": 0,
+      "tokens": {
+        "output_tokens": 140,
+        "input_tokens": 2,
+        "cache_read_input_tokens": 54937,
+        "cache_creation_input_tokens": 1285
+      },
+      "session_id": "d871435c-e4e9-44a3-8f8c-3eaa94466208",
+      "timestamp": "2026-06-12T00:16:36.578Z",
+      "file": ""
+    },
+    {
+      "turn": 9,
+      "intent": "commit_tactic",
+      "payload_key": "have Red := reduction (QueryBounder(A)) &m QBll.",
+      "thinking_chars": 0,
+      "text_chars": 0,
+      "tokens": {
+        "output_tokens": 230,
+        "input_tokens": 2,
+        "cache_read_input_tokens": 56222,
+        "cache_creation_input_tokens": 1420
+      },
+      "session_id": "d871435c-e4e9-44a3-8f8c-3eaa94466208",
+      "timestamp": "2026-06-12T00:16:47.291Z",
+      "file": ""
+    },
+    {
+      "turn": 10,
+      "intent": "commit_tactic",
+      "payload_key": "have B1 := Bound_by_PRP_PRF A A_run_ll &m.",
+      "thinking_chars": 0,
+      "text_chars": 0,
+      "tokens": {
+        "output_tokens": 127,
+        "input_tokens": 2,
+        "cache_read_input_tokens": 57642,
+        "cache_creation_input_tokens": 1849
+      },
+      "session_id": "d871435c-e4e9-44a3-8f8c-3eaa94466208",
+      "timestamp": "2026-06-12T00:16:53.890Z",
+      "file": ""
+    },
+    {
+      "turn": 11,
+      "intent": "commit_tactic",
+      "payload_key": "have B2 := Bound_by_Birthday A A_run_ll &m.",
+      "thinking_chars": 0,
+      "text_chars": 0,
+      "tokens": {
+        "output_tokens": 124,
+        "input_tokens": 2,
+        "cache_read_input_tokens": 59491,
+        "cache_creation_input_tokens": 1881
+      },
+      "session_id": "d871435c-e4e9-44a3-8f8c-3eaa94466208",
+      "timestamp": "2026-06-12T00:16:59.704Z",
+      "file": ""
+    },
+    {
+      "turn": 12,
+      "intent": "commit_tactic",
+      "payload_key": "smt(gt0_q gt0_ell mu_bounded expr2).",
+      "thinking_chars": 0,
+      "text_chars": 0,
+      "tokens": {
+        "output_tokens": 1007,
+        "input_tokens": 2,
+        "cache_read_input_tokens": 61372,
+        "cache_creation_input_tokens": 1956
+      },
+      "session_id": "d871435c-e4e9-44a3-8f8c-3eaa94466208",
+      "timestamp": "2026-06-12T00:17:18.874Z",
+      "file": ""
+    },
+    {
+      "turn": 13,
+      "intent": "commit_tactic",
+      "payload_key": "apply (ler_trans _ _ _ Red).",
+      "thinking_chars": 0,
+      "text_chars": 147,
+      "tokens": {
+        "output_tokens": 3371,
+        "input_tokens": 2,
+        "cache_read_input_tokens": 63328,
+        "cache_creation_input_tokens": 2886
+      },
+      "session_id": "d871435c-e4e9-44a3-8f8c-3eaa94466208",
+      "timestamp": "2026-06-12T00:18:12.114Z",
+      "file": "thinking/turn_013.md"
+    },
+    {
+      "turn": 14,
+      "intent": "commit_tactic",
+      "payload_key": "smt(mu_bounded expr2 gt0_q gt0_ell).",
+      "thinking_chars": 0,
+      "text_chars": 0,
+      "tokens": {
+        "output_tokens": 229,
+        "input_tokens": 2,
+        "cache_read_input_tokens": 66214,
+        "cache_creation_input_tokens": 5479
+      },
+      "session_id": "d871435c-e4e9-44a3-8f8c-3eaa94466208",
+      "timestamp": "2026-06-12T00:18:21.581Z",
+      "file": ""
+    },
+    {
+      "turn": 15,
+      "intent": "commit_tactic",
+      "payload_key": "rewrite -RField.addrA RealOrder.ler_add2l.",
+      "thinking_chars": 0,
+      "text_chars": 0,
+      "tokens": {
+        "output_tokens": 1527,
+        "input_tokens": 2,
+        "cache_read_input_tokens": 71693,
+        "cache_creation_input_tokens": 2236
+      },
+      "session_id": "d871435c-e4e9-44a3-8f8c-3eaa94466208",
+      "timestamp": "2026-06-12T00:18:50.871Z",
+      "file": ""
+    }
+  ]
+}

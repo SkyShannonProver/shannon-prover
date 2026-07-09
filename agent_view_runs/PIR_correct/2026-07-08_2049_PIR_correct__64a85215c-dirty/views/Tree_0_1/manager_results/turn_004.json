@@ -1,0 +1,20 @@
+{
+  "turn": 4,
+  "handled_intent": {
+    "intent": "commit_tactic",
+    "payload": {
+      "tactic": "inline PIR.query."
+    }
+  },
+  "ok": true,
+  "manager_note": "Committed tactic accepted; the EasyCrypt proof state changed.",
+  "manager_actions": [
+    {
+      "action": "tactic commit",
+      "outcome": "EasyCrypt accepted the committed tactic.",
+      "timing": "144 ms"
+    }
+  ],
+  "view_refreshed": true,
+  "surface_turn_hash": "fb992fd366f930e9b710c57161ee7da88b2c0e1e"
+}

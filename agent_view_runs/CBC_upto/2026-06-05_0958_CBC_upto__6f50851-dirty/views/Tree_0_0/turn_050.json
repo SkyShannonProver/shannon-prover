@@ -1,0 +1,67 @@
+{
+  "last_result": {
+    "intent": "commit_tactic",
+    "payload": {
+      "tactic": "auto; smt(dBlock_uffu)."
+    },
+    "manager_action": "commit_tactic",
+    "result": "EasyCrypt accepted the committed tactic.",
+    "effect": "EasyCrypt accepted a proof-state change; the refreshed view is based on the new committed state.",
+    "proof_state": "The committed EasyCrypt proof state changed.",
+    "tactic": "auto; smt(dBlock_uffu)."
+  },
+  "current_goal": {
+    "lines": [
+      "Current goal (remaining: 2)",
+      "",
+      "Type variables: <none>",
+      "",
+      "&m: {}",
+      "------------------------------------------------------------------------",
+      "&1 (left ) : {b : bool}",
+      "&2 (right) : {b : bool}",
+      "",
+      "pre = (glob A){2} = (glob A){m} /\\ (glob A){1} = (glob A){m}",
+      "",
+      "CBC_Oracle(DoubleQuery(PRFi)).init()  (1)  CBC_Oracle(DoubleQuery(Sample)).init()",
+      "",
+      "post =",
+      "  (!DoubleQuery.bad{2} =>",
+      "   true /\\",
+      "   (glob A){1} = (glob A){2} /\\",
+      "   DoubleQuery.qs{1} = DoubleQuery.qs{2} /\\",
+      "   fdom PRFi.m{1} = DoubleQuery.qs{1}) &&",
+      "  forall (result_L result_R : bool) (A_L : (glob A)) (bad_L : bool)",
+      "    (qs_L : block fset) (m_L : (block, block) fmap) (A_R : (glob A))",
+      "    (bad_R : bool) (qs_R : block fset),",
+      "    (!bad_R =>",
+      "     result_L = result_R /\\ A_L = A_R /\\ qs_L = qs_R /\\ fdom m_L = qs_L) =>",
+      "    (bad_L <=> bad_R) /\\ (!bad_R => result_L = result_R)",
+      "[158|check]>"
+    ],
+    "text_fully_shown": true,
+    "truncated": false,
+    "goal_type": "pRHL",
+    "view_focus": "relational_program",
+    "source": {
+      "label": "Parsed from EasyCrypt pretty goal text",
+      "ground_truth": false
+    }
+  },
+  "proof_status": {
+    "status": "open",
+    "remaining_goals": 2,
+    "remaining_goals_known": true,
+    "goal_type": "pRHL",
+    "view_focus": "relational_program",
+    "current_layer": "procedure_body"
+  },
+  "surface_profile": {
+    "name": "l1_goal_projection",
+    "surface_profile": "l1_goal_projection",
+    "stage": "l1_goal_projection",
+    "description": "L1 Goal-State Projection: manager transport of ONLY the current goal. No status, no manager-result section, no focus \u2014 the agent sees the raw goal and nothing else (the node-memory recovery anchor and the one-line submit-intent reminder are the only scaffolding).",
+    "paper_level": "L1",
+    "paper_role": "paper"
+  }
+}

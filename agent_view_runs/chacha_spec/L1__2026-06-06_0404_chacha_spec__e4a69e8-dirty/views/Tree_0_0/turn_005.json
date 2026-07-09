@@ -1,0 +1,441 @@
+{
+  "last_result": {
+    "intent": "commit_tactic",
+    "payload": {
+      "tactic": "inline."
+    },
+    "manager_action": "commit_tactic",
+    "result": "EasyCrypt rejected the committed tactic. Use the error summary and current goal to revise the proof step.",
+    "effect": "The manager attempted to commit a tactic; use the result and latest goal to decide what changed.",
+    "tactic": "inline."
+  },
+  "current_goal": {
+    "lines": [
+      "Current goal",
+      "",
+      "Type variables: <none>",
+      "",
+      "k0: key",
+      "n0: nonce",
+      "p0: message",
+      "gs0: globS",
+      "htake_xor: forall (str : block), take_xor [] str = []",
+      "------------------------------------------------------------------------",
+      "Context : hr: {i : int, c : byte list, k : key, n : nonce, z : block,",
+      "              p : message}",
+      "Bound   : [=] 1%r",
+      "",
+      "pre =",
+      "  (k, n, p).`1 = k0 /\\ (k, n, p).`2 = n0 /\\ (k, n, p).`3 = p0 /\\ OCC.gs = gs0",
+      "",
+      "(1--)  c <- []                                                   ",
+      "(2--)  i <- 1                                                    ",
+      "(3--)  while (p <> []) {                                         ",
+      "(3.1)    z <@ OCC(I).cc(k, n, C.ofintd i)                        ",
+      "(3.2)    c <- c ++ take (size p) (bytes_of_block (extend p +^ z))",
+      "(3.3)    p <- drop block_size p                                  ",
+      "(3.4)    i <- i + 1                                              ",
+      "(3--)  }                                                         ",
+      "",
+      "post = c = gen_CTR_encrypt_bytes take_xor (cc gs0) k0 n0 1 p0",
+      "[203|check]>"
+    ],
+    "text_fully_shown": true,
+    "truncated": false,
+    "goal_type": "phoare",
+    "view_focus": "procedure_frontier",
+    "source": {
+      "label": "Parsed from EasyCrypt pretty goal text",
+      "ground_truth": false
+    }
+  },
+  "proof_status": {
+    "status": "open",
+    "remaining_goals": 1,
+    "remaining_goals_known": true,
+    "goal_type": "phoare",
+    "view_focus": "procedure_frontier",
+    "current_layer": "procedure_body"
+  },
+  "candidate_moves": {
+    "moves": [
+      {
+        "category": "strategy",
+        "tactic_shape": "Structured procedure frontier: straight_line_prefix_before_call_site; primary: use sp if the next invariant/seq cut needs names from the straight-line prefix",
+        "applicability": "Use this as route-selection context; it is not a tactic to run as-is.",
+        "source": "proof-state analysis"
+      },
+      {
+        "category": "strategy",
+        "tactic_shape": "Inspect proof obligation stack: loop_frontier / statement 3.",
+        "applicability": "Use this as route-selection context; it is not a tactic to run as-is.",
+        "source": "proof-state analysis"
+      },
+      {
+        "category": "strategy",
+        "tactic_shape": "Inspect control/suffix legality: while@1:3=structurally_ready.",
+        "applicability": "Use this as route-selection context; it is not a tactic to run as-is.",
+        "source": "proof-state analysis"
+      },
+      {
+        "category": "strategy",
+        "tactic_shape": "Inspect one-sided call-site map: OCC on side 1 at statement 3.",
+        "applicability": "Use this as route-selection context; it is not a tactic to run as-is.",
+        "source": "proof-state analysis"
+      },
+      {
+        "category": "strategy",
+        "tactic_shape": "wp.",
+        "applicability": "Use this as route-selection context; it is not a tactic to run as-is.",
+        "source": "proof-state analysis"
+      },
+      {
+        "category": "strategy",
+        "tactic_shape": "sp.",
+        "applicability": "Use this as route-selection context; it is not a tactic to run as-is.",
+        "source": "proof-state analysis"
+      },
+      {
+        "title": "Loop-splitting route",
+        "category": "strategy",
+        "tactic_shape": "splitwhile{1} 3: (<split of p <> []>).",
+        "applicability": "Use this as route-selection context; it is not a tactic to run as-is.",
+        "source": "proof-state analysis"
+      },
+      {
+        "title": "Loop-invariant route",
+        "category": "strategy",
+        "tactic_shape": "while (0 <= p < > []).",
+        "applicability": "Use this as route-selection context; it is not a tactic to run as-is.",
+        "source": "proof-state analysis"
+      },
+      {
+        "title": "Loop-invariant route",
+        "category": "strategy",
+        "tactic_shape": "while (<loop invariant from live variables>).",
+        "applicability": "Use this as route-selection context; it is not a tactic to run as-is.",
+        "source": "proof-state analysis"
+      },
+      {
+        "category": "strategy",
+        "tactic_shape": "swap <range> <offset>; wp.",
+        "applicability": "Use this as route-selection context; it is not a tactic to run as-is.",
+        "source": "proof-state analysis"
+      },
+      {
+        "category": "strategy",
+        "tactic_shape": "conseq (_: <weaker postcondition preserving live state>) => />.",
+        "applicability": "Use this as route-selection context; it is not a tactic to run as-is.",
+        "source": "proof-state analysis"
+      },
+      {
+        "title": "Residual closing tactic",
+        "category": "strategy",
+        "tactic_shape": "auto => />; smt(C.ofintdK C.gt0_max_counter nth0 nth_default size_ge0 mem_take mem_drop size_cat).",
+        "applicability": "Use this as route-selection context; it is not a tactic to run as-is.",
+        "source": "proof-state analysis"
+      }
+    ]
+  },
+  "program_frontier": {
+    "authority": "proof-state analysis",
+    "view_focus": "procedure_frontier",
+    "focus": {
+      "live_call_sites": 0,
+      "frontier_call_sites": 0,
+      "live_callable_lemmas": 0,
+      "callable_now_lemmas": 0,
+      "oracle_obligation_handles": 0,
+      "has_invariant_skeleton": false
+    },
+    "call_sites": [
+      {
+        "side": "left",
+        "side_index": 1,
+        "statement_order": 3,
+        "statement_path": "3.1",
+        "statement": "z <@ OCC(I).cc(k, n, C.ofintd i)"
+      }
+    ],
+    "frontier_alignment": {
+      "summary": "Frontier alignment: setup statements appear before the current frontier; loop guards are part of the current proof shape; call sites are visible at the frontier; residual statements remain after a call frontier. Use this as a proof-reader map before choosing while/rnd/seq/call tactics.",
+      "first_instruction_alignment": {
+        "left_first": "c <- []",
+        "right_first": "no right-side setup before this frontier",
+        "left_head": "assignment",
+        "branch_alignment": "one-sided_frontier",
+        "proof_read": "The visible frontier is one-sided; use a one-sided tactic, alignment step, or seq cut before applying a symmetric tactic."
+      },
+      "rows": [
+        {
+          "role": "left-only setup",
+          "left": "2 setup statement(s): c <- []; i <- 1",
+          "right": "no right-side setup before this frontier",
+          "proof_read": "The left side has setup before the shared frontier; relate it to the precondition or carry the initialized state in the next invariant/cut.",
+          "location": {
+            "left_paths": [
+              "1",
+              "2"
+            ]
+          }
+        },
+        {
+          "role": "call frontier",
+          "left": "z <@ OCC(I).cc(k, n, C.ofintd i)",
+          "right": "no matching right-side call at this frontier",
+          "proof_read": "This is a call frontier; compare the procedures/oracle wrappers before choosing a named call or invariant call.",
+          "location": {
+            "left_path": "3.1"
+          }
+        },
+        {
+          "role": "left residual after call",
+          "left": "3 setup statement(s): c <- c ++ take (size p) (bytes_of_block (extend p +^ z)); p <- drop block_size p; i <- i + 1",
+          "right": "no right-side residual statement after this call frontier",
+          "proof_read": "The left side has residual statements after the live call frontier; their effects are not part of the callee obligation.",
+          "location": {
+            "left_paths": [
+              "3.2",
+              "3.3",
+              "3.4"
+            ]
+          }
+        },
+        {
+          "role": "loop frontier",
+          "left": "while (p <> []) {",
+          "right": "no matching right-side loop at this frontier",
+          "proof_read": "This is the loop frontier; choose a while invariant that carries the state needed by the postcondition.",
+          "location": {
+            "left_path": "3"
+          }
+        }
+      ]
+    },
+    "procedure_navigation": {
+      "how_to_use": "Positions for choosing wp/sp depth, which `if` to rcond, and where the next loop/call frontier is. Facts only \u2014 pick the tactic and the branch direction yourself.",
+      "absorb_depth": {
+        "left": {
+          "side_index": 1,
+          "absorbable_statements": 2,
+          "through_order": 2,
+          "kinds": [
+            "ASSIGN",
+            "ASSIGN"
+          ]
+        },
+        "sp_hint": "sp 2 0 / wp -2 -0 absorbs the straight-line setup (2 left, 0 right) before the next frontier"
+      },
+      "loop_frontiers": [
+        {
+          "side_index": 1,
+          "at_order": 3,
+          "statement": null
+        }
+      ],
+      "next_frontier": {
+        "kind": "straight_line_prefix_before_call_site",
+        "at_order": 3
+      }
+    },
+    "checks": [
+      "Keep one-sided instrumentation as a map, not as a tactic recipe."
+    ]
+  },
+  "call_site_surface": {
+    "live_call_sites": [
+      {
+        "side": "left"
+      }
+    ],
+    "frontier_blockers": [
+      {
+        "kind": "residual_after_call_site",
+        "left": "3 setup statement(s): c <- c ++ take (size p) (bytes_of_block (extend p +^ z)); p <- drop block_size p; i <- i + 1",
+        "right": "no right-side residual statement after this call frontier",
+        "effect": "Residual statements remain after the live call frontier; their effects are not part of the callee obligation."
+      }
+    ],
+    "residual_frontier": {
+      "state": "residual_after_call",
+      "rows": [
+        {
+          "role": "left residual after call",
+          "left": "3 setup statement(s): c <- c ++ take (size p) (bytes_of_block (extend p +^ z)); p <- drop block_size p; i <- i + 1",
+          "right": "no right-side residual statement after this call frontier",
+          "location": {
+            "left_paths": [
+              "3.2",
+              "3.3",
+              "3.4"
+            ]
+          },
+          "proof_read": "The left side has residual statements after the live call frontier; their effects are not part of the callee obligation."
+        }
+      ],
+      "effect": "These statements remain after the live call frontier and are checked after the call returns.",
+      "limitations": [
+        "The surface reports suffix structure only; it does not choose whether to use a call, inline, wp, or another local tactic."
+      ]
+    },
+    "wrapper_depth": 1
+  },
+  "application_context": {},
+  "facts_and_diagnostics": {
+    "facts": {
+      "has_invariant_skeleton": false,
+      "unfoldable_goal_heads": [
+        {
+          "name": "take_xor",
+          "unqualified_name": "take_xor",
+          "declaration_kind": "op",
+          "unfold_tactic": "rewrite /take_xor.",
+          "smt_argument_role": "not_a_lemma_hint"
+        },
+        {
+          "name": "cc",
+          "unqualified_name": "cc",
+          "declaration_kind": "op",
+          "unfold_tactic": "rewrite /cc.",
+          "smt_argument_role": "not_a_lemma_hint"
+        },
+        {
+          "name": "extend",
+          "unqualified_name": "extend",
+          "declaration_kind": "op",
+          "unfold_tactic": "rewrite /extend.",
+          "smt_argument_role": "not_a_lemma_hint"
+        },
+        {
+          "name": "block_size",
+          "unqualified_name": "block_size",
+          "declaration_kind": "op",
+          "unfold_tactic": "rewrite /block_size.",
+          "smt_argument_role": "not_a_lemma_hint"
+        }
+      ],
+      "unfoldable_goal_head_count": 5
+    },
+    "fact_note": "Only current-frontier facts are shown here; the full proof context artifact keeps the compiler/internal details."
+  },
+  "inspect_lookup_handles": {
+    "effect": "All handles here are read-only manager requests; the committed EasyCrypt proof state stays unchanged.",
+    "manager_note": "Some requests may ask EasyCrypt or name resolution; wait for the manager result before choosing the next proof intent.",
+    "ask_manager_for": [
+      {
+        "intent": "inspect_context",
+        "payload": {
+          "topic": "goal_info"
+        },
+        "use_when": "No fresh recommendation is available; parse the current goal.",
+        "returns": "manager-provided read-only context for this proof route"
+      },
+      {
+        "intent": "inspect_context",
+        "payload": {
+          "topic": "call_site_options"
+        },
+        "use_when": "The current procedure frontier exposes a call route.",
+        "returns": "call-ready/oracle-equiv context for the current frontier, plus the BODY of the procedure(s) called here (functor aliases resolved) so you can see which oracles/state your call invariant must preserve"
+      },
+      {
+        "intent": "inspect_context",
+        "payload": {
+          "topic": "call_subgoals",
+          "invariant": "<the EasyCrypt invariant expression inside call (_: ...)>"
+        },
+        "use_when": "You are considering `call (_: Inv)` and already have a concrete invariant expression you want to test first.",
+        "returns": "a read-only preview of the obligations caused by that candidate invariant, including pre/init, call-preservation, oracle-side, postcondition, missing-fact signals, and extra conjuncts that may create avoidable obligations"
+      },
+      {
+        "intent": "inspect_context",
+        "payload": {
+          "topic": "tactic_forms",
+          "name": "call"
+        },
+        "use_when": "Need the valid form for call, while, seq, rnd, or rewrite.",
+        "returns": "valid tactic forms and common traps"
+      },
+      {
+        "intent": "inspect_context",
+        "payload": {
+          "topic": "tactic_forms",
+          "name": "sp"
+        },
+        "returns": "valid `sp` forms and common traps"
+      },
+      {
+        "intent": "inspect_context",
+        "payload": {
+          "topic": "tactic_forms",
+          "name": "while"
+        },
+        "use_when": "Need the valid one-sided hoare/phoare loop form.",
+        "returns": "valid `while` forms and common traps"
+      },
+      {
+        "intent": "inspect_context",
+        "payload": {
+          "topic": "tactic_forms",
+          "name": "wp"
+        },
+        "use_when": "Mid-proof pRHL suffix surgery may need indexed `wp`.",
+        "returns": "valid indexed `wp` forms and suffix-alignment traps"
+      },
+      {
+        "intent": "inspect_context",
+        "payload": {
+          "topic": "tactic_forms",
+          "name": "swap"
+        },
+        "use_when": "Statement order may need a small `swap` before `sp`, `wp`, or `sim`.",
+        "returns": "valid `swap` forms and statement-order traps"
+      },
+      {
+        "intent": "inspect_context",
+        "payload": {
+          "topic": "tactic_forms",
+          "name": "rcondt"
+        },
+        "use_when": "A guarded branch may need `rcondt` after a case split or invariant fact.",
+        "returns": "valid `rcondt` forms and guard-obligation traps"
+      },
+      {
+        "intent": "inspect_context",
+        "payload": {
+          "topic": "tactic_forms",
+          "name": "rcondf"
+        },
+        "use_when": "A guarded branch may need `rcondf` after a case split or invariant fact.",
+        "returns": "valid `rcondf` forms and guard-obligation traps"
+      },
+      {
+        "intent": "inspect_context",
+        "payload": {
+          "topic": "tactic_forms",
+          "name": "conseq"
+        },
+        "use_when": "A suffix proof may need `conseq` to weaken to a smaller relation before `sim`.",
+        "returns": "valid `conseq` forms and pRHL memory-annotation traps"
+      },
+      {
+        "intent": "inspect_context",
+        "payload": {
+          "topic": "tactic_forms",
+          "name": "rnd"
+        },
+        "use_when": "One side may have an extra sample or need an explicit sample coupling.",
+        "returns": "valid `rnd` forms, including one-sided sampling"
+      },
+      {
+        "intent": "inspect_context",
+        "payload": {
+          "topic": "tactic_forms",
+          "name": "eager"
+        },
+        "use_when": "A known statement-order mismatch may need an eager/lazy transformation.",
+        "returns": "valid `eager` forms and when to prefer smaller surgery"
+      }
+    ]
+  }
+}

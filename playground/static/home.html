@@ -1,0 +1,364 @@
+<!-- Shannon Prover — main page. Served at / by playground/server.py; the two
+     click-through destinations are /playground and /results/. The page carries
+     the full intro + install instructions (no separate /start page): the paper's
+     Phase I/II/III framing (arXiv 2607.02847 — this system targets Phase III),
+     the MCP tool story (one tool, submit_proof_intent, wired automatically by
+     Claude Code per proof node), and the quickstart. Keep commands in sync with
+     .claude/commands/prove.md, easycrypt-src/README.md, playground/run.sh.
+     Stats strip is fetched live from /results/manifest.json and hides itself
+     if the manifest is unavailable. -->
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Shannon Prover</title>
+<style>
+  :root{
+    --bg:#faf9f7; --surface:#ffffff; --ink:#23211c; --muted:#6b6862; --hint:#9a968d;
+    --line:rgba(0,0,0,.12); --line2:rgba(0,0,0,.22);
+    --ok:#27500a; --okbg:#eaf3de; --warn:#854f0b; --warnbg:#faeeda;
+    --bad:#791f1f; --badbg:#fcebeb; --info:#0c447c; --infobg:#e6f1fb;
+    --purp:#3c3489; --purpbg:#eeedfe;
+    --mono:ui-monospace,SFMono-Regular,Menlo,monospace;
+    --sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+  }
+  @media(prefers-color-scheme:dark){:root{
+    --bg:#1a1916;--surface:#242320;--ink:#ece9e2;--muted:#a8a399;--hint:#6f6b62;
+    --line:rgba(255,255,255,.14);--line2:rgba(255,255,255,.26);
+    --ok:#c0dd97;--okbg:#27500a;--warn:#fac775;--warnbg:#633806;--bad:#f7c1c1;--badbg:#791f1f;
+    --info:#b5d4f4;--infobg:#0c447c;--purp:#cecbf6;--purpbg:#3c3489;}}
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);font-size:14px;line-height:1.6}
+  a{color:var(--info);text-decoration:none}
+  .top{display:flex;align-items:center;gap:14px;padding:12px 22px;border-bottom:.5px solid var(--line);position:sticky;top:0;background:var(--bg);z-index:5;flex-wrap:wrap}
+  .top .brand{font-size:16px;font-weight:600;color:var(--ink)}
+  .top nav{margin-left:auto;display:flex;gap:4px;flex-wrap:wrap;align-items:center}
+  .top nav a{font-size:13px;color:var(--muted);padding:5px 11px;border-radius:8px}
+  .top nav a:hover{background:var(--infobg);color:var(--info)}
+  .top nav a.cta{border:.5px solid var(--line2);color:var(--ink)}
+  .top nav a.cta:hover{border-color:var(--info)}
+  .page{max-width:880px;margin:0 auto;padding:44px 24px 70px}
+  .pill{font-size:11px;padding:2px 9px;border-radius:6px;white-space:nowrap}
+  .p-ok{background:var(--okbg);color:var(--ok)} .p-info{background:var(--infobg);color:var(--info)}
+  .p-purp{background:var(--purpbg);color:var(--purp)} .p-warn{background:var(--warnbg);color:var(--warn)}
+  h1{font-size:32px;font-weight:600;letter-spacing:-.015em;line-height:1.2;margin:0 0 14px;max-width:760px}
+  .sub{color:var(--muted);font-size:15px;max-width:700px}
+  section{margin-top:56px}
+  section>h2{font-size:13px;font-weight:600;color:var(--hint);text-transform:uppercase;letter-spacing:.07em;margin:0 0 6px}
+  .seclead{color:var(--muted);font-size:13.5px;max-width:700px;margin:0 0 16px}
+  code{font-family:var(--mono);font-size:12.5px;background:var(--infobg);color:var(--info);padding:1px 5px;border-radius:4px}
+  pre{background:var(--surface);border:.5px solid var(--line);border-radius:10px;padding:12px 14px;overflow-x:auto;font-family:var(--mono);font-size:12.5px;line-height:1.7;margin:10px 0 14px}
+  pre code{background:transparent;color:var(--ink);padding:0}
+  pre .c{color:var(--hint)}
+
+  /* phases */
+  .phases{display:grid;grid-template-columns:repeat(3,1fr);gap:26px}
+  .phase{border:.5px solid var(--line);background:var(--surface);border-radius:12px;padding:14px 16px;position:relative;min-width:0}
+  .phase+.phase::before{content:"→";position:absolute;left:-22px;top:50%;transform:translateY(-50%);color:var(--hint);font-size:16px}
+  .phase .who{font-size:10.5px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px;display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+  .phase .who.expert{color:var(--hint)} .phase .who.us{color:var(--info)}
+  .phase .t{font-weight:600;font-size:13.5px;margin-bottom:4px}
+  .phase .b{font-size:12.5px;color:var(--muted)}
+  .phase .eg{margin-top:8px;font-family:var(--mono);font-size:10.5px;color:var(--hint);line-height:1.6;overflow-wrap:anywhere}
+  .phase.hot{border-color:var(--info);box-shadow:0 0 0 1px var(--info) inset}
+  @media(max-width:820px){.phases{grid-template-columns:1fr}
+    .phase+.phase::before{content:"↓";left:50%;top:-23px;transform:translateX(-50%)}}
+  .phasefoot{margin-top:14px;font-size:12.5px;color:var(--muted)}
+  .phasefoot .q{font-style:italic}
+
+  /* mcp */
+  .mcpgrid{display:grid;grid-template-columns:1.15fr .85fr;gap:22px;align-items:start}
+  @media(max-width:760px){.mcpgrid{grid-template-columns:1fr}}
+  .mcpgrid p{margin:0 0 12px;color:var(--ink);font-size:13.5px}
+  .mcpgrid p.dim{color:var(--muted)}
+  .toolcard{border:.5px solid var(--line2);background:var(--surface);border-radius:12px;overflow:hidden}
+  .toolcard .th{display:flex;align-items:center;gap:8px;padding:9px 12px;border-bottom:.5px solid var(--line);font-family:var(--mono);font-size:12px}
+  .toolcard .th .dot{width:7px;height:7px;border-radius:50%;background:var(--ok)}
+  .toolcard pre{border:none;border-radius:0;margin:0;background:transparent}
+  .toolcard .tr{padding:8px 12px;border-top:.5px solid var(--line);font-size:11.5px;color:var(--ok);background:var(--okbg)}
+  .intents{display:flex;gap:5px;flex-wrap:wrap;margin-top:10px}
+  .intents span{font-family:var(--mono);font-size:10.5px;padding:2px 7px;border-radius:5px;background:var(--purpbg);color:var(--purp)}
+  .modes{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:18px}
+  @media(max-width:640px){.modes{grid-template-columns:1fr}}
+  .mode{border:.5px solid var(--line);background:var(--surface);border-radius:12px;padding:13px 15px}
+  .mode .mt{font-weight:600;font-size:13.5px;display:flex;align-items:center;gap:8px;margin-bottom:5px}
+  .mode .mb{font-size:12.5px;color:var(--muted)}
+  .mode .mid{margin-top:8px;font-family:var(--mono);font-size:10.5px;color:var(--hint)}
+
+  /* steps */
+  .steps{counter-reset:s;margin:18px 0 0}
+  .stepblk{position:relative;padding:0 0 6px 40px;margin-bottom:10px}
+  .stepblk::before{counter-increment:s;content:counter(s);position:absolute;left:0;top:1px;width:26px;height:26px;border-radius:50%;background:var(--infobg);color:var(--info);font-weight:600;font-size:13px;display:flex;align-items:center;justify-content:center}
+  .stepblk h3{font-size:14px;font-weight:600;margin:2px 0 6px}
+  .stepblk p{color:var(--muted);font-size:13px;margin:0 0 8px}
+  .callout{border:.5px solid var(--line);border-left:3px solid var(--warn);background:var(--surface);border-radius:10px;padding:12px 16px;margin:18px 0 0}
+  .callout .t{font-weight:600;font-size:13px;margin-bottom:6px;color:var(--warn)}
+  .callout ul{margin:0;padding-left:18px}
+  .callout li{font-size:13px;color:var(--muted);margin:4px 0}
+
+  /* explore */
+  .cards{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+  @media(max-width:640px){.cards{grid-template-columns:1fr}}
+  .card{display:block;border:.5px solid var(--line);background:var(--surface);border-radius:14px;padding:20px 22px;color:var(--ink)}
+  .card:hover{border-color:var(--info)}
+  .card .ic{width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;margin-bottom:10px}
+  .card .ic svg{display:block}
+  .ic-play{background:var(--infobg);color:var(--info)}
+  .ic-bars{background:var(--purpbg);color:var(--purp)}
+  .card h3{font-size:17px;font-weight:600;margin:0 0 6px;display:flex;align-items:center;gap:8px}
+  .card h3 .go{margin-left:auto;color:var(--hint);font-weight:400}
+  .card p{margin:0 0 10px;color:var(--muted);font-size:13px}
+  .card ul{margin:0;padding:0;list-style:none}
+  .card li{font-size:12.5px;color:var(--muted);padding:3px 0 3px 18px;position:relative}
+  .card li::before{content:"·";position:absolute;left:6px;color:var(--hint)}
+  .foot{margin-top:64px;padding-top:18px;border-top:.5px solid var(--line);display:flex;gap:18px;flex-wrap:wrap;font-size:12px;color:var(--hint)}
+  .foot a{color:var(--hint);text-decoration:underline;text-decoration-color:var(--line2)}
+  .foot a:hover{color:var(--info)}
+</style>
+
+<div class="top">
+  <a class="brand" href=".">Shannon Prover</a>
+  <nav>
+    <a href="#phases">three phases</a>
+    <a href="#mcp">the MCP tool</a>
+    <a href="#install">install</a>
+    <a href="https://arxiv.org/pdf/2607.02847" rel="noopener">paper</a>
+    <a class="cta" href="playground">playground</a>
+    <a class="cta" href="results/">benchmark</a>
+  </nav>
+</div>
+
+<div class="page">
+  <h1>LLM agents that write machine-checked cryptographic proofs</h1>
+  <div class="sub">
+    The agent never drives the proof assistant directly. Each turn it reads a structured
+    proof-state panel, answers with a single tool call, and a session manager applies it,
+    checks it against EasyCrypt, and re-renders the view. Every accepted proof is admit-free
+    and re-verified by an independent replay validator — each run is a fully auditable record
+    of what the agent saw, chose, and proved.
+  </div>
+
+  <section id="phases">
+    <h2>What this tool does — and what you bring</h2>
+    <p class="seclead">A provable-security proof moves through three phases
+    (<a href="https://arxiv.org/pdf/2607.02847" rel="noopener">our paper</a>, Fig.&nbsp;1).
+    <strong>Shannon Prover's scope is Phase&nbsp;III</strong>: you bring the security model
+    (Phase&nbsp;I) and the decomposition into lemma-level obligations (Phase&nbsp;II), and it
+    writes the tactic-level proof script for each lemma — the tedious, time-consuming part
+    you can now delegate.</p>
+    <div class="phases">
+      <div class="phase">
+        <div class="who expert">Phase I · expert</div>
+        <div class="t">Security modeling</div>
+        <div class="b">Express the scheme and its security notions as EasyCrypt modules and
+        definitions — the games the whole argument is played in.</div>
+        <div class="eg">module CBC(P : PseudoRP) = {<br>&nbsp;&nbsp;proc enc(key, iv, p) = { … } }</div>
+      </div>
+      <div class="phase">
+        <div class="who expert">Phase II · expert <span class="pill p-warn">assistance coming — stay tuned</span></div>
+        <div class="t">Lemma decomposition</div>
+        <div class="b">Decompose the main theorem into intermediate lemma statements — the
+        game hops that structure the proof. Extending Shannon Prover to assist here is our
+        next step.</div>
+        <div class="eg">lemma CBC_PRP_RF · lemma Bound_by_Birthday · lemma CBC_upto</div>
+      </div>
+      <div class="phase hot">
+        <div class="who us">Phase III · Shannon Prover <span class="pill p-info">this project</span></div>
+        <div class="t">Tactic-level lemma proving</div>
+        <div class="b">Prove each lemma with a tactic script EasyCrypt accepts. Shannon Prover
+        automates this phase — agents search and commit tactics until the checker
+        says <code>qed</code>.</div>
+        <div class="eg">proof. byequiv=> //=. proc.<br>call (_: ={bad,qs} …). qed.</div>
+      </div>
+    </div>
+    <p class="phasefoot">The phases feed back: a proved lemma lets the cryptographer proceed,
+    while a stalled search is itself information — it often means the Phase&nbsp;II
+    decomposition needs revising. <span class="q">“Given the decomposition, Shannon Prover can
+    fully automate Phase&nbsp;III for MEE-CBC and ChaCha20-Poly1305 in a day.”</span></p>
+  </section>
+
+  <section id="mcp">
+    <h2>The MCP tool</h2>
+    <div class="mcpgrid">
+      <div>
+        <p>Shannon Prover talks to the agent through the
+        <a href="https://modelcontextprotocol.io" rel="noopener">Model Context Protocol</a>.
+        The agent gets exactly <strong>one tool</strong>: <code>submit_proof_intent</code> —
+        one proof-level action per turn. The always-available moves are deliberately few:
+        commit a tactic, undo, rewind to a checkpoint, restart, finish. Every other intent is
+        offered by the panel itself — when the proof state makes a lookup, a diagnosis, or a
+        specialized view relevant, the panel surfaces it that turn.</p>
+        <p class="dim">Everything else stays behind the manager: the live EasyCrypt session, files,
+        session state, repair prompts. When you run a proof, each tree node automatically gets
+        its own private MCP server wired to a headless Claude Code instance — there is nothing
+        to configure, and the agent physically can't touch the prover except through this tool.</p>
+        <div class="intents">
+          <span>commit_tactic</span><span>undo_last_step</span><span>undo_to_checkpoint</span>
+          <span>fresh_restart</span><span>finish</span>
+        </div>
+        <p class="dim" style="font-size:12px;margin-top:8px">…plus the intents the panel offers
+        in context, turn by turn.</p>
+      </div>
+      <div class="toolcard">
+        <div class="th"><span class="dot"></span>submit_proof_intent</div>
+<pre><code>{ "intent": "commit_tactic",
+  "payload": {
+    "tactic": "while (={r} /\\ 1 <= r{1} <= 6)."
+  } }</code></pre>
+        <div class="tr">✓ commit accepted · panel re-rendered with the new goal</div>
+      </div>
+    </div>
+
+    <div class="modes">
+      <div class="mode">
+        <div class="mt">🔬 Goal-only mode <span class="pill p-mut" style="border:.5px solid var(--line2);color:var(--muted)">minimal</span></div>
+        <div class="mb">The agent sees nothing but the produced EasyCrypt goal — the raw
+        proof state, no analysis, no hints. The clean baseline for what a model can do
+        alone.</div>
+        <div class="mid">surface profile: l1_goal_projection</div>
+      </div>
+      <div class="mode">
+        <div class="mt">🛠 Workbench mode <span class="pill p-info">default</span></div>
+        <div class="mb">The agent reads the full compiler surface: the analyzed goal,
+        candidate moves, route health, and inspection handles it can pull on.</div>
+        <div class="mid">surface profile: l4_checked_action_surface</div>
+      </div>
+    </div>
+    <p class="seclead" style="margin-top:12px">The two modes drive the same manager and the same
+    EasyCrypt session — only the panel changes, which is exactly what our interface ablations
+    measure. Flip between them live in the <a href="playground">playground</a>.</p>
+  </section>
+
+  <section id="install">
+    <h2>Run it yourself</h2>
+    <p class="seclead">Prerequisites: macOS or Linux,
+    <a href="https://opam.ocaml.org" rel="noopener">opam</a>, Python ≥ 3.12 with
+    <a href="https://docs.astral.sh/uv/" rel="noopener">uv</a>, and the Claude Code CLI
+    (logged in). Grab the source from
+    <a href="https://github.com/SkyShannonProver/shannon-prover" rel="noopener">github.com/SkyShannonProver/shannon-prover</a>
+    and run the steps below from the checkout.</p>
+
+    <div class="steps">
+      <div class="stepblk">
+        <h3>Install EasyCrypt via opam</h3>
+        <p>The pipeline expects the opam switch to be named <code>easycrypt</code>
+        (configured in <code>core/easycrypt/ec_env.py</code>).</p>
+<pre><code>opam init
+opam switch --empty create easycrypt
+opam pin -yn add easycrypt https://github.com/EasyCrypt/easycrypt.git
+opam install --deps-only easycrypt
+opam install alt-ergo.2.6.0 easycrypt
+easycrypt why3config</code></pre>
+        <p>Then, in <em>every</em> shell that runs the prover or the playground:</p>
+<pre><code>eval "$(opam env --switch=easycrypt)"</code></pre>
+      </div>
+      <div class="stepblk">
+        <h3>Set up the Python environment</h3>
+<pre><code>uv sync            <span class="c"># installs from pyproject.toml (Python ≥ 3.12)</span>
+claude --version   <span class="c"># the prover drives the Claude Code CLI — install &amp; log in first</span></code></pre>
+      </div>
+      <div class="stepblk">
+        <h3>Open Claude Code and prove a lemma</h3>
+        <p>The repo ships a <code>/prove</code> command. Open Claude Code in the checkout and
+        point it at any lemma under <code>eval/examples/</code>:</p>
+<pre><code><span class="c"># inside a Claude Code session opened on the repo:</span>
+/prove PIR_correct                        <span class="c"># Workbench mode (default)</span>
+/prove PIR_correct l1_goal_projection     <span class="c"># Goal-only mode</span></code></pre>
+        <p>Claude finds the lemma's source, generates a one-target eval suite, and launches the
+        run in eval mode — the source is copied into an isolated container and the target's
+        proof body is stripped, so the agent proves it blind. All the MCP plumbing (per-node
+        server, config, tokens) happens automatically. Equivalent direct command:</p>
+<pre><code>eval "$(opam env --switch=easycrypt)"
+uv run python -m eval_suite.run --suite eval_suite/suites/demo_pir.json \
+    --profiles l4_checked_action_surface</code></pre>
+      </div>
+      <div class="stepblk">
+        <h3>Read the results</h3>
+        <p>Metrics land in <code>artifacts/eval_suite/…/eval_metrics.md</code>; every run also
+        produces a replayable bundle under
+        <code>agent_view_runs/&lt;lemma&gt;/&lt;timestamp&gt;__&lt;commit&gt;/</code> — browse it turn by
+        turn in the <a href="results/">benchmark browser</a>. A run counts as proved only if
+        EasyCrypt accepts the complete proof with no <code>admit.</code> anywhere; the pipeline
+        itself rejects proofs that still have one.</p>
+      </div>
+    </div>
+
+    <div class="callout">
+      <div class="t">Good to know</div>
+      <ul>
+        <li><strong>why3server needs a real terminal.</strong> An OS sandbox that blocks the
+          <code>nice()</code> syscall prevents why3server from starting, and <code>smt()</code>
+          fails with “cannot start &amp; connect to why3server”. Run outside sandboxes.</li>
+        <li><strong>Eval isolation is deliberate.</strong> Don't hand-edit the checkout to help
+          a proof — the run works on an isolated proof-stripped copy, and helping breaks the
+          numbers.</li>
+        <li><strong>Model default.</strong> Suites inherit <code>claude-opus-4-8</code> at effort
+          <code>high</code>; override with <code>"model"</code>/<code>"effort"</code> keys under
+          the suite's <code>defaults</code>, or <code>--prover-model</code>/<code>--prover-effort</code>
+          on direct <code>workflow.orchestrator</code> runs.</li>
+        <li><strong>Playground:</strong> start it with
+          <code>uv run --with fastapi --with "uvicorn[standard]" uvicorn playground.server:app --port 8000</code>
+          — local only, no auth layer; one EasyCrypt workload per checkout.</li>
+      </ul>
+    </div>
+  </section>
+
+  <section id="explore">
+    <h2>Explore</h2>
+    <div class="cards">
+      <a class="card" href="playground">
+        <div class="ic ic-play"><svg width="17" height="17" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5.2v13.6a.8.8 0 0 0 1.22.68l10.9-6.8a.8.8 0 0 0 0-1.36L9.22 4.52A.8.8 0 0 0 8 5.2z"/></svg></div>
+        <h3>Playground <span class="go">›</span></h3>
+        <p>Watch a live agent prove a lemma in your browser.</p>
+        <ul>
+          <li>pick a target file and lemma, press start</li>
+          <li>see every panel and committed tactic as it happens</li>
+          <li>flip between Goal-only and Workbench mode live</li>
+        </ul>
+      </a>
+      <a class="card" href="results/">
+        <div class="ic ic-bars"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M5 19v-5M12 19V5M19 19v-9"/></svg></div>
+        <h3>Benchmark <span class="go">›</span></h3>
+        <p>Model capability board and replayable run bundles.</p>
+        <ul>
+          <li>which models close which lemmas</li>
+          <li>every run replayable turn by turn — panel, thinking, tactic</li>
+          <li>proved = EasyCrypt-accepted, admit-free, replay-verified</li>
+        </ul>
+      </a>
+    </div>
+  </section>
+
+  <div class="foot">
+    <span>Shannon Prover — research prototype</span>
+    <a href="https://arxiv.org/pdf/2607.02847" rel="noopener">paper (arXiv)</a>
+    <a href="https://github.com/SkyShannonProver/shannon-prover" rel="noopener">source on GitHub</a>
+    <span>questions? <a href="mailto:shannonprover@gmail.com">shannonprover@gmail.com</a></span>
+    <span>EasyCrypt is developed <a href="https://www.easycrypt.info" rel="noopener">upstream</a> under its own license</span>
+  </div>
+</div>
+
+
+<script>
+// Runtime adaptation: this page is served two ways — by playground/server.py
+// (live playground available) and as a static site (GitHub Pages, no backend).
+// Probe the backend once; without it, every playground entry point becomes a
+// "run it locally" pointer at the install section. One HTML, two deployments.
+(function(){
+  fetch('/api/targets').then(function(r){if(!r.ok)throw 0;}).catch(function(){
+    document.querySelectorAll('a[href="playground"]').forEach(function(a){
+      a.setAttribute('href','#install');
+      a.setAttribute('title','the live playground runs locally — see the install steps');
+    });
+    var card=document.querySelector('.cards a[href="#install"].card');
+    if(card){
+      var p=card.querySelector('p');
+      if(p)p.textContent='Runs locally — clone the repo and start it with one command.';
+      var ul=card.querySelector('ul');
+      if(ul)ul.innerHTML='<li>install EasyCrypt and the Python environment (below)</li>'+
+        '<li>start the server: one uvicorn command</li>'+
+        '<li>then watch a live agent prove a lemma in your browser</li>';
+      var go=card.querySelector('h3 .go'); if(go)go.textContent='↓';
+    }
+  });
+})();
+</script>

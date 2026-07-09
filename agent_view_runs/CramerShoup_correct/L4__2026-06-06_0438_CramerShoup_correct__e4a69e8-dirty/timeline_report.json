@@ -1,0 +1,1125 @@
+{
+  "kind": "agent_view_timeline_report",
+  "run_count": 1,
+  "runs": [
+    {
+      "chronological": false,
+      "first_action_at": "2026-06-06T11:39:36+00:00",
+      "label": "2026-06-06_0438_CramerShoup_correct",
+      "node_count": 1,
+      "rows": [
+        {
+          "action_submitted_at": "2026-06-06T11:39:36+00:00",
+          "action_time": "+00:00",
+          "agent_think": "",
+          "agent_think_path": "artifacts/eval_suite/wave1_ablation/l4_checked_action_surface/d1_cramershoup/r01/2026-06-06_0438_CramerShoup_correct/iteration_1/node_memory/Tree_0_0/thinking/turn_001.md",
+          "agent_think_seconds": null,
+          "decision_followup_path": "",
+          "decision_state_summary": "hoare / procedure_entry / procedure_frontier, 1 goal, goal 169 chars",
+          "decision_view_path": "artifacts/eval_suite/wave1_ablation/l4_checked_action_surface/d1_cramershoup/r01/2026-06-06_0438_CramerShoup_correct/iteration_1/manager_bootstrap_0_0.json",
+          "deterministic_signals": [],
+          "goal_chars": 169,
+          "inspect_topics": [
+            "goal_info",
+            "call_site_options",
+            "call_subgoals",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms"
+          ],
+          "intent": {
+            "intent": "probe_tactic",
+            "payload": {
+              "tactic": "proc."
+            }
+          },
+          "intent_summary": "probe proc",
+          "manager_action_summary": [
+            "tactic probe (2.0 s)"
+          ],
+          "manager_result_at": "2026-06-06T11:39:38+00:00",
+          "manager_result_path": "artifacts/eval_suite/wave1_ablation/l4_checked_action_surface/d1_cramershoup/r01/2026-06-06_0438_CramerShoup_correct/iteration_1/node_memory/Tree_0_0/manager_results/turn_001.json",
+          "manager_seconds": 2.0,
+          "manager_time": "2 s",
+          "node": "Tree-0.0",
+          "node_dir": "artifacts/eval_suite/wave1_ablation/l4_checked_action_surface/d1_cramershoup/r01/2026-06-06_0438_CramerShoup_correct/iteration_1/node_memory/Tree_0_0",
+          "ok": true,
+          "result_followup_path": "artifacts/eval_suite/wave1_ablation/l4_checked_action_surface/d1_cramershoup/r01/2026-06-06_0438_CramerShoup_correct/iteration_1/node_memory/Tree_0_0/followups/turn_001.md",
+          "result_state_summary": "hoare / procedure_entry / procedure_frontier, 1 goal, goal 169 chars",
+          "result_summary": "accepted probe",
+          "result_view_path": "artifacts/eval_suite/wave1_ablation/l4_checked_action_surface/d1_cramershoup/r01/2026-06-06_0438_CramerShoup_correct/iteration_1/node_memory/Tree_0_0/workspace_views/turn_001.json",
+          "turn": 1,
+          "usage": {
+            "cache_creation_input_tokens": 61080,
+            "cache_read_input_tokens": 30547,
+            "input_tokens": 2076,
+            "output_tokens": 3565
+          },
+          "view_chars": 7685,
+          "view_id": "T0.0-1",
+          "workspace_view_path": "artifacts/eval_suite/wave1_ablation/l4_checked_action_surface/d1_cramershoup/r01/2026-06-06_0438_CramerShoup_correct/iteration_1/manager_bootstrap_0_0.json"
+        },
+        {
+          "action_submitted_at": "2026-06-06T11:39:44.848000+00:00",
+          "action_time": "+00:09",
+          "agent_think": "6.8 s",
+          "agent_think_path": "artifacts/eval_suite/wave1_ablation/l4_checked_action_surface/d1_cramershoup/r01/2026-06-06_0438_CramerShoup_correct/iteration_1/node_memory/Tree_0_0/thinking/turn_002.md",
+          "agent_think_seconds": 6.848,
+          "decision_followup_path": "artifacts/eval_suite/wave1_ablation/l4_checked_action_surface/d1_cramershoup/r01/2026-06-06_0438_CramerShoup_correct/iteration_1/node_memory/Tree_0_0/followups/turn_001.md",
+          "decision_state_summary": "hoare / procedure_entry / procedure_frontier, 1 goal, goal 169 chars",
+          "decision_view_path": "artifacts/eval_suite/wave1_ablation/l4_checked_action_surface/d1_cramershoup/r01/2026-06-06_0438_CramerShoup_correct/iteration_1/node_memory/Tree_0_0/workspace_views/turn_001.json",
+          "deterministic_signals": [
+            "commit_without_probe_check_not_inferred"
+          ],
+          "goal_chars": 169,
+          "inspect_topics": [
+            "goal_info",
+            "call_site_options",
+            "call_subgoals",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms"
+          ],
+          "intent": {
+            "intent": "commit_tactic",
+            "payload": {
+              "tactic": "proc."
+            }
+          },
+          "intent_summary": "commit proc",
+          "manager_action_summary": [
+            "tactic commit (152 ms)"
+          ],
+          "manager_result_at": "2026-06-06T11:39:45+00:00",
+          "manager_result_path": "artifacts/eval_suite/wave1_ablation/l4_checked_action_surface/d1_cramershoup/r01/2026-06-06_0438_CramerShoup_correct/iteration_1/node_memory/Tree_0_0/manager_results/turn_002.json",
+          "manager_seconds": 0.152,
+          "manager_time": "152 ms",
+          "node": "Tree-0.0",
+          "node_dir": "artifacts/eval_suite/wave1_ablation/l4_checked_action_surface/d1_cramershoup/r01/2026-06-06_0438_CramerShoup_correct/iteration_1/node_memory/Tree_0_0",
+          "ok": true,
+          "result_followup_path": "artifacts/eval_suite/wave1_ablation/l4_checked_action_surface/d1_cramershoup/r01/2026-06-06_0438_CramerShoup_correct/iteration_1/node_memory/Tree_0_0/followups/turn_002.md",
+          "result_state_summary": "hoare / procedure_body / procedure_frontier, 1 goal, goal 388 chars",
+          "result_summary": "accepted commit",
+          "result_view_path": "artifacts/eval_suite/wave1_ablation/l4_checked_action_surface/d1_cramershoup/r01/2026-06-06_0438_CramerShoup_correct/iteration_1/node_memory/Tree_0_0/workspace_views/turn_002.json",
+          "turn": 2,
+          "usage": {
+            "cache_creation_input_tokens": 1616,
+            "cache_read_input_tokens": 57778,
+            "input_tokens": 2,
+            "output_tokens": 452
+          },
+          "view_chars": 11880,
+          "view_id": "T0.0-2",
+          "workspace_view_path": "artifacts/eval_suite/wave1_ablation/l4_checked_action_surface/d1_cramershoup/r01/2026-06-06_0438_CramerShoup_correct/iteration_1/node_memory/Tree_0_0/workspace_views/turn_001.json"
+        },
+        {
+          "action_submitted_at": "2026-06-06T11:39:52+00:00",
+          "action_time": "+00:16",
+          "agent_think": "7 s",
+          "agent_think_path": "artifacts/eval_suite/wave1_ablation/l4_checked_action_surface/d1_cramershoup/r01/2026-06-06_0438_CramerShoup_correct/iteration_1/node_memory/Tree_0_0/thinking/turn_003.md",
+          "agent_think_seconds": 7.0,
+          "decision_followup_path": "artifacts/eval_suite/wave1_ablation/l4_checked_action_surface/d1_cramershoup/r01/2026-06-06_0438_CramerShoup_correct/iteration_1/node_memory/Tree_0_0/followups/turn_002.md",
+          "decision_state_summary": "hoare / procedure_body / procedure_frontier, 1 goal, goal 388 chars",
+          "decision_view_path": "artifacts/eval_suite/wave1_ablation/l4_checked_action_surface/d1_cramershoup/r01/2026-06-06_0438_CramerShoup_correct/iteration_1/node_memory/Tree_0_0/workspace_views/turn_002.json",
+          "deterministic_signals": [],
+          "goal_chars": 388,
+          "inspect_topics": [
+            "goal_info",
+            "call_site_options",
+            "call_subgoals",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms"
+          ],
+          "intent": {
+            "intent": "probe_tactic",
+            "payload": {
+              "tactic": "inline *; auto."
+            }
+          },
+          "intent_summary": "probe inline *; auto",
+          "manager_action_summary": [
+            "tactic probe (1.0 s)"
+          ],
+          "manager_result_at": "2026-06-06T11:39:53+00:00",
+          "manager_result_path": "artifacts/eval_suite/wave1_ablation/l4_checked_action_surface/d1_cramershoup/r01/2026-06-06_0438_CramerShoup_correct/iteration_1/node_memory/Tree_0_0/manager_results/turn_003.json",
+          "manager_seconds": 1.0,
+          "manager_time": "1 s",
+          "node": "Tree-0.0",
+          "node_dir": "artifacts/eval_suite/wave1_ablation/l4_checked_action_surface/d1_cramershoup/r01/2026-06-06_0438_CramerShoup_correct/iteration_1/node_memory/Tree_0_0",
+          "ok": true,
+          "result_followup_path": "artifacts/eval_suite/wave1_ablation/l4_checked_action_surface/d1_cramershoup/r01/2026-06-06_0438_CramerShoup_correct/iteration_1/node_memory/Tree_0_0/followups/turn_003.md",
+          "result_state_summary": "hoare / procedure_body / procedure_frontier, 1 goal, goal 388 chars",
+          "result_summary": "accepted probe",
+          "result_view_path": "artifacts/eval_suite/wave1_ablation/l4_checked_action_surface/d1_cramershoup/r01/2026-06-06_0438_CramerShoup_correct/iteration_1/node_memory/Tree_0_0/workspace_views/turn_003.json",
+          "turn": 3,
+          "usage": {
+            "cache_creation_input_tokens": 2554,
+            "cache_read_input_tokens": 59394,
+            "input_tokens": 2,
+            "output_tokens": 330
+          },
+          "view_chars": 8907,
+          "view_id": "T0.0-3",
+          "workspace_view_path": "artifacts/eval_suite/wave1_ablation/l4_checked_action_surface/d1_cramershoup/r01/2026-06-06_0438_CramerShoup_correct/iteration_1/node_memory/Tree_0_0/workspace_views/turn_002.json"
+        },
+        {
+          "action_submitted_at": "2026-06-06T11:40:46.861000+00:00",
+          "action_time": "+01:11",
+          "agent_think": "53.9 s",
+          "agent_think_path": "artifacts/eval_suite/wave1_ablation/l4_checked_action_surface/d1_cramershoup/r01/2026-06-06_0438_CramerShoup_correct/iteration_1/node_memory/Tree_0_0/thinking/turn_004.md",
+          "agent_think_seconds": 53.861,
+          "decision_followup_path": "artifacts/eval_suite/wave1_ablation/l4_checked_action_surface/d1_cramershoup/r01/2026-06-06_0438_CramerShoup_correct/iteration_1/node_memory/Tree_0_0/followups/turn_003.md",
+          "decision_state_summary": "hoare / procedure_body / procedure_frontier, 1 goal, goal 388 chars",
+          "decision_view_path": "artifacts/eval_suite/wave1_ablation/l4_checked_action_surface/d1_cramershoup/r01/2026-06-06_0438_CramerShoup_correct/iteration_1/node_memory/Tree_0_0/workspace_views/turn_003.json",
+          "deterministic_signals": [
+            "commit_without_probe_check_not_inferred"
+          ],
+          "goal_chars": 388,
+          "inspect_topics": [
+            "goal_info",
+            "call_site_options",
+            "call_subgoals",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms"
+          ],
+          "intent": {
+            "intent": "commit_tactic",
+            "payload": {
+              "tactic": "inline *; auto."
+            }
+          },
+          "intent_summary": "commit inline *; auto",
+          "manager_action_summary": [
+            "tactic commit (139 ms)"
+          ],
+          "manager_result_at": "2026-06-06T11:40:47+00:00",
+          "manager_result_path": "artifacts/eval_suite/wave1_ablation/l4_checked_action_surface/d1_cramershoup/r01/2026-06-06_0438_CramerShoup_correct/iteration_1/node_memory/Tree_0_0/manager_results/turn_004.json",
+          "manager_seconds": 0.139,
+          "manager_time": "139 ms",
+          "node": "Tree-0.0",
+          "node_dir": "artifacts/eval_suite/wave1_ablation/l4_checked_action_surface/d1_cramershoup/r01/2026-06-06_0438_CramerShoup_correct/iteration_1/node_memory/Tree_0_0",
+          "ok": true,
+          "result_followup_path": "artifacts/eval_suite/wave1_ablation/l4_checked_action_surface/d1_cramershoup/r01/2026-06-06_0438_CramerShoup_correct/iteration_1/node_memory/Tree_0_0/followups/turn_004.md",
+          "result_state_summary": "ambient / ambient_logic, 1 goal, goal 1498 chars",
+          "result_summary": "accepted commit",
+          "result_view_path": "artifacts/eval_suite/wave1_ablation/l4_checked_action_surface/d1_cramershoup/r01/2026-06-06_0438_CramerShoup_correct/iteration_1/node_memory/Tree_0_0/workspace_views/turn_004.json",
+          "turn": 4,
+          "usage": {
+            "cache_creation_input_tokens": 1230,
+            "cache_read_input_tokens": 61948,
+            "input_tokens": 2,
+            "output_tokens": 4124
+          },
+          "view_chars": 14690,
+          "view_id": "T0.0-4",
+          "workspace_view_path": "artifacts/eval_suite/wave1_ablation/l4_checked_action_surface/d1_cramershoup/r01/2026-06-06_0438_CramerShoup_correct/iteration_1/node_memory/Tree_0_0/workspace_views/turn_003.json"
+        },
+        {
+          "action_submitted_at": "2026-06-06T11:41:03+00:00",
+          "action_time": "+01:27",
+          "agent_think": "16 s",
+          "agent_think_path": "artifacts/eval_suite/wave1_ablation/l4_checked_action_surface/d1_cramershoup/r01/2026-06-06_0438_CramerShoup_correct/iteration_1/node_memory/Tree_0_0/thinking/turn_005.md",
+          "agent_think_seconds": 16.0,
+          "decision_followup_path": "artifacts/eval_suite/wave1_ablation/l4_checked_action_surface/d1_cramershoup/r01/2026-06-06_0438_CramerShoup_correct/iteration_1/node_memory/Tree_0_0/followups/turn_004.md",
+          "decision_state_summary": "ambient / ambient_logic, 1 goal, goal 1498 chars",
+          "decision_view_path": "artifacts/eval_suite/wave1_ablation/l4_checked_action_surface/d1_cramershoup/r01/2026-06-06_0438_CramerShoup_correct/iteration_1/node_memory/Tree_0_0/workspace_views/turn_004.json",
+          "deterministic_signals": [],
+          "goal_chars": 1498,
+          "inspect_topics": [
+            "goal_info",
+            "lemma_hints",
+            "tactic_forms"
+          ],
+          "intent": {
+            "intent": "probe_tactic",
+            "payload": {
+              "tactic": "move=> &hr _ x1 hx1 x2 hx2 y1 hy1 y2 hy2 z1 hz1 z2 hz2 w hw k hk /= u hu /=."
+            }
+          },
+          "intent_summary": "probe move=> &hr _ x1 hx1 x2 hx2 y1 hy1 y2 hy2 z1 hz1 z2 hz2 w hw k hk /= u...",
+          "manager_action_summary": [
+            "tactic probe (1.0 s)"
+          ],
+          "manager_result_at": "2026-06-06T11:41:04+00:00",
+          "manager_result_path": "artifacts/eval_suite/wave1_ablation/l4_checked_action_surface/d1_cramershoup/r01/2026-06-06_0438_CramerShoup_correct/iteration_1/node_memory/Tree_0_0/manager_results/turn_005.json",
+          "manager_seconds": 1.0,
+          "manager_time": "1 s",
+          "node": "Tree-0.0",
+          "node_dir": "artifacts/eval_suite/wave1_ablation/l4_checked_action_surface/d1_cramershoup/r01/2026-06-06_0438_CramerShoup_correct/iteration_1/node_memory/Tree_0_0",
+          "ok": true,
+          "result_followup_path": "artifacts/eval_suite/wave1_ablation/l4_checked_action_surface/d1_cramershoup/r01/2026-06-06_0438_CramerShoup_correct/iteration_1/node_memory/Tree_0_0/followups/turn_005.md",
+          "result_state_summary": "ambient / ambient_logic, 1 goal, goal 1498 chars",
+          "result_summary": "accepted probe",
+          "result_view_path": "artifacts/eval_suite/wave1_ablation/l4_checked_action_surface/d1_cramershoup/r01/2026-06-06_0438_CramerShoup_correct/iteration_1/node_memory/Tree_0_0/workspace_views/turn_005.json",
+          "turn": 5,
+          "usage": {
+            "cache_creation_input_tokens": 6315,
+            "cache_read_input_tokens": 63178,
+            "input_tokens": 131,
+            "output_tokens": 965
+          },
+          "view_chars": 8151,
+          "view_id": "T0.0-5",
+          "workspace_view_path": "artifacts/eval_suite/wave1_ablation/l4_checked_action_surface/d1_cramershoup/r01/2026-06-06_0438_CramerShoup_correct/iteration_1/node_memory/Tree_0_0/workspace_views/turn_004.json"
+        },
+        {
+          "action_submitted_at": "2026-06-06T11:41:46.843000+00:00",
+          "action_time": "+02:11",
+          "agent_think": "42.8 s",
+          "agent_think_path": "artifacts/eval_suite/wave1_ablation/l4_checked_action_surface/d1_cramershoup/r01/2026-06-06_0438_CramerShoup_correct/iteration_1/node_memory/Tree_0_0/thinking/turn_006.md",
+          "agent_think_seconds": 42.843,
+          "decision_followup_path": "artifacts/eval_suite/wave1_ablation/l4_checked_action_surface/d1_cramershoup/r01/2026-06-06_0438_CramerShoup_correct/iteration_1/node_memory/Tree_0_0/followups/turn_005.md",
+          "decision_state_summary": "ambient / ambient_logic, 1 goal, goal 1498 chars",
+          "decision_view_path": "artifacts/eval_suite/wave1_ablation/l4_checked_action_surface/d1_cramershoup/r01/2026-06-06_0438_CramerShoup_correct/iteration_1/node_memory/Tree_0_0/workspace_views/turn_005.json",
+          "deterministic_signals": [
+            "commit_without_probe_check_not_inferred"
+          ],
+          "goal_chars": 1498,
+          "inspect_topics": [
+            "goal_info",
+            "lemma_hints",
+            "tactic_forms"
+          ],
+          "intent": {
+            "intent": "commit_tactic",
+            "payload": {
+              "tactic": "move=> &hr _ x1 hx1 x2 hx2 y1 hy1 y2 hy2 z1 hz1 z2 hz2 w hw k hk /= u hu /=."
+            }
+          },
+          "intent_summary": "commit move=> &hr _ x1 hx1 x2 hx2 y1 hy1 y2 hy2 z1 hz1 z2 hz2 w hw k hk /= u...",
+          "manager_action_summary": [
+            "tactic commit (157 ms)"
+          ],
+          "manager_result_at": "2026-06-06T11:41:47+00:00",
+          "manager_result_path": "artifacts/eval_suite/wave1_ablation/l4_checked_action_surface/d1_cramershoup/r01/2026-06-06_0438_CramerShoup_correct/iteration_1/node_memory/Tree_0_0/manager_results/turn_006.json",
+          "manager_seconds": 0.157,
+          "manager_time": "157 ms",
+          "node": "Tree-0.0",
+          "node_dir": "artifacts/eval_suite/wave1_ablation/l4_checked_action_surface/d1_cramershoup/r01/2026-06-06_0438_CramerShoup_correct/iteration_1/node_memory/Tree_0_0",
+          "ok": true,
+          "result_followup_path": "artifacts/eval_suite/wave1_ablation/l4_checked_action_surface/d1_cramershoup/r01/2026-06-06_0438_CramerShoup_correct/iteration_1/node_memory/Tree_0_0/followups/turn_006.md",
+          "result_state_summary": "ambient / ambient_logic, 1 goal, goal 1453 chars",
+          "result_summary": "accepted commit",
+          "result_view_path": "artifacts/eval_suite/wave1_ablation/l4_checked_action_surface/d1_cramershoup/r01/2026-06-06_0438_CramerShoup_correct/iteration_1/node_memory/Tree_0_0/workspace_views/turn_006.json",
+          "turn": 6,
+          "usage": {
+            "cache_creation_input_tokens": 2284,
+            "cache_read_input_tokens": 69493,
+            "input_tokens": 2,
+            "output_tokens": 2943
+          },
+          "view_chars": 13962,
+          "view_id": "T0.0-6",
+          "workspace_view_path": "artifacts/eval_suite/wave1_ablation/l4_checked_action_surface/d1_cramershoup/r01/2026-06-06_0438_CramerShoup_correct/iteration_1/node_memory/Tree_0_0/workspace_views/turn_005.json"
+        },
+        {
+          "action_submitted_at": "2026-06-06T11:42:04.040000+00:00",
+          "action_time": "+02:28",
+          "agent_think": "17.0 s",
+          "agent_think_path": "artifacts/eval_suite/wave1_ablation/l4_checked_action_surface/d1_cramershoup/r01/2026-06-06_0438_CramerShoup_correct/iteration_1/node_memory/Tree_0_0/thinking/turn_007.md",
+          "agent_think_seconds": 17.04,
+          "decision_followup_path": "artifacts/eval_suite/wave1_ablation/l4_checked_action_surface/d1_cramershoup/r01/2026-06-06_0438_CramerShoup_correct/iteration_1/node_memory/Tree_0_0/followups/turn_006.md",
+          "decision_state_summary": "ambient / ambient_logic, 1 goal, goal 1453 chars",
+          "decision_view_path": "artifacts/eval_suite/wave1_ablation/l4_checked_action_surface/d1_cramershoup/r01/2026-06-06_0438_CramerShoup_correct/iteration_1/node_memory/Tree_0_0/workspace_views/turn_006.json",
+          "deterministic_signals": [],
+          "goal_chars": 1453,
+          "inspect_topics": [
+            "goal_info",
+            "lemma_hints",
+            "tactic_forms"
+          ],
+          "intent": {
+            "intent": "lookup_symbol",
+            "payload": {
+              "symbol": "log_bij"
+            }
+          },
+          "intent_summary": "lookup log_bij",
+          "manager_action_summary": [
+            "symbol lookup (960 ms)"
+          ],
+          "manager_result_at": "2026-06-06T11:42:05+00:00",
+          "manager_result_path": "artifacts/eval_suite/wave1_ablation/l4_checked_action_surface/d1_cramershoup/r01/2026-06-06_0438_CramerShoup_correct/iteration_1/node_memory/Tree_0_0/manager_results/turn_007.json",
+          "manager_seconds": 0.96,
+          "manager_time": "960 ms",
+          "node": "Tree-0.0",
+          "node_dir": "artifacts/eval_suite/wave1_ablation/l4_checked_action_surface/d1_cramershoup/r01/2026-06-06_0438_CramerShoup_correct/iteration_1/node_memory/Tree_0_0",
+          "ok": true,
+          "result_followup_path": "artifacts/eval_suite/wave1_ablation/l4_checked_action_surface/d1_cramershoup/r01/2026-06-06_0438_CramerShoup_correct/iteration_1/node_memory/Tree_0_0/followups/turn_007.md",
+          "result_state_summary": "ambient / ambient_logic, 1 goal, goal 1453 chars",
+          "result_summary": "lookup result",
+          "result_view_path": "artifacts/eval_suite/wave1_ablation/l4_checked_action_surface/d1_cramershoup/r01/2026-06-06_0438_CramerShoup_correct/iteration_1/node_memory/Tree_0_0/workspace_views/turn_007.json",
+          "turn": 7,
+          "usage": {
+            "cache_creation_input_tokens": 5495,
+            "cache_read_input_tokens": 71777,
+            "input_tokens": 2,
+            "output_tokens": 1334
+          },
+          "view_chars": 7914,
+          "view_id": "T0.0-7",
+          "workspace_view_path": "artifacts/eval_suite/wave1_ablation/l4_checked_action_surface/d1_cramershoup/r01/2026-06-06_0438_CramerShoup_correct/iteration_1/node_memory/Tree_0_0/workspace_views/turn_006.json"
+        },
+        {
+          "action_submitted_at": "2026-06-06T11:42:17+00:00",
+          "action_time": "+02:41",
+          "agent_think": "12 s",
+          "agent_think_path": "artifacts/eval_suite/wave1_ablation/l4_checked_action_surface/d1_cramershoup/r01/2026-06-06_0438_CramerShoup_correct/iteration_1/node_memory/Tree_0_0/thinking/turn_008.md",
+          "agent_think_seconds": 12.0,
+          "decision_followup_path": "artifacts/eval_suite/wave1_ablation/l4_checked_action_surface/d1_cramershoup/r01/2026-06-06_0438_CramerShoup_correct/iteration_1/node_memory/Tree_0_0/followups/turn_007.md",
+          "decision_state_summary": "ambient / ambient_logic, 1 goal, goal 1453 chars",
+          "decision_view_path": "artifacts/eval_suite/wave1_ablation/l4_checked_action_surface/d1_cramershoup/r01/2026-06-06_0438_CramerShoup_correct/iteration_1/node_memory/Tree_0_0/workspace_views/turn_007.json",
+          "deterministic_signals": [],
+          "goal_chars": 1453,
+          "inspect_topics": [
+            "goal_info",
+            "lemma_hints",
+            "tactic_forms"
+          ],
+          "intent": {
+            "intent": "probe_tactic",
+            "payload": {
+              "tactic": "pose V := H k (DH.G.g ^ u, DH.G.g ^ w ^ u, (DH.G.g ^ z1 * DH.G.g ^ w ^ z2) ^ u * m{hr}); have hc: (DH.G.g ^ x1 * DH.G.g ^ w ^ x2) ^ u * (DH.G.g ^ y1 * DH.G.g ^ w ^ y2) ^ (u * V) = DH.G.g ^ u ^ (x1 + V * y1) * DH.G.g ^ w ^ u ^ (x2 + V * y2); first by rewrite log_bij !(logg1, logrzM, logDr); ring."
+            }
+          },
+          "intent_summary": "probe pose V := H k (DH.G.g ^ u, DH.G.g ^ w ^ u, (DH.G.g ^ z1 * DH.G.g ^ w ^ z2) ^ u * m{hr}); have...",
+          "manager_action_summary": [
+            "tactic probe (1.0 s)"
+          ],
+          "manager_result_at": "2026-06-06T11:42:18+00:00",
+          "manager_result_path": "artifacts/eval_suite/wave1_ablation/l4_checked_action_surface/d1_cramershoup/r01/2026-06-06_0438_CramerShoup_correct/iteration_1/node_memory/Tree_0_0/manager_results/turn_008.json",
+          "manager_seconds": 1.0,
+          "manager_time": "1 s",
+          "node": "Tree-0.0",
+          "node_dir": "artifacts/eval_suite/wave1_ablation/l4_checked_action_surface/d1_cramershoup/r01/2026-06-06_0438_CramerShoup_correct/iteration_1/node_memory/Tree_0_0",
+          "ok": true,
+          "result_followup_path": "artifacts/eval_suite/wave1_ablation/l4_checked_action_surface/d1_cramershoup/r01/2026-06-06_0438_CramerShoup_correct/iteration_1/node_memory/Tree_0_0/followups/turn_008.md",
+          "result_state_summary": "ambient / ambient_logic, 1 goal, goal 1453 chars",
+          "result_summary": "accepted probe",
+          "result_view_path": "artifacts/eval_suite/wave1_ablation/l4_checked_action_surface/d1_cramershoup/r01/2026-06-06_0438_CramerShoup_correct/iteration_1/node_memory/Tree_0_0/workspace_views/turn_008.json",
+          "turn": 8,
+          "usage": {
+            "cache_creation_input_tokens": 3055,
+            "cache_read_input_tokens": 77272,
+            "input_tokens": 2,
+            "output_tokens": 560
+          },
+          "view_chars": 7820,
+          "view_id": "T0.0-8",
+          "workspace_view_path": "artifacts/eval_suite/wave1_ablation/l4_checked_action_surface/d1_cramershoup/r01/2026-06-06_0438_CramerShoup_correct/iteration_1/node_memory/Tree_0_0/workspace_views/turn_007.json"
+        },
+        {
+          "action_submitted_at": "2026-06-06T11:42:37.851000+00:00",
+          "action_time": "+03:02",
+          "agent_think": "19.9 s",
+          "agent_think_path": "artifacts/eval_suite/wave1_ablation/l4_checked_action_surface/d1_cramershoup/r01/2026-06-06_0438_CramerShoup_correct/iteration_1/node_memory/Tree_0_0/thinking/turn_009.md",
+          "agent_think_seconds": 19.851,
+          "decision_followup_path": "artifacts/eval_suite/wave1_ablation/l4_checked_action_surface/d1_cramershoup/r01/2026-06-06_0438_CramerShoup_correct/iteration_1/node_memory/Tree_0_0/followups/turn_008.md",
+          "decision_state_summary": "ambient / ambient_logic, 1 goal, goal 1453 chars",
+          "decision_view_path": "artifacts/eval_suite/wave1_ablation/l4_checked_action_surface/d1_cramershoup/r01/2026-06-06_0438_CramerShoup_correct/iteration_1/node_memory/Tree_0_0/workspace_views/turn_008.json",
+          "deterministic_signals": [
+            "commit_without_probe_check_not_inferred"
+          ],
+          "goal_chars": 1453,
+          "inspect_topics": [
+            "goal_info",
+            "lemma_hints",
+            "tactic_forms"
+          ],
+          "intent": {
+            "intent": "commit_tactic",
+            "payload": {
+              "tactic": "pose V := H k (DH.G.g ^ u, DH.G.g ^ w ^ u, (DH.G.g ^ z1 * DH.G.g ^ w ^ z2) ^ u * m{hr}); have hc: (DH.G.g ^ x1 * DH.G.g ^ w ^ x2) ^ u * (DH.G.g ^ y1 * DH.G.g ^ w ^ y2) ^ (u * V) = DH.G.g ^ u ^ (x1 + V * y1) * DH.G.g ^ w ^ u ^ (x2 + V * y2); first by rewrite log_bij !(logg1, logrzM, logDr); ring."
+            }
+          },
+          "intent_summary": "commit pose V := H k (DH.G.g ^ u, DH.G.g ^ w ^ u, (DH.G.g ^ z1 * DH.G.g ^ w ^ z2) ^ u * m{hr}); have...",
+          "manager_action_summary": [
+            "tactic commit (149 ms)"
+          ],
+          "manager_result_at": "2026-06-06T11:42:38+00:00",
+          "manager_result_path": "artifacts/eval_suite/wave1_ablation/l4_checked_action_surface/d1_cramershoup/r01/2026-06-06_0438_CramerShoup_correct/iteration_1/node_memory/Tree_0_0/manager_results/turn_009.json",
+          "manager_seconds": 0.149,
+          "manager_time": "149 ms",
+          "node": "Tree-0.0",
+          "node_dir": "artifacts/eval_suite/wave1_ablation/l4_checked_action_surface/d1_cramershoup/r01/2026-06-06_0438_CramerShoup_correct/iteration_1/node_memory/Tree_0_0",
+          "ok": true,
+          "result_followup_path": "artifacts/eval_suite/wave1_ablation/l4_checked_action_surface/d1_cramershoup/r01/2026-06-06_0438_CramerShoup_correct/iteration_1/node_memory/Tree_0_0/followups/turn_009.md",
+          "result_state_summary": "ambient / ambient_logic, 1 goal, goal 1413 chars",
+          "result_summary": "accepted commit",
+          "result_view_path": "artifacts/eval_suite/wave1_ablation/l4_checked_action_surface/d1_cramershoup/r01/2026-06-06_0438_CramerShoup_correct/iteration_1/node_memory/Tree_0_0/workspace_views/turn_009.json",
+          "turn": 9,
+          "usage": {
+            "cache_creation_input_tokens": 1740,
+            "cache_read_input_tokens": 80327,
+            "input_tokens": 2,
+            "output_tokens": 1333
+          },
+          "view_chars": 15749,
+          "view_id": "T0.0-9",
+          "workspace_view_path": "artifacts/eval_suite/wave1_ablation/l4_checked_action_surface/d1_cramershoup/r01/2026-06-06_0438_CramerShoup_correct/iteration_1/node_memory/Tree_0_0/workspace_views/turn_008.json"
+        },
+        {
+          "action_submitted_at": "2026-06-06T11:42:47+00:00",
+          "action_time": "+03:11",
+          "agent_think": "9 s",
+          "agent_think_path": "artifacts/eval_suite/wave1_ablation/l4_checked_action_surface/d1_cramershoup/r01/2026-06-06_0438_CramerShoup_correct/iteration_1/node_memory/Tree_0_0/thinking/turn_010.md",
+          "agent_think_seconds": 9.0,
+          "decision_followup_path": "artifacts/eval_suite/wave1_ablation/l4_checked_action_surface/d1_cramershoup/r01/2026-06-06_0438_CramerShoup_correct/iteration_1/node_memory/Tree_0_0/followups/turn_009.md",
+          "decision_state_summary": "ambient / ambient_logic, 1 goal, goal 1413 chars",
+          "decision_view_path": "artifacts/eval_suite/wave1_ablation/l4_checked_action_surface/d1_cramershoup/r01/2026-06-06_0438_CramerShoup_correct/iteration_1/node_memory/Tree_0_0/workspace_views/turn_009.json",
+          "deterministic_signals": [],
+          "goal_chars": 1413,
+          "inspect_topics": [
+            "goal_info",
+            "lemma_hints",
+            "tactic_forms"
+          ],
+          "intent": {
+            "intent": "probe_tactic",
+            "payload": {
+              "tactic": "rewrite hc /="
+            }
+          },
+          "intent_summary": "probe rewrite hc /=",
+          "manager_action_summary": [
+            "tactic probe (1.0 s)"
+          ],
+          "manager_result_at": "2026-06-06T11:42:48+00:00",
+          "manager_result_path": "artifacts/eval_suite/wave1_ablation/l4_checked_action_surface/d1_cramershoup/r01/2026-06-06_0438_CramerShoup_correct/iteration_1/node_memory/Tree_0_0/manager_results/turn_010.json",
+          "manager_seconds": 1.0,
+          "manager_time": "1 s",
+          "node": "Tree-0.0",
+          "node_dir": "artifacts/eval_suite/wave1_ablation/l4_checked_action_surface/d1_cramershoup/r01/2026-06-06_0438_CramerShoup_correct/iteration_1/node_memory/Tree_0_0",
+          "ok": true,
+          "result_followup_path": "artifacts/eval_suite/wave1_ablation/l4_checked_action_surface/d1_cramershoup/r01/2026-06-06_0438_CramerShoup_correct/iteration_1/node_memory/Tree_0_0/followups/turn_010.md",
+          "result_state_summary": "ambient / ambient_logic, 1 goal, goal 1413 chars",
+          "result_summary": "accepted probe",
+          "result_view_path": "artifacts/eval_suite/wave1_ablation/l4_checked_action_surface/d1_cramershoup/r01/2026-06-06_0438_CramerShoup_correct/iteration_1/node_memory/Tree_0_0/workspace_views/turn_010.json",
+          "turn": 10,
+          "usage": {
+            "cache_creation_input_tokens": 3874,
+            "cache_read_input_tokens": 82067,
+            "input_tokens": 131,
+            "output_tokens": 485
+          },
+          "view_chars": 8290,
+          "view_id": "T0.0-10",
+          "workspace_view_path": "artifacts/eval_suite/wave1_ablation/l4_checked_action_surface/d1_cramershoup/r01/2026-06-06_0438_CramerShoup_correct/iteration_1/node_memory/Tree_0_0/workspace_views/turn_009.json"
+        },
+        {
+          "action_submitted_at": "2026-06-06T11:42:56.832000+00:00",
+          "action_time": "+03:21",
+          "agent_think": "8.8 s",
+          "agent_think_path": "artifacts/eval_suite/wave1_ablation/l4_checked_action_surface/d1_cramershoup/r01/2026-06-06_0438_CramerShoup_correct/iteration_1/node_memory/Tree_0_0/thinking/turn_011.md",
+          "agent_think_seconds": 8.832,
+          "decision_followup_path": "artifacts/eval_suite/wave1_ablation/l4_checked_action_surface/d1_cramershoup/r01/2026-06-06_0438_CramerShoup_correct/iteration_1/node_memory/Tree_0_0/followups/turn_010.md",
+          "decision_state_summary": "ambient / ambient_logic, 1 goal, goal 1413 chars",
+          "decision_view_path": "artifacts/eval_suite/wave1_ablation/l4_checked_action_surface/d1_cramershoup/r01/2026-06-06_0438_CramerShoup_correct/iteration_1/node_memory/Tree_0_0/workspace_views/turn_010.json",
+          "deterministic_signals": [],
+          "goal_chars": 1413,
+          "inspect_topics": [
+            "goal_info",
+            "lemma_hints",
+            "tactic_forms"
+          ],
+          "intent": {
+            "intent": "probe_tactic",
+            "payload": {
+              "tactic": "rewrite hc /=; rewrite log_bij !(logg1, logrzM, logDr); ring."
+            }
+          },
+          "intent_summary": "probe rewrite hc /=; rewrite log_bij !(logg1, logrzM, logDr); ring",
+          "manager_action_summary": [
+            "tactic probe (168 ms)"
+          ],
+          "manager_result_at": "2026-06-06T11:42:57+00:00",
+          "manager_result_path": "artifacts/eval_suite/wave1_ablation/l4_checked_action_surface/d1_cramershoup/r01/2026-06-06_0438_CramerShoup_correct/iteration_1/node_memory/Tree_0_0/manager_results/turn_011.json",
+          "manager_seconds": 0.168,
+          "manager_time": "168 ms",
+          "node": "Tree-0.0",
+          "node_dir": "artifacts/eval_suite/wave1_ablation/l4_checked_action_surface/d1_cramershoup/r01/2026-06-06_0438_CramerShoup_correct/iteration_1/node_memory/Tree_0_0",
+          "ok": true,
+          "result_followup_path": "artifacts/eval_suite/wave1_ablation/l4_checked_action_surface/d1_cramershoup/r01/2026-06-06_0438_CramerShoup_correct/iteration_1/node_memory/Tree_0_0/followups/turn_011.md",
+          "result_state_summary": "ambient / ambient_logic, 1 goal, goal 1413 chars",
+          "result_summary": "accepted probe",
+          "result_view_path": "artifacts/eval_suite/wave1_ablation/l4_checked_action_surface/d1_cramershoup/r01/2026-06-06_0438_CramerShoup_correct/iteration_1/node_memory/Tree_0_0/workspace_views/turn_011.json",
+          "turn": 11,
+          "usage": {
+            "cache_creation_input_tokens": 1587,
+            "cache_read_input_tokens": 85941,
+            "input_tokens": 2,
+            "output_tokens": 324
+          },
+          "view_chars": 12577,
+          "view_id": "T0.0-11",
+          "workspace_view_path": "artifacts/eval_suite/wave1_ablation/l4_checked_action_surface/d1_cramershoup/r01/2026-06-06_0438_CramerShoup_correct/iteration_1/node_memory/Tree_0_0/workspace_views/turn_010.json"
+        },
+        {
+          "action_submitted_at": "2026-06-06T11:43:18.046000+00:00",
+          "action_time": "+03:42",
+          "agent_think": "21.0 s",
+          "agent_think_path": "artifacts/eval_suite/wave1_ablation/l4_checked_action_surface/d1_cramershoup/r01/2026-06-06_0438_CramerShoup_correct/iteration_1/node_memory/Tree_0_0/thinking/turn_012.md",
+          "agent_think_seconds": 21.046,
+          "decision_followup_path": "artifacts/eval_suite/wave1_ablation/l4_checked_action_surface/d1_cramershoup/r01/2026-06-06_0438_CramerShoup_correct/iteration_1/node_memory/Tree_0_0/followups/turn_011.md",
+          "decision_state_summary": "ambient / ambient_logic, 1 goal, goal 1413 chars",
+          "decision_view_path": "artifacts/eval_suite/wave1_ablation/l4_checked_action_surface/d1_cramershoup/r01/2026-06-06_0438_CramerShoup_correct/iteration_1/node_memory/Tree_0_0/workspace_views/turn_011.json",
+          "deterministic_signals": [],
+          "goal_chars": 1413,
+          "inspect_topics": [
+            "goal_info",
+            "lemma_hints",
+            "tactic_forms"
+          ],
+          "intent": {
+            "intent": "lookup_symbol",
+            "payload": {
+              "symbol": "logVr"
+            }
+          },
+          "intent_summary": "lookup logVr",
+          "manager_action_summary": [
+            "symbol lookup (954 ms)"
+          ],
+          "manager_result_at": "2026-06-06T11:43:19+00:00",
+          "manager_result_path": "artifacts/eval_suite/wave1_ablation/l4_checked_action_surface/d1_cramershoup/r01/2026-06-06_0438_CramerShoup_correct/iteration_1/node_memory/Tree_0_0/manager_results/turn_012.json",
+          "manager_seconds": 0.954,
+          "manager_time": "954 ms",
+          "node": "Tree-0.0",
+          "node_dir": "artifacts/eval_suite/wave1_ablation/l4_checked_action_surface/d1_cramershoup/r01/2026-06-06_0438_CramerShoup_correct/iteration_1/node_memory/Tree_0_0",
+          "ok": true,
+          "result_followup_path": "artifacts/eval_suite/wave1_ablation/l4_checked_action_surface/d1_cramershoup/r01/2026-06-06_0438_CramerShoup_correct/iteration_1/node_memory/Tree_0_0/followups/turn_012.md",
+          "result_state_summary": "ambient / ambient_logic, 1 goal, goal 1413 chars",
+          "result_summary": "lookup result",
+          "result_view_path": "artifacts/eval_suite/wave1_ablation/l4_checked_action_surface/d1_cramershoup/r01/2026-06-06_0438_CramerShoup_correct/iteration_1/node_memory/Tree_0_0/workspace_views/turn_012.json",
+          "turn": 12,
+          "usage": {
+            "cache_creation_input_tokens": 1307,
+            "cache_read_input_tokens": 87528,
+            "input_tokens": 2,
+            "output_tokens": 1335
+          },
+          "view_chars": 13501,
+          "view_id": "T0.0-12",
+          "workspace_view_path": "artifacts/eval_suite/wave1_ablation/l4_checked_action_surface/d1_cramershoup/r01/2026-06-06_0438_CramerShoup_correct/iteration_1/node_memory/Tree_0_0/workspace_views/turn_011.json"
+        },
+        {
+          "action_submitted_at": "2026-06-06T11:44:05.891000+00:00",
+          "action_time": "+04:30",
+          "agent_think": "46.9 s",
+          "agent_think_path": "artifacts/eval_suite/wave1_ablation/l4_checked_action_surface/d1_cramershoup/r01/2026-06-06_0438_CramerShoup_correct/iteration_1/node_memory/Tree_0_0/thinking/turn_013.md",
+          "agent_think_seconds": 46.891,
+          "decision_followup_path": "artifacts/eval_suite/wave1_ablation/l4_checked_action_surface/d1_cramershoup/r01/2026-06-06_0438_CramerShoup_correct/iteration_1/node_memory/Tree_0_0/followups/turn_012.md",
+          "decision_state_summary": "ambient / ambient_logic, 1 goal, goal 1413 chars",
+          "decision_view_path": "artifacts/eval_suite/wave1_ablation/l4_checked_action_surface/d1_cramershoup/r01/2026-06-06_0438_CramerShoup_correct/iteration_1/node_memory/Tree_0_0/workspace_views/turn_012.json",
+          "deterministic_signals": [],
+          "goal_chars": 1413,
+          "inspect_topics": [
+            "goal_info",
+            "lemma_hints",
+            "tactic_forms"
+          ],
+          "intent": {
+            "intent": "inspect_context",
+            "payload": {
+              "topic": "lemma_hints"
+            }
+          },
+          "intent_summary": "inspect lemma_hints",
+          "manager_action_summary": [
+            "inspect lemma hints (109 ms)"
+          ],
+          "manager_result_at": "2026-06-06T11:44:06+00:00",
+          "manager_result_path": "artifacts/eval_suite/wave1_ablation/l4_checked_action_surface/d1_cramershoup/r01/2026-06-06_0438_CramerShoup_correct/iteration_1/node_memory/Tree_0_0/manager_results/turn_013.json",
+          "manager_seconds": 0.109,
+          "manager_time": "109 ms",
+          "node": "Tree-0.0",
+          "node_dir": "artifacts/eval_suite/wave1_ablation/l4_checked_action_surface/d1_cramershoup/r01/2026-06-06_0438_CramerShoup_correct/iteration_1/node_memory/Tree_0_0",
+          "ok": true,
+          "result_followup_path": "artifacts/eval_suite/wave1_ablation/l4_checked_action_surface/d1_cramershoup/r01/2026-06-06_0438_CramerShoup_correct/iteration_1/node_memory/Tree_0_0/followups/turn_013.md",
+          "result_state_summary": "ambient / ambient_logic, 1 goal, goal 1413 chars",
+          "result_summary": "read-only inspect",
+          "result_view_path": "artifacts/eval_suite/wave1_ablation/l4_checked_action_surface/d1_cramershoup/r01/2026-06-06_0438_CramerShoup_correct/iteration_1/node_memory/Tree_0_0/workspace_views/turn_013.json",
+          "turn": 13,
+          "usage": {
+            "cache_creation_input_tokens": 3150,
+            "cache_read_input_tokens": 88835,
+            "input_tokens": 2,
+            "output_tokens": 3073
+          },
+          "view_chars": 8632,
+          "view_id": "T0.0-13",
+          "workspace_view_path": "artifacts/eval_suite/wave1_ablation/l4_checked_action_surface/d1_cramershoup/r01/2026-06-06_0438_CramerShoup_correct/iteration_1/node_memory/Tree_0_0/workspace_views/turn_012.json"
+        },
+        {
+          "action_submitted_at": "2026-06-06T11:44:34.835000+00:00",
+          "action_time": "+04:59",
+          "agent_think": "28.8 s",
+          "agent_think_path": "artifacts/eval_suite/wave1_ablation/l4_checked_action_surface/d1_cramershoup/r01/2026-06-06_0438_CramerShoup_correct/iteration_1/node_memory/Tree_0_0/thinking/turn_014.md",
+          "agent_think_seconds": 28.835,
+          "decision_followup_path": "artifacts/eval_suite/wave1_ablation/l4_checked_action_surface/d1_cramershoup/r01/2026-06-06_0438_CramerShoup_correct/iteration_1/node_memory/Tree_0_0/followups/turn_013.md",
+          "decision_state_summary": "ambient / ambient_logic, 1 goal, goal 1413 chars",
+          "decision_view_path": "artifacts/eval_suite/wave1_ablation/l4_checked_action_surface/d1_cramershoup/r01/2026-06-06_0438_CramerShoup_correct/iteration_1/node_memory/Tree_0_0/workspace_views/turn_013.json",
+          "deterministic_signals": [],
+          "goal_chars": 1413,
+          "inspect_topics": [
+            "inspection",
+            "goal_info",
+            "lemma_hints",
+            "tactic_forms"
+          ],
+          "intent": {
+            "intent": "probe_tactic",
+            "payload": {
+              "tactic": "rewrite hc /=; have hD: (DH.G.g ^ z1 * DH.G.g ^ w ^ z2) ^ u = DH.G.g ^ u ^ z1 * DH.G.g ^ w ^ u ^ z2; first by rewrite log_bij !(logg1, logrzM, logDr); ring. rewrite -hD."
+            }
+          },
+          "intent_summary": "probe rewrite hc /=; have hD: (DH.G.g ^ z1 * DH.G.g ^ w ^ z2) ^ u = DH.G.g ^ u ^ z1 * DH.G.g ^ w ^...",
+          "manager_action_summary": [
+            "tactic probe (165 ms)"
+          ],
+          "manager_result_at": "2026-06-06T11:44:35+00:00",
+          "manager_result_path": "artifacts/eval_suite/wave1_ablation/l4_checked_action_surface/d1_cramershoup/r01/2026-06-06_0438_CramerShoup_correct/iteration_1/node_memory/Tree_0_0/manager_results/turn_014.json",
+          "manager_seconds": 0.165,
+          "manager_time": "165 ms",
+          "node": "Tree-0.0",
+          "node_dir": "artifacts/eval_suite/wave1_ablation/l4_checked_action_surface/d1_cramershoup/r01/2026-06-06_0438_CramerShoup_correct/iteration_1/node_memory/Tree_0_0",
+          "ok": true,
+          "result_followup_path": "artifacts/eval_suite/wave1_ablation/l4_checked_action_surface/d1_cramershoup/r01/2026-06-06_0438_CramerShoup_correct/iteration_1/node_memory/Tree_0_0/followups/turn_014.md",
+          "result_state_summary": "ambient / ambient_logic, 1 goal, goal 1413 chars",
+          "result_summary": "accepted probe",
+          "result_view_path": "artifacts/eval_suite/wave1_ablation/l4_checked_action_surface/d1_cramershoup/r01/2026-06-06_0438_CramerShoup_correct/iteration_1/node_memory/Tree_0_0/workspace_views/turn_014.json",
+          "turn": 14,
+          "usage": {
+            "cache_creation_input_tokens": 5301,
+            "cache_read_input_tokens": 91985,
+            "input_tokens": 2,
+            "output_tokens": 1932
+          },
+          "view_chars": 9555,
+          "view_id": "T0.0-14",
+          "workspace_view_path": "artifacts/eval_suite/wave1_ablation/l4_checked_action_surface/d1_cramershoup/r01/2026-06-06_0438_CramerShoup_correct/iteration_1/node_memory/Tree_0_0/workspace_views/turn_013.json"
+        },
+        {
+          "action_submitted_at": "2026-06-06T11:44:46.067000+00:00",
+          "action_time": "+05:10",
+          "agent_think": "11.1 s",
+          "agent_think_path": "artifacts/eval_suite/wave1_ablation/l4_checked_action_surface/d1_cramershoup/r01/2026-06-06_0438_CramerShoup_correct/iteration_1/node_memory/Tree_0_0/thinking/turn_015.md",
+          "agent_think_seconds": 11.067,
+          "decision_followup_path": "artifacts/eval_suite/wave1_ablation/l4_checked_action_surface/d1_cramershoup/r01/2026-06-06_0438_CramerShoup_correct/iteration_1/node_memory/Tree_0_0/followups/turn_014.md",
+          "decision_state_summary": "ambient / ambient_logic, 1 goal, goal 1413 chars",
+          "decision_view_path": "artifacts/eval_suite/wave1_ablation/l4_checked_action_surface/d1_cramershoup/r01/2026-06-06_0438_CramerShoup_correct/iteration_1/node_memory/Tree_0_0/workspace_views/turn_014.json",
+          "deterministic_signals": [],
+          "goal_chars": 1413,
+          "inspect_topics": [
+            "inspection",
+            "goal_info",
+            "lemma_hints",
+            "tactic_forms"
+          ],
+          "intent": {
+            "intent": "lookup_symbol",
+            "payload": {
+              "symbol": "mulrK"
+            }
+          },
+          "intent_summary": "lookup mulrK",
+          "manager_action_summary": [
+            "symbol lookup (933 ms)"
+          ],
+          "manager_result_at": "2026-06-06T11:44:47+00:00",
+          "manager_result_path": "artifacts/eval_suite/wave1_ablation/l4_checked_action_surface/d1_cramershoup/r01/2026-06-06_0438_CramerShoup_correct/iteration_1/node_memory/Tree_0_0/manager_results/turn_015.json",
+          "manager_seconds": 0.933,
+          "manager_time": "933 ms",
+          "node": "Tree-0.0",
+          "node_dir": "artifacts/eval_suite/wave1_ablation/l4_checked_action_surface/d1_cramershoup/r01/2026-06-06_0438_CramerShoup_correct/iteration_1/node_memory/Tree_0_0",
+          "ok": true,
+          "result_followup_path": "artifacts/eval_suite/wave1_ablation/l4_checked_action_surface/d1_cramershoup/r01/2026-06-06_0438_CramerShoup_correct/iteration_1/node_memory/Tree_0_0/followups/turn_015.md",
+          "result_state_summary": "ambient / ambient_logic, 1 goal, goal 1413 chars",
+          "result_summary": "lookup result",
+          "result_view_path": "artifacts/eval_suite/wave1_ablation/l4_checked_action_surface/d1_cramershoup/r01/2026-06-06_0438_CramerShoup_correct/iteration_1/node_memory/Tree_0_0/workspace_views/turn_015.json",
+          "turn": 15,
+          "usage": {
+            "cache_creation_input_tokens": 3036,
+            "cache_read_input_tokens": 97286,
+            "input_tokens": 131,
+            "output_tokens": 676
+          },
+          "view_chars": 14636,
+          "view_id": "T0.0-15",
+          "workspace_view_path": "artifacts/eval_suite/wave1_ablation/l4_checked_action_surface/d1_cramershoup/r01/2026-06-06_0438_CramerShoup_correct/iteration_1/node_memory/Tree_0_0/workspace_views/turn_014.json"
+        },
+        {
+          "action_submitted_at": "2026-06-06T11:45:14.043000+00:00",
+          "action_time": "+05:38",
+          "agent_think": "27.0 s",
+          "agent_think_path": "artifacts/eval_suite/wave1_ablation/l4_checked_action_surface/d1_cramershoup/r01/2026-06-06_0438_CramerShoup_correct/iteration_1/node_memory/Tree_0_0/thinking/turn_016.md",
+          "agent_think_seconds": 27.043,
+          "decision_followup_path": "artifacts/eval_suite/wave1_ablation/l4_checked_action_surface/d1_cramershoup/r01/2026-06-06_0438_CramerShoup_correct/iteration_1/node_memory/Tree_0_0/followups/turn_015.md",
+          "decision_state_summary": "ambient / ambient_logic, 1 goal, goal 1413 chars",
+          "decision_view_path": "artifacts/eval_suite/wave1_ablation/l4_checked_action_surface/d1_cramershoup/r01/2026-06-06_0438_CramerShoup_correct/iteration_1/node_memory/Tree_0_0/workspace_views/turn_015.json",
+          "deterministic_signals": [],
+          "goal_chars": 1413,
+          "inspect_topics": [
+            "inspection",
+            "goal_info",
+            "lemma_hints",
+            "tactic_forms"
+          ],
+          "intent": {
+            "intent": "lookup_symbol",
+            "payload": {
+              "symbol": "logDr"
+            }
+          },
+          "intent_summary": "lookup logDr",
+          "manager_action_summary": [
+            "symbol lookup (957 ms)"
+          ],
+          "manager_result_at": "2026-06-06T11:45:15+00:00",
+          "manager_result_path": "artifacts/eval_suite/wave1_ablation/l4_checked_action_surface/d1_cramershoup/r01/2026-06-06_0438_CramerShoup_correct/iteration_1/node_memory/Tree_0_0/manager_results/turn_016.json",
+          "manager_seconds": 0.957,
+          "manager_time": "957 ms",
+          "node": "Tree-0.0",
+          "node_dir": "artifacts/eval_suite/wave1_ablation/l4_checked_action_surface/d1_cramershoup/r01/2026-06-06_0438_CramerShoup_correct/iteration_1/node_memory/Tree_0_0",
+          "ok": true,
+          "result_followup_path": "artifacts/eval_suite/wave1_ablation/l4_checked_action_surface/d1_cramershoup/r01/2026-06-06_0438_CramerShoup_correct/iteration_1/node_memory/Tree_0_0/followups/turn_016.md",
+          "result_state_summary": "ambient / ambient_logic, 1 goal, goal 1413 chars",
+          "result_summary": "lookup result",
+          "result_view_path": "artifacts/eval_suite/wave1_ablation/l4_checked_action_surface/d1_cramershoup/r01/2026-06-06_0438_CramerShoup_correct/iteration_1/node_memory/Tree_0_0/workspace_views/turn_016.json",
+          "turn": 16,
+          "usage": {
+            "cache_creation_input_tokens": 2876,
+            "cache_read_input_tokens": 100322,
+            "input_tokens": 2,
+            "output_tokens": 1737
+          },
+          "view_chars": 8908,
+          "view_id": "T0.0-16",
+          "workspace_view_path": "artifacts/eval_suite/wave1_ablation/l4_checked_action_surface/d1_cramershoup/r01/2026-06-06_0438_CramerShoup_correct/iteration_1/node_memory/Tree_0_0/workspace_views/turn_015.json"
+        },
+        {
+          "action_submitted_at": "2026-06-06T11:46:04.600000+00:00",
+          "action_time": "+06:29",
+          "agent_think": "49.6 s",
+          "agent_think_path": "artifacts/eval_suite/wave1_ablation/l4_checked_action_surface/d1_cramershoup/r01/2026-06-06_0438_CramerShoup_correct/iteration_1/node_memory/Tree_0_0/thinking/turn_017.md",
+          "agent_think_seconds": 49.6,
+          "decision_followup_path": "artifacts/eval_suite/wave1_ablation/l4_checked_action_surface/d1_cramershoup/r01/2026-06-06_0438_CramerShoup_correct/iteration_1/node_memory/Tree_0_0/followups/turn_016.md",
+          "decision_state_summary": "ambient / ambient_logic, 1 goal, goal 1413 chars",
+          "decision_view_path": "artifacts/eval_suite/wave1_ablation/l4_checked_action_surface/d1_cramershoup/r01/2026-06-06_0438_CramerShoup_correct/iteration_1/node_memory/Tree_0_0/workspace_views/turn_016.json",
+          "deterministic_signals": [
+            "manager_error:cannot prove goal (strict)"
+          ],
+          "goal_chars": 1413,
+          "inspect_topics": [
+            "inspection",
+            "goal_info",
+            "lemma_hints",
+            "tactic_forms"
+          ],
+          "intent": {
+            "intent": "probe_tactic",
+            "payload": {
+              "tactic": "rewrite hc /=; have hD: (DH.G.g ^ z1 * DH.G.g ^ w ^ z2) ^ u = DH.G.g ^ u ^ z1 * DH.G.g ^ w ^ u ^ z2; first by rewrite log_bij !(logg1, logrzM, logDr); ring. rewrite -hD; smt(@DH.G)."
+            }
+          },
+          "intent_summary": "probe rewrite hc /=; have hD: (DH.G.g ^ z1 * DH.G.g ^ w ^ z2) ^ u = DH.G.g ^ u ^ z1 * DH.G.g ^ w ^...",
+          "manager_action_summary": [
+            "tactic probe (3.4 s)"
+          ],
+          "manager_result_at": "2026-06-06T11:46:08+00:00",
+          "manager_result_path": "artifacts/eval_suite/wave1_ablation/l4_checked_action_surface/d1_cramershoup/r01/2026-06-06_0438_CramerShoup_correct/iteration_1/node_memory/Tree_0_0/manager_results/turn_017.json",
+          "manager_seconds": 3.4,
+          "manager_time": "3.4 s",
+          "node": "Tree-0.0",
+          "node_dir": "artifacts/eval_suite/wave1_ablation/l4_checked_action_surface/d1_cramershoup/r01/2026-06-06_0438_CramerShoup_correct/iteration_1/node_memory/Tree_0_0",
+          "ok": true,
+          "result_followup_path": "artifacts/eval_suite/wave1_ablation/l4_checked_action_surface/d1_cramershoup/r01/2026-06-06_0438_CramerShoup_correct/iteration_1/node_memory/Tree_0_0/followups/turn_017.md",
+          "result_state_summary": "ambient / ambient_logic, 1 goal, goal 1413 chars",
+          "result_summary": "rejected probe: cannot prove goal (strict)",
+          "result_view_path": "artifacts/eval_suite/wave1_ablation/l4_checked_action_surface/d1_cramershoup/r01/2026-06-06_0438_CramerShoup_correct/iteration_1/node_memory/Tree_0_0/workspace_views/turn_017.json",
+          "turn": 17,
+          "usage": {
+            "cache_creation_input_tokens": 3683,
+            "cache_read_input_tokens": 103198,
+            "input_tokens": 2,
+            "output_tokens": 3411
+          },
+          "view_chars": 8680,
+          "view_id": "T0.0-17",
+          "workspace_view_path": "artifacts/eval_suite/wave1_ablation/l4_checked_action_surface/d1_cramershoup/r01/2026-06-06_0438_CramerShoup_correct/iteration_1/node_memory/Tree_0_0/workspace_views/turn_016.json"
+        },
+        {
+          "action_submitted_at": "2026-06-06T11:46:42.062000+00:00",
+          "action_time": "+07:06",
+          "agent_think": "34.1 s",
+          "agent_think_path": "artifacts/eval_suite/wave1_ablation/l4_checked_action_surface/d1_cramershoup/r01/2026-06-06_0438_CramerShoup_correct/iteration_1/node_memory/Tree_0_0/thinking/turn_018.md",
+          "agent_think_seconds": 34.062,
+          "decision_followup_path": "artifacts/eval_suite/wave1_ablation/l4_checked_action_surface/d1_cramershoup/r01/2026-06-06_0438_CramerShoup_correct/iteration_1/node_memory/Tree_0_0/followups/turn_017.md",
+          "decision_state_summary": "ambient / ambient_logic, 1 goal, goal 1413 chars",
+          "decision_view_path": "artifacts/eval_suite/wave1_ablation/l4_checked_action_surface/d1_cramershoup/r01/2026-06-06_0438_CramerShoup_correct/iteration_1/node_memory/Tree_0_0/workspace_views/turn_017.json",
+          "deterministic_signals": [],
+          "goal_chars": 1413,
+          "inspect_topics": [
+            "diagnose",
+            "inspection",
+            "goal_info",
+            "lemma_hints",
+            "tactic_forms"
+          ],
+          "intent": {
+            "intent": "lookup_symbol",
+            "payload": {
+              "symbol": "expN"
+            }
+          },
+          "intent_summary": "lookup expN",
+          "manager_action_summary": [
+            "symbol lookup (938 ms)"
+          ],
+          "manager_result_at": "2026-06-06T11:46:43+00:00",
+          "manager_result_path": "artifacts/eval_suite/wave1_ablation/l4_checked_action_surface/d1_cramershoup/r01/2026-06-06_0438_CramerShoup_correct/iteration_1/node_memory/Tree_0_0/manager_results/turn_018.json",
+          "manager_seconds": 0.938,
+          "manager_time": "938 ms",
+          "node": "Tree-0.0",
+          "node_dir": "artifacts/eval_suite/wave1_ablation/l4_checked_action_surface/d1_cramershoup/r01/2026-06-06_0438_CramerShoup_correct/iteration_1/node_memory/Tree_0_0",
+          "ok": true,
+          "result_followup_path": "artifacts/eval_suite/wave1_ablation/l4_checked_action_surface/d1_cramershoup/r01/2026-06-06_0438_CramerShoup_correct/iteration_1/node_memory/Tree_0_0/followups/turn_018.md",
+          "result_state_summary": "ambient / ambient_logic, 1 goal, goal 1413 chars",
+          "result_summary": "lookup result",
+          "result_view_path": "artifacts/eval_suite/wave1_ablation/l4_checked_action_surface/d1_cramershoup/r01/2026-06-06_0438_CramerShoup_correct/iteration_1/node_memory/Tree_0_0/workspace_views/turn_018.json",
+          "turn": 18,
+          "usage": {
+            "cache_creation_input_tokens": 3827,
+            "cache_read_input_tokens": 106881,
+            "input_tokens": 2,
+            "output_tokens": 2230
+          },
+          "view_chars": 9891,
+          "view_id": "T0.0-18",
+          "workspace_view_path": "artifacts/eval_suite/wave1_ablation/l4_checked_action_surface/d1_cramershoup/r01/2026-06-06_0438_CramerShoup_correct/iteration_1/node_memory/Tree_0_0/workspace_views/turn_017.json"
+        },
+        {
+          "action_submitted_at": "2026-06-06T11:47:35.846000+00:00",
+          "action_time": "+08:00",
+          "agent_think": "52.8 s",
+          "agent_think_path": "artifacts/eval_suite/wave1_ablation/l4_checked_action_surface/d1_cramershoup/r01/2026-06-06_0438_CramerShoup_correct/iteration_1/node_memory/Tree_0_0/thinking/turn_019.md",
+          "agent_think_seconds": 52.846,
+          "decision_followup_path": "artifacts/eval_suite/wave1_ablation/l4_checked_action_surface/d1_cramershoup/r01/2026-06-06_0438_CramerShoup_correct/iteration_1/node_memory/Tree_0_0/followups/turn_018.md",
+          "decision_state_summary": "ambient / ambient_logic, 1 goal, goal 1413 chars",
+          "decision_view_path": "artifacts/eval_suite/wave1_ablation/l4_checked_action_surface/d1_cramershoup/r01/2026-06-06_0438_CramerShoup_correct/iteration_1/node_memory/Tree_0_0/workspace_views/turn_018.json",
+          "deterministic_signals": [],
+          "goal_chars": 1413,
+          "inspect_topics": [
+            "diagnose",
+            "inspection",
+            "goal_info",
+            "lemma_hints",
+            "tactic_forms"
+          ],
+          "intent": {
+            "intent": "probe_tactic",
+            "payload": {
+              "tactic": "rewrite hc /=; have hD: (DH.G.g ^ z1 * DH.G.g ^ w ^ z2) ^ u = DH.G.g ^ u ^ z1 * DH.G.g ^ w ^ u ^ z2; first by rewrite log_bij !(logg1, logrzM, logDr); ring. rewrite -hD log_bij !(logg1, logrzM, logDr) -expN !(logg1, logrzM, logDr); ring."
+            }
+          },
+          "intent_summary": "probe rewrite hc /=; have hD: (DH.G.g ^ z1 * DH.G.g ^ w ^ z2) ^ u = DH.G.g ^ u ^ z1 * DH.G.g ^ w ^...",
+          "manager_action_summary": [
+            "tactic probe (154 ms)"
+          ],
+          "manager_result_at": "2026-06-06T11:47:36+00:00",
+          "manager_result_path": "artifacts/eval_suite/wave1_ablation/l4_checked_action_surface/d1_cramershoup/r01/2026-06-06_0438_CramerShoup_correct/iteration_1/node_memory/Tree_0_0/manager_results/turn_019.json",
+          "manager_seconds": 0.154,
+          "manager_time": "154 ms",
+          "node": "Tree-0.0",
+          "node_dir": "artifacts/eval_suite/wave1_ablation/l4_checked_action_surface/d1_cramershoup/r01/2026-06-06_0438_CramerShoup_correct/iteration_1/node_memory/Tree_0_0",
+          "ok": true,
+          "result_followup_path": "artifacts/eval_suite/wave1_ablation/l4_checked_action_surface/d1_cramershoup/r01/2026-06-06_0438_CramerShoup_correct/iteration_1/node_memory/Tree_0_0/followups/turn_019.md",
+          "result_state_summary": "ambient / ambient_logic, 1 goal, goal 1413 chars",
+          "result_summary": "accepted probe",
+          "result_view_path": "artifacts/eval_suite/wave1_ablation/l4_checked_action_surface/d1_cramershoup/r01/2026-06-06_0438_CramerShoup_correct/iteration_1/node_memory/Tree_0_0/workspace_views/turn_019.json",
+          "turn": 19,
+          "usage": {
+            "cache_creation_input_tokens": 4329,
+            "cache_read_input_tokens": 110708,
+            "input_tokens": 2,
+            "output_tokens": 4345
+          },
+          "view_chars": 8970,
+          "view_id": "T0.0-19",
+          "workspace_view_path": "artifacts/eval_suite/wave1_ablation/l4_checked_action_surface/d1_cramershoup/r01/2026-06-06_0438_CramerShoup_correct/iteration_1/node_memory/Tree_0_0/workspace_views/turn_018.json"
+        },
+        {
+          "action_submitted_at": "2026-06-06T11:47:49.832000+00:00",
+          "action_time": "+08:14",
+          "agent_think": "13.8 s",
+          "agent_think_path": "artifacts/eval_suite/wave1_ablation/l4_checked_action_surface/d1_cramershoup/r01/2026-06-06_0438_CramerShoup_correct/iteration_1/node_memory/Tree_0_0/thinking/turn_020.md",
+          "agent_think_seconds": 13.832,
+          "decision_followup_path": "artifacts/eval_suite/wave1_ablation/l4_checked_action_surface/d1_cramershoup/r01/2026-06-06_0438_CramerShoup_correct/iteration_1/node_memory/Tree_0_0/followups/turn_019.md",
+          "decision_state_summary": "ambient / ambient_logic, 1 goal, goal 1413 chars",
+          "decision_view_path": "artifacts/eval_suite/wave1_ablation/l4_checked_action_surface/d1_cramershoup/r01/2026-06-06_0438_CramerShoup_correct/iteration_1/node_memory/Tree_0_0/workspace_views/turn_019.json",
+          "deterministic_signals": [
+            "commit_without_probe_check_not_inferred"
+          ],
+          "goal_chars": 1413,
+          "inspect_topics": [
+            "inspection",
+            "goal_info",
+            "lemma_hints",
+            "tactic_forms"
+          ],
+          "intent": {
+            "intent": "commit_tactic",
+            "payload": {
+              "tactic": "rewrite hc /=; have hD: (DH.G.g ^ z1 * DH.G.g ^ w ^ z2) ^ u = DH.G.g ^ u ^ z1 * DH.G.g ^ w ^ u ^ z2; first by rewrite log_bij !(logg1, logrzM, logDr); ring. rewrite -hD log_bij !(logg1, logrzM, logDr) -expN !(logg1, logrzM, logDr); ring."
+            }
+          },
+          "intent_summary": "commit rewrite hc /=; have hD: (DH.G.g ^ z1 * DH.G.g ^ w ^ z2) ^ u = DH.G.g ^ u ^ z1 * DH.G.g ^ w ^...",
+          "manager_action_summary": [
+            "tactic commit (168 ms)"
+          ],
+          "manager_result_at": "2026-06-06T11:47:50+00:00",
+          "manager_result_path": "artifacts/eval_suite/wave1_ablation/l4_checked_action_surface/d1_cramershoup/r01/2026-06-06_0438_CramerShoup_correct/iteration_1/node_memory/Tree_0_0/manager_results/turn_020.json",
+          "manager_seconds": 0.168,
+          "manager_time": "168 ms",
+          "node": "Tree-0.0",
+          "node_dir": "artifacts/eval_suite/wave1_ablation/l4_checked_action_surface/d1_cramershoup/r01/2026-06-06_0438_CramerShoup_correct/iteration_1/node_memory/Tree_0_0",
+          "ok": true,
+          "result_followup_path": "artifacts/eval_suite/wave1_ablation/l4_checked_action_surface/d1_cramershoup/r01/2026-06-06_0438_CramerShoup_correct/iteration_1/node_memory/Tree_0_0/followups/turn_020.md",
+          "result_state_summary": "ambient / closed_candidate, goal 25 chars",
+          "result_summary": "accepted commit",
+          "result_view_path": "artifacts/eval_suite/wave1_ablation/l4_checked_action_surface/d1_cramershoup/r01/2026-06-06_0438_CramerShoup_correct/iteration_1/node_memory/Tree_0_0/workspace_views/turn_020.json",
+          "turn": 20,
+          "usage": {
+            "cache_creation_input_tokens": 6564,
+            "cache_read_input_tokens": 115037,
+            "input_tokens": 131,
+            "output_tokens": 728
+          },
+          "view_chars": 14133,
+          "view_id": "T0.0-20",
+          "workspace_view_path": "artifacts/eval_suite/wave1_ablation/l4_checked_action_surface/d1_cramershoup/r01/2026-06-06_0438_CramerShoup_correct/iteration_1/node_memory/Tree_0_0/workspace_views/turn_019.json"
+        },
+        {
+          "action_submitted_at": "2026-06-06T11:47:52.836000+00:00",
+          "action_time": "+08:17",
+          "agent_think": "2.8 s",
+          "agent_think_path": "artifacts/eval_suite/wave1_ablation/l4_checked_action_surface/d1_cramershoup/r01/2026-06-06_0438_CramerShoup_correct/iteration_1/node_memory/Tree_0_0/thinking/turn_021.md",
+          "agent_think_seconds": 2.836,
+          "decision_followup_path": "artifacts/eval_suite/wave1_ablation/l4_checked_action_surface/d1_cramershoup/r01/2026-06-06_0438_CramerShoup_correct/iteration_1/node_memory/Tree_0_0/followups/turn_020.md",
+          "decision_state_summary": "ambient / closed_candidate, goal 25 chars",
+          "decision_view_path": "artifacts/eval_suite/wave1_ablation/l4_checked_action_surface/d1_cramershoup/r01/2026-06-06_0438_CramerShoup_correct/iteration_1/node_memory/Tree_0_0/workspace_views/turn_020.json",
+          "deterministic_signals": [
+            "commit_without_probe_check_not_inferred"
+          ],
+          "goal_chars": 25,
+          "inspect_topics": [
+            "goal_info"
+          ],
+          "intent": {
+            "intent": "commit_tactic",
+            "payload": {
+              "tactic": "qed."
+            }
+          },
+          "intent_summary": "commit qed",
+          "manager_action_summary": [
+            "tactic commit (164 ms)"
+          ],
+          "manager_result_at": "2026-06-06T11:47:53+00:00",
+          "manager_result_path": "artifacts/eval_suite/wave1_ablation/l4_checked_action_surface/d1_cramershoup/r01/2026-06-06_0438_CramerShoup_correct/iteration_1/node_memory/Tree_0_0/manager_results/turn_021.json",
+          "manager_seconds": 0.164,
+          "manager_time": "164 ms",
+          "node": "Tree-0.0",
+          "node_dir": "artifacts/eval_suite/wave1_ablation/l4_checked_action_surface/d1_cramershoup/r01/2026-06-06_0438_CramerShoup_correct/iteration_1/node_memory/Tree_0_0",
+          "ok": true,
+          "result_followup_path": "artifacts/eval_suite/wave1_ablation/l4_checked_action_surface/d1_cramershoup/r01/2026-06-06_0438_CramerShoup_correct/iteration_1/node_memory/Tree_0_0/followups/turn_021.md",
+          "result_state_summary": "complete / unknown / closed_candidate, 0 goals, goal 11 chars",
+          "result_summary": "accepted commit",
+          "result_view_path": "artifacts/eval_suite/wave1_ablation/l4_checked_action_surface/d1_cramershoup/r01/2026-06-06_0438_CramerShoup_correct/iteration_1/node_memory/Tree_0_0/workspace_views/turn_021.json",
+          "turn": 21,
+          "usage": {
+            "cache_creation_input_tokens": 1985,
+            "cache_read_input_tokens": 121601,
+            "input_tokens": 2,
+            "output_tokens": 129
+          },
+          "view_chars": 4298,
+          "view_id": "T0.0-21",
+          "workspace_view_path": "artifacts/eval_suite/wave1_ablation/l4_checked_action_surface/d1_cramershoup/r01/2026-06-06_0438_CramerShoup_correct/iteration_1/node_memory/Tree_0_0/workspace_views/turn_020.json"
+        },
+        {
+          "action_submitted_at": "2026-06-06T11:47:59+00:00",
+          "action_time": "+08:23",
+          "agent_think": "6 s",
+          "agent_think_path": "",
+          "agent_think_seconds": 6.0,
+          "decision_followup_path": "artifacts/eval_suite/wave1_ablation/l4_checked_action_surface/d1_cramershoup/r01/2026-06-06_0438_CramerShoup_correct/iteration_1/node_memory/Tree_0_0/followups/turn_021.md",
+          "decision_state_summary": "complete / unknown / closed_candidate, 0 goals, goal 11 chars",
+          "decision_view_path": "artifacts/eval_suite/wave1_ablation/l4_checked_action_surface/d1_cramershoup/r01/2026-06-06_0438_CramerShoup_correct/iteration_1/node_memory/Tree_0_0/workspace_views/turn_021.json",
+          "deterministic_signals": [],
+          "goal_chars": 11,
+          "inspect_topics": [
+            "verify",
+            "goal_info"
+          ],
+          "intent": {
+            "intent": "finish"
+          },
+          "intent_summary": "finish",
+          "manager_action_summary": [
+            "finish"
+          ],
+          "manager_result_at": "2026-06-06T11:47:59+00:00",
+          "manager_result_path": "artifacts/eval_suite/wave1_ablation/l4_checked_action_surface/d1_cramershoup/r01/2026-06-06_0438_CramerShoup_correct/iteration_1/node_memory/Tree_0_0/manager_results/turn_022.json",
+          "manager_seconds": 0.0,
+          "manager_time": "",
+          "node": "Tree-0.0",
+          "node_dir": "artifacts/eval_suite/wave1_ablation/l4_checked_action_surface/d1_cramershoup/r01/2026-06-06_0438_CramerShoup_correct/iteration_1/node_memory/Tree_0_0",
+          "ok": true,
+          "result_followup_path": "artifacts/eval_suite/wave1_ablation/l4_checked_action_surface/d1_cramershoup/r01/2026-06-06_0438_CramerShoup_correct/iteration_1/node_memory/Tree_0_0/followups/turn_022.md",
+          "result_state_summary": "complete / unknown / closed_candidate, 0 goals, goal 11 chars",
+          "result_summary": "finish requested",
+          "result_view_path": "artifacts/eval_suite/wave1_ablation/l4_checked_action_surface/d1_cramershoup/r01/2026-06-06_0438_CramerShoup_correct/iteration_1/node_memory/Tree_0_0/workspace_views/turn_022.json",
+          "turn": 22,
+          "usage": {},
+          "view_chars": 3038,
+          "view_id": "T0.0-22",
+          "workspace_view_path": "artifacts/eval_suite/wave1_ablation/l4_checked_action_surface/d1_cramershoup/r01/2026-06-06_0438_CramerShoup_correct/iteration_1/node_memory/Tree_0_0/workspace_views/turn_021.json"
+        }
+      ],
+      "run_dir": "artifacts/eval_suite/wave1_ablation/l4_checked_action_surface/d1_cramershoup/r01/2026-06-06_0438_CramerShoup_correct/iteration_1",
+      "turn_count": 22
+    }
+  ],
+  "schema_version": 1
+}

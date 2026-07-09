@@ -1,0 +1,21 @@
+{
+  "turn": 31,
+  "handled_intent": {
+    "intent": "commit_tactic",
+    "payload": {
+      "tactic": "smt(xorwA xorwC xorwK xorw0)."
+    }
+  },
+  "ok": true,
+  "manager_note": "Commit attempt did not change the committed EasyCrypt proof state; use the returned result and latest view before trying the next proof intent.",
+  "manager_actions": [
+    {
+      "action": "tactic commit",
+      "outcome": "EasyCrypt rejected the committed tactic. Use the error summary and current goal to revise the proof step.",
+      "timing": "4.1 s",
+      "error_summary": "[error] cannot prove goal (strict)"
+    }
+  ],
+  "view_refreshed": true,
+  "surface_turn_hash": "a524352891c0291f35a8a3a8a43da0f6e2a8881e"
+}

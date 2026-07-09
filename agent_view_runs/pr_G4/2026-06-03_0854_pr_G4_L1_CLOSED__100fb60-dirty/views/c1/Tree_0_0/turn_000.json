@@ -1,0 +1,44 @@
+{
+  "last_result": {},
+  "current_goal": {
+    "goal_type": "phoare",
+    "lines": [
+      "Current goal (remaining: 6)",
+      "",
+      "Type variables: <none>",
+      "",
+      "&m: {}",
+      "------------------------------------------------------------------------",
+      "Context : hr: {b0 : bool, e, f, h : group, r, r' : ZModE.exp,",
+      "              m0, m1 : PKE_.plaintext}",
+      "Bound   : [<=] (PKE_.qD%r / order%r) ^ 3 * (PKE_.qD%r / (order - 1)%r)",
+      "",
+      "pre = size G3.cilog <= PKE_.qD /\\ G1.w <> zero /\\ G1.g_ = g ^ G1.w",
+      "",
+      "(1)  G1.u <$ dt               ",
+      "(2)  G1.u' <$ dt \\ pred1 G1.u ",
+      "(3)  r' <$ dt                 ",
+      "(4)  r <$ dt                  ",
+      "",
+      "post =",
+      "  ((g ^ G1.u, G1.g_ ^ G1.u', g ^ r', g ^ r) \\in G3.cilog) /\\",
+      "  size G3.cilog <= PKE_.qD /\\ G1.w <> zero /\\ G1.g_ = g ^ G1.w",
+      "[153|check]>"
+    ],
+    "source": {
+      "ground_truth": false,
+      "label": "Parsed from EasyCrypt pretty goal text"
+    },
+    "text_fully_shown": true,
+    "truncated": false,
+    "view_focus": "seq_cut"
+  },
+  "proof_status": {
+    "current_layer": "procedure_body",
+    "goal_type": "phoare",
+    "remaining_goals": 6,
+    "remaining_goals_known": true,
+    "status": "open",
+    "view_focus": "seq_cut"
+  }
+}

@@ -1,0 +1,49 @@
+# Deploys the static site to GitHub Pages: the landing page, the benchmark
+# browser with a baked --public manifest, and the curated run bundles it reads.
+# The playground needs a live backend and is NOT deployed — the landing page
+# detects the missing backend at runtime and points visitors at the install
+# steps instead.
+name: pages
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build-deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Assemble static site
+        run: |
+          mkdir -p site/results
+          cp playground/static/home.html site/index.html
+          cp bundle_browser/index.html site/results/index.html
+          python3 bundle_browser/build_manifest.py --public --out site/results/manifest.json
+          cp -r agent_view_runs site/agent_view_runs
+          rm -f site/agent_view_runs/INDEX.md
+          touch site/.nojekyll
+          echo "site size: $(du -sh site | cut -f1)"
+
+      - uses: actions/configure-pages@v5
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+
+      - id: deployment
+        uses: actions/deploy-pages@v4

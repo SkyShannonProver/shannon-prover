@@ -1,0 +1,121 @@
+{
+  "node": "Tree-0.0",
+  "discovery": "recorded_session_id",
+  "transcripts": [
+    "~/.claude/projects/<PROJECT>/cdc7c7dc-126c-4234-badf-079855e9c803.jsonl"
+  ],
+  "turns": [
+    {
+      "turn": 1,
+      "intent": "probe_tactic",
+      "payload_key": "move=> hPi; rewrite /mee_dec /mee_enc /=.",
+      "thinking_chars": 0,
+      "text_chars": 364,
+      "tokens": {
+        "output_tokens": 1588,
+        "input_tokens": 3,
+        "cache_read_input_tokens": 29147,
+        "cache_creation_input_tokens": 53869
+      },
+      "session_id": "cdc7c7dc-126c-4234-badf-079855e9c803",
+      "timestamp": "2026-06-11T01:11:12.929Z",
+      "file": "thinking/turn_001.md"
+    },
+    {
+      "turn": 2,
+      "intent": "commit_tactic",
+      "payload_key": "move=> hPi; rewrite /mee_dec /mee_enc /=.",
+      "thinking_chars": 0,
+      "text_chars": 35,
+      "tokens": {
+        "output_tokens": 308,
+        "input_tokens": 2,
+        "cache_read_input_tokens": 42471,
+        "cache_creation_input_tokens": 996
+      },
+      "session_id": "cdc7c7dc-126c-4234-badf-079855e9c803",
+      "timestamp": "2026-06-11T01:11:21.317Z",
+      "file": "thinking/turn_002.md"
+    },
+    {
+      "turn": 3,
+      "intent": "probe_tactic",
+      "payload_key": "rewrite (cbc_correct P Pi ek iv (pad m (M mk m)) hPi).",
+      "thinking_chars": 0,
+      "text_chars": 100,
+      "tokens": {
+        "output_tokens": 174,
+        "input_tokens": 2,
+        "cache_read_input_tokens": 43467,
+        "cache_creation_input_tokens": 1718
+      },
+      "session_id": "cdc7c7dc-126c-4234-badf-079855e9c803",
+      "timestamp": "2026-06-11T01:11:25.207Z",
+      "file": "thinking/turn_003.md"
+    },
+    {
+      "turn": 4,
+      "intent": "probe_tactic",
+      "payload_key": "rewrite (cbc_correct P Pi ek iv (pad m (M mk m)) hPi) padK /=.",
+      "thinking_chars": 0,
+      "text_chars": 128,
+      "tokens": {
+        "output_tokens": 377,
+        "input_tokens": 2,
+        "cache_read_input_tokens": 45185,
+        "cache_creation_input_tokens": 556
+      },
+      "session_id": "cdc7c7dc-126c-4234-badf-079855e9c803",
+      "timestamp": "2026-06-11T01:11:33.043Z",
+      "file": "thinking/turn_004.md"
+    },
+    {
+      "turn": 5,
+      "intent": "commit_tactic",
+      "payload_key": "rewrite (cbc_correct P Pi ek iv (pad m (M mk m)) hPi) padK /=.",
+      "thinking_chars": 0,
+      "text_chars": 63,
+      "tokens": {
+        "output_tokens": 285,
+        "input_tokens": 2,
+        "cache_read_input_tokens": 45741,
+        "cache_creation_input_tokens": 824
+      },
+      "session_id": "cdc7c7dc-126c-4234-badf-079855e9c803",
+      "timestamp": "2026-06-11T01:11:39.688Z",
+      "file": "thinking/turn_005.md"
+    },
+    {
+      "turn": 6,
+      "intent": "commit_tactic",
+      "payload_key": "done.",
+      "thinking_chars": 0,
+      "text_chars": 32,
+      "tokens": {
+        "output_tokens": 116,
+        "input_tokens": 2,
+        "cache_read_input_tokens": 46565,
+        "cache_creation_input_tokens": 1553
+      },
+      "session_id": "cdc7c7dc-126c-4234-badf-079855e9c803",
+      "timestamp": "2026-06-11T01:11:47.379Z",
+      "file": "thinking/turn_006.md"
+    },
+    {
+      "turn": 7,
+      "intent": "commit_tactic",
+      "payload_key": "qed.",
+      "thinking_chars": 0,
+      "text_chars": 73,
+      "tokens": {
+        "output_tokens": 130,
+        "input_tokens": 2,
+        "cache_read_input_tokens": 48118,
+        "cache_creation_input_tokens": 1076
+      },
+      "session_id": "cdc7c7dc-126c-4234-badf-079855e9c803",
+      "timestamp": "2026-06-11T01:11:51.104Z",
+      "file": "thinking/turn_007.md"
+    }
+  ]
+}

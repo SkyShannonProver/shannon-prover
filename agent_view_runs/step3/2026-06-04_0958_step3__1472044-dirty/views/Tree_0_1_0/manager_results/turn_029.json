@@ -1,0 +1,19 @@
+{
+  "turn": 29,
+  "handled_intent": {
+    "intent": "commit_tactic",
+    "payload": {
+      "tactic": "move=> &1 &2; rewrite /inv_cpa /poly1305 /=; smt(mk_rs_ofpair get_set_sameE get_setE mem_set domE poly_out_sub_add poly_out_add_sub)."
+    }
+  },
+  "ok": true,
+  "manager_note": "Committed tactic accepted; the EasyCrypt proof state changed.",
+  "manager_actions": [
+    {
+      "action": "tactic commit",
+      "outcome": "EasyCrypt accepted the committed tactic.",
+      "timing": "925 ms"
+    }
+  ],
+  "view_refreshed": true
+}

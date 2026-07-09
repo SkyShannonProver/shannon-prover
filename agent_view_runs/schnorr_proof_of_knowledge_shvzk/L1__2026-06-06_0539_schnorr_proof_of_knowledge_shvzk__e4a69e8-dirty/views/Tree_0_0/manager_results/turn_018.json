@@ -1,0 +1,19 @@
+{
+  "turn": 18,
+  "handled_intent": {
+    "intent": "commit_tactic",
+    "payload": {
+      "tactic": "move=> w0L _; split=> _ r1 _ eL _; (split; first by move=> rR _; ring); move=> _ z1L _; split; first by ring; move=> _; rewrite log_bij !(loggK, logDr, logrzM); ring."
+    }
+  },
+  "ok": true,
+  "manager_note": "Committed tactic accepted; the EasyCrypt proof state changed.",
+  "manager_actions": [
+    {
+      "action": "tactic commit",
+      "outcome": "EasyCrypt accepted the committed tactic.",
+      "timing": "122 ms"
+    }
+  ],
+  "view_refreshed": true
+}

@@ -1,0 +1,19 @@
+{
+  "turn": 24,
+  "handled_intent": {
+    "intent": "commit_tactic",
+    "payload": {
+      "tactic": "by move=> &2 _; proc; wp; call (EtM_dec_ll E M E_dec_ll M_verify_ll); auto."
+    }
+  },
+  "ok": true,
+  "manager_note": "Committed tactic accepted; the EasyCrypt proof state changed.",
+  "manager_actions": [
+    {
+      "action": "tactic commit",
+      "outcome": "EasyCrypt accepted the committed tactic.",
+      "timing": "2.6 s"
+    }
+  ],
+  "view_refreshed": true
+}

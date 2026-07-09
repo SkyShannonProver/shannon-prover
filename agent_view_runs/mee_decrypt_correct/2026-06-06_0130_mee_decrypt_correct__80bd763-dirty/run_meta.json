@@ -1,0 +1,45 @@
+{
+  "kind": "agent_view_run_report",
+  "timestamp": "2026-06-06_0130_mee_decrypt_correct",
+  "lemma": "mee_decrypt_correct",
+  "source_file": "eval/examples/MEE-CBC/FunctionalSpec.ec",
+  "model": "claude-opus-4-6",
+  "surface_profile": "l4_checked_action_surface",
+  "trees": 2,
+  "eval_mode": true,
+  "outcome": "incomplete (timeout/open)",
+  "committed_proofs": [
+    {
+      "tree": "Tree_0_0",
+      "tactics": [
+        "proc.",
+        "sp.",
+        "seq 1 : (padded = cbc_dec AESi _ek (head witness _c) (behead _c) /\\ ek = _ek /\\ mk = _mk /\\ p = None).",
+        "while (true)."
+      ],
+      "proved": false
+    },
+    {
+      "tree": "Tree_0_1",
+      "tactics": [
+        "proc.",
+        "sp.",
+        "seq 1 : (padded = cbc_dec AESi _ek (head witness _c) (behead _c) /\\ mk = _mk /\\ p = None).",
+        "while (true).",
+        "wp; call (_: true); auto.",
+        "auto.",
+        "while (0 <= i /\\ i <= size c /\\ padded = cbc_dec AESi ek (head witness _c) (take i c) /\\ s = last (head witness _c) (take i c) /\\ p = None /\\ ek = _ek /\\ mk = _mk /\\ c = behead _c) (size c - i).",
+        "move=> z.",
+        "wp."
+      ],
+      "proved": false
+    }
+  ],
+  "turn_count": 48,
+  "views_copied": 50,
+  "run_iteration_dir": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1",
+  "commit": "80bd763",
+  "commit_full": "80bd763251741be1ef1cea7c2b12b81f47049b49",
+  "branch": "mcp-v0",
+  "dirty": true
+}

@@ -1,0 +1,19 @@
+{
+  "turn": 9,
+  "handled_intent": {
+    "intent": "commit_tactic",
+    "payload": {
+      "tactic": "have R0 : Pr[UFCMA_l.f() @ &m : (size UFCMA_l.lbad1 <= qdec /\\ exists (p : tag * tag), (p \\in UFCMA_l.lbad1) /\\ p.`1 = p.`2) /\\ ! (find (fun (p : tag * tag) => p.`1 = p.`2) UFCMA_l.lbad1 \\in iota_ 0 qdec)] = Pr[UFCMA_l.f() @ &m : false]."
+    }
+  },
+  "ok": true,
+  "manager_note": "Committed tactic accepted; the EasyCrypt proof state changed.",
+  "manager_actions": [
+    {
+      "action": "tactic commit",
+      "outcome": "EasyCrypt accepted the committed tactic.",
+      "timing": "560 ms"
+    }
+  ],
+  "view_refreshed": true
+}

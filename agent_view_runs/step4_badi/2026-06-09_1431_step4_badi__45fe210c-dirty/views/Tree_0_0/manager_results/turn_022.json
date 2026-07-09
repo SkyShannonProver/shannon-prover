@@ -1,0 +1,19 @@
+{
+  "turn": 22,
+  "handled_intent": {
+    "intent": "commit_tactic",
+    "payload": {
+      "tactic": "move=> &2 hinv hc1 hltq hge hlt t1 _ tL _; rewrite size_cat size_map nth_cat; have -> /= : (nth0 < size UFCMA_l.lbad1{2}) = false by smt(); have hbnd : 0 <= nth0 - size UFCMA_l.lbad1{2} < size lt{2} by smt(); rewrite (nth_map witness) // /=; smt()."
+    }
+  },
+  "ok": true,
+  "manager_note": "Committed tactic accepted; the EasyCrypt proof state changed.",
+  "manager_actions": [
+    {
+      "action": "tactic commit",
+      "outcome": "EasyCrypt accepted the committed tactic.",
+      "timing": "318 ms"
+    }
+  ],
+  "view_refreshed": true
+}

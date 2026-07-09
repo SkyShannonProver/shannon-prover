@@ -1,0 +1,19 @@
+{
+  "turn": 44,
+  "handled_intent": {
+    "intent": "commit_tactic",
+    "payload": {
+      "tactic": "have ->: SplitC2.I2.RO.m{2}.[t1{2}, C.ofintd 0 <- witness<:poly_out>].[t2{2}, C.ofintd 0 <- witness<:poly_out>] = SplitC2.I2.RO.m{2}.[t2{2}, C.ofintd 0 <- witness<:poly_out>].[t1{2}, C.ofintd 0 <- witness<:poly_out>] by rewrite set_setE /#."
+    }
+  },
+  "ok": true,
+  "manager_note": "Committed tactic accepted; the EasyCrypt proof state changed.",
+  "manager_actions": [
+    {
+      "action": "tactic commit",
+      "outcome": "EasyCrypt accepted the committed tactic.",
+      "timing": "352 ms"
+    }
+  ],
+  "view_refreshed": true
+}

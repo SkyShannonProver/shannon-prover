@@ -1,0 +1,991 @@
+{
+  "last_result": {
+    "intent": "probe_tactic",
+    "payload": {
+      "tactic": "have f_eqM : forall (B : bool), equiv[DoubleQuery(PRFi).f ~ DoubleQuery(Sample).f : DoubleQuery.bad{2} = B /\\ (DoubleQuery.bad{1} <=> DoubleQuery.bad{2}) /\\ (!DoubleQuery.bad{2} => arg{1} = arg{2} /\\ DoubleQuery.qs{1} = DoubleQuery.qs{2} /\\ fdom PRFi.m{1} = DoubleQuery.qs{1}) ==> (B => DoubleQuery.bad{2}) /\\ (DoubleQuery.bad{1} <=> DoubleQuery.bad{2}) /\\ (!DoubleQuery.bad{2} => res{1} = res{2} /\\ DoubleQuery.qs{1} = DoubleQuery.qs{2} /\\ fdom PRFi.m{1} = DoubleQuery.qs{1})]."
+    },
+    "manager_action": "probe_tactic",
+    "result": "EasyCrypt accepted this read-only probe. The committed proof state was not changed; `goal_after_probe` shows the goal that would be visible if this tactic were committed.",
+    "effect": "This is a read-only probe; it asks EasyCrypt what would happen without changing the committed proof state.",
+    "proof_state": "The committed EasyCrypt proof state was not changed.",
+    "probe_preview": {
+      "tactic": "have f_eqM : forall (B : bool), equiv[DoubleQuery(PRFi).f ~ DoubleQuery(Sample).f : DoubleQuery.bad{2} = B /\\ (DoubleQuery.bad{1} <=> DoubleQuery.bad{2}) /\\ (!DoubleQuery.bad{2} => arg{1} = arg{2} /\\ DoubleQuery.qs{1} = DoubleQuery.qs{2} /\\ fdom PRFi.m{1} = DoubleQuery.qs{1}) ==> (B => DoubleQuery.bad{2}) /\\ (DoubleQuery.bad{1} <=> DoubleQuery.bad{2}) /\\ (!DoubleQuery.bad{2} => res{1} = res{2} /\\ DoubleQuery.qs{1} = DoubleQuery.qs{2} /\\ fdom PRFi.m{1} = DoubleQuery.qs{1})].",
+      "outcome": "EasyCrypt accepted this read-only probe.",
+      "goal_after_remaining": 6,
+      "effect": "This preview is speculative only; the committed EasyCrypt proof state was not changed.",
+      "goal_after_probe": {
+        "lines": [
+          "Current goal (remaining: 6)",
+          "Type variables: <none>",
+          "&m: {}",
+          "f_eq: equiv[ DoubleQuery(PRFi).f  ~ DoubleQuery(Sample).f :",
+          "              (DoubleQuery.bad{1} <=> DoubleQuery.bad{2}) /\\",
+          "              (!DoubleQuery.bad{2} =>",
+          "               arg{1} = arg{2} /\\",
+          "               DoubleQuery.qs{1} = DoubleQuery.qs{2} /\\",
+          "               fdom PRFi.m{1} = DoubleQuery.qs{1}) ==>",
+          "              (DoubleQuery.bad{1} <=> DoubleQuery.bad{2}) /\\",
+          "              (!DoubleQuery.bad{2} =>",
+          "               res{1} = res{2} /\\",
+          "               DoubleQuery.qs{1} = DoubleQuery.qs{2} /\\",
+          "               fdom PRFi.m{1} = DoubleQuery.qs{1})]",
+          "------------------------------------------------------------------------",
+          "forall (B : bool),",
+          "  equiv[ DoubleQuery(PRFi).f  ~ DoubleQuery(Sample).f :",
+          "          DoubleQuery.bad{2} = B /\\",
+          "          (DoubleQuery.bad{1} <=> DoubleQuery.bad{2}) /\\",
+          "          (!DoubleQuery.bad{2} =>",
+          "           arg{1} = arg{2} /\\",
+          "           DoubleQuery.qs{1} = DoubleQuery.qs{2} /\\",
+          "           fdom PRFi.m{1} = DoubleQuery.qs{1}) ==>",
+          "          (B => DoubleQuery.bad{2}) /\\",
+          "          (DoubleQuery.bad{1} <=> DoubleQuery.bad{2}) /\\",
+          "          (!DoubleQuery.bad{2} =>",
+          "           res{1} = res{2} /\\",
+          "           DoubleQuery.qs{1} = DoubleQuery.qs{2} /\\",
+          "           fdom PRFi.m{1} = DoubleQuery.qs{1})]",
+          "[138|check]>"
+        ],
+        "text_fully_shown": true,
+        "truncated": false,
+        "source": {
+          "label": "[TRY] goal_after_raw",
+          "ground_truth": false
+        }
+      }
+    },
+    "kind": "accepted_structural_transition",
+    "message": "This structural transition probe was accepted.",
+    "accepted_tactic": "have f_eqM : forall (B : bool), equiv[DoubleQuery(PRFi).f ~ DoubleQuery(Sample).f : DoubleQuery.bad{2} = B /\\ (DoubleQuery.bad{1} <=> DoubleQuery.bad{2}) /\\ (!DoubleQuery.bad{2} => arg{1} = arg{2} /\\ DoubleQuery.qs{1} = DoubleQuery.qs{2} /\\ fdom PRFi.m{1} = DoubleQuery.qs{1}) ==> (B => DoubleQuery.bad{2}) /\\ (DoubleQuery.bad{1} <=> DoubleQuery.bad{2}) /\\ (!DoubleQuery.bad{2} => res{1} = res{2} /\\ DoubleQuery.qs{1} = DoubleQuery.qs{2} /\\ fdom PRFi.m{1} = DoubleQuery.qs{1})].",
+    "structural_transition": {
+      "id": "post_tactic",
+      "kind": "structural_transition",
+      "status": "accepted_checkpoint",
+      "tactic": "have f_eqM : forall (B : bool), equiv[DoubleQuery(PRFi).f ~ DoubleQuery(Sample).f : DoubleQuery.bad{2} = B /\\ (DoubleQuery.bad{1} <=> DoubleQuery.bad{2}) /\\ (!DoubleQuery.bad{2} => arg{1} = arg{2} /\\ DoubleQuery.qs{1} = DoubleQuery.qs{2} /\\ fdom PRFi.m{1} = DoubleQuery.qs{1}) ==> (B => DoubleQuery.bad{2}) /\\ (DoubleQuery.bad{1} <=> DoubleQuery.bad{2}) /\\ (!DoubleQuery.bad{2} => res{1} = res{2} /\\ DoubleQuery.qs{1} = DoubleQuery.qs{2} /\\ fdom PRFi.m{1} = DoubleQuery.qs{1})].",
+      "phase": "post-tactic",
+      "valid_for": "current_view_only",
+      "decision": "Commit this exact accepted tactic only if you want to enter the post-tactic phase.",
+      "recommended_next": {
+        "label": "Enter this transition",
+        "submit": {
+          "intent": "commit_tactic",
+          "payload": {
+            "tactic": "have f_eqM : forall (B : bool), equiv[DoubleQuery(PRFi).f ~ DoubleQuery(Sample).f : DoubleQuery.bad{2} = B /\\ (DoubleQuery.bad{1} <=> DoubleQuery.bad{2}) /\\ (!DoubleQuery.bad{2} => arg{1} = arg{2} /\\ DoubleQuery.qs{1} = DoubleQuery.qs{2} /\\ fdom PRFi.m{1} = DoubleQuery.qs{1}) ==> (B => DoubleQuery.bad{2}) /\\ (DoubleQuery.bad{1} <=> DoubleQuery.bad{2}) /\\ (!DoubleQuery.bad{2} => res{1} = res{2} /\\ DoubleQuery.qs{1} = DoubleQuery.qs{2} /\\ fdom PRFi.m{1} = DoubleQuery.qs{1})]."
+          }
+        }
+      },
+      "after_commit": "The next authoritative view will show the real workbench after this tactic is committed.",
+      "if_wrong_after_commit": "Use `undo_last_step` or `undo_to_checkpoint` if the committed route is wrong."
+    },
+    "question": "Do you want to enter the post-tactic workbench?",
+    "recommended_next": {
+      "label": "Enter this transition",
+      "submit": {
+        "intent": "commit_tactic",
+        "payload": {
+          "tactic": "have f_eqM : forall (B : bool), equiv[DoubleQuery(PRFi).f ~ DoubleQuery(Sample).f : DoubleQuery.bad{2} = B /\\ (DoubleQuery.bad{1} <=> DoubleQuery.bad{2}) /\\ (!DoubleQuery.bad{2} => arg{1} = arg{2} /\\ DoubleQuery.qs{1} = DoubleQuery.qs{2} /\\ fdom PRFi.m{1} = DoubleQuery.qs{1}) ==> (B => DoubleQuery.bad{2}) /\\ (DoubleQuery.bad{1} <=> DoubleQuery.bad{2}) /\\ (!DoubleQuery.bad{2} => res{1} = res{2} /\\ DoubleQuery.qs{1} = DoubleQuery.qs{2} /\\ fdom PRFi.m{1} = DoubleQuery.qs{1})]."
+        }
+      }
+    },
+    "guidance": "If yes, commit this exact tactic and read the real post-commit workbench. If no, choose another probe or inspect the current state. Do not solve the speculative preview in your mental model.",
+    "if_route_wrong": "Use `undo_last_step` or `undo_to_checkpoint` if the committed route is wrong.",
+    "preview_summary": {
+      "remaining_goals": 6,
+      "truncated": false
+    },
+    "tactic": "have f_eqM : forall (B : bool), equiv[DoubleQuery(PRFi).f ~ DoubleQuery(Sample).f : DoubleQuery.bad{2} = B /\\ (DoubleQuery.bad{1} <=> DoubleQuery.bad{2}) /\\ (!DoubleQuery.bad{2} => arg{1} = arg{2} /\\ DoubleQuery.qs{1} = DoubleQuery.qs{2} /\\ fdom PRFi.m{1} = DoubleQuery.qs{1}) ==> (B => DoubleQuery.bad{2}) /\\ (DoubleQuery.bad{1} <=> DoubleQuery.bad{2}) /\\ (!DoubleQuery.bad{2} => res{1} = res{2} /\\ DoubleQuery.qs{1} = DoubleQuery.qs{2} /\\ fdom PRFi.m{1} = DoubleQuery.qs{1})]."
+  },
+  "current_goal": {
+    "lines": [
+      "Current goal (remaining: 5)",
+      "",
+      "Type variables: <none>",
+      "",
+      "&m: {}",
+      "f_eq: equiv[ DoubleQuery(PRFi).f  ~ DoubleQuery(Sample).f :",
+      "              (DoubleQuery.bad{1} <=> DoubleQuery.bad{2}) /\\",
+      "              (!DoubleQuery.bad{2} =>",
+      "               arg{1} = arg{2} /\\",
+      "               DoubleQuery.qs{1} = DoubleQuery.qs{2} /\\",
+      "               fdom PRFi.m{1} = DoubleQuery.qs{1}) ==>",
+      "              (DoubleQuery.bad{1} <=> DoubleQuery.bad{2}) /\\",
+      "              (!DoubleQuery.bad{2} =>",
+      "               res{1} = res{2} /\\",
+      "               DoubleQuery.qs{1} = DoubleQuery.qs{2} /\\",
+      "               fdom PRFi.m{1} = DoubleQuery.qs{1})]",
+      "------------------------------------------------------------------------",
+      "&1 (left ) : {i : int, s, pi : block, p, c : block list}",
+      "&2 (right) : {i : int, s, pi : block, p, c : block list}",
+      "",
+      "pre =",
+      "  ((i{1} = i{2} /\\ p{1} = p{2}) /\\",
+      "   0 <= i{1} <= size p{1} /\\",
+      "   (DoubleQuery.bad{1} <=> DoubleQuery.bad{2}) /\\",
+      "   (!DoubleQuery.bad{2} =>",
+      "    c{1} = c{2} /\\",
+      "    s{1} = s{2} /\\",
+      "    DoubleQuery.qs{1} = DoubleQuery.qs{2} /\\",
+      "    fdom PRFi.m{1} = DoubleQuery.qs{1})) /\\",
+      "  i{1} < size p{1} /\\ i{2} < size p{2}",
+      "",
+      "pi <- nth witness p i                  (1)  pi <- nth witness p i                  ",
+      "s <@                                   (2)  s <@                                   ",
+      "  DoubleQuery(PRFi).f(Block.(-) s pi)  ( )    DoubleQuery(Sample).f(Block.(-) s pi)",
+      "c <- c ++ [s]                          (3)  c <- c ++ [s]                          ",
+      "i <- i + 1                             (4)  i <- i + 1                             ",
+      "",
+      "post =",
+      "  ((i{1} = i{2} /\\ p{1} = p{2}) /\\",
+      "   0 <= i{1} <= size p{1} /\\",
+      "   (DoubleQuery.bad{1} <=> DoubleQuery.bad{2}) /\\",
+      "   (!DoubleQuery.bad{2} =>",
+      "    c{1} = c{2} /\\",
+      "    s{1} = s{2} /\\",
+      "    DoubleQuery.qs{1} = DoubleQuery.qs{2} /\\",
+      "    fdom PRFi.m{1} = DoubleQuery.qs{1})) /\\",
+      "  (i{1} < size p{1} <=> i{2} < size p{2})"
+    ],
+    "text_fully_shown": true,
+    "truncated": false,
+    "goal_type": "pRHL",
+    "view_focus": "relational_program",
+    "source": {
+      "label": "Parsed from EasyCrypt pretty goal text",
+      "ground_truth": false
+    }
+  },
+  "proof_status": {
+    "status": "open",
+    "remaining_goals": 5,
+    "remaining_goals_known": true,
+    "goal_type": "pRHL",
+    "view_focus": "relational_program",
+    "current_layer": "call_site"
+  },
+  "call_focus": {
+    "situation": "the candidate named call is NOT callable at this frontier yet \u2014 blocker: `residual_after_call_site`; so step into the body or write a manual invariant.",
+    "candidate": [
+      "`DoubleQuery.f`",
+      "`lemma`",
+      "`lemma`"
+    ],
+    "frontier": [
+      "setup before the frontier (positions 1\u20131) \u2014 absorb with `sp`/`wp`: pi <- nth witness p i",
+      "frontier: both sides at `s <@ DoubleQuery(PRFi).f(Block.(-) s pi)`"
+    ],
+    "options": [
+      "`call (_: <Inv>)` \u2014 cross the call with a relational invariant (YOU write `<Inv>`)",
+      "`inline*` / `proc` \u2014 step into the callee body instead of crossing"
+    ],
+    "yours": "the invariant predicate; whether to cross (`call`) or step in (`inline*`)."
+  },
+  "candidate_moves": {
+    "moves": [
+      {
+        "category": "strategy",
+        "tactic_shape": "sp.",
+        "applicability": "Use this as route-selection context; it is not a tactic to run as-is.",
+        "source": "proof-state analysis"
+      },
+      {
+        "category": "strategy",
+        "tactic_shape": "Inspect proof obligation stack: local_procedure_call / nested_non_frontier / DoubleQuery.f / statement 2.",
+        "applicability": "Use this as route-selection context; it is not a tactic to run as-is.",
+        "source": "proof-state analysis"
+      },
+      {
+        "category": "strategy",
+        "tactic_shape": "Inspect bad-event candidate map: DoubleQuery.bad (postcondition).",
+        "applicability": "Use this as route-selection context; it is not a tactic to run as-is.",
+        "source": "proof-state analysis"
+      },
+      {
+        "category": "strategy",
+        "tactic_shape": "Inspect control/suffix legality: call_site@1:2:inner, call_site@2:2:inner.",
+        "applicability": "Use this as route-selection context; it is not a tactic to run as-is.",
+        "source": "proof-state analysis"
+      },
+      {
+        "category": "strategy",
+        "tactic_shape": "wp.",
+        "applicability": "Use this as route-selection context; it is not a tactic to run as-is.",
+        "source": "proof-state analysis"
+      }
+    ],
+    "probe_alternatives": [
+      {
+        "tactic": "have f_eqM : forall (B : bool), equiv[DoubleQuery(PRFi).f ~ DoubleQuery(Sample).f : DoubleQuery.bad{2} = B /\\ (DoubleQuery.bad{1} <=> DoubleQuery.bad{2}) /\\ (!DoubleQuery.bad{2} => arg{1} = arg{2} /\\ DoubleQuery.qs{1} = DoubleQuery.qs{2} /\\ fdom PRFi.m{1} = DoubleQuery.qs{1}) ==> (B => DoubleQuery.bad{2}) /\\ (DoubleQuery.bad{1} <=> DoubleQuery.bad{2}) /\\ (!DoubleQuery.bad{2} => res{1} = res{2} /\\ DoubleQuery.qs{1} = DoubleQuery.qs{2} /\\ fdom PRFi.m{1} = DoubleQuery.qs{1})].",
+        "probe_result": "accepted",
+        "status": "verified_on_current_state",
+        "how_to_use": "This tactic was accepted by a read-only probe on the current proof state. The transition record describes the checked effect and any visible limitations.",
+        "structural_transition": {
+          "id": "post_tactic",
+          "kind": "structural_transition",
+          "status": "accepted_checkpoint",
+          "tactic": "have f_eqM : forall (B : bool), equiv[DoubleQuery(PRFi).f ~ DoubleQuery(Sample).f : DoubleQuery.bad{2} = B /\\ (DoubleQuery.bad{1} <=> DoubleQuery.bad{2}) /\\ (!DoubleQuery.bad{2} => arg{1} = arg{2} /\\ DoubleQuery.qs{1} = DoubleQuery.qs{2} /\\ fdom PRFi.m{1} = DoubleQuery.qs{1}) ==> (B => DoubleQuery.bad{2}) /\\ (DoubleQuery.bad{1} <=> DoubleQuery.bad{2}) /\\ (!DoubleQuery.bad{2} => res{1} = res{2} /\\ DoubleQuery.qs{1} = DoubleQuery.qs{2} /\\ fdom PRFi.m{1} = DoubleQuery.qs{1})].",
+          "phase": "post-tactic",
+          "valid_for": "current_view_only",
+          "decision": "Commit this exact accepted tactic only if you want to enter the post-tactic phase.",
+          "recommended_next": {
+            "label": "Enter this transition",
+            "submit": {
+              "intent": "commit_tactic",
+              "payload": {
+                "tactic": "have f_eqM : forall (B : bool), equiv[DoubleQuery(PRFi).f ~ DoubleQuery(Sample).f : DoubleQuery.bad{2} = B /\\ (DoubleQuery.bad{1} <=> DoubleQuery.bad{2}) /\\ (!DoubleQuery.bad{2} => arg{1} = arg{2} /\\ DoubleQuery.qs{1} = DoubleQuery.qs{2} /\\ fdom PRFi.m{1} = DoubleQuery.qs{1}) ==> (B => DoubleQuery.bad{2}) /\\ (DoubleQuery.bad{1} <=> DoubleQuery.bad{2}) /\\ (!DoubleQuery.bad{2} => res{1} = res{2} /\\ DoubleQuery.qs{1} = DoubleQuery.qs{2} /\\ fdom PRFi.m{1} = DoubleQuery.qs{1})]."
+              }
+            }
+          },
+          "after_commit": "The next authoritative view will show the real workbench after this tactic is committed.",
+          "if_wrong_after_commit": "Use `undo_last_step` or `undo_to_checkpoint` if the committed route is wrong."
+        },
+        "goal_after_probe_summary": {
+          "remaining_goals": 6,
+          "first_lines": [
+            "Current goal (remaining: 6)",
+            "Type variables: <none>",
+            "&m: {}",
+            "f_eq: equiv[ DoubleQuery(PRFi).f  ~ DoubleQuery(Sample).f :"
+          ],
+          "truncated": false
+        }
+      }
+    ],
+    "route_health": [
+      {
+        "signal": "seq_cut_mismatch",
+        "confidence": "medium",
+        "message": "Recent rejected work is inside the current seq-cut scope.",
+        "evidence": [
+          "latest seq cut tactic #22: seq 3 3 : (={i, p} /\\ 0 <= i{1} <= size p{1} /\\ (DoubleQuery.bad{1} <=> DoubleQuery.bad{2}) /\\ (!DoubleQuery.bad{2} => c{1} = c{2} /\\ s{1} = s{2} /\\ DoubleQuery.qs{1} = DoubleQuery.qs{2} /\\ fdom PRFi.m{1} = DoubleQuery.qs{1})).",
+          "recent rejected tactic head: sp",
+          "mismatch kind: branch_obligation"
+        ],
+        "repair_checkpoint": {
+          "label": "Before committed tactic #23",
+          "committed_tactic": "auto; smt(size_ge0).",
+          "tactic_index": 23,
+          "why_here": "seq-local boundary associated with recent rejected work inside the current seq scope",
+          "submit": {
+            "intent": "undo_to_checkpoint",
+            "payload": {
+              "checkpoint_id": "cp_23_6a93ac9de7f60f9c"
+            }
+          },
+          "undo_scope": "branch_local",
+          "semantic_id": "after_seq_opened"
+        },
+        "recommended_next": {
+          "intent": "undo_to_checkpoint",
+          "payload": {
+            "checkpoint_id": "cp_23_6a93ac9de7f60f9c"
+          }
+        },
+        "primary_next_action": {
+          "intent": "undo_to_checkpoint",
+          "payload": {
+            "checkpoint_id": "cp_23_6a93ac9de7f60f9c"
+          }
+        },
+        "related_checkpoints": [
+          {
+            "checkpoint_id": "cp_22_6a93ac9de7f60f9c",
+            "semantic_id": "before_seq_cut",
+            "semantic_ids": [
+              "before_seq_cut"
+            ],
+            "label": "Before seq cut #22",
+            "committed_step_index": 22,
+            "committed_tactic": "seq 3 3 : (={i, p} /\\ 0 <= i{1} <= size p{1} /\\ (DoubleQuery.bad{1} <=> DoubleQuery.bad{2}) /\\ (!DoubleQuery.bad{2} => c{1} = c{2} /\\ s{1} = s{2} /\\ DoubleQuery.qs{1} = DoubleQuery.qs{2} /\\ fdom PRFi.m{1} = DoubleQuery.qs{1})).",
+            "restored_proof_layer": "pre_seq_cut",
+            "restored_affordances": {
+              "seq_cut": "not_committed",
+              "call_site_state": "as_before_seq_cut"
+            },
+            "undo_scope": "seq_local",
+            "why_checkpoint": "seq-cut boundary; selecting it restores the proof state before this cut was committed",
+            "effect_if_selected": "Undo committed tactic #22 and every committed tactic after it in this node.",
+            "submit": {
+              "intent": "undo_to_checkpoint",
+              "payload": {
+                "checkpoint_id": "cp_22_6a93ac9de7f60f9c"
+              }
+            }
+          },
+          {
+            "checkpoint_id": "cp_23_6a93ac9de7f60f9c",
+            "semantic_id": "after_seq_opened",
+            "semantic_ids": [
+              "after_seq_opened",
+              "before_branch_work"
+            ],
+            "label": "After seq opened / before branch work #23",
+            "committed_step_index": 23,
+            "committed_tactic": "auto; smt(size_ge0).",
+            "restored_proof_layer": "seq_obligations_opened",
+            "restored_affordances": {
+              "seq_cut": "committed",
+              "branch_work": "not_committed"
+            },
+            "undo_scope": "branch_local",
+            "why_checkpoint": "seq-local branch boundary; selecting it keeps the seq cut and removes branch-local work after it",
+            "effect_if_selected": "Undo committed tactic #23 and every committed tactic after it in this node.",
+            "submit": {
+              "intent": "undo_to_checkpoint",
+              "payload": {
+                "checkpoint_id": "cp_23_6a93ac9de7f60f9c"
+              }
+            }
+          }
+        ],
+        "recovery_class": "seq_midpoint_repair_evidence",
+        "checkpoint_policy": "seq_local_checkpoint_visible"
+      }
+    ]
+  },
+  "program_frontier": {
+    "authority": "proof-state analysis",
+    "view_focus": "relational_program",
+    "focus": {
+      "live_call_sites": 2,
+      "frontier_call_sites": 0,
+      "live_callable_lemmas": 1,
+      "callable_now_lemmas": 0,
+      "oracle_obligation_handles": 0,
+      "has_invariant_skeleton": true
+    },
+    "call_sites": [
+      {
+        "side": "left",
+        "side_index": 1,
+        "statement_order": 2,
+        "statement_path": "2",
+        "procedure": "DoubleQuery.f",
+        "statement": "s <@ DoubleQuery(PRFi).f(Block.(-) s pi)"
+      },
+      {
+        "side": "right",
+        "side_index": 2,
+        "statement_order": 2,
+        "statement_path": "2",
+        "procedure": "DoubleQuery.f",
+        "statement": "s <@ DoubleQuery(Sample).f(Block.(-) s pi)"
+      }
+    ],
+    "frontier_alignment": {
+      "summary": "Frontier alignment: setup statements appear before the current frontier; call sites are visible at the frontier; residual statements remain after a call frontier. Use this as a proof-reader map before choosing while/rnd/seq/call tactics.",
+      "first_instruction_alignment": {
+        "left_first": "s <@ DoubleQuery(PRFi).f(Block.(-) s pi)",
+        "right_first": "s <@ DoubleQuery(Sample).f(Block.(-) s pi)",
+        "left_head": "call",
+        "right_head": "call",
+        "branch_alignment": "both_sides_at_call",
+        "proof_read": "Both sides are at call frontiers; inspect call options or use a call tactic form before guessing an invariant."
+      },
+      "rows": [
+        {
+          "role": "setup / initialization",
+          "left": "pi <- nth witness p i",
+          "right": "pi <- nth witness p i",
+          "proof_read": "These are setup statements before the current frontier; preserve the proof-relevant initialized state in later invariants, seq cuts, or calls.",
+          "location": {
+            "left_paths": [
+              "1"
+            ],
+            "right_paths": [
+              "1"
+            ]
+          }
+        },
+        {
+          "role": "call frontier",
+          "left": "s <@ DoubleQuery(PRFi).f(Block.(-) s pi)",
+          "right": "s <@ DoubleQuery(Sample).f(Block.(-) s pi)",
+          "proof_read": "Both sides expose the same call procedure; a named equiv call or an invariant call may apply at this frontier.",
+          "location": {
+            "left_path": "2",
+            "right_path": "2"
+          },
+          "observations": [
+            "same procedure name: `DoubleQuery.f`"
+          ]
+        },
+        {
+          "role": "residual after call",
+          "left": "2 setup statement(s): c <- c ++ [s]; i <- i + 1",
+          "right": "2 setup statement(s): c <- c ++ [s]; i <- i + 1",
+          "proof_read": "These statements remain after the live call frontier. Their effects are checked after the call returns; a bare call obligation is checked before these residual statements execute.",
+          "location": {
+            "left_paths": [
+              "3",
+              "4"
+            ],
+            "right_paths": [
+              "3",
+              "4"
+            ]
+          }
+        }
+      ]
+    },
+    "procedure_navigation": {
+      "how_to_use": "Positions for choosing wp/sp depth, which `if` to rcond, and where the next loop/call frontier is. Facts only \u2014 pick the tactic and the branch direction yourself.",
+      "absorb_depth": {
+        "left": {
+          "side_index": 1,
+          "absorbable_statements": 1,
+          "through_order": 1,
+          "kinds": [
+            "ASSIGN"
+          ]
+        },
+        "right": {
+          "side_index": 2,
+          "absorbable_statements": 1,
+          "through_order": 1,
+          "kinds": [
+            "ASSIGN"
+          ]
+        },
+        "sp_hint": "sp 1 1 / wp -1 -1 absorbs the straight-line setup (1 left, 1 right) before the next frontier"
+      },
+      "next_frontier": {
+        "kind": "straight_line_prefix_before_call_site",
+        "at_order": 2
+      }
+    }
+  },
+  "application_context": {
+    "selected_handles": [
+      {
+        "title": "Proof-route context",
+        "why_relevant": "have f_eqM : forall (B : bool), equiv[DoubleQuery(PRFi).f ~ DoubleQuery(Sample).f : DoubleQuery.bad{2} = B /\\ (DoubleQuery.bad{1} <=> DoubleQuery.bad{2}) /\\ (!DoubleQuery.bad{2} => arg{1} = arg{2} /\\ DoubleQuery.qs{1} = DoubleQuery.qs{2} /\\ fdom PRFi.m{1} = DoubleQuery.qs{1}) ==> (B => DoubleQuery.bad{2}) /\\ (DoubleQuery.bad{1} <=> DoubleQuery.bad{2}) /\\ (!DoubleQuery.bad{2} => res{1} = res{2} /\\ DoubleQuery.qs{1} = DoubleQuery.qs{2} /\\ fdom PRFi.m{1} = DoubleQuery.qs{1})].",
+        "runnable_status": "Not yet; replace every placeholder with concrete EasyCrypt terms from the current goal before probing or committing this tactic.",
+        "missing_input": [
+          "Concrete EasyCrypt arguments for every placeholder in the displayed tactic."
+        ]
+      },
+      {
+        "title": "Concrete tactic candidate",
+        "tactic": "sp 1 1; wp; call f_eq; auto.",
+        "why_relevant": "Daemon probe accepted this tactic and it would leave 5 subgoal(s); commit it if that is the intended decomposition.",
+        "derivation": "surfaced from current-state analysis; not daemon-checked on this goal",
+        "verified": "unverified_suggestion",
+        "guarantee": "not verified on the current goal; probe before committing; reversible"
+      }
+    ]
+  },
+  "facts_and_diagnostics": {
+    "facts": {
+      "has_invariant_skeleton": true,
+      "unfoldable_goal_heads": [
+        {
+          "name": "pi",
+          "unqualified_name": "pi",
+          "declaration_kind": "op",
+          "unfold_tactic": "rewrite /pi.",
+          "smt_argument_role": "not_a_lemma_hint"
+        },
+        {
+          "name": "p",
+          "unqualified_name": "p",
+          "declaration_kind": "op",
+          "unfold_tactic": "rewrite /p.",
+          "smt_argument_role": "not_a_lemma_hint"
+        }
+      ],
+      "unfoldable_goal_head_count": 2
+    },
+    "fact_note": "Only current-frontier facts are shown here; the full proof context artifact keeps the compiler/internal details.",
+    "notes": [
+      {
+        "message": "proof-state analysis sees live named call handle(s), but none is currently at EasyCrypt's last-call frontier (f_eq). `call <lemma>` may fail until wp/seq/targeted transforms expose the matching call as the last statement.",
+        "severity": "info"
+      },
+      {
+        "message": "proof-state analysis layer is call_site: 2 call site(s) and 1 callable lemma handle(s) are live (f_eq). `inline *` is a broad global transformation here and can hide those handles; named calls and targeted inline are route context for comparison.",
+        "severity": "warning"
+      }
+    ]
+  },
+  "call_site_surface": {
+    "state": "tail_blocked_named_call",
+    "live_call_sites": [
+      {
+        "side": "left",
+        "procedure": "DoubleQuery.f"
+      },
+      {
+        "side": "right",
+        "procedure": "DoubleQuery.f"
+      }
+    ],
+    "named_handles": [
+      {
+        "symbol": "DoubleQuery.f",
+        "source": "proof-state analysis",
+        "callable_now": false,
+        "why_visible": "Use this as route-selection context; it is not a tactic to run as-is.",
+        "limitations": [
+          "The tactic shape is hidden until the handle is callable at the current frontier."
+        ]
+      },
+      {
+        "symbol": "lemma",
+        "source": "candidate_moves.moves",
+        "callable_now": false,
+        "why_visible": "This tactic shape still has placeholders; replace them with concrete EasyCrypt arguments from the current goal before probing or committing it.",
+        "limitations": [
+          "The tactic shape is hidden until the handle is callable at the current frontier."
+        ]
+      },
+      {
+        "symbol": "lemma",
+        "source": "proof-state analysis",
+        "callable_now": false,
+        "why_visible": "Use this as route-selection context; it is not a tactic to run as-is.",
+        "limitations": [
+          "The tactic shape is hidden until the handle is callable at the current frontier."
+        ]
+      }
+    ],
+    "frontier_blockers": [
+      {
+        "kind": "residual_after_call_site",
+        "left": "2 setup statement(s): c <- c ++ [s]; i <- i + 1",
+        "right": "2 setup statement(s): c <- c ++ [s]; i <- i + 1",
+        "effect": "Residual statements remain after the live call frontier; their effects are not part of the callee obligation."
+      },
+      {
+        "kind": "named_handle_not_callable_in_current_view",
+        "named_handle_count": 3,
+        "live_call_site_count": 2
+      }
+    ],
+    "wrapper_depth": 1,
+    "exposure": {
+      "symbol": "f_eq",
+      "plan_id": "plan.call_pair.2",
+      "plan_kind": "call_site_exposure_plan",
+      "action": {
+        "kind": "expose_call_pair_frontier",
+        "tactic_shape": "seq 2 2 : <invariant preserving the call lemma postcondition>.",
+        "tactic_family": "procedure_transform",
+        "reason": "the matching call pair exists before the last-call frontier; split the sequence at that pair before using a call lemma"
+      }
+    },
+    "named_call_templates": [
+      {
+        "symbol": "f_eq",
+        "status": "candidate_named_call",
+        "tactic_shape": "call f_eq."
+      }
+    ],
+    "residual_frontier": {
+      "state": "residual_after_call",
+      "rows": [
+        {
+          "role": "residual after call",
+          "left": "2 setup statement(s): c <- c ++ [s]; i <- i + 1",
+          "right": "2 setup statement(s): c <- c ++ [s]; i <- i + 1",
+          "location": {
+            "left_paths": [
+              "3",
+              "4"
+            ],
+            "right_paths": [
+              "3",
+              "4"
+            ]
+          },
+          "proof_read": "These statements remain after the live call frontier. Their effects are checked after the call returns; a bare call obligation is checked before these residual statements execute."
+        }
+      ],
+      "effect": "These statements remain after the live call frontier and are checked after the call returns.",
+      "limitations": [
+        "The surface reports suffix structure only; it does not choose whether to use a call, inline, wp, or another local tactic."
+      ]
+    }
+  },
+  "recovery_diagnosis_surface": {
+    "kind": "recovery_diagnosis_surface",
+    "recovery_class": "seq_midpoint_repair_evidence",
+    "confidence": "medium",
+    "checkpoint_policy": "seq_local_checkpoint_visible",
+    "evidence": [
+      "latest seq cut tactic #22: seq 3 3 : (={i, p} /\\ 0 <= i{1} <= size p{1} /\\ (DoubleQuery.bad{1} <=> DoubleQuery.bad{2}) /\\ (!DoubleQuery.bad{2} => c{1} = c{2} /\\ s{1} = s{2} /\\ DoubleQuery.qs{1} = DoubleQuery.qs{2} /\\ fdom PRFi.m{1} = DoubleQuery.qs{1})).",
+      "recent rejected tactic head: sp",
+      "mismatch kind: branch_obligation"
+    ],
+    "available_local_work": [
+      {
+        "kind": "local_work_status",
+        "items": [
+          "current evidence points at a structural recovery boundary"
+        ]
+      }
+    ],
+    "related_checkpoints": [
+      {
+        "semantic_id": "after_seq_opened",
+        "label": "Before committed tactic #23",
+        "tactic_index": 23,
+        "committed_step_index": 23,
+        "undo_scope": "branch_local",
+        "why_checkpoint": "seq-local boundary associated with recent rejected work inside the current seq scope"
+      },
+      {
+        "checkpoint_id": "cp_22_6a93ac9de7f60f9c",
+        "semantic_id": "before_seq_cut",
+        "semantic_ids": [
+          "before_seq_cut"
+        ],
+        "label": "Before seq cut #22",
+        "committed_step_index": 22,
+        "undo_scope": "seq_local",
+        "restored_proof_layer": "pre_seq_cut",
+        "restored_affordances": {
+          "seq_cut": "not_committed",
+          "call_site_state": "as_before_seq_cut"
+        },
+        "why_checkpoint": "seq-cut boundary; selecting it restores the proof state before this cut was committed"
+      },
+      {
+        "checkpoint_id": "cp_23_6a93ac9de7f60f9c",
+        "semantic_id": "after_seq_opened",
+        "semantic_ids": [
+          "after_seq_opened",
+          "before_branch_work"
+        ],
+        "label": "After seq opened / before branch work #23",
+        "committed_step_index": 23,
+        "undo_scope": "branch_local",
+        "restored_proof_layer": "seq_obligations_opened",
+        "restored_affordances": {
+          "seq_cut": "committed",
+          "branch_work": "not_committed"
+        },
+        "why_checkpoint": "seq-local branch boundary; selecting it keeps the seq cut and removes branch-local work after it"
+      },
+      {
+        "checkpoint_id": "cp_23_6a93ac9de7f60f9c",
+        "semantic_id": "seq_cut_mismatch",
+        "semantic_ids": [
+          "seq_cut_mismatch",
+          "after_seq_opened",
+          "before_branch_work"
+        ],
+        "label": "After seq opened / before branch work #23",
+        "committed_step_index": 23,
+        "undo_scope": "branch_local",
+        "restored_proof_layer": "seq_obligations_opened",
+        "restored_affordances": {
+          "seq_cut": "committed",
+          "branch_work": "not_committed"
+        },
+        "why_checkpoint": "seq-local branch boundary; selecting it keeps the seq cut and removes branch-local work after it"
+      }
+    ],
+    "related_surfaces": [
+      "call_site_surface",
+      "seq_cut_surface",
+      "structural_checkpoints"
+    ],
+    "limitations": [
+      "does not synthesize a replacement seq midpoint",
+      "reports obligation shape and local recovery boundaries only"
+    ]
+  },
+  "structural_checkpoints": {
+    "items": [
+      {
+        "checkpoint_id": "cp_23_6a93ac9de7f60f9c",
+        "semantic_id": "seq_cut_mismatch",
+        "semantic_ids": [
+          "seq_cut_mismatch",
+          "after_seq_opened",
+          "before_branch_work"
+        ],
+        "label": "After seq opened / before branch work #23",
+        "committed_step_index": 23,
+        "committed_tactic": "auto; smt(size_ge0).",
+        "restored_proof_layer": "seq_obligations_opened",
+        "restored_affordances": {
+          "seq_cut": "committed",
+          "branch_work": "not_committed"
+        },
+        "undo_scope": "branch_local",
+        "why_checkpoint": "seq-local branch boundary; selecting it keeps the seq cut and removes branch-local work after it",
+        "effect_if_selected": "Undo committed tactic #23 and every committed tactic after it in this node.",
+        "submit": {
+          "intent": "undo_to_checkpoint",
+          "payload": {
+            "checkpoint_id": "cp_23_6a93ac9de7f60f9c"
+          }
+        }
+      },
+      {
+        "checkpoint_id": "cp_24_6a93ac9de7f60f9c",
+        "semantic_id": "before_branch_work",
+        "semantic_ids": [
+          "before_branch_work",
+          "before_call_obligation_work"
+        ],
+        "label": "Before latest call-obligation tactic #24",
+        "committed_step_index": 24,
+        "committed_tactic": "while (={i, p} /\\ 0 <= i{1} <= size p{1} /\\ (DoubleQuery.bad{1} <=> DoubleQuery.bad{2}) /\\ (!DoubleQuery.bad{2} => c{1} = c{2} /\\ s{1} = s{2} /\\ DoubleQuery.qs{1} = DoubleQuery.qs{2} /\\ fdom PRFi.m{1} = DoubleQuery.qs{1})).",
+        "restored_proof_layer": "call_obligation",
+        "restored_affordances": {
+          "call_route": "committed",
+          "call_obligation": "preserved",
+          "later_local_work": "not_committed"
+        },
+        "undo_scope": "call_obligation_local",
+        "why_checkpoint": "call-obligation local boundary; selecting it keeps the opened call obligation and removes later local work",
+        "effect_if_selected": "Undo committed tactic #24 and every committed tactic after it in this node.",
+        "submit": {
+          "intent": "undo_to_checkpoint",
+          "payload": {
+            "checkpoint_id": "cp_24_6a93ac9de7f60f9c"
+          }
+        }
+      },
+      {
+        "checkpoint_id": "cp_7_6a93ac9de7f60f9c",
+        "semantic_id": "after_call_opened",
+        "semantic_ids": [
+          "after_call_opened"
+        ],
+        "label": "After call opened / before obligation work #7",
+        "committed_step_index": 7,
+        "committed_tactic": "exact A_distinguish_ll.",
+        "restored_proof_layer": "call_obligations_opened",
+        "restored_affordances": {
+          "call_route": "committed",
+          "call_obligation_work": "not_committed"
+        },
+        "undo_scope": "call_local",
+        "why_checkpoint": "call-local boundary; selecting it keeps the call tactic and removes work committed after the call opened",
+        "effect_if_selected": "Undo committed tactic #7 and every committed tactic after it in this node.",
+        "submit": {
+          "intent": "undo_to_checkpoint",
+          "payload": {
+            "checkpoint_id": "cp_7_6a93ac9de7f60f9c"
+          }
+        }
+      },
+      {
+        "checkpoint_id": "cp_6_6a93ac9de7f60f9c",
+        "semantic_id": "before_call_route",
+        "semantic_ids": [
+          "before_call_route"
+        ],
+        "label": "Before call invariant #6",
+        "committed_step_index": 6,
+        "committed_tactic": "call (_: DoubleQuery.bad, ={DoubleQuery.qs} /\\ (DoubleQuery.bad{1} <=> DoubleQuery.bad{2}) /\\ fdom PRFi.m{1} = DoubleQuery.qs{1}, DoubleQuery.bad{1} <=> DoubleQuery.bad{2}).",
+        "restored_proof_layer": "pre_call_route",
+        "restored_affordances": {
+          "call_route": "not_committed",
+          "call_obligation_work": "not_committed"
+        },
+        "undo_scope": "call_local",
+        "why_checkpoint": "call invariant introduction point; later oracle/branch obligations often reveal missing preserved facts or an over-strong equality from this tactic",
+        "effect_if_selected": "Undo committed tactic #6 and every committed tactic after it in this node.",
+        "submit": {
+          "intent": "undo_to_checkpoint",
+          "payload": {
+            "checkpoint_id": "cp_6_6a93ac9de7f60f9c"
+          }
+        }
+      },
+      {
+        "checkpoint_id": "cp_22_6a93ac9de7f60f9c",
+        "semantic_id": "before_seq_cut",
+        "semantic_ids": [
+          "before_seq_cut"
+        ],
+        "label": "Before seq cut #22",
+        "committed_step_index": 22,
+        "committed_tactic": "seq 3 3 : (={i, p} /\\ 0 <= i{1} <= size p{1} /\\ (DoubleQuery.bad{1} <=> DoubleQuery.bad{2}) /\\ (!DoubleQuery.bad{2} => c{1} = c{2} /\\ s{1} = s{2} /\\ DoubleQuery.qs{1} = DoubleQuery.qs{2} /\\ fdom PRFi.m{1} = DoubleQuery.qs{1})).",
+        "restored_proof_layer": "pre_seq_cut",
+        "restored_affordances": {
+          "seq_cut": "not_committed",
+          "call_site_state": "as_before_seq_cut"
+        },
+        "undo_scope": "seq_local",
+        "why_checkpoint": "seq-cut boundary; selecting it restores the proof state before this cut was committed",
+        "effect_if_selected": "Undo committed tactic #22 and every committed tactic after it in this node.",
+        "submit": {
+          "intent": "undo_to_checkpoint",
+          "payload": {
+            "checkpoint_id": "cp_22_6a93ac9de7f60f9c"
+          }
+        }
+      },
+      {
+        "checkpoint_id": "cp_12_6a93ac9de7f60f9c",
+        "semantic_id": "last_call_site_boundary",
+        "semantic_ids": [
+          "last_call_site_boundary"
+        ],
+        "label": "Before inline expansion #12",
+        "committed_step_index": 12,
+        "committed_tactic": "inline *; auto.",
+        "restored_proof_layer": "pre_inline_frontier",
+        "restored_affordances": {
+          "call_site_handles": "as_before_inline"
+        },
+        "undo_scope": "call_site_boundary",
+        "why_checkpoint": "inline boundary; selecting it restores the proof state before this expansion",
+        "effect_if_selected": "Undo committed tactic #12 and every committed tactic after it in this node.",
+        "submit": {
+          "intent": "undo_to_checkpoint",
+          "payload": {
+            "checkpoint_id": "cp_12_6a93ac9de7f60f9c"
+          }
+        }
+      }
+    ]
+  },
+  "inspect_lookup_handles": {
+    "effect": "All handles here are read-only manager requests; the committed EasyCrypt proof state stays unchanged.",
+    "manager_note": "Some requests may ask EasyCrypt or name resolution; wait for the manager result before choosing the next proof intent.",
+    "ask_manager_for": [
+      {
+        "intent": "inspect_context",
+        "payload": {
+          "topic": "goal_info"
+        },
+        "use_when": "Need parsed goal shape, resolved names, or KB pattern hints.",
+        "returns": "parsed goal structure and names"
+      },
+      {
+        "intent": "inspect_context",
+        "payload": {
+          "topic": "call_site_options"
+        },
+        "use_when": "The visible frontier contains call sites or named equiv handles may apply.",
+        "returns": "call-ready/oracle-equiv context for the current frontier, plus the BODY of the procedure(s) called here (functor aliases resolved) so you can see which oracles/state your call invariant must preserve"
+      },
+      {
+        "intent": "inspect_context",
+        "payload": {
+          "topic": "call_invariant_skeleton"
+        },
+        "use_when": "You are at an abstract-adversary `call (_: <inv>)` and want the mechanical glob frame of the invariant before adding your own semantic conjuncts.",
+        "returns": "the mechanical `={glob ...}` frame of the call invariant (shared abstract oracle modules, daemon-confirmed to apply and spawn the obligations). When a named coupling predicate fits the in-scope state it ALSO surfaces a field-threaded carrier (`inv \u2026 s1{1} s2{2}`), plus candidate inductive side-conditions (`dom \u2286 used-set`) for any random oracle the call queries. All revisable starting points \u2014 confirm the coupling and add/adjust the semantic conjuncts (key/state correspondences, set-membership)."
+      },
+      {
+        "intent": "inspect_context",
+        "payload": {
+          "topic": "call_subgoals",
+          "invariant": "<the EasyCrypt invariant expression inside call (_: ...)>"
+        },
+        "use_when": "You are considering `call (_: Inv)` and already have a concrete invariant expression you want to test first.",
+        "returns": "a read-only preview of the obligations caused by that candidate invariant, including pre/init, call-preservation, oracle-side, postcondition, missing-fact signals, and extra conjuncts that may create avoidable obligations"
+      },
+      {
+        "intent": "inspect_context",
+        "payload": {
+          "topic": "tactic_forms",
+          "name": "call"
+        },
+        "use_when": "A tactic has multiple EasyCrypt argument forms.",
+        "returns": "valid tactic forms and common traps"
+      },
+      {
+        "intent": "inspect_context",
+        "payload": {
+          "topic": "tactic_forms",
+          "name": "sp"
+        },
+        "use_when": "The frontier may need indexed `sp i j` before branch or call tactics.",
+        "returns": "valid `sp` forms and branch-frontier traps"
+      },
+      {
+        "intent": "inspect_context",
+        "payload": {
+          "topic": "tactic_forms",
+          "name": "wp"
+        },
+        "use_when": "Mid-proof pRHL suffix surgery may need indexed `wp`.",
+        "returns": "valid indexed `wp` forms and suffix-alignment traps"
+      },
+      {
+        "intent": "inspect_context",
+        "payload": {
+          "topic": "tactic_forms",
+          "name": "swap"
+        },
+        "use_when": "Statement order may need a small `swap` before `sp`, `wp`, or `sim`.",
+        "returns": "valid `swap` forms and statement-order traps"
+      },
+      {
+        "intent": "inspect_context",
+        "payload": {
+          "topic": "tactic_forms",
+          "name": "rcondt"
+        },
+        "use_when": "A guarded branch may need `rcondt` after a case split or invariant fact.",
+        "returns": "valid `rcondt` forms and guard-obligation traps"
+      },
+      {
+        "intent": "inspect_context",
+        "payload": {
+          "topic": "tactic_forms",
+          "name": "rcondf"
+        },
+        "use_when": "A guarded branch may need `rcondf` after a case split or invariant fact.",
+        "returns": "valid `rcondf` forms and guard-obligation traps"
+      },
+      {
+        "intent": "inspect_context",
+        "payload": {
+          "topic": "tactic_forms",
+          "name": "conseq"
+        },
+        "use_when": "A suffix proof may need `conseq` to weaken to a smaller relation before `sim`.",
+        "returns": "valid `conseq` forms and pRHL memory-annotation traps"
+      },
+      {
+        "intent": "inspect_context",
+        "payload": {
+          "topic": "tactic_forms",
+          "name": "rnd"
+        },
+        "use_when": "One side may have an extra sample or need an explicit sample coupling.",
+        "returns": "valid `rnd` forms, including one-sided sampling"
+      },
+      {
+        "intent": "inspect_context",
+        "payload": {
+          "topic": "tactic_forms",
+          "name": "eager"
+        },
+        "use_when": "A known statement-order mismatch may need an eager/lazy transformation.",
+        "returns": "valid `eager` forms and when to prefer smaller surgery"
+      },
+      {
+        "intent": "inspect_context",
+        "payload": {
+          "topic": "align"
+        },
+        "use_when": "LHS/RHS statement order may need swap/alignment context.",
+        "returns": "swap/alignment context for the visible pRHL frontier"
+      }
+    ]
+  },
+  "reference": {
+    "note": "Panels collapsed for focus. The essentials for THIS phase are in the focus above; the rest were noise here (a flat view of all of them is what disorients). If you genuinely need a precise field from one, ask with `inspect_context`.",
+    "collapsed": [
+      "seq_cut_surface"
+    ]
+  },
+  "surface_profile": {
+    "name": "l4_checked_action_surface",
+    "surface_profile": "l4_checked_action_surface",
+    "stage": "l4_checked_action_surface",
+    "description": "L4 Verifier-Checked Action Surface: exposes checked previews, post-probe goals, route health, recovery diagnosis, recovery signals, and selected diagnostics while demoting accepted partial openers that only create residual surgery.",
+    "paper_level": "L4",
+    "paper_role": "paper"
+  }
+}

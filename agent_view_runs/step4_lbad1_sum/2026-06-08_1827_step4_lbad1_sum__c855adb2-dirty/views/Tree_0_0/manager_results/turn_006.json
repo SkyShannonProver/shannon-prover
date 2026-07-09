@@ -1,0 +1,19 @@
+{
+  "turn": 6,
+  "handled_intent": {
+    "intent": "commit_tactic",
+    "payload": {
+      "tactic": "have EQ := HP (fun _ (g: glob UFCMA_l) _ => size g.`6 <= qdec /\\ exists (p:tag*tag), p \\in g.`6 /\\ p.`1 = p.`2) (fun _ (g: glob UFCMA_l) _ => find (fun (p:tag*tag) => p.`1 = p.`2) g.`6) (iota_ 0 qdec) &m (iota_uniq 0 qdec)."
+    }
+  },
+  "ok": true,
+  "manager_note": "Committed tactic accepted; the EasyCrypt proof state changed.",
+  "manager_actions": [
+    {
+      "action": "tactic commit",
+      "outcome": "EasyCrypt accepted the committed tactic.",
+      "timing": "609 ms"
+    }
+  ],
+  "view_refreshed": true
+}

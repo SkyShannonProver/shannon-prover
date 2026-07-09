@@ -1,0 +1,35 @@
+{
+  "kind": "agent_view_run_report",
+  "timestamp": "2026-06-10_1724_step4_lbad1_sum",
+  "lemma": "step4_lbad1_sum",
+  "source_file": "eval/examples/ChaChaPoly/chacha_poly.ec",
+  "model": "claude-opus-4-8",
+  "surface_profile": "l1_goal_projection",
+  "trees": 1,
+  "eval_mode": true,
+  "outcome": "proved",
+  "committed_proofs": [
+    {
+      "tree": "Tree_0_0",
+      "tactics": [
+        "apply (ler_trans Pr[UFCMA_l.f() @ &m : has (fun (i : int) => let tt = nth (w1, w2) UFCMA_l.lbad1 i in tt.`1 = tt.`2) (iota_ 0 qdec)]).",
+        "rewrite Pr[mu_sub].",
+        "move=> &hr [hsz [tt [htt htteq]]]; rewrite hasP; exists (index tt UFCMA_l.lbad1{hr}).",
+        "rewrite mem_iota /=; smt(index_ge0 index_mem nth_index size_ge0).",
+        "done.",
+        "rewrite Pr[mu_has_le].",
+        "done.",
+        "qed."
+      ],
+      "source": "session",
+      "proved": true
+    }
+  ],
+  "turn_count": 10,
+  "views_copied": 11,
+  "run_iteration_dir": "artifacts/eval_suite/rerun_struct_core/l1_goal_projection/step4_lbad1_sum/r01/2026-06-10_1724_step4_lbad1_sum/iteration_1",
+  "commit": "b9952510",
+  "commit_full": "b99525104f61f6420c44f6b6e697772041399243",
+  "branch": "mcp-v0",
+  "dirty": true
+}

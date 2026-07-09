@@ -1,0 +1,2200 @@
+{
+  "kind": "agent_view_timeline_report",
+  "run_count": 1,
+  "runs": [
+    {
+      "chronological": false,
+      "first_action_at": "2026-06-08T23:16:42.800000+00:00",
+      "label": "2026-06-08_1612_step2_1",
+      "node_count": 2,
+      "rows": [
+        {
+          "action_submitted_at": "2026-06-08T23:16:45.100000+00:00",
+          "action_time": "+00:02",
+          "agent_think": "",
+          "agent_think_path": "artifacts/eval_suite/medium4_l1_l4noprobe/l1_goal_projection/chacha_step2_1/r01/2026-06-08_1612_step2_1/iteration_1/node_memory/Tree_0_0/thinking/turn_001.md",
+          "agent_think_seconds": null,
+          "decision_followup_path": "",
+          "decision_state_summary": "probability / pr / probability, 1 goal, goal 409 chars",
+          "decision_view_path": "artifacts/eval_suite/medium4_l1_l4noprobe/l1_goal_projection/chacha_step2_1/r01/2026-06-08_1612_step2_1/iteration_1/manager_bootstrap_0_0.json",
+          "deterministic_signals": [
+            "commit_without_probe_check_not_inferred"
+          ],
+          "goal_chars": 409,
+          "inspect_topics": [],
+          "intent": {
+            "intent": "commit_tactic",
+            "payload": {
+              "tactic": "have <- : Pr[CCA_game(A, RealOrcls(StLSke(St))).main() @ &m : res] = Pr[CCA_game(A, RealOrcls(OChaChaPoly(IFinRO))).main() @ &m : res]."
+            }
+          },
+          "intent_summary": "commit have <- : Pr[CCA_game(A, RealOrcls(StLSke(St))).main() @ &m : res] =...",
+          "manager_action_summary": [
+            "tactic commit (1.9 s)"
+          ],
+          "manager_result_at": "2026-06-08T23:16:47+00:00",
+          "manager_result_path": "artifacts/eval_suite/medium4_l1_l4noprobe/l1_goal_projection/chacha_step2_1/r01/2026-06-08_1612_step2_1/iteration_1/node_memory/Tree_0_0/manager_results/turn_001.json",
+          "manager_seconds": 1.9,
+          "manager_time": "1.9 s",
+          "node": "Tree-0.0",
+          "node_dir": "artifacts/eval_suite/medium4_l1_l4noprobe/l1_goal_projection/chacha_step2_1/r01/2026-06-08_1612_step2_1/iteration_1/node_memory/Tree_0_0",
+          "ok": true,
+          "result_followup_path": "artifacts/eval_suite/medium4_l1_l4noprobe/l1_goal_projection/chacha_step2_1/r01/2026-06-08_1612_step2_1/iteration_1/node_memory/Tree_0_0/followups/turn_001.md",
+          "result_state_summary": "probability / pr / probability, 2 goals, goal 270 chars",
+          "result_summary": "accepted commit",
+          "result_view_path": "artifacts/eval_suite/medium4_l1_l4noprobe/l1_goal_projection/chacha_step2_1/r01/2026-06-08_1612_step2_1/iteration_1/node_memory/Tree_0_0/workspace_views/turn_001.json",
+          "turn": 1,
+          "usage": {
+            "cache_creation_input_tokens": 106618,
+            "cache_read_input_tokens": 583626,
+            "input_tokens": 31,
+            "output_tokens": 16991
+          },
+          "view_chars": 965,
+          "view_id": "T0.0-1",
+          "workspace_view_path": "artifacts/eval_suite/medium4_l1_l4noprobe/l1_goal_projection/chacha_step2_1/r01/2026-06-08_1612_step2_1/iteration_1/manager_bootstrap_0_0.json"
+        },
+        {
+          "action_submitted_at": "2026-06-08T23:16:59.674000+00:00",
+          "action_time": "+00:17",
+          "agent_think": "12.7 s",
+          "agent_think_path": "artifacts/eval_suite/medium4_l1_l4noprobe/l1_goal_projection/chacha_step2_1/r01/2026-06-08_1612_step2_1/iteration_1/node_memory/Tree_0_0/thinking/turn_002.md",
+          "agent_think_seconds": 12.674,
+          "decision_followup_path": "artifacts/eval_suite/medium4_l1_l4noprobe/l1_goal_projection/chacha_step2_1/r01/2026-06-08_1612_step2_1/iteration_1/node_memory/Tree_0_0/followups/turn_001.md",
+          "decision_state_summary": "probability / pr / probability, 2 goals, goal 270 chars",
+          "decision_view_path": "artifacts/eval_suite/medium4_l1_l4noprobe/l1_goal_projection/chacha_step2_1/r01/2026-06-08_1612_step2_1/iteration_1/node_memory/Tree_0_0/workspace_views/turn_001.json",
+          "deterministic_signals": [
+            "commit_without_probe_check_not_inferred"
+          ],
+          "goal_chars": 270,
+          "inspect_topics": [
+            "hint",
+            "goal_info",
+            "pr_bridge_routes",
+            "equiv_bridge_lemmas",
+            "lemma_hints",
+            "tactic_forms"
+          ],
+          "intent": {
+            "intent": "commit_tactic",
+            "payload": {
+              "tactic": "byequiv => //; proc."
+            }
+          },
+          "intent_summary": "commit byequiv => //; proc",
+          "manager_action_summary": [
+            "tactic commit (326 ms)"
+          ],
+          "manager_result_at": "2026-06-08T23:17:00+00:00",
+          "manager_result_path": "artifacts/eval_suite/medium4_l1_l4noprobe/l1_goal_projection/chacha_step2_1/r01/2026-06-08_1612_step2_1/iteration_1/node_memory/Tree_0_0/manager_results/turn_002.json",
+          "manager_seconds": 0.326,
+          "manager_time": "326 ms",
+          "node": "Tree-0.0",
+          "node_dir": "artifacts/eval_suite/medium4_l1_l4noprobe/l1_goal_projection/chacha_step2_1/r01/2026-06-08_1612_step2_1/iteration_1/node_memory/Tree_0_0",
+          "ok": true,
+          "result_followup_path": "artifacts/eval_suite/medium4_l1_l4noprobe/l1_goal_projection/chacha_step2_1/r01/2026-06-08_1612_step2_1/iteration_1/node_memory/Tree_0_0/followups/turn_002.md",
+          "result_state_summary": "pRHL / call_site / relational_program, 2 goals, goal 534 chars",
+          "result_summary": "accepted commit",
+          "result_view_path": "artifacts/eval_suite/medium4_l1_l4noprobe/l1_goal_projection/chacha_step2_1/r01/2026-06-08_1612_step2_1/iteration_1/node_memory/Tree_0_0/workspace_views/turn_002.json",
+          "turn": 2,
+          "usage": {
+            "cache_creation_input_tokens": 1245,
+            "cache_read_input_tokens": 68449,
+            "input_tokens": 2,
+            "output_tokens": 848
+          },
+          "view_chars": 4890,
+          "view_id": "T0.0-2",
+          "workspace_view_path": "artifacts/eval_suite/medium4_l1_l4noprobe/l1_goal_projection/chacha_step2_1/r01/2026-06-08_1612_step2_1/iteration_1/node_memory/Tree_0_0/workspace_views/turn_001.json"
+        },
+        {
+          "action_submitted_at": "2026-06-08T23:17:08.772000+00:00",
+          "action_time": "+00:26",
+          "agent_think": "8.8 s",
+          "agent_think_path": "artifacts/eval_suite/medium4_l1_l4noprobe/l1_goal_projection/chacha_step2_1/r01/2026-06-08_1612_step2_1/iteration_1/node_memory/Tree_0_0/thinking/turn_003.md",
+          "agent_think_seconds": 8.772,
+          "decision_followup_path": "artifacts/eval_suite/medium4_l1_l4noprobe/l1_goal_projection/chacha_step2_1/r01/2026-06-08_1612_step2_1/iteration_1/node_memory/Tree_0_0/followups/turn_002.md",
+          "decision_state_summary": "pRHL / call_site / relational_program, 2 goals, goal 534 chars",
+          "decision_view_path": "artifacts/eval_suite/medium4_l1_l4noprobe/l1_goal_projection/chacha_step2_1/r01/2026-06-08_1612_step2_1/iteration_1/node_memory/Tree_0_0/workspace_views/turn_002.json",
+          "deterministic_signals": [
+            "commit_without_probe_check_not_inferred"
+          ],
+          "goal_chars": 534,
+          "inspect_topics": [
+            "goal_info",
+            "call_site_options",
+            "call_invariant_skeleton",
+            "call_subgoals",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "align"
+          ],
+          "intent": {
+            "intent": "commit_tactic",
+            "payload": {
+              "tactic": "call (_: StLSke.gs{1} = OpCCRO.OCC.gs{2} /\\ ={Mem.k})."
+            }
+          },
+          "intent_summary": "commit call StLSke.gs",
+          "manager_action_summary": [
+            "tactic commit (228 ms)"
+          ],
+          "manager_result_at": "2026-06-08T23:17:09+00:00",
+          "manager_result_path": "artifacts/eval_suite/medium4_l1_l4noprobe/l1_goal_projection/chacha_step2_1/r01/2026-06-08_1612_step2_1/iteration_1/node_memory/Tree_0_0/manager_results/turn_003.json",
+          "manager_seconds": 0.228,
+          "manager_time": "228 ms",
+          "node": "Tree-0.0",
+          "node_dir": "artifacts/eval_suite/medium4_l1_l4noprobe/l1_goal_projection/chacha_step2_1/r01/2026-06-08_1612_step2_1/iteration_1/node_memory/Tree_0_0",
+          "ok": true,
+          "result_followup_path": "artifacts/eval_suite/medium4_l1_l4noprobe/l1_goal_projection/chacha_step2_1/r01/2026-06-08_1612_step2_1/iteration_1/node_memory/Tree_0_0/followups/turn_003.md",
+          "result_state_summary": "equiv / prhl_module / relational_program, 4 goals, goal 362 chars",
+          "result_summary": "accepted commit",
+          "result_view_path": "artifacts/eval_suite/medium4_l1_l4noprobe/l1_goal_projection/chacha_step2_1/r01/2026-06-08_1612_step2_1/iteration_1/node_memory/Tree_0_0/workspace_views/turn_003.json",
+          "turn": 3,
+          "usage": {
+            "cache_creation_input_tokens": 1946,
+            "cache_read_input_tokens": 69694,
+            "input_tokens": 2,
+            "output_tokens": 458
+          },
+          "view_chars": 11450,
+          "view_id": "T0.0-3",
+          "workspace_view_path": "artifacts/eval_suite/medium4_l1_l4noprobe/l1_goal_projection/chacha_step2_1/r01/2026-06-08_1612_step2_1/iteration_1/node_memory/Tree_0_0/workspace_views/turn_002.json"
+        },
+        {
+          "action_submitted_at": "2026-06-08T23:17:28.803000+00:00",
+          "action_time": "+00:46",
+          "agent_think": "19.8 s",
+          "agent_think_path": "artifacts/eval_suite/medium4_l1_l4noprobe/l1_goal_projection/chacha_step2_1/r01/2026-06-08_1612_step2_1/iteration_1/node_memory/Tree_0_0/thinking/turn_004.md",
+          "agent_think_seconds": 19.803,
+          "decision_followup_path": "artifacts/eval_suite/medium4_l1_l4noprobe/l1_goal_projection/chacha_step2_1/r01/2026-06-08_1612_step2_1/iteration_1/node_memory/Tree_0_0/followups/turn_003.md",
+          "decision_state_summary": "equiv / prhl_module / relational_program, 4 goals, goal 362 chars",
+          "decision_view_path": "artifacts/eval_suite/medium4_l1_l4noprobe/l1_goal_projection/chacha_step2_1/r01/2026-06-08_1612_step2_1/iteration_1/node_memory/Tree_0_0/workspace_views/turn_003.json",
+          "deterministic_signals": [
+            "commit_without_probe_check_not_inferred"
+          ],
+          "goal_chars": 362,
+          "inspect_topics": [
+            "hint",
+            "goal_info",
+            "call_site_options",
+            "call_invariant_skeleton",
+            "call_subgoals",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "align"
+          ],
+          "intent": {
+            "intent": "commit_tactic",
+            "payload": {
+              "tactic": "proc; inline *; wp; skip => />."
+            }
+          },
+          "intent_summary": "commit proc; inline *; wp; skip => />",
+          "manager_action_summary": [
+            "tactic commit (197 ms)"
+          ],
+          "manager_result_at": "2026-06-08T23:17:29+00:00",
+          "manager_result_path": "artifacts/eval_suite/medium4_l1_l4noprobe/l1_goal_projection/chacha_step2_1/r01/2026-06-08_1612_step2_1/iteration_1/node_memory/Tree_0_0/manager_results/turn_004.json",
+          "manager_seconds": 0.197,
+          "manager_time": "197 ms",
+          "node": "Tree-0.0",
+          "node_dir": "artifacts/eval_suite/medium4_l1_l4noprobe/l1_goal_projection/chacha_step2_1/r01/2026-06-08_1612_step2_1/iteration_1/node_memory/Tree_0_0",
+          "ok": true,
+          "result_followup_path": "artifacts/eval_suite/medium4_l1_l4noprobe/l1_goal_projection/chacha_step2_1/r01/2026-06-08_1612_step2_1/iteration_1/node_memory/Tree_0_0/followups/turn_004.md",
+          "result_state_summary": "ambient / ambient_logic, 4 goals, goal 657 chars",
+          "result_summary": "accepted commit",
+          "result_view_path": "artifacts/eval_suite/medium4_l1_l4noprobe/l1_goal_projection/chacha_step2_1/r01/2026-06-08_1612_step2_1/iteration_1/node_memory/Tree_0_0/workspace_views/turn_004.json",
+          "turn": 4,
+          "usage": {
+            "cache_creation_input_tokens": 1710,
+            "cache_read_input_tokens": 71640,
+            "input_tokens": 2,
+            "output_tokens": 1272
+          },
+          "view_chars": 9566,
+          "view_id": "T0.0-4",
+          "workspace_view_path": "artifacts/eval_suite/medium4_l1_l4noprobe/l1_goal_projection/chacha_step2_1/r01/2026-06-08_1612_step2_1/iteration_1/node_memory/Tree_0_0/workspace_views/turn_003.json"
+        },
+        {
+          "action_submitted_at": "2026-06-08T23:17:44.736000+00:00",
+          "action_time": "+01:02",
+          "agent_think": "15.7 s",
+          "agent_think_path": "artifacts/eval_suite/medium4_l1_l4noprobe/l1_goal_projection/chacha_step2_1/r01/2026-06-08_1612_step2_1/iteration_1/node_memory/Tree_0_0/thinking/turn_005.md",
+          "agent_think_seconds": 15.736,
+          "decision_followup_path": "artifacts/eval_suite/medium4_l1_l4noprobe/l1_goal_projection/chacha_step2_1/r01/2026-06-08_1612_step2_1/iteration_1/node_memory/Tree_0_0/followups/turn_004.md",
+          "decision_state_summary": "ambient / ambient_logic, 4 goals, goal 657 chars",
+          "decision_view_path": "artifacts/eval_suite/medium4_l1_l4noprobe/l1_goal_projection/chacha_step2_1/r01/2026-06-08_1612_step2_1/iteration_1/node_memory/Tree_0_0/workspace_views/turn_004.json",
+          "deterministic_signals": [
+            "commit_without_probe_check_not_inferred"
+          ],
+          "goal_chars": 657,
+          "inspect_topics": [
+            "goal_info",
+            "lemma_hints",
+            "tactic_forms"
+          ],
+          "intent": {
+            "intent": "commit_tactic",
+            "payload": {
+              "tactic": "move=> &2; rewrite /enc /get //=."
+            }
+          },
+          "intent_summary": "commit move=> &2; rewrite /enc /get //=",
+          "manager_action_summary": [
+            "tactic commit (264 ms)"
+          ],
+          "manager_result_at": "2026-06-08T23:17:45+00:00",
+          "manager_result_path": "artifacts/eval_suite/medium4_l1_l4noprobe/l1_goal_projection/chacha_step2_1/r01/2026-06-08_1612_step2_1/iteration_1/node_memory/Tree_0_0/manager_results/turn_005.json",
+          "manager_seconds": 0.264,
+          "manager_time": "264 ms",
+          "node": "Tree-0.0",
+          "node_dir": "artifacts/eval_suite/medium4_l1_l4noprobe/l1_goal_projection/chacha_step2_1/r01/2026-06-08_1612_step2_1/iteration_1/node_memory/Tree_0_0",
+          "ok": true,
+          "result_followup_path": "artifacts/eval_suite/medium4_l1_l4noprobe/l1_goal_projection/chacha_step2_1/r01/2026-06-08_1612_step2_1/iteration_1/node_memory/Tree_0_0/followups/turn_005.md",
+          "result_state_summary": "ambient / ambient_logic, 4 goals, goal 1207 chars",
+          "result_summary": "accepted commit",
+          "result_view_path": "artifacts/eval_suite/medium4_l1_l4noprobe/l1_goal_projection/chacha_step2_1/r01/2026-06-08_1612_step2_1/iteration_1/node_memory/Tree_0_0/workspace_views/turn_005.json",
+          "turn": 5,
+          "usage": {
+            "cache_creation_input_tokens": 2518,
+            "cache_read_input_tokens": 73350,
+            "input_tokens": 2,
+            "output_tokens": 1131
+          },
+          "view_chars": 10692,
+          "view_id": "T0.0-5",
+          "workspace_view_path": "artifacts/eval_suite/medium4_l1_l4noprobe/l1_goal_projection/chacha_step2_1/r01/2026-06-08_1612_step2_1/iteration_1/node_memory/Tree_0_0/workspace_views/turn_004.json"
+        },
+        {
+          "action_submitted_at": "2026-06-08T23:17:53.802000+00:00",
+          "action_time": "+01:11",
+          "agent_think": "8.8 s",
+          "agent_think_path": "artifacts/eval_suite/medium4_l1_l4noprobe/l1_goal_projection/chacha_step2_1/r01/2026-06-08_1612_step2_1/iteration_1/node_memory/Tree_0_0/thinking/turn_006.md",
+          "agent_think_seconds": 8.802,
+          "decision_followup_path": "artifacts/eval_suite/medium4_l1_l4noprobe/l1_goal_projection/chacha_step2_1/r01/2026-06-08_1612_step2_1/iteration_1/node_memory/Tree_0_0/followups/turn_005.md",
+          "decision_state_summary": "ambient / ambient_logic, 4 goals, goal 1207 chars",
+          "decision_view_path": "artifacts/eval_suite/medium4_l1_l4noprobe/l1_goal_projection/chacha_step2_1/r01/2026-06-08_1612_step2_1/iteration_1/node_memory/Tree_0_0/workspace_views/turn_005.json",
+          "deterministic_signals": [
+            "commit_without_probe_check_not_inferred"
+          ],
+          "goal_chars": 1207,
+          "inspect_topics": [
+            "goal_info",
+            "lemma_hints",
+            "tactic_forms"
+          ],
+          "intent": {
+            "intent": "commit_tactic",
+            "payload": {
+              "tactic": "by case: (p{2})."
+            }
+          },
+          "intent_summary": "commit by case: (p{2})",
+          "manager_action_summary": [
+            "tactic commit (198 ms)"
+          ],
+          "manager_result_at": "2026-06-08T23:17:54+00:00",
+          "manager_result_path": "artifacts/eval_suite/medium4_l1_l4noprobe/l1_goal_projection/chacha_step2_1/r01/2026-06-08_1612_step2_1/iteration_1/node_memory/Tree_0_0/manager_results/turn_006.json",
+          "manager_seconds": 0.198,
+          "manager_time": "198 ms",
+          "node": "Tree-0.0",
+          "node_dir": "artifacts/eval_suite/medium4_l1_l4noprobe/l1_goal_projection/chacha_step2_1/r01/2026-06-08_1612_step2_1/iteration_1/node_memory/Tree_0_0",
+          "ok": true,
+          "result_followup_path": "artifacts/eval_suite/medium4_l1_l4noprobe/l1_goal_projection/chacha_step2_1/r01/2026-06-08_1612_step2_1/iteration_1/node_memory/Tree_0_0/followups/turn_006.md",
+          "result_state_summary": "equiv / prhl_module / relational_program, 3 goals, goal 362 chars",
+          "result_summary": "accepted commit",
+          "result_view_path": "artifacts/eval_suite/medium4_l1_l4noprobe/l1_goal_projection/chacha_step2_1/r01/2026-06-08_1612_step2_1/iteration_1/node_memory/Tree_0_0/workspace_views/turn_006.json",
+          "turn": 6,
+          "usage": {
+            "cache_creation_input_tokens": 2712,
+            "cache_read_input_tokens": 75868,
+            "input_tokens": 2,
+            "output_tokens": 453
+          },
+          "view_chars": 11615,
+          "view_id": "T0.0-6",
+          "workspace_view_path": "artifacts/eval_suite/medium4_l1_l4noprobe/l1_goal_projection/chacha_step2_1/r01/2026-06-08_1612_step2_1/iteration_1/node_memory/Tree_0_0/workspace_views/turn_005.json"
+        },
+        {
+          "action_submitted_at": "2026-06-08T23:18:01.763000+00:00",
+          "action_time": "+01:19",
+          "agent_think": "7.8 s",
+          "agent_think_path": "artifacts/eval_suite/medium4_l1_l4noprobe/l1_goal_projection/chacha_step2_1/r01/2026-06-08_1612_step2_1/iteration_1/node_memory/Tree_0_0/thinking/turn_007.md",
+          "agent_think_seconds": 7.763,
+          "decision_followup_path": "artifacts/eval_suite/medium4_l1_l4noprobe/l1_goal_projection/chacha_step2_1/r01/2026-06-08_1612_step2_1/iteration_1/node_memory/Tree_0_0/followups/turn_006.md",
+          "decision_state_summary": "equiv / prhl_module / relational_program, 3 goals, goal 362 chars",
+          "decision_view_path": "artifacts/eval_suite/medium4_l1_l4noprobe/l1_goal_projection/chacha_step2_1/r01/2026-06-08_1612_step2_1/iteration_1/node_memory/Tree_0_0/workspace_views/turn_006.json",
+          "deterministic_signals": [
+            "commit_without_probe_check_not_inferred"
+          ],
+          "goal_chars": 362,
+          "inspect_topics": [
+            "hint",
+            "goal_info",
+            "call_site_options",
+            "call_invariant_skeleton",
+            "call_subgoals",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "align"
+          ],
+          "intent": {
+            "intent": "commit_tactic",
+            "payload": {
+              "tactic": "proc; inline *; wp; skip => />."
+            }
+          },
+          "intent_summary": "commit proc; inline *; wp; skip => />",
+          "manager_action_summary": [
+            "tactic commit (237 ms)"
+          ],
+          "manager_result_at": "2026-06-08T23:18:02+00:00",
+          "manager_result_path": "artifacts/eval_suite/medium4_l1_l4noprobe/l1_goal_projection/chacha_step2_1/r01/2026-06-08_1612_step2_1/iteration_1/node_memory/Tree_0_0/manager_results/turn_007.json",
+          "manager_seconds": 0.237,
+          "manager_time": "237 ms",
+          "node": "Tree-0.0",
+          "node_dir": "artifacts/eval_suite/medium4_l1_l4noprobe/l1_goal_projection/chacha_step2_1/r01/2026-06-08_1612_step2_1/iteration_1/node_memory/Tree_0_0",
+          "ok": true,
+          "result_followup_path": "artifacts/eval_suite/medium4_l1_l4noprobe/l1_goal_projection/chacha_step2_1/r01/2026-06-08_1612_step2_1/iteration_1/node_memory/Tree_0_0/followups/turn_007.md",
+          "result_state_summary": "ambient / ambient_logic, 3 goals, goal 766 chars",
+          "result_summary": "accepted commit",
+          "result_view_path": "artifacts/eval_suite/medium4_l1_l4noprobe/l1_goal_projection/chacha_step2_1/r01/2026-06-08_1612_step2_1/iteration_1/node_memory/Tree_0_0/workspace_views/turn_007.json",
+          "turn": 7,
+          "usage": {
+            "cache_creation_input_tokens": 1514,
+            "cache_read_input_tokens": 78580,
+            "input_tokens": 2,
+            "output_tokens": 451
+          },
+          "view_chars": 9591,
+          "view_id": "T0.0-7",
+          "workspace_view_path": "artifacts/eval_suite/medium4_l1_l4noprobe/l1_goal_projection/chacha_step2_1/r01/2026-06-08_1612_step2_1/iteration_1/node_memory/Tree_0_0/workspace_views/turn_006.json"
+        },
+        {
+          "action_submitted_at": "2026-06-08T23:18:39.686000+00:00",
+          "action_time": "+01:57",
+          "agent_think": "37.7 s",
+          "agent_think_path": "artifacts/eval_suite/medium4_l1_l4noprobe/l1_goal_projection/chacha_step2_1/r01/2026-06-08_1612_step2_1/iteration_1/node_memory/Tree_0_0/thinking/turn_008.md",
+          "agent_think_seconds": 37.686,
+          "decision_followup_path": "artifacts/eval_suite/medium4_l1_l4noprobe/l1_goal_projection/chacha_step2_1/r01/2026-06-08_1612_step2_1/iteration_1/node_memory/Tree_0_0/followups/turn_007.md",
+          "decision_state_summary": "ambient / ambient_logic, 3 goals, goal 766 chars",
+          "decision_view_path": "artifacts/eval_suite/medium4_l1_l4noprobe/l1_goal_projection/chacha_step2_1/r01/2026-06-08_1612_step2_1/iteration_1/node_memory/Tree_0_0/workspace_views/turn_007.json",
+          "deterministic_signals": [
+            "commit_without_probe_check_not_inferred"
+          ],
+          "goal_chars": 766,
+          "inspect_topics": [
+            "goal_info",
+            "lemma_hints",
+            "tactic_forms"
+          ],
+          "intent": {
+            "intent": "commit_tactic",
+            "payload": {
+              "tactic": "move=> &2; case: (c{2}) => n a c0 t /=; rewrite /dec /get /=; smt()."
+            }
+          },
+          "intent_summary": "commit move=> &2; case: (c{2}) => n a c0 t /=; rewrite /dec /get /=; smt()",
+          "manager_action_summary": [
+            "tactic commit (314 ms)"
+          ],
+          "manager_result_at": "2026-06-08T23:18:40+00:00",
+          "manager_result_path": "artifacts/eval_suite/medium4_l1_l4noprobe/l1_goal_projection/chacha_step2_1/r01/2026-06-08_1612_step2_1/iteration_1/node_memory/Tree_0_0/manager_results/turn_008.json",
+          "manager_seconds": 0.314,
+          "manager_time": "314 ms",
+          "node": "Tree-0.0",
+          "node_dir": "artifacts/eval_suite/medium4_l1_l4noprobe/l1_goal_projection/chacha_step2_1/r01/2026-06-08_1612_step2_1/iteration_1/node_memory/Tree_0_0",
+          "ok": true,
+          "result_followup_path": "artifacts/eval_suite/medium4_l1_l4noprobe/l1_goal_projection/chacha_step2_1/r01/2026-06-08_1612_step2_1/iteration_1/node_memory/Tree_0_0/followups/turn_008.md",
+          "result_state_summary": "pRHL / procedure_body / relational_program, 2 goals, goal 612 chars",
+          "result_summary": "accepted commit",
+          "result_view_path": "artifacts/eval_suite/medium4_l1_l4noprobe/l1_goal_projection/chacha_step2_1/r01/2026-06-08_1612_step2_1/iteration_1/node_memory/Tree_0_0/workspace_views/turn_008.json",
+          "turn": 8,
+          "usage": {
+            "cache_creation_input_tokens": 1778,
+            "cache_read_input_tokens": 80094,
+            "input_tokens": 2,
+            "output_tokens": 2345
+          },
+          "view_chars": 11768,
+          "view_id": "T0.0-8",
+          "workspace_view_path": "artifacts/eval_suite/medium4_l1_l4noprobe/l1_goal_projection/chacha_step2_1/r01/2026-06-08_1612_step2_1/iteration_1/node_memory/Tree_0_0/workspace_views/turn_007.json"
+        },
+        {
+          "action_submitted_at": "2026-06-08T23:19:18.400000+00:00",
+          "action_time": "+02:36",
+          "agent_think": "38.4 s",
+          "agent_think_path": "artifacts/eval_suite/medium4_l1_l4noprobe/l1_goal_projection/chacha_step2_1/r01/2026-06-08_1612_step2_1/iteration_1/node_memory/Tree_0_0/thinking/turn_009.md",
+          "agent_think_seconds": 38.4,
+          "decision_followup_path": "artifacts/eval_suite/medium4_l1_l4noprobe/l1_goal_projection/chacha_step2_1/r01/2026-06-08_1612_step2_1/iteration_1/node_memory/Tree_0_0/followups/turn_008.md",
+          "decision_state_summary": "pRHL / procedure_body / relational_program, 2 goals, goal 612 chars",
+          "decision_view_path": "artifacts/eval_suite/medium4_l1_l4noprobe/l1_goal_projection/chacha_step2_1/r01/2026-06-08_1612_step2_1/iteration_1/node_memory/Tree_0_0/workspace_views/turn_008.json",
+          "deterministic_signals": [
+            "commit_without_probe_check_not_inferred",
+            "manager_error:[error] cannot infer the set of equalities",
+            "commit_no_state_change"
+          ],
+          "goal_chars": 612,
+          "inspect_topics": [
+            "goal_info",
+            "call_site_options",
+            "call_invariant_skeleton",
+            "call_subgoals",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "align"
+          ],
+          "intent": {
+            "intent": "commit_tactic",
+            "payload": {
+              "tactic": "inline *; sim."
+            }
+          },
+          "intent_summary": "commit inline *; sim",
+          "manager_action_summary": [
+            "tactic commit (1.6 s)"
+          ],
+          "manager_result_at": "2026-06-08T23:19:20+00:00",
+          "manager_result_path": "artifacts/eval_suite/medium4_l1_l4noprobe/l1_goal_projection/chacha_step2_1/r01/2026-06-08_1612_step2_1/iteration_1/node_memory/Tree_0_0/manager_results/turn_009.json",
+          "manager_seconds": 1.6,
+          "manager_time": "1.6 s",
+          "node": "Tree-0.0",
+          "node_dir": "artifacts/eval_suite/medium4_l1_l4noprobe/l1_goal_projection/chacha_step2_1/r01/2026-06-08_1612_step2_1/iteration_1/node_memory/Tree_0_0",
+          "ok": true,
+          "result_followup_path": "artifacts/eval_suite/medium4_l1_l4noprobe/l1_goal_projection/chacha_step2_1/r01/2026-06-08_1612_step2_1/iteration_1/node_memory/Tree_0_0/followups/turn_009.md",
+          "result_state_summary": "pRHL / procedure_body / relational_program, 2 goals, goal 612 chars",
+          "result_summary": "rejected commit: [error] cannot infer the set of equalities",
+          "result_view_path": "artifacts/eval_suite/medium4_l1_l4noprobe/l1_goal_projection/chacha_step2_1/r01/2026-06-08_1612_step2_1/iteration_1/node_memory/Tree_0_0/workspace_views/turn_009.json",
+          "turn": 9,
+          "usage": {
+            "cache_creation_input_tokens": 3722,
+            "cache_read_input_tokens": 81872,
+            "input_tokens": 2,
+            "output_tokens": 2520
+          },
+          "view_chars": 20699,
+          "view_id": "T0.0-9",
+          "workspace_view_path": "artifacts/eval_suite/medium4_l1_l4noprobe/l1_goal_projection/chacha_step2_1/r01/2026-06-08_1612_step2_1/iteration_1/node_memory/Tree_0_0/workspace_views/turn_008.json"
+        },
+        {
+          "action_submitted_at": "2026-06-08T23:19:52.729000+00:00",
+          "action_time": "+03:10",
+          "agent_think": "32.7 s",
+          "agent_think_path": "artifacts/eval_suite/medium4_l1_l4noprobe/l1_goal_projection/chacha_step2_1/r01/2026-06-08_1612_step2_1/iteration_1/node_memory/Tree_0_0/thinking/turn_010.md",
+          "agent_think_seconds": 32.729,
+          "decision_followup_path": "artifacts/eval_suite/medium4_l1_l4noprobe/l1_goal_projection/chacha_step2_1/r01/2026-06-08_1612_step2_1/iteration_1/node_memory/Tree_0_0/followups/turn_009.md",
+          "decision_state_summary": "pRHL / procedure_body / relational_program, 2 goals, goal 612 chars",
+          "decision_view_path": "artifacts/eval_suite/medium4_l1_l4noprobe/l1_goal_projection/chacha_step2_1/r01/2026-06-08_1612_step2_1/iteration_1/node_memory/Tree_0_0/workspace_views/turn_009.json",
+          "deterministic_signals": [
+            "commit_without_probe_check_not_inferred"
+          ],
+          "goal_chars": 612,
+          "inspect_topics": [
+            "diagnose",
+            "goal_info",
+            "call_site_options",
+            "call_invariant_skeleton",
+            "call_subgoals",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "align"
+          ],
+          "intent": {
+            "intent": "commit_tactic",
+            "payload": {
+              "tactic": "conseq (: _ ==> (glob A){1} = (glob A){2} /\\ StLSke.gs{1} = OCC.gs{2} /\\ Mem.k{1} = Mem.k{2})."
+            }
+          },
+          "intent_summary": "commit conseq (: _ ==> (glob A){1} = (glob A){2} /\\ StLSke.gs{1} = OCC.gs{2}...",
+          "manager_action_summary": [
+            "tactic commit (271 ms)"
+          ],
+          "manager_result_at": "2026-06-08T23:19:53+00:00",
+          "manager_result_path": "artifacts/eval_suite/medium4_l1_l4noprobe/l1_goal_projection/chacha_step2_1/r01/2026-06-08_1612_step2_1/iteration_1/node_memory/Tree_0_0/manager_results/turn_010.json",
+          "manager_seconds": 0.271,
+          "manager_time": "271 ms",
+          "node": "Tree-0.0",
+          "node_dir": "artifacts/eval_suite/medium4_l1_l4noprobe/l1_goal_projection/chacha_step2_1/r01/2026-06-08_1612_step2_1/iteration_1/node_memory/Tree_0_0",
+          "ok": true,
+          "result_followup_path": "artifacts/eval_suite/medium4_l1_l4noprobe/l1_goal_projection/chacha_step2_1/r01/2026-06-08_1612_step2_1/iteration_1/node_memory/Tree_0_0/followups/turn_010.md",
+          "result_state_summary": "ambient / ambient_logic / relational_program, 3 goals, goal 571 chars",
+          "result_summary": "accepted commit",
+          "result_view_path": "artifacts/eval_suite/medium4_l1_l4noprobe/l1_goal_projection/chacha_step2_1/r01/2026-06-08_1612_step2_1/iteration_1/node_memory/Tree_0_0/workspace_views/turn_010.json",
+          "turn": 10,
+          "usage": {
+            "cache_creation_input_tokens": 3756,
+            "cache_read_input_tokens": 85594,
+            "input_tokens": 2,
+            "output_tokens": 2180
+          },
+          "view_chars": 20918,
+          "view_id": "T0.0-10",
+          "workspace_view_path": "artifacts/eval_suite/medium4_l1_l4noprobe/l1_goal_projection/chacha_step2_1/r01/2026-06-08_1612_step2_1/iteration_1/node_memory/Tree_0_0/workspace_views/turn_009.json"
+        },
+        {
+          "action_submitted_at": "2026-06-08T23:20:04.681000+00:00",
+          "action_time": "+03:22",
+          "agent_think": "11.7 s",
+          "agent_think_path": "artifacts/eval_suite/medium4_l1_l4noprobe/l1_goal_projection/chacha_step2_1/r01/2026-06-08_1612_step2_1/iteration_1/node_memory/Tree_0_0/thinking/turn_011.md",
+          "agent_think_seconds": 11.681,
+          "decision_followup_path": "artifacts/eval_suite/medium4_l1_l4noprobe/l1_goal_projection/chacha_step2_1/r01/2026-06-08_1612_step2_1/iteration_1/node_memory/Tree_0_0/followups/turn_010.md",
+          "decision_state_summary": "ambient / ambient_logic / relational_program, 3 goals, goal 571 chars",
+          "decision_view_path": "artifacts/eval_suite/medium4_l1_l4noprobe/l1_goal_projection/chacha_step2_1/r01/2026-06-08_1612_step2_1/iteration_1/node_memory/Tree_0_0/workspace_views/turn_010.json",
+          "deterministic_signals": [
+            "commit_without_probe_check_not_inferred"
+          ],
+          "goal_chars": 571,
+          "inspect_topics": [
+            "goal_info",
+            "call_site_options",
+            "call_invariant_skeleton",
+            "call_subgoals",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "align"
+          ],
+          "intent": {
+            "intent": "commit_tactic",
+            "payload": {
+              "tactic": "smt()."
+            }
+          },
+          "intent_summary": "commit smt()",
+          "manager_action_summary": [
+            "tactic commit (319 ms)"
+          ],
+          "manager_result_at": "2026-06-08T23:20:05+00:00",
+          "manager_result_path": "artifacts/eval_suite/medium4_l1_l4noprobe/l1_goal_projection/chacha_step2_1/r01/2026-06-08_1612_step2_1/iteration_1/node_memory/Tree_0_0/manager_results/turn_011.json",
+          "manager_seconds": 0.319,
+          "manager_time": "319 ms",
+          "node": "Tree-0.0",
+          "node_dir": "artifacts/eval_suite/medium4_l1_l4noprobe/l1_goal_projection/chacha_step2_1/r01/2026-06-08_1612_step2_1/iteration_1/node_memory/Tree_0_0",
+          "ok": true,
+          "result_followup_path": "artifacts/eval_suite/medium4_l1_l4noprobe/l1_goal_projection/chacha_step2_1/r01/2026-06-08_1612_step2_1/iteration_1/node_memory/Tree_0_0/followups/turn_011.md",
+          "result_state_summary": "pRHL / procedure_body / relational_program, 2 goals, goal 418 chars",
+          "result_summary": "accepted commit",
+          "result_view_path": "artifacts/eval_suite/medium4_l1_l4noprobe/l1_goal_projection/chacha_step2_1/r01/2026-06-08_1612_step2_1/iteration_1/node_memory/Tree_0_0/workspace_views/turn_011.json",
+          "turn": 11,
+          "usage": {
+            "cache_creation_input_tokens": 3380,
+            "cache_read_input_tokens": 89350,
+            "input_tokens": 2,
+            "output_tokens": 264
+          },
+          "view_chars": 13475,
+          "view_id": "T0.0-11",
+          "workspace_view_path": "artifacts/eval_suite/medium4_l1_l4noprobe/l1_goal_projection/chacha_step2_1/r01/2026-06-08_1612_step2_1/iteration_1/node_memory/Tree_0_0/workspace_views/turn_010.json"
+        },
+        {
+          "action_submitted_at": "2026-06-08T23:20:21.325000+00:00",
+          "action_time": "+03:39",
+          "agent_think": "16.3 s",
+          "agent_think_path": "artifacts/eval_suite/medium4_l1_l4noprobe/l1_goal_projection/chacha_step2_1/r01/2026-06-08_1612_step2_1/iteration_1/node_memory/Tree_0_0/thinking/turn_012.md",
+          "agent_think_seconds": 16.325,
+          "decision_followup_path": "artifacts/eval_suite/medium4_l1_l4noprobe/l1_goal_projection/chacha_step2_1/r01/2026-06-08_1612_step2_1/iteration_1/node_memory/Tree_0_0/followups/turn_011.md",
+          "decision_state_summary": "pRHL / procedure_body / relational_program, 2 goals, goal 418 chars",
+          "decision_view_path": "artifacts/eval_suite/medium4_l1_l4noprobe/l1_goal_projection/chacha_step2_1/r01/2026-06-08_1612_step2_1/iteration_1/node_memory/Tree_0_0/workspace_views/turn_011.json",
+          "deterministic_signals": [
+            "commit_without_probe_check_not_inferred"
+          ],
+          "goal_chars": 418,
+          "inspect_topics": [
+            "goal_info",
+            "call_site_options",
+            "call_invariant_skeleton",
+            "call_subgoals",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "align"
+          ],
+          "intent": {
+            "intent": "commit_tactic",
+            "payload": {
+              "tactic": "inline *; wp; rnd; sim."
+            }
+          },
+          "intent_summary": "commit inline *; wp; rnd; sim",
+          "manager_action_summary": [
+            "tactic commit (675 ms)"
+          ],
+          "manager_result_at": "2026-06-08T23:20:22+00:00",
+          "manager_result_path": "artifacts/eval_suite/medium4_l1_l4noprobe/l1_goal_projection/chacha_step2_1/r01/2026-06-08_1612_step2_1/iteration_1/node_memory/Tree_0_0/manager_results/turn_012.json",
+          "manager_seconds": 0.675,
+          "manager_time": "675 ms",
+          "node": "Tree-0.0",
+          "node_dir": "artifacts/eval_suite/medium4_l1_l4noprobe/l1_goal_projection/chacha_step2_1/r01/2026-06-08_1612_step2_1/iteration_1/node_memory/Tree_0_0",
+          "ok": true,
+          "result_followup_path": "artifacts/eval_suite/medium4_l1_l4noprobe/l1_goal_projection/chacha_step2_1/r01/2026-06-08_1612_step2_1/iteration_1/node_memory/Tree_0_0/followups/turn_012.md",
+          "result_state_summary": "probability / pr / probability, 1 goal, goal 413 chars",
+          "result_summary": "accepted commit",
+          "result_view_path": "artifacts/eval_suite/medium4_l1_l4noprobe/l1_goal_projection/chacha_step2_1/r01/2026-06-08_1612_step2_1/iteration_1/node_memory/Tree_0_0/workspace_views/turn_012.json",
+          "turn": 12,
+          "usage": {
+            "cache_creation_input_tokens": 1336,
+            "cache_read_input_tokens": 92730,
+            "input_tokens": 2,
+            "output_tokens": 1101
+          },
+          "view_chars": 18886,
+          "view_id": "T0.0-12",
+          "workspace_view_path": "artifacts/eval_suite/medium4_l1_l4noprobe/l1_goal_projection/chacha_step2_1/r01/2026-06-08_1612_step2_1/iteration_1/node_memory/Tree_0_0/workspace_views/turn_011.json"
+        },
+        {
+          "action_submitted_at": "2026-06-08T23:20:42.788000+00:00",
+          "action_time": "+04:00",
+          "agent_think": "20.8 s",
+          "agent_think_path": "artifacts/eval_suite/medium4_l1_l4noprobe/l1_goal_projection/chacha_step2_1/r01/2026-06-08_1612_step2_1/iteration_1/node_memory/Tree_0_0/thinking/turn_013.md",
+          "agent_think_seconds": 20.788,
+          "decision_followup_path": "artifacts/eval_suite/medium4_l1_l4noprobe/l1_goal_projection/chacha_step2_1/r01/2026-06-08_1612_step2_1/iteration_1/node_memory/Tree_0_0/followups/turn_012.md",
+          "decision_state_summary": "probability / pr / probability, 1 goal, goal 413 chars",
+          "decision_view_path": "artifacts/eval_suite/medium4_l1_l4noprobe/l1_goal_projection/chacha_step2_1/r01/2026-06-08_1612_step2_1/iteration_1/node_memory/Tree_0_0/workspace_views/turn_012.json",
+          "deterministic_signals": [
+            "commit_without_probe_check_not_inferred"
+          ],
+          "goal_chars": 413,
+          "inspect_topics": [
+            "hint",
+            "goal_info",
+            "pr_bridge_routes",
+            "equiv_bridge_lemmas",
+            "lemma_hints",
+            "tactic_forms"
+          ],
+          "intent": {
+            "intent": "commit_tactic",
+            "payload": {
+              "tactic": "apply (CCA_UFCMA.CCA_CPA_UFCMA St _ _ A A_ll &m)."
+            }
+          },
+          "intent_summary": "commit apply (CCA_UFCMA.CCA_CPA_UFCMA St _ _ A A_ll &m)",
+          "manager_action_summary": [
+            "tactic commit (212 ms)"
+          ],
+          "manager_result_at": "2026-06-08T23:20:43+00:00",
+          "manager_result_path": "artifacts/eval_suite/medium4_l1_l4noprobe/l1_goal_projection/chacha_step2_1/r01/2026-06-08_1612_step2_1/iteration_1/node_memory/Tree_0_0/manager_results/turn_013.json",
+          "manager_seconds": 0.212,
+          "manager_time": "212 ms",
+          "node": "Tree-0.0",
+          "node_dir": "artifacts/eval_suite/medium4_l1_l4noprobe/l1_goal_projection/chacha_step2_1/r01/2026-06-08_1612_step2_1/iteration_1/node_memory/Tree_0_0",
+          "ok": true,
+          "result_followup_path": "artifacts/eval_suite/medium4_l1_l4noprobe/l1_goal_projection/chacha_step2_1/r01/2026-06-08_1612_step2_1/iteration_1/node_memory/Tree_0_0/followups/turn_013.md",
+          "result_state_summary": "equiv / prhl_module / relational_program, 2 goals, goal 225 chars",
+          "result_summary": "accepted commit",
+          "result_view_path": "artifacts/eval_suite/medium4_l1_l4noprobe/l1_goal_projection/chacha_step2_1/r01/2026-06-08_1612_step2_1/iteration_1/node_memory/Tree_0_0/workspace_views/turn_013.json",
+          "turn": 13,
+          "usage": {
+            "cache_creation_input_tokens": 2173,
+            "cache_read_input_tokens": 94066,
+            "input_tokens": 2,
+            "output_tokens": 1569
+          },
+          "view_chars": 8008,
+          "view_id": "T0.0-13",
+          "workspace_view_path": "artifacts/eval_suite/medium4_l1_l4noprobe/l1_goal_projection/chacha_step2_1/r01/2026-06-08_1612_step2_1/iteration_1/node_memory/Tree_0_0/workspace_views/turn_012.json"
+        },
+        {
+          "action_submitted_at": "2026-06-08T23:20:54.795000+00:00",
+          "action_time": "+04:12",
+          "agent_think": "11.8 s",
+          "agent_think_path": "artifacts/eval_suite/medium4_l1_l4noprobe/l1_goal_projection/chacha_step2_1/r01/2026-06-08_1612_step2_1/iteration_1/node_memory/Tree_0_0/thinking/turn_014.md",
+          "agent_think_seconds": 11.795,
+          "decision_followup_path": "artifacts/eval_suite/medium4_l1_l4noprobe/l1_goal_projection/chacha_step2_1/r01/2026-06-08_1612_step2_1/iteration_1/node_memory/Tree_0_0/followups/turn_013.md",
+          "decision_state_summary": "equiv / prhl_module / relational_program, 2 goals, goal 225 chars",
+          "decision_view_path": "artifacts/eval_suite/medium4_l1_l4noprobe/l1_goal_projection/chacha_step2_1/r01/2026-06-08_1612_step2_1/iteration_1/node_memory/Tree_0_0/workspace_views/turn_013.json",
+          "deterministic_signals": [
+            "commit_without_probe_check_not_inferred"
+          ],
+          "goal_chars": 225,
+          "inspect_topics": [
+            "hint",
+            "goal_info",
+            "call_site_options",
+            "call_invariant_skeleton",
+            "call_subgoals",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "align"
+          ],
+          "intent": {
+            "intent": "commit_tactic",
+            "payload": {
+              "tactic": "proc; sim."
+            }
+          },
+          "intent_summary": "commit proc; sim",
+          "manager_action_summary": [
+            "tactic commit (205 ms)"
+          ],
+          "manager_result_at": "2026-06-08T23:20:55+00:00",
+          "manager_result_path": "artifacts/eval_suite/medium4_l1_l4noprobe/l1_goal_projection/chacha_step2_1/r01/2026-06-08_1612_step2_1/iteration_1/node_memory/Tree_0_0/manager_results/turn_014.json",
+          "manager_seconds": 0.205,
+          "manager_time": "205 ms",
+          "node": "Tree-0.0",
+          "node_dir": "artifacts/eval_suite/medium4_l1_l4noprobe/l1_goal_projection/chacha_step2_1/r01/2026-06-08_1612_step2_1/iteration_1/node_memory/Tree_0_0",
+          "ok": true,
+          "result_followup_path": "artifacts/eval_suite/medium4_l1_l4noprobe/l1_goal_projection/chacha_step2_1/r01/2026-06-08_1612_step2_1/iteration_1/node_memory/Tree_0_0/followups/turn_014.md",
+          "result_state_summary": "hoare / procedure_body / procedure_frontier, 1 goal, goal 167 chars",
+          "result_summary": "accepted commit",
+          "result_view_path": "artifacts/eval_suite/medium4_l1_l4noprobe/l1_goal_projection/chacha_step2_1/r01/2026-06-08_1612_step2_1/iteration_1/node_memory/Tree_0_0/workspace_views/turn_014.json",
+          "turn": 14,
+          "usage": {
+            "cache_creation_input_tokens": 2703,
+            "cache_read_input_tokens": 96239,
+            "input_tokens": 2,
+            "output_tokens": 481
+          },
+          "view_chars": 14482,
+          "view_id": "T0.0-14",
+          "workspace_view_path": "artifacts/eval_suite/medium4_l1_l4noprobe/l1_goal_projection/chacha_step2_1/r01/2026-06-08_1612_step2_1/iteration_1/node_memory/Tree_0_0/workspace_views/turn_013.json"
+        },
+        {
+          "action_submitted_at": "2026-06-08T23:16:42.800000+00:00",
+          "action_time": "+00:00",
+          "agent_think": "",
+          "agent_think_path": "artifacts/eval_suite/medium4_l1_l4noprobe/l1_goal_projection/chacha_step2_1/r01/2026-06-08_1612_step2_1/iteration_1/node_memory/Tree_0_1/thinking/turn_001.md",
+          "agent_think_seconds": null,
+          "decision_followup_path": "",
+          "decision_state_summary": "probability / pr / probability, 1 goal, goal 409 chars",
+          "decision_view_path": "artifacts/eval_suite/medium4_l1_l4noprobe/l1_goal_projection/chacha_step2_1/r01/2026-06-08_1612_step2_1/iteration_1/manager_bootstrap_0_1.json",
+          "deterministic_signals": [
+            "commit_without_probe_check_not_inferred"
+          ],
+          "goal_chars": 409,
+          "inspect_topics": [],
+          "intent": {
+            "intent": "commit_tactic",
+            "payload": {
+              "tactic": "have hL : Pr[CCA_game(A, RealOrcls(OChaChaPoly(IFinRO))).main() @ &m : res] = Pr[CCA_game(A, RealOrcls(StLSke(St))).main() @ &m : res]."
+            }
+          },
+          "intent_summary": "commit have hL : Pr[CCA_game(A, RealOrcls(OChaChaPoly(IFinRO))).main() @ &m...",
+          "manager_action_summary": [
+            "tactic commit (2.2 s)"
+          ],
+          "manager_result_at": "2026-06-08T23:16:45+00:00",
+          "manager_result_path": "artifacts/eval_suite/medium4_l1_l4noprobe/l1_goal_projection/chacha_step2_1/r01/2026-06-08_1612_step2_1/iteration_1/node_memory/Tree_0_1/manager_results/turn_001.json",
+          "manager_seconds": 2.2,
+          "manager_time": "2.2 s",
+          "node": "Tree-0.1",
+          "node_dir": "artifacts/eval_suite/medium4_l1_l4noprobe/l1_goal_projection/chacha_step2_1/r01/2026-06-08_1612_step2_1/iteration_1/node_memory/Tree_0_1",
+          "ok": true,
+          "result_followup_path": "artifacts/eval_suite/medium4_l1_l4noprobe/l1_goal_projection/chacha_step2_1/r01/2026-06-08_1612_step2_1/iteration_1/node_memory/Tree_0_1/followups/turn_001.md",
+          "result_state_summary": "probability / pr / probability, 2 goals, goal 270 chars",
+          "result_summary": "accepted commit",
+          "result_view_path": "artifacts/eval_suite/medium4_l1_l4noprobe/l1_goal_projection/chacha_step2_1/r01/2026-06-08_1612_step2_1/iteration_1/node_memory/Tree_0_1/workspace_views/turn_001.json",
+          "turn": 1,
+          "usage": {
+            "cache_creation_input_tokens": 98662,
+            "cache_read_input_tokens": 693806,
+            "input_tokens": 35,
+            "output_tokens": 18064
+          },
+          "view_chars": 965,
+          "view_id": "T0.1-1",
+          "workspace_view_path": "artifacts/eval_suite/medium4_l1_l4noprobe/l1_goal_projection/chacha_step2_1/r01/2026-06-08_1612_step2_1/iteration_1/manager_bootstrap_0_1.json"
+        },
+        {
+          "action_submitted_at": "2026-06-08T23:16:47.789000+00:00",
+          "action_time": "+00:05",
+          "agent_think": "2.8 s",
+          "agent_think_path": "artifacts/eval_suite/medium4_l1_l4noprobe/l1_goal_projection/chacha_step2_1/r01/2026-06-08_1612_step2_1/iteration_1/node_memory/Tree_0_1/thinking/turn_002.md",
+          "agent_think_seconds": 2.789,
+          "decision_followup_path": "artifacts/eval_suite/medium4_l1_l4noprobe/l1_goal_projection/chacha_step2_1/r01/2026-06-08_1612_step2_1/iteration_1/node_memory/Tree_0_1/followups/turn_001.md",
+          "decision_state_summary": "probability / pr / probability, 2 goals, goal 270 chars",
+          "decision_view_path": "artifacts/eval_suite/medium4_l1_l4noprobe/l1_goal_projection/chacha_step2_1/r01/2026-06-08_1612_step2_1/iteration_1/node_memory/Tree_0_1/workspace_views/turn_001.json",
+          "deterministic_signals": [
+            "commit_without_probe_check_not_inferred"
+          ],
+          "goal_chars": 270,
+          "inspect_topics": [
+            "hint",
+            "goal_info",
+            "pr_bridge_routes",
+            "equiv_bridge_lemmas",
+            "lemma_hints",
+            "tactic_forms"
+          ],
+          "intent": {
+            "intent": "commit_tactic",
+            "payload": {
+              "tactic": "byequiv => //."
+            }
+          },
+          "intent_summary": "commit byequiv=>//",
+          "manager_action_summary": [
+            "tactic commit (211 ms)"
+          ],
+          "manager_result_at": "2026-06-08T23:16:48+00:00",
+          "manager_result_path": "artifacts/eval_suite/medium4_l1_l4noprobe/l1_goal_projection/chacha_step2_1/r01/2026-06-08_1612_step2_1/iteration_1/node_memory/Tree_0_1/manager_results/turn_002.json",
+          "manager_seconds": 0.211,
+          "manager_time": "211 ms",
+          "node": "Tree-0.1",
+          "node_dir": "artifacts/eval_suite/medium4_l1_l4noprobe/l1_goal_projection/chacha_step2_1/r01/2026-06-08_1612_step2_1/iteration_1/node_memory/Tree_0_1",
+          "ok": true,
+          "result_followup_path": "artifacts/eval_suite/medium4_l1_l4noprobe/l1_goal_projection/chacha_step2_1/r01/2026-06-08_1612_step2_1/iteration_1/node_memory/Tree_0_1/followups/turn_002.md",
+          "result_state_summary": "equiv / prhl_module / relational_program, 2 goals, goal 444 chars",
+          "result_summary": "accepted commit",
+          "result_view_path": "artifacts/eval_suite/medium4_l1_l4noprobe/l1_goal_projection/chacha_step2_1/r01/2026-06-08_1612_step2_1/iteration_1/node_memory/Tree_0_1/workspace_views/turn_002.json",
+          "turn": 2,
+          "usage": {
+            "cache_creation_input_tokens": 1388,
+            "cache_read_input_tokens": 67403,
+            "input_tokens": 2,
+            "output_tokens": 173
+          },
+          "view_chars": 4890,
+          "view_id": "T0.1-2",
+          "workspace_view_path": "artifacts/eval_suite/medium4_l1_l4noprobe/l1_goal_projection/chacha_step2_1/r01/2026-06-08_1612_step2_1/iteration_1/node_memory/Tree_0_1/workspace_views/turn_001.json"
+        },
+        {
+          "action_submitted_at": "2026-06-08T23:16:51.685000+00:00",
+          "action_time": "+00:09",
+          "agent_think": "3.7 s",
+          "agent_think_path": "artifacts/eval_suite/medium4_l1_l4noprobe/l1_goal_projection/chacha_step2_1/r01/2026-06-08_1612_step2_1/iteration_1/node_memory/Tree_0_1/thinking/turn_003.md",
+          "agent_think_seconds": 3.685,
+          "decision_followup_path": "artifacts/eval_suite/medium4_l1_l4noprobe/l1_goal_projection/chacha_step2_1/r01/2026-06-08_1612_step2_1/iteration_1/node_memory/Tree_0_1/followups/turn_002.md",
+          "decision_state_summary": "equiv / prhl_module / relational_program, 2 goals, goal 444 chars",
+          "decision_view_path": "artifacts/eval_suite/medium4_l1_l4noprobe/l1_goal_projection/chacha_step2_1/r01/2026-06-08_1612_step2_1/iteration_1/node_memory/Tree_0_1/workspace_views/turn_002.json",
+          "deterministic_signals": [
+            "commit_without_probe_check_not_inferred"
+          ],
+          "goal_chars": 444,
+          "inspect_topics": [
+            "hint",
+            "goal_info",
+            "call_site_options",
+            "call_invariant_skeleton",
+            "call_subgoals",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "align"
+          ],
+          "intent": {
+            "intent": "commit_tactic",
+            "payload": {
+              "tactic": "proc."
+            }
+          },
+          "intent_summary": "commit proc",
+          "manager_action_summary": [
+            "tactic commit (315 ms)"
+          ],
+          "manager_result_at": "2026-06-08T23:16:52+00:00",
+          "manager_result_path": "artifacts/eval_suite/medium4_l1_l4noprobe/l1_goal_projection/chacha_step2_1/r01/2026-06-08_1612_step2_1/iteration_1/node_memory/Tree_0_1/manager_results/turn_003.json",
+          "manager_seconds": 0.315,
+          "manager_time": "315 ms",
+          "node": "Tree-0.1",
+          "node_dir": "artifacts/eval_suite/medium4_l1_l4noprobe/l1_goal_projection/chacha_step2_1/r01/2026-06-08_1612_step2_1/iteration_1/node_memory/Tree_0_1",
+          "ok": true,
+          "result_followup_path": "artifacts/eval_suite/medium4_l1_l4noprobe/l1_goal_projection/chacha_step2_1/r01/2026-06-08_1612_step2_1/iteration_1/node_memory/Tree_0_1/followups/turn_003.md",
+          "result_state_summary": "pRHL / call_site / relational_program, 2 goals, goal 534 chars",
+          "result_summary": "accepted commit",
+          "result_view_path": "artifacts/eval_suite/medium4_l1_l4noprobe/l1_goal_projection/chacha_step2_1/r01/2026-06-08_1612_step2_1/iteration_1/node_memory/Tree_0_1/workspace_views/turn_003.json",
+          "turn": 3,
+          "usage": {
+            "cache_creation_input_tokens": 1192,
+            "cache_read_input_tokens": 68791,
+            "input_tokens": 2,
+            "output_tokens": 141
+          },
+          "view_chars": 7747,
+          "view_id": "T0.1-3",
+          "workspace_view_path": "artifacts/eval_suite/medium4_l1_l4noprobe/l1_goal_projection/chacha_step2_1/r01/2026-06-08_1612_step2_1/iteration_1/node_memory/Tree_0_1/workspace_views/turn_002.json"
+        },
+        {
+          "action_submitted_at": "2026-06-08T23:17:03+00:00",
+          "action_time": "+00:20",
+          "agent_think": "11 s",
+          "agent_think_path": "",
+          "agent_think_seconds": 11.0,
+          "decision_followup_path": "artifacts/eval_suite/medium4_l1_l4noprobe/l1_goal_projection/chacha_step2_1/r01/2026-06-08_1612_step2_1/iteration_1/node_memory/Tree_0_1/followups/turn_003.md",
+          "decision_state_summary": "pRHL / call_site / relational_program, 2 goals, goal 534 chars",
+          "decision_view_path": "artifacts/eval_suite/medium4_l1_l4noprobe/l1_goal_projection/chacha_step2_1/r01/2026-06-08_1612_step2_1/iteration_1/node_memory/Tree_0_1/workspace_views/turn_003.json",
+          "deterministic_signals": [],
+          "goal_chars": 534,
+          "inspect_topics": [
+            "goal_info",
+            "call_site_options",
+            "call_invariant_skeleton",
+            "call_subgoals",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "align"
+          ],
+          "intent": {},
+          "intent_summary": "unknown",
+          "manager_action_summary": [],
+          "manager_result_at": "2026-06-08T23:17:03+00:00",
+          "manager_result_path": "artifacts/eval_suite/medium4_l1_l4noprobe/l1_goal_projection/chacha_step2_1/r01/2026-06-08_1612_step2_1/iteration_1/node_memory/Tree_0_1/manager_results/turn_004.json",
+          "manager_seconds": 0,
+          "manager_time": "",
+          "node": "Tree-0.1",
+          "node_dir": "artifacts/eval_suite/medium4_l1_l4noprobe/l1_goal_projection/chacha_step2_1/r01/2026-06-08_1612_step2_1/iteration_1/node_memory/Tree_0_1",
+          "ok": false,
+          "result_followup_path": "artifacts/eval_suite/medium4_l1_l4noprobe/l1_goal_projection/chacha_step2_1/r01/2026-06-08_1612_step2_1/iteration_1/node_memory/Tree_0_1/followups/turn_004.md",
+          "result_state_summary": "pRHL / call_site / relational_program, 2 goals, goal 534 chars",
+          "result_summary": "repair / unhealthy",
+          "result_view_path": "artifacts/eval_suite/medium4_l1_l4noprobe/l1_goal_projection/chacha_step2_1/r01/2026-06-08_1612_step2_1/iteration_1/node_memory/Tree_0_1/workspace_views/turn_004.json",
+          "turn": 4,
+          "usage": {},
+          "view_chars": 11420,
+          "view_id": "T0.1-4",
+          "workspace_view_path": "artifacts/eval_suite/medium4_l1_l4noprobe/l1_goal_projection/chacha_step2_1/r01/2026-06-08_1612_step2_1/iteration_1/node_memory/Tree_0_1/workspace_views/turn_003.json"
+        },
+        {
+          "action_submitted_at": "2026-06-08T23:17:07.796000+00:00",
+          "action_time": "+00:25",
+          "agent_think": "4.8 s",
+          "agent_think_path": "artifacts/eval_suite/medium4_l1_l4noprobe/l1_goal_projection/chacha_step2_1/r01/2026-06-08_1612_step2_1/iteration_1/node_memory/Tree_0_1/thinking/turn_005.md",
+          "agent_think_seconds": 4.796,
+          "decision_followup_path": "artifacts/eval_suite/medium4_l1_l4noprobe/l1_goal_projection/chacha_step2_1/r01/2026-06-08_1612_step2_1/iteration_1/node_memory/Tree_0_1/followups/turn_004.md",
+          "decision_state_summary": "pRHL / call_site / relational_program, 2 goals, goal 534 chars",
+          "decision_view_path": "artifacts/eval_suite/medium4_l1_l4noprobe/l1_goal_projection/chacha_step2_1/r01/2026-06-08_1612_step2_1/iteration_1/node_memory/Tree_0_1/workspace_views/turn_004.json",
+          "deterministic_signals": [
+            "commit_without_probe_check_not_inferred"
+          ],
+          "goal_chars": 534,
+          "inspect_topics": [
+            "goal_info",
+            "call_site_options",
+            "call_invariant_skeleton",
+            "call_subgoals",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "align"
+          ],
+          "intent": {
+            "intent": "commit_tactic",
+            "payload": {
+              "tactic": "call (_: ={Mem.k} /\\ OCC.gs{1} = StLSke.gs{2})."
+            }
+          },
+          "intent_summary": "commit call (_: ={Mem.k} /\\ OCC.gs{1} = StLSke.gs{2})",
+          "manager_action_summary": [
+            "tactic commit (204 ms)"
+          ],
+          "manager_result_at": "2026-06-08T23:17:08+00:00",
+          "manager_result_path": "artifacts/eval_suite/medium4_l1_l4noprobe/l1_goal_projection/chacha_step2_1/r01/2026-06-08_1612_step2_1/iteration_1/node_memory/Tree_0_1/manager_results/turn_005.json",
+          "manager_seconds": 0.204,
+          "manager_time": "204 ms",
+          "node": "Tree-0.1",
+          "node_dir": "artifacts/eval_suite/medium4_l1_l4noprobe/l1_goal_projection/chacha_step2_1/r01/2026-06-08_1612_step2_1/iteration_1/node_memory/Tree_0_1",
+          "ok": true,
+          "result_followup_path": "artifacts/eval_suite/medium4_l1_l4noprobe/l1_goal_projection/chacha_step2_1/r01/2026-06-08_1612_step2_1/iteration_1/node_memory/Tree_0_1/followups/turn_005.md",
+          "result_state_summary": "equiv / prhl_module / relational_program, 4 goals, goal 362 chars",
+          "result_summary": "accepted commit",
+          "result_view_path": "artifacts/eval_suite/medium4_l1_l4noprobe/l1_goal_projection/chacha_step2_1/r01/2026-06-08_1612_step2_1/iteration_1/node_memory/Tree_0_1/workspace_views/turn_005.json",
+          "turn": 5,
+          "usage": {
+            "cache_creation_input_tokens": 1791,
+            "cache_read_input_tokens": 71215,
+            "input_tokens": 2,
+            "output_tokens": 206
+          },
+          "view_chars": 11420,
+          "view_id": "T0.1-5",
+          "workspace_view_path": "artifacts/eval_suite/medium4_l1_l4noprobe/l1_goal_projection/chacha_step2_1/r01/2026-06-08_1612_step2_1/iteration_1/node_memory/Tree_0_1/workspace_views/turn_004.json"
+        },
+        {
+          "action_submitted_at": "2026-06-08T23:17:19.718000+00:00",
+          "action_time": "+00:37",
+          "agent_think": "11.7 s",
+          "agent_think_path": "artifacts/eval_suite/medium4_l1_l4noprobe/l1_goal_projection/chacha_step2_1/r01/2026-06-08_1612_step2_1/iteration_1/node_memory/Tree_0_1/thinking/turn_006.md",
+          "agent_think_seconds": 11.718,
+          "decision_followup_path": "artifacts/eval_suite/medium4_l1_l4noprobe/l1_goal_projection/chacha_step2_1/r01/2026-06-08_1612_step2_1/iteration_1/node_memory/Tree_0_1/followups/turn_005.md",
+          "decision_state_summary": "equiv / prhl_module / relational_program, 4 goals, goal 362 chars",
+          "decision_view_path": "artifacts/eval_suite/medium4_l1_l4noprobe/l1_goal_projection/chacha_step2_1/r01/2026-06-08_1612_step2_1/iteration_1/node_memory/Tree_0_1/workspace_views/turn_005.json",
+          "deterministic_signals": [
+            "commit_without_probe_check_not_inferred"
+          ],
+          "goal_chars": 362,
+          "inspect_topics": [
+            "hint",
+            "goal_info",
+            "call_site_options",
+            "call_invariant_skeleton",
+            "call_subgoals",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "align"
+          ],
+          "intent": {
+            "intent": "commit_tactic",
+            "payload": {
+              "tactic": "proc; inline *."
+            }
+          },
+          "intent_summary": "commit proc; inline *",
+          "manager_action_summary": [
+            "tactic commit (282 ms)"
+          ],
+          "manager_result_at": "2026-06-08T23:17:20+00:00",
+          "manager_result_path": "artifacts/eval_suite/medium4_l1_l4noprobe/l1_goal_projection/chacha_step2_1/r01/2026-06-08_1612_step2_1/iteration_1/node_memory/Tree_0_1/manager_results/turn_006.json",
+          "manager_seconds": 0.282,
+          "manager_time": "282 ms",
+          "node": "Tree-0.1",
+          "node_dir": "artifacts/eval_suite/medium4_l1_l4noprobe/l1_goal_projection/chacha_step2_1/r01/2026-06-08_1612_step2_1/iteration_1/node_memory/Tree_0_1",
+          "ok": true,
+          "result_followup_path": "artifacts/eval_suite/medium4_l1_l4noprobe/l1_goal_projection/chacha_step2_1/r01/2026-06-08_1612_step2_1/iteration_1/node_memory/Tree_0_1/followups/turn_006.md",
+          "result_state_summary": "pRHL / procedure_body / relational_program, 4 goals, goal 1601 chars",
+          "result_summary": "accepted commit",
+          "result_view_path": "artifacts/eval_suite/medium4_l1_l4noprobe/l1_goal_projection/chacha_step2_1/r01/2026-06-08_1612_step2_1/iteration_1/node_memory/Tree_0_1/workspace_views/turn_006.json",
+          "turn": 6,
+          "usage": {
+            "cache_creation_input_tokens": 1294,
+            "cache_read_input_tokens": 73006,
+            "input_tokens": 2,
+            "output_tokens": 730
+          },
+          "view_chars": 9545,
+          "view_id": "T0.1-6",
+          "workspace_view_path": "artifacts/eval_suite/medium4_l1_l4noprobe/l1_goal_projection/chacha_step2_1/r01/2026-06-08_1612_step2_1/iteration_1/node_memory/Tree_0_1/workspace_views/turn_005.json"
+        },
+        {
+          "action_submitted_at": "2026-06-08T23:17:32.792000+00:00",
+          "action_time": "+00:50",
+          "agent_think": "12.8 s",
+          "agent_think_path": "artifacts/eval_suite/medium4_l1_l4noprobe/l1_goal_projection/chacha_step2_1/r01/2026-06-08_1612_step2_1/iteration_1/node_memory/Tree_0_1/thinking/turn_007.md",
+          "agent_think_seconds": 12.792,
+          "decision_followup_path": "artifacts/eval_suite/medium4_l1_l4noprobe/l1_goal_projection/chacha_step2_1/r01/2026-06-08_1612_step2_1/iteration_1/node_memory/Tree_0_1/followups/turn_006.md",
+          "decision_state_summary": "pRHL / procedure_body / relational_program, 4 goals, goal 1601 chars",
+          "decision_view_path": "artifacts/eval_suite/medium4_l1_l4noprobe/l1_goal_projection/chacha_step2_1/r01/2026-06-08_1612_step2_1/iteration_1/node_memory/Tree_0_1/workspace_views/turn_006.json",
+          "deterministic_signals": [
+            "commit_without_probe_check_not_inferred"
+          ],
+          "goal_chars": 1601,
+          "inspect_topics": [
+            "goal_info",
+            "call_site_options",
+            "call_invariant_skeleton",
+            "call_subgoals",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "align"
+          ],
+          "intent": {
+            "intent": "commit_tactic",
+            "payload": {
+              "tactic": "wp; skip => />."
+            }
+          },
+          "intent_summary": "commit wp; skip => />",
+          "manager_action_summary": [
+            "tactic commit (208 ms)"
+          ],
+          "manager_result_at": "2026-06-08T23:17:33+00:00",
+          "manager_result_path": "artifacts/eval_suite/medium4_l1_l4noprobe/l1_goal_projection/chacha_step2_1/r01/2026-06-08_1612_step2_1/iteration_1/node_memory/Tree_0_1/manager_results/turn_007.json",
+          "manager_seconds": 0.208,
+          "manager_time": "208 ms",
+          "node": "Tree-0.1",
+          "node_dir": "artifacts/eval_suite/medium4_l1_l4noprobe/l1_goal_projection/chacha_step2_1/r01/2026-06-08_1612_step2_1/iteration_1/node_memory/Tree_0_1",
+          "ok": true,
+          "result_followup_path": "artifacts/eval_suite/medium4_l1_l4noprobe/l1_goal_projection/chacha_step2_1/r01/2026-06-08_1612_step2_1/iteration_1/node_memory/Tree_0_1/followups/turn_007.md",
+          "result_state_summary": "ambient / ambient_logic, 4 goals, goal 663 chars",
+          "result_summary": "accepted commit",
+          "result_view_path": "artifacts/eval_suite/medium4_l1_l4noprobe/l1_goal_projection/chacha_step2_1/r01/2026-06-08_1612_step2_1/iteration_1/node_memory/Tree_0_1/workspace_views/turn_007.json",
+          "turn": 7,
+          "usage": {
+            "cache_creation_input_tokens": 2346,
+            "cache_read_input_tokens": 74300,
+            "input_tokens": 2,
+            "output_tokens": 777
+          },
+          "view_chars": 18258,
+          "view_id": "T0.1-7",
+          "workspace_view_path": "artifacts/eval_suite/medium4_l1_l4noprobe/l1_goal_projection/chacha_step2_1/r01/2026-06-08_1612_step2_1/iteration_1/node_memory/Tree_0_1/workspace_views/turn_006.json"
+        },
+        {
+          "action_submitted_at": "2026-06-08T23:17:46.766000+00:00",
+          "action_time": "+01:04",
+          "agent_think": "13.8 s",
+          "agent_think_path": "artifacts/eval_suite/medium4_l1_l4noprobe/l1_goal_projection/chacha_step2_1/r01/2026-06-08_1612_step2_1/iteration_1/node_memory/Tree_0_1/thinking/turn_008.md",
+          "agent_think_seconds": 13.766,
+          "decision_followup_path": "artifacts/eval_suite/medium4_l1_l4noprobe/l1_goal_projection/chacha_step2_1/r01/2026-06-08_1612_step2_1/iteration_1/node_memory/Tree_0_1/followups/turn_007.md",
+          "decision_state_summary": "ambient / ambient_logic, 4 goals, goal 663 chars",
+          "decision_view_path": "artifacts/eval_suite/medium4_l1_l4noprobe/l1_goal_projection/chacha_step2_1/r01/2026-06-08_1612_step2_1/iteration_1/node_memory/Tree_0_1/workspace_views/turn_007.json",
+          "deterministic_signals": [
+            "commit_without_probe_check_not_inferred"
+          ],
+          "goal_chars": 663,
+          "inspect_topics": [
+            "goal_info",
+            "lemma_hints",
+            "tactic_forms"
+          ],
+          "intent": {
+            "intent": "commit_tactic",
+            "payload": {
+              "tactic": "move=> &2; rewrite /enc /get /=."
+            }
+          },
+          "intent_summary": "commit move=> &2; rewrite /enc /get /=",
+          "manager_action_summary": [
+            "tactic commit (234 ms)"
+          ],
+          "manager_result_at": "2026-06-08T23:17:47+00:00",
+          "manager_result_path": "artifacts/eval_suite/medium4_l1_l4noprobe/l1_goal_projection/chacha_step2_1/r01/2026-06-08_1612_step2_1/iteration_1/node_memory/Tree_0_1/manager_results/turn_008.json",
+          "manager_seconds": 0.234,
+          "manager_time": "234 ms",
+          "node": "Tree-0.1",
+          "node_dir": "artifacts/eval_suite/medium4_l1_l4noprobe/l1_goal_projection/chacha_step2_1/r01/2026-06-08_1612_step2_1/iteration_1/node_memory/Tree_0_1",
+          "ok": true,
+          "result_followup_path": "artifacts/eval_suite/medium4_l1_l4noprobe/l1_goal_projection/chacha_step2_1/r01/2026-06-08_1612_step2_1/iteration_1/node_memory/Tree_0_1/followups/turn_008.md",
+          "result_state_summary": "ambient / ambient_logic, 4 goals, goal 1081 chars",
+          "result_summary": "accepted commit",
+          "result_view_path": "artifacts/eval_suite/medium4_l1_l4noprobe/l1_goal_projection/chacha_step2_1/r01/2026-06-08_1612_step2_1/iteration_1/node_memory/Tree_0_1/workspace_views/turn_008.json",
+          "turn": 8,
+          "usage": {
+            "cache_creation_input_tokens": 2011,
+            "cache_read_input_tokens": 76646,
+            "input_tokens": 2,
+            "output_tokens": 837
+          },
+          "view_chars": 11452,
+          "view_id": "T0.1-8",
+          "workspace_view_path": "artifacts/eval_suite/medium4_l1_l4noprobe/l1_goal_projection/chacha_step2_1/r01/2026-06-08_1612_step2_1/iteration_1/node_memory/Tree_0_1/workspace_views/turn_007.json"
+        },
+        {
+          "action_submitted_at": "2026-06-08T23:18:06.600000+00:00",
+          "action_time": "+01:24",
+          "agent_think": "19.6 s",
+          "agent_think_path": "artifacts/eval_suite/medium4_l1_l4noprobe/l1_goal_projection/chacha_step2_1/r01/2026-06-08_1612_step2_1/iteration_1/node_memory/Tree_0_1/thinking/turn_009.md",
+          "agent_think_seconds": 19.6,
+          "decision_followup_path": "artifacts/eval_suite/medium4_l1_l4noprobe/l1_goal_projection/chacha_step2_1/r01/2026-06-08_1612_step2_1/iteration_1/node_memory/Tree_0_1/followups/turn_008.md",
+          "decision_state_summary": "ambient / ambient_logic, 4 goals, goal 1081 chars",
+          "decision_view_path": "artifacts/eval_suite/medium4_l1_l4noprobe/l1_goal_projection/chacha_step2_1/r01/2026-06-08_1612_step2_1/iteration_1/node_memory/Tree_0_1/workspace_views/turn_008.json",
+          "deterministic_signals": [
+            "commit_without_probe_check_not_inferred",
+            "manager_error:[error] parse error",
+            "commit_no_state_change"
+          ],
+          "goal_chars": 1081,
+          "inspect_topics": [
+            "goal_info",
+            "lemma_hints",
+            "tactic_forms"
+          ],
+          "intent": {
+            "intent": "commit_tactic",
+            "payload": {
+              "tactic": "by case: p{2}."
+            }
+          },
+          "intent_summary": "commit by case: p{2}",
+          "manager_action_summary": [
+            "tactic commit (1.4 s)"
+          ],
+          "manager_result_at": "2026-06-08T23:18:08+00:00",
+          "manager_result_path": "artifacts/eval_suite/medium4_l1_l4noprobe/l1_goal_projection/chacha_step2_1/r01/2026-06-08_1612_step2_1/iteration_1/node_memory/Tree_0_1/manager_results/turn_009.json",
+          "manager_seconds": 1.4,
+          "manager_time": "1.4 s",
+          "node": "Tree-0.1",
+          "node_dir": "artifacts/eval_suite/medium4_l1_l4noprobe/l1_goal_projection/chacha_step2_1/r01/2026-06-08_1612_step2_1/iteration_1/node_memory/Tree_0_1",
+          "ok": true,
+          "result_followup_path": "artifacts/eval_suite/medium4_l1_l4noprobe/l1_goal_projection/chacha_step2_1/r01/2026-06-08_1612_step2_1/iteration_1/node_memory/Tree_0_1/followups/turn_009.md",
+          "result_state_summary": "ambient / ambient_logic, 4 goals, goal 1081 chars",
+          "result_summary": "rejected commit: [error] parse error",
+          "result_view_path": "artifacts/eval_suite/medium4_l1_l4noprobe/l1_goal_projection/chacha_step2_1/r01/2026-06-08_1612_step2_1/iteration_1/node_memory/Tree_0_1/workspace_views/turn_009.json",
+          "turn": 9,
+          "usage": {
+            "cache_creation_input_tokens": 2356,
+            "cache_read_input_tokens": 78657,
+            "input_tokens": 2,
+            "output_tokens": 1224
+          },
+          "view_chars": 12257,
+          "view_id": "T0.1-9",
+          "workspace_view_path": "artifacts/eval_suite/medium4_l1_l4noprobe/l1_goal_projection/chacha_step2_1/r01/2026-06-08_1612_step2_1/iteration_1/node_memory/Tree_0_1/workspace_views/turn_008.json"
+        },
+        {
+          "action_submitted_at": "2026-06-08T23:18:13.762000+00:00",
+          "action_time": "+01:31",
+          "agent_think": "5.8 s",
+          "agent_think_path": "artifacts/eval_suite/medium4_l1_l4noprobe/l1_goal_projection/chacha_step2_1/r01/2026-06-08_1612_step2_1/iteration_1/node_memory/Tree_0_1/thinking/turn_010.md",
+          "agent_think_seconds": 5.762,
+          "decision_followup_path": "artifacts/eval_suite/medium4_l1_l4noprobe/l1_goal_projection/chacha_step2_1/r01/2026-06-08_1612_step2_1/iteration_1/node_memory/Tree_0_1/followups/turn_009.md",
+          "decision_state_summary": "ambient / ambient_logic, 4 goals, goal 1081 chars",
+          "decision_view_path": "artifacts/eval_suite/medium4_l1_l4noprobe/l1_goal_projection/chacha_step2_1/r01/2026-06-08_1612_step2_1/iteration_1/node_memory/Tree_0_1/workspace_views/turn_009.json",
+          "deterministic_signals": [
+            "commit_without_probe_check_not_inferred"
+          ],
+          "goal_chars": 1081,
+          "inspect_topics": [
+            "diagnose",
+            "goal_info",
+            "lemma_hints",
+            "tactic_forms"
+          ],
+          "intent": {
+            "intent": "commit_tactic",
+            "payload": {
+              "tactic": "smt()."
+            }
+          },
+          "intent_summary": "commit smt()",
+          "manager_action_summary": [
+            "tactic commit (238 ms)"
+          ],
+          "manager_result_at": "2026-06-08T23:18:14+00:00",
+          "manager_result_path": "artifacts/eval_suite/medium4_l1_l4noprobe/l1_goal_projection/chacha_step2_1/r01/2026-06-08_1612_step2_1/iteration_1/node_memory/Tree_0_1/manager_results/turn_010.json",
+          "manager_seconds": 0.238,
+          "manager_time": "238 ms",
+          "node": "Tree-0.1",
+          "node_dir": "artifacts/eval_suite/medium4_l1_l4noprobe/l1_goal_projection/chacha_step2_1/r01/2026-06-08_1612_step2_1/iteration_1/node_memory/Tree_0_1",
+          "ok": true,
+          "result_followup_path": "artifacts/eval_suite/medium4_l1_l4noprobe/l1_goal_projection/chacha_step2_1/r01/2026-06-08_1612_step2_1/iteration_1/node_memory/Tree_0_1/followups/turn_010.md",
+          "result_state_summary": "equiv / prhl_module / relational_program, 3 goals, goal 362 chars",
+          "result_summary": "accepted commit",
+          "result_view_path": "artifacts/eval_suite/medium4_l1_l4noprobe/l1_goal_projection/chacha_step2_1/r01/2026-06-08_1612_step2_1/iteration_1/node_memory/Tree_0_1/workspace_views/turn_010.json",
+          "turn": 10,
+          "usage": {
+            "cache_creation_input_tokens": 2773,
+            "cache_read_input_tokens": 81013,
+            "input_tokens": 2,
+            "output_tokens": 309
+          },
+          "view_chars": 12500,
+          "view_id": "T0.1-10",
+          "workspace_view_path": "artifacts/eval_suite/medium4_l1_l4noprobe/l1_goal_projection/chacha_step2_1/r01/2026-06-08_1612_step2_1/iteration_1/node_memory/Tree_0_1/workspace_views/turn_009.json"
+        },
+        {
+          "action_submitted_at": "2026-06-08T23:18:22.715000+00:00",
+          "action_time": "+01:40",
+          "agent_think": "8.7 s",
+          "agent_think_path": "artifacts/eval_suite/medium4_l1_l4noprobe/l1_goal_projection/chacha_step2_1/r01/2026-06-08_1612_step2_1/iteration_1/node_memory/Tree_0_1/thinking/turn_011.md",
+          "agent_think_seconds": 8.715,
+          "decision_followup_path": "artifacts/eval_suite/medium4_l1_l4noprobe/l1_goal_projection/chacha_step2_1/r01/2026-06-08_1612_step2_1/iteration_1/node_memory/Tree_0_1/followups/turn_010.md",
+          "decision_state_summary": "equiv / prhl_module / relational_program, 3 goals, goal 362 chars",
+          "decision_view_path": "artifacts/eval_suite/medium4_l1_l4noprobe/l1_goal_projection/chacha_step2_1/r01/2026-06-08_1612_step2_1/iteration_1/node_memory/Tree_0_1/workspace_views/turn_010.json",
+          "deterministic_signals": [
+            "commit_without_probe_check_not_inferred"
+          ],
+          "goal_chars": 362,
+          "inspect_topics": [
+            "hint",
+            "goal_info",
+            "call_site_options",
+            "call_invariant_skeleton",
+            "call_subgoals",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "align"
+          ],
+          "intent": {
+            "intent": "commit_tactic",
+            "payload": {
+              "tactic": "proc; inline *."
+            }
+          },
+          "intent_summary": "commit proc; inline *",
+          "manager_action_summary": [
+            "tactic commit (285 ms)"
+          ],
+          "manager_result_at": "2026-06-08T23:18:23+00:00",
+          "manager_result_path": "artifacts/eval_suite/medium4_l1_l4noprobe/l1_goal_projection/chacha_step2_1/r01/2026-06-08_1612_step2_1/iteration_1/node_memory/Tree_0_1/manager_results/turn_011.json",
+          "manager_seconds": 0.285,
+          "manager_time": "285 ms",
+          "node": "Tree-0.1",
+          "node_dir": "artifacts/eval_suite/medium4_l1_l4noprobe/l1_goal_projection/chacha_step2_1/r01/2026-06-08_1612_step2_1/iteration_1/node_memory/Tree_0_1",
+          "ok": true,
+          "result_followup_path": "artifacts/eval_suite/medium4_l1_l4noprobe/l1_goal_projection/chacha_step2_1/r01/2026-06-08_1612_step2_1/iteration_1/node_memory/Tree_0_1/followups/turn_011.md",
+          "result_state_summary": "pRHL / procedure_body / relational_program, 3 goals, goal 2126 chars",
+          "result_summary": "accepted commit",
+          "result_view_path": "artifacts/eval_suite/medium4_l1_l4noprobe/l1_goal_projection/chacha_step2_1/r01/2026-06-08_1612_step2_1/iteration_1/node_memory/Tree_0_1/workspace_views/turn_011.json",
+          "turn": 11,
+          "usage": {
+            "cache_creation_input_tokens": 1364,
+            "cache_read_input_tokens": 83786,
+            "input_tokens": 2,
+            "output_tokens": 470
+          },
+          "view_chars": 10327,
+          "view_id": "T0.1-11",
+          "workspace_view_path": "artifacts/eval_suite/medium4_l1_l4noprobe/l1_goal_projection/chacha_step2_1/r01/2026-06-08_1612_step2_1/iteration_1/node_memory/Tree_0_1/workspace_views/turn_010.json"
+        },
+        {
+          "action_submitted_at": "2026-06-08T23:18:29.803000+00:00",
+          "action_time": "+01:47",
+          "agent_think": "6.8 s",
+          "agent_think_path": "artifacts/eval_suite/medium4_l1_l4noprobe/l1_goal_projection/chacha_step2_1/r01/2026-06-08_1612_step2_1/iteration_1/node_memory/Tree_0_1/thinking/turn_012.md",
+          "agent_think_seconds": 6.803,
+          "decision_followup_path": "artifacts/eval_suite/medium4_l1_l4noprobe/l1_goal_projection/chacha_step2_1/r01/2026-06-08_1612_step2_1/iteration_1/node_memory/Tree_0_1/followups/turn_011.md",
+          "decision_state_summary": "pRHL / procedure_body / relational_program, 3 goals, goal 2126 chars",
+          "decision_view_path": "artifacts/eval_suite/medium4_l1_l4noprobe/l1_goal_projection/chacha_step2_1/r01/2026-06-08_1612_step2_1/iteration_1/node_memory/Tree_0_1/workspace_views/turn_011.json",
+          "deterministic_signals": [
+            "commit_without_probe_check_not_inferred"
+          ],
+          "goal_chars": 2126,
+          "inspect_topics": [
+            "goal_info",
+            "call_site_options",
+            "call_invariant_skeleton",
+            "call_subgoals",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "align"
+          ],
+          "intent": {
+            "intent": "commit_tactic",
+            "payload": {
+              "tactic": "wp; skip => />."
+            }
+          },
+          "intent_summary": "commit wp; skip => />",
+          "manager_action_summary": [
+            "tactic commit (197 ms)"
+          ],
+          "manager_result_at": "2026-06-08T23:18:30+00:00",
+          "manager_result_path": "artifacts/eval_suite/medium4_l1_l4noprobe/l1_goal_projection/chacha_step2_1/r01/2026-06-08_1612_step2_1/iteration_1/node_memory/Tree_0_1/manager_results/turn_012.json",
+          "manager_seconds": 0.197,
+          "manager_time": "197 ms",
+          "node": "Tree-0.1",
+          "node_dir": "artifacts/eval_suite/medium4_l1_l4noprobe/l1_goal_projection/chacha_step2_1/r01/2026-06-08_1612_step2_1/iteration_1/node_memory/Tree_0_1",
+          "ok": true,
+          "result_followup_path": "artifacts/eval_suite/medium4_l1_l4noprobe/l1_goal_projection/chacha_step2_1/r01/2026-06-08_1612_step2_1/iteration_1/node_memory/Tree_0_1/followups/turn_012.md",
+          "result_state_summary": "ambient / ambient_logic, 3 goals, goal 775 chars",
+          "result_summary": "accepted commit",
+          "result_view_path": "artifacts/eval_suite/medium4_l1_l4noprobe/l1_goal_projection/chacha_step2_1/r01/2026-06-08_1612_step2_1/iteration_1/node_memory/Tree_0_1/workspace_views/turn_012.json",
+          "turn": 12,
+          "usage": {
+            "cache_creation_input_tokens": 2211,
+            "cache_read_input_tokens": 85150,
+            "input_tokens": 2,
+            "output_tokens": 379
+          },
+          "view_chars": 22221,
+          "view_id": "T0.1-12",
+          "workspace_view_path": "artifacts/eval_suite/medium4_l1_l4noprobe/l1_goal_projection/chacha_step2_1/r01/2026-06-08_1612_step2_1/iteration_1/node_memory/Tree_0_1/workspace_views/turn_011.json"
+        },
+        {
+          "action_submitted_at": "2026-06-08T23:18:39.704000+00:00",
+          "action_time": "+01:57",
+          "agent_think": "9.7 s",
+          "agent_think_path": "artifacts/eval_suite/medium4_l1_l4noprobe/l1_goal_projection/chacha_step2_1/r01/2026-06-08_1612_step2_1/iteration_1/node_memory/Tree_0_1/thinking/turn_013.md",
+          "agent_think_seconds": 9.704,
+          "decision_followup_path": "artifacts/eval_suite/medium4_l1_l4noprobe/l1_goal_projection/chacha_step2_1/r01/2026-06-08_1612_step2_1/iteration_1/node_memory/Tree_0_1/followups/turn_012.md",
+          "decision_state_summary": "ambient / ambient_logic, 3 goals, goal 775 chars",
+          "decision_view_path": "artifacts/eval_suite/medium4_l1_l4noprobe/l1_goal_projection/chacha_step2_1/r01/2026-06-08_1612_step2_1/iteration_1/node_memory/Tree_0_1/workspace_views/turn_012.json",
+          "deterministic_signals": [
+            "commit_without_probe_check_not_inferred"
+          ],
+          "goal_chars": 775,
+          "inspect_topics": [
+            "goal_info",
+            "lemma_hints",
+            "tactic_forms"
+          ],
+          "intent": {
+            "intent": "commit_tactic",
+            "payload": {
+              "tactic": "move=> &2; rewrite /dec /get /=; smt()."
+            }
+          },
+          "intent_summary": "commit move=> &2; rewrite /dec /get /=; smt()",
+          "manager_action_summary": [
+            "tactic commit (296 ms)"
+          ],
+          "manager_result_at": "2026-06-08T23:18:40+00:00",
+          "manager_result_path": "artifacts/eval_suite/medium4_l1_l4noprobe/l1_goal_projection/chacha_step2_1/r01/2026-06-08_1612_step2_1/iteration_1/node_memory/Tree_0_1/manager_results/turn_013.json",
+          "manager_seconds": 0.296,
+          "manager_time": "296 ms",
+          "node": "Tree-0.1",
+          "node_dir": "artifacts/eval_suite/medium4_l1_l4noprobe/l1_goal_projection/chacha_step2_1/r01/2026-06-08_1612_step2_1/iteration_1/node_memory/Tree_0_1",
+          "ok": true,
+          "result_followup_path": "artifacts/eval_suite/medium4_l1_l4noprobe/l1_goal_projection/chacha_step2_1/r01/2026-06-08_1612_step2_1/iteration_1/node_memory/Tree_0_1/followups/turn_013.md",
+          "result_state_summary": "pRHL / procedure_body / relational_program, 2 goals, goal 612 chars",
+          "result_summary": "accepted commit",
+          "result_view_path": "artifacts/eval_suite/medium4_l1_l4noprobe/l1_goal_projection/chacha_step2_1/r01/2026-06-08_1612_step2_1/iteration_1/node_memory/Tree_0_1/workspace_views/turn_013.json",
+          "turn": 13,
+          "usage": {
+            "cache_creation_input_tokens": 1694,
+            "cache_read_input_tokens": 87361,
+            "input_tokens": 2,
+            "output_tokens": 527
+          },
+          "view_chars": 12465,
+          "view_id": "T0.1-13",
+          "workspace_view_path": "artifacts/eval_suite/medium4_l1_l4noprobe/l1_goal_projection/chacha_step2_1/r01/2026-06-08_1612_step2_1/iteration_1/node_memory/Tree_0_1/workspace_views/turn_012.json"
+        },
+        {
+          "action_submitted_at": "2026-06-08T23:19:22.600000+00:00",
+          "action_time": "+02:40",
+          "agent_think": "42.6 s",
+          "agent_think_path": "artifacts/eval_suite/medium4_l1_l4noprobe/l1_goal_projection/chacha_step2_1/r01/2026-06-08_1612_step2_1/iteration_1/node_memory/Tree_0_1/thinking/turn_014.md",
+          "agent_think_seconds": 42.6,
+          "decision_followup_path": "artifacts/eval_suite/medium4_l1_l4noprobe/l1_goal_projection/chacha_step2_1/r01/2026-06-08_1612_step2_1/iteration_1/node_memory/Tree_0_1/followups/turn_013.md",
+          "decision_state_summary": "pRHL / procedure_body / relational_program, 2 goals, goal 612 chars",
+          "decision_view_path": "artifacts/eval_suite/medium4_l1_l4noprobe/l1_goal_projection/chacha_step2_1/r01/2026-06-08_1612_step2_1/iteration_1/node_memory/Tree_0_1/workspace_views/turn_013.json",
+          "deterministic_signals": [
+            "commit_without_probe_check_not_inferred",
+            "manager_error:[error] cannot infer the set of equalities",
+            "commit_no_state_change"
+          ],
+          "goal_chars": 612,
+          "inspect_topics": [
+            "goal_info",
+            "call_site_options",
+            "call_invariant_skeleton",
+            "call_subgoals",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "align"
+          ],
+          "intent": {
+            "intent": "commit_tactic",
+            "payload": {
+              "tactic": "inline *; sim."
+            }
+          },
+          "intent_summary": "commit inline *; sim",
+          "manager_action_summary": [
+            "tactic commit (1.4 s)"
+          ],
+          "manager_result_at": "2026-06-08T23:19:24+00:00",
+          "manager_result_path": "artifacts/eval_suite/medium4_l1_l4noprobe/l1_goal_projection/chacha_step2_1/r01/2026-06-08_1612_step2_1/iteration_1/node_memory/Tree_0_1/manager_results/turn_014.json",
+          "manager_seconds": 1.4,
+          "manager_time": "1.4 s",
+          "node": "Tree-0.1",
+          "node_dir": "artifacts/eval_suite/medium4_l1_l4noprobe/l1_goal_projection/chacha_step2_1/r01/2026-06-08_1612_step2_1/iteration_1/node_memory/Tree_0_1",
+          "ok": true,
+          "result_followup_path": "artifacts/eval_suite/medium4_l1_l4noprobe/l1_goal_projection/chacha_step2_1/r01/2026-06-08_1612_step2_1/iteration_1/node_memory/Tree_0_1/followups/turn_014.md",
+          "result_state_summary": "pRHL / procedure_body / relational_program, 2 goals, goal 612 chars",
+          "result_summary": "rejected commit: [error] cannot infer the set of equalities",
+          "result_view_path": "artifacts/eval_suite/medium4_l1_l4noprobe/l1_goal_projection/chacha_step2_1/r01/2026-06-08_1612_step2_1/iteration_1/node_memory/Tree_0_1/workspace_views/turn_014.json",
+          "turn": 14,
+          "usage": {
+            "cache_creation_input_tokens": 1729,
+            "cache_read_input_tokens": 89055,
+            "input_tokens": 2,
+            "output_tokens": 3028
+          },
+          "view_chars": 21306,
+          "view_id": "T0.1-14",
+          "workspace_view_path": "artifacts/eval_suite/medium4_l1_l4noprobe/l1_goal_projection/chacha_step2_1/r01/2026-06-08_1612_step2_1/iteration_1/node_memory/Tree_0_1/workspace_views/turn_013.json"
+        },
+        {
+          "action_submitted_at": "2026-06-08T23:19:38.645000+00:00",
+          "action_time": "+02:56",
+          "agent_think": "14.6 s",
+          "agent_think_path": "artifacts/eval_suite/medium4_l1_l4noprobe/l1_goal_projection/chacha_step2_1/r01/2026-06-08_1612_step2_1/iteration_1/node_memory/Tree_0_1/thinking/turn_015.md",
+          "agent_think_seconds": 14.645,
+          "decision_followup_path": "artifacts/eval_suite/medium4_l1_l4noprobe/l1_goal_projection/chacha_step2_1/r01/2026-06-08_1612_step2_1/iteration_1/node_memory/Tree_0_1/followups/turn_014.md",
+          "decision_state_summary": "pRHL / procedure_body / relational_program, 2 goals, goal 612 chars",
+          "decision_view_path": "artifacts/eval_suite/medium4_l1_l4noprobe/l1_goal_projection/chacha_step2_1/r01/2026-06-08_1612_step2_1/iteration_1/node_memory/Tree_0_1/workspace_views/turn_014.json",
+          "deterministic_signals": [
+            "commit_without_probe_check_not_inferred"
+          ],
+          "goal_chars": 612,
+          "inspect_topics": [
+            "diagnose",
+            "goal_info",
+            "call_site_options",
+            "call_invariant_skeleton",
+            "call_subgoals",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "align"
+          ],
+          "intent": {
+            "intent": "commit_tactic",
+            "payload": {
+              "tactic": "conseq (_ : _ ==> ={glob A} /\\ Mem.k{1} = Mem.k{2} /\\ OCC.gs{1} = StLSke.gs{2})."
+            }
+          },
+          "intent_summary": "commit conseq (_ : _ ==> ={glob A} /\\ Mem.k{1} = Mem.k{2} /\\ OCC.gs{1} = StL...",
+          "manager_action_summary": [
+            "tactic commit (355 ms)"
+          ],
+          "manager_result_at": "2026-06-08T23:19:39+00:00",
+          "manager_result_path": "artifacts/eval_suite/medium4_l1_l4noprobe/l1_goal_projection/chacha_step2_1/r01/2026-06-08_1612_step2_1/iteration_1/node_memory/Tree_0_1/manager_results/turn_015.json",
+          "manager_seconds": 0.355,
+          "manager_time": "355 ms",
+          "node": "Tree-0.1",
+          "node_dir": "artifacts/eval_suite/medium4_l1_l4noprobe/l1_goal_projection/chacha_step2_1/r01/2026-06-08_1612_step2_1/iteration_1/node_memory/Tree_0_1",
+          "ok": true,
+          "result_followup_path": "artifacts/eval_suite/medium4_l1_l4noprobe/l1_goal_projection/chacha_step2_1/r01/2026-06-08_1612_step2_1/iteration_1/node_memory/Tree_0_1/followups/turn_015.md",
+          "result_state_summary": "ambient / ambient_logic / relational_program, 3 goals, goal 571 chars",
+          "result_summary": "accepted commit",
+          "result_view_path": "artifacts/eval_suite/medium4_l1_l4noprobe/l1_goal_projection/chacha_step2_1/r01/2026-06-08_1612_step2_1/iteration_1/node_memory/Tree_0_1/workspace_views/turn_015.json",
+          "turn": 15,
+          "usage": {
+            "cache_creation_input_tokens": 4264,
+            "cache_read_input_tokens": 90784,
+            "input_tokens": 2,
+            "output_tokens": 913
+          },
+          "view_chars": 21583,
+          "view_id": "T0.1-15",
+          "workspace_view_path": "artifacts/eval_suite/medium4_l1_l4noprobe/l1_goal_projection/chacha_step2_1/r01/2026-06-08_1612_step2_1/iteration_1/node_memory/Tree_0_1/workspace_views/turn_014.json"
+        },
+        {
+          "action_submitted_at": "2026-06-08T23:19:46.710000+00:00",
+          "action_time": "+03:04",
+          "agent_think": "7.7 s",
+          "agent_think_path": "artifacts/eval_suite/medium4_l1_l4noprobe/l1_goal_projection/chacha_step2_1/r01/2026-06-08_1612_step2_1/iteration_1/node_memory/Tree_0_1/thinking/turn_016.md",
+          "agent_think_seconds": 7.71,
+          "decision_followup_path": "artifacts/eval_suite/medium4_l1_l4noprobe/l1_goal_projection/chacha_step2_1/r01/2026-06-08_1612_step2_1/iteration_1/node_memory/Tree_0_1/followups/turn_015.md",
+          "decision_state_summary": "ambient / ambient_logic / relational_program, 3 goals, goal 571 chars",
+          "decision_view_path": "artifacts/eval_suite/medium4_l1_l4noprobe/l1_goal_projection/chacha_step2_1/r01/2026-06-08_1612_step2_1/iteration_1/node_memory/Tree_0_1/workspace_views/turn_015.json",
+          "deterministic_signals": [
+            "commit_without_probe_check_not_inferred"
+          ],
+          "goal_chars": 571,
+          "inspect_topics": [
+            "goal_info",
+            "call_site_options",
+            "call_invariant_skeleton",
+            "call_subgoals",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "align"
+          ],
+          "intent": {
+            "intent": "commit_tactic",
+            "payload": {
+              "tactic": "by move=> />."
+            }
+          },
+          "intent_summary": "commit by move=> />",
+          "manager_action_summary": [
+            "tactic commit (290 ms)"
+          ],
+          "manager_result_at": "2026-06-08T23:19:47+00:00",
+          "manager_result_path": "artifacts/eval_suite/medium4_l1_l4noprobe/l1_goal_projection/chacha_step2_1/r01/2026-06-08_1612_step2_1/iteration_1/node_memory/Tree_0_1/manager_results/turn_016.json",
+          "manager_seconds": 0.29,
+          "manager_time": "290 ms",
+          "node": "Tree-0.1",
+          "node_dir": "artifacts/eval_suite/medium4_l1_l4noprobe/l1_goal_projection/chacha_step2_1/r01/2026-06-08_1612_step2_1/iteration_1/node_memory/Tree_0_1",
+          "ok": true,
+          "result_followup_path": "artifacts/eval_suite/medium4_l1_l4noprobe/l1_goal_projection/chacha_step2_1/r01/2026-06-08_1612_step2_1/iteration_1/node_memory/Tree_0_1/followups/turn_016.md",
+          "result_state_summary": "pRHL / procedure_body / relational_program, 2 goals, goal 418 chars",
+          "result_summary": "accepted commit",
+          "result_view_path": "artifacts/eval_suite/medium4_l1_l4noprobe/l1_goal_projection/chacha_step2_1/r01/2026-06-08_1612_step2_1/iteration_1/node_memory/Tree_0_1/workspace_views/turn_016.json",
+          "turn": 16,
+          "usage": {
+            "cache_creation_input_tokens": 2117,
+            "cache_read_input_tokens": 95048,
+            "input_tokens": 2,
+            "output_tokens": 299
+          },
+          "view_chars": 13399,
+          "view_id": "T0.1-16",
+          "workspace_view_path": "artifacts/eval_suite/medium4_l1_l4noprobe/l1_goal_projection/chacha_step2_1/r01/2026-06-08_1612_step2_1/iteration_1/node_memory/Tree_0_1/workspace_views/turn_015.json"
+        },
+        {
+          "action_submitted_at": "2026-06-08T23:19:52.307000+00:00",
+          "action_time": "+03:10",
+          "agent_think": "5.3 s",
+          "agent_think_path": "artifacts/eval_suite/medium4_l1_l4noprobe/l1_goal_projection/chacha_step2_1/r01/2026-06-08_1612_step2_1/iteration_1/node_memory/Tree_0_1/thinking/turn_017.md",
+          "agent_think_seconds": 5.307,
+          "decision_followup_path": "artifacts/eval_suite/medium4_l1_l4noprobe/l1_goal_projection/chacha_step2_1/r01/2026-06-08_1612_step2_1/iteration_1/node_memory/Tree_0_1/followups/turn_016.md",
+          "decision_state_summary": "pRHL / procedure_body / relational_program, 2 goals, goal 418 chars",
+          "decision_view_path": "artifacts/eval_suite/medium4_l1_l4noprobe/l1_goal_projection/chacha_step2_1/r01/2026-06-08_1612_step2_1/iteration_1/node_memory/Tree_0_1/workspace_views/turn_016.json",
+          "deterministic_signals": [
+            "commit_without_probe_check_not_inferred"
+          ],
+          "goal_chars": 418,
+          "inspect_topics": [
+            "goal_info",
+            "call_site_options",
+            "call_invariant_skeleton",
+            "call_subgoals",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "align"
+          ],
+          "intent": {
+            "intent": "commit_tactic",
+            "payload": {
+              "tactic": "inline *; sim."
+            }
+          },
+          "intent_summary": "commit inline *; sim",
+          "manager_action_summary": [
+            "tactic commit (693 ms)"
+          ],
+          "manager_result_at": "2026-06-08T23:19:53+00:00",
+          "manager_result_path": "artifacts/eval_suite/medium4_l1_l4noprobe/l1_goal_projection/chacha_step2_1/r01/2026-06-08_1612_step2_1/iteration_1/node_memory/Tree_0_1/manager_results/turn_017.json",
+          "manager_seconds": 0.693,
+          "manager_time": "693 ms",
+          "node": "Tree-0.1",
+          "node_dir": "artifacts/eval_suite/medium4_l1_l4noprobe/l1_goal_projection/chacha_step2_1/r01/2026-06-08_1612_step2_1/iteration_1/node_memory/Tree_0_1",
+          "ok": true,
+          "result_followup_path": "artifacts/eval_suite/medium4_l1_l4noprobe/l1_goal_projection/chacha_step2_1/r01/2026-06-08_1612_step2_1/iteration_1/node_memory/Tree_0_1/followups/turn_017.md",
+          "result_state_summary": "probability / pr / probability, 1 goal, goal 555 chars",
+          "result_summary": "accepted commit",
+          "result_view_path": "artifacts/eval_suite/medium4_l1_l4noprobe/l1_goal_projection/chacha_step2_1/r01/2026-06-08_1612_step2_1/iteration_1/node_memory/Tree_0_1/workspace_views/turn_017.json",
+          "turn": 17,
+          "usage": {
+            "cache_creation_input_tokens": 1531,
+            "cache_read_input_tokens": 97165,
+            "input_tokens": 2,
+            "output_tokens": 172
+          },
+          "view_chars": 18939,
+          "view_id": "T0.1-17",
+          "workspace_view_path": "artifacts/eval_suite/medium4_l1_l4noprobe/l1_goal_projection/chacha_step2_1/r01/2026-06-08_1612_step2_1/iteration_1/node_memory/Tree_0_1/workspace_views/turn_016.json"
+        },
+        {
+          "action_submitted_at": "2026-06-08T23:19:58.360000+00:00",
+          "action_time": "+03:16",
+          "agent_think": "5.4 s",
+          "agent_think_path": "artifacts/eval_suite/medium4_l1_l4noprobe/l1_goal_projection/chacha_step2_1/r01/2026-06-08_1612_step2_1/iteration_1/node_memory/Tree_0_1/thinking/turn_018.md",
+          "agent_think_seconds": 5.36,
+          "decision_followup_path": "artifacts/eval_suite/medium4_l1_l4noprobe/l1_goal_projection/chacha_step2_1/r01/2026-06-08_1612_step2_1/iteration_1/node_memory/Tree_0_1/followups/turn_017.md",
+          "decision_state_summary": "probability / pr / probability, 1 goal, goal 555 chars",
+          "decision_view_path": "artifacts/eval_suite/medium4_l1_l4noprobe/l1_goal_projection/chacha_step2_1/r01/2026-06-08_1612_step2_1/iteration_1/node_memory/Tree_0_1/workspace_views/turn_017.json",
+          "deterministic_signals": [
+            "commit_without_probe_check_not_inferred"
+          ],
+          "goal_chars": 555,
+          "inspect_topics": [
+            "hint",
+            "goal_info",
+            "pr_bridge_routes",
+            "equiv_bridge_lemmas",
+            "lemma_hints",
+            "tactic_forms"
+          ],
+          "intent": {
+            "intent": "commit_tactic",
+            "payload": {
+              "tactic": "rewrite hL."
+            }
+          },
+          "intent_summary": "commit rewrite hL",
+          "manager_action_summary": [
+            "tactic commit (640 ms)"
+          ],
+          "manager_result_at": "2026-06-08T23:19:59+00:00",
+          "manager_result_path": "artifacts/eval_suite/medium4_l1_l4noprobe/l1_goal_projection/chacha_step2_1/r01/2026-06-08_1612_step2_1/iteration_1/node_memory/Tree_0_1/manager_results/turn_018.json",
+          "manager_seconds": 0.64,
+          "manager_time": "640 ms",
+          "node": "Tree-0.1",
+          "node_dir": "artifacts/eval_suite/medium4_l1_l4noprobe/l1_goal_projection/chacha_step2_1/r01/2026-06-08_1612_step2_1/iteration_1/node_memory/Tree_0_1",
+          "ok": true,
+          "result_followup_path": "artifacts/eval_suite/medium4_l1_l4noprobe/l1_goal_projection/chacha_step2_1/r01/2026-06-08_1612_step2_1/iteration_1/node_memory/Tree_0_1/followups/turn_018.md",
+          "result_state_summary": "probability / pr / probability, 1 goal, goal 546 chars",
+          "result_summary": "accepted commit",
+          "result_view_path": "artifacts/eval_suite/medium4_l1_l4noprobe/l1_goal_projection/chacha_step2_1/r01/2026-06-08_1612_step2_1/iteration_1/node_memory/Tree_0_1/workspace_views/turn_018.json",
+          "turn": 18,
+          "usage": {
+            "cache_creation_input_tokens": 1332,
+            "cache_read_input_tokens": 98696,
+            "input_tokens": 2,
+            "output_tokens": 385
+          },
+          "view_chars": 10096,
+          "view_id": "T0.1-18",
+          "workspace_view_path": "artifacts/eval_suite/medium4_l1_l4noprobe/l1_goal_projection/chacha_step2_1/r01/2026-06-08_1612_step2_1/iteration_1/node_memory/Tree_0_1/workspace_views/turn_017.json"
+        },
+        {
+          "action_submitted_at": "2026-06-08T23:20:14.100000+00:00",
+          "action_time": "+03:31",
+          "agent_think": "15.1 s",
+          "agent_think_path": "artifacts/eval_suite/medium4_l1_l4noprobe/l1_goal_projection/chacha_step2_1/r01/2026-06-08_1612_step2_1/iteration_1/node_memory/Tree_0_1/thinking/turn_019.md",
+          "agent_think_seconds": 15.1,
+          "decision_followup_path": "artifacts/eval_suite/medium4_l1_l4noprobe/l1_goal_projection/chacha_step2_1/r01/2026-06-08_1612_step2_1/iteration_1/node_memory/Tree_0_1/followups/turn_018.md",
+          "decision_state_summary": "probability / pr / probability, 1 goal, goal 546 chars",
+          "decision_view_path": "artifacts/eval_suite/medium4_l1_l4noprobe/l1_goal_projection/chacha_step2_1/r01/2026-06-08_1612_step2_1/iteration_1/node_memory/Tree_0_1/workspace_views/turn_018.json",
+          "deterministic_signals": [
+            "commit_without_probe_check_not_inferred",
+            "manager_error:[error] expecting a `proof-term', not a `formula'",
+            "commit_no_state_change"
+          ],
+          "goal_chars": 546,
+          "inspect_topics": [
+            "hint",
+            "goal_info",
+            "pr_bridge_routes",
+            "equiv_bridge_lemmas",
+            "lemma_hints",
+            "tactic_forms"
+          ],
+          "intent": {
+            "intent": "commit_tactic",
+            "payload": {
+              "tactic": "apply (CCA_UFCMA.CCA_CPA_UFCMA St A &m)."
+            }
+          },
+          "intent_summary": "commit apply (CCA_UFCMA.CCA_CPA_UFCMA St A &m)",
+          "manager_action_summary": [
+            "tactic commit (1.9 s)"
+          ],
+          "manager_result_at": "2026-06-08T23:20:16+00:00",
+          "manager_result_path": "artifacts/eval_suite/medium4_l1_l4noprobe/l1_goal_projection/chacha_step2_1/r01/2026-06-08_1612_step2_1/iteration_1/node_memory/Tree_0_1/manager_results/turn_019.json",
+          "manager_seconds": 1.9,
+          "manager_time": "1.9 s",
+          "node": "Tree-0.1",
+          "node_dir": "artifacts/eval_suite/medium4_l1_l4noprobe/l1_goal_projection/chacha_step2_1/r01/2026-06-08_1612_step2_1/iteration_1/node_memory/Tree_0_1",
+          "ok": true,
+          "result_followup_path": "artifacts/eval_suite/medium4_l1_l4noprobe/l1_goal_projection/chacha_step2_1/r01/2026-06-08_1612_step2_1/iteration_1/node_memory/Tree_0_1/followups/turn_019.md",
+          "result_state_summary": "probability / pr / probability, 1 goal, goal 546 chars",
+          "result_summary": "rejected commit: [error] expecting a `proof-term', not a `formula'",
+          "result_view_path": "artifacts/eval_suite/medium4_l1_l4noprobe/l1_goal_projection/chacha_step2_1/r01/2026-06-08_1612_step2_1/iteration_1/node_memory/Tree_0_1/workspace_views/turn_019.json",
+          "turn": 19,
+          "usage": {
+            "cache_creation_input_tokens": 1537,
+            "cache_read_input_tokens": 100028,
+            "input_tokens": 2,
+            "output_tokens": 1004
+          },
+          "view_chars": 10072,
+          "view_id": "T0.1-19",
+          "workspace_view_path": "artifacts/eval_suite/medium4_l1_l4noprobe/l1_goal_projection/chacha_step2_1/r01/2026-06-08_1612_step2_1/iteration_1/node_memory/Tree_0_1/workspace_views/turn_018.json"
+        },
+        {
+          "action_submitted_at": "2026-06-08T23:20:31.727000+00:00",
+          "action_time": "+03:49",
+          "agent_think": "15.7 s",
+          "agent_think_path": "artifacts/eval_suite/medium4_l1_l4noprobe/l1_goal_projection/chacha_step2_1/r01/2026-06-08_1612_step2_1/iteration_1/node_memory/Tree_0_1/thinking/turn_020.md",
+          "agent_think_seconds": 15.727,
+          "decision_followup_path": "artifacts/eval_suite/medium4_l1_l4noprobe/l1_goal_projection/chacha_step2_1/r01/2026-06-08_1612_step2_1/iteration_1/node_memory/Tree_0_1/followups/turn_019.md",
+          "decision_state_summary": "probability / pr / probability, 1 goal, goal 546 chars",
+          "decision_view_path": "artifacts/eval_suite/medium4_l1_l4noprobe/l1_goal_projection/chacha_step2_1/r01/2026-06-08_1612_step2_1/iteration_1/node_memory/Tree_0_1/workspace_views/turn_019.json",
+          "deterministic_signals": [
+            "commit_without_probe_check_not_inferred"
+          ],
+          "goal_chars": 546,
+          "inspect_topics": [
+            "diagnose",
+            "hint",
+            "goal_info",
+            "pr_bridge_routes",
+            "equiv_bridge_lemmas",
+            "lemma_hints",
+            "tactic_forms"
+          ],
+          "intent": {
+            "intent": "commit_tactic",
+            "payload": {
+              "tactic": "apply (CCA_UFCMA.CCA_CPA_UFCMA St _ _ A _ &m)."
+            }
+          },
+          "intent_summary": "commit apply (CCA_UFCMA.CCA_CPA_UFCMA St _ _ A _ &m)",
+          "manager_action_summary": [
+            "tactic commit (273 ms)"
+          ],
+          "manager_result_at": "2026-06-08T23:20:32+00:00",
+          "manager_result_path": "artifacts/eval_suite/medium4_l1_l4noprobe/l1_goal_projection/chacha_step2_1/r01/2026-06-08_1612_step2_1/iteration_1/node_memory/Tree_0_1/manager_results/turn_020.json",
+          "manager_seconds": 0.273,
+          "manager_time": "273 ms",
+          "node": "Tree-0.1",
+          "node_dir": "artifacts/eval_suite/medium4_l1_l4noprobe/l1_goal_projection/chacha_step2_1/r01/2026-06-08_1612_step2_1/iteration_1/node_memory/Tree_0_1",
+          "ok": true,
+          "result_followup_path": "artifacts/eval_suite/medium4_l1_l4noprobe/l1_goal_projection/chacha_step2_1/r01/2026-06-08_1612_step2_1/iteration_1/node_memory/Tree_0_1/followups/turn_020.md",
+          "result_state_summary": "equiv / prhl_module / relational_program, 3 goals, goal 358 chars",
+          "result_summary": "accepted commit",
+          "result_view_path": "artifacts/eval_suite/medium4_l1_l4noprobe/l1_goal_projection/chacha_step2_1/r01/2026-06-08_1612_step2_1/iteration_1/node_memory/Tree_0_1/workspace_views/turn_020.json",
+          "turn": 20,
+          "usage": {
+            "cache_creation_input_tokens": 2233,
+            "cache_read_input_tokens": 101565,
+            "input_tokens": 2,
+            "output_tokens": 1100
+          },
+          "view_chars": 10464,
+          "view_id": "T0.1-20",
+          "workspace_view_path": "artifacts/eval_suite/medium4_l1_l4noprobe/l1_goal_projection/chacha_step2_1/r01/2026-06-08_1612_step2_1/iteration_1/node_memory/Tree_0_1/workspace_views/turn_019.json"
+        },
+        {
+          "action_submitted_at": "2026-06-08T23:20:45.751000+00:00",
+          "action_time": "+04:03",
+          "agent_think": "13.8 s",
+          "agent_think_path": "artifacts/eval_suite/medium4_l1_l4noprobe/l1_goal_projection/chacha_step2_1/r01/2026-06-08_1612_step2_1/iteration_1/node_memory/Tree_0_1/thinking/turn_021.md",
+          "agent_think_seconds": 13.751,
+          "decision_followup_path": "artifacts/eval_suite/medium4_l1_l4noprobe/l1_goal_projection/chacha_step2_1/r01/2026-06-08_1612_step2_1/iteration_1/node_memory/Tree_0_1/followups/turn_020.md",
+          "decision_state_summary": "equiv / prhl_module / relational_program, 3 goals, goal 358 chars",
+          "decision_view_path": "artifacts/eval_suite/medium4_l1_l4noprobe/l1_goal_projection/chacha_step2_1/r01/2026-06-08_1612_step2_1/iteration_1/node_memory/Tree_0_1/workspace_views/turn_020.json",
+          "deterministic_signals": [
+            "commit_without_probe_check_not_inferred"
+          ],
+          "goal_chars": 358,
+          "inspect_topics": [
+            "hint",
+            "goal_info",
+            "call_site_options",
+            "call_invariant_skeleton",
+            "call_subgoals",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "align"
+          ],
+          "intent": {
+            "intent": "commit_tactic",
+            "payload": {
+              "tactic": "sim."
+            }
+          },
+          "intent_summary": "commit sim",
+          "manager_action_summary": [
+            "tactic commit (249 ms)"
+          ],
+          "manager_result_at": "2026-06-08T23:20:46+00:00",
+          "manager_result_path": "artifacts/eval_suite/medium4_l1_l4noprobe/l1_goal_projection/chacha_step2_1/r01/2026-06-08_1612_step2_1/iteration_1/node_memory/Tree_0_1/manager_results/turn_021.json",
+          "manager_seconds": 0.249,
+          "manager_time": "249 ms",
+          "node": "Tree-0.1",
+          "node_dir": "artifacts/eval_suite/medium4_l1_l4noprobe/l1_goal_projection/chacha_step2_1/r01/2026-06-08_1612_step2_1/iteration_1/node_memory/Tree_0_1",
+          "ok": true,
+          "result_followup_path": "artifacts/eval_suite/medium4_l1_l4noprobe/l1_goal_projection/chacha_step2_1/r01/2026-06-08_1612_step2_1/iteration_1/node_memory/Tree_0_1/followups/turn_021.md",
+          "result_state_summary": "hoare / procedure_body / procedure_frontier, 2 goals, goal 315 chars",
+          "result_summary": "accepted commit",
+          "result_view_path": "artifacts/eval_suite/medium4_l1_l4noprobe/l1_goal_projection/chacha_step2_1/r01/2026-06-08_1612_step2_1/iteration_1/node_memory/Tree_0_1/workspace_views/turn_021.json",
+          "turn": 21,
+          "usage": {
+            "cache_creation_input_tokens": 2162,
+            "cache_read_input_tokens": 103798,
+            "input_tokens": 2,
+            "output_tokens": 824
+          },
+          "view_chars": 14648,
+          "view_id": "T0.1-21",
+          "workspace_view_path": "artifacts/eval_suite/medium4_l1_l4noprobe/l1_goal_projection/chacha_step2_1/r01/2026-06-08_1612_step2_1/iteration_1/node_memory/Tree_0_1/workspace_views/turn_020.json"
+        },
+        {
+          "action_submitted_at": "2026-06-08T23:20:52.732000+00:00",
+          "action_time": "+04:10",
+          "agent_think": "6.7 s",
+          "agent_think_path": "artifacts/eval_suite/medium4_l1_l4noprobe/l1_goal_projection/chacha_step2_1/r01/2026-06-08_1612_step2_1/iteration_1/node_memory/Tree_0_1/thinking/turn_022.md",
+          "agent_think_seconds": 6.732,
+          "decision_followup_path": "artifacts/eval_suite/medium4_l1_l4noprobe/l1_goal_projection/chacha_step2_1/r01/2026-06-08_1612_step2_1/iteration_1/node_memory/Tree_0_1/followups/turn_021.md",
+          "decision_state_summary": "hoare / procedure_body / procedure_frontier, 2 goals, goal 315 chars",
+          "decision_view_path": "artifacts/eval_suite/medium4_l1_l4noprobe/l1_goal_projection/chacha_step2_1/r01/2026-06-08_1612_step2_1/iteration_1/node_memory/Tree_0_1/workspace_views/turn_021.json",
+          "deterministic_signals": [
+            "commit_without_probe_check_not_inferred"
+          ],
+          "goal_chars": 315,
+          "inspect_topics": [
+            "hint",
+            "goal_info",
+            "call_site_options",
+            "call_subgoals",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms"
+          ],
+          "intent": {
+            "intent": "commit_tactic",
+            "payload": {
+              "tactic": "proc; auto."
+            }
+          },
+          "intent_summary": "commit proc; auto",
+          "manager_action_summary": [
+            "tactic commit (268 ms)"
+          ],
+          "manager_result_at": "2026-06-08T23:20:53+00:00",
+          "manager_result_path": "artifacts/eval_suite/medium4_l1_l4noprobe/l1_goal_projection/chacha_step2_1/r01/2026-06-08_1612_step2_1/iteration_1/node_memory/Tree_0_1/manager_results/turn_022.json",
+          "manager_seconds": 0.268,
+          "manager_time": "268 ms",
+          "node": "Tree-0.1",
+          "node_dir": "artifacts/eval_suite/medium4_l1_l4noprobe/l1_goal_projection/chacha_step2_1/r01/2026-06-08_1612_step2_1/iteration_1/node_memory/Tree_0_1",
+          "ok": true,
+          "result_followup_path": "artifacts/eval_suite/medium4_l1_l4noprobe/l1_goal_projection/chacha_step2_1/r01/2026-06-08_1612_step2_1/iteration_1/node_memory/Tree_0_1/followups/turn_022.md",
+          "result_state_summary": "ambient / ambient_logic, 1 goal, goal 357 chars",
+          "result_summary": "accepted commit",
+          "result_view_path": "artifacts/eval_suite/medium4_l1_l4noprobe/l1_goal_projection/chacha_step2_1/r01/2026-06-08_1612_step2_1/iteration_1/node_memory/Tree_0_1/workspace_views/turn_022.json",
+          "turn": 22,
+          "usage": {
+            "cache_creation_input_tokens": 1978,
+            "cache_read_input_tokens": 105960,
+            "input_tokens": 2,
+            "output_tokens": 411
+          },
+          "view_chars": 9593,
+          "view_id": "T0.1-22",
+          "workspace_view_path": "artifacts/eval_suite/medium4_l1_l4noprobe/l1_goal_projection/chacha_step2_1/r01/2026-06-08_1612_step2_1/iteration_1/node_memory/Tree_0_1/workspace_views/turn_021.json"
+        },
+        {
+          "action_submitted_at": "2026-06-08T23:20:56.812000+00:00",
+          "action_time": "+04:14",
+          "agent_think": "3.8 s",
+          "agent_think_path": "artifacts/eval_suite/medium4_l1_l4noprobe/l1_goal_projection/chacha_step2_1/r01/2026-06-08_1612_step2_1/iteration_1/node_memory/Tree_0_1/thinking/turn_023.md",
+          "agent_think_seconds": 3.812,
+          "decision_followup_path": "artifacts/eval_suite/medium4_l1_l4noprobe/l1_goal_projection/chacha_step2_1/r01/2026-06-08_1612_step2_1/iteration_1/node_memory/Tree_0_1/followups/turn_022.md",
+          "decision_state_summary": "ambient / ambient_logic, 1 goal, goal 357 chars",
+          "decision_view_path": "artifacts/eval_suite/medium4_l1_l4noprobe/l1_goal_projection/chacha_step2_1/r01/2026-06-08_1612_step2_1/iteration_1/node_memory/Tree_0_1/workspace_views/turn_022.json",
+          "deterministic_signals": [
+            "commit_without_probe_check_not_inferred"
+          ],
+          "goal_chars": 357,
+          "inspect_topics": [
+            "hint",
+            "goal_info",
+            "lemma_hints",
+            "tactic_forms"
+          ],
+          "intent": {
+            "intent": "commit_tactic",
+            "payload": {
+              "tactic": "apply A_ll."
+            }
+          },
+          "intent_summary": "commit apply A_ll",
+          "manager_action_summary": [
+            "tactic commit (188 ms)"
+          ],
+          "manager_result_at": "2026-06-08T23:20:57+00:00",
+          "manager_result_path": "artifacts/eval_suite/medium4_l1_l4noprobe/l1_goal_projection/chacha_step2_1/r01/2026-06-08_1612_step2_1/iteration_1/node_memory/Tree_0_1/manager_results/turn_023.json",
+          "manager_seconds": 0.188,
+          "manager_time": "188 ms",
+          "node": "Tree-0.1",
+          "node_dir": "artifacts/eval_suite/medium4_l1_l4noprobe/l1_goal_projection/chacha_step2_1/r01/2026-06-08_1612_step2_1/iteration_1/node_memory/Tree_0_1",
+          "ok": true,
+          "result_followup_path": "artifacts/eval_suite/medium4_l1_l4noprobe/l1_goal_projection/chacha_step2_1/r01/2026-06-08_1612_step2_1/iteration_1/node_memory/Tree_0_1/followups/turn_023.md",
+          "result_state_summary": "ambient / closed_candidate, goal 26 chars",
+          "result_summary": "accepted commit",
+          "result_view_path": "artifacts/eval_suite/medium4_l1_l4noprobe/l1_goal_projection/chacha_step2_1/r01/2026-06-08_1612_step2_1/iteration_1/node_memory/Tree_0_1/workspace_views/turn_023.json",
+          "turn": 23,
+          "usage": {
+            "cache_creation_input_tokens": 1433,
+            "cache_read_input_tokens": 107938,
+            "input_tokens": 2,
+            "output_tokens": 201
+          },
+          "view_chars": 10262,
+          "view_id": "T0.1-23",
+          "workspace_view_path": "artifacts/eval_suite/medium4_l1_l4noprobe/l1_goal_projection/chacha_step2_1/r01/2026-06-08_1612_step2_1/iteration_1/node_memory/Tree_0_1/workspace_views/turn_022.json"
+        },
+        {
+          "action_submitted_at": "2026-06-08T23:20:59.798000+00:00",
+          "action_time": "+04:17",
+          "agent_think": "2.8 s",
+          "agent_think_path": "artifacts/eval_suite/medium4_l1_l4noprobe/l1_goal_projection/chacha_step2_1/r01/2026-06-08_1612_step2_1/iteration_1/node_memory/Tree_0_1/thinking/turn_024.md",
+          "agent_think_seconds": 2.798,
+          "decision_followup_path": "artifacts/eval_suite/medium4_l1_l4noprobe/l1_goal_projection/chacha_step2_1/r01/2026-06-08_1612_step2_1/iteration_1/node_memory/Tree_0_1/followups/turn_023.md",
+          "decision_state_summary": "ambient / closed_candidate, goal 26 chars",
+          "decision_view_path": "artifacts/eval_suite/medium4_l1_l4noprobe/l1_goal_projection/chacha_step2_1/r01/2026-06-08_1612_step2_1/iteration_1/node_memory/Tree_0_1/workspace_views/turn_023.json",
+          "deterministic_signals": [
+            "commit_without_probe_check_not_inferred"
+          ],
+          "goal_chars": 26,
+          "inspect_topics": [
+            "goal_info"
+          ],
+          "intent": {
+            "intent": "commit_tactic",
+            "payload": {
+              "tactic": "qed."
+            }
+          },
+          "intent_summary": "commit qed",
+          "manager_action_summary": [
+            "tactic commit (202 ms)"
+          ],
+          "manager_result_at": "2026-06-08T23:21:00+00:00",
+          "manager_result_path": "artifacts/eval_suite/medium4_l1_l4noprobe/l1_goal_projection/chacha_step2_1/r01/2026-06-08_1612_step2_1/iteration_1/node_memory/Tree_0_1/manager_results/turn_024.json",
+          "manager_seconds": 0.202,
+          "manager_time": "202 ms",
+          "node": "Tree-0.1",
+          "node_dir": "artifacts/eval_suite/medium4_l1_l4noprobe/l1_goal_projection/chacha_step2_1/r01/2026-06-08_1612_step2_1/iteration_1/node_memory/Tree_0_1",
+          "ok": true,
+          "result_followup_path": "artifacts/eval_suite/medium4_l1_l4noprobe/l1_goal_projection/chacha_step2_1/r01/2026-06-08_1612_step2_1/iteration_1/node_memory/Tree_0_1/followups/turn_024.md",
+          "result_state_summary": "complete / unknown / closed_candidate, 0 goals, goal 12 chars",
+          "result_summary": "accepted commit",
+          "result_view_path": "artifacts/eval_suite/medium4_l1_l4noprobe/l1_goal_projection/chacha_step2_1/r01/2026-06-08_1612_step2_1/iteration_1/node_memory/Tree_0_1/workspace_views/turn_024.json",
+          "turn": 24,
+          "usage": {
+            "cache_creation_input_tokens": 1063,
+            "cache_read_input_tokens": 109371,
+            "input_tokens": 2,
+            "output_tokens": 117
+          },
+          "view_chars": 5476,
+          "view_id": "T0.1-24",
+          "workspace_view_path": "artifacts/eval_suite/medium4_l1_l4noprobe/l1_goal_projection/chacha_step2_1/r01/2026-06-08_1612_step2_1/iteration_1/node_memory/Tree_0_1/workspace_views/turn_023.json"
+        },
+        {
+          "action_submitted_at": "2026-06-08T23:21:14+00:00",
+          "action_time": "+04:31",
+          "agent_think": "14 s",
+          "agent_think_path": "",
+          "agent_think_seconds": 14.0,
+          "decision_followup_path": "artifacts/eval_suite/medium4_l1_l4noprobe/l1_goal_projection/chacha_step2_1/r01/2026-06-08_1612_step2_1/iteration_1/node_memory/Tree_0_1/followups/turn_024.md",
+          "decision_state_summary": "complete / unknown / closed_candidate, 0 goals, goal 12 chars",
+          "decision_view_path": "artifacts/eval_suite/medium4_l1_l4noprobe/l1_goal_projection/chacha_step2_1/r01/2026-06-08_1612_step2_1/iteration_1/node_memory/Tree_0_1/workspace_views/turn_024.json",
+          "deterministic_signals": [],
+          "goal_chars": 12,
+          "inspect_topics": [
+            "verify",
+            "goal_info"
+          ],
+          "intent": {
+            "intent": "finish"
+          },
+          "intent_summary": "finish",
+          "manager_action_summary": [
+            "finish"
+          ],
+          "manager_result_at": "2026-06-08T23:21:14+00:00",
+          "manager_result_path": "artifacts/eval_suite/medium4_l1_l4noprobe/l1_goal_projection/chacha_step2_1/r01/2026-06-08_1612_step2_1/iteration_1/node_memory/Tree_0_1/manager_results/turn_025.json",
+          "manager_seconds": 0.0,
+          "manager_time": "",
+          "node": "Tree-0.1",
+          "node_dir": "artifacts/eval_suite/medium4_l1_l4noprobe/l1_goal_projection/chacha_step2_1/r01/2026-06-08_1612_step2_1/iteration_1/node_memory/Tree_0_1",
+          "ok": true,
+          "result_followup_path": "artifacts/eval_suite/medium4_l1_l4noprobe/l1_goal_projection/chacha_step2_1/r01/2026-06-08_1612_step2_1/iteration_1/node_memory/Tree_0_1/followups/turn_025.md",
+          "result_state_summary": "complete / unknown / closed_candidate, 0 goals, goal 12 chars",
+          "result_summary": "finish requested",
+          "result_view_path": "artifacts/eval_suite/medium4_l1_l4noprobe/l1_goal_projection/chacha_step2_1/r01/2026-06-08_1612_step2_1/iteration_1/node_memory/Tree_0_1/workspace_views/turn_025.json",
+          "turn": 25,
+          "usage": {},
+          "view_chars": 4633,
+          "view_id": "T0.1-25",
+          "workspace_view_path": "artifacts/eval_suite/medium4_l1_l4noprobe/l1_goal_projection/chacha_step2_1/r01/2026-06-08_1612_step2_1/iteration_1/node_memory/Tree_0_1/workspace_views/turn_024.json"
+        }
+      ],
+      "run_dir": "artifacts/eval_suite/medium4_l1_l4noprobe/l1_goal_projection/chacha_step2_1/r01/2026-06-08_1612_step2_1/iteration_1",
+      "turn_count": 39
+    }
+  ],
+  "schema_version": 1
+}

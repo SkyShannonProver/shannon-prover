@@ -1,0 +1,205 @@
+{
+  "last_result": {
+    "intent": "fresh_restart",
+    "kind": "structural_recovery_menu",
+    "message": "A structural recovery boundary is available for the current committed branch.",
+    "checkpoint_options": [
+      {
+        "checkpoint_id": "cp_45_0e07f9fb6ddf3d4a",
+        "semantic_id": "before_branch_work",
+        "semantic_ids": [
+          "before_branch_work",
+          "before_call_obligation_work"
+        ],
+        "label": "Before latest call-obligation tactic #45",
+        "committed_tactic": "auto; smt(dBlock_uffu).",
+        "tactic_index": 45,
+        "committed_step_index": 45,
+        "restored_proof_layer": "call_obligation",
+        "restored_affordances": {
+          "call_route": "committed",
+          "call_obligation": "preserved",
+          "later_local_work": "not_committed"
+        },
+        "undo_scope": "call_obligation_local",
+        "why_checkpoint": "call-obligation local boundary; selecting it keeps the opened call obligation and removes later local work",
+        "repair_use_when": "Use this when the recent local step appears to have introduced the current blocker.",
+        "after_rewind_next": "Probe a smaller replacement step or inspect the current goal before recommitting.",
+        "effect_if_selected": "This will undo committed tactic #45 and every committed tactic after it in this node.",
+        "submit": {
+          "intent": "undo_to_checkpoint",
+          "payload": {
+            "checkpoint_id": "cp_45_0e07f9fb6ddf3d4a"
+          }
+        }
+      },
+      {
+        "checkpoint_id": "cp_23_0e07f9fb6ddf3d4a",
+        "semantic_id": "after_seq_opened",
+        "semantic_ids": [
+          "after_seq_opened",
+          "before_branch_work"
+        ],
+        "label": "After seq opened / before branch work #23",
+        "committed_tactic": "auto.",
+        "tactic_index": 23,
+        "committed_step_index": 23,
+        "restored_proof_layer": "seq_obligations_opened",
+        "restored_affordances": {
+          "seq_cut": "committed",
+          "branch_work": "not_committed"
+        },
+        "undo_scope": "branch_local",
+        "why_checkpoint": "seq-local branch boundary; selecting it keeps the seq cut and removes branch-local work after it",
+        "repair_use_when": "Use this when the recent local step appears to have introduced the current blocker.",
+        "after_rewind_next": "Probe a smaller replacement step or inspect the current goal before recommitting.",
+        "effect_if_selected": "This will undo committed tactic #23 and every committed tactic after it in this node.",
+        "submit": {
+          "intent": "undo_to_checkpoint",
+          "payload": {
+            "checkpoint_id": "cp_23_0e07f9fb6ddf3d4a"
+          }
+        }
+      },
+      {
+        "checkpoint_id": "cp_6_0e07f9fb6ddf3d4a",
+        "semantic_id": "after_call_opened",
+        "semantic_ids": [
+          "after_call_opened"
+        ],
+        "label": "After call opened / before obligation work #6",
+        "committed_tactic": "exact A_distinguish_ll.",
+        "tactic_index": 6,
+        "committed_step_index": 6,
+        "restored_proof_layer": "call_obligations_opened",
+        "restored_affordances": {
+          "call_route": "committed",
+          "call_obligation_work": "not_committed"
+        },
+        "undo_scope": "call_local",
+        "why_checkpoint": "call-local boundary; selecting it keeps the call tactic and removes work committed after the call opened",
+        "repair_use_when": "Use this when the recent local step appears to have introduced the current blocker.",
+        "after_rewind_next": "Probe a smaller replacement step or inspect the current goal before recommitting.",
+        "effect_if_selected": "This will undo committed tactic #6 and every committed tactic after it in this node.",
+        "submit": {
+          "intent": "undo_to_checkpoint",
+          "payload": {
+            "checkpoint_id": "cp_6_0e07f9fb6ddf3d4a"
+          }
+        }
+      },
+      {
+        "checkpoint_id": "cp_5_0e07f9fb6ddf3d4a",
+        "semantic_id": "before_call_route",
+        "semantic_ids": [
+          "before_call_route"
+        ],
+        "label": "Before call invariant #5",
+        "committed_tactic": "call (_: DoubleQuery.bad, ={DoubleQuery.qs} /\\ fdom PRFi.m{1} = DoubleQuery.qs{1}).",
+        "tactic_index": 5,
+        "committed_step_index": 5,
+        "restored_proof_layer": "pre_call_route",
+        "restored_affordances": {
+          "call_route": "not_committed",
+          "call_obligation_work": "not_committed"
+        },
+        "undo_scope": "call_local",
+        "why_checkpoint": "call invariant introduction point; later oracle/branch obligations often reveal missing preserved facts or an over-strong equality from this tactic",
+        "repair_use_when": "Use this when the current blocker is an invariant gap, a bad-event fact that should have been preserved, or a local surgery problem after a call. Prefer this over fresh restart when the top-level route still looks right.",
+        "after_rewind_next": "Inspect `call_subgoals` or `subgoal_gap`, then probe a revised `call (_: ...)` invariant or a smaller prefix.",
+        "effect_if_selected": "This will undo committed tactic #5 and every committed tactic after it in this node.",
+        "submit": {
+          "intent": "undo_to_checkpoint",
+          "payload": {
+            "checkpoint_id": "cp_5_0e07f9fb6ddf3d4a"
+          }
+        }
+      }
+    ],
+    "options": [
+      {
+        "label": "Continue current branch",
+        "effect_if_selected": "This keeps working from the current proof state.",
+        "submit": {
+          "intent": "inspect_context",
+          "payload": {
+            "topic": "goal_info"
+          }
+        }
+      },
+      {
+        "label": "Show all rewind choices",
+        "effect_if_selected": "This shows committed tactics you can rewind before.",
+        "submit": {
+          "intent": "undo_to_checkpoint",
+          "payload": {}
+        }
+      },
+      {
+        "label": "Erase branch and restart",
+        "effect_if_selected": "This confirms erasing committed tactics in this node and restarting from the target lemma.",
+        "submit": {
+          "intent": "fresh_restart",
+          "payload": {
+            "confirm": true,
+            "confirmation_id": "40bfcda3a6db6ab2"
+          }
+        }
+      }
+    ]
+  },
+  "current_goal": {
+    "lines": [
+      "Current goal (remaining: 2)",
+      "",
+      "Type variables: <none>",
+      "",
+      "&m: {}",
+      "------------------------------------------------------------------------",
+      "&1 (left ) : {b : bool}",
+      "&2 (right) : {b : bool}",
+      "",
+      "pre = (glob A){2} = (glob A){m} /\\ (glob A){1} = (glob A){m}",
+      "",
+      "CBC_Oracle(DoubleQuery(PRFi)).init()  (1)  CBC_Oracle(DoubleQuery(Sample)).init()",
+      "",
+      "post =",
+      "  (!DoubleQuery.bad{2} =>",
+      "   true /\\",
+      "   (glob A){1} = (glob A){2} /\\",
+      "   DoubleQuery.qs{1} = DoubleQuery.qs{2} /\\",
+      "   fdom PRFi.m{1} = DoubleQuery.qs{1}) &&",
+      "  forall (result_L result_R : bool) (A_L : (glob A)) (bad_L : bool)",
+      "    (qs_L : block fset) (m_L : (block, block) fmap) (A_R : (glob A))",
+      "    (bad_R : bool) (qs_R : block fset),",
+      "    (!bad_R =>",
+      "     result_L = result_R /\\ A_L = A_R /\\ qs_L = qs_R /\\ fdom m_L = qs_L) =>",
+      "    (bad_L <=> bad_R) /\\ (!bad_R => result_L = result_R)",
+      "[158|check]>"
+    ],
+    "text_fully_shown": true,
+    "truncated": false,
+    "goal_type": "pRHL",
+    "view_focus": "relational_program",
+    "source": {
+      "label": "Parsed from EasyCrypt pretty goal text",
+      "ground_truth": false
+    }
+  },
+  "proof_status": {
+    "status": "error",
+    "remaining_goals": 2,
+    "remaining_goals_known": true,
+    "goal_type": "pRHL",
+    "view_focus": "relational_program",
+    "current_layer": "procedure_body"
+  },
+  "surface_profile": {
+    "name": "l1_goal_projection",
+    "surface_profile": "l1_goal_projection",
+    "stage": "l1_goal_projection",
+    "description": "L1 Goal-State Projection: manager transport of ONLY the current goal. No status, no manager-result section, no focus \u2014 the agent sees the raw goal and nothing else (the node-memory recovery anchor and the one-line submit-intent reminder are the only scaffolding).",
+    "paper_level": "L1",
+    "paper_role": "paper"
+  }
+}

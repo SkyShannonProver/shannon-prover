@@ -1,0 +1,300 @@
+{
+  "kind": "agent_view_timeline_report",
+  "run_count": 1,
+  "runs": [
+    {
+      "chronological": false,
+      "first_action_at": "2026-06-12T00:54:53.600000+00:00",
+      "label": "2026-06-11_1753_os2tK",
+      "node_count": 1,
+      "rows": [
+        {
+          "action_submitted_at": "2026-06-12T00:54:53.600000+00:00",
+          "action_time": "+00:00",
+          "agent_think": "",
+          "agent_think_path": "artifacts/eval_suite/mee_sweep_l1_v2/l1_goal_projection/mee_os2tK/r01/2026-06-11_1753_os2tK/iteration_1/node_memory/Tree_0_0/thinking/turn_001.md",
+          "agent_think_seconds": null,
+          "decision_followup_path": "",
+          "decision_state_summary": "ambient / ambient_logic, 1 goal, goal 161 chars",
+          "decision_view_path": "artifacts/eval_suite/mee_sweep_l1_v2/l1_goal_projection/mee_os2tK/r01/2026-06-11_1753_os2tK/iteration_1/manager_bootstrap_0_0.json",
+          "deterministic_signals": [
+            "commit_without_probe_check_not_inferred"
+          ],
+          "goal_chars": 161,
+          "inspect_topics": [],
+          "intent": {
+            "intent": "commit_tactic",
+            "payload": {
+              "tactic": "move=> sz_os."
+            }
+          },
+          "intent_summary": "commit move=> sz_os",
+          "manager_action_summary": [
+            "tactic commit (1.4 s)"
+          ],
+          "manager_result_at": "2026-06-12T00:54:55+00:00",
+          "manager_result_path": "artifacts/eval_suite/mee_sweep_l1_v2/l1_goal_projection/mee_os2tK/r01/2026-06-11_1753_os2tK/iteration_1/node_memory/Tree_0_0/manager_results/turn_001.json",
+          "manager_seconds": 1.4,
+          "manager_time": "1.4 s",
+          "node": "Tree-0.0",
+          "node_dir": "artifacts/eval_suite/mee_sweep_l1_v2/l1_goal_projection/mee_os2tK/r01/2026-06-11_1753_os2tK/iteration_1/node_memory/Tree_0_0",
+          "ok": true,
+          "result_followup_path": "artifacts/eval_suite/mee_sweep_l1_v2/l1_goal_projection/mee_os2tK/r01/2026-06-11_1753_os2tK/iteration_1/node_memory/Tree_0_0/followups/turn_001.md",
+          "result_state_summary": "ambient / ambient_logic, 1 goal, goal 178 chars",
+          "result_summary": "accepted commit",
+          "result_view_path": "artifacts/eval_suite/mee_sweep_l1_v2/l1_goal_projection/mee_os2tK/r01/2026-06-11_1753_os2tK/iteration_1/node_memory/Tree_0_0/workspace_views/turn_001.json",
+          "turn": 1,
+          "usage": {
+            "cache_creation_input_tokens": 42879,
+            "cache_read_input_tokens": 124893,
+            "input_tokens": 9,
+            "output_tokens": 3129
+          },
+          "view_chars": 707,
+          "view_id": "T0.0-1",
+          "workspace_view_path": "artifacts/eval_suite/mee_sweep_l1_v2/l1_goal_projection/mee_os2tK/r01/2026-06-11_1753_os2tK/iteration_1/manager_bootstrap_0_0.json"
+        },
+        {
+          "action_submitted_at": "2026-06-12T00:55:00.843000+00:00",
+          "action_time": "+00:07",
+          "agent_think": "5.8 s",
+          "agent_think_path": "artifacts/eval_suite/mee_sweep_l1_v2/l1_goal_projection/mee_os2tK/r01/2026-06-11_1753_os2tK/iteration_1/node_memory/Tree_0_0/thinking/turn_002.md",
+          "agent_think_seconds": 5.843,
+          "decision_followup_path": "artifacts/eval_suite/mee_sweep_l1_v2/l1_goal_projection/mee_os2tK/r01/2026-06-11_1753_os2tK/iteration_1/node_memory/Tree_0_0/followups/turn_001.md",
+          "decision_state_summary": "ambient / ambient_logic, 1 goal, goal 178 chars",
+          "decision_view_path": "artifacts/eval_suite/mee_sweep_l1_v2/l1_goal_projection/mee_os2tK/r01/2026-06-11_1753_os2tK/iteration_1/node_memory/Tree_0_0/workspace_views/turn_001.json",
+          "deterministic_signals": [
+            "commit_without_probe_check_not_inferred"
+          ],
+          "goal_chars": 178,
+          "inspect_topics": [
+            "goal_info",
+            "lemma_hints",
+            "tactic_forms"
+          ],
+          "intent": {
+            "intent": "commit_tactic",
+            "payload": {
+              "tactic": "rewrite /os2t /t2os /chunk sz_os divzz /b2i /=."
+            }
+          },
+          "intent_summary": "commit rewrite /os2t /t2os /chunk sz_os divzz /b2i /=",
+          "manager_action_summary": [
+            "tactic commit (157 ms)"
+          ],
+          "manager_result_at": "2026-06-12T00:55:01+00:00",
+          "manager_result_path": "artifacts/eval_suite/mee_sweep_l1_v2/l1_goal_projection/mee_os2tK/r01/2026-06-11_1753_os2tK/iteration_1/node_memory/Tree_0_0/manager_results/turn_002.json",
+          "manager_seconds": 0.157,
+          "manager_time": "157 ms",
+          "node": "Tree-0.0",
+          "node_dir": "artifacts/eval_suite/mee_sweep_l1_v2/l1_goal_projection/mee_os2tK/r01/2026-06-11_1753_os2tK/iteration_1/node_memory/Tree_0_0",
+          "ok": true,
+          "result_followup_path": "artifacts/eval_suite/mee_sweep_l1_v2/l1_goal_projection/mee_os2tK/r01/2026-06-11_1753_os2tK/iteration_1/node_memory/Tree_0_0/followups/turn_002.md",
+          "result_state_summary": "ambient / ambient_logic, 1 goal, goal 276 chars",
+          "result_summary": "accepted commit",
+          "result_view_path": "artifacts/eval_suite/mee_sweep_l1_v2/l1_goal_projection/mee_os2tK/r01/2026-06-11_1753_os2tK/iteration_1/node_memory/Tree_0_0/workspace_views/turn_002.json",
+          "turn": 2,
+          "usage": {
+            "cache_creation_input_tokens": 1013,
+            "cache_read_input_tokens": 37518,
+            "input_tokens": 2,
+            "output_tokens": 189
+          },
+          "view_chars": 4517,
+          "view_id": "T0.0-2",
+          "workspace_view_path": "artifacts/eval_suite/mee_sweep_l1_v2/l1_goal_projection/mee_os2tK/r01/2026-06-11_1753_os2tK/iteration_1/node_memory/Tree_0_0/workspace_views/turn_001.json"
+        },
+        {
+          "action_submitted_at": "2026-06-12T00:55:08.849000+00:00",
+          "action_time": "+00:15",
+          "agent_think": "7.8 s",
+          "agent_think_path": "artifacts/eval_suite/mee_sweep_l1_v2/l1_goal_projection/mee_os2tK/r01/2026-06-11_1753_os2tK/iteration_1/node_memory/Tree_0_0/thinking/turn_003.md",
+          "agent_think_seconds": 7.849,
+          "decision_followup_path": "artifacts/eval_suite/mee_sweep_l1_v2/l1_goal_projection/mee_os2tK/r01/2026-06-11_1753_os2tK/iteration_1/node_memory/Tree_0_0/followups/turn_002.md",
+          "decision_state_summary": "ambient / ambient_logic, 1 goal, goal 276 chars",
+          "decision_view_path": "artifacts/eval_suite/mee_sweep_l1_v2/l1_goal_projection/mee_os2tK/r01/2026-06-11_1753_os2tK/iteration_1/node_memory/Tree_0_0/workspace_views/turn_002.json",
+          "deterministic_signals": [
+            "commit_without_probe_check_not_inferred"
+          ],
+          "goal_chars": 276,
+          "inspect_topics": [
+            "goal_info",
+            "lemma_hints",
+            "tactic_forms"
+          ],
+          "intent": {
+            "intent": "commit_tactic",
+            "payload": {
+              "tactic": "rewrite /mkseq /= (iotaS _ 0) //= drop0."
+            }
+          },
+          "intent_summary": "commit rewrite /mkseq /= (iotaS _ 0) //= drop0",
+          "manager_action_summary": [
+            "tactic commit (151 ms)"
+          ],
+          "manager_result_at": "2026-06-12T00:55:09+00:00",
+          "manager_result_path": "artifacts/eval_suite/mee_sweep_l1_v2/l1_goal_projection/mee_os2tK/r01/2026-06-11_1753_os2tK/iteration_1/node_memory/Tree_0_0/manager_results/turn_003.json",
+          "manager_seconds": 0.151,
+          "manager_time": "151 ms",
+          "node": "Tree-0.0",
+          "node_dir": "artifacts/eval_suite/mee_sweep_l1_v2/l1_goal_projection/mee_os2tK/r01/2026-06-11_1753_os2tK/iteration_1/node_memory/Tree_0_0",
+          "ok": true,
+          "result_followup_path": "artifacts/eval_suite/mee_sweep_l1_v2/l1_goal_projection/mee_os2tK/r01/2026-06-11_1753_os2tK/iteration_1/node_memory/Tree_0_0/followups/turn_003.md",
+          "result_state_summary": "ambient / ambient_logic, 1 goal, goal 190 chars",
+          "result_summary": "accepted commit",
+          "result_view_path": "artifacts/eval_suite/mee_sweep_l1_v2/l1_goal_projection/mee_os2tK/r01/2026-06-11_1753_os2tK/iteration_1/node_memory/Tree_0_0/workspace_views/turn_003.json",
+          "turn": 3,
+          "usage": {
+            "cache_creation_input_tokens": 1166,
+            "cache_read_input_tokens": 38531,
+            "input_tokens": 2,
+            "output_tokens": 262
+          },
+          "view_chars": 5048,
+          "view_id": "T0.0-3",
+          "workspace_view_path": "artifacts/eval_suite/mee_sweep_l1_v2/l1_goal_projection/mee_os2tK/r01/2026-06-11_1753_os2tK/iteration_1/node_memory/Tree_0_0/workspace_views/turn_002.json"
+        },
+        {
+          "action_submitted_at": "2026-06-12T00:55:25.842000+00:00",
+          "action_time": "+00:32",
+          "agent_think": "16.8 s",
+          "agent_think_path": "",
+          "agent_think_seconds": 16.842,
+          "decision_followup_path": "artifacts/eval_suite/mee_sweep_l1_v2/l1_goal_projection/mee_os2tK/r01/2026-06-11_1753_os2tK/iteration_1/node_memory/Tree_0_0/followups/turn_003.md",
+          "decision_state_summary": "ambient / ambient_logic, 1 goal, goal 190 chars",
+          "decision_view_path": "artifacts/eval_suite/mee_sweep_l1_v2/l1_goal_projection/mee_os2tK/r01/2026-06-11_1753_os2tK/iteration_1/node_memory/Tree_0_0/workspace_views/turn_003.json",
+          "deterministic_signals": [
+            "commit_without_probe_check_not_inferred"
+          ],
+          "goal_chars": 190,
+          "inspect_topics": [
+            "goal_info",
+            "lemma_hints",
+            "tactic_forms"
+          ],
+          "intent": {
+            "intent": "commit_tactic",
+            "payload": {
+              "tactic": "by rewrite -sz_os take_size oftagK."
+            }
+          },
+          "intent_summary": "commit by rewrite -sz_os take_size oftagK",
+          "manager_action_summary": [
+            "tactic commit (158 ms)"
+          ],
+          "manager_result_at": "2026-06-12T00:55:26+00:00",
+          "manager_result_path": "artifacts/eval_suite/mee_sweep_l1_v2/l1_goal_projection/mee_os2tK/r01/2026-06-11_1753_os2tK/iteration_1/node_memory/Tree_0_0/manager_results/turn_004.json",
+          "manager_seconds": 0.158,
+          "manager_time": "158 ms",
+          "node": "Tree-0.0",
+          "node_dir": "artifacts/eval_suite/mee_sweep_l1_v2/l1_goal_projection/mee_os2tK/r01/2026-06-11_1753_os2tK/iteration_1/node_memory/Tree_0_0",
+          "ok": true,
+          "result_followup_path": "artifacts/eval_suite/mee_sweep_l1_v2/l1_goal_projection/mee_os2tK/r01/2026-06-11_1753_os2tK/iteration_1/node_memory/Tree_0_0/followups/turn_004.md",
+          "result_state_summary": "ambient / closed_candidate, goal 26 chars",
+          "result_summary": "accepted commit",
+          "result_view_path": "artifacts/eval_suite/mee_sweep_l1_v2/l1_goal_projection/mee_os2tK/r01/2026-06-11_1753_os2tK/iteration_1/node_memory/Tree_0_0/workspace_views/turn_004.json",
+          "turn": 4,
+          "usage": {
+            "cache_creation_input_tokens": 1350,
+            "cache_read_input_tokens": 39697,
+            "input_tokens": 2,
+            "output_tokens": 889
+          },
+          "view_chars": 3476,
+          "view_id": "T0.0-4",
+          "workspace_view_path": "artifacts/eval_suite/mee_sweep_l1_v2/l1_goal_projection/mee_os2tK/r01/2026-06-11_1753_os2tK/iteration_1/node_memory/Tree_0_0/workspace_views/turn_003.json"
+        },
+        {
+          "action_submitted_at": "2026-06-12T00:55:31.853000+00:00",
+          "action_time": "+00:38",
+          "agent_think": "5.9 s",
+          "agent_think_path": "artifacts/eval_suite/mee_sweep_l1_v2/l1_goal_projection/mee_os2tK/r01/2026-06-11_1753_os2tK/iteration_1/node_memory/Tree_0_0/thinking/turn_005.md",
+          "agent_think_seconds": 5.853,
+          "decision_followup_path": "artifacts/eval_suite/mee_sweep_l1_v2/l1_goal_projection/mee_os2tK/r01/2026-06-11_1753_os2tK/iteration_1/node_memory/Tree_0_0/followups/turn_004.md",
+          "decision_state_summary": "ambient / closed_candidate, goal 26 chars",
+          "decision_view_path": "artifacts/eval_suite/mee_sweep_l1_v2/l1_goal_projection/mee_os2tK/r01/2026-06-11_1753_os2tK/iteration_1/node_memory/Tree_0_0/workspace_views/turn_004.json",
+          "deterministic_signals": [
+            "commit_without_probe_check_not_inferred"
+          ],
+          "goal_chars": 26,
+          "inspect_topics": [
+            "goal_info"
+          ],
+          "intent": {
+            "intent": "commit_tactic",
+            "payload": {
+              "tactic": "qed."
+            }
+          },
+          "intent_summary": "commit qed",
+          "manager_action_summary": [
+            "tactic commit (147 ms)"
+          ],
+          "manager_result_at": "2026-06-12T00:55:32+00:00",
+          "manager_result_path": "artifacts/eval_suite/mee_sweep_l1_v2/l1_goal_projection/mee_os2tK/r01/2026-06-11_1753_os2tK/iteration_1/node_memory/Tree_0_0/manager_results/turn_005.json",
+          "manager_seconds": 0.147,
+          "manager_time": "147 ms",
+          "node": "Tree-0.0",
+          "node_dir": "artifacts/eval_suite/mee_sweep_l1_v2/l1_goal_projection/mee_os2tK/r01/2026-06-11_1753_os2tK/iteration_1/node_memory/Tree_0_0",
+          "ok": true,
+          "result_followup_path": "artifacts/eval_suite/mee_sweep_l1_v2/l1_goal_projection/mee_os2tK/r01/2026-06-11_1753_os2tK/iteration_1/node_memory/Tree_0_0/followups/turn_005.md",
+          "result_state_summary": "complete / unknown / closed_candidate, 0 goals, goal 12 chars",
+          "result_summary": "accepted commit",
+          "result_view_path": "artifacts/eval_suite/mee_sweep_l1_v2/l1_goal_projection/mee_os2tK/r01/2026-06-11_1753_os2tK/iteration_1/node_memory/Tree_0_0/workspace_views/turn_005.json",
+          "turn": 5,
+          "usage": {
+            "cache_creation_input_tokens": 1754,
+            "cache_read_input_tokens": 41047,
+            "input_tokens": 2,
+            "output_tokens": 123
+          },
+          "view_chars": 3039,
+          "view_id": "T0.0-5",
+          "workspace_view_path": "artifacts/eval_suite/mee_sweep_l1_v2/l1_goal_projection/mee_os2tK/r01/2026-06-11_1753_os2tK/iteration_1/node_memory/Tree_0_0/workspace_views/turn_004.json"
+        },
+        {
+          "action_submitted_at": "2026-06-12T00:55:38+00:00",
+          "action_time": "+00:44",
+          "agent_think": "6 s",
+          "agent_think_path": "",
+          "agent_think_seconds": 6.0,
+          "decision_followup_path": "artifacts/eval_suite/mee_sweep_l1_v2/l1_goal_projection/mee_os2tK/r01/2026-06-11_1753_os2tK/iteration_1/node_memory/Tree_0_0/followups/turn_005.md",
+          "decision_state_summary": "complete / unknown / closed_candidate, 0 goals, goal 12 chars",
+          "decision_view_path": "artifacts/eval_suite/mee_sweep_l1_v2/l1_goal_projection/mee_os2tK/r01/2026-06-11_1753_os2tK/iteration_1/node_memory/Tree_0_0/workspace_views/turn_005.json",
+          "deterministic_signals": [],
+          "goal_chars": 12,
+          "inspect_topics": [
+            "verify",
+            "goal_info"
+          ],
+          "intent": {
+            "intent": "finish"
+          },
+          "intent_summary": "finish",
+          "manager_action_summary": [
+            "finish"
+          ],
+          "manager_result_at": "2026-06-12T00:55:38+00:00",
+          "manager_result_path": "artifacts/eval_suite/mee_sweep_l1_v2/l1_goal_projection/mee_os2tK/r01/2026-06-11_1753_os2tK/iteration_1/node_memory/Tree_0_0/manager_results/turn_006.json",
+          "manager_seconds": 0.0,
+          "manager_time": "",
+          "node": "Tree-0.0",
+          "node_dir": "artifacts/eval_suite/mee_sweep_l1_v2/l1_goal_projection/mee_os2tK/r01/2026-06-11_1753_os2tK/iteration_1/node_memory/Tree_0_0",
+          "ok": true,
+          "result_followup_path": "artifacts/eval_suite/mee_sweep_l1_v2/l1_goal_projection/mee_os2tK/r01/2026-06-11_1753_os2tK/iteration_1/node_memory/Tree_0_0/followups/turn_006.md",
+          "result_state_summary": "complete / unknown / closed_candidate, 0 goals, goal 12 chars",
+          "result_summary": "finish requested",
+          "result_view_path": "artifacts/eval_suite/mee_sweep_l1_v2/l1_goal_projection/mee_os2tK/r01/2026-06-11_1753_os2tK/iteration_1/node_memory/Tree_0_0/workspace_views/turn_006.json",
+          "turn": 6,
+          "usage": {},
+          "view_chars": 2137,
+          "view_id": "T0.0-6",
+          "workspace_view_path": "artifacts/eval_suite/mee_sweep_l1_v2/l1_goal_projection/mee_os2tK/r01/2026-06-11_1753_os2tK/iteration_1/node_memory/Tree_0_0/workspace_views/turn_005.json"
+        }
+      ],
+      "run_dir": "artifacts/eval_suite/mee_sweep_l1_v2/l1_goal_projection/mee_os2tK/r01/2026-06-11_1753_os2tK/iteration_1",
+      "turn_count": 6
+    }
+  ],
+  "schema_version": 1
+}

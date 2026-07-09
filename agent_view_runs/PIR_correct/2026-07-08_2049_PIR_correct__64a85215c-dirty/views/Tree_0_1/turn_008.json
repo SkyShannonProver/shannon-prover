@@ -1,0 +1,390 @@
+{
+  "last_result": {
+    "intent": "commit_tactic",
+    "payload": {
+      "tactic": "move => z; wp."
+    },
+    "manager_action": "commit_tactic",
+    "result": "EasyCrypt accepted the committed tactic.",
+    "effect": "EasyCrypt accepted a proof-state change; the refreshed view is based on the new committed state.",
+    "proof_state": "The committed EasyCrypt proof state changed.",
+    "tactic": "move => z; wp."
+  },
+  "current_goal": {
+    "lines": [
+      "Current goal (remaining: 2)",
+      "",
+      "Type variables: <none>",
+      "",
+      "&m: {}",
+      "i0: int",
+      "hi: 0 <= i0 < N",
+      "z: int",
+      "------------------------------------------------------------------------",
+      "Context : hr: {b : bool, i, j : int, s, s0 : int list, r, r' : word}",
+      "Bound   : [=] 1%r",
+      "",
+      "pre =",
+      "  ((0 <= j <= N /\\",
+      "    i = i0 /\\",
+      "    (j <= i0 => PIR.s = PIR.s') /\\ (i0 < j => sxor2 PIR.s PIR.s' i0)) /\\",
+      "   j < N) /\\",
+      "  N - j = z",
+      "",
+      "(1)  b <$ {0,1}               ",
+      "",
+      "post =",
+      "  if j = i then",
+      "    if b then",
+      "      let s1 = j :: PIR.s in",
+      "      let j0 = j + 1 in",
+      "      (0 <= j0 <= N /\\",
+      "       i = i0 /\\ (j0 <= i0 => s1 = PIR.s') /\\ (i0 < j0 => sxor2 s1 PIR.s' i0)) /\\",
+      "      N - j0 < z",
+      "    else",
+      "      let s' = j :: PIR.s' in",
+      "      let j0 = j + 1 in",
+      "      (0 <= j0 <= N /\\",
+      "       i = i0 /\\ (j0 <= i0 => PIR.s = s') /\\ (i0 < j0 => sxor2 PIR.s s' i0)) /\\",
+      "      N - j0 < z",
+      "  else",
+      "    if b then",
+      "      let s1 = j :: PIR.s in",
+      "      let s' = j :: PIR.s' in",
+      "      let j0 = j + 1 in",
+      "      (0 <= j0 <= N /\\",
+      "       i = i0 /\\ (j0 <= i0 => s1 = s') /\\ (i0 < j0 => sxor2 s1 s' i0)) /\\",
+      "      N - j0 < z",
+      "    else",
+      "      let j0 = j + 1 in",
+      "      (0 <= j0 <= N /\\",
+      "       i = i0 /\\",
+      "       (j0 <= i0 => PIR.s = PIR.s') /\\ (i0 < j0 => sxor2 PIR.s PIR.s' i0)) /\\",
+      "      N - j0 < z",
+      "[26|check]>"
+    ],
+    "text_fully_shown": true,
+    "truncated": false,
+    "goal_type": "phoare",
+    "view_focus": "procedure_frontier",
+    "source": {
+      "label": "Parsed from EasyCrypt pretty goal text",
+      "ground_truth": false
+    }
+  },
+  "proof_status": {
+    "status": "open",
+    "remaining_goals": 2,
+    "remaining_goals_known": true,
+    "goal_type": "phoare",
+    "view_focus": "procedure_frontier",
+    "current_layer": "procedure_body"
+  },
+  "candidate_moves": {
+    "moves": [
+      {
+        "category": "strategy",
+        "tactic_shape": "Inspect proof obligation stack: sample_frontier / statement 1.",
+        "applicability": "Use this as route-selection context; it is not a tactic to run as-is.",
+        "source": "proof-state analysis"
+      },
+      {
+        "category": "strategy",
+        "tactic_shape": "Inspect one-sided sampling residual: b{1} <$ {0,1}.",
+        "applicability": "Use this as route-selection context; it is not a tactic to run as-is.",
+        "source": "proof-state analysis"
+      },
+      {
+        "category": "strategy",
+        "tactic_shape": "Inspect control/suffix legality: rnd@1:1=structurally_ready.",
+        "applicability": "Use this as route-selection context; it is not a tactic to run as-is.",
+        "source": "proof-state analysis"
+      }
+    ]
+  },
+  "program_frontier": {
+    "authority": "proof-state analysis",
+    "view_focus": "procedure_frontier",
+    "focus": {
+      "live_call_sites": 0,
+      "frontier_call_sites": 0,
+      "live_callable_lemmas": 0,
+      "callable_now_lemmas": 0,
+      "oracle_obligation_handles": 0,
+      "has_invariant_skeleton": false
+    },
+    "frontier_alignment": {
+      "summary": "Frontier alignment: sampling steps are visible inside the frontier. Use this as a proof-reader map before choosing while/rnd/seq/call tactics.",
+      "first_instruction_alignment": {
+        "left_first": "b <$ {0,1}",
+        "right_first": "no matching right-side sample at this frontier",
+        "left_head": "sample",
+        "branch_alignment": "single_program_frontier",
+        "proof_read": "Single-program (phoare/hoare) frontier; there is no second side to align."
+      },
+      "rows": [
+        {
+          "role": "sample inside frontier",
+          "left": "b <$ {0,1}",
+          "right": "no matching right-side sample at this frontier",
+          "proof_read": "This is a sampling frontier; choose a coupling or distribution argument that connects the sampled values.",
+          "location": {
+            "left_path": "1"
+          }
+        }
+      ]
+    },
+    "current_frontier_scope": {
+      "frontier": {
+        "kind": "left_sample",
+        "left": {
+          "side": "left",
+          "path": "1",
+          "path_key": [
+            1
+          ],
+          "statement": "b <$ {0,1}",
+          "head": "sample",
+          "source_row": 0
+        }
+      }
+    },
+    "procedure_navigation": {
+      "how_to_use": "Positions for choosing wp/sp depth, which `if` to rcond, and where the next loop/call frontier is. Facts only \u2014 pick the tactic and the branch direction yourself.",
+      "next_frontier": {
+        "kind": "sample_frontier",
+        "at_order": 1
+      }
+    },
+    "checks": [
+      "Keep one-sided instrumentation as a map, not as a tactic recipe."
+    ]
+  },
+  "call_site_surface": {},
+  "application_context": {},
+  "facts_and_diagnostics": {
+    "facts": {
+      "has_invariant_skeleton": false,
+      "unfoldable_goal_heads": [
+        {
+          "name": "sxor2",
+          "unqualified_name": "sxor2",
+          "declaration_kind": "pred",
+          "unfold_tactic": "rewrite /sxor2.",
+          "smt_argument_role": "not_a_lemma_hint"
+        }
+      ],
+      "unfoldable_goal_head_count": 1
+    },
+    "fact_note": "Only current-frontier facts are shown here; the full proof context artifact keeps the compiler/internal details.",
+    "notes": [
+      {
+        "message": "One-sided sampling residual: b{1} <$ {0,1}. The postcondition still mentions the sampled value or a quantified witness, so this may be a true losslessness side condition or leftover coupling debt.",
+        "severity": "info"
+      }
+    ]
+  },
+  "proof_so_far": {
+    "committed_count": 7,
+    "steps": [
+      {
+        "step": 1,
+        "tactic": "move => hi."
+      },
+      {
+        "step": 2,
+        "tactic": "byphoare (_: i = i0 ==> res = a i0) => //."
+      },
+      {
+        "step": 3,
+        "tactic": "proc."
+      },
+      {
+        "step": 4,
+        "tactic": "inline PIR.query."
+      },
+      {
+        "step": 5,
+        "tactic": "wp."
+      },
+      {
+        "step": 6,
+        "tactic": "while (0 <= j <= N /\\ i = i0 /\\ (j <= i0 => PIR.s = PIR.s') /\\ (i0 < j => sxor2 PIR.s PIR.s' i0)) (N - j)."
+      },
+      {
+        "step": 7,
+        "tactic": "move => z; wp."
+      }
+    ],
+    "elided_count": 0,
+    "note": "Your committed proof so far in THIS node, step-numbered \u2014 your own work. Use it to orient; do not re-derive steps already listed here."
+  },
+  "surface_action_preflight": {
+    "schema_version": 1,
+    "results": []
+  },
+  "inspect_lookup_handles": {
+    "effect": "All handles here are read-only manager requests; the committed EasyCrypt proof state stays unchanged.",
+    "manager_note": "Some requests may ask EasyCrypt or name resolution; wait for the manager result before choosing the next proof intent.",
+    "ask_manager_for": [
+      {
+        "intent": "inspect_context",
+        "payload": {
+          "topic": "operator_lemmas",
+          "operator": "OPERATOR"
+        },
+        "use_when": "Need the lemmas that apply to an OPERATOR in your goal \u2014 project-local lemmas included (not just stdlib) \u2014 instead of guessing a lemma name.",
+        "returns": "lemmas mentioning that operator, found by live EC `search` over the loaded context (statements; you pick which to apply)",
+        "intent_class": "context_topic",
+        "read_only": true,
+        "public_intent": "operator_lemmas",
+        "payload_fields": [
+          "operator"
+        ]
+      },
+      {
+        "intent": "inspect_context",
+        "payload": {
+          "topic": "tactic_forms",
+          "name": "while"
+        },
+        "use_when": "Need the valid one-sided hoare/phoare loop form.",
+        "returns": "valid `while` forms and common traps",
+        "intent_class": "context_topic",
+        "read_only": true,
+        "public_intent": "tactic_forms",
+        "payload_fields": [
+          "name"
+        ]
+      },
+      {
+        "intent": "inspect_context",
+        "payload": {
+          "topic": "tactic_forms",
+          "name": "rnd"
+        },
+        "use_when": "A sampling step may need `rnd` to reduce it to a distribution/probability fact.",
+        "returns": "valid `rnd` forms, including one-sided sampling",
+        "intent_class": "context_topic",
+        "read_only": true,
+        "public_intent": "tactic_forms",
+        "payload_fields": [
+          "name"
+        ]
+      }
+    ]
+  },
+  "structural_checkpoints": {
+    "items": [
+      {
+        "checkpoint_id": "cp_4_77bf4b379d6d8941",
+        "semantic_id": "last_call_site_boundary",
+        "semantic_ids": [
+          "last_call_site_boundary"
+        ],
+        "label": "Before inline expansion #4",
+        "committed_step_index": 4,
+        "committed_tactic": "inline PIR.query.",
+        "restored_proof_layer": "pre_inline_frontier",
+        "restored_affordances": {
+          "call_site_handles": "as_before_inline"
+        },
+        "undo_scope": "call_site_boundary",
+        "why_checkpoint": "inline boundary; selecting it restores the proof state before this expansion",
+        "effect_if_selected": "Undo committed tactic #4 and every committed tactic after it in this node.",
+        "submit": {
+          "intent": "undo_to_checkpoint",
+          "payload": {
+            "checkpoint_id": "cp_4_77bf4b379d6d8941"
+          }
+        }
+      }
+    ]
+  },
+  "surface_turn": {
+    "schema_version": 1,
+    "presentation_kind": "proof_state",
+    "proof_surface": {
+      "schema_version": 1,
+      "profile": "l4_checked_action_surface",
+      "phase": "plain",
+      "goal": {
+        "title": "Current Goal",
+        "text": "Current goal (remaining: 2)\n\nType variables: <none>\n\n&m: {}\ni0: int\nhi: 0 <= i0 < N\nz: int\n------------------------------------------------------------------------\nContext : hr: {b : bool, i, j : int, s, s0 : int list, r, r' : word}\nBound   : [=] 1%r\n\npre =\n  ((0 <= j <= N /\\\n    i = i0 /\\\n    (j <= i0 => PIR.s = PIR.s') /\\ (i0 < j => sxor2 PIR.s PIR.s' i0)) /\\\n   j < N) /\\\n  N - j = z\n\n(1)  b <$ {0,1}               \n\npost =\n  if j = i then\n    if b then\n      let s1 = j :: PIR.s in\n      let j0 = j + 1 in\n      (0 <= j0 <= N /\\\n       i = i0 /\\ (j0 <= i0 => s1 = PIR.s') /\\ (i0 < j0 => sxor2 s1 PIR.s' i0)) /\\\n      N - j0 < z\n    else\n      let s' = j :: PIR.s' in\n      let j0 = j + 1 in\n      (0 <= j0 <= N /\\\n       i = i0 /\\ (j0 <= i0 => PIR.s = s') /\\ (i0 < j0 => sxor2 PIR.s s' i0)) /\\\n      N - j0 < z\n  else\n    if b then\n      let s1 = j :: PIR.s in\n      let s' = j :: PIR.s' in\n      let j0 = j + 1 in\n      (0 <= j0 <= N /\\\n       i = i0 /\\ (j0 <= i0 => s1 = s') /\\ (i0 < j0 => sxor2 s1 s' i0)) /\\\n      N - j0 < z\n    else\n      let j0 = j + 1 in\n      (0 <= j0 <= N /\\\n       i = i0 /\\\n       (j0 <= i0 => PIR.s = PIR.s') /\\ (i0 < j0 => sxor2 PIR.s PIR.s' i0)) /\\\n      N - j0 < z\n[26|check]>",
+        "goal_type": "phoare",
+        "truncated": false,
+        "line_count": 50
+      },
+      "status": {
+        "status": "open",
+        "remaining_goals": 2,
+        "remaining_goals_known": true,
+        "view_focus": "procedure_frontier",
+        "current_layer": "procedure_body",
+        "goal_type": "phoare",
+        "surface_phase": "plain"
+      },
+      "actions": [
+        {
+          "intent": "tactic_forms",
+          "payload": {
+            "name": "<name>"
+          },
+          "label": "tactic_forms: <name>",
+          "intent_class": "context_topic",
+          "read_only": true,
+          "requires_input": [
+            "name"
+          ],
+          "choices": {
+            "name": [
+              "while",
+              "rnd",
+              "wp",
+              "rcondt",
+              "rcondf",
+              "rewrite",
+              "apply"
+            ]
+          },
+          "description": "Need the valid one-sided hoare/phoare loop form.",
+          "source_refs": [
+            "inspect_lookup_handles.ask_manager_for",
+            "proof_status",
+            "program_frontier"
+          ],
+          "eligibility_reason": "tactic family matches the current proof phase",
+          "state_scope": "current_phase"
+        }
+      ],
+      "metadata": {
+        "contract": "raw_workspace_facts -> SurfaceModel -> markdown/card",
+        "primary_panel_id": "",
+        "primary_action_count": 0,
+        "available_action_count": 3
+      },
+      "surface_model_hash": "bcb489f64948c8e50cd9e89fa0af8acc5d7e9434"
+    },
+    "turn_outcome": {
+      "intent": "commit_tactic",
+      "payload": {
+        "tactic": "move => z; wp."
+      },
+      "ok": true,
+      "result_line": "Last action: `move => z; wp.` -- EasyCrypt accepted the committed tactic.",
+      "lead_before_goal": false,
+      "proof_state_changed": true,
+      "source_refs": [
+        "last_result"
+      ]
+    },
+    "base_surface_updates": true,
+    "proof_state_changed": true,
+    "metadata": {
+      "contract": "SurfaceModel -> SurfaceTurnModel -> markdown/card",
+      "current_surface_hash": "bcb489f64948c8e50cd9e89fa0af8acc5d7e9434",
+      "proof_surface_hash": "bcb489f64948c8e50cd9e89fa0af8acc5d7e9434"
+    },
+    "surface_turn_hash": "f7cb5ecb050b26529f62b6c493e8cde8b6e13da2"
+  }
+}

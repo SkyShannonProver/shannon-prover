@@ -1,0 +1,24 @@
+{
+  "turn": 8,
+  "handled_intent": {
+    "intent": "inspect_context",
+    "payload": {
+      "topic": "call_subgoals",
+      "invariant": "={Mem.k} /\\ OpCCRO.OCC.gs{1} = StLSke.gs{2}"
+    }
+  },
+  "ok": true,
+  "manager_note": "Read-only context. Accepted/rejected tactic or call text inside a preview is route-selection information, not the current proof-state error.",
+  "manager_actions": [
+    {
+      "action": "call-obligation preview",
+      "outcome": "The previewed call typechecked against the daemon; no tactic was committed.",
+      "timing": "101 ms",
+      "content": {
+        "title": "Call Obligation Preview",
+        "preview": "=== Call subgoal preview === Speculative `call (_: ...).` accepted by daemon. 4 subgoal(s) will be queued post-commit. Active call (pre-tactic): `... <@ A(RealOrcls(StLSke(St))).main(...)` Active subgoal verifies: `RealOrcls(OChaChaPoly(IFinRO)).enc ~ RealOrcls(StLSke(St)).enc` (this is subgoal 1 of 4) Outermost module's type: `Adv` (declared procs: main) Note: the 4 subgoals queued aren't necessarily one per proc above \u2014 EC's `call` produces one subgoal per oracle the adversary INVOKES, plus residual. The active subgoal's proc (shown above) tells you which oracle this subgoal verifies. Recommended next step: \u2022 Examine the active subgoal preview below \u2014 it tells you what proc this subgoal verifies and the post you must prove. \u2022 For the remaining subgoals, commit the call and navigate with `-status` between each. Each subgoal is one oracle equiv with the SAME invariant `I` you supplied. Active subgoal preview (first 20 lines): Current goal (remaining: 4) Type variables: <none> &m: {} ------------------------------------------------------------------------ pre = arg{1} = arg{2} /\\ Mem.k{1} = Mem.k{2} /\\ OCC.gs{1} = StLSke.gs{2} RealOrcls(OChaChaPoly(IFinRO)).enc ~ RealOrcls(StLSke..."
+      }
+    }
+  ],
+  "view_refreshed": true
+}

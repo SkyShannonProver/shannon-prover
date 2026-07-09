@@ -1,0 +1,33 @@
+{
+  "kind": "agent_view_run_report",
+  "timestamp": "2026-06-01_0002_CPprgL",
+  "lemma": "CPprgL",
+  "source_file": "eval/examples/PRG.ec",
+  "model": "claude-opus-4-6",
+  "surface_profile": "l4_checked_action_surface",
+  "trees": 2,
+  "eval_mode": true,
+  "outcome": "proved",
+  "committed_proofs": [
+    {
+      "tree": "Tree_0_0",
+      "tactics": [
+        "by move=> PprgL; proc; sp; if=> //; call PprgL; wp.",
+        "qed."
+      ],
+      "proved": true
+    },
+    {
+      "tree": "Tree_0_1",
+      "tactics": [],
+      "proved": false
+    }
+  ],
+  "turn_count": 4,
+  "views_copied": 6,
+  "run_iteration_dir": "artifacts/eval_suite/compiler_ladder_matrix/l4_checked_action_surface/easy_prg_CPprgL/r01/2026-06-01_0002_CPprgL/iteration_1",
+  "commit": "ef713ea",
+  "commit_full": "ef713ea8c34c5bb62c55b40e519465a9e1987406",
+  "branch": "feat/agent-thinking-trace",
+  "dirty": true
+}

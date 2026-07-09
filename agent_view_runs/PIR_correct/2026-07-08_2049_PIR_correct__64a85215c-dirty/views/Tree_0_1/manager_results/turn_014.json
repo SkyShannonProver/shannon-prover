@@ -1,0 +1,20 @@
+{
+  "turn": 14,
+  "handled_intent": {
+    "intent": "commit_tactic",
+    "payload": {
+      "tactic": "split."
+    }
+  },
+  "ok": true,
+  "manager_note": "Committed tactic accepted; the EasyCrypt proof state changed.",
+  "manager_actions": [
+    {
+      "action": "tactic commit",
+      "outcome": "EasyCrypt accepted the committed tactic.",
+      "timing": "856 ms"
+    }
+  ],
+  "view_refreshed": true,
+  "surface_turn_hash": "c8ab0e89e92ce9517a70dbeead81daf1b76011ca"
+}

@@ -1,0 +1,19 @@
+{
+  "turn": 1,
+  "handled_intent": {
+    "intent": "probe_tactic",
+    "payload": {
+      "tactic": "move=> Hexit [i_rng [Hlc' [Hgs' [Hns' IH]]]] [c [Hc Hdec]]; apply (IH c); first by rewrite -Hlc'. by rewrite Hgs'. rewrite take_oversize 1:/#; rewrite Hns' mem_undup; apply/mapP; exists c; rewrite -Hlc'."
+    }
+  },
+  "ok": true,
+  "manager_note": "Read-only tactic probe. Use any goal-after-probe text as a preview only; there is no probe step to undo.",
+  "manager_actions": [
+    {
+      "action": "tactic probe",
+      "outcome": "EasyCrypt rejected this probe. The committed proof state was not changed; the EasyCrypt error tells you why.",
+      "timing": "2.1 s"
+    }
+  ],
+  "view_refreshed": true
+}

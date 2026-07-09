@@ -1,0 +1,19 @@
+{
+  "turn": 3,
+  "handled_intent": {
+    "intent": "commit_tactic",
+    "payload": {
+      "tactic": "call (_:    ={glob E, glob M}\n         /\\ PTXT_Wrap.k{1} = (CMAa.ek, MACa.WUF_CMA.WUF_Wrap.k){2}\n         /\\ PTXT_Wrap.s{1} = MACa.WUF_CMA.WUF_Wrap.s{2}\n         /\\ PTXT_Wrap.win{1} = MACa.WUF_CMA.WUF_Wrap.win{2})."
+    }
+  },
+  "ok": true,
+  "manager_note": "Committed tactic accepted; the EasyCrypt proof state changed.",
+  "manager_actions": [
+    {
+      "action": "tactic commit",
+      "outcome": "EasyCrypt accepted the committed tactic.",
+      "timing": "201 ms"
+    }
+  ],
+  "view_refreshed": true
+}

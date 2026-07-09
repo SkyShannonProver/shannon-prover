@@ -1,0 +1,23 @@
+{
+  "turn": 10,
+  "handled_intent": {
+    "intent": "tactic_forms",
+    "payload": {
+      "name": "rnd"
+    }
+  },
+  "ok": true,
+  "manager_note": "Read-only context. Accepted/rejected tactic or call text inside a preview is route-selection information, not the current proof-state error.",
+  "manager_actions": [
+    {
+      "action": "inspect tactic forms",
+      "outcome": "The manager returned read-only context for the current goal.",
+      "timing": "79 ms",
+      "content": {
+        "preview": "=== `rnd` tactic \u2014 argument forms ===\n\nCurrent proof mode: ambient\n\nForm 1:  rnd.\n  Use when: Symmetric random sampling: both sides sample from the same distribution and EC can infer the coupling automatically (usually just identity).\n  Example:  rnd.\n\nForm 2:  rnd (fun s => FWD(s)) (fun s => BWD(s)).\n  Use when: Bijection coupling: the two samples are related by a bijection. Provide forward map and backward map. EC generates a subgoal to show FWD and BWD are mutual inverses.\n  Example:  rnd (fun s => s + mask) (fun s => s - mask).\n  Note:     THE key technique for game hops that shift/mask random samples. Look for it whenever a sampled value on one side equals the other side's sample plus a deterministic offset.\n\nForm 3:  rnd{1}. / rnd{2}.\n  Use when: Drop a one-sided sampling that's not present on the other side (dead-code elimination for randoms). Typical: LHS samples something the proof doesn't use, RHS doesn't sample.\n  Example:  rnd{1}.    (* drop useless LHS sample *)\n  Note:     In branch-local pRHL surgery, it is also common to combine a one-sided drop with an aligned sample step, e.g. `rnd{2}; rnd.` when the RHS has an extra instrumentation sample before the shared sample.\n\nForm 4:  rnd predT.    (* phoare/pHL single program *)\n  Use when: SINGLE-program phoare/bd_hoare goal (`phoare[...] = p` / `[<=] p` / `[>=] p`, or `bd_hoare`) whose program ends in a sample `x <$ d`, where the postcondition does NOT constrain the sampled value \u2014 the probability-1 / losslessness case. `predT` is the always-true event, so EC reduces the sample step to `mu d predT = 1%r` (i.e. `is_lossless d`); discharge it with the distribution's `*_ll` lemma.\n  Example:  proc; rnd predT; skip => />; smt(dbool_ll).\n  Note:     The argument is a PREDICATE / event (`'a -> bool`), NOT a probability-mass function \u2014 EC computes the sample's contribution as `mu d <event>`. `rnd.` (no argument) also works when the post is independent of the sampled variable (EC infers the event as `predT`); pass `predT` explicitly when that inference fails. Do NOT use the two-function `rnd (fwd) (bwd)` bijection form here \u2014 that is pRHL-only and EC rejects it in a single-program goal.\n\nForm 5:  rnd (fun x => P x).    (* phoare/pHL single program *)\n  Use when: SINGLE-program phoare/bd_hoare goal where the bound is the probability that the freshly sampled value satisfies a specific predicate `P`. EC reduces the sample step to `mu d (fun x => P x) <cmp> bound` (the `<cmp>` matches the goal's `=` / `<=` / `>=`).\n  Example:  rnd (fun b => !b); skip; smt(dbool_funi dbool_fu).    (* EasyCrypt examples/PIR.ec *)\n  Note:     `P` ranges over the sampled value's type only (no `{1}`/`{2}` side annotation \u2014 this is one program). Discharge the residual mass obligation with the distribution's mass lemmas (`mu1_*`, `dboolE`, `*_funi`, `*_fu`, `*_ll`).\n\n\u26a0\ufe0f  Common mistake: Mode confusion is the #1 trap. In pRHL (two programs, `equiv [_ ~ _]`), `rnd.` with a non-trivial coupling fails \u2014 use `rnd (fwd) (bwd)` with explicit mutually-inverse maps. In a SINGLE-program phoare/bd_hoare goal (`phoare[...] = p`), the two-function bijection form is INVALID; `rnd` there takes one predicate/event argument \u2014 `rnd predT.` for a probability-1 sample (residual is the distribution's losslessness), or `rnd (fun x => P x).` to reduce to `mu d P`. Read the goal head (`equiv [...]` vs `phoare[...]`/`bd_hoare`) before choosing the form.\n\nSee also: while, wp, phoare, conseq  (run `-tactic-forms <name>` for any of these)"
+      }
+    }
+  ],
+  "view_refreshed": true,
+  "surface_turn_hash": "032c4b79348f58c98d95e6859c4591844df09da9"
+}

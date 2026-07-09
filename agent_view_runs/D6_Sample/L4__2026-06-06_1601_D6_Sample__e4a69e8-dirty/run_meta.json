@@ -1,0 +1,32 @@
+{
+  "kind": "agent_view_run_report",
+  "timestamp": "2026-06-06_1601_D6_Sample",
+  "lemma": "D6_Sample",
+  "source_file": "eval/examples/Dice4_6.ec",
+  "model": "claude-opus-4-8",
+  "surface_profile": "l4_checked_action_surface",
+  "trees": 1,
+  "eval_mode": true,
+  "outcome": "proved",
+  "committed_proofs": [
+    {
+      "tree": "Tree_0_0",
+      "tactics": [
+        "proc.",
+        "sp.",
+        "while (={r} /\\ 1 <= r{1} <= 6).",
+        "auto=> />; smt(supp_dinter).",
+        "skip=> /> /#.",
+        "qed."
+      ],
+      "proved": true
+    }
+  ],
+  "turn_count": 13,
+  "views_copied": 14,
+  "run_iteration_dir": "artifacts/eval_suite/d6_l4_retry/l4_checked_action_surface/d0_d6_sample/r01/2026-06-06_1601_D6_Sample/iteration_1",
+  "commit": "e4a69e8",
+  "commit_full": "e4a69e84448536e27b35e2690da4976ef06001ea",
+  "branch": "mcp-v0",
+  "dirty": true
+}

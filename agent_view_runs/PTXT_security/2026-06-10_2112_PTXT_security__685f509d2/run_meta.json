@@ -1,0 +1,63 @@
+{
+  "kind": "agent_view_run_report",
+  "timestamp": "2026-06-10_2112_PTXT_security",
+  "lemma": "PTXT_security",
+  "source_file": "eval/examples/MEE-CBC/RCPA_CMA.ec",
+  "model": "claude-fable-5",
+  "surface_profile": "l1_goal_projection",
+  "trees": 2,
+  "eval_mode": true,
+  "outcome": "proved",
+  "committed_proofs": [
+    {
+      "tree": "Tree_0_0",
+      "tactics": [
+        "byequiv=> //.",
+        "proc; inline *.",
+        "swap{2} 4 -3.",
+        "call (_: ={glob E, glob M} /\\ PTXT_Wrap.k{1} = (CMAa.ek, MACa.WUF_CMA.WUF_Wrap.k){2} /\\ PTXT_Wrap.s{1} = MACa.WUF_CMA.WUF_Wrap.s{2} /\\ PTXT_Wrap.win{1} = MACa.WUF_CMA.WUF_Wrap.win{2})."
+      ],
+      "source": "session",
+      "proved": false
+    },
+    {
+      "tree": "Tree_0_1",
+      "tactics": [
+        "byequiv=> //=.",
+        "proc; inline *.",
+        "call (_:    ={glob E, glob M}",
+        "         /\\ PTXT_Wrap.k{1} = (CMAa.ek, MACa.WUF_CMA.WUF_Wrap.k){2}",
+        "         /\\ PTXT_Wrap.s{1} = MACa.WUF_CMA.WUF_Wrap.s{2}",
+        "         /\\ PTXT_Wrap.win{1} = MACa.WUF_CMA.WUF_Wrap.win{2}).",
+        "proc; inline *.",
+        "wp; call (_: true).",
+        "wp; call (_: true).",
+        "by auto.",
+        "proc; inline *.",
+        "seq 5 2: (   ={glob E, glob M, pt}",
+        "          /\\ PTXT_Wrap.k{1} = (CMAa.ek{2}, MACa.WUF_CMA.WUF_Wrap.k{2})",
+        "          /\\ PTXT_Wrap.s{1} = MACa.WUF_CMA.WUF_Wrap.s{2}",
+        "          /\\ PTXT_Wrap.win{1} = MACa.WUF_CMA.WUF_Wrap.win{2}",
+        "          /\\ mk{1} = MACa.WUF_CMA.WUF_Wrap.k{2}",
+        "          /\\ p0{1} = None",
+        "          /\\ b{2} = false).",
+        "by wp; call (_: true); auto.",
+        "if=> //.",
+        "by wp; call (_: true); auto=> /#.",
+        "by auto=> /#.",
+        "swap{2} 4 -3.",
+        "by wp; call (_: true); call (_: true); auto.",
+        "qed."
+      ],
+      "source": "session",
+      "proved": true
+    }
+  ],
+  "turn_count": 21,
+  "views_copied": 23,
+  "run_iteration_dir": "artifacts/eval_suite/mee_ptxt_fable_l1/l1_goal_projection/mee_PTXT_security/r01/2026-06-10_2112_PTXT_security/iteration_1",
+  "commit": "685f509d2",
+  "commit_full": "685f509d2678739057061c570c67d41c0342d619",
+  "branch": "HEAD",
+  "dirty": false
+}

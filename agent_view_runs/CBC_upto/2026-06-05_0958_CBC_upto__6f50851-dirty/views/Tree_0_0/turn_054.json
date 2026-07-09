@@ -1,0 +1,44 @@
+{
+  "last_result": {
+    "intent": "fresh_restart",
+    "kind": "fresh_restart_confirmed",
+    "message": "Fresh restart confirmed. This branch was erased to the target lemma."
+  },
+  "current_goal": {
+    "lines": [
+      "Current goal",
+      "",
+      "Type variables: <none>",
+      "",
+      "&m: {}",
+      "------------------------------------------------------------------------",
+      "`|Pr[INDR_CPA_direct(CBC_Oracle(PRFi), A).main() @ &m : res] -",
+      "  Pr[INDR_CPA_direct(CBC_Oracle(Sample), A).main() @ &m : res]| <=",
+      "Pr[INDR_CPA_direct(Compute, A).main() @ &m : Compute.bad]"
+    ],
+    "text_fully_shown": true,
+    "truncated": false,
+    "goal_type": "probability",
+    "view_focus": "probability",
+    "source": {
+      "label": "Parsed from EasyCrypt pretty goal text",
+      "ground_truth": false
+    }
+  },
+  "proof_status": {
+    "status": "open",
+    "remaining_goals": 1,
+    "remaining_goals_known": true,
+    "goal_type": "probability",
+    "view_focus": "probability",
+    "current_layer": "pr"
+  },
+  "surface_profile": {
+    "name": "l1_goal_projection",
+    "surface_profile": "l1_goal_projection",
+    "stage": "l1_goal_projection",
+    "description": "L1 Goal-State Projection: manager transport of ONLY the current goal. No status, no manager-result section, no focus \u2014 the agent sees the raw goal and nothing else (the node-memory recovery anchor and the one-line submit-intent reminder are the only scaffolding).",
+    "paper_level": "L1",
+    "paper_role": "paper"
+  }
+}

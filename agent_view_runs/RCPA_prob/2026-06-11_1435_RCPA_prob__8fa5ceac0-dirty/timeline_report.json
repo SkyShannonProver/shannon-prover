@@ -1,0 +1,622 @@
+{
+  "kind": "agent_view_timeline_report",
+  "run_count": 1,
+  "runs": [
+    {
+      "chronological": false,
+      "first_action_at": "2026-06-11T21:37:08+00:00",
+      "label": "2026-06-11_1435_RCPA_prob",
+      "node_count": 2,
+      "rows": [
+        {
+          "action_submitted_at": "2026-06-11T21:37:08+00:00",
+          "action_time": "+00:00",
+          "agent_think": "",
+          "agent_think_path": "artifacts/eval_suite/mee_renamed3_fable_l1/l1_goal_projection/mee_RCPA_prob/r01/2026-06-11_1435_RCPA_prob/iteration_1/node_memory/Tree_0_0/thinking/turn_001.md",
+          "agent_think_seconds": null,
+          "decision_followup_path": "",
+          "decision_state_summary": "probability / pr / probability, 1 goal, goal 232 chars",
+          "decision_view_path": "artifacts/eval_suite/mee_renamed3_fable_l1/l1_goal_projection/mee_RCPA_prob/r01/2026-06-11_1435_RCPA_prob/iteration_1/manager_bootstrap_0_0.json",
+          "deterministic_signals": [
+            "commit_without_probe_check_not_inferred"
+          ],
+          "goal_chars": 232,
+          "inspect_topics": [],
+          "intent": {
+            "intent": "commit_tactic",
+            "payload": {
+              "tactic": "byequiv=> //=."
+            }
+          },
+          "intent_summary": "commit byequiv=> //=",
+          "manager_action_summary": [
+            "tactic commit (2.0 s)"
+          ],
+          "manager_result_at": "2026-06-11T21:37:10+00:00",
+          "manager_result_path": "artifacts/eval_suite/mee_renamed3_fable_l1/l1_goal_projection/mee_RCPA_prob/r01/2026-06-11_1435_RCPA_prob/iteration_1/node_memory/Tree_0_0/manager_results/turn_001.json",
+          "manager_seconds": 2.0,
+          "manager_time": "2 s",
+          "node": "Tree-0.0",
+          "node_dir": "artifacts/eval_suite/mee_renamed3_fable_l1/l1_goal_projection/mee_RCPA_prob/r01/2026-06-11_1435_RCPA_prob/iteration_1/node_memory/Tree_0_0",
+          "ok": true,
+          "result_followup_path": "artifacts/eval_suite/mee_renamed3_fable_l1/l1_goal_projection/mee_RCPA_prob/r01/2026-06-11_1435_RCPA_prob/iteration_1/node_memory/Tree_0_0/followups/turn_001.md",
+          "result_state_summary": "equiv / prhl_module / relational_program, 1 goal, goal 484 chars",
+          "result_summary": "accepted commit",
+          "result_view_path": "artifacts/eval_suite/mee_renamed3_fable_l1/l1_goal_projection/mee_RCPA_prob/r01/2026-06-11_1435_RCPA_prob/iteration_1/node_memory/Tree_0_0/workspace_views/turn_001.json",
+          "turn": 1,
+          "usage": {
+            "cache_creation_input_tokens": 52115,
+            "cache_read_input_tokens": 197998,
+            "input_tokens": 13,
+            "output_tokens": 3229
+          },
+          "view_chars": 774,
+          "view_id": "T0.0-1",
+          "workspace_view_path": "artifacts/eval_suite/mee_renamed3_fable_l1/l1_goal_projection/mee_RCPA_prob/r01/2026-06-11_1435_RCPA_prob/iteration_1/manager_bootstrap_0_0.json"
+        },
+        {
+          "action_submitted_at": "2026-06-11T21:37:16.200000+00:00",
+          "action_time": "+00:08",
+          "agent_think": "6.2 s",
+          "agent_think_path": "artifacts/eval_suite/mee_renamed3_fable_l1/l1_goal_projection/mee_RCPA_prob/r01/2026-06-11_1435_RCPA_prob/iteration_1/node_memory/Tree_0_0/thinking/turn_002.md",
+          "agent_think_seconds": 6.2,
+          "decision_followup_path": "artifacts/eval_suite/mee_renamed3_fable_l1/l1_goal_projection/mee_RCPA_prob/r01/2026-06-11_1435_RCPA_prob/iteration_1/node_memory/Tree_0_0/followups/turn_001.md",
+          "decision_state_summary": "equiv / prhl_module / relational_program, 1 goal, goal 484 chars",
+          "decision_view_path": "artifacts/eval_suite/mee_renamed3_fable_l1/l1_goal_projection/mee_RCPA_prob/r01/2026-06-11_1435_RCPA_prob/iteration_1/node_memory/Tree_0_0/workspace_views/turn_001.json",
+          "deterministic_signals": [
+            "commit_without_probe_check_not_inferred"
+          ],
+          "goal_chars": 484,
+          "inspect_topics": [
+            "goal_info",
+            "call_site_options",
+            "call_invariant_skeleton",
+            "call_subgoals",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "align"
+          ],
+          "intent": {
+            "intent": "commit_tactic",
+            "payload": {
+              "tactic": "proc; inline *."
+            }
+          },
+          "intent_summary": "commit proc; inline *",
+          "manager_action_summary": [
+            "tactic commit (1.8 s)"
+          ],
+          "manager_result_at": "2026-06-11T21:37:18+00:00",
+          "manager_result_path": "artifacts/eval_suite/mee_renamed3_fable_l1/l1_goal_projection/mee_RCPA_prob/r01/2026-06-11_1435_RCPA_prob/iteration_1/node_memory/Tree_0_0/manager_results/turn_002.json",
+          "manager_seconds": 1.8,
+          "manager_time": "1.8 s",
+          "node": "Tree-0.0",
+          "node_dir": "artifacts/eval_suite/mee_renamed3_fable_l1/l1_goal_projection/mee_RCPA_prob/r01/2026-06-11_1435_RCPA_prob/iteration_1/node_memory/Tree_0_0",
+          "ok": true,
+          "result_followup_path": "artifacts/eval_suite/mee_renamed3_fable_l1/l1_goal_projection/mee_RCPA_prob/r01/2026-06-11_1435_RCPA_prob/iteration_1/node_memory/Tree_0_0/followups/turn_002.md",
+          "result_state_summary": "pRHL / call_site / relational_program, 1 goal, goal 1220 chars",
+          "result_summary": "accepted commit",
+          "result_view_path": "artifacts/eval_suite/mee_renamed3_fable_l1/l1_goal_projection/mee_RCPA_prob/r01/2026-06-11_1435_RCPA_prob/iteration_1/node_memory/Tree_0_0/workspace_views/turn_002.json",
+          "turn": 2,
+          "usage": {
+            "cache_creation_input_tokens": 1227,
+            "cache_read_input_tokens": 41790,
+            "input_tokens": 2,
+            "output_tokens": 128
+          },
+          "view_chars": 7492,
+          "view_id": "T0.0-2",
+          "workspace_view_path": "artifacts/eval_suite/mee_renamed3_fable_l1/l1_goal_projection/mee_RCPA_prob/r01/2026-06-11_1435_RCPA_prob/iteration_1/node_memory/Tree_0_0/workspace_views/turn_001.json"
+        },
+        {
+          "action_submitted_at": "2026-06-11T21:37:25.853000+00:00",
+          "action_time": "+00:18",
+          "agent_think": "7.9 s",
+          "agent_think_path": "",
+          "agent_think_seconds": 7.853,
+          "decision_followup_path": "artifacts/eval_suite/mee_renamed3_fable_l1/l1_goal_projection/mee_RCPA_prob/r01/2026-06-11_1435_RCPA_prob/iteration_1/node_memory/Tree_0_0/followups/turn_002.md",
+          "decision_state_summary": "pRHL / call_site / relational_program, 1 goal, goal 1220 chars",
+          "decision_view_path": "artifacts/eval_suite/mee_renamed3_fable_l1/l1_goal_projection/mee_RCPA_prob/r01/2026-06-11_1435_RCPA_prob/iteration_1/node_memory/Tree_0_0/workspace_views/turn_002.json",
+          "deterministic_signals": [
+            "commit_without_probe_check_not_inferred"
+          ],
+          "goal_chars": 1220,
+          "inspect_topics": [
+            "goal_info",
+            "call_site_options",
+            "call_invariant_skeleton",
+            "call_subgoals",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "align"
+          ],
+          "intent": {
+            "intent": "commit_tactic",
+            "payload": {
+              "tactic": "wp; call (_: ={glob E, glob M} /\\ RCPA_Wrap.k{1} = (SKEa.RCPA.RCPA_Wrap.k, RCPAa.mk){2})."
+            }
+          },
+          "intent_summary": "commit wp; call (_: ={glob E, glob M} /\\ RCPA_Wrap.k{1} = (SKEa.RCPA.RCPA_Wrap.k, RCPAa.mk){2})",
+          "manager_action_summary": [
+            "tactic commit (147 ms)"
+          ],
+          "manager_result_at": "2026-06-11T21:37:26+00:00",
+          "manager_result_path": "artifacts/eval_suite/mee_renamed3_fable_l1/l1_goal_projection/mee_RCPA_prob/r01/2026-06-11_1435_RCPA_prob/iteration_1/node_memory/Tree_0_0/manager_results/turn_003.json",
+          "manager_seconds": 0.147,
+          "manager_time": "147 ms",
+          "node": "Tree-0.0",
+          "node_dir": "artifacts/eval_suite/mee_renamed3_fable_l1/l1_goal_projection/mee_RCPA_prob/r01/2026-06-11_1435_RCPA_prob/iteration_1/node_memory/Tree_0_0",
+          "ok": true,
+          "result_followup_path": "artifacts/eval_suite/mee_renamed3_fable_l1/l1_goal_projection/mee_RCPA_prob/r01/2026-06-11_1435_RCPA_prob/iteration_1/node_memory/Tree_0_0/followups/turn_003.md",
+          "result_state_summary": "equiv / prhl_module / relational_program, 2 goals, goal 530 chars",
+          "result_summary": "accepted commit",
+          "result_view_path": "artifacts/eval_suite/mee_renamed3_fable_l1/l1_goal_projection/mee_RCPA_prob/r01/2026-06-11_1435_RCPA_prob/iteration_1/node_memory/Tree_0_0/workspace_views/turn_003.json",
+          "turn": 3,
+          "usage": {
+            "cache_creation_input_tokens": 1464,
+            "cache_read_input_tokens": 43017,
+            "input_tokens": 2,
+            "output_tokens": 295
+          },
+          "view_chars": 15501,
+          "view_id": "T0.0-3",
+          "workspace_view_path": "artifacts/eval_suite/mee_renamed3_fable_l1/l1_goal_projection/mee_RCPA_prob/r01/2026-06-11_1435_RCPA_prob/iteration_1/node_memory/Tree_0_0/workspace_views/turn_002.json"
+        },
+        {
+          "action_submitted_at": "2026-06-11T21:37:32.200000+00:00",
+          "action_time": "+00:24",
+          "agent_think": "6.2 s",
+          "agent_think_path": "artifacts/eval_suite/mee_renamed3_fable_l1/l1_goal_projection/mee_RCPA_prob/r01/2026-06-11_1435_RCPA_prob/iteration_1/node_memory/Tree_0_0/thinking/turn_004.md",
+          "agent_think_seconds": 6.2,
+          "decision_followup_path": "artifacts/eval_suite/mee_renamed3_fable_l1/l1_goal_projection/mee_RCPA_prob/r01/2026-06-11_1435_RCPA_prob/iteration_1/node_memory/Tree_0_0/followups/turn_003.md",
+          "decision_state_summary": "equiv / prhl_module / relational_program, 2 goals, goal 530 chars",
+          "decision_view_path": "artifacts/eval_suite/mee_renamed3_fable_l1/l1_goal_projection/mee_RCPA_prob/r01/2026-06-11_1435_RCPA_prob/iteration_1/node_memory/Tree_0_0/workspace_views/turn_003.json",
+          "deterministic_signals": [
+            "commit_without_probe_check_not_inferred"
+          ],
+          "goal_chars": 530,
+          "inspect_topics": [
+            "goal_info",
+            "call_site_options",
+            "call_invariant_skeleton",
+            "call_subgoals",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "align"
+          ],
+          "intent": {
+            "intent": "commit_tactic",
+            "payload": {
+              "tactic": "proc; inline *."
+            }
+          },
+          "intent_summary": "commit proc; inline *",
+          "manager_action_summary": [
+            "tactic commit (1.8 s)"
+          ],
+          "manager_result_at": "2026-06-11T21:37:34+00:00",
+          "manager_result_path": "artifacts/eval_suite/mee_renamed3_fable_l1/l1_goal_projection/mee_RCPA_prob/r01/2026-06-11_1435_RCPA_prob/iteration_1/node_memory/Tree_0_0/manager_results/turn_004.json",
+          "manager_seconds": 1.8,
+          "manager_time": "1.8 s",
+          "node": "Tree-0.0",
+          "node_dir": "artifacts/eval_suite/mee_renamed3_fable_l1/l1_goal_projection/mee_RCPA_prob/r01/2026-06-11_1435_RCPA_prob/iteration_1/node_memory/Tree_0_0",
+          "ok": true,
+          "result_followup_path": "artifacts/eval_suite/mee_renamed3_fable_l1/l1_goal_projection/mee_RCPA_prob/r01/2026-06-11_1435_RCPA_prob/iteration_1/node_memory/Tree_0_0/followups/turn_004.md",
+          "result_state_summary": "pRHL / call_site / seq_cut, 2 goals, goal 1021 chars",
+          "result_summary": "accepted commit",
+          "result_view_path": "artifacts/eval_suite/mee_renamed3_fable_l1/l1_goal_projection/mee_RCPA_prob/r01/2026-06-11_1435_RCPA_prob/iteration_1/node_memory/Tree_0_0/workspace_views/turn_004.json",
+          "turn": 4,
+          "usage": {
+            "cache_creation_input_tokens": 1562,
+            "cache_read_input_tokens": 44481,
+            "input_tokens": 2,
+            "output_tokens": 206
+          },
+          "view_chars": 8615,
+          "view_id": "T0.0-4",
+          "workspace_view_path": "artifacts/eval_suite/mee_renamed3_fable_l1/l1_goal_projection/mee_RCPA_prob/r01/2026-06-11_1435_RCPA_prob/iteration_1/node_memory/Tree_0_0/workspace_views/turn_003.json"
+        },
+        {
+          "action_submitted_at": "2026-06-11T21:37:44.200000+00:00",
+          "action_time": "+00:36",
+          "agent_think": "10.2 s",
+          "agent_think_path": "artifacts/eval_suite/mee_renamed3_fable_l1/l1_goal_projection/mee_RCPA_prob/r01/2026-06-11_1435_RCPA_prob/iteration_1/node_memory/Tree_0_0/thinking/turn_005.md",
+          "agent_think_seconds": 10.2,
+          "decision_followup_path": "artifacts/eval_suite/mee_renamed3_fable_l1/l1_goal_projection/mee_RCPA_prob/r01/2026-06-11_1435_RCPA_prob/iteration_1/node_memory/Tree_0_0/followups/turn_004.md",
+          "decision_state_summary": "pRHL / call_site / seq_cut, 2 goals, goal 1021 chars",
+          "decision_view_path": "artifacts/eval_suite/mee_renamed3_fable_l1/l1_goal_projection/mee_RCPA_prob/r01/2026-06-11_1435_RCPA_prob/iteration_1/node_memory/Tree_0_0/workspace_views/turn_004.json",
+          "deterministic_signals": [
+            "commit_without_probe_check_not_inferred"
+          ],
+          "goal_chars": 1021,
+          "inspect_topics": [
+            "goal_info",
+            "call_site_options",
+            "call_subgoals",
+            "align",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms"
+          ],
+          "intent": {
+            "intent": "commit_tactic",
+            "payload": {
+              "tactic": "wp; call (_: true); wp; call (_: true); auto."
+            }
+          },
+          "intent_summary": "commit wp; call (_: true); wp; call (_: true); auto",
+          "manager_action_summary": [
+            "tactic commit (1.8 s)"
+          ],
+          "manager_result_at": "2026-06-11T21:37:46+00:00",
+          "manager_result_path": "artifacts/eval_suite/mee_renamed3_fable_l1/l1_goal_projection/mee_RCPA_prob/r01/2026-06-11_1435_RCPA_prob/iteration_1/node_memory/Tree_0_0/manager_results/turn_005.json",
+          "manager_seconds": 1.8,
+          "manager_time": "1.8 s",
+          "node": "Tree-0.0",
+          "node_dir": "artifacts/eval_suite/mee_renamed3_fable_l1/l1_goal_projection/mee_RCPA_prob/r01/2026-06-11_1435_RCPA_prob/iteration_1/node_memory/Tree_0_0",
+          "ok": true,
+          "result_followup_path": "artifacts/eval_suite/mee_renamed3_fable_l1/l1_goal_projection/mee_RCPA_prob/r01/2026-06-11_1435_RCPA_prob/iteration_1/node_memory/Tree_0_0/followups/turn_005.md",
+          "result_state_summary": "pRHL / call_site / relational_program, 1 goal, goal 1077 chars",
+          "result_summary": "accepted commit",
+          "result_view_path": "artifacts/eval_suite/mee_renamed3_fable_l1/l1_goal_projection/mee_RCPA_prob/r01/2026-06-11_1435_RCPA_prob/iteration_1/node_memory/Tree_0_0/workspace_views/turn_005.json",
+          "turn": 5,
+          "usage": {
+            "cache_creation_input_tokens": 1646,
+            "cache_read_input_tokens": 46043,
+            "input_tokens": 2,
+            "output_tokens": 218
+          },
+          "view_chars": 14502,
+          "view_id": "T0.0-5",
+          "workspace_view_path": "artifacts/eval_suite/mee_renamed3_fable_l1/l1_goal_projection/mee_RCPA_prob/r01/2026-06-11_1435_RCPA_prob/iteration_1/node_memory/Tree_0_0/workspace_views/turn_004.json"
+        },
+        {
+          "action_submitted_at": "2026-06-11T21:37:54.844000+00:00",
+          "action_time": "+00:47",
+          "agent_think": "8.8 s",
+          "agent_think_path": "artifacts/eval_suite/mee_renamed3_fable_l1/l1_goal_projection/mee_RCPA_prob/r01/2026-06-11_1435_RCPA_prob/iteration_1/node_memory/Tree_0_0/thinking/turn_006.md",
+          "agent_think_seconds": 8.844,
+          "decision_followup_path": "artifacts/eval_suite/mee_renamed3_fable_l1/l1_goal_projection/mee_RCPA_prob/r01/2026-06-11_1435_RCPA_prob/iteration_1/node_memory/Tree_0_0/followups/turn_005.md",
+          "decision_state_summary": "pRHL / call_site / relational_program, 1 goal, goal 1077 chars",
+          "decision_view_path": "artifacts/eval_suite/mee_renamed3_fable_l1/l1_goal_projection/mee_RCPA_prob/r01/2026-06-11_1435_RCPA_prob/iteration_1/node_memory/Tree_0_0/workspace_views/turn_005.json",
+          "deterministic_signals": [
+            "commit_without_probe_check_not_inferred"
+          ],
+          "goal_chars": 1077,
+          "inspect_topics": [
+            "goal_info",
+            "call_site_options",
+            "call_invariant_skeleton",
+            "call_subgoals",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "align"
+          ],
+          "intent": {
+            "intent": "commit_tactic",
+            "payload": {
+              "tactic": "wp; call (_: true); call (_: true); auto."
+            }
+          },
+          "intent_summary": "commit wp; call (_: true); call (_: true); auto",
+          "manager_action_summary": [
+            "tactic commit (156 ms)"
+          ],
+          "manager_result_at": "2026-06-11T21:37:55+00:00",
+          "manager_result_path": "artifacts/eval_suite/mee_renamed3_fable_l1/l1_goal_projection/mee_RCPA_prob/r01/2026-06-11_1435_RCPA_prob/iteration_1/node_memory/Tree_0_0/manager_results/turn_006.json",
+          "manager_seconds": 0.156,
+          "manager_time": "156 ms",
+          "node": "Tree-0.0",
+          "node_dir": "artifacts/eval_suite/mee_renamed3_fable_l1/l1_goal_projection/mee_RCPA_prob/r01/2026-06-11_1435_RCPA_prob/iteration_1/node_memory/Tree_0_0",
+          "ok": true,
+          "result_followup_path": "artifacts/eval_suite/mee_renamed3_fable_l1/l1_goal_projection/mee_RCPA_prob/r01/2026-06-11_1435_RCPA_prob/iteration_1/node_memory/Tree_0_0/followups/turn_006.md",
+          "result_state_summary": "ambient / closed_candidate, goal 25 chars",
+          "result_summary": "accepted commit",
+          "result_view_path": "artifacts/eval_suite/mee_renamed3_fable_l1/l1_goal_projection/mee_RCPA_prob/r01/2026-06-11_1435_RCPA_prob/iteration_1/node_memory/Tree_0_0/workspace_views/turn_006.json",
+          "turn": 6,
+          "usage": {
+            "cache_creation_input_tokens": 1729,
+            "cache_read_input_tokens": 47689,
+            "input_tokens": 2,
+            "output_tokens": 238
+          },
+          "view_chars": 20936,
+          "view_id": "T0.0-6",
+          "workspace_view_path": "artifacts/eval_suite/mee_renamed3_fable_l1/l1_goal_projection/mee_RCPA_prob/r01/2026-06-11_1435_RCPA_prob/iteration_1/node_memory/Tree_0_0/workspace_views/turn_005.json"
+        },
+        {
+          "action_submitted_at": "2026-06-11T21:38:01.863000+00:00",
+          "action_time": "+00:54",
+          "agent_think": "6.9 s",
+          "agent_think_path": "artifacts/eval_suite/mee_renamed3_fable_l1/l1_goal_projection/mee_RCPA_prob/r01/2026-06-11_1435_RCPA_prob/iteration_1/node_memory/Tree_0_0/thinking/turn_007.md",
+          "agent_think_seconds": 6.863,
+          "decision_followup_path": "artifacts/eval_suite/mee_renamed3_fable_l1/l1_goal_projection/mee_RCPA_prob/r01/2026-06-11_1435_RCPA_prob/iteration_1/node_memory/Tree_0_0/followups/turn_006.md",
+          "decision_state_summary": "ambient / closed_candidate, goal 25 chars",
+          "decision_view_path": "artifacts/eval_suite/mee_renamed3_fable_l1/l1_goal_projection/mee_RCPA_prob/r01/2026-06-11_1435_RCPA_prob/iteration_1/node_memory/Tree_0_0/workspace_views/turn_006.json",
+          "deterministic_signals": [
+            "commit_without_probe_check_not_inferred"
+          ],
+          "goal_chars": 25,
+          "inspect_topics": [
+            "goal_info"
+          ],
+          "intent": {
+            "intent": "commit_tactic",
+            "payload": {
+              "tactic": "qed."
+            }
+          },
+          "intent_summary": "commit qed",
+          "manager_action_summary": [
+            "tactic commit (137 ms)"
+          ],
+          "manager_result_at": "2026-06-11T21:38:02+00:00",
+          "manager_result_path": "artifacts/eval_suite/mee_renamed3_fable_l1/l1_goal_projection/mee_RCPA_prob/r01/2026-06-11_1435_RCPA_prob/iteration_1/node_memory/Tree_0_0/manager_results/turn_007.json",
+          "manager_seconds": 0.137,
+          "manager_time": "137 ms",
+          "node": "Tree-0.0",
+          "node_dir": "artifacts/eval_suite/mee_renamed3_fable_l1/l1_goal_projection/mee_RCPA_prob/r01/2026-06-11_1435_RCPA_prob/iteration_1/node_memory/Tree_0_0",
+          "ok": true,
+          "result_followup_path": "artifacts/eval_suite/mee_renamed3_fable_l1/l1_goal_projection/mee_RCPA_prob/r01/2026-06-11_1435_RCPA_prob/iteration_1/node_memory/Tree_0_0/followups/turn_007.md",
+          "result_state_summary": "complete / unknown / closed_candidate, 0 goals, goal 11 chars",
+          "result_summary": "accepted commit",
+          "result_view_path": "artifacts/eval_suite/mee_renamed3_fable_l1/l1_goal_projection/mee_RCPA_prob/r01/2026-06-11_1435_RCPA_prob/iteration_1/node_memory/Tree_0_0/workspace_views/turn_007.json",
+          "turn": 7,
+          "usage": {
+            "cache_creation_input_tokens": 1288,
+            "cache_read_input_tokens": 49418,
+            "input_tokens": 2,
+            "output_tokens": 123
+          },
+          "view_chars": 3963,
+          "view_id": "T0.0-7",
+          "workspace_view_path": "artifacts/eval_suite/mee_renamed3_fable_l1/l1_goal_projection/mee_RCPA_prob/r01/2026-06-11_1435_RCPA_prob/iteration_1/node_memory/Tree_0_0/workspace_views/turn_006.json"
+        },
+        {
+          "action_submitted_at": "2026-06-11T21:38:08+00:00",
+          "action_time": "+01:00",
+          "agent_think": "6 s",
+          "agent_think_path": "",
+          "agent_think_seconds": 6.0,
+          "decision_followup_path": "artifacts/eval_suite/mee_renamed3_fable_l1/l1_goal_projection/mee_RCPA_prob/r01/2026-06-11_1435_RCPA_prob/iteration_1/node_memory/Tree_0_0/followups/turn_007.md",
+          "decision_state_summary": "complete / unknown / closed_candidate, 0 goals, goal 11 chars",
+          "decision_view_path": "artifacts/eval_suite/mee_renamed3_fable_l1/l1_goal_projection/mee_RCPA_prob/r01/2026-06-11_1435_RCPA_prob/iteration_1/node_memory/Tree_0_0/workspace_views/turn_007.json",
+          "deterministic_signals": [],
+          "goal_chars": 11,
+          "inspect_topics": [
+            "verify",
+            "goal_info"
+          ],
+          "intent": {
+            "intent": "finish"
+          },
+          "intent_summary": "finish",
+          "manager_action_summary": [
+            "finish"
+          ],
+          "manager_result_at": "2026-06-11T21:38:08+00:00",
+          "manager_result_path": "artifacts/eval_suite/mee_renamed3_fable_l1/l1_goal_projection/mee_RCPA_prob/r01/2026-06-11_1435_RCPA_prob/iteration_1/node_memory/Tree_0_0/manager_results/turn_008.json",
+          "manager_seconds": 0.0,
+          "manager_time": "",
+          "node": "Tree-0.0",
+          "node_dir": "artifacts/eval_suite/mee_renamed3_fable_l1/l1_goal_projection/mee_RCPA_prob/r01/2026-06-11_1435_RCPA_prob/iteration_1/node_memory/Tree_0_0",
+          "ok": true,
+          "result_followup_path": "artifacts/eval_suite/mee_renamed3_fable_l1/l1_goal_projection/mee_RCPA_prob/r01/2026-06-11_1435_RCPA_prob/iteration_1/node_memory/Tree_0_0/followups/turn_008.md",
+          "result_state_summary": "complete / unknown / closed_candidate, 0 goals, goal 11 chars",
+          "result_summary": "finish requested",
+          "result_view_path": "artifacts/eval_suite/mee_renamed3_fable_l1/l1_goal_projection/mee_RCPA_prob/r01/2026-06-11_1435_RCPA_prob/iteration_1/node_memory/Tree_0_0/workspace_views/turn_008.json",
+          "turn": 8,
+          "usage": {},
+          "view_chars": 3060,
+          "view_id": "T0.0-8",
+          "workspace_view_path": "artifacts/eval_suite/mee_renamed3_fable_l1/l1_goal_projection/mee_RCPA_prob/r01/2026-06-11_1435_RCPA_prob/iteration_1/node_memory/Tree_0_0/workspace_views/turn_007.json"
+        },
+        {
+          "action_submitted_at": "2026-06-11T21:37:26.200000+00:00",
+          "action_time": "+00:18",
+          "agent_think": "",
+          "agent_think_path": "artifacts/eval_suite/mee_renamed3_fable_l1/l1_goal_projection/mee_RCPA_prob/r01/2026-06-11_1435_RCPA_prob/iteration_1/node_memory/Tree_0_1/thinking/turn_001.md",
+          "agent_think_seconds": null,
+          "decision_followup_path": "",
+          "decision_state_summary": "probability / pr / probability, 1 goal, goal 232 chars",
+          "decision_view_path": "artifacts/eval_suite/mee_renamed3_fable_l1/l1_goal_projection/mee_RCPA_prob/r01/2026-06-11_1435_RCPA_prob/iteration_1/manager_bootstrap_0_1.json",
+          "deterministic_signals": [
+            "commit_without_probe_check_not_inferred"
+          ],
+          "goal_chars": 232,
+          "inspect_topics": [],
+          "intent": {
+            "intent": "commit_tactic",
+            "payload": {
+              "tactic": "byequiv=> //."
+            }
+          },
+          "intent_summary": "commit byequiv=>//",
+          "manager_action_summary": [
+            "tactic commit (1.8 s)"
+          ],
+          "manager_result_at": "2026-06-11T21:37:28+00:00",
+          "manager_result_path": "artifacts/eval_suite/mee_renamed3_fable_l1/l1_goal_projection/mee_RCPA_prob/r01/2026-06-11_1435_RCPA_prob/iteration_1/node_memory/Tree_0_1/manager_results/turn_001.json",
+          "manager_seconds": 1.8,
+          "manager_time": "1.8 s",
+          "node": "Tree-0.1",
+          "node_dir": "artifacts/eval_suite/mee_renamed3_fable_l1/l1_goal_projection/mee_RCPA_prob/r01/2026-06-11_1435_RCPA_prob/iteration_1/node_memory/Tree_0_1",
+          "ok": true,
+          "result_followup_path": "artifacts/eval_suite/mee_renamed3_fable_l1/l1_goal_projection/mee_RCPA_prob/r01/2026-06-11_1435_RCPA_prob/iteration_1/node_memory/Tree_0_1/followups/turn_001.md",
+          "result_state_summary": "equiv / prhl_module / relational_program, 1 goal, goal 484 chars",
+          "result_summary": "accepted commit",
+          "result_view_path": "artifacts/eval_suite/mee_renamed3_fable_l1/l1_goal_projection/mee_RCPA_prob/r01/2026-06-11_1435_RCPA_prob/iteration_1/node_memory/Tree_0_1/workspace_views/turn_001.json",
+          "turn": 1,
+          "usage": {
+            "cache_creation_input_tokens": 54128,
+            "cache_read_input_tokens": 270489,
+            "input_tokens": 17,
+            "output_tokens": 4793
+          },
+          "view_chars": 774,
+          "view_id": "T0.1-1",
+          "workspace_view_path": "artifacts/eval_suite/mee_renamed3_fable_l1/l1_goal_projection/mee_RCPA_prob/r01/2026-06-11_1435_RCPA_prob/iteration_1/manager_bootstrap_0_1.json"
+        },
+        {
+          "action_submitted_at": "2026-06-11T21:37:34.200000+00:00",
+          "action_time": "+00:26",
+          "agent_think": "6.2 s",
+          "agent_think_path": "artifacts/eval_suite/mee_renamed3_fable_l1/l1_goal_projection/mee_RCPA_prob/r01/2026-06-11_1435_RCPA_prob/iteration_1/node_memory/Tree_0_1/thinking/turn_002.md",
+          "agent_think_seconds": 6.2,
+          "decision_followup_path": "artifacts/eval_suite/mee_renamed3_fable_l1/l1_goal_projection/mee_RCPA_prob/r01/2026-06-11_1435_RCPA_prob/iteration_1/node_memory/Tree_0_1/followups/turn_001.md",
+          "decision_state_summary": "equiv / prhl_module / relational_program, 1 goal, goal 484 chars",
+          "decision_view_path": "artifacts/eval_suite/mee_renamed3_fable_l1/l1_goal_projection/mee_RCPA_prob/r01/2026-06-11_1435_RCPA_prob/iteration_1/node_memory/Tree_0_1/workspace_views/turn_001.json",
+          "deterministic_signals": [
+            "commit_without_probe_check_not_inferred"
+          ],
+          "goal_chars": 484,
+          "inspect_topics": [
+            "goal_info",
+            "call_site_options",
+            "call_invariant_skeleton",
+            "call_subgoals",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "align"
+          ],
+          "intent": {
+            "intent": "commit_tactic",
+            "payload": {
+              "tactic": "proc; inline *."
+            }
+          },
+          "intent_summary": "commit proc; inline *",
+          "manager_action_summary": [
+            "tactic commit (1.8 s)"
+          ],
+          "manager_result_at": "2026-06-11T21:37:36+00:00",
+          "manager_result_path": "artifacts/eval_suite/mee_renamed3_fable_l1/l1_goal_projection/mee_RCPA_prob/r01/2026-06-11_1435_RCPA_prob/iteration_1/node_memory/Tree_0_1/manager_results/turn_002.json",
+          "manager_seconds": 1.8,
+          "manager_time": "1.8 s",
+          "node": "Tree-0.1",
+          "node_dir": "artifacts/eval_suite/mee_renamed3_fable_l1/l1_goal_projection/mee_RCPA_prob/r01/2026-06-11_1435_RCPA_prob/iteration_1/node_memory/Tree_0_1",
+          "ok": true,
+          "result_followup_path": "artifacts/eval_suite/mee_renamed3_fable_l1/l1_goal_projection/mee_RCPA_prob/r01/2026-06-11_1435_RCPA_prob/iteration_1/node_memory/Tree_0_1/followups/turn_002.md",
+          "result_state_summary": "pRHL / call_site / relational_program, 1 goal, goal 1220 chars",
+          "result_summary": "accepted commit",
+          "result_view_path": "artifacts/eval_suite/mee_renamed3_fable_l1/l1_goal_projection/mee_RCPA_prob/r01/2026-06-11_1435_RCPA_prob/iteration_1/node_memory/Tree_0_1/workspace_views/turn_002.json",
+          "turn": 2,
+          "usage": {
+            "cache_creation_input_tokens": 1213,
+            "cache_read_input_tokens": 43517,
+            "input_tokens": 2,
+            "output_tokens": 167
+          },
+          "view_chars": 7490,
+          "view_id": "T0.1-2",
+          "workspace_view_path": "artifacts/eval_suite/mee_renamed3_fable_l1/l1_goal_projection/mee_RCPA_prob/r01/2026-06-11_1435_RCPA_prob/iteration_1/node_memory/Tree_0_1/workspace_views/turn_001.json"
+        },
+        {
+          "action_submitted_at": "2026-06-11T21:37:57.856000+00:00",
+          "action_time": "+00:50",
+          "agent_think": "21.9 s",
+          "agent_think_path": "artifacts/eval_suite/mee_renamed3_fable_l1/l1_goal_projection/mee_RCPA_prob/r01/2026-06-11_1435_RCPA_prob/iteration_1/node_memory/Tree_0_1/thinking/turn_003.md",
+          "agent_think_seconds": 21.856,
+          "decision_followup_path": "artifacts/eval_suite/mee_renamed3_fable_l1/l1_goal_projection/mee_RCPA_prob/r01/2026-06-11_1435_RCPA_prob/iteration_1/node_memory/Tree_0_1/followups/turn_002.md",
+          "decision_state_summary": "pRHL / call_site / relational_program, 1 goal, goal 1220 chars",
+          "decision_view_path": "artifacts/eval_suite/mee_renamed3_fable_l1/l1_goal_projection/mee_RCPA_prob/r01/2026-06-11_1435_RCPA_prob/iteration_1/node_memory/Tree_0_1/workspace_views/turn_002.json",
+          "deterministic_signals": [
+            "commit_without_probe_check_not_inferred"
+          ],
+          "goal_chars": 1220,
+          "inspect_topics": [
+            "goal_info",
+            "call_site_options",
+            "call_invariant_skeleton",
+            "call_subgoals",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "align"
+          ],
+          "intent": {
+            "intent": "commit_tactic",
+            "payload": {
+              "tactic": "wp; call (_: ={glob E, glob M} /\\ RCPA_Wrap.k{1} = (SKEa.RCPA.RCPA_Wrap.k{2}, RCPAa.mk{2}))."
+            }
+          },
+          "intent_summary": "commit wp; call (_: ={glob E, glob M} /\\ RCPA_Wrap.k{1} = (SKEa.RCPA.RCPA_Wrap.k{2}, RCPAa.mk{2}))",
+          "manager_action_summary": [
+            "tactic commit (144 ms)"
+          ],
+          "manager_result_at": "2026-06-11T21:37:58+00:00",
+          "manager_result_path": "artifacts/eval_suite/mee_renamed3_fable_l1/l1_goal_projection/mee_RCPA_prob/r01/2026-06-11_1435_RCPA_prob/iteration_1/node_memory/Tree_0_1/manager_results/turn_003.json",
+          "manager_seconds": 0.144,
+          "manager_time": "144 ms",
+          "node": "Tree-0.1",
+          "node_dir": "artifacts/eval_suite/mee_renamed3_fable_l1/l1_goal_projection/mee_RCPA_prob/r01/2026-06-11_1435_RCPA_prob/iteration_1/node_memory/Tree_0_1",
+          "ok": true,
+          "result_followup_path": "artifacts/eval_suite/mee_renamed3_fable_l1/l1_goal_projection/mee_RCPA_prob/r01/2026-06-11_1435_RCPA_prob/iteration_1/node_memory/Tree_0_1/followups/turn_003.md",
+          "result_state_summary": "equiv / prhl_module / relational_program, 2 goals, goal 530 chars",
+          "result_summary": "accepted commit",
+          "result_view_path": "artifacts/eval_suite/mee_renamed3_fable_l1/l1_goal_projection/mee_RCPA_prob/r01/2026-06-11_1435_RCPA_prob/iteration_1/node_memory/Tree_0_1/workspace_views/turn_003.json",
+          "turn": 3,
+          "usage": {
+            "cache_creation_input_tokens": 1503,
+            "cache_read_input_tokens": 44730,
+            "input_tokens": 2,
+            "output_tokens": 1261
+          },
+          "view_chars": 15501,
+          "view_id": "T0.1-3",
+          "workspace_view_path": "artifacts/eval_suite/mee_renamed3_fable_l1/l1_goal_projection/mee_RCPA_prob/r01/2026-06-11_1435_RCPA_prob/iteration_1/node_memory/Tree_0_1/workspace_views/turn_002.json"
+        }
+      ],
+      "run_dir": "artifacts/eval_suite/mee_renamed3_fable_l1/l1_goal_projection/mee_RCPA_prob/r01/2026-06-11_1435_RCPA_prob/iteration_1",
+      "turn_count": 11
+    }
+  ],
+  "schema_version": 1
+}

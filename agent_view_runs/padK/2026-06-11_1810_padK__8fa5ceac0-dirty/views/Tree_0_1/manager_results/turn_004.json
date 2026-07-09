@@ -1,0 +1,19 @@
+{
+  "turn": 4,
+  "handled_intent": {
+    "intent": "commit_tactic",
+    "payload": {
+      "tactic": "rewrite size_padded (_: 48 + (size m - size m %% 16) - (16 - size m %% 16) - 32 = size m) 1:/# (_: 48 + (size m - size m %% 16) - (16 - size m %% 16) = size m + 32) 1:/#."
+    }
+  },
+  "ok": true,
+  "manager_note": "Committed tactic accepted; the EasyCrypt proof state changed.",
+  "manager_actions": [
+    {
+      "action": "tactic commit",
+      "outcome": "EasyCrypt accepted the committed tactic.",
+      "timing": "274 ms"
+    }
+  ],
+  "view_refreshed": true
+}

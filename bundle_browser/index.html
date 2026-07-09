@@ -1,0 +1,527 @@
+<!-- Shannon Prover benchmark browser — static SPA over agent_view_runs/.
+     Two views, hash-routed: #bench (model capability board computed live from
+     ./manifest.json; placeholder rows for models not yet evaluated) and #runs
+     (per-lemma bundle browser with icon-coded turn timelines). Reads each
+     bundle's own timeline_report.json on demand; fetches per-step artifacts
+     lazily. No build backend. -->
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Shannon Prover — benchmark</title>
+<style>
+  :root{
+    --bg:#faf9f7; --surface:#ffffff; --ink:#23211c; --muted:#6b6862; --hint:#9a968d;
+    --line:rgba(0,0,0,.12); --line2:rgba(0,0,0,.22);
+    --ok:#27500a; --okbg:#eaf3de; --warn:#854f0b; --warnbg:#faeeda;
+    --bad:#791f1f; --badbg:#fcebeb; --info:#0c447c; --infobg:#e6f1fb;
+    --purp:#3c3489; --purpbg:#eeedfe;
+    --barA:#5b8def; --barB:#9db7e8;
+    --mono:ui-monospace,SFMono-Regular,Menlo,monospace;
+    --sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+  }
+  @media(prefers-color-scheme:dark){:root{
+    --bg:#1a1916;--surface:#242320;--ink:#ece9e2;--muted:#a8a399;--hint:#6f6b62;
+    --line:rgba(255,255,255,.14);--line2:rgba(255,255,255,.26);
+    --ok:#c0dd97;--okbg:#27500a;--warn:#fac775;--warnbg:#633806;--bad:#f7c1c1;--badbg:#791f1f;
+    --info:#b5d4f4;--infobg:#0c447c;--purp:#cecbf6;--purpbg:#3c3489;
+    --barA:#5b8def;--barB:#33517e;}}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);font-size:14px;line-height:1.5}
+  .top{display:flex;align-items:center;gap:12px;padding:12px 18px;border-bottom:.5px solid var(--line);position:sticky;top:0;background:var(--bg);z-index:5;flex-wrap:wrap}
+  .top h1{font-size:16px;font-weight:500;margin:0;cursor:pointer}
+  .top .sub{color:var(--hint);font-size:12px}
+  .navtabs{display:flex;gap:2px;border:.5px solid var(--line2);border-radius:8px;overflow:hidden}
+  .navtab{font-size:12px;padding:5px 12px;border:none;background:transparent;color:var(--muted);cursor:pointer}
+  .navtab.on{background:var(--infobg);color:var(--info)}
+  .chips{display:flex;gap:6px;flex-wrap:wrap;margin-left:auto;align-items:center}
+  .chip{font-size:12px;padding:4px 10px;border-radius:8px;border:.5px solid var(--line2);background:transparent;color:var(--muted);cursor:pointer}
+  .chip.on{border-color:var(--info);background:var(--infobg);color:var(--info)}
+  input[type=text]{height:32px;padding:0 10px;border:.5px solid var(--line2);border-radius:8px;background:var(--surface);color:var(--ink);font-size:13px;min-width:160px}
+  .pill{font-size:11px;padding:2px 7px;border-radius:6px;white-space:nowrap}
+  .p-ok{background:var(--okbg);color:var(--ok)} .p-warn{background:var(--warnbg);color:var(--warn)}
+  .p-bad{background:var(--badbg);color:var(--bad)} .p-info{background:var(--infobg);color:var(--info)}
+  .p-purp{background:var(--purpbg);color:var(--purp)} .p-mut{background:transparent;color:var(--muted);border:.5px solid var(--line2)}
+  .meta{font-size:11px;color:var(--hint)}
+  .banner{background:var(--warnbg);color:var(--warn);font-size:12px;padding:8px 22px;border-bottom:.5px solid var(--line)}
+  .banner strong{font-weight:600}
+
+  /* ---------- benchmark home ---------- */
+  .bench{max-width:880px;margin:0 auto;padding:28px 24px 60px}
+  .hero h2{font-size:26px;font-weight:600;margin:6px 0 4px;letter-spacing:-.01em}
+  .hero .tag{color:var(--muted);font-size:14px;max-width:640px}
+  .statstrip{display:flex;gap:28px;margin:20px 0 6px;flex-wrap:wrap}
+  .stat .n{font-size:22px;font-weight:600}
+  .stat .l{font-size:11px;color:var(--hint);text-transform:uppercase;letter-spacing:.05em}
+  .board{margin-top:26px;border:.5px solid var(--line);background:var(--surface);border-radius:14px;padding:16px 18px}
+  .board .bh{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;margin-bottom:4px}
+  .board .bh h3{font-size:15px;font-weight:600;margin:0}
+  .board .bh .note{font-size:11px;color:var(--hint)}
+  .mrow{display:flex;align-items:center;gap:12px;padding:10px 8px;border-radius:10px;cursor:pointer}
+  .mrow:hover{background:var(--infobg)}
+  .mrow.ph{cursor:default;opacity:.55}
+  .mrow.ph:hover{background:transparent}
+  .mrow .mname{width:150px;flex:none;font-weight:500;font-size:13px}
+  .mrow .mname .msub{display:block;font-weight:400;font-size:11px;color:var(--hint)}
+  .mrow .barwrap{flex:1;min-width:120px;height:22px;border-radius:6px;background:rgba(127,127,127,.10);overflow:hidden;position:relative}
+  .mrow .bar{height:100%;border-radius:6px;background:linear-gradient(90deg,var(--barA),var(--barB));min-width:2px}
+  .mrow.ph .barwrap{background:transparent;border:1.5px dashed var(--line2)}
+  .mrow .barlabel{position:absolute;left:8px;top:0;line-height:22px;font-size:11px;color:var(--ink);mix-blend-mode:normal;white-space:nowrap}
+  .mrow .mstats{width:210px;flex:none;text-align:right;font-size:11px;color:var(--muted);white-space:nowrap}
+  .mrow .go{flex:none;color:var(--hint)}
+  .divider{border-top:.5px dashed var(--line);margin:8px 0}
+  .foot{margin-top:10px;font-size:11px;color:var(--hint);line-height:1.6}
+  .feat{margin-top:26px}
+  .feat h3{font-size:15px;font-weight:600;margin:0 0 10px}
+  .featgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:10px}
+  .fcard{border:.5px solid var(--line);background:var(--surface);border-radius:10px;padding:10px 12px;cursor:pointer}
+  .fcard:hover{border-color:var(--info)}
+  .fcard .fn{font-weight:500;font-size:13px;margin-bottom:6px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .fcard .fr{display:flex;gap:5px;flex-wrap:wrap;align-items:center}
+
+  /* ---------- runs browser ---------- */
+  .wrap{display:flex;align-items:flex-start;gap:0;height:calc(100vh - 58px)}
+  .list{width:330px;flex:none;overflow:auto;height:100%;border-right:.5px solid var(--line);padding:10px}
+  .grp{font-size:11px;color:var(--hint);text-transform:uppercase;letter-spacing:.04em;margin:12px 4px 6px}
+  .bcard{border:.5px solid var(--line);background:var(--surface);border-radius:8px;padding:8px 10px;margin-bottom:6px;cursor:pointer}
+  .bcard.on{border-color:var(--info);background:var(--infobg)}
+  .bcard .l1{display:flex;align-items:center;gap:6px;justify-content:space-between}
+  .bcard .nm{font-weight:500;font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .bcard .l2{display:flex;gap:5px;align-items:center;margin-top:6px;flex-wrap:wrap}
+  .main{flex:1;min-width:0;overflow:auto;height:100%;padding:16px 20px}
+  .empty{color:var(--hint);padding:40px;text-align:center}
+  .hd{border:.5px solid var(--line);background:var(--surface);border-radius:12px;padding:12px 14px}
+  .hd .ttl{font-weight:500;font-size:16px}
+  .hd .row{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px;align-items:center}
+  .legend{margin:12px 2px 0;font-size:11px;color:var(--hint);display:flex;gap:14px;flex-wrap:wrap}
+  .legend .ic{margin-right:3px}
+  .steps{margin-top:8px;display:flex;flex-direction:column;gap:4px}
+  .step{display:flex;align-items:center;gap:9px;padding:6px 10px;border:.5px solid var(--line);border-radius:8px;background:var(--surface);cursor:pointer}
+  .step.on{border-color:var(--info);background:var(--infobg)}
+  .step.rej{border-left:3px solid var(--bad)}
+  .step .t{font-size:11px;color:var(--hint);width:24px;flex:none;text-align:right}
+  .ic{width:22px;height:22px;flex:none;border-radius:6px;display:inline-flex;align-items:center;justify-content:center;font-size:12px;line-height:1}
+  .ic-ok{background:var(--okbg);color:var(--ok)} .ic-bad{background:var(--badbg);color:var(--bad)}
+  .ic-info{background:var(--infobg);color:var(--info)} .ic-purp{background:var(--purpbg);color:var(--purp)}
+  .ic-warn{background:var(--warnbg);color:var(--warn)} .ic-mut{background:rgba(127,127,127,.12);color:var(--muted)}
+  .step code{flex:1;min-width:0;font-family:var(--mono);font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .step code .arg{color:var(--purp)}
+  .step .why{flex:2;min-width:0;font-size:11px;color:var(--bad);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .step .tm{font-size:11px;color:var(--hint);flex:none;white-space:nowrap}
+  .panel{margin-top:12px;border:.5px solid var(--line2);background:var(--surface);border-radius:12px;overflow:hidden}
+  .ptabs{display:flex;align-items:center;border-bottom:.5px solid var(--line);flex-wrap:wrap}
+  .ptab{font-size:12px;padding:8px 12px;cursor:pointer;border:none;border-bottom:2px solid transparent;background:transparent;color:var(--muted)}
+  .ptab.on{border-bottom-color:var(--info);color:var(--info)}
+  .pttl{font-size:12px;color:var(--hint);padding:0 10px}
+  .px{margin-left:auto;border:none;background:transparent;cursor:pointer;color:var(--muted);font-size:18px;padding:4px 12px;line-height:1}
+  .pbody{margin:0;padding:12px 14px;font-family:var(--mono);font-size:12px;line-height:1.6;white-space:pre-wrap;max-height:440px;overflow:auto}
+  .note{color:var(--hint);font-style:italic}
+</style>
+
+<div class="top">
+  <a id="sitehome" href="../" title="back to Shannon Prover home" style="display:none;color:var(--muted);text-decoration:none;font-size:13px;padding:3px 8px;border-radius:8px">&larr; home</a>
+  <h1 id="home">Shannon Prover <span style="color:var(--hint);font-weight:400">benchmark</span></h1>
+  <div class="navtabs">
+    <button class="navtab" id="nav-bench">benchmark</button>
+    <button class="navtab" id="nav-runs">runs</button>
+  </div>
+  <span class="sub" id="count"></span>
+  <div class="chips" id="topctl"></div>
+</div>
+<div class="banner">⚠ <strong>Placeholder — work in progress.</strong> Everything on this page
+comes from unstandardized development runs; it is not a controlled comparison and does not
+represent final results. We'll keep updating as new experiments land.</div>
+<div id="view"><div class="empty">loading…</div></div>
+
+<script>
+(function(){
+  var MANIFEST_URL='./manifest.json';
+  var RUNS_URL='../agent_view_runs/';
+  var esc=function(s){return (s==null?'':String(s)).replace(/[&<>]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;'}[c];});};
+  var BUNDLES=[], byLemma={}, MODELS=[], view='bench',
+      filt={outcome:'',profile:'',model:'',pubonly:false,q:''},
+      sortMode='lemma', sel=null, selRows=null, selStep=null, selKind='result', cache={};
+
+  // Model labels observed in run_meta vary ("fable-5" vs "claude-fable-5"); merge.
+  function normModel(m){ m=m||'?'; if(m==='fable-5')m='claude-fable-5'; return m; }
+  function shortModel(m){ return (m||'?').replace(/^claude-/,''); }
+
+  function pill(txt,cls){return '<span class="pill '+cls+'">'+esc(txt)+'</span>';}
+  function outcomePill(o){return o==='proved'?pill('proved ✓','p-ok'):o==='verify_failed'?pill('verify-failed','p-bad'):pill('open','p-warn');}
+
+  function getJSON(url){ if(cache[url])return cache[url];
+    // cache the PARSED json, NOT the Response — a Response body can be read only once.
+    cache[url]=fetch(url).then(function(r){ if(!r.ok) throw new Error(r.status); return r.json(); });
+    return cache[url];
+  }
+
+  fetch(MANIFEST_URL).then(function(r){return r.json();}).then(function(d){
+    BUNDLES=(d.bundles||[]);
+    BUNDLES.forEach(function(b){b.model=normModel(b.model);});
+    byLemma={}; BUNDLES.forEach(function(b){(byLemma[b.lemma]=byLemma[b.lemma]||[]).push(b);});
+    MODELS=aggregateModels(BUNDLES);
+    document.getElementById('count').textContent=d.count+' recorded runs · '+d.generated_for+(d.generated_for==='local'?' (🔒 = private, hidden from public builds)':'');
+    route();
+  }).catch(function(e){document.getElementById('view').innerHTML='<div class="empty">could not load manifest.json — run <code>python3 bundle_browser/build_manifest.py</code> first.<br>'+esc(e)+'</div>';});
+
+  function aggregateModels(bundles){
+    var agg={};
+    bundles.forEach(function(b){
+      var m=b.model; if(m==='?')return;
+      var a=agg[m]=agg[m]||{model:m,runs:0,proved:0,lemmas:{},provedLemmas:{},l1:0,l4:0};
+      a.runs++; a.lemmas[b.lemma]=1;
+      if(b.proved){a.proved++;a.provedLemmas[b.lemma]=1;}
+      if(b.profile==='L1')a.l1++; if(b.profile==='L4')a.l4++;
+    });
+    return Object.keys(agg).map(function(k){
+      var a=agg[k];
+      a.nLemmas=Object.keys(a.lemmas).length; a.nProvedLemmas=Object.keys(a.provedLemmas).length;
+      a.rate=a.nLemmas?a.nProvedLemmas/a.nLemmas:0;
+      return a;
+    }).sort(function(x,y){return y.rate-x.rate || y.runs-x.runs;});
+  }
+
+  /* ---------------- routing ---------------- */
+  function route(){
+    var h=location.hash||'#bench';
+    if(h.indexOf('#runs')===0){
+      view='runs';
+      var m=h.match(/#runs\/(.+)$/); if(m)filt.model=decodeURIComponent(m[1]);
+    } else view='bench';
+    render();
+  }
+  window.addEventListener('hashchange',route);
+  // "← home" leads to the site landing page (one level up) — only meaningful
+  // when this browser is mounted at a .../results/ path (playground server or
+  // the static Pages deploy), not as a standalone file.
+  if(location.pathname.indexOf('/results')>=0)document.getElementById('sitehome').style.display='';
+  document.getElementById('home').onclick=function(){location.hash='#bench';};
+  document.getElementById('nav-bench').onclick=function(){location.hash='#bench';};
+  document.getElementById('nav-runs').onclick=function(){filt.model='';location.hash='#runs';if(view==='runs')render();};
+
+  function render(){
+    document.getElementById('nav-bench').className='navtab'+(view==='bench'?' on':'');
+    document.getElementById('nav-runs').className='navtab'+(view==='runs'?' on':'');
+    if(view==='bench'){renderTopCtl();renderBench();}
+    else{renderTopCtl();renderRuns();}
+  }
+
+  /* ---------------- benchmark home ---------------- */
+  var PLACEHOLDERS=[
+    {name:'GPT (latest)',sub:'not yet evaluated'},
+    {name:'Gemini (latest)',sub:'not yet evaluated'},
+    {name:'open-weights baseline',sub:'not yet evaluated'},
+  ];
+
+  function renderBench(){
+    var V=document.getElementById('view');
+    var total=BUNDLES.length, provedRuns=BUNDLES.filter(function(b){return b.proved;}).length;
+    var lemmas=Object.keys(byLemma).length;
+    var main=MODELS.filter(function(a){return a.runs>=3;});
+    var small=MODELS.filter(function(a){return a.runs<3;});
+    var maxRate=Math.max.apply(null,main.map(function(a){return a.rate;}).concat([0.01]));
+
+    function mrow(a){
+      var w=Math.round(100*a.rate/maxRate);
+      return '<div class="mrow" data-model="'+esc(a.model)+'" title="browse '+esc(a.model)+' runs">'+
+        '<div class="mname">'+esc(shortModel(a.model))+'<span class="msub">'+a.runs+' runs</span></div>'+
+        '<div class="barwrap"><div class="bar" style="width:'+w+'%"></div>'+
+          '<span class="barlabel">'+a.nProvedLemmas+'/'+a.nLemmas+' lemmas proved · '+Math.round(100*a.rate)+'%</span></div>'+
+        '<div class="mstats">'+a.proved+'/'+a.runs+' runs proved · L1 '+a.l1+' · L4 '+a.l4+'</div>'+
+        '<div class="go">›</div></div>';
+    }
+    function phrow(p){
+      return '<div class="mrow ph"><div class="mname">'+esc(p.name)+'<span class="msub">'+esc(p.sub)+'</span></div>'+
+        '<div class="barwrap"></div><div class="mstats">—</div><div class="go"></div></div>';
+    }
+
+    // featured: proved runs with the longest committed proofs (hardest closures)
+    var feat=BUNDLES.filter(function(b){return b.proved&&b.turns;})
+      .sort(function(x,y){return y.turns-x.turns;}).slice(0,6);
+
+    V.innerHTML='<div class="bench">'+
+      '<div class="hero">'+
+        '<h2>Can LLM agents write machine-checked cryptographic proofs?</h2>'+
+        '<div class="tag">Every result below is a recorded agent run against the EasyCrypt proof assistant — '+
+        'each turn the agent saw a structured proof-state panel, chose one action, and the checker accepted or rejected it. '+
+        'Click any run to replay exactly what the agent saw, thought, and committed.</div>'+
+      '</div>'+
+      '<div class="statstrip">'+
+        '<div class="stat"><div class="n">'+lemmas+'</div><div class="l">lemmas</div></div>'+
+        '<div class="stat"><div class="n">'+total+'</div><div class="l">recorded runs</div></div>'+
+        '<div class="stat"><div class="n">'+provedRuns+'</div><div class="l">proved runs</div></div>'+
+        '<div class="stat"><div class="n">'+MODELS.length+'</div><div class="l">models</div></div>'+
+      '</div>'+
+      '<div class="board">'+
+        '<div class="bh"><h3>Model capability</h3><span class="pill p-warn">preview — observed runs, not a controlled benchmark</span></div>'+
+        '<div class="note" style="font-size:11px;color:var(--hint);margin-bottom:8px">Fraction of attempted lemmas closed with a machine-checked proof. Models were run on overlapping but not identical lemma sets — the standardized head-to-head suite will replace this board. L1 = Goal-only interface (bare goal) · L4 = Workbench (full compiler surface).</div>'+
+        main.map(mrow).join('')+
+        (small.length?'<div class="divider"></div>'+small.map(mrow).join(''):'')+
+        '<div class="divider"></div>'+
+        PLACEHOLDERS.map(phrow).join('')+
+        '<div class="foot">A lemma counts as proved only when EasyCrypt accepts the complete proof (no <code>admit</code>) and the replay validator re-checks it. Click a model to browse its runs.</div>'+
+      '</div>'+
+      '<div class="feat"><h3>Longest proved runs</h3><div class="featgrid">'+
+        feat.map(function(b){
+          return '<div class="fcard" data-bid="'+esc(b.id)+'"><div class="fn">'+esc(b.lemma)+'</div>'+
+            '<div class="fr">'+outcomePill(b.outcome)+pill(b.profile,'p-info')+pill(shortModel(b.model),'p-mut')+pill(b.turns+' turns','p-mut')+
+            (b.tier==='private'?'<span title="private">🔒</span>':'')+'</div></div>';
+        }).join('')+
+      '</div></div>'+
+    '</div>';
+
+    V.querySelectorAll('.mrow[data-model]').forEach(function(el){
+      el.onclick=function(){filt.model=el.getAttribute('data-model');filt.outcome='';filt.profile='';location.hash='#runs/'+encodeURIComponent(filt.model);};
+    });
+    V.querySelectorAll('.fcard[data-bid]').forEach(function(el){
+      el.onclick=function(){
+        var b=BUNDLES.filter(function(x){return x.id===el.getAttribute('data-bid');})[0];
+        if(!b)return; filt.model='';filt.outcome='';filt.profile='';filt.q='';
+        location.hash='#runs'; view='runs'; render(); selectBundle(b);
+      };
+    });
+  }
+
+  /* ---------------- runs browser ---------------- */
+  function renderTopCtl(){
+    var c=document.getElementById('topctl');
+    if(view==='bench'){c.innerHTML='';return;}
+    c.innerHTML='<input type="text" id="q" placeholder="search lemma…" value="'+esc(filt.q)+'"/><span id="chips" style="display:flex;gap:6px;flex-wrap:wrap"></span>';
+    document.getElementById('q').addEventListener('input',function(e){filt.q=e.target.value.toLowerCase();renderList();});
+    renderChips();
+  }
+
+  function renderChips(){
+    function t(k,v){return filt[k]===v?'':v;}
+    var defs=[
+      ['all',function(){filt.outcome='';filt.profile='';filt.model='';}],
+      ['proved',function(){filt.outcome=t('outcome','proved');}],
+      ['open',function(){filt.outcome=t('outcome','open');}],
+      ['L1',function(){filt.profile=t('profile','L1');}],
+      ['L4',function(){filt.profile=t('profile','L4');}],
+      ['🔒 public only',function(){filt.pubonly=!filt.pubonly;}]
+    ];
+    MODELS.filter(function(a){return a.runs>=3;}).forEach(function(a){
+      defs.splice(defs.length-1,0,[shortModel(a.model),function(){filt.model=t('model',a.model);}]);
+    });
+    var c=document.getElementById('chips');if(!c)return;c.innerHTML='';
+    defs.forEach(function(d){
+      var on=(d[0]==='all'&&!filt.outcome&&!filt.profile&&!filt.model)||
+             (filt.outcome===d[0])||(filt.profile===d[0])||
+             (d[0]==='🔒 public only'&&filt.pubonly)||
+             (filt.model&&shortModel(filt.model)===d[0]);
+      var b=document.createElement('button');b.className='chip'+(on?' on':'');b.textContent=d[0];
+      b.onclick=function(){d[1]();renderChips();renderList();};c.appendChild(b);
+    });
+  }
+
+  function renderRuns(){
+    var V=document.getElementById('view');
+    V.innerHTML='<div class="wrap"><div class="list" id="list"></div><div class="main" id="main"><div class="empty">select a run on the left</div></div></div>';
+    renderList();
+    if(sel){selectBundle(sel);}
+  }
+
+  function pass(b){
+    if(filt.outcome&&b.outcome!==filt.outcome)return false;
+    if(filt.profile&&b.profile!==filt.profile)return false;
+    if(filt.model&&b.model!==filt.model)return false;
+    if(filt.pubonly&&b.tier!=='public')return false;
+    if(filt.q&&b.lemma.toLowerCase().indexOf(filt.q)<0)return false;
+    return true;
+  }
+  function bcard(b,showLemma){
+    var c=document.createElement('div');c.className='bcard'+(sel&&sel.id===b.id?' on':'');
+    var title=showLemma?(esc(b.lemma)+' <span class="meta">· '+esc(b.date)+'</span>'):esc(b.date);
+    c.innerHTML='<div class="l1"><span class="nm">'+title+'</span>'+(b.tier==='private'?'<span title="private — excluded from public builds">🔒</span>':'')+'</div>'+
+      '<div class="l2">'+outcomePill(b.outcome)+pill(b.profile,'p-mut')+'<span class="meta">'+esc(shortModel(b.model))+' · '+b.turns+'t</span></div>';
+    c.onclick=function(){selectBundle(b);};
+    return c;
+  }
+  function renderList(){
+    var L=document.getElementById('list');if(!L)return;L.innerHTML='';
+    var sc=document.createElement('div');sc.style.cssText='display:flex;gap:6px;align-items:center;margin-bottom:8px;font-size:11px;color:var(--hint)';
+    sc.innerHTML='sort: <button class="chip'+(sortMode==='lemma'?' on':'')+'" data-sort="lemma" style="padding:2px 9px">lemma</button><button class="chip'+(sortMode==='date'?' on':'')+'" data-sort="date" style="padding:2px 9px">date</button><span style="margin-left:auto" id="nmatch"></span>';
+    L.appendChild(sc);
+    sc.querySelectorAll('[data-sort]').forEach(function(x){x.onclick=function(){sortMode=x.getAttribute('data-sort');renderList();};});
+    var matched=BUNDLES.filter(pass);
+    document.getElementById('nmatch').textContent=matched.length+' runs';
+    if(!matched.length){var e=document.createElement('div');e.className='empty';e.textContent='no runs match';L.appendChild(e);return;}
+    if(sortMode==='date'){
+      matched.slice().sort(function(a,b){return (b.timestamp||'').localeCompare(a.timestamp||'');})
+        .forEach(function(b){L.appendChild(bcard(b,true));});
+    }else{
+      Object.keys(byLemma).sort().forEach(function(lem){
+        var rows=byLemma[lem].filter(pass);
+        if(!rows.length)return;
+        var nProved=rows.filter(function(b){return b.proved;}).length;
+        var g=document.createElement('div');g.className='grp';
+        g.textContent=lem+' · '+rows.length+(nProved?' · '+nProved+'✓':'');L.appendChild(g);
+        rows.forEach(function(b){L.appendChild(bcard(b,false));});
+      });
+    }
+  }
+
+  function selectBundle(b){
+    sel=b;selStep=null;selRows=null;renderList();
+    var M=document.getElementById('main');if(!M)return;
+    M.innerHTML=renderHeader(b,null)+
+      '<div class="legend" id="legend"></div>'+
+      '<div class="steps" id="steps"><div class="note" style="padding:10px">loading timeline…</div></div><div id="panelhost"></div>';
+    getJSON((b.base||RUNS_URL)+b.dir+'/timeline_report.json').then(function(tl){
+      var runs=tl.runs||[]; var rows=[];
+      runs.forEach(function(run){(run.rows||[]).forEach(function(x){rows.push(x);});});
+      selRows=rows;
+      var M2=document.getElementById('main');
+      if(M2&&sel===b){
+        M2.firstElementChild.outerHTML=renderHeader(b,rows);
+        renderLegend(); renderSteps();
+      }
+    }).catch(function(e){var s=document.getElementById('steps');if(s)s.innerHTML='<div class="note" style="padding:10px">no timeline for this bundle ('+esc(e)+')</div>';});
+  }
+
+  function renderHeader(b,rows){
+    var proof=b.per_tree.filter(function(t){return (t.tactics||[]).length;});
+    var pbtn=proof.length?'<button class="chip" id="proofbtn">show committed proof</button>':'';
+    var counts='';
+    if(rows&&rows.length){
+      var c={acc:0,rej:0,look:0,undo:0};
+      rows.forEach(function(r){var k=classify(r);
+        if(k.group==='commit'&&!k.rejected)c.acc++;
+        else if(k.rejected)c.rej++;
+        else if(k.group==='lookup')c.look++;
+        else if(k.group==='undo')c.undo++;});
+      counts=pill(c.acc+' ✓ accepted','p-ok')+(c.rej?pill(c.rej+' ✗ rejected','p-bad'):'')+
+             (c.look?pill(c.look+' 🔍 lookups','p-purp'):'')+(c.undo?pill(c.undo+' ↶ undo','p-warn'):'');
+    }
+    return '<div class="hd"><div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap"><span class="ttl">'+esc(b.lemma)+'</span>'+
+      (b.tier==='private'?pill('🔒 private','p-bad'):pill('public · tier-A','p-ok'))+'</div>'+
+      '<div class="row">'+outcomePill(b.outcome)+pill(b.profile+' surface','p-info')+pill(esc(shortModel(b.model)),'p-mut')+pill(b.turns+' turns','p-mut')+pill(b.trees+' tree'+(b.trees>1?'s':''),'p-mut')+(b.eval_mode?pill('sealed','p-purp'):'')+counts+'<span class="meta">'+esc(b.source)+' · '+esc(b.commit)+' · '+esc(b.date)+'</span></div>'+
+      '<div class="row">'+pbtn+'<span class="meta">click a turn to inspect what the agent saw / thought</span></div></div>';
+  }
+
+  /* --- turn classification: icon + label from the recorded intent --- */
+  function payloadOf(row){var it=row.intent||{};return it.payload||{};}
+  function stripPrefix(s,p){return s&&s.indexOf(p)===0?s.slice(p.length):s;}
+  function classify(row){
+    var it=(row.intent&&row.intent.intent)||'';
+    var rs=row.result_summary||'';
+    var rejected=/^rejected/.test(rs)||row.ok===false;
+    var p=payloadOf(row), sum=row.intent_summary||'';
+    var why=rejected?rs.replace(/^rejected\s+(commit|probe)?:?\s*/,''):'';
+    switch(it){
+      case 'commit_tactic':
+        return {icon:rejected?'✗':'✓',cls:rejected?'ic-bad':'ic-ok',group:'commit',rejected:rejected,
+                label:stripPrefix(sum,'commit '),mono:true,why:why,tip:rejected?'commit rejected by EasyCrypt':'commit accepted'};
+      case 'probe_tactic':
+        return {icon:'▷',cls:rejected?'ic-bad':'ic-info',group:'probe',rejected:rejected,
+                label:stripPrefix(sum,'probe '),mono:true,why:why,tip:rejected?'probe rejected (nothing committed)':'probe — try without committing'};
+      case 'commit_replay_suffix_chunk': case 'probe_replay_suffix_chunk':
+        return {icon:'⏩',cls:rejected?'ic-bad':'ic-info',group:'commit',rejected:rejected,
+                label:'replay chunk',mono:false,why:why,tip:'replay a recorded tactic chunk'};
+      case 'inspect_context':
+        return {icon:'🔍',cls:'ic-purp',group:'lookup',rejected:rejected,
+                label:'inspect · '+(p.topic||'?'),mono:false,why:why,tip:'read-only context inspection'};
+      case 'lookup_symbol':
+        return {icon:'🔍',cls:'ic-purp',group:'lookup',rejected:rejected,
+                label:'lookup · '+(p.symbol||'?'),mono:false,why:why,tip:'exact symbol lookup'};
+      case 'tactic_forms':
+        return {icon:'🔍',cls:'ic-purp',group:'lookup',rejected:rejected,
+                label:'tactic forms · '+(p.name||'?'),mono:false,why:why,tip:'tactic syntax reference'};
+      case 'undo_last_step':
+        return {icon:'↶',cls:'ic-warn',group:'undo',rejected:rejected,label:'undo last step',mono:false,why:why,tip:'undo'};
+      case 'undo_to_checkpoint':
+        return {icon:'↶',cls:'ic-warn',group:'undo',rejected:rejected,label:'undo to checkpoint',mono:false,why:why,tip:'roll back to a saved checkpoint'};
+      case 'finish':
+        return {icon:'🏁',cls:rejected?'ic-bad':'ic-ok',group:'finish',rejected:rejected,
+                label:'finish',mono:false,why:why||(rejected?stripPrefix(rs,'finish '):''),tip:rejected?'finish gate rejected (goals or admits remain)':'finish — close the proof'};
+      case 'fresh_restart':
+        return {icon:'⟲',cls:'ic-mut',group:'other',rejected:rejected,label:'fresh restart',mono:false,why:why,tip:'restart from the lemma statement'};
+      case 'annotate_piece':
+        return {icon:'✎',cls:'ic-mut',group:'other',rejected:rejected,label:'note: '+((p.note||'').slice(0,60)),mono:false,why:'',tip:'agent note to future turns'};
+      case '': case '?':
+        return {icon:'·',cls:'ic-mut',group:'other',rejected:rejected,label:'(malformed turn)',mono:false,why:why,tip:'turn the manager could not parse'};
+      default:
+        // remaining read-only context intents (pr_bridge_routes, proof_frontier, …)
+        return {icon:'🔍',cls:'ic-purp',group:'lookup',rejected:rejected,
+                label:it.replace(/_/g,' ')+(p.name?' · '+p.name:''),mono:false,why:why,tip:'read-only context request'};
+    }
+  }
+
+  function renderLegend(){
+    var el=document.getElementById('legend');if(!el)return;
+    el.innerHTML='<span><span class="ic ic-ok">✓</span>commit accepted</span>'+
+      '<span><span class="ic ic-bad">✗</span>commit rejected</span>'+
+      '<span><span class="ic ic-info">▷</span>probe (no commit)</span>'+
+      '<span><span class="ic ic-purp">🔍</span>inspect / lookup</span>'+
+      '<span><span class="ic ic-warn">↶</span>undo</span>'+
+      '<span><span class="ic ic-ok">🏁</span>finish</span>'+
+      '<span>⏱ agent think time</span>';
+  }
+
+  function renderSteps(){
+    var host=document.getElementById('steps');if(!host)return;host.innerHTML='';
+    if(!selRows||!selRows.length){host.innerHTML='<div class="note" style="padding:10px">no per-turn rows</div>';return;}
+    var multi=(sel.trees>1), lastNode=null;
+    selRows.forEach(function(row,i){
+      if(multi && row.node!==lastNode){
+        lastNode=row.node;
+        var h=document.createElement('div');h.className='grp';h.style.marginTop='10px';
+        h.textContent='● '+(row.node||'tree')+' — turns reset per tree';
+        host.appendChild(h);
+      }
+      var k=classify(row), active=selStep===row;
+      var d=document.createElement('div');d.className='step'+(active?' on':'')+(k.rejected?' rej':'');
+      var tm=row.agent_think?('<span class="tm">⏱ '+esc(row.agent_think)+'</span>'):'';
+      var why=k.why?('<span class="why" title="'+esc(k.why)+'">'+esc(k.why)+'</span>'):'';
+      d.innerHTML='<span class="t">'+esc(row.turn||(i+1))+'</span>'+
+        '<span class="ic '+k.cls+'" title="'+esc(k.tip)+'">'+k.icon+'</span>'+
+        '<code'+(k.mono?'':' style="font-family:var(--sans);color:var(--muted)"')+'>'+esc(k.label)+'</code>'+why+tm;
+      d.onclick=function(){selStep=row;selKind='result';renderSteps();renderPanel();};
+      host.appendChild(d);
+    });
+  }
+
+  function rel(p){ if(!p)return null; var i=p.indexOf('node_memory/'); if(i<0)return null;
+    return 'views/'+p.slice(i+'node_memory/'.length).replace('/workspace_views/','/'); }
+  function artURLs(row,kind){
+    var p={result:row.result_followup_path,saw:row.decision_followup_path,think:row.agent_think_path,manager:row.manager_result_path,audit:row.workspace_view_path}[kind];
+    var r=rel(p); if(!r)return [];
+    var base=(sel.base||RUNS_URL)+sel.dir+'/', tail=r.slice('views/'.length), urls=[base+r];
+    (sel.view_roots||[]).forEach(function(root){urls.push(base+'views/'+root+'/'+tail);});
+    return urls;
+  }
+
+  function renderPanel(){
+    var host=document.getElementById('panelhost');if(!host)return;
+    if(!selStep){host.innerHTML='';return;}
+    var tabs=[['result','📄','result (after)'],['saw','👁','context (before)'],['think','🧠','thinking'],['manager','⚙','manager'],['audit','{}','audit']];
+    var th=tabs.map(function(t){return '<button class="ptab'+(t[0]===selKind?' on':'')+'" data-k="'+t[0]+'">'+t[1]+' '+t[2]+'</button>';}).join('');
+    var k=classify(selStep);
+    host.innerHTML='<div class="panel"><div class="ptabs"><span class="pttl">turn '+esc(selStep.turn)+(sel.trees>1?(' · '+esc((selStep.node||'').replace('Tree-',''))):'')+' · '+k.icon+' '+esc(k.label).slice(0,60)+'</span>'+th+'<button class="px" id="px" aria-label="close">×</button></div><pre class="pbody" id="pbody">loading…</pre></div>';
+    host.querySelectorAll('.ptab').forEach(function(b){b.onclick=function(){selKind=b.getAttribute('data-k');renderPanel();};});
+    document.getElementById('px').onclick=function(){selStep=null;renderSteps();renderPanel();};
+    var body=document.getElementById('pbody');
+    var urls=artURLs(selStep,selKind);
+    if(!urls.length){body.innerHTML='<span class="note">not captured for this run.</span>';return;}
+    var hint=selKind==='audit'?'// AUDIT TWIN — the manager\'s full snapshot, identical across L1–L4.\n// This is NOT what the agent saw (it renders identically at L1 and L4).\n\n'
+      :selKind==='result'?'// WHAT THIS TURN PRODUCED — the rendered panel the agent saw AFTER this\n// action (lookup result / new goal / probe outcome). "context (before)" = what prompted it.\n\n'
+      :selKind==='saw'?'// WHAT PROMPTED THIS TURN — the panel the agent read BEFORE acting\n// (= the previous turn\'s result). "result (after)" = what this turn produced.\n\n':'';
+    var i=0;
+    (function next(){
+      if(i>=urls.length){body.innerHTML='<span class="note">not captured for this run (no file at this step).</span>';return;}
+      fetch(urls[i++]).then(function(r){if(!r.ok)throw 0;return r.text();}).then(function(txt){
+        if(selKind==='manager'||selKind==='audit'){try{txt=JSON.stringify(JSON.parse(txt),null,2);}catch(e){}}
+        body.textContent=hint+txt;
+      }).catch(next);
+    })();
+  }
+
+  document.addEventListener('click',function(e){if(e.target&&e.target.id==='proofbtn'){
+    var ts=sel.per_tree.filter(function(t){return (t.tactics||[]).length;});
+    var txt=ts.map(function(t){return '# '+t.tree+(t.proved?' (proved ✓)':' (open)')+'\n'+t.tactics.join('\n');}).join('\n\n');
+    selStep=null;
+    var host=document.getElementById('panelhost');
+    host.innerHTML='<div class="panel"><div class="ptabs"><span class="pttl">committed proof</span><button class="px" id="px2">×</button></div><pre class="pbody">'+esc(txt)+'</pre></div>';
+    document.getElementById('px2').onclick=function(){host.innerHTML='';};
+  }});
+})();
+</script>

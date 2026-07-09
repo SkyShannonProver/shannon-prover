@@ -1,0 +1,64 @@
+{
+  "last_result": {
+    "intent": "commit_tactic",
+    "payload": {
+      "tactic": "smt(pow_pow)."
+    },
+    "manager_action": "commit_tactic",
+    "result": "EasyCrypt rejected the committed tactic. Use the error summary and current goal to revise the proof step.",
+    "effect": "The manager attempted to commit a tactic; use the result and latest goal to decide what changed.",
+    "proof_state": "The committed EasyCrypt proof state was not changed.",
+    "tactic": "smt(pow_pow)."
+  },
+  "current_goal": {
+    "lines": [
+      "Current goal",
+      "",
+      "Type variables: <none>",
+      "",
+      "&m: {}",
+      "------------------------------------------------------------------------",
+      "forall &1 &2,",
+      "  (glob A){2} = (glob A){m} /\\ (glob A){1} = (glob A){m} =>",
+      "  (forall (xR : ZModE.exp), xR \\in dt => xR = xR) &&",
+      "  forall (sk0L : ZModE.exp),",
+      "    sk0L \\in dt =>",
+      "    sk0L = sk0L &&",
+      "    (forall (yR : ZModE.exp), yR \\in dt => yR = yR) &&",
+      "    forall (yL : ZModE.exp),",
+      "      yL \\in dt =>",
+      "      yL = yL &&",
+      "      let pk_L = g ^ sk0L in",
+      "      (pk_L = g ^ sk0L /\\ (glob A){1} = (glob A){2} /\\ true) &&",
+      "      forall (result_L result_R : ptxt * ptxt) (A_L A_R : (glob A)),",
+      "        result_L = result_R /\\ A_L = A_R /\\ true =>",
+      "        (forall (b0R : bool), b0R \\in {0,1} => b0R = b0R) &&",
+      "        forall (bL : bool),",
+      "          bL \\in {0,1} =>",
+      "          bL = bL &&",
+      "          ((g ^ yL, pk_L ^ yL * if bL then result_L.`2 else result_L.`1) =",
+      "           (g ^ yL, g ^ (sk0L * yL) * if bL then result_R.`2 else result_R.`1) /\\",
+      "           A_L = A_R /\\ true) &&",
+      "          forall (result_L0 result_R0 : bool) (A_L0 A_R0 : (glob A)),",
+      "            result_L0 = result_R0 /\\ A_L0 = A_R0 /\\ true =>",
+      "            (result_L0 = bL) = (result_R0 = bL)",
+      "[32|check]>"
+    ],
+    "text_fully_shown": true,
+    "truncated": false,
+    "goal_type": "ambient",
+    "view_focus": "relational_program",
+    "source": {
+      "label": "Parsed from EasyCrypt pretty goal text",
+      "ground_truth": false
+    }
+  },
+  "proof_status": {
+    "status": "error",
+    "remaining_goals": 1,
+    "remaining_goals_known": true,
+    "goal_type": "ambient",
+    "view_focus": "relational_program",
+    "current_layer": "ambient_logic"
+  }
+}

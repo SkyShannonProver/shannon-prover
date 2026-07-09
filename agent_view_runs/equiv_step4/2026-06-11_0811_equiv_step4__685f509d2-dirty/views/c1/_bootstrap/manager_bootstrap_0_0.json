@@ -1,0 +1,900 @@
+{
+  "file": "artifacts/eval_suite/chacha_steps_a2_fable_l1/l1_goal_projection/cc_equiv_step4/r01/source/ChaChaPoly/chacha_poly.ec",
+  "include_dirs": [
+    "artifacts/eval_suite/chacha_steps_a2_fable_l1/l1_goal_projection/cc_equiv_step4/r01/source/ChaChaPoly",
+    "easycrypt-src/theories"
+  ],
+  "kind": "manager_session_bootstrap",
+  "lemma": "equiv_step4",
+  "manager_actions": [
+    {
+      "agent_observation": {
+        "effect": "This manager intent does not change the EasyCrypt proof state.",
+        "manager_action": "start",
+        "result": "The manager completed this proof-level request."
+      },
+      "argv": [
+        ".venv/bin/python3",
+        "core/easycrypt/session_cli.py",
+        "-d",
+        ".ec_session_prover_tree_0_0",
+        "-start",
+        "-f",
+        "artifacts/eval_suite/chacha_steps_a2_fable_l1/l1_goal_projection/cc_equiv_step4/r01/source/ChaChaPoly/chacha_poly.ec",
+        "-I",
+        "artifacts/eval_suite/chacha_steps_a2_fable_l1/l1_goal_projection/cc_equiv_step4/r01/source/ChaChaPoly",
+        "-I",
+        "easycrypt-src/theories",
+        "-lemma",
+        "equiv_step4"
+      ],
+      "duration_ms": 1300,
+      "exit_code": 0,
+      "label": "start",
+      "mutates_proof_state": true,
+      "stderr_chars": 0,
+      "stderr_preview": "",
+      "stdout_chars": 8647,
+      "stdout_has_workspace_view": true,
+      "stdout_lines": 222
+    },
+    {
+      "agent_observation": {
+        "effect": "EasyCrypt accepted a proof-state change; the refreshed view is based on the new committed state.",
+        "manager_action": "replay_prefix_step_1",
+        "proof_state": "The committed EasyCrypt proof state changed.",
+        "result": "The manager completed this proof-level request.",
+        "tactic": "have eqRO : equiv [ROIN.RO.get ~ ROIN.RO.get : ={arg} /\\ ={ROIN.RO.m} ==> ={res} /\\ ={ROIN.RO.m}]; first by proc; auto."
+      },
+      "argv": [
+        ".venv/bin/python3",
+        "core/easycrypt/session_cli.py",
+        "-d",
+        ".ec_session_prover_tree_0_0",
+        "-next",
+        "-c",
+        "have eqRO : equiv [ROIN.RO.get ~ ROIN.RO.get : ={arg} /\\ ={ROIN.RO.m} ==> ={res} /\\ ={ROIN.RO.m}]; first by proc; auto."
+      ],
+      "duration_ms": 1542,
+      "exit_code": 0,
+      "label": "replay_prefix_step_1",
+      "mutates_proof_state": true,
+      "stderr_chars": 0,
+      "stderr_preview": "",
+      "stdout_chars": 11625,
+      "stdout_has_workspace_view": true,
+      "stdout_lines": 2
+    },
+    {
+      "agent_observation": {
+        "effect": "EasyCrypt accepted a proof-state change; the refreshed view is based on the new committed state.",
+        "manager_action": "replay_prefix_step_2",
+        "proof_state": "The committed EasyCrypt proof state changed.",
+        "result": "The manager completed this proof-level request.",
+        "tactic": "have eqSB2 : equiv [UFCMA(ROIN.RO).set_bad2 ~ UFCMA(ROIN.RO).set_bad2 : ={arg, UFCMA.bad2, UFCMA.cbad2} ==> ={res, UFCMA.bad2, UFCMA.cbad2}]; first by proc; auto."
+      },
+      "argv": [
+        ".venv/bin/python3",
+        "core/easycrypt/session_cli.py",
+        "-d",
+        ".ec_session_prover_tree_0_0",
+        "-next",
+        "-c",
+        "have eqSB2 : equiv [UFCMA(ROIN.RO).set_bad2 ~ UFCMA(ROIN.RO).set_bad2 : ={arg, UFCMA.bad2, UFCMA.cbad2} ==> ={res, UFCMA.bad2, UFCMA.cbad2}]; first by proc; auto."
+      ],
+      "duration_ms": 258,
+      "exit_code": 0,
+      "label": "replay_prefix_step_2",
+      "mutates_proof_state": true,
+      "stderr_chars": 0,
+      "stderr_preview": "",
+      "stdout_chars": 12527,
+      "stdout_has_workspace_view": true,
+      "stdout_lines": 2
+    },
+    {
+      "agent_observation": {
+        "effect": "EasyCrypt accepted a proof-state change; the refreshed view is based on the new committed state.",
+        "manager_action": "replay_prefix_step_3",
+        "proof_state": "The committed EasyCrypt proof state changed.",
+        "result": "The manager completed this proof-level request.",
+        "tactic": "have eqf : equiv [Orcl.f ~ Orcl.f : ={arg} /\\ ={glob Orcl} ==> ={glob Orcl}]; first by sim."
+      },
+      "argv": [
+        ".venv/bin/python3",
+        "core/easycrypt/session_cli.py",
+        "-d",
+        ".ec_session_prover_tree_0_0",
+        "-next",
+        "-c",
+        "have eqf : equiv [Orcl.f ~ Orcl.f : ={arg} /\\ ={glob Orcl} ==> ={glob Orcl}]; first by sim."
+      ],
+      "duration_ms": 264,
+      "exit_code": 0,
+      "label": "replay_prefix_step_3",
+      "mutates_proof_state": true,
+      "stderr_chars": 0,
+      "stderr_preview": "",
+      "stdout_chars": 13532,
+      "stdout_has_workspace_view": true,
+      "stdout_lines": 2
+    },
+    {
+      "agent_observation": {
+        "effect": "EasyCrypt accepted a proof-state change; the refreshed view is based on the new committed state.",
+        "manager_action": "replay_prefix_step_4",
+        "proof_state": "The committed EasyCrypt proof state changed.",
+        "result": "The manager completed this proof-level request.",
+        "tactic": "have Hsw : equiv [Iter(Orcl).iter_12 ~ Iter(Orcl).iter_21 : ={glob Orcl, t1, t2} ==> ={glob Orcl}]."
+      },
+      "argv": [
+        ".venv/bin/python3",
+        "core/easycrypt/session_cli.py",
+        "-d",
+        ".ec_session_prover_tree_0_0",
+        "-next",
+        "-c",
+        "have Hsw : equiv [Iter(Orcl).iter_12 ~ Iter(Orcl).iter_21 : ={glob Orcl, t1, t2} ==> ={glob Orcl}]."
+      ],
+      "duration_ms": 260,
+      "exit_code": 0,
+      "label": "replay_prefix_step_4",
+      "mutates_proof_state": true,
+      "stderr_chars": 0,
+      "stderr_preview": "",
+      "stdout_chars": 13479,
+      "stdout_has_workspace_view": true,
+      "stdout_lines": 2
+    },
+    {
+      "agent_observation": {
+        "effect": "EasyCrypt accepted a proof-state change; the refreshed view is based on the new committed state.",
+        "manager_action": "replay_prefix_step_5",
+        "proof_state": "The committed EasyCrypt proof state changed.",
+        "result": "The manager completed this proof-level request.",
+        "tactic": "proc."
+      },
+      "argv": [
+        ".venv/bin/python3",
+        "core/easycrypt/session_cli.py",
+        "-d",
+        ".ec_session_prover_tree_0_0",
+        "-next",
+        "-c",
+        "proc."
+      ],
+      "duration_ms": 268,
+      "exit_code": 0,
+      "label": "replay_prefix_step_5",
+      "mutates_proof_state": true,
+      "stderr_chars": 0,
+      "stderr_preview": "",
+      "stdout_chars": 16547,
+      "stdout_has_workspace_view": true,
+      "stdout_lines": 2
+    },
+    {
+      "agent_observation": {
+        "effect": "EasyCrypt accepted a proof-state change; the refreshed view is based on the new committed state.",
+        "manager_action": "replay_prefix_step_6",
+        "proof_state": "The committed EasyCrypt proof state changed.",
+        "result": "The manager completed this proof-level request.",
+        "tactic": "case (t1{1} = t2{1})."
+      },
+      "argv": [
+        ".venv/bin/python3",
+        "core/easycrypt/session_cli.py",
+        "-d",
+        ".ec_session_prover_tree_0_0",
+        "-next",
+        "-c",
+        "case (t1{1} = t2{1})."
+      ],
+      "duration_ms": 271,
+      "exit_code": 0,
+      "label": "replay_prefix_step_6",
+      "mutates_proof_state": true,
+      "stderr_chars": 0,
+      "stderr_preview": "",
+      "stdout_chars": 16596,
+      "stdout_has_workspace_view": true,
+      "stdout_lines": 2
+    },
+    {
+      "agent_observation": {
+        "effect": "EasyCrypt accepted a proof-state change; the refreshed view is based on the new committed state.",
+        "manager_action": "replay_prefix_step_7",
+        "proof_state": "The committed EasyCrypt proof state changed.",
+        "result": "The manager completed this proof-level request.",
+        "tactic": "seq 1 1 : (={glob Orcl} /\\ t2{1} = t1{2}); first by call eqf; auto => /#."
+      },
+      "argv": [
+        ".venv/bin/python3",
+        "core/easycrypt/session_cli.py",
+        "-d",
+        ".ec_session_prover_tree_0_0",
+        "-next",
+        "-c",
+        "seq 1 1 : (={glob Orcl} /\\ t2{1} = t1{2}); first by call eqf; auto => /#."
+      ],
+      "duration_ms": 272,
+      "exit_code": 0,
+      "label": "replay_prefix_step_7",
+      "mutates_proof_state": true,
+      "stderr_chars": 0,
+      "stderr_preview": "",
+      "stdout_chars": 16475,
+      "stdout_has_workspace_view": true,
+      "stdout_lines": 2
+    },
+    {
+      "agent_observation": {
+        "effect": "EasyCrypt accepted a proof-state change; the refreshed view is based on the new committed state.",
+        "manager_action": "replay_prefix_step_8",
+        "proof_state": "The committed EasyCrypt proof state changed.",
+        "result": "The manager completed this proof-level request.",
+        "tactic": "by call eqf; auto."
+      },
+      "argv": [
+        ".venv/bin/python3",
+        "core/easycrypt/session_cli.py",
+        "-d",
+        ".ec_session_prover_tree_0_0",
+        "-next",
+        "-c",
+        "by call eqf; auto."
+      ],
+      "duration_ms": 275,
+      "exit_code": 0,
+      "label": "replay_prefix_step_8",
+      "mutates_proof_state": true,
+      "stderr_chars": 0,
+      "stderr_preview": "",
+      "stdout_chars": 16589,
+      "stdout_has_workspace_view": true,
+      "stdout_lines": 2
+    },
+    {
+      "agent_observation": {
+        "effect": "EasyCrypt accepted a proof-state change; the refreshed view is based on the new committed state.",
+        "manager_action": "replay_prefix_step_9",
+        "proof_state": "The committed EasyCrypt proof state changed.",
+        "result": "The manager completed this proof-level request.",
+        "tactic": "inline *."
+      },
+      "argv": [
+        ".venv/bin/python3",
+        "core/easycrypt/session_cli.py",
+        "-d",
+        ".ec_session_prover_tree_0_0",
+        "-next",
+        "-c",
+        "inline *."
+      ],
+      "duration_ms": 1674,
+      "exit_code": 0,
+      "label": "replay_prefix_step_9",
+      "mutates_proof_state": true,
+      "stderr_chars": 0,
+      "stderr_preview": "",
+      "stdout_chars": 30763,
+      "stdout_has_workspace_view": true,
+      "stdout_lines": 2
+    },
+    {
+      "agent_observation": {
+        "effect": "EasyCrypt accepted a proof-state change; the refreshed view is based on the new committed state.",
+        "manager_action": "replay_prefix_step_10",
+        "proof_state": "The committed EasyCrypt proof state changed.",
+        "result": "The manager completed this proof-level request.",
+        "tactic": "case ((t1{1}, C.ofintd 0) \\in ROout.m{1})."
+      },
+      "argv": [
+        ".venv/bin/python3",
+        "core/easycrypt/session_cli.py",
+        "-d",
+        ".ec_session_prover_tree_0_0",
+        "-next",
+        "-c",
+        "case ((t1{1}, C.ofintd 0) \\in ROout.m{1})."
+      ],
+      "duration_ms": 1625,
+      "exit_code": 0,
+      "label": "replay_prefix_step_10",
+      "mutates_proof_state": true,
+      "stderr_chars": 0,
+      "stderr_preview": "",
+      "stdout_chars": 30849,
+      "stdout_has_workspace_view": true,
+      "stdout_lines": 2
+    },
+    {
+      "agent_observation": {
+        "effect": "EasyCrypt accepted a proof-state change; the refreshed view is based on the new committed state.",
+        "manager_action": "replay_prefix_step_11",
+        "proof_state": "The committed EasyCrypt proof state changed.",
+        "result": "The manager completed this proof-level request.",
+        "tactic": "case ((t2{1}, C.ofintd 0) \\in ROout.m{1})."
+      },
+      "argv": [
+        ".venv/bin/python3",
+        "core/easycrypt/session_cli.py",
+        "-d",
+        ".ec_session_prover_tree_0_0",
+        "-next",
+        "-c",
+        "case ((t2{1}, C.ofintd 0) \\in ROout.m{1})."
+      ],
+      "duration_ms": 1700,
+      "exit_code": 0,
+      "label": "replay_prefix_step_11",
+      "mutates_proof_state": true,
+      "stderr_chars": 0,
+      "stderr_preview": "",
+      "stdout_chars": 30904,
+      "stdout_has_workspace_view": true,
+      "stdout_lines": 2
+    },
+    {
+      "agent_observation": {
+        "effect": "This manager intent does not change the EasyCrypt proof state.",
+        "manager_action": "agent_view",
+        "result": "The manager completed this proof-level request."
+      },
+      "argv": [
+        ".venv/bin/python3",
+        "core/easycrypt/session_cli.py",
+        "-d",
+        ".ec_session_prover_tree_0_0",
+        "-agent-view"
+      ],
+      "duration_ms": 211,
+      "exit_code": 0,
+      "label": "agent_view",
+      "mutates_proof_state": false,
+      "stderr_chars": 0,
+      "stderr_preview": "",
+      "stdout_chars": 35322,
+      "stdout_has_workspace_view": true,
+      "stdout_lines": 756
+    }
+  ],
+  "node": "Tree-0.0",
+  "replay_prefix": [
+    "have eqRO : equiv [ROIN.RO.get ~ ROIN.RO.get : ={arg} /\\ ={ROIN.RO.m} ==> ={res} /\\ ={ROIN.RO.m}]; first by proc; auto.",
+    "have eqSB2 : equiv [UFCMA(ROIN.RO).set_bad2 ~ UFCMA(ROIN.RO).set_bad2 : ={arg, UFCMA.bad2, UFCMA.cbad2} ==> ={res, UFCMA.bad2, UFCMA.cbad2}]; first by proc; auto.",
+    "have eqf : equiv [Orcl.f ~ Orcl.f : ={arg} /\\ ={glob Orcl} ==> ={glob Orcl}]; first by sim.",
+    "have Hsw : equiv [Iter(Orcl).iter_12 ~ Iter(Orcl).iter_21 : ={glob Orcl, t1, t2} ==> ={glob Orcl}].",
+    "proc.",
+    "case (t1{1} = t2{1}).",
+    "seq 1 1 : (={glob Orcl} /\\ t2{1} = t1{2}); first by call eqf; auto => /#.",
+    "by call eqf; auto.",
+    "inline *.",
+    "case ((t1{1}, C.ofintd 0) \\in ROout.m{1}).",
+    "case ((t2{1}, C.ofintd 0) \\in ROout.m{1})."
+  ],
+  "replay_prefix_count": 11,
+  "replay_prefix_requested_count": 11,
+  "schema_version": 2,
+  "session_dir": ".ec_session_prover_tree_0_0",
+  "session_tag": "prover_tree_0_0",
+  "snapshot": {
+    "execution_refs": {
+      "manager_action_count": 13,
+      "manager_actions": [
+        {
+          "agent_observation": {
+            "effect": "This manager intent does not change the EasyCrypt proof state.",
+            "manager_action": "start",
+            "result": "The manager completed this proof-level request."
+          },
+          "argv": [
+            ".venv/bin/python3",
+            "core/easycrypt/session_cli.py",
+            "-d",
+            ".ec_session_prover_tree_0_0",
+            "-start",
+            "-f",
+            "artifacts/eval_suite/chacha_steps_a2_fable_l1/l1_goal_projection/cc_equiv_step4/r01/source/ChaChaPoly/chacha_poly.ec",
+            "-I",
+            "artifacts/eval_suite/chacha_steps_a2_fable_l1/l1_goal_projection/cc_equiv_step4/r01/source/ChaChaPoly",
+            "-I",
+            "easycrypt-src/theories",
+            "-lemma",
+            "equiv_step4"
+          ],
+          "duration_ms": 1300,
+          "exit_code": 0,
+          "label": "start",
+          "mutates_proof_state": true,
+          "stderr_chars": 0,
+          "stderr_preview": "",
+          "stdout_chars": 8647,
+          "stdout_has_workspace_view": true,
+          "stdout_lines": 222
+        },
+        {
+          "agent_observation": {
+            "effect": "EasyCrypt accepted a proof-state change; the refreshed view is based on the new committed state.",
+            "manager_action": "replay_prefix_step_1",
+            "proof_state": "The committed EasyCrypt proof state changed.",
+            "result": "The manager completed this proof-level request.",
+            "tactic": "have eqRO : equiv [ROIN.RO.get ~ ROIN.RO.get : ={arg} /\\ ={ROIN.RO.m} ==> ={res} /\\ ={ROIN.RO.m}]; first by proc; auto."
+          },
+          "argv": [
+            ".venv/bin/python3",
+            "core/easycrypt/session_cli.py",
+            "-d",
+            ".ec_session_prover_tree_0_0",
+            "-next",
+            "-c",
+            "have eqRO : equiv [ROIN.RO.get ~ ROIN.RO.get : ={arg} /\\ ={ROIN.RO.m} ==> ={res} /\\ ={ROIN.RO.m}]; first by proc; auto."
+          ],
+          "duration_ms": 1542,
+          "exit_code": 0,
+          "label": "replay_prefix_step_1",
+          "mutates_proof_state": true,
+          "stderr_chars": 0,
+          "stderr_preview": "",
+          "stdout_chars": 11625,
+          "stdout_has_workspace_view": true,
+          "stdout_lines": 2
+        },
+        {
+          "agent_observation": {
+            "effect": "EasyCrypt accepted a proof-state change; the refreshed view is based on the new committed state.",
+            "manager_action": "replay_prefix_step_2",
+            "proof_state": "The committed EasyCrypt proof state changed.",
+            "result": "The manager completed this proof-level request.",
+            "tactic": "have eqSB2 : equiv [UFCMA(ROIN.RO).set_bad2 ~ UFCMA(ROIN.RO).set_bad2 : ={arg, UFCMA.bad2, UFCMA.cbad2} ==> ={res, UFCMA.bad2, UFCMA.cbad2}]; first by proc; auto."
+          },
+          "argv": [
+            ".venv/bin/python3",
+            "core/easycrypt/session_cli.py",
+            "-d",
+            ".ec_session_prover_tree_0_0",
+            "-next",
+            "-c",
+            "have eqSB2 : equiv [UFCMA(ROIN.RO).set_bad2 ~ UFCMA(ROIN.RO).set_bad2 : ={arg, UFCMA.bad2, UFCMA.cbad2} ==> ={res, UFCMA.bad2, UFCMA.cbad2}]; first by proc; auto."
+          ],
+          "duration_ms": 258,
+          "exit_code": 0,
+          "label": "replay_prefix_step_2",
+          "mutates_proof_state": true,
+          "stderr_chars": 0,
+          "stderr_preview": "",
+          "stdout_chars": 12527,
+          "stdout_has_workspace_view": true,
+          "stdout_lines": 2
+        },
+        {
+          "agent_observation": {
+            "effect": "EasyCrypt accepted a proof-state change; the refreshed view is based on the new committed state.",
+            "manager_action": "replay_prefix_step_3",
+            "proof_state": "The committed EasyCrypt proof state changed.",
+            "result": "The manager completed this proof-level request.",
+            "tactic": "have eqf : equiv [Orcl.f ~ Orcl.f : ={arg} /\\ ={glob Orcl} ==> ={glob Orcl}]; first by sim."
+          },
+          "argv": [
+            ".venv/bin/python3",
+            "core/easycrypt/session_cli.py",
+            "-d",
+            ".ec_session_prover_tree_0_0",
+            "-next",
+            "-c",
+            "have eqf : equiv [Orcl.f ~ Orcl.f : ={arg} /\\ ={glob Orcl} ==> ={glob Orcl}]; first by sim."
+          ],
+          "duration_ms": 264,
+          "exit_code": 0,
+          "label": "replay_prefix_step_3",
+          "mutates_proof_state": true,
+          "stderr_chars": 0,
+          "stderr_preview": "",
+          "stdout_chars": 13532,
+          "stdout_has_workspace_view": true,
+          "stdout_lines": 2
+        },
+        {
+          "agent_observation": {
+            "effect": "EasyCrypt accepted a proof-state change; the refreshed view is based on the new committed state.",
+            "manager_action": "replay_prefix_step_4",
+            "proof_state": "The committed EasyCrypt proof state changed.",
+            "result": "The manager completed this proof-level request.",
+            "tactic": "have Hsw : equiv [Iter(Orcl).iter_12 ~ Iter(Orcl).iter_21 : ={glob Orcl, t1, t2} ==> ={glob Orcl}]."
+          },
+          "argv": [
+            ".venv/bin/python3",
+            "core/easycrypt/session_cli.py",
+            "-d",
+            ".ec_session_prover_tree_0_0",
+            "-next",
+            "-c",
+            "have Hsw : equiv [Iter(Orcl).iter_12 ~ Iter(Orcl).iter_21 : ={glob Orcl, t1, t2} ==> ={glob Orcl}]."
+          ],
+          "duration_ms": 260,
+          "exit_code": 0,
+          "label": "replay_prefix_step_4",
+          "mutates_proof_state": true,
+          "stderr_chars": 0,
+          "stderr_preview": "",
+          "stdout_chars": 13479,
+          "stdout_has_workspace_view": true,
+          "stdout_lines": 2
+        },
+        {
+          "agent_observation": {
+            "effect": "EasyCrypt accepted a proof-state change; the refreshed view is based on the new committed state.",
+            "manager_action": "replay_prefix_step_5",
+            "proof_state": "The committed EasyCrypt proof state changed.",
+            "result": "The manager completed this proof-level request.",
+            "tactic": "proc."
+          },
+          "argv": [
+            ".venv/bin/python3",
+            "core/easycrypt/session_cli.py",
+            "-d",
+            ".ec_session_prover_tree_0_0",
+            "-next",
+            "-c",
+            "proc."
+          ],
+          "duration_ms": 268,
+          "exit_code": 0,
+          "label": "replay_prefix_step_5",
+          "mutates_proof_state": true,
+          "stderr_chars": 0,
+          "stderr_preview": "",
+          "stdout_chars": 16547,
+          "stdout_has_workspace_view": true,
+          "stdout_lines": 2
+        },
+        {
+          "agent_observation": {
+            "effect": "EasyCrypt accepted a proof-state change; the refreshed view is based on the new committed state.",
+            "manager_action": "replay_prefix_step_6",
+            "proof_state": "The committed EasyCrypt proof state changed.",
+            "result": "The manager completed this proof-level request.",
+            "tactic": "case (t1{1} = t2{1})."
+          },
+          "argv": [
+            ".venv/bin/python3",
+            "core/easycrypt/session_cli.py",
+            "-d",
+            ".ec_session_prover_tree_0_0",
+            "-next",
+            "-c",
+            "case (t1{1} = t2{1})."
+          ],
+          "duration_ms": 271,
+          "exit_code": 0,
+          "label": "replay_prefix_step_6",
+          "mutates_proof_state": true,
+          "stderr_chars": 0,
+          "stderr_preview": "",
+          "stdout_chars": 16596,
+          "stdout_has_workspace_view": true,
+          "stdout_lines": 2
+        },
+        {
+          "agent_observation": {
+            "effect": "EasyCrypt accepted a proof-state change; the refreshed view is based on the new committed state.",
+            "manager_action": "replay_prefix_step_7",
+            "proof_state": "The committed EasyCrypt proof state changed.",
+            "result": "The manager completed this proof-level request.",
+            "tactic": "seq 1 1 : (={glob Orcl} /\\ t2{1} = t1{2}); first by call eqf; auto => /#."
+          },
+          "argv": [
+            ".venv/bin/python3",
+            "core/easycrypt/session_cli.py",
+            "-d",
+            ".ec_session_prover_tree_0_0",
+            "-next",
+            "-c",
+            "seq 1 1 : (={glob Orcl} /\\ t2{1} = t1{2}); first by call eqf; auto => /#."
+          ],
+          "duration_ms": 272,
+          "exit_code": 0,
+          "label": "replay_prefix_step_7",
+          "mutates_proof_state": true,
+          "stderr_chars": 0,
+          "stderr_preview": "",
+          "stdout_chars": 16475,
+          "stdout_has_workspace_view": true,
+          "stdout_lines": 2
+        },
+        {
+          "agent_observation": {
+            "effect": "EasyCrypt accepted a proof-state change; the refreshed view is based on the new committed state.",
+            "manager_action": "replay_prefix_step_8",
+            "proof_state": "The committed EasyCrypt proof state changed.",
+            "result": "The manager completed this proof-level request.",
+            "tactic": "by call eqf; auto."
+          },
+          "argv": [
+            ".venv/bin/python3",
+            "core/easycrypt/session_cli.py",
+            "-d",
+            ".ec_session_prover_tree_0_0",
+            "-next",
+            "-c",
+            "by call eqf; auto."
+          ],
+          "duration_ms": 275,
+          "exit_code": 0,
+          "label": "replay_prefix_step_8",
+          "mutates_proof_state": true,
+          "stderr_chars": 0,
+          "stderr_preview": "",
+          "stdout_chars": 16589,
+          "stdout_has_workspace_view": true,
+          "stdout_lines": 2
+        },
+        {
+          "agent_observation": {
+            "effect": "EasyCrypt accepted a proof-state change; the refreshed view is based on the new committed state.",
+            "manager_action": "replay_prefix_step_9",
+            "proof_state": "The committed EasyCrypt proof state changed.",
+            "result": "The manager completed this proof-level request.",
+            "tactic": "inline *."
+          },
+          "argv": [
+            ".venv/bin/python3",
+            "core/easycrypt/session_cli.py",
+            "-d",
+            ".ec_session_prover_tree_0_0",
+            "-next",
+            "-c",
+            "inline *."
+          ],
+          "duration_ms": 1674,
+          "exit_code": 0,
+          "label": "replay_prefix_step_9",
+          "mutates_proof_state": true,
+          "stderr_chars": 0,
+          "stderr_preview": "",
+          "stdout_chars": 30763,
+          "stdout_has_workspace_view": true,
+          "stdout_lines": 2
+        },
+        {
+          "agent_observation": {
+            "effect": "EasyCrypt accepted a proof-state change; the refreshed view is based on the new committed state.",
+            "manager_action": "replay_prefix_step_10",
+            "proof_state": "The committed EasyCrypt proof state changed.",
+            "result": "The manager completed this proof-level request.",
+            "tactic": "case ((t1{1}, C.ofintd 0) \\in ROout.m{1})."
+          },
+          "argv": [
+            ".venv/bin/python3",
+            "core/easycrypt/session_cli.py",
+            "-d",
+            ".ec_session_prover_tree_0_0",
+            "-next",
+            "-c",
+            "case ((t1{1}, C.ofintd 0) \\in ROout.m{1})."
+          ],
+          "duration_ms": 1625,
+          "exit_code": 0,
+          "label": "replay_prefix_step_10",
+          "mutates_proof_state": true,
+          "stderr_chars": 0,
+          "stderr_preview": "",
+          "stdout_chars": 30849,
+          "stdout_has_workspace_view": true,
+          "stdout_lines": 2
+        },
+        {
+          "agent_observation": {
+            "effect": "EasyCrypt accepted a proof-state change; the refreshed view is based on the new committed state.",
+            "manager_action": "replay_prefix_step_11",
+            "proof_state": "The committed EasyCrypt proof state changed.",
+            "result": "The manager completed this proof-level request.",
+            "tactic": "case ((t2{1}, C.ofintd 0) \\in ROout.m{1})."
+          },
+          "argv": [
+            ".venv/bin/python3",
+            "core/easycrypt/session_cli.py",
+            "-d",
+            ".ec_session_prover_tree_0_0",
+            "-next",
+            "-c",
+            "case ((t2{1}, C.ofintd 0) \\in ROout.m{1})."
+          ],
+          "duration_ms": 1700,
+          "exit_code": 0,
+          "label": "replay_prefix_step_11",
+          "mutates_proof_state": true,
+          "stderr_chars": 0,
+          "stderr_preview": "",
+          "stdout_chars": 30904,
+          "stdout_has_workspace_view": true,
+          "stdout_lines": 2
+        },
+        {
+          "agent_observation": {
+            "effect": "This manager intent does not change the EasyCrypt proof state.",
+            "manager_action": "agent_view",
+            "result": "The manager completed this proof-level request."
+          },
+          "argv": [
+            ".venv/bin/python3",
+            "core/easycrypt/session_cli.py",
+            "-d",
+            ".ec_session_prover_tree_0_0",
+            "-agent-view"
+          ],
+          "duration_ms": 211,
+          "exit_code": 0,
+          "label": "agent_view",
+          "mutates_proof_state": false,
+          "stderr_chars": 0,
+          "stderr_preview": "",
+          "stdout_chars": 35322,
+          "stdout_has_workspace_view": true,
+          "stdout_lines": 756
+        }
+      ]
+    },
+    "goal_hash": "45624385e025354eaec4cf7616db1723a40f117f",
+    "node_id": "Tree-0.0",
+    "proof_context_view_artifact": "",
+    "session_dir": ".ec_session_prover_tree_0_0",
+    "session_epoch": 1,
+    "session_tag": "prover_tree_0_0",
+    "state_version": 1,
+    "workspace_view_artifact": ""
+  },
+  "workspace_view": {
+    "current_goal": {
+      "goal_type": "pRHL",
+      "lines": [
+        "Current goal (remaining: 4)",
+        "",
+        "Type variables: <none>",
+        "",
+        "eqRO: equiv[ RO.get  ~ RO.get :",
+        "              arg{1} = arg{2} /\\ RO.m{1} = RO.m{2} ==>",
+        "              res{1} = res{2} /\\ RO.m{1} = RO.m{2}]",
+        "eqSB2: equiv[ UFCMA(RO).set_bad2  ~ UFCMA(RO).set_bad2 :",
+        "               arg{1} = arg{2} /\\",
+        "               UFCMA.bad2{1} = UFCMA.bad2{2} /\\",
+        "               UFCMA.cbad2{1} = UFCMA.cbad2{2} ==>",
+        "               res{1} = res{2} /\\",
+        "               UFCMA.bad2{1} = UFCMA.bad2{2} /\\",
+        "               UFCMA.cbad2{1} = UFCMA.cbad2{2}]",
+        "eqf: equiv[ Orcl.f  ~ Orcl.f :",
+        "             arg{1} = arg{2} /\\",
+        "             (UF.forged{1}, UFCMA.bad2{1}, UFCMA.cbad2{1}, UFCMA.log{1},",
+        "              RO.m{1}, Mem.lc{1}, SplitC2.I2.RO.m{1}) =",
+        "             (UF.forged{2}, UFCMA.bad2{2}, UFCMA.cbad2{2}, UFCMA.log{2},",
+        "              RO.m{2}, Mem.lc{2}, SplitC2.I2.RO.m{2}) ==>",
+        "             (UF.forged{1}, UFCMA.bad2{1}, UFCMA.cbad2{1}, UFCMA.log{1},",
+        "              RO.m{1}, Mem.lc{1}, SplitC2.I2.RO.m{1}) =",
+        "             (UF.forged{2}, UFCMA.bad2{2}, UFCMA.cbad2{2}, UFCMA.log{2},",
+        "              RO.m{2}, Mem.lc{2}, SplitC2.I2.RO.m{2})]",
+        "------------------------------------------------------------------------",
+        "&1 (left ) : {t1, t2, n, n0 : nonce,",
+        "             x, x0, x1, x2, x3, x4 : nonce * C.counter,",
+        "             r, r0, r1, r2, r3, r4 : poly_in,",
+        "             t, t0, t3, y, t4, y0 : poly_out, lt, lt0 : tag list}",
+        "&2 (right) : {t1, t2, n, n0 : nonce,",
+        "             x, x0, x1, x2, x3, x4 : nonce * C.counter,",
+        "             r, r0, r1, r2, r3, r4 : poly_in,",
+        "             t, t0, t3, y, t4, y0 : poly_out, lt, lt0 : tag list}",
+        "",
+        "pre =",
+        "  ((((UF.forged{1}, UFCMA.bad2{1}, UFCMA.cbad2{1}, UFCMA.log{1}, RO.m{1},",
+        "      Mem.lc{1}, SplitC2.I2.RO.m{1}) =",
+        "     (UF.forged{2}, UFCMA.bad2{2}, UFCMA.cbad2{2}, UFCMA.log{2}, RO.m{2},",
+        "      Mem.lc{2}, SplitC2.I2.RO.m{2}) /\\",
+        "     (t1{1}, t2{1}).`1 = (t1{2}, t2{2}).`1 /\\",
+        "     (t1{1}, t2{1}).`2 = (t1{2}, t2{2}).`2) /\\",
+        "    t1{1} <> t2{1}) /\\",
+        "   ((t1{1}, C.ofintd 0) \\in ROout.m{1})) /\\",
+        "  ((t2{1}, C.ofintd 0) \\in ROout.m{1})",
+        "",
+        "n <- t1                                    (1-----)  n <- t2                                  ",
+        "if ((n, C.ofintd 0) \\in ROout.m) {         (2-----)  if ((n, C.ofintd 0) \\in ROout.m) {       ",
+        "  x <- (n, C.ofintd 0)                     (2. 1--)    x <- (n, C.ofintd 0)                   ",
+        "  r1 <$ dpoly_in                           (2. 2--)    r1 <$ dpoly_in                         ",
+        "  if (x \\notin RO.m) {                     (2. 3--)    if (x \\notin RO.m) {                   ",
+        "    RO.m <- RO.m.[x <- r1]                 (2. 3.1)      RO.m <- RO.m.[x <- r1]               ",
+        "  }                                        (2. 3--)    }                                      ",
+        "  r <- oget RO.m.[x]                       (2. 4--)    r <- oget RO.m.[x]                     ",
+        "  UF.forged <-                             (2. 5--)    UF.forged <-                           ",
+        "    UF.forged ||                           (     -)      UF.forged ||                         ",
+        "    test_poly_in n Mem.lc r                (     -)      test_poly_in n Mem.lc r              ",
+        "      (oget UFCMA.log.[n])                 (     -)        (oget UFCMA.log.[n])               ",
+        "} else {                                   (2-----)  } else {                                 ",
+        "  x0 <- (n, C.ofintd 0)                    (2? 1--)    x0 <- (n, C.ofintd 0)                  ",
+        "  r2 <$ dpoly_in                           (2? 2--)    r2 <$ dpoly_in                         ",
+        "  if (x0 \\notin RO.m) {                    (2? 3--)    if (x0 \\notin RO.m) {                  ",
+        "    RO.m <- RO.m.[x0 <- r2]                (2? 3.1)      RO.m <- RO.m.[x0 <- r2]              ",
+        "  }                                        (2? 3--)    }                                      ",
+        "  r <- oget RO.m.[x0]                      (2? 4--)    r <- oget RO.m.[x0]                    ",
+        "  lt <-                                    (2? 5--)    lt <-                                  ",
+        "    map                                    (     -)      map                                  ",
+        "      (fun (c : ciphertext) =>             (     -)        (fun (c : ciphertext) =>           ",
+        "         c.`4 -                            (     -)           c.`4 -                          ",
+        "         poly1305_eval r                   (     -)           poly1305_eval r                 ",
+        "           (topol c.`2 c.`3))              (     -)             (topol c.`2 c.`3))            ",
+        "      (filter                              (     -)        (filter                            ",
+        "         (fun (c : ciphertext) =>          (     -)           (fun (c : ciphertext) =>        ",
+        "            c.`1 = n) Mem.lc)              (     -)              c.`1 = n) Mem.lc)            ",
+        "  t3 <$ dpoly_out                          (2? 6--)    t3 <$ dpoly_out                        ",
+        "  UFCMA.bad2 <- UFCMA.bad2 || (t3 \\in lt)  (2? 7--)    UFCMA.bad2 <- UFCMA.bad2 || (t3 \\in lt)",
+        "  UFCMA.cbad2 <- UFCMA.cbad2 + 1           (2? 8--)    UFCMA.cbad2 <- UFCMA.cbad2 + 1         ",
+        "  t <- t3                                  (2? 9--)    t <- t3                                ",
+        "  x1 <- (n, C.ofintd 0)                    (2?10--)    x1 <- (n, C.ofintd 0)                  ",
+        "  y <- witness<:poly_out>                  (2?11--)    y <- witness<:poly_out>                ",
+        "  SplitC2.I2.RO.m <-                       (2?12--)    SplitC2.I2.RO.m <-                     ",
+        "    SplitC2.I2.RO.m.[x1 <- y]              (     -)      SplitC2.I2.RO.m.[x1 <- y]            ",
+        "}                                          (2-----)  }                                        ",
+        "n0 <- t2                                   (3-----)  n0 <- t1                                 ",
+        "if ((n0, C.ofintd 0) \\in ROout.m) {        (4-----)  if ((n0, C.ofintd 0) \\in ROout.m) {      ",
+        "  x2 <- (n0, C.ofintd 0)                   (4. 1--)    x2 <- (n0, C.ofintd 0)                 ",
+        "  r3 <$ dpoly_in                           (4. 2--)    r3 <$ dpoly_in                         ",
+        "  if (x2 \\notin RO.m) {                    (4. 3--)    if (x2 \\notin RO.m) {                  ",
+        "    RO.m <- RO.m.[x2 <- r3]                (4. 3.1)      RO.m <- RO.m.[x2 <- r3]              ",
+        "  }                                        (4. 3--)    }                                      ",
+        "  r0 <- oget RO.m.[x2]                     (4. 4--)    r0 <- oget RO.m.[x2]                   ",
+        "  UF.forged <-                             (4. 5--)    UF.forged <-                           ",
+        "    UF.forged ||                           (     -)      UF.forged ||                         ",
+        "    test_poly_in n0 Mem.lc r0              (     -)      test_poly_in n0 Mem.lc r0            ",
+        "      (oget UFCMA.log.[n0])                (     -)        (oget UFCMA.log.[n0])              ",
+        "} else {                                   (4-----)  } else {                                 ",
+        "  x3 <- (n0, C.ofintd 0)                   (4? 1--)    x3 <- (n0, C.ofintd 0)                 ",
+        "  r4 <$ dpoly_in                           (4? 2--)    r4 <$ dpoly_in                         ",
+        "  if (x3 \\notin RO.m) {                    (4? 3--)    if (x3 \\notin RO.m) {                  ",
+        "    RO.m <- RO.m.[x3 <- r4]                (4? 3.1)      RO.m <- RO.m.[x3 <- r4]              ",
+        "  }                                        (4? 3--)    }                                      ",
+        "  r0 <- oget RO.m.[x3]                     (4? 4--)    r0 <- oget RO.m.[x3]                   ",
+        "  lt0 <-                                   (4? 5--)    lt0 <-                                 ",
+        "    map                                    (     -)      map                                  ",
+        "      (fun (c : ciphertext) =>             (     -)        (fun (c : ciphertext) =>           ",
+        "         c.`4 -                            (     -)           c.`4 -                          ",
+        "         poly1305_eval r0                  (     -)           poly1305_eval r0                ",
+        "           (topol c.`2 c.`3))              (     -)             (topol c.`2 c.`3))            ",
+        "      (filter                              (     -)        (filter                            ",
+        "         (fun (c : ciphertext) =>          (     -)           (fun (c : ciphertext) =>        ",
+        "            c.`1 = n0) Mem.lc)             (     -)              c.`1 = n0) Mem.lc)           ",
+        "  t4 <$ dpoly_out                          (4? 6--)    t4 <$ dpoly_out                        ",
+        "  UFCMA.bad2 <-                            (4? 7--)    UFCMA.bad2 <-                          ",
+        "    UFCMA.bad2 || (t4 \\in lt0)             (     -)      UFCMA.bad2 || (t4 \\in lt0)           ",
+        "  UFCMA.cbad2 <- UFCMA.cbad2 + 1           (4? 8--)    UFCMA.cbad2 <- UFCMA.cbad2 + 1         ",
+        "  t0 <- t4                                 (4? 9--)    t0 <- t4                               ",
+        "  x4 <- (n0, C.ofintd 0)                   (4?10--)    x4 <- (n0, C.ofintd 0)                 ",
+        "  y0 <- witness<:poly_out>                 (4?11--)    y0 <- witness<:poly_out>               ",
+        "  SplitC2.I2.RO.m <-                       (4?12--)    SplitC2.I2.RO.m <-                     ",
+        "    SplitC2.I2.RO.m.[x4 <- y0]             (     -)      SplitC2.I2.RO.m.[x4 <- y0]           ",
+        "}                                          (4-----)  }                                        ",
+        "",
+        "post =",
+        "  (UF.forged{1}, UFCMA.bad2{1}, UFCMA.cbad2{1}, UFCMA.log{1}, RO.m{1},",
+        "   Mem.lc{1}, SplitC2.I2.RO.m{1}) =",
+        "  (UF.forged{2}, UFCMA.bad2{2}, UFCMA.cbad2{2}, UFCMA.log{2}, RO.m{2},",
+        "   Mem.lc{2}, SplitC2.I2.RO.m{2})",
+        "[388|check]>"
+      ],
+      "source": {
+        "ground_truth": false,
+        "label": "Parsed from EasyCrypt pretty goal text"
+      },
+      "text_fully_shown": true,
+      "truncated": false,
+      "view_focus": "relational_program"
+    },
+    "kind": "prover_workspace_view",
+    "last_result": {},
+    "proof_status": {
+      "current_layer": "procedure_body",
+      "goal_type": "pRHL",
+      "remaining_goals": 4,
+      "remaining_goals_known": true,
+      "status": "open",
+      "view_focus": "relational_program"
+    },
+    "schema_version": 2,
+    "view_hash": "754fc5e9f0db361156154373e286ea0e826ee928"
+  }
+}

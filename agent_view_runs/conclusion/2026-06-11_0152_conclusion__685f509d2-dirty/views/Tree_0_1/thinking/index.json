@@ -1,0 +1,233 @@
+{
+  "node": "Tree-0.1",
+  "discovery": "recorded_session_id",
+  "transcripts": [
+    "~/.claude/projects/<PROJECT>--worktrees-mee-ctxt-l4np/a5a3a140-ff56-4c67-86fd-0797c78e978b.jsonl"
+  ],
+  "turns": [
+    {
+      "turn": 1,
+      "intent": "inspect_context",
+      "payload_key": "lemma_hints",
+      "thinking_chars": 0,
+      "text_chars": 299,
+      "tokens": {
+        "output_tokens": 2328,
+        "input_tokens": 3,
+        "cache_read_input_tokens": 29167,
+        "cache_creation_input_tokens": 100637
+      },
+      "session_id": "a5a3a140-ff56-4c67-86fd-0797c78e978b",
+      "timestamp": "2026-06-11T08:52:54.232Z",
+      "file": "thinking/turn_001.md"
+    },
+    {
+      "turn": 2,
+      "intent": "lookup_symbol",
+      "payload_key": "step2",
+      "thinking_chars": 0,
+      "text_chars": 0,
+      "tokens": {
+        "output_tokens": 318,
+        "input_tokens": 2,
+        "cache_read_input_tokens": 66481,
+        "cache_creation_input_tokens": 1169
+      },
+      "session_id": "a5a3a140-ff56-4c67-86fd-0797c78e978b",
+      "timestamp": "2026-06-11T08:53:02.673Z",
+      "file": ""
+    },
+    {
+      "turn": 3,
+      "intent": "lookup_symbol",
+      "payload_key": "CPA_game",
+      "thinking_chars": 0,
+      "text_chars": 0,
+      "tokens": {
+        "output_tokens": 2028,
+        "input_tokens": 2,
+        "cache_read_input_tokens": 67650,
+        "cache_creation_input_tokens": 1762
+      },
+      "session_id": "a5a3a140-ff56-4c67-86fd-0797c78e978b",
+      "timestamp": "2026-06-11T08:53:32.952Z",
+      "file": ""
+    },
+    {
+      "turn": 4,
+      "intent": "commit_tactic",
+      "payload_key": "have h2 := step2 (BNR_Adv(A)) _ &m.",
+      "thinking_chars": 0,
+      "text_chars": 0,
+      "tokens": {
+        "output_tokens": 2513,
+        "input_tokens": 2,
+        "cache_read_input_tokens": 69412,
+        "cache_creation_input_tokens": 2862
+      },
+      "session_id": "a5a3a140-ff56-4c67-86fd-0797c78e978b",
+      "timestamp": "2026-06-11T08:54:18.211Z",
+      "file": ""
+    },
+    {
+      "turn": 5,
+      "intent": "commit_tactic",
+      "payload_key": "move=> O enc_ll dec_ll; proc; call (A_ll (BNR(O)) _ _).",
+      "thinking_chars": 0,
+      "text_chars": 72,
+      "tokens": {
+        "output_tokens": 819,
+        "input_tokens": 2,
+        "cache_read_input_tokens": 72274,
+        "cache_creation_input_tokens": 4047
+      },
+      "session_id": "a5a3a140-ff56-4c67-86fd-0797c78e978b",
+      "timestamp": "2026-06-11T08:54:34.730Z",
+      "file": "thinking/turn_005.md"
+    },
+    {
+      "turn": 6,
+      "intent": "commit_tactic",
+      "payload_key": "by proc; sp; if; [wp; call enc_ll; auto | auto].",
+      "thinking_chars": 0,
+      "text_chars": 71,
+      "tokens": {
+        "output_tokens": 682,
+        "input_tokens": 2,
+        "cache_read_input_tokens": 76321,
+        "cache_creation_input_tokens": 2815
+      },
+      "session_id": "a5a3a140-ff56-4c67-86fd-0797c78e978b",
+      "timestamp": "2026-06-11T08:54:48.304Z",
+      "file": "thinking/turn_006.md"
+    },
+    {
+      "turn": 7,
+      "intent": "commit_tactic",
+      "payload_key": "by proc; sp; if; [wp; call dec_ll; auto | auto].",
+      "thinking_chars": 0,
+      "text_chars": 0,
+      "tokens": {
+        "output_tokens": 126,
+        "input_tokens": 2,
+        "cache_read_input_tokens": 79136,
+        "cache_creation_input_tokens": 2054
+      },
+      "session_id": "a5a3a140-ff56-4c67-86fd-0797c78e978b",
+      "timestamp": "2026-06-11T08:54:55.368Z",
+      "file": ""
+    },
+    {
+      "turn": 8,
+      "intent": "commit_tactic",
+      "payload_key": "by inline *; auto.",
+      "thinking_chars": 0,
+      "text_chars": 77,
+      "tokens": {
+        "output_tokens": 164,
+        "input_tokens": 2,
+        "cache_read_input_tokens": 81190,
+        "cache_creation_input_tokens": 1361
+      },
+      "session_id": "a5a3a140-ff56-4c67-86fd-0797c78e978b",
+      "timestamp": "2026-06-11T08:55:04.744Z",
+      "file": "thinking/turn_008.md"
+    },
+    {
+      "turn": 9,
+      "intent": "commit_tactic",
+      "payload_key": "have h3 := step3 &m.",
+      "thinking_chars": 0,
+      "text_chars": 92,
+      "tokens": {
+        "output_tokens": 252,
+        "input_tokens": 2,
+        "cache_read_input_tokens": 82551,
+        "cache_creation_input_tokens": 2525
+      },
+      "session_id": "a5a3a140-ff56-4c67-86fd-0797c78e978b",
+      "timestamp": "2026-06-11T08:55:12.966Z",
+      "file": "thinking/turn_009.md"
+    },
+    {
+      "turn": 10,
+      "intent": "commit_tactic",
+      "payload_key": "have h41 := step4_1 &m.",
+      "thinking_chars": 0,
+      "text_chars": 0,
+      "tokens": {
+        "output_tokens": 112,
+        "input_tokens": 2,
+        "cache_read_input_tokens": 85076,
+        "cache_creation_input_tokens": 2463
+      },
+      "session_id": "a5a3a140-ff56-4c67-86fd-0797c78e978b",
+      "timestamp": "2026-06-11T08:55:18.737Z",
+      "file": ""
+    },
+    {
+      "turn": 11,
+      "intent": "commit_tactic",
+      "payload_key": "have hb2 := step4_bad2 &m; have hb1 := step4_bad1 &m.",
+      "thinking_chars": 0,
+      "text_chars": 0,
+      "tokens": {
+        "output_tokens": 131,
+        "input_tokens": 2,
+        "cache_read_input_tokens": 87539,
+        "cache_creation_input_tokens": 2474
+      },
+      "session_id": "a5a3a140-ff56-4c67-86fd-0797c78e978b",
+      "timestamp": "2026-06-11T08:55:25.535Z",
+      "file": ""
+    },
+    {
+      "turn": 12,
+      "intent": "commit_tactic",
+      "payload_key": "smt().",
+      "thinking_chars": 0,
+      "text_chars": 0,
+      "tokens": {
+        "output_tokens": 344,
+        "input_tokens": 2,
+        "cache_read_input_tokens": 90013,
+        "cache_creation_input_tokens": 2636
+      },
+      "session_id": "a5a3a140-ff56-4c67-86fd-0797c78e978b",
+      "timestamp": "2026-06-11T08:55:34.869Z",
+      "file": ""
+    },
+    {
+      "turn": 13,
+      "intent": "commit_tactic",
+      "payload_key": "qed.",
+      "thinking_chars": 0,
+      "text_chars": 37,
+      "tokens": {
+        "output_tokens": 139,
+        "input_tokens": 2,
+        "cache_read_input_tokens": 92649,
+        "cache_creation_input_tokens": 1401
+      },
+      "session_id": "a5a3a140-ff56-4c67-86fd-0797c78e978b",
+      "timestamp": "2026-06-11T08:55:41.934Z",
+      "file": "thinking/turn_013.md"
+    },
+    {
+      "turn": 14,
+      "intent": "finish",
+      "payload_key": "",
+      "thinking_chars": 0,
+      "text_chars": 67,
+      "tokens": {
+        "output_tokens": 138,
+        "input_tokens": 2,
+        "cache_read_input_tokens": 94050,
+        "cache_creation_input_tokens": 1351
+      },
+      "session_id": "a5a3a140-ff56-4c67-86fd-0797c78e978b",
+      "timestamp": "2026-06-11T08:55:47.576Z",
+      "file": "thinking/turn_014.md"
+    }
+  ]
+}

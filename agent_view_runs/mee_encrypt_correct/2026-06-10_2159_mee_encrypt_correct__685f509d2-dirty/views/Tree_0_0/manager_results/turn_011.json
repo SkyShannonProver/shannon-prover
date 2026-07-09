@@ -1,0 +1,19 @@
+{
+  "turn": 11,
+  "handled_intent": {
+    "intent": "commit_tactic",
+    "payload": {
+      "tactic": "while (0 <= i <= size p' /\\ ek = _ek /\\ size c = i + 1 /\\ c = head witness c :: cbc_enc AES _ek (head witness c) (take i p') /\\ s = nth witness c i /\\ head witness c :: cbc_enc AES _ek (head witness c) p' = _c)."
+    }
+  },
+  "ok": true,
+  "manager_note": "Committed tactic accepted; the EasyCrypt proof state changed.",
+  "manager_actions": [
+    {
+      "action": "tactic commit",
+      "outcome": "EasyCrypt accepted the committed tactic.",
+      "timing": "157 ms"
+    }
+  ],
+  "view_refreshed": true
+}

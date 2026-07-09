@@ -1,0 +1,19 @@
+{
+  "turn": 12,
+  "handled_intent": {
+    "intent": "commit_tactic",
+    "payload": {
+      "tactic": "seq 6 : (UFCMA.bad2 = false /\\ UF.forged = false /\\ ROIN.RO.m = empty) 1%r (qdec%r * maxr pr_zeropol pr1_poly_out) 0%r 1%r."
+    }
+  },
+  "ok": true,
+  "manager_note": "Committed tactic accepted; the EasyCrypt proof state changed.",
+  "manager_actions": [
+    {
+      "action": "tactic commit",
+      "outcome": "EasyCrypt accepted the committed tactic.",
+      "timing": "348 ms"
+    }
+  ],
+  "view_refreshed": true
+}

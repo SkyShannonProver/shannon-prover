@@ -1,0 +1,717 @@
+{
+  "last_result": {
+    "intent": "probe_tactic",
+    "payload": {
+      "tactic": "auto; smt()."
+    },
+    "manager_action": "probe_tactic",
+    "result": "EasyCrypt accepted this read-only probe. The committed proof state was not changed; `goal_after_probe` shows the goal that would be visible if this tactic were committed.",
+    "effect": "This is a read-only probe; it asks EasyCrypt what would happen without changing the committed proof state.",
+    "proof_state": "The committed EasyCrypt proof state was not changed.",
+    "probe_preview": {
+      "tactic": "auto; smt().",
+      "outcome": "EasyCrypt accepted this read-only probe.",
+      "goal_after_remaining": 3,
+      "effect": "This preview is speculative only; the committed EasyCrypt proof state was not changed.",
+      "goal_after_probe": {
+        "lines": [
+          "Current goal (remaining: 3)",
+          "Type variables: <none>",
+          "&m: {}",
+          "------------------------------------------------------------------------",
+          "forall &2,",
+          "  DoubleQuery.bad{2} =>",
+          "  phoare[ CBC_Oracle(DoubleQuery(PRFi)).enc {&1}:",
+          "           DoubleQuery.bad <=> DoubleQuery.bad{2} ==>",
+          "           DoubleQuery.bad <=> DoubleQuery.bad{2}] = 1%r",
+          "[145|check]>"
+        ],
+        "text_fully_shown": true,
+        "truncated": false,
+        "source": {
+          "label": "[TRY] goal_after_raw",
+          "ground_truth": false
+        }
+      }
+    },
+    "kind": "accepted_closing_probe",
+    "message": "This closing/checking probe was accepted.",
+    "accepted_tactic": "auto; smt().",
+    "closing_decision": {
+      "id": "closing_or_checking",
+      "kind": "closing_or_checking",
+      "status": "accepted_checkpoint",
+      "tactic": "auto; smt().",
+      "phase": "closing/checking",
+      "valid_for": "current_view_only",
+      "decision": "Commit this exact tactic only if you want to try closing or checking this obligation.",
+      "recommended_next": {
+        "label": "Commit this exact tactic",
+        "submit": {
+          "intent": "commit_tactic",
+          "payload": {
+            "tactic": "auto; smt()."
+          }
+        }
+      },
+      "after_commit": "This is a closing/checking step; it may close the current goal or expose the next remaining goal, but it does not promise a new surgery workbench.",
+      "if_wrong_after_commit": "Use `undo_last_step` if the committed closing/checking step does not match the intended route."
+    },
+    "preview_summary": {
+      "remaining_goals": 3,
+      "truncated": false
+    },
+    "tactic": "auto; smt()."
+  },
+  "current_goal": {
+    "lines": [
+      "Current goal (remaining: 4)",
+      "",
+      "Type variables: <none>",
+      "",
+      "&m: {}",
+      "f_eq: equiv[ DoubleQuery(PRFi).f  ~ DoubleQuery(Sample).f :",
+      "              (DoubleQuery.bad{1} <=> DoubleQuery.bad{2}) /\\",
+      "              (!DoubleQuery.bad{2} =>",
+      "               arg{1} = arg{2} /\\",
+      "               DoubleQuery.qs{1} = DoubleQuery.qs{2} /\\",
+      "               fdom PRFi.m{1} = DoubleQuery.qs{1}) ==>",
+      "              (DoubleQuery.bad{1} <=> DoubleQuery.bad{2}) /\\",
+      "              (!DoubleQuery.bad{2} =>",
+      "               res{1} = res{2} /\\",
+      "               DoubleQuery.qs{1} = DoubleQuery.qs{2} /\\",
+      "               fdom PRFi.m{1} = DoubleQuery.qs{1})]",
+      "------------------------------------------------------------------------",
+      "&1 (left ) : {i : int, s, pi : block, p, c : block list} [programs are in sync]",
+      "&2 (right) : {i : int, s, pi : block, p, c : block list}",
+      "",
+      "pre =",
+      "  (i{1} = i{2} /\\ p{1} = p{2}) /\\",
+      "  0 <= i{1} <= size p{1} /\\",
+      "  (DoubleQuery.bad{1} <=> DoubleQuery.bad{2}) /\\",
+      "  (!DoubleQuery.bad{2} =>",
+      "   c{1} = c{2} /\\",
+      "   s{1} = s{2} /\\",
+      "   DoubleQuery.qs{1} = DoubleQuery.qs{2} /\\",
+      "   fdom PRFi.m{1} = DoubleQuery.qs{1})",
+      "",
+      "",
+      "post =",
+      "  (((i{1} = i{2} /\\ p{1} = p{2}) /\\",
+      "    0 <= i{1} <= size p{1} /\\",
+      "    (DoubleQuery.bad{1} <=> DoubleQuery.bad{2}) /\\",
+      "    (!DoubleQuery.bad{2} =>",
+      "     c{1} = c{2} /\\",
+      "     s{1} = s{2} /\\",
+      "     DoubleQuery.qs{1} = DoubleQuery.qs{2} /\\",
+      "     fdom PRFi.m{1} = DoubleQuery.qs{1})) /\\",
+      "   (i{1} < size p{1} <=> i{2} < size p{2})) /\\",
+      "  forall (bad_L : bool) (qs_L : block fset) (m_L : (block, block) fmap)",
+      "    (c_L : block list) (i_L : int) (s_L : block) (bad_R : bool)",
+      "    (qs_R : block fset) (c_R : block list) (i_R : int) (s_R : block),",
+      "    ! i_L < size p{1} =>",
+      "    ! i_R < size p{2} =>",
+      "    (i_L = i_R /\\ p{1} = p{2}) /\\",
+      "    0 <= i_L <= size p{1} /\\",
+      "    (bad_L <=> bad_R) /\\",
+      "    (!bad_R => c_L = c_R /\\ s_L = s_R /\\ qs_L = qs_R /\\ fdom m_L = qs_L) =>",
+      "    if bad_R then bad_L <=> bad_R",
+      "    else c_L = c_R /\\ qs_L = qs_R /\\ (bad_L <=> bad_R) /\\ fdom m_L = qs_L",
+      "[144|check]>"
+    ],
+    "text_fully_shown": true,
+    "truncated": false,
+    "goal_type": "pRHL",
+    "view_focus": "relational_program",
+    "source": {
+      "label": "Parsed from EasyCrypt pretty goal text",
+      "ground_truth": false
+    }
+  },
+  "proof_status": {
+    "status": "open",
+    "remaining_goals": 4,
+    "remaining_goals_known": true,
+    "goal_type": "pRHL",
+    "view_focus": "relational_program",
+    "current_layer": "verification_residue"
+  },
+  "candidate_moves": {
+    "moves": [
+      {
+        "title": "Residual closing tactic",
+        "category": "probe",
+        "tactic": "auto.",
+        "applicability": "This tactic-shaped option should be checked with a read-only probe before committing it.",
+        "effect": "This is a read-only probe; it asks EasyCrypt what would happen without changing the committed proof state.",
+        "source": "proof-state analysis",
+        "derivation": "read-only probe surfaced from proof-state analysis",
+        "verified": "read_only_probe_suggestion",
+        "guarantee": "read-only probe shape; proof state unchanged; probe then decide; reversible"
+      }
+    ],
+    "probe_alternatives": [
+      {
+        "tactic": "auto; smt().",
+        "probe_result": "accepted",
+        "status": "verified_on_current_state",
+        "how_to_use": "This closing/checking tactic was accepted by a read-only probe on the current proof state. Commit it only if you want to try closing or checking this obligation.",
+        "closing_decision": {
+          "id": "closing_or_checking",
+          "kind": "closing_or_checking",
+          "status": "accepted_checkpoint",
+          "tactic": "auto; smt().",
+          "phase": "closing/checking",
+          "valid_for": "current_view_only",
+          "decision": "Commit this exact tactic only if you want to try closing or checking this obligation.",
+          "recommended_next": {
+            "label": "Commit this exact tactic",
+            "submit": {
+              "intent": "commit_tactic",
+              "payload": {
+                "tactic": "auto; smt()."
+              }
+            }
+          },
+          "after_commit": "This is a closing/checking step; it may close the current goal or expose the next remaining goal, but it does not promise a new surgery workbench.",
+          "if_wrong_after_commit": "Use `undo_last_step` if the committed closing/checking step does not match the intended route."
+        },
+        "goal_after_probe_summary": {
+          "remaining_goals": 3,
+          "first_lines": [
+            "Current goal (remaining: 3)",
+            "Type variables: <none>",
+            "&m: {}",
+            "------------------------------------------------------------------------"
+          ],
+          "truncated": false
+        }
+      }
+    ],
+    "route_health": [
+      {
+        "signal": "seq_cut_mismatch",
+        "confidence": "medium",
+        "message": "Recent rejected work is inside the current seq-cut scope.",
+        "evidence": [
+          "latest seq cut tactic #22: seq 3 3 : (={i, p} /\\ 0 <= i{1} <= size p{1} /\\ (DoubleQuery.bad{1} <=> DoubleQuery.bad{2}) /\\ (!DoubleQuery.bad{2} => c{1} = c{2} /\\ s{1} = s{2} /\\ DoubleQuery.qs{1} = DoubleQuery.qs{2} /\\ fdom PRFi.m{1} = DoubleQuery.qs{1})).",
+          "recent rejected tactic head: sp",
+          "mismatch kind: branch_obligation"
+        ],
+        "repair_checkpoint": {
+          "label": "Before committed tactic #23",
+          "committed_tactic": "auto; smt(size_ge0).",
+          "tactic_index": 23,
+          "why_here": "seq-local boundary associated with recent rejected work inside the current seq scope",
+          "submit": {
+            "intent": "undo_to_checkpoint",
+            "payload": {
+              "checkpoint_id": "cp_23_3365b0cab2a590e8"
+            }
+          },
+          "undo_scope": "branch_local",
+          "semantic_id": "after_seq_opened"
+        },
+        "recommended_next": {
+          "intent": "undo_to_checkpoint",
+          "payload": {
+            "checkpoint_id": "cp_23_3365b0cab2a590e8"
+          }
+        },
+        "primary_next_action": {
+          "intent": "undo_to_checkpoint",
+          "payload": {
+            "checkpoint_id": "cp_23_3365b0cab2a590e8"
+          }
+        },
+        "related_checkpoints": [
+          {
+            "checkpoint_id": "cp_22_3365b0cab2a590e8",
+            "semantic_id": "before_seq_cut",
+            "semantic_ids": [
+              "before_seq_cut"
+            ],
+            "label": "Before seq cut #22",
+            "committed_step_index": 22,
+            "committed_tactic": "seq 3 3 : (={i, p} /\\ 0 <= i{1} <= size p{1} /\\ (DoubleQuery.bad{1} <=> DoubleQuery.bad{2}) /\\ (!DoubleQuery.bad{2} => c{1} = c{2} /\\ s{1} = s{2} /\\ DoubleQuery.qs{1} = DoubleQuery.qs{2} /\\ fdom PRFi.m{1} = DoubleQuery.qs{1})).",
+            "restored_proof_layer": "pre_seq_cut",
+            "restored_affordances": {
+              "seq_cut": "not_committed",
+              "call_site_state": "as_before_seq_cut"
+            },
+            "undo_scope": "seq_local",
+            "why_checkpoint": "seq-cut boundary; selecting it restores the proof state before this cut was committed",
+            "effect_if_selected": "Undo committed tactic #22 and every committed tactic after it in this node.",
+            "submit": {
+              "intent": "undo_to_checkpoint",
+              "payload": {
+                "checkpoint_id": "cp_22_3365b0cab2a590e8"
+              }
+            }
+          },
+          {
+            "checkpoint_id": "cp_23_3365b0cab2a590e8",
+            "semantic_id": "after_seq_opened",
+            "semantic_ids": [
+              "after_seq_opened",
+              "before_branch_work"
+            ],
+            "label": "After seq opened / before branch work #23",
+            "committed_step_index": 23,
+            "committed_tactic": "auto; smt(size_ge0).",
+            "restored_proof_layer": "seq_obligations_opened",
+            "restored_affordances": {
+              "seq_cut": "committed",
+              "branch_work": "not_committed"
+            },
+            "undo_scope": "branch_local",
+            "why_checkpoint": "seq-local branch boundary; selecting it keeps the seq cut and removes branch-local work after it",
+            "effect_if_selected": "Undo committed tactic #23 and every committed tactic after it in this node.",
+            "submit": {
+              "intent": "undo_to_checkpoint",
+              "payload": {
+                "checkpoint_id": "cp_23_3365b0cab2a590e8"
+              }
+            }
+          }
+        ],
+        "recovery_class": "seq_midpoint_repair_evidence",
+        "checkpoint_policy": "seq_local_checkpoint_visible"
+      }
+    ]
+  },
+  "program_frontier": {
+    "authority": "proof-state analysis",
+    "view_focus": "relational_program",
+    "focus": {
+      "live_call_sites": 0,
+      "frontier_call_sites": 0,
+      "live_callable_lemmas": 1,
+      "callable_now_lemmas": 0,
+      "oracle_obligation_handles": 0,
+      "has_invariant_skeleton": true
+    }
+  },
+  "application_context": {
+    "selected_handles": [
+      {
+        "title": "Residual closing tactic",
+        "tactic": "auto; smt().",
+        "why_relevant": "Daemon probe accepted this tactic and it would leave 3 subgoal(s); commit it if that is the intended decomposition.",
+        "derivation": "surfaced from current-state analysis; not daemon-checked on this goal",
+        "verified": "unverified_suggestion",
+        "guarantee": "not verified on the current goal; probe before committing; reversible"
+      }
+    ]
+  },
+  "facts_and_diagnostics": {
+    "facts": {
+      "has_invariant_skeleton": true,
+      "unfoldable_goal_heads": [
+        {
+          "name": "pi",
+          "unqualified_name": "pi",
+          "declaration_kind": "op",
+          "unfold_tactic": "rewrite /pi.",
+          "smt_argument_role": "not_a_lemma_hint"
+        },
+        {
+          "name": "p",
+          "unqualified_name": "p",
+          "declaration_kind": "op",
+          "unfold_tactic": "rewrite /p.",
+          "smt_argument_role": "not_a_lemma_hint"
+        }
+      ],
+      "unfoldable_goal_head_count": 2
+    },
+    "fact_note": "Only current-frontier facts are shown here; the full proof context artifact keeps the compiler/internal details.",
+    "notes": [
+      {
+        "message": "proof-state analysis sees no live call sites after a prior `inline *` at tactic 12. Continue at procedure/ambient layer, or undo if a call lemma is needed.",
+        "severity": "info"
+      }
+    ]
+  },
+  "recovery_diagnosis_surface": {
+    "kind": "recovery_diagnosis_surface",
+    "recovery_class": "seq_midpoint_repair_evidence",
+    "confidence": "medium",
+    "checkpoint_policy": "seq_local_checkpoint_visible",
+    "evidence": [
+      "latest seq cut tactic #22: seq 3 3 : (={i, p} /\\ 0 <= i{1} <= size p{1} /\\ (DoubleQuery.bad{1} <=> DoubleQuery.bad{2}) /\\ (!DoubleQuery.bad{2} => c{1} = c{2} /\\ s{1} = s{2} /\\ DoubleQuery.qs{1} = DoubleQuery.qs{2} /\\ fdom PRFi.m{1} = DoubleQuery.qs{1})).",
+      "recent rejected tactic head: sp",
+      "mismatch kind: branch_obligation"
+    ],
+    "available_local_work": [
+      {
+        "kind": "local_work_status",
+        "items": [
+          "current evidence points at a structural recovery boundary"
+        ]
+      }
+    ],
+    "related_checkpoints": [
+      {
+        "semantic_id": "after_seq_opened",
+        "label": "Before committed tactic #23",
+        "tactic_index": 23,
+        "committed_step_index": 23,
+        "undo_scope": "branch_local",
+        "why_checkpoint": "seq-local boundary associated with recent rejected work inside the current seq scope"
+      },
+      {
+        "checkpoint_id": "cp_22_3365b0cab2a590e8",
+        "semantic_id": "before_seq_cut",
+        "semantic_ids": [
+          "before_seq_cut"
+        ],
+        "label": "Before seq cut #22",
+        "committed_step_index": 22,
+        "undo_scope": "seq_local",
+        "restored_proof_layer": "pre_seq_cut",
+        "restored_affordances": {
+          "seq_cut": "not_committed",
+          "call_site_state": "as_before_seq_cut"
+        },
+        "why_checkpoint": "seq-cut boundary; selecting it restores the proof state before this cut was committed"
+      },
+      {
+        "checkpoint_id": "cp_23_3365b0cab2a590e8",
+        "semantic_id": "after_seq_opened",
+        "semantic_ids": [
+          "after_seq_opened",
+          "before_branch_work"
+        ],
+        "label": "After seq opened / before branch work #23",
+        "committed_step_index": 23,
+        "undo_scope": "branch_local",
+        "restored_proof_layer": "seq_obligations_opened",
+        "restored_affordances": {
+          "seq_cut": "committed",
+          "branch_work": "not_committed"
+        },
+        "why_checkpoint": "seq-local branch boundary; selecting it keeps the seq cut and removes branch-local work after it"
+      },
+      {
+        "checkpoint_id": "cp_23_3365b0cab2a590e8",
+        "semantic_id": "seq_cut_mismatch",
+        "semantic_ids": [
+          "seq_cut_mismatch",
+          "after_seq_opened",
+          "before_branch_work"
+        ],
+        "label": "After seq opened / before branch work #23",
+        "committed_step_index": 23,
+        "undo_scope": "branch_local",
+        "restored_proof_layer": "seq_obligations_opened",
+        "restored_affordances": {
+          "seq_cut": "committed",
+          "branch_work": "not_committed"
+        },
+        "why_checkpoint": "seq-local branch boundary; selecting it keeps the seq cut and removes branch-local work after it"
+      }
+    ],
+    "related_surfaces": [
+      "seq_cut_surface",
+      "structural_checkpoints"
+    ],
+    "limitations": [
+      "does not synthesize a replacement seq midpoint",
+      "reports obligation shape and local recovery boundaries only"
+    ]
+  },
+  "structural_checkpoints": {
+    "items": [
+      {
+        "checkpoint_id": "cp_23_3365b0cab2a590e8",
+        "semantic_id": "seq_cut_mismatch",
+        "semantic_ids": [
+          "seq_cut_mismatch",
+          "after_seq_opened",
+          "before_branch_work"
+        ],
+        "label": "After seq opened / before branch work #23",
+        "committed_step_index": 23,
+        "committed_tactic": "auto; smt(size_ge0).",
+        "restored_proof_layer": "seq_obligations_opened",
+        "restored_affordances": {
+          "seq_cut": "committed",
+          "branch_work": "not_committed"
+        },
+        "undo_scope": "branch_local",
+        "why_checkpoint": "seq-local branch boundary; selecting it keeps the seq cut and removes branch-local work after it",
+        "effect_if_selected": "Undo committed tactic #23 and every committed tactic after it in this node.",
+        "submit": {
+          "intent": "undo_to_checkpoint",
+          "payload": {
+            "checkpoint_id": "cp_23_3365b0cab2a590e8"
+          }
+        }
+      },
+      {
+        "checkpoint_id": "cp_31_3365b0cab2a590e8",
+        "semantic_id": "before_branch_work",
+        "semantic_ids": [
+          "before_branch_work",
+          "before_call_obligation_work"
+        ],
+        "label": "Before latest call-obligation tactic #31",
+        "committed_step_index": 31,
+        "committed_tactic": "sp 1 1; wp; exists* DoubleQuery.bad{2}; elim* => B0; call (f_eqM B0); auto; smt(size_ge0).",
+        "restored_proof_layer": "call_obligation",
+        "restored_affordances": {
+          "call_route": "committed",
+          "call_obligation": "preserved",
+          "later_local_work": "not_committed"
+        },
+        "undo_scope": "call_obligation_local",
+        "why_checkpoint": "call-obligation local boundary; selecting it keeps the opened call obligation and removes later local work",
+        "effect_if_selected": "Undo committed tactic #31 and every committed tactic after it in this node.",
+        "submit": {
+          "intent": "undo_to_checkpoint",
+          "payload": {
+            "checkpoint_id": "cp_31_3365b0cab2a590e8"
+          }
+        }
+      },
+      {
+        "checkpoint_id": "cp_7_3365b0cab2a590e8",
+        "semantic_id": "after_call_opened",
+        "semantic_ids": [
+          "after_call_opened"
+        ],
+        "label": "After call opened / before obligation work #7",
+        "committed_step_index": 7,
+        "committed_tactic": "exact A_distinguish_ll.",
+        "restored_proof_layer": "call_obligations_opened",
+        "restored_affordances": {
+          "call_route": "committed",
+          "call_obligation_work": "not_committed"
+        },
+        "undo_scope": "call_local",
+        "why_checkpoint": "call-local boundary; selecting it keeps the call tactic and removes work committed after the call opened",
+        "effect_if_selected": "Undo committed tactic #7 and every committed tactic after it in this node.",
+        "submit": {
+          "intent": "undo_to_checkpoint",
+          "payload": {
+            "checkpoint_id": "cp_7_3365b0cab2a590e8"
+          }
+        }
+      },
+      {
+        "checkpoint_id": "cp_6_3365b0cab2a590e8",
+        "semantic_id": "before_call_route",
+        "semantic_ids": [
+          "before_call_route"
+        ],
+        "label": "Before call invariant #6",
+        "committed_step_index": 6,
+        "committed_tactic": "call (_: DoubleQuery.bad, ={DoubleQuery.qs} /\\ (DoubleQuery.bad{1} <=> DoubleQuery.bad{2}) /\\ fdom PRFi.m{1} = DoubleQuery.qs{1}, DoubleQuery.bad{1} <=> DoubleQuery.bad{2}).",
+        "restored_proof_layer": "pre_call_route",
+        "restored_affordances": {
+          "call_route": "not_committed",
+          "call_obligation_work": "not_committed"
+        },
+        "undo_scope": "call_local",
+        "why_checkpoint": "call invariant introduction point; later oracle/branch obligations often reveal missing preserved facts or an over-strong equality from this tactic",
+        "effect_if_selected": "Undo committed tactic #6 and every committed tactic after it in this node.",
+        "submit": {
+          "intent": "undo_to_checkpoint",
+          "payload": {
+            "checkpoint_id": "cp_6_3365b0cab2a590e8"
+          }
+        }
+      },
+      {
+        "checkpoint_id": "cp_22_3365b0cab2a590e8",
+        "semantic_id": "before_seq_cut",
+        "semantic_ids": [
+          "before_seq_cut"
+        ],
+        "label": "Before seq cut #22",
+        "committed_step_index": 22,
+        "committed_tactic": "seq 3 3 : (={i, p} /\\ 0 <= i{1} <= size p{1} /\\ (DoubleQuery.bad{1} <=> DoubleQuery.bad{2}) /\\ (!DoubleQuery.bad{2} => c{1} = c{2} /\\ s{1} = s{2} /\\ DoubleQuery.qs{1} = DoubleQuery.qs{2} /\\ fdom PRFi.m{1} = DoubleQuery.qs{1})).",
+        "restored_proof_layer": "pre_seq_cut",
+        "restored_affordances": {
+          "seq_cut": "not_committed",
+          "call_site_state": "as_before_seq_cut"
+        },
+        "undo_scope": "seq_local",
+        "why_checkpoint": "seq-cut boundary; selecting it restores the proof state before this cut was committed",
+        "effect_if_selected": "Undo committed tactic #22 and every committed tactic after it in this node.",
+        "submit": {
+          "intent": "undo_to_checkpoint",
+          "payload": {
+            "checkpoint_id": "cp_22_3365b0cab2a590e8"
+          }
+        }
+      },
+      {
+        "checkpoint_id": "cp_12_3365b0cab2a590e8",
+        "semantic_id": "last_call_site_boundary",
+        "semantic_ids": [
+          "last_call_site_boundary"
+        ],
+        "label": "Before inline expansion #12",
+        "committed_step_index": 12,
+        "committed_tactic": "inline *; auto.",
+        "restored_proof_layer": "pre_inline_frontier",
+        "restored_affordances": {
+          "call_site_handles": "as_before_inline"
+        },
+        "undo_scope": "call_site_boundary",
+        "why_checkpoint": "inline boundary; selecting it restores the proof state before this expansion",
+        "effect_if_selected": "Undo committed tactic #12 and every committed tactic after it in this node.",
+        "submit": {
+          "intent": "undo_to_checkpoint",
+          "payload": {
+            "checkpoint_id": "cp_12_3365b0cab2a590e8"
+          }
+        }
+      }
+    ]
+  },
+  "inspect_lookup_handles": {
+    "effect": "All handles here are read-only manager requests; the committed EasyCrypt proof state stays unchanged.",
+    "manager_note": "Some requests may ask EasyCrypt or name resolution; wait for the manager result before choosing the next proof intent.",
+    "ask_manager_for": [
+      {
+        "intent": "inspect_context",
+        "payload": {
+          "topic": "goal_info"
+        },
+        "use_when": "Need parsed goal shape, resolved names, or KB pattern hints.",
+        "returns": "parsed goal structure and names"
+      },
+      {
+        "intent": "inspect_context",
+        "payload": {
+          "topic": "call_site_options"
+        },
+        "use_when": "The visible frontier contains call sites or named equiv handles may apply.",
+        "returns": "call-ready/oracle-equiv context for the current frontier, plus the BODY of the procedure(s) called here (functor aliases resolved) so you can see which oracles/state your call invariant must preserve"
+      },
+      {
+        "intent": "inspect_context",
+        "payload": {
+          "topic": "call_invariant_skeleton"
+        },
+        "use_when": "You are at an abstract-adversary `call (_: <inv>)` and want the mechanical glob frame of the invariant before adding your own semantic conjuncts.",
+        "returns": "the mechanical `={glob ...}` frame of the call invariant (shared abstract oracle modules, daemon-confirmed to apply and spawn the obligations). When a named coupling predicate fits the in-scope state it ALSO surfaces a field-threaded carrier (`inv \u2026 s1{1} s2{2}`), plus candidate inductive side-conditions (`dom \u2286 used-set`) for any random oracle the call queries. All revisable starting points \u2014 confirm the coupling and add/adjust the semantic conjuncts (key/state correspondences, set-membership)."
+      },
+      {
+        "intent": "inspect_context",
+        "payload": {
+          "topic": "call_subgoals",
+          "invariant": "<the EasyCrypt invariant expression inside call (_: ...)>"
+        },
+        "use_when": "You are considering `call (_: Inv)` and already have a concrete invariant expression you want to test first.",
+        "returns": "a read-only preview of the obligations caused by that candidate invariant, including pre/init, call-preservation, oracle-side, postcondition, missing-fact signals, and extra conjuncts that may create avoidable obligations"
+      },
+      {
+        "intent": "inspect_context",
+        "payload": {
+          "topic": "tactic_forms",
+          "name": "call"
+        },
+        "use_when": "A tactic has multiple EasyCrypt argument forms.",
+        "returns": "valid tactic forms and common traps"
+      },
+      {
+        "intent": "inspect_context",
+        "payload": {
+          "topic": "tactic_forms",
+          "name": "sp"
+        },
+        "use_when": "The frontier may need indexed `sp i j` before branch or call tactics.",
+        "returns": "valid `sp` forms and branch-frontier traps"
+      },
+      {
+        "intent": "inspect_context",
+        "payload": {
+          "topic": "tactic_forms",
+          "name": "wp"
+        },
+        "use_when": "Mid-proof pRHL suffix surgery may need indexed `wp`.",
+        "returns": "valid indexed `wp` forms and suffix-alignment traps"
+      },
+      {
+        "intent": "inspect_context",
+        "payload": {
+          "topic": "tactic_forms",
+          "name": "swap"
+        },
+        "use_when": "Statement order may need a small `swap` before `sp`, `wp`, or `sim`.",
+        "returns": "valid `swap` forms and statement-order traps"
+      },
+      {
+        "intent": "inspect_context",
+        "payload": {
+          "topic": "tactic_forms",
+          "name": "rcondt"
+        },
+        "use_when": "A guarded branch may need `rcondt` after a case split or invariant fact.",
+        "returns": "valid `rcondt` forms and guard-obligation traps"
+      },
+      {
+        "intent": "inspect_context",
+        "payload": {
+          "topic": "tactic_forms",
+          "name": "rcondf"
+        },
+        "use_when": "A guarded branch may need `rcondf` after a case split or invariant fact.",
+        "returns": "valid `rcondf` forms and guard-obligation traps"
+      },
+      {
+        "intent": "inspect_context",
+        "payload": {
+          "topic": "tactic_forms",
+          "name": "conseq"
+        },
+        "use_when": "A suffix proof may need `conseq` to weaken to a smaller relation before `sim`.",
+        "returns": "valid `conseq` forms and pRHL memory-annotation traps"
+      },
+      {
+        "intent": "inspect_context",
+        "payload": {
+          "topic": "tactic_forms",
+          "name": "rnd"
+        },
+        "use_when": "One side may have an extra sample or need an explicit sample coupling.",
+        "returns": "valid `rnd` forms, including one-sided sampling"
+      },
+      {
+        "intent": "inspect_context",
+        "payload": {
+          "topic": "tactic_forms",
+          "name": "eager"
+        },
+        "use_when": "A known statement-order mismatch may need an eager/lazy transformation.",
+        "returns": "valid `eager` forms and when to prefer smaller surgery"
+      },
+      {
+        "intent": "inspect_context",
+        "payload": {
+          "topic": "align"
+        },
+        "use_when": "LHS/RHS statement order may need swap/alignment context.",
+        "returns": "swap/alignment context for the visible pRHL frontier"
+      }
+    ]
+  },
+  "reference": {
+    "note": "Panels collapsed for focus. The essentials for THIS phase are in the focus above; the rest were noise here (a flat view of all of them is what disorients). If you genuinely need a precise field from one, ask with `inspect_context`.",
+    "collapsed": [
+      "seq_cut_surface"
+    ]
+  },
+  "surface_profile": {
+    "name": "l4_checked_action_surface",
+    "surface_profile": "l4_checked_action_surface",
+    "stage": "l4_checked_action_surface",
+    "description": "L4 Verifier-Checked Action Surface: exposes checked previews, post-probe goals, route health, recovery diagnosis, recovery signals, and selected diagnostics while demoting accepted partial openers that only create residual surgery.",
+    "paper_level": "L4",
+    "paper_role": "paper"
+  }
+}

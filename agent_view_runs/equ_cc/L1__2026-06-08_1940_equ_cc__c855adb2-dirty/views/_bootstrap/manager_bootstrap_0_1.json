@@ -1,0 +1,196 @@
+{
+  "file": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/equ_cc/r01/source/ChaChaPoly/chacha_poly.ec",
+  "include_dirs": [
+    "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/equ_cc/r01/source/ChaChaPoly",
+    "easycrypt-src/theories"
+  ],
+  "kind": "manager_session_bootstrap",
+  "lemma": "equ_cc",
+  "manager_actions": [
+    {
+      "agent_observation": {
+        "effect": "This manager intent does not change the EasyCrypt proof state.",
+        "manager_action": "start",
+        "result": "The manager completed this proof-level request."
+      },
+      "argv": [
+        "~/Downloads/crypto-agent-pipeline/.venv/bin/python",
+        "core/easycrypt/session_cli.py",
+        "-d",
+        ".ec_session_prover_tree_0_1",
+        "-start",
+        "-f",
+        "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/equ_cc/r01/source/ChaChaPoly/chacha_poly.ec",
+        "-I",
+        "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/equ_cc/r01/source/ChaChaPoly",
+        "-I",
+        "easycrypt-src/theories",
+        "-lemma",
+        "equ_cc"
+      ],
+      "duration_ms": 1385,
+      "exit_code": 0,
+      "label": "start",
+      "mutates_proof_state": true,
+      "stderr_chars": 0,
+      "stderr_preview": "",
+      "stdout_chars": 9516,
+      "stdout_has_workspace_view": true,
+      "stdout_lines": 250
+    },
+    {
+      "agent_observation": {
+        "effect": "This manager intent does not change the EasyCrypt proof state.",
+        "manager_action": "agent_view",
+        "result": "The manager completed this proof-level request."
+      },
+      "argv": [
+        "~/Downloads/crypto-agent-pipeline/.venv/bin/python",
+        "core/easycrypt/session_cli.py",
+        "-d",
+        ".ec_session_prover_tree_0_1",
+        "-agent-view"
+      ],
+      "duration_ms": 165,
+      "exit_code": 0,
+      "label": "agent_view",
+      "mutates_proof_state": false,
+      "stderr_chars": 0,
+      "stderr_preview": "",
+      "stdout_chars": 9401,
+      "stdout_has_workspace_view": true,
+      "stdout_lines": 245
+    }
+  ],
+  "node": "Tree-0.1",
+  "replay_prefix": [],
+  "replay_prefix_count": 0,
+  "schema_version": 2,
+  "session_dir": ".ec_session_prover_tree_0_1",
+  "session_tag": "prover_tree_0_1",
+  "snapshot": {
+    "execution_refs": {
+      "manager_action_count": 2,
+      "manager_actions": [
+        {
+          "agent_observation": {
+            "effect": "This manager intent does not change the EasyCrypt proof state.",
+            "manager_action": "start",
+            "result": "The manager completed this proof-level request."
+          },
+          "argv": [
+            "~/Downloads/crypto-agent-pipeline/.venv/bin/python",
+            "core/easycrypt/session_cli.py",
+            "-d",
+            ".ec_session_prover_tree_0_1",
+            "-start",
+            "-f",
+            "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/equ_cc/r01/source/ChaChaPoly/chacha_poly.ec",
+            "-I",
+            "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/equ_cc/r01/source/ChaChaPoly",
+            "-I",
+            "easycrypt-src/theories",
+            "-lemma",
+            "equ_cc"
+          ],
+          "duration_ms": 1385,
+          "exit_code": 0,
+          "label": "start",
+          "mutates_proof_state": true,
+          "stderr_chars": 0,
+          "stderr_preview": "",
+          "stdout_chars": 9516,
+          "stdout_has_workspace_view": true,
+          "stdout_lines": 250
+        },
+        {
+          "agent_observation": {
+            "effect": "This manager intent does not change the EasyCrypt proof state.",
+            "manager_action": "agent_view",
+            "result": "The manager completed this proof-level request."
+          },
+          "argv": [
+            "~/Downloads/crypto-agent-pipeline/.venv/bin/python",
+            "core/easycrypt/session_cli.py",
+            "-d",
+            ".ec_session_prover_tree_0_1",
+            "-agent-view"
+          ],
+          "duration_ms": 165,
+          "exit_code": 0,
+          "label": "agent_view",
+          "mutates_proof_state": false,
+          "stderr_chars": 0,
+          "stderr_preview": "",
+          "stdout_chars": 9401,
+          "stdout_has_workspace_view": true,
+          "stdout_lines": 245
+        }
+      ]
+    },
+    "goal_hash": "483998b3592386477dfad525a6dfac96190a05ed",
+    "node_id": "Tree-0.1",
+    "proof_context_view_artifact": "",
+    "session_dir": ".ec_session_prover_tree_0_1",
+    "session_epoch": 1,
+    "session_tag": "prover_tree_0_1",
+    "state_version": 1,
+    "workspace_view_artifact": ""
+  },
+  "workspace_view": {
+    "current_goal": {
+      "goal_type": "equiv",
+      "lines": [
+        "Current goal",
+        "",
+        "Type variables: <none>",
+        "",
+        "n0: nonce",
+        "mr0: (nonce * C.counter, poly_in) fmap",
+        "ms0: (nonce * C.counter, poly_out) fmap",
+        "------------------------------------------------------------------------",
+        "pre =",
+        "  arg{2} = (n{1}, p{1}) /\\",
+        "  n{2} = n0 /\\",
+        "  size p{1} <= max_cipher_size /\\",
+        "  ! (n0 \\in BNR.lenc{1}) /\\",
+        "  (forall (n1 : nonce) (c : C.counter),",
+        "     (n1, c) \\in ROF.m{1} => n1 \\in BNR.lenc{1}) /\\",
+        "  mr0 = ROin.m{1} /\\ ms0 = ROout.m{1}",
+        "",
+        "    ChaCha(",
+        "      CCRO(",
+        "        SplitD.RO_DOM(",
+        "                 SplitC1.RO_Pair(SplitC2.RO_Pair(ROin, ROout), SplitC1.I2.RO),",
+        "                 ROF))).enc ~ EncRnd.cc ",
+        "",
+        "post =",
+        "  res{1} = res{2} /\\",
+        "  size res{1} <= max_cipher_size /\\",
+        "  mr0 = ROin.m{1} /\\",
+        "  ms0 = ROout.m{1} /\\",
+        "  forall (n : nonce) (c : C.counter),",
+        "    (n, c) \\in ROF.m{1} => n \\in n0 :: BNR.lenc{1}"
+      ],
+      "source": {
+        "ground_truth": false,
+        "label": "Parsed from EasyCrypt pretty goal text"
+      },
+      "text_fully_shown": true,
+      "truncated": false,
+      "view_focus": "relational_program"
+    },
+    "kind": "prover_workspace_view",
+    "last_result": {},
+    "proof_status": {
+      "current_layer": "prhl_module",
+      "goal_type": "equiv",
+      "remaining_goals": 1,
+      "remaining_goals_known": true,
+      "status": "open",
+      "view_focus": "relational_program"
+    },
+    "schema_version": 2,
+    "view_hash": "038a3a5dcf02f1343b1ca1825b3938d7ecdae278"
+  }
+}

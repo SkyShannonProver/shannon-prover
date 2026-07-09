@@ -1,0 +1,118 @@
+## 🎯 Current Goal
+```
+Current goal (remaining: 3)
+
+Type variables: <none>
+
+eqRO: equiv[ RO.get  ~ RO.get :
+              arg{1} = arg{2} /\ RO.m{1} = RO.m{2} ==>
+              res{1} = res{2} /\ RO.m{1} = RO.m{2}]
+eqSB2: equiv[ UFCMA(RO).set_bad2  ~ UFCMA(RO).set_bad2 :
+               arg{1} = arg{2} /\
+               UFCMA.bad2{1} = UFCMA.bad2{2} /\
+               UFCMA.cbad2{1} = UFCMA.cbad2{2} ==>
+               res{1} = res{2} /\
+               UFCMA.bad2{1} = UFCMA.bad2{2} /\
+               UFCMA.cbad2{1} = UFCMA.cbad2{2}]
+eqf: equiv[ Orcl.f  ~ Orcl.f :
+             arg{1} = arg{2} /\
+             (UF.forged{1}, UFCMA.bad2{1}, UFCMA.cbad2{1}, UFCMA.log{1},
+              RO.m{1}, Mem.lc{1}, SplitC2.I2.RO.m{1}) =
+             (UF.forged{2}, UFCMA.bad2{2}, UFCMA.cbad2{2}, UFCMA.log{2},
+              RO.m{2}, Mem.lc{2}, SplitC2.I2.RO.m{2}) ==>
+             (UF.forged{1}, UFCMA.bad2{1}, UFCMA.cbad2{1}, UFCMA.log{1},
+              RO.m{1}, Mem.lc{1}, SplitC2.I2.RO.m{1}) =
+             (UF.forged{2}, UFCMA.bad2{2}, UFCMA.cbad2{2}, UFCMA.log{2},
+              RO.m{2}, Mem.lc{2}, SplitC2.I2.RO.m{2})]
+------------------------------------------------------------------------
+&1 (left ) : {t1, t2, n, n0 : nonce,
+             x, x0, x1, x2, x3, x4 : nonce * C.counter,
+             r, r0, r1, r2, r3, r4 : poly_in,
+             t, t0, t3, y, t4, y0 : poly_out, lt, lt0 : tag list}
+&2 (right) : {t1, t2, n, n0 : nonce,
+             x, x0, x1, x2, x3, x4 : nonce * C.counter,
+             r, r0, r1, r2, r3, r4 : poly_in,
+             t, t0, t3, y, t4, y0 : poly_out, lt, lt0 : tag list}
+
+pre =
+  ((((UF.forged{1}, UFCMA.bad2{1}, UFCMA.cbad2{1}, UFCMA.log{1}, RO.m{1},
+      Mem.lc{1}, SplitC2.I2.RO.m{1}) =
+     (UF.forged{2}, UFCMA.bad2{2}, UFCMA.cbad2{2}, UFCMA.log{2}, RO.m{2},
+      Mem.lc{2}, SplitC2.I2.RO.m{2}) /\
+     (t1{1}, t2{1}).`1 = (t1{2}, t2{2}).`1 /\
+     (t1{1}, t2{1}).`2 = (t1{2}, t2{2}).`2) /\
+    t1{1} <> t2{1}) /\
+   ((t1{1}, C.ofintd 0) \in ROout.m{1})) /\
+  ((t2{1}, C.ofintd 0) \notin ROout.m{1})
+
+n <- t1                          ( 1--)  n <- t2                                
+x <- (n, C.ofintd 0)             ( 2--)  x0 <- (n, C.ofintd 0)                  
+r1 <$ dpoly_in                   ( 3--)  r2 <$ dpoly_in                         
+if (x \notin RO.m) {             ( 4--)  if (x0 \notin RO.m) {                  
+  RO.m <- RO.m.[x <- r1]         ( 4.1)    RO.m <- RO.m.[x0 <- r2]              
+}                                ( 4--)  }                                      
+r <- oget RO.m.[x]               ( 5--)  r <- oget RO.m.[x0]                    
+UF.forged <-                     ( 6--)  lt <-                                  
+  UF.forged ||                   (   -)    map                                  
+  test_poly_in n Mem.lc r        (   -)      (fun (c : ciphertext) =>           
+    (oget UFCMA.log.[n])         (   -)         c.`4 -                          
+                                 (   -)         poly1305_eval r                 
+                                 (   -)           (topol c.`2 c.`3))            
+                                 (   -)      (filter                            
+                                 (   -)         (fun (c : ciphertext) =>        
+                                 (   -)            c.`1 = n) Mem.lc)            
+n0 <- t2                         ( 7--)  t3 <$ dpoly_out                        
+x3 <- (n0, C.ofintd 0)           ( 8--)  UFCMA.bad2 <- UFCMA.bad2 || (t3 \in lt)
+r4 <$ dpoly_in                   ( 9--)  UFCMA.cbad2 <- UFCMA.cbad2 + 1         
+if (x3 \notin RO.m) {            (10--)  t <- t3                                
+  RO.m <- RO.m.[x3 <- r4]        (10.1)                                         
+}                                (10--)                                         
+r0 <- oget RO.m.[x3]             (11--)  x1 <- (n, C.ofintd 0)                  
+lt0 <-                           (12--)  y <- witness<:poly_out>                
+  map                            (   -)                                         
+    (fun (c : ciphertext) =>     (   -)                                         
+       c.`4 -                    (   -)                                         
+       poly1305_eval r0          (   -)                                         
+         (topol c.`2 c.`3))      (   -)                                         
+    (filter                      (   -)                                         
+       (fun (c : ciphertext) =>  (   -)                                         
+          c.`1 = n0) Mem.lc)     (   -)                                         
+t4 <$ dpoly_out                  (13--)  SplitC2.I2.RO.m <-                     
+                                 (   -)    SplitC2.I2.RO.m.[x1 <- y]            
+UFCMA.bad2 <-                    (14--)  n0 <- t1                               
+  UFCMA.bad2 || (t4 \in lt0)     (   -)                                         
+UFCMA.cbad2 <- UFCMA.cbad2 + 1   (15--)  x2 <- (n0, C.ofintd 0)                 
+t0 <- t4                         (16--)  r3 <$ dpoly_in                         
+x4 <- (n0, C.ofintd 0)           (17--)  if (x2 \notin RO.m) {                  
+                                 (17.1)    RO.m <- RO.m.[x2 <- r3]              
+                                 (17--)  }                                      
+y0 <- witness<:poly_out>         (18--)  r0 <- oget RO.m.[x2]                   
+SplitC2.I2.RO.m <-               (19--)  UF.forged <-                           
+  SplitC2.I2.RO.m.[x4 <- y0]     (   -)    UF.forged ||                         
+                                 (   -)    test_poly_in n0 Mem.lc r0            
+                                 (   -)      (oget UFCMA.log.[n0])              
+
+post =
+  (UF.forged{1}, UFCMA.bad2{1}, UFCMA.cbad2{1}, UFCMA.log{1}, RO.m{1},
+   Mem.lc{1}, SplitC2.I2.RO.m{1}) =
+  (UF.forged{2}, UFCMA.bad2{2}, UFCMA.cbad2{2}, UFCMA.log{2}, RO.m{2},
+   Mem.lc{2}, SplitC2.I2.RO.m{2})
+[406|check]>
+```
+
+**Last action:** `by auto; smt(mem_set).` — EasyCrypt accepted the committed tactic. (The committed EasyCrypt proof state changed.)
+
+---
+
+Submit exactly ONE proof intent via the `submit_proof_intent` MCP tool (only `intent` + `payload`; no node ids, hashes, request ids, or reasoning fields).
+
+### Legal Node Memory Anchor
+
+LEGAL_NODE_MEMORY_DIR: `artifacts/eval_suite/chacha_steps_a2_fable_l1/l1_goal_projection/cc_equiv_step4/r01/2026-06-11_0054_equiv_step4/iteration_1/node_memory/Tree_0_0`
+LEGAL_LATEST_WORKSPACE_VIEW: `artifacts/eval_suite/chacha_steps_a2_fable_l1/l1_goal_projection/cc_equiv_step4/r01/2026-06-11_0054_equiv_step4/iteration_1/node_memory/Tree_0_0/latest_workspace_view.json`
+LEGAL_LATEST_MANAGER_RESULT: `artifacts/eval_suite/chacha_steps_a2_fable_l1/l1_goal_projection/cc_equiv_step4/r01/2026-06-11_0054_equiv_step4/iteration_1/node_memory/Tree_0_0/latest_manager_result.json`
+LEGAL_LATEST_FOLLOWUP: `artifacts/eval_suite/chacha_steps_a2_fable_l1/l1_goal_projection/cc_equiv_step4/r01/2026-06-11_0054_equiv_step4/iteration_1/node_memory/Tree_0_0/latest_followup.md`
+
+Compaction recovery: if these exact paths are missing from your context, refresh through `submit_proof_intent` with `{"intent":"inspect_context","payload":{"topic":"goal_info"}}` instead of using shell directory discovery for proof-state artifacts.
+
+The current goal above is your complete surface. `LEGAL_LATEST_WORKSPACE_VIEW` is the manager's audit file, not part of your surface — you do not need to open it.

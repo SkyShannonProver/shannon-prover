@@ -1,0 +1,87 @@
+(* -------------------------------------------------------------------- *)
+pragma +implicits.
+
+(* -------------------------------------------------------------------- *)
+(* This theory defines the subtype [sT] of [T] defined as {x : T | P x} *)
+(* where P is a nonempty predicate over T. This subtype is defined      *)
+(* using [choiceb] through a global axiom asserting the existence of    *)
+(* the injection from [sT] to [T].                                      *)
+(*                                                                      *)
+(* Injection from [sT] to [T] and (partial) projection of [T] to [sT]   *)
+(*    val    == generic injection from [sT] to [T]                      *)
+(*    insub  == generic partial projection from [T] to [sT]             *)
+(*    insubd == odflt witness (insub x)                                 *)
+(*                                                                      *)
+(*    {x : T | P x} and [sT] are in bijection via val/insub.            *)
+(*       1. insub x = None                  if !(P x)                   *)
+(*       2. insub x = Some y with val y = x if  (P x)                   *)
+(* -------------------------------------------------------------------- *)
+
+require import AllCore.
+
+type T, sT.
+
+op P : T -> bool.
+
+op insub : T  -> sT option.
+op val   : sT -> T.
+
+axiom [prove] inhabited : exists x, P x.
+
+axiom [explicit] insubN (x : T): !P x => insub x = None.
+axiom [explicit] insubT (x : T):  P x => omap val (insub x) = Some x.
+
+axiom [explicit] valP (x : sT): P (val x).
+axiom [explicit] valK: pcancel val insub.
+
+(* -------------------------------------------------------------------- *)
+op insubd (x : T) = odflt witness (insub x).
+
+(* -------------------------------------------------------------------- *)
+lemma val_range x: P x <=> exists y, x = val y.
+proof. split.
+- by move/insubT; case (insub x) => // [y] /= <-; exists y.
+- by case=> y ->; apply/valP.
+qed.
+
+(* -------------------------------------------------------------------- *)
+lemma val_inj: injective val.
+proof. by apply/(pcan_inj _ _ valK). qed.
+
+(* -------------------------------------------------------------------- *)
+lemma valKd: cancel val insubd.
+proof. by move=> u; rewrite /insubd valK. qed.
+
+lemma insubP (x : T):           (* We need inductive predicates *)
+     (exists u, P x /\ insub x = Some u /\ val u = x)
+  \/ (!P x /\ insub x = None).
+proof.                          (* this proof script is awful *)
+case (P x)=> [Px | /insubN -> //]; left.
+move: Px => /insubT; case {-2}(insub x) (eq_refl (insub x))=> //.
+by move=> /= u eq_insub eqx; exists u => /=; move: eqx => ->.
+qed.
+
+lemma val_insubd x: val (insubd x) = if P x then x else val witness.
+proof. by rewrite /insubd; case (insubP x) => [[u] [->] [->]|[-> ->]]. qed.
+
+lemma insubdK (x : T): P x => val (insubd x) = x.
+proof. by move=> Px; rewrite val_insubd Px. qed.
+
+(* -------------------------------------------------------------------- *)
+theory Lift.
+  op lift1 (f : T -> T) =
+    fun (z : sT), insubd (f (val z)).
+
+  op lift2 (f : T -> T -> T) =
+    fun (z1 z2 : sT), insubd (f (val z1) (val z2)).
+
+  lemma lift1E (f : T -> T):
+       (forall x, P x => P (f x))
+    => forall x, val (lift1 f x) = f (val x).
+  proof. by move=> h x; rewrite /lift1 insubdK ?h ?valP. qed.
+
+  lemma lift2E (f : T -> T -> T):
+       (forall x y, P x => P y => P (f x y))
+    => forall x y, val (lift2 f x y) = f (val x) (val y).
+  proof. by move=> h x y; rewrite /lift2 insubdK ?h ?valP. qed.
+end Lift.

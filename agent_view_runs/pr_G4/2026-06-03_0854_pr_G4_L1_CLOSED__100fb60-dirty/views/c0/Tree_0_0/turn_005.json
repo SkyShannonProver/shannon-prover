@@ -1,0 +1,558 @@
+{
+  "last_result": {
+    "intent": "commit_tactic",
+    "payload": {
+      "tactic": "wp; do 4! rnd predT; call (choose_ll G4.O ll_dec); auto."
+    },
+    "manager_action": "commit_tactic",
+    "result": "EasyCrypt rejected the committed tactic. Use the error summary and current goal to revise the proof step.",
+    "effect": "The manager attempted to commit a tactic; use the result and latest goal to decide what changed.",
+    "proof_state": "The committed EasyCrypt proof state was not changed.",
+    "tactic": "wp; do 4! rnd predT; call (choose_ll G4.O ll_dec); auto."
+  },
+  "current_goal": {
+    "lines": [
+      "Current goal (remaining: 5)",
+      "",
+      "Type variables: <none>",
+      "",
+      "&m: {}",
+      "ll_dec: islossless G4.O.dec",
+      "------------------------------------------------------------------------",
+      "Context : hr: {b0 : bool, e, f, h : group, r, r' : ZModE.exp,",
+      "              m0, m1 : PKE_.plaintext}",
+      "",
+      "pre = true",
+      "",
+      "( 1)  G1.log <- []                                    ",
+      "( 2)  G3.cilog <- []                                  ",
+      "( 3)  G1.cstar <- None                                ",
+      "( 4)  G1.w <$ dt \\ pred1 zero                         ",
+      "( 5)  G1.g_ <- g ^ G1.w                               ",
+      "( 6)  G1.k <$ dk                                      ",
+      "( 7)  G1.y <$ dt                                      ",
+      "( 8)  f <- g ^ G1.y                                   ",
+      "( 9)  G1.z <$ dt                                      ",
+      "(10)  h <- g ^ G1.z                                   ",
+      "(11)  G1.x <$ dt                                      ",
+      "(12)  e <- g ^ G1.x                                   ",
+      "(13)  (m0, m1) <@ G4.A.choose(G1.k, g, G1.g_, e, f, h)",
+      "(14)  G1.u <$ dt                                      ",
+      "(15)  G1.u' <$ dt \\ pred1 G1.u                        ",
+      "(16)  r' <$ dt                                        ",
+      "(17)  r <$ dt                                         ",
+      "(18)  G3.a <- g ^ G1.u                                ",
+      "(19)  G3.a_ <- G1.g_ ^ G1.u'                          ",
+      "(20)  G3.c <- g ^ r'                                  ",
+      "(21)  G3.d <- g ^ r                                   ",
+      "",
+      "post = true",
+      "[140|check]>"
+    ],
+    "text_fully_shown": true,
+    "truncated": false,
+    "goal_type": "hoare",
+    "view_focus": "procedure_frontier",
+    "source": {
+      "label": "Parsed from EasyCrypt pretty goal text",
+      "ground_truth": false
+    }
+  },
+  "proof_status": {
+    "status": "error",
+    "remaining_goals": 5,
+    "remaining_goals_known": true,
+    "goal_type": "hoare",
+    "view_focus": "procedure_frontier",
+    "current_layer": "procedure_body"
+  },
+  "candidate_moves": {
+    "navigation": [
+      {
+        "id": "phoare_frontier",
+        "proof_family": "one_sided_procedure_frontier",
+        "episode": "hoare_entry",
+        "route": "enter_one_sided_procedure_frontier",
+        "confidence": "high",
+        "confidence_reason": "The current view is already a hoare/phoare procedure state, so the next route should advance the current frontier rather than restart with byphoare.",
+        "valid_for": "current_view_only",
+        "why_now": "current goal is a one-sided procedure judgment; use state-local procedure tactics for this frontier.",
+        "fast_track_probe": {
+          "tactic": "proc; inline *; wp; sp.",
+          "preconditions": [
+            "Use when the view is already a hoare/phoare procedure judgment.",
+            "Do not prefix this with byphoare; the proof is already inside the one-sided judgment.",
+            "Probe the bounded block first; commit only accepted block or prefix."
+          ],
+          "expected_next_shape": "A one-sided procedure body/frontier, loop obligation, or pure residual subgoal."
+        },
+        "anti_routes": [
+          {
+            "route": "byphoare_inside_phoare",
+            "reason": "The proof is already inside a hoare/phoare judgment.",
+            "scope": "avoid_until_state_changes_to_top_level_pr"
+          },
+          {
+            "route": "pRHL_branch_tactic_on_one_sided_goal",
+            "reason": "One-sided hoare/phoare states do not have left/right pRHL branches.",
+            "scope": "avoid_for_current_view"
+          }
+        ],
+        "repair_if_fails": [
+          {
+            "failure": "syntax",
+            "next": "inspect tactic_forms for hoare/phoare procedure forms"
+          },
+          {
+            "failure": "frontier",
+            "next": "inspect goal_info for the current one-sided procedure frontier"
+          },
+          {
+            "failure": "invariant",
+            "next": "inspect subgoal_gap or inv_from_lemma for loop invariant shape"
+          },
+          {
+            "failure": "route",
+            "next": "downgrade this route and choose another current-view navigation item"
+          }
+        ],
+        "lemma_pack": []
+      }
+    ],
+    "moves": [
+      {
+        "title": "Proof-route context",
+        "category": "strategy",
+        "guidance": "Probabilistic VC plan: hoare probabilistic VC generation via rnd coupling, distribution facts, proc/wp before bound subgoals",
+        "applicability": "Use this as route-selection context; it is not a tactic to run as-is.",
+        "source": "proof-state analysis"
+      },
+      {
+        "title": "Program-shape context",
+        "category": "strategy",
+        "guidance": "Inspect current procedure region summary: visible procedure regions.",
+        "applicability": "Use this as route-selection context; it is not a tactic to run as-is.",
+        "source": "proof-state analysis"
+      },
+      {
+        "title": "Proof-route context",
+        "category": "strategy",
+        "guidance": "Structured procedure frontier: straight_line_prefix_before_sample_frontier; primary: use sp if the next invariant/seq cut needs names from the straight-line prefix",
+        "applicability": "Use this as route-selection context; it is not a tactic to run as-is.",
+        "source": "proof-state analysis"
+      }
+    ]
+  },
+  "program_frontier": {
+    "authority": "proof-state analysis",
+    "view_focus": "procedure_frontier",
+    "focus": {
+      "live_call_sites": 0,
+      "frontier_call_sites": 0,
+      "live_callable_lemmas": 0,
+      "callable_now_lemmas": 0,
+      "oracle_obligation_handles": 0,
+      "has_invariant_skeleton": false
+    },
+    "call_sites": [
+      {
+        "side": "left",
+        "side_index": 1,
+        "statement_order": 13,
+        "statement_path": "13",
+        "statement": "(m0, m1) <@ G4.A.choose(G1.k, g, G1.g_, e, f, h)"
+      }
+    ],
+    "frontier_alignment": {
+      "summary": "Frontier alignment: setup statements appear before the current frontier; sampling steps are visible inside the frontier; call sites are visible at the frontier; residual statements remain after a call frontier. Use this as a proof-reader map before choosing while/rnd/seq/call tactics.",
+      "first_instruction_alignment": {
+        "left_first": "(m0, m1) <@ G4.A.choose(G1.k, g, G1.g_, e, f, h)",
+        "right_first": "no matching right-side call at this frontier",
+        "left_head": "call",
+        "branch_alignment": "one-sided_frontier",
+        "proof_read": "The visible frontier is one-sided; use a one-sided tactic, alignment step, or seq cut before applying a symmetric tactic."
+      },
+      "rows": [
+        {
+          "role": "left-only setup",
+          "left": "2 setup statement(s): h <- g ^ G1.z; e <- g ^ G1.x",
+          "right": "no right-side setup before this frontier",
+          "proof_read": "The left side has setup before the shared frontier; relate it to the precondition or carry the initialized state in the next invariant/cut.",
+          "location": {
+            "left_paths": [
+              "10",
+              "12"
+            ]
+          }
+        },
+        {
+          "role": "call frontier",
+          "left": "(m0, m1) <@ G4.A.choose(G1.k, g, G1.g_, e, f, h)",
+          "right": "no matching right-side call at this frontier",
+          "proof_read": "This is a call frontier; compare the procedures/oracle wrappers before choosing a named call or invariant call.",
+          "location": {
+            "left_path": "13"
+          }
+        },
+        {
+          "role": "left residual after call",
+          "left": "4 setup statement(s): G3.a <- g ^ G1.u; G3.a_ <- G1.g_ ^ G1.u'; G3.c <- g ^ r'; ... (1 more)",
+          "right": "no right-side residual statement after this call frontier",
+          "proof_read": "The left side has residual statements after the live call frontier; their effects are not part of the callee obligation.",
+          "location": {
+            "left_paths": [
+              "18",
+              "19",
+              "20",
+              "21"
+            ]
+          }
+        },
+        {
+          "role": "sample inside frontier",
+          "left": "G1.x <$ dt",
+          "right": "no matching right-side sample at this frontier",
+          "proof_read": "This is a sampling frontier; choose a coupling or distribution argument that connects the sampled values.",
+          "location": {
+            "left_path": "11"
+          }
+        },
+        {
+          "role": "sample inside frontier",
+          "left": "G1.u <$ dt",
+          "right": "no matching right-side sample at this frontier",
+          "proof_read": "This is a sampling frontier; choose a coupling or distribution argument that connects the sampled values.",
+          "location": {
+            "left_path": "14"
+          }
+        },
+        {
+          "role": "sample inside frontier",
+          "left": "G1.u' <$ dt \\ pred1 G1.u",
+          "right": "no matching right-side sample at this frontier",
+          "proof_read": "This is a sampling frontier; choose a coupling or distribution argument that connects the sampled values.",
+          "location": {
+            "left_path": "15"
+          }
+        },
+        {
+          "role": "sample inside frontier",
+          "left": "r' <$ dt",
+          "right": "no matching right-side sample at this frontier",
+          "proof_read": "This is a sampling frontier; choose a coupling or distribution argument that connects the sampled values.",
+          "location": {
+            "left_path": "16"
+          }
+        },
+        {
+          "role": "sample inside frontier",
+          "left": "r <$ dt",
+          "right": "no matching right-side sample at this frontier",
+          "proof_read": "This is a sampling frontier; choose a coupling or distribution argument that connects the sampled values.",
+          "location": {
+            "left_path": "17"
+          }
+        }
+      ]
+    },
+    "procedure_navigation": {
+      "how_to_use": "Positions for choosing wp/sp depth, which `if` to rcond, and where the next loop/call frontier is. Facts only \u2014 pick the tactic and the branch direction yourself.",
+      "absorb_depth": {
+        "left": {
+          "side_index": 1,
+          "absorbable_statements": 2,
+          "note": "count from frontier alignment; the body parser under-counted the asymmetric (right-only) setup statements (1 parsed)"
+        },
+        "sp_hint": "sp 2 0 / wp -2 -0 absorbs the straight-line setup (2 left, 0 right) before the next frontier"
+      },
+      "next_frontier": {
+        "kind": "straight_line_prefix_before_sample_frontier",
+        "at_order": 11
+      }
+    },
+    "checks": [
+      "Check the next statement/call frontier before applying local transforms.",
+      "Keep one-sided instrumentation as a map, not as a tactic recipe."
+    ]
+  },
+  "call_site_surface": {
+    "live_call_sites": [
+      {
+        "side": "left"
+      }
+    ],
+    "frontier_blockers": [
+      {
+        "kind": "residual_after_call_site",
+        "left": "4 setup statement(s): G3.a <- g ^ G1.u; G3.a_ <- G1.g_ ^ G1.u'; G3.c <- g ^ r'; ... (1 more)",
+        "right": "no right-side residual statement after this call frontier",
+        "effect": "Residual statements remain after the live call frontier; their effects are not part of the callee obligation."
+      }
+    ],
+    "residual_frontier": {
+      "state": "residual_after_call",
+      "rows": [
+        {
+          "role": "left residual after call",
+          "left": "4 setup statement(s): G3.a <- g ^ G1.u; G3.a_ <- G1.g_ ^ G1.u'; G3.c <- g ^ r'; ... (1 more)",
+          "right": "no right-side residual statement after this call frontier",
+          "location": {
+            "left_paths": [
+              "18",
+              "19",
+              "20",
+              "21"
+            ]
+          },
+          "proof_read": "The left side has residual statements after the live call frontier; their effects are not part of the callee obligation."
+        }
+      ],
+      "effect": "These statements remain after the live call frontier and are checked after the call returns.",
+      "limitations": [
+        "The surface reports suffix structure only; it does not choose whether to use a call, inline, wp, or another local tactic."
+      ]
+    },
+    "wrapper_depth": 1
+  },
+  "seq_cut_surface": {
+    "seq_candidate_id": "cp_3_3f240dd5e29d2466",
+    "state": "inside_seq_scope",
+    "cut_position": {
+      "left_count": 21,
+      "tactic": "seq 21 : ((G3.a, G3.a_, G3.c, G3.d) \\in G3.cilog) ((PKE_.qD%r / order%r) ^ 3 * (PKE_.qD%r / (order - 1)%r)) 1%r 1%r 0%r."
+    },
+    "obligation_count": 5,
+    "obligation_kinds": [
+      "call_site",
+      "postcondition",
+      "probability_or_loss"
+    ],
+    "branch_focus": {
+      "remaining_goals": 5,
+      "latest_event_head": "wp"
+    },
+    "residual_frontier": {
+      "current_layer": "procedure_body",
+      "view_focus": "procedure_frontier",
+      "live_call_site_count": 1,
+      "goal_contains_call_site": true,
+      "latest_seq_tactic_index": 3,
+      "tactics_after_latest_seq": 1
+    }
+  },
+  "application_context": {
+    "selected_handles": [
+      {
+        "title": "Proof-route context",
+        "why_relevant": "Probabilistic VC plan: hoare probabilistic VC generation via rnd coupling, distribution facts, proc/wp before bound subgoals"
+      },
+      {
+        "title": "Program-shape context",
+        "why_relevant": "Inspect current procedure region summary: visible procedure regions."
+      }
+    ]
+  },
+  "facts_and_diagnostics": {
+    "facts": {
+      "has_invariant_skeleton": false,
+      "unfoldable_goal_heads": [
+        {
+          "name": "G3.d",
+          "unqualified_name": "d",
+          "declaration_kind": "op",
+          "unfold_tactic": "rewrite /G3.d.",
+          "smt_argument_role": "not_a_lemma_hint"
+        }
+      ],
+      "unfoldable_goal_head_count": 1
+    },
+    "fact_note": "Only current-frontier facts are shown here; the full proof context artifact keeps the compiler/internal details.",
+    "notes": [
+      {
+        "message": "One-sided sampling residual: G1.x{1} <$ dt. The postcondition still mentions the sampled value or a quantified witness, so this may be a true losslessness side condition or leftover coupling debt.",
+        "severity": "info"
+      }
+    ]
+  },
+  "inspect_lookup_handles": {
+    "effect": "All handles here are read-only manager requests; the committed EasyCrypt proof state stays unchanged.",
+    "manager_note": "Some requests may ask EasyCrypt or name resolution; wait for the manager result before choosing the next proof intent.",
+    "ask_manager_for": [
+      {
+        "intent": "inspect_context",
+        "payload": {
+          "topic": "diagnose"
+        },
+        "use_when": "The latest transition recorded an error.",
+        "returns": "manager-provided read-only context for this proof route"
+      },
+      {
+        "intent": "inspect_context",
+        "payload": {
+          "topic": "goal_info"
+        },
+        "use_when": "Need parsed goal shape, resolved names, or KB pattern hints.",
+        "returns": "parsed goal structure and names"
+      },
+      {
+        "intent": "inspect_context",
+        "payload": {
+          "topic": "call_site_options"
+        },
+        "use_when": "The current procedure frontier exposes a call route.",
+        "returns": "call-ready/oracle-equiv context for the current frontier, plus the BODY of the procedure(s) called here (functor aliases resolved) so you can see which oracles/state your call invariant must preserve"
+      },
+      {
+        "intent": "inspect_context",
+        "payload": {
+          "topic": "call_subgoals",
+          "invariant": "<the EasyCrypt invariant expression inside call (_: ...)>"
+        },
+        "use_when": "You are considering `call (_: Inv)` and already have a concrete invariant expression you want to test first.",
+        "returns": "a read-only preview of the obligations caused by that candidate invariant, including pre/init, call-preservation, oracle-side, postcondition, missing-fact signals, and extra conjuncts that may create avoidable obligations"
+      },
+      {
+        "intent": "inspect_context",
+        "payload": {
+          "topic": "tactic_forms",
+          "name": "call"
+        },
+        "use_when": "Need the valid form for call, while, seq, rnd, or rewrite.",
+        "returns": "valid tactic forms and common traps"
+      },
+      {
+        "intent": "inspect_context",
+        "payload": {
+          "topic": "tactic_forms",
+          "name": "sp"
+        },
+        "returns": "valid `sp` forms and common traps"
+      },
+      {
+        "intent": "inspect_context",
+        "payload": {
+          "topic": "tactic_forms",
+          "name": "while"
+        },
+        "use_when": "Need the valid one-sided hoare/phoare loop form.",
+        "returns": "valid `while` forms and common traps"
+      },
+      {
+        "intent": "inspect_context",
+        "payload": {
+          "topic": "tactic_forms",
+          "name": "wp"
+        },
+        "use_when": "Mid-proof pRHL suffix surgery may need indexed `wp`.",
+        "returns": "valid indexed `wp` forms and suffix-alignment traps"
+      },
+      {
+        "intent": "inspect_context",
+        "payload": {
+          "topic": "tactic_forms",
+          "name": "swap"
+        },
+        "use_when": "Statement order may need a small `swap` before `sp`, `wp`, or `sim`.",
+        "returns": "valid `swap` forms and statement-order traps"
+      },
+      {
+        "intent": "inspect_context",
+        "payload": {
+          "topic": "tactic_forms",
+          "name": "rcondt"
+        },
+        "use_when": "A guarded branch may need `rcondt` after a case split or invariant fact.",
+        "returns": "valid `rcondt` forms and guard-obligation traps"
+      },
+      {
+        "intent": "inspect_context",
+        "payload": {
+          "topic": "tactic_forms",
+          "name": "rcondf"
+        },
+        "use_when": "A guarded branch may need `rcondf` after a case split or invariant fact.",
+        "returns": "valid `rcondf` forms and guard-obligation traps"
+      },
+      {
+        "intent": "inspect_context",
+        "payload": {
+          "topic": "tactic_forms",
+          "name": "conseq"
+        },
+        "use_when": "A suffix proof may need `conseq` to weaken to a smaller relation before `sim`.",
+        "returns": "valid `conseq` forms and pRHL memory-annotation traps"
+      },
+      {
+        "intent": "inspect_context",
+        "payload": {
+          "topic": "tactic_forms",
+          "name": "rnd"
+        },
+        "use_when": "One side may have an extra sample or need an explicit sample coupling.",
+        "returns": "valid `rnd` forms, including one-sided sampling"
+      },
+      {
+        "intent": "inspect_context",
+        "payload": {
+          "topic": "tactic_forms",
+          "name": "eager"
+        },
+        "use_when": "A known statement-order mismatch may need an eager/lazy transformation.",
+        "returns": "valid `eager` forms and when to prefer smaller surgery"
+      }
+    ]
+  },
+  "structural_checkpoints": {
+    "items": [
+      {
+        "checkpoint_id": "cp_4_3f240dd5e29d2466",
+        "semantic_id": "after_seq_opened",
+        "semantic_ids": [
+          "after_seq_opened",
+          "before_branch_work"
+        ],
+        "label": "After seq opened / before branch work #4",
+        "committed_step_index": 4,
+        "committed_tactic": "have ll_dec : islossless G4.O.dec by islossless.",
+        "restored_proof_layer": "seq_obligations_opened",
+        "restored_affordances": {
+          "seq_cut": "committed",
+          "branch_work": "not_committed"
+        },
+        "undo_scope": "branch_local",
+        "why_checkpoint": "seq-local branch boundary; selecting it keeps the seq cut and removes branch-local work after it",
+        "effect_if_selected": "Undo committed tactic #4 and every committed tactic after it in this node.",
+        "submit": {
+          "intent": "undo_to_checkpoint",
+          "payload": {
+            "checkpoint_id": "cp_4_3f240dd5e29d2466"
+          }
+        }
+      },
+      {
+        "checkpoint_id": "cp_3_3f240dd5e29d2466",
+        "semantic_id": "before_seq_cut",
+        "semantic_ids": [
+          "before_seq_cut"
+        ],
+        "label": "Before product-budget seq cut #3",
+        "committed_step_index": 3,
+        "committed_tactic": "seq 21 : ((G3.a, G3.a_, G3.c, G3.d) \\in G3.cilog) ((PKE_.qD%r / order%r) ^ 3 * (PKE_.qD%r / (order - 1)%r)) 1%r 1%r 0%r.",
+        "restored_proof_layer": "pre_seq_cut",
+        "restored_affordances": {
+          "seq_cut": "not_committed",
+          "call_site_state": "as_before_seq_cut"
+        },
+        "undo_scope": "seq_local",
+        "why_checkpoint": "seq-cut boundary; selecting it restores the proof state before this cut was committed",
+        "effect_if_selected": "Undo committed tactic #3 and every committed tactic after it in this node.",
+        "submit": {
+          "intent": "undo_to_checkpoint",
+          "payload": {
+            "checkpoint_id": "cp_3_3f240dd5e29d2466"
+          }
+        }
+      }
+    ]
+  }
+}

@@ -1,0 +1,19 @@
+{
+  "turn": 40,
+  "handled_intent": {
+    "intent": "commit_tactic",
+    "payload": {
+      "tactic": "have hnil : gen_CTR_encrypt_bytes take_xor (get RO.m{2}) Mem.k{2} n{2} i_R [] = [] by apply gen_CTR_encrypt_bytes0; move=> str; rewrite /take_xor; smt(take0 size_eq0)."
+    }
+  },
+  "ok": true,
+  "manager_note": "Committed tactic accepted; the EasyCrypt proof state changed.",
+  "manager_actions": [
+    {
+      "action": "tactic commit",
+      "outcome": "EasyCrypt accepted the committed tactic.",
+      "timing": "353 ms"
+    }
+  ],
+  "view_refreshed": true
+}

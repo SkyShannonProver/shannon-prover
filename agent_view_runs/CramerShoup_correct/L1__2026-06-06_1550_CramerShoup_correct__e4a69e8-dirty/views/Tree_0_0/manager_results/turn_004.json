@@ -1,0 +1,19 @@
+{
+  "turn": 4,
+  "handled_intent": {
+    "intent": "commit_tactic",
+    "payload": {
+      "tactic": "have hd : (DH.G.g ^ x1 * DH.G.g ^ w ^ x2) ^ u * (DH.G.g ^ y1 * DH.G.g ^ w ^ y2) ^ (u * v) = DH.G.g ^ u ^ (x1 + v * y1) * DH.G.g ^ w ^ u ^ (x2 + v * y2) by rewrite log_bij !(logg1, logrzM, logDr); ring."
+    }
+  },
+  "ok": true,
+  "manager_note": "Committed tactic accepted; the EasyCrypt proof state changed.",
+  "manager_actions": [
+    {
+      "action": "tactic commit",
+      "outcome": "EasyCrypt accepted the committed tactic.",
+      "timing": "159 ms"
+    }
+  ],
+  "view_refreshed": true
+}

@@ -1,0 +1,41 @@
+{
+  "last_result": {
+    "intent": "commit_tactic",
+    "payload": {
+      "tactic": "byequiv (_ : ={glob A, glob LRO, glob Log} ==> !(Game1.r \\in Log.qs){2} => ={res}) : (Game1.r \\in Log.qs)."
+    },
+    "manager_action": "commit_tactic",
+    "result": "EasyCrypt rejected the committed tactic. Use the error summary and current goal to revise the proof step.",
+    "effect": "The manager attempted to commit a tactic; use the result and latest goal to decide what changed.",
+    "proof_state": "The committed EasyCrypt proof state was not changed.",
+    "tactic": "byequiv (_ : ={glob A, glob LRO, glob Log} ==> !(Game1.r \\in Log.qs){2} => ={res}) : (Game1.r \\in Log.qs)."
+  },
+  "current_goal": {
+    "lines": [
+      "Current goal",
+      "",
+      "Type variables: <none>",
+      "",
+      "&m: {}",
+      "------------------------------------------------------------------------",
+      "Pr[BR93_CPA(A).main() @ &m : res] <=",
+      "Pr[Game1.main() @ &m : res] + Pr[Game1.main() @ &m : Game1.r \\in Log.qs]"
+    ],
+    "text_fully_shown": true,
+    "truncated": false,
+    "goal_type": "probability",
+    "view_focus": "failure_diagnostic",
+    "source": {
+      "label": "Parsed from EasyCrypt pretty goal text",
+      "ground_truth": false
+    }
+  },
+  "proof_status": {
+    "status": "error",
+    "remaining_goals": 1,
+    "remaining_goals_known": true,
+    "goal_type": "probability",
+    "view_focus": "failure_diagnostic",
+    "current_layer": "pr"
+  }
+}

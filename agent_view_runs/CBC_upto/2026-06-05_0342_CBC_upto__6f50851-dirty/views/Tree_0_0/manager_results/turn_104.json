@@ -1,0 +1,19 @@
+{
+  "turn": 104,
+  "handled_intent": {
+    "intent": "commit_tactic",
+    "payload": {
+      "tactic": "proc; while (DoubleQuery.bad /\\ (DoubleQuery.bad{1} <=> DoubleQuery.bad)); inline*; auto; sp; if; auto; smt()."
+    }
+  },
+  "ok": true,
+  "manager_note": "Committed tactic accepted; the EasyCrypt proof state changed.",
+  "manager_actions": [
+    {
+      "action": "tactic commit",
+      "outcome": "EasyCrypt accepted the committed tactic.",
+      "timing": "266 ms"
+    }
+  ],
+  "view_refreshed": true
+}

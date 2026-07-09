@@ -1,0 +1,19 @@
+{
+  "turn": 13,
+  "handled_intent": {
+    "intent": "commit_tactic",
+    "payload": {
+      "tactic": "sp 3 0; exlim ek{1}, p0{1} => ek0 pp0; wp; call (_: true); wp; call (enc_eq ek0 pp0); skip; smt(in_fsetU in_fset1)."
+    }
+  },
+  "ok": true,
+  "manager_note": "Committed tactic accepted; the EasyCrypt proof state changed.",
+  "manager_actions": [
+    {
+      "action": "tactic commit",
+      "outcome": "EasyCrypt accepted the committed tactic.",
+      "timing": "256 ms"
+    }
+  ],
+  "view_refreshed": true
+}

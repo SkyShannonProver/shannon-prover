@@ -1,0 +1,38 @@
+## 🎯 Current Goal
+```
+Current goal (remaining: 2)
+
+Type variables: <none>
+
+E : SKEa.Enc_Scheme{-SKEa.RCPA.RCPA_Wrap, -RCPA_Wrap, -RCPAa}
+M : MACa.MAC_Scheme{-SKEa.RCPA.RCPA_Wrap, -RCPA_Wrap, -RCPAa, -E}
+A(O : RCPA_Oracles) : RCPA_Adversary{-SKEa.RCPA.RCPA_Wrap, -RCPA_Wrap, -RCPAa, -E, -M}
+&m: {}
+Mkg_ll: islossless M.keygen
+Mtag_ll: islossless M.tag
+------------------------------------------------------------------------
+pre = arg{1} = arg{2} /\ true
+
+    RCPA_Wrap(Ideal).enc ~ RCPAa(M, A, SKEa.RCPA.RCPA_Wrap(SKEa.RCPA.Ideal)).Sim.enc 
+
+post = res{1} = res{2} /\ true
+[48|check]>
+```
+
+**Last action:** `by proc; inline *; wp; rnd; call{2} Mtag_ll; auto.` — EasyCrypt rejected the committed tactic. Use the error summary and current goal to revise the proof step. (The committed EasyCrypt proof state was not changed.)
+**EasyCrypt error:** `[error] invalid last instruction`
+
+---
+
+Submit exactly ONE proof intent via the `submit_proof_intent` MCP tool (only `intent` + `payload`; no node ids, hashes, request ids, or reasoning fields).
+
+### Legal Node Memory Anchor
+
+LEGAL_NODE_MEMORY_DIR: `artifacts/eval_suite/mee_renamed3_fable_l1/l1_goal_projection/mee_RCPA_preservation/r01/2026-06-11_1438_RCPA_preservation/iteration_1/node_memory/Tree_0_1`
+LEGAL_LATEST_WORKSPACE_VIEW: `artifacts/eval_suite/mee_renamed3_fable_l1/l1_goal_projection/mee_RCPA_preservation/r01/2026-06-11_1438_RCPA_preservation/iteration_1/node_memory/Tree_0_1/latest_workspace_view.json`
+LEGAL_LATEST_MANAGER_RESULT: `artifacts/eval_suite/mee_renamed3_fable_l1/l1_goal_projection/mee_RCPA_preservation/r01/2026-06-11_1438_RCPA_preservation/iteration_1/node_memory/Tree_0_1/latest_manager_result.json`
+LEGAL_LATEST_FOLLOWUP: `artifacts/eval_suite/mee_renamed3_fable_l1/l1_goal_projection/mee_RCPA_preservation/r01/2026-06-11_1438_RCPA_preservation/iteration_1/node_memory/Tree_0_1/latest_followup.md`
+
+Compaction recovery: if these exact paths are missing from your context, refresh through `submit_proof_intent` with `{"intent":"inspect_context","payload":{"topic":"goal_info"}}` instead of using shell directory discovery for proof-state artifacts.
+
+The current goal above is your complete surface. `LEGAL_LATEST_WORKSPACE_VIEW` is the manager's audit file, not part of your surface — you do not need to open it.

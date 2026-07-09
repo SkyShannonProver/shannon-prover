@@ -1,0 +1,195 @@
+{
+  "current_goal": {
+    "goal_type": "probability",
+    "lines": [
+      "Current goal",
+      "",
+      "Type variables: <none>",
+      "",
+      "&m: {}",
+      "i0: int",
+      "------------------------------------------------------------------------",
+      "0 <= i0 < N => Pr[PIR.main(i0) @ &m : res = a i0] = 1%r"
+    ],
+    "source": {
+      "ground_truth": false,
+      "label": "Parsed from EasyCrypt pretty goal text"
+    },
+    "text_fully_shown": true,
+    "truncated": false,
+    "view_focus": "probability"
+  },
+  "proof_status": {
+    "current_layer": "pr",
+    "goal_type": "probability",
+    "remaining_goals": 1,
+    "remaining_goals_known": true,
+    "status": "open",
+    "view_focus": "probability"
+  },
+  "candidate_moves": {
+    "moves": [
+      {
+        "applicability": "This tactic-shaped option is concrete for the current goal; commit it only if it matches your proof plan.",
+        "category": "commit",
+        "derivation": "candidate tactic surfaced from proof-state analysis",
+        "effect": "Committing this tactic would change the EasyCrypt proof state if EasyCrypt accepts it.",
+        "guarantee": "candidate tactic shape; proof state unchanged; decide; reversible",
+        "source": "proof-state analysis",
+        "tactic": "move=> H.",
+        "title": "Concrete tactic candidate",
+        "verified": "static_candidate"
+      }
+    ]
+  },
+  "program_frontier": {
+    "authority": "proof-state analysis",
+    "focus": {
+      "has_pr_arithmetic_plan": false,
+      "has_pr_normal_form": false,
+      "has_pr_obligation_plan": false,
+      "native_ast_search_hits": 0,
+      "pr_rewrite_candidates": 0
+    },
+    "view_focus": "probability"
+  },
+  "facts_and_diagnostics": {
+    "fact_note": "Only current-frontier facts are shown here; the full proof context artifact keeps the compiler/internal details.",
+    "facts": {
+      "has_pr_arithmetic_plan": false,
+      "has_pr_normal_form": false,
+      "has_pr_obligation_plan": false,
+      "unfoldable_goal_head_count": 0
+    }
+  },
+  "surface_action_preflight": {
+    "results": [],
+    "schema_version": 1
+  },
+  "inspect_lookup_handles": {
+    "ask_manager_for": [
+      {
+        "intent": "operator_lemmas",
+        "intent_class": "context_topic",
+        "payload": {
+          "operator": "OPERATOR"
+        },
+        "payload_fields": [
+          "operator"
+        ],
+        "public_intent": "operator_lemmas",
+        "read_only": true,
+        "returns": "lemmas mentioning that operator, found by live EC `search` over the loaded context (statements; you pick which to apply)",
+        "use_when": "Need the lemmas that apply to an OPERATOR in your goal \u2014 project-local lemmas included (not just stdlib) \u2014 instead of guessing a lemma name."
+      },
+      {
+        "intent": "tactic_forms",
+        "intent_class": "context_topic",
+        "payload": {
+          "name": "while"
+        },
+        "payload_fields": [
+          "name"
+        ],
+        "public_intent": "tactic_forms",
+        "read_only": true,
+        "returns": "valid `while` forms and common traps",
+        "use_when": "Need exact byphoare/phoare-loop tactic syntax before choosing the probability route."
+      }
+    ],
+    "effect": "All handles here are read-only manager requests; the committed EasyCrypt proof state stays unchanged.",
+    "manager_note": "Some requests may ask EasyCrypt or name resolution; wait for the manager result before choosing the next proof intent."
+  },
+  "surface_turn": {
+    "schema_version": 1,
+    "presentation_kind": "bootstrap",
+    "proof_surface": {
+      "schema_version": 1,
+      "profile": "l4_checked_action_surface",
+      "phase": "opener",
+      "goal": {
+        "title": "Current Goal",
+        "text": "Current goal\n\nType variables: <none>\n\n&m: {}\ni0: int\n------------------------------------------------------------------------\n0 <= i0 < N => Pr[PIR.main(i0) @ &m : res = a i0] = 1%r",
+        "goal_type": "probability",
+        "truncated": false,
+        "line_count": 8
+      },
+      "status": {
+        "status": "open",
+        "remaining_goals": 1,
+        "remaining_goals_known": true,
+        "view_focus": "probability",
+        "current_layer": "pr",
+        "goal_type": "probability",
+        "surface_phase": "opener"
+      },
+      "primary_panel": {
+        "panel_id": "opener",
+        "phase": "opener",
+        "title": "Probability Goal",
+        "facts": [
+          {
+            "key": "probability_structure",
+            "label": "Probability structure",
+            "kind": "state_fact",
+            "role": "primary",
+            "value": "Pr[...] equality",
+            "source_refs": [
+              "current_goal",
+              "proof_status"
+            ]
+          },
+          {
+            "key": "tactic_affordances",
+            "label": "Tactic applicability",
+            "kind": "state_fact",
+            "role": "primary",
+            "value": [
+              "`byphoare` family for a single Pr bound",
+              "`rewrite` family for a matching Pr lemma",
+              "`byequiv` family if introducing a comparison program"
+            ],
+            "source_refs": [
+              "current_goal",
+              "tactic_forms"
+            ]
+          }
+        ],
+        "display_policy": {
+          "lead_before_goal": false,
+          "verbosity": "normal",
+          "compact_goal": false,
+          "show_status": true,
+          "show_actions": true
+        },
+        "source_refs": [
+          "current_goal",
+          "facts_and_diagnostics"
+        ]
+      },
+      "metadata": {
+        "contract": "raw_workspace_facts -> SurfaceModel -> markdown/card",
+        "primary_panel_id": "opener",
+        "primary_action_count": 0,
+        "available_action_count": 2
+      },
+      "surface_model_hash": "a31146875f2832dcd8eed95bd22eb24af698db6a"
+    },
+    "turn_outcome": {
+      "ok": true,
+      "lead_before_goal": false,
+      "proof_state_changed": false,
+      "source_refs": [
+        "last_result"
+      ]
+    },
+    "base_surface_updates": true,
+    "proof_state_changed": false,
+    "metadata": {
+      "contract": "SurfaceModel -> SurfaceTurnModel -> markdown/card",
+      "current_surface_hash": "a31146875f2832dcd8eed95bd22eb24af698db6a",
+      "proof_surface_hash": "a31146875f2832dcd8eed95bd22eb24af698db6a"
+    },
+    "surface_turn_hash": "cb2861d6cadc036f9813f5ed2b6d20be715a6c9b"
+  }
+}

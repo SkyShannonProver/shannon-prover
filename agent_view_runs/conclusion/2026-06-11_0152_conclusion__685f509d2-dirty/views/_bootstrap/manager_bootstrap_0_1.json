@@ -1,0 +1,319 @@
+{
+  "file": "artifacts/eval_suite/night_ccp_fable_l4np/l4_checked_action_surface/cc_conclusion/r01/source/ChaChaPoly/chacha_poly.ec",
+  "include_dirs": [
+    "artifacts/eval_suite/night_ccp_fable_l4np/l4_checked_action_surface/cc_conclusion/r01/source/ChaChaPoly",
+    "easycrypt-src/theories"
+  ],
+  "kind": "manager_session_bootstrap",
+  "lemma": "conclusion",
+  "manager_actions": [
+    {
+      "agent_observation": {
+        "effect": "This manager intent does not change the EasyCrypt proof state.",
+        "manager_action": "start",
+        "result": "The manager completed this proof-level request."
+      },
+      "argv": [
+        ".venv/bin/python3",
+        "core/easycrypt/session_cli.py",
+        "-d",
+        ".ec_session_prover_tree_0_1",
+        "-start",
+        "-f",
+        "artifacts/eval_suite/night_ccp_fable_l4np/l4_checked_action_surface/cc_conclusion/r01/source/ChaChaPoly/chacha_poly.ec",
+        "-I",
+        "artifacts/eval_suite/night_ccp_fable_l4np/l4_checked_action_surface/cc_conclusion/r01/source/ChaChaPoly",
+        "-I",
+        "easycrypt-src/theories",
+        "-lemma",
+        "conclusion"
+      ],
+      "duration_ms": 1866,
+      "exit_code": 0,
+      "label": "start",
+      "mutates_proof_state": true,
+      "stderr_chars": 0,
+      "stderr_preview": "",
+      "stdout_chars": 6620,
+      "stdout_has_workspace_view": true,
+      "stdout_lines": 170
+    },
+    {
+      "agent_observation": {
+        "effect": "This manager intent does not change the EasyCrypt proof state.",
+        "manager_action": "agent_view",
+        "result": "The manager completed this proof-level request."
+      },
+      "argv": [
+        ".venv/bin/python3",
+        "core/easycrypt/session_cli.py",
+        "-d",
+        ".ec_session_prover_tree_0_1",
+        "-agent-view"
+      ],
+      "duration_ms": 384,
+      "exit_code": 0,
+      "label": "agent_view",
+      "mutates_proof_state": false,
+      "stderr_chars": 0,
+      "stderr_preview": "",
+      "stdout_chars": 6526,
+      "stdout_has_workspace_view": true,
+      "stdout_lines": 167
+    }
+  ],
+  "node": "Tree-0.1",
+  "replay_prefix": [],
+  "replay_prefix_count": 0,
+  "replay_prefix_requested_count": 0,
+  "schema_version": 2,
+  "session_dir": ".ec_session_prover_tree_0_1",
+  "session_tag": "prover_tree_0_1",
+  "snapshot": {
+    "execution_refs": {
+      "manager_action_count": 2,
+      "manager_actions": [
+        {
+          "agent_observation": {
+            "effect": "This manager intent does not change the EasyCrypt proof state.",
+            "manager_action": "start",
+            "result": "The manager completed this proof-level request."
+          },
+          "argv": [
+            ".venv/bin/python3",
+            "core/easycrypt/session_cli.py",
+            "-d",
+            ".ec_session_prover_tree_0_1",
+            "-start",
+            "-f",
+            "artifacts/eval_suite/night_ccp_fable_l4np/l4_checked_action_surface/cc_conclusion/r01/source/ChaChaPoly/chacha_poly.ec",
+            "-I",
+            "artifacts/eval_suite/night_ccp_fable_l4np/l4_checked_action_surface/cc_conclusion/r01/source/ChaChaPoly",
+            "-I",
+            "easycrypt-src/theories",
+            "-lemma",
+            "conclusion"
+          ],
+          "duration_ms": 1866,
+          "exit_code": 0,
+          "label": "start",
+          "mutates_proof_state": true,
+          "stderr_chars": 0,
+          "stderr_preview": "",
+          "stdout_chars": 6620,
+          "stdout_has_workspace_view": true,
+          "stdout_lines": 170
+        },
+        {
+          "agent_observation": {
+            "effect": "This manager intent does not change the EasyCrypt proof state.",
+            "manager_action": "agent_view",
+            "result": "The manager completed this proof-level request."
+          },
+          "argv": [
+            ".venv/bin/python3",
+            "core/easycrypt/session_cli.py",
+            "-d",
+            ".ec_session_prover_tree_0_1",
+            "-agent-view"
+          ],
+          "duration_ms": 384,
+          "exit_code": 0,
+          "label": "agent_view",
+          "mutates_proof_state": false,
+          "stderr_chars": 0,
+          "stderr_preview": "",
+          "stdout_chars": 6526,
+          "stdout_has_workspace_view": true,
+          "stdout_lines": 167
+        }
+      ]
+    },
+    "goal_hash": "c5dc43528f6bc977feaf07887259070fc33f8fc1",
+    "node_id": "Tree-0.1",
+    "proof_context_view_artifact": "",
+    "session_dir": ".ec_session_prover_tree_0_1",
+    "session_epoch": 1,
+    "session_tag": "prover_tree_0_1",
+    "state_version": 1,
+    "workspace_view_artifact": ""
+  },
+  "workspace_view": {
+    "candidate_moves": {
+      "moves": [
+        {
+          "applicability": "Use this as route-selection context; it is not a tactic to run as-is.",
+          "category": "strategy",
+          "source": "proof-state analysis",
+          "tactic_shape": "Probabilistic VC plan: Pr loss-accounting via have-chain, rewrite Pr/mu rules, real-order smt"
+        },
+        {
+          "applicability": "Use this as route-selection context; it is not a tactic to run as-is.",
+          "category": "strategy",
+          "source": "proof-state analysis",
+          "tactic_shape": "rewrite step1."
+        },
+        {
+          "applicability": "Use this as route-selection context; it is not a tactic to run as-is.",
+          "category": "strategy",
+          "source": "proof-state analysis",
+          "tactic_shape": "have -> : Pr[CCA_game(BNR_Adv(A), RealOrcls(ChaChaPoly)).main() @ &m : res] = Pr[CCA_game(BNR_Adv(A), RealOrcls(GenChaChaPoly(IFinRO))).main() @ &m : res] by byequiv=>//; proc; inline *; sim."
+        },
+        {
+          "applicability": "Use this as route-selection context; it is not a tactic to run as-is.",
+          "category": "strategy",
+          "source": "proof-state analysis",
+          "tactic_shape": "have -> : Pr[CCA_game(BNR_Adv(A), RealOrcls(ChaChaPoly)).main() @ &m : res] = Pr[CCA_game(BNR_Adv(A), RealOrcls(GenChaChaPoly(I_stateless))).main() @ &m : res] by byequiv=>//; proc; inline *; sim."
+        },
+        {
+          "applicability": "Use this as route-selection context; it is not a tactic to run as-is.",
+          "category": "strategy",
+          "source": "proof-state analysis",
+          "tactic_shape": "have -> : Pr[CCA_game(BNR_Adv(A), RealOrcls(ChaChaPoly)).main() @ &m : res] = Pr[CCA_game(BNR_Adv(A), RealOrcls(GenChaChaPoly(EncRnd))).main() @ &m : res] by byequiv=>//; proc; inline *; sim."
+        },
+        {
+          "applicability": "Use this as route-selection context; it is not a tactic to run as-is.",
+          "category": "strategy",
+          "source": "proof-state analysis",
+          "tactic_shape": "rewrite (step3 &m)."
+        }
+      ]
+    },
+    "current_goal": {
+      "goal_type": "probability",
+      "lines": [
+        "Current goal",
+        "",
+        "Type variables: <none>",
+        "",
+        "&m: {}",
+        "------------------------------------------------------------------------",
+        "Pr[CCA_game(BNR_Adv(A), RealOrcls(ChaChaPoly)).main() @ &m : res] <=",
+        "Pr[CCA_game(CCA_CPA_Adv(BNR_Adv(A)), EncRnd).main() @ &m : res] +",
+        "(Pr[Indist.Distinguish(D(BNR_Adv(A)), IndBlock).game() @ &m : res] -",
+        " Pr[Indist.Distinguish(D(BNR_Adv(A)), IndRO).game() @ &m : res]) +",
+        "qdec%r * maxr pr_zeropol pr1_poly_out + qdec%r * pr1_poly_out"
+      ],
+      "source": {
+        "ground_truth": false,
+        "label": "Parsed from EasyCrypt pretty goal text"
+      },
+      "text_fully_shown": true,
+      "truncated": false,
+      "view_focus": "probability"
+    },
+    "facts_and_diagnostics": {
+      "fact_note": "Only current-frontier facts are shown here; the full proof context artifact keeps the compiler/internal details.",
+      "facts": {
+        "has_pr_arithmetic_plan": true,
+        "has_pr_normal_form": true,
+        "has_pr_obligation_plan": true,
+        "unfoldable_goal_head_count": 1,
+        "unfoldable_goal_heads": [
+          {
+            "declaration_kind": "op",
+            "name": "pr1_poly_out",
+            "smt_argument_role": "not_a_lemma_hint",
+            "unfold_tactic": "rewrite /pr1_poly_out.",
+            "unqualified_name": "pr1_poly_out"
+          }
+        ]
+      },
+      "notes": [
+        {
+          "message": "Some imported or cross-scope handles may need lookup if that route is being tested; use lookup_candidates for the concrete symbol instead of treating the whole list as a to-do queue.",
+          "severity": "info"
+        }
+      ]
+    },
+    "inspect_lookup_handles": {
+      "ask_manager_for": [
+        {
+          "intent": "inspect_context",
+          "payload": {
+            "topic": "goal_info"
+          },
+          "returns": "manager-provided read-only context for this proof route",
+          "use_when": "No fresh recommendation is available; parse the current goal."
+        },
+        {
+          "intent": "inspect_context",
+          "payload": {
+            "topic": "pr_bridge_routes"
+          },
+          "returns": "daemon-verified, committable Pr bridge routes with manager-owned intent payloads",
+          "use_when": "Current Pr equality may need a manager-verified bridge route (game-hop or scheme/endpoint normalization) before direct byequiv/proc lowering."
+        },
+        {
+          "intent": "inspect_context",
+          "payload": {
+            "topic": "equiv_bridge_lemmas"
+          },
+          "returns": "context-only equiv bridge lemma candidates (names to look up/apply); not a verified Pr route",
+          "use_when": "Need pRHL/procedure-equivalence bridge lemma names or context after checking pr_bridge_routes."
+        },
+        {
+          "intent": "inspect_context",
+          "payload": {
+            "topic": "lemma_hints"
+          },
+          "returns": "nearby lemma hints and proof-route context",
+          "use_when": "Need local lemma hints before choosing a Pr-level proof route."
+        },
+        {
+          "intent": "inspect_context",
+          "payload": {
+            "name": "while",
+            "topic": "tactic_forms"
+          },
+          "returns": "valid `while` forms and common traps",
+          "use_when": "Need exact byphoare/phoare-loop tactic syntax before choosing the probability route."
+        }
+      ],
+      "effect": "All handles here are read-only manager requests; the committed EasyCrypt proof state stays unchanged.",
+      "lookup_candidates": [
+        {
+          "symbol": "step1",
+          "use_when": "Resolve exact signature for `step1` only when this handle route is being tested."
+        }
+      ],
+      "manager_note": "Some requests may ask EasyCrypt or name resolution; wait for the manager result before choosing the next proof intent."
+    },
+    "kind": "prover_workspace_view",
+    "last_result": {},
+    "opener_focus": {
+      "goal_shape": "a goal relating 4 `Pr[...]` terms",
+      "reduce_with": [
+        "`apply (ler_trans <mid>)` / `rewrite` a `|\u00b7|` norm or `ler_add` step \u2014 an order/transitivity move that splits the `|Pr \u2212 Pr|` / sum bound into per-term obligations; this comes BEFORE any byequiv/byphoare",
+        "`byequiv (_: <pre> ==> <post>)` \u2014 reduce a single `Pr[...]` to a pRHL `equiv`",
+        "`byphoare (_: <pre> ==> <post>)` \u2014 reduce a single `Pr[...]` to a `phoare` bound",
+        "`rewrite (<a Pr (in)equality lemma> &m \u2026)` \u2014 replace ONE `Pr[...]` term with an equal one; byequiv/byphoare reduce a single program, but this goal relates several Pr terms, so reduce them one at a time"
+      ],
+      "unfoldable_heads": [
+        "`rewrite /pr1_poly_out.` (unfolds `pr1_poly_out`)"
+      ],
+      "yours": "which reduction form fits this goal's Pr shape, the pre/post, the numeric bound."
+    },
+    "program_frontier": {
+      "authority": "proof-state analysis",
+      "focus": {
+        "has_pr_arithmetic_plan": true,
+        "has_pr_normal_form": true,
+        "has_pr_obligation_plan": true,
+        "native_ast_search_hits": 0,
+        "pr_rewrite_candidates": 7
+      },
+      "view_focus": "probability"
+    },
+    "proof_status": {
+      "current_layer": "pr",
+      "goal_type": "probability",
+      "remaining_goals": 1,
+      "remaining_goals_known": true,
+      "status": "open",
+      "view_focus": "probability"
+    },
+    "schema_version": 2,
+    "view_hash": "9561e8f3a736b007132729c75c34b956f70bb1ea"
+  }
+}

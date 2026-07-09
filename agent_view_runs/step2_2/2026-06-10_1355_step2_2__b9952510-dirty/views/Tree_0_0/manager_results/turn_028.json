@@ -1,0 +1,19 @@
+{
+  "turn": 28,
+  "handled_intent": {
+    "intent": "commit_tactic",
+    "payload": {
+      "tactic": "have Hcrux : forall (c : ciphertext), c \\in Mem.lc{hr} => dec RO.m{hr} Mem.k{hr} c <> None<:nonce * associated_data * bytes> => c.`1 \\in take (i{hr} + 1) ns{hr} => forged{hr} || test_poly (nth witness<:nonce> ns{hr} i{hr}) Mem.lc{hr} (mk_rs (oget RO.m{hr}.[nth witness<:nonce> ns{hr} i{hr}, C.ofintd 0])).`1 (mk_rs (oget RO.m{hr}.[nth witness<:nonce> ns{hr} i{hr}, C.ofintd 0])).`2."
+    }
+  },
+  "ok": true,
+  "manager_note": "Committed tactic accepted; the EasyCrypt proof state changed.",
+  "manager_actions": [
+    {
+      "action": "tactic commit",
+      "outcome": "EasyCrypt accepted the committed tactic.",
+      "timing": "295 ms"
+    }
+  ],
+  "view_refreshed": true
+}

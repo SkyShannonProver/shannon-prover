@@ -1,0 +1,19 @@
+{
+  "turn": 3,
+  "handled_intent": {
+    "intent": "commit_tactic",
+    "payload": {
+      "tactic": "wp; call (_: ={glob E, glob M} /\\ RCPA_Wrap.k{1} = (SKEa.RCPA.RCPA_Wrap.k, RCPAa.mk){2})."
+    }
+  },
+  "ok": true,
+  "manager_note": "Committed tactic accepted; the EasyCrypt proof state changed.",
+  "manager_actions": [
+    {
+      "action": "tactic commit",
+      "outcome": "EasyCrypt accepted the committed tactic.",
+      "timing": "147 ms"
+    }
+  ],
+  "view_refreshed": true
+}

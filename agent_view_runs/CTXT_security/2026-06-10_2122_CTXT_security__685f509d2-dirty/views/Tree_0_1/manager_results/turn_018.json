@@ -1,0 +1,19 @@
+{
+  "turn": 18,
+  "handled_intent": {
+    "intent": "commit_tactic",
+    "payload": {
+      "tactic": "call (_: ={glob E, k, p} /\\ k{1} = ek_ /\\ p{1} = p_ ==> ={glob E, res} /\\ dec ek_ res{1} = Some p_)."
+    }
+  },
+  "ok": true,
+  "manager_note": "Committed tactic accepted; the EasyCrypt proof state changed.",
+  "manager_actions": [
+    {
+      "action": "tactic commit",
+      "outcome": "EasyCrypt accepted the committed tactic.",
+      "timing": "191 ms"
+    }
+  ],
+  "view_refreshed": true
+}

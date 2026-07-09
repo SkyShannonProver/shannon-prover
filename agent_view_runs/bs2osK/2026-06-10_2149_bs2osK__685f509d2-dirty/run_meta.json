@@ -1,0 +1,38 @@
+{
+  "kind": "agent_view_run_report",
+  "timestamp": "2026-06-10_2149_bs2osK",
+  "lemma": "bs2osK",
+  "source_file": "eval/examples/MEE-CBC/FunctionalSpec.ec",
+  "model": "claude-fable-5",
+  "surface_profile": "l1_goal_projection",
+  "trees": 2,
+  "eval_mode": true,
+  "outcome": "proved",
+  "committed_proofs": [
+    {
+      "tree": "Tree_0_0",
+      "tactics": [
+        "rewrite /os2bs /bs2os flattenK //.",
+        "by move=> b /mapP [x [_ ->]]; rewrite size_block.",
+        "by rewrite -map_comp id_map // => x; rewrite /(\\o) mkblockK.",
+        "qed."
+      ],
+      "source": "session",
+      "proved": true
+    },
+    {
+      "tree": "Tree_0_1",
+      "tactics": [],
+      "source": "timeline_replay",
+      "replay_prefix_count": 0,
+      "proved": false
+    }
+  ],
+  "turn_count": 5,
+  "views_copied": 7,
+  "run_iteration_dir": "artifacts/eval_suite/mee_samples_fable_l1/l1_goal_projection/mee_bs2osK/r01/2026-06-10_2149_bs2osK/iteration_1",
+  "commit": "685f509d2",
+  "commit_full": "685f509d2678739057061c570c67d41c0342d619",
+  "branch": "HEAD",
+  "dirty": true
+}

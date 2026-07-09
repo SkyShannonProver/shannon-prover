@@ -1,0 +1,67 @@
+{
+ "current_goal": {
+  "lines": [
+   "Current goal (remaining: 6)",
+   "",
+   "Type variables: <none>",
+   "",
+   "&m: {}",
+   "------------------------------------------------------------------------",
+   "Context : hr: {b, forged, b0, b1 : bool, i : int, n : nonce, ns : nonce list,",
+   "              x, x0, x1 : nonce * C.counter, r, r0, r1 : poly_in,",
+   "              t, t0, y : poly_out, lt : tag list}",
+   "",
+   "pre = UFCMA.bad1 /\\ i < size ns",
+   "",
+   "(1-----)  n <- nth witness<:nonce> ns i                                             ",
+   "(2-----)  if ((n, C.ofintd 0) \\in ROout.m) {                                        ",
+   "(2. 1--)    x <- (n, C.ofintd 0)                                                    ",
+   "(2. 2--)    r0 <$ dpoly_in                                                          ",
+   "(2. 3--)    if (x \\notin RO.m) {                                                    ",
+   "(2. 3.1)      RO.m <- RO.m.[x <- r0]                                                ",
+   "(2. 3--)    }                                                                       ",
+   "(2. 4--)    r <- oget RO.m.[x]                                                      ",
+   "(2. 5--)    forged <- forged || test_poly_in n Mem.lc r (oget UFCMA.log.[n])        ",
+   "(2-----)  } else {                                                                  ",
+   "(2? 1--)    x0 <- (n, C.ofintd 0)                                                   ",
+   "(2? 2--)    r1 <$ dpoly_in                                                          ",
+   "(2? 3--)    if (x0 \\notin RO.m) {                                                   ",
+   "(2? 3.1)      RO.m <- RO.m.[x0 <- r1]                                               ",
+   "(2? 3--)    }                                                                       ",
+   "(2? 4--)    r <- oget RO.m.[x0]                                                     ",
+   "(2? 5--)    lt <-                                                                   ",
+   "(     -)      map (fun (c : ciphertext) => c.`4 - poly1305_eval r (topol c.`2 c.`3))",
+   "(     -)        (filter (fun (c : ciphertext) => c.`1 = n) Mem.lc)                  ",
+   "(2? 6--)    t0 <$ dpoly_out                                                         ",
+   "(2? 7--)    UFCMA.bad2 <- UFCMA.bad2 || (t0 \\in lt)                                 ",
+   "(2? 8--)    UFCMA.cbad2 <- UFCMA.cbad2 + 1                                          ",
+   "(2? 9--)    t <- t0                                                                 ",
+   "(2?10--)    x1 <- (n, C.ofintd 0)                                                   ",
+   "(2?11--)    y <- witness<:poly_out>                                                 ",
+   "(2?12--)    SplitC2.I2.RO.m <- SplitC2.I2.RO.m.[x1 <- y]                            ",
+   "(2-----)  }                                                                         ",
+   "",
+   "post = UFCMA.bad1",
+   "",
+   "[483|check]>"
+  ],
+  "view_focus": "procedure_frontier",
+  "goal_type": "hoare"
+ },
+ "proof_status": {
+  "status": "open",
+  "remaining_goals": 6,
+  "remaining_goals_known": true,
+  "goal_type": "hoare",
+  "view_focus": "procedure_frontier",
+  "current_layer": "procedure_body"
+ },
+ "last_result": {
+  "intent": "commit_tactic",
+  "tactic": "inline*; auto.",
+  "payload": {
+   "tactic": "inline*; auto."
+  },
+  "result": "EasyCrypt accepted the committed tactic."
+ }
+}

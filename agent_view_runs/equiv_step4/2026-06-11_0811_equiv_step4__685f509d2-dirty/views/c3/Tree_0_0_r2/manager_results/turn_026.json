@@ -1,0 +1,19 @@
+{
+  "turn": 26,
+  "handled_intent": {
+    "intent": "commit_tactic",
+    "payload": {
+      "tactic": "move=> &m; skip; smt(drop_nth in_cons head_cons mem_head mem_nth)."
+    }
+  },
+  "ok": true,
+  "manager_note": "Committed tactic accepted; the EasyCrypt proof state changed.",
+  "manager_actions": [
+    {
+      "action": "tactic commit",
+      "outcome": "EasyCrypt accepted the committed tactic.",
+      "timing": "7.3 s"
+    }
+  ],
+  "view_refreshed": true
+}

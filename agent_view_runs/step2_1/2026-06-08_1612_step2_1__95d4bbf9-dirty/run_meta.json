@@ -1,0 +1,69 @@
+{
+  "kind": "agent_view_run_report",
+  "timestamp": "2026-06-08_1612_step2_1",
+  "lemma": "step2_1",
+  "source_file": "eval/examples/ChaChaPoly/chacha_poly.ec",
+  "model": "claude-opus-4-8",
+  "surface_profile": "l1_goal_projection",
+  "trees": 2,
+  "eval_mode": true,
+  "outcome": "proved",
+  "committed_proofs": [
+    {
+      "tree": "Tree_0_0",
+      "tactics": [
+        "have <- : Pr[CCA_game(A, RealOrcls(StLSke(St))).main() @ &m : res] = Pr[CCA_game(A, RealOrcls(OChaChaPoly(IFinRO))).main() @ &m : res].",
+        "byequiv => //; proc.",
+        "call (_: StLSke.gs{1} = OpCCRO.OCC.gs{2} /\\ ={Mem.k}).",
+        "proc; inline *; wp; skip => />.",
+        "move=> &2; rewrite /enc /get //=.",
+        "by case: (p{2}).",
+        "proc; inline *; wp; skip => />.",
+        "move=> &2; case: (c{2}) => n a c0 t /=; rewrite /dec /get /=; smt().",
+        "inline *; sim.",
+        "conseq (: _ ==> (glob A){1} = (glob A){2} /\\ StLSke.gs{1} = OCC.gs{2} /\\ Mem.k{1} = Mem.k{2}).",
+        "smt().",
+        "inline *; wp; rnd; sim.",
+        "apply (CCA_UFCMA.CCA_CPA_UFCMA St _ _ A A_ll &m).",
+        "proc; sim."
+      ],
+      "proved": false
+    },
+    {
+      "tree": "Tree_0_1",
+      "tactics": [
+        "have hL : Pr[CCA_game(A, RealOrcls(OChaChaPoly(IFinRO))).main() @ &m : res] = Pr[CCA_game(A, RealOrcls(StLSke(St))).main() @ &m : res].",
+        "byequiv => //.",
+        "proc.",
+        "call (_: ={Mem.k} /\\ OCC.gs{1} = StLSke.gs{2}).",
+        "proc; inline *.",
+        "wp; skip => />.",
+        "move=> &2; rewrite /enc /get /=.",
+        "by case: p{2}.",
+        "smt().",
+        "proc; inline *.",
+        "wp; skip => />.",
+        "move=> &2; rewrite /dec /get /=; smt().",
+        "inline *; sim.",
+        "conseq (_ : _ ==> ={glob A} /\\ Mem.k{1} = Mem.k{2} /\\ OCC.gs{1} = StLSke.gs{2}).",
+        "by move=> />.",
+        "inline *; sim.",
+        "rewrite hL.",
+        "apply (CCA_UFCMA.CCA_CPA_UFCMA St A &m).",
+        "apply (CCA_UFCMA.CCA_CPA_UFCMA St _ _ A _ &m).",
+        "sim.",
+        "proc; auto.",
+        "apply A_ll.",
+        "qed."
+      ],
+      "proved": true
+    }
+  ],
+  "turn_count": 39,
+  "views_copied": 41,
+  "run_iteration_dir": "artifacts/eval_suite/medium4_l1_l4noprobe/l1_goal_projection/chacha_step2_1/r01/2026-06-08_1612_step2_1/iteration_1",
+  "commit": "95d4bbf9",
+  "commit_full": "95d4bbf95e8b0e104cb0e25fdeaeeae27bcfb339",
+  "branch": "mcp-v0",
+  "dirty": true
+}

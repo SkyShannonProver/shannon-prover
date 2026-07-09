@@ -1,0 +1,211 @@
+{
+  "last_result": {
+    "intent": "undo_to_checkpoint",
+    "kind": "checkpoint_selection",
+    "message": "Choose the committed tactic you want to rewind before.",
+    "checkpoint_options": [
+      {
+        "checkpoint_id": "cp_9_02d6368229aa15c2",
+        "semantic_id": "before_branch_work",
+        "semantic_ids": [
+          "before_branch_work",
+          "before_call_route"
+        ],
+        "label": "Before committed tactic #9",
+        "committed_tactic": "call (_ : ={Log.qs} /\\ eq_except (pred1 Game1.r{2}) LRO.m{1} LRO.m{2}).",
+        "tactic_index": 9,
+        "committed_step_index": 9,
+        "restored_proof_layer": "pre_call_route",
+        "restored_affordances": {
+          "call_route": "not_committed",
+          "call_obligation_work": "not_committed"
+        },
+        "undo_scope": "call_local",
+        "why_checkpoint": "latest branch-local step inside the current seq scope",
+        "repair_use_when": "Use this if the selected named call lemma or frontier route was wrong, or the call should have been preceded by a wrapper or alignment step.",
+        "after_rewind_next": "Use `lookup_symbol` or `call_site_options` before probing the next call route.",
+        "effect_if_selected": "This will undo committed tactic #9 and every committed tactic after it in this node.",
+        "submit": {
+          "intent": "undo_to_checkpoint",
+          "payload": {
+            "checkpoint_id": "cp_9_02d6368229aa15c2"
+          }
+        }
+      },
+      {
+        "checkpoint_id": "cp_7_02d6368229aa15c2",
+        "semantic_id": "after_seq_opened",
+        "semantic_ids": [
+          "after_seq_opened",
+          "before_branch_work"
+        ],
+        "label": "After seq opened / before branch work #7",
+        "committed_tactic": "sim.",
+        "tactic_index": 7,
+        "committed_step_index": 7,
+        "restored_proof_layer": "seq_obligations_opened",
+        "restored_affordances": {
+          "seq_cut": "committed",
+          "branch_work": "not_committed"
+        },
+        "undo_scope": "branch_local",
+        "why_checkpoint": "seq-local branch boundary; selecting it keeps the seq cut and removes branch-local work after it",
+        "repair_use_when": "Use this when the recent local step appears to have introduced the current blocker.",
+        "after_rewind_next": "Probe a smaller replacement step or inspect the current goal before recommitting.",
+        "effect_if_selected": "This will undo committed tactic #7 and every committed tactic after it in this node.",
+        "submit": {
+          "intent": "undo_to_checkpoint",
+          "payload": {
+            "checkpoint_id": "cp_7_02d6368229aa15c2"
+          }
+        }
+      },
+      {
+        "checkpoint_id": "cp_6_02d6368229aa15c2",
+        "semantic_id": "before_seq_cut",
+        "semantic_ids": [
+          "before_seq_cut"
+        ],
+        "label": "Before seq cut #6",
+        "committed_tactic": "seq 5 4 : (={glob A, glob LRO, glob Log, pk, sk, m0, m1, b}).",
+        "tactic_index": 6,
+        "committed_step_index": 6,
+        "restored_proof_layer": "pre_seq_cut",
+        "restored_affordances": {
+          "seq_cut": "not_committed",
+          "call_site_state": "as_before_seq_cut"
+        },
+        "undo_scope": "seq_local",
+        "why_checkpoint": "seq-cut boundary; selecting it restores the proof state before this cut was committed",
+        "repair_use_when": "Use this when the current branch is stuck because the cut assertion lacks live facts, exposes the wrong frontier, or created residual obligations that should have been part of the midpoint.",
+        "after_rewind_next": "Inspect `align` or `goal_info`, then probe a revised `seq` cut with the missing state facts.",
+        "effect_if_selected": "This will undo committed tactic #6 and every committed tactic after it in this node.",
+        "submit": {
+          "intent": "undo_to_checkpoint",
+          "payload": {
+            "checkpoint_id": "cp_6_02d6368229aa15c2"
+          }
+        }
+      },
+      {
+        "checkpoint_id": "cp_8_02d6368229aa15c2",
+        "semantic_id": "last_call_site_boundary",
+        "semantic_ids": [
+          "last_call_site_boundary"
+        ],
+        "label": "Before inline expansion #8",
+        "committed_tactic": "inline *; wp; rnd; auto.",
+        "tactic_index": 8,
+        "committed_step_index": 8,
+        "restored_proof_layer": "pre_inline_frontier",
+        "restored_affordances": {
+          "call_site_handles": "as_before_inline"
+        },
+        "undo_scope": "call_site_boundary",
+        "why_checkpoint": "inline boundary; selecting it restores the proof state before this expansion",
+        "repair_use_when": "Use this when broad inlining exposed too much code, hid a call handle, or a targeted inline would keep the proof frontier cleaner.",
+        "after_rewind_next": "Probe targeted `inline{1}`/`inline{2}` or inspect `call_site_options` before expanding more code.",
+        "effect_if_selected": "This will undo committed tactic #8 and every committed tactic after it in this node.",
+        "submit": {
+          "intent": "undo_to_checkpoint",
+          "payload": {
+            "checkpoint_id": "cp_8_02d6368229aa15c2"
+          }
+        }
+      },
+      {
+        "checkpoint_id": "cp_5_02d6368229aa15c2",
+        "label": "Rewind to before committed tactic #5",
+        "committed_tactic": "inline{1} LRO.o.",
+        "tactic_index": 5,
+        "committed_step_index": 5,
+        "restored_proof_layer": "pre_inline_frontier",
+        "undo_scope": "call_site_boundary",
+        "why_checkpoint": "inline expansion point",
+        "repair_use_when": "Use this when broad inlining exposed too much code, hid a call handle, or a targeted inline would keep the proof frontier cleaner.",
+        "after_rewind_next": "Probe targeted `inline{1}`/`inline{2}` or inspect `call_site_options` before expanding more code.",
+        "effect_if_selected": "This will undo committed tactic #5 and every committed tactic after it in this node.",
+        "submit": {
+          "intent": "undo_to_checkpoint",
+          "payload": {
+            "checkpoint_id": "cp_5_02d6368229aa15c2"
+          }
+        }
+      },
+      {
+        "checkpoint_id": "cp_4_02d6368229aa15c2",
+        "label": "Rewind to before committed tactic #4",
+        "committed_tactic": "inline{1} BR93(LRO).keygen; inline{1} BR93(LRO).enc.",
+        "tactic_index": 4,
+        "committed_step_index": 4,
+        "restored_proof_layer": "pre_inline_frontier",
+        "undo_scope": "call_site_boundary",
+        "why_checkpoint": "inline expansion point",
+        "repair_use_when": "Use this when broad inlining exposed too much code, hid a call handle, or a targeted inline would keep the proof frontier cleaner.",
+        "after_rewind_next": "Probe targeted `inline{1}`/`inline{2}` or inspect `call_site_options` before expanding more code.",
+        "effect_if_selected": "This will undo committed tactic #4 and every committed tactic after it in this node.",
+        "submit": {
+          "intent": "undo_to_checkpoint",
+          "payload": {
+            "checkpoint_id": "cp_4_02d6368229aa15c2"
+          }
+        }
+      },
+      {
+        "checkpoint_id": "cp_3_02d6368229aa15c2",
+        "label": "Rewind to before committed tactic #3",
+        "committed_tactic": "proc.",
+        "tactic_index": 3,
+        "committed_step_index": 3,
+        "restored_proof_layer": "previous_committed_state",
+        "undo_scope": "recent_step",
+        "why_checkpoint": "procedure entry point",
+        "repair_use_when": "Use this only when the chosen procedure-level route was wrong, not for a local invariant or branch-surgery problem.",
+        "after_rewind_next": "Re-enter the procedure with a different high-level route or inspect `goal_info` first.",
+        "effect_if_selected": "This will undo committed tactic #3 and every committed tactic after it in this node.",
+        "submit": {
+          "intent": "undo_to_checkpoint",
+          "payload": {
+            "checkpoint_id": "cp_3_02d6368229aa15c2"
+          }
+        }
+      }
+    ]
+  },
+  "current_goal": {
+    "lines": [
+      "Current goal (remaining: 5)",
+      "",
+      "Type variables: <none>",
+      "",
+      "&m: {}",
+      "------------------------------------------------------------------------",
+      "pre =",
+      "  arg{1} = arg{2} /\\",
+      "  Log.qs{1} = Log.qs{2} /\\ eq_except (pred1 Game1.r{2}) LRO.m{1} LRO.m{2}",
+      "",
+      "    Log(LRO).o ~ Log(LRO).o ",
+      "",
+      "post =",
+      "  res{1} = res{2} /\\",
+      "  Log.qs{1} = Log.qs{2} /\\ eq_except (pred1 Game1.r{2}) LRO.m{1} LRO.m{2}",
+      "[78|check]>"
+    ],
+    "text_fully_shown": true,
+    "truncated": false,
+    "goal_type": "equiv",
+    "view_focus": "relational_program",
+    "source": {
+      "label": "Parsed from EasyCrypt pretty goal text",
+      "ground_truth": false
+    }
+  },
+  "proof_status": {
+    "status": "open",
+    "remaining_goals": 5,
+    "remaining_goals_known": true,
+    "goal_type": "equiv",
+    "view_focus": "relational_program",
+    "current_layer": "prhl_module"
+  }
+}

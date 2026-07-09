@@ -1,0 +1,206 @@
+[
+  {
+    "id": "schnorr_ll_lossless",
+    "proof_bank_lemma": "schnorr_proof_of_knowledge_completeness_ll",
+    "surface_profile": "l4_checked_action_surface",
+    "max_steps": 1,
+    "notes": "Tiny losslessness/procedure close."
+  },
+  {
+    "id": "schnorr_completeness_opener",
+    "proof_bank_lemma": "schnorr_proof_of_knowledge_completeness",
+    "surface_profile": "l4_checked_action_surface",
+    "max_steps": 5,
+    "notes": "Probability opener into phoare/procedure entry."
+  },
+  {
+    "id": "schnorr_special_soundness",
+    "proof_bank_lemma": "schnorr_proof_of_knowledge_special_soundness",
+    "surface_profile": "l4_checked_action_surface",
+    "max_steps": 5,
+    "notes": "Phoare/procedure proof with arithmetic residuals."
+  },
+  {
+    "id": "pir_secure2_loop",
+    "proof_bank_lemma": "PIR_secure2",
+    "surface_profile": "l4_checked_action_surface",
+    "max_steps": 4,
+    "notes": "pRHL loop/sampling alignment."
+  },
+  {
+    "id": "prg_resample_loop",
+    "proof_bank_lemma": "Resample_resampleL",
+    "surface_profile": "l4_checked_action_surface",
+    "max_steps": 5,
+    "notes": "Loop invariant and losslessness side conditions."
+  },
+  {
+    "id": "prg_conclusion_bound",
+    "proof_bank_lemma": "conclusion",
+    "surface_profile": "l4_checked_action_surface",
+    "max_steps": 4,
+    "notes": "Probability bound composition."
+  },
+  {
+    "id": "dice_prd6_bridge",
+    "proof_bank_lemma": "prD6",
+    "surface_profile": "l4_checked_action_surface",
+    "max_steps": 5,
+    "notes": "Probability equality bridge and rewrite."
+  },
+  {
+    "id": "pedersen_hi_ll",
+    "proof_bank_lemma": "hi_ll",
+    "surface_profile": "l4_checked_action_surface",
+    "max_steps": 1,
+    "notes": "Compact phoare/call/rnd losslessness."
+  },
+  {
+    "id": "elgamal_cpa_ddh0",
+    "proof_bank_lemma": "cpa_ddh0",
+    "surface_profile": "l4_checked_action_surface",
+    "max_steps": 1,
+    "notes": "Large pRHL inline/swap/call tactic."
+  },
+  {
+    "id": "br93_eq_game1_game2",
+    "proof_bank_lemma": "eq_Game1_Game2",
+    "surface_profile": "l4_checked_action_surface",
+    "max_steps": 1,
+    "notes": "Game-hop equivalence with calls, swaps, rnd."
+  },
+  {
+    "id": "br93_pr_game0_game1",
+    "proof_bank_lemma": "pr_Game0_Game1",
+    "surface_profile": "l4_checked_action_surface",
+    "max_steps": 1,
+    "notes": "Large probability bridge with bad-event side condition."
+  },
+  {
+    "id": "br93_reduction",
+    "proof_bank_lemma": "Reduction",
+    "surface_profile": "l4_checked_action_surface",
+    "max_steps": 2,
+    "notes": "Short top-level reduction close."
+  },
+  {
+    "id": "prg_plog_psample",
+    "proof_bank_lemma": "Plog_Psample",
+    "surface_profile": "l4_checked_action_surface",
+    "max_steps": 30,
+    "total_tactics": 67,
+    "tier": "long_proof",
+    "notes": "Long PRG/Plog_Psample bad-event proof: call invariant, inline, swaps, pure-tail residuals."
+  },
+  {
+    "id": "chachapoly_step1_long_prefix",
+    "proof_bank_lemma": "step1",
+    "surface_profile": "l4_checked_action_surface",
+    "max_steps": 30,
+    "total_tactics": 53,
+    "tier": "long_proof",
+    "notes": "Large-project ChaChaPoly probability-to-pRHL proof prefix."
+  },
+  {
+    "id": "chachapoly_step3_trace",
+    "file": "eval/examples/ChaChaPoly/chacha_poly.ec",
+    "lemma": "step3",
+    "include_dir": "easycrypt-src/theories",
+    "tactics_file": "workflow/validation/anchors/chachapoly_step3_tactics.json",
+    "surface_profile": "l4_checked_action_surface",
+    "max_steps": 23,
+    "total_tactics": 23,
+    "tier": "long_proof_trace",
+    "notes": "Proved-run tactic trace: deep nested inline/call-frontier/rcondt/rnd proof; source lemma is admit."
+  },
+  {
+    "id": "chachapoly_step4_1_trace_prefix",
+    "file": "eval/examples/ChaChaPoly/chacha_poly.ec",
+    "lemma": "step4_1",
+    "include_dir": "easycrypt-src/theories",
+    "tactics_file": "workflow/validation/anchors/chachapoly_step4_1_tactics.json",
+    "surface_profile": "l4_checked_action_surface",
+    "max_steps": 35,
+    "total_tactics": 122,
+    "tier": "long_proof_trace",
+    "notes": "Proved-run tactic trace prefix: up-to-bad, G-game inline tower, seq/call/rcondt surgery; source lemma is admit."
+  },
+  {
+    "id": "mee_cbc_upto_long",
+    "file": "eval/examples/MEE-CBC/CBC.eca",
+    "lemma": "CBC_upto",
+    "include_dir": "easycrypt-src/theories",
+    "surface_profile": "l4_checked_action_surface",
+    "max_steps": 28,
+    "total_tactics": 32,
+    "tier": "long_proof",
+    "notes": "CBC up-to-bad proof prefix: transitivity, bad-event equivalence, loop/call frontier, probability residuals."
+  },
+  {
+    "id": "mee_cbc_ctxt_security_long",
+    "file": "eval/examples/MEE-CBC/RCPA_CMA.ec",
+    "lemma": "CTXT_security",
+    "include_dir": "easycrypt-src/theories",
+    "surface_profile": "l4_checked_action_surface",
+    "max_steps": 28,
+    "total_tactics": 31,
+    "tier": "long_proof",
+    "notes": "MEE-CBC reduction proof prefix with encryption/decryption oracle invariants."
+  },
+  {
+    "id": "dice_prd4_source",
+    "file": "eval/examples/Dice4_6.ec",
+    "lemma": "prD4",
+    "include_dir": "easycrypt-src/theories",
+    "surface_profile": "l4_checked_action_surface",
+    "max_steps": 2,
+    "notes": "Source proof: byphoare probability sample."
+  },
+  {
+    "id": "dice_d4_d6_source",
+    "file": "eval/examples/Dice4_6.ec",
+    "lemma": "D4_D6",
+    "include_dir": "easycrypt-src/theories",
+    "surface_profile": "l4_checked_action_surface",
+    "max_steps": 6,
+    "notes": "Source proof: bypr/equiv bridge with side facts."
+  },
+  {
+    "id": "pir_correct_source",
+    "file": "eval/examples/PIR.ec",
+    "lemma": "PIR_correct",
+    "include_dir": "easycrypt-src/theories",
+    "surface_profile": "l4_checked_action_surface",
+    "max_steps": 24,
+    "total_tactics": 32,
+    "tier": "long_proof",
+    "notes": "Source proof: correctness probability, loop/procedure long prefix."
+  },
+  {
+    "id": "pir_pr_s_source",
+    "file": "eval/examples/PIR.ec",
+    "lemma": "Pr_PIR_s",
+    "include_dir": "easycrypt-src/theories",
+    "surface_profile": "l4_checked_action_surface",
+    "max_steps": 6,
+    "notes": "Source proof: probability fact and byphoare support."
+  },
+  {
+    "id": "while_sample_lossless_source",
+    "file": "eval/examples/WhileSample.ec",
+    "lemma": "Sample_lossless",
+    "include_dir": "easycrypt-src/theories",
+    "surface_profile": "l4_checked_action_surface",
+    "max_steps": 6,
+    "notes": "Source proof: seq split and while/sample losslessness."
+  },
+  {
+    "id": "mee_cbc_oracle_enc_eq_source",
+    "file": "eval/examples/MEE-CBC/CBC.eca",
+    "lemma": "CBC_Oracle_enc_eq",
+    "include_dir": "easycrypt-src/theories",
+    "surface_profile": "l4_checked_action_surface",
+    "max_steps": 4,
+    "notes": "Source proof: CBC oracle equivalence loop/call."
+  }
+]

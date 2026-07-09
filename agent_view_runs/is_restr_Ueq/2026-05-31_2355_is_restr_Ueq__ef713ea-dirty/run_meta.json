@@ -1,0 +1,33 @@
+{
+  "kind": "agent_view_run_report",
+  "timestamp": "2026-05-31_2355_is_restr_Ueq",
+  "lemma": "is_restr_Ueq",
+  "source_file": "eval/examples/PIR.ec",
+  "model": "claude-opus-4-6",
+  "surface_profile": "l4_checked_action_surface",
+  "trees": 2,
+  "eval_mode": true,
+  "outcome": "proved",
+  "committed_proofs": [
+    {
+      "tree": "Tree_0_0",
+      "tactics": [
+        "move=> h1 h2; rewrite eq_iff; split => [/fsetP heq | ->] //; apply fsetP => x; have := heq x; rewrite !in_fsetU !in_fset1; smt(nin_is_restr).",
+        "qed."
+      ],
+      "proved": true
+    },
+    {
+      "tree": "Tree_0_1",
+      "tactics": [],
+      "proved": false
+    }
+  ],
+  "turn_count": 7,
+  "views_copied": 9,
+  "run_iteration_dir": "artifacts/eval_suite/compiler_ladder_matrix/l4_checked_action_surface/easy_pir_is_restr_Ueq/r01/2026-05-31_2355_is_restr_Ueq/iteration_1",
+  "commit": "ef713ea",
+  "commit_full": "ef713ea8c34c5bb62c55b40e519465a9e1987406",
+  "branch": "feat/agent-thinking-trace",
+  "dirty": true
+}

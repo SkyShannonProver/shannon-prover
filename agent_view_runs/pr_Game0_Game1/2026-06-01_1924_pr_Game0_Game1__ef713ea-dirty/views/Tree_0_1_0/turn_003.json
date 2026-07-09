@@ -1,0 +1,61 @@
+{
+  "last_result": {
+    "intent": "commit_tactic",
+    "payload": {
+      "tactic": "wp."
+    },
+    "manager_action": "commit_tactic",
+    "result": "EasyCrypt accepted the committed tactic.",
+    "effect": "EasyCrypt accepted a proof-state change; the refreshed view is based on the new committed state.",
+    "proof_state": "The committed EasyCrypt proof state changed.",
+    "tactic": "wp."
+  },
+  "current_goal": {
+    "lines": [
+      "Current goal (remaining: 3)",
+      "",
+      "Type variables: <none>",
+      "",
+      "&m: {}",
+      "------------------------------------------------------------------------",
+      "&1 (left ) : {b, b' : bool, m0, m1, m, h, r0 : ptxt, r, x : rand,",
+      "             c : rand * ptxt, pk, pk0 : pkey, sk : skey, kp : pkey * skey}",
+      "&2 (right) : {b, b' : bool, m0, m1, h : ptxt, c : rand * ptxt, pk : pkey,",
+      "             sk : skey}",
+      "",
+      "pre = (glob A){1} = (glob A){2} /\\ LRO.m{1} = LRO.m{2}",
+      "",
+      "Log(LRO).init()                 (1)  Log(LRO).init()               ",
+      "kp <$ dkeys                     (2)  (pk, sk) <$ dkeys             ",
+      "(pk, sk) <- kp                  (3)  (m0, m1) <@ A(Log(LRO)).a1(pk)",
+      "(m0, m1) <@ A(Log(LRO)).a1(pk)  (4)  b <$ {0,1}                    ",
+      "b <$ {0,1}                      (5)                                ",
+      "",
+      "post =",
+      "  ((glob A){1} = (glob A){2} /\\",
+      "   Log.qs{1} = Log.qs{2} /\\",
+      "   LRO.m{1} = LRO.m{2} /\\",
+      "   b{1} = b{2} /\\",
+      "   pk{1} = pk{2} /\\ sk{1} = sk{2} /\\ m0{1} = m0{2} /\\ m1{1} = m1{2}) /\\",
+      "  pk{1} = pk{1} /\\",
+      "  (if b{1} then m0{1} else m1{1}) = if b{1} then m0{1} else m1{1}",
+      "[75|check]>"
+    ],
+    "text_fully_shown": true,
+    "truncated": false,
+    "goal_type": "pRHL",
+    "view_focus": "seq_cut",
+    "source": {
+      "label": "Parsed from EasyCrypt pretty goal text",
+      "ground_truth": false
+    }
+  },
+  "proof_status": {
+    "status": "open",
+    "remaining_goals": 3,
+    "remaining_goals_known": true,
+    "goal_type": "pRHL",
+    "view_focus": "seq_cut",
+    "current_layer": "call_site"
+  }
+}

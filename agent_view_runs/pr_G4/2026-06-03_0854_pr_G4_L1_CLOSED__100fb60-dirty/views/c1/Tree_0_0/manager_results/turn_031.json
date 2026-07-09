@@ -1,0 +1,19 @@
+{
+  "turn": 31,
+  "handled_intent": {
+    "intent": "commit_tactic",
+    "payload": {
+      "tactic": "apply (mu_mem_le_mu1_size (dt \\ pred1 G1.u{hr}) (map (logb G1.g_{hr}) (map (fun (t : PKE_.ciphertext) => t.`2) G3.cilog{hr})) (1%r / (order - 1)%r) PKE_.qD); [ by rewrite !size_map | by apply hmu1 ]."
+    }
+  },
+  "ok": true,
+  "manager_note": "Committed tactic accepted; the EasyCrypt proof state changed.",
+  "manager_actions": [
+    {
+      "action": "tactic commit",
+      "outcome": "EasyCrypt accepted the committed tactic.",
+      "timing": "296 ms"
+    }
+  ],
+  "view_refreshed": true
+}

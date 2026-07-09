@@ -1,0 +1,295 @@
+{
+  "last_result": {
+    "intent": "commit_tactic",
+    "payload": {
+      "tactic": "qed."
+    },
+    "manager_action": "commit_tactic",
+    "result": "EasyCrypt accepted the committed tactic.",
+    "effect": "EasyCrypt accepted a proof-state change; the refreshed view is based on the new committed state.",
+    "proof_state": "The committed EasyCrypt proof state changed.",
+    "tactic": "qed."
+  },
+  "current_goal": {
+    "lines": [
+      "[49|check]>"
+    ],
+    "text_fully_shown": true,
+    "truncated": false,
+    "goal_type": "complete",
+    "view_focus": "closed_candidate",
+    "source": {
+      "label": "Projected from session_event_projection",
+      "ground_truth": false
+    }
+  },
+  "proof_status": {
+    "status": "candidate_closed",
+    "remaining_goals": 0,
+    "remaining_goals_known": true,
+    "goal_type": "complete",
+    "view_focus": "closed_candidate",
+    "current_layer": "unknown"
+  },
+  "candidate_moves": {
+    "moves": [
+      {
+        "category": "verify",
+        "applicability": "This tactic is already concrete for the current goal.",
+        "why_relevant": "The proof candidate is closed; run verification next."
+      }
+    ]
+  },
+  "program_frontier": {
+    "authority": "proof-state analysis",
+    "view_focus": "closed_candidate"
+  },
+  "call_site_surface": {},
+  "application_context": {
+    "selected_handles": [
+      {
+        "why_relevant": "The proof candidate is closed; run verification next.",
+        "confidence": "high"
+      }
+    ]
+  },
+  "facts_and_diagnostics": {
+    "facts": {
+      "unfoldable_goal_head_count": 0
+    },
+    "fact_note": "Only current-frontier facts are shown here; the full proof context artifact keeps the compiler/internal details."
+  },
+  "proof_so_far": {
+    "committed_count": 27,
+    "steps": [
+      {
+        "step": 1,
+        "tactic": "move => hi."
+      },
+      {
+        "step": 2,
+        "tactic": "byphoare (_: i = i0 ==> res = a i0) => //."
+      },
+      {
+        "step": 3,
+        "tactic": "proc."
+      },
+      {
+        "step": 4,
+        "tactic": "inline PIR.query."
+      },
+      {
+        "step": 5,
+        "tactic": "wp."
+      },
+      {
+        "step": 6,
+        "tactic": "while (0 <= j <= N /\\ i = i0 /\\ (j <= i0 => PIR.s = PIR.s') /\\ (i0 < j => sxor2 PIR.s PIR.s' i0)) (N - j)."
+      },
+      {
+        "step": 7,
+        "tactic": "move => z; wp."
+      },
+      {
+        "step": 8,
+        "tactic": "rnd predT."
+      },
+      {
+        "step": 9,
+        "tactic": "skip."
+      },
+      {
+        "step": 10,
+        "tactic": "move => &hr [[[[Hjb [Hii [Hs Hsx]]] Hjlt] Hz] _]."
+      },
+      {
+        "step": 11,
+        "tactic": "split."
+      },
+      {
+        "step": 12,
+        "tactic": "exact dbool_ll."
+      },
+      {
+        "step": 13,
+        "tactic": "move => _ v hv; rewrite /predT /= Hii /=."
+      },
+      {
+        "step": 14,
+        "tactic": "smt(sxor_cons sxor2_cons)."
+      },
+      {
+        "step": 15,
+        "tactic": "wp."
+      },
+      {
+        "step": 16,
+        "tactic": "skip => &hr Hi0; split; first by smt()."
+      },
+      {
+        "step": 17,
+        "tactic": "move => s1 s' j0; split; first by smt()."
+      },
+      {
+        "step": 18,
+        "tactic": "move => hnlt [hb [hi2 [hle hsxi]]]; have h: sxor2 s1 s' i0 by apply hsxi; smt()."
+      },
+      {
+        "step": 19,
+        "tactic": "move: h; rewrite /sxor2 /sxor => -[[u1 u2 [-> ->]]|[u1 u2 [-> ->]]]."
+      },
+      {
+        "step": 20,
+        "tactic": "rewrite !big_cat big_consT."
+      },
+      {
+        "step": 21,
+        "tactic": "move: (big predT<:int> a u1) (big predT<:int> a u2) => A B."
+      },
+      {
+        "step": 22,
+        "tactic": "rewrite (xorwC (a i0) B) !xorwA."
+      },
+      {
+        "step": 23,
+        "tactic": "have hz : A +^ B +^ A +^ B = zerow by rewrite -xorwA xorwK."
+      },
+      {
+        "step": 24,
+        "tactic": "by rewrite hz xorwC xorw0."
+      },
+      {
+        "step": 25,
+        "tactic": "rewrite xorwC !big_cat big_consT; move: (big predT<:int> a u1) (big predT<:int> a u2) => A B; rewrite (xorwC (a i0) B) !xorwA."
+      },
+      {
+        "step": 26,
+        "tactic": "have hz : A +^ B +^ A +^ B = zerow by rewrite -xorwA xorwK. by rewrite hz xorwC xorw0."
+      },
+      {
+        "step": 27,
+        "tactic": "qed."
+      }
+    ],
+    "elided_count": 0,
+    "note": "Your committed proof so far in THIS node, step-numbered \u2014 your own work. Use it to orient; do not re-derive steps already listed here."
+  },
+  "surface_action_preflight": {
+    "schema_version": 1,
+    "results": []
+  },
+  "inspect_lookup_handles": {
+    "effect": "All handles here are read-only manager requests; the committed EasyCrypt proof state stays unchanged.",
+    "manager_note": "Some requests may ask EasyCrypt or name resolution; wait for the manager result before choosing the next proof intent.",
+    "ask_manager_for": [
+      {
+        "intent": "inspect_context",
+        "payload": {
+          "topic": "verify"
+        },
+        "use_when": "The proof candidate is closed; run verification next.",
+        "returns": "manager-provided read-only context for this proof route",
+        "intent_class": "legacy_wrapper",
+        "read_only": true,
+        "payload_fields": [
+          "topic"
+        ]
+      },
+      {
+        "intent": "inspect_context",
+        "payload": {
+          "topic": "operator_lemmas",
+          "operator": "OPERATOR"
+        },
+        "use_when": "Need the lemmas that apply to an OPERATOR in your goal \u2014 project-local lemmas included (not just stdlib) \u2014 instead of guessing a lemma name.",
+        "returns": "lemmas mentioning that operator, found by live EC `search` over the loaded context (statements; you pick which to apply)",
+        "intent_class": "context_topic",
+        "read_only": true,
+        "public_intent": "operator_lemmas",
+        "payload_fields": [
+          "operator"
+        ]
+      }
+    ]
+  },
+  "structural_checkpoints": {
+    "items": [
+      {
+        "checkpoint_id": "cp_4_db7e2bf7c2b5c845",
+        "semantic_id": "last_call_site_boundary",
+        "semantic_ids": [
+          "last_call_site_boundary"
+        ],
+        "label": "Before inline expansion #4",
+        "committed_step_index": 4,
+        "committed_tactic": "inline PIR.query.",
+        "restored_proof_layer": "pre_inline_frontier",
+        "restored_affordances": {
+          "call_site_handles": "as_before_inline"
+        },
+        "undo_scope": "call_site_boundary",
+        "why_checkpoint": "inline boundary; selecting it restores the proof state before this expansion",
+        "effect_if_selected": "Undo committed tactic #4 and every committed tactic after it in this node.",
+        "submit": {
+          "intent": "undo_to_checkpoint",
+          "payload": {
+            "checkpoint_id": "cp_4_db7e2bf7c2b5c845"
+          }
+        }
+      }
+    ]
+  },
+  "surface_turn": {
+    "schema_version": 1,
+    "presentation_kind": "proof_state",
+    "proof_surface": {
+      "schema_version": 1,
+      "profile": "l4_checked_action_surface",
+      "phase": "closed_candidate",
+      "goal": {
+        "title": "Current Goal",
+        "text": "[49|check]>",
+        "goal_type": "complete",
+        "truncated": false,
+        "line_count": 1
+      },
+      "status": {
+        "status": "candidate_closed",
+        "remaining_goals": 0,
+        "remaining_goals_known": true,
+        "view_focus": "closed_candidate",
+        "current_layer": "unknown",
+        "goal_type": "complete",
+        "surface_phase": "closed_candidate"
+      },
+      "metadata": {
+        "contract": "raw_workspace_facts -> SurfaceModel -> markdown/card",
+        "primary_panel_id": "",
+        "primary_action_count": 0,
+        "available_action_count": 1
+      },
+      "surface_model_hash": "dfbe7921d91af1ed086af9fd8b777a331d967a70"
+    },
+    "turn_outcome": {
+      "intent": "commit_tactic",
+      "payload": {
+        "tactic": "qed."
+      },
+      "ok": true,
+      "result_line": "Last action: `qed.` -- EasyCrypt accepted the committed tactic.",
+      "lead_before_goal": false,
+      "proof_state_changed": true,
+      "source_refs": [
+        "last_result"
+      ]
+    },
+    "base_surface_updates": true,
+    "proof_state_changed": true,
+    "metadata": {
+      "contract": "SurfaceModel -> SurfaceTurnModel -> markdown/card",
+      "current_surface_hash": "dfbe7921d91af1ed086af9fd8b777a331d967a70",
+      "proof_surface_hash": "dfbe7921d91af1ed086af9fd8b777a331d967a70"
+    },
+    "surface_turn_hash": "182e3dc2a13ecd4b8abdd51c8de3a07e63f4cc22"
+  }
+}

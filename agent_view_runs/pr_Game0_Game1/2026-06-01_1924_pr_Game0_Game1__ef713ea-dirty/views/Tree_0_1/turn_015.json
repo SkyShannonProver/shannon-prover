@@ -1,0 +1,45 @@
+{
+  "last_result": {
+    "intent": "commit_tactic",
+    "payload": {
+      "tactic": "exact A_a2_ll."
+    },
+    "manager_action": "commit_tactic",
+    "result": "EasyCrypt accepted the committed tactic.",
+    "effect": "EasyCrypt accepted a proof-state change; the refreshed view is based on the new committed state.",
+    "proof_state": "The committed EasyCrypt proof state changed.",
+    "tactic": "exact A_a2_ll."
+  },
+  "current_goal": {
+    "lines": [
+      "Current goal (remaining: 5)",
+      "",
+      "Type variables: <none>",
+      "",
+      "&m: {}",
+      "------------------------------------------------------------------------",
+      "pre = !true /\\ arg{1} = arg{2} /\\ (Game1.r{2} \\in Log.qs{2})",
+      "",
+      "    Log(LRO).o ~ Log(LRO).o ",
+      "",
+      "post = true",
+      "[74|check]>"
+    ],
+    "text_fully_shown": true,
+    "truncated": false,
+    "goal_type": "equiv",
+    "view_focus": "relational_program",
+    "source": {
+      "label": "Parsed from EasyCrypt pretty goal text",
+      "ground_truth": false
+    }
+  },
+  "proof_status": {
+    "status": "open",
+    "remaining_goals": 5,
+    "remaining_goals_known": true,
+    "goal_type": "equiv",
+    "view_focus": "relational_program",
+    "current_layer": "prhl_module"
+  }
+}

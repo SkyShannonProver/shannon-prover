@@ -1,0 +1,22 @@
+{
+  "turn": 4,
+  "handled_intent": {
+    "intent": "lookup_symbol",
+    "payload": {
+      "symbol": "ROIN.RO_LRO_D"
+    }
+  },
+  "ok": true,
+  "manager_note": "Read-only context. Accepted/rejected tactic or call text inside a preview is route-selection information, not the current proof-state error.",
+  "manager_actions": [
+    {
+      "action": "symbol lookup",
+      "outcome": "The manager returned read-only context for the current goal.",
+      "timing": "1.4 s",
+      "content": {
+        "preview": "[WHERE-MISS] ROIN.RO_LRO_D not found. tried: ROIN.RO_LRO_D, MB.ROIN.RO_LRO_D, NonceCount.ROIN.RO_LRO_D, Poly_in.ROIN.RO_LRO_D, Poly_out.ROIN.RO_LRO_D, TPoly.ROIN.RO_LRO_D, Extra_block.ROIN.RO_LRO_D, Block.ROIN.RO_LRO_D, FiniteRO.ROIN.RO_LRO_D, Indist.ROIN.RO_LRO_D, OpCCinit.ROIN.RO_LRO_D, OpCCRO.ROIN.RO_LRO_D, CCA_UFCMA.ROIN.RO_LRO_D, Split0.ROIN.RO_LRO_D, SplitD.ROIN.RO_LRO_D, SplitC1.ROIN.RO_LRO_D, Split1.ROIN.RO_LRO_D, SplitC2.ROIN.RO_LRO_D, IPNonce.ROIN.RO_LRO_D, Byte.ROIN.RO_LRO_D, Key.ROIN.RO_LRO_D, Nonce.ROIN.RO_LRO_D, C.ROIN.RO_LRO_D, MB.I1.ROIN.RO_LRO_D, MB.I2.ROIN.RO_LRO_D, MB.RO.ROIN.RO_LRO_D, MB.RO_Pair.ROIN.RO_LRO_D, MB.ROF.ROIN.RO_LRO_D, MB.ROin.ROIN.RO_LRO_D, MB.ROout.ROIN.RO_LRO_D, NonceCount.I1.ROIN.RO_LRO_D hint: no declaration resolved in the current EasyCrypt context or source-scan fallback. Use a more exact qualified name, or ask the manager for `goal_info` / `lemma_hints` before trying to apply it."
+      }
+    }
+  ],
+  "view_refreshed": true
+}

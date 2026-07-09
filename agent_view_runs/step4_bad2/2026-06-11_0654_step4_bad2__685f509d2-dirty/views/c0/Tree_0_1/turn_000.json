@@ -1,0 +1,157 @@
+{
+  "last_result": {},
+  "current_goal": {
+    "goal_type": "probability",
+    "lines": [
+      "Current goal",
+      "",
+      "Type variables: <none>",
+      "",
+      "&m: {}",
+      "------------------------------------------------------------------------",
+      "Pr[UFCMA(RO).distinguish() @ &m : res \\/ UFCMA.bad2] <=",
+      "qdec%r * maxr pr_zeropol pr1_poly_out"
+    ],
+    "source": {
+      "ground_truth": false,
+      "label": "Parsed from EasyCrypt pretty goal text"
+    },
+    "text_fully_shown": true,
+    "truncated": false,
+    "view_focus": "probability"
+  },
+  "proof_status": {
+    "current_layer": "pr",
+    "goal_type": "probability",
+    "remaining_goals": 1,
+    "remaining_goals_known": true,
+    "status": "open",
+    "view_focus": "probability"
+  },
+  "candidate_moves": {
+    "moves": [
+      {
+        "applicability": "Use this as route-selection context; it is not a tactic to run as-is.",
+        "category": "strategy",
+        "source": "proof-state analysis",
+        "tactic_shape": "Probabilistic VC plan: bad-event reduction via have-chain, rewrite Pr/mu rules, real-order smt, byequiv/bad-event bridge"
+      },
+      {
+        "applicability": "Use this as route-selection context; it is not a tactic to run as-is.",
+        "category": "strategy",
+        "source": "proof-state analysis",
+        "tactic_shape": "rewrite pr_RO_split."
+      }
+    ]
+  },
+  "program_frontier": {
+    "authority": "proof-state analysis",
+    "focus": {
+      "has_pr_arithmetic_plan": false,
+      "has_pr_normal_form": false,
+      "has_pr_obligation_plan": true,
+      "native_ast_search_hits": 0,
+      "pr_rewrite_candidates": 5
+    },
+    "view_focus": "probability"
+  },
+  "facts_and_diagnostics": {
+    "fact_note": "Only current-frontier facts are shown here; the full proof context artifact keeps the compiler/internal details.",
+    "facts": {
+      "has_pr_arithmetic_plan": false,
+      "has_pr_normal_form": false,
+      "has_pr_obligation_plan": true,
+      "unfoldable_goal_head_count": 1,
+      "unfoldable_goal_heads": [
+        {
+          "declaration_kind": "op",
+          "name": "pr1_poly_out",
+          "smt_argument_role": "not_a_lemma_hint",
+          "unfold_tactic": "rewrite /pr1_poly_out.",
+          "unqualified_name": "pr1_poly_out"
+        }
+      ]
+    },
+    "notes": [
+      {
+        "message": "Some imported or cross-scope handles may need lookup if that route is being tested; use lookup_candidates for the concrete symbol instead of treating the whole list as a to-do queue.",
+        "severity": "info"
+      }
+    ]
+  },
+  "opener_focus": {
+    "reduce_with": [
+      "`byequiv (_: <pre> ==> <post>)` \u2014 reduce a single `Pr[...]` to a pRHL `equiv`",
+      "`byphoare (_: <pre> ==> <post>)` \u2014 reduce a single `Pr[...]` to a `phoare` bound"
+    ],
+    "unfoldable_heads": [
+      "`rewrite /pr1_poly_out.` (unfolds `pr1_poly_out`)"
+    ],
+    "yours": "which reduction form fits this goal's Pr shape, the pre/post, the numeric bound."
+  },
+  "inspect_lookup_handles": {
+    "ask_manager_for": [
+      {
+        "intent": "inspect_context",
+        "payload": {
+          "topic": "goal_info"
+        },
+        "returns": "manager-provided read-only context for this proof route",
+        "use_when": "No fresh recommendation is available; parse the current goal."
+      },
+      {
+        "intent": "inspect_context",
+        "payload": {
+          "topic": "pr_bridge_routes"
+        },
+        "returns": "daemon-verified, committable Pr bridge routes with manager-owned intent payloads",
+        "use_when": "Current Pr equality may need a manager-verified bridge route (game-hop or scheme/endpoint normalization) before direct byequiv/proc lowering."
+      },
+      {
+        "intent": "inspect_context",
+        "payload": {
+          "topic": "equiv_bridge_lemmas"
+        },
+        "returns": "context-only equiv bridge lemma candidates (names to look up/apply); not a verified Pr route",
+        "use_when": "Need pRHL/procedure-equivalence bridge lemma names or context after checking pr_bridge_routes."
+      },
+      {
+        "intent": "inspect_context",
+        "payload": {
+          "topic": "lemma_hints"
+        },
+        "returns": "nearby lemma hints and proof-route context",
+        "use_when": "Need local lemma hints before choosing a Pr-level proof route."
+      },
+      {
+        "intent": "inspect_context",
+        "payload": {
+          "name": "while",
+          "topic": "tactic_forms"
+        },
+        "returns": "valid `while` forms and common traps",
+        "use_when": "Need exact byphoare/phoare-loop tactic syntax before choosing the probability route."
+      }
+    ],
+    "effect": "All handles here are read-only manager requests; the committed EasyCrypt proof state stays unchanged.",
+    "lookup_candidates": [
+      {
+        "symbol": "step4_1",
+        "use_when": "Resolve exact signature for `step4_1` only when this handle route is being tested."
+      },
+      {
+        "symbol": "step4_bad1",
+        "use_when": "Resolve exact signature for `step4_bad1` only when this handle route is being tested."
+      },
+      {
+        "symbol": "step4_bad1_lbad1",
+        "use_when": "Resolve exact signature for `step4_bad1_lbad1` only when this handle route is being tested."
+      },
+      {
+        "symbol": "pr_RO_split",
+        "use_when": "Resolve exact signature for `pr_RO_split` only when this handle route is being tested."
+      }
+    ],
+    "manager_note": "Some requests may ask EasyCrypt or name resolution; wait for the manager result before choosing the next proof intent."
+  }
+}

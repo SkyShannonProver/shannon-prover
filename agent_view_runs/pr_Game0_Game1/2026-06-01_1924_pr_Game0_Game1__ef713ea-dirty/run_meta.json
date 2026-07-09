@@ -1,0 +1,90 @@
+{
+  "kind": "agent_view_run_report",
+  "timestamp": "2026-06-01_1924_pr_Game0_Game1",
+  "lemma": "pr_Game0_Game1",
+  "source_file": "eval/examples/br93.ec",
+  "model": "claude-opus-4-6",
+  "surface_profile": "l1_goal_projection",
+  "trees": 4,
+  "eval_mode": true,
+  "outcome": "incomplete (timeout/open)",
+  "committed_proofs": [
+    {
+      "tree": "Tree_0_0",
+      "tactics": [
+        "byequiv (_ : ={glob A, glob LRO, glob Log} ==> !(Game1.r \\in Log.qs){2} => ={res}) : (Game1.r \\in Log.qs) => //.",
+        "byequiv (_ : ={glob A, glob LRO, glob Log} ==> !(Game1.r \\in Log.qs){2} => ={res}) : (Game1.r \\in Log.qs).",
+        "have h : Pr[BR93_CPA(A).main() @ &m : res] <= Pr[Game1.main() @ &m : res \\/ Game1.r \\in Log.qs].",
+        "byequiv (_ : ={glob A, glob LRO, glob Log} ==> res{1} => (res{2} \\/ (Game1.r{2} \\in Log.qs{2}))).",
+        "proc.",
+        "inline{1} BR93(LRO).keygen; inline{1} BR93(LRO).enc.",
+        "inline{1} LRO.o.",
+        "seq 5 4 : (={glob A, glob LRO, glob Log, pk, sk, m0, m1, b}).",
+        "sim.",
+        "call (_ : true); auto.",
+        "inline *; wp; rnd; auto.",
+        "call (_ : ={Log.qs} /\\ eq_except (pred1 Game1.r{2}) LRO.m{1} LRO.m{2})."
+      ],
+      "proved": false
+    },
+    {
+      "tree": "Tree_0_1",
+      "tactics": [
+        "byequiv (_ : ={glob A, glob LRO} ==> ={res} \\/ (Game1.r \\in Log.qs){2}) => //.",
+        "proc.",
+        "inline BR93(LRO).keygen BR93(LRO).enc.",
+        "call (_: eq_except (pred1 Game1.r{2}) LRO.m{1} LRO.m{2} /\\ ={Log.qs}, Game1.r{2} \\in Log.qs{2}).",
+        "call (_: ={glob Log, glob LRO}).",
+        "call (_: true, (Game1.r \\in Log.qs){2}).",
+        "call (_: (={Log.qs}) /\\ (forall x, x <> Game1.r{2} => LRO.m{1}.[x] = LRO.m{2}.[x]), (Game1.r \\in Log.qs){2}).",
+        "call (_: ={Log.qs, LRO.m}, (Game1.r \\in Log.qs){2}).",
+        "call (_: (={Log.qs, LRO.m}), ((Game1.r \\in Log.qs){2})).",
+        "call (_: ={Log.qs}, (Game1.r \\in Log.qs){2}).",
+        "call (_: true, (Game1.r \\in Log.qs){2}).",
+        "exact A_a2_ll.",
+        "by exfalso.",
+        "by move=> _; proc; call (LRO_o_ll _); auto=> /=; apply dptxt_ll.",
+        "by move=> _; proc; call (LRO_o_ll _); auto=> /=; apply dptxt_ll.",
+        "proc; inline BR93(LRO).keygen BR93(LRO).enc.",
+        "call (_: Log.qs{1} = Log.qs{2}, (Game1.r \\in Log.qs){2}).",
+        "byequiv (_ : ={glob A, glob LRO} ==> !(Game1.r{2} \\in Log.qs{2}) => ={res}) : (Game1.r \\in Log.qs) => //."
+      ],
+      "proved": false
+    },
+    {
+      "tree": "Tree_0_1_0",
+      "tactics": [
+        "inline{1} LRO.o.",
+        "seq 7 4 : (={glob A, Log.qs, LRO.m, b, pk, sk, m0, m1} /\\ pk0{1} = pk{1} /\\ m{1} = (if b{1} then m0{1} else m1{1})).",
+        "wp.",
+        "rnd.",
+        "call (_: ={Log.qs, LRO.m}).",
+        "by proc; inline*; auto.",
+        "inline*; wp; rnd; skip; auto.",
+        "inline*.",
+        "wp.",
+        "rnd.",
+        "skip; progress.",
+        "wp; skip; progress.",
+        "call (_: ={Log.qs, LRO.m}, (Game1.r \\in Log.qs){2})."
+      ],
+      "proved": false
+    },
+    {
+      "tree": "Tree_0_1_1",
+      "tactics": [
+        "seq 5 4: (={glob A, glob LRO, glob Log, pk, sk, m0, m1, b}).",
+        "rnd.",
+        "call (_: ={glob LRO, glob Log})."
+      ],
+      "proved": false
+    }
+  ],
+  "turn_count": 55,
+  "views_copied": 59,
+  "run_iteration_dir": "artifacts/eval_suite/l1_l4_surface_ablation/l1_goal_projection/pr_game0_game1_synth/r01/2026-06-01_1924_pr_Game0_Game1/iteration_1",
+  "commit": "ef713ea",
+  "commit_full": "ef713ea8c34c5bb62c55b40e519465a9e1987406",
+  "branch": "ablation/l1-l4-surface",
+  "dirty": true
+}

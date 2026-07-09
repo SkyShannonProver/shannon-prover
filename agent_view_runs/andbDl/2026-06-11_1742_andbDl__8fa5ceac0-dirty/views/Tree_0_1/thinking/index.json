@@ -1,0 +1,89 @@
+{
+  "node": "Tree-0.1",
+  "discovery": "recorded_session_id",
+  "transcripts": [
+    "~/.claude/projects/<PROJECT>/27d2ca88-150d-455e-a5dd-9984484c0677.jsonl"
+  ],
+  "turns": [
+    {
+      "turn": 1,
+      "intent": "commit_tactic",
+      "payload_key": "by move=> [] [] [].",
+      "thinking_chars": 0,
+      "text_chars": 224,
+      "tokens": {
+        "output_tokens": 1441,
+        "input_tokens": 3,
+        "cache_read_input_tokens": 45558,
+        "cache_creation_input_tokens": 17193
+      },
+      "session_id": "27d2ca88-150d-455e-a5dd-9984484c0677",
+      "timestamp": "2026-06-12T00:43:05.792Z",
+      "file": "thinking/turn_001.md"
+    },
+    {
+      "turn": 2,
+      "intent": "commit_tactic",
+      "payload_key": "rewrite /left_distributive.",
+      "thinking_chars": 0,
+      "text_chars": 0,
+      "tokens": {
+        "output_tokens": 326,
+        "input_tokens": 2,
+        "cache_read_input_tokens": 31724,
+        "cache_creation_input_tokens": 2163
+      },
+      "session_id": "27d2ca88-150d-455e-a5dd-9984484c0677",
+      "timestamp": "2026-06-12T00:43:18.073Z",
+      "file": ""
+    },
+    {
+      "turn": 3,
+      "intent": "commit_tactic",
+      "payload_key": "by move=> x y z; apply/blockP=> i ge0_gti_n; rewrite !(andbE, xorbE) // andwDl.",
+      "thinking_chars": 0,
+      "text_chars": 149,
+      "tokens": {
+        "output_tokens": 2263,
+        "input_tokens": 6,
+        "cache_read_input_tokens": 105500,
+        "cache_creation_input_tokens": 4231
+      },
+      "session_id": "27d2ca88-150d-455e-a5dd-9984484c0677",
+      "timestamp": "2026-06-12T00:43:59.233Z",
+      "file": "thinking/turn_003.md"
+    },
+    {
+      "turn": 4,
+      "intent": "commit_tactic",
+      "payload_key": "qed.",
+      "thinking_chars": 0,
+      "text_chars": 52,
+      "tokens": {
+        "output_tokens": 134,
+        "input_tokens": 2,
+        "cache_read_input_tokens": 38118,
+        "cache_creation_input_tokens": 2257
+      },
+      "session_id": "27d2ca88-150d-455e-a5dd-9984484c0677",
+      "timestamp": "2026-06-12T00:44:05.793Z",
+      "file": "thinking/turn_004.md"
+    },
+    {
+      "turn": 5,
+      "intent": "finish",
+      "payload_key": "",
+      "thinking_chars": 0,
+      "text_chars": 67,
+      "tokens": {
+        "output_tokens": 138,
+        "input_tokens": 2,
+        "cache_read_input_tokens": 40375,
+        "cache_creation_input_tokens": 1136
+      },
+      "session_id": "27d2ca88-150d-455e-a5dd-9984484c0677",
+      "timestamp": "2026-06-12T00:44:12.911Z",
+      "file": "thinking/turn_005.md"
+    }
+  ]
+}

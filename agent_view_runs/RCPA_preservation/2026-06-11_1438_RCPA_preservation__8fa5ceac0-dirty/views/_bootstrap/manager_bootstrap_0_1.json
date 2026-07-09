@@ -1,0 +1,182 @@
+{
+  "file": "artifacts/eval_suite/mee_renamed3_fable_l1/l1_goal_projection/mee_RCPA_preservation/r01/source/MEE-CBC/RCPA_CMA.ec",
+  "include_dirs": [
+    "artifacts/eval_suite/mee_renamed3_fable_l1/l1_goal_projection/mee_RCPA_preservation/r01/source/MEE-CBC",
+    "easycrypt-src/theories"
+  ],
+  "kind": "manager_session_bootstrap",
+  "lemma": "RCPA_preservation",
+  "manager_actions": [
+    {
+      "agent_observation": {
+        "effect": "This manager intent does not change the EasyCrypt proof state.",
+        "manager_action": "start",
+        "result": "The manager completed this proof-level request."
+      },
+      "argv": [
+        ".venv/bin/python3",
+        "core/easycrypt/session_cli.py",
+        "-d",
+        ".ec_session_prover_tree_0_1",
+        "-start",
+        "-f",
+        "artifacts/eval_suite/mee_renamed3_fable_l1/l1_goal_projection/mee_RCPA_preservation/r01/source/MEE-CBC/RCPA_CMA.ec",
+        "-I",
+        "artifacts/eval_suite/mee_renamed3_fable_l1/l1_goal_projection/mee_RCPA_preservation/r01/source/MEE-CBC",
+        "-I",
+        "easycrypt-src/theories",
+        "-lemma",
+        "RCPA_preservation"
+      ],
+      "duration_ms": 2233,
+      "exit_code": 0,
+      "label": "start",
+      "mutates_proof_state": true,
+      "stderr_chars": 0,
+      "stderr_preview": "",
+      "stdout_chars": 5684,
+      "stdout_has_workspace_view": true,
+      "stdout_lines": 147
+    },
+    {
+      "agent_observation": {
+        "effect": "This manager intent does not change the EasyCrypt proof state.",
+        "manager_action": "agent_view",
+        "result": "The manager completed this proof-level request."
+      },
+      "argv": [
+        ".venv/bin/python3",
+        "core/easycrypt/session_cli.py",
+        "-d",
+        ".ec_session_prover_tree_0_1",
+        "-agent-view"
+      ],
+      "duration_ms": 108,
+      "exit_code": 0,
+      "label": "agent_view",
+      "mutates_proof_state": false,
+      "stderr_chars": 0,
+      "stderr_preview": "",
+      "stdout_chars": 5569,
+      "stdout_has_workspace_view": true,
+      "stdout_lines": 142
+    }
+  ],
+  "node": "Tree-0.1",
+  "replay_prefix": [],
+  "replay_prefix_count": 0,
+  "replay_prefix_requested_count": 0,
+  "schema_version": 2,
+  "session_dir": ".ec_session_prover_tree_0_1",
+  "session_tag": "prover_tree_0_1",
+  "snapshot": {
+    "execution_refs": {
+      "manager_action_count": 2,
+      "manager_actions": [
+        {
+          "agent_observation": {
+            "effect": "This manager intent does not change the EasyCrypt proof state.",
+            "manager_action": "start",
+            "result": "The manager completed this proof-level request."
+          },
+          "argv": [
+            ".venv/bin/python3",
+            "core/easycrypt/session_cli.py",
+            "-d",
+            ".ec_session_prover_tree_0_1",
+            "-start",
+            "-f",
+            "artifacts/eval_suite/mee_renamed3_fable_l1/l1_goal_projection/mee_RCPA_preservation/r01/source/MEE-CBC/RCPA_CMA.ec",
+            "-I",
+            "artifacts/eval_suite/mee_renamed3_fable_l1/l1_goal_projection/mee_RCPA_preservation/r01/source/MEE-CBC",
+            "-I",
+            "easycrypt-src/theories",
+            "-lemma",
+            "RCPA_preservation"
+          ],
+          "duration_ms": 2233,
+          "exit_code": 0,
+          "label": "start",
+          "mutates_proof_state": true,
+          "stderr_chars": 0,
+          "stderr_preview": "",
+          "stdout_chars": 5684,
+          "stdout_has_workspace_view": true,
+          "stdout_lines": 147
+        },
+        {
+          "agent_observation": {
+            "effect": "This manager intent does not change the EasyCrypt proof state.",
+            "manager_action": "agent_view",
+            "result": "The manager completed this proof-level request."
+          },
+          "argv": [
+            ".venv/bin/python3",
+            "core/easycrypt/session_cli.py",
+            "-d",
+            ".ec_session_prover_tree_0_1",
+            "-agent-view"
+          ],
+          "duration_ms": 108,
+          "exit_code": 0,
+          "label": "agent_view",
+          "mutates_proof_state": false,
+          "stderr_chars": 0,
+          "stderr_preview": "",
+          "stdout_chars": 5569,
+          "stdout_has_workspace_view": true,
+          "stdout_lines": 142
+        }
+      ]
+    },
+    "goal_hash": "284ed436d03c55dcce5f0f0a949149594c4d3b9b",
+    "node_id": "Tree-0.1",
+    "proof_context_view_artifact": "",
+    "session_dir": ".ec_session_prover_tree_0_1",
+    "session_epoch": 1,
+    "session_tag": "prover_tree_0_1",
+    "state_version": 1,
+    "workspace_view_artifact": ""
+  },
+  "workspace_view": {
+    "current_goal": {
+      "goal_type": "probability",
+      "lines": [
+        "Current goal",
+        "",
+        "Type variables: <none>",
+        "",
+        "E : SKEa.Enc_Scheme{-SKEa.RCPA.RCPA_Wrap, -RCPA_Wrap, -RCPAa}",
+        "M : MACa.MAC_Scheme{-SKEa.RCPA.RCPA_Wrap, -RCPA_Wrap, -RCPAa, -E}",
+        "A(O : RCPA_Oracles) : RCPA_Adversary{-SKEa.RCPA.RCPA_Wrap, -RCPA_Wrap, -RCPAa, -E, -M}",
+        "&m: {}",
+        "------------------------------------------------------------------------",
+        "islossless M.keygen =>",
+        "islossless M.tag =>",
+        "`|Pr[INDR_CPA(MacThenEncrypt(E, M), A).main() @ &m : res] -",
+        "  Pr[INDR_CPA(Ideal, A).main() @ &m : res]| =",
+        "`|Pr[SKEa.RCPA.INDR_CPA(E, RCPAa(M, A)).main() @ &m : res] -",
+        "  Pr[SKEa.RCPA.INDR_CPA(SKEa.RCPA.Ideal, RCPAa(M, A)).main() @ &m : res]|"
+      ],
+      "source": {
+        "ground_truth": false,
+        "label": "Parsed from EasyCrypt pretty goal text"
+      },
+      "text_fully_shown": true,
+      "truncated": false,
+      "view_focus": "probability"
+    },
+    "kind": "prover_workspace_view",
+    "last_result": {},
+    "proof_status": {
+      "current_layer": "pr",
+      "goal_type": "probability",
+      "remaining_goals": 1,
+      "remaining_goals_known": true,
+      "status": "open",
+      "view_focus": "probability"
+    },
+    "schema_version": 2,
+    "view_hash": "de579b093db01a80aac9e80edac712c2cbf4ceec"
+  }
+}

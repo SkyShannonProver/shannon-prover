@@ -1,0 +1,449 @@
+{
+  "node": "Tree-0.1",
+  "discovery": "recorded_session_id",
+  "transcripts": [
+    "~/.claude/projects/<PROJECT>--worktrees-eval-suite-48/794a61bb-7f1e-4330-b53e-4ab039bb259a.jsonl"
+  ],
+  "turns": [
+    {
+      "turn": 1,
+      "intent": "inspect_context",
+      "payload_key": "pr_bridge_routes",
+      "thinking_chars": 0,
+      "text_chars": 174,
+      "session_id": "794a61bb-7f1e-4330-b53e-4ab039bb259a",
+      "timestamp": "2026-06-04T08:33:54.977Z",
+      "file": "thinking/turn_001.md"
+    },
+    {
+      "turn": 2,
+      "intent": "inspect_context",
+      "payload_key": "proof_map",
+      "thinking_chars": 0,
+      "text_chars": 180,
+      "session_id": "794a61bb-7f1e-4330-b53e-4ab039bb259a",
+      "timestamp": "2026-06-04T08:34:28.129Z",
+      "file": "thinking/turn_002.md"
+    },
+    {
+      "turn": 3,
+      "intent": "inspect_context",
+      "payload_key": "equiv_bridge_lemmas",
+      "thinking_chars": 0,
+      "text_chars": 0,
+      "session_id": "794a61bb-7f1e-4330-b53e-4ab039bb259a",
+      "timestamp": "2026-06-04T08:34:42.161Z",
+      "file": ""
+    },
+    {
+      "turn": 4,
+      "intent": "probe_tactic",
+      "payload_key": "congr.",
+      "thinking_chars": 0,
+      "text_chars": 689,
+      "session_id": "794a61bb-7f1e-4330-b53e-4ab039bb259a",
+      "timestamp": "2026-06-04T08:40:55.457Z",
+      "file": "thinking/turn_004.md"
+    },
+    {
+      "turn": 5,
+      "intent": "commit_tactic",
+      "payload_key": "congr.",
+      "thinking_chars": 0,
+      "text_chars": 217,
+      "session_id": "794a61bb-7f1e-4330-b53e-4ab039bb259a",
+      "timestamp": "2026-06-04T08:41:07.885Z",
+      "file": "thinking/turn_005.md"
+    },
+    {
+      "turn": 6,
+      "intent": "probe_tactic",
+      "payload_key": "have -> : Pr[CPA_game(CCA_CPA_Adv(A), RealOrcls(GenChaChaPoly(CCRO(FinRO)))).main() @ &m : res] = Pr[MainD(G4(A), FinRO).distinguish() @ &m : res] by byequiv => //; proc; inline *; sim.",
+      "thinking_chars": 0,
+      "text_chars": 79,
+      "session_id": "794a61bb-7f1e-4330-b53e-4ab039bb259a",
+      "timestamp": "2026-06-04T08:41:42.507Z",
+      "file": "thinking/turn_006.md"
+    },
+    {
+      "turn": 7,
+      "intent": "commit_tactic",
+      "payload_key": "have -> : Pr[CPA_game(CCA_CPA_Adv(A), RealOrcls(GenChaChaPoly(CCRO(FinRO)))).main() @ &m : res] = Pr[MainD(G4(A), FinRO).distinguish() @ &m : res] by byequiv => //; proc; inline *; sim.",
+      "thinking_chars": 0,
+      "text_chars": 106,
+      "session_id": "794a61bb-7f1e-4330-b53e-4ab039bb259a",
+      "timestamp": "2026-06-04T08:41:57.073Z",
+      "file": "thinking/turn_007.md"
+    },
+    {
+      "turn": 8,
+      "intent": "lookup_symbol",
+      "payload_key": "SplitC2.pr_RO_split",
+      "thinking_chars": 0,
+      "text_chars": 117,
+      "session_id": "794a61bb-7f1e-4330-b53e-4ab039bb259a",
+      "timestamp": "2026-06-04T08:42:05.736Z",
+      "file": "thinking/turn_008.md"
+    },
+    {
+      "turn": 9,
+      "intent": "lookup_symbol",
+      "payload_key": "SplitC1.pr_RO_split",
+      "thinking_chars": 0,
+      "text_chars": 222,
+      "session_id": "794a61bb-7f1e-4330-b53e-4ab039bb259a",
+      "timestamp": "2026-06-04T08:42:56.984Z",
+      "file": "thinking/turn_009.md"
+    },
+    {
+      "turn": 10,
+      "intent": "lookup_symbol",
+      "payload_key": "SplitD.pr_RO_split",
+      "thinking_chars": 0,
+      "text_chars": 0,
+      "session_id": "794a61bb-7f1e-4330-b53e-4ab039bb259a",
+      "timestamp": "2026-06-04T08:43:03.381Z",
+      "file": ""
+    },
+    {
+      "turn": 11,
+      "intent": "lookup_symbol",
+      "payload_key": "pr_RO_FinRO_D",
+      "thinking_chars": 0,
+      "text_chars": 0,
+      "session_id": "794a61bb-7f1e-4330-b53e-4ab039bb259a",
+      "timestamp": "2026-06-04T08:43:15.049Z",
+      "file": ""
+    },
+    {
+      "turn": 12,
+      "intent": "probe_tactic",
+      "payload_key": "rewrite -(SplitC2.pr_RO_split (G8 A)).",
+      "thinking_chars": 0,
+      "text_chars": 195,
+      "session_id": "794a61bb-7f1e-4330-b53e-4ab039bb259a",
+      "timestamp": "2026-06-04T08:44:44.626Z",
+      "file": "thinking/turn_012.md"
+    },
+    {
+      "turn": 13,
+      "intent": "probe_tactic",
+      "payload_key": "rewrite -(SplitC2.pr_RO_split (G8(A))).",
+      "thinking_chars": 0,
+      "text_chars": 62,
+      "session_id": "794a61bb-7f1e-4330-b53e-4ab039bb259a",
+      "timestamp": "2026-06-04T08:45:01.731Z",
+      "file": "thinking/turn_013.md"
+    },
+    {
+      "turn": 14,
+      "intent": "probe_tactic",
+      "payload_key": "rewrite -(SplitC2.pr_RO_split (G8(A)) (fun _ b => b) &m ()).",
+      "thinking_chars": 0,
+      "text_chars": 127,
+      "session_id": "794a61bb-7f1e-4330-b53e-4ab039bb259a",
+      "timestamp": "2026-06-04T08:45:19.727Z",
+      "file": "thinking/turn_014.md"
+    },
+    {
+      "turn": 15,
+      "intent": "probe_tactic",
+      "payload_key": "rewrite -(SplitC2.pr_RO_split (G8(A)) (fun _ b => b) &m ()) /=.",
+      "thinking_chars": 0,
+      "text_chars": 167,
+      "session_id": "794a61bb-7f1e-4330-b53e-4ab039bb259a",
+      "timestamp": "2026-06-04T08:46:34.676Z",
+      "file": "thinking/turn_015.md"
+    },
+    {
+      "turn": 16,
+      "intent": "commit_tactic",
+      "payload_key": "rewrite -(SplitC2.pr_RO_split (G8(A)) (fun _ b => b) &m ()) /=.",
+      "thinking_chars": 0,
+      "text_chars": 75,
+      "session_id": "794a61bb-7f1e-4330-b53e-4ab039bb259a",
+      "timestamp": "2026-06-04T08:47:16.135Z",
+      "file": "thinking/turn_016.md"
+    },
+    {
+      "turn": 17,
+      "intent": "probe_tactic",
+      "payload_key": "have -> : Pr[Split1.IdealAll.MainD(G8(A), Split1.IdealAll.RO).distinguish() @ &m : res] = Pr[Split0.IdealAll.MainD(G6(A), SplitC1.RO_Pair(SplitC1.I1.RO, SplitC1.I2.RO)).distinguish() @ &m : res] by byequiv => //; proc; inline *; sim.",
+      "thinking_chars": 0,
+      "text_chars": 206,
+      "session_id": "794a61bb-7f1e-4330-b53e-4ab039bb259a",
+      "timestamp": "2026-06-04T08:48:00.884Z",
+      "file": "thinking/turn_017.md"
+    },
+    {
+      "turn": 18,
+      "intent": "commit_tactic",
+      "payload_key": "have -> : Pr[Split1.IdealAll.MainD(G8(A), Split1.IdealAll.RO).distinguish() @ &m : res] = Pr[Split0.IdealAll.MainD(G6(A), SplitC1.RO_Pair(SplitC1.I1.RO, SplitC1.I2.RO)).distinguish() @ &m : res] by byequiv => //; proc; inline *; sim.",
+      "thinking_chars": 0,
+      "text_chars": 153,
+      "session_id": "794a61bb-7f1e-4330-b53e-4ab039bb259a",
+      "timestamp": "2026-06-04T08:48:15.571Z",
+      "file": "thinking/turn_018.md"
+    },
+    {
+      "turn": 19,
+      "intent": "probe_tactic",
+      "payload_key": "rewrite -(SplitC1.pr_RO_split (G6(A)) (fun _ b => b) &m ()) /=.",
+      "thinking_chars": 0,
+      "text_chars": 75,
+      "session_id": "794a61bb-7f1e-4330-b53e-4ab039bb259a",
+      "timestamp": "2026-06-04T08:48:21.638Z",
+      "file": "thinking/turn_019.md"
+    },
+    {
+      "turn": 20,
+      "intent": "commit_tactic",
+      "payload_key": "rewrite -(SplitC1.pr_RO_split (G6(A)) (fun _ b => b) &m ()) /=.",
+      "thinking_chars": 0,
+      "text_chars": 80,
+      "session_id": "794a61bb-7f1e-4330-b53e-4ab039bb259a",
+      "timestamp": "2026-06-04T08:48:48.889Z",
+      "file": "thinking/turn_020.md"
+    },
+    {
+      "turn": 21,
+      "intent": "probe_tactic",
+      "payload_key": "have -> : Pr[Split0.IdealAll.MainD(G6(A), Split0.IdealAll.RO).distinguish() @ &m : res] = Pr[Split0.IdealAll.MainD(G4(A), SplitD.RO_DOM(SplitD.ROT.RO, SplitD.ROF.RO)).distinguish() @ &m : res] by byequiv => //; proc; inline *; sim.",
+      "thinking_chars": 0,
+      "text_chars": 124,
+      "session_id": "794a61bb-7f1e-4330-b53e-4ab039bb259a",
+      "timestamp": "2026-06-04T08:49:02.173Z",
+      "file": "thinking/turn_021.md"
+    },
+    {
+      "turn": 22,
+      "intent": "commit_tactic",
+      "payload_key": "have -> : Pr[Split0.IdealAll.MainD(G6(A), Split0.IdealAll.RO).distinguish() @ &m : res] = Pr[Split0.IdealAll.MainD(G4(A), SplitD.RO_DOM(SplitD.ROT.RO, SplitD.ROF.RO)).distinguish() @ &m : res] by byequiv => //; proc; inline *; sim.",
+      "thinking_chars": 0,
+      "text_chars": 85,
+      "session_id": "794a61bb-7f1e-4330-b53e-4ab039bb259a",
+      "timestamp": "2026-06-04T08:49:13.882Z",
+      "file": "thinking/turn_022.md"
+    },
+    {
+      "turn": 23,
+      "intent": "probe_tactic",
+      "payload_key": "rewrite -(SplitD.pr_RO_split (G4(A)) (fun _ b => b) &m ()) /=.",
+      "thinking_chars": 0,
+      "text_chars": 66,
+      "session_id": "794a61bb-7f1e-4330-b53e-4ab039bb259a",
+      "timestamp": "2026-06-04T08:49:19.140Z",
+      "file": "thinking/turn_023.md"
+    },
+    {
+      "turn": 24,
+      "intent": "commit_tactic",
+      "payload_key": "rewrite -(SplitD.pr_RO_split (G4(A)) (fun _ b => b) &m ()) /=.",
+      "thinking_chars": 0,
+      "text_chars": 94,
+      "session_id": "794a61bb-7f1e-4330-b53e-4ab039bb259a",
+      "timestamp": "2026-06-04T08:49:31.885Z",
+      "file": "thinking/turn_024.md"
+    },
+    {
+      "turn": 25,
+      "intent": "probe_tactic",
+      "payload_key": "rewrite -(FiniteRO.pr_RO_FinRO_D (fun _ => Block.dblock_ll) (G4(A)) &m () (fun b => b)) /=.",
+      "thinking_chars": 0,
+      "text_chars": 121,
+      "session_id": "794a61bb-7f1e-4330-b53e-4ab039bb259a",
+      "timestamp": "2026-06-04T08:50:07.085Z",
+      "file": "thinking/turn_025.md"
+    },
+    {
+      "turn": 26,
+      "intent": "probe_tactic",
+      "payload_key": "have Hll : forall (_ : nonce * C.counter), is_lossless dblock by move=> ?; exact Block.dblock_ll.",
+      "thinking_chars": 0,
+      "text_chars": 131,
+      "session_id": "794a61bb-7f1e-4330-b53e-4ab039bb259a",
+      "timestamp": "2026-06-04T08:51:18.971Z",
+      "file": "thinking/turn_026.md"
+    },
+    {
+      "turn": 27,
+      "intent": "probe_tactic",
+      "payload_key": "have Hll : forall (x : nonce * C.counter), is_lossless dblock by move=> ?; exact Block.dblock_ll.",
+      "thinking_chars": 0,
+      "text_chars": 73,
+      "session_id": "794a61bb-7f1e-4330-b53e-4ab039bb259a",
+      "timestamp": "2026-06-04T08:51:24.754Z",
+      "file": "thinking/turn_027.md"
+    },
+    {
+      "turn": 28,
+      "intent": "commit_tactic",
+      "payload_key": "have Hll : forall (x : nonce * C.counter), is_lossless dblock by move=> ?; exact Block.dblock_ll.",
+      "thinking_chars": 0,
+      "text_chars": 30,
+      "session_id": "794a61bb-7f1e-4330-b53e-4ab039bb259a",
+      "timestamp": "2026-06-04T08:51:32.469Z",
+      "file": "thinking/turn_028.md"
+    },
+    {
+      "turn": 29,
+      "intent": "probe_tactic",
+      "payload_key": "rewrite -(FiniteRO.pr_RO_FinRO_D Hll (G4(A)) &m () (fun b => b)) /=.",
+      "thinking_chars": 0,
+      "text_chars": 61,
+      "session_id": "794a61bb-7f1e-4330-b53e-4ab039bb259a",
+      "timestamp": "2026-06-04T08:51:38.759Z",
+      "file": "thinking/turn_029.md"
+    },
+    {
+      "turn": 30,
+      "intent": "commit_tactic",
+      "payload_key": "rewrite -(FiniteRO.pr_RO_FinRO_D Hll (G4(A)) &m () (fun b => b)) /=.",
+      "thinking_chars": 0,
+      "text_chars": 99,
+      "session_id": "794a61bb-7f1e-4330-b53e-4ab039bb259a",
+      "timestamp": "2026-06-04T08:51:52.080Z",
+      "file": "thinking/turn_030.md"
+    },
+    {
+      "turn": 31,
+      "intent": "probe_tactic",
+      "payload_key": "byequiv => //; proc; inline *; sim.",
+      "thinking_chars": 0,
+      "text_chars": 85,
+      "session_id": "794a61bb-7f1e-4330-b53e-4ab039bb259a",
+      "timestamp": "2026-06-04T08:51:58.334Z",
+      "file": "thinking/turn_031.md"
+    },
+    {
+      "turn": 32,
+      "intent": "commit_tactic",
+      "payload_key": "byequiv => //; proc; inline *; sim.",
+      "thinking_chars": 0,
+      "text_chars": 157,
+      "session_id": "794a61bb-7f1e-4330-b53e-4ab039bb259a",
+      "timestamp": "2026-06-04T08:52:31.189Z",
+      "file": "thinking/turn_032.md"
+    },
+    {
+      "turn": 33,
+      "intent": "probe_tactic",
+      "payload_key": "have -> : Pr[UFCMA_poly(A, FinRO).main() @ &m : res] = Pr[MainD(G5(A), FinRO).distinguish() @ &m : res] by byequiv => //; proc; inline *; sim.",
+      "thinking_chars": 0,
+      "text_chars": 111,
+      "session_id": "794a61bb-7f1e-4330-b53e-4ab039bb259a",
+      "timestamp": "2026-06-04T08:52:40.099Z",
+      "file": "thinking/turn_033.md"
+    },
+    {
+      "turn": 34,
+      "intent": "commit_tactic",
+      "payload_key": "have -> : Pr[UFCMA_poly(A, FinRO).main() @ &m : res] = Pr[MainD(G5(A), FinRO).distinguish() @ &m : res] by byequiv => //; proc; inline *; sim.",
+      "thinking_chars": 0,
+      "text_chars": 179,
+      "session_id": "794a61bb-7f1e-4330-b53e-4ab039bb259a",
+      "timestamp": "2026-06-04T08:52:53.208Z",
+      "file": "thinking/turn_034.md"
+    },
+    {
+      "turn": 35,
+      "intent": "commit_tactic",
+      "payload_key": "rewrite -(SplitC2.pr_RO_split (G9(A)) (fun _ b => b) &m ()) /=.",
+      "thinking_chars": 0,
+      "text_chars": 40,
+      "session_id": "794a61bb-7f1e-4330-b53e-4ab039bb259a",
+      "timestamp": "2026-06-04T08:53:00.097Z",
+      "file": "thinking/turn_035.md"
+    },
+    {
+      "turn": 36,
+      "intent": "commit_tactic",
+      "payload_key": "have -> : Pr[Split1.IdealAll.MainD(G9(A), Split1.IdealAll.RO).distinguish() @ &m : res] = Pr[Split0.IdealAll.MainD(G7(A), SplitC1.RO_Pair(SplitC1.I1.RO, SplitC1.I2.RO)).distinguish() @ &m : res] by byequiv => //; proc; inline *; sim.",
+      "thinking_chars": 0,
+      "text_chars": 39,
+      "session_id": "794a61bb-7f1e-4330-b53e-4ab039bb259a",
+      "timestamp": "2026-06-04T08:53:08.534Z",
+      "file": "thinking/turn_036.md"
+    },
+    {
+      "turn": 37,
+      "intent": "commit_tactic",
+      "payload_key": "rewrite -(SplitC1.pr_RO_split (G7(A)) (fun _ b => b) &m ()) /=.",
+      "thinking_chars": 0,
+      "text_chars": 31,
+      "session_id": "794a61bb-7f1e-4330-b53e-4ab039bb259a",
+      "timestamp": "2026-06-04T08:53:13.447Z",
+      "file": "thinking/turn_037.md"
+    },
+    {
+      "turn": 38,
+      "intent": "commit_tactic",
+      "payload_key": "have -> : Pr[Split0.IdealAll.MainD(G7(A), Split0.IdealAll.RO).distinguish() @ &m : res] = Pr[Split0.IdealAll.MainD(G5(A), SplitD.RO_DOM(SplitD.ROT.RO, SplitD.ROF.RO)).distinguish() @ &m : res] by byequiv => //; proc; inline *; sim.",
+      "thinking_chars": 0,
+      "text_chars": 40,
+      "session_id": "794a61bb-7f1e-4330-b53e-4ab039bb259a",
+      "timestamp": "2026-06-04T08:53:21.778Z",
+      "file": "thinking/turn_038.md"
+    },
+    {
+      "turn": 39,
+      "intent": "commit_tactic",
+      "payload_key": "rewrite -(SplitD.pr_RO_split (G5(A)) (fun _ b => b) &m ()) /=.",
+      "thinking_chars": 0,
+      "text_chars": 32,
+      "session_id": "794a61bb-7f1e-4330-b53e-4ab039bb259a",
+      "timestamp": "2026-06-04T08:53:26.630Z",
+      "file": "thinking/turn_039.md"
+    },
+    {
+      "turn": 40,
+      "intent": "commit_tactic",
+      "payload_key": "have Hll : forall (x : nonce * C.counter), is_lossless dblock by move=> ?; exact Block.dblock_ll.",
+      "thinking_chars": 0,
+      "text_chars": 64,
+      "session_id": "794a61bb-7f1e-4330-b53e-4ab039bb259a",
+      "timestamp": "2026-06-04T08:53:33.893Z",
+      "file": "thinking/turn_040.md"
+    },
+    {
+      "turn": 41,
+      "intent": "commit_tactic",
+      "payload_key": "rewrite -(FiniteRO.pr_RO_FinRO_D Hll (G5(A)) &m () (fun b => b)) /=.",
+      "thinking_chars": 0,
+      "text_chars": 34,
+      "session_id": "794a61bb-7f1e-4330-b53e-4ab039bb259a",
+      "timestamp": "2026-06-04T08:53:39.665Z",
+      "file": "thinking/turn_041.md"
+    },
+    {
+      "turn": 42,
+      "intent": "commit_tactic",
+      "payload_key": "byequiv => //; proc; inline *; sim.",
+      "thinking_chars": 0,
+      "text_chars": 44,
+      "session_id": "794a61bb-7f1e-4330-b53e-4ab039bb259a",
+      "timestamp": "2026-06-04T08:53:45.754Z",
+      "file": "thinking/turn_042.md"
+    },
+    {
+      "turn": 43,
+      "intent": "commit_tactic",
+      "payload_key": "qed.",
+      "thinking_chars": 0,
+      "text_chars": 80,
+      "session_id": "794a61bb-7f1e-4330-b53e-4ab039bb259a",
+      "timestamp": "2026-06-04T08:53:51.403Z",
+      "file": "thinking/turn_043.md"
+    },
+    {
+      "turn": 44,
+      "intent": "inspect_context",
+      "payload_key": "goal_info",
+      "thinking_chars": 0,
+      "text_chars": 64,
+      "session_id": "794a61bb-7f1e-4330-b53e-4ab039bb259a",
+      "timestamp": "2026-06-04T08:54:02.530Z",
+      "file": "thinking/turn_044.md"
+    }
+  ]
+}

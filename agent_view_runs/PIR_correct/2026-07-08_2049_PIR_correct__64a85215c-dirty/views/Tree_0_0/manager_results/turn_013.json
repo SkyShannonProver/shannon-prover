@@ -1,0 +1,20 @@
+{
+  "turn": 13,
+  "handled_intent": {
+    "intent": "commit_tactic",
+    "payload": {
+      "tactic": "move => &hr [[[Hinv Hlt] Hz] _]; split."
+    }
+  },
+  "ok": true,
+  "manager_note": "Committed tactic accepted; the EasyCrypt proof state changed.",
+  "manager_actions": [
+    {
+      "action": "tactic commit",
+      "outcome": "EasyCrypt accepted the committed tactic.",
+      "timing": "143 ms"
+    }
+  ],
+  "view_refreshed": true,
+  "surface_turn_hash": "68bb08393c473e1dc49c87ae573a1b05d2e8325f"
+}

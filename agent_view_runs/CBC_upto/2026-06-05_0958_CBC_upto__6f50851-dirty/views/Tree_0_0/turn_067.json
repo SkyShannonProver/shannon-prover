@@ -1,0 +1,64 @@
+{
+  "last_result": {
+    "intent": "commit_tactic",
+    "payload": {
+      "tactic": "conseq (_: _ ==> DoubleQuery.bad{1} /\\ DoubleQuery.bad{2} /\\ i{1} = i{2} /\\ p{1} = p{2})."
+    },
+    "manager_action": "commit_tactic",
+    "result": "EasyCrypt accepted the committed tactic.",
+    "effect": "EasyCrypt accepted a proof-state change; the refreshed view is based on the new committed state.",
+    "proof_state": "The committed EasyCrypt proof state changed.",
+    "tactic": "conseq (_: _ ==> DoubleQuery.bad{1} /\\ DoubleQuery.bad{2} /\\ i{1} = i{2} /\\ p{1} = p{2})."
+  },
+  "current_goal": {
+    "lines": [
+      "Current goal (remaining: 8)",
+      "",
+      "Type variables: <none>",
+      "",
+      "&m: {}",
+      "------------------------------------------------------------------------",
+      "forall &1 &2,",
+      "  (((i{1} = i{2} /\\ p{1} = p{2}) /\\",
+      "    DoubleQuery.bad{1} = DoubleQuery.bad{2} /\\",
+      "    (!DoubleQuery.bad{2} =>",
+      "     (s{1} = s{2} /\\ c{1} = c{2} /\\ DoubleQuery.qs{1} = DoubleQuery.qs{2}) /\\",
+      "     fdom PRFi.m{1} = DoubleQuery.qs{1})) /\\",
+      "   i{1} < size p{1} /\\ i{2} < size p{2}) /\\",
+      "  DoubleQuery.bad{2} =>",
+      "  forall (bad_L : bool) (qs_L : block fset) (m_L : (block, block) fmap)",
+      "    (c_L : block list) (i_L : int) (s_L : block) (bad_R : bool)",
+      "    (qs_R : block fset) (c_R : block list) (i_R : int) (s_R : block),",
+      "    bad_L /\\ bad_R /\\ i_L = i_R /\\ p{1} = p{2} =>",
+      "    ((i_L = i_R /\\ p{1} = p{2}) /\\",
+      "     bad_L = bad_R /\\",
+      "     (!bad_R => (s_L = s_R /\\ c_L = c_R /\\ qs_L = qs_R) /\\ fdom m_L = qs_L)) /\\",
+      "    (i_L < size p{1} <=> i_R < size p{2})",
+      "[126|check]>"
+    ],
+    "text_fully_shown": true,
+    "truncated": false,
+    "goal_type": "ambient",
+    "view_focus": "relational_program",
+    "source": {
+      "label": "Parsed from EasyCrypt pretty goal text",
+      "ground_truth": false
+    }
+  },
+  "proof_status": {
+    "status": "open",
+    "remaining_goals": 8,
+    "remaining_goals_known": true,
+    "goal_type": "ambient",
+    "view_focus": "relational_program",
+    "current_layer": "ambient_logic"
+  },
+  "surface_profile": {
+    "name": "l1_goal_projection",
+    "surface_profile": "l1_goal_projection",
+    "stage": "l1_goal_projection",
+    "description": "L1 Goal-State Projection: manager transport of ONLY the current goal. No status, no manager-result section, no focus \u2014 the agent sees the raw goal and nothing else (the node-memory recovery anchor and the one-line submit-intent reminder are the only scaffolding).",
+    "paper_level": "L1",
+    "paper_role": "paper"
+  }
+}

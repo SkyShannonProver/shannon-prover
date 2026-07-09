@@ -1,0 +1,53 @@
+{
+  "last_result": {
+    "intent": "commit_tactic",
+    "payload": {
+      "tactic": "congr."
+    },
+    "manager_action": "commit_tactic",
+    "result": "EasyCrypt accepted the committed tactic.",
+    "effect": "EasyCrypt accepted a proof-state change; the refreshed view is based on the new committed state.",
+    "proof_state": "The committed EasyCrypt proof state changed.",
+    "tactic": "congr."
+  },
+  "current_goal": {
+    "lines": [
+      "Current goal",
+      "",
+      "Type variables: <none>",
+      "",
+      "&m: {}",
+      "&1: {b, b' : bool, sk0, y : ZModE.exp, pk, pk0 : pkey, sk : skey,",
+      "    m0, m1, m : ptxt, c : ctxt}",
+      "&2: {b, b0, b' : bool, gy, gz : group, x, y : ZModE.exp, gx : pkey,",
+      "    m0, m1 : ptxt}",
+      "sk0L: ZModE.exp",
+      "H: sk0L \\in dt",
+      "yL: ZModE.exp",
+      "H0: yL \\in dt",
+      "result_R: ptxt * ptxt",
+      "A_R: (glob A)",
+      "bL: bool",
+      "H1: bL \\in {0,1}",
+      "------------------------------------------------------------------------",
+      "g ^ sk0L ^ yL = g ^ (sk0L * yL)",
+      "[36|check]>"
+    ],
+    "text_fully_shown": true,
+    "truncated": false,
+    "goal_type": "ambient",
+    "view_focus": "ambient_logic",
+    "source": {
+      "label": "Parsed from EasyCrypt pretty goal text",
+      "ground_truth": false
+    }
+  },
+  "proof_status": {
+    "status": "open",
+    "remaining_goals": 1,
+    "remaining_goals_known": true,
+    "goal_type": "ambient",
+    "view_focus": "ambient_logic",
+    "current_layer": "ambient_logic"
+  }
+}

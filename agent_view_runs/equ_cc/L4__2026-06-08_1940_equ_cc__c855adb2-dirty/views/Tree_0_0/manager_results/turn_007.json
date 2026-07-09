@@ -1,0 +1,22 @@
+{
+  "turn": 7,
+  "handled_intent": {
+    "intent": "lookup_symbol",
+    "payload": {
+      "symbol": "C.ofintdK"
+    }
+  },
+  "ok": true,
+  "manager_note": "Read-only context. Accepted/rejected tactic or call text inside a preview is route-selection information, not the current proof-state error.",
+  "manager_actions": [
+    {
+      "action": "symbol lookup",
+      "outcome": "The manager returned read-only context for the current goal.",
+      "timing": "1.2 s",
+      "content": {
+        "preview": "[WHERE-HIT] C.ofintdK (kind: lemma) * In [lemmas or axioms]: (* C.ofintdK *) lemma ofintdK: forall (x : int), 0 <= x < C.max_counter + 1 => C.toint (C.ofintd x) = x."
+      }
+    }
+  ],
+  "view_refreshed": true
+}

@@ -1,0 +1,864 @@
+(*** A proof that CBC mode turns any weak PRP into an IND$- CPA-secure
+     symmetric encryption scheme **when used with random IVs**  ***)
+require import AllCore Int Real Distr List FSet FMap.
+require import StdRing StdOrder DList.
+require (*ab*) PRP PRF SKE_INDR. (* Definitions and Security Notions *)
+(*---*) import RField RealOrder.
+
+(* -------------------------------------------------------------------- *)
+(** Parameters and Constants *)
+op q   : {int | 0 < q}   as gt0_q.   (* number of queries *)
+op ell : {int | 0 < ell} as gt0_ell. (* maximal number of blocks in message *)
+
+(* -------------------------------------------------------------------- *)
+(** An abstract type for keys **)
+type key.
+
+(* TODO: replace the following axiomatization with "uniform
+   distribution over the full type block", or generalize instead *)
+op dKey: key distr.
+axiom dKey_uffu: is_uniform dKey /\ is_lossless dKey /\ is_full dKey.
+
+(* -------------------------------------------------------------------- *)
+(** An abstract type for plaintext/ciphertext blocks **)
+type block.
+
+op dBlock: block distr.
+axiom dBlock_uffu: is_uniform dBlock /\ is_lossless dBlock /\ is_full dBlock.
+
+op zeros: block.
+op (+): block -> block -> block.
+
+axiom add0b (x : block)    : zeros + x = x.
+axiom addbA (x y z : block): x + (y + z) = (x + y) + z.
+axiom addbC (x y : block)  : x + y = y + x.
+axiom addbK (x : block)    : x + x = zeros.
+
+clone Ring.ZModule as Block with
+  type t               <- block,
+  op   zeror           <- zeros,
+  op   (+)             <- (+),
+  op   [-] (x : block) <- x,
+  lemma addrA          <- addbA,
+  lemma addrC          <- addbC,
+  lemma add0r          <- add0b,
+  lemma addNr          <- addbK.
+
+(* -------------------------------------------------------------------- *)
+(** Let P, Pi: key -> block -> block be a PRP and its inverse **)
+op P : key -> block -> block.
+op Pi: key -> block -> block.
+
+(* TODO: if dBlock is modified to not cover the whole type block,
+   modify the axiom below to restrict the bijection *)
+axiom bijective_P (k : key):
+     cancel (P k) (Pi k)
+  /\ cancel (Pi k) (P k).
+
+(** We instantiate library definitions for brevity **)
+clone import PRP as PRPt with
+  type D <- block.
+
+clone import WeakPRP as PRPSec.
+
+clone import PseudoRP as PRPr with
+  type K    <- key,
+  op   dK   <- dKey,
+  op   p    <- P,
+  op   pi   <- Pi
+proof * by smt(dKey_uffu bijective_P).
+
+clone import RP as PRPi with
+  op   dD   <- dBlock
+rename "RP" as "PRPi"
+proof * by smt(dBlock_uffu).
+
+(*-------------------------------------------------------------------- *)
+(** The CBC construction turning a PRP into an explicit-IV SKE scheme **)
+module CBC(P : PseudoRP) = {
+  proc keygen = P.keygen
+
+  proc enc(key:key,iv:block,p:block list): block list = {
+    var s, c, i, pi;
+
+    s <- iv;
+    c <- [s];
+    i <- 0;
+    while (i < size p) {
+      pi <- nth witness p i;
+      s  <@ P.f(key,(s + pi));
+      c  <- c ++ [s];
+      i  <- i + 1;
+    }
+    return c;
+  }
+
+  proc dec(key:key,iv:block,c:block list): block list option = {
+    var s, p, i, ci, pi;
+
+    p <- [];
+    i <- 0;
+    s <- iv;
+    while (i < size c) {
+      ci <- nth witness c i;
+      pi <@ P.fi(key,ci);
+      p  <- p ++ [s + pi];
+      s  <- ci;
+      i  <- i + 1;
+    }
+    return Some p;
+  }
+}.
+
+(* -------------------------------------------------------------------- *)
+(** Setting up the security definitions for the construction           **)
+module type IVScheme = {
+  proc keygen(): key
+  proc enc(k:key,iv:block,p:block list): block list
+  proc dec(k:key,iv:block,p:block list): block list option
+}.
+
+module IV_Wrap (S : IVScheme) = {
+  proc keygen = S.keygen
+
+  proc enc(key:key,p:block list): block list = {
+    var iv, c;
+
+    iv <$ dBlock;
+    c  <@ S.enc(key,iv,p);
+    return c;
+  }
+
+  proc dec(key:key,c:block list): block list option = {
+    var iv, p;
+
+    iv <- head witness c;
+    c  <- behead c;
+    p  <@ S.dec(key,iv,c);
+    return p;
+  }
+}.
+
+op dBlocks: int -> block list distr = dlist dBlock.
+lemma dBlocks_ll l: is_lossless (dBlocks l)
+by smt (dlist_ll dBlock_uffu).
+
+clone import SKE_INDR as SKEa with
+  type eK            <- key,
+  type ptxt          <- block list,
+  type ctxt          <- block list,
+  type leaks         <- int,
+  op   leak          <- List.size<:block>,
+  op   dC    (l:int) <- dBlocks (l + 1) (* plus iv *)
+proof * by smt (dBlocks_ll).
+import RCPA.
+
+(** We say that a SKE S scheme is IND$-CPA secure whenever, for all
+ ** "efficient" A <: Adv, the IND$-CPA advantage of A against S,
+ ** defined below, is "small" (for all initial memories):
+ **   Adv^{IND$-CPA}_{S}(&m,A)
+ **   = `|Pr[INDR_CPA(S,A).main() @ &m: res]
+ **       - Pr[INDR_CPA(Ideal,A).main() @ &m: res]|
+ **)
+module Random = {
+  proc keygen = Ideal.keygen
+  proc dec    = Ideal.dec
+
+  proc enc(k:key,p:block list): block list = {
+    var c, i, s;
+
+    i <- 0;
+    c <- [];
+    while (i <= size p) {
+      s <$ dBlock;
+      c <- c ++ [s];
+      i <- i + 1;
+    }
+    return c;
+  }
+}.
+
+section Random_Ideal.
+  local clone import Program as Sampling with
+    type t <- block,
+    op   d <- dBlock
+  proof *.
+
+  equiv Random_Ideal: Random.enc ~ Ideal.enc: size p{1} = size p{2} ==> ={res}.
+  proof.
+  proc.
+  outline {2} 1 by { r <@ Sampling.Sample.sample(size p + 1); }.
+  rewrite equiv[{2} 1 Sampling.Sample_LoopSnoc_eq].
+  by inline; wp; while (={i} /\ c{1} = l{2} /\ size p{1} + 1 = n{2}); auto=> /#.
+  qed.
+end section Random_Ideal.
+
+(* -------------------------------------------------------------------- *)
+(** Step 0: Drop the decryption oracles to simplify notations. Note
+    that we use the PRF interface to keep CBC parametric, since we no
+    longer need the inverse permutation for decryption... We will never
+    make use of a concrete PRF (only use the ideal one), so we don't
+    instantiate F **)
+clone import PRF as PRFt with
+  type D  <- block,
+  type R  <- block.
+
+clone import RF as PRFi with
+  op   dR _ <- dBlock
+rename "RF" as "PRFi"
+proof * by smt (dBlock_uffu).
+
+module CBC_Oracle (P:PRF) = {
+  proc init = P.init
+
+  proc enc(p:block list): block list = {
+    var s, c, i, pi;
+
+    s <$ dBlock;
+    c <- [s];
+    i <- 0;
+    while (i < size p) {
+      pi <- nth witness p i;
+      s  <@ P.f(s + pi);
+      c  <- c ++ [s];
+      i  <- i + 1;
+    }
+    return c;
+  }
+}.
+
+module Sample = {
+  proc init(): unit = { }
+
+  proc f(x:block): block = {
+    var r;
+
+    r <$ dBlock;
+    return r;
+  }
+}.
+
+module type RCPA_full = {
+  proc init(): unit
+  proc enc(p:block list): block list
+}.
+
+module INDR_CPA_direct(O:RCPA_full,A:RCPA_Adversary) = {
+  proc main(): bool = {
+    var b;
+
+         O.init();
+    b <@ A(O).distinguish();
+    return b;
+  }
+}.
+
+(** A generic equivalence result that will stop us having to deal with
+ ** the loop all the time...
+ **
+ ** This is currently not very useful because of the treatment of glob
+ **)
+lemma CBC_Oracle_enc_eq (P  <: PRF)
+                        (P' <: PRF)
+                        (I: (glob P) -> (glob P') -> bool):
+  equiv [P.f ~ P'.f: ={arg} /\ I (glob P){1} (glob P'){2}
+                 ==> ={res} /\ I (glob P){1} (glob P'){2}] =>
+  equiv [CBC_Oracle(P).enc ~ CBC_Oracle(P').enc:
+               ={p} /\ I (glob P){1} (glob P'){2}
+           ==> ={res} /\ I (glob P){1} (glob P'){2}].
+proof.
+  move=> P_f_eq.
+  proc; while (   ={i, s, p, c}
+               /\ I (glob P){1} (glob P'){2}).
+    by wp; call P_f_eq; auto.
+  by auto.
+qed.
+
+lemma CPA_direct_eq (P  <: PRF)
+                    (P' <: PRF)
+                    (I: (glob P) -> (glob P') -> bool):
+  equiv [P.init ~ P'.init: true ==> I (glob P){1} (glob P'){2}] =>
+  equiv [P.f ~ P'.f: ={arg} /\ I (glob P){1} (glob P'){2}
+                 ==> ={res} /\ I (glob P){1} (glob P'){2}] =>
+  forall &m (A <: RCPA_Adversary {-P, -P'}),
+    Pr[INDR_CPA_direct(CBC_Oracle(P),A).main() @ &m: res]
+    = Pr[INDR_CPA_direct(CBC_Oracle(P'),A).main() @ &m: res].
+proof.
+  move=> P_init_eq P_f_eq &m A.
+  byequiv=> //=.
+    proc; call (_: I (glob P){1} (glob P'){2}).
+      exact/(CBC_Oracle_enc_eq P P' I P_f_eq).
+    by call P_init_eq.
+qed.
+
+section Cleanup.
+  declare module A <: RCPA_Adversary { -RCPA_Wrap, -PRP }.
+
+  local module M : Enc_Scheme = {
+    proc keygen = IV_Wrap(CBC(PseudoRP)).keygen
+    proc enc    = IV_Wrap(CBC(PseudoRP)).enc
+    proc dec    = IV_Wrap(CBC(PseudoRP)).dec
+  }.
+
+  local equiv enc_eq:
+    RCPA_Wrap(IV_Wrap(CBC(PseudoRP))).enc ~ CBC_Oracle(PRP).enc:
+      ={arg} /\ ={k}(RCPA_Wrap,PRP) ==> ={res} /\ ={k}(RCPA_Wrap,PRP).
+  proof.
+    proc; inline *; wp.
+    while (   ={i, s}
+           /\ key0{1} = PRP.k{2}
+           /\ p1{1} = p{2}
+           /\ c1{1} = c{2});
+      by auto.
+  qed.
+
+  local lemma success_eq &m:
+    Pr[INDR_CPA(IV_Wrap(CBC(PseudoRP)),A).main() @ &m: res]
+    = Pr[INDR_CPA_direct(CBC_Oracle(PRP),A).main() @ &m: res].
+  proof.
+    byequiv=> //=; proc.
+    call (_: ={k}(RCPA_Wrap,PRP));
+      1:by conseq enc_eq.
+    by inline *; auto.
+  qed.
+
+  local equiv random_eq:
+    RCPA_Wrap(Random).enc ~ CBC_Oracle(Sample).enc:
+      ={arg} ==> ={res}.
+  proof.
+    proc; inline *; wp.
+    rcondt{1} 5.
+      by move=> &m; auto; smt (size_ge0).
+    while (   i{1} = i{2} + 1
+           /\ p0{1} = p{2}
+           /\ c0{1} = c{2});
+    by auto; smt ml=0.
+  qed.
+
+  local lemma success_eq_random &m:
+    Pr[INDR_CPA(Random,A).main() @ &m: res]
+    = Pr[INDR_CPA_direct(CBC_Oracle(Sample),A).main() @ &m: res].
+  proof.
+    byequiv=> //=; proc.
+    call (_: true);
+      1:by conseq random_eq.
+    by inline*; auto.
+  qed.
+
+  lemma cleanup &m:
+    `|Pr[INDR_CPA(IV_Wrap(CBC(PseudoRP)),A).main() @ &m: res]
+      - Pr[INDR_CPA(Random,A).main() @ &m: res]|
+    = `|Pr[INDR_CPA_direct(CBC_Oracle(PRP),A).main() @ &m: res]
+        - Pr[INDR_CPA_direct(CBC_Oracle(Sample),A).main() @ &m: res]|.
+  proof. by rewrite (success_eq &m) (success_eq_random &m). qed.
+end section Cleanup.
+
+(** Step 1: Decompose the advantage into manageable sub-problems **)
+(* We push the CBC construction out and into an adversary against the
+   PRP/RP/RF *)
+module PRPF_Adv(A:RCPA_Adversary, F:PRF_Oracles) = {
+  module O = {
+    proc enc(p:block list): block list = {
+      var s, c, i, pi;
+
+      s <$ dBlock;
+      c <- [s];
+      i <- 0;
+      while (i < size p) {
+        pi <- nth witness p i;
+        s  <@ F.f(s + pi);
+        c  <- c ++ [s];
+        i  <- i + 1;
+      }
+      return c;
+    }
+  }
+
+  proc distinguish = A(O).distinguish
+}.
+
+section Decomposition.
+  declare module A <: RCPA_Adversary { -RCPA_Wrap, -PRP, -PRPi, -PRFi }.
+
+  local lemma refactor_abstract (O <: PRP {-A}) &m:
+    Pr[INDR_CPA_direct(CBC_Oracle(O),A).main() @ &m: res]
+    = Pr[IND(O,PRPF_Adv(A)).main() @ &m: res].
+  proof. by byequiv=> //=; proc; inline *; sim. qed.
+
+  lemma CBC_PRP_RF &m:
+    `|Pr[INDR_CPA_direct(CBC_Oracle(PRP),A).main() @ &m: res]
+      - Pr[INDR_CPA_direct(CBC_Oracle(Sample),A).main() @ &m: res]|
+    <= `|Pr[INDR_CPA_direct(CBC_Oracle(PRFi),A).main() @ &m: res]
+         - Pr[INDR_CPA_direct(CBC_Oracle(Sample),A).main() @ &m: res]|
+       + `|Pr[IND(PRP,PRPF_Adv(A)).main() @ &m: res]
+           - Pr[IND(PRPi,PRPF_Adv(A)).main() @ &m: res]| (* Adv^{prp}_{P}(PRP_Adv(A)) *)
+       + `|Pr[IND(PRPi,PRPF_Adv(A)).main() @ &m: res]
+           - Pr[IND(PRFi,PRPF_Adv(A)).main() @ &m: res]|.
+  proof.
+    rewrite (refactor_abstract PRP    &m).
+    rewrite (refactor_abstract PRFi   &m).
+    rewrite (refactor_abstract Sample &m).
+    smt(). (* triangular inequality *)
+  qed.
+end section Decomposition.
+
+(* -------------------------------------------------------------------- *)
+(** We relate the first term to the probability of the bad event being
+ ** triggered when the adversary plays the IND$-CPA game against the
+ ** following [enc] oracle:
+ **
+ ** `|Pr[INDR_CPA_direct(CBC_Oracle(PRFa.PRFi),A).main() @ &m: res]
+ **   - Pr[INDR_CPA_direct(CBC_Oracle(Sample),A).main() @ &m: res]|
+ ** <= Pr[INDR_CPA_direct(Compute,A).main() @ &m: res]
+ **)
+module Compute = {
+  var bad: bool
+  var qs : block fset
+
+  proc init(): unit = {
+    bad <- false;
+    qs  <- fset0;
+  }
+
+  proc enc(p:block list): block list = {
+    var c, s, i, pi;
+
+    c <- [];
+    i <- 0;
+    while (i < size p) {
+      pi <- nth witness p i;
+      s  <$ dBlock;
+      c  <- c ++ [s + pi];
+      if (mem qs s) { bad <- true; }
+      qs <- qs `|` (fset1 s);
+      i  <- i + 1;
+    }
+    s <$ dBlock;
+    c <- c ++ [s];
+    return c;
+  }
+}.
+
+section Reduce.
+  declare module A <: RCPA_Adversary { -RCPA_Wrap, -PRFi, -Compute }.
+  declare axiom A_distinguish_ll (O <: RCPA_Oracles {-A}): islossless O.enc => islossless A(O).distinguish.
+
+  local module DoubleQuery (F : PRF) = {
+    var qs : block fset
+    var bad: bool
+
+    proc init(): unit = {
+      qs <- fset0;
+      bad <- false;
+      F.init();
+    }
+
+    proc f(x:block): block = {
+      var r;
+
+      if (mem qs x) { bad <- true; }
+      r <@ F.f(x);
+      qs <- qs `|` (fset1 x);
+      return r;
+    }
+  }.
+
+  local lemma doublequery_eq (F <: PRF {-A, -DoubleQuery}) &m:
+    Pr[INDR_CPA_direct(CBC_Oracle(F),A).main() @ &m: res]
+    = Pr[INDR_CPA_direct(CBC_Oracle(DoubleQuery(F)),A).main() @ &m: res].
+  proof.
+    byequiv=> //=; proc.
+    call (_: ={glob F}).
+      proc; while (={i, s, p, c, glob F}).
+        wp; call (_: ={glob F, arg} ==> ={glob F, res}).
+          by proc *; inline *; wp; call (_: true); wp.
+        by auto.
+      by auto.
+    by inline *; call (_: true); auto.
+  qed.
+
+  local equiv DQ_Sample_Compute_eq:
+    CBC_Oracle(DoubleQuery(Sample)).enc ~ Compute.enc:
+          ={bad,qs}(DoubleQuery,Compute) /\ ={arg}
+      ==> ={bad,qs}(DoubleQuery,Compute) /\ ={res}.
+  proof.
+    proc; inline*; case (size p{1} = 0).
+      rcondf{1} 4; 1:by auto=> /#.
+      by rcondf{2} 3; auto=> /#.
+    splitwhile{1} 4: (i < size p - 1).
+    rcondt{1} 5=> [&m|].
+      while (0 <= i < size p);
+        by auto; smt (size_ge0).
+    rcondf{1} 15=> [&m|].
+      auto; while (0 <= i < size p);
+        by auto; smt (size_ge0).
+    rcondt{2} 3; 1:by auto; smt (size_ge0).
+    auto=> //=.
+    while (   ={p, c}
+           /\ i{1} = i{2} - 1
+           /\ 0 <= i{1} < size p{1}
+           /\ Compute.bad{2}
+              = (DoubleQuery.bad{1} \/ mem DoubleQuery.qs (s + nth witness p i)){1}
+           /\ Compute.qs{2} = (DoubleQuery.qs `|` (fset1 (s + nth witness p i))){1}).
+      wp; rnd (fun x => x + pi{2}); auto=> /> &1 &2 ge0_iP _ _ lt_i_szp.
+      case: (mem DoubleQuery.qs{1} _)=> //=.
+        split=> [|_]; 1:smt (addbA addbK add0b). (* TODO: instantiate ring structure *)
+        split=> [|_ r _]; 1:smt (dBlock_uffu).
+        split=> [|_]; 1:smt (dBlock_uffu).
+        split=> [|_]; 1:smt (addbA addbK add0b). (* TODO: instantiate ring structure *)
+        by split=> [|/#]; 1:smt (addbA addbK add0b). (* TODO: instantiate ring structure *)
+      split=> [|_]; 1:smt (addbA addbK add0b). (* TODO: instantiate ring structure *)
+      split=> [|_ r _]; 1:smt (dBlock_uffu).
+      split=> [|_]; 1:smt (dBlock_uffu).
+      split=> [|_]; 1:smt (addbA addbK add0b). (* TODO: instantiate ring structure *)
+split.
+      by move=> h; rewrite -addbA Block.subrr Block.addr0 /= /#.
+      by move=> h; rewrite -addbA Block.subrr Block.addr0 /= /#.
+    wp; rnd (fun x => x + pi{2}).
+    auto=> /> &2 szp_neq_0; split=> [|_]; 1:smt (addbA addbK add0b). (* TODO: instantiate ring structure *)
+    split=> [|_ s _]; 1:smt (dBlock_uffu).
+    split=> [|_]; 1:smt (dBlock_uffu).
+    split=> [|_]; 1:smt (addbA addbK add0b). (* TODO: instantiate ring structure *)
+    smt (size_ge0).
+  qed.
+
+  local lemma DQ_Sample_Compute_pr &m:
+    Pr[INDR_CPA_direct(CBC_Oracle(DoubleQuery(Sample)),A).main() @ &m: DoubleQuery.bad]
+    = Pr[INDR_CPA_direct(Compute,A).main() @ &m: Compute.bad].
+  proof.
+    byequiv=> //=.
+    proc. call (_: ={bad,qs}(DoubleQuery,Compute)).
+      by conseq DQ_Sample_Compute_eq.
+    by inline *; auto.
+  qed.
+
+  lemma CBC_upto &m:
+    `|Pr[INDR_CPA_direct(CBC_Oracle(PRFi),A).main() @ &m: res]
+      - Pr[INDR_CPA_direct(CBC_Oracle(Sample),A).main() @ &m: res]|
+    <= Pr[INDR_CPA_direct(Compute,A).main() @ &m: Compute.bad].
+  proof.
+    rewrite -(DQ_Sample_Compute_pr &m) (doublequery_eq PRFi &m) (doublequery_eq Sample &m).
+    byequiv: DoubleQuery.bad=> //=; 2:smt ml=0.
+    proc.
+    call (_: DoubleQuery.bad,
+                  ={glob DoubleQuery}
+               /\ forall x, mem DoubleQuery.qs{1} x <=> dom PRFi.m{1} x,
+               ={DoubleQuery.bad}).
+    + exact/A_distinguish_ll.
+    + proc.
+      while (   ={DoubleQuery.bad, i, p}
+             /\ (!DoubleQuery.bad{2}
+                 =>    ={s, c, glob DoubleQuery}
+                    /\ forall x, mem DoubleQuery.qs{1} x <=> dom PRFi.m{1} x)).
+        case (DoubleQuery.bad{2}).
+          inline *.
+          seq  4  4: (DoubleQuery.bad{2} /\ ={DoubleQuery.bad, i, p}).
+            by auto=> /#.
+          by if{1}; auto; smt (dBlock_uffu).
+        wp; inline *; sp 2 2; if; 1:smt ml=0.
+        * rcondf{1} 3; 1:by auto=> /#.
+          by auto; smt (dD_ll).
+        * rcondt{1} 2; 1:by auto=> /#.
+          auto=> /> &1 &2 ih lt_i_szp /ih [#] !->> eq_qs h m _.
+          by rewrite !get_setE => //= b; rewrite mem_set !inE eq_qs.
+      by auto; smt ml=0.
+    + move=> &2 bad; proc.
+      while (   DoubleQuery.bad = DoubleQuery.bad{2}
+             /\ 0 <= i <= size p)
+            (size p - i).
+        move=> z; inline *; sp; if=> //=; auto=> />; 2:smt ml=0.
+        by rewrite -/predT; smt (dBlock_uffu).
+      by auto=> />; rewrite -/predT; smt (dBlock_uffu size_ge0).
+    + move=> &1; proc.
+      while (   DoubleQuery.bad
+             /\ DoubleQuery.bad{1} = DoubleQuery.bad
+             /\ 0 <= i <= size p)
+            (size p - i).
+        by move=> z; inline *; auto=> />; rewrite -/predT; smt (dBlock_uffu size_ge0).
+      by auto=> />; rewrite -/predT; smt (dBlock_uffu size_ge0).
+    inline *; auto=> />.
+    split=> [|_].
+    + by move=> x; rewrite mem_empty in_fset0.
+    by move=> rL rR gaL mL qsL badL gaR [].
+  qed.
+end section Reduce.
+
+(** So far, we have proved that, for all &m and for all A (with the
+ ** right memory restrictions), we have:
+ **
+ **   Adv^{IND$-CPA}_{CBC(PRPr)}(&m,A)
+ **   <=   Adv^{prp}_{P}(PRP_Adv(A))
+ **      + `|Pr[IND(PRPi,PRPF_Adv(A)).main() @ &m: res]
+ **          - Pr[IND(PRFa.PRFi,PRPF_Adv(A)).main() @ &m: res]|
+ **      + Pr[INDR_CPA_direct(Compute,A).main() @ &m: Compute.bad]
+ **)
+lemma reduction (A <: RCPA_Adversary { -RCPA_Wrap, -PRP, -PRPi, -PRFi, -Compute }) &m:
+  (forall (O <: RCPA_Oracles {-A}), islossless O.enc => islossless A(O).distinguish) =>
+     `|Pr[INDR_CPA(IV_Wrap(CBC(PseudoRP)),A).main() @ &m: res]
+       - Pr[INDR_CPA(Random,A).main() @ &m: res]|
+  <=    `|Pr[IND(PRP,PRPF_Adv(A)).main() @ &m: res]
+          - Pr[IND(PRPi,PRPF_Adv(A)).main() @ &m: res]|
+      + `|Pr[IND(PRPi,PRPF_Adv(A)).main() @ &m: res]
+          - Pr[IND(PRFi,PRPF_Adv(A)).main() @ &m: res]|
+      + Pr[INDR_CPA_direct(Compute,A).main() @ &m: Compute.bad].
+proof.
+  move=> A_run_ll.
+  rewrite (cleanup A &m).
+  have:= (CBC_PRP_RF A &m).
+  have:= (CBC_upto A A_run_ll &m).
+  smt ml=0.
+qed.
+
+(** We now bound the last two terms for bounded adversaries.
+ **
+ ** * `|Pr[IND(PRPi,PRPF_Adv(A)).main() @ &m: res]
+ **     - Pr[IND(PRFa.PRFi,PRPF_Adv(A)).main() @ &m: res]|
+ **   <= (q*l)^2 * mu uD (pred1 witness), and
+ **
+ ** * Pr[INDR_CPA_direct(Compute,A).main() @ &m: Compute.bad]
+ **   <= (q*l)^2 / |block|,
+ **
+ ** where q is a bound on the number of encryption queries
+ ** and l is a bound on their length.
+ **
+ ** We avoid simply bounding using the total number of blocks fed into
+ ** the PRP so that the addition of padding does not make us lose too
+ ** much precision...
+ **
+ **)
+module OracleBounder(O:RCPA_full) = {
+  var qC : int
+
+  proc init(): unit = {
+          O.init();
+    qC <- 0;
+  }
+
+  proc enc(p:block list): block list = {
+    var i;
+    var r <- [];
+
+    if (qC < q /\ size p <= ell) {
+      r  <@ O.enc(p);
+      qC <- qC + 1;
+    } else {
+      i <- 0;
+      while (i <= size p) {
+        r <- witness::r;
+        i <- i + 1;
+      }
+    }
+    return r;
+  }
+}.
+
+module QueryBounder(A:RCPA_Adversary, O:RCPA_Oracles) = {
+  module O' = {
+    proc enc(p:block list): block list = {
+      var i;
+      var r <- [];
+
+      if (OracleBounder.qC < q /\ size p <= ell) {
+        r                <@ O.enc(p);
+        OracleBounder.qC <- OracleBounder.qC + 1;
+      } else {
+        i <- 0;
+        while (i <= size p) {
+          r <- r ++ [witness];
+          i <- i + 1;
+        }
+      }
+      return r;
+    }
+  }
+
+  proc distinguish(): bool = {
+    var b;
+
+    OracleBounder.qC <- 0;
+    b  <@ A(O').distinguish();
+    return b;
+  }
+}.
+
+section Probability_RP_RF.
+  declare module A <: RCPA_Adversary { -PRPi, -PRFi, -QueryBounder }.
+  declare axiom A_run_ll (O <: RCPA_Oracles { -A }): islossless O.enc => islossless A(O).distinguish.
+
+  local clone PRPi_RF as RP_RFc with
+    op   q    <- q * ell
+  proof * by smt (dBlock_uffu IntOrder.divr_ge0 gt0_q gt0_ell).
+
+  lemma Bound_by_PRP_PRF &m:
+    `|Pr[IND(PRPi,PRPF_Adv(QueryBounder(A))).main() @ &m: res]
+      - Pr[IND(PRFi,PRPF_Adv(QueryBounder(A))).main() @ &m: res]|
+    <= ((q * ell)*(q * ell - 1))%r/2%r * mu dBlock (pred1 witness).
+  proof.
+    have ->: Pr[IND(PRPi,PRPF_Adv(QueryBounder(A))).main() @ &m: res]
+             = Pr[RP_RFc.PRFt.IND(PRPi,RP_RFc.DBounder(PRPF_Adv(QueryBounder(A)))).main() @ &m: res].
+      byequiv=> //=.
+      proc; inline *; auto.
+      call (_:   ={PRPi.m, OracleBounder.qC}
+              /\ 0 <= OracleBounder.qC{2} <= q
+              /\ 0 <= RP_RFc.FBounder.c{2} <= OracleBounder.qC{2} * ell).
+        proc; inline *; sp; if=> //=; 2:by while (={i, p, r}); auto.
+          wp; while (   ={i0, p0, r, s, c, PRPi.m}
+                     /\ 0 <= OracleBounder.qC{2} < q
+                     /\ 0 <= i0{2} <= size p0{2} <= ell
+                     /\ 0 <= RP_RFc.FBounder.c{2} <= OracleBounder.qC{2} * ell + i0{2}).
+            rcondt{2} 4; first auto; progress.
+              by have: RP_RFc.FBounder.c{hr} <= (q - 1) * ell + i0{hr}; smt ml=0.
+            by sp; if=> //=; auto=> /#.
+          by auto=> />; smt (size_ge0).
+      by auto=> />; smt (gt0_q).
+    have ->: Pr[IND(PRFi,PRPF_Adv(QueryBounder(A))).main() @ &m: res]
+             = Pr[RP_RFc.PRFt.IND(RP_RFc.PRFi.PRFi,RP_RFc.DBounder(PRPF_Adv(QueryBounder(A)))).main() @ &m: res].
+      byequiv=> //=.
+      proc; inline *; auto.
+      call (_:   ={OracleBounder.qC}
+              /\ ={m}(PRFi,RP_RFc.PRFi.PRFi)
+              /\ 0 <= OracleBounder.qC{2} <= q
+              /\ 0 <= RP_RFc.FBounder.c{2} <= OracleBounder.qC{2} * ell).
+        proc; inline *; sp; if=> //=; 2:by while (={i, p, r}); auto.
+          wp; while (   ={i0, p0, r, s, c}
+                     /\ ={m}(PRFi,RP_RFc.PRFi.PRFi)
+                     /\ 0 <= OracleBounder.qC{2} < q
+                     /\ 0 <= i0{2} <= size p0{2} <= ell
+                     /\ 0 <= RP_RFc.FBounder.c{2} <= OracleBounder.qC{2} * ell + i0{2}).
+            rcondt{2} 4; first auto; progress.
+              by have: RP_RFc.FBounder.c{hr} <= (q - 1) * ell + i0{hr}; smt ml=0.
+            by sp; if=> //=; auto=> /#.
+          by auto; smt (size_ge0).
+      by auto; smt (gt0_q).
+  apply/(RP_RFc.Conclusion_DBounder (PRPF_Adv(QueryBounder(A))) _ &m).
+  move=> O O_f_ll.
+  proc. call (A_run_ll (<: QueryBounder(A,PRPF_Adv(QueryBounder(A),O).O).O') _).
+  + proc; inline *; sp; if=> //=.
+    + wp; while true (size p0 - i0).
+      + by auto; call O_f_ll; auto=> /#.
+      by auto; rewrite -/predT; smt (dBlock_uffu).
+    by while true (size p + 1 - i); auto=> /#.
+  by auto.
+  qed.
+end section Probability_RP_RF.
+
+section Probability_Collision.
+  declare module A <: RCPA_Adversary { -PRPi, -PRFi, -Compute, -QueryBounder }.
+  declare axiom A_run_ll (O <: RCPA_Oracles { -A }): islossless O.enc => islossless A(O).distinguish.
+
+  local clone import Birthday as BBound with
+    type T  <- block,
+    op   uT <- dBlock,
+    op   q  <- q * ell
+  proof * by smt (dBlock_uffu IntOrder.divr_ge0 gt0_q gt0_ell).
+
+  local module Wrap(A : RCPA_Adversary,S : ASampler) = {
+    var qC : int
+
+    module O = {
+      proc enc(p: block list): block list = {
+        var i, c, s, pi;
+
+        i <- 0;
+        c <- [];
+        if (qC < q /\ size p <= ell) {
+          while (i < size p) {
+            pi <- nth witness p i;
+            s  <@ S.s();
+            c  <- c ++ [s + pi];
+            i  <- i + 1;
+          }
+          s <$ dBlock;
+          c <- c ++ [s];
+          qC <- qC + 1;
+        } else {
+          while (i <= size p) {
+            c <- c ++ [witness];
+            i <- i + 1;
+          }
+        }
+        return c;
+      }
+    }
+
+    proc a(): unit = {
+      qC <- 0;
+      A(O).distinguish();
+    }
+  }.
+
+  local lemma pr_PushBound_list p &m:
+      Pr[Exp(Bounder(Sample),Wrap(A)).main() @ &m: p Sample.l]
+    = Pr[Exp(Sample,Bounded(Wrap(A))).main() @ &m: p Sample.l].
+  proof.
+  byequiv (: ={glob Wrap(A), glob Sample} ==> ={glob Wrap(A), glob Sample})=> //=.
+  by conseq (PushBound Sample (Wrap(A))).
+  qed.
+
+  lemma Bound_by_Birthday &m:
+    Pr[INDR_CPA_direct(Compute,QueryBounder(A)).main() @ &m: Compute.bad]
+    <= ((q * ell)^2)%r * mu dBlock (pred1 witness).
+  proof.
+  apply/(ler_trans Pr[Exp(Bounder(Sample),Wrap(A)).main() @ &m: !(uniq Sample.l)]).
+  + rewrite (pr_PushBound_list (fun l=> !uniq l) &m)=> /=.
+    byequiv (: ={glob A} ==> Compute.bad{1} => !uniq Sample.l{2})=> //.
+    proc; inline *; wp.
+    call (_:    OracleBounder.qC{1} = Wrap.qC{2}
+             /\ 0 <= Wrap.qC{2} <= q
+             /\ 0 <= Bounder.c{2} <= Wrap.qC{2} * ell
+             /\ (Compute.bad{1} <=> !List.uniq Sample.l{2})
+             /\ (forall x, mem Compute.qs{1} x <=> mem Sample.l{2} x)).
+    + proc; sp; if=> //.
+      + inline *; auto.
+        while (   ={c}
+               /\ p0{1} = p{2}
+               /\ i0{1} = i{2}
+               /\ 0 <= Wrap.qC{2} < q
+               /\ 0 <= i{2} <= size p{2} <= ell
+               /\ 0 <= Bounder.c{2} <= Wrap.qC{2} * ell + i{2}
+               /\ (Compute.bad{1} <=> !List.uniq Sample.l{2})
+               /\ (forall x, mem Compute.qs{1} x <=> mem Sample.l{2} x)).
+        (* LOCAL ENV PATCH 2026-06-11: upstream `smt(mulrSl)` fails strict check
+           in this local prover environment (UPSTREAM.md). Same side-condition,
+           widened hint set. *)
+        + rcondt{2} 3; first auto => />; smt(mulrSl mulrDl mulrC ltzE).
+          by auto=> /> &1 &2; smt(in_fsetU in_fset1).
+        by auto=> />; smt(size_ge0).
+      by while (={i, p} /\ r{1} = c{2}); auto.
+    by auto; smt (in_fset0 gt0_q).
+  have:= BBound.pr_collision_bounded_oracles (Wrap(A)) _ &m.
+  + move=> S S_s_ll; proc.
+    call (A_run_ll (<: Wrap(A,S).O) _).
+    + proc; sp; if.
+      + auto; while (true) (size p - i).
+        + by move=> z; wp; call S_s_ll; auto=> /#.
+        by auto; rewrite -/predT; smt (dBlock_uffu).
+      by while (true) (size p + 1 - i); auto=> /#.
+    by auto.
+  have [] + [] _ dBlock_fu:= dBlock_uffu.
+  by rewrite /is_uniform=> /(_ _ _ (dBlock_fu maxu) (dBlock_fu witness)) ->.
+  qed.
+end section Probability_Collision.
+
+lemma Conclusion (A <: RCPA_Adversary { -RCPA_Wrap, -PRP, -PRPi, -QueryBounder, -PRFi (* pollution *), -Compute (* pollution *) }) &m:
+  (forall (O <: RCPA_Oracles {-A}), islossless O.enc => islossless A(O).distinguish) =>
+     `|Pr[INDR_CPA(IV_Wrap(CBC(PseudoRP)),QueryBounder(A)).main() @ &m: res]
+       - Pr[INDR_CPA(Random,QueryBounder(A)).main() @ &m: res]|
+  <=    `|Pr[IND(PRP,PRPF_Adv(QueryBounder(A))).main() @ &m: res]
+          - Pr[IND(PRPi,PRPF_Adv(QueryBounder(A))).main() @ &m: res]|
+      + 2%r * ((q*ell)^2)%r * mu dBlock (pred1 witness).
+proof.
+move=> A_distinguish_ll.
+have BA_distinguish_ll: (forall (O <: RCPA_Oracles { -QueryBounder(A) }), islossless O.enc => islossless QueryBounder(A,O).distinguish).
++ move=> O O_enc_ll; proc.
+  call (A_distinguish_ll (<: QueryBounder(A,O).O') _).
+  + proc; sp; if.
+    + by wp; call O_enc_ll; auto.
+    by while (true) (size p + 1 - i); auto=> /#.
+  by auto.
+have:= reduction (QueryBounder(A)) &m BA_distinguish_ll.
+have:= Bound_by_Birthday A A_distinguish_ll &m.
+have:= Bound_by_PRP_PRF A A_distinguish_ll &m.
+have -> : (q * ell)^2 = (q * ell) * (q * ell) by ring. 
+smt(mu_bounded).
+qed.

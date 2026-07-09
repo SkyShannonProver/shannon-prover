@@ -1,0 +1,100 @@
+{
+  "last_result": {
+    "intent": "fresh_restart",
+    "kind": "fresh_restart_confirmation",
+    "message": "Fresh restart is destructive. For route repair, prefer checkpoint rewind.",
+    "notice": "",
+    "resume_prefix": {
+      "replayed_tactic_count": 0,
+      "post_resume_tactic_count": 2
+    },
+    "options": [
+      {
+        "label": "Continue current branch",
+        "effect_if_selected": "This keeps working from the current proof state.",
+        "submit": {
+          "intent": "inspect_context",
+          "payload": {
+            "topic": "goal_info"
+          }
+        }
+      },
+      {
+        "label": "Undo last committed tactic",
+        "effect_if_selected": "This will undo the last committed tactic in this node.",
+        "submit": {
+          "intent": "undo_last_step",
+          "payload": {}
+        }
+      },
+      {
+        "label": "Show rewind choices",
+        "effect_if_selected": "This will show committed tactics you can rewind before.",
+        "submit": {
+          "intent": "undo_to_checkpoint",
+          "payload": {}
+        }
+      },
+      {
+        "label": "Erase branch and restart",
+        "effect_if_selected": "This will erase all committed tactics in this node and restart from the target lemma.",
+        "submit": {
+          "intent": "fresh_restart",
+          "payload": {
+            "confirm": true,
+            "confirmation_id": "96b78e82969ebbdf"
+          }
+        }
+      }
+    ]
+  },
+  "current_goal": {
+    "lines": [
+      "Current goal (remaining: 2)",
+      "",
+      "Type variables: <none>",
+      "",
+      "&m: {}",
+      "------------------------------------------------------------------------",
+      "&1 (left ) : {b, b' : bool, m0, m1, m, h : ptxt, r : rand, c : rand * ptxt,",
+      "             pk, pk0 : pkey, sk : skey, kp : pkey * skey}",
+      "&2 (right) : {b, b' : bool, m0, m1, h : ptxt, c : rand * ptxt, pk : pkey,",
+      "             sk : skey}",
+      "",
+      "pre = (glob A){1} = (glob A){2} /\\ LRO.m{1} = LRO.m{2}",
+      "",
+      "Log(LRO).init()                 ( 1)  Log(LRO).init()               ",
+      "kp <$ dkeys                     ( 2)  (pk, sk) <$ dkeys             ",
+      "(pk, sk) <- kp                  ( 3)  (m0, m1) <@ A(Log(LRO)).a1(pk)",
+      "(m0, m1) <@ A(Log(LRO)).a1(pk)  ( 4)  b <$ {0,1}                    ",
+      "b <$ {0,1}                      ( 5)  Game1.r <$ drand              ",
+      "pk0 <- pk                       ( 6)  h <$ dptxt                    ",
+      "m <- if b then m0 else m1       ( 7)  c <-                          ",
+      "                                (  )    (f pk Game1.r,              ",
+      "                                (  )     h +^ if b then m0 else m1) ",
+      "r <$ drand                      ( 8)  b' <@ A(Log(LRO)).a2(c)       ",
+      "h <@ LRO.o(r)                   ( 9)                                ",
+      "c <- (f pk0 r, h +^ m)          (10)                                ",
+      "b' <@ A(Log(LRO)).a2(c)         (11)                                ",
+      "",
+      "post = (b'{1} = b{1}) = (b'{2} = b{2}) \\/ (Game1.r{2} \\in Log.qs{2})",
+      "[71|check]>"
+    ],
+    "text_fully_shown": true,
+    "truncated": false,
+    "goal_type": "pRHL",
+    "view_focus": "failure_diagnostic",
+    "source": {
+      "label": "Parsed from EasyCrypt pretty goal text",
+      "ground_truth": false
+    }
+  },
+  "proof_status": {
+    "status": "error",
+    "remaining_goals": 2,
+    "remaining_goals_known": true,
+    "goal_type": "pRHL",
+    "view_focus": "failure_diagnostic",
+    "current_layer": "call_site"
+  }
+}

@@ -1,0 +1,384 @@
+{
+  "file": "eval/examples/ChaChaPoly/chacha_poly.ec",
+  "file_purpose": "Formalizes the IND-CCA2 security of the ChaChaPoly AEAD scheme (ChaCha20 CTR-mode encryption + Poly1305 MAC) for bounded nonce-respecting adversaries. The main theorem reduces the CCA advantage to the PRP/PRF distinguishing advantage of chacha20_block, the CPA advantage against random encryption, and two information-theoretic forgery bounds involving the Poly1305 collision probability and tag-guessing probability.",
+  "main_theorem": {
+    "name": "conclusion",
+    "informal_statement": "For any bounded nonce-respecting adversary A (at most qenc encryption queries, qdec decryption queries), the CCA winning probability against ChaChaPoly is at most: the CPA advantage of A against EncRnd (uniformly random encryption), plus the PRP/PRF distinguishing advantage of chacha20_block, plus qdec times max(pr_zeropol, pr1_poly_out), plus qdec times pr1_poly_out."
+  },
+  "proof_strategy_overview": "The proof decomposes the CCA advantage via a four-step game-hopping sequence. Step 1 replaces the concrete chacha20_block with a lazy random oracle via a PRP/PRF switch, expressing the gap as the indistinguishability advantage of D(A) against IndBlock vs IndRO. Step 2 decomposes the resulting RO-based CCA game into a CPA component and a UFCMA forgery component using the generic CCA_CPA_UFCMA framework, then rewrites both in terms of split random oracles that separate the poly_in, poly_out, and extra_block randomness (games G8 and G9). Step 3 shows that under the fully split RO and nonce-respecting constraints, the CPA game (G8) is identical to encryption with uniformly random output (EncRnd), since each fresh nonce's RO entries are independent uniform samples. Step 4 bounds the UFCMA game (G9) by analyzing two bad events: bad1 (an encryption tag collides with a previously seen decryption tag, bounded by qdec * pr1_poly_out via a union bound) and bad2 (a forgery succeeds during verification, bounded by qdec * max(pr_zeropol, pr1_poly_out) via the Poly1305 collision bound).",
+  "game_chain": [
+    {
+      "id": "G_real",
+      "role": "real_cca",
+      "description": "CCA_game(A, RealOrcls(ChaChaPoly)): standard IND-CCA2 game where encryption and decryption use concrete chacha20_block keyed by a uniformly random key."
+    },
+    {
+      "id": "G_indist_real",
+      "role": "prf_real",
+      "description": "Indist.Distinguish(D(A), IndBlock): indistinguishability game where D(A) wraps the CCA adversary and IndBlock provides keyed chacha20_block; the real side of the PRP/PRF switch."
+    },
+    {
+      "id": "G_indist_ro",
+      "role": "prf_random",
+      "description": "Indist.Distinguish(D(A), IndRO): indistinguishability game where IndRO provides a lazy random oracle on (nonce, counter) pairs; the ideal side of the PRP/PRF switch."
+    },
+    {
+      "id": "G_ro",
+      "role": "intermediate_abstraction",
+      "description": "CCA_game(A, RealOrcls(OChaChaPoly(IFinRO))): CCA game where chacha20_block is replaced by a finite eager random oracle, giving operator-based encryption and MAC."
+    },
+    {
+      "id": "G_cpa",
+      "role": "intermediate_abstraction",
+      "description": "CPA_game(CCA_CPA_Adv(A), RealOrcls(GenChaChaPoly(CCRO(FinRO)))): encryption-only component after CCA-to-CPA+UFCMA decomposition, using the RO-backed GenChaChaPoly."
+    },
+    {
+      "id": "G_ufcma_poly",
+      "role": "intermediate_abstraction",
+      "description": "UFCMA_poly(A, FinRO): forgery-checking component after CCA decomposition; runs CPA game then tests whether any decryption ciphertext's Poly1305 tag is valid."
+    },
+    {
+      "id": "G8",
+      "role": "intermediate_abstraction",
+      "description": "G8(A, RO1) wrapped in Split1/SplitC2: CPA game with RO fully split \u2014 domain split separates counter=0 (MAC key) from counter>=1 (stream), codomain split separates block into (poly_in, poly_out, extra_block)."
+    },
+    {
+      "id": "G9",
+      "role": "intermediate_abstraction",
+      "description": "G9(A, RO1) wrapped in Split1/SplitC2: UFCMA forgery check with the same RO splitting as G8; iterates over nonces and checks tag validity under the split Poly1305 key material."
+    },
+    {
+      "id": "G_encrnd",
+      "role": "ideal_cpa",
+      "description": "CPA_game(CCA_CPA_Adv(BNR_Adv(A)), EncRnd): CPA game where encryption returns uniformly random ciphertext bytes and a uniformly random Poly1305 tag, independent of the plaintext; decryption always returns None."
+    }
+  ],
+  "lemma_catalog": [
+    {
+      "name": "map2_zip, size_map2, nth_map2",
+      "role": "helper",
+      "narrative": "Algebraic properties of the map2 operator: equivalence with map-over-zip, size equals min of input sizes, and element-wise access at valid indices."
+    },
+    {
+      "name": "Byte.xorK1",
+      "role": "helper",
+      "narrative": "Byte-level XOR self-inverse: b1 = b1 +^ b2 +^ b2. Foundation for block-level XOR cancellation used throughout."
+    },
+    {
+      "name": "GenBlock.dblock_ll, GenBlock.dblock_uni, GenBlock.dblock_fu, GenBlock.dblock_funi",
+      "role": "helper",
+      "narrative": "Distribution properties of dblock: lossless, uniform, full, and funiform. Inherited by all cloned block types (dpoly_in, dpoly_out, dpoly, dextra_block, dblock) and used pervasively in sampling arguments."
+    },
+    {
+      "name": "GenBlock.nth_xor, GenBlock.nth_zero, GenBlock.Axioms.addmA, GenBlock.Axioms.addmC, GenBlock.Axioms.add0m, GenBlock.addK, GenBlock.xorK1",
+      "role": "helper",
+      "narrative": "Block-level XOR algebra: element-wise XOR, zero element, associativity, commutativity, identity, self-cancellation, and self-inverse. Establishes blocks as an abelian group under XOR, critical for proving CTR encryption/decryption invertibility in dec_enc."
+    },
+    {
+      "name": "C.inhabited, C.enum_spec, GenBlock.inhabited",
+      "role": "helper",
+      "narrative": "Clone realization obligations: counter subtype is inhabited, counter enumeration is correct, and block subtype is inhabited (via nseq of zero bytes)."
+    },
+    {
+      "name": "nth_extend",
+      "role": "helper",
+      "narrative": "Element-wise characterization of the extend operation: for i < size m returns the original byte, otherwise returns Byte.zero. Used in XOR equivalence proofs."
+    },
+    {
+      "name": "take_xor_map2_xor",
+      "role": "helper",
+      "narrative": "Proves map2_xor and take_xor compute the same result on any message and stream block. Justifies using either XOR formulation interchangeably in CTR-mode proofs."
+    },
+    {
+      "name": "iter_gen_ctr_round_nil_cat, iter_gen_ctr_round_S, iter_gen_ctr_round_nil",
+      "role": "helper",
+      "narrative": "Structural lemmas for iterating gen_ctr_round: prefix concatenation distributes over iteration, step-unfolding exposes one encryption round, and iteration on empty input is a no-op."
+    },
+    {
+      "name": "gen_CTR_encrypt_bytes0, gen_CTR_encrypt_bytes_cons",
+      "role": "helper",
+      "narrative": "Base and recursive cases of gen_CTR_encrypt_bytes: empty plaintext yields empty ciphertext; non-empty plaintext XORs one block and recurses on the remainder with incremented counter."
+    },
+    {
+      "name": "OpCC.chacha_spec",
+      "role": "oracle_equiv",
+      "narrative": "Phoare spec for ChaCha(OCC(I)).enc: terminates with probability 1 and returns gen_CTR_encrypt_bytes applied to the operator cc. Used to bridge the procedural while-loop implementation to its functional specification.",
+      "semantic_delta": "Proves the procedural while-loop in ChaCha(OCC(I)).enc computes exactly gen_CTR_encrypt_bytes(take_xor, cc gs, k, n, 1, p); purely a procedure-to-operator correspondence, no game-level change."
+    },
+    {
+      "name": "OpCC.poly_spec",
+      "role": "oracle_equiv",
+      "narrative": "Phoare spec for Poly(OCC(I)).mac: terminates with probability 1 and returns genpoly1305(cc gs, k, n, topol a c). Bridges the procedural MAC computation to its functional specification.",
+      "semantic_delta": "Proves Poly(OCC(I)).mac computes exactly genpoly1305(cc gs, k, n, topol a c); procedure-to-operator correspondence."
+    },
+    {
+      "name": "OpCC.CCP_OCCP",
+      "role": "oracle_equiv",
+      "narrative": "Equivalence between A(GenChaChaPoly(OCC(I))).main and A(OChaChaPoly(I)).main: the procedural wrapper and the operator-based wrapper give identical results for any adversary A. The core building block for pr_CCP_OCCP.",
+      "semantic_delta": "Replaces procedural oracle calls in GenChaChaPoly(OCC(I)) \u2014 ChaCha while-loop and Poly oracle call \u2014 with direct operator evaluation in OChaChaPoly(I), preserving all inputs and outputs."
+    },
+    {
+      "name": "OpCC.pr_CCP_OCCP",
+      "role": "bridge_lemma",
+      "narrative": "Probability-level consequence of CCP_OCCP: Pr[A(GenChaChaPoly(OCC(I))).main()] = Pr[A(OChaChaPoly(I)).main()]. Used in step1 to switch between the procedural and functional formulations of ChaChaPoly. Instantiated via OpCCinit (with chacha20_block) and OpCCRO (with RO map lookup).",
+      "hop": [
+        "G_real",
+        "G_ro"
+      ],
+      "semantic_delta": "Replaces the procedural GenChaChaPoly(OCC(I)) wrapper with the functional OChaChaPoly(I) wrapper; no change in game structure, adversary interface, or underlying block function \u2014 purely syntactic refactoring of how encryption and MAC are computed.",
+      "rewrite_form": "rewrite (OpCCinit.pr_CCP_OCCP <I> <A> &m).",
+      "arg_types": {
+        "<I>": {
+          "type": "OpCCinit.Init",
+          "known_instances_in_file": [
+            "I_stateless",
+            "IFinRO"
+          ]
+        },
+        "<A>": {
+          "type": "OpCCinit.Adv",
+          "known_instances_in_file": [
+            "G1"
+          ]
+        }
+      },
+      "closer_hints": {
+        "smt_lemmas": [],
+        "unfold_ops": [],
+        "typical_tail": "byequiv => //; proc; inline *; wp; call (_: Mem.k{1} = IndBlock.k{2}); last by auto."
+      }
+    },
+    {
+      "name": "Step1_2.dec_enc",
+      "role": "helper",
+      "narrative": "Realizes the dec_enc axiom for CCA_CPA_UFCMA: decryption correctly inverts encryption under take_xor CTR mode. Proved by strong induction on plaintext size using XOR self-cancellation (Byte.xorK1)."
+    },
+    {
+      "name": "SplitC1.topairK, SplitC1.sample_spec, SplitC2.topairK, SplitC2.sample_spec",
+      "role": "helper",
+      "narrative": "Clone realizations for the two codomain-splitting layers. SplitC1 splits block into (poly, extra_block); SplitC2 splits poly into (poly_in, poly_out). Each proves the topair/ofpair bijection and that sampling the joint distribution equals sampling the product of marginals."
+    },
+    {
+      "name": "poly_mac1",
+      "role": "oracle_equiv",
+      "narrative": "Local equiv: Poly(OpCCinit.OCC(I_stateless)).mac ~ D(A, IndBlock).O.Poly.mac when k{1} = IndBlock.k{2}. Used in step1 to relate the real ChaChaPoly scheme to D's internal Poly oracle on the IndBlock side.",
+      "semantic_delta": "Shows the Poly1305 MAC under OCC(I_stateless) with key k produces the same tag as D(A, IndBlock).O.Poly.mac when IndBlock.k = k; both compute poly1305(r, s, topol a c) using chacha20_block(k, n, 0) to derive (r, s).",
+      "call_template": "call poly_mac1.",
+      "invariant_sketch": "Pre: k{1} = IndBlock.k{2} /\\ ={n, a, c}. Post: ={res}. Use inside a pRHL goal where the enclosing `call (_: Mem.k{1} = IndBlock.k{2})` invariant already establishes the key equality.",
+      "closer_hints": {
+        "smt_lemmas": [],
+        "unfold_ops": [],
+        "typical_tail": "auto."
+      }
+    },
+    {
+      "name": "chacha_enc1",
+      "role": "oracle_equiv",
+      "narrative": "Local equiv: ChaCha(OpCCinit.OCC(I_stateless)).enc ~ D(A, IndBlock).O.ChaCha.enc when k{1} = IndBlock.k{2}. Used alongside poly_mac1 in step1 for the real-block-cipher side.",
+      "semantic_delta": "Shows ChaCha CTR encryption under OCC(I_stateless) with key k produces the same ciphertext as D(A, IndBlock).O.ChaCha.enc when IndBlock.k = k; both XOR plaintext with chacha20_block(k, n, counter) blocks.",
+      "call_template": "call chacha_enc1.",
+      "invariant_sketch": "Pre: k{1} = IndBlock.k{2} /\\ ={n, p}. Post: ={res}. Use inside a pRHL goal where the enclosing `call (_: Mem.k{1} = IndBlock.k{2})` invariant already establishes the key equality.",
+      "closer_hints": {
+        "smt_lemmas": [],
+        "unfold_ops": [],
+        "typical_tail": "auto."
+      }
+    },
+    {
+      "name": "poly_mac2",
+      "role": "oracle_equiv",
+      "narrative": "Local equiv: Poly(OCC(IFinRO)).mac ~ D(A, G2(FinRO).CCRO).O.Poly.mac when OCC.gs{1} = RO.m{2}. Used in step1 for the random-oracle side.",
+      "semantic_delta": "Shows the Poly1305 MAC under OCC backed by a finite RO state produces the same tag as D's internal Poly oracle backed by the same RO map; both look up (n, 0) in the shared map to derive (r, s).",
+      "call_template": "call poly_mac2.",
+      "invariant_sketch": "Pre: OCC.gs{1} = RO.m{2} /\\ ={n, a, c}. Post: ={res}. Use inside the `call (_: OCC.gs{1} = RO.m{2})` enclosing invariant on the RO-backed side of step1.",
+      "closer_hints": {
+        "smt_lemmas": [],
+        "unfold_ops": [],
+        "typical_tail": "auto."
+      }
+    },
+    {
+      "name": "chacha_enc2",
+      "role": "oracle_equiv",
+      "narrative": "Local equiv: ChaCha(OCC(IFinRO)).enc ~ D(A, G2(FinRO).CCRO).O.ChaCha.enc when OCC.gs{1} = RO.m{2}. Used alongside poly_mac2 in step1 for the random-oracle side.",
+      "semantic_delta": "Shows ChaCha CTR encryption under OCC backed by a finite RO state produces the same ciphertext as D's internal ChaCha oracle backed by the same RO map.",
+      "call_template": "call chacha_enc2.",
+      "invariant_sketch": "Pre: OCC.gs{1} = RO.m{2} /\\ ={n, p}. Post: ={res}. Closing the call residual uses `while (={p, c, n, i} /\\ OCC.gs{1} = RO.m{2}); auto.` for the CTR loop.",
+      "closer_hints": {
+        "smt_lemmas": [],
+        "unfold_ops": [],
+        "typical_tail": "while (={p, c, n, i} /\\ OCC.gs{1} = RO.m{2}); auto."
+      }
+    },
+    {
+      "name": "step1",
+      "role": "main_reduction",
+      "narrative": "The PRP/PRF switch: Pr[G_real] - Pr[G_ro] = Pr[G_indist_real] - Pr[G_indist_ro]. Shows the gap between the real CCA game and the RO-based CCA game equals exactly the indistinguishability advantage of D(A) against chacha20_block. Uses poly_mac1/chacha_enc1 for the real side and poly_mac2/chacha_enc2 plus pr_CCP_OCCP for the RO side.",
+      "hop": [
+        "G_real",
+        "G_ro"
+      ],
+      "semantic_delta": "Replaces the keyed chacha20_block in ChaChaPoly with a lazy random oracle on (nonce, counter) pairs; the probability gap is captured exactly by the PRP/PRF distinguishing game."
+    },
+    {
+      "name": "step2_1",
+      "role": "main_reduction",
+      "narrative": "CCA-to-CPA+UFCMA decomposition: Pr[G_ro] <= Pr[CPA(StLSke(St))] + Pr[UFCMA(A, St) with successful dec]. Applies the generic CCA_CPA_UFCMA framework to the RO-based ChaChaPoly, splitting the CCA advantage into an encryption-only component and a forgery component."
+    },
+    {
+      "name": "UFCMA_genCC",
+      "role": "oracle_equiv",
+      "narrative": "Equiv between UFCMA(A, St).main and CPA_game(CCA_CPA_Adv(A), RealOrcls(GenChaChaPoly(CCRO(FinRO)))).main, preserving Mem.lc and relating StLSke.gs to RO.m. Bridges the state-based formulation from step2_1 to the RO-based formulation needed in step2_2.",
+      "semantic_delta": "Shows UFCMA(A, St) \u2014 which initializes FinRO and stores RO.m as StLSke state \u2014 runs identically to CPA with GenChaChaPoly(CCRO(FinRO)), since both use the same underlying random oracle for encryption and MAC."
+    },
+    {
+      "name": "step2_2",
+      "role": "main_reduction",
+      "narrative": "Refines the CPA + UFCMA bound from step2_1: Pr[CPA(StLSke(St))] + Pr[UFCMA existential dec] <= Pr[CPA(GenChaChaPoly(CCRO(FinRO)))] + Pr[UFCMA_poly(A, FinRO)]. Replaces the abstract UFCMA decryption-success event with UFCMA_poly's concrete Poly1305 forgery check, using UFCMA_genCC to align the two formulations."
+    },
+    {
+      "name": "step2_3",
+      "role": "intermediate_step",
+      "narrative": "Rewrites Pr[G_cpa] + Pr[G_ufcma_poly] as Pr[G8] + Pr[G9] by applying the domain split (SplitD separates counter=0 from counter>=1) and two codomain splits (SplitC1 separates poly from extra_block; SplitC2 separates poly_in from poly_out). This separation is essential for step3 and step4 which analyze G8 and G9 independently."
+    },
+    {
+      "name": "step2",
+      "role": "main_reduction",
+      "narrative": "Combines step1, step2_1, step2_2, and step2_3 into the main reduction: Pr[G_real] <= Pr[G8] + Pr[G9] + (Pr[G_indist_real] - Pr[G_indist_ro]). This is the public lemma exported from the Step1_2 abstract theory, reducing CCA security to the split-RO games plus PRP/PRF advantage."
+    },
+    {
+      "name": "pr_TPI_ok, filter_test_poly_in, pr_TPI_ok_filter",
+      "role": "helper",
+      "narrative": "Probability bounds on test_poly_in: the probability that a random poly_in key r creates a forgery match against any ciphertext in lc is at most k * pr_zeropol (where k bounds the list size). The filter variant restricts to ciphertexts matching a specific nonce. Used in step4_bad2."
+    },
+    {
+      "name": "mk_rs_ofpair",
+      "role": "helper",
+      "narrative": "Shows mk_rs(SplitC1.ofpair(SplitC2.ofpair(r, s), e)) = (r, s): extracting the Poly1305 key from a reconstructed block recovers the original (poly_in, poly_out) components. Used in step3 to relate the split-RO representation to mk_rs."
+    },
+    {
+      "name": "equ_cc",
+      "role": "oracle_equiv",
+      "narrative": "Local equiv showing ChaCha encryption under the fully split RO produces the same output as EncRnd.cc when the nonce is fresh (not in BNR.lenc). Core building block for step3: for fresh nonces, the split-RO at counter>=1 returns independent uniform blocks, so XOR encryption yields uniform ciphertext.",
+      "semantic_delta": "Under a fresh nonce not in BNR.lenc, the split-RO ChaCha encryption samples fresh uniform blocks from ROF for each counter>=1, making the XOR ciphertext equivalent to EncRnd.cc's direct uniform byte sampling.",
+      "call_template": "ecall (equ_cc <nonce_var>{1} <ROin_map>{1} <ROout_map>{1}).",
+      "invariant_sketch": "ecall yields an ambient residual — the current pRHL state must satisfy equ_cc's precondition (nonce fresh: not in BNR.lenc on side 1). Discharge by `rewrite /check_plaintext; auto => /> /#` (unfolds the freshness predicate so /# closes).",
+      "closer_hints": {
+        "smt_lemmas": [
+          "dpoly_in_ll",
+          "poly_out_sub_add",
+          "poly_out_add_sub",
+          "get_setE",
+          "mk_rs_ofpair",
+          "mem_set",
+          "dkey_ll",
+          "mem_empty"
+        ],
+        "unfold_ops": ["check_plaintext"],
+        "typical_tail": "rewrite /check_plaintext; auto => /> /#."
+      }
+    },
+    {
+      "name": "step3",
+      "role": "main_reduction",
+      "narrative": "Bridges G8 and G_encrnd: Pr[G8(BNR_Adv(A))] = Pr[CPA(EncRnd)]. Under the fully split RO with nonce-respecting constraints, each encryption query uses a fresh nonce, so the stream blocks and poly_out key are independent uniform samples, making the CPA game identical to random encryption.",
+      "hop": [
+        "G8",
+        "G_encrnd"
+      ],
+      "semantic_delta": "Replaces the split-RO-based CPA encryption \u2014 which XORs plaintext with fresh RO blocks at counter>=1 and computes Poly1305 with fresh poly_in/poly_out from counter=0 \u2014 with EncRnd's direct uniform ciphertext and tag sampling, exploiting nonce-freshness and independence of the split RO components."
+    },
+    {
+      "name": "step4_1",
+      "role": "main_reduction",
+      "narrative": "Decomposes the UFCMA forgery probability: Pr[G9(BNR_Adv(A))] <= Pr[UFCMA(ROIN.RO) : res or bad2] + Pr[UFCMA(ROIN.RO) : bad1]. Introduces the local UFCMA module with bad events: bad1 tracks whether an encryption tag collides with a decryption tag, bad2 tracks whether the forgery check succeeds for nonces whose poly_out was not yet queried."
+    },
+    {
+      "name": "equiv_step4",
+      "role": "oracle_equiv",
+      "narrative": "Restructuring equiv between UFCMA and UFCMA3: separates the single nonce-iteration loop into two phases and makes the disjunction explicit. Used to enable independent analysis of bad1 and bad2.",
+      "semantic_delta": "Splits the single forgery-check loop in UFCMA.distinguish into two sequential loops in UFCMA3 \u2014 first over nonces with poly_out cached in ROout.m, then over nonces without \u2014 and tracks UF.forged and UFCMA.bad2 as separate flags."
+    },
+    {
+      "name": "step4_bad2",
+      "role": "intermediate_step",
+      "narrative": "Bounds Pr[UFCMA(ROIN.RO) : res or bad2] <= qdec * max(pr_zeropol, pr1_poly_out). For each of at most qdec decryption ciphertexts, the forgery probability is bounded by the maximum of the Poly1305 collision probability (pr_zeropol, from pr_TPI_ok) and the tag-guessing probability (pr1_poly_out, from bad2's uniform sampling)."
+    },
+    {
+      "name": "make_lbad1_size_cons2, leq_make_lbad1, make_lbad1_size_cons3",
+      "role": "helper",
+      "narrative": "Size-tracking lemmas for make_lbad1: adding a ciphertext increments the list by 1 if its nonce matches; overall size is bounded by |lc|; adding a new nonce to lenc contributes exactly the count of matching ciphertexts. Used in the bad1 invariant proofs."
+    },
+    {
+      "name": "step4_bad1_lbad1",
+      "role": "intermediate_step",
+      "narrative": "Reduces Pr[UFCMA bad1] to Pr[collision in UFCMA_l.lbad1]: if bad1 fires, there exists a pair (t, t') in the list lbad1 of (encryption-tag, decryption-tag) pairs with t = t'. Introduces the UFCMA_l module that records these pairs explicitly."
+    },
+    {
+      "name": "step4_lbad1_sum",
+      "role": "intermediate_step",
+      "narrative": "Union bound over lbad1: Pr[exists collision in lbad1 of size <= qdec] <= sum_{i=0}^{qdec-1} Pr[i-th entry collides]. Uses the EventPartitioning/ListPartitioning framework to decompose the existential event."
+    },
+    {
+      "name": "step4_badi",
+      "role": "intermediate_step",
+      "narrative": "For each index nth0 in [0, qdec), bounds Pr[nth0-th lbad1 entry collides] <= Pr[UFCMA_li.f(nth0) : badi]. Introduces UFCMA_li which isolates a single collision check into its own bad event flag."
+    },
+    {
+      "name": "pr_step4_badi",
+      "role": "intermediate_step",
+      "narrative": "Bounds Pr[UFCMA_li.f(nth0) : badi] <= pr1_poly_out for each index: the encryption tag t is a fresh uniform sample from dpoly_out, independent of the fixed decryption tag, so Pr[t = target] = mu1(dpoly_out, witness) = pr1_poly_out."
+    },
+    {
+      "name": "step4_bad1",
+      "role": "intermediate_step",
+      "narrative": "Combines step4_bad1_lbad1, step4_lbad1_sum, step4_badi, and pr_step4_badi: Pr[UFCMA(ROIN.RO) : bad1] <= qdec * pr1_poly_out. The qdec factor comes from the union bound over at most qdec (encryption-tag, decryption-tag) pairs."
+    },
+    {
+      "name": "conclusion",
+      "role": "main_theorem",
+      "narrative": "The final security bound combining all four steps: Pr[CCA(BNR_Adv(A), ChaChaPoly)] <= Pr[CPA(A, EncRnd)] + PRP/PRF advantage + qdec * max(pr_zeropol, pr1_poly_out) + qdec * pr1_poly_out. Assembles Step1_2.step2 (instantiated with BNR_Adv(A)), step3, step4_1, step4_bad2, and step4_bad1 via triangle-inequality arithmetic."
+    }
+  ],
+  "glossary": {
+    "CCA_game(A, O)": "Standard IND-CCA2 game: adversary A receives encryption and decryption oracles from O and outputs a boolean guess. Defined in the imported Ske library.",
+    "CPA_game(A, O)": "IND-CPA game: adversary A receives only the encryption oracle from O (no decryption). Used after the CCA-to-CPA+UFCMA decomposition.",
+    "CCA_CPA_Adv(A)": "Generic reduction converting a CCA adversary A into a CPA adversary by removing decryption access; defined in the Ske/CCA_CPA_UFCMA framework.",
+    "BNR(O) / BNR_Adv(A)": "Bounded Nonce-Respecting wrapper: enforces at most qenc encryption queries with distinct nonces, at most qdec decryption queries, and valid_topol size constraints. BNR_Adv wraps an adversary A with these checks.",
+    "ChaChaPoly": "Concrete AEAD module: encrypts via gen_CTR_encrypt_bytes(take_xor, chacha20_block, k, n, 1, p) and authenticates via genpoly1305(chacha20_block, k, n, topol(a, c)).",
+    "GenChaChaPoly(CC)": "ChaChaPoly parameterized by an abstract FCC module CC; allows swapping chacha20_block for a random oracle or other block function.",
+    "OChaChaPoly(I)": "Operator-based ChaChaPoly that computes enc/dec via direct functional evaluation of gen_CTR_encrypt_bytes and genpoly1305 on operator cc, avoiding oracle calls.",
+    "OpCC / OCC(I)": "Abstract theory providing an operator-based CC module; OCC.cc returns cc(gs, k, n, c) where gs is global state initialized by I. Cloned as OpCCinit (cc = chacha20_block) and OpCCRO (cc = oget map[(n,c)]).",
+    "D(A, RO)": "Distinguisher wrapping CCA adversary A and oracle RO into the Indistinguishability game format; internally provides CCA enc/dec using RO.f as the block function (key is ignored).",
+    "IndBlock / IndRO": "Real and ideal oracles for the PRP/PRF indistinguishability game: IndBlock returns chacha20_block(k, n, c) for random k; IndRO returns lazy RO samples.",
+    "CCRO(RO)": "Adapter wrapping a random oracle RO into the FCC interface; cc(k, n, c) ignores the key and returns RO.get(n, c).",
+    "EncRnd": "Ideal encryption module: enc samples random bytes (same length as plaintext) via dblock and a random tag via dpoly_out; dec always returns None.",
+    "StLSke(St) / St": "Stateful SKE wrapper for the CCA_CPA_UFCMA framework: St.init runs FinRO.init and returns RO.m as global state; StLSke evaluates enc/dec as operators over that stored map.",
+    "UFCMA_poly(A, RO)": "Concrete UFCMA game: runs the CPA game, then for each nonce in the decryption log, queries RO at counter 0, extracts (r,s), and checks test_poly for tag validity.",
+    "test_poly_in": "Predicate testing whether a random poly_in key r causes any decryption ciphertext's tag to be a valid Poly1305 forgery relative to an encryption ciphertext; used in the UFCMA analysis.",
+    "SplitD / SplitC1 / SplitC2": "Three RO-splitting layers: SplitD separates domain by counter (0 vs non-0); SplitC1 splits counter-0 codomain into (poly, extra_block); SplitC2 splits poly into (poly_in, poly_out). Enables independent analysis of MAC key components.",
+    "G4 through G9": "Intermediate game modules: G4/G5 are CPA/UFCMA over a single RO; G6/G7 add domain splitting; G8/G9 add codomain splitting. G8 is the CPA component and G9 is the UFCMA component in the final reduction.",
+    "pr_zeropol": "Upper bound on Pr[poly1305_eval(r, p2) - poly1305_eval(r, p1) = target] for random r and distinct polynomials p1 != p2; the information-theoretic Poly1305 collision probability.",
+    "pr1_poly_out": "mu1(dpoly_out, witness) = 1/|poly_out|; probability of guessing a uniformly random poly_out value.",
+    "mk_rs(b)": "Extracts the Poly1305 key pair (r : poly_in, s : poly_out) from block b by taking the first poly_in_size bytes as r and the next poly_out_size bytes as s."
+  },
+  "_source_sha256": "0eefc8d27e74cdb2aba480f218337fe9a266d3631c52713148fe2f5af7112284",
+  "_annotator_version": "v0",
+  "_model": "claude-opus-4-6",
+  "synthetic_module_bridges": [
+    {
+      "name": "ChaChaPoly_to_OChaChaPoly_I_stateless",
+      "replace_from": "RealOrcls(ChaChaPoly)",
+      "replace_to": "RealOrcls(OpCCinit.OChaChaPoly(I_stateless))",
+      "relation": "ChaChaPoly \u2261 OChaChaPoly(I_stateless) \u2014 both use chacha20_block directly",
+      "closer_hint": "byequiv=>//; proc; inline *; wp; call (_: ={Mem.k}); sim />"
+    },
+    {
+      "name": "OChaChaPoly_IFinRO_to_OCCRO_IFinRO",
+      "replace_from": "RealOrcls(OChaChaPoly(IFinRO))",
+      "replace_to": "RealOrcls(OpCCRO.OChaChaPoly(IFinRO))",
+      "relation": "Same functional form, different theory import path",
+      "closer_hint": "byequiv=>//; sim"
+    }
+  ]
+}

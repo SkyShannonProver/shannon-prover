@@ -1,0 +1,19 @@
+{
+  "turn": 4,
+  "handled_intent": {
+    "intent": "commit_tactic",
+    "payload": {
+      "tactic": "byequiv (_: ={glob A} ==> (exists (c : ciphertext), (c \\in Mem.lc) /\\ dec StLSke.gs Mem.k c <> None){1} => res{2}) => //."
+    }
+  },
+  "ok": true,
+  "manager_note": "Committed tactic accepted; the EasyCrypt proof state changed.",
+  "manager_actions": [
+    {
+      "action": "tactic commit",
+      "outcome": "EasyCrypt accepted the committed tactic.",
+      "timing": "275 ms"
+    }
+  ],
+  "view_refreshed": true
+}

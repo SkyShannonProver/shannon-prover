@@ -1,0 +1,19 @@
+{
+  "turn": 17,
+  "handled_intent": {
+    "intent": "commit_tactic",
+    "payload": {
+      "tactic": "move: hx; rewrite supp_dexcepted supp_dinter."
+    }
+  },
+  "ok": true,
+  "manager_note": "Committed tactic accepted; the EasyCrypt proof state changed.",
+  "manager_actions": [
+    {
+      "action": "tactic commit",
+      "outcome": "EasyCrypt accepted the committed tactic.",
+      "timing": "336 ms"
+    }
+  ],
+  "view_refreshed": true
+}

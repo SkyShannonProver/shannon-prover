@@ -1,0 +1,20 @@
+{
+  "turn": 2,
+  "handled_intent": {
+    "intent": "commit_tactic",
+    "payload": {
+      "tactic": "byphoare (_: i = i0 ==> res = a i0) => //."
+    }
+  },
+  "ok": true,
+  "manager_note": "Committed tactic accepted; the EasyCrypt proof state changed.",
+  "manager_actions": [
+    {
+      "action": "tactic commit",
+      "outcome": "EasyCrypt accepted the committed tactic.",
+      "timing": "145 ms"
+    }
+  ],
+  "view_refreshed": true,
+  "surface_turn_hash": "e31311f5ef811edb03b3bc6f17258fbd776528c2"
+}

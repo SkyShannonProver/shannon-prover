@@ -1,0 +1,19 @@
+{
+  "turn": 34,
+  "handled_intent": {
+    "intent": "commit_tactic",
+    "payload": {
+      "tactic": "rewrite hn12 hf hb hcb hlog hlc hro /=; move => resL resR mL mR [-> ->] /=; move => r0L r0R b2L cb2L b2R cb2R [#] _ -> -> /=; smt(drop_drop mem_set in_cons mem_drop size_drop size_eq0 size_ge0)."
+    }
+  },
+  "ok": true,
+  "manager_note": "Committed tactic accepted; the EasyCrypt proof state changed.",
+  "manager_actions": [
+    {
+      "action": "tactic commit",
+      "outcome": "EasyCrypt accepted the committed tactic.",
+      "timing": "809 ms"
+    }
+  ],
+  "view_refreshed": true
+}

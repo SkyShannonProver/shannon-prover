@@ -1,0 +1,19 @@
+{
+  "turn": 26,
+  "handled_intent": {
+    "intent": "commit_tactic",
+    "payload": {
+      "tactic": "rnd (fun (x : block) => extend p{1} +^ x) (fun (x : block) => extend p{1} +^ x)."
+    }
+  },
+  "ok": true,
+  "manager_note": "Committed tactic accepted; the EasyCrypt proof state changed.",
+  "manager_actions": [
+    {
+      "action": "tactic commit",
+      "outcome": "EasyCrypt accepted the committed tactic.",
+      "timing": "668 ms"
+    }
+  ],
+  "view_refreshed": true
+}

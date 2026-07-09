@@ -1,0 +1,45 @@
+{
+ "current_goal": {
+  "lines": [
+   "Current goal (remaining: 7)",
+   "",
+   "Type variables: <none>",
+   "",
+   "&m: {}",
+   "------------------------------------------------------------------------",
+   "forall &1 &2,",
+   "  (p{2} = None<:plaintext> /\\",
+   "   p{1} = None<:plaintext> /\\",
+   "   !UFCMA.bad1{2} /\\",
+   "   c{1} = c{2} /\\",
+   "   inv SplitC2.I1.RO.m{1} RO.m{2} SplitC2.I2.RO.m{1} SplitC2.I2.RO.m{2}",
+   "     Mem.log{1} Mem.log{2} Mem.lc{1} Mem.lc{2} BNR.lenc{1} BNR.lenc{2}",
+   "     BNR.ndec{1} BNR.ndec{2} UFCMA.log{2}) /\\",
+   "  check_cipher BNR.ndec{1} c{1} =>",
+   "  !UFCMA.bad1{2} =>",
+   "  Mem.log{1}.[c{1}] = Mem.log{2}.[c{2}] /\\",
+   "  inv SplitC2.I1.RO.m{1} RO.m{2} SplitC2.I2.RO.m{1} SplitC2.I2.RO.m{2}",
+   "    Mem.log{1} Mem.log{2}",
+   "    (if c{1} \\in Mem.log{1} then Mem.lc{1} else c{1} :: Mem.lc{1})",
+   "    (if c{2} \\in Mem.log{2} then Mem.lc{2} else c{2} :: Mem.lc{2})",
+   "    BNR.lenc{1} BNR.lenc{2} (BNR.ndec{1} + 1) (BNR.ndec{2} + 1) UFCMA.log{2}",
+   "[464|check]>"
+  ],
+  "view_focus": "relational_program",
+  "goal_type": "ambient"
+ },
+ "proof_status": {
+  "current_layer": "ambient_logic",
+  "goal_type": "ambient",
+  "remaining_goals": 7,
+  "remaining_goals_known": true,
+  "status": "open",
+  "view_focus": "relational_program"
+ },
+ "last_result": {
+  "intent": null,
+  "tactic": null,
+  "payload": null,
+  "result": null
+ }
+}

@@ -1,0 +1,22 @@
+{
+  "turn": 1,
+  "handled_intent": {
+    "intent": "inspect_context",
+    "payload": {
+      "topic": "lemma_hints"
+    }
+  },
+  "ok": true,
+  "manager_note": "Read-only context. Accepted/rejected tactic or call text inside a preview is route-selection information, not the current proof-state error.",
+  "manager_actions": [
+    {
+      "action": "inspect lemma hints",
+      "outcome": "The manager returned read-only context for the current goal.",
+      "timing": "265 ms",
+      "content": {
+        "preview": "[AUTO-LEMMA-HINTS] EC stdlib lemmas relevant to ops in your goal \u2014 paste-ready signatures (apply / rewrite / smt(...)): [Number / op:`maxr`] `maxr_ub`: (x y : t) : x <= maxr x y /\\ y <= maxr x y [Number / op:`maxr`] `maxrE`: (x y : t): maxr x y = if y <= x then x else y [Number / op:`maxr`] `maxrC`: (x y : t) : maxr x y = maxr y x [Number / op:`maxr`] `maxrA`: (x y z: t): maxr (maxr x y) z = maxr x (maxr y z) -> Use `lookup_symbol` for the full declaration first; then `apply <name>` / `rewrite <name>` only after the statement matches."
+      }
+    }
+  ],
+  "view_refreshed": true
+}

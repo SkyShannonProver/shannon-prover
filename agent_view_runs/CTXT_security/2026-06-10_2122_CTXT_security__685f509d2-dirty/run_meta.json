@@ -1,0 +1,61 @@
+{
+  "kind": "agent_view_run_report",
+  "timestamp": "2026-06-10_2122_CTXT_security",
+  "lemma": "CTXT_security",
+  "source_file": "eval/examples/MEE-CBC/RCPA_CMA.ec",
+  "model": "claude-fable-5",
+  "surface_profile": "l1_goal_projection",
+  "trees": 2,
+  "eval_mode": true,
+  "outcome": "proved",
+  "committed_proofs": [
+    {
+      "tree": "Tree_0_0",
+      "tactics": [],
+      "source": "timeline_replay",
+      "replay_prefix_count": 0,
+      "proved": false
+    },
+    {
+      "tree": "Tree_0_1",
+      "tactics": [
+        "have [dec [dec_sem enc_corr]] := dec_op.",
+        "byequiv (_: ={glob A, glob E, glob M} ==> res{1} => res{2}) => //.",
+        "proc; inline *.",
+        "swap{2} 4 -3.",
+        "call (_: MACa.SUF_CMA.SUF_Wrap.win, ={glob E, glob M} /\\ CTXT_Wrap.k{1} = (CMAa.ek, MACa.SUF_CMA.SUF_Wrap.k){2} /\\ CTXT_Wrap.s{1} = MACa.SUF_CMA.SUF_Wrap.s{2} /\\ !CTXT_Wrap.win{1} /\\ (forall ct, ct \\in CTXT_Wrap.s{1} => dec CMAa.ek{2} ct.`1 <> None)).",
+        "exact A_forge_ll.",
+        "proc; inline *.",
+        "exists* CMAa.ek{2}, p{2}; elim* => ek_ p_.",
+        "wp; call (_: true); wp.",
+        "call (_: ={glob E, k, p} /\\ k{1} = ek_ /\\ p{1} = p_ ==> ={glob E, res} /\\ dec ek_ res{1} = Some p_).",
+        "conseq (_: ={glob E, k, p} ==> ={glob E, res}) (enc_corr ek_ p_) _ => //.",
+        "by proc true.",
+        "auto => />; smt(in_fsetU in_fset1).",
+        "move=> &2 _; proc; inline *; wp; call M_tag_ll; wp; call E_enc_ll; auto.",
+        "move=> &1; proc; inline *; wp; call M_tag_ll; wp; call E_enc_ll; auto.",
+        "proc; inline *.",
+        "seq 6 4: (={glob E, glob M} /\\ CTXT_Wrap.k{1} = (CMAa.ek{2}, MACa.SUF_CMA.SUF_Wrap.k{2}) /\\ CTXT_Wrap.s{1} = MACa.SUF_CMA.SUF_Wrap.s{2} /\\ !CTXT_Wrap.win{1} /\\ !MACa.SUF_CMA.SUF_Wrap.win{2} /\\ (forall ct0, ct0 \\in CTXT_Wrap.s{1} => dec CMAa.ek{2} ct0.`1 <> None) /\\ b{1} = b0{2} /\\ c0{1} = m{2} /\\ t{1} = t0{2} /\\ c{1} = (m{2}, t0{2}) /\\ ek{1} = CMAa.ek{2} /\\ p0{1} = None).",
+        "call (_: true); auto => /> /#.",
+        "if{1}.",
+        "exists* (glob E){1}, ek{1}, c0{1}; elim* => ge ek_ c_; wp; call{1} (_: (glob E) = ge /\\ k = ek_ /\\ c = c_ ==> (glob E) = ge /\\ res = dec ek_ c_).",
+        "by conseq E_dec_ll (dec_sem ge ek_ c_).",
+        "auto => /> /#.",
+        "auto => />.",
+        "move=> &2 _; proc; inline *; seq 6: true 1%r 1%r 0%r _ => //; [by call M_verify_ll; auto | if; [by wp; call E_dec_ll; auto | by auto]].",
+        "move=> &1; proc; inline *; wp; call M_verify_ll; auto => />.",
+        "wp; call (_: true); call (_: true); auto => />; smt(in_fset0).",
+        "qed."
+      ],
+      "source": "session",
+      "proved": true
+    }
+  ],
+  "turn_count": 36,
+  "views_copied": 38,
+  "run_iteration_dir": "artifacts/eval_suite/mee_ctxt_fable_l1/l1_goal_projection/mee_CTXT_security/r01/2026-06-10_2122_CTXT_security/iteration_1",
+  "commit": "685f509d2",
+  "commit_full": "685f509d2678739057061c570c67d41c0342d619",
+  "branch": "HEAD",
+  "dirty": true
+}

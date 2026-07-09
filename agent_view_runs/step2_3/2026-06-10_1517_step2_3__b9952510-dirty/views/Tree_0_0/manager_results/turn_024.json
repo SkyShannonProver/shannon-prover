@@ -1,0 +1,19 @@
+{
+  "turn": 24,
+  "handled_intent": {
+    "intent": "commit_tactic",
+    "payload": {
+      "tactic": "have ->: Pr[MainD(G5(A), RO).distinguish() @ &m : res] = Pr[Split0.IdealAll.MainD(G5(A), Split0.IdealAll.RO).distinguish() @ &m : res] by byequiv => //; proc; inline *; sim."
+    }
+  },
+  "ok": true,
+  "manager_note": "Committed tactic accepted; the EasyCrypt proof state changed.",
+  "manager_actions": [
+    {
+      "action": "tactic commit",
+      "outcome": "EasyCrypt accepted the committed tactic.",
+      "timing": "565 ms"
+    }
+  ],
+  "view_refreshed": true
+}

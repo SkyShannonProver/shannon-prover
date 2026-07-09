@@ -1,0 +1,22 @@
+{
+  "turn": 1,
+  "handled_intent": {
+    "intent": "lookup_symbol",
+    "payload": {
+      "symbol": "enc_eq"
+    }
+  },
+  "ok": true,
+  "manager_note": "Read-only context. Accepted/rejected tactic or call text inside a preview is route-selection information, not the current proof-state error.",
+  "manager_actions": [
+    {
+      "action": "symbol lookup",
+      "outcome": "The manager returned read-only context for the current goal.",
+      "timing": "2.6 s",
+      "content": {
+        "preview": "[WHERE-HIT-SOURCE] enc_eq (kind: equiv \u00b7 proven; source-scan fallback) equiv enc_eq: _k _p: E.enc ~ E.enc: ={glob E, k, p} /\\ k{1} = _k /\\ p{1} = _p ==> ={glob E, res} /\\ dec _k res{1} = Some _p. SCOPE: `local` \u2014 declared `local`, so it is NOT exported; `apply enc_eq` from the current context fails with `unknown identifier`. It is not a usable lemma here. SOURCE: current context line 460. NOTE: This is source-scan context because EasyCrypt `print` did not resolve the exact name. Treat it as definition context, not as a daemon-verified lemma signature. DETAIL: source declaration only; proof body intentionally omitted"
+      }
+    }
+  ],
+  "view_refreshed": true
+}

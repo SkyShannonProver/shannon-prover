@@ -1,0 +1,19 @@
+{
+  "turn": 48,
+  "handled_intent": {
+    "intent": "commit_tactic",
+    "payload": {
+      "tactic": "by move=> &2 _; rewrite perm_eq_sym; apply (perm_filterC (fun (n : nonce) => (n, C.ofintd 0) \\in SplitC2.I2.RO.m{2}) (undup (map (fun (p : ciphertext) => p.`1) Mem.lc{2})))."
+    }
+  },
+  "ok": true,
+  "manager_note": "Committed tactic accepted; the EasyCrypt proof state changed.",
+  "manager_actions": [
+    {
+      "action": "tactic commit",
+      "outcome": "EasyCrypt accepted the committed tactic.",
+      "timing": "795 ms"
+    }
+  ],
+  "view_refreshed": true
+}

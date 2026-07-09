@@ -1,0 +1,359 @@
+{
+  "kind": "agent_view_timeline_report",
+  "run_count": 1,
+  "runs": [
+    {
+      "chronological": false,
+      "first_action_at": "2026-06-11T01:11:12.500000+00:00",
+      "label": "2026-06-10_1810_mee_correct",
+      "node_count": 1,
+      "rows": [
+        {
+          "action_submitted_at": "2026-06-11T01:11:12.500000+00:00",
+          "action_time": "+00:00",
+          "agent_think": "",
+          "agent_think_path": "artifacts/eval_suite/rerun_iclass/l4_checked_action_surface/mee_correct/r01/2026-06-10_1810_mee_correct/iteration_1/node_memory/Tree_0_0/thinking/turn_001.md",
+          "agent_think_seconds": null,
+          "decision_followup_path": "",
+          "decision_state_summary": "ambient / ambient_logic, 1 goal, goal 300 chars",
+          "decision_view_path": "artifacts/eval_suite/rerun_iclass/l4_checked_action_surface/mee_correct/r01/2026-06-10_1810_mee_correct/iteration_1/manager_bootstrap_0_0.json",
+          "deterministic_signals": [],
+          "goal_chars": 300,
+          "inspect_topics": [
+            "goal_info",
+            "lemma_hints",
+            "tactic_forms"
+          ],
+          "intent": {
+            "intent": "probe_tactic",
+            "payload": {
+              "tactic": "move=> hPi; rewrite /mee_dec /mee_enc /=."
+            }
+          },
+          "intent_summary": "probe move=> hPi; rewrite /mee_dec /mee_enc /=",
+          "manager_action_summary": [
+            "tactic probe (2.5 s)"
+          ],
+          "manager_result_at": "2026-06-11T01:11:15+00:00",
+          "manager_result_path": "artifacts/eval_suite/rerun_iclass/l4_checked_action_surface/mee_correct/r01/2026-06-10_1810_mee_correct/iteration_1/node_memory/Tree_0_0/manager_results/turn_001.json",
+          "manager_seconds": 2.5,
+          "manager_time": "2.5 s",
+          "node": "Tree-0.0",
+          "node_dir": "artifacts/eval_suite/rerun_iclass/l4_checked_action_surface/mee_correct/r01/2026-06-10_1810_mee_correct/iteration_1/node_memory/Tree_0_0",
+          "ok": true,
+          "result_followup_path": "artifacts/eval_suite/rerun_iclass/l4_checked_action_surface/mee_correct/r01/2026-06-10_1810_mee_correct/iteration_1/node_memory/Tree_0_0/followups/turn_001.md",
+          "result_state_summary": "ambient / ambient_logic, 1 goal, goal 300 chars",
+          "result_summary": "accepted probe",
+          "result_view_path": "artifacts/eval_suite/rerun_iclass/l4_checked_action_surface/mee_correct/r01/2026-06-10_1810_mee_correct/iteration_1/node_memory/Tree_0_0/workspace_views/turn_001.json",
+          "turn": 1,
+          "usage": {
+            "cache_creation_input_tokens": 53869,
+            "cache_read_input_tokens": 29147,
+            "input_tokens": 3,
+            "output_tokens": 1588
+          },
+          "view_chars": 6976,
+          "view_id": "T0.0-1",
+          "workspace_view_path": "artifacts/eval_suite/rerun_iclass/l4_checked_action_surface/mee_correct/r01/2026-06-10_1810_mee_correct/iteration_1/manager_bootstrap_0_0.json"
+        },
+        {
+          "action_submitted_at": "2026-06-11T01:11:20.841000+00:00",
+          "action_time": "+00:08",
+          "agent_think": "5.8 s",
+          "agent_think_path": "artifacts/eval_suite/rerun_iclass/l4_checked_action_surface/mee_correct/r01/2026-06-10_1810_mee_correct/iteration_1/node_memory/Tree_0_0/thinking/turn_002.md",
+          "agent_think_seconds": 5.841,
+          "decision_followup_path": "artifacts/eval_suite/rerun_iclass/l4_checked_action_surface/mee_correct/r01/2026-06-10_1810_mee_correct/iteration_1/node_memory/Tree_0_0/followups/turn_001.md",
+          "decision_state_summary": "ambient / ambient_logic, 1 goal, goal 300 chars",
+          "decision_view_path": "artifacts/eval_suite/rerun_iclass/l4_checked_action_surface/mee_correct/r01/2026-06-10_1810_mee_correct/iteration_1/node_memory/Tree_0_0/workspace_views/turn_001.json",
+          "deterministic_signals": [
+            "commit_without_probe_check_not_inferred"
+          ],
+          "goal_chars": 300,
+          "inspect_topics": [
+            "goal_info",
+            "lemma_hints",
+            "tactic_forms"
+          ],
+          "intent": {
+            "intent": "commit_tactic",
+            "payload": {
+              "tactic": "move=> hPi; rewrite /mee_dec /mee_enc /=."
+            }
+          },
+          "intent_summary": "commit move=> hPi; rewrite /mee_dec /mee_enc /=",
+          "manager_action_summary": [
+            "tactic commit (159 ms)"
+          ],
+          "manager_result_at": "2026-06-11T01:11:21+00:00",
+          "manager_result_path": "artifacts/eval_suite/rerun_iclass/l4_checked_action_surface/mee_correct/r01/2026-06-10_1810_mee_correct/iteration_1/node_memory/Tree_0_0/manager_results/turn_002.json",
+          "manager_seconds": 0.159,
+          "manager_time": "159 ms",
+          "node": "Tree-0.0",
+          "node_dir": "artifacts/eval_suite/rerun_iclass/l4_checked_action_surface/mee_correct/r01/2026-06-10_1810_mee_correct/iteration_1/node_memory/Tree_0_0",
+          "ok": true,
+          "result_followup_path": "artifacts/eval_suite/rerun_iclass/l4_checked_action_surface/mee_correct/r01/2026-06-10_1810_mee_correct/iteration_1/node_memory/Tree_0_0/followups/turn_002.md",
+          "result_state_summary": "ambient / ambient_logic, 1 goal, goal 539 chars",
+          "result_summary": "accepted commit",
+          "result_view_path": "artifacts/eval_suite/rerun_iclass/l4_checked_action_surface/mee_correct/r01/2026-06-10_1810_mee_correct/iteration_1/node_memory/Tree_0_0/workspace_views/turn_002.json",
+          "turn": 2,
+          "usage": {
+            "cache_creation_input_tokens": 996,
+            "cache_read_input_tokens": 42471,
+            "input_tokens": 2,
+            "output_tokens": 308
+          },
+          "view_chars": 11056,
+          "view_id": "T0.0-2",
+          "workspace_view_path": "artifacts/eval_suite/rerun_iclass/l4_checked_action_surface/mee_correct/r01/2026-06-10_1810_mee_correct/iteration_1/node_memory/Tree_0_0/workspace_views/turn_001.json"
+        },
+        {
+          "action_submitted_at": "2026-06-11T01:11:24.800000+00:00",
+          "action_time": "+00:12",
+          "agent_think": "3.8 s",
+          "agent_think_path": "artifacts/eval_suite/rerun_iclass/l4_checked_action_surface/mee_correct/r01/2026-06-10_1810_mee_correct/iteration_1/node_memory/Tree_0_0/thinking/turn_003.md",
+          "agent_think_seconds": 3.8,
+          "decision_followup_path": "artifacts/eval_suite/rerun_iclass/l4_checked_action_surface/mee_correct/r01/2026-06-10_1810_mee_correct/iteration_1/node_memory/Tree_0_0/followups/turn_002.md",
+          "decision_state_summary": "ambient / ambient_logic, 1 goal, goal 539 chars",
+          "decision_view_path": "artifacts/eval_suite/rerun_iclass/l4_checked_action_surface/mee_correct/r01/2026-06-10_1810_mee_correct/iteration_1/node_memory/Tree_0_0/workspace_views/turn_002.json",
+          "deterministic_signals": [],
+          "goal_chars": 539,
+          "inspect_topics": [
+            "goal_info",
+            "lemma_hints",
+            "tactic_forms"
+          ],
+          "intent": {
+            "intent": "probe_tactic",
+            "payload": {
+              "tactic": "rewrite (cbc_correct P Pi ek iv (pad m (M mk m)) hPi)."
+            }
+          },
+          "intent_summary": "probe rewrite (cbc_correct P Pi ek iv (pad m (M mk m)) hPi)",
+          "manager_action_summary": [
+            "tactic probe (1.2 s)"
+          ],
+          "manager_result_at": "2026-06-11T01:11:26+00:00",
+          "manager_result_path": "artifacts/eval_suite/rerun_iclass/l4_checked_action_surface/mee_correct/r01/2026-06-10_1810_mee_correct/iteration_1/node_memory/Tree_0_0/manager_results/turn_003.json",
+          "manager_seconds": 1.2,
+          "manager_time": "1.2 s",
+          "node": "Tree-0.0",
+          "node_dir": "artifacts/eval_suite/rerun_iclass/l4_checked_action_surface/mee_correct/r01/2026-06-10_1810_mee_correct/iteration_1/node_memory/Tree_0_0",
+          "ok": true,
+          "result_followup_path": "artifacts/eval_suite/rerun_iclass/l4_checked_action_surface/mee_correct/r01/2026-06-10_1810_mee_correct/iteration_1/node_memory/Tree_0_0/followups/turn_003.md",
+          "result_state_summary": "ambient / ambient_logic, 1 goal, goal 539 chars",
+          "result_summary": "accepted probe",
+          "result_view_path": "artifacts/eval_suite/rerun_iclass/l4_checked_action_surface/mee_correct/r01/2026-06-10_1810_mee_correct/iteration_1/node_memory/Tree_0_0/workspace_views/turn_003.json",
+          "turn": 3,
+          "usage": {
+            "cache_creation_input_tokens": 1718,
+            "cache_read_input_tokens": 43467,
+            "input_tokens": 2,
+            "output_tokens": 174
+          },
+          "view_chars": 5303,
+          "view_id": "T0.0-3",
+          "workspace_view_path": "artifacts/eval_suite/rerun_iclass/l4_checked_action_surface/mee_correct/r01/2026-06-10_1810_mee_correct/iteration_1/node_memory/Tree_0_0/workspace_views/turn_002.json"
+        },
+        {
+          "action_submitted_at": "2026-06-11T01:11:32.821000+00:00",
+          "action_time": "+00:20",
+          "agent_think": "6.8 s",
+          "agent_think_path": "artifacts/eval_suite/rerun_iclass/l4_checked_action_surface/mee_correct/r01/2026-06-10_1810_mee_correct/iteration_1/node_memory/Tree_0_0/thinking/turn_004.md",
+          "agent_think_seconds": 6.821,
+          "decision_followup_path": "artifacts/eval_suite/rerun_iclass/l4_checked_action_surface/mee_correct/r01/2026-06-10_1810_mee_correct/iteration_1/node_memory/Tree_0_0/followups/turn_003.md",
+          "decision_state_summary": "ambient / ambient_logic, 1 goal, goal 539 chars",
+          "decision_view_path": "artifacts/eval_suite/rerun_iclass/l4_checked_action_surface/mee_correct/r01/2026-06-10_1810_mee_correct/iteration_1/node_memory/Tree_0_0/workspace_views/turn_003.json",
+          "deterministic_signals": [],
+          "goal_chars": 539,
+          "inspect_topics": [
+            "goal_info",
+            "lemma_hints",
+            "tactic_forms"
+          ],
+          "intent": {
+            "intent": "probe_tactic",
+            "payload": {
+              "tactic": "rewrite (cbc_correct P Pi ek iv (pad m (M mk m)) hPi) padK /=."
+            }
+          },
+          "intent_summary": "probe rewrite (cbc_correct P Pi ek iv (pad m (M mk m)) hPi) padK /=",
+          "manager_action_summary": [
+            "tactic probe (179 ms)"
+          ],
+          "manager_result_at": "2026-06-11T01:11:33+00:00",
+          "manager_result_path": "artifacts/eval_suite/rerun_iclass/l4_checked_action_surface/mee_correct/r01/2026-06-10_1810_mee_correct/iteration_1/node_memory/Tree_0_0/manager_results/turn_004.json",
+          "manager_seconds": 0.179,
+          "manager_time": "179 ms",
+          "node": "Tree-0.0",
+          "node_dir": "artifacts/eval_suite/rerun_iclass/l4_checked_action_surface/mee_correct/r01/2026-06-10_1810_mee_correct/iteration_1/node_memory/Tree_0_0",
+          "ok": true,
+          "result_followup_path": "artifacts/eval_suite/rerun_iclass/l4_checked_action_surface/mee_correct/r01/2026-06-10_1810_mee_correct/iteration_1/node_memory/Tree_0_0/followups/turn_004.md",
+          "result_state_summary": "ambient / ambient_logic, 1 goal, goal 539 chars",
+          "result_summary": "accepted probe",
+          "result_view_path": "artifacts/eval_suite/rerun_iclass/l4_checked_action_surface/mee_correct/r01/2026-06-10_1810_mee_correct/iteration_1/node_memory/Tree_0_0/workspace_views/turn_004.json",
+          "turn": 4,
+          "usage": {
+            "cache_creation_input_tokens": 556,
+            "cache_read_input_tokens": 45185,
+            "input_tokens": 2,
+            "output_tokens": 377
+          },
+          "view_chars": 9639,
+          "view_id": "T0.0-4",
+          "workspace_view_path": "artifacts/eval_suite/rerun_iclass/l4_checked_action_surface/mee_correct/r01/2026-06-10_1810_mee_correct/iteration_1/node_memory/Tree_0_0/workspace_views/turn_003.json"
+        },
+        {
+          "action_submitted_at": "2026-06-11T01:11:38.846000+00:00",
+          "action_time": "+00:26",
+          "agent_think": "5.8 s",
+          "agent_think_path": "artifacts/eval_suite/rerun_iclass/l4_checked_action_surface/mee_correct/r01/2026-06-10_1810_mee_correct/iteration_1/node_memory/Tree_0_0/thinking/turn_005.md",
+          "agent_think_seconds": 5.846,
+          "decision_followup_path": "artifacts/eval_suite/rerun_iclass/l4_checked_action_surface/mee_correct/r01/2026-06-10_1810_mee_correct/iteration_1/node_memory/Tree_0_0/followups/turn_004.md",
+          "decision_state_summary": "ambient / ambient_logic, 1 goal, goal 539 chars",
+          "decision_view_path": "artifacts/eval_suite/rerun_iclass/l4_checked_action_surface/mee_correct/r01/2026-06-10_1810_mee_correct/iteration_1/node_memory/Tree_0_0/workspace_views/turn_004.json",
+          "deterministic_signals": [
+            "commit_without_probe_check_not_inferred"
+          ],
+          "goal_chars": 539,
+          "inspect_topics": [
+            "goal_info",
+            "lemma_hints",
+            "tactic_forms"
+          ],
+          "intent": {
+            "intent": "commit_tactic",
+            "payload": {
+              "tactic": "rewrite (cbc_correct P Pi ek iv (pad m (M mk m)) hPi) padK /=."
+            }
+          },
+          "intent_summary": "commit rewrite (cbc_correct P Pi ek iv (pad m (M mk m)) hPi) padK /=",
+          "manager_action_summary": [
+            "tactic commit (154 ms)"
+          ],
+          "manager_result_at": "2026-06-11T01:11:39+00:00",
+          "manager_result_path": "artifacts/eval_suite/rerun_iclass/l4_checked_action_surface/mee_correct/r01/2026-06-10_1810_mee_correct/iteration_1/node_memory/Tree_0_0/manager_results/turn_005.json",
+          "manager_seconds": 0.154,
+          "manager_time": "154 ms",
+          "node": "Tree-0.0",
+          "node_dir": "artifacts/eval_suite/rerun_iclass/l4_checked_action_surface/mee_correct/r01/2026-06-10_1810_mee_correct/iteration_1/node_memory/Tree_0_0",
+          "ok": true,
+          "result_followup_path": "artifacts/eval_suite/rerun_iclass/l4_checked_action_surface/mee_correct/r01/2026-06-10_1810_mee_correct/iteration_1/node_memory/Tree_0_0/followups/turn_005.md",
+          "result_state_summary": "ambient / ambient_logic, 1 goal, goal 264 chars",
+          "result_summary": "accepted commit",
+          "result_view_path": "artifacts/eval_suite/rerun_iclass/l4_checked_action_surface/mee_correct/r01/2026-06-10_1810_mee_correct/iteration_1/node_memory/Tree_0_0/workspace_views/turn_005.json",
+          "turn": 5,
+          "usage": {
+            "cache_creation_input_tokens": 824,
+            "cache_read_input_tokens": 45741,
+            "input_tokens": 2,
+            "output_tokens": 285
+          },
+          "view_chars": 10003,
+          "view_id": "T0.0-5",
+          "workspace_view_path": "artifacts/eval_suite/rerun_iclass/l4_checked_action_surface/mee_correct/r01/2026-06-10_1810_mee_correct/iteration_1/node_memory/Tree_0_0/workspace_views/turn_004.json"
+        },
+        {
+          "action_submitted_at": "2026-06-11T01:11:46.819000+00:00",
+          "action_time": "+00:34",
+          "agent_think": "7.8 s",
+          "agent_think_path": "artifacts/eval_suite/rerun_iclass/l4_checked_action_surface/mee_correct/r01/2026-06-10_1810_mee_correct/iteration_1/node_memory/Tree_0_0/thinking/turn_006.md",
+          "agent_think_seconds": 7.819,
+          "decision_followup_path": "artifacts/eval_suite/rerun_iclass/l4_checked_action_surface/mee_correct/r01/2026-06-10_1810_mee_correct/iteration_1/node_memory/Tree_0_0/followups/turn_005.md",
+          "decision_state_summary": "ambient / ambient_logic, 1 goal, goal 264 chars",
+          "decision_view_path": "artifacts/eval_suite/rerun_iclass/l4_checked_action_surface/mee_correct/r01/2026-06-10_1810_mee_correct/iteration_1/node_memory/Tree_0_0/workspace_views/turn_005.json",
+          "deterministic_signals": [
+            "commit_without_probe_check_not_inferred"
+          ],
+          "goal_chars": 264,
+          "inspect_topics": [
+            "goal_info",
+            "lemma_hints",
+            "tactic_forms"
+          ],
+          "intent": {
+            "intent": "commit_tactic",
+            "payload": {
+              "tactic": "done."
+            }
+          },
+          "intent_summary": "commit done",
+          "manager_action_summary": [
+            "tactic commit (181 ms)"
+          ],
+          "manager_result_at": "2026-06-11T01:11:47+00:00",
+          "manager_result_path": "artifacts/eval_suite/rerun_iclass/l4_checked_action_surface/mee_correct/r01/2026-06-10_1810_mee_correct/iteration_1/node_memory/Tree_0_0/manager_results/turn_006.json",
+          "manager_seconds": 0.181,
+          "manager_time": "181 ms",
+          "node": "Tree-0.0",
+          "node_dir": "artifacts/eval_suite/rerun_iclass/l4_checked_action_surface/mee_correct/r01/2026-06-10_1810_mee_correct/iteration_1/node_memory/Tree_0_0",
+          "ok": true,
+          "result_followup_path": "artifacts/eval_suite/rerun_iclass/l4_checked_action_surface/mee_correct/r01/2026-06-10_1810_mee_correct/iteration_1/node_memory/Tree_0_0/followups/turn_006.md",
+          "result_state_summary": "ambient / closed_candidate, goal 26 chars",
+          "result_summary": "accepted commit",
+          "result_view_path": "artifacts/eval_suite/rerun_iclass/l4_checked_action_surface/mee_correct/r01/2026-06-10_1810_mee_correct/iteration_1/node_memory/Tree_0_0/workspace_views/turn_006.json",
+          "turn": 6,
+          "usage": {
+            "cache_creation_input_tokens": 1553,
+            "cache_read_input_tokens": 46565,
+            "input_tokens": 2,
+            "output_tokens": 116
+          },
+          "view_chars": 3612,
+          "view_id": "T0.0-6",
+          "workspace_view_path": "artifacts/eval_suite/rerun_iclass/l4_checked_action_surface/mee_correct/r01/2026-06-10_1810_mee_correct/iteration_1/node_memory/Tree_0_0/workspace_views/turn_005.json"
+        },
+        {
+          "action_submitted_at": "2026-06-11T01:11:50.865000+00:00",
+          "action_time": "+00:38",
+          "agent_think": "3.9 s",
+          "agent_think_path": "artifacts/eval_suite/rerun_iclass/l4_checked_action_surface/mee_correct/r01/2026-06-10_1810_mee_correct/iteration_1/node_memory/Tree_0_0/thinking/turn_007.md",
+          "agent_think_seconds": 3.865,
+          "decision_followup_path": "artifacts/eval_suite/rerun_iclass/l4_checked_action_surface/mee_correct/r01/2026-06-10_1810_mee_correct/iteration_1/node_memory/Tree_0_0/followups/turn_006.md",
+          "decision_state_summary": "ambient / closed_candidate, goal 26 chars",
+          "decision_view_path": "artifacts/eval_suite/rerun_iclass/l4_checked_action_surface/mee_correct/r01/2026-06-10_1810_mee_correct/iteration_1/node_memory/Tree_0_0/workspace_views/turn_006.json",
+          "deterministic_signals": [
+            "commit_without_probe_check_not_inferred"
+          ],
+          "goal_chars": 26,
+          "inspect_topics": [
+            "goal_info"
+          ],
+          "intent": {
+            "intent": "commit_tactic",
+            "payload": {
+              "tactic": "qed."
+            }
+          },
+          "intent_summary": "commit qed",
+          "manager_action_summary": [
+            "tactic commit (135 ms)"
+          ],
+          "manager_result_at": "2026-06-11T01:11:51+00:00",
+          "manager_result_path": "artifacts/eval_suite/rerun_iclass/l4_checked_action_surface/mee_correct/r01/2026-06-10_1810_mee_correct/iteration_1/node_memory/Tree_0_0/manager_results/turn_007.json",
+          "manager_seconds": 0.135,
+          "manager_time": "135 ms",
+          "node": "Tree-0.0",
+          "node_dir": "artifacts/eval_suite/rerun_iclass/l4_checked_action_surface/mee_correct/r01/2026-06-10_1810_mee_correct/iteration_1/node_memory/Tree_0_0",
+          "ok": true,
+          "result_followup_path": "artifacts/eval_suite/rerun_iclass/l4_checked_action_surface/mee_correct/r01/2026-06-10_1810_mee_correct/iteration_1/node_memory/Tree_0_0/followups/turn_007.md",
+          "result_state_summary": "complete / unknown / closed_candidate, 0 goals, goal 12 chars",
+          "result_summary": "accepted commit",
+          "result_view_path": "artifacts/eval_suite/rerun_iclass/l4_checked_action_surface/mee_correct/r01/2026-06-10_1810_mee_correct/iteration_1/node_memory/Tree_0_0/workspace_views/turn_007.json",
+          "turn": 7,
+          "usage": {
+            "cache_creation_input_tokens": 1076,
+            "cache_read_input_tokens": 48118,
+            "input_tokens": 2,
+            "output_tokens": 130
+          },
+          "view_chars": 2979,
+          "view_id": "T0.0-7",
+          "workspace_view_path": "artifacts/eval_suite/rerun_iclass/l4_checked_action_surface/mee_correct/r01/2026-06-10_1810_mee_correct/iteration_1/node_memory/Tree_0_0/workspace_views/turn_006.json"
+        }
+      ],
+      "run_dir": "artifacts/eval_suite/rerun_iclass/l4_checked_action_surface/mee_correct/r01/2026-06-10_1810_mee_correct/iteration_1",
+      "turn_count": 7
+    }
+  ],
+  "schema_version": 1
+}

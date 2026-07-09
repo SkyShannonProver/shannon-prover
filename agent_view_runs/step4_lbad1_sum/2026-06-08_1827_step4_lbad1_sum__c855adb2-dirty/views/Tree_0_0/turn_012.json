@@ -1,0 +1,332 @@
+{
+  "last_result": {
+    "intent": "commit_tactic",
+    "payload": {
+      "tactic": "move=> &hr; split=> //; case=> [[hsz hex] hnotin]; move: hex => [p [hp hpp]]; have hh: has (fun (p0:tag*tag) => p0.`1 = p0.`2) UFCMA_l.lbad1{hr} by apply/hasP; exists p; smt(); smt(has_find find_ge0 mem_iota)."
+    },
+    "manager_action": "commit_tactic",
+    "result": "EasyCrypt rejected the committed tactic. Use the error summary and current goal to revise the proof step.",
+    "effect": "The manager attempted to commit a tactic; use the result and latest goal to decide what changed.",
+    "proof_state": "The committed EasyCrypt proof state was not changed.",
+    "tactic": "move=> &hr; split=> //; case=> [[hsz hex] hnotin]; move: hex => [p [hp hpp]]; have hh: has (fun (p0:tag*tag) => p0.`1 = p0.`2) UFCMA_l.lbad1{hr} by apply/hasP; exists p; smt(); smt(has_find find_ge0 mem_iota).",
+    "error_summary": "[error] the given proof-term proves:"
+  },
+  "current_goal": {
+    "lines": [
+      "Current goal (remaining: 3)",
+      "",
+      "Type variables: <none>",
+      "",
+      "&m: {}",
+      "HP: forall (E : unit ->",
+      "                (glob A) * nonce list * int * int * (nonce, associated_data *",
+      "                message * tag) fmap * (tag * tag) list * (nonce * C.counter,",
+      "                poly_in) fmap * ciphertext list * (ciphertext,",
+      "                plaintext) fmap * (nonce * C.counter, poly_out) fmap *",
+      "                (nonce * C.counter, block) fmap -> unit -> bool)",
+      "      (phi : unit ->",
+      "             (glob A) * nonce list * int * int * (nonce, associated_data *",
+      "             message * tag) fmap * (tag * tag) list * (nonce * C.counter,",
+      "             poly_in) fmap * ciphertext list * (ciphertext, plaintext) fmap *",
+      "             (nonce * C.counter, poly_out) fmap * (nonce * C.counter,",
+      "             block) fmap -> unit -> int) (P : int list) &m0,",
+      "      uniq P =>",
+      "      Pr[UFCMA_l.f() @ &m0 :",
+      "         E tt",
+      "           ((glob A), BNR.lenc, BNR.ndec, UFCMA.cbad1, UFCMA.log,",
+      "            UFCMA_l.lbad1, RO.m, Mem.lc, Mem.log, SplitC2.I2.RO.m,",
+      "            SplitD.ROF.RO.m) res] =",
+      "      BRA.big predT<:int>",
+      "        (fun (a : int) =>",
+      "           Pr[UFCMA_l.f() @ &m0 :",
+      "              E tt",
+      "                ((glob A), BNR.lenc, BNR.ndec, UFCMA.cbad1, UFCMA.log,",
+      "                 UFCMA_l.lbad1, RO.m, Mem.lc, Mem.log, SplitC2.I2.RO.m,",
+      "                 SplitD.ROF.RO.m) res /\\",
+      "              phi tt",
+      "                ((glob A), BNR.lenc, BNR.ndec, UFCMA.cbad1, UFCMA.log,",
+      "                 UFCMA_l.lbad1, RO.m, Mem.lc, Mem.log, SplitC2.I2.RO.m,",
+      "                 SplitD.ROF.RO.m) res =",
+      "              a]) P +",
+      "      Pr[UFCMA_l.f() @ &m0 :",
+      "         E tt",
+      "           ((glob A), BNR.lenc, BNR.ndec, UFCMA.cbad1, UFCMA.log,",
+      "            UFCMA_l.lbad1, RO.m, Mem.lc, Mem.log, SplitC2.I2.RO.m,",
+      "            SplitD.ROF.RO.m) res /\\",
+      "         ! (phi tt",
+      "              ((glob A), BNR.lenc, BNR.ndec, UFCMA.cbad1, UFCMA.log,",
+      "               UFCMA_l.lbad1, RO.m, Mem.lc, Mem.log, SplitC2.I2.RO.m,",
+      "               SplitD.ROF.RO.m) res \\in",
+      "            P)]",
+      "EQ: Pr[UFCMA_l.f() @ &m :",
+      "       size UFCMA_l.lbad1 <= qdec /\\",
+      "       exists (p : tag * tag), (p \\in UFCMA_l.lbad1) /\\ p.`1 = p.`2] =",
+      "    BRA.big predT<:int>",
+      "      (fun (a : int) =>",
+      "         Pr[UFCMA_l.f() @ &m :",
+      "            (size UFCMA_l.lbad1 <= qdec /\\",
+      "             exists (p : tag * tag), (p \\in UFCMA_l.lbad1) /\\ p.`1 = p.`2) /\\",
+      "            find (fun (p : tag * tag) => p.`1 = p.`2) UFCMA_l.lbad1 = a])",
+      "      (iota_ 0 qdec) +",
+      "    Pr[UFCMA_l.f() @ &m :",
+      "       (size UFCMA_l.lbad1 <= qdec /\\",
+      "        exists (p : tag * tag), (p \\in UFCMA_l.lbad1) /\\ p.`1 = p.`2) /\\",
+      "       ! (find (fun (p : tag * tag) => p.`1 = p.`2) UFCMA_l.lbad1 \\in",
+      "          iota_ 0 qdec)]",
+      "------------------------------------------------------------------------",
+      "forall &hr,",
+      "  (size UFCMA_l.lbad1{hr} <= qdec /\\",
+      "   exists (p : tag * tag), (p \\in UFCMA_l.lbad1{hr}) /\\ p.`1 = p.`2) /\\",
+      "  ! (find (fun (p : tag * tag) => p.`1 = p.`2) UFCMA_l.lbad1{hr} \\in",
+      "     iota_ 0 qdec) <=>",
+      "  false",
+      "[417|check]>"
+    ],
+    "text_fully_shown": true,
+    "truncated": false,
+    "goal_type": "ambient",
+    "view_focus": "ambient_logic",
+    "source": {
+      "label": "Parsed from EasyCrypt pretty goal text",
+      "ground_truth": false
+    }
+  },
+  "proof_status": {
+    "status": "open",
+    "remaining_goals": 3,
+    "remaining_goals_known": true,
+    "goal_type": "ambient",
+    "view_focus": "ambient_logic",
+    "current_layer": "ambient_logic"
+  },
+  "candidate_moves": {
+    "moves": [
+      {
+        "category": "strategy",
+        "tactic_shape": "split.",
+        "applicability": "Use this as route-selection context; it is not a tactic to run as-is.",
+        "source": "proof-state analysis"
+      },
+      {
+        "title": "Residual closing tactic",
+        "category": "probe",
+        "tactic": "auto => />.",
+        "applicability": "This tactic-shaped option should be checked with a read-only probe before committing it.",
+        "effect": "This is a read-only probe; it asks EasyCrypt what would happen without changing the committed proof state.",
+        "source": "proof-state analysis",
+        "derivation": "read-only probe surfaced from proof-state analysis",
+        "verified": "read_only_probe_suggestion",
+        "guarantee": "read-only probe shape; proof state unchanged; probe then decide; reversible"
+      },
+      {
+        "title": "Read-only tactic probe",
+        "category": "probe",
+        "tactic": "smt().",
+        "applicability": "This tactic-shaped option should be checked with a read-only probe before committing it.",
+        "effect": "This is a read-only probe; it asks EasyCrypt what would happen without changing the committed proof state.",
+        "source": "proof-state analysis",
+        "derivation": "read-only probe surfaced from proof-state analysis",
+        "verified": "read_only_probe_suggestion",
+        "guarantee": "read-only probe shape; proof state unchanged; probe then decide; reversible"
+      }
+    ]
+  },
+  "program_frontier": {
+    "authority": "proof-state analysis",
+    "view_focus": "ambient_logic"
+  },
+  "call_site_surface": {},
+  "pure_tail_surface": {
+    "state": "quantified_ambient_tail",
+    "goal_operators": [
+      "hr",
+      "size",
+      "UFCMA_l.lbad1",
+      "qdec",
+      "tag",
+      "find",
+      "iota_",
+      "\\in"
+    ],
+    "visible_hypotheses": [
+      "HP: forall (E : unit ->"
+    ],
+    "obligation_families": [
+      {
+        "family": "sampling_bijection",
+        "evidence": [
+          "add/sub expression remains visible"
+        ],
+        "effect": "The remaining pure goal may include invertibility or lossless side conditions from an earlier sampling alignment.",
+        "limitations": "No distribution lemma is selected by this surface."
+      },
+      {
+        "family": "constructor_projection",
+        "selectors": [
+          ".`1",
+          ".`2"
+        ],
+        "tuple_equality_count": 0,
+        "effect": "The pure goal exposes tuple/record projections or constructor equalities that can connect program variables to map/list keys.",
+        "limitations": "Projection equalities are reported only when visible in the current text."
+      },
+      {
+        "family": "quantified_residual_logic",
+        "evidence": [
+          "universal quantifier visible",
+          "implication residual visible"
+        ],
+        "effect": "The current proof point is dominated by local logical obligations rather than program-frontier movement.",
+        "limitations": "Quantifier names are not normalized across EasyCrypt pretty-printer variants."
+      }
+    ],
+    "existential_witness_surface": {
+      "binders": [
+        {
+          "name": "p",
+          "type": "tag * tag"
+        },
+        {
+          "name": "p",
+          "type": "tag * tag"
+        },
+        {
+          "name": "p",
+          "type": "tag * tag"
+        },
+        {
+          "name": "p",
+          "type": "tag * tag"
+        }
+      ],
+      "candidate_sources": [
+        {
+          "source": "membership_member",
+          "term": "res",
+          "why_visible": "A visible membership fact binds this member term."
+        },
+        {
+          "source": "membership_member",
+          "term": "p",
+          "why_visible": "A visible membership fact binds this member term."
+        },
+        {
+          "source": "membership_member",
+          "term": "UFCMA_l.lbad1",
+          "why_visible": "A visible membership fact binds this member term."
+        },
+        {
+          "source": "membership_member",
+          "term": "UFCMA_l.lbad1{hr}",
+          "why_visible": "A visible membership fact binds this member term."
+        }
+      ],
+      "effect": "Lists verifier-visible term sources that can instantiate local existentials in the pure tail.",
+      "limitations": [
+        "No witness is selected by this surface.",
+        "Candidate terms may still require local equality or membership facts."
+      ]
+    },
+    "effect": "Summarizes verifier-visible pure-goal structure after program frontier actions have been discharged or hidden by local proof steps.",
+    "limitations": [
+      "This panel records syntactic and proof-state facts from the current view.",
+      "It does not choose a tactic or instantiate a lemma."
+    ]
+  },
+  "application_context": {},
+  "facts_and_diagnostics": {
+    "facts": {
+      "unfoldable_goal_head_count": 0
+    },
+    "fact_note": "Only current-frontier facts are shown here; the full proof context artifact keeps the compiler/internal details."
+  },
+  "recovery_diagnosis_surface": {
+    "kind": "recovery_diagnosis_surface",
+    "recovery_class": "local_pure_surgery_available",
+    "confidence": "medium",
+    "checkpoint_policy": "current_state_local_work_visible",
+    "evidence": [
+      "pure_tail_surface is visible for the current goal",
+      "current proof state has no program-frontier work before the logical residual"
+    ],
+    "available_local_work": [
+      {
+        "kind": "pure_tail_obligation_families",
+        "items": [
+          "sampling_bijection",
+          "constructor_projection",
+          "quantified_residual_logic"
+        ]
+      },
+      {
+        "kind": "existential_witness_sources",
+        "items": [
+          "membership_member",
+          "membership_member",
+          "membership_member",
+          "membership_member"
+        ]
+      }
+    ],
+    "related_surfaces": [
+      "pure_tail_surface"
+    ],
+    "limitations": [
+      "does not select a destructor, witness, rewrite, or SMT lemma",
+      "reported checkpoints are recovery references, not a default route"
+    ]
+  },
+  "inspect_lookup_handles": {
+    "effect": "All handles here are read-only manager requests; the committed EasyCrypt proof state stays unchanged.",
+    "manager_note": "Some requests may ask EasyCrypt or name resolution; wait for the manager result before choosing the next proof intent.",
+    "ask_manager_for": [
+      {
+        "intent": "inspect_context",
+        "payload": {
+          "topic": "diagnose"
+        },
+        "use_when": "The latest transition recorded an error.",
+        "returns": "manager-provided read-only context for this proof route"
+      },
+      {
+        "intent": "inspect_context",
+        "payload": {
+          "topic": "hint"
+        },
+        "use_when": "pivot.RHS matches your goal.Pr#1 literally \u2014 `apply <pivot>.` or `rewrite <pivot>.` are direct route candidates",
+        "returns": "manager-provided read-only context for this proof route"
+      },
+      {
+        "intent": "inspect_context",
+        "payload": {
+          "topic": "goal_info"
+        },
+        "use_when": "Need parsed goal shape, resolved names, or KB pattern hints.",
+        "returns": "parsed goal structure and names"
+      },
+      {
+        "intent": "inspect_context",
+        "payload": {
+          "topic": "lemma_hints"
+        },
+        "use_when": "Need local or standard-library lemma names before rewriting a pure goal.",
+        "returns": "nearby lemma hints and qualified-name lookup guidance"
+      },
+      {
+        "intent": "inspect_context",
+        "payload": {
+          "topic": "tactic_forms",
+          "name": "rewrite"
+        },
+        "use_when": "Need the valid EasyCrypt form for rewrite, apply, conseq, while, or SMT setup.",
+        "returns": "valid tactic forms and common traps"
+      }
+    ],
+    "lookup_candidates": [
+      {
+        "symbol": "pr_CCP_OCCP",
+        "use_when": "Resolve exact signature for `pr_CCP_OCCP` only when this handle route is being tested."
+      }
+    ]
+  }
+}

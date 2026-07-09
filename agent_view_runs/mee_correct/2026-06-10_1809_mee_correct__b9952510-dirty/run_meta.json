@@ -1,0 +1,30 @@
+{
+  "kind": "agent_view_run_report",
+  "timestamp": "2026-06-10_1809_mee_correct",
+  "lemma": "mee_correct",
+  "source_file": "eval/examples/MEE-CBC/FunctionalSpec.ec",
+  "model": "claude-opus-4-8",
+  "surface_profile": "l1_goal_projection",
+  "trees": 1,
+  "eval_mode": true,
+  "outcome": "proved",
+  "committed_proofs": [
+    {
+      "tree": "Tree_0_0",
+      "tactics": [
+        "move=> PiK; rewrite /mee_enc /mee_dec /= cbc_correct // padK /=.",
+        "done.",
+        "qed."
+      ],
+      "source": "session",
+      "proved": true
+    }
+  ],
+  "turn_count": 4,
+  "views_copied": 5,
+  "run_iteration_dir": "artifacts/eval_suite/rerun_iclass/l1_goal_projection/mee_correct/r01/2026-06-10_1809_mee_correct/iteration_1",
+  "commit": "b9952510",
+  "commit_full": "b99525104f61f6420c44f6b6e697772041399243",
+  "branch": "mcp-v0",
+  "dirty": true
+}

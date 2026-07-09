@@ -1,0 +1,53 @@
+{
+  "last_result": {},
+  "current_goal": {
+    "goal_type": "probability",
+    "lines": [
+      "Current goal (remaining: 2)",
+      "",
+      "Type variables: <none>",
+      "",
+      "&m: {}",
+      "CC: (forall (O <:",
+      "              CBCa.SKEa.RCPA.RCPA_Oracles{-RCPAa(RCPA_WUF_RCPA.RCPAa(MAC, A))}),",
+      "       islossless O.enc =>",
+      "       islossless RCPAa(RCPA_WUF_RCPA.RCPAa(MAC, A), O).distinguish) =>",
+      "    `|Pr[CBCa.SKEa.RCPA.INDR_CPA(IV_Wrap(CBC(PRPr.PseudoRP)),",
+      "                          QueryBounder(RCPAa(RCPA_WUF_RCPA.RCPAa(MAC, A)))).main",
+      "         () @ &m : res] -",
+      "      Pr[CBCa.SKEa.RCPA.INDR_CPA(Random,",
+      "                          QueryBounder(RCPAa(RCPA_WUF_RCPA.RCPAa(MAC, A)))).main",
+      "         () @ &m : res]| <=",
+      "    `|Pr[PRFt.IND(PRPr.PRP,",
+      "                PRPF_Adv(QueryBounder(RCPAa(RCPA_WUF_RCPA.RCPAa(MAC, A))))).main",
+      "         () @ &m : res] -",
+      "      Pr[PRFt.IND(PRPi.PRPi,",
+      "                PRPF_Adv(QueryBounder(RCPAa(RCPA_WUF_RCPA.RCPAa(MAC, A))))).main",
+      "         () @ &m : res]| +",
+      "    2%r * ((q * n) ^ 2)%r * mu1 d_block witness<:block>",
+      "------------------------------------------------------------------------",
+      "Pr[CBCa.SKEa.RCPA.INDR_CPA(IV_Wrap(CBC(PseudoRP)),",
+      "                    QueryBounder(RCPAa(RCPA_WUF_RCPA.RCPAa(MAC, A)))).main",
+      "   () @ &m : res] =",
+      "Pr[CBCa.SKEa.RCPA.INDR_CPA(IV_Wrap(CBC(PRPr.PseudoRP)),",
+      "                    QueryBounder(RCPAa(RCPA_WUF_RCPA.RCPAa(MAC, A)))).main",
+      "   () @ &m : res]",
+      "[92|check]>"
+    ],
+    "source": {
+      "ground_truth": false,
+      "label": "Parsed from EasyCrypt pretty goal text"
+    },
+    "text_fully_shown": true,
+    "truncated": false,
+    "view_focus": "probability"
+  },
+  "proof_status": {
+    "current_layer": "pr",
+    "goal_type": "probability",
+    "remaining_goals": 2,
+    "remaining_goals_known": true,
+    "status": "open",
+    "view_focus": "probability"
+  }
+}

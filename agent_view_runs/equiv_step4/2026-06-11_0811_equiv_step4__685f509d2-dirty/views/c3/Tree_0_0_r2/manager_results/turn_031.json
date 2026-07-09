@@ -1,0 +1,19 @@
+{
+  "turn": 31,
+  "handled_intent": {
+    "intent": "commit_tactic",
+    "payload": {
+      "tactic": "have hn12 : n{1} = n{2} by rewrite hn1 hl0 hd head_cons."
+    }
+  },
+  "ok": true,
+  "manager_note": "Committed tactic accepted; the EasyCrypt proof state changed.",
+  "manager_actions": [
+    {
+      "action": "tactic commit",
+      "outcome": "EasyCrypt accepted the committed tactic.",
+      "timing": "405 ms"
+    }
+  ],
+  "view_refreshed": true
+}

@@ -1,0 +1,98 @@
+{
+  "last_result": {
+    "intent": "undo_to_checkpoint",
+    "kind": "checkpoint_rewind_confirmation",
+    "message": "This rewind leaves the current call obligation scope. Confirm it only if that broader recovery boundary is the state you want to restore.",
+    "checkpoint": {
+      "checkpoint_id": "cp_2_678ca75386b57599",
+      "label": "Rewind to before committed tactic #2",
+      "committed_tactic": "proc.",
+      "tactic_index": 2,
+      "committed_step_index": 2,
+      "restored_proof_layer": "previous_committed_state",
+      "undo_scope": "recent_step",
+      "why_checkpoint": "procedure entry point",
+      "repair_use_when": "Use this only when the chosen procedure-level route was wrong, not for a local invariant or branch-surgery problem.",
+      "after_rewind_next": "Re-enter the procedure with a different high-level route or inspect `goal_info` first.",
+      "effect_if_selected": "This confirms a rewind that leaves the current call obligation scope and returns the refreshed view.",
+      "submit": {
+        "intent": "undo_to_checkpoint",
+        "payload": {
+          "checkpoint_id": "cp_2_678ca75386b57599",
+          "confirm": true,
+          "confirmation_id": "c283d55bd4cf6507"
+        }
+      }
+    },
+    "options": [
+      {
+        "label": "Show current rewind choices",
+        "effect_if_selected": "This returns to the checkpoint menu without changing the proof state.",
+        "submit": {
+          "intent": "undo_to_checkpoint",
+          "payload": {}
+        }
+      },
+      {
+        "label": "Continue current branch",
+        "effect_if_selected": "This keeps working from the current proof state.",
+        "submit": {
+          "intent": "inspect_context",
+          "payload": {
+            "topic": "goal_info"
+          }
+        }
+      }
+    ]
+  },
+  "current_goal": {
+    "lines": [
+      "Current goal (remaining: 2)",
+      "",
+      "Type variables: <none>",
+      "",
+      "&m: {}",
+      "------------------------------------------------------------------------",
+      "&1 (left ) : {b, b' : bool, m0, m1, m, h : ptxt, r : rand, c : rand * ptxt,",
+      "             pk, pk0 : pkey, sk : skey, kp : pkey * skey}",
+      "&2 (right) : {b, b' : bool, m0, m1, h : ptxt, c : rand * ptxt, pk : pkey,",
+      "             sk : skey}",
+      "",
+      "pre = (glob A){1} = (glob A){2} /\\ LRO.m{1} = LRO.m{2}",
+      "",
+      "Log(LRO).init()                 ( 1)  Log(LRO).init()               ",
+      "kp <$ dkeys                     ( 2)  (pk, sk) <$ dkeys             ",
+      "(pk, sk) <- kp                  ( 3)  (m0, m1) <@ A(Log(LRO)).a1(pk)",
+      "(m0, m1) <@ A(Log(LRO)).a1(pk)  ( 4)  b <$ {0,1}                    ",
+      "b <$ {0,1}                      ( 5)  Game1.r <$ drand              ",
+      "pk0 <- pk                       ( 6)  h <$ dptxt                    ",
+      "m <- if b then m0 else m1       ( 7)  c <-                          ",
+      "                                (  )    (f pk Game1.r,              ",
+      "                                (  )     h +^ if b then m0 else m1) ",
+      "r <$ drand                      ( 8)                                ",
+      "h <@ LRO.o(r)                   ( 9)                                ",
+      "c <- (f pk0 r, h +^ m)          (10)                                ",
+      "",
+      "post =",
+      "  forall (result_L result_R : bool) (qs_R : rand list),",
+      "    (result_L = b{1}) = (result_R = b{2}) \\/ (Game1.r{2} \\in qs_R)",
+      "[77|check]>"
+    ],
+    "text_fully_shown": true,
+    "truncated": false,
+    "goal_type": "pRHL",
+    "view_focus": "seq_cut",
+    "source": {
+      "label": "Parsed from EasyCrypt pretty goal text",
+      "ground_truth": false
+    }
+  },
+  "proof_status": {
+    "status": "open",
+    "remaining_goals": 2,
+    "remaining_goals_known": true,
+    "goal_type": "pRHL",
+    "view_focus": "seq_cut",
+    "current_layer": "call_site"
+  }
+}

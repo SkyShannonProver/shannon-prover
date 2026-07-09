@@ -1,0 +1,19 @@
+{
+  "turn": 9,
+  "handled_intent": {
+    "intent": "commit_tactic",
+    "payload": {
+      "tactic": "wp; call (: ={glob RCPA_QueryBounder} /\\ RCPA_Wrap.k{1} = Sec.RCPA.RCPA_Wrap.k{2})."
+    }
+  },
+  "ok": true,
+  "manager_note": "Committed tactic accepted; the EasyCrypt proof state changed.",
+  "manager_actions": [
+    {
+      "action": "tactic commit",
+      "outcome": "EasyCrypt accepted the committed tactic.",
+      "timing": "193 ms"
+    }
+  ],
+  "view_refreshed": true
+}

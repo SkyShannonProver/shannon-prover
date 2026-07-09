@@ -1,0 +1,1273 @@
+{
+  "last_result": {},
+  "current_goal": {
+    "goal_type": "pRHL",
+    "lines": [
+      "Current goal (remaining: 6)",
+      "",
+      "Type variables: <none>",
+      "",
+      "&m: {}",
+      "nth0: int",
+      "H: 0 <= nth0 < qdec",
+      "------------------------------------------------------------------------",
+      "&1 (left ) : {i : int, c2 : byte list, n, n0 : nonce,",
+      "             x, x0, x1 : nonce * C.counter, c1 : bytes, r : poly_in,",
+      "             t, t0, y : poly_out, z : block, a : associated_data,",
+      "             p1, p2 : message, nap : nonce * associated_data * message,",
+      "             p, p0 : plaintext, c, c0 : ciphertext, lt : tag list}",
+      "&2 (right) : {i : int, c2 : byte list, n, n0 : nonce,",
+      "             x, x0, x1 : nonce * C.counter, c1 : bytes, r : poly_in,",
+      "             t, t0, y, t1 : poly_out, z : block, a : associated_data,",
+      "             p1, p2 : message, nap : nonce * associated_data * message,",
+      "             ti : tag, p, p0 : plaintext, c, c0 : ciphertext, lt : tag list}",
+      "",
+      "pre =",
+      "  (c{2} = witness /\\",
+      "   c{1} = witness /\\",
+      "   p{1} = p{2} /\\",
+      "   Mem.lc{1} = Mem.lc{2} /\\",
+      "   Mem.log{1} = Mem.log{2} /\\",
+      "   BNR.lenc{1} = BNR.lenc{2} /\\",
+      "   BNR.ndec{1} = BNR.ndec{2} /\\",
+      "   UFCMA.log{1} = UFCMA.log{2} /\\",
+      "   UFCMA.cbad1{1} = UFCMA.cbad1{2} /\\",
+      "   UFCMA_l.lbad1{1} = UFCMA_l.lbad1{2} /\\",
+      "   RO.m{1} = RO.m{2} /\\",
+      "   SplitC2.I2.RO.m{1} = SplitC2.I2.RO.m{2} /\\",
+      "   SplitD.ROF.RO.m{1} = SplitD.ROF.RO.m{2} /\\",
+      "   UFCMA_li.i{2} = nth0 /\\",
+      "   UFCMA_li.cbadi{2} = b2i (nth0 < size UFCMA_l.lbad1{2}) /\\",
+      "   UFCMA_li.badi{2} =",
+      "   (nth0 < size UFCMA_l.lbad1{2} /\\",
+      "    (nth (w1, w2) UFCMA_l.lbad1{2} nth0).`1 =",
+      "    (nth (w1, w2) UFCMA_l.lbad1{2} nth0).`2)) /\\",
+      "  check_plaintext BNR.lenc{1} p{1}",
+      "",
+      "p0 <- p                                  ( 1------)  p0 <- p                                   ",
+      "nap <- p0                                ( 2------)  nap <- p0                                 ",
+      "(n, a, p1) <- nap                        ( 3------)  (n, a, p1) <- nap                         ",
+      "n0 <- n                                  ( 4------)  n0 <- n                                   ",
+      "p2 <- p1                                 ( 5------)  p2 <- p1                                  ",
+      "p2 <-                                    ( 6------)  p2 <-                                     ",
+      "  map (fun (_ : byte) => witness) p2     (   -----)    map (fun (_ : byte) => witness) p2      ",
+      "c2 <- []                                 ( 7------)  c2 <- []                                  ",
+      "i <- 1                                   ( 8------)  i <- 1                                    ",
+      "while (p2 <> []) {                       ( 9------)  while (p2 <> []) {                        ",
+      "  z <$ dblock                            ( 9.1----)    z <$ dblock                             ",
+      "  c2 <-                                  ( 9.2----)    c2 <-                                   ",
+      "    c2 ++                                (     ---)      c2 ++                                 ",
+      "    take (size p2) (bytes_of_block z)    (     ---)      take (size p2) (bytes_of_block z)     ",
+      "  p2 <- drop block_size p2               ( 9.3----)    p2 <- drop block_size p2                ",
+      "  i <- i + 1                             ( 9.4----)    i <- i + 1                              ",
+      "}                                        ( 9------)  }                                         ",
+      "c1 <- c2                                 (10------)  c1 <- c2                                  ",
+      "lt <-                                    (11------)  lt <-                                     ",
+      "  map (fun (c3 : ciphertext) => c3.`4)   (   -----)    map (fun (c3 : ciphertext) => c3.`4)    ",
+      "    (filter                              (   -----)      (filter                               ",
+      "       (fun (c3 : ciphertext) =>         (   -----)         (fun (c3 : ciphertext) =>          ",
+      "          c3.`1 = n) Mem.lc)             (   -----)            c3.`1 = n) Mem.lc)              ",
+      "t0 <$ dpoly_out                          (12------)  t0 <$ dpoly_out                           ",
+      "if (UFCMA.cbad1 < qenc /\\                (13------)  if (UFCMA.cbad1 < qenc /\\                 ",
+      "    size lt <= qdec) {                   (   -----)      size lt <= qdec) {                    ",
+      "  UFCMA_l.lbad1 <-                       (13.1----)    if (size UFCMA_l.lbad1 <= UFCMA_li.i <  ",
+      "    UFCMA_l.lbad1 ++                     (     ---)        size UFCMA_l.lbad1 + size lt) {     ",
+      "    map (fun (t' : tag) => (t0, t')) lt  (     ---)                                            ",
+      "                                         (13.1.1--)      ti <-                                 ",
+      "                                         (       -)        nth witness lt                      ",
+      "                                         (       -)          (UFCMA_li.i - size UFCMA_l.lbad1) ",
+      "                                         (13.1.2--)      t1 <$ dpoly_out                       ",
+      "                                         (13.1.3--)      if (UFCMA_li.cbadi < 1) {             ",
+      "                                         (13.1.3.1)        UFCMA_li.badi <-                    ",
+      "                                         (        )          UFCMA_li.badi || t1 = ti          ",
+      "                                         (13.1.3.2)        UFCMA_li.cbadi <- UFCMA_li.cbadi + 1",
+      "                                         (13.1.3--)      }                                     ",
+      "                                         (13.1.4--)      t0 <- t1                              ",
+      "                                         (13.1----)    }                                       ",
+      "  UFCMA.cbad1 <- UFCMA.cbad1 + 1         (13.2----)    UFCMA_l.lbad1 <-                        ",
+      "                                         (     ---)      UFCMA_l.lbad1 ++                      ",
+      "                                         (     ---)      map (fun (t' : tag) => (t0, t')) lt   ",
+      "                                         (13.3----)    UFCMA.cbad1 <- UFCMA.cbad1 + 1          ",
+      "}                                        (13------)  }                                         ",
+      "t <- t0                                  (14------)  t <- t0                                   ",
+      "x <- (n, C.ofintd 0)                     (15------)  x <- (n, C.ofintd 0)                      ",
+      "x1 <- x                                  (16------)  x1 <- x                                   ",
+      "r <$ dpoly_in                            (17------)  r <$ dpoly_in                             ",
+      "if (x1 \\notin RO.m) {                    (18------)  if (x1 \\notin RO.m) {                     ",
+      "  RO.m <- RO.m.[x1 <- r]                 (18.1----)    RO.m <- RO.m.[x1 <- r]                  ",
+      "}                                        (18------)  }                                         ",
+      "x0 <- (n, C.ofintd 0)                    (19------)  x0 <- (n, C.ofintd 0)                     ",
+      "y <- witness                             (20------)  y <- witness                              ",
+      "SplitC2.I2.RO.m <-                       (21------)  SplitC2.I2.RO.m <-                        ",
+      "  SplitC2.I2.RO.m.[x0 <- y]              (   -----)    SplitC2.I2.RO.m.[x0 <- y]               ",
+      "UFCMA.log <-                             (22------)  UFCMA.log <-                              ",
+      "  UFCMA.log.[n <- (a, c1, t)]            (   -----)    UFCMA.log.[n <- (a, c1, t)]             ",
+      "c0 <- (n, a, c1, t)                      (23------)  c0 <- (n, a, c1, t)                       ",
+      "Mem.log <- Mem.log.[c0 <- p0]            (24------)  Mem.log <- Mem.log.[c0 <- p0]             ",
+      "c <- c0                                  (25------)  c <- c0                                   ",
+      "BNR.lenc <- p.`1 :: BNR.lenc             (26------)  BNR.lenc <- p.`1 :: BNR.lenc              ",
+      "",
+      "post =",
+      "  c{1} = c{2} /\\",
+      "  Mem.lc{1} = Mem.lc{2} /\\",
+      "  Mem.log{1} = Mem.log{2} /\\",
+      "  BNR.lenc{1} = BNR.lenc{2} /\\",
+      "  BNR.ndec{1} = BNR.ndec{2} /\\",
+      "  UFCMA.log{1} = UFCMA.log{2} /\\",
+      "  UFCMA.cbad1{1} = UFCMA.cbad1{2} /\\",
+      "  UFCMA_l.lbad1{1} = UFCMA_l.lbad1{2} /\\",
+      "  RO.m{1} = RO.m{2} /\\",
+      "  SplitC2.I2.RO.m{1} = SplitC2.I2.RO.m{2} /\\",
+      "  SplitD.ROF.RO.m{1} = SplitD.ROF.RO.m{2} /\\",
+      "  UFCMA_li.i{2} = nth0 /\\",
+      "  UFCMA_li.cbadi{2} = b2i (nth0 < size UFCMA_l.lbad1{2}) /\\",
+      "  UFCMA_li.badi{2} =",
+      "  (nth0 < size UFCMA_l.lbad1{2} /\\",
+      "   (nth (w1, w2) UFCMA_l.lbad1{2} nth0).`1 =",
+      "   (nth (w1, w2) UFCMA_l.lbad1{2} nth0).`2)",
+      "[432|check]>"
+    ],
+    "source": {
+      "ground_truth": false,
+      "label": "Parsed from EasyCrypt pretty goal text"
+    },
+    "text_fully_shown": true,
+    "truncated": false,
+    "view_focus": "seq_cut"
+  },
+  "proof_status": {
+    "current_layer": "procedure_body",
+    "goal_type": "pRHL",
+    "remaining_goals": 6,
+    "remaining_goals_known": true,
+    "status": "open",
+    "view_focus": "seq_cut"
+  },
+  "candidate_moves": {
+    "route_health": [
+      {
+        "checkpoint_policy": "seq_local_checkpoint_visible",
+        "confidence": "medium",
+        "evidence": [
+          "latest seq cut tactic #5: seq 10 13 : (={glob A, Mem.lc, Mem.log, glob BNR, UFCMA.log, UFCMA.cbad1, UFCMA_l.lbad1, RO.m, SplitC2.I2.RO.m, SplitD.ROF.RO.m} /\\ UFCMA_li.i{2} = nth0 /\\ UFCMA_li.cbadi{2} = b2i (nth0 < size UFCMA_l.lbad1{2}) /\\ UFCMA_li.badi{2} = (nth0 < size UFCMA_l.lbad1{2} /\\ (nth (w1, w2) UFCMA_l.lbad1{2} nth0).`1 = (nth (w1, w2) UFCMA_l.lbad1{2} nth0).`2)).",
+          "recent rejected tactic head: sim",
+          "mismatch kind: branch_obligation"
+        ],
+        "message": "Recent rejected work is inside the current seq-cut scope.",
+        "recovery_class": "seq_midpoint_repair_evidence",
+        "related_checkpoints": [
+          {
+            "committed_step_index": 6,
+            "label": "Before committed tactic #6",
+            "semantic_id": "after_seq_opened",
+            "tactic_index": 6,
+            "undo_scope": "branch_local",
+            "why_checkpoint": "seq-local boundary associated with recent rejected work inside the current seq scope"
+          },
+          {
+            "checkpoint_id": "cp_5_6687a0f0097796f5",
+            "committed_step_index": 5,
+            "committed_tactic": "seq 10 13 : (={glob A, Mem.lc, Mem.log, glob BNR, UFCMA.log, UFCMA.cbad1, UFCMA_l.lbad1, RO.m, SplitC2.I2.RO.m, SplitD.ROF.RO.m} /\\ UFCMA_li.i{2} = nth0 /\\ UFCMA_li.cbadi{2} = b2i (nth0 < size UFCMA_l.lbad1{2}) /\\ UFCMA_li.badi{2} = (nth0 < size UFCMA_l.lbad1{2} /\\ (nth (w1, w2) UFCMA_l.lbad1{2} nth0).`1 = (nth (w1, w2) UFCMA_l.lbad1{2} nth0).`2)).",
+            "effect_if_selected": "Undo committed tactic #5 and every committed tactic after it in this node.",
+            "label": "Before seq cut #5",
+            "restored_affordances": {
+              "call_site_state": "as_before_seq_cut",
+              "seq_cut": "not_committed"
+            },
+            "restored_proof_layer": "pre_seq_cut",
+            "semantic_id": "before_seq_cut",
+            "semantic_ids": [
+              "before_seq_cut"
+            ],
+            "submit": {
+              "intent": "undo_to_checkpoint",
+              "payload": {
+                "checkpoint_id": "cp_5_6687a0f0097796f5"
+              }
+            },
+            "undo_scope": "seq_local",
+            "why_checkpoint": "seq-cut boundary; selecting it restores the proof state before this cut was committed"
+          },
+          {
+            "checkpoint_id": "cp_6_6687a0f0097796f5",
+            "committed_step_index": 6,
+            "committed_tactic": "auto.",
+            "effect_if_selected": "Undo committed tactic #6 and every committed tactic after it in this node.",
+            "label": "After seq opened / before branch work #6",
+            "restored_affordances": {
+              "branch_work": "not_committed",
+              "seq_cut": "committed"
+            },
+            "restored_proof_layer": "seq_obligations_opened",
+            "semantic_id": "after_seq_opened",
+            "semantic_ids": [
+              "after_seq_opened",
+              "before_branch_work"
+            ],
+            "submit": {
+              "intent": "undo_to_checkpoint",
+              "payload": {
+                "checkpoint_id": "cp_6_6687a0f0097796f5"
+              }
+            },
+            "undo_scope": "branch_local",
+            "why_checkpoint": "seq-local branch boundary; selecting it keeps the seq cut and removes branch-local work after it"
+          }
+        ],
+        "signal": "seq_cut_mismatch"
+      },
+      {
+        "checkpoint_policy": "current_state_local_work_visible",
+        "confidence": "medium",
+        "evidence": [
+          "map update key: x1",
+          "update key head: x1",
+          "membership/list head: p.`1"
+        ],
+        "message": "Current pure-tail obligations expose map/projection alignment facts that are not visible in the goal text.",
+        "observed_gap": "Map update key head and membership/list head are both visible, but no equality path between them is visible.",
+        "observed_risk": "pure_tail_alignment_fact_not_visible",
+        "recovery_class": "local_pure_surgery_available",
+        "related_checkpoints": [
+          {
+            "committed_step_index": 14,
+            "label": "Before inline expansion #14",
+            "restored_affordances": {
+              "call_site_handles": "as_before_inline"
+            },
+            "semantic_id": "before_branch_work",
+            "tactic_index": 14,
+            "undo_scope": "call_site_boundary",
+            "why_checkpoint": "seq-local boundary associated with the currently visible pure-tail alignment gap"
+          }
+        ],
+        "related_surface": "pure_tail_surface.gap_analysis",
+        "signal": "pure_tail_alignment_gap"
+      }
+    ],
+    "structural_transitions": [
+      {
+        "after_commit": "The next authoritative view will expose the real post-wp surgery workbench, so you do not need to mentally simulate now what will happen.",
+        "decision": "Probe this tactic if you want to test entry into the post-wp surgery phase.",
+        "id": "post_wp_surgery",
+        "if_wrong_after_commit": "Use `undo_last_step` or `undo_to_checkpoint` if the committed route is wrong.",
+        "kind": "structural_transition",
+        "phase": "post-wp surgery",
+        "recommended_next": {
+          "label": "Probe this transition",
+          "submit": {
+            "intent": "probe_tactic",
+            "payload": {
+              "tactic": "wp."
+            }
+          }
+        },
+        "status": "candidate_reversible_probe",
+        "tactic": "wp.",
+        "valid_for": "current_view_only",
+        "why_here": "The current pRHL seq-cut exposes a large postcondition. Probe `wp.` if you want to test entry into the real post-wp suffix/surgery workbench."
+      }
+    ]
+  },
+  "program_frontier": {
+    "authority": "proof-state analysis",
+    "checks": [
+      "Read coverage and missing live facts before committing a seq cut.",
+      "A runnable seq candidate is not evidence that the invariant is strong enough."
+    ],
+    "focus": {
+      "has_invariant_skeleton": true
+    },
+    "frontier_alignment": {
+      "rows": [
+        {
+          "left": "8 setup statement(s): p0 <- p; nap <- p0; (n, a, p1) <- nap; ... (5 more)",
+          "location": {
+            "left_paths": [
+              "1",
+              "2",
+              "3",
+              "4",
+              "5",
+              "6",
+              "7",
+              "8"
+            ],
+            "right_paths": [
+              "1",
+              "2",
+              "3",
+              "4",
+              "5",
+              "6",
+              "7",
+              "8"
+            ]
+          },
+          "proof_read": "These are setup statements before the current frontier; preserve the proof-relevant initialized state in later invariants, seq cuts, or calls.",
+          "right": "8 setup statement(s): p0 <- p; nap <- p0; (n, a, p1) <- nap; ... (5 more)",
+          "role": "setup / initialization"
+        }
+      ],
+      "summary": "Frontier alignment: setup statements appear before the current frontier. Use this as a proof-reader map before choosing while/rnd/seq/call tactics."
+    },
+    "procedure_navigation": {
+      "absorb_depth": {
+        "left": {
+          "absorbable_statements": 8,
+          "note": "count from frontier alignment; the body parser under-counted the asymmetric (right-only) setup statements (4 parsed)",
+          "side_index": 1
+        },
+        "right": {
+          "absorbable_statements": 8,
+          "note": "count from frontier alignment; the body parser under-counted the asymmetric (right-only) setup statements (0 parsed)",
+          "side_index": 2
+        },
+        "sp_hint": "sp 8 8 / wp -8 -8 absorbs the straight-line setup (8 left, 8 right) before the next frontier"
+      },
+      "branch_guards": [
+        {
+          "at_order": 17,
+          "at_path": "13",
+          "guard": "UFCMA.cbad1 < qenc /\\ size lt <= qdec",
+          "rcond_forms": "rcondt{1} 17 or rcondf{1} 17 (direction needs guard entailment \u2014 yours to decide)",
+          "side_index": 1
+        },
+        {
+          "at_order": 24,
+          "at_path": "18",
+          "guard": "x1 \\notin RO.m",
+          "rcond_forms": "rcondt{1} 24 or rcondf{1} 24 (direction needs guard entailment \u2014 yours to decide)",
+          "side_index": 1
+        },
+        {
+          "at_order": 17,
+          "at_path": "13",
+          "guard": "UFCMA.cbad1 < qenc /\\ size lt <= qdec",
+          "rcond_forms": "rcondt{2} 17 or rcondf{2} 17 (direction needs guard entailment \u2014 yours to decide)",
+          "side_index": 2
+        },
+        {
+          "at_order": 18,
+          "at_path": "13.1",
+          "guard": "size UFCMA_l.lbad1 <= UFCMA_li.i < size UFCMA_l.lbad1 + size lt",
+          "rcond_forms": "rcondt{2} 18 or rcondf{2} 18 (direction needs guard entailment \u2014 yours to decide)",
+          "side_index": 2
+        }
+      ],
+      "how_to_use": "Positions for choosing wp/sp depth, which `if` to rcond, and where the next loop/call frontier is. Facts only \u2014 pick the tactic and the branch direction yourself.",
+      "loop_frontiers": [
+        {
+          "at_order": 9,
+          "side_index": 1,
+          "statement": null
+        },
+        {
+          "at_order": 9,
+          "side_index": 2,
+          "statement": null
+        }
+      ],
+      "next_frontier": {
+        "at_order": 1,
+        "kind": "straight_line_prefix"
+      }
+    },
+    "view_focus": "seq_cut"
+  },
+  "pure_tail_surface": {
+    "ambient_memory_translation": {
+      "effect": "Local claims in the pure tail depend on the currently introduced memory binders as well as displayed term decorations.",
+      "state": "decorated_memory_terms_visible",
+      "translation_facts": [
+        "Decorations identify the program memory from which a term is read.",
+        "Pretty-printer memory names and introduced proof-context names can differ."
+      ],
+      "visible_decorations": [
+        "{1}",
+        "{2}"
+      ]
+    },
+    "effect": "Summarizes verifier-visible pure-goal structure after program frontier actions have been discharged or hidden by local proof steps.",
+    "gap_analysis": [
+      {
+        "confidence": "medium",
+        "evidence": [
+          "map update key: x1",
+          "update key head: x1",
+          "membership/list head: p.`1"
+        ],
+        "gap": "Map update key head and membership/list head are both visible, but no equality path between them is visible.",
+        "observed_risk": "pure_tail_alignment_fact_not_visible",
+        "reversible_to": [
+          {
+            "checkpoint_id": "cp_6_6687a0f0097796f5",
+            "label": "After seq opened / before branch work #6",
+            "restored_affordances": {
+              "branch_work": "not_committed",
+              "seq_cut": "committed"
+            },
+            "semantic_id": "seq_cut_mismatch",
+            "semantic_ids": [
+              "seq_cut_mismatch",
+              "after_seq_opened",
+              "before_branch_work"
+            ],
+            "submit": {
+              "intent": "undo_to_checkpoint",
+              "payload": {
+                "checkpoint_id": "cp_6_6687a0f0097796f5"
+              }
+            },
+            "undo_scope": "branch_local"
+          },
+          {
+            "checkpoint_id": "cp_5_6687a0f0097796f5",
+            "label": "Before seq cut #5",
+            "restored_affordances": {
+              "call_site_state": "as_before_seq_cut",
+              "seq_cut": "not_committed"
+            },
+            "semantic_id": "before_seq_cut",
+            "semantic_ids": [
+              "before_seq_cut"
+            ],
+            "submit": {
+              "intent": "undo_to_checkpoint",
+              "payload": {
+                "checkpoint_id": "cp_5_6687a0f0097796f5"
+              }
+            },
+            "undo_scope": "seq_local"
+          }
+        ],
+        "signal": "map_key_membership_head_alignment"
+      },
+      {
+        "confidence": "medium",
+        "evidence": [
+          "map update key: x0",
+          "update key head: x0",
+          "membership/list head: p.`1"
+        ],
+        "gap": "Map update key head and membership/list head are both visible, but no equality path between them is visible.",
+        "observed_risk": "pure_tail_alignment_fact_not_visible",
+        "reversible_to": [
+          {
+            "checkpoint_id": "cp_6_6687a0f0097796f5",
+            "label": "After seq opened / before branch work #6",
+            "restored_affordances": {
+              "branch_work": "not_committed",
+              "seq_cut": "committed"
+            },
+            "semantic_id": "seq_cut_mismatch",
+            "semantic_ids": [
+              "seq_cut_mismatch",
+              "after_seq_opened",
+              "before_branch_work"
+            ],
+            "submit": {
+              "intent": "undo_to_checkpoint",
+              "payload": {
+                "checkpoint_id": "cp_6_6687a0f0097796f5"
+              }
+            },
+            "undo_scope": "branch_local"
+          },
+          {
+            "checkpoint_id": "cp_5_6687a0f0097796f5",
+            "label": "Before seq cut #5",
+            "restored_affordances": {
+              "call_site_state": "as_before_seq_cut",
+              "seq_cut": "not_committed"
+            },
+            "semantic_id": "before_seq_cut",
+            "semantic_ids": [
+              "before_seq_cut"
+            ],
+            "submit": {
+              "intent": "undo_to_checkpoint",
+              "payload": {
+                "checkpoint_id": "cp_5_6687a0f0097796f5"
+              }
+            },
+            "undo_scope": "seq_local"
+          }
+        ],
+        "signal": "map_key_membership_head_alignment"
+      },
+      {
+        "confidence": "medium",
+        "evidence": [
+          "map update key: n",
+          "update key head: n",
+          "membership/list head: p.`1"
+        ],
+        "gap": "Map update key head and membership/list head are both visible, but no equality path between them is visible.",
+        "observed_risk": "pure_tail_alignment_fact_not_visible",
+        "reversible_to": [
+          {
+            "checkpoint_id": "cp_6_6687a0f0097796f5",
+            "label": "After seq opened / before branch work #6",
+            "restored_affordances": {
+              "branch_work": "not_committed",
+              "seq_cut": "committed"
+            },
+            "semantic_id": "seq_cut_mismatch",
+            "semantic_ids": [
+              "seq_cut_mismatch",
+              "after_seq_opened",
+              "before_branch_work"
+            ],
+            "submit": {
+              "intent": "undo_to_checkpoint",
+              "payload": {
+                "checkpoint_id": "cp_6_6687a0f0097796f5"
+              }
+            },
+            "undo_scope": "branch_local"
+          },
+          {
+            "checkpoint_id": "cp_5_6687a0f0097796f5",
+            "label": "Before seq cut #5",
+            "restored_affordances": {
+              "call_site_state": "as_before_seq_cut",
+              "seq_cut": "not_committed"
+            },
+            "semantic_id": "before_seq_cut",
+            "semantic_ids": [
+              "before_seq_cut"
+            ],
+            "submit": {
+              "intent": "undo_to_checkpoint",
+              "payload": {
+                "checkpoint_id": "cp_5_6687a0f0097796f5"
+              }
+            },
+            "undo_scope": "seq_local"
+          }
+        ],
+        "signal": "map_key_membership_head_alignment"
+      },
+      {
+        "confidence": "medium",
+        "evidence": [
+          "map update key: c0",
+          "update key head: c0",
+          "membership/list head: p.`1"
+        ],
+        "gap": "Map update key head and membership/list head are both visible, but no equality path between them is visible.",
+        "observed_risk": "pure_tail_alignment_fact_not_visible",
+        "reversible_to": [
+          {
+            "checkpoint_id": "cp_6_6687a0f0097796f5",
+            "label": "After seq opened / before branch work #6",
+            "restored_affordances": {
+              "branch_work": "not_committed",
+              "seq_cut": "committed"
+            },
+            "semantic_id": "seq_cut_mismatch",
+            "semantic_ids": [
+              "seq_cut_mismatch",
+              "after_seq_opened",
+              "before_branch_work"
+            ],
+            "submit": {
+              "intent": "undo_to_checkpoint",
+              "payload": {
+                "checkpoint_id": "cp_6_6687a0f0097796f5"
+              }
+            },
+            "undo_scope": "branch_local"
+          },
+          {
+            "checkpoint_id": "cp_5_6687a0f0097796f5",
+            "label": "Before seq cut #5",
+            "restored_affordances": {
+              "call_site_state": "as_before_seq_cut",
+              "seq_cut": "not_committed"
+            },
+            "semantic_id": "before_seq_cut",
+            "semantic_ids": [
+              "before_seq_cut"
+            ],
+            "submit": {
+              "intent": "undo_to_checkpoint",
+              "payload": {
+                "checkpoint_id": "cp_5_6687a0f0097796f5"
+              }
+            },
+            "undo_scope": "seq_local"
+          }
+        ],
+        "signal": "map_key_membership_head_alignment"
+      }
+    ],
+    "limitations": [
+      "This panel records syntactic and proof-state facts from the current view.",
+      "It does not choose a tactic or instantiate a lemma."
+    ],
+    "map_update_lookup_surface": {
+      "effect": "Summarizes finite-map update and lookup keys that determine same-key versus different-key local obligations.",
+      "key_cases": [
+        {
+          "case": "update_key",
+          "evidence": "The lookup term is itself an update key.",
+          "lookup_term": "x1"
+        },
+        {
+          "case": "update_key",
+          "evidence": "The lookup term is itself an update key.",
+          "lookup_term": "x0"
+        },
+        {
+          "case": "update_key",
+          "evidence": "The lookup term is itself an update key.",
+          "lookup_term": "n"
+        },
+        {
+          "case": "update_key",
+          "evidence": "The lookup term is itself an update key.",
+          "lookup_term": "c0"
+        }
+      ],
+      "limitations": [
+        "This surface does not perform a rewrite or case split.",
+        "A key case marked unresolved only means no equality path is visible in this goal text."
+      ],
+      "lookup_terms": [
+        "x1",
+        "x0",
+        "n",
+        "c0"
+      ],
+      "update_keys": [
+        "x1",
+        "x0",
+        "n",
+        "c0"
+      ]
+    },
+    "obligation_families": [
+      {
+        "effect": "The remaining pure goal may include invertibility or lossless side conditions from an earlier sampling alignment.",
+        "evidence": [
+          "distribution or lossless token remains visible",
+          "add/sub expression remains visible"
+        ],
+        "family": "sampling_bijection",
+        "limitations": "No distribution lemma is selected by this surface."
+      },
+      {
+        "effect": "The pure goal contains finite-map update or lookup structure whose key/projection equalities are verifier-visible facts.",
+        "family": "map_update_projection",
+        "limitations": "The surface does not rewrite any map expression.",
+        "lookup_count": 4,
+        "sample_lookup_terms": [
+          "x1",
+          "x0",
+          "n",
+          "c0"
+        ],
+        "sample_update_keys": [
+          "x1",
+          "x0",
+          "n",
+          "c0"
+        ],
+        "update_count": 4,
+        "visible_key_cases": [
+          {
+            "case": "update_key",
+            "evidence": "The lookup term is itself an update key.",
+            "lookup_term": "x1"
+          },
+          {
+            "case": "update_key",
+            "evidence": "The lookup term is itself an update key.",
+            "lookup_term": "x0"
+          },
+          {
+            "case": "update_key",
+            "evidence": "The lookup term is itself an update key.",
+            "lookup_term": "n"
+          },
+          {
+            "case": "update_key",
+            "evidence": "The lookup term is itself an update key.",
+            "lookup_term": "c0"
+          }
+        ]
+      },
+      {
+        "effect": "The pure goal exposes tuple/record projections or constructor equalities that can connect program variables to map/list keys.",
+        "family": "constructor_projection",
+        "limitations": "Projection equalities are reported only when visible in the current text.",
+        "selectors": [
+          ".`1",
+          ".`2",
+          ".`4"
+        ],
+        "tuple_equality_count": 2
+      },
+      {
+        "effect": "The current proof point is dominated by local logical obligations rather than program-frontier movement.",
+        "evidence": [
+          "implication residual visible"
+        ],
+        "family": "quantified_residual_logic",
+        "limitations": "Quantifier names are not normalized across EasyCrypt pretty-printer variants."
+      }
+    ],
+    "related_checkpoints": [
+      {
+        "checkpoint_id": "cp_6_6687a0f0097796f5",
+        "label": "After seq opened / before branch work #6",
+        "restored_affordances": {
+          "branch_work": "not_committed",
+          "seq_cut": "committed"
+        },
+        "semantic_id": "seq_cut_mismatch",
+        "semantic_ids": [
+          "seq_cut_mismatch",
+          "after_seq_opened",
+          "before_branch_work"
+        ],
+        "submit": {
+          "intent": "undo_to_checkpoint",
+          "payload": {
+            "checkpoint_id": "cp_6_6687a0f0097796f5"
+          }
+        },
+        "undo_scope": "branch_local"
+      },
+      {
+        "checkpoint_id": "cp_5_6687a0f0097796f5",
+        "label": "Before seq cut #5",
+        "restored_affordances": {
+          "call_site_state": "as_before_seq_cut",
+          "seq_cut": "not_committed"
+        },
+        "semantic_id": "before_seq_cut",
+        "semantic_ids": [
+          "before_seq_cut"
+        ],
+        "submit": {
+          "intent": "undo_to_checkpoint",
+          "payload": {
+            "checkpoint_id": "cp_5_6687a0f0097796f5"
+          }
+        },
+        "undo_scope": "seq_local"
+      },
+      {
+        "label": "Restore before last checkpoint rewind",
+        "semantic_id": "restore_before_last_rewind",
+        "semantic_ids": [
+          "restore_before_last_rewind"
+        ],
+        "undo_scope": "restore_pre_rewind"
+      },
+      {
+        "checkpoint_id": "cp_14_6687a0f0097796f5",
+        "label": "Before inline expansion #14",
+        "restored_affordances": {
+          "call_site_handles": "as_before_inline"
+        },
+        "semantic_id": "before_branch_work",
+        "semantic_ids": [
+          "before_branch_work",
+          "before_call_obligation_work",
+          "last_call_site_boundary"
+        ],
+        "submit": {
+          "intent": "undo_to_checkpoint",
+          "payload": {
+            "checkpoint_id": "cp_14_6687a0f0097796f5"
+          }
+        },
+        "undo_scope": "call_site_boundary"
+      }
+    ],
+    "state": "map_projection_tail"
+  },
+  "application_context": {
+    "selected_handles": [
+      {
+        "title": "Proof-route context",
+        "why_relevant": "Inspect asymmetric instrumentation region: one-sided live state t1, ti must be budgeted."
+      },
+      {
+        "title": "Proof-route context",
+        "why_relevant": "Inspect sample coupling budget: z{1}/z{2} <$ dblock; extra state t1, ti."
+      }
+    ]
+  },
+  "facts_and_diagnostics": {
+    "fact_note": "Only current-frontier facts are shown here; the full proof context artifact keeps the compiler/internal details.",
+    "facts": {
+      "has_invariant_skeleton": true,
+      "unfoldable_goal_head_count": 6,
+      "unfoldable_goal_heads": [
+        {
+          "declaration_kind": "op",
+          "name": "qdec",
+          "smt_argument_role": "not_a_lemma_hint",
+          "unfold_tactic": "rewrite /qdec.",
+          "unqualified_name": "qdec"
+        },
+        {
+          "declaration_kind": "op",
+          "name": "w1",
+          "smt_argument_role": "not_a_lemma_hint",
+          "unfold_tactic": "rewrite /w1.",
+          "unqualified_name": "w1"
+        },
+        {
+          "declaration_kind": "op",
+          "name": "w2",
+          "smt_argument_role": "not_a_lemma_hint",
+          "unfold_tactic": "rewrite /w2.",
+          "unqualified_name": "w2"
+        },
+        {
+          "declaration_kind": "op",
+          "name": "check_plaintext",
+          "smt_argument_role": "not_a_lemma_hint",
+          "unfold_tactic": "rewrite /check_plaintext.",
+          "unqualified_name": "check_plaintext"
+        }
+      ]
+    },
+    "notes": [
+      {
+        "message": "Sampling order note: a paired same-distribution sample is still live (z{1} <$ dblock at statement 10 with z{2} <$ dblock at statement 10), while one-sided sample(s) are also visible (t0{1} <$ dpoly_out at statement 16; r{1} <$ dpoly_in at statement 23). Eas...",
+        "severity": "warning"
+      }
+    ]
+  },
+  "deep_focus": {
+    "avoid": [
+      "This is a branch-local/suffix alignment problem; a fresh restart throws away useful opener and invariant work.",
+      "One side has sampling or instrumentation before the suffix; use `rcond`, `swap`, or one-sided `rnd` before plain `wp`.",
+      "`sim` is usually too late/too strong before the guard and suffix shape are aligned."
+    ],
+    "confidence": "medium \u2014 The current pRHL goal exposes a bad-event/instrumented branch together with sampling or one-sided suffix evidence; this is the shape where experts use `case`, `rcondt/rcondf`, `swap`, indexed `wp`, `conseq`, or one-sided `rnd` before local SMT. The fast-track tactic is schematic, so confidence is capped until the current view or an inspect result supplies concrete terms.",
+    "fast_track_probe": "try `case: (<current branch guard>).` first \u2014 Use only when the visible goal has a concrete guard controlling the local branch.",
+    "repair_if_fails": [
+      "syntax \u2192 inspect tactic_forms for swap, rcondt, rcondf, wp, conseq, rnd, or eager",
+      "frontier \u2192 inspect align or goal_info for statement indexes before retrying",
+      "invariant \u2192 use undo_to_checkpoint {} and choose the checkpoint before the call/loop invariant that should carry the missing guard or size fact",
+      "lemma \u2192 inspect lemma_hints or lookup_symbol for the local size/nth/bad-event lemma",
+      "route \u2192 downgrade this surgery route only after a smaller prefix and relevant tactic_forms fail"
+    ],
+    "route": "experts decompose this shape as case split then rcond swap wp conseq \u2192 local smt.",
+    "toolbox": [
+      "`case: (<which guard>)` \u2014 split the divergent branch (YOU pick the condition).",
+      "`rcondt{i} N` / `rcondf{i} N` \u2014 force a branch (YOU pick t/f); for a loop guard, `while(true); auto`.",
+      "`swap [a..b] c` \u2014 line up statement order across the two sides.",
+      "`wp` / `wp -N -N` \u2014 absorb suffix statements (from the end) before `call`/`sim`.",
+      "`conseq(:_==> ={<the few equal vars>})` then `sim` \u2014 weaken to the equal prefix and auto-close it.",
+      "local `smt(...)` for the residual logic."
+    ],
+    "where": [
+      "setup before the frontier (positions 1\u20138) \u2014 absorb with `sp`/`wp`: 8 setup statement(s): p0 <- p; nap <- p0; (n, a, p1) <- nap; ... (5 more)"
+    ],
+    "why_now": "current pRHL state looks past the main opener: the useful next work is local branch/suffix surgery, not changing proof family.",
+    "yours": "which condition to `case` on, which way each guard resolves, the sample coupling (e.g. `t0{1} = t1{2}`), the smt lemmas."
+  },
+  "recovery_diagnosis_surface": {
+    "available_local_work": [
+      {
+        "items": [
+          "sampling_bijection",
+          "map_update_projection",
+          "constructor_projection",
+          "quantified_residual_logic"
+        ],
+        "kind": "pure_tail_obligation_families"
+      },
+      {
+        "items": [
+          "{'lookup_term': 'x1', 'case': 'update_key', 'evidence': 'The lookup term is itself an update key.'}",
+          "{'lookup_term': 'x0', 'case': 'update_key', 'evidence': 'The lookup term is itself an update key.'}",
+          "{'lookup_term': 'n', 'case': 'update_key', 'evidence': 'The lookup term is itself an update key.'}",
+          "{'lookup_term': 'c0', 'case': 'update_key', 'evidence': 'The lookup term is itself an update key.'}"
+        ],
+        "kind": "map_update_lookup_cases"
+      }
+    ],
+    "checkpoint_policy": "current_state_local_work_visible",
+    "confidence": "medium",
+    "evidence": [
+      "map update key: x1",
+      "update key head: x1",
+      "membership/list head: p.`1"
+    ],
+    "kind": "recovery_diagnosis_surface",
+    "limitations": [
+      "does not select a destructor, witness, rewrite, or SMT lemma",
+      "reported checkpoints are recovery references, not a default route"
+    ],
+    "recovery_class": "local_pure_surgery_available",
+    "related_checkpoints": [
+      {
+        "committed_step_index": 14,
+        "label": "Before inline expansion #14",
+        "restored_affordances": {
+          "call_site_handles": "as_before_inline"
+        },
+        "semantic_id": "before_branch_work",
+        "tactic_index": 14,
+        "undo_scope": "call_site_boundary",
+        "why_checkpoint": "seq-local boundary associated with the currently visible pure-tail alignment gap"
+      },
+      {
+        "checkpoint_id": "cp_6_6687a0f0097796f5",
+        "label": "After seq opened / before branch work #6",
+        "restored_affordances": {
+          "branch_work": "not_committed",
+          "seq_cut": "committed"
+        },
+        "semantic_id": "seq_cut_mismatch",
+        "semantic_ids": [
+          "seq_cut_mismatch",
+          "after_seq_opened",
+          "before_branch_work"
+        ],
+        "undo_scope": "branch_local"
+      },
+      {
+        "checkpoint_id": "cp_5_6687a0f0097796f5",
+        "label": "Before seq cut #5",
+        "restored_affordances": {
+          "call_site_state": "as_before_seq_cut",
+          "seq_cut": "not_committed"
+        },
+        "semantic_id": "before_seq_cut",
+        "semantic_ids": [
+          "before_seq_cut"
+        ],
+        "undo_scope": "seq_local"
+      },
+      {
+        "checkpoint_id": "cp_6_6687a0f0097796f5",
+        "committed_step_index": 6,
+        "label": "After seq opened / before branch work #6",
+        "restored_affordances": {
+          "branch_work": "not_committed",
+          "seq_cut": "committed"
+        },
+        "restored_proof_layer": "seq_obligations_opened",
+        "semantic_id": "seq_cut_mismatch",
+        "semantic_ids": [
+          "seq_cut_mismatch",
+          "after_seq_opened",
+          "before_branch_work"
+        ],
+        "undo_scope": "branch_local",
+        "why_checkpoint": "seq-local branch boundary; selecting it keeps the seq cut and removes branch-local work after it"
+      },
+      {
+        "checkpoint_id": "cp_5_6687a0f0097796f5",
+        "committed_step_index": 5,
+        "label": "Before seq cut #5",
+        "restored_affordances": {
+          "call_site_state": "as_before_seq_cut",
+          "seq_cut": "not_committed"
+        },
+        "restored_proof_layer": "pre_seq_cut",
+        "semantic_id": "before_seq_cut",
+        "semantic_ids": [
+          "before_seq_cut"
+        ],
+        "undo_scope": "seq_local",
+        "why_checkpoint": "seq-cut boundary; selecting it restores the proof state before this cut was committed"
+      }
+    ],
+    "related_surfaces": [
+      "pure_tail_surface.gap_analysis",
+      "seq_cut_surface",
+      "pure_tail_surface",
+      "structural_checkpoints"
+    ]
+  },
+  "reference": {
+    "collapsed": [
+      "candidate_moves.navigation",
+      "seq_cut_surface"
+    ],
+    "note": "Panels collapsed for focus. The essentials for THIS phase are in the focus above; the rest were noise here (a flat view of all of them is what disorients). If you genuinely need a precise field from one, ask with `inspect_context`."
+  },
+  "inspect_lookup_handles": {
+    "ask_manager_for": [
+      {
+        "intent": "inspect_context",
+        "payload": {
+          "topic": "goal_info"
+        },
+        "returns": "parsed goal structure and names",
+        "use_when": "Need parsed goal shape, resolved names, or KB pattern hints."
+      },
+      {
+        "intent": "inspect_context",
+        "payload": {
+          "topic": "call_site_options"
+        },
+        "returns": "call-ready/oracle-equiv context for the current frontier, plus the BODY of the procedure(s) called here (functor aliases resolved) so you can see which oracles/state your call invariant must preserve",
+        "use_when": "The current cut or frontier context may expose a call route."
+      },
+      {
+        "intent": "inspect_context",
+        "payload": {
+          "invariant": "<the EasyCrypt invariant expression inside call (_: ...)>",
+          "topic": "call_subgoals"
+        },
+        "returns": "a read-only preview of the obligations caused by that candidate invariant, including pre/init, call-preservation, oracle-side, postcondition, missing-fact signals, and extra conjuncts that may create avoidable obligations",
+        "use_when": "You are considering `call (_: Inv)` and already have a concrete invariant expression you want to test first."
+      },
+      {
+        "intent": "inspect_context",
+        "payload": {
+          "topic": "align"
+        },
+        "returns": "swap/alignment context for the visible pRHL frontier",
+        "use_when": "The visible cut may depend on LHS/RHS statement alignment or missing live facts."
+      },
+      {
+        "intent": "inspect_context",
+        "payload": {
+          "name": "call",
+          "topic": "tactic_forms"
+        },
+        "returns": "valid tactic forms and common traps",
+        "use_when": "Need the valid form for call, seq, while, rnd, or rewrite."
+      },
+      {
+        "intent": "inspect_context",
+        "payload": {
+          "name": "sp",
+          "topic": "tactic_forms"
+        },
+        "returns": "valid `sp` forms and branch-frontier traps",
+        "use_when": "The visible cut/frontier may need indexed `sp i j` before branch tactics."
+      },
+      {
+        "intent": "inspect_context",
+        "payload": {
+          "name": "wp",
+          "topic": "tactic_forms"
+        },
+        "returns": "valid indexed `wp` forms and suffix-alignment traps",
+        "use_when": "Mid-proof pRHL suffix surgery may need indexed `wp`."
+      },
+      {
+        "intent": "inspect_context",
+        "payload": {
+          "name": "swap",
+          "topic": "tactic_forms"
+        },
+        "returns": "valid `swap` forms and statement-order traps",
+        "use_when": "Statement order may need a small `swap` before `sp`, `wp`, or `sim`."
+      },
+      {
+        "intent": "inspect_context",
+        "payload": {
+          "name": "rcondt",
+          "topic": "tactic_forms"
+        },
+        "returns": "valid `rcondt` forms and guard-obligation traps",
+        "use_when": "A guarded branch may need `rcondt` after a case split or invariant fact."
+      },
+      {
+        "intent": "inspect_context",
+        "payload": {
+          "name": "rcondf",
+          "topic": "tactic_forms"
+        },
+        "returns": "valid `rcondf` forms and guard-obligation traps",
+        "use_when": "A guarded branch may need `rcondf` after a case split or invariant fact."
+      },
+      {
+        "intent": "inspect_context",
+        "payload": {
+          "name": "conseq",
+          "topic": "tactic_forms"
+        },
+        "returns": "valid `conseq` forms and pRHL memory-annotation traps",
+        "use_when": "A suffix proof may need `conseq` to weaken to a smaller relation before `sim`."
+      },
+      {
+        "intent": "inspect_context",
+        "payload": {
+          "name": "rnd",
+          "topic": "tactic_forms"
+        },
+        "returns": "valid `rnd` forms, including one-sided sampling",
+        "use_when": "One side may have an extra sample or need an explicit sample coupling."
+      },
+      {
+        "intent": "inspect_context",
+        "payload": {
+          "name": "eager",
+          "topic": "tactic_forms"
+        },
+        "returns": "valid `eager` forms and when to prefer smaller surgery",
+        "use_when": "A known statement-order mismatch may need an eager/lazy transformation."
+      }
+    ],
+    "effect": "All handles here are read-only manager requests; the committed EasyCrypt proof state stays unchanged.",
+    "manager_note": "Some requests may ask EasyCrypt or name resolution; wait for the manager result before choosing the next proof intent."
+  },
+  "structural_checkpoints": {
+    "items": [
+      {
+        "effect_if_selected": "Legacy capsule preserved this restore marker without the full pre-rewind tactic payload, so it is continuity evidence only.",
+        "label": "Restore before last checkpoint rewind",
+        "legacy_resume_surface": true,
+        "restored_proof_layer": "pre_rewind_state",
+        "semantic_id": "restore_before_last_rewind",
+        "semantic_ids": [
+          "restore_before_last_rewind"
+        ],
+        "undo_scope": "restore_pre_rewind",
+        "why_checkpoint": "state saved before the last checkpoint rewind; selecting it returns to that proof state"
+      },
+      {
+        "effect_if_selected": "Legacy capsule preserved this restore marker without the full pre-rewind tactic payload, so it is continuity evidence only.",
+        "label": "Restore before last checkpoint rewind",
+        "legacy_resume_surface": true,
+        "restored_proof_layer": "pre_rewind_state",
+        "semantic_id": "restore_before_last_rewind",
+        "semantic_ids": [
+          "restore_before_last_rewind"
+        ],
+        "undo_scope": "restore_pre_rewind",
+        "why_checkpoint": "state saved before the last checkpoint rewind; selecting it returns to that proof state"
+      },
+      {
+        "checkpoint_id": "cp_6_6687a0f0097796f5",
+        "committed_step_index": 6,
+        "committed_tactic": "auto.",
+        "effect_if_selected": "Undo committed tactic #6 and every committed tactic after it in this node.",
+        "label": "After seq opened / before branch work #6",
+        "restored_affordances": {
+          "branch_work": "not_committed",
+          "seq_cut": "committed"
+        },
+        "restored_proof_layer": "seq_obligations_opened",
+        "semantic_id": "seq_cut_mismatch",
+        "semantic_ids": [
+          "seq_cut_mismatch",
+          "after_seq_opened",
+          "before_branch_work"
+        ],
+        "submit": {
+          "intent": "undo_to_checkpoint",
+          "payload": {
+            "checkpoint_id": "cp_6_6687a0f0097796f5"
+          }
+        },
+        "undo_scope": "branch_local",
+        "why_checkpoint": "seq-local branch boundary; selecting it keeps the seq cut and removes branch-local work after it"
+      },
+      {
+        "checkpoint_id": "cp_14_6687a0f0097796f5",
+        "committed_step_index": 14,
+        "committed_tactic": "inline*.",
+        "effect_if_selected": "Undo committed tactic #14 and every committed tactic after it in this node.",
+        "label": "Before inline expansion #14",
+        "restored_affordances": {
+          "call_site_handles": "as_before_inline"
+        },
+        "restored_proof_layer": "pre_inline_frontier",
+        "semantic_id": "before_branch_work",
+        "semantic_ids": [
+          "before_branch_work",
+          "before_call_obligation_work",
+          "last_call_site_boundary"
+        ],
+        "submit": {
+          "intent": "undo_to_checkpoint",
+          "payload": {
+            "checkpoint_id": "cp_14_6687a0f0097796f5"
+          }
+        },
+        "undo_scope": "call_site_boundary",
+        "why_checkpoint": "inline boundary; selecting it restores the proof state before this expansion"
+      },
+      {
+        "checkpoint_id": "cp_10_6687a0f0097796f5",
+        "committed_step_index": 10,
+        "committed_tactic": "proc.",
+        "effect_if_selected": "Undo committed tactic #10 and every committed tactic after it in this node.",
+        "label": "After call opened / before obligation work #10",
+        "restored_affordances": {
+          "call_obligation_work": "not_committed",
+          "call_route": "committed"
+        },
+        "restored_proof_layer": "call_obligations_opened",
+        "semantic_id": "after_call_opened",
+        "semantic_ids": [
+          "after_call_opened"
+        ],
+        "submit": {
+          "intent": "undo_to_checkpoint",
+          "payload": {
+            "checkpoint_id": "cp_10_6687a0f0097796f5"
+          }
+        },
+        "undo_scope": "call_local",
+        "why_checkpoint": "call-local boundary; selecting it keeps the call tactic and removes work committed after the call opened"
+      },
+      {
+        "checkpoint_id": "cp_9_6687a0f0097796f5",
+        "committed_step_index": 9,
+        "committed_tactic": "call (_: Mem.lc{1} = Mem.lc{2} /\\ Mem.log{1} = Mem.log{2} /\\ BNR.lenc{1} = BNR.lenc{2} /\\ BNR.ndec{1} = BNR.ndec{2} /\\ UFCMA.log{1} = UFCMA.log{2} /\\ UFCMA.cbad1{1} = UFCMA.cbad1{2} /\\ UFCMA_l.lbad1{1} = UFCMA_l.lbad1{2} /\\ RO.m{1} = RO.m{2} /\\ SplitC2.I2.RO.m{1} = SplitC2.I2.RO.m{2} /\\ SplitD.ROF.RO.m{1} = SplitD.ROF.RO.m{2} /\\ UFCMA_li.i{2} = nth0 /\\ UFCMA_li.cbadi{2} = b2i (nth0 < size UFCMA_l.lbad1{2}) /\\ UFCMA_li.badi{2} = (nth0 < size UFCMA_l.lbad1{2} /\\ (nth (w1, w2) UFCMA_l.lbad1{2} nth0).`1 = (nth (w1, w2) UFCMA_l.lbad1{2} nth0).`2)).",
+        "effect_if_selected": "Undo committed tactic #9 and every committed tactic after it in this node.",
+        "label": "Before call invariant #9",
+        "restored_affordances": {
+          "call_obligation_work": "not_committed",
+          "call_route": "not_committed"
+        },
+        "restored_proof_layer": "pre_call_route",
+        "semantic_id": "before_call_route",
+        "semantic_ids": [
+          "before_call_route"
+        ],
+        "submit": {
+          "intent": "undo_to_checkpoint",
+          "payload": {
+            "checkpoint_id": "cp_9_6687a0f0097796f5"
+          }
+        },
+        "undo_scope": "call_local",
+        "why_checkpoint": "call invariant introduction point; later oracle/branch obligations often reveal missing preserved facts or an over-strong equality from this tactic"
+      },
+      {
+        "checkpoint_id": "cp_5_6687a0f0097796f5",
+        "committed_step_index": 5,
+        "committed_tactic": "seq 10 13 : (={glob A, Mem.lc, Mem.log, glob BNR, UFCMA.log, UFCMA.cbad1, UFCMA_l.lbad1, RO.m, SplitC2.I2.RO.m, SplitD.ROF.RO.m} /\\ UFCMA_li.i{2} = nth0 /\\ UFCMA_li.cbadi{2} = b2i (nth0 < size UFCMA_l.lbad1{2}) /\\ UFCMA_li.badi{2} = (nth0 < size UFCMA_l.lbad1{2} /\\ (nth (w1, w2) UFCMA_l.lbad1{2} nth0).`1 = (nth (w1, w2) UFCMA_l.lbad1{2} nth0).`2)).",
+        "effect_if_selected": "Undo committed tactic #5 and every committed tactic after it in this node.",
+        "label": "Before seq cut #5",
+        "restored_affordances": {
+          "call_site_state": "as_before_seq_cut",
+          "seq_cut": "not_committed"
+        },
+        "restored_proof_layer": "pre_seq_cut",
+        "semantic_id": "before_seq_cut",
+        "semantic_ids": [
+          "before_seq_cut"
+        ],
+        "submit": {
+          "intent": "undo_to_checkpoint",
+          "payload": {
+            "checkpoint_id": "cp_5_6687a0f0097796f5"
+          }
+        },
+        "undo_scope": "seq_local",
+        "why_checkpoint": "seq-cut boundary; selecting it restores the proof state before this cut was committed"
+      }
+    ]
+  }
+}

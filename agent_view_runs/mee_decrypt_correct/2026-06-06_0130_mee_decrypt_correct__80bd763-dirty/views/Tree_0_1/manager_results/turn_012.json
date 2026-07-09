@@ -1,0 +1,19 @@
+{
+  "turn": 12,
+  "handled_intent": {
+    "intent": "commit_tactic",
+    "payload": {
+      "tactic": "seq 1 : (padded = cbc_dec AESi _ek (head witness _c) (behead _c) /\\ mk = _mk /\\ p = None)."
+    }
+  },
+  "ok": true,
+  "manager_note": "Committed tactic accepted; the EasyCrypt proof state changed.",
+  "manager_actions": [
+    {
+      "action": "tactic commit",
+      "outcome": "EasyCrypt accepted the committed tactic.",
+      "timing": "424 ms"
+    }
+  ],
+  "view_refreshed": true
+}

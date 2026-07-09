@@ -1,0 +1,73 @@
+{
+  "node": "Tree-0.1",
+  "discovery": "recorded_session_id",
+  "transcripts": [
+    "~/.claude/projects/<PROJECT>/a19e92e2-12a7-4419-bd7f-3d37c1648b89.jsonl"
+  ],
+  "turns": [
+    {
+      "turn": 1,
+      "intent": "commit_tactic",
+      "payload_key": "elim: c st => [|ci c ih] st //=.",
+      "thinking_chars": 0,
+      "text_chars": 71,
+      "tokens": {
+        "output_tokens": 2784,
+        "input_tokens": 7,
+        "cache_read_input_tokens": 92163,
+        "cache_creation_input_tokens": 41465
+      },
+      "session_id": "a19e92e2-12a7-4419-bd7f-3d37c1648b89",
+      "timestamp": "2026-06-12T01:02:07.050Z",
+      "file": "thinking/turn_001.md"
+    },
+    {
+      "turn": 2,
+      "intent": "commit_tactic",
+      "payload_key": "smt(size_ge0).",
+      "thinking_chars": 0,
+      "text_chars": 154,
+      "tokens": {
+        "output_tokens": 624,
+        "input_tokens": 2,
+        "cache_read_input_tokens": 36759,
+        "cache_creation_input_tokens": 1279
+      },
+      "session_id": "a19e92e2-12a7-4419-bd7f-3d37c1648b89",
+      "timestamp": "2026-06-12T01:02:19.107Z",
+      "file": "thinking/turn_002.md"
+    },
+    {
+      "turn": 3,
+      "intent": "commit_tactic",
+      "payload_key": "qed.",
+      "thinking_chars": 0,
+      "text_chars": 52,
+      "tokens": {
+        "output_tokens": 123,
+        "input_tokens": 2,
+        "cache_read_input_tokens": 38038,
+        "cache_creation_input_tokens": 1528
+      },
+      "session_id": "a19e92e2-12a7-4419-bd7f-3d37c1648b89",
+      "timestamp": "2026-06-12T01:02:23.738Z",
+      "file": "thinking/turn_003.md"
+    },
+    {
+      "turn": 4,
+      "intent": "finish",
+      "payload_key": "",
+      "thinking_chars": 0,
+      "text_chars": 67,
+      "tokens": {
+        "output_tokens": 138,
+        "input_tokens": 2,
+        "cache_read_input_tokens": 39566,
+        "cache_creation_input_tokens": 1016
+      },
+      "session_id": "a19e92e2-12a7-4419-bd7f-3d37c1648b89",
+      "timestamp": "2026-06-12T01:02:28.329Z",
+      "file": "thinking/turn_004.md"
+    }
+  ]
+}

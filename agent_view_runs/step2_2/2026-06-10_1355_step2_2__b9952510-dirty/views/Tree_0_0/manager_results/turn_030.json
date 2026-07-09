@@ -1,0 +1,19 @@
+{
+  "turn": 30,
+  "handled_intent": {
+    "intent": "commit_tactic",
+    "payload": {
+      "tactic": "have heq : take (i{hr} + 1) ns{hr} = rcons (take i{hr} ns{hr}) (nth witness<:nonce> ns{hr} i{hr}) by apply (take_nth witness<:nonce>); smt()."
+    }
+  },
+  "ok": true,
+  "manager_note": "Committed tactic accepted; the EasyCrypt proof state changed.",
+  "manager_actions": [
+    {
+      "action": "tactic commit",
+      "outcome": "EasyCrypt accepted the committed tactic.",
+      "timing": "358 ms"
+    }
+  ],
+  "view_refreshed": true
+}

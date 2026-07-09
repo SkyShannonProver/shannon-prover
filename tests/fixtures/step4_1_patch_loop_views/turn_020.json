@@ -1,0 +1,53 @@
+{
+ "current_goal": {
+  "lines": [
+   "Current goal (remaining: 6)",
+   "",
+   "Type variables: <none>",
+   "",
+   "&m: {}",
+   "------------------------------------------------------------------------",
+   "Context : hr: {b, forged, b0, b1 : bool, i : int, n : nonce, ns : nonce list,",
+   "              r : poly_in, t : poly_out}",
+   "",
+   "pre = UFCMA.bad1 /\\ i < size ns",
+   "",
+   "(1--)  n <- nth witness<:nonce> ns i                                               ",
+   "(2--)  if ((n, C.ofintd 0) \\in ROout.m) {                                          ",
+   "(2.1)    r <@ RO.get(n, C.ofintd 0)                                                ",
+   "(2.2)    forged <- forged || test_poly_in n Mem.lc r (oget UFCMA.log.[n])          ",
+   "(2--)  } else {                                                                    ",
+   "(2?1)    r <@ RO.get(n, C.ofintd 0)                                                ",
+   "(2?2)    t <@                                                                      ",
+   "(   )      UFCMA(RO).set_bad2(map                                                  ",
+   "(   )                           (fun (c : ciphertext) =>                           ",
+   "(   )                              c.`4 - poly1305_eval r (topol c.`2 c.`3))       ",
+   "(   )                           (filter (fun (c : ciphertext) => c.`1 = n) Mem.lc))",
+   "(2?3)    ROout.set((n, C.ofintd 0), witness<:poly_out>)                            ",
+   "(2--)  }                                                                           ",
+   "(3--)  i <- i + 1                                                                  ",
+   "",
+   "post = UFCMA.bad1",
+   "",
+   "[482|check]>"
+  ],
+  "view_focus": "procedure_frontier",
+  "goal_type": "hoare"
+ },
+ "proof_status": {
+  "status": "open",
+  "remaining_goals": 6,
+  "remaining_goals_known": true,
+  "goal_type": "hoare",
+  "view_focus": "procedure_frontier",
+  "current_layer": "procedure_body"
+ },
+ "last_result": {
+  "intent": "commit_tactic",
+  "tactic": "while (UFCMA.bad1).",
+  "payload": {
+   "tactic": "while (UFCMA.bad1)."
+  },
+  "result": "EasyCrypt accepted the committed tactic."
+ }
+}

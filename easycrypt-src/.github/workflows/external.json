@@ -1,0 +1,65 @@
+[
+  { "name"       : "jasmin-eclib"
+  , "repository" : "https://github.com/jasmin-lang/jasmin"
+  , "branch"     : "main"
+  , "subdir"     : "eclib"
+  , "config"     : "tests.config"
+  , "scenario"   : "jasmin"
+  , "options"    : ""
+  }
+
+  ,
+
+  { "name"       : "sha3"
+  , "repository" : "https://gitlab.com/easycrypt/sha3"
+  , "branch"     : "next"
+  , "subdir"     : "."
+  , "config"     : "config/tests.config"
+  , "scenario"   : "sponge"
+  , "options"    : "-jobs 1"
+  }
+
+  ,
+
+  { "name"       : "cryptobox"
+  , "repository" : "https://gitlab.com/fdupress/ec-cryptobox"
+  , "branch"     : "next"
+  , "subdir"     : "."
+  , "config"     : "config/tests.config"
+  , "scenario"   : "cryptobox"
+  , "options"    : ""
+  }
+
+  ,
+
+  { "name"       : "xsalsa20"
+  , "repository" : "https://gitlab.com/fdupress/ec-xsalsa"
+  , "branch"     : "ec-main"
+  , "subdir"     : "."
+  , "config"     : "config/tests.config"
+  , "scenario"   : "xsalsa"
+  , "options"    : ""
+  }
+
+  ,
+
+  { "name"       : "xmss-security"
+  , "repository" : "https://github.com/formosa-crypto/formosa-xmss"
+  , "branch"     : "main"
+  , "subdir"     : "proof"
+  , "config"     : "config/tests.config"
+  , "scenario"   : "security"
+  , "options"    : ""
+  }
+
+  ,
+
+  { "name"       : "sphincsplus"
+  , "repository" : "https://github.com/MM45/FV-SPHINCSPLUS-EC"
+  , "branch"     : "master"
+  , "subdir"     : "."
+  , "config"     : "config/tests.config"
+  , "scenario"   : "sphincsplus"
+  , "options"    : ""
+  }
+]

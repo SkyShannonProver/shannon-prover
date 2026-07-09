@@ -1,0 +1,19 @@
+{
+  "turn": 5,
+  "handled_intent": {
+    "intent": "commit_tactic",
+    "payload": {
+      "tactic": "rewrite (cbc_correct P Pi ek iv (pad m (M mk m)) hPi) padK /=."
+    }
+  },
+  "ok": true,
+  "manager_note": "Committed tactic accepted; the EasyCrypt proof state changed.",
+  "manager_actions": [
+    {
+      "action": "tactic commit",
+      "outcome": "EasyCrypt accepted the committed tactic.",
+      "timing": "154 ms"
+    }
+  ],
+  "view_refreshed": true
+}

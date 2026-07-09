@@ -1,0 +1,23 @@
+{
+  "turn": 10,
+  "handled_intent": {
+    "intent": "inspect_context",
+    "payload": {
+      "topic": "tactic_forms",
+      "name": "call"
+    }
+  },
+  "ok": true,
+  "manager_note": "Read-only context. Accepted/rejected tactic or call text inside a preview is route-selection information, not the current proof-state error.",
+  "manager_actions": [
+    {
+      "action": "inspect tactic forms",
+      "outcome": "The manager returned read-only context for the current goal.",
+      "timing": "114 ms",
+      "content": {
+        "preview": "=== `call` tactic \u2014 argument forms === Current proof mode: ambient Form 1: call LEMMA. Use when: An equiv lemma already proves the procedure correspondence you need. This is the preferred form when available \u2014 EC closes the whole adversary/oracle call in one step. Example: call H_proc. (* uses a pre-declared equiv handle *) Note: EC unifies the pRHL call's LHS/RHS procedure targets against LEMMA's statement. If that succeeds, the call is fully handled. Form 2: call (_: INVARIANT). Use when: No pre-existing equiv lemma matches \u2014 you must provide the oracle invariant manually. EC generates oracle-equiv subgoals (one per oracle procedure the adversary may call). Example: call (_: ={Mem.k, Mem.log} /\\ StLSke.gs{1} = RO.m{2}). Note: Two pre-flight checks before writing the invariant: (a) Is there already a named equiv lemma that proves this correspondence? Run `-file-index` or check `strategic_helpers[equiv]` in your plan's context brief \u2014 if yes, prefer Form 1 (`call LEMMA.`) instead of re-deriving via invariant. (b) For an outer call to an abstract adversary's main (e.g. `A.main`, `BNR_Adv(A).main`), do NOT include `={glob A}` in the invariant. EC handles glob A implicitly via the..."
+      }
+    }
+  ],
+  "view_refreshed": true
+}

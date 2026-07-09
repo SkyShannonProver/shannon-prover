@@ -1,0 +1,34 @@
+{
+ "current_goal": {
+  "lines": [
+   "Current goal (remaining: 4)",
+   "",
+   "Type variables: <none>",
+   "",
+   "&m: {}",
+   "------------------------------------------------------------------------",
+   "forall _,",
+   "  phoare[ BNR(CPA_CCA_Orcls(UFCMA(RO).O)).dec {&2}:",
+   "           UFCMA.bad1 /\\ true ==> UFCMA.bad1 /\\ true] = 1%r",
+   "[468|check]>"
+  ],
+  "view_focus": "procedure_frontier",
+  "goal_type": "phoare"
+ },
+ "proof_status": {
+  "status": "open",
+  "remaining_goals": 4,
+  "remaining_goals_known": true,
+  "goal_type": "phoare",
+  "view_focus": "procedure_frontier",
+  "current_layer": "procedure_body"
+ },
+ "last_result": {
+  "intent": "commit_tactic",
+  "tactic": "islossless.",
+  "payload": {
+   "tactic": "islossless."
+  },
+  "result": "EasyCrypt accepted the committed tactic."
+ }
+}

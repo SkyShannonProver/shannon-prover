@@ -1,0 +1,19 @@
+{
+  "turn": 23,
+  "handled_intent": {
+    "intent": "commit_tactic",
+    "payload": {
+      "tactic": "rcondt{1} 1; first by auto. exlim (glob E){1}, ek{1}, c0{1} => ge ek0 cc0; wp; call{1} (dec_ph ge ek0 cc0); skip; smt()."
+    }
+  },
+  "ok": true,
+  "manager_note": "Committed tactic accepted; the EasyCrypt proof state changed.",
+  "manager_actions": [
+    {
+      "action": "tactic commit",
+      "outcome": "EasyCrypt accepted the committed tactic.",
+      "timing": "5.1 s"
+    }
+  ],
+  "view_refreshed": true
+}

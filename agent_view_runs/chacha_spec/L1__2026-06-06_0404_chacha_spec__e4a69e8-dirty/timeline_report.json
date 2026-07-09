@@ -1,0 +1,1699 @@
+{
+  "kind": "agent_view_timeline_report",
+  "run_count": 1,
+  "runs": [
+    {
+      "chronological": false,
+      "first_action_at": "2026-06-06T11:09:15.800000+00:00",
+      "label": "2026-06-06_0404_chacha_spec",
+      "node_count": 2,
+      "rows": [
+        {
+          "action_submitted_at": "2026-06-06T11:09:15.800000+00:00",
+          "action_time": "+00:00",
+          "agent_think": "",
+          "agent_think_path": "artifacts/eval_suite/wave1_ablation/l1_goal_projection/d0_chacha_spec/r01/2026-06-06_0404_chacha_spec/iteration_1/node_memory/Tree_0_0/thinking/turn_001.md",
+          "agent_think_seconds": null,
+          "decision_followup_path": "",
+          "decision_state_summary": "phoare / procedure_entry / procedure_frontier, 1 goal, goal 302 chars",
+          "decision_view_path": "artifacts/eval_suite/wave1_ablation/l1_goal_projection/d0_chacha_spec/r01/2026-06-06_0404_chacha_spec/iteration_1/manager_bootstrap_0_0.json",
+          "deterministic_signals": [
+            "commit_without_probe_check_not_inferred"
+          ],
+          "goal_chars": 302,
+          "inspect_topics": [],
+          "intent": {
+            "intent": "commit_tactic",
+            "payload": {
+              "tactic": "have htake_xor : forall str, take_xor [] str = []."
+            }
+          },
+          "intent_summary": "commit have htake_xor : forall str, take_xor [] str = []",
+          "manager_action_summary": [
+            "tactic commit (1.2 s)"
+          ],
+          "manager_result_at": "2026-06-06T11:09:17+00:00",
+          "manager_result_path": "artifacts/eval_suite/wave1_ablation/l1_goal_projection/d0_chacha_spec/r01/2026-06-06_0404_chacha_spec/iteration_1/node_memory/Tree_0_0/manager_results/turn_001.json",
+          "manager_seconds": 1.2,
+          "manager_time": "1.2 s",
+          "node": "Tree-0.0",
+          "node_dir": "artifacts/eval_suite/wave1_ablation/l1_goal_projection/d0_chacha_spec/r01/2026-06-06_0404_chacha_spec/iteration_1/node_memory/Tree_0_0",
+          "ok": true,
+          "result_followup_path": "artifacts/eval_suite/wave1_ablation/l1_goal_projection/d0_chacha_spec/r01/2026-06-06_0404_chacha_spec/iteration_1/node_memory/Tree_0_0/followups/turn_001.md",
+          "result_state_summary": "ambient / ambient_logic, 2 goals, goal 222 chars",
+          "result_summary": "accepted commit",
+          "result_view_path": "artifacts/eval_suite/wave1_ablation/l1_goal_projection/d0_chacha_spec/r01/2026-06-06_0404_chacha_spec/iteration_1/node_memory/Tree_0_0/workspace_views/turn_001.json",
+          "turn": 1,
+          "usage": {
+            "cache_creation_input_tokens": 65556,
+            "cache_read_input_tokens": 367177,
+            "input_tokens": 2225,
+            "output_tokens": 10819
+          },
+          "view_chars": 885,
+          "view_id": "T0.0-1",
+          "workspace_view_path": "artifacts/eval_suite/wave1_ablation/l1_goal_projection/d0_chacha_spec/r01/2026-06-06_0404_chacha_spec/iteration_1/manager_bootstrap_0_0.json"
+        },
+        {
+          "action_submitted_at": "2026-06-06T11:09:21.796000+00:00",
+          "action_time": "+00:06",
+          "agent_think": "4.8 s",
+          "agent_think_path": "artifacts/eval_suite/wave1_ablation/l1_goal_projection/d0_chacha_spec/r01/2026-06-06_0404_chacha_spec/iteration_1/node_memory/Tree_0_0/thinking/turn_002.md",
+          "agent_think_seconds": 4.796,
+          "decision_followup_path": "artifacts/eval_suite/wave1_ablation/l1_goal_projection/d0_chacha_spec/r01/2026-06-06_0404_chacha_spec/iteration_1/node_memory/Tree_0_0/followups/turn_001.md",
+          "decision_state_summary": "ambient / ambient_logic, 2 goals, goal 222 chars",
+          "decision_view_path": "artifacts/eval_suite/wave1_ablation/l1_goal_projection/d0_chacha_spec/r01/2026-06-06_0404_chacha_spec/iteration_1/node_memory/Tree_0_0/workspace_views/turn_001.json",
+          "deterministic_signals": [
+            "commit_without_probe_check_not_inferred"
+          ],
+          "goal_chars": 222,
+          "inspect_topics": [
+            "goal_info",
+            "lemma_hints",
+            "tactic_forms"
+          ],
+          "intent": {
+            "intent": "commit_tactic",
+            "payload": {
+              "tactic": "by move=> str; rewrite /take_xor take0."
+            }
+          },
+          "intent_summary": "commit by move=> str; rewrite /take_xor take0",
+          "manager_action_summary": [
+            "tactic commit (204 ms)"
+          ],
+          "manager_result_at": "2026-06-06T11:09:22+00:00",
+          "manager_result_path": "artifacts/eval_suite/wave1_ablation/l1_goal_projection/d0_chacha_spec/r01/2026-06-06_0404_chacha_spec/iteration_1/node_memory/Tree_0_0/manager_results/turn_002.json",
+          "manager_seconds": 0.204,
+          "manager_time": "204 ms",
+          "node": "Tree-0.0",
+          "node_dir": "artifacts/eval_suite/wave1_ablation/l1_goal_projection/d0_chacha_spec/r01/2026-06-06_0404_chacha_spec/iteration_1/node_memory/Tree_0_0",
+          "ok": true,
+          "result_followup_path": "artifacts/eval_suite/wave1_ablation/l1_goal_projection/d0_chacha_spec/r01/2026-06-06_0404_chacha_spec/iteration_1/node_memory/Tree_0_0/followups/turn_002.md",
+          "result_state_summary": "phoare / procedure_entry / procedure_frontier, 1 goal, goal 369 chars",
+          "result_summary": "accepted commit",
+          "result_view_path": "artifacts/eval_suite/wave1_ablation/l1_goal_projection/d0_chacha_spec/r01/2026-06-06_0404_chacha_spec/iteration_1/node_memory/Tree_0_0/workspace_views/turn_002.json",
+          "turn": 2,
+          "usage": {
+            "cache_creation_input_tokens": 1132,
+            "cache_read_input_tokens": 48602,
+            "input_tokens": 131,
+            "output_tokens": 129
+          },
+          "view_chars": 5877,
+          "view_id": "T0.0-2",
+          "workspace_view_path": "artifacts/eval_suite/wave1_ablation/l1_goal_projection/d0_chacha_spec/r01/2026-06-06_0404_chacha_spec/iteration_1/node_memory/Tree_0_0/workspace_views/turn_001.json"
+        },
+        {
+          "action_submitted_at": "2026-06-06T11:09:25.807000+00:00",
+          "action_time": "+00:10",
+          "agent_think": "3.8 s",
+          "agent_think_path": "artifacts/eval_suite/wave1_ablation/l1_goal_projection/d0_chacha_spec/r01/2026-06-06_0404_chacha_spec/iteration_1/node_memory/Tree_0_0/thinking/turn_003.md",
+          "agent_think_seconds": 3.807,
+          "decision_followup_path": "artifacts/eval_suite/wave1_ablation/l1_goal_projection/d0_chacha_spec/r01/2026-06-06_0404_chacha_spec/iteration_1/node_memory/Tree_0_0/followups/turn_002.md",
+          "decision_state_summary": "phoare / procedure_entry / procedure_frontier, 1 goal, goal 369 chars",
+          "decision_view_path": "artifacts/eval_suite/wave1_ablation/l1_goal_projection/d0_chacha_spec/r01/2026-06-06_0404_chacha_spec/iteration_1/node_memory/Tree_0_0/workspace_views/turn_002.json",
+          "deterministic_signals": [
+            "commit_without_probe_check_not_inferred"
+          ],
+          "goal_chars": 369,
+          "inspect_topics": [
+            "goal_info",
+            "call_site_options",
+            "call_subgoals",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms"
+          ],
+          "intent": {
+            "intent": "commit_tactic",
+            "payload": {
+              "tactic": "proc."
+            }
+          },
+          "intent_summary": "commit proc",
+          "manager_action_summary": [
+            "tactic commit (193 ms)"
+          ],
+          "manager_result_at": "2026-06-06T11:09:26+00:00",
+          "manager_result_path": "artifacts/eval_suite/wave1_ablation/l1_goal_projection/d0_chacha_spec/r01/2026-06-06_0404_chacha_spec/iteration_1/node_memory/Tree_0_0/manager_results/turn_003.json",
+          "manager_seconds": 0.193,
+          "manager_time": "193 ms",
+          "node": "Tree-0.0",
+          "node_dir": "artifacts/eval_suite/wave1_ablation/l1_goal_projection/d0_chacha_spec/r01/2026-06-06_0404_chacha_spec/iteration_1/node_memory/Tree_0_0",
+          "ok": true,
+          "result_followup_path": "artifacts/eval_suite/wave1_ablation/l1_goal_projection/d0_chacha_spec/r01/2026-06-06_0404_chacha_spec/iteration_1/node_memory/Tree_0_0/followups/turn_003.md",
+          "result_state_summary": "phoare / procedure_body / procedure_frontier, 1 goal, goal 1010 chars",
+          "result_summary": "accepted commit",
+          "result_view_path": "artifacts/eval_suite/wave1_ablation/l1_goal_projection/d0_chacha_spec/r01/2026-06-06_0404_chacha_spec/iteration_1/node_memory/Tree_0_0/workspace_views/turn_003.json",
+          "turn": 3,
+          "usage": {
+            "cache_creation_input_tokens": 1371,
+            "cache_read_input_tokens": 49734,
+            "input_tokens": 2,
+            "output_tokens": 122
+          },
+          "view_chars": 10447,
+          "view_id": "T0.0-3",
+          "workspace_view_path": "artifacts/eval_suite/wave1_ablation/l1_goal_projection/d0_chacha_spec/r01/2026-06-06_0404_chacha_spec/iteration_1/node_memory/Tree_0_0/workspace_views/turn_002.json"
+        },
+        {
+          "action_submitted_at": "2026-06-06T11:09:32.791000+00:00",
+          "action_time": "+00:17",
+          "agent_think": "6.8 s",
+          "agent_think_path": "artifacts/eval_suite/wave1_ablation/l1_goal_projection/d0_chacha_spec/r01/2026-06-06_0404_chacha_spec/iteration_1/node_memory/Tree_0_0/thinking/turn_004.md",
+          "agent_think_seconds": 6.791,
+          "decision_followup_path": "artifacts/eval_suite/wave1_ablation/l1_goal_projection/d0_chacha_spec/r01/2026-06-06_0404_chacha_spec/iteration_1/node_memory/Tree_0_0/followups/turn_003.md",
+          "decision_state_summary": "phoare / procedure_body / procedure_frontier, 1 goal, goal 1010 chars",
+          "decision_view_path": "artifacts/eval_suite/wave1_ablation/l1_goal_projection/d0_chacha_spec/r01/2026-06-06_0404_chacha_spec/iteration_1/node_memory/Tree_0_0/workspace_views/turn_003.json",
+          "deterministic_signals": [
+            "commit_without_probe_check_not_inferred"
+          ],
+          "goal_chars": 1010,
+          "inspect_topics": [
+            "goal_info",
+            "call_site_options",
+            "call_subgoals",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms"
+          ],
+          "intent": {
+            "intent": "commit_tactic",
+            "payload": {
+              "tactic": "inline OCC(I).cc."
+            }
+          },
+          "intent_summary": "commit inline OCC(I).cc",
+          "manager_action_summary": [
+            "tactic commit (209 ms)"
+          ],
+          "manager_result_at": "2026-06-06T11:09:33+00:00",
+          "manager_result_path": "artifacts/eval_suite/wave1_ablation/l1_goal_projection/d0_chacha_spec/r01/2026-06-06_0404_chacha_spec/iteration_1/node_memory/Tree_0_0/manager_results/turn_004.json",
+          "manager_seconds": 0.209,
+          "manager_time": "209 ms",
+          "node": "Tree-0.0",
+          "node_dir": "artifacts/eval_suite/wave1_ablation/l1_goal_projection/d0_chacha_spec/r01/2026-06-06_0404_chacha_spec/iteration_1/node_memory/Tree_0_0",
+          "ok": true,
+          "result_followup_path": "artifacts/eval_suite/wave1_ablation/l1_goal_projection/d0_chacha_spec/r01/2026-06-06_0404_chacha_spec/iteration_1/node_memory/Tree_0_0/followups/turn_004.md",
+          "result_state_summary": "phoare / procedure_body / procedure_frontier, 1 goal, goal 1010 chars",
+          "result_summary": "rejected commit: manager reported rejection",
+          "result_view_path": "artifacts/eval_suite/wave1_ablation/l1_goal_projection/d0_chacha_spec/r01/2026-06-06_0404_chacha_spec/iteration_1/node_memory/Tree_0_0/workspace_views/turn_004.json",
+          "turn": 4,
+          "usage": {
+            "cache_creation_input_tokens": 1436,
+            "cache_read_input_tokens": 51105,
+            "input_tokens": 2,
+            "output_tokens": 216
+          },
+          "view_chars": 13429,
+          "view_id": "T0.0-4",
+          "workspace_view_path": "artifacts/eval_suite/wave1_ablation/l1_goal_projection/d0_chacha_spec/r01/2026-06-06_0404_chacha_spec/iteration_1/node_memory/Tree_0_0/workspace_views/turn_003.json"
+        },
+        {
+          "action_submitted_at": "2026-06-06T11:09:40.900000+00:00",
+          "action_time": "+00:25",
+          "agent_think": "7.9 s",
+          "agent_think_path": "artifacts/eval_suite/wave1_ablation/l1_goal_projection/d0_chacha_spec/r01/2026-06-06_0404_chacha_spec/iteration_1/node_memory/Tree_0_0/thinking/turn_005.md",
+          "agent_think_seconds": 7.9,
+          "decision_followup_path": "artifacts/eval_suite/wave1_ablation/l1_goal_projection/d0_chacha_spec/r01/2026-06-06_0404_chacha_spec/iteration_1/node_memory/Tree_0_0/followups/turn_004.md",
+          "decision_state_summary": "phoare / procedure_body / procedure_frontier, 1 goal, goal 1010 chars",
+          "decision_view_path": "artifacts/eval_suite/wave1_ablation/l1_goal_projection/d0_chacha_spec/r01/2026-06-06_0404_chacha_spec/iteration_1/node_memory/Tree_0_0/workspace_views/turn_004.json",
+          "deterministic_signals": [
+            "commit_without_probe_check_not_inferred"
+          ],
+          "goal_chars": 1010,
+          "inspect_topics": [
+            "goal_info",
+            "call_site_options",
+            "call_subgoals",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms"
+          ],
+          "intent": {
+            "intent": "commit_tactic",
+            "payload": {
+              "tactic": "inline."
+            }
+          },
+          "intent_summary": "commit inline",
+          "manager_action_summary": [
+            "tactic commit (1.1 s)"
+          ],
+          "manager_result_at": "2026-06-06T11:09:42+00:00",
+          "manager_result_path": "artifacts/eval_suite/wave1_ablation/l1_goal_projection/d0_chacha_spec/r01/2026-06-06_0404_chacha_spec/iteration_1/node_memory/Tree_0_0/manager_results/turn_005.json",
+          "manager_seconds": 1.1,
+          "manager_time": "1.1 s",
+          "node": "Tree-0.0",
+          "node_dir": "artifacts/eval_suite/wave1_ablation/l1_goal_projection/d0_chacha_spec/r01/2026-06-06_0404_chacha_spec/iteration_1/node_memory/Tree_0_0",
+          "ok": true,
+          "result_followup_path": "artifacts/eval_suite/wave1_ablation/l1_goal_projection/d0_chacha_spec/r01/2026-06-06_0404_chacha_spec/iteration_1/node_memory/Tree_0_0/followups/turn_005.md",
+          "result_state_summary": "phoare / procedure_body / procedure_frontier, 1 goal, goal 1010 chars",
+          "result_summary": "rejected commit: manager reported rejection",
+          "result_view_path": "artifacts/eval_suite/wave1_ablation/l1_goal_projection/d0_chacha_spec/r01/2026-06-06_0404_chacha_spec/iteration_1/node_memory/Tree_0_0/workspace_views/turn_005.json",
+          "turn": 5,
+          "usage": {
+            "cache_creation_input_tokens": 2063,
+            "cache_read_input_tokens": 106620,
+            "input_tokens": 4,
+            "output_tokens": 374
+          },
+          "view_chars": 13455,
+          "view_id": "T0.0-5",
+          "workspace_view_path": "artifacts/eval_suite/wave1_ablation/l1_goal_projection/d0_chacha_spec/r01/2026-06-06_0404_chacha_spec/iteration_1/node_memory/Tree_0_0/workspace_views/turn_004.json"
+        },
+        {
+          "action_submitted_at": "2026-06-06T11:09:58.900000+00:00",
+          "action_time": "+00:43",
+          "agent_think": "16.9 s",
+          "agent_think_path": "artifacts/eval_suite/wave1_ablation/l1_goal_projection/d0_chacha_spec/r01/2026-06-06_0404_chacha_spec/iteration_1/node_memory/Tree_0_0/thinking/turn_006.md",
+          "agent_think_seconds": 16.9,
+          "decision_followup_path": "artifacts/eval_suite/wave1_ablation/l1_goal_projection/d0_chacha_spec/r01/2026-06-06_0404_chacha_spec/iteration_1/node_memory/Tree_0_0/followups/turn_005.md",
+          "decision_state_summary": "phoare / procedure_body / procedure_frontier, 1 goal, goal 1010 chars",
+          "decision_view_path": "artifacts/eval_suite/wave1_ablation/l1_goal_projection/d0_chacha_spec/r01/2026-06-06_0404_chacha_spec/iteration_1/node_memory/Tree_0_0/workspace_views/turn_005.json",
+          "deterministic_signals": [
+            "commit_without_probe_check_not_inferred"
+          ],
+          "goal_chars": 1010,
+          "inspect_topics": [
+            "goal_info",
+            "call_site_options",
+            "call_subgoals",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms"
+          ],
+          "intent": {
+            "intent": "commit_tactic",
+            "payload": {
+              "tactic": "sp."
+            }
+          },
+          "intent_summary": "commit sp",
+          "manager_action_summary": [
+            "tactic commit (1.1 s)"
+          ],
+          "manager_result_at": "2026-06-06T11:10:00+00:00",
+          "manager_result_path": "artifacts/eval_suite/wave1_ablation/l1_goal_projection/d0_chacha_spec/r01/2026-06-06_0404_chacha_spec/iteration_1/node_memory/Tree_0_0/manager_results/turn_006.json",
+          "manager_seconds": 1.1,
+          "manager_time": "1.1 s",
+          "node": "Tree-0.0",
+          "node_dir": "artifacts/eval_suite/wave1_ablation/l1_goal_projection/d0_chacha_spec/r01/2026-06-06_0404_chacha_spec/iteration_1/node_memory/Tree_0_0",
+          "ok": true,
+          "result_followup_path": "artifacts/eval_suite/wave1_ablation/l1_goal_projection/d0_chacha_spec/r01/2026-06-06_0404_chacha_spec/iteration_1/node_memory/Tree_0_0/followups/turn_006.md",
+          "result_state_summary": "phoare / procedure_body / procedure_frontier, 1 goal, goal 901 chars",
+          "result_summary": "accepted commit",
+          "result_view_path": "artifacts/eval_suite/wave1_ablation/l1_goal_projection/d0_chacha_spec/r01/2026-06-06_0404_chacha_spec/iteration_1/node_memory/Tree_0_0/workspace_views/turn_006.json",
+          "turn": 6,
+          "usage": {
+            "cache_creation_input_tokens": 1436,
+            "cache_read_input_tokens": 54604,
+            "input_tokens": 2,
+            "output_tokens": 1000
+          },
+          "view_chars": 13435,
+          "view_id": "T0.0-6",
+          "workspace_view_path": "artifacts/eval_suite/wave1_ablation/l1_goal_projection/d0_chacha_spec/r01/2026-06-06_0404_chacha_spec/iteration_1/node_memory/Tree_0_0/workspace_views/turn_005.json"
+        },
+        {
+          "action_submitted_at": "2026-06-06T11:10:08.815000+00:00",
+          "action_time": "+00:53",
+          "agent_think": "8.8 s",
+          "agent_think_path": "artifacts/eval_suite/wave1_ablation/l1_goal_projection/d0_chacha_spec/r01/2026-06-06_0404_chacha_spec/iteration_1/node_memory/Tree_0_0/thinking/turn_007.md",
+          "agent_think_seconds": 8.815,
+          "decision_followup_path": "artifacts/eval_suite/wave1_ablation/l1_goal_projection/d0_chacha_spec/r01/2026-06-06_0404_chacha_spec/iteration_1/node_memory/Tree_0_0/followups/turn_006.md",
+          "decision_state_summary": "phoare / procedure_body / procedure_frontier, 1 goal, goal 901 chars",
+          "decision_view_path": "artifacts/eval_suite/wave1_ablation/l1_goal_projection/d0_chacha_spec/r01/2026-06-06_0404_chacha_spec/iteration_1/node_memory/Tree_0_0/workspace_views/turn_006.json",
+          "deterministic_signals": [
+            "commit_without_probe_check_not_inferred"
+          ],
+          "goal_chars": 901,
+          "inspect_topics": [
+            "goal_info",
+            "call_site_options",
+            "call_subgoals",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms"
+          ],
+          "intent": {
+            "intent": "commit_tactic",
+            "payload": {
+              "tactic": "while (OCC.gs = gs0 /\\ k = k0 /\\ n = n0 /\\ c ++ gen_CTR_encrypt_bytes take_xor (cc gs0) k0 n0 i p = gen_CTR_encrypt_bytes take_xor (cc gs0) k0 n0 1 p0) (size p)."
+            }
+          },
+          "intent_summary": "commit while (OCC.gs = gs0 /\\ k = k0 /\\ n = n0 /\\ c ++ gen_CTR_encrypt_bytes...",
+          "manager_action_summary": [
+            "tactic commit (185 ms)"
+          ],
+          "manager_result_at": "2026-06-06T11:10:09+00:00",
+          "manager_result_path": "artifacts/eval_suite/wave1_ablation/l1_goal_projection/d0_chacha_spec/r01/2026-06-06_0404_chacha_spec/iteration_1/node_memory/Tree_0_0/manager_results/turn_007.json",
+          "manager_seconds": 0.185,
+          "manager_time": "185 ms",
+          "node": "Tree-0.0",
+          "node_dir": "artifacts/eval_suite/wave1_ablation/l1_goal_projection/d0_chacha_spec/r01/2026-06-06_0404_chacha_spec/iteration_1/node_memory/Tree_0_0",
+          "ok": true,
+          "result_followup_path": "artifacts/eval_suite/wave1_ablation/l1_goal_projection/d0_chacha_spec/r01/2026-06-06_0404_chacha_spec/iteration_1/node_memory/Tree_0_0/followups/turn_007.md",
+          "result_state_summary": "phoare / procedure_body / procedure_frontier, 2 goals, goal 814 chars",
+          "result_summary": "accepted commit",
+          "result_view_path": "artifacts/eval_suite/wave1_ablation/l1_goal_projection/d0_chacha_spec/r01/2026-06-06_0404_chacha_spec/iteration_1/node_memory/Tree_0_0/workspace_views/turn_007.json",
+          "turn": 7,
+          "usage": {
+            "cache_creation_input_tokens": 2302,
+            "cache_read_input_tokens": 56040,
+            "input_tokens": 131,
+            "output_tokens": 538
+          },
+          "view_chars": 12402,
+          "view_id": "T0.0-7",
+          "workspace_view_path": "artifacts/eval_suite/wave1_ablation/l1_goal_projection/d0_chacha_spec/r01/2026-06-06_0404_chacha_spec/iteration_1/node_memory/Tree_0_0/workspace_views/turn_006.json"
+        },
+        {
+          "action_submitted_at": "2026-06-06T11:10:29.794000+00:00",
+          "action_time": "+01:14",
+          "agent_think": "20.8 s",
+          "agent_think_path": "artifacts/eval_suite/wave1_ablation/l1_goal_projection/d0_chacha_spec/r01/2026-06-06_0404_chacha_spec/iteration_1/node_memory/Tree_0_0/thinking/turn_008.md",
+          "agent_think_seconds": 20.794,
+          "decision_followup_path": "artifacts/eval_suite/wave1_ablation/l1_goal_projection/d0_chacha_spec/r01/2026-06-06_0404_chacha_spec/iteration_1/node_memory/Tree_0_0/followups/turn_007.md",
+          "decision_state_summary": "phoare / procedure_body / procedure_frontier, 2 goals, goal 814 chars",
+          "decision_view_path": "artifacts/eval_suite/wave1_ablation/l1_goal_projection/d0_chacha_spec/r01/2026-06-06_0404_chacha_spec/iteration_1/node_memory/Tree_0_0/workspace_views/turn_007.json",
+          "deterministic_signals": [
+            "commit_without_probe_check_not_inferred"
+          ],
+          "goal_chars": 814,
+          "inspect_topics": [
+            "goal_info",
+            "call_site_options",
+            "call_subgoals",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms"
+          ],
+          "intent": {
+            "intent": "commit_tactic",
+            "payload": {
+              "tactic": "move=> bnd."
+            }
+          },
+          "intent_summary": "commit move=> bnd",
+          "manager_action_summary": [
+            "tactic commit (206 ms)"
+          ],
+          "manager_result_at": "2026-06-06T11:10:30+00:00",
+          "manager_result_path": "artifacts/eval_suite/wave1_ablation/l1_goal_projection/d0_chacha_spec/r01/2026-06-06_0404_chacha_spec/iteration_1/node_memory/Tree_0_0/manager_results/turn_008.json",
+          "manager_seconds": 0.206,
+          "manager_time": "206 ms",
+          "node": "Tree-0.0",
+          "node_dir": "artifacts/eval_suite/wave1_ablation/l1_goal_projection/d0_chacha_spec/r01/2026-06-06_0404_chacha_spec/iteration_1/node_memory/Tree_0_0",
+          "ok": true,
+          "result_followup_path": "artifacts/eval_suite/wave1_ablation/l1_goal_projection/d0_chacha_spec/r01/2026-06-06_0404_chacha_spec/iteration_1/node_memory/Tree_0_0/followups/turn_008.md",
+          "result_state_summary": "phoare / procedure_body / procedure_frontier, 2 goals, goal 997 chars",
+          "result_summary": "accepted commit",
+          "result_view_path": "artifacts/eval_suite/wave1_ablation/l1_goal_projection/d0_chacha_spec/r01/2026-06-06_0404_chacha_spec/iteration_1/node_memory/Tree_0_0/workspace_views/turn_008.json",
+          "turn": 8,
+          "usage": {
+            "cache_creation_input_tokens": 2035,
+            "cache_read_input_tokens": 58342,
+            "input_tokens": 2,
+            "output_tokens": 837
+          },
+          "view_chars": 8106,
+          "view_id": "T0.0-8",
+          "workspace_view_path": "artifacts/eval_suite/wave1_ablation/l1_goal_projection/d0_chacha_spec/r01/2026-06-06_0404_chacha_spec/iteration_1/node_memory/Tree_0_0/workspace_views/turn_007.json"
+        },
+        {
+          "action_submitted_at": "2026-06-06T11:10:33.797000+00:00",
+          "action_time": "+01:18",
+          "agent_think": "3.8 s",
+          "agent_think_path": "artifacts/eval_suite/wave1_ablation/l1_goal_projection/d0_chacha_spec/r01/2026-06-06_0404_chacha_spec/iteration_1/node_memory/Tree_0_0/thinking/turn_009.md",
+          "agent_think_seconds": 3.797,
+          "decision_followup_path": "artifacts/eval_suite/wave1_ablation/l1_goal_projection/d0_chacha_spec/r01/2026-06-06_0404_chacha_spec/iteration_1/node_memory/Tree_0_0/followups/turn_008.md",
+          "decision_state_summary": "phoare / procedure_body / procedure_frontier, 2 goals, goal 997 chars",
+          "decision_view_path": "artifacts/eval_suite/wave1_ablation/l1_goal_projection/d0_chacha_spec/r01/2026-06-06_0404_chacha_spec/iteration_1/node_memory/Tree_0_0/workspace_views/turn_008.json",
+          "deterministic_signals": [
+            "commit_without_probe_check_not_inferred"
+          ],
+          "goal_chars": 997,
+          "inspect_topics": [
+            "goal_info",
+            "call_site_options",
+            "call_subgoals",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms"
+          ],
+          "intent": {
+            "intent": "commit_tactic",
+            "payload": {
+              "tactic": "inline OCC(I).cc."
+            }
+          },
+          "intent_summary": "commit inline OCC(I).cc",
+          "manager_action_summary": [
+            "tactic commit (203 ms)"
+          ],
+          "manager_result_at": "2026-06-06T11:10:34+00:00",
+          "manager_result_path": "artifacts/eval_suite/wave1_ablation/l1_goal_projection/d0_chacha_spec/r01/2026-06-06_0404_chacha_spec/iteration_1/node_memory/Tree_0_0/manager_results/turn_009.json",
+          "manager_seconds": 0.203,
+          "manager_time": "203 ms",
+          "node": "Tree-0.0",
+          "node_dir": "artifacts/eval_suite/wave1_ablation/l1_goal_projection/d0_chacha_spec/r01/2026-06-06_0404_chacha_spec/iteration_1/node_memory/Tree_0_0",
+          "ok": true,
+          "result_followup_path": "artifacts/eval_suite/wave1_ablation/l1_goal_projection/d0_chacha_spec/r01/2026-06-06_0404_chacha_spec/iteration_1/node_memory/Tree_0_0/followups/turn_009.md",
+          "result_state_summary": "phoare / procedure_body / procedure_frontier, 2 goals, goal 997 chars",
+          "result_summary": "rejected commit: manager reported rejection",
+          "result_view_path": "artifacts/eval_suite/wave1_ablation/l1_goal_projection/d0_chacha_spec/r01/2026-06-06_0404_chacha_spec/iteration_1/node_memory/Tree_0_0/workspace_views/turn_009.json",
+          "turn": 9,
+          "usage": {
+            "cache_creation_input_tokens": 2261,
+            "cache_read_input_tokens": 60377,
+            "input_tokens": 2,
+            "output_tokens": 184
+          },
+          "view_chars": 11232,
+          "view_id": "T0.0-9",
+          "workspace_view_path": "artifacts/eval_suite/wave1_ablation/l1_goal_projection/d0_chacha_spec/r01/2026-06-06_0404_chacha_spec/iteration_1/node_memory/Tree_0_0/workspace_views/turn_008.json"
+        },
+        {
+          "action_submitted_at": "2026-06-06T11:10:52.900000+00:00",
+          "action_time": "+01:37",
+          "agent_think": "18.9 s",
+          "agent_think_path": "artifacts/eval_suite/wave1_ablation/l1_goal_projection/d0_chacha_spec/r01/2026-06-06_0404_chacha_spec/iteration_1/node_memory/Tree_0_0/thinking/turn_010.md",
+          "agent_think_seconds": 18.9,
+          "decision_followup_path": "artifacts/eval_suite/wave1_ablation/l1_goal_projection/d0_chacha_spec/r01/2026-06-06_0404_chacha_spec/iteration_1/node_memory/Tree_0_0/followups/turn_009.md",
+          "decision_state_summary": "phoare / procedure_body / procedure_frontier, 2 goals, goal 997 chars",
+          "decision_view_path": "artifacts/eval_suite/wave1_ablation/l1_goal_projection/d0_chacha_spec/r01/2026-06-06_0404_chacha_spec/iteration_1/node_memory/Tree_0_0/workspace_views/turn_009.json",
+          "deterministic_signals": [
+            "commit_without_probe_check_not_inferred"
+          ],
+          "goal_chars": 997,
+          "inspect_topics": [
+            "goal_info",
+            "call_site_options",
+            "call_subgoals",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms"
+          ],
+          "intent": {
+            "intent": "commit_tactic",
+            "payload": {
+              "tactic": "inline."
+            }
+          },
+          "intent_summary": "commit inline",
+          "manager_action_summary": [
+            "tactic commit (1.1 s)"
+          ],
+          "manager_result_at": "2026-06-06T11:10:54+00:00",
+          "manager_result_path": "artifacts/eval_suite/wave1_ablation/l1_goal_projection/d0_chacha_spec/r01/2026-06-06_0404_chacha_spec/iteration_1/node_memory/Tree_0_0/manager_results/turn_010.json",
+          "manager_seconds": 1.1,
+          "manager_time": "1.1 s",
+          "node": "Tree-0.0",
+          "node_dir": "artifacts/eval_suite/wave1_ablation/l1_goal_projection/d0_chacha_spec/r01/2026-06-06_0404_chacha_spec/iteration_1/node_memory/Tree_0_0",
+          "ok": true,
+          "result_followup_path": "artifacts/eval_suite/wave1_ablation/l1_goal_projection/d0_chacha_spec/r01/2026-06-06_0404_chacha_spec/iteration_1/node_memory/Tree_0_0/followups/turn_010.md",
+          "result_state_summary": "phoare / procedure_body / procedure_frontier, 2 goals, goal 997 chars",
+          "result_summary": "rejected commit: manager reported rejection",
+          "result_view_path": "artifacts/eval_suite/wave1_ablation/l1_goal_projection/d0_chacha_spec/r01/2026-06-06_0404_chacha_spec/iteration_1/node_memory/Tree_0_0/workspace_views/turn_010.json",
+          "turn": 10,
+          "usage": {
+            "cache_creation_input_tokens": 1612,
+            "cache_read_input_tokens": 62638,
+            "input_tokens": 2,
+            "output_tokens": 1089
+          },
+          "view_chars": 11246,
+          "view_id": "T0.0-10",
+          "workspace_view_path": "artifacts/eval_suite/wave1_ablation/l1_goal_projection/d0_chacha_spec/r01/2026-06-06_0404_chacha_spec/iteration_1/node_memory/Tree_0_0/workspace_views/turn_009.json"
+        },
+        {
+          "action_submitted_at": "2026-06-06T11:11:34+00:00",
+          "action_time": "+02:18",
+          "agent_think": "40 s",
+          "agent_think_path": "artifacts/eval_suite/wave1_ablation/l1_goal_projection/d0_chacha_spec/r01/2026-06-06_0404_chacha_spec/iteration_1/node_memory/Tree_0_0/thinking/turn_011.md",
+          "agent_think_seconds": 40.0,
+          "decision_followup_path": "artifacts/eval_suite/wave1_ablation/l1_goal_projection/d0_chacha_spec/r01/2026-06-06_0404_chacha_spec/iteration_1/node_memory/Tree_0_0/followups/turn_010.md",
+          "decision_state_summary": "phoare / procedure_body / procedure_frontier, 2 goals, goal 997 chars",
+          "decision_view_path": "artifacts/eval_suite/wave1_ablation/l1_goal_projection/d0_chacha_spec/r01/2026-06-06_0404_chacha_spec/iteration_1/node_memory/Tree_0_0/workspace_views/turn_010.json",
+          "deterministic_signals": [
+            "commit_without_probe_check_not_inferred"
+          ],
+          "goal_chars": 997,
+          "inspect_topics": [
+            "goal_info",
+            "call_site_options",
+            "call_subgoals",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms"
+          ],
+          "intent": {
+            "intent": "commit_tactic",
+            "payload": {
+              "tactic": "inline (1)."
+            }
+          },
+          "intent_summary": "commit inline (1)",
+          "manager_action_summary": [
+            "tactic commit (1.0 s)"
+          ],
+          "manager_result_at": "2026-06-06T11:11:35+00:00",
+          "manager_result_path": "artifacts/eval_suite/wave1_ablation/l1_goal_projection/d0_chacha_spec/r01/2026-06-06_0404_chacha_spec/iteration_1/node_memory/Tree_0_0/manager_results/turn_011.json",
+          "manager_seconds": 1.0,
+          "manager_time": "1 s",
+          "node": "Tree-0.0",
+          "node_dir": "artifacts/eval_suite/wave1_ablation/l1_goal_projection/d0_chacha_spec/r01/2026-06-06_0404_chacha_spec/iteration_1/node_memory/Tree_0_0",
+          "ok": true,
+          "result_followup_path": "artifacts/eval_suite/wave1_ablation/l1_goal_projection/d0_chacha_spec/r01/2026-06-06_0404_chacha_spec/iteration_1/node_memory/Tree_0_0/followups/turn_011.md",
+          "result_state_summary": "phoare / procedure_body / procedure_frontier, 2 goals, goal 997 chars",
+          "result_summary": "rejected commit: manager reported rejection",
+          "result_view_path": "artifacts/eval_suite/wave1_ablation/l1_goal_projection/d0_chacha_spec/r01/2026-06-06_0404_chacha_spec/iteration_1/node_memory/Tree_0_0/workspace_views/turn_011.json",
+          "turn": 11,
+          "usage": {
+            "cache_creation_input_tokens": 2509,
+            "cache_read_input_tokens": 64250,
+            "input_tokens": 2,
+            "output_tokens": 2404
+          },
+          "view_chars": 11226,
+          "view_id": "T0.0-11",
+          "workspace_view_path": "artifacts/eval_suite/wave1_ablation/l1_goal_projection/d0_chacha_spec/r01/2026-06-06_0404_chacha_spec/iteration_1/node_memory/Tree_0_0/workspace_views/turn_010.json"
+        },
+        {
+          "action_submitted_at": "2026-06-06T11:13:00.100000+00:00",
+          "action_time": "+03:44",
+          "agent_think": "85.1 s",
+          "agent_think_path": "artifacts/eval_suite/wave1_ablation/l1_goal_projection/d0_chacha_spec/r01/2026-06-06_0404_chacha_spec/iteration_1/node_memory/Tree_0_0/thinking/turn_012.md",
+          "agent_think_seconds": 85.1,
+          "decision_followup_path": "artifacts/eval_suite/wave1_ablation/l1_goal_projection/d0_chacha_spec/r01/2026-06-06_0404_chacha_spec/iteration_1/node_memory/Tree_0_0/followups/turn_011.md",
+          "decision_state_summary": "phoare / procedure_body / procedure_frontier, 2 goals, goal 997 chars",
+          "decision_view_path": "artifacts/eval_suite/wave1_ablation/l1_goal_projection/d0_chacha_spec/r01/2026-06-06_0404_chacha_spec/iteration_1/node_memory/Tree_0_0/workspace_views/turn_011.json",
+          "deterministic_signals": [
+            "commit_without_probe_check_not_inferred",
+            "commit_no_state_change"
+          ],
+          "goal_chars": 997,
+          "inspect_topics": [
+            "goal_info",
+            "call_site_options",
+            "call_subgoals",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms"
+          ],
+          "intent": {
+            "intent": "commit_tactic",
+            "payload": {
+              "tactic": "call (_: true ==> res = cc OCC.gs k n c)."
+            }
+          },
+          "intent_summary": "commit call true",
+          "manager_action_summary": [
+            "tactic commit (1.9 s)"
+          ],
+          "manager_result_at": "2026-06-06T11:13:02+00:00",
+          "manager_result_path": "artifacts/eval_suite/wave1_ablation/l1_goal_projection/d0_chacha_spec/r01/2026-06-06_0404_chacha_spec/iteration_1/node_memory/Tree_0_0/manager_results/turn_012.json",
+          "manager_seconds": 1.9,
+          "manager_time": "1.9 s",
+          "node": "Tree-0.0",
+          "node_dir": "artifacts/eval_suite/wave1_ablation/l1_goal_projection/d0_chacha_spec/r01/2026-06-06_0404_chacha_spec/iteration_1/node_memory/Tree_0_0",
+          "ok": true,
+          "result_followup_path": "artifacts/eval_suite/wave1_ablation/l1_goal_projection/d0_chacha_spec/r01/2026-06-06_0404_chacha_spec/iteration_1/node_memory/Tree_0_0/followups/turn_012.md",
+          "result_state_summary": "phoare / procedure_body / procedure_frontier, 2 goals, goal 997 chars",
+          "result_summary": "rejected commit: proof state unchanged",
+          "result_view_path": "artifacts/eval_suite/wave1_ablation/l1_goal_projection/d0_chacha_spec/r01/2026-06-06_0404_chacha_spec/iteration_1/node_memory/Tree_0_0/workspace_views/turn_012.json",
+          "turn": 12,
+          "usage": {
+            "cache_creation_input_tokens": 7292,
+            "cache_read_input_tokens": 137345,
+            "input_tokens": 133,
+            "output_tokens": 5563
+          },
+          "view_chars": 11234,
+          "view_id": "T0.0-12",
+          "workspace_view_path": "artifacts/eval_suite/wave1_ablation/l1_goal_projection/d0_chacha_spec/r01/2026-06-06_0404_chacha_spec/iteration_1/node_memory/Tree_0_0/workspace_views/turn_011.json"
+        },
+        {
+          "action_submitted_at": "2026-06-06T11:13:24.900000+00:00",
+          "action_time": "+04:09",
+          "agent_think": "22.9 s",
+          "agent_think_path": "artifacts/eval_suite/wave1_ablation/l1_goal_projection/d0_chacha_spec/r01/2026-06-06_0404_chacha_spec/iteration_1/node_memory/Tree_0_0/thinking/turn_013.md",
+          "agent_think_seconds": 22.9,
+          "decision_followup_path": "artifacts/eval_suite/wave1_ablation/l1_goal_projection/d0_chacha_spec/r01/2026-06-06_0404_chacha_spec/iteration_1/node_memory/Tree_0_0/followups/turn_012.md",
+          "decision_state_summary": "phoare / procedure_body / procedure_frontier, 2 goals, goal 997 chars",
+          "decision_view_path": "artifacts/eval_suite/wave1_ablation/l1_goal_projection/d0_chacha_spec/r01/2026-06-06_0404_chacha_spec/iteration_1/node_memory/Tree_0_0/workspace_views/turn_012.json",
+          "deterministic_signals": [
+            "commit_without_probe_check_not_inferred",
+            "commit_no_state_change"
+          ],
+          "goal_chars": 997,
+          "inspect_topics": [
+            "diagnose",
+            "goal_info",
+            "call_site_options",
+            "call_subgoals",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms"
+          ],
+          "intent": {
+            "intent": "commit_tactic",
+            "payload": {
+              "tactic": "have cc_spec: phoare[OCC(I).cc : true ==> res = cc OCC.gs k n c] = 1%r."
+            }
+          },
+          "intent_summary": "commit have cc_spec: phoare[OCC(I).cc : true ==> res = cc OCC.gs k n c] = 1%r",
+          "manager_action_summary": [
+            "tactic commit (1.1 s)"
+          ],
+          "manager_result_at": "2026-06-06T11:13:26+00:00",
+          "manager_result_path": "artifacts/eval_suite/wave1_ablation/l1_goal_projection/d0_chacha_spec/r01/2026-06-06_0404_chacha_spec/iteration_1/node_memory/Tree_0_0/manager_results/turn_013.json",
+          "manager_seconds": 1.1,
+          "manager_time": "1.1 s",
+          "node": "Tree-0.0",
+          "node_dir": "artifacts/eval_suite/wave1_ablation/l1_goal_projection/d0_chacha_spec/r01/2026-06-06_0404_chacha_spec/iteration_1/node_memory/Tree_0_0",
+          "ok": true,
+          "result_followup_path": "artifacts/eval_suite/wave1_ablation/l1_goal_projection/d0_chacha_spec/r01/2026-06-06_0404_chacha_spec/iteration_1/node_memory/Tree_0_0/followups/turn_013.md",
+          "result_state_summary": "phoare / procedure_body / procedure_frontier, 2 goals, goal 997 chars",
+          "result_summary": "rejected commit: proof state unchanged",
+          "result_view_path": "artifacts/eval_suite/wave1_ablation/l1_goal_projection/d0_chacha_spec/r01/2026-06-06_0404_chacha_spec/iteration_1/node_memory/Tree_0_0/workspace_views/turn_013.json",
+          "turn": 13,
+          "usage": {
+            "cache_creation_input_tokens": 5236,
+            "cache_read_input_tokens": 74051,
+            "input_tokens": 2,
+            "output_tokens": 1453
+          },
+          "view_chars": 11532,
+          "view_id": "T0.0-13",
+          "workspace_view_path": "artifacts/eval_suite/wave1_ablation/l1_goal_projection/d0_chacha_spec/r01/2026-06-06_0404_chacha_spec/iteration_1/node_memory/Tree_0_0/workspace_views/turn_012.json"
+        },
+        {
+          "action_submitted_at": "2026-06-06T11:19:53.819000+00:00",
+          "action_time": "+10:38",
+          "agent_think": "",
+          "agent_think_path": "artifacts/eval_suite/wave1_ablation/l1_goal_projection/d0_chacha_spec/r01/2026-06-06_0404_chacha_spec/iteration_1/node_memory/Tree_0_0_0/thinking/turn_001.md",
+          "agent_think_seconds": null,
+          "decision_followup_path": "",
+          "decision_state_summary": "phoare / procedure_body / procedure_frontier, 2 goals, goal 997 chars",
+          "decision_view_path": "artifacts/eval_suite/wave1_ablation/l1_goal_projection/d0_chacha_spec/r01/2026-06-06_0404_chacha_spec/iteration_1/manager_bootstrap_0_0_0.json",
+          "deterministic_signals": [
+            "commit_without_probe_check_not_inferred"
+          ],
+          "goal_chars": 997,
+          "inspect_topics": [],
+          "intent": {
+            "intent": "commit_tactic",
+            "payload": {
+              "tactic": "inline OCC(I).cc."
+            }
+          },
+          "intent_summary": "commit inline OCC(I).cc",
+          "manager_action_summary": [
+            "tactic commit (181 ms)"
+          ],
+          "manager_result_at": "2026-06-06T11:19:54+00:00",
+          "manager_result_path": "artifacts/eval_suite/wave1_ablation/l1_goal_projection/d0_chacha_spec/r01/2026-06-06_0404_chacha_spec/iteration_1/node_memory/Tree_0_0_0/manager_results/turn_001.json",
+          "manager_seconds": 0.181,
+          "manager_time": "181 ms",
+          "node": "Tree-0.0.0",
+          "node_dir": "artifacts/eval_suite/wave1_ablation/l1_goal_projection/d0_chacha_spec/r01/2026-06-06_0404_chacha_spec/iteration_1/node_memory/Tree_0_0_0",
+          "ok": true,
+          "result_followup_path": "artifacts/eval_suite/wave1_ablation/l1_goal_projection/d0_chacha_spec/r01/2026-06-06_0404_chacha_spec/iteration_1/node_memory/Tree_0_0_0/followups/turn_001.md",
+          "result_state_summary": "phoare / procedure_body / procedure_frontier, 2 goals, goal 997 chars",
+          "result_summary": "rejected commit: manager reported rejection",
+          "result_view_path": "artifacts/eval_suite/wave1_ablation/l1_goal_projection/d0_chacha_spec/r01/2026-06-06_0404_chacha_spec/iteration_1/node_memory/Tree_0_0_0/workspace_views/turn_001.json",
+          "turn": 1,
+          "usage": {
+            "cache_creation_input_tokens": 102565,
+            "cache_read_input_tokens": 299294,
+            "input_tokens": 2219,
+            "output_tokens": 7566
+          },
+          "view_chars": 1651,
+          "view_id": "T0.0.0-1",
+          "workspace_view_path": "artifacts/eval_suite/wave1_ablation/l1_goal_projection/d0_chacha_spec/r01/2026-06-06_0404_chacha_spec/iteration_1/manager_bootstrap_0_0_0.json"
+        },
+        {
+          "action_submitted_at": "2026-06-06T11:20:02+00:00",
+          "action_time": "+10:46",
+          "agent_think": "8 s",
+          "agent_think_path": "artifacts/eval_suite/wave1_ablation/l1_goal_projection/d0_chacha_spec/r01/2026-06-06_0404_chacha_spec/iteration_1/node_memory/Tree_0_0_0/thinking/turn_002.md",
+          "agent_think_seconds": 8.0,
+          "decision_followup_path": "artifacts/eval_suite/wave1_ablation/l1_goal_projection/d0_chacha_spec/r01/2026-06-06_0404_chacha_spec/iteration_1/node_memory/Tree_0_0_0/followups/turn_001.md",
+          "decision_state_summary": "phoare / procedure_body / procedure_frontier, 2 goals, goal 997 chars",
+          "decision_view_path": "artifacts/eval_suite/wave1_ablation/l1_goal_projection/d0_chacha_spec/r01/2026-06-06_0404_chacha_spec/iteration_1/node_memory/Tree_0_0_0/workspace_views/turn_001.json",
+          "deterministic_signals": [
+            "commit_without_probe_check_not_inferred"
+          ],
+          "goal_chars": 997,
+          "inspect_topics": [
+            "goal_info",
+            "call_site_options",
+            "call_subgoals",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms"
+          ],
+          "intent": {
+            "intent": "commit_tactic",
+            "payload": {
+              "tactic": "inline."
+            }
+          },
+          "intent_summary": "commit inline",
+          "manager_action_summary": [
+            "tactic commit (1.0 s)"
+          ],
+          "manager_result_at": "2026-06-06T11:20:03+00:00",
+          "manager_result_path": "artifacts/eval_suite/wave1_ablation/l1_goal_projection/d0_chacha_spec/r01/2026-06-06_0404_chacha_spec/iteration_1/node_memory/Tree_0_0_0/manager_results/turn_002.json",
+          "manager_seconds": 1.0,
+          "manager_time": "1 s",
+          "node": "Tree-0.0.0",
+          "node_dir": "artifacts/eval_suite/wave1_ablation/l1_goal_projection/d0_chacha_spec/r01/2026-06-06_0404_chacha_spec/iteration_1/node_memory/Tree_0_0_0",
+          "ok": true,
+          "result_followup_path": "artifacts/eval_suite/wave1_ablation/l1_goal_projection/d0_chacha_spec/r01/2026-06-06_0404_chacha_spec/iteration_1/node_memory/Tree_0_0_0/followups/turn_002.md",
+          "result_state_summary": "phoare / procedure_body / procedure_frontier, 2 goals, goal 997 chars",
+          "result_summary": "rejected commit: manager reported rejection",
+          "result_view_path": "artifacts/eval_suite/wave1_ablation/l1_goal_projection/d0_chacha_spec/r01/2026-06-06_0404_chacha_spec/iteration_1/node_memory/Tree_0_0_0/workspace_views/turn_002.json",
+          "turn": 2,
+          "usage": {
+            "cache_creation_input_tokens": 2197,
+            "cache_read_input_tokens": 135801,
+            "input_tokens": 4,
+            "output_tokens": 428
+          },
+          "view_chars": 11246,
+          "view_id": "T0.0.0-2",
+          "workspace_view_path": "artifacts/eval_suite/wave1_ablation/l1_goal_projection/d0_chacha_spec/r01/2026-06-06_0404_chacha_spec/iteration_1/node_memory/Tree_0_0_0/workspace_views/turn_001.json"
+        },
+        {
+          "action_submitted_at": "2026-06-06T11:20:23+00:00",
+          "action_time": "+11:07",
+          "agent_think": "20 s",
+          "agent_think_path": "artifacts/eval_suite/wave1_ablation/l1_goal_projection/d0_chacha_spec/r01/2026-06-06_0404_chacha_spec/iteration_1/node_memory/Tree_0_0_0/thinking/turn_003.md",
+          "agent_think_seconds": 20.0,
+          "decision_followup_path": "artifacts/eval_suite/wave1_ablation/l1_goal_projection/d0_chacha_spec/r01/2026-06-06_0404_chacha_spec/iteration_1/node_memory/Tree_0_0_0/followups/turn_002.md",
+          "decision_state_summary": "phoare / procedure_body / procedure_frontier, 2 goals, goal 997 chars",
+          "decision_view_path": "artifacts/eval_suite/wave1_ablation/l1_goal_projection/d0_chacha_spec/r01/2026-06-06_0404_chacha_spec/iteration_1/node_memory/Tree_0_0_0/workspace_views/turn_002.json",
+          "deterministic_signals": [
+            "commit_without_probe_check_not_inferred"
+          ],
+          "goal_chars": 997,
+          "inspect_topics": [
+            "goal_info",
+            "call_site_options",
+            "call_subgoals",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms"
+          ],
+          "intent": {
+            "intent": "commit_tactic",
+            "payload": {
+              "tactic": "wp."
+            }
+          },
+          "intent_summary": "commit wp",
+          "manager_action_summary": [
+            "tactic commit (1.0 s)"
+          ],
+          "manager_result_at": "2026-06-06T11:20:24+00:00",
+          "manager_result_path": "artifacts/eval_suite/wave1_ablation/l1_goal_projection/d0_chacha_spec/r01/2026-06-06_0404_chacha_spec/iteration_1/node_memory/Tree_0_0_0/manager_results/turn_003.json",
+          "manager_seconds": 1.0,
+          "manager_time": "1 s",
+          "node": "Tree-0.0.0",
+          "node_dir": "artifacts/eval_suite/wave1_ablation/l1_goal_projection/d0_chacha_spec/r01/2026-06-06_0404_chacha_spec/iteration_1/node_memory/Tree_0_0_0",
+          "ok": true,
+          "result_followup_path": "artifacts/eval_suite/wave1_ablation/l1_goal_projection/d0_chacha_spec/r01/2026-06-06_0404_chacha_spec/iteration_1/node_memory/Tree_0_0_0/followups/turn_003.md",
+          "result_state_summary": "phoare / procedure_body / procedure_frontier, 2 goals, goal 880 chars",
+          "result_summary": "accepted commit",
+          "result_view_path": "artifacts/eval_suite/wave1_ablation/l1_goal_projection/d0_chacha_spec/r01/2026-06-06_0404_chacha_spec/iteration_1/node_memory/Tree_0_0_0/workspace_views/turn_003.json",
+          "turn": 3,
+          "usage": {
+            "cache_creation_input_tokens": 1607,
+            "cache_read_input_tokens": 69260,
+            "input_tokens": 2,
+            "output_tokens": 1295
+          },
+          "view_chars": 11226,
+          "view_id": "T0.0.0-3",
+          "workspace_view_path": "artifacts/eval_suite/wave1_ablation/l1_goal_projection/d0_chacha_spec/r01/2026-06-06_0404_chacha_spec/iteration_1/node_memory/Tree_0_0_0/workspace_views/turn_002.json"
+        },
+        {
+          "action_submitted_at": "2026-06-06T11:20:35.804000+00:00",
+          "action_time": "+11:20",
+          "agent_think": "11.8 s",
+          "agent_think_path": "artifacts/eval_suite/wave1_ablation/l1_goal_projection/d0_chacha_spec/r01/2026-06-06_0404_chacha_spec/iteration_1/node_memory/Tree_0_0_0/thinking/turn_004.md",
+          "agent_think_seconds": 11.804,
+          "decision_followup_path": "artifacts/eval_suite/wave1_ablation/l1_goal_projection/d0_chacha_spec/r01/2026-06-06_0404_chacha_spec/iteration_1/node_memory/Tree_0_0_0/followups/turn_003.md",
+          "decision_state_summary": "phoare / procedure_body / procedure_frontier, 2 goals, goal 880 chars",
+          "decision_view_path": "artifacts/eval_suite/wave1_ablation/l1_goal_projection/d0_chacha_spec/r01/2026-06-06_0404_chacha_spec/iteration_1/node_memory/Tree_0_0_0/workspace_views/turn_003.json",
+          "deterministic_signals": [
+            "commit_without_probe_check_not_inferred"
+          ],
+          "goal_chars": 880,
+          "inspect_topics": [
+            "goal_info",
+            "call_site_options",
+            "call_subgoals",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms"
+          ],
+          "intent": {
+            "intent": "commit_tactic",
+            "payload": {
+              "tactic": "inline *."
+            }
+          },
+          "intent_summary": "commit inline *",
+          "manager_action_summary": [
+            "tactic commit (196 ms)"
+          ],
+          "manager_result_at": "2026-06-06T11:20:36+00:00",
+          "manager_result_path": "artifacts/eval_suite/wave1_ablation/l1_goal_projection/d0_chacha_spec/r01/2026-06-06_0404_chacha_spec/iteration_1/node_memory/Tree_0_0_0/manager_results/turn_004.json",
+          "manager_seconds": 0.196,
+          "manager_time": "196 ms",
+          "node": "Tree-0.0.0",
+          "node_dir": "artifacts/eval_suite/wave1_ablation/l1_goal_projection/d0_chacha_spec/r01/2026-06-06_0404_chacha_spec/iteration_1/node_memory/Tree_0_0_0",
+          "ok": true,
+          "result_followup_path": "artifacts/eval_suite/wave1_ablation/l1_goal_projection/d0_chacha_spec/r01/2026-06-06_0404_chacha_spec/iteration_1/node_memory/Tree_0_0_0/followups/turn_004.md",
+          "result_state_summary": "phoare / procedure_body / procedure_frontier, 2 goals, goal 880 chars",
+          "result_summary": "rejected commit: manager reported rejection",
+          "result_view_path": "artifacts/eval_suite/wave1_ablation/l1_goal_projection/d0_chacha_spec/r01/2026-06-06_0404_chacha_spec/iteration_1/node_memory/Tree_0_0_0/workspace_views/turn_004.json",
+          "turn": 4,
+          "usage": {
+            "cache_creation_input_tokens": 2705,
+            "cache_read_input_tokens": 70867,
+            "input_tokens": 2,
+            "output_tokens": 804
+          },
+          "view_chars": 10194,
+          "view_id": "T0.0.0-4",
+          "workspace_view_path": "artifacts/eval_suite/wave1_ablation/l1_goal_projection/d0_chacha_spec/r01/2026-06-06_0404_chacha_spec/iteration_1/node_memory/Tree_0_0_0/workspace_views/turn_003.json"
+        },
+        {
+          "action_submitted_at": "2026-06-06T11:22:04.900000+00:00",
+          "action_time": "+12:49",
+          "agent_think": "88.9 s",
+          "agent_think_path": "artifacts/eval_suite/wave1_ablation/l1_goal_projection/d0_chacha_spec/r01/2026-06-06_0404_chacha_spec/iteration_1/node_memory/Tree_0_0_0/thinking/turn_005.md",
+          "agent_think_seconds": 88.9,
+          "decision_followup_path": "artifacts/eval_suite/wave1_ablation/l1_goal_projection/d0_chacha_spec/r01/2026-06-06_0404_chacha_spec/iteration_1/node_memory/Tree_0_0_0/followups/turn_004.md",
+          "decision_state_summary": "phoare / procedure_body / procedure_frontier, 2 goals, goal 880 chars",
+          "decision_view_path": "artifacts/eval_suite/wave1_ablation/l1_goal_projection/d0_chacha_spec/r01/2026-06-06_0404_chacha_spec/iteration_1/node_memory/Tree_0_0_0/workspace_views/turn_004.json",
+          "deterministic_signals": [
+            "commit_without_probe_check_not_inferred"
+          ],
+          "goal_chars": 880,
+          "inspect_topics": [
+            "goal_info",
+            "call_site_options",
+            "call_subgoals",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms"
+          ],
+          "intent": {
+            "intent": "commit_tactic",
+            "payload": {
+              "tactic": "exists* OCC.gs, k, n, i."
+            }
+          },
+          "intent_summary": "commit exists* OCC.gs, k, n, i",
+          "manager_action_summary": [
+            "tactic commit (1.1 s)"
+          ],
+          "manager_result_at": "2026-06-06T11:22:06+00:00",
+          "manager_result_path": "artifacts/eval_suite/wave1_ablation/l1_goal_projection/d0_chacha_spec/r01/2026-06-06_0404_chacha_spec/iteration_1/node_memory/Tree_0_0_0/manager_results/turn_005.json",
+          "manager_seconds": 1.1,
+          "manager_time": "1.1 s",
+          "node": "Tree-0.0.0",
+          "node_dir": "artifacts/eval_suite/wave1_ablation/l1_goal_projection/d0_chacha_spec/r01/2026-06-06_0404_chacha_spec/iteration_1/node_memory/Tree_0_0_0",
+          "ok": true,
+          "result_followup_path": "artifacts/eval_suite/wave1_ablation/l1_goal_projection/d0_chacha_spec/r01/2026-06-06_0404_chacha_spec/iteration_1/node_memory/Tree_0_0_0/followups/turn_005.md",
+          "result_state_summary": "phoare / procedure_body / procedure_frontier, 2 goals, goal 1003 chars",
+          "result_summary": "accepted commit",
+          "result_view_path": "artifacts/eval_suite/wave1_ablation/l1_goal_projection/d0_chacha_spec/r01/2026-06-06_0404_chacha_spec/iteration_1/node_memory/Tree_0_0_0/workspace_views/turn_005.json",
+          "turn": 5,
+          "usage": {
+            "cache_creation_input_tokens": 2215,
+            "cache_read_input_tokens": 73572,
+            "input_tokens": 2,
+            "output_tokens": 6642
+          },
+          "view_chars": 10208,
+          "view_id": "T0.0.0-5",
+          "workspace_view_path": "artifacts/eval_suite/wave1_ablation/l1_goal_projection/d0_chacha_spec/r01/2026-06-06_0404_chacha_spec/iteration_1/node_memory/Tree_0_0_0/workspace_views/turn_004.json"
+        },
+        {
+          "action_submitted_at": "2026-06-06T11:22:10.815000+00:00",
+          "action_time": "+12:55",
+          "agent_think": "4.8 s",
+          "agent_think_path": "artifacts/eval_suite/wave1_ablation/l1_goal_projection/d0_chacha_spec/r01/2026-06-06_0404_chacha_spec/iteration_1/node_memory/Tree_0_0_0/thinking/turn_006.md",
+          "agent_think_seconds": 4.815,
+          "decision_followup_path": "artifacts/eval_suite/wave1_ablation/l1_goal_projection/d0_chacha_spec/r01/2026-06-06_0404_chacha_spec/iteration_1/node_memory/Tree_0_0_0/followups/turn_005.md",
+          "decision_state_summary": "phoare / procedure_body / procedure_frontier, 2 goals, goal 1003 chars",
+          "decision_view_path": "artifacts/eval_suite/wave1_ablation/l1_goal_projection/d0_chacha_spec/r01/2026-06-06_0404_chacha_spec/iteration_1/node_memory/Tree_0_0_0/workspace_views/turn_005.json",
+          "deterministic_signals": [
+            "commit_without_probe_check_not_inferred"
+          ],
+          "goal_chars": 1003,
+          "inspect_topics": [
+            "goal_info",
+            "call_site_options",
+            "call_subgoals",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms"
+          ],
+          "intent": {
+            "intent": "commit_tactic",
+            "payload": {
+              "tactic": "elim* => gsv kv nv iv."
+            }
+          },
+          "intent_summary": "commit elim* => gsv kv nv iv",
+          "manager_action_summary": [
+            "tactic commit (185 ms)"
+          ],
+          "manager_result_at": "2026-06-06T11:22:11+00:00",
+          "manager_result_path": "artifacts/eval_suite/wave1_ablation/l1_goal_projection/d0_chacha_spec/r01/2026-06-06_0404_chacha_spec/iteration_1/node_memory/Tree_0_0_0/manager_results/turn_006.json",
+          "manager_seconds": 0.185,
+          "manager_time": "185 ms",
+          "node": "Tree-0.0.0",
+          "node_dir": "artifacts/eval_suite/wave1_ablation/l1_goal_projection/d0_chacha_spec/r01/2026-06-06_0404_chacha_spec/iteration_1/node_memory/Tree_0_0_0",
+          "ok": true,
+          "result_followup_path": "artifacts/eval_suite/wave1_ablation/l1_goal_projection/d0_chacha_spec/r01/2026-06-06_0404_chacha_spec/iteration_1/node_memory/Tree_0_0_0/followups/turn_006.md",
+          "result_state_summary": "phoare / procedure_body / procedure_frontier, 2 goals, goal 967 chars",
+          "result_summary": "accepted commit",
+          "result_view_path": "artifacts/eval_suite/wave1_ablation/l1_goal_projection/d0_chacha_spec/r01/2026-06-06_0404_chacha_spec/iteration_1/node_memory/Tree_0_0_0/workspace_views/turn_006.json",
+          "turn": 6,
+          "usage": {
+            "cache_creation_input_tokens": 8138,
+            "cache_read_input_tokens": 75787,
+            "input_tokens": 131,
+            "output_tokens": 214
+          },
+          "view_chars": 10369,
+          "view_id": "T0.0.0-6",
+          "workspace_view_path": "artifacts/eval_suite/wave1_ablation/l1_goal_projection/d0_chacha_spec/r01/2026-06-06_0404_chacha_spec/iteration_1/node_memory/Tree_0_0_0/workspace_views/turn_005.json"
+        },
+        {
+          "action_submitted_at": "2026-06-06T11:22:22.815000+00:00",
+          "action_time": "+13:07",
+          "agent_think": "11.8 s",
+          "agent_think_path": "artifacts/eval_suite/wave1_ablation/l1_goal_projection/d0_chacha_spec/r01/2026-06-06_0404_chacha_spec/iteration_1/node_memory/Tree_0_0_0/thinking/turn_007.md",
+          "agent_think_seconds": 11.815,
+          "decision_followup_path": "artifacts/eval_suite/wave1_ablation/l1_goal_projection/d0_chacha_spec/r01/2026-06-06_0404_chacha_spec/iteration_1/node_memory/Tree_0_0_0/followups/turn_006.md",
+          "decision_state_summary": "phoare / procedure_body / procedure_frontier, 2 goals, goal 967 chars",
+          "decision_view_path": "artifacts/eval_suite/wave1_ablation/l1_goal_projection/d0_chacha_spec/r01/2026-06-06_0404_chacha_spec/iteration_1/node_memory/Tree_0_0_0/workspace_views/turn_006.json",
+          "deterministic_signals": [
+            "commit_without_probe_check_not_inferred"
+          ],
+          "goal_chars": 967,
+          "inspect_topics": [
+            "goal_info",
+            "call_site_options",
+            "call_subgoals",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms"
+          ],
+          "intent": {
+            "intent": "commit_tactic",
+            "payload": {
+              "tactic": "call (_: k = kv /\\ n = nv /\\ c = C.ofintd iv /\\ OCC.gs = gsv ==> res = cc gsv kv nv (C.ofintd iv))."
+            }
+          },
+          "intent_summary": "commit call k",
+          "manager_action_summary": [
+            "tactic commit (185 ms)"
+          ],
+          "manager_result_at": "2026-06-06T11:22:23+00:00",
+          "manager_result_path": "artifacts/eval_suite/wave1_ablation/l1_goal_projection/d0_chacha_spec/r01/2026-06-06_0404_chacha_spec/iteration_1/node_memory/Tree_0_0_0/manager_results/turn_007.json",
+          "manager_seconds": 0.185,
+          "manager_time": "185 ms",
+          "node": "Tree-0.0.0",
+          "node_dir": "artifacts/eval_suite/wave1_ablation/l1_goal_projection/d0_chacha_spec/r01/2026-06-06_0404_chacha_spec/iteration_1/node_memory/Tree_0_0_0",
+          "ok": true,
+          "result_followup_path": "artifacts/eval_suite/wave1_ablation/l1_goal_projection/d0_chacha_spec/r01/2026-06-06_0404_chacha_spec/iteration_1/node_memory/Tree_0_0_0/followups/turn_007.md",
+          "result_state_summary": "phoare / procedure_body / procedure_frontier, 3 goals, goal 406 chars",
+          "result_summary": "accepted commit",
+          "result_view_path": "artifacts/eval_suite/wave1_ablation/l1_goal_projection/d0_chacha_spec/r01/2026-06-06_0404_chacha_spec/iteration_1/node_memory/Tree_0_0_0/workspace_views/turn_007.json",
+          "turn": 7,
+          "usage": {
+            "cache_creation_input_tokens": 1825,
+            "cache_read_input_tokens": 83925,
+            "input_tokens": 2,
+            "output_tokens": 931
+          },
+          "view_chars": 10338,
+          "view_id": "T0.0.0-7",
+          "workspace_view_path": "artifacts/eval_suite/wave1_ablation/l1_goal_projection/d0_chacha_spec/r01/2026-06-06_0404_chacha_spec/iteration_1/node_memory/Tree_0_0_0/workspace_views/turn_006.json"
+        },
+        {
+          "action_submitted_at": "2026-06-06T11:22:43.822000+00:00",
+          "action_time": "+13:28",
+          "agent_think": "20.8 s",
+          "agent_think_path": "artifacts/eval_suite/wave1_ablation/l1_goal_projection/d0_chacha_spec/r01/2026-06-06_0404_chacha_spec/iteration_1/node_memory/Tree_0_0_0/thinking/turn_008.md",
+          "agent_think_seconds": 20.822,
+          "decision_followup_path": "artifacts/eval_suite/wave1_ablation/l1_goal_projection/d0_chacha_spec/r01/2026-06-06_0404_chacha_spec/iteration_1/node_memory/Tree_0_0_0/followups/turn_007.md",
+          "decision_state_summary": "phoare / procedure_body / procedure_frontier, 3 goals, goal 406 chars",
+          "decision_view_path": "artifacts/eval_suite/wave1_ablation/l1_goal_projection/d0_chacha_spec/r01/2026-06-06_0404_chacha_spec/iteration_1/node_memory/Tree_0_0_0/workspace_views/turn_007.json",
+          "deterministic_signals": [
+            "commit_without_probe_check_not_inferred"
+          ],
+          "goal_chars": 406,
+          "inspect_topics": [
+            "goal_info",
+            "call_site_options",
+            "call_subgoals",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms"
+          ],
+          "intent": {
+            "intent": "commit_tactic",
+            "payload": {
+              "tactic": "proc; auto => /#."
+            }
+          },
+          "intent_summary": "commit proc; auto => /#",
+          "manager_action_summary": [
+            "tactic commit (178 ms)"
+          ],
+          "manager_result_at": "2026-06-06T11:22:44+00:00",
+          "manager_result_path": "artifacts/eval_suite/wave1_ablation/l1_goal_projection/d0_chacha_spec/r01/2026-06-06_0404_chacha_spec/iteration_1/node_memory/Tree_0_0_0/manager_results/turn_008.json",
+          "manager_seconds": 0.178,
+          "manager_time": "178 ms",
+          "node": "Tree-0.0.0",
+          "node_dir": "artifacts/eval_suite/wave1_ablation/l1_goal_projection/d0_chacha_spec/r01/2026-06-06_0404_chacha_spec/iteration_1/node_memory/Tree_0_0_0",
+          "ok": true,
+          "result_followup_path": "artifacts/eval_suite/wave1_ablation/l1_goal_projection/d0_chacha_spec/r01/2026-06-06_0404_chacha_spec/iteration_1/node_memory/Tree_0_0_0/followups/turn_008.md",
+          "result_state_summary": "phoare / procedure_body / procedure_frontier, 2 goals, goal 1145 chars",
+          "result_summary": "accepted commit",
+          "result_view_path": "artifacts/eval_suite/wave1_ablation/l1_goal_projection/d0_chacha_spec/r01/2026-06-06_0404_chacha_spec/iteration_1/node_memory/Tree_0_0_0/workspace_views/turn_008.json",
+          "turn": 8,
+          "usage": {
+            "cache_creation_input_tokens": 2104,
+            "cache_read_input_tokens": 85750,
+            "input_tokens": 2,
+            "output_tokens": 1470
+          },
+          "view_chars": 10343,
+          "view_id": "T0.0.0-8",
+          "workspace_view_path": "artifacts/eval_suite/wave1_ablation/l1_goal_projection/d0_chacha_spec/r01/2026-06-06_0404_chacha_spec/iteration_1/node_memory/Tree_0_0_0/workspace_views/turn_007.json"
+        },
+        {
+          "action_submitted_at": "2026-06-06T11:23:04.799000+00:00",
+          "action_time": "+13:49",
+          "agent_think": "20.8 s",
+          "agent_think_path": "artifacts/eval_suite/wave1_ablation/l1_goal_projection/d0_chacha_spec/r01/2026-06-06_0404_chacha_spec/iteration_1/node_memory/Tree_0_0_0/thinking/turn_009.md",
+          "agent_think_seconds": 20.799,
+          "decision_followup_path": "artifacts/eval_suite/wave1_ablation/l1_goal_projection/d0_chacha_spec/r01/2026-06-06_0404_chacha_spec/iteration_1/node_memory/Tree_0_0_0/followups/turn_008.md",
+          "decision_state_summary": "phoare / procedure_body / procedure_frontier, 2 goals, goal 1145 chars",
+          "decision_view_path": "artifacts/eval_suite/wave1_ablation/l1_goal_projection/d0_chacha_spec/r01/2026-06-06_0404_chacha_spec/iteration_1/node_memory/Tree_0_0_0/workspace_views/turn_008.json",
+          "deterministic_signals": [
+            "commit_without_probe_check_not_inferred"
+          ],
+          "goal_chars": 1145,
+          "inspect_topics": [
+            "goal_info",
+            "call_site_options",
+            "call_subgoals",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms"
+          ],
+          "intent": {
+            "intent": "commit_tactic",
+            "payload": {
+              "tactic": "skip => />."
+            }
+          },
+          "intent_summary": "commit skip => />",
+          "manager_action_summary": [
+            "tactic commit (201 ms)"
+          ],
+          "manager_result_at": "2026-06-06T11:23:05+00:00",
+          "manager_result_path": "artifacts/eval_suite/wave1_ablation/l1_goal_projection/d0_chacha_spec/r01/2026-06-06_0404_chacha_spec/iteration_1/node_memory/Tree_0_0_0/manager_results/turn_009.json",
+          "manager_seconds": 0.201,
+          "manager_time": "201 ms",
+          "node": "Tree-0.0.0",
+          "node_dir": "artifacts/eval_suite/wave1_ablation/l1_goal_projection/d0_chacha_spec/r01/2026-06-06_0404_chacha_spec/iteration_1/node_memory/Tree_0_0_0",
+          "ok": true,
+          "result_followup_path": "artifacts/eval_suite/wave1_ablation/l1_goal_projection/d0_chacha_spec/r01/2026-06-06_0404_chacha_spec/iteration_1/node_memory/Tree_0_0_0/followups/turn_009.md",
+          "result_state_summary": "ambient / ambient_logic, 2 goals, goal 719 chars",
+          "result_summary": "accepted commit",
+          "result_view_path": "artifacts/eval_suite/wave1_ablation/l1_goal_projection/d0_chacha_spec/r01/2026-06-06_0404_chacha_spec/iteration_1/node_memory/Tree_0_0_0/workspace_views/turn_009.json",
+          "turn": 9,
+          "usage": {
+            "cache_creation_input_tokens": 3041,
+            "cache_read_input_tokens": 87854,
+            "input_tokens": 2,
+            "output_tokens": 1441
+          },
+          "view_chars": 12754,
+          "view_id": "T0.0.0-9",
+          "workspace_view_path": "artifacts/eval_suite/wave1_ablation/l1_goal_projection/d0_chacha_spec/r01/2026-06-06_0404_chacha_spec/iteration_1/node_memory/Tree_0_0_0/workspace_views/turn_008.json"
+        },
+        {
+          "action_submitted_at": "2026-06-06T11:23:53.767000+00:00",
+          "action_time": "+14:38",
+          "agent_think": "48.8 s",
+          "agent_think_path": "artifacts/eval_suite/wave1_ablation/l1_goal_projection/d0_chacha_spec/r01/2026-06-06_0404_chacha_spec/iteration_1/node_memory/Tree_0_0_0/thinking/turn_010.md",
+          "agent_think_seconds": 48.767,
+          "decision_followup_path": "artifacts/eval_suite/wave1_ablation/l1_goal_projection/d0_chacha_spec/r01/2026-06-06_0404_chacha_spec/iteration_1/node_memory/Tree_0_0_0/followups/turn_009.md",
+          "decision_state_summary": "ambient / ambient_logic, 2 goals, goal 719 chars",
+          "decision_view_path": "artifacts/eval_suite/wave1_ablation/l1_goal_projection/d0_chacha_spec/r01/2026-06-06_0404_chacha_spec/iteration_1/node_memory/Tree_0_0_0/workspace_views/turn_009.json",
+          "deterministic_signals": [
+            "commit_without_probe_check_not_inferred"
+          ],
+          "goal_chars": 719,
+          "inspect_topics": [
+            "goal_info",
+            "lemma_hints",
+            "tactic_forms"
+          ],
+          "intent": {
+            "intent": "commit_tactic",
+            "payload": {
+              "tactic": "move=> &hr Heq Hne; split; last by smt(size_drop gt0_block_size size_eq0 size_ge0)."
+            }
+          },
+          "intent_summary": "commit move=> &hr Heq Hne; split; last by smt(size_drop gt0_block_size size_eq0 size_ge0)",
+          "manager_action_summary": [
+            "tactic commit (233 ms)"
+          ],
+          "manager_result_at": "2026-06-06T11:23:54+00:00",
+          "manager_result_path": "artifacts/eval_suite/wave1_ablation/l1_goal_projection/d0_chacha_spec/r01/2026-06-06_0404_chacha_spec/iteration_1/node_memory/Tree_0_0_0/manager_results/turn_010.json",
+          "manager_seconds": 0.233,
+          "manager_time": "233 ms",
+          "node": "Tree-0.0.0",
+          "node_dir": "artifacts/eval_suite/wave1_ablation/l1_goal_projection/d0_chacha_spec/r01/2026-06-06_0404_chacha_spec/iteration_1/node_memory/Tree_0_0_0",
+          "ok": true,
+          "result_followup_path": "artifacts/eval_suite/wave1_ablation/l1_goal_projection/d0_chacha_spec/r01/2026-06-06_0404_chacha_spec/iteration_1/node_memory/Tree_0_0_0/followups/turn_010.md",
+          "result_state_summary": "ambient / ambient_logic, 2 goals, goal 725 chars",
+          "result_summary": "accepted commit",
+          "result_view_path": "artifacts/eval_suite/wave1_ablation/l1_goal_projection/d0_chacha_spec/r01/2026-06-06_0404_chacha_spec/iteration_1/node_memory/Tree_0_0_0/workspace_views/turn_010.json",
+          "turn": 10,
+          "usage": {
+            "cache_creation_input_tokens": 2776,
+            "cache_read_input_tokens": 90895,
+            "input_tokens": 2,
+            "output_tokens": 4341
+          },
+          "view_chars": 9873,
+          "view_id": "T0.0.0-10",
+          "workspace_view_path": "artifacts/eval_suite/wave1_ablation/l1_goal_projection/d0_chacha_spec/r01/2026-06-06_0404_chacha_spec/iteration_1/node_memory/Tree_0_0_0/workspace_views/turn_009.json"
+        },
+        {
+          "action_submitted_at": "2026-06-06T11:24:21.756000+00:00",
+          "action_time": "+15:06",
+          "agent_think": "27.8 s",
+          "agent_think_path": "artifacts/eval_suite/wave1_ablation/l1_goal_projection/d0_chacha_spec/r01/2026-06-06_0404_chacha_spec/iteration_1/node_memory/Tree_0_0_0/thinking/turn_011.md",
+          "agent_think_seconds": 27.756,
+          "decision_followup_path": "artifacts/eval_suite/wave1_ablation/l1_goal_projection/d0_chacha_spec/r01/2026-06-06_0404_chacha_spec/iteration_1/node_memory/Tree_0_0_0/followups/turn_010.md",
+          "decision_state_summary": "ambient / ambient_logic, 2 goals, goal 725 chars",
+          "decision_view_path": "artifacts/eval_suite/wave1_ablation/l1_goal_projection/d0_chacha_spec/r01/2026-06-06_0404_chacha_spec/iteration_1/node_memory/Tree_0_0_0/workspace_views/turn_010.json",
+          "deterministic_signals": [
+            "commit_without_probe_check_not_inferred"
+          ],
+          "goal_chars": 725,
+          "inspect_topics": [
+            "goal_info",
+            "lemma_hints",
+            "tactic_forms"
+          ],
+          "intent": {
+            "intent": "commit_tactic",
+            "payload": {
+              "tactic": "rewrite -Heq (gen_CTR_encrypt_bytes_cons take_xor (cc gs0) k0 n0 iv p{hr} htake_xor) /take_xor //."
+            }
+          },
+          "intent_summary": "commit rewrite -Heq (gen_CTR_encrypt_bytes_cons take_xor (cc gs0) k0 n0 iv p...",
+          "manager_action_summary": [
+            "tactic commit (244 ms)"
+          ],
+          "manager_result_at": "2026-06-06T11:24:22+00:00",
+          "manager_result_path": "artifacts/eval_suite/wave1_ablation/l1_goal_projection/d0_chacha_spec/r01/2026-06-06_0404_chacha_spec/iteration_1/node_memory/Tree_0_0_0/manager_results/turn_011.json",
+          "manager_seconds": 0.244,
+          "manager_time": "244 ms",
+          "node": "Tree-0.0.0",
+          "node_dir": "artifacts/eval_suite/wave1_ablation/l1_goal_projection/d0_chacha_spec/r01/2026-06-06_0404_chacha_spec/iteration_1/node_memory/Tree_0_0_0",
+          "ok": true,
+          "result_followup_path": "artifacts/eval_suite/wave1_ablation/l1_goal_projection/d0_chacha_spec/r01/2026-06-06_0404_chacha_spec/iteration_1/node_memory/Tree_0_0_0/followups/turn_011.md",
+          "result_state_summary": "ambient / ambient_logic, 2 goals, goal 1032 chars",
+          "result_summary": "accepted commit",
+          "result_view_path": "artifacts/eval_suite/wave1_ablation/l1_goal_projection/d0_chacha_spec/r01/2026-06-06_0404_chacha_spec/iteration_1/node_memory/Tree_0_0_0/workspace_views/turn_011.json",
+          "turn": 11,
+          "usage": {
+            "cache_creation_input_tokens": 5710,
+            "cache_read_input_tokens": 93671,
+            "input_tokens": 131,
+            "output_tokens": 2242
+          },
+          "view_chars": 9531,
+          "view_id": "T0.0.0-11",
+          "workspace_view_path": "artifacts/eval_suite/wave1_ablation/l1_goal_projection/d0_chacha_spec/r01/2026-06-06_0404_chacha_spec/iteration_1/node_memory/Tree_0_0_0/workspace_views/turn_010.json"
+        },
+        {
+          "action_submitted_at": "2026-06-06T11:24:33.818000+00:00",
+          "action_time": "+15:18",
+          "agent_think": "11.8 s",
+          "agent_think_path": "artifacts/eval_suite/wave1_ablation/l1_goal_projection/d0_chacha_spec/r01/2026-06-06_0404_chacha_spec/iteration_1/node_memory/Tree_0_0_0/thinking/turn_012.md",
+          "agent_think_seconds": 11.818,
+          "decision_followup_path": "artifacts/eval_suite/wave1_ablation/l1_goal_projection/d0_chacha_spec/r01/2026-06-06_0404_chacha_spec/iteration_1/node_memory/Tree_0_0_0/followups/turn_011.md",
+          "decision_state_summary": "ambient / ambient_logic, 2 goals, goal 1032 chars",
+          "decision_view_path": "artifacts/eval_suite/wave1_ablation/l1_goal_projection/d0_chacha_spec/r01/2026-06-06_0404_chacha_spec/iteration_1/node_memory/Tree_0_0_0/workspace_views/turn_011.json",
+          "deterministic_signals": [
+            "commit_without_probe_check_not_inferred"
+          ],
+          "goal_chars": 1032,
+          "inspect_topics": [
+            "goal_info",
+            "lemma_hints",
+            "tactic_forms"
+          ],
+          "intent": {
+            "intent": "commit_tactic",
+            "payload": {
+              "tactic": "by rewrite catA."
+            }
+          },
+          "intent_summary": "commit by rewrite catA",
+          "manager_action_summary": [
+            "tactic commit (182 ms)"
+          ],
+          "manager_result_at": "2026-06-06T11:24:34+00:00",
+          "manager_result_path": "artifacts/eval_suite/wave1_ablation/l1_goal_projection/d0_chacha_spec/r01/2026-06-06_0404_chacha_spec/iteration_1/node_memory/Tree_0_0_0/manager_results/turn_012.json",
+          "manager_seconds": 0.182,
+          "manager_time": "182 ms",
+          "node": "Tree-0.0.0",
+          "node_dir": "artifacts/eval_suite/wave1_ablation/l1_goal_projection/d0_chacha_spec/r01/2026-06-06_0404_chacha_spec/iteration_1/node_memory/Tree_0_0_0",
+          "ok": true,
+          "result_followup_path": "artifacts/eval_suite/wave1_ablation/l1_goal_projection/d0_chacha_spec/r01/2026-06-06_0404_chacha_spec/iteration_1/node_memory/Tree_0_0_0/followups/turn_012.md",
+          "result_state_summary": "phoare / procedure_body / procedure_frontier, 1 goal, goal 1127 chars",
+          "result_summary": "accepted commit",
+          "result_view_path": "artifacts/eval_suite/wave1_ablation/l1_goal_projection/d0_chacha_spec/r01/2026-06-06_0404_chacha_spec/iteration_1/node_memory/Tree_0_0_0/workspace_views/turn_012.json",
+          "turn": 12,
+          "usage": {
+            "cache_creation_input_tokens": 3917,
+            "cache_read_input_tokens": 99381,
+            "input_tokens": 2,
+            "output_tokens": 754
+          },
+          "view_chars": 9924,
+          "view_id": "T0.0.0-12",
+          "workspace_view_path": "artifacts/eval_suite/wave1_ablation/l1_goal_projection/d0_chacha_spec/r01/2026-06-06_0404_chacha_spec/iteration_1/node_memory/Tree_0_0_0/workspace_views/turn_011.json"
+        },
+        {
+          "action_submitted_at": "2026-06-06T11:24:56.814000+00:00",
+          "action_time": "+15:41",
+          "agent_think": "22.8 s",
+          "agent_think_path": "artifacts/eval_suite/wave1_ablation/l1_goal_projection/d0_chacha_spec/r01/2026-06-06_0404_chacha_spec/iteration_1/node_memory/Tree_0_0_0/thinking/turn_013.md",
+          "agent_think_seconds": 22.814,
+          "decision_followup_path": "artifacts/eval_suite/wave1_ablation/l1_goal_projection/d0_chacha_spec/r01/2026-06-06_0404_chacha_spec/iteration_1/node_memory/Tree_0_0_0/followups/turn_012.md",
+          "decision_state_summary": "phoare / procedure_body / procedure_frontier, 1 goal, goal 1127 chars",
+          "decision_view_path": "artifacts/eval_suite/wave1_ablation/l1_goal_projection/d0_chacha_spec/r01/2026-06-06_0404_chacha_spec/iteration_1/node_memory/Tree_0_0_0/workspace_views/turn_012.json",
+          "deterministic_signals": [
+            "commit_without_probe_check_not_inferred"
+          ],
+          "goal_chars": 1127,
+          "inspect_topics": [
+            "goal_info",
+            "call_site_options",
+            "call_subgoals",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms"
+          ],
+          "intent": {
+            "intent": "commit_tactic",
+            "payload": {
+              "tactic": "skip => />."
+            }
+          },
+          "intent_summary": "commit skip => />",
+          "manager_action_summary": [
+            "tactic commit (186 ms)"
+          ],
+          "manager_result_at": "2026-06-06T11:24:57+00:00",
+          "manager_result_path": "artifacts/eval_suite/wave1_ablation/l1_goal_projection/d0_chacha_spec/r01/2026-06-06_0404_chacha_spec/iteration_1/node_memory/Tree_0_0_0/manager_results/turn_013.json",
+          "manager_seconds": 0.186,
+          "manager_time": "186 ms",
+          "node": "Tree-0.0.0",
+          "node_dir": "artifacts/eval_suite/wave1_ablation/l1_goal_projection/d0_chacha_spec/r01/2026-06-06_0404_chacha_spec/iteration_1/node_memory/Tree_0_0_0",
+          "ok": true,
+          "result_followup_path": "artifacts/eval_suite/wave1_ablation/l1_goal_projection/d0_chacha_spec/r01/2026-06-06_0404_chacha_spec/iteration_1/node_memory/Tree_0_0_0/followups/turn_013.md",
+          "result_state_summary": "ambient / ambient_logic, 1 goal, goal 600 chars",
+          "result_summary": "accepted commit",
+          "result_view_path": "artifacts/eval_suite/wave1_ablation/l1_goal_projection/d0_chacha_spec/r01/2026-06-06_0404_chacha_spec/iteration_1/node_memory/Tree_0_0_0/workspace_views/turn_013.json",
+          "turn": 13,
+          "usage": {
+            "cache_creation_input_tokens": 2357,
+            "cache_read_input_tokens": 103298,
+            "input_tokens": 2,
+            "output_tokens": 1739
+          },
+          "view_chars": 12528,
+          "view_id": "T0.0.0-13",
+          "workspace_view_path": "artifacts/eval_suite/wave1_ablation/l1_goal_projection/d0_chacha_spec/r01/2026-06-06_0404_chacha_spec/iteration_1/node_memory/Tree_0_0_0/workspace_views/turn_012.json"
+        },
+        {
+          "action_submitted_at": "2026-06-06T11:25:27.764000+00:00",
+          "action_time": "+16:12",
+          "agent_think": "30.8 s",
+          "agent_think_path": "artifacts/eval_suite/wave1_ablation/l1_goal_projection/d0_chacha_spec/r01/2026-06-06_0404_chacha_spec/iteration_1/node_memory/Tree_0_0_0/thinking/turn_014.md",
+          "agent_think_seconds": 30.764,
+          "decision_followup_path": "artifacts/eval_suite/wave1_ablation/l1_goal_projection/d0_chacha_spec/r01/2026-06-06_0404_chacha_spec/iteration_1/node_memory/Tree_0_0_0/followups/turn_013.md",
+          "decision_state_summary": "ambient / ambient_logic, 1 goal, goal 600 chars",
+          "decision_view_path": "artifacts/eval_suite/wave1_ablation/l1_goal_projection/d0_chacha_spec/r01/2026-06-06_0404_chacha_spec/iteration_1/node_memory/Tree_0_0_0/workspace_views/turn_013.json",
+          "deterministic_signals": [
+            "commit_without_probe_check_not_inferred"
+          ],
+          "goal_chars": 600,
+          "inspect_topics": [
+            "goal_info",
+            "lemma_hints",
+            "tactic_forms"
+          ],
+          "intent": {
+            "intent": "commit_tactic",
+            "payload": {
+              "tactic": "move=> c0 i0 p1; split=> [hi hle|]; first by smt(size_eq0 size_ge0)."
+            }
+          },
+          "intent_summary": "commit move=> c0 i0 p1; split=> [hi hle|]; first by smt(size_eq0 size_ge0)",
+          "manager_action_summary": [
+            "tactic commit (236 ms)"
+          ],
+          "manager_result_at": "2026-06-06T11:25:28+00:00",
+          "manager_result_path": "artifacts/eval_suite/wave1_ablation/l1_goal_projection/d0_chacha_spec/r01/2026-06-06_0404_chacha_spec/iteration_1/node_memory/Tree_0_0_0/manager_results/turn_014.json",
+          "manager_seconds": 0.236,
+          "manager_time": "236 ms",
+          "node": "Tree-0.0.0",
+          "node_dir": "artifacts/eval_suite/wave1_ablation/l1_goal_projection/d0_chacha_spec/r01/2026-06-06_0404_chacha_spec/iteration_1/node_memory/Tree_0_0_0",
+          "ok": true,
+          "result_followup_path": "artifacts/eval_suite/wave1_ablation/l1_goal_projection/d0_chacha_spec/r01/2026-06-06_0404_chacha_spec/iteration_1/node_memory/Tree_0_0_0/followups/turn_014.md",
+          "result_state_summary": "ambient / ambient_logic, 1 goal, goal 422 chars",
+          "result_summary": "accepted commit",
+          "result_view_path": "artifacts/eval_suite/wave1_ablation/l1_goal_projection/d0_chacha_spec/r01/2026-06-06_0404_chacha_spec/iteration_1/node_memory/Tree_0_0_0/workspace_views/turn_014.json",
+          "turn": 14,
+          "usage": {
+            "cache_creation_input_tokens": 3007,
+            "cache_read_input_tokens": 105655,
+            "input_tokens": 2,
+            "output_tokens": 2513
+          },
+          "view_chars": 9181,
+          "view_id": "T0.0.0-14",
+          "workspace_view_path": "artifacts/eval_suite/wave1_ablation/l1_goal_projection/d0_chacha_spec/r01/2026-06-06_0404_chacha_spec/iteration_1/node_memory/Tree_0_0_0/workspace_views/turn_013.json"
+        },
+        {
+          "action_submitted_at": "2026-06-06T11:25:37.796000+00:00",
+          "action_time": "+16:22",
+          "agent_think": "9.8 s",
+          "agent_think_path": "artifacts/eval_suite/wave1_ablation/l1_goal_projection/d0_chacha_spec/r01/2026-06-06_0404_chacha_spec/iteration_1/node_memory/Tree_0_0_0/thinking/turn_015.md",
+          "agent_think_seconds": 9.796,
+          "decision_followup_path": "artifacts/eval_suite/wave1_ablation/l1_goal_projection/d0_chacha_spec/r01/2026-06-06_0404_chacha_spec/iteration_1/node_memory/Tree_0_0_0/followups/turn_014.md",
+          "decision_state_summary": "ambient / ambient_logic, 1 goal, goal 422 chars",
+          "decision_view_path": "artifacts/eval_suite/wave1_ablation/l1_goal_projection/d0_chacha_spec/r01/2026-06-06_0404_chacha_spec/iteration_1/node_memory/Tree_0_0_0/workspace_views/turn_014.json",
+          "deterministic_signals": [
+            "commit_without_probe_check_not_inferred"
+          ],
+          "goal_chars": 422,
+          "inspect_topics": [
+            "goal_info",
+            "lemma_hints",
+            "tactic_forms"
+          ],
+          "intent": {
+            "intent": "commit_tactic",
+            "payload": {
+              "tactic": "by rewrite (gen_CTR_encrypt_bytes0 take_xor (cc gs0) k0 n0 i0 htake_xor) cats0."
+            }
+          },
+          "intent_summary": "commit by rewrite (gen_CTR_encrypt_bytes0 take_xor (cc gs0) k0 n0 i0 htake_x...",
+          "manager_action_summary": [
+            "tactic commit (204 ms)"
+          ],
+          "manager_result_at": "2026-06-06T11:25:38+00:00",
+          "manager_result_path": "artifacts/eval_suite/wave1_ablation/l1_goal_projection/d0_chacha_spec/r01/2026-06-06_0404_chacha_spec/iteration_1/node_memory/Tree_0_0_0/manager_results/turn_015.json",
+          "manager_seconds": 0.204,
+          "manager_time": "204 ms",
+          "node": "Tree-0.0.0",
+          "node_dir": "artifacts/eval_suite/wave1_ablation/l1_goal_projection/d0_chacha_spec/r01/2026-06-06_0404_chacha_spec/iteration_1/node_memory/Tree_0_0_0",
+          "ok": true,
+          "result_followup_path": "artifacts/eval_suite/wave1_ablation/l1_goal_projection/d0_chacha_spec/r01/2026-06-06_0404_chacha_spec/iteration_1/node_memory/Tree_0_0_0/followups/turn_015.md",
+          "result_state_summary": "ambient / closed_candidate, goal 26 chars",
+          "result_summary": "accepted commit",
+          "result_view_path": "artifacts/eval_suite/wave1_ablation/l1_goal_projection/d0_chacha_spec/r01/2026-06-06_0404_chacha_spec/iteration_1/node_memory/Tree_0_0_0/workspace_views/turn_015.json",
+          "turn": 15,
+          "usage": {
+            "cache_creation_input_tokens": 3692,
+            "cache_read_input_tokens": 108662,
+            "input_tokens": 2,
+            "output_tokens": 730
+          },
+          "view_chars": 9443,
+          "view_id": "T0.0.0-15",
+          "workspace_view_path": "artifacts/eval_suite/wave1_ablation/l1_goal_projection/d0_chacha_spec/r01/2026-06-06_0404_chacha_spec/iteration_1/node_memory/Tree_0_0_0/workspace_views/turn_014.json"
+        },
+        {
+          "action_submitted_at": "2026-06-06T11:25:41.807000+00:00",
+          "action_time": "+16:26",
+          "agent_think": "3.8 s",
+          "agent_think_path": "artifacts/eval_suite/wave1_ablation/l1_goal_projection/d0_chacha_spec/r01/2026-06-06_0404_chacha_spec/iteration_1/node_memory/Tree_0_0_0/thinking/turn_016.md",
+          "agent_think_seconds": 3.807,
+          "decision_followup_path": "artifacts/eval_suite/wave1_ablation/l1_goal_projection/d0_chacha_spec/r01/2026-06-06_0404_chacha_spec/iteration_1/node_memory/Tree_0_0_0/followups/turn_015.md",
+          "decision_state_summary": "ambient / closed_candidate, goal 26 chars",
+          "decision_view_path": "artifacts/eval_suite/wave1_ablation/l1_goal_projection/d0_chacha_spec/r01/2026-06-06_0404_chacha_spec/iteration_1/node_memory/Tree_0_0_0/workspace_views/turn_015.json",
+          "deterministic_signals": [
+            "commit_without_probe_check_not_inferred"
+          ],
+          "goal_chars": 26,
+          "inspect_topics": [
+            "goal_info"
+          ],
+          "intent": {
+            "intent": "commit_tactic",
+            "payload": {
+              "tactic": "qed."
+            }
+          },
+          "intent_summary": "commit qed",
+          "manager_action_summary": [
+            "tactic commit (193 ms)"
+          ],
+          "manager_result_at": "2026-06-06T11:25:42+00:00",
+          "manager_result_path": "artifacts/eval_suite/wave1_ablation/l1_goal_projection/d0_chacha_spec/r01/2026-06-06_0404_chacha_spec/iteration_1/node_memory/Tree_0_0_0/manager_results/turn_016.json",
+          "manager_seconds": 0.193,
+          "manager_time": "193 ms",
+          "node": "Tree-0.0.0",
+          "node_dir": "artifacts/eval_suite/wave1_ablation/l1_goal_projection/d0_chacha_spec/r01/2026-06-06_0404_chacha_spec/iteration_1/node_memory/Tree_0_0_0",
+          "ok": true,
+          "result_followup_path": "artifacts/eval_suite/wave1_ablation/l1_goal_projection/d0_chacha_spec/r01/2026-06-06_0404_chacha_spec/iteration_1/node_memory/Tree_0_0_0/followups/turn_016.md",
+          "result_state_summary": "complete / unknown / closed_candidate, 0 goals, goal 12 chars",
+          "result_summary": "accepted commit",
+          "result_view_path": "artifacts/eval_suite/wave1_ablation/l1_goal_projection/d0_chacha_spec/r01/2026-06-06_0404_chacha_spec/iteration_1/node_memory/Tree_0_0_0/workspace_views/turn_016.json",
+          "turn": 16,
+          "usage": {
+            "cache_creation_input_tokens": 1711,
+            "cache_read_input_tokens": 112354,
+            "input_tokens": 131,
+            "output_tokens": 133
+          },
+          "view_chars": 5307,
+          "view_id": "T0.0.0-16",
+          "workspace_view_path": "artifacts/eval_suite/wave1_ablation/l1_goal_projection/d0_chacha_spec/r01/2026-06-06_0404_chacha_spec/iteration_1/node_memory/Tree_0_0_0/workspace_views/turn_015.json"
+        },
+        {
+          "action_submitted_at": "2026-06-06T11:25:52+00:00",
+          "action_time": "+16:36",
+          "agent_think": "10 s",
+          "agent_think_path": "",
+          "agent_think_seconds": 10.0,
+          "decision_followup_path": "artifacts/eval_suite/wave1_ablation/l1_goal_projection/d0_chacha_spec/r01/2026-06-06_0404_chacha_spec/iteration_1/node_memory/Tree_0_0_0/followups/turn_016.md",
+          "decision_state_summary": "complete / unknown / closed_candidate, 0 goals, goal 12 chars",
+          "decision_view_path": "artifacts/eval_suite/wave1_ablation/l1_goal_projection/d0_chacha_spec/r01/2026-06-06_0404_chacha_spec/iteration_1/node_memory/Tree_0_0_0/workspace_views/turn_016.json",
+          "deterministic_signals": [],
+          "goal_chars": 12,
+          "inspect_topics": [
+            "verify",
+            "goal_info"
+          ],
+          "intent": {
+            "intent": "finish"
+          },
+          "intent_summary": "finish",
+          "manager_action_summary": [
+            "finish"
+          ],
+          "manager_result_at": "2026-06-06T11:25:52+00:00",
+          "manager_result_path": "artifacts/eval_suite/wave1_ablation/l1_goal_projection/d0_chacha_spec/r01/2026-06-06_0404_chacha_spec/iteration_1/node_memory/Tree_0_0_0/manager_results/turn_017.json",
+          "manager_seconds": 0.0,
+          "manager_time": "",
+          "node": "Tree-0.0.0",
+          "node_dir": "artifacts/eval_suite/wave1_ablation/l1_goal_projection/d0_chacha_spec/r01/2026-06-06_0404_chacha_spec/iteration_1/node_memory/Tree_0_0_0",
+          "ok": true,
+          "result_followup_path": "artifacts/eval_suite/wave1_ablation/l1_goal_projection/d0_chacha_spec/r01/2026-06-06_0404_chacha_spec/iteration_1/node_memory/Tree_0_0_0/followups/turn_017.md",
+          "result_state_summary": "complete / unknown / closed_candidate, 0 goals, goal 12 chars",
+          "result_summary": "finish requested",
+          "result_view_path": "artifacts/eval_suite/wave1_ablation/l1_goal_projection/d0_chacha_spec/r01/2026-06-06_0404_chacha_spec/iteration_1/node_memory/Tree_0_0_0/workspace_views/turn_017.json",
+          "turn": 17,
+          "usage": {},
+          "view_chars": 4352,
+          "view_id": "T0.0.0-17",
+          "workspace_view_path": "artifacts/eval_suite/wave1_ablation/l1_goal_projection/d0_chacha_spec/r01/2026-06-06_0404_chacha_spec/iteration_1/node_memory/Tree_0_0_0/workspace_views/turn_016.json"
+        }
+      ],
+      "run_dir": "artifacts/eval_suite/wave1_ablation/l1_goal_projection/d0_chacha_spec/r01/2026-06-06_0404_chacha_spec/iteration_1",
+      "turn_count": 30
+    }
+  ],
+  "schema_version": 1
+}

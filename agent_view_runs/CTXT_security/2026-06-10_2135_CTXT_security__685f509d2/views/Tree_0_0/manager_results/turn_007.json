@@ -1,0 +1,43 @@
+{
+  "turn": 7,
+  "handled_intent": {
+    "intent": "inspect_context",
+    "payload": {
+      "topic": "call_invariant_skeleton"
+    }
+  },
+  "ok": true,
+  "manager_note": "Read-only context. Accepted/rejected tactic or call text inside a preview is route-selection information, not the current proof-state error.",
+  "manager_actions": [
+    {
+      "action": "inspect call invariant skeleton",
+      "outcome": "The manager returned read-only context for the current goal.",
+      "timing": "99 ms",
+      "content": {
+        "title": "Call-Invariant Glob Skeleton",
+        "notes": [
+          {
+            "message": "Compiler emits only the mechanical `={glob ...}` frame; the semantic conjuncts are the agent's to add."
+          }
+        ],
+        "items": [
+          {
+            "candidate": "call (_: ={glob E, glob M}).",
+            "why": "Shared abstract oracle modules E, M must stay synchronized across the adversary call; mechanical glob frame, daemon-confirmed to apply.",
+            "verification": "not daemon-verified against the current goal",
+            "submit": {
+              "intent": "commit_tactic",
+              "payload": {
+                "tactic": "call (_: ={glob E, glob M})."
+              }
+            }
+          },
+          {
+            "why": "No mechanical `={glob}` frame applies at this call \u2014 build the call invariant from THIS development's own in-scope predicates (an invariant conjunct can be a guarded implication / size-or-count bound / domain fact, not only an equality). In-scope forms + named predicates (use lookup_symbol for the full definition of any): guarded implication (guard => relation) \u2014 andb: Block.offun (fun i=> andw b1.[i] b2.[i]). lemma oneb_neq0: oneb <> zerob. proof. rewrite blockP negb_forall /=; exists 0=> /=. by rewrite !offunE // onew_neq0.  | relational equality \u2014 pad: let p = padding (pad_length m) in os2bs (m ++ (t2os t) ++ p). op unpad (bs : block list) = let os = bs2os bs in let l = o2int (last witness os) in let m = take "
+          }
+        ]
+      }
+    }
+  ],
+  "view_refreshed": true
+}

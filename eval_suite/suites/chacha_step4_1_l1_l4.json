@@ -1,0 +1,27 @@
+{
+  "suite": "chacha_step4_1_l1_l4",
+  "_note": "Fair L1-vs-L4 test on a KNOWN-PROVABLE, properly-set-up target (ChaChaPoly step4_1). opus-4-8 + effort high, isolated why3 per arm.",
+  "profiles": ["l1_goal_projection", "l4_checked_action_surface"],
+  "defaults": {
+    "eval_mode": true,
+    "model": "claude-opus-4-8",
+    "skip_regression": true,
+    "max_iterations": 1,
+    "repeats": 1,
+    "output_dir": "artifacts/eval_suite",
+    "source_isolation": true,
+    "strip_proofs": true,
+    "include_dir": "easycrypt-src/theories",
+    "timeout_minutes": 60
+  },
+  "targets": [
+    {
+      "id": "chacha_step4_1",
+      "file": "eval/examples/ChaChaPoly/chacha_poly.ec",
+      "lemma": "step4_1",
+      "copy_root": "eval/examples/ChaChaPoly",
+      "include_dir": "easycrypt-src/theories",
+      "timeout_minutes": 60
+    }
+  ]
+}

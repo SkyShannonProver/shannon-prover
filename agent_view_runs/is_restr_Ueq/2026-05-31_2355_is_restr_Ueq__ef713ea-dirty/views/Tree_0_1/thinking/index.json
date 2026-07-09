@@ -1,0 +1,29 @@
+{
+  "node": "Tree-0.1",
+  "discovery": "content_match",
+  "transcripts": [
+    "~/.claude/projects/<PROJECT>/023937ce-0bad-4bd1-84e6-c790185a3766.jsonl"
+  ],
+  "turns": [
+    {
+      "turn": 1,
+      "intent": "probe_tactic",
+      "payload_key": "move=> *; rewrite /is_restr; smt(restrS is_restrS is_restr_addS).",
+      "thinking_chars": 1653,
+      "text_chars": 318,
+      "session_id": "023937ce-0bad-4bd1-84e6-c790185a3766",
+      "timestamp": "2026-06-01T06:55:38.956Z",
+      "file": "thinking/turn_001.md"
+    },
+    {
+      "turn": 2,
+      "intent": "probe_tactic",
+      "payload_key": "move=> h1 h2; smt(nin_is_restr fsetP in_fsetU in_fset1).",
+      "thinking_chars": 1488,
+      "text_chars": 126,
+      "session_id": "023937ce-0bad-4bd1-84e6-c790185a3766",
+      "timestamp": "2026-06-01T06:56:09.922Z",
+      "file": "thinking/turn_002.md"
+    }
+  ]
+}

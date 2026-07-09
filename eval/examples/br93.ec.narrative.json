@@ -1,0 +1,223 @@
+{
+  "file": "eval/examples/br93.ec",
+  "file_purpose": "Proves that the Bellare-Rogaway 1993 (BR93) public-key encryption scheme is IND-CPA secure under the assumption that the underlying trapdoor permutation is one-way. The proof is first carried out in an abstract theory with minimal algebraic structure, then instantiated to fixed-length bitstrings.",
+  "main_theorem": {
+    "name": "Reduction (concrete, line 584)",
+    "informal_statement": "For any IND-CPA adversary A against the concrete BR scheme (bitstring instantiation), the CPA advantage Pr[CPA(LRO, BR, A) : res] - 1/2 is bounded by the one-way inversion advantage Pr[Exp_OW(I(A, LRO)) : res]."
+  },
+  "proof_strategy_overview": "The proof uses a three-hop game sequence G0 -> G1 -> G2 -> OW. Step 1 (G0 to G1) replaces the random oracle call H.o(r) during challenge encryption with an independent uniform sample h, introducing a 'bad event' that the adversary queried r to the oracle; the fundamental lemma bounds the gap by Pr[bad]. Step 2 (G1 to G2) exploits the fact that h +^ m is uniformly distributed when h is uniform, removing the XOR masking from the ciphertext; this is a tight equivalence via a bijection argument. In G2 the ciphertext is independent of the challenge bit, so Pr[G2:res] = 1/2 exactly. Step 3 reduces the bad event probability to the one-way inversion advantage: if the adversary ever queries the RO at the encryption randomness r, the constructed inverter I(A) can extract r from the query log and invert f(pk, r). The abstract result is then instantiated to concrete bitstrings by cloning the abstract theory.",
+  "game_chain": [
+    {
+      "id": "G0",
+      "role": "real_cpa",
+      "description": "BR93_CPA(A): the real IND-CPA game where the adversary chooses two messages, receives an encryption of one under a random bit b using the BR93 scheme with a lazy random oracle, and guesses b."
+    },
+    {
+      "id": "G1",
+      "role": "intermediate_abstraction",
+      "description": "Game1: like G0 but the random oracle call during challenge encryption is replaced by fresh uniform sampling h <$ dptxt; the encryption randomness r is stored as Game1.r to define the bad event (r in Log.qs)."
+    },
+    {
+      "id": "G2",
+      "role": "intermediate_abstraction",
+      "description": "Game2: like G1 but the challenge ciphertext uses (f pk r, h) instead of (f pk r, h +^ (b ? m0 : m1)); since h is already uniform, the ciphertext is now completely independent of the challenge bit b."
+    },
+    {
+      "id": "OW",
+      "role": "assumption_game",
+      "description": "OW(I(A)): the one-way inversion game where the constructed inverter I(A) receives (pk, f(pk,x)) and must recover x, using the CPA adversary A's oracle queries to find x in the query log."
+    }
+  ],
+  "lemma_catalog": [
+    {
+      "name": "addpK",
+      "role": "helper",
+      "narrative": "Algebraic helper: proves x +^ y +^ y = x, the cancellation law for the nilpotent XOR operation. Used in correctness proof and in the G1-G2 bijection argument."
+    },
+    {
+      "name": "dptxt_ll",
+      "role": "helper",
+      "narrative": "Distribution property: dptxt is lossless. Used throughout for termination arguments."
+    },
+    {
+      "name": "dptxt_uni",
+      "role": "helper",
+      "narrative": "Distribution property: dptxt is uniform."
+    },
+    {
+      "name": "dptxt_fu",
+      "role": "helper",
+      "narrative": "Distribution property: dptxt is full (has full support)."
+    },
+    {
+      "name": "dptxt_funi",
+      "role": "helper",
+      "narrative": "Distribution property: dptxt is funiform (full + uniform). Key for the bijection argument in eq_Game1_Game2."
+    },
+    {
+      "name": "drand_ll",
+      "role": "helper",
+      "narrative": "Distribution property: drand is lossless."
+    },
+    {
+      "name": "drand_uni",
+      "role": "helper",
+      "narrative": "Distribution property: drand is uniform."
+    },
+    {
+      "name": "dkeys_ll",
+      "role": "helper",
+      "narrative": "Distribution property: dkeys is lossless."
+    },
+    {
+      "name": "dkeys_funi",
+      "role": "helper",
+      "narrative": "Distribution property: dkeys is funiform."
+    },
+    {
+      "name": "fI",
+      "role": "helper",
+      "narrative": "Injectivity of the trapdoor permutation f(pk, \u00b7): if f(pk,x) = f(pk,y) then x = y. Derived from the fK axiom. Used in pr_Game2_OW to justify that nth_find recovers the correct preimage."
+    },
+    {
+      "name": "BR93_correct",
+      "role": "helper",
+      "narrative": "Sanity check: BR93 decryption correctly recovers the plaintext with probability 1. Not used in the security proof but validates the scheme definition."
+    },
+    {
+      "name": "pr_Game0_Game1",
+      "role": "bridge_lemma",
+      "hop": [
+        "G0",
+        "G1"
+      ],
+      "narrative": "First game hop via the fundamental lemma: bounds Pr[G0:res] by Pr[G1:res] + Pr[G1:bad] where bad = (Game1.r in Log.qs). The two games differ only at the point where the RO is queried at r during encryption; if the adversary has not queried r (bad does not hold), the RO output is independent and identically distributed to a fresh sample.",
+      "semantic_delta": "Replaces the random oracle evaluation H.o(r) during challenge encryption with independent uniform sampling h <$ dptxt; the two games are identical conditioned on the adversary not having queried the oracle at r.",
+      "rewrite_form": "apply (pr_Game0_Game1 &m).",
+      "arg_types": {},
+      "closer_hints": {
+        "smt_lemmas": [
+          "eq_except_set_eq",
+          "eq_exceptP",
+          "get_setE",
+          "mem_set",
+          "dptxt_ll",
+          "domE",
+          "get_set_sameE",
+          "eq_except_setl",
+          "emptyE",
+          "mu_bounded"
+        ],
+        "unfold_ops": [],
+        "typical_tail": "rewrite Pr[mu_or]; smt(mu_bounded)."
+      }
+    },
+    {
+      "name": "eq_Game1_Game2",
+      "role": "oracle_equiv",
+      "narrative": "pRHL equivalence between Game1 and Game2. Establishes that the two games produce identical distributions on (res, Log state, r). Used by pr_Game1_Game2 and pr_bad_Game1_Game2 to transfer both the advantage and the bad event probability. The bijection rnd (fun x => x +^ m) witnesses that h +^ m is uniform when h is uniform.",
+      "semantic_delta": "Replaces (f pk r, h +^ (b ? m0 : m1)) with (f pk r, h) in the challenge ciphertext by coupling h in Game1 with h +^ (b ? m0 : m1) in Game2 via the XOR bijection on dptxt."
+    },
+    {
+      "name": "pr_Game1_Game2",
+      "role": "bridge_lemma",
+      "hop": [
+        "G1",
+        "G2"
+      ],
+      "narrative": "Transfers the winning probability from Game1 to Game2: Pr[G1:res] = Pr[G2:res]. Direct corollary of eq_Game1_Game2.",
+      "semantic_delta": "XOR masking with the challenge message is removed from the ciphertext; the uniform distribution of h absorbs the message, making res probabilities identical.",
+      "rewrite_form": "rewrite (pr_Game1_Game2 &m).",
+      "arg_types": {}
+    },
+    {
+      "name": "pr_bad_Game1_Game2",
+      "role": "bridge_lemma",
+      "hop": [
+        "G1",
+        "G2"
+      ],
+      "narrative": "Transfers the bad event probability from Game1 to Game2: Pr[G1: r in Log.qs] = Pr[G2: r in Log.qs]. Direct corollary of eq_Game1_Game2 (the equivalence preserves Game1.r = Game2.r and Log.qs equality).",
+      "semantic_delta": "Identical to pr_Game1_Game2 but for the bad event (r in Log.qs) rather than the winning event; the eq_Game1_Game2 equivalence couples both events simultaneously.",
+      "rewrite_form": "rewrite (pr_bad_Game1_Game2 &m).",
+      "arg_types": {}
+    },
+    {
+      "name": "pr_Game2",
+      "role": "intermediate_step",
+      "narrative": "Shows Pr[G2:res] = 1/2 exactly: in Game2 the challenge ciphertext (f pk r, h) is independent of the bit b, so the adversary's guess b' is independent of b and the probability of b' = b is exactly 1/2. Proved by byphoare with a swap to move the b-sampling to the end and applying dbool1E."
+    },
+    {
+      "name": "OW_OWr",
+      "role": "helper",
+      "narrative": "Syntactic equivalence between OW(I) and OWr(I) \u2014 a reformulation of the one-way game where the challenge preimage x is stored as a module variable. The two are equivalent by sim. Used in pr_Game2_OW to work with the more convenient OWr formulation."
+    },
+    {
+      "name": "pr_Game2_OW",
+      "role": "bridge_lemma",
+      "hop": [
+        "G2",
+        "OW"
+      ],
+      "narrative": "The reduction step: bounds Pr[G2: r in Log.qs] by Pr[OW(I(A)):res]. If the adversary ever queries the random oracle at the encryption randomness r, then r appears in Log.qs and the inverter I(A) extracts it via nth/find, successfully inverting f(pk, r). Uses fI (injectivity of f) to justify that the found query is the correct preimage.",
+      "semantic_delta": "Reduces the bad event 'adversary queries RO at encryption randomness r' to successful one-way inversion: the inverter I(A) simulates Game2 for the adversary and scans the query log for a preimage of the OW challenge y = f(pk, r).",
+      "rewrite_form": "apply (pr_Game2_OW &m).",
+      "arg_types": {},
+      "closer_hints": {
+        "smt_lemmas": ["nth_find", "fI"],
+        "unfold_ops": [],
+        "typical_tail": "rewrite List.hasP; exists <witness_var>; smt()."
+      }
+    },
+    {
+      "name": "Reduction (abstract, line 367)",
+      "role": "main_reduction",
+      "narrative": "Combines all game hops: Pr[BR93_CPA(A):res] - 1/2 <= Pr[OW(I(A)):res]. Derived by chaining pr_Game0_Game1, pr_Game1_Game2, pr_bad_Game1_Game2, pr_Game2, and pr_Game2_OW via smt. This is the abstract-theory version of the security bound."
+    },
+    {
+      "name": "gt0_n",
+      "role": "helper",
+      "narrative": "Concrete instantiation helper: ciphertext bitstring length n = l + k is positive."
+    },
+    {
+      "name": "parseK",
+      "role": "helper",
+      "narrative": "Concrete instantiation helper: parse(r || p) = (r, p), i.e., parsing a formatted ciphertext recovers its components."
+    },
+    {
+      "name": "formatI",
+      "role": "helper",
+      "narrative": "Concrete instantiation helper: the format operator (||) is injective."
+    },
+    {
+      "name": "Reduction (concrete, line 584)",
+      "role": "main_theorem",
+      "narrative": "The final concrete security theorem: for the bitstring-instantiated BR scheme and any CPA adversary A, Pr[CPA(LRO, BR, A):res] - 1/2 <= Pr[Exp_OW(I(A, LRO)):res]. Proved by instantiating the abstract BR93 theory (clone Instance) and invoking the abstract Reduction lemma via smt on the instantiated bridge lemmas."
+    }
+  ],
+  "glossary": {
+    "BR93": "The Bellare-Rogaway 1993 public-key encryption scheme: enc(pk, m) = (f(pk,r), H(r) +^ m) where r is random, f is a trapdoor permutation, and H is a random oracle.",
+    "BR93_CPA(A)": "The IND-CPA security game specialized to BR93 with a lazy random oracle; adversary A chooses two messages, receives an encryption of one, and guesses which.",
+    "LRO": "Lazy Random Oracle \u2014 the standard ROM.Lazy.LRO module that lazily samples random oracle outputs on first query and caches them.",
+    "Log": "Oracle wrapper that records all adversary queries to the random oracle in a list Log.qs, used to define the bad event.",
+    "OW / OW_rand": "One-Way game for trapdoor permutations: given (pk, f(pk,x)), the inverter must recover x. OW_rand is the instantiation of the generic OW theory with the concrete rand type.",
+    "I(A)": "The constructed OW inverter built from CPA adversary A: simulates the CPA game for A, samples a random hash instead of querying the RO, then scans A's query log for the preimage of the OW challenge.",
+    "Game1": "Intermediate game where the RO call H.o(r) during encryption is replaced by uniform sampling h <$ dptxt; stores r as Game1.r for defining the bad event.",
+    "Game2": "Intermediate game where the ciphertext is (f pk r, h) \u2014 the XOR masking with the message is removed, making the ciphertext independent of the challenge bit.",
+    "OWr": "Local reformulation of the OW game where the challenge preimage x is a module variable rather than a local variable; syntactically equivalent to OW by sim.",
+    "Adv": "CPA adversary type with two procedures: a1(pk) returns a pair of challenge messages, a2(c) returns a bit (guess of the challenge bit).",
+    "POracle": "Partial oracle interface (queryable via o(x) but not initializable); the type of oracle access given to the adversary.",
+    "A_CPA": "Adapter module converting a concrete CPA adversary (which receives bitstring ciphertexts) into an abstract CPA adversary (which receives rand * ptxt pairs) by applying the format operator (||).",
+    "CPA(O, S, A)": "Generic IND-CPA game parameterized by oracle O, scheme S, and adversary A; used in the concrete instantiation.",
+    "BR": "Concrete Bellare-Rogaway scheme module implementing the Scheme interface with bitstring types and the (||) format operator.",
+    "Exp_OW(I)": "Concrete one-way experiment: samples keys and challenge, calls I.invert, checks if the returned value equals the preimage.",
+    "dptxt / drand / dkeys": "Lossless uniform distributions over plaintexts, nonces, and keypairs respectively; their properties (lossless, full, uniform, funiform) are the key distribution assumptions.",
+    "f / fi": "The trapdoor permutation family (f indexed by pkey) and its inverse (fi indexed by skey); the axiom fK states fi(sk, f(pk, x)) = x for valid keypairs.",
+    "(+^)": "Nilpotent (self-inverse) addition on plaintexts, modeling bitwise XOR: associative, commutative, and x +^ x +^ y = y."
+  },
+  "_source_sha256": "5131f560a3a073ae2b378bd4c65fab47345fa13b71fbd894a6a0d9ac14ef7f4a",
+  "synthetic_module_bridges": [],
+  "_synthetic_module_bridges_note": "br93 has no unrecorded module equivalences worth surfacing: every game-hop is codified as a local pr_* lemma (pr_Game0_Game1, pr_Game1_Game2, pr_bad_Game1_Game2, pr_Game2_OW), plus OW_OWr for the OW<->OWr reformulation. Unlike chacha_poly, there is no multi-wrapper reduction chain (ChaChaPoly -> OCC(I_stateless) -> OChaChaPoly(I)) that would justify a synthetic bridge. AUTO-BRIDGE-SUGGEST should fire on the rewrite_forms of the codified lemmas directly; no 2-step chain synthesis needed.",
+  "_annotator_version": "v3.1",
+  "_model": "claude-opus-4-6"
+}

@@ -1,0 +1,19 @@
+{
+  "turn": 18,
+  "handled_intent": {
+    "intent": "commit_tactic",
+    "payload": {
+      "tactic": "while{2} ( (p{1} = p{2} /\\ Mem.k{1} = Mem.k{2} /\\ Mem.log{1} = Mem.log{2} /\\ Mem.lc{1} = Mem.lc{2}) /\\ StLSke.gs{1} = RO.m{2} /\\ k0{2} = Mem.k{2} /\\ n0{2} = n{2} /\\ k{2} = Mem.k{2} /\\ (n{2}, a{2}, p1{2}) = p{2} /\\ c2{2} ++ gen_CTR_encrypt_bytes take_xor (get RO.m{2}) k0{2} n0{2} i{2} p2{2} = gen_CTR_encrypt_bytes take_xor (get RO.m{2}) k0{2} n0{2} 1 p1{2} ) (size p2{2})."
+    }
+  },
+  "ok": true,
+  "manager_note": "Committed tactic accepted; the EasyCrypt proof state changed.",
+  "manager_actions": [
+    {
+      "action": "tactic commit",
+      "outcome": "EasyCrypt accepted the committed tactic.",
+      "timing": "243 ms"
+    }
+  ],
+  "view_refreshed": true
+}

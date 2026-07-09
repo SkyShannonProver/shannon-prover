@@ -1,0 +1,2845 @@
+{
+  "kind": "agent_view_timeline_report",
+  "run_count": 1,
+  "runs": [
+    {
+      "chronological": false,
+      "first_action_at": "2026-06-06T08:30:49+00:00",
+      "label": "2026-06-06_0130_mee_decrypt_correct",
+      "node_count": 2,
+      "rows": [
+        {
+          "action_submitted_at": "2026-06-06T08:30:53.600000+00:00",
+          "action_time": "+00:05",
+          "agent_think": "",
+          "agent_think_path": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_0/thinking/turn_001.md",
+          "agent_think_seconds": null,
+          "decision_followup_path": "",
+          "decision_state_summary": "phoare / procedure_entry / procedure_frontier, 1 goal, goal 300 chars",
+          "decision_view_path": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/manager_bootstrap_0_0.json",
+          "deterministic_signals": [],
+          "goal_chars": 300,
+          "inspect_topics": [
+            "goal_info",
+            "call_site_options",
+            "call_subgoals",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms"
+          ],
+          "intent": {
+            "intent": "probe_tactic",
+            "payload": {
+              "tactic": "proc."
+            }
+          },
+          "intent_summary": "probe proc",
+          "manager_action_summary": [
+            "tactic probe (3.4 s)"
+          ],
+          "manager_result_at": "2026-06-06T08:30:57+00:00",
+          "manager_result_path": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_0/manager_results/turn_001.json",
+          "manager_seconds": 3.4,
+          "manager_time": "3.4 s",
+          "node": "Tree-0.0",
+          "node_dir": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_0",
+          "ok": true,
+          "result_followup_path": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_0/followups/turn_001.md",
+          "result_state_summary": "phoare / procedure_entry / procedure_frontier, 1 goal, goal 300 chars",
+          "result_summary": "accepted probe",
+          "result_view_path": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_0/workspace_views/turn_001.json",
+          "turn": 1,
+          "usage": {
+            "cache_creation_input_tokens": 24284,
+            "cache_read_input_tokens": 54330,
+            "input_tokens": 5,
+            "output_tokens": 660
+          },
+          "view_chars": 8184,
+          "view_id": "T0.0-1",
+          "workspace_view_path": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/manager_bootstrap_0_0.json"
+        },
+        {
+          "action_submitted_at": "2026-06-06T08:31:21.735000+00:00",
+          "action_time": "+00:33",
+          "agent_think": "24.7 s",
+          "agent_think_path": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_0/thinking/turn_002.md",
+          "agent_think_seconds": 24.735,
+          "decision_followup_path": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_0/followups/turn_001.md",
+          "decision_state_summary": "phoare / procedure_entry / procedure_frontier, 1 goal, goal 300 chars",
+          "decision_view_path": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_0/workspace_views/turn_001.json",
+          "deterministic_signals": [
+            "commit_without_probe_check_not_inferred"
+          ],
+          "goal_chars": 300,
+          "inspect_topics": [
+            "goal_info",
+            "call_site_options",
+            "call_subgoals",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms"
+          ],
+          "intent": {
+            "intent": "commit_tactic",
+            "payload": {
+              "tactic": "proc."
+            }
+          },
+          "intent_summary": "commit proc",
+          "manager_action_summary": [
+            "tactic commit (265 ms)"
+          ],
+          "manager_result_at": "2026-06-06T08:31:22+00:00",
+          "manager_result_path": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_0/manager_results/turn_002.json",
+          "manager_seconds": 0.265,
+          "manager_time": "265 ms",
+          "node": "Tree-0.0",
+          "node_dir": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_0",
+          "ok": true,
+          "result_followup_path": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_0/followups/turn_002.md",
+          "result_state_summary": "phoare / procedure_body / procedure_frontier, 1 goal, goal 1311 chars",
+          "result_summary": "accepted commit",
+          "result_view_path": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_0/workspace_views/turn_002.json",
+          "turn": 2,
+          "usage": {
+            "cache_creation_input_tokens": 2030,
+            "cache_read_input_tokens": 39876,
+            "input_tokens": 1,
+            "output_tokens": 837
+          },
+          "view_chars": 12923,
+          "view_id": "T0.0-2",
+          "workspace_view_path": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_0/workspace_views/turn_001.json"
+        },
+        {
+          "action_submitted_at": "2026-06-06T08:31:27.100000+00:00",
+          "action_time": "+00:38",
+          "agent_think": "5.1 s",
+          "agent_think_path": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_0/thinking/turn_003.md",
+          "agent_think_seconds": 5.1,
+          "decision_followup_path": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_0/followups/turn_002.md",
+          "decision_state_summary": "phoare / procedure_body / procedure_frontier, 1 goal, goal 1311 chars",
+          "decision_view_path": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_0/workspace_views/turn_002.json",
+          "deterministic_signals": [],
+          "goal_chars": 1311,
+          "inspect_topics": [
+            "goal_info",
+            "call_site_options",
+            "call_subgoals",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms"
+          ],
+          "intent": {
+            "intent": "probe_tactic",
+            "payload": {
+              "tactic": "inline *."
+            }
+          },
+          "intent_summary": "probe inline *",
+          "manager_action_summary": [
+            "tactic probe (1.9 s)"
+          ],
+          "manager_result_at": "2026-06-06T08:31:29+00:00",
+          "manager_result_path": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_0/manager_results/turn_003.json",
+          "manager_seconds": 1.9,
+          "manager_time": "1.9 s",
+          "node": "Tree-0.0",
+          "node_dir": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_0",
+          "ok": true,
+          "result_followup_path": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_0/followups/turn_003.md",
+          "result_state_summary": "phoare / procedure_body / procedure_frontier, 1 goal, goal 1311 chars",
+          "result_summary": "rejected probe: manager reported rejection",
+          "result_view_path": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_0/workspace_views/turn_003.json",
+          "turn": 3,
+          "usage": {
+            "cache_creation_input_tokens": 2655,
+            "cache_read_input_tokens": 41906,
+            "input_tokens": 1,
+            "output_tokens": 171
+          },
+          "view_chars": 16253,
+          "view_id": "T0.0-3",
+          "workspace_view_path": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_0/workspace_views/turn_002.json"
+        },
+        {
+          "action_submitted_at": "2026-06-06T08:31:55.712000+00:00",
+          "action_time": "+01:07",
+          "agent_think": "26.7 s",
+          "agent_think_path": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_0/thinking/turn_004.md",
+          "agent_think_seconds": 26.712,
+          "decision_followup_path": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_0/followups/turn_003.md",
+          "decision_state_summary": "phoare / procedure_body / procedure_frontier, 1 goal, goal 1311 chars",
+          "decision_view_path": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_0/workspace_views/turn_003.json",
+          "deterministic_signals": [],
+          "goal_chars": 1311,
+          "inspect_topics": [
+            "goal_info",
+            "call_site_options",
+            "call_subgoals",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms"
+          ],
+          "intent": {
+            "intent": "probe_tactic",
+            "payload": {
+              "tactic": "inline PRPc.PseudoRP.fi."
+            }
+          },
+          "intent_summary": "probe inline PRPc.PseudoRP.fi",
+          "manager_action_summary": [
+            "tactic probe (288 ms)"
+          ],
+          "manager_result_at": "2026-06-06T08:31:56+00:00",
+          "manager_result_path": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_0/manager_results/turn_004.json",
+          "manager_seconds": 0.288,
+          "manager_time": "288 ms",
+          "node": "Tree-0.0",
+          "node_dir": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_0",
+          "ok": true,
+          "result_followup_path": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_0/followups/turn_004.md",
+          "result_state_summary": "phoare / procedure_body / procedure_frontier, 1 goal, goal 1311 chars",
+          "result_summary": "rejected probe: manager reported rejection",
+          "result_view_path": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_0/workspace_views/turn_004.json",
+          "turn": 4,
+          "usage": {
+            "cache_creation_input_tokens": 9244,
+            "cache_read_input_tokens": 90769,
+            "input_tokens": 2,
+            "output_tokens": 840
+          },
+          "view_chars": 16586,
+          "view_id": "T0.0-4",
+          "workspace_view_path": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_0/workspace_views/turn_003.json"
+        },
+        {
+          "action_submitted_at": "2026-06-06T08:32:10+00:00",
+          "action_time": "+01:21",
+          "agent_think": "14 s",
+          "agent_think_path": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_0/thinking/turn_005.md",
+          "agent_think_seconds": 14.0,
+          "decision_followup_path": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_0/followups/turn_004.md",
+          "decision_state_summary": "phoare / procedure_body / procedure_frontier, 1 goal, goal 1311 chars",
+          "decision_view_path": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_0/workspace_views/turn_004.json",
+          "deterministic_signals": [],
+          "goal_chars": 1311,
+          "inspect_topics": [
+            "goal_info",
+            "call_site_options",
+            "call_subgoals",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms"
+          ],
+          "intent": {
+            "intent": "inspect_context",
+            "payload": {
+              "topic": "call_site_options"
+            }
+          },
+          "intent_summary": "inspect call_site_options",
+          "manager_action_summary": [
+            "inspect call site options"
+          ],
+          "manager_result_at": "2026-06-06T08:32:10+00:00",
+          "manager_result_path": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_0/manager_results/turn_005.json",
+          "manager_seconds": 0.0,
+          "manager_time": "",
+          "node": "Tree-0.0",
+          "node_dir": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_0",
+          "ok": true,
+          "result_followup_path": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_0/followups/turn_005.md",
+          "result_state_summary": "phoare / procedure_body / procedure_frontier, 1 goal, goal 1311 chars",
+          "result_summary": "read-only inspect",
+          "result_view_path": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_0/workspace_views/turn_005.json",
+          "turn": 5,
+          "usage": {
+            "cache_creation_input_tokens": 2578,
+            "cache_read_input_tokens": 109746,
+            "input_tokens": 2,
+            "output_tokens": 563
+          },
+          "view_chars": 16631,
+          "view_id": "T0.0-5",
+          "workspace_view_path": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_0/workspace_views/turn_004.json"
+        },
+        {
+          "action_submitted_at": "2026-06-06T08:32:28.666000+00:00",
+          "action_time": "+01:40",
+          "agent_think": "18.7 s",
+          "agent_think_path": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_0/thinking/turn_006.md",
+          "agent_think_seconds": 18.666,
+          "decision_followup_path": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_0/followups/turn_005.md",
+          "decision_state_summary": "phoare / procedure_body / procedure_frontier, 1 goal, goal 1311 chars",
+          "decision_view_path": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_0/workspace_views/turn_005.json",
+          "deterministic_signals": [],
+          "goal_chars": 1311,
+          "inspect_topics": [
+            "goal_info",
+            "call_site_options",
+            "call_subgoals",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms"
+          ],
+          "intent": {
+            "intent": "probe_tactic",
+            "payload": {
+              "tactic": "hoare."
+            }
+          },
+          "intent_summary": "probe hoare",
+          "manager_action_summary": [
+            "tactic probe (334 ms)"
+          ],
+          "manager_result_at": "2026-06-06T08:32:29+00:00",
+          "manager_result_path": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_0/manager_results/turn_006.json",
+          "manager_seconds": 0.334,
+          "manager_time": "334 ms",
+          "node": "Tree-0.0",
+          "node_dir": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_0",
+          "ok": true,
+          "result_followup_path": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_0/followups/turn_006.md",
+          "result_state_summary": "phoare / procedure_body / procedure_frontier, 1 goal, goal 1311 chars",
+          "result_summary": "accepted probe",
+          "result_view_path": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_0/workspace_views/turn_006.json",
+          "turn": 6,
+          "usage": {
+            "cache_creation_input_tokens": 2316,
+            "cache_read_input_tokens": 113966,
+            "input_tokens": 2,
+            "output_tokens": 552
+          },
+          "view_chars": 16609,
+          "view_id": "T0.0-6",
+          "workspace_view_path": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_0/workspace_views/turn_005.json"
+        },
+        {
+          "action_submitted_at": "2026-06-06T08:32:58.100000+00:00",
+          "action_time": "+02:09",
+          "agent_think": "29.1 s",
+          "agent_think_path": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_0/thinking/turn_007.md",
+          "agent_think_seconds": 29.1,
+          "decision_followup_path": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_0/followups/turn_006.md",
+          "decision_state_summary": "phoare / procedure_body / procedure_frontier, 1 goal, goal 1311 chars",
+          "decision_view_path": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_0/workspace_views/turn_006.json",
+          "deterministic_signals": [],
+          "goal_chars": 1311,
+          "inspect_topics": [
+            "goal_info",
+            "call_site_options",
+            "call_subgoals",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms"
+          ],
+          "intent": {
+            "intent": "lookup_symbol",
+            "payload": {
+              "symbol": "PRPc.PseudoRP.fi"
+            }
+          },
+          "intent_summary": "lookup PRPc.PseudoRP.fi",
+          "manager_action_summary": [
+            "symbol lookup (1.9 s)"
+          ],
+          "manager_result_at": "2026-06-06T08:33:00+00:00",
+          "manager_result_path": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_0/manager_results/turn_007.json",
+          "manager_seconds": 1.9,
+          "manager_time": "1.9 s",
+          "node": "Tree-0.0",
+          "node_dir": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_0",
+          "ok": true,
+          "result_followup_path": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_0/followups/turn_007.md",
+          "result_state_summary": "phoare / procedure_body / procedure_frontier, 1 goal, goal 1311 chars",
+          "result_summary": "lookup result",
+          "result_view_path": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_0/workspace_views/turn_007.json",
+          "turn": 7,
+          "usage": {
+            "cache_creation_input_tokens": 1994,
+            "cache_read_input_tokens": 58699,
+            "input_tokens": 1,
+            "output_tokens": 891
+          },
+          "view_chars": 19714,
+          "view_id": "T0.0-7",
+          "workspace_view_path": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_0/workspace_views/turn_006.json"
+        },
+        {
+          "action_submitted_at": "2026-06-06T08:33:27.673000+00:00",
+          "action_time": "+02:39",
+          "agent_think": "27.7 s",
+          "agent_think_path": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_0/thinking/turn_008.md",
+          "agent_think_seconds": 27.673,
+          "decision_followup_path": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_0/followups/turn_007.md",
+          "decision_state_summary": "phoare / procedure_body / procedure_frontier, 1 goal, goal 1311 chars",
+          "decision_view_path": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_0/workspace_views/turn_007.json",
+          "deterministic_signals": [
+            "manager_error:unknown procedure: PseudoRP.fi"
+          ],
+          "goal_chars": 1311,
+          "inspect_topics": [
+            "goal_info",
+            "call_site_options",
+            "call_subgoals",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms"
+          ],
+          "intent": {
+            "intent": "probe_tactic",
+            "payload": {
+              "tactic": "inline PseudoRP.fi."
+            }
+          },
+          "intent_summary": "probe inline PseudoRP.fi",
+          "manager_action_summary": [
+            "tactic probe (327 ms)"
+          ],
+          "manager_result_at": "2026-06-06T08:33:28+00:00",
+          "manager_result_path": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_0/manager_results/turn_008.json",
+          "manager_seconds": 0.327,
+          "manager_time": "327 ms",
+          "node": "Tree-0.0",
+          "node_dir": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_0",
+          "ok": true,
+          "result_followup_path": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_0/followups/turn_008.md",
+          "result_state_summary": "phoare / procedure_body / procedure_frontier, 1 goal, goal 1311 chars",
+          "result_summary": "rejected probe: unknown procedure: PseudoRP.fi",
+          "result_view_path": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_0/workspace_views/turn_008.json",
+          "turn": 8,
+          "usage": {
+            "cache_creation_input_tokens": 2484,
+            "cache_read_input_tokens": 60693,
+            "input_tokens": 3,
+            "output_tokens": 1010
+          },
+          "view_chars": 17450,
+          "view_id": "T0.0-8",
+          "workspace_view_path": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_0/workspace_views/turn_007.json"
+        },
+        {
+          "action_submitted_at": "2026-06-06T08:33:52.816000+00:00",
+          "action_time": "+03:04",
+          "agent_think": "24.8 s",
+          "agent_think_path": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_0/thinking/turn_009.md",
+          "agent_think_seconds": 24.816,
+          "decision_followup_path": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_0/followups/turn_008.md",
+          "decision_state_summary": "phoare / procedure_body / procedure_frontier, 1 goal, goal 1311 chars",
+          "decision_view_path": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_0/workspace_views/turn_008.json",
+          "deterministic_signals": [],
+          "goal_chars": 1311,
+          "inspect_topics": [
+            "diagnose",
+            "goal_info",
+            "call_site_options",
+            "call_subgoals",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms"
+          ],
+          "intent": {
+            "intent": "inspect_context",
+            "payload": {
+              "name": "call",
+              "topic": "tactic_forms"
+            }
+          },
+          "intent_summary": "inspect tactic_forms",
+          "manager_action_summary": [
+            "inspect tactic forms (184 ms)"
+          ],
+          "manager_result_at": "2026-06-06T08:33:53+00:00",
+          "manager_result_path": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_0/manager_results/turn_009.json",
+          "manager_seconds": 0.184,
+          "manager_time": "184 ms",
+          "node": "Tree-0.0",
+          "node_dir": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_0",
+          "ok": true,
+          "result_followup_path": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_0/followups/turn_009.md",
+          "result_state_summary": "phoare / procedure_body / procedure_frontier, 1 goal, goal 1311 chars",
+          "result_summary": "read-only inspect",
+          "result_view_path": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_0/workspace_views/turn_009.json",
+          "turn": 9,
+          "usage": {
+            "cache_creation_input_tokens": 2639,
+            "cache_read_input_tokens": 63177,
+            "input_tokens": 1,
+            "output_tokens": 860
+          },
+          "view_chars": 17324,
+          "view_id": "T0.0-9",
+          "workspace_view_path": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_0/workspace_views/turn_008.json"
+        },
+        {
+          "action_submitted_at": "2026-06-06T08:34:40.827000+00:00",
+          "action_time": "+03:52",
+          "agent_think": "47.8 s",
+          "agent_think_path": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_0/thinking/turn_010.md",
+          "agent_think_seconds": 47.827,
+          "decision_followup_path": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_0/followups/turn_009.md",
+          "decision_state_summary": "phoare / procedure_body / procedure_frontier, 1 goal, goal 1311 chars",
+          "decision_view_path": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_0/workspace_views/turn_009.json",
+          "deterministic_signals": [],
+          "goal_chars": 1311,
+          "inspect_topics": [
+            "diagnose",
+            "goal_info",
+            "call_site_options",
+            "call_subgoals",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms"
+          ],
+          "intent": {
+            "intent": "inspect_context",
+            "payload": {
+              "name": "while",
+              "topic": "tactic_forms"
+            }
+          },
+          "intent_summary": "inspect tactic_forms",
+          "manager_action_summary": [
+            "inspect tactic forms (173 ms)"
+          ],
+          "manager_result_at": "2026-06-06T08:34:41+00:00",
+          "manager_result_path": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_0/manager_results/turn_010.json",
+          "manager_seconds": 0.173,
+          "manager_time": "173 ms",
+          "node": "Tree-0.0",
+          "node_dir": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_0",
+          "ok": true,
+          "result_followup_path": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_0/followups/turn_010.md",
+          "result_state_summary": "phoare / procedure_body / procedure_frontier, 1 goal, goal 1311 chars",
+          "result_summary": "read-only inspect",
+          "result_view_path": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_0/workspace_views/turn_010.json",
+          "turn": 10,
+          "usage": {
+            "cache_creation_input_tokens": 2099,
+            "cache_read_input_tokens": 65816,
+            "input_tokens": 1,
+            "output_tokens": 1906
+          },
+          "view_chars": 17782,
+          "view_id": "T0.0-10",
+          "workspace_view_path": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_0/workspace_views/turn_009.json"
+        },
+        {
+          "action_submitted_at": "2026-06-06T08:35:33.625000+00:00",
+          "action_time": "+04:45",
+          "agent_think": "52.6 s",
+          "agent_think_path": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_0/thinking/turn_011.md",
+          "agent_think_seconds": 52.625,
+          "decision_followup_path": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_0/followups/turn_010.md",
+          "decision_state_summary": "phoare / procedure_body / procedure_frontier, 1 goal, goal 1311 chars",
+          "decision_view_path": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_0/workspace_views/turn_010.json",
+          "deterministic_signals": [],
+          "goal_chars": 1311,
+          "inspect_topics": [
+            "diagnose",
+            "goal_info",
+            "call_site_options",
+            "call_subgoals",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms"
+          ],
+          "intent": {
+            "intent": "probe_tactic",
+            "payload": {
+              "tactic": "sp."
+            }
+          },
+          "intent_summary": "probe sp",
+          "manager_action_summary": [
+            "tactic probe (375 ms)"
+          ],
+          "manager_result_at": "2026-06-06T08:35:34+00:00",
+          "manager_result_path": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_0/manager_results/turn_011.json",
+          "manager_seconds": 0.375,
+          "manager_time": "375 ms",
+          "node": "Tree-0.0",
+          "node_dir": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_0",
+          "ok": true,
+          "result_followup_path": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_0/followups/turn_011.md",
+          "result_state_summary": "phoare / procedure_body / procedure_frontier, 1 goal, goal 1311 chars",
+          "result_summary": "accepted probe",
+          "result_view_path": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_0/workspace_views/turn_011.json",
+          "turn": 11,
+          "usage": {
+            "cache_creation_input_tokens": 3154,
+            "cache_read_input_tokens": 67915,
+            "input_tokens": 1,
+            "output_tokens": 2697
+          },
+          "view_chars": 17784,
+          "view_id": "T0.0-11",
+          "workspace_view_path": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_0/workspace_views/turn_010.json"
+        },
+        {
+          "action_submitted_at": "2026-06-06T08:37:13.635000+00:00",
+          "action_time": "+06:25",
+          "agent_think": "99.6 s",
+          "agent_think_path": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_0/thinking/turn_012.md",
+          "agent_think_seconds": 99.635,
+          "decision_followup_path": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_0/followups/turn_011.md",
+          "decision_state_summary": "phoare / procedure_body / procedure_frontier, 1 goal, goal 1311 chars",
+          "decision_view_path": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_0/workspace_views/turn_011.json",
+          "deterministic_signals": [],
+          "goal_chars": 1311,
+          "inspect_topics": [
+            "goal_info",
+            "call_site_options",
+            "call_subgoals",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms"
+          ],
+          "intent": {
+            "intent": "probe_tactic",
+            "payload": {
+              "tactic": "inline MEEt.PRPc.PseudoRP.fi."
+            }
+          },
+          "intent_summary": "probe inline MEEt.PRPc.PseudoRP.fi",
+          "manager_action_summary": [
+            "tactic probe (365 ms)"
+          ],
+          "manager_result_at": "2026-06-06T08:37:14+00:00",
+          "manager_result_path": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_0/manager_results/turn_012.json",
+          "manager_seconds": 0.365,
+          "manager_time": "365 ms",
+          "node": "Tree-0.0",
+          "node_dir": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_0",
+          "ok": true,
+          "result_followup_path": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_0/followups/turn_012.md",
+          "result_state_summary": "phoare / procedure_body / procedure_frontier, 1 goal, goal 1311 chars",
+          "result_summary": "rejected probe: manager reported rejection",
+          "result_view_path": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_0/workspace_views/turn_012.json",
+          "turn": 12,
+          "usage": {
+            "cache_creation_input_tokens": 4718,
+            "cache_read_input_tokens": 71069,
+            "input_tokens": 1,
+            "output_tokens": 4568
+          },
+          "view_chars": 20978,
+          "view_id": "T0.0-12",
+          "workspace_view_path": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_0/workspace_views/turn_011.json"
+        },
+        {
+          "action_submitted_at": "2026-06-06T08:37:36.624000+00:00",
+          "action_time": "+06:48",
+          "agent_think": "22.6 s",
+          "agent_think_path": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_0/thinking/turn_013.md",
+          "agent_think_seconds": 22.624,
+          "decision_followup_path": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_0/followups/turn_012.md",
+          "decision_state_summary": "phoare / procedure_body / procedure_frontier, 1 goal, goal 1311 chars",
+          "decision_view_path": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_0/workspace_views/turn_012.json",
+          "deterministic_signals": [],
+          "goal_chars": 1311,
+          "inspect_topics": [
+            "goal_info",
+            "call_site_options",
+            "call_subgoals",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms"
+          ],
+          "intent": {
+            "intent": "probe_tactic",
+            "payload": {
+              "tactic": "inline MAC.verify."
+            }
+          },
+          "intent_summary": "probe inline MAC.verify",
+          "manager_action_summary": [
+            "tactic probe (376 ms)"
+          ],
+          "manager_result_at": "2026-06-06T08:37:37+00:00",
+          "manager_result_path": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_0/manager_results/turn_013.json",
+          "manager_seconds": 0.376,
+          "manager_time": "376 ms",
+          "node": "Tree-0.0",
+          "node_dir": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_0",
+          "ok": true,
+          "result_followup_path": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_0/followups/turn_013.md",
+          "result_state_summary": "phoare / procedure_body / procedure_frontier, 1 goal, goal 1311 chars",
+          "result_summary": "rejected probe: manager reported rejection",
+          "result_view_path": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_0/workspace_views/turn_013.json",
+          "turn": 13,
+          "usage": {
+            "cache_creation_input_tokens": 6697,
+            "cache_read_input_tokens": 157843,
+            "input_tokens": 4,
+            "output_tokens": 617
+          },
+          "view_chars": 17263,
+          "view_id": "T0.0-13",
+          "workspace_view_path": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_0/workspace_views/turn_012.json"
+        },
+        {
+          "action_submitted_at": "2026-06-06T08:39:04.657000+00:00",
+          "action_time": "+08:16",
+          "agent_think": "87.7 s",
+          "agent_think_path": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_0/thinking/turn_014.md",
+          "agent_think_seconds": 87.657,
+          "decision_followup_path": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_0/followups/turn_013.md",
+          "decision_state_summary": "phoare / procedure_body / procedure_frontier, 1 goal, goal 1311 chars",
+          "decision_view_path": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_0/workspace_views/turn_013.json",
+          "deterministic_signals": [
+            "commit_without_probe_check_not_inferred"
+          ],
+          "goal_chars": 1311,
+          "inspect_topics": [
+            "goal_info",
+            "call_site_options",
+            "call_subgoals",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms"
+          ],
+          "intent": {
+            "intent": "commit_tactic",
+            "payload": {
+              "tactic": "sp."
+            }
+          },
+          "intent_summary": "commit sp",
+          "manager_action_summary": [
+            "tactic commit (343 ms)"
+          ],
+          "manager_result_at": "2026-06-06T08:39:05+00:00",
+          "manager_result_path": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_0/manager_results/turn_014.json",
+          "manager_seconds": 0.343,
+          "manager_time": "343 ms",
+          "node": "Tree-0.0",
+          "node_dir": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_0",
+          "ok": true,
+          "result_followup_path": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_0/followups/turn_014.md",
+          "result_state_summary": "phoare / procedure_body / procedure_frontier, 1 goal, goal 1203 chars",
+          "result_summary": "accepted commit",
+          "result_view_path": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_0/workspace_views/turn_014.json",
+          "turn": 14,
+          "usage": {
+            "cache_creation_input_tokens": 8465,
+            "cache_read_input_tokens": 430419,
+            "input_tokens": 5,
+            "output_tokens": 3576
+          },
+          "view_chars": 17230,
+          "view_id": "T0.0-14",
+          "workspace_view_path": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_0/workspace_views/turn_013.json"
+        },
+        {
+          "action_submitted_at": "2026-06-06T08:39:13.100000+00:00",
+          "action_time": "+08:24",
+          "agent_think": "8.1 s",
+          "agent_think_path": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_0/thinking/turn_015.md",
+          "agent_think_seconds": 8.1,
+          "decision_followup_path": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_0/followups/turn_014.md",
+          "decision_state_summary": "phoare / procedure_body / procedure_frontier, 1 goal, goal 1203 chars",
+          "decision_view_path": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_0/workspace_views/turn_014.json",
+          "deterministic_signals": [],
+          "goal_chars": 1203,
+          "inspect_topics": [
+            "goal_info",
+            "call_site_options",
+            "call_subgoals",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms"
+          ],
+          "intent": {
+            "intent": "probe_tactic",
+            "payload": {
+              "tactic": "inline *."
+            }
+          },
+          "intent_summary": "probe inline *",
+          "manager_action_summary": [
+            "tactic probe (1.9 s)"
+          ],
+          "manager_result_at": "2026-06-06T08:39:15+00:00",
+          "manager_result_path": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_0/manager_results/turn_015.json",
+          "manager_seconds": 1.9,
+          "manager_time": "1.9 s",
+          "node": "Tree-0.0",
+          "node_dir": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_0",
+          "ok": true,
+          "result_followup_path": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_0/followups/turn_015.md",
+          "result_state_summary": "phoare / procedure_body / procedure_frontier, 1 goal, goal 1203 chars",
+          "result_summary": "rejected probe: manager reported rejection",
+          "result_view_path": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_0/workspace_views/turn_015.json",
+          "turn": 15,
+          "usage": {
+            "cache_creation_input_tokens": 3896,
+            "cache_read_input_tokens": 90949,
+            "input_tokens": 3,
+            "output_tokens": 181
+          },
+          "view_chars": 15678,
+          "view_id": "T0.0-15",
+          "workspace_view_path": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_0/workspace_views/turn_014.json"
+        },
+        {
+          "action_submitted_at": "2026-06-06T08:39:23.735000+00:00",
+          "action_time": "+08:35",
+          "agent_think": "8.7 s",
+          "agent_think_path": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_0/thinking/turn_016.md",
+          "agent_think_seconds": 8.735,
+          "decision_followup_path": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_0/followups/turn_015.md",
+          "decision_state_summary": "phoare / procedure_body / procedure_frontier, 1 goal, goal 1203 chars",
+          "decision_view_path": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_0/workspace_views/turn_015.json",
+          "deterministic_signals": [],
+          "goal_chars": 1203,
+          "inspect_topics": [
+            "goal_info",
+            "call_site_options",
+            "call_subgoals",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms"
+          ],
+          "intent": {
+            "intent": "probe_tactic",
+            "payload": {
+              "tactic": "wp."
+            }
+          },
+          "intent_summary": "probe wp",
+          "manager_action_summary": [
+            "tactic probe (265 ms)"
+          ],
+          "manager_result_at": "2026-06-06T08:39:24+00:00",
+          "manager_result_path": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_0/manager_results/turn_016.json",
+          "manager_seconds": 0.265,
+          "manager_time": "265 ms",
+          "node": "Tree-0.0",
+          "node_dir": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_0",
+          "ok": true,
+          "result_followup_path": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_0/followups/turn_016.md",
+          "result_state_summary": "phoare / procedure_body / procedure_frontier, 1 goal, goal 1203 chars",
+          "result_summary": "rejected probe: manager reported rejection",
+          "result_view_path": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_0/workspace_views/turn_016.json",
+          "turn": 16,
+          "usage": {
+            "cache_creation_input_tokens": 1659,
+            "cache_read_input_tokens": 94845,
+            "input_tokens": 1,
+            "output_tokens": 233
+          },
+          "view_chars": 16015,
+          "view_id": "T0.0-16",
+          "workspace_view_path": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_0/workspace_views/turn_015.json"
+        },
+        {
+          "action_submitted_at": "2026-06-06T08:41:07.685000+00:00",
+          "action_time": "+10:19",
+          "agent_think": "103.7 s",
+          "agent_think_path": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_0/thinking/turn_017.md",
+          "agent_think_seconds": 103.685,
+          "decision_followup_path": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_0/followups/turn_016.md",
+          "decision_state_summary": "phoare / procedure_body / procedure_frontier, 1 goal, goal 1203 chars",
+          "decision_view_path": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_0/workspace_views/turn_016.json",
+          "deterministic_signals": [],
+          "goal_chars": 1203,
+          "inspect_topics": [
+            "goal_info",
+            "call_site_options",
+            "call_subgoals",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms"
+          ],
+          "intent": {
+            "intent": "probe_tactic",
+            "payload": {
+              "tactic": "seq 1 : (padded = cbc_dec AESi _ek (head witness _c) (behead _c) /\\ ek = _ek /\\ mk = _mk /\\ p = None)."
+            }
+          },
+          "intent_summary": "probe seq 1 : (padded = cbc_dec AESi _ek (head witness _c) (behead _c) /\\ e...",
+          "manager_action_summary": [
+            "tactic probe (315 ms)"
+          ],
+          "manager_result_at": "2026-06-06T08:41:08+00:00",
+          "manager_result_path": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_0/manager_results/turn_017.json",
+          "manager_seconds": 0.315,
+          "manager_time": "315 ms",
+          "node": "Tree-0.0",
+          "node_dir": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_0",
+          "ok": true,
+          "result_followup_path": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_0/followups/turn_017.md",
+          "result_state_summary": "phoare / procedure_body / seq_cut, 1 goal, goal 1203 chars",
+          "result_summary": "accepted probe",
+          "result_view_path": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_0/workspace_views/turn_017.json",
+          "turn": 17,
+          "usage": {
+            "cache_creation_input_tokens": 5809,
+            "cache_read_input_tokens": 496472,
+            "input_tokens": 5,
+            "output_tokens": 4266
+          },
+          "view_chars": 15997,
+          "view_id": "T0.0-17",
+          "workspace_view_path": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_0/workspace_views/turn_016.json"
+        },
+        {
+          "action_submitted_at": "2026-06-06T08:41:50.698000+00:00",
+          "action_time": "+11:02",
+          "agent_think": "42.7 s",
+          "agent_think_path": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_0/thinking/turn_018.md",
+          "agent_think_seconds": 42.698,
+          "decision_followup_path": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_0/followups/turn_017.md",
+          "decision_state_summary": "phoare / procedure_body / seq_cut, 1 goal, goal 1203 chars",
+          "decision_view_path": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_0/workspace_views/turn_017.json",
+          "deterministic_signals": [
+            "manager_error:invalid last instruction"
+          ],
+          "goal_chars": 1203,
+          "inspect_topics": [
+            "goal_info",
+            "call_site_options",
+            "call_subgoals",
+            "align",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms"
+          ],
+          "intent": {
+            "intent": "probe_tactic",
+            "payload": {
+              "tactic": "while (0 <= i <= size c /\\ ek = _ek /\\ mk = _mk /\\ p = None /\\ c = behead _c /\\ padded = cbc_dec AESi _ek (head witness _c) (take i c) /\\ s = last (head witness _c) (take i c)) (size c - i)."
+            }
+          },
+          "intent_summary": "probe while (0 <= i <= size c /\\ ek = _ek /\\ mk = _mk /\\ p = None /\\ c = be...",
+          "manager_action_summary": [
+            "tactic probe (302 ms)"
+          ],
+          "manager_result_at": "2026-06-06T08:41:51+00:00",
+          "manager_result_path": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_0/manager_results/turn_018.json",
+          "manager_seconds": 0.302,
+          "manager_time": "302 ms",
+          "node": "Tree-0.0",
+          "node_dir": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_0",
+          "ok": true,
+          "result_followup_path": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_0/followups/turn_018.md",
+          "result_state_summary": "phoare / procedure_body / seq_cut, 1 goal, goal 1203 chars",
+          "result_summary": "rejected probe: invalid last instruction",
+          "result_view_path": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_0/workspace_views/turn_018.json",
+          "turn": 18,
+          "usage": {
+            "cache_creation_input_tokens": 4810,
+            "cache_read_input_tokens": 102313,
+            "input_tokens": 3,
+            "output_tokens": 1851
+          },
+          "view_chars": 24070,
+          "view_id": "T0.0-18",
+          "workspace_view_path": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_0/workspace_views/turn_017.json"
+        },
+        {
+          "action_submitted_at": "2026-06-06T08:44:05.670000+00:00",
+          "action_time": "+13:17",
+          "agent_think": "134.7 s",
+          "agent_think_path": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_0/thinking/turn_019.md",
+          "agent_think_seconds": 134.67,
+          "decision_followup_path": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_0/followups/turn_018.md",
+          "decision_state_summary": "phoare / procedure_body / seq_cut, 1 goal, goal 1203 chars",
+          "decision_view_path": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_0/workspace_views/turn_018.json",
+          "deterministic_signals": [
+            "commit_without_probe_check_not_inferred"
+          ],
+          "goal_chars": 1203,
+          "inspect_topics": [
+            "diagnose",
+            "goal_info",
+            "call_site_options",
+            "call_subgoals",
+            "align",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms"
+          ],
+          "intent": {
+            "intent": "commit_tactic",
+            "payload": {
+              "tactic": "seq 1 : (padded = cbc_dec AESi _ek (head witness _c) (behead _c) /\\ ek = _ek /\\ mk = _mk /\\ p = None)."
+            }
+          },
+          "intent_summary": "commit seq 1 : (padded = cbc_dec AESi _ek (head witness _c) (behead _c) /\\ e...",
+          "manager_action_summary": [
+            "tactic commit (330 ms)"
+          ],
+          "manager_result_at": "2026-06-06T08:44:06+00:00",
+          "manager_result_path": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_0/manager_results/turn_019.json",
+          "manager_seconds": 0.33,
+          "manager_time": "330 ms",
+          "node": "Tree-0.0",
+          "node_dir": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_0",
+          "ok": true,
+          "result_followup_path": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_0/followups/turn_019.md",
+          "result_state_summary": "hoare / procedure_body / procedure_frontier, 5 goals, goal 872 chars",
+          "result_summary": "accepted commit",
+          "result_view_path": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_0/workspace_views/turn_019.json",
+          "turn": 19,
+          "usage": {
+            "cache_creation_input_tokens": 5451,
+            "cache_read_input_tokens": 329848,
+            "input_tokens": 3,
+            "output_tokens": 3856
+          },
+          "view_chars": 19728,
+          "view_id": "T0.0-19",
+          "workspace_view_path": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_0/workspace_views/turn_018.json"
+        },
+        {
+          "action_submitted_at": "2026-06-06T08:44:22.900000+00:00",
+          "action_time": "+13:34",
+          "agent_think": "16.9 s",
+          "agent_think_path": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_0/thinking/turn_020.md",
+          "agent_think_seconds": 16.9,
+          "decision_followup_path": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_0/followups/turn_019.md",
+          "decision_state_summary": "hoare / procedure_body / procedure_frontier, 5 goals, goal 872 chars",
+          "decision_view_path": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_0/workspace_views/turn_019.json",
+          "deterministic_signals": [
+            "manager_error:invalid arguments"
+          ],
+          "goal_chars": 872,
+          "inspect_topics": [
+            "goal_info",
+            "call_site_options",
+            "call_subgoals",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms"
+          ],
+          "intent": {
+            "intent": "probe_tactic",
+            "payload": {
+              "tactic": "while (true) (size c - i)."
+            }
+          },
+          "intent_summary": "probe while (true) (size c - i)",
+          "manager_action_summary": [
+            "tactic probe (2.1 s)"
+          ],
+          "manager_result_at": "2026-06-06T08:44:25+00:00",
+          "manager_result_path": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_0/manager_results/turn_020.json",
+          "manager_seconds": 2.1,
+          "manager_time": "2.1 s",
+          "node": "Tree-0.0",
+          "node_dir": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_0",
+          "ok": true,
+          "result_followup_path": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_0/followups/turn_020.md",
+          "result_state_summary": "hoare / procedure_body / procedure_frontier, 5 goals, goal 872 chars",
+          "result_summary": "rejected probe: invalid arguments",
+          "result_view_path": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_0/workspace_views/turn_020.json",
+          "turn": 20,
+          "usage": {
+            "cache_creation_input_tokens": 4164,
+            "cache_read_input_tokens": 112574,
+            "input_tokens": 1,
+            "output_tokens": 412
+          },
+          "view_chars": 13925,
+          "view_id": "T0.0-20",
+          "workspace_view_path": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_0/workspace_views/turn_019.json"
+        },
+        {
+          "action_submitted_at": "2026-06-06T08:44:56.664000+00:00",
+          "action_time": "+14:08",
+          "agent_think": "31.7 s",
+          "agent_think_path": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_0/thinking/turn_021.md",
+          "agent_think_seconds": 31.664,
+          "decision_followup_path": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_0/followups/turn_020.md",
+          "decision_state_summary": "hoare / procedure_body / procedure_frontier, 5 goals, goal 872 chars",
+          "decision_view_path": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_0/workspace_views/turn_020.json",
+          "deterministic_signals": [],
+          "goal_chars": 872,
+          "inspect_topics": [
+            "diagnose",
+            "goal_info",
+            "call_site_options",
+            "call_subgoals",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms"
+          ],
+          "intent": {
+            "intent": "probe_tactic",
+            "payload": {
+              "tactic": "while (true)."
+            }
+          },
+          "intent_summary": "probe while (true)",
+          "manager_action_summary": [
+            "tactic probe (336 ms)"
+          ],
+          "manager_result_at": "2026-06-06T08:44:57+00:00",
+          "manager_result_path": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_0/manager_results/turn_021.json",
+          "manager_seconds": 0.336,
+          "manager_time": "336 ms",
+          "node": "Tree-0.0",
+          "node_dir": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_0",
+          "ok": true,
+          "result_followup_path": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_0/followups/turn_021.md",
+          "result_state_summary": "hoare / procedure_body / procedure_frontier, 5 goals, goal 872 chars",
+          "result_summary": "accepted probe",
+          "result_view_path": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_0/workspace_views/turn_021.json",
+          "turn": 21,
+          "usage": {
+            "cache_creation_input_tokens": 3982,
+            "cache_read_input_tokens": 235488,
+            "input_tokens": 2,
+            "output_tokens": 1175
+          },
+          "view_chars": 14578,
+          "view_id": "T0.0-21",
+          "workspace_view_path": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_0/workspace_views/turn_020.json"
+        },
+        {
+          "action_submitted_at": "2026-06-06T08:45:11.503000+00:00",
+          "action_time": "+14:23",
+          "agent_think": "14.5 s",
+          "agent_think_path": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_0/thinking/turn_022.md",
+          "agent_think_seconds": 14.503,
+          "decision_followup_path": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_0/followups/turn_021.md",
+          "decision_state_summary": "hoare / procedure_body / procedure_frontier, 5 goals, goal 872 chars",
+          "decision_view_path": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_0/workspace_views/turn_021.json",
+          "deterministic_signals": [
+            "commit_without_probe_check_not_inferred"
+          ],
+          "goal_chars": 872,
+          "inspect_topics": [
+            "goal_info",
+            "call_site_options",
+            "call_subgoals",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms"
+          ],
+          "intent": {
+            "intent": "commit_tactic",
+            "payload": {
+              "tactic": "while (true)."
+            }
+          },
+          "intent_summary": "commit while (true)",
+          "manager_action_summary": [
+            "tactic commit (497 ms)"
+          ],
+          "manager_result_at": "2026-06-06T08:45:12+00:00",
+          "manager_result_path": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_0/manager_results/turn_022.json",
+          "manager_seconds": 0.497,
+          "manager_time": "497 ms",
+          "node": "Tree-0.0",
+          "node_dir": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_0",
+          "ok": true,
+          "result_followup_path": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_0/followups/turn_022.md",
+          "result_state_summary": "hoare / procedure_body / procedure_frontier, 6 goals, goal 594 chars",
+          "result_summary": "accepted commit",
+          "result_view_path": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_0/workspace_views/turn_022.json",
+          "turn": 22,
+          "usage": {
+            "cache_creation_input_tokens": 2486,
+            "cache_read_input_tokens": 120720,
+            "input_tokens": 1,
+            "output_tokens": 404
+          },
+          "view_chars": 17606,
+          "view_id": "T0.0-22",
+          "workspace_view_path": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_0/workspace_views/turn_021.json"
+        },
+        {
+          "action_submitted_at": "2026-06-06T08:30:49+00:00",
+          "action_time": "+00:00",
+          "agent_think": "",
+          "agent_think_path": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_1/thinking/turn_001.md",
+          "agent_think_seconds": null,
+          "decision_followup_path": "",
+          "decision_state_summary": "phoare / procedure_entry / procedure_frontier, 1 goal, goal 300 chars",
+          "decision_view_path": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/manager_bootstrap_0_1.json",
+          "deterministic_signals": [],
+          "goal_chars": 300,
+          "inspect_topics": [
+            "goal_info",
+            "call_site_options",
+            "call_subgoals",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms"
+          ],
+          "intent": {
+            "intent": "probe_tactic",
+            "payload": {
+              "tactic": "proc."
+            }
+          },
+          "intent_summary": "probe proc",
+          "manager_action_summary": [
+            "tactic probe (4.0 s)"
+          ],
+          "manager_result_at": "2026-06-06T08:30:53+00:00",
+          "manager_result_path": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_1/manager_results/turn_001.json",
+          "manager_seconds": 4.0,
+          "manager_time": "4 s",
+          "node": "Tree-0.1",
+          "node_dir": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_1",
+          "ok": true,
+          "result_followup_path": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_1/followups/turn_001.md",
+          "result_state_summary": "phoare / procedure_entry / procedure_frontier, 1 goal, goal 300 chars",
+          "result_summary": "accepted probe",
+          "result_view_path": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_1/workspace_views/turn_001.json",
+          "turn": 1,
+          "usage": {
+            "cache_creation_input_tokens": 24180,
+            "cache_read_input_tokens": 54330,
+            "input_tokens": 5,
+            "output_tokens": 514
+          },
+          "view_chars": 8184,
+          "view_id": "T0.1-1",
+          "workspace_view_path": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/manager_bootstrap_0_1.json"
+        },
+        {
+          "action_submitted_at": "2026-06-06T08:31:18.682000+00:00",
+          "action_time": "+00:30",
+          "agent_think": "25.7 s",
+          "agent_think_path": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_1/thinking/turn_002.md",
+          "agent_think_seconds": 25.682,
+          "decision_followup_path": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_1/followups/turn_001.md",
+          "decision_state_summary": "phoare / procedure_entry / procedure_frontier, 1 goal, goal 300 chars",
+          "decision_view_path": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_1/workspace_views/turn_001.json",
+          "deterministic_signals": [
+            "commit_without_probe_check_not_inferred"
+          ],
+          "goal_chars": 300,
+          "inspect_topics": [
+            "goal_info",
+            "call_site_options",
+            "call_subgoals",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms"
+          ],
+          "intent": {
+            "intent": "commit_tactic",
+            "payload": {
+              "tactic": "proc."
+            }
+          },
+          "intent_summary": "commit proc",
+          "manager_action_summary": [
+            "tactic commit (318 ms)"
+          ],
+          "manager_result_at": "2026-06-06T08:31:19+00:00",
+          "manager_result_path": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_1/manager_results/turn_002.json",
+          "manager_seconds": 0.318,
+          "manager_time": "318 ms",
+          "node": "Tree-0.1",
+          "node_dir": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_1",
+          "ok": true,
+          "result_followup_path": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_1/followups/turn_002.md",
+          "result_state_summary": "phoare / procedure_body / procedure_frontier, 1 goal, goal 1311 chars",
+          "result_summary": "accepted commit",
+          "result_view_path": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_1/workspace_views/turn_002.json",
+          "turn": 2,
+          "usage": {
+            "cache_creation_input_tokens": 1988,
+            "cache_read_input_tokens": 39772,
+            "input_tokens": 1,
+            "output_tokens": 880
+          },
+          "view_chars": 12923,
+          "view_id": "T0.1-2",
+          "workspace_view_path": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_1/workspace_views/turn_001.json"
+        },
+        {
+          "action_submitted_at": "2026-06-06T08:31:47.500000+00:00",
+          "action_time": "+00:58",
+          "agent_think": "28.5 s",
+          "agent_think_path": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_1/thinking/turn_003.md",
+          "agent_think_seconds": 28.5,
+          "decision_followup_path": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_1/followups/turn_002.md",
+          "decision_state_summary": "phoare / procedure_body / procedure_frontier, 1 goal, goal 1311 chars",
+          "decision_view_path": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_1/workspace_views/turn_002.json",
+          "deterministic_signals": [],
+          "goal_chars": 1311,
+          "inspect_topics": [
+            "goal_info",
+            "call_site_options",
+            "call_subgoals",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms"
+          ],
+          "intent": {
+            "intent": "probe_tactic",
+            "payload": {
+              "tactic": "inline *."
+            }
+          },
+          "intent_summary": "probe inline *",
+          "manager_action_summary": [
+            "tactic probe (2.5 s)"
+          ],
+          "manager_result_at": "2026-06-06T08:31:50+00:00",
+          "manager_result_path": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_1/manager_results/turn_003.json",
+          "manager_seconds": 2.5,
+          "manager_time": "2.5 s",
+          "node": "Tree-0.1",
+          "node_dir": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_1",
+          "ok": true,
+          "result_followup_path": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_1/followups/turn_003.md",
+          "result_state_summary": "phoare / procedure_body / procedure_frontier, 1 goal, goal 1311 chars",
+          "result_summary": "rejected probe: manager reported rejection",
+          "result_view_path": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_1/workspace_views/turn_003.json",
+          "turn": 3,
+          "usage": {
+            "cache_creation_input_tokens": 2698,
+            "cache_read_input_tokens": 41760,
+            "input_tokens": 1,
+            "output_tokens": 1092
+          },
+          "view_chars": 16253,
+          "view_id": "T0.1-3",
+          "workspace_view_path": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_1/workspace_views/turn_002.json"
+        },
+        {
+          "action_submitted_at": "2026-06-06T08:32:11.891000+00:00",
+          "action_time": "+01:23",
+          "agent_think": "21.9 s",
+          "agent_think_path": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_1/thinking/turn_004.md",
+          "agent_think_seconds": 21.891,
+          "decision_followup_path": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_1/followups/turn_003.md",
+          "decision_state_summary": "phoare / procedure_body / procedure_frontier, 1 goal, goal 1311 chars",
+          "decision_view_path": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_1/workspace_views/turn_003.json",
+          "deterministic_signals": [],
+          "goal_chars": 1311,
+          "inspect_topics": [
+            "goal_info",
+            "call_site_options",
+            "call_subgoals",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms"
+          ],
+          "intent": {
+            "intent": "inspect_context",
+            "payload": {
+              "name": "while",
+              "topic": "tactic_forms"
+            }
+          },
+          "intent_summary": "inspect tactic_forms",
+          "manager_action_summary": [
+            "inspect tactic forms (109 ms)"
+          ],
+          "manager_result_at": "2026-06-06T08:32:12+00:00",
+          "manager_result_path": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_1/manager_results/turn_004.json",
+          "manager_seconds": 0.109,
+          "manager_time": "109 ms",
+          "node": "Tree-0.1",
+          "node_dir": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_1",
+          "ok": true,
+          "result_followup_path": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_1/followups/turn_004.md",
+          "result_state_summary": "phoare / procedure_body / procedure_frontier, 1 goal, goal 1311 chars",
+          "result_summary": "read-only inspect",
+          "result_view_path": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_1/workspace_views/turn_004.json",
+          "turn": 4,
+          "usage": {
+            "cache_creation_input_tokens": 10169,
+            "cache_read_input_tokens": 91484,
+            "input_tokens": 2,
+            "output_tokens": 604
+          },
+          "view_chars": 16586,
+          "view_id": "T0.1-4",
+          "workspace_view_path": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_1/workspace_views/turn_003.json"
+        },
+        {
+          "action_submitted_at": "2026-06-06T08:32:30.730000+00:00",
+          "action_time": "+01:42",
+          "agent_think": "18.7 s",
+          "agent_think_path": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_1/thinking/turn_005.md",
+          "agent_think_seconds": 18.73,
+          "decision_followup_path": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_1/followups/turn_004.md",
+          "decision_state_summary": "phoare / procedure_body / procedure_frontier, 1 goal, goal 1311 chars",
+          "decision_view_path": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_1/workspace_views/turn_004.json",
+          "deterministic_signals": [],
+          "goal_chars": 1311,
+          "inspect_topics": [
+            "goal_info",
+            "call_site_options",
+            "call_subgoals",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms"
+          ],
+          "intent": {
+            "intent": "probe_tactic",
+            "payload": {
+              "tactic": "inline PRPc.PseudoRP.fi."
+            }
+          },
+          "intent_summary": "probe inline PRPc.PseudoRP.fi",
+          "manager_action_summary": [
+            "tactic probe (270 ms)"
+          ],
+          "manager_result_at": "2026-06-06T08:32:31+00:00",
+          "manager_result_path": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_1/manager_results/turn_005.json",
+          "manager_seconds": 0.27,
+          "manager_time": "270 ms",
+          "node": "Tree-0.1",
+          "node_dir": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_1",
+          "ok": true,
+          "result_followup_path": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_1/followups/turn_005.md",
+          "result_state_summary": "phoare / procedure_body / procedure_frontier, 1 goal, goal 1311 chars",
+          "result_summary": "rejected probe: manager reported rejection",
+          "result_view_path": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_1/workspace_views/turn_005.json",
+          "turn": 5,
+          "usage": {
+            "cache_creation_input_tokens": 1566,
+            "cache_read_input_tokens": 54627,
+            "input_tokens": 1,
+            "output_tokens": 715
+          },
+          "view_chars": 17378,
+          "view_id": "T0.1-5",
+          "workspace_view_path": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_1/workspace_views/turn_004.json"
+        },
+        {
+          "action_submitted_at": "2026-06-06T08:32:51+00:00",
+          "action_time": "+02:02",
+          "agent_think": "20 s",
+          "agent_think_path": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_1/thinking/turn_006.md",
+          "agent_think_seconds": 20.0,
+          "decision_followup_path": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_1/followups/turn_005.md",
+          "decision_state_summary": "phoare / procedure_body / procedure_frontier, 1 goal, goal 1311 chars",
+          "decision_view_path": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_1/workspace_views/turn_005.json",
+          "deterministic_signals": [],
+          "goal_chars": 1311,
+          "inspect_topics": [
+            "goal_info",
+            "call_site_options",
+            "call_subgoals",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms"
+          ],
+          "intent": {
+            "intent": "inspect_context",
+            "payload": {
+              "topic": "call_site_options"
+            }
+          },
+          "intent_summary": "inspect call_site_options",
+          "manager_action_summary": [
+            "inspect call site options"
+          ],
+          "manager_result_at": "2026-06-06T08:32:51+00:00",
+          "manager_result_path": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_1/manager_results/turn_006.json",
+          "manager_seconds": 0.0,
+          "manager_time": "",
+          "node": "Tree-0.1",
+          "node_dir": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_1",
+          "ok": true,
+          "result_followup_path": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_1/followups/turn_006.md",
+          "result_state_summary": "phoare / procedure_body / procedure_frontier, 1 goal, goal 1311 chars",
+          "result_summary": "read-only inspect",
+          "result_view_path": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_1/workspace_views/turn_006.json",
+          "turn": 6,
+          "usage": {
+            "cache_creation_input_tokens": 2671,
+            "cache_read_input_tokens": 114606,
+            "input_tokens": 2,
+            "output_tokens": 621
+          },
+          "view_chars": 16631,
+          "view_id": "T0.1-6",
+          "workspace_view_path": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_1/workspace_views/turn_005.json"
+        },
+        {
+          "action_submitted_at": "2026-06-06T08:33:00.659000+00:00",
+          "action_time": "+02:12",
+          "agent_think": "9.7 s",
+          "agent_think_path": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_1/thinking/turn_007.md",
+          "agent_think_seconds": 9.659,
+          "decision_followup_path": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_1/followups/turn_006.md",
+          "decision_state_summary": "phoare / procedure_body / procedure_frontier, 1 goal, goal 1311 chars",
+          "decision_view_path": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_1/workspace_views/turn_006.json",
+          "deterministic_signals": [],
+          "goal_chars": 1311,
+          "inspect_topics": [
+            "goal_info",
+            "call_site_options",
+            "call_subgoals",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms"
+          ],
+          "intent": {
+            "intent": "probe_tactic",
+            "payload": {
+              "tactic": "sp."
+            }
+          },
+          "intent_summary": "probe sp",
+          "manager_action_summary": [
+            "tactic probe (341 ms)"
+          ],
+          "manager_result_at": "2026-06-06T08:33:01+00:00",
+          "manager_result_path": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_1/manager_results/turn_007.json",
+          "manager_seconds": 0.341,
+          "manager_time": "341 ms",
+          "node": "Tree-0.1",
+          "node_dir": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_1",
+          "ok": true,
+          "result_followup_path": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_1/followups/turn_007.md",
+          "result_state_summary": "phoare / procedure_body / procedure_frontier, 1 goal, goal 1311 chars",
+          "result_summary": "accepted probe",
+          "result_view_path": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_1/workspace_views/turn_007.json",
+          "turn": 7,
+          "usage": {
+            "cache_creation_input_tokens": 2369,
+            "cache_read_input_tokens": 118977,
+            "input_tokens": 2,
+            "output_tokens": 404
+          },
+          "view_chars": 16609,
+          "view_id": "T0.1-7",
+          "workspace_view_path": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_1/workspace_views/turn_006.json"
+        },
+        {
+          "action_submitted_at": "2026-06-06T08:35:01.473000+00:00",
+          "action_time": "+04:12",
+          "agent_think": "120.5 s",
+          "agent_think_path": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_1/thinking/turn_008.md",
+          "agent_think_seconds": 120.473,
+          "decision_followup_path": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_1/followups/turn_007.md",
+          "decision_state_summary": "phoare / procedure_body / procedure_frontier, 1 goal, goal 1311 chars",
+          "decision_view_path": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_1/workspace_views/turn_007.json",
+          "deterministic_signals": [],
+          "goal_chars": 1311,
+          "inspect_topics": [
+            "goal_info",
+            "call_site_options",
+            "call_subgoals",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms"
+          ],
+          "intent": {
+            "intent": "probe_tactic",
+            "payload": {
+              "tactic": "wp."
+            }
+          },
+          "intent_summary": "probe wp",
+          "manager_action_summary": [
+            "tactic probe (527 ms)"
+          ],
+          "manager_result_at": "2026-06-06T08:35:02+00:00",
+          "manager_result_path": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_1/manager_results/turn_008.json",
+          "manager_seconds": 0.527,
+          "manager_time": "527 ms",
+          "node": "Tree-0.1",
+          "node_dir": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_1",
+          "ok": true,
+          "result_followup_path": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_1/followups/turn_008.md",
+          "result_state_summary": "phoare / procedure_body / procedure_frontier, 1 goal, goal 1311 chars",
+          "result_summary": "rejected probe: manager reported rejection",
+          "result_view_path": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_1/workspace_views/turn_008.json",
+          "turn": 8,
+          "usage": {
+            "cache_creation_input_tokens": 2291,
+            "cache_read_input_tokens": 61233,
+            "input_tokens": 3,
+            "output_tokens": 5481
+          },
+          "view_chars": 20783,
+          "view_id": "T0.1-8",
+          "workspace_view_path": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_1/workspace_views/turn_007.json"
+        },
+        {
+          "action_submitted_at": "2026-06-06T08:35:16.611000+00:00",
+          "action_time": "+04:28",
+          "agent_think": "14.6 s",
+          "agent_think_path": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_1/thinking/turn_009.md",
+          "agent_think_seconds": 14.611,
+          "decision_followup_path": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_1/followups/turn_008.md",
+          "decision_state_summary": "phoare / procedure_body / procedure_frontier, 1 goal, goal 1311 chars",
+          "decision_view_path": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_1/workspace_views/turn_008.json",
+          "deterministic_signals": [
+            "commit_without_probe_check_not_inferred"
+          ],
+          "goal_chars": 1311,
+          "inspect_topics": [
+            "goal_info",
+            "call_site_options",
+            "call_subgoals",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms"
+          ],
+          "intent": {
+            "intent": "commit_tactic",
+            "payload": {
+              "tactic": "sp."
+            }
+          },
+          "intent_summary": "commit sp",
+          "manager_action_summary": [
+            "tactic commit (389 ms)"
+          ],
+          "manager_result_at": "2026-06-06T08:35:17+00:00",
+          "manager_result_path": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_1/manager_results/turn_009.json",
+          "manager_seconds": 0.389,
+          "manager_time": "389 ms",
+          "node": "Tree-0.1",
+          "node_dir": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_1",
+          "ok": true,
+          "result_followup_path": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_1/followups/turn_009.md",
+          "result_state_summary": "phoare / procedure_body / procedure_frontier, 1 goal, goal 1203 chars",
+          "result_summary": "accepted commit",
+          "result_view_path": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_1/workspace_views/turn_009.json",
+          "turn": 9,
+          "usage": {
+            "cache_creation_input_tokens": 7429,
+            "cache_read_input_tokens": 134071,
+            "input_tokens": 2,
+            "output_tokens": 551
+          },
+          "view_chars": 16990,
+          "view_id": "T0.1-9",
+          "workspace_view_path": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_1/workspace_views/turn_008.json"
+        },
+        {
+          "action_submitted_at": "2026-06-06T08:38:51+00:00",
+          "action_time": "+08:02",
+          "agent_think": "214 s",
+          "agent_think_path": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_1/thinking/turn_010.md",
+          "agent_think_seconds": 214.0,
+          "decision_followup_path": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_1/followups/turn_009.md",
+          "decision_state_summary": "phoare / procedure_body / procedure_frontier, 1 goal, goal 1203 chars",
+          "decision_view_path": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_1/workspace_views/turn_009.json",
+          "deterministic_signals": [
+            "manager_error:invalid last instruction"
+          ],
+          "goal_chars": 1203,
+          "inspect_topics": [
+            "goal_info",
+            "call_site_options",
+            "call_subgoals",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms"
+          ],
+          "intent": {
+            "intent": "probe_tactic",
+            "payload": {
+              "tactic": "while (0 <= i /\\ i <= size c /\\ padded = cbc_dec AESi ek (head witness _c) (take i c) /\\ s = last (head witness _c) (take i c) /\\ p = None /\\ ek = _ek /\\ mk = _mk /\\ c = behead _c) (size c - i)."
+            }
+          },
+          "intent_summary": "probe while (0 <= i /\\ i <= size c /\\ padded = cbc_dec AESi ek (head witnes...",
+          "manager_action_summary": [
+            "tactic probe (2.0 s)"
+          ],
+          "manager_result_at": "2026-06-06T08:38:53+00:00",
+          "manager_result_path": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_1/manager_results/turn_010.json",
+          "manager_seconds": 2.0,
+          "manager_time": "2 s",
+          "node": "Tree-0.1",
+          "node_dir": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_1",
+          "ok": true,
+          "result_followup_path": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_1/followups/turn_010.md",
+          "result_state_summary": "phoare / procedure_body / procedure_frontier, 1 goal, goal 1203 chars",
+          "result_summary": "rejected probe: invalid last instruction",
+          "result_view_path": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_1/workspace_views/turn_010.json",
+          "turn": 10,
+          "usage": {
+            "cache_creation_input_tokens": 2188,
+            "cache_read_input_tokens": 70953,
+            "input_tokens": 1,
+            "output_tokens": 11594
+          },
+          "view_chars": 15678,
+          "view_id": "T0.1-10",
+          "workspace_view_path": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_1/workspace_views/turn_009.json"
+        },
+        {
+          "action_submitted_at": "2026-06-06T08:39:31.687000+00:00",
+          "action_time": "+08:43",
+          "agent_think": "38.7 s",
+          "agent_think_path": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_1/thinking/turn_011.md",
+          "agent_think_seconds": 38.687,
+          "decision_followup_path": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_1/followups/turn_010.md",
+          "decision_state_summary": "phoare / procedure_body / procedure_frontier, 1 goal, goal 1203 chars",
+          "decision_view_path": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_1/workspace_views/turn_010.json",
+          "deterministic_signals": [],
+          "goal_chars": 1203,
+          "inspect_topics": [
+            "diagnose",
+            "goal_info",
+            "call_site_options",
+            "call_subgoals",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms"
+          ],
+          "intent": {
+            "intent": "probe_tactic",
+            "payload": {
+              "tactic": "seq 1 : (padded = cbc_dec AESi _ek (head witness _c) (behead _c) /\\ mk = _mk /\\ p = None)."
+            }
+          },
+          "intent_summary": "probe seq 1 : (padded = cbc_dec AESi _ek (head witness _c) (behead _c) /\\ m...",
+          "manager_action_summary": [
+            "tactic probe (313 ms)"
+          ],
+          "manager_result_at": "2026-06-06T08:39:32+00:00",
+          "manager_result_path": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_1/manager_results/turn_011.json",
+          "manager_seconds": 0.313,
+          "manager_time": "313 ms",
+          "node": "Tree-0.1",
+          "node_dir": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_1",
+          "ok": true,
+          "result_followup_path": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_1/followups/turn_011.md",
+          "result_state_summary": "phoare / procedure_body / seq_cut, 1 goal, goal 1203 chars",
+          "result_summary": "accepted probe",
+          "result_view_path": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_1/workspace_views/turn_011.json",
+          "turn": 11,
+          "usage": {
+            "cache_creation_input_tokens": 13204,
+            "cache_read_input_tokens": 73141,
+            "input_tokens": 1,
+            "output_tokens": 1800
+          },
+          "view_chars": 18065,
+          "view_id": "T0.1-11",
+          "workspace_view_path": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_1/workspace_views/turn_010.json"
+        },
+        {
+          "action_submitted_at": "2026-06-06T08:40:08.576000+00:00",
+          "action_time": "+09:20",
+          "agent_think": "36.6 s",
+          "agent_think_path": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_1/thinking/turn_012.md",
+          "agent_think_seconds": 36.576,
+          "decision_followup_path": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_1/followups/turn_011.md",
+          "decision_state_summary": "phoare / procedure_body / seq_cut, 1 goal, goal 1203 chars",
+          "decision_view_path": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_1/workspace_views/turn_011.json",
+          "deterministic_signals": [
+            "commit_without_probe_check_not_inferred"
+          ],
+          "goal_chars": 1203,
+          "inspect_topics": [
+            "goal_info",
+            "call_site_options",
+            "call_subgoals",
+            "align",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms"
+          ],
+          "intent": {
+            "intent": "commit_tactic",
+            "payload": {
+              "tactic": "seq 1 : (padded = cbc_dec AESi _ek (head witness _c) (behead _c) /\\ mk = _mk /\\ p = None)."
+            }
+          },
+          "intent_summary": "commit seq 1 : (padded = cbc_dec AESi _ek (head witness _c) (behead _c) /\\ m...",
+          "manager_action_summary": [
+            "tactic commit (424 ms)"
+          ],
+          "manager_result_at": "2026-06-06T08:40:09+00:00",
+          "manager_result_path": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_1/manager_results/turn_012.json",
+          "manager_seconds": 0.424,
+          "manager_time": "424 ms",
+          "node": "Tree-0.1",
+          "node_dir": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_1",
+          "ok": true,
+          "result_followup_path": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_1/followups/turn_012.md",
+          "result_state_summary": "hoare / procedure_body / procedure_frontier, 5 goals, goal 872 chars",
+          "result_summary": "accepted commit",
+          "result_view_path": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_1/workspace_views/turn_012.json",
+          "turn": 12,
+          "usage": {
+            "cache_creation_input_tokens": 3741,
+            "cache_read_input_tokens": 86345,
+            "input_tokens": 1,
+            "output_tokens": 1572
+          },
+          "view_chars": 23914,
+          "view_id": "T0.1-12",
+          "workspace_view_path": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_1/workspace_views/turn_011.json"
+        },
+        {
+          "action_submitted_at": "2026-06-06T08:40:26.900000+00:00",
+          "action_time": "+09:38",
+          "agent_think": "17.9 s",
+          "agent_think_path": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_1/thinking/turn_013.md",
+          "agent_think_seconds": 17.9,
+          "decision_followup_path": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_1/followups/turn_012.md",
+          "decision_state_summary": "hoare / procedure_body / procedure_frontier, 5 goals, goal 872 chars",
+          "decision_view_path": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_1/workspace_views/turn_012.json",
+          "deterministic_signals": [],
+          "goal_chars": 872,
+          "inspect_topics": [
+            "goal_info",
+            "call_site_options",
+            "call_subgoals",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms"
+          ],
+          "intent": {
+            "intent": "probe_tactic",
+            "payload": {
+              "tactic": "while (true)."
+            }
+          },
+          "intent_summary": "probe while (true)",
+          "manager_action_summary": [
+            "tactic probe (2.1 s)"
+          ],
+          "manager_result_at": "2026-06-06T08:40:29+00:00",
+          "manager_result_path": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_1/manager_results/turn_013.json",
+          "manager_seconds": 2.1,
+          "manager_time": "2.1 s",
+          "node": "Tree-0.1",
+          "node_dir": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_1",
+          "ok": true,
+          "result_followup_path": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_1/followups/turn_013.md",
+          "result_state_summary": "hoare / procedure_body / procedure_frontier, 5 goals, goal 872 chars",
+          "result_summary": "accepted probe",
+          "result_view_path": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_1/workspace_views/turn_013.json",
+          "turn": 13,
+          "usage": {
+            "cache_creation_input_tokens": 3392,
+            "cache_read_input_tokens": 90086,
+            "input_tokens": 3,
+            "output_tokens": 573
+          },
+          "view_chars": 13873,
+          "view_id": "T0.1-13",
+          "workspace_view_path": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_1/workspace_views/turn_012.json"
+        },
+        {
+          "action_submitted_at": "2026-06-06T08:40:41.684000+00:00",
+          "action_time": "+09:53",
+          "agent_think": "12.7 s",
+          "agent_think_path": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_1/thinking/turn_014.md",
+          "agent_think_seconds": 12.684,
+          "decision_followup_path": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_1/followups/turn_013.md",
+          "decision_state_summary": "hoare / procedure_body / procedure_frontier, 5 goals, goal 872 chars",
+          "decision_view_path": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_1/workspace_views/turn_013.json",
+          "deterministic_signals": [
+            "commit_without_probe_check_not_inferred"
+          ],
+          "goal_chars": 872,
+          "inspect_topics": [
+            "goal_info",
+            "call_site_options",
+            "call_subgoals",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms"
+          ],
+          "intent": {
+            "intent": "commit_tactic",
+            "payload": {
+              "tactic": "while (true)."
+            }
+          },
+          "intent_summary": "commit while (true)",
+          "manager_action_summary": [
+            "tactic commit (316 ms)"
+          ],
+          "manager_result_at": "2026-06-06T08:40:42+00:00",
+          "manager_result_path": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_1/manager_results/turn_014.json",
+          "manager_seconds": 0.316,
+          "manager_time": "316 ms",
+          "node": "Tree-0.1",
+          "node_dir": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_1",
+          "ok": true,
+          "result_followup_path": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_1/followups/turn_014.md",
+          "result_state_summary": "hoare / procedure_body / procedure_frontier, 6 goals, goal 594 chars",
+          "result_summary": "accepted commit",
+          "result_view_path": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_1/workspace_views/turn_014.json",
+          "turn": 14,
+          "usage": {
+            "cache_creation_input_tokens": 2298,
+            "cache_read_input_tokens": 93478,
+            "input_tokens": 1,
+            "output_tokens": 425
+          },
+          "view_chars": 17580,
+          "view_id": "T0.1-14",
+          "workspace_view_path": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_1/workspace_views/turn_013.json"
+        },
+        {
+          "action_submitted_at": "2026-06-06T08:40:58.800000+00:00",
+          "action_time": "+10:10",
+          "agent_think": "16.8 s",
+          "agent_think_path": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_1/thinking/turn_015.md",
+          "agent_think_seconds": 16.8,
+          "decision_followup_path": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_1/followups/turn_014.md",
+          "decision_state_summary": "hoare / procedure_body / procedure_frontier, 6 goals, goal 594 chars",
+          "decision_view_path": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_1/workspace_views/turn_014.json",
+          "deterministic_signals": [],
+          "goal_chars": 594,
+          "inspect_topics": [
+            "goal_info",
+            "call_site_options",
+            "call_subgoals",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms"
+          ],
+          "intent": {
+            "intent": "probe_tactic",
+            "payload": {
+              "tactic": "wp; call (_: true); auto."
+            }
+          },
+          "intent_summary": "probe wp; call (_: true); auto",
+          "manager_action_summary": [
+            "tactic probe (2.2 s)"
+          ],
+          "manager_result_at": "2026-06-06T08:41:01+00:00",
+          "manager_result_path": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_1/manager_results/turn_015.json",
+          "manager_seconds": 2.2,
+          "manager_time": "2.2 s",
+          "node": "Tree-0.1",
+          "node_dir": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_1",
+          "ok": true,
+          "result_followup_path": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_1/followups/turn_015.md",
+          "result_state_summary": "hoare / procedure_body / procedure_frontier, 6 goals, goal 594 chars",
+          "result_summary": "accepted probe",
+          "result_view_path": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_1/workspace_views/turn_015.json",
+          "turn": 15,
+          "usage": {
+            "cache_creation_input_tokens": 1977,
+            "cache_read_input_tokens": 95776,
+            "input_tokens": 1,
+            "output_tokens": 407
+          },
+          "view_chars": 12819,
+          "view_id": "T0.1-15",
+          "workspace_view_path": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_1/workspace_views/turn_014.json"
+        },
+        {
+          "action_submitted_at": "2026-06-06T08:41:19.692000+00:00",
+          "action_time": "+10:31",
+          "agent_think": "18.7 s",
+          "agent_think_path": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_1/thinking/turn_016.md",
+          "agent_think_seconds": 18.692,
+          "decision_followup_path": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_1/followups/turn_015.md",
+          "decision_state_summary": "hoare / procedure_body / procedure_frontier, 6 goals, goal 594 chars",
+          "decision_view_path": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_1/workspace_views/turn_015.json",
+          "deterministic_signals": [
+            "commit_without_probe_check_not_inferred"
+          ],
+          "goal_chars": 594,
+          "inspect_topics": [
+            "goal_info",
+            "call_site_options",
+            "call_subgoals",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms"
+          ],
+          "intent": {
+            "intent": "commit_tactic",
+            "payload": {
+              "tactic": "wp; call (_: true); auto."
+            }
+          },
+          "intent_summary": "commit wp; call (_: true); auto",
+          "manager_action_summary": [
+            "tactic commit (308 ms)"
+          ],
+          "manager_result_at": "2026-06-06T08:41:20+00:00",
+          "manager_result_path": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_1/manager_results/turn_016.json",
+          "manager_seconds": 0.308,
+          "manager_time": "308 ms",
+          "node": "Tree-0.1",
+          "node_dir": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_1",
+          "ok": true,
+          "result_followup_path": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_1/followups/turn_016.md",
+          "result_state_summary": "hoare / procedure_body / procedure_frontier, 5 goals, goal 592 chars",
+          "result_summary": "accepted commit",
+          "result_view_path": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_1/workspace_views/turn_016.json",
+          "turn": 16,
+          "usage": {
+            "cache_creation_input_tokens": 2126,
+            "cache_read_input_tokens": 97753,
+            "input_tokens": 1,
+            "output_tokens": 474
+          },
+          "view_chars": 17232,
+          "view_id": "T0.1-16",
+          "workspace_view_path": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_1/workspace_views/turn_015.json"
+        },
+        {
+          "action_submitted_at": "2026-06-06T08:41:33.708000+00:00",
+          "action_time": "+10:45",
+          "agent_think": "13.7 s",
+          "agent_think_path": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_1/thinking/turn_017.md",
+          "agent_think_seconds": 13.708,
+          "decision_followup_path": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_1/followups/turn_016.md",
+          "decision_state_summary": "hoare / procedure_body / procedure_frontier, 5 goals, goal 592 chars",
+          "decision_view_path": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_1/workspace_views/turn_016.json",
+          "deterministic_signals": [
+            "commit_without_probe_check_not_inferred"
+          ],
+          "goal_chars": 592,
+          "inspect_topics": [
+            "goal_info",
+            "call_site_options",
+            "call_subgoals",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms"
+          ],
+          "intent": {
+            "intent": "commit_tactic",
+            "payload": {
+              "tactic": "auto."
+            }
+          },
+          "intent_summary": "commit auto",
+          "manager_action_summary": [
+            "tactic commit (292 ms)"
+          ],
+          "manager_result_at": "2026-06-06T08:41:34+00:00",
+          "manager_result_path": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_1/manager_results/turn_017.json",
+          "manager_seconds": 0.292,
+          "manager_time": "292 ms",
+          "node": "Tree-0.1",
+          "node_dir": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_1",
+          "ok": true,
+          "result_followup_path": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_1/followups/turn_017.md",
+          "result_state_summary": "phoare / procedure_body / procedure_frontier, 4 goals, goal 969 chars",
+          "result_summary": "accepted commit",
+          "result_view_path": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_1/workspace_views/turn_017.json",
+          "turn": 17,
+          "usage": {
+            "cache_creation_input_tokens": 2047,
+            "cache_read_input_tokens": 99879,
+            "input_tokens": 1,
+            "output_tokens": 276
+          },
+          "view_chars": 9545,
+          "view_id": "T0.1-17",
+          "workspace_view_path": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_1/workspace_views/turn_016.json"
+        },
+        {
+          "action_submitted_at": "2026-06-06T08:41:48.900000+00:00",
+          "action_time": "+11:00",
+          "agent_think": "14.9 s",
+          "agent_think_path": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_1/thinking/turn_018.md",
+          "agent_think_seconds": 14.9,
+          "decision_followup_path": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_1/followups/turn_017.md",
+          "decision_state_summary": "phoare / procedure_body / procedure_frontier, 4 goals, goal 969 chars",
+          "decision_view_path": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_1/workspace_views/turn_017.json",
+          "deterministic_signals": [],
+          "goal_chars": 969,
+          "inspect_topics": [
+            "goal_info",
+            "call_site_options",
+            "call_subgoals",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms"
+          ],
+          "intent": {
+            "intent": "probe_tactic",
+            "payload": {
+              "tactic": "while (0 <= i /\\ i <= size c /\\ padded = cbc_dec AESi ek (head witness _c) (take i c) /\\ s = last (head witness _c) (take i c) /\\ p = None /\\ ek = _ek /\\ mk = _mk /\\ c = behead _c) (size c - i)."
+            }
+          },
+          "intent_summary": "probe while (0 <= i /\\ i <= size c /\\ padded = cbc_dec AESi ek (head witnes...",
+          "manager_action_summary": [
+            "tactic probe (2.1 s)"
+          ],
+          "manager_result_at": "2026-06-06T08:41:51+00:00",
+          "manager_result_path": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_1/manager_results/turn_018.json",
+          "manager_seconds": 2.1,
+          "manager_time": "2.1 s",
+          "node": "Tree-0.1",
+          "node_dir": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_1",
+          "ok": true,
+          "result_followup_path": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_1/followups/turn_018.md",
+          "result_state_summary": "phoare / procedure_body / procedure_frontier, 4 goals, goal 969 chars",
+          "result_summary": "accepted probe",
+          "result_view_path": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_1/workspace_views/turn_018.json",
+          "turn": 18,
+          "usage": {
+            "cache_creation_input_tokens": 2106,
+            "cache_read_input_tokens": 101926,
+            "input_tokens": 3,
+            "output_tokens": 664
+          },
+          "view_chars": 15383,
+          "view_id": "T0.1-18",
+          "workspace_view_path": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_1/workspace_views/turn_017.json"
+        },
+        {
+          "action_submitted_at": "2026-06-06T08:42:43.558000+00:00",
+          "action_time": "+11:55",
+          "agent_think": "52.6 s",
+          "agent_think_path": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_1/thinking/turn_019.md",
+          "agent_think_seconds": 52.558,
+          "decision_followup_path": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_1/followups/turn_018.md",
+          "decision_state_summary": "phoare / procedure_body / procedure_frontier, 4 goals, goal 969 chars",
+          "decision_view_path": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_1/workspace_views/turn_018.json",
+          "deterministic_signals": [
+            "commit_without_probe_check_not_inferred"
+          ],
+          "goal_chars": 969,
+          "inspect_topics": [
+            "goal_info",
+            "call_site_options",
+            "call_subgoals",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms"
+          ],
+          "intent": {
+            "intent": "commit_tactic",
+            "payload": {
+              "tactic": "while (0 <= i /\\ i <= size c /\\ padded = cbc_dec AESi ek (head witness _c) (take i c) /\\ s = last (head witness _c) (take i c) /\\ p = None /\\ ek = _ek /\\ mk = _mk /\\ c = behead _c) (size c - i)."
+            }
+          },
+          "intent_summary": "commit while (0 <= i /\\ i <= size c /\\ padded = cbc_dec AESi ek (head witnes...",
+          "manager_action_summary": [
+            "tactic commit (442 ms)"
+          ],
+          "manager_result_at": "2026-06-06T08:42:44+00:00",
+          "manager_result_path": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_1/manager_results/turn_019.json",
+          "manager_seconds": 0.442,
+          "manager_time": "442 ms",
+          "node": "Tree-0.1",
+          "node_dir": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_1",
+          "ok": true,
+          "result_followup_path": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_1/followups/turn_019.md",
+          "result_state_summary": "phoare / procedure_body / procedure_frontier, 5 goals, goal 810 chars",
+          "result_summary": "accepted commit",
+          "result_view_path": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_1/workspace_views/turn_019.json",
+          "turn": 19,
+          "usage": {
+            "cache_creation_input_tokens": 2508,
+            "cache_read_input_tokens": 104032,
+            "input_tokens": 1,
+            "output_tokens": 2544
+          },
+          "view_chars": 21633,
+          "view_id": "T0.1-19",
+          "workspace_view_path": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_1/workspace_views/turn_018.json"
+        },
+        {
+          "action_submitted_at": "2026-06-06T08:43:05.800000+00:00",
+          "action_time": "+12:17",
+          "agent_think": "21.8 s",
+          "agent_think_path": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_1/thinking/turn_020.md",
+          "agent_think_seconds": 21.8,
+          "decision_followup_path": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_1/followups/turn_019.md",
+          "decision_state_summary": "phoare / procedure_body / procedure_frontier, 5 goals, goal 810 chars",
+          "decision_view_path": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_1/workspace_views/turn_019.json",
+          "deterministic_signals": [],
+          "goal_chars": 810,
+          "inspect_topics": [
+            "goal_info",
+            "call_site_options",
+            "call_subgoals",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms"
+          ],
+          "intent": {
+            "intent": "probe_tactic",
+            "payload": {
+              "tactic": "move=> z."
+            }
+          },
+          "intent_summary": "probe move=> z",
+          "manager_action_summary": [
+            "tactic probe (2.2 s)"
+          ],
+          "manager_result_at": "2026-06-06T08:43:08+00:00",
+          "manager_result_path": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_1/manager_results/turn_020.json",
+          "manager_seconds": 2.2,
+          "manager_time": "2.2 s",
+          "node": "Tree-0.1",
+          "node_dir": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_1",
+          "ok": true,
+          "result_followup_path": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_1/followups/turn_020.md",
+          "result_state_summary": "phoare / procedure_body / procedure_frontier, 5 goals, goal 810 chars",
+          "result_summary": "accepted probe",
+          "result_view_path": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_1/workspace_views/turn_020.json",
+          "turn": 20,
+          "usage": {
+            "cache_creation_input_tokens": 4216,
+            "cache_read_input_tokens": 106540,
+            "input_tokens": 1,
+            "output_tokens": 783
+          },
+          "view_chars": 13964,
+          "view_id": "T0.1-20",
+          "workspace_view_path": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_1/workspace_views/turn_019.json"
+        },
+        {
+          "action_submitted_at": "2026-06-06T08:43:17.652000+00:00",
+          "action_time": "+12:29",
+          "agent_think": "9.7 s",
+          "agent_think_path": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_1/thinking/turn_021.md",
+          "agent_think_seconds": 9.652,
+          "decision_followup_path": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_1/followups/turn_020.md",
+          "decision_state_summary": "phoare / procedure_body / procedure_frontier, 5 goals, goal 810 chars",
+          "decision_view_path": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_1/workspace_views/turn_020.json",
+          "deterministic_signals": [
+            "commit_without_probe_check_not_inferred"
+          ],
+          "goal_chars": 810,
+          "inspect_topics": [
+            "goal_info",
+            "call_site_options",
+            "call_subgoals",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms"
+          ],
+          "intent": {
+            "intent": "commit_tactic",
+            "payload": {
+              "tactic": "move=> z."
+            }
+          },
+          "intent_summary": "commit move=> z",
+          "manager_action_summary": [
+            "tactic commit (348 ms)"
+          ],
+          "manager_result_at": "2026-06-06T08:43:18+00:00",
+          "manager_result_path": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_1/manager_results/turn_021.json",
+          "manager_seconds": 0.348,
+          "manager_time": "348 ms",
+          "node": "Tree-0.1",
+          "node_dir": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_1",
+          "ok": true,
+          "result_followup_path": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_1/followups/turn_021.md",
+          "result_state_summary": "phoare / procedure_body / procedure_frontier, 5 goals, goal 1044 chars",
+          "result_summary": "accepted commit",
+          "result_view_path": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_1/workspace_views/turn_021.json",
+          "turn": 21,
+          "usage": {
+            "cache_creation_input_tokens": 2721,
+            "cache_read_input_tokens": 110756,
+            "input_tokens": 1,
+            "output_tokens": 313
+          },
+          "view_chars": 18032,
+          "view_id": "T0.1-21",
+          "workspace_view_path": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_1/workspace_views/turn_020.json"
+        },
+        {
+          "action_submitted_at": "2026-06-06T08:43:24+00:00",
+          "action_time": "+12:35",
+          "agent_think": "6 s",
+          "agent_think_path": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_1/thinking/turn_022.md",
+          "agent_think_seconds": 6.0,
+          "decision_followup_path": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_1/followups/turn_021.md",
+          "decision_state_summary": "phoare / procedure_body / procedure_frontier, 5 goals, goal 1044 chars",
+          "decision_view_path": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_1/workspace_views/turn_021.json",
+          "deterministic_signals": [],
+          "goal_chars": 1044,
+          "inspect_topics": [
+            "goal_info",
+            "call_site_options",
+            "call_subgoals",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms"
+          ],
+          "intent": {
+            "intent": "probe_tactic",
+            "payload": {
+              "tactic": "inline PRPc.PseudoRP.fi."
+            }
+          },
+          "intent_summary": "probe inline PRPc.PseudoRP.fi",
+          "manager_action_summary": [
+            "tactic probe (2.0 s)"
+          ],
+          "manager_result_at": "2026-06-06T08:43:26+00:00",
+          "manager_result_path": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_1/manager_results/turn_022.json",
+          "manager_seconds": 2.0,
+          "manager_time": "2 s",
+          "node": "Tree-0.1",
+          "node_dir": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_1",
+          "ok": true,
+          "result_followup_path": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_1/followups/turn_022.md",
+          "result_state_summary": "phoare / procedure_body / procedure_frontier, 5 goals, goal 1044 chars",
+          "result_summary": "rejected probe: manager reported rejection",
+          "result_view_path": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_1/workspace_views/turn_022.json",
+          "turn": 22,
+          "usage": {
+            "cache_creation_input_tokens": 2085,
+            "cache_read_input_tokens": 113477,
+            "input_tokens": 1,
+            "output_tokens": 176
+          },
+          "view_chars": 14166,
+          "view_id": "T0.1-22",
+          "workspace_view_path": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_1/workspace_views/turn_021.json"
+        },
+        {
+          "action_submitted_at": "2026-06-06T08:43:53.659000+00:00",
+          "action_time": "+13:05",
+          "agent_think": "27.7 s",
+          "agent_think_path": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_1/thinking/turn_023.md",
+          "agent_think_seconds": 27.659,
+          "decision_followup_path": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_1/followups/turn_022.md",
+          "decision_state_summary": "phoare / procedure_body / procedure_frontier, 5 goals, goal 1044 chars",
+          "decision_view_path": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_1/workspace_views/turn_022.json",
+          "deterministic_signals": [],
+          "goal_chars": 1044,
+          "inspect_topics": [
+            "goal_info",
+            "call_site_options",
+            "call_subgoals",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms"
+          ],
+          "intent": {
+            "intent": "probe_tactic",
+            "payload": {
+              "tactic": "inline *."
+            }
+          },
+          "intent_summary": "probe inline *",
+          "manager_action_summary": [
+            "tactic probe (341 ms)"
+          ],
+          "manager_result_at": "2026-06-06T08:43:54+00:00",
+          "manager_result_path": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_1/manager_results/turn_023.json",
+          "manager_seconds": 0.341,
+          "manager_time": "341 ms",
+          "node": "Tree-0.1",
+          "node_dir": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_1",
+          "ok": true,
+          "result_followup_path": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_1/followups/turn_023.md",
+          "result_state_summary": "phoare / procedure_body / procedure_frontier, 5 goals, goal 1044 chars",
+          "result_summary": "rejected probe: manager reported rejection",
+          "result_view_path": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_1/workspace_views/turn_023.json",
+          "turn": 23,
+          "usage": {
+            "cache_creation_input_tokens": 2193,
+            "cache_read_input_tokens": 232896,
+            "input_tokens": 4,
+            "output_tokens": 849
+          },
+          "view_chars": 14538,
+          "view_id": "T0.1-23",
+          "workspace_view_path": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_1/workspace_views/turn_022.json"
+        },
+        {
+          "action_submitted_at": "2026-06-06T08:44:08.866000+00:00",
+          "action_time": "+13:20",
+          "agent_think": "14.9 s",
+          "agent_think_path": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_1/thinking/turn_024.md",
+          "agent_think_seconds": 14.866,
+          "decision_followup_path": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_1/followups/turn_023.md",
+          "decision_state_summary": "phoare / procedure_body / procedure_frontier, 5 goals, goal 1044 chars",
+          "decision_view_path": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_1/workspace_views/turn_023.json",
+          "deterministic_signals": [],
+          "goal_chars": 1044,
+          "inspect_topics": [
+            "goal_info",
+            "call_site_options",
+            "call_subgoals",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms"
+          ],
+          "intent": {
+            "intent": "inspect_context",
+            "payload": {
+              "name": "call",
+              "topic": "tactic_forms"
+            }
+          },
+          "intent_summary": "inspect tactic_forms",
+          "manager_action_summary": [
+            "inspect tactic forms (134 ms)"
+          ],
+          "manager_result_at": "2026-06-06T08:44:09+00:00",
+          "manager_result_path": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_1/manager_results/turn_024.json",
+          "manager_seconds": 0.134,
+          "manager_time": "134 ms",
+          "node": "Tree-0.1",
+          "node_dir": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_1",
+          "ok": true,
+          "result_followup_path": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_1/followups/turn_024.md",
+          "result_state_summary": "phoare / procedure_body / procedure_frontier, 5 goals, goal 1044 chars",
+          "result_summary": "read-only inspect",
+          "result_view_path": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_1/workspace_views/turn_024.json",
+          "turn": 24,
+          "usage": {
+            "cache_creation_input_tokens": 2189,
+            "cache_read_input_tokens": 117755,
+            "input_tokens": 1,
+            "output_tokens": 451
+          },
+          "view_chars": 14493,
+          "view_id": "T0.1-24",
+          "workspace_view_path": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_1/workspace_views/turn_023.json"
+        },
+        {
+          "action_submitted_at": "2026-06-06T08:44:37.646000+00:00",
+          "action_time": "+13:49",
+          "agent_think": "28.6 s",
+          "agent_think_path": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_1/thinking/turn_025.md",
+          "agent_think_seconds": 28.646,
+          "decision_followup_path": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_1/followups/turn_024.md",
+          "decision_state_summary": "phoare / procedure_body / procedure_frontier, 5 goals, goal 1044 chars",
+          "decision_view_path": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_1/workspace_views/turn_024.json",
+          "deterministic_signals": [],
+          "goal_chars": 1044,
+          "inspect_topics": [
+            "goal_info",
+            "call_site_options",
+            "call_subgoals",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms"
+          ],
+          "intent": {
+            "intent": "probe_tactic",
+            "payload": {
+              "tactic": "wp."
+            }
+          },
+          "intent_summary": "probe wp",
+          "manager_action_summary": [
+            "tactic probe (354 ms)"
+          ],
+          "manager_result_at": "2026-06-06T08:44:38+00:00",
+          "manager_result_path": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_1/manager_results/turn_025.json",
+          "manager_seconds": 0.354,
+          "manager_time": "354 ms",
+          "node": "Tree-0.1",
+          "node_dir": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_1",
+          "ok": true,
+          "result_followup_path": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_1/followups/turn_025.md",
+          "result_state_summary": "phoare / procedure_body / procedure_frontier, 5 goals, goal 1044 chars",
+          "result_summary": "accepted probe",
+          "result_view_path": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_1/workspace_views/turn_025.json",
+          "turn": 25,
+          "usage": {
+            "cache_creation_input_tokens": 1655,
+            "cache_read_input_tokens": 119944,
+            "input_tokens": 1,
+            "output_tokens": 736
+          },
+          "view_chars": 15252,
+          "view_id": "T0.1-25",
+          "workspace_view_path": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_1/workspace_views/turn_024.json"
+        },
+        {
+          "action_submitted_at": "2026-06-06T08:45:18.619000+00:00",
+          "action_time": "+14:30",
+          "agent_think": "40.6 s",
+          "agent_think_path": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_1/thinking/turn_026.md",
+          "agent_think_seconds": 40.619,
+          "decision_followup_path": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_1/followups/turn_025.md",
+          "decision_state_summary": "phoare / procedure_body / procedure_frontier, 5 goals, goal 1044 chars",
+          "decision_view_path": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_1/workspace_views/turn_025.json",
+          "deterministic_signals": [
+            "commit_without_probe_check_not_inferred"
+          ],
+          "goal_chars": 1044,
+          "inspect_topics": [
+            "goal_info",
+            "call_site_options",
+            "call_subgoals",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms"
+          ],
+          "intent": {
+            "intent": "commit_tactic",
+            "payload": {
+              "tactic": "wp."
+            }
+          },
+          "intent_summary": "commit wp",
+          "manager_action_summary": [
+            "tactic commit (381 ms)"
+          ],
+          "manager_result_at": "2026-06-06T08:45:19+00:00",
+          "manager_result_path": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_1/manager_results/turn_026.json",
+          "manager_seconds": 0.381,
+          "manager_time": "381 ms",
+          "node": "Tree-0.1",
+          "node_dir": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_1",
+          "ok": true,
+          "result_followup_path": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_1/followups/turn_026.md",
+          "result_state_summary": "phoare / procedure_body / procedure_frontier, 5 goals, goal 974 chars",
+          "result_summary": "accepted commit",
+          "result_view_path": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_1/workspace_views/turn_026.json",
+          "turn": 26,
+          "usage": {
+            "cache_creation_input_tokens": 2681,
+            "cache_read_input_tokens": 121599,
+            "input_tokens": 1,
+            "output_tokens": 1547
+          },
+          "view_chars": 18646,
+          "view_id": "T0.1-26",
+          "workspace_view_path": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1/node_memory/Tree_0_1/workspace_views/turn_025.json"
+        }
+      ],
+      "run_dir": "artifacts/eval_suite/smoke_mee_decrypt_correct/l4_checked_action_surface/mee_decrypt_correct/r01/2026-06-06_0130_mee_decrypt_correct/iteration_1",
+      "turn_count": 48
+    }
+  ],
+  "schema_version": 1
+}

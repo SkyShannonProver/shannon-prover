@@ -1,0 +1,52 @@
+{
+  "kind": "agent_view_run_report",
+  "timestamp": "2026-06-11_1438_RCPA_preservation",
+  "lemma": "RCPA_preservation",
+  "source_file": "eval/examples/MEE-CBC/RCPA_CMA.ec",
+  "model": "claude-fable-5",
+  "surface_profile": "l1_goal_projection",
+  "trees": 2,
+  "eval_mode": true,
+  "outcome": "proved",
+  "committed_proofs": [
+    {
+      "tree": "Tree_0_0",
+      "tactics": [
+        "move=> Mkg_ll Mtag_ll.",
+        "rewrite (RCPA_prob E M A &m).",
+        "do 2!congr.",
+        "congr.",
+        "byequiv=> //=.",
+        "proc; inline *.",
+        "wp; call (_: true).",
+        "proc; inline *.",
+        "wp; rnd; wp; call{2} Mtag_ll; auto.",
+        "call{2} Mkg_ll; auto.",
+        "qed."
+      ],
+      "source": "session",
+      "proved": true
+    },
+    {
+      "tree": "Tree_0_1",
+      "tactics": [
+        "move=> Mkg_ll Mtag_ll.",
+        "have ->: Pr[INDR_CPA(MacThenEncrypt(E, M), A).main() @ &m : res] = Pr[SKEa.RCPA.INDR_CPA(E, RCPAa(M, A)).main() @ &m : res] by exact (RCPA_prob E M A &m).",
+        "have ->: Pr[INDR_CPA(Ideal, A).main() @ &m : res] = Pr[SKEa.RCPA.INDR_CPA(SKEa.RCPA.Ideal, RCPAa(M, A)).main() @ &m : res]; last by done.",
+        "byequiv=> //=.",
+        "proc; inline *.",
+        "wp; call (_: true).",
+        "proc; inline *."
+      ],
+      "source": "session",
+      "proved": false
+    }
+  ],
+  "turn_count": 21,
+  "views_copied": 23,
+  "run_iteration_dir": "artifacts/eval_suite/mee_renamed3_fable_l1/l1_goal_projection/mee_RCPA_preservation/r01/2026-06-11_1438_RCPA_preservation/iteration_1",
+  "commit": "8fa5ceac0",
+  "commit_full": "8fa5ceac0a4c7ed08e53023adcaade43f89a6de8",
+  "branch": "mcp-v0",
+  "dirty": true
+}

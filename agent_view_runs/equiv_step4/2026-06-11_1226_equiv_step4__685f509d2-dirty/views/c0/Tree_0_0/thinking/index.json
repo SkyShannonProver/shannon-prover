@@ -1,0 +1,233 @@
+{
+  "node": "Tree-0.0",
+  "discovery": "recorded_session_id",
+  "transcripts": [
+    "~/.claude/projects/<PROJECT>--worktrees-s23-l4np-resume/2a906b42-b9e2-4eca-b55e-ed59a3848696.jsonl"
+  ],
+  "turns": [
+    {
+      "turn": 1,
+      "intent": "commit_tactic",
+      "payload_key": "rcondt{1} 5; first by auto => />.",
+      "thinking_chars": 0,
+      "text_chars": 488,
+      "tokens": {
+        "output_tokens": 5121,
+        "input_tokens": 3,
+        "cache_read_input_tokens": 29155,
+        "cache_creation_input_tokens": 103601
+      },
+      "session_id": "2a906b42-b9e2-4eca-b55e-ed59a3848696",
+      "timestamp": "2026-06-11T15:08:25.348Z",
+      "file": "thinking/turn_001.md"
+    },
+    {
+      "turn": 2,
+      "intent": "commit_tactic",
+      "payload_key": "rcondt{2} 4; first by auto => />.",
+      "thinking_chars": 0,
+      "text_chars": 128,
+      "tokens": {
+        "output_tokens": 204,
+        "input_tokens": 2,
+        "cache_read_input_tokens": 69371,
+        "cache_creation_input_tokens": 4765
+      },
+      "session_id": "2a906b42-b9e2-4eca-b55e-ed59a3848696",
+      "timestamp": "2026-06-11T15:08:53.763Z",
+      "file": "thinking/turn_002.md"
+    },
+    {
+      "turn": 3,
+      "intent": "commit_tactic",
+      "payload_key": "rcondt{1} 17; first by auto => />; smt(mem_set).",
+      "thinking_chars": 0,
+      "text_chars": 120,
+      "tokens": {
+        "output_tokens": 268,
+        "input_tokens": 2,
+        "cache_read_input_tokens": 74136,
+        "cache_creation_input_tokens": 4867
+      },
+      "session_id": "2a906b42-b9e2-4eca-b55e-ed59a3848696",
+      "timestamp": "2026-06-11T15:09:18.671Z",
+      "file": "thinking/turn_003.md"
+    },
+    {
+      "turn": 4,
+      "intent": "commit_tactic",
+      "payload_key": "rcondt{2} 10; first by auto => />; smt(mem_set).",
+      "thinking_chars": 0,
+      "text_chars": 0,
+      "tokens": {
+        "output_tokens": 167,
+        "input_tokens": 2,
+        "cache_read_input_tokens": 79003,
+        "cache_creation_input_tokens": 4825
+      },
+      "session_id": "2a906b42-b9e2-4eca-b55e-ed59a3848696",
+      "timestamp": "2026-06-11T15:09:46.290Z",
+      "file": ""
+    },
+    {
+      "turn": 5,
+      "intent": "commit_tactic",
+      "payload_key": "auto => />.",
+      "thinking_chars": 0,
+      "text_chars": 154,
+      "tokens": {
+        "output_tokens": 283,
+        "input_tokens": 2,
+        "cache_read_input_tokens": 83828,
+        "cache_creation_input_tokens": 4722
+      },
+      "session_id": "2a906b42-b9e2-4eca-b55e-ed59a3848696",
+      "timestamp": "2026-06-11T15:10:12.766Z",
+      "file": "thinking/turn_005.md"
+    },
+    {
+      "turn": 6,
+      "intent": "commit_tactic",
+      "payload_key": "move=> &2 ne h1 h2 h3 h4 r3L _ r2L _ t3L _; (have ->: RO.m{2}.[t1{2}, C.ofintd 0 <- r2L].[t2{2}, C.ofintd 0 <- r3L] = RO.m{2}.[t2{2}, C.ofintd 0 <- r3L].[t1{2}, C.ofintd 0 <- r2L] by rewrite set_setE /#); rewrite !get_setE /=; smt().",
+      "thinking_chars": 0,
+      "text_chars": 0,
+      "tokens": {
+        "output_tokens": 1054,
+        "input_tokens": 2,
+        "cache_read_input_tokens": 88550,
+        "cache_creation_input_tokens": 3057
+      },
+      "session_id": "2a906b42-b9e2-4eca-b55e-ed59a3848696",
+      "timestamp": "2026-06-11T15:10:30.043Z",
+      "file": ""
+    },
+    {
+      "turn": 7,
+      "intent": "commit_tactic",
+      "payload_key": "rcondf{1} 2; first by auto => />.",
+      "thinking_chars": 0,
+      "text_chars": 0,
+      "tokens": {
+        "output_tokens": 3916,
+        "input_tokens": 2,
+        "cache_read_input_tokens": 91607,
+        "cache_creation_input_tokens": 7168
+      },
+      "session_id": "2a906b42-b9e2-4eca-b55e-ed59a3848696",
+      "timestamp": "2026-06-11T15:11:31.477Z",
+      "file": ""
+    },
+    {
+      "turn": 8,
+      "intent": "commit_tactic",
+      "payload_key": "rcondf{2} 2; first by auto => />.",
+      "thinking_chars": 0,
+      "text_chars": 0,
+      "tokens": {
+        "output_tokens": 116,
+        "input_tokens": 2,
+        "cache_read_input_tokens": 98775,
+        "cache_creation_input_tokens": 9744
+      },
+      "session_id": "2a906b42-b9e2-4eca-b55e-ed59a3848696",
+      "timestamp": "2026-06-11T15:11:46.981Z",
+      "file": ""
+    },
+    {
+      "turn": 9,
+      "intent": "commit_tactic",
+      "payload_key": "rcondf{1} 15; first by auto => />; smt(mem_set).",
+      "thinking_chars": 0,
+      "text_chars": 0,
+      "tokens": {
+        "output_tokens": 274,
+        "input_tokens": 2,
+        "cache_read_input_tokens": 108519,
+        "cache_creation_input_tokens": 4750
+      },
+      "session_id": "2a906b42-b9e2-4eca-b55e-ed59a3848696",
+      "timestamp": "2026-06-11T15:12:02.446Z",
+      "file": ""
+    },
+    {
+      "turn": 10,
+      "intent": "commit_tactic",
+      "payload_key": "rcondf{2} 15; first by auto => />; smt(mem_set).",
+      "thinking_chars": 0,
+      "text_chars": 0,
+      "tokens": {
+        "output_tokens": 125,
+        "input_tokens": 2,
+        "cache_read_input_tokens": 113269,
+        "cache_creation_input_tokens": 5033
+      },
+      "session_id": "2a906b42-b9e2-4eca-b55e-ed59a3848696",
+      "timestamp": "2026-06-11T15:12:17.004Z",
+      "file": ""
+    },
+    {
+      "turn": 11,
+      "intent": "commit_tactic",
+      "payload_key": "swap{1} 16 -13.",
+      "thinking_chars": 0,
+      "text_chars": 0,
+      "tokens": {
+        "output_tokens": 2019,
+        "input_tokens": 2,
+        "cache_read_input_tokens": 118302,
+        "cache_creation_input_tokens": 4227
+      },
+      "session_id": "2a906b42-b9e2-4eca-b55e-ed59a3848696",
+      "timestamp": "2026-06-11T15:12:48.308Z",
+      "file": ""
+    },
+    {
+      "turn": 12,
+      "intent": "commit_tactic",
+      "payload_key": "swap{1} 20 -16.",
+      "thinking_chars": 0,
+      "text_chars": 63,
+      "tokens": {
+        "output_tokens": 175,
+        "input_tokens": 2,
+        "cache_read_input_tokens": 122529,
+        "cache_creation_input_tokens": 6257
+      },
+      "session_id": "2a906b42-b9e2-4eca-b55e-ed59a3848696",
+      "timestamp": "2026-06-11T15:13:10.795Z",
+      "file": "thinking/turn_012.md"
+    },
+    {
+      "turn": 13,
+      "intent": "commit_tactic",
+      "payload_key": "case (((t1, C.ofintd 0) \\in RO.m){1}).",
+      "thinking_chars": 0,
+      "text_chars": 0,
+      "tokens": {
+        "output_tokens": 568,
+        "input_tokens": 2,
+        "cache_read_input_tokens": 128786,
+        "cache_creation_input_tokens": 4548
+      },
+      "session_id": "2a906b42-b9e2-4eca-b55e-ed59a3848696",
+      "timestamp": "2026-06-11T15:13:56.353Z",
+      "file": ""
+    },
+    {
+      "turn": 14,
+      "intent": "commit_tactic",
+      "payload_key": "case (((t2, C.ofintd 0) \\in RO.m){1}).",
+      "thinking_chars": 0,
+      "text_chars": 0,
+      "tokens": {
+        "output_tokens": 125,
+        "input_tokens": 2,
+        "cache_read_input_tokens": 133334,
+        "cache_creation_input_tokens": 4986
+      },
+      "session_id": "2a906b42-b9e2-4eca-b55e-ed59a3848696",
+      "timestamp": "2026-06-11T15:14:34.578Z",
+      "file": ""
+    }
+  ]
+}

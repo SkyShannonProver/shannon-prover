@@ -1,0 +1,39 @@
+{
+  "kind": "agent_view_run_report",
+  "timestamp": "2026-06-11_1753_os2tK",
+  "lemma": "os2tK",
+  "source_file": "eval/examples/MEE-CBC/FunctionalSpec.ec",
+  "model": "claude-fable-5",
+  "surface_profile": "l1_goal_projection",
+  "trees": 2,
+  "eval_mode": true,
+  "outcome": "proved",
+  "committed_proofs": [
+    {
+      "tree": "Tree_0_0",
+      "tactics": [
+        "move=> sz_os.",
+        "rewrite /os2t /t2os /chunk sz_os divzz /b2i /=.",
+        "rewrite /mkseq /= (iotaS _ 0) //= drop0.",
+        "by rewrite -sz_os take_size oftagK.",
+        "qed."
+      ],
+      "source": "session",
+      "proved": true
+    },
+    {
+      "tree": "Tree_0_1",
+      "tactics": [],
+      "source": "timeline_replay",
+      "replay_prefix_count": 0,
+      "proved": false
+    }
+  ],
+  "turn_count": 6,
+  "views_copied": 8,
+  "run_iteration_dir": "artifacts/eval_suite/mee_sweep_l1_v2/l1_goal_projection/mee_os2tK/r01/2026-06-11_1753_os2tK/iteration_1",
+  "commit": "8fa5ceac0",
+  "commit_full": "8fa5ceac0a4c7ed08e53023adcaade43f89a6de8",
+  "branch": "mcp-v0",
+  "dirty": true
+}

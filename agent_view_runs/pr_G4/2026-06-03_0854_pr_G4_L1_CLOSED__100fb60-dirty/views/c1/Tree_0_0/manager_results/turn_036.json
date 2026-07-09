@@ -1,0 +1,19 @@
+{
+  "turn": 36,
+  "handled_intent": {
+    "intent": "commit_tactic",
+    "payload": {
+      "tactic": "apply (ler_trans (mu dt (mem (map loge (map (fun (t : PKE_.ciphertext) => t.`3) G3.cilog{hr})))))."
+    }
+  },
+  "ok": true,
+  "manager_note": "Committed tactic accepted; the EasyCrypt proof state changed.",
+  "manager_actions": [
+    {
+      "action": "tactic commit",
+      "outcome": "EasyCrypt accepted the committed tactic.",
+      "timing": "303 ms"
+    }
+  ],
+  "view_refreshed": true
+}

@@ -1,0 +1,19 @@
+{
+  "turn": 43,
+  "handled_intent": {
+    "intent": "commit_tactic",
+    "payload": {
+      "tactic": "rnd (fun (u:poly_out) => u + poly1305_eval r5{1} (topol a0{1} c3{1})) (fun (u:poly_out) => u - poly1305_eval r5{1} (topol a0{1} c3{1})); wp; rnd{1}."
+    }
+  },
+  "ok": true,
+  "manager_note": "Committed tactic accepted; the EasyCrypt proof state changed.",
+  "manager_actions": [
+    {
+      "action": "tactic commit",
+      "outcome": "EasyCrypt accepted the committed tactic.",
+      "timing": "709 ms"
+    }
+  ],
+  "view_refreshed": true
+}

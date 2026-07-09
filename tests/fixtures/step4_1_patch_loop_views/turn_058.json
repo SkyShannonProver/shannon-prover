@@ -1,0 +1,43 @@
+{
+ "current_goal": {
+  "lines": [
+   "Current goal (remaining: 5)",
+   "",
+   "Type variables: <none>",
+   "",
+   "&m: {}",
+   "------------------------------------------------------------------------",
+   "Context : hr: {x : unit, r, b, b0, b1, forged, b2, b3 : bool}",
+   "",
+   "pre = true",
+   "",
+   "(1)  forged <@                                                                  ",
+   "( )    G5_end(                                                                  ",
+   "( )      SplitD.RO_DOM(                                                         ",
+   "( )               SplitC1.RO_Pair(SplitC2.RO_Pair(SplitC2.I1.RO, SplitC2.I2.RO),",
+   "( )                         SplitC1.I2.RO), SplitD.ROF.RO)).main()              ",
+   "",
+   "post = true",
+   "",
+   "[519|check]>"
+  ],
+  "view_focus": "procedure_frontier",
+  "goal_type": "hoare"
+ },
+ "proof_status": {
+  "status": "open",
+  "remaining_goals": 5,
+  "remaining_goals_known": true,
+  "goal_type": "hoare",
+  "view_focus": "procedure_frontier",
+  "current_layer": "procedure_body"
+ },
+ "last_result": {
+  "intent": "commit_tactic",
+  "tactic": "smt().",
+  "payload": {
+   "tactic": "smt()."
+  },
+  "result": "EasyCrypt accepted the committed tactic."
+ }
+}

@@ -1,0 +1,675 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Shannon Prover — Playground</title>
+<style>
+  :root{
+    --bg:#ffffff; --surface:#f7f6f3; --surface-2:#f1efe8;
+    --border:rgba(0,0,0,0.10); --border-2:rgba(0,0,0,0.18);
+    --fg:#2c2c2a; --muted:#6e6e68; --faint:#9a9890;
+    --accent:#185fa5; --accent-bg:#e6f1fb;
+    --ok:#3b6d11; --ok-bg:#eaf3de;
+    --bad:#a32d2d; --bad-bg:#fcebeb;
+    --radius:8px; --radius-sm:6px;
+    --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;height:100%}
+  body{font-family:-apple-system,system-ui,"Segoe UI",sans-serif;background:var(--bg);color:var(--fg);
+    height:100vh;display:flex;flex-direction:column;font-size:14px}
+  header{display:flex;align-items:center;gap:8px;padding:10px 14px;border-bottom:0.5px solid var(--border);flex-wrap:wrap}
+  header .brand{font-weight:500}
+  header .sub{color:var(--faint);font-size:13px}
+  header .homelink{color:var(--muted);text-decoration:none;font-size:13px;padding:3px 8px;border:0.5px solid transparent;border-radius:var(--radius-sm)}
+  header .homelink:hover{color:var(--accent);background:var(--accent-bg)}
+  header input,header select{background:var(--bg);color:var(--fg);border:0.5px solid var(--border-2);border-radius:var(--radius-sm);
+    padding:5px 9px;font-size:13px;font-family:var(--mono)}
+  header input:focus,header select:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 2px var(--accent-bg)}
+  header select{min-width:180px;max-width:min(40vw,340px)}
+  header select#lemma{min-width:150px;max-width:min(30vw,280px)}
+  header select:disabled{color:var(--faint);background:var(--surface)}
+  button{background:var(--bg);color:var(--fg);border:0.5px solid var(--border-2);border-radius:var(--radius-sm);
+    padding:5px 11px;font-size:13px;cursor:pointer;transition:background .12s,border-color .12s}
+  button:hover{background:var(--surface);border-color:var(--accent)}
+  button:active{transform:scale(.98)}
+  .seg{display:inline-flex;border:0.5px solid var(--border-2);border-radius:var(--radius-sm);overflow:hidden}
+  .seg button{border:0;border-radius:0;background:transparent;color:var(--muted);padding:5px 11px}
+  .seg button:hover{background:var(--surface)}
+  .seg button.active{background:var(--accent-bg);color:var(--accent)}
+  .ghost{border-color:transparent;color:var(--muted);padding:5px 8px}
+  .ghost:hover{border-color:var(--border-2);background:var(--surface)}
+  .status{margin-left:auto;color:var(--faint);font-size:13px;display:flex;align-items:center;gap:6px}
+  .dot{width:8px;height:8px;border-radius:50%;background:var(--bad);display:inline-block}
+  .dot.on{background:var(--ok)}
+  main{flex:1;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);min-height:0}
+  .col{display:flex;flex-direction:column;min-height:0;min-width:0}
+  .col.left{border-right:0.5px solid var(--border)}
+  .transcript{flex:1;overflow:auto;padding:12px 14px;font-family:var(--mono);font-size:12.5px;line-height:1.6}
+  .transcript div{margin-bottom:2px}
+  .t-intent{color:var(--accent)} .t-ok{color:var(--ok)} .t-bad{color:var(--bad)} .t-muted{color:var(--faint)}
+  .inbar{border-top:0.5px solid var(--border);padding:10px 12px;display:flex;flex-direction:column;gap:8px;position:relative}
+  .inbar .box{display:flex;align-items:center;gap:7px;border:0.5px solid var(--border-2);border-radius:var(--radius-sm);
+    padding:7px 10px;background:var(--bg)}
+  .inbar .box:focus-within{border-color:var(--accent);box-shadow:0 0 0 2px var(--accent-bg)}
+  .inbar .box .chev{color:var(--faint);font-family:var(--mono)}
+  .inbar input{flex:1;border:0;outline:none;background:transparent;color:var(--fg);font-family:var(--mono);font-size:13px}
+  .btns{display:flex;flex-wrap:wrap;gap:6px}
+  .btns button{font-size:12.5px;padding:4px 11px}
+  .btns .primary{background:var(--accent-bg);color:var(--accent);border-color:transparent}
+  .btns .primary:hover{background:#d8e8fb}
+  .control-menu{position:absolute;left:12px;right:12px;bottom:44px;max-height:min(320px,48vh);overflow:auto;z-index:9;
+    background:var(--bg);border:0.5px solid var(--accent);border-radius:var(--radius-sm);box-shadow:0 10px 28px rgba(0,0,0,.14)}
+  .control-menu[hidden]{display:none}
+  .control-menu .menuhdr{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:7px 10px;
+    background:var(--accent-bg);border-bottom:0.5px solid rgba(24,95,165,.2);font-size:11.5px;color:var(--accent)}
+  .control-menu .menuclose{border:0;background:transparent;color:var(--muted);padding:0 4px;font-size:15px;line-height:1}
+  .control-menu .menuclose:hover{background:transparent;color:var(--fg)}
+  .control-menu .menunote{padding:9px 10px;font-size:12px;color:var(--muted);line-height:1.45;border-bottom:0.5px solid var(--border)}
+  .control-menu .menunote:last-child{border-bottom:0}
+  .panelhdr{display:flex;align-items:center;justify-content:space-between;padding:8px 14px;border-bottom:0.5px solid var(--border);
+    font-size:12px;color:var(--muted)}
+  .panelhdr .eye{display:flex;align-items:center;gap:6px}
+  .paneltools{display:flex;align-items:center;gap:8px}
+  .seg.mini button{font-size:11px;padding:3px 9px}
+  .headerback{background:var(--accent-bg);color:var(--accent);border-color:rgba(24,95,165,.28);font-size:11.5px;padding:4px 10px}
+  .headerback[hidden]{display:none}
+  .headerback:hover{background:#d8e8fb;border-color:var(--accent)}
+  .panel{flex:1;overflow:auto;padding:12px 14px;min-width:0}
+  /* cards */
+  .vlabel{font-size:11px;color:var(--muted);margin:15px 0 6px}
+  .vlabel:first-child{margin-top:0}
+  .faint{color:var(--faint)} .sm{font-size:11.5px}
+  .statusbar{display:flex;align-items:center;gap:7px;font-size:11.5px;color:var(--muted);background:var(--surface);
+    border-radius:var(--radius-sm);padding:7px 11px;margin-bottom:4px}
+  .statusbar .pin{width:7px;height:7px;border-radius:50%;background:var(--accent)}
+  .goalbox{font-family:var(--mono);font-size:11.5px;line-height:1.55;white-space:pre-wrap;background:var(--surface);
+    border:0.5px solid var(--border);border-radius:var(--radius-sm);padding:9px 11px}
+  .goalbox.sm{font-size:11px}
+  .fcard{background:var(--surface);border:0.5px solid var(--border);border-radius:var(--radius-sm);padding:8px 12px;margin-bottom:8px}
+  .fcard:last-child{margin-bottom:0}
+  .fcard.md{font-size:12px;line-height:1.55}
+  .fcard.md :first-child{margin-top:0} .fcard.md :last-child{margin-bottom:0}
+  .surfacefact{border-bottom:0.5px solid var(--border);padding:7px 0}
+  .surfacefact:first-child{padding-top:0}
+  .surfacefact:last-child{border-bottom:0;padding-bottom:0}
+  .surfacefact .ck{font-size:11px;color:var(--muted);margin-bottom:4px}
+  .surfacefact .cv{font-size:12px;line-height:1.5}
+  .surfacefact .kv{display:flex;flex-direction:column;gap:4px}
+  .surfacefact .kv>div{display:flex;gap:8px;align-items:baseline}
+  .surfacefact .kv .ck{min-width:100px;flex:none;margin:0;font-family:var(--mono)}
+  .surfacefact code{font-family:var(--mono);font-size:12px;background:var(--surface-2);padding:1px 5px;border-radius:4px}
+  .surfacefact .factdetails{margin-top:5px}
+  .surfacefact pre.preview{font-family:var(--mono);font-size:11px;line-height:1.45;white-space:pre-wrap;word-break:break-word;background:var(--bg);border:0.5px solid var(--border);border-radius:var(--radius-sm);padding:7px 9px;margin:4px 0 0;max-height:220px;overflow:auto}
+  .movecard{display:flex;align-items:center;justify-content:space-between;gap:8px;border:0.5px solid var(--border);
+    border-radius:var(--radius-sm);padding:7px 11px;margin-bottom:5px}
+  .movecard .mono{font-family:var(--mono);font-size:11.5px;word-break:break-word}
+  .tag{font-size:10.5px;color:var(--muted);background:var(--surface-2);padding:1px 8px;border-radius:10px;white-space:nowrap;flex:none}
+  .tag.ok{color:var(--ok);background:var(--ok-bg)}
+  .actionsurface{border-top:0.5px solid var(--border);margin-top:16px;padding-top:11px}
+  .needlabel{font-size:12px;color:var(--muted);margin-bottom:7px}
+  .actionlist{display:flex;flex-direction:column;gap:7px;margin-top:6px}
+  .actionrow{display:grid;grid-template-columns:minmax(112px,132px) minmax(0,1fr);gap:10px;align-items:start}
+  .actionname{font-size:11px;font-family:var(--mono);color:var(--muted);line-height:22px}
+  .topactions{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:2px}
+  .choicepills{display:flex;flex-wrap:wrap;gap:5px;min-width:0}
+  .grouplabel{font-size:11px;color:var(--faint);text-transform:none;letter-spacing:0;margin:0 0 7px}
+  .pill{font-size:11px;font-family:var(--mono);color:var(--fg);cursor:pointer;transition:background .12s,color .12s,border-color .12s}
+  .actionpill{background:var(--bg);border:0.5px solid var(--border-2);border-radius:var(--radius-sm);padding:3px 9px}
+  .choicepill{background:var(--surface-2);border:0.5px solid transparent;border-radius:10px;padding:3px 9px}
+  .pill[data-ask]:hover{background:var(--accent-bg);color:var(--accent);border-color:rgba(24,95,165,.25)}
+  .lookupcard{border:0.5px solid var(--accent);border-radius:var(--radius-sm);margin-bottom:14px;overflow:hidden}
+  .lookuphdr{display:flex;align-items:center;justify-content:space-between;font-size:11px;color:var(--accent);background:var(--accent-bg);padding:6px 10px}
+  .lookuphdr .x{cursor:pointer;color:var(--muted);font-size:12px}
+  .lookuphdr .x:hover{color:var(--fg)}
+  .lookupbody{padding:10px 11px;max-height:320px;overflow:auto}
+  .lookupbody .ckv{display:flex;flex-direction:column;gap:4px}
+  .lookupbody .crow{display:flex;gap:10px;align-items:baseline;line-height:1.5}
+  .lookupbody .ck{color:var(--muted);font-size:11.5px;min-width:108px;flex:none}
+  .lookupbody .ckh{color:var(--muted);font-size:11.5px;margin-top:3px}
+  .lookupbody .cv{font-family:var(--mono);font-size:12px;color:var(--fg);word-break:break-word}
+  .lookupbody .cnest{padding-left:10px;border-left:2px solid var(--border);margin-top:3px;display:flex;flex-direction:column;gap:4px}
+  .lookupbody .ro{margin-top:10px;font-size:11px;color:var(--faint);border-top:0.5px solid var(--border);padding-top:7px}
+  .lookupbody .prevnote{font-size:11px;color:var(--bad);line-height:1.45;margin-bottom:6px}
+  .lookupbody pre.preview{font-family:var(--mono);font-size:11px;line-height:1.45;white-space:pre-wrap;word-break:break-word;background:var(--surface);border:0.5px solid var(--border);border-radius:var(--radius-sm);padding:8px 10px;margin:0;max-height:220px;overflow:auto}
+  .turn-drawer{border:0.5px solid var(--accent);border-radius:var(--radius-sm);margin-top:12px;overflow:hidden;background:var(--bg)}
+  .drawerhdr{display:flex;align-items:center;justify-content:space-between;gap:10px;background:var(--accent-bg);color:var(--accent);padding:6px 10px;font-size:11.5px}
+  .drawerback{border:0.5px solid rgba(24,95,165,.25);background:var(--bg);color:var(--accent);border-radius:var(--radius-sm);
+    padding:3px 9px;font-size:11.5px;white-space:nowrap}
+  .drawerback:hover{background:var(--surface);border-color:var(--accent)}
+  .drawerbody{padding:10px 11px;max-height:360px;overflow:auto}
+  .turn-outcome{border:0.5px solid var(--border);border-radius:var(--radius-sm);padding:8px 10px;margin:14px 0 8px;
+    background:var(--surface);font-size:12px;line-height:1.5;white-space:pre-wrap}
+  .turn-outcome:first-child{margin-top:0}
+  .turn-outcome.bad{border-color:rgba(163,45,45,.35);background:var(--bad-bg);color:var(--bad)}
+  .controlitem{width:100%;display:block;text-align:left;border:0.5px solid var(--border);border-radius:var(--radius-sm);
+    background:var(--bg);padding:8px 10px;margin-top:6px}
+  .controlitem:hover{background:var(--accent-bg)}
+  .controltitle{font-size:12px;color:var(--fg);line-height:1.35}
+  .controldesc{font-size:11.5px;color:var(--muted);line-height:1.45;margin-top:3px}
+  .controltactic{font-family:var(--mono);font-size:11px;color:var(--faint);line-height:1.45;margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .diag{font-size:11px;color:var(--muted);margin:3px 0;line-height:1.45;padding-left:14px;text-indent:-14px}
+  .diag.err{color:var(--bad)}
+  /* followup markdown */
+  .md{font-size:13px;line-height:1.6}
+  .md h1,.md h2,.md h3{font-size:12px;font-weight:500;color:var(--muted);margin:14px 0 6px}
+  .md h1:first-child,.md h2:first-child,.md h3:first-child{margin-top:0}
+  .md p{margin:6px 0} .md ul,.md ol{margin:6px 0;padding-left:20px} .md li{margin:3px 0}
+  .md code{font-family:var(--mono);font-size:12px;background:var(--surface-2);padding:1px 5px;border-radius:4px;overflow-wrap:anywhere}
+  .md pre{background:var(--surface);border:0.5px solid var(--border);border-radius:var(--radius-sm);padding:9px 11px;overflow:auto;margin:6px 0;max-width:100%;white-space:pre-wrap;overflow-wrap:anywhere}
+  .md pre code{background:none;padding:0;font-size:12px;white-space:pre-wrap;overflow-wrap:anywhere} .md strong{font-weight:500}
+  .md hr{border:0;border-top:0.5px solid var(--border);margin:12px 0}
+  pre.json{font-family:var(--mono);font-size:11.5px;line-height:1.5;white-space:pre-wrap;color:var(--fg);margin:0}
+  .empty{color:var(--faint);font-family:var(--mono);font-size:12px}
+  .foot{border-top:0.5px solid var(--border);padding:8px 14px;display:flex;flex-direction:column;gap:8px;background:var(--bg)}
+  .hint{font-size:12px;color:var(--faint);display:flex;align-items:center;gap:6px}
+  .ask{display:flex;align-items:center;gap:9px;border:0.5px solid var(--border);border-radius:var(--radius-sm);
+    padding:8px 11px;background:var(--surface);font-size:12.5px;color:var(--muted)}
+  .ask .soon{margin-left:auto;font-size:11px;color:var(--faint);background:var(--surface-2);padding:1px 8px;border-radius:10px}
+  .ask code{font-family:var(--mono);font-size:12px}
+</style>
+</head>
+<body>
+<header>
+  <a class="homelink" href="/" title="back to Shannon Prover home">&larr; home</a>
+  <span class="brand">Shannon Prover</span><span class="sub">playground · cards-v6</span>
+  <select id="file" title="target .ec file" aria-label="target .ec file">
+    <option value="eval/examples/ChaChaPoly/chacha_poly.ec">chacha_poly.ec</option>
+  </select>
+  <select id="lemma" title="lemma name" aria-label="lemma name">
+    <option value="step4_1">step4_1</option>
+  </select>
+  <div class="seg" id="profile">
+    <button data-p="l1_goal_projection" title="the agent sees only the produced EasyCrypt goal">Goal-only</button>
+    <button data-p="l4_checked_action_surface" class="active" title="the agent sees the full compiler surface: analyzed goal, candidate moves, inspection handles">Workbench</button>
+  </div>
+  <button id="start">Start</button>
+  <span class="status"><span id="dot" class="dot"></span> <span id="statusTxt">disconnected</span></span>
+</header>
+<main>
+  <div class="col left">
+    <div class="transcript" id="transcript"><div class="t-muted">Set a file + lemma, pick Goal-only / Workbench, then Start.</div></div>
+    <div class="inbar">
+      <div class="box"><span class="chev">&gt;_</span>
+        <input id="tactic" placeholder="type a tactic, e.g.  proc.    (Enter = commit)"></div>
+      <div class="btns">
+        <button class="ghost" data-i="undo_last_step" title="undo only the last committed tactic">Undo last</button>
+        <button class="ghost" data-i="undo_to_checkpoint" title="open the manager checkpoint rewind menu">Rewind</button>
+        <button class="ghost" data-i="fresh_restart" title="open the manager restart confirmation menu">Restart</button>
+        <button class="ghost" data-i="finish" title="ask the manager to finish or explain why it cannot">Finish</button>
+      </div>
+      <div id="controlMenu" class="control-menu" hidden></div>
+    </div>
+  </div>
+  <div class="col">
+    <div class="panelhdr">
+      <span class="eye">👁 what the agent reads · <span id="pprofile">Workbench</span></span>
+      <div class="paneltools">
+        <button id="backToProof" class="headerback" type="button" hidden>Back to proof menu</button>
+        <div class="seg mini" id="view-toggle">
+          <button data-v="cards" class="active">cards</button>
+          <button data-v="followup">followup</button>
+          <button data-v="json">audit json</button>
+          <button data-v="instructions">instructions</button>
+        </div>
+      </div>
+    </div>
+    <div class="panel"><div id="panelBody" class="empty">— start a session —</div></div>
+    <div class="foot">
+      <div class="hint">ⓘ flip to Goal-only → the right panel collapses to the goal box alone</div>
+      <div class="ask">💬 Ask the compiler — “how was <code>candidate_moves</code> built for this goal?” <span class="soon">soon</span></div>
+    </div>
+  </div>
+</main>
+<script src="/static/marked.min.js"></script>
+<script>
+  let ws=null, profile="l4_checked_action_surface", lastView=null, lastInstructions=null, instructionsKey="", viewMode="cards", pending=false, _asks=[], _controlItems=[], drawerClosed=false;
+  let targets=[], targetDefaults={file:"eval/examples/ChaChaPoly/chacha_poly.ec", lemma:"step4_1"};
+  const $=s=>document.querySelector(s);
+  const transcript=$("#transcript"), panelBody=$("#panelBody"), panelShell=document.querySelector(".panel"), backToProof=$("#backToProof"), controlMenu=$("#controlMenu");
+  const esc=s=>String(s==null?"":s).replace(/[&<>]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;"}[c]));
+  function log(cls,text){const d=document.createElement("div");if(cls)d.className=cls;d.textContent=text;
+    transcript.appendChild(d);transcript.scrollTop=transcript.scrollHeight;}
+  function setStatus(s,on){$("#statusTxt").textContent=s;$("#dot").classList.toggle("on",!!on);}
+  function profLabel(p){return p&&p.indexOf("l1_")===0?"Goal-only":p&&p.indexOf("l4_")===0?"Workbench":(p||"");}
+  function targetByPath(path){ return targets.find(t=>t.path===path); }
+  function fileGroup(label){
+    const parts=label.split("/");
+    return parts.length>1 ? parts.slice(0,-1).join("/") : "examples";
+  }
+  function populateLemmaSelect(preferred){
+    const sel=$("#lemma"), file=targetByPath($("#file").value), current=preferred||sel.value;
+    sel.innerHTML="";
+    if(!file||!file.lemmas||!file.lemmas.length){
+      sel.appendChild(new Option("(no lemmas found)", ""));
+      sel.disabled=true;
+      return;
+    }
+    sel.disabled=false;
+    file.lemmas.forEach(d=>{
+      const label=`${d.name} · ${d.kind} L${d.line}`;
+      const opt=new Option(label,d.name);
+      opt.title=`${d.kind} ${d.name} · line ${d.line}`;
+      sel.appendChild(opt);
+    });
+    const names=new Set(file.lemmas.map(d=>d.name));
+    if(names.has(current)) sel.value=current;
+    else if(file.path===targetDefaults.file&&names.has(targetDefaults.lemma)) sel.value=targetDefaults.lemma;
+    else sel.value=file.lemmas[0].name;
+  }
+  function populateFileSelect(preferred){
+    const sel=$("#file"), current=preferred||sel.value;
+    sel.innerHTML="";
+    if(!targets.length){
+      sel.appendChild(new Option("eval/examples/ChaChaPoly/chacha_poly.ec","eval/examples/ChaChaPoly/chacha_poly.ec"));
+      populateLemmaSelect(targetDefaults.lemma);
+      return;
+    }
+    const groups=new Map();
+    targets.forEach(t=>{
+      const g=fileGroup(t.label);
+      if(!groups.has(g)) groups.set(g,[]);
+      groups.get(g).push(t);
+    });
+    groups.forEach((items,groupName)=>{
+      const group=document.createElement("optgroup");
+      group.label=groupName;
+      items.forEach(t=>{
+        const opt=new Option(`${t.label.split("/").pop()} · ${t.lemmas.length}`,t.path);
+        opt.title=t.path;
+        group.appendChild(opt);
+      });
+      sel.appendChild(group);
+    });
+    if(targetByPath(current)) sel.value=current;
+    else if(targetByPath(targetDefaults.file)) sel.value=targetDefaults.file;
+    else sel.value=targets[0].path;
+    populateLemmaSelect(targetDefaults.lemma);
+  }
+  async function loadTargets(){
+    try{
+      const res=await fetch("/api/targets");
+      if(!res.ok) throw new Error(await res.text());
+      const data=await res.json();
+      targetDefaults={file:data.default_file||targetDefaults.file, lemma:data.default_lemma||targetDefaults.lemma};
+      targets=(data.files||[]).slice().sort((a,b)=>a.label.localeCompare(b.label));
+      populateFileSelect(targetDefaults.file);
+      log("t-muted","loaded "+targets.length+" target files");
+    }catch(e){
+      log("t-bad","✗ could not load target list — using default PIR target");
+    }
+  }
+
+  function intentClassOf(a){
+    if(!a) return "unknown";
+    if(a.intent_class) return a.intent_class;
+    if(a.intent==="lookup_symbol") return "symbol_lookup";
+    if(["commit_tactic","commit_replay_suffix_chunk"].includes(a.intent)) return "proof_mutation";
+    if(["undo_last_step","undo_to_checkpoint","fresh_restart","finish","amend_and_replay"].includes(a.intent)) return "proof_control";
+    return "context_topic";
+  }
+  function intentClassLabel(cls){
+    return ({
+      context_topic:"context topics",
+      symbol_lookup:"symbol lookup",
+      proof_control:"proof controls",
+      proof_mutation:"proof actions",
+      proof_memory:"proof memory"
+    })[cls]||cls;
+  }
+  function askTopic(a){
+    const p=a.payload||{};
+    return p.topic||p.symbol||a.public_intent||a.intent;
+  }
+
+  function surfaceGoalHtml(model){
+    const goal=(model&&model.goal)||{};
+    const text=goal.text || ((goal.lines||[]).join("\n"));
+    const label='current_goal'+(goal.goal_type?` · <span class="faint">${esc(goal.goal_type)}</span>`:"");
+    let h=`<div class="vlabel">${label}</div>`;
+    h+=`<div class="goalbox">${esc(text)||"(no goal)"}</div>`;
+    if(goal.notice) h+=`<div class="faint sm" style="margin-top:4px">${esc(goal.notice)}</div>`;
+    if(goal.truncated) h+=`<div class="faint sm" style="margin-top:4px">goal truncated — see audit json</div>`;
+    return h;
+  }
+  function renderSurfaceValue(value){
+    if(value===null||value===undefined||value==="") return '<span class="faint">(empty)</span>';
+    if(Array.isArray(value)){
+      if(!value.length) return '<span class="faint">(none)</span>';
+      return '<ul>'+value.map(v=>`<li>${renderSurfaceValue(v)}</li>`).join('')+'</ul>';
+    }
+    if(typeof value==="object"){
+      return '<div class="kv">'+Object.keys(value).map(k=>`<div><span class="ck">${esc(k)}</span><span class="cv">${renderSurfaceValue(value[k])}</span></div>`).join('')+'</div>';
+    }
+    const s=String(value);
+    return /\n/.test(s) ? `<pre class="preview">${esc(s)}</pre>` : renderInlineSurfaceText(s);
+  }
+  function renderInlineSurfaceText(text){
+    const s=String(text);
+    let out='', pos=0;
+    while(pos<s.length){
+      const start=s.indexOf('`',pos);
+      if(start<0){out+=esc(s.slice(pos));break;}
+      out+=esc(s.slice(pos,start));
+      let tickEnd=start+1;
+      while(tickEnd<s.length&&s[tickEnd]==='`') tickEnd++;
+      const ticks=s.slice(start,tickEnd);
+      const end=s.indexOf(ticks,tickEnd);
+      if(end<0){out+=esc(s.slice(start));break;}
+      let inner=s.slice(tickEnd,end);
+      if(inner.startsWith(' ')&&inner.endsWith(' ')&&inner.length>1) inner=inner.slice(1,-1);
+      out+=`<code>${esc(inner)}</code>`;
+      pos=end+ticks.length;
+    }
+    return out;
+  }
+  function renderSurfacePanel(panel){
+    if(!panel) return '';
+    let h=`<div class="vlabel">${esc(panel.title||panel.panel_id||"surface panel")}</div>`;
+    const facts=(panel.facts||[]).filter(f=>f&&f.role!=="audit_only");
+    if(!facts.length) return h+`<div class="fcard"><div class="faint sm">No panel facts for this state.</div></div>`;
+    h+='<div class="fcard">';
+    facts.forEach(f=>{
+      let body='';
+      if(f.summary){
+        body+=`<div>${renderSurfaceValue(f.summary)}</div>`;
+        if(f.details!==undefined&&f.details!==null&&f.details!=="") body+=`<div class="factdetails">${renderSurfaceValue(f.details)}</div>`;
+      }else{
+        body=renderSurfaceValue(f.value);
+      }
+      const role=f.role?` data-role="${esc(f.role)}"`:"";
+      h+=`<div class="surfacefact"${role}><div class="ck">${esc(f.label||f.key||"fact")}</div><div class="cv">${body}</div></div>`;
+    });
+    h+='</div>';
+    return h;
+  }
+  function choiceFieldForAction(a){
+    const choices=a&&a.choices||{};
+    const fields=Object.keys(choices).filter(k=>Array.isArray(choices[k]) && choices[k].some(v=>!isPlaceholder(String(v))));
+    return fields.length===1 ? fields[0] : "";
+  }
+  function pushAsk(a){
+    const idx=_asks.length;
+    _asks.push(a);
+    return idx;
+  }
+  function renderSurfaceActions(model){
+    const actions=((model&&model.actions)||[]).filter(a=>a&&a.intent_class!=="probe_preview");
+    _asks=[];
+    if(!actions.length) return '';
+    let h=`<div class="actionsurface"><div class="needlabel">Need more? <span class="faint">· click to run the same intent the agent sees</span></div>`;
+    const byClass={};
+    actions.forEach(a=>{ const cls=intentClassOf(a); (byClass[cls]=byClass[cls]||[]).push(a); });
+    Object.keys(byClass).forEach(cls=>{
+      h+=`<div class="grouplabel">${esc(intentClassLabel(cls))}</div>`;
+      const top=[], groups=[];
+      byClass[cls].forEach(a=>{ const field=choiceFieldForAction(a); (field?groups:top).push([a,field]); });
+      if(top.length){
+        h+='<div class="topactions">';
+        top.forEach(([a])=>{
+          const i=pushAsk(a);
+          h+=`<span class="pill actionpill" data-ask="${i}" title="${esc(a.description||"")}">${esc(askTopic(a))}</span>`;
+        });
+        h+='</div>';
+      }
+      if(groups.length) h+='<div class="actionlist">';
+      groups.forEach(([a,field])=>{
+        const payload=Object.assign({},a.payload||{});
+        const values=((a.choices||{})[field]||[]).filter(v=>!isPlaceholder(String(v)));
+        h+=`<div class="actionrow"><span class="actionname">${esc(askTopic(a))}</span><span class="choicepills">`;
+        values.forEach(v=>{
+          const p=Object.assign({},payload); p[field]=v;
+          const concrete=Object.assign({},a,{payload:p, sub:v, label:(a.intent+": "+v)});
+          const i=pushAsk(concrete);
+          h+=`<span class="pill choicepill" data-ask="${i}" title="${esc(a.description||"")}">${esc(v)}</span>`;
+        });
+        h+='</span></div>';
+      });
+      if(groups.length) h+='</div>';
+    });
+    return h+'</div>';
+  }
+  function renderSurfaceCards(model){
+    if(!model||!Object.keys(model).length) return '<div class="empty">— no surface model —</div>';
+    _asks=[];
+    let h='';
+    const hash=model.surface_model_hash?` · <span class="faint">${esc(model.surface_model_hash.slice(0,8))}</span>`:"";
+    h+=`<div class="vlabel">what the agent reads <span class="faint">· SurfaceModel${hash}</span></div>`;
+    if(model.phase==="goal_only") return h+surfaceGoalHtml(model);
+    const st=model.status||{};
+    const phaseLabel=st.surface_phase||(st.view_focus||st.current_layer);
+    const bits=[st.status,(st.remaining_goals!=null?st.remaining_goals+" goal"+(st.remaining_goals===1?"":"s"):""),st.goal_type,phaseLabel].filter(Boolean);
+    if(bits.length) h+=`<div class="statusbar"><span class="pin"></span>${esc(bits.join("  ·  "))}</div>`;
+    const panel=model.primary_panel||null;
+    const goal=surfaceGoalHtml(model), panelHtml=renderSurfacePanel(panel);
+    h+=goal+panelHtml;
+    h+=renderSurfaceActions(model);
+    return h;
+  }
+
+  function renderTurnOutcome(outcome){
+    if(!outcome||!outcome.result_line) return "";
+    const bad=outcome.ok===false || /rejected|error|no progress/i.test(String(outcome.result_line||""));
+    return `<div class="turn-outcome ${bad?'bad':''}">${esc(outcome.result_line)}</div>`;
+  }
+  function hasDrawerContent(turn){
+    if(!turn||typeof turn!=="object") return false;
+    const overlay=turn.overlay_surface;
+    return !!(overlay&&Object.keys(overlay).length);
+  }
+  function renderContractViolation(message){
+    _asks=[]; _controlItems=[];
+    return `<div class="turn-outcome bad">${esc(message)}</div>`;
+  }
+  function updateBackButton(){
+    if(!backToProof) return;
+    backToProof.hidden=true;
+  }
+  function closeDrawer(){
+    drawerClosed=true;
+    renderPanel();
+  }
+  function hideControlMenu(){
+    _controlItems=[];
+    if(controlMenu){ controlMenu.hidden=true; controlMenu.innerHTML=""; }
+  }
+  function showControlMenu(menu){
+    if(!controlMenu||!menu){hideControlMenu();return;}
+    const items=Array.isArray(menu.items)?menu.items:[];
+    _controlItems=items;
+    let h=`<div class="menuhdr"><span>${esc(menu.title||"Manager menu")}</span><button class="menuclose" type="button" title="close">×</button></div>`;
+    if(menu.notice) h+=`<div class="menunote">${renderSurfaceValue(menu.notice)}</div>`;
+    if(items.length){
+      items.forEach((item,i)=>{
+        h+=`<button class="controlitem" type="button" data-control="${i}"><div class="controltitle">${esc(item.label||"option")}</div>`;
+        if(item.description) h+=`<div class="controldesc">${esc(item.description)}</div>`;
+        if(item.tactic) h+=`<div class="controltactic">${esc(item.tactic)}</div>`;
+        h+=`</button>`;
+      });
+    }else if(!menu.notice){
+      h+=`<div class="menunote">No manager menu is available for this state.</div>`;
+    }
+    controlMenu.innerHTML=h;
+    controlMenu.hidden=false;
+  }
+  function drawerBackButton(){return `<button class="drawerback" type="button" data-close-drawer>Back to proof menu</button>`;}
+  function renderReadOnlyInline(turn){
+    if(drawerClosed||!turn) return "";
+    const overlay=turn.overlay_surface;
+    if(overlay&&Object.keys(overlay).length){
+      const panel=overlay.primary_panel||null;
+      const title=(panel&&panel.title)||"Requested context";
+      return `<div class="turn-drawer" data-drawer="overlay"><div class="drawerhdr"><span>${esc(title)}</span>${drawerBackButton()}</div><div class="drawerbody">${renderSurfacePanel(panel)}</div></div>`;
+    }
+    return "";
+  }
+  function renderSurfaceTurn(turn){
+    if(!turn||!turn.proof_surface){
+      return renderContractViolation("Contract violation: backend view is missing surface_turn.proof_surface. Restart the playground server so the web UI and backend are on the same SurfaceTurnModel contract.");
+    }
+    const model=turn.proof_surface;
+    let proof=renderSurfaceCards(model);
+    const showOutcome=!(turn&&turn.presentation_kind==="read_only_overlay"&&turn.overlay_surface);
+    const outcome=showOutcome?renderTurnOutcome(turn&&turn.turn_outcome):"";
+    if(outcome){
+      proof=(turn.turn_outcome&&turn.turn_outcome.lead_before_goal) ? (outcome+proof) : (proof+outcome);
+    }
+    return proof+renderReadOnlyInline(turn);
+  }
+
+  function renderPanel(){
+    $("#pprofile").textContent=profLabel(profile);
+    if(viewMode==="instructions"){
+      panelBody.className=""; panelBody.innerHTML='<pre class="json"></pre>';
+      panelBody.firstChild.textContent=lastInstructions
+        ? `AGENT INSTRUCTIONS @ ${lastInstructions.profile || "?"}\n${lastInstructions.file || ""}:${lastInstructions.lemma || ""}\n${lastInstructions.scope || ""}\n\n${lastInstructions.prompt || ""}`
+        : "loading instructions...";
+      updateBackButton(); return;
+    }
+    if(!lastView){panelBody.className="empty";panelBody.textContent="— start a session —";updateBackButton();return;}
+    if(viewMode==="json"){
+      panelBody.className=""; panelBody.innerHTML='<pre class="json"></pre>';
+      panelBody.firstChild.textContent=JSON.stringify(lastView.workspace_view||{},null,2); updateBackButton(); return;
+    }
+    if(viewMode==="followup"){
+      const md=lastView.followup_md||"(no followup)"; panelBody.className="md";
+      panelBody.innerHTML=(window.marked&&marked.parse)?marked.parse(md):"<pre>"+esc(md)+"</pre>"; updateBackButton(); return;
+    }
+    panelBody.className="";
+    panelBody.innerHTML=renderSurfaceTurn(lastView.surface_turn);
+    updateBackButton();
+  }
+
+  function connect(after){
+    ws=new WebSocket(`ws://${location.host}/play`);
+    ws.onopen=()=>{setStatus("connected",true);after&&after();};
+    ws.onclose=()=>setStatus("disconnected",false);
+    ws.onerror=()=>log("t-bad","✗ can't reach the server at "+location.host+" — run ./playground/run.sh and open http://127.0.0.1:8000 (not the static file preview)");
+    ws.onmessage=e=>{
+      const m=JSON.parse(e.data);
+      if(m.type==="error"){log("t-bad","✗ "+m.message);pending=false;return;}
+      if(m.type==="initial_prompt"){
+        lastInstructions=m;
+        if(viewMode==="instructions") renderPanel();
+        return;
+      }
+      if(m.type==="view"){
+        lastView=m; drawerClosed=false;
+        renderPanel();
+        if(hasDrawerContent(lastView.surface_turn) && panelShell) panelShell.scrollTop=panelShell.scrollHeight;
+        const menu=lastView.surface_turn&&lastView.surface_turn.control_menu;
+        if(menu) showControlMenu(menu); else hideControlMenu();
+        if(pending){
+          if(!lastView.surface_turn) log("t-bad","→ backend contract violation: missing surface_turn");
+          else if(menu) log(lastView.ok?"t-ok":"t-bad","→ menu");
+          else log(lastView.ok?"t-ok":"t-bad","→ "+(lastView.ok?"ok":("rejected"+(lastView.repair_prompt?" · "+lastView.repair_prompt.split("\n")[0]:""))));
+          pending=false;
+        }
+      }
+    };
+  }
+  function startSession(){
+    profile=$("#profile .active").dataset.p;
+    const file=$("#file").value, lemma=$("#lemma").value;
+    if(!file||!lemma){ log("t-bad","✗ choose a file and lemma first"); return; }
+    drawerClosed=false; hideControlMenu(); lastView=null; transcript.innerHTML="";renderPanel();
+    log("t-muted","started "+lemma+" in "+file+" @ "+profLabel(profile)+" mode");
+    send({type:"start",file,lemma,profile}); pending=true;
+  }
+  function send(o){ if(ws&&ws.readyState===1) ws.send(JSON.stringify(o)); }
+  function sendIntent(intent,payload,label){
+    if(!ws||ws.readyState!==1){ log("t-bad","✗ no live session — click Start first"); return; }
+    hideControlMenu();
+    drawerClosed=false;
+    log("t-intent","▸ "+(label||intent)); send({type:"intent",intent,payload:payload||{}}); pending=true;
+  }
+  function activeProfile(){ return ($("#profile .active")&&$("#profile .active").dataset.p)||profile; }
+  function currentInstructionsKey(){
+    return JSON.stringify({file:$("#file").value, lemma:$("#lemma").value, profile:activeProfile()});
+  }
+  async function requestInstructions(force=false){
+    const key=currentInstructionsKey();
+    if(!force && lastInstructions && instructionsKey===key) return;
+    instructionsKey=key;
+    lastInstructions=null;
+    if(viewMode==="instructions") renderPanel();
+    const params=new URLSearchParams({
+      file:$("#file").value||"",
+      lemma:$("#lemma").value||"",
+      profile:activeProfile()||profile
+    });
+    try{
+      const res=await fetch("/api/instructions?"+params.toString());
+      const data=await res.json();
+      if(!res.ok) throw new Error(data.error||JSON.stringify(data));
+      if(instructionsKey!==key) return;
+      lastInstructions=data;
+    }catch(e){
+      if(instructionsKey!==key) return;
+      lastInstructions={
+        profile:activeProfile(),
+        file:$("#file").value,
+        lemma:$("#lemma").value,
+        scope:"error",
+        prompt:"Could not render instructions: "+e.message
+      };
+    }
+    if(viewMode==="instructions") renderPanel();
+  }
+  function setViewMode(mode){
+    viewMode=mode;
+    const toggle=$("#view-toggle");
+    if(toggle) [...toggle.children].forEach(x=>x.classList.toggle("active", x.dataset.v===mode));
+    if(viewMode==="instructions") requestInstructions();
+    renderPanel();
+  }
+  $("#start").onclick=()=>{ if(!ws||ws.readyState!==1) connect(startSession); else startSession(); };
+  $("#profile").onclick=e=>{const b=e.target.closest("button");if(!b)return;
+    [...e.currentTarget.children].forEach(x=>x.classList.remove("active"));b.classList.add("active");
+    profile=b.dataset.p;$("#pprofile").textContent=profLabel(profile);
+    lastInstructions=null;
+    if(viewMode==="instructions") requestInstructions(true);
+    drawerClosed=true; hideControlMenu();
+    if(ws&&ws.readyState===1){log("t-muted","re-rendered in "+profLabel(profile)+" mode (same proof state)");send({type:"switch_profile",profile});pending=true;}
+    else renderPanel();};
+  $("#view-toggle").onclick=e=>{const b=e.target.closest("button");if(!b)return;
+    setViewMode(b.dataset.v);};
+  if(backToProof) backToProof.onclick=closeDrawer;
+  if(controlMenu) controlMenu.addEventListener("click",e=>{
+    if(e.target.closest(".menuclose")){hideControlMenu();return;}
+    const c=e.target.closest(".controlitem[data-control]");
+    if(!c)return;
+    const item=_controlItems[+c.dataset.control];
+    if(item&&item.submit) sendIntent(item.submit.intent,item.submit.payload||{},item.label);
+  });
+  $("#file").onchange=()=>{populateLemmaSelect(); lastInstructions=null; if(viewMode==="instructions") requestInstructions(true);};
+  $("#lemma").onchange=()=>{lastInstructions=null; if(viewMode==="instructions") requestInstructions(true);};
+  document.querySelectorAll("button[data-i]").forEach(b=>b.onclick=()=>sendIntent(b.dataset.i,{},b.textContent.trim()));
+  function isPlaceholder(v){ return /^<[^>]+>$/.test(v)||/^[A-Z][A-Z0-9_]*$/.test(v)||v.indexOf("…")>=0||v.indexOf("...")>=0||/NAME|LEMMA|SYMBOL|QUERY/.test(v); }
+  function runHandle(ask){
+    const intent=ask.intent, payload=Object.assign({}, ask.payload||{});
+    for(const k in payload){ const v=payload[k];
+      if(typeof v==="string" && isPlaceholder(v)){
+        // The pill is a placeholder (no concrete value from the goal) — ask the user, and guide
+        // them so they don't blindly search an operator that isn't in THIS goal (a bare common
+        // op like (+^) returns the whole theory). Empty default every time (no carried value).
+        const hint = (k==="operator")
+          ? "enter an operator FROM THE CURRENT GOAL (or a term skeleton to narrow, e.g. (big _ _ (_ :: _))). A bare common op like (+^) returns the whole theory."
+          : (intent+" — enter "+k+":");
+        const ans=prompt(hint,""); if(ans===null)return; payload[k]=ans.trim();
+        if(!payload[k]) return;  // empty -> cancel, don't run a placeholder search
+      } }
+    const detail=payload.operator||payload.symbol||payload.name||payload.topic||"";
+    sendIntent(intent,payload, intent==="lookup_symbol"?("lookup "+(payload.symbol||"")):("context "+intent+(detail?(" "+detail):"")));
+  }
+  panelBody.addEventListener("click",e=>{
+    if(e.target.closest("[data-close-drawer]")){closeDrawer();return;}
+    const p=e.target.closest(".pill[data-ask]"); if(!p)return; const a=_asks[+p.dataset.ask]; if(a)runHandle(a);
+  });
+  $("#tactic").onkeydown=e=>{ if(e.key==="Enter"){const tac=e.target.value.trim();if(!tac)return;
+    sendIntent("commit_tactic",{tactic:tac},"commit "+tac);e.target.value=""; e.preventDefault();}};
+  loadTargets();
+</script>
+</body>
+</html>

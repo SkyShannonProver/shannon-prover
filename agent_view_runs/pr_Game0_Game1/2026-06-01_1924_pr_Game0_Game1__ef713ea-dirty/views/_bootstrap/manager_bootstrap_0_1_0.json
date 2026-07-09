@@ -1,0 +1,361 @@
+{
+  "file": "artifacts/eval_suite/l1_l4_surface_ablation/l1_goal_projection/pr_game0_game1_synth/r01/source/br93.ec",
+  "include_dirs": [
+    "artifacts/eval_suite/l1_l4_surface_ablation/l1_goal_projection/pr_game0_game1_synth/r01/source",
+    "easycrypt-src/theories"
+  ],
+  "kind": "manager_session_bootstrap",
+  "lemma": "pr_Game0_Game1",
+  "manager_actions": [
+    {
+      "agent_observation": {
+        "effect": "This manager intent does not change the EasyCrypt proof state.",
+        "manager_action": "start",
+        "result": "The manager completed this proof-level request."
+      },
+      "argv": [
+        "/Library/Developer/CommandLineTools/usr/bin/python3",
+        "core/easycrypt/session_cli.py",
+        "-d",
+        ".ec_session_prover_tree_0_1_0",
+        "-start",
+        "-f",
+        "artifacts/eval_suite/l1_l4_surface_ablation/l1_goal_projection/pr_game0_game1_synth/r01/source/br93.ec",
+        "-I",
+        "artifacts/eval_suite/l1_l4_surface_ablation/l1_goal_projection/pr_game0_game1_synth/r01/source",
+        "-I",
+        "easycrypt-src/theories",
+        "-lemma",
+        "pr_Game0_Game1"
+      ],
+      "duration_ms": 1786,
+      "exit_code": 0,
+      "label": "start",
+      "mutates_proof_state": true,
+      "stderr_chars": 0,
+      "stderr_preview": "",
+      "stdout_chars": 5452,
+      "stdout_has_workspace_view": true,
+      "stdout_lines": 151
+    },
+    {
+      "agent_observation": {
+        "effect": "EasyCrypt accepted a proof-state change; the refreshed view is based on the new committed state.",
+        "manager_action": "replay_prefix_step_1",
+        "proof_state": "The committed EasyCrypt proof state changed.",
+        "result": "The manager completed this proof-level request.",
+        "tactic": "byequiv (_ : ={glob A, glob LRO} ==> ={res} \\/ (Game1.r \\in Log.qs){2}) => //."
+      },
+      "argv": [
+        "/Library/Developer/CommandLineTools/usr/bin/python3",
+        "core/easycrypt/session_cli.py",
+        "-d",
+        ".ec_session_prover_tree_0_1_0",
+        "-next",
+        "-c",
+        "byequiv (_ : ={glob A, glob LRO} ==> ={res} \\/ (Game1.r \\in Log.qs){2}) => //."
+      ],
+      "duration_ms": 1317,
+      "exit_code": 0,
+      "label": "replay_prefix_step_1",
+      "mutates_proof_state": true,
+      "stderr_chars": 0,
+      "stderr_preview": "",
+      "stdout_chars": 12755,
+      "stdout_has_workspace_view": true,
+      "stdout_lines": 2
+    },
+    {
+      "agent_observation": {
+        "effect": "EasyCrypt accepted a proof-state change; the refreshed view is based on the new committed state.",
+        "manager_action": "replay_prefix_step_2",
+        "proof_state": "The committed EasyCrypt proof state changed.",
+        "result": "The manager completed this proof-level request.",
+        "tactic": "proc."
+      },
+      "argv": [
+        "/Library/Developer/CommandLineTools/usr/bin/python3",
+        "core/easycrypt/session_cli.py",
+        "-d",
+        ".ec_session_prover_tree_0_1_0",
+        "-next",
+        "-c",
+        "proc."
+      ],
+      "duration_ms": 1345,
+      "exit_code": 0,
+      "label": "replay_prefix_step_2",
+      "mutates_proof_state": true,
+      "stderr_chars": 0,
+      "stderr_preview": "",
+      "stdout_chars": 25292,
+      "stdout_has_workspace_view": true,
+      "stdout_lines": 2
+    },
+    {
+      "agent_observation": {
+        "effect": "EasyCrypt accepted a proof-state change; the refreshed view is based on the new committed state.",
+        "manager_action": "replay_prefix_step_3",
+        "proof_state": "The committed EasyCrypt proof state changed.",
+        "result": "The manager completed this proof-level request.",
+        "tactic": "inline BR93(LRO).keygen BR93(LRO).enc."
+      },
+      "argv": [
+        "/Library/Developer/CommandLineTools/usr/bin/python3",
+        "core/easycrypt/session_cli.py",
+        "-d",
+        ".ec_session_prover_tree_0_1_0",
+        "-next",
+        "-c",
+        "inline BR93(LRO).keygen BR93(LRO).enc."
+      ],
+      "duration_ms": 6243,
+      "exit_code": 0,
+      "label": "replay_prefix_step_3",
+      "mutates_proof_state": true,
+      "stderr_chars": 0,
+      "stderr_preview": "",
+      "stdout_chars": 23970,
+      "stdout_has_workspace_view": true,
+      "stdout_lines": 2
+    },
+    {
+      "agent_observation": {
+        "effect": "This manager intent does not change the EasyCrypt proof state.",
+        "manager_action": "agent_view",
+        "result": "The manager completed this proof-level request."
+      },
+      "argv": [
+        "/Library/Developer/CommandLineTools/usr/bin/python3",
+        "core/easycrypt/session_cli.py",
+        "-d",
+        ".ec_session_prover_tree_0_1_0",
+        "-agent-view"
+      ],
+      "duration_ms": 249,
+      "exit_code": 0,
+      "label": "agent_view",
+      "mutates_proof_state": false,
+      "stderr_chars": 0,
+      "stderr_preview": "",
+      "stdout_chars": 28779,
+      "stdout_has_workspace_view": true,
+      "stdout_lines": 721
+    }
+  ],
+  "node": "Tree-0.1.0",
+  "replay_prefix": [
+    "byequiv (_ : ={glob A, glob LRO} ==> ={res} \\/ (Game1.r \\in Log.qs){2}) => //.",
+    "proc.",
+    "inline BR93(LRO).keygen BR93(LRO).enc."
+  ],
+  "replay_prefix_count": 3,
+  "schema_version": 2,
+  "session_dir": ".ec_session_prover_tree_0_1_0",
+  "session_tag": "prover_tree_0_1_0",
+  "snapshot": {
+    "execution_refs": {
+      "manager_action_count": 5,
+      "manager_actions": [
+        {
+          "agent_observation": {
+            "effect": "This manager intent does not change the EasyCrypt proof state.",
+            "manager_action": "start",
+            "result": "The manager completed this proof-level request."
+          },
+          "argv": [
+            "/Library/Developer/CommandLineTools/usr/bin/python3",
+            "core/easycrypt/session_cli.py",
+            "-d",
+            ".ec_session_prover_tree_0_1_0",
+            "-start",
+            "-f",
+            "artifacts/eval_suite/l1_l4_surface_ablation/l1_goal_projection/pr_game0_game1_synth/r01/source/br93.ec",
+            "-I",
+            "artifacts/eval_suite/l1_l4_surface_ablation/l1_goal_projection/pr_game0_game1_synth/r01/source",
+            "-I",
+            "easycrypt-src/theories",
+            "-lemma",
+            "pr_Game0_Game1"
+          ],
+          "duration_ms": 1786,
+          "exit_code": 0,
+          "label": "start",
+          "mutates_proof_state": true,
+          "stderr_chars": 0,
+          "stderr_preview": "",
+          "stdout_chars": 5452,
+          "stdout_has_workspace_view": true,
+          "stdout_lines": 151
+        },
+        {
+          "agent_observation": {
+            "effect": "EasyCrypt accepted a proof-state change; the refreshed view is based on the new committed state.",
+            "manager_action": "replay_prefix_step_1",
+            "proof_state": "The committed EasyCrypt proof state changed.",
+            "result": "The manager completed this proof-level request.",
+            "tactic": "byequiv (_ : ={glob A, glob LRO} ==> ={res} \\/ (Game1.r \\in Log.qs){2}) => //."
+          },
+          "argv": [
+            "/Library/Developer/CommandLineTools/usr/bin/python3",
+            "core/easycrypt/session_cli.py",
+            "-d",
+            ".ec_session_prover_tree_0_1_0",
+            "-next",
+            "-c",
+            "byequiv (_ : ={glob A, glob LRO} ==> ={res} \\/ (Game1.r \\in Log.qs){2}) => //."
+          ],
+          "duration_ms": 1317,
+          "exit_code": 0,
+          "label": "replay_prefix_step_1",
+          "mutates_proof_state": true,
+          "stderr_chars": 0,
+          "stderr_preview": "",
+          "stdout_chars": 12755,
+          "stdout_has_workspace_view": true,
+          "stdout_lines": 2
+        },
+        {
+          "agent_observation": {
+            "effect": "EasyCrypt accepted a proof-state change; the refreshed view is based on the new committed state.",
+            "manager_action": "replay_prefix_step_2",
+            "proof_state": "The committed EasyCrypt proof state changed.",
+            "result": "The manager completed this proof-level request.",
+            "tactic": "proc."
+          },
+          "argv": [
+            "/Library/Developer/CommandLineTools/usr/bin/python3",
+            "core/easycrypt/session_cli.py",
+            "-d",
+            ".ec_session_prover_tree_0_1_0",
+            "-next",
+            "-c",
+            "proc."
+          ],
+          "duration_ms": 1345,
+          "exit_code": 0,
+          "label": "replay_prefix_step_2",
+          "mutates_proof_state": true,
+          "stderr_chars": 0,
+          "stderr_preview": "",
+          "stdout_chars": 25292,
+          "stdout_has_workspace_view": true,
+          "stdout_lines": 2
+        },
+        {
+          "agent_observation": {
+            "effect": "EasyCrypt accepted a proof-state change; the refreshed view is based on the new committed state.",
+            "manager_action": "replay_prefix_step_3",
+            "proof_state": "The committed EasyCrypt proof state changed.",
+            "result": "The manager completed this proof-level request.",
+            "tactic": "inline BR93(LRO).keygen BR93(LRO).enc."
+          },
+          "argv": [
+            "/Library/Developer/CommandLineTools/usr/bin/python3",
+            "core/easycrypt/session_cli.py",
+            "-d",
+            ".ec_session_prover_tree_0_1_0",
+            "-next",
+            "-c",
+            "inline BR93(LRO).keygen BR93(LRO).enc."
+          ],
+          "duration_ms": 6243,
+          "exit_code": 0,
+          "label": "replay_prefix_step_3",
+          "mutates_proof_state": true,
+          "stderr_chars": 0,
+          "stderr_preview": "",
+          "stdout_chars": 23970,
+          "stdout_has_workspace_view": true,
+          "stdout_lines": 2
+        },
+        {
+          "agent_observation": {
+            "effect": "This manager intent does not change the EasyCrypt proof state.",
+            "manager_action": "agent_view",
+            "result": "The manager completed this proof-level request."
+          },
+          "argv": [
+            "/Library/Developer/CommandLineTools/usr/bin/python3",
+            "core/easycrypt/session_cli.py",
+            "-d",
+            ".ec_session_prover_tree_0_1_0",
+            "-agent-view"
+          ],
+          "duration_ms": 249,
+          "exit_code": 0,
+          "label": "agent_view",
+          "mutates_proof_state": false,
+          "stderr_chars": 0,
+          "stderr_preview": "",
+          "stdout_chars": 28779,
+          "stdout_has_workspace_view": true,
+          "stdout_lines": 721
+        }
+      ]
+    },
+    "goal_hash": "b578efa5e94fe1ef682e13dedb9721b7e72ce77f",
+    "node_id": "Tree-0.1.0",
+    "proof_context_view_artifact": "",
+    "session_dir": ".ec_session_prover_tree_0_1_0",
+    "session_epoch": 1,
+    "session_tag": "prover_tree_0_1_0",
+    "state_version": 1,
+    "workspace_view_artifact": ""
+  },
+  "workspace_view": {
+    "current_goal": {
+      "goal_type": "pRHL",
+      "lines": [
+        "Current goal (remaining: 2)",
+        "",
+        "Type variables: <none>",
+        "",
+        "&m: {}",
+        "------------------------------------------------------------------------",
+        "&1 (left ) : {b, b' : bool, m0, m1, m, h : ptxt, r : rand, c : rand * ptxt,",
+        "             pk, pk0 : pkey, sk : skey, kp : pkey * skey}",
+        "&2 (right) : {b, b' : bool, m0, m1, h : ptxt, c : rand * ptxt, pk : pkey,",
+        "             sk : skey}",
+        "",
+        "pre = (glob A){1} = (glob A){2} /\\ LRO.m{1} = LRO.m{2}",
+        "",
+        "Log(LRO).init()                 ( 1)  Log(LRO).init()               ",
+        "kp <$ dkeys                     ( 2)  (pk, sk) <$ dkeys             ",
+        "(pk, sk) <- kp                  ( 3)  (m0, m1) <@ A(Log(LRO)).a1(pk)",
+        "(m0, m1) <@ A(Log(LRO)).a1(pk)  ( 4)  b <$ {0,1}                    ",
+        "b <$ {0,1}                      ( 5)  Game1.r <$ drand              ",
+        "pk0 <- pk                       ( 6)  h <$ dptxt                    ",
+        "m <- if b then m0 else m1       ( 7)  c <-                          ",
+        "                                (  )    (f pk Game1.r,              ",
+        "                                (  )     h +^ if b then m0 else m1) ",
+        "r <$ drand                      ( 8)  b' <@ A(Log(LRO)).a2(c)       ",
+        "h <@ LRO.o(r)                   ( 9)                                ",
+        "c <- (f pk0 r, h +^ m)          (10)                                ",
+        "b' <@ A(Log(LRO)).a2(c)         (11)                                ",
+        "",
+        "post = (b'{1} = b{1}) = (b'{2} = b{2}) \\/ (Game1.r{2} \\in Log.qs{2})",
+        "[72|check]>"
+      ],
+      "source": {
+        "ground_truth": false,
+        "label": "Parsed from EasyCrypt pretty goal text"
+      },
+      "text_fully_shown": true,
+      "truncated": false,
+      "view_focus": "seq_cut"
+    },
+    "kind": "prover_workspace_view",
+    "last_result": {},
+    "proof_status": {
+      "current_layer": "call_site",
+      "goal_type": "pRHL",
+      "remaining_goals": 2,
+      "remaining_goals_known": true,
+      "status": "open",
+      "view_focus": "seq_cut"
+    },
+    "schema_version": 2,
+    "view_hash": "e1e4f8f75f2aae1008c08ac0cb4d979ddaf333e7"
+  }
+}

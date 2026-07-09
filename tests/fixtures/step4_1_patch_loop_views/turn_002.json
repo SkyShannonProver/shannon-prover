@@ -1,0 +1,43 @@
+{
+ "current_goal": {
+  "lines": [
+   "Current goal (remaining: 5)",
+   "",
+   "Type variables: <none>",
+   "",
+   "&m: {}",
+   "------------------------------------------------------------------------",
+   "forall &2,",
+   "  UFCMA.bad1{2} =>",
+   "  islossless BNR(",
+   "               CPA_CCA_Orcls(",
+   "                 RealOrcls(",
+   "                   GenChaChaPoly(",
+   "                     CCRO(",
+   "                       SplitD.RO_DOM(",
+   "                                SplitC1.RO_Pair(",
+   "                                          SplitC2.RO_Pair(SplitC2.I1.RO,",
+   "                                                    SplitC2.I2.RO),",
+   "                                          SplitC1.I2.RO), SplitD.ROF.RO)))))).dec",
+   "[466|check]>"
+  ],
+  "view_focus": "ambient_logic",
+  "goal_type": "ambient"
+ },
+ "proof_status": {
+  "status": "open",
+  "remaining_goals": 5,
+  "remaining_goals_known": true,
+  "goal_type": "ambient",
+  "view_focus": "ambient_logic",
+  "current_layer": "ambient_logic"
+ },
+ "last_result": {
+  "intent": "commit_tactic",
+  "tactic": "skip; smt().",
+  "payload": {
+   "tactic": "skip; smt()."
+  },
+  "result": "EasyCrypt accepted the committed tactic."
+ }
+}

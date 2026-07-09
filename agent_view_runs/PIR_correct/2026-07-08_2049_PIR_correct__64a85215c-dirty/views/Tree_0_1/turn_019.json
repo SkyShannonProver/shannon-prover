@@ -1,0 +1,531 @@
+{
+  "last_result": {
+    "intent": "commit_tactic",
+    "payload": {
+      "tactic": "skip => &hr Hi0; split; first by smt(N_pos)."
+    },
+    "manager_action": "commit_tactic",
+    "result": "EasyCrypt rejected the committed tactic. Use the error summary and current goal to revise the proof step.",
+    "effect": "The manager attempted to commit a tactic; use the result and latest goal to decide what changed.",
+    "proof_state": "The committed EasyCrypt proof state was not changed.",
+    "tactic": "skip => &hr Hi0; split; first by smt(N_pos).",
+    "error_summary": "[error] cannot find lemma `N_pos'"
+  },
+  "current_goal": {
+    "lines": [
+      "Current goal",
+      "",
+      "Type variables: <none>",
+      "",
+      "&m: {}",
+      "i0: int",
+      "hi: 0 <= i0 < N",
+      "------------------------------------------------------------------------",
+      "Context : hr: {b : bool, i, j : int, s, s0 : int list, r, r' : word}",
+      "Bound   : [=] 1%r",
+      "",
+      "pre = i = i0",
+      "",
+      "",
+      "post =",
+      "  (0 <= 0 <= N /\\",
+      "   i = i0 /\\ (0 <= i0 => [] = []) /\\ (i0 < 0 => sxor2 [] [] i0)) /\\",
+      "  forall (s1 s' : int list) (j0 : int),",
+      "    (0 <= j0 <= N /\\",
+      "     i = i0 /\\ (j0 <= i0 => s1 = s') /\\ (i0 < j0 => sxor2 s1 s' i0) =>",
+      "     N - j0 <= 0 => ! j0 < N) /\\",
+      "    (! j0 < N =>",
+      "     0 <= j0 <= N /\\",
+      "     i = i0 /\\ (j0 <= i0 => s1 = s') /\\ (i0 < j0 => sxor2 s1 s' i0) =>",
+      "     big predT<:int> a s1 +^ big predT<:int> a s' = a i0)",
+      "[34|check]>"
+    ],
+    "text_fully_shown": true,
+    "truncated": false,
+    "goal_type": "phoare",
+    "view_focus": "procedure_frontier",
+    "source": {
+      "label": "Parsed from EasyCrypt pretty goal text",
+      "ground_truth": false
+    }
+  },
+  "proof_status": {
+    "status": "open",
+    "remaining_goals": 1,
+    "remaining_goals_known": true,
+    "goal_type": "phoare",
+    "view_focus": "procedure_frontier",
+    "current_layer": "procedure_body"
+  },
+  "candidate_moves": {},
+  "program_frontier": {
+    "authority": "proof-state analysis",
+    "view_focus": "procedure_frontier",
+    "focus": {
+      "live_call_sites": 0,
+      "frontier_call_sites": 0,
+      "live_callable_lemmas": 0,
+      "callable_now_lemmas": 0,
+      "oracle_obligation_handles": 0,
+      "has_invariant_skeleton": false
+    },
+    "checks": [
+      "Keep one-sided instrumentation as a map, not as a tactic recipe."
+    ]
+  },
+  "call_site_surface": {},
+  "pure_tail_surface": {
+    "state": "quantified_ambient_tail",
+    "obligation_shape_surface": {
+      "conclusion_obligations": [
+        {
+          "shape": "equality obligation",
+          "text": "Context : hr: {b : bool, i, j : int, s, s0 : int list, r, r' : word} Bound : [=] 1%r pre = i = i0 post = (0 <= 0 <= N /\\ i = i0 /\\ (0 <= i0 => [] = []) /\\ (i0 < 0 => sxor2 [] []..."
+        },
+        {
+          "shape": "equality obligation",
+          "text": "forall (s1 s' : int list) (j0 : int), (0 <= j0 <= N /\\ i = i0 /\\ (j0 <= i0 => s1 = s') /\\ (i0 < j0 => sxor2 s1 s' i0) => N - j0 <= 0 => ! j0 < N)"
+        },
+        {
+          "shape": "equality obligation",
+          "text": "(! j0 < N => 0 <= j0 <= N /\\ i = i0 /\\ (j0 <= i0 => s1 = s') /\\ (i0 < j0 => sxor2 s1 s' i0) => big predT<:int> a s1 +^ big predT<:int> a s' = a i0)"
+        }
+      ]
+    },
+    "goal_operators": [
+      "hr",
+      "bool",
+      "s0",
+      "word",
+      "pre",
+      "post",
+      "sxor2",
+      "big"
+    ],
+    "visible_hypotheses": [
+      "hi: 0 <= i0 < N"
+    ],
+    "obligation_families": [
+      {
+        "family": "quantified_residual_logic",
+        "evidence": [
+          "universal quantifier visible",
+          "implication residual visible"
+        ],
+        "effect": "The current proof point is dominated by local logical obligations rather than program-frontier movement.",
+        "limitations": "Quantifier names are not normalized across EasyCrypt pretty-printer variants."
+      }
+    ],
+    "ambient_memory_translation": {
+      "state": "introduced_memories_visible",
+      "introduced_memory_bindings": [
+        "&m:"
+      ],
+      "translation_facts": [
+        "Decorations identify the program memory from which a term is read.",
+        "Pretty-printer memory names and introduced proof-context names can differ."
+      ],
+      "effect": "Local claims in the pure tail depend on the currently introduced memory binders as well as displayed term decorations."
+    },
+    "effect": "Summarizes verifier-visible pure-goal structure after program frontier actions have been discharged or hidden by local proof steps.",
+    "limitations": [
+      "This panel records syntactic and proof-state facts from the current view.",
+      "It does not choose a tactic or instantiate a lemma."
+    ]
+  },
+  "application_context": {},
+  "facts_and_diagnostics": {
+    "facts": {
+      "has_invariant_skeleton": false,
+      "unfoldable_goal_heads": [
+        {
+          "name": "sxor2",
+          "unqualified_name": "sxor2",
+          "declaration_kind": "pred",
+          "unfold_tactic": "rewrite /sxor2.",
+          "smt_argument_role": "not_a_lemma_hint"
+        }
+      ],
+      "unfoldable_goal_head_count": 1
+    },
+    "fact_note": "Only current-frontier facts are shown here; the full proof context artifact keeps the compiler/internal details."
+  },
+  "proof_so_far": {
+    "committed_count": 15,
+    "steps": [
+      {
+        "step": 1,
+        "tactic": "move => hi."
+      },
+      {
+        "step": 2,
+        "tactic": "byphoare (_: i = i0 ==> res = a i0) => //."
+      },
+      {
+        "step": 3,
+        "tactic": "proc."
+      },
+      {
+        "step": 4,
+        "tactic": "inline PIR.query."
+      },
+      {
+        "step": 5,
+        "tactic": "wp."
+      },
+      {
+        "step": 6,
+        "tactic": "while (0 <= j <= N /\\ i = i0 /\\ (j <= i0 => PIR.s = PIR.s') /\\ (i0 < j => sxor2 PIR.s PIR.s' i0)) (N - j)."
+      },
+      {
+        "step": 7,
+        "tactic": "move => z; wp."
+      },
+      {
+        "step": 8,
+        "tactic": "rnd predT."
+      },
+      {
+        "step": 9,
+        "tactic": "skip."
+      },
+      {
+        "step": 10,
+        "tactic": "move => &hr [[[[Hjb [Hii [Hs Hsx]]] Hjlt] Hz] _]."
+      },
+      {
+        "step": 11,
+        "tactic": "split."
+      },
+      {
+        "step": 12,
+        "tactic": "exact dbool_ll."
+      },
+      {
+        "step": 13,
+        "tactic": "move => _ v hv; rewrite /predT /= Hii /=."
+      },
+      {
+        "step": 14,
+        "tactic": "smt(sxor_cons sxor2_cons)."
+      },
+      {
+        "step": 15,
+        "tactic": "wp."
+      }
+    ],
+    "elided_count": 0,
+    "note": "Your committed proof so far in THIS node, step-numbered \u2014 your own work. Use it to orient; do not re-derive steps already listed here."
+  },
+  "recovery_diagnosis_surface": {
+    "kind": "recovery_diagnosis_surface",
+    "recovery_class": "local_pure_surgery_available",
+    "confidence": "medium",
+    "checkpoint_policy": "current_state_local_work_visible",
+    "evidence": [
+      "pure_tail_surface is visible for the current goal",
+      "current proof state has no program-frontier work before the logical residual"
+    ],
+    "available_local_work": [
+      {
+        "kind": "pure_tail_obligation_families",
+        "items": [
+          "quantified_residual_logic"
+        ]
+      }
+    ],
+    "related_surfaces": [
+      "pure_tail_surface",
+      "structural_checkpoints"
+    ],
+    "limitations": [
+      "does not select a destructor, witness, rewrite, or SMT lemma",
+      "reported checkpoints are recovery references, not a default route"
+    ]
+  },
+  "surface_action_preflight": {
+    "schema_version": 1,
+    "results": []
+  },
+  "inspect_lookup_handles": {
+    "effect": "All handles here are read-only manager requests; the committed EasyCrypt proof state stays unchanged.",
+    "manager_note": "Some requests may ask EasyCrypt or name resolution; wait for the manager result before choosing the next proof intent.",
+    "ask_manager_for": [
+      {
+        "intent": "inspect_context",
+        "payload": {
+          "topic": "diagnose"
+        },
+        "use_when": "The latest transition recorded an error.",
+        "returns": "manager-provided read-only context for this proof route",
+        "intent_class": "context_topic",
+        "read_only": true,
+        "public_intent": "diagnose"
+      },
+      {
+        "intent": "inspect_context",
+        "payload": {
+          "topic": "operator_lemmas",
+          "operator": "OPERATOR"
+        },
+        "use_when": "Need the lemmas that apply to an OPERATOR in your goal \u2014 project-local lemmas included (not just stdlib) \u2014 instead of guessing a lemma name.",
+        "returns": "lemmas mentioning that operator, found by live EC `search` over the loaded context (statements; you pick which to apply)",
+        "intent_class": "context_topic",
+        "read_only": true,
+        "public_intent": "operator_lemmas",
+        "payload_fields": [
+          "operator"
+        ]
+      },
+      {
+        "intent": "inspect_context",
+        "payload": {
+          "topic": "tactic_forms",
+          "name": "while"
+        },
+        "use_when": "Need the valid one-sided hoare/phoare loop form.",
+        "returns": "valid `while` forms and common traps",
+        "intent_class": "context_topic",
+        "read_only": true,
+        "public_intent": "tactic_forms",
+        "payload_fields": [
+          "name"
+        ]
+      }
+    ]
+  },
+  "structural_checkpoints": {
+    "items": [
+      {
+        "checkpoint_id": "cp_4_36996bcc24b884a4",
+        "semantic_id": "last_call_site_boundary",
+        "semantic_ids": [
+          "last_call_site_boundary"
+        ],
+        "label": "Before inline expansion #4",
+        "committed_step_index": 4,
+        "committed_tactic": "inline PIR.query.",
+        "restored_proof_layer": "pre_inline_frontier",
+        "restored_affordances": {
+          "call_site_handles": "as_before_inline"
+        },
+        "undo_scope": "call_site_boundary",
+        "why_checkpoint": "inline boundary; selecting it restores the proof state before this expansion",
+        "effect_if_selected": "Undo committed tactic #4 and every committed tactic after it in this node.",
+        "submit": {
+          "intent": "undo_to_checkpoint",
+          "payload": {
+            "checkpoint_id": "cp_4_36996bcc24b884a4"
+          }
+        }
+      }
+    ]
+  },
+  "surface_turn": {
+    "schema_version": 1,
+    "presentation_kind": "proof_state",
+    "proof_surface": {
+      "schema_version": 1,
+      "profile": "l4_checked_action_surface",
+      "phase": "failure_recovery",
+      "goal": {
+        "title": "Current Goal",
+        "text": "Current goal\n\nType variables: <none>\n\n&m: {}\ni0: int\nhi: 0 <= i0 < N\n------------------------------------------------------------------------\nContext : hr: {b : bool, i, j : int, s, s0 : int list, r, r' : word}\nBound   : [=] 1%r\n\npre = i = i0\n\n\npost =\n  (0 <= 0 <= N /\\\n   i = i0 /\\ (0 <= i0 => [] = []) /\\ (i0 < 0 => sxor2 [] [] i0)) /\\\n  forall (s1 s' : int list) (j0 : int),\n    (0 <= j0 <= N /\\\n     i = i0 /\\ (j0 <= i0 => s1 = s') /\\ (i0 < j0 => sxor2 s1 s' i0) =>\n     N - j0 <= 0 => ! j0 < N) /\\\n    (! j0 < N =>\n     0 <= j0 <= N /\\\n     i = i0 /\\ (j0 <= i0 => s1 = s') /\\ (i0 < j0 => sxor2 s1 s' i0) =>\n     big predT<:int> a s1 +^ big predT<:int> a s' = a i0)\n[34|check]>",
+        "goal_type": "phoare",
+        "truncated": false,
+        "line_count": 26
+      },
+      "status": {
+        "status": "open",
+        "remaining_goals": 1,
+        "remaining_goals_known": true,
+        "view_focus": "procedure_frontier",
+        "current_layer": "procedure_body",
+        "goal_type": "phoare",
+        "surface_phase": "failure_recovery"
+      },
+      "primary_panel": {
+        "panel_id": "recovery",
+        "phase": "failure_recovery",
+        "title": "Recover -- last committed tactic was rejected",
+        "facts": [
+          {
+            "key": "rejected_tactic",
+            "label": "Rejected tactic",
+            "kind": "last_result",
+            "role": "primary",
+            "value": {
+              "tactic": "skip => &hr Hi0; split; first by smt(N_pos).",
+              "family": "skip",
+              "result": "EasyCrypt rejected the committed tactic. Use the error summary and current goal to revise the proof step.",
+              "error_summary": "[error] cannot find lemma `N_pos'"
+            },
+            "source_refs": [
+              "last_result"
+            ]
+          },
+          {
+            "key": "current_frontier_head",
+            "label": "Current frontier head",
+            "kind": "state_fact",
+            "role": "primary",
+            "value": "unknown program frontier",
+            "source_refs": [
+              "program_frontier"
+            ]
+          },
+          {
+            "key": "available_rewind_targets",
+            "label": "Available rewind targets",
+            "kind": "control_options",
+            "role": "primary",
+            "value": [
+              "`cp_4_36996bcc24b884a4` -- step 4 -- inline PIR.query. (inline boundary; selecting it restores the proof state before this expansion)"
+            ],
+            "source_refs": [
+              "structural_checkpoints",
+              "recovery_diagnosis_surface"
+            ]
+          }
+        ],
+        "actions": [
+          {
+            "intent": "operator_lemmas",
+            "payload": {
+              "operator": "(+^)"
+            },
+            "label": "operator_lemmas: (+^)",
+            "intent_class": "context_topic",
+            "read_only": true,
+            "choices": {
+              "operator": [
+                "(+^)"
+              ]
+            },
+            "description": "Need the lemmas that apply to an OPERATOR in your goal \u2014 project-local lemmas included (not just stdlib) \u2014 instead of guessing a lemma name.",
+            "source_refs": [
+              "inspect_lookup_handles.ask_manager_for",
+              "current_goal"
+            ],
+            "eligibility_reason": "operator query is derived from the current goal",
+            "state_scope": "current_goal"
+          },
+          {
+            "intent": "tactic_forms",
+            "payload": {
+              "name": "while"
+            },
+            "label": "tactic_forms: while",
+            "intent_class": "context_topic",
+            "read_only": true,
+            "choices": {
+              "name": [
+                "while"
+              ]
+            },
+            "description": "Need the valid one-sided hoare/phoare loop form.",
+            "source_refs": [
+              "inspect_lookup_handles.ask_manager_for",
+              "proof_status",
+              "program_frontier"
+            ],
+            "eligibility_reason": "tactic family matches the current proof phase",
+            "state_scope": "current_phase"
+          }
+        ],
+        "display_policy": {
+          "lead_before_goal": true,
+          "verbosity": "focused",
+          "compact_goal": false,
+          "show_status": true,
+          "show_actions": true
+        },
+        "source_refs": [
+          "last_result",
+          "program_frontier",
+          "proof_status"
+        ]
+      },
+      "actions": [
+        {
+          "intent": "operator_lemmas",
+          "payload": {
+            "operator": "<operator>"
+          },
+          "label": "operator_lemmas: <operator>",
+          "intent_class": "context_topic",
+          "read_only": true,
+          "requires_input": [
+            "operator"
+          ],
+          "choices": {
+            "operator": [
+              "(+^)"
+            ]
+          },
+          "description": "Need the lemmas that apply to an OPERATOR in your goal \u2014 project-local lemmas included (not just stdlib) \u2014 instead of guessing a lemma name.",
+          "source_refs": [
+            "inspect_lookup_handles.ask_manager_for",
+            "current_goal"
+          ],
+          "eligibility_reason": "operator query is derived from the current goal",
+          "state_scope": "current_goal"
+        },
+        {
+          "intent": "tactic_forms",
+          "payload": {
+            "name": "<name>"
+          },
+          "label": "tactic_forms: <name>",
+          "intent_class": "context_topic",
+          "read_only": true,
+          "requires_input": [
+            "name"
+          ],
+          "choices": {
+            "name": [
+              "while"
+            ]
+          },
+          "description": "Need the valid one-sided hoare/phoare loop form.",
+          "source_refs": [
+            "inspect_lookup_handles.ask_manager_for",
+            "proof_status",
+            "program_frontier"
+          ],
+          "eligibility_reason": "tactic family matches the current proof phase",
+          "state_scope": "current_phase"
+        }
+      ],
+      "metadata": {
+        "contract": "raw_workspace_facts -> SurfaceModel -> markdown/card",
+        "primary_panel_id": "recovery",
+        "primary_action_count": 2,
+        "available_action_count": 3
+      },
+      "surface_model_hash": "15d049dbb22d2e1e0cb6c83d36c2c993f7eba01f"
+    },
+    "turn_outcome": {
+      "intent": "commit_tactic",
+      "payload": {
+        "tactic": "skip => &hr Hi0; split; first by smt(N_pos)."
+      },
+      "ok": true,
+      "result_line": "Last action: `skip => &hr Hi0; split; first by smt(N_pos).` -- EasyCrypt rejected the committed tactic. Use the error summary and current goal to revise the proof step.\nEasyCrypt error: [error] cannot find lemma `N_pos'",
+      "error_summary": "[error] cannot find lemma `N_pos'",
+      "lead_before_goal": true,
+      "proof_state_changed": false,
+      "source_refs": [
+        "last_result"
+      ]
+    },
+    "base_surface_updates": true,
+    "proof_state_changed": false,
+    "metadata": {
+      "contract": "SurfaceModel -> SurfaceTurnModel -> markdown/card",
+      "current_surface_hash": "15d049dbb22d2e1e0cb6c83d36c2c993f7eba01f",
+      "proof_surface_hash": "15d049dbb22d2e1e0cb6c83d36c2c993f7eba01f"
+    },
+    "surface_turn_hash": "2a8c3bf145e9d30b1350b2b728863d8f2472dec2"
+  }
+}

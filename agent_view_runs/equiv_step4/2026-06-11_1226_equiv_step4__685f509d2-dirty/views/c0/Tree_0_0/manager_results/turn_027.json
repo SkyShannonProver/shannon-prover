@@ -1,0 +1,19 @@
+{
+  "turn": 27,
+  "handled_intent": {
+    "intent": "commit_tactic",
+    "payload": {
+      "tactic": "by move=> &2 ne h1 h2 h3 h4 r4L _ t4L _ r2L _ t3L _; rewrite !get_setE set_setE /=; smt()."
+    }
+  },
+  "ok": true,
+  "manager_note": "Committed tactic accepted; the EasyCrypt proof state changed.",
+  "manager_actions": [
+    {
+      "action": "tactic commit",
+      "outcome": "EasyCrypt accepted the committed tactic.",
+      "timing": "35.7 s"
+    }
+  ],
+  "view_refreshed": true
+}

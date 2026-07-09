@@ -1,0 +1,1301 @@
+{
+  "kind": "agent_view_timeline_report",
+  "run_count": 1,
+  "runs": [
+    {
+      "chronological": false,
+      "first_action_at": "2026-06-06T20:31:48.400000+00:00",
+      "label": "2026-06-06_1331_eq_Game1_Game2",
+      "node_count": 1,
+      "rows": [
+        {
+          "action_submitted_at": "2026-06-06T20:31:48.400000+00:00",
+          "action_time": "+00:00",
+          "agent_think": "",
+          "agent_think_path": "artifacts/eval_suite/wave1_recover_both/l4_checked_action_surface/d1_eq_game12/r01/2026-06-06_1331_eq_Game1_Game2/iteration_1/node_memory/Tree_0_0/thinking/turn_001.md",
+          "agent_think_seconds": null,
+          "decision_followup_path": "",
+          "decision_state_summary": "equiv / prhl_module / relational_program, 1 goal, goal 250 chars",
+          "decision_view_path": "artifacts/eval_suite/wave1_recover_both/l4_checked_action_surface/d1_eq_game12/r01/2026-06-06_1331_eq_Game1_Game2/iteration_1/manager_bootstrap_0_0.json",
+          "deterministic_signals": [],
+          "goal_chars": 250,
+          "inspect_topics": [
+            "equiv_bridge_lemmas",
+            "goal_info",
+            "call_site_options",
+            "call_invariant_skeleton",
+            "call_subgoals",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "align"
+          ],
+          "intent": {
+            "intent": "probe_tactic",
+            "payload": {
+              "tactic": "proc."
+            }
+          },
+          "intent_summary": "probe proc",
+          "manager_action_summary": [
+            "tactic probe (1.6 s)"
+          ],
+          "manager_result_at": "2026-06-06T20:31:50+00:00",
+          "manager_result_path": "artifacts/eval_suite/wave1_recover_both/l4_checked_action_surface/d1_eq_game12/r01/2026-06-06_1331_eq_Game1_Game2/iteration_1/node_memory/Tree_0_0/manager_results/turn_001.json",
+          "manager_seconds": 1.6,
+          "manager_time": "1.6 s",
+          "node": "Tree-0.0",
+          "node_dir": "artifacts/eval_suite/wave1_recover_both/l4_checked_action_surface/d1_eq_game12/r01/2026-06-06_1331_eq_Game1_Game2/iteration_1/node_memory/Tree_0_0",
+          "ok": true,
+          "result_followup_path": "artifacts/eval_suite/wave1_recover_both/l4_checked_action_surface/d1_eq_game12/r01/2026-06-06_1331_eq_Game1_Game2/iteration_1/node_memory/Tree_0_0/followups/turn_001.md",
+          "result_state_summary": "equiv / prhl_module / relational_program, 1 goal, goal 250 chars",
+          "result_summary": "accepted probe",
+          "result_view_path": "artifacts/eval_suite/wave1_recover_both/l4_checked_action_surface/d1_eq_game12/r01/2026-06-06_1331_eq_Game1_Game2/iteration_1/node_memory/Tree_0_0/workspace_views/turn_001.json",
+          "turn": 1,
+          "usage": {
+            "cache_creation_input_tokens": 47179,
+            "cache_read_input_tokens": 30547,
+            "input_tokens": 2076,
+            "output_tokens": 1801
+          },
+          "view_chars": 7275,
+          "view_id": "T0.0-1",
+          "workspace_view_path": "artifacts/eval_suite/wave1_recover_both/l4_checked_action_surface/d1_eq_game12/r01/2026-06-06_1331_eq_Game1_Game2/iteration_1/manager_bootstrap_0_0.json"
+        },
+        {
+          "action_submitted_at": "2026-06-06T20:31:55.821000+00:00",
+          "action_time": "+00:07",
+          "agent_think": "5.8 s",
+          "agent_think_path": "artifacts/eval_suite/wave1_recover_both/l4_checked_action_surface/d1_eq_game12/r01/2026-06-06_1331_eq_Game1_Game2/iteration_1/node_memory/Tree_0_0/thinking/turn_002.md",
+          "agent_think_seconds": 5.821,
+          "decision_followup_path": "artifacts/eval_suite/wave1_recover_both/l4_checked_action_surface/d1_eq_game12/r01/2026-06-06_1331_eq_Game1_Game2/iteration_1/node_memory/Tree_0_0/followups/turn_001.md",
+          "decision_state_summary": "equiv / prhl_module / relational_program, 1 goal, goal 250 chars",
+          "decision_view_path": "artifacts/eval_suite/wave1_recover_both/l4_checked_action_surface/d1_eq_game12/r01/2026-06-06_1331_eq_Game1_Game2/iteration_1/node_memory/Tree_0_0/workspace_views/turn_001.json",
+          "deterministic_signals": [
+            "commit_without_probe_check_not_inferred"
+          ],
+          "goal_chars": 250,
+          "inspect_topics": [
+            "goal_info",
+            "call_site_options",
+            "call_invariant_skeleton",
+            "call_subgoals",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "align"
+          ],
+          "intent": {
+            "intent": "commit_tactic",
+            "payload": {
+              "tactic": "proc."
+            }
+          },
+          "intent_summary": "commit proc",
+          "manager_action_summary": [
+            "tactic commit (179 ms)"
+          ],
+          "manager_result_at": "2026-06-06T20:31:56+00:00",
+          "manager_result_path": "artifacts/eval_suite/wave1_recover_both/l4_checked_action_surface/d1_eq_game12/r01/2026-06-06_1331_eq_Game1_Game2/iteration_1/node_memory/Tree_0_0/manager_results/turn_002.json",
+          "manager_seconds": 0.179,
+          "manager_time": "179 ms",
+          "node": "Tree-0.0",
+          "node_dir": "artifacts/eval_suite/wave1_recover_both/l4_checked_action_surface/d1_eq_game12/r01/2026-06-06_1331_eq_Game1_Game2/iteration_1/node_memory/Tree_0_0",
+          "ok": true,
+          "result_followup_path": "artifacts/eval_suite/wave1_recover_both/l4_checked_action_surface/d1_eq_game12/r01/2026-06-06_1331_eq_Game1_Game2/iteration_1/node_memory/Tree_0_0/followups/turn_002.md",
+          "result_state_summary": "pRHL / call_site / relational_program, 1 goal, goal 1130 chars",
+          "result_summary": "accepted commit",
+          "result_view_path": "artifacts/eval_suite/wave1_recover_both/l4_checked_action_surface/d1_eq_game12/r01/2026-06-06_1331_eq_Game1_Game2/iteration_1/node_memory/Tree_0_0/workspace_views/turn_002.json",
+          "turn": 2,
+          "usage": {
+            "cache_creation_input_tokens": 1968,
+            "cache_read_input_tokens": 40647,
+            "input_tokens": 2,
+            "output_tokens": 345
+          },
+          "view_chars": 11897,
+          "view_id": "T0.0-2",
+          "workspace_view_path": "artifacts/eval_suite/wave1_recover_both/l4_checked_action_surface/d1_eq_game12/r01/2026-06-06_1331_eq_Game1_Game2/iteration_1/node_memory/Tree_0_0/workspace_views/turn_001.json"
+        },
+        {
+          "action_submitted_at": "2026-06-06T20:32:15.214000+00:00",
+          "action_time": "+00:27",
+          "agent_think": "19.2 s",
+          "agent_think_path": "artifacts/eval_suite/wave1_recover_both/l4_checked_action_surface/d1_eq_game12/r01/2026-06-06_1331_eq_Game1_Game2/iteration_1/node_memory/Tree_0_0/thinking/turn_003.md",
+          "agent_think_seconds": 19.214,
+          "decision_followup_path": "artifacts/eval_suite/wave1_recover_both/l4_checked_action_surface/d1_eq_game12/r01/2026-06-06_1331_eq_Game1_Game2/iteration_1/node_memory/Tree_0_0/followups/turn_002.md",
+          "decision_state_summary": "pRHL / call_site / relational_program, 1 goal, goal 1130 chars",
+          "decision_view_path": "artifacts/eval_suite/wave1_recover_both/l4_checked_action_surface/d1_eq_game12/r01/2026-06-06_1331_eq_Game1_Game2/iteration_1/node_memory/Tree_0_0/workspace_views/turn_002.json",
+          "deterministic_signals": [],
+          "goal_chars": 1130,
+          "inspect_topics": [
+            "goal_info",
+            "call_site_options",
+            "call_invariant_skeleton",
+            "call_subgoals",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "align"
+          ],
+          "intent": {
+            "intent": "inspect_context",
+            "payload": {
+              "topic": "call_invariant_skeleton"
+            }
+          },
+          "intent_summary": "inspect call_invariant_skeleton",
+          "manager_action_summary": [
+            "inspect call invariant skeleton (786 ms)"
+          ],
+          "manager_result_at": "2026-06-06T20:32:16+00:00",
+          "manager_result_path": "artifacts/eval_suite/wave1_recover_both/l4_checked_action_surface/d1_eq_game12/r01/2026-06-06_1331_eq_Game1_Game2/iteration_1/node_memory/Tree_0_0/manager_results/turn_003.json",
+          "manager_seconds": 0.786,
+          "manager_time": "786 ms",
+          "node": "Tree-0.0",
+          "node_dir": "artifacts/eval_suite/wave1_recover_both/l4_checked_action_surface/d1_eq_game12/r01/2026-06-06_1331_eq_Game1_Game2/iteration_1/node_memory/Tree_0_0",
+          "ok": true,
+          "result_followup_path": "artifacts/eval_suite/wave1_recover_both/l4_checked_action_surface/d1_eq_game12/r01/2026-06-06_1331_eq_Game1_Game2/iteration_1/node_memory/Tree_0_0/followups/turn_003.md",
+          "result_state_summary": "pRHL / call_site / relational_program, 1 goal, goal 1130 chars",
+          "result_summary": "read-only inspect",
+          "result_view_path": "artifacts/eval_suite/wave1_recover_both/l4_checked_action_surface/d1_eq_game12/r01/2026-06-06_1331_eq_Game1_Game2/iteration_1/node_memory/Tree_0_0/workspace_views/turn_003.json",
+          "turn": 3,
+          "usage": {
+            "cache_creation_input_tokens": 3296,
+            "cache_read_input_tokens": 42615,
+            "input_tokens": 2,
+            "output_tokens": 1138
+          },
+          "view_chars": 17222,
+          "view_id": "T0.0-3",
+          "workspace_view_path": "artifacts/eval_suite/wave1_recover_both/l4_checked_action_surface/d1_eq_game12/r01/2026-06-06_1331_eq_Game1_Game2/iteration_1/node_memory/Tree_0_0/workspace_views/turn_002.json"
+        },
+        {
+          "action_submitted_at": "2026-06-06T20:32:30.836000+00:00",
+          "action_time": "+00:42",
+          "agent_think": "14.8 s",
+          "agent_think_path": "artifacts/eval_suite/wave1_recover_both/l4_checked_action_surface/d1_eq_game12/r01/2026-06-06_1331_eq_Game1_Game2/iteration_1/node_memory/Tree_0_0/thinking/turn_004.md",
+          "agent_think_seconds": 14.836,
+          "decision_followup_path": "artifacts/eval_suite/wave1_recover_both/l4_checked_action_surface/d1_eq_game12/r01/2026-06-06_1331_eq_Game1_Game2/iteration_1/node_memory/Tree_0_0/followups/turn_003.md",
+          "decision_state_summary": "pRHL / call_site / relational_program, 1 goal, goal 1130 chars",
+          "decision_view_path": "artifacts/eval_suite/wave1_recover_both/l4_checked_action_surface/d1_eq_game12/r01/2026-06-06_1331_eq_Game1_Game2/iteration_1/node_memory/Tree_0_0/workspace_views/turn_003.json",
+          "deterministic_signals": [],
+          "goal_chars": 1130,
+          "inspect_topics": [
+            "goal_info",
+            "call_site_options",
+            "call_invariant_skeleton",
+            "call_subgoals",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "align"
+          ],
+          "intent": {
+            "intent": "probe_tactic",
+            "payload": {
+              "tactic": "call (_: ={glob Log})."
+            }
+          },
+          "intent_summary": "probe call (_: ={glob Log})",
+          "manager_action_summary": [
+            "tactic probe (164 ms)"
+          ],
+          "manager_result_at": "2026-06-06T20:32:31+00:00",
+          "manager_result_path": "artifacts/eval_suite/wave1_recover_both/l4_checked_action_surface/d1_eq_game12/r01/2026-06-06_1331_eq_Game1_Game2/iteration_1/node_memory/Tree_0_0/manager_results/turn_004.json",
+          "manager_seconds": 0.164,
+          "manager_time": "164 ms",
+          "node": "Tree-0.0",
+          "node_dir": "artifacts/eval_suite/wave1_recover_both/l4_checked_action_surface/d1_eq_game12/r01/2026-06-06_1331_eq_Game1_Game2/iteration_1/node_memory/Tree_0_0",
+          "ok": true,
+          "result_followup_path": "artifacts/eval_suite/wave1_recover_both/l4_checked_action_surface/d1_eq_game12/r01/2026-06-06_1331_eq_Game1_Game2/iteration_1/node_memory/Tree_0_0/followups/turn_004.md",
+          "result_state_summary": "pRHL / call_site / relational_program, 1 goal, goal 1130 chars",
+          "result_summary": "accepted probe",
+          "result_view_path": "artifacts/eval_suite/wave1_recover_both/l4_checked_action_surface/d1_eq_game12/r01/2026-06-06_1331_eq_Game1_Game2/iteration_1/node_memory/Tree_0_0/workspace_views/turn_004.json",
+          "turn": 4,
+          "usage": {
+            "cache_creation_input_tokens": 2779,
+            "cache_read_input_tokens": 45911,
+            "input_tokens": 2,
+            "output_tokens": 824
+          },
+          "view_chars": 17222,
+          "view_id": "T0.0-4",
+          "workspace_view_path": "artifacts/eval_suite/wave1_recover_both/l4_checked_action_surface/d1_eq_game12/r01/2026-06-06_1331_eq_Game1_Game2/iteration_1/node_memory/Tree_0_0/workspace_views/turn_003.json"
+        },
+        {
+          "action_submitted_at": "2026-06-06T20:32:57.850000+00:00",
+          "action_time": "+01:09",
+          "agent_think": "26.9 s",
+          "agent_think_path": "artifacts/eval_suite/wave1_recover_both/l4_checked_action_surface/d1_eq_game12/r01/2026-06-06_1331_eq_Game1_Game2/iteration_1/node_memory/Tree_0_0/thinking/turn_005.md",
+          "agent_think_seconds": 26.85,
+          "decision_followup_path": "artifacts/eval_suite/wave1_recover_both/l4_checked_action_surface/d1_eq_game12/r01/2026-06-06_1331_eq_Game1_Game2/iteration_1/node_memory/Tree_0_0/followups/turn_004.md",
+          "decision_state_summary": "pRHL / call_site / relational_program, 1 goal, goal 1130 chars",
+          "decision_view_path": "artifacts/eval_suite/wave1_recover_both/l4_checked_action_surface/d1_eq_game12/r01/2026-06-06_1331_eq_Game1_Game2/iteration_1/node_memory/Tree_0_0/workspace_views/turn_004.json",
+          "deterministic_signals": [],
+          "goal_chars": 1130,
+          "inspect_topics": [
+            "goal_info",
+            "call_site_options",
+            "call_invariant_skeleton",
+            "call_subgoals",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "align"
+          ],
+          "intent": {
+            "intent": "probe_tactic",
+            "payload": {
+              "tactic": "call (_: ={glob Log, glob LRO})."
+            }
+          },
+          "intent_summary": "probe call (_: ={glob Log, glob LRO})",
+          "manager_action_summary": [
+            "tactic probe (150 ms)"
+          ],
+          "manager_result_at": "2026-06-06T20:32:58+00:00",
+          "manager_result_path": "artifacts/eval_suite/wave1_recover_both/l4_checked_action_surface/d1_eq_game12/r01/2026-06-06_1331_eq_Game1_Game2/iteration_1/node_memory/Tree_0_0/manager_results/turn_005.json",
+          "manager_seconds": 0.15,
+          "manager_time": "150 ms",
+          "node": "Tree-0.0",
+          "node_dir": "artifacts/eval_suite/wave1_recover_both/l4_checked_action_surface/d1_eq_game12/r01/2026-06-06_1331_eq_Game1_Game2/iteration_1/node_memory/Tree_0_0",
+          "ok": true,
+          "result_followup_path": "artifacts/eval_suite/wave1_recover_both/l4_checked_action_surface/d1_eq_game12/r01/2026-06-06_1331_eq_Game1_Game2/iteration_1/node_memory/Tree_0_0/followups/turn_005.md",
+          "result_state_summary": "pRHL / call_site / relational_program, 1 goal, goal 1130 chars",
+          "result_summary": "accepted probe",
+          "result_view_path": "artifacts/eval_suite/wave1_recover_both/l4_checked_action_surface/d1_eq_game12/r01/2026-06-06_1331_eq_Game1_Game2/iteration_1/node_memory/Tree_0_0/workspace_views/turn_005.json",
+          "turn": 5,
+          "usage": {
+            "cache_creation_input_tokens": 1105,
+            "cache_read_input_tokens": 48690,
+            "input_tokens": 131,
+            "output_tokens": 1968
+          },
+          "view_chars": 20822,
+          "view_id": "T0.0-5",
+          "workspace_view_path": "artifacts/eval_suite/wave1_recover_both/l4_checked_action_surface/d1_eq_game12/r01/2026-06-06_1331_eq_Game1_Game2/iteration_1/node_memory/Tree_0_0/workspace_views/turn_004.json"
+        },
+        {
+          "action_submitted_at": "2026-06-06T20:33:07.863000+00:00",
+          "action_time": "+01:19",
+          "agent_think": "9.9 s",
+          "agent_think_path": "artifacts/eval_suite/wave1_recover_both/l4_checked_action_surface/d1_eq_game12/r01/2026-06-06_1331_eq_Game1_Game2/iteration_1/node_memory/Tree_0_0/thinking/turn_006.md",
+          "agent_think_seconds": 9.863,
+          "decision_followup_path": "artifacts/eval_suite/wave1_recover_both/l4_checked_action_surface/d1_eq_game12/r01/2026-06-06_1331_eq_Game1_Game2/iteration_1/node_memory/Tree_0_0/followups/turn_005.md",
+          "decision_state_summary": "pRHL / call_site / relational_program, 1 goal, goal 1130 chars",
+          "decision_view_path": "artifacts/eval_suite/wave1_recover_both/l4_checked_action_surface/d1_eq_game12/r01/2026-06-06_1331_eq_Game1_Game2/iteration_1/node_memory/Tree_0_0/workspace_views/turn_005.json",
+          "deterministic_signals": [
+            "commit_without_probe_check_not_inferred"
+          ],
+          "goal_chars": 1130,
+          "inspect_topics": [
+            "goal_info",
+            "call_site_options",
+            "call_invariant_skeleton",
+            "call_subgoals",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "align"
+          ],
+          "intent": {
+            "intent": "commit_tactic",
+            "payload": {
+              "tactic": "call (_: ={glob Log, glob LRO})."
+            }
+          },
+          "intent_summary": "commit call (_: ={glob Log, glob LRO})",
+          "manager_action_summary": [
+            "tactic commit (137 ms)"
+          ],
+          "manager_result_at": "2026-06-06T20:33:08+00:00",
+          "manager_result_path": "artifacts/eval_suite/wave1_recover_both/l4_checked_action_surface/d1_eq_game12/r01/2026-06-06_1331_eq_Game1_Game2/iteration_1/node_memory/Tree_0_0/manager_results/turn_006.json",
+          "manager_seconds": 0.137,
+          "manager_time": "137 ms",
+          "node": "Tree-0.0",
+          "node_dir": "artifacts/eval_suite/wave1_recover_both/l4_checked_action_surface/d1_eq_game12/r01/2026-06-06_1331_eq_Game1_Game2/iteration_1/node_memory/Tree_0_0",
+          "ok": true,
+          "result_followup_path": "artifacts/eval_suite/wave1_recover_both/l4_checked_action_surface/d1_eq_game12/r01/2026-06-06_1331_eq_Game1_Game2/iteration_1/node_memory/Tree_0_0/followups/turn_006.md",
+          "result_state_summary": "equiv / prhl_module / relational_program, 2 goals, goal 309 chars",
+          "result_summary": "accepted commit",
+          "result_view_path": "artifacts/eval_suite/wave1_recover_both/l4_checked_action_surface/d1_eq_game12/r01/2026-06-06_1331_eq_Game1_Game2/iteration_1/node_memory/Tree_0_0/workspace_views/turn_006.json",
+          "turn": 6,
+          "usage": {
+            "cache_creation_input_tokens": 2424,
+            "cache_read_input_tokens": 49795,
+            "input_tokens": 2,
+            "output_tokens": 520
+          },
+          "view_chars": 20994,
+          "view_id": "T0.0-6",
+          "workspace_view_path": "artifacts/eval_suite/wave1_recover_both/l4_checked_action_surface/d1_eq_game12/r01/2026-06-06_1331_eq_Game1_Game2/iteration_1/node_memory/Tree_0_0/workspace_views/turn_005.json"
+        },
+        {
+          "action_submitted_at": "2026-06-06T20:33:15.171000+00:00",
+          "action_time": "+01:27",
+          "agent_think": "7.2 s",
+          "agent_think_path": "artifacts/eval_suite/wave1_recover_both/l4_checked_action_surface/d1_eq_game12/r01/2026-06-06_1331_eq_Game1_Game2/iteration_1/node_memory/Tree_0_0/thinking/turn_007.md",
+          "agent_think_seconds": 7.171,
+          "decision_followup_path": "artifacts/eval_suite/wave1_recover_both/l4_checked_action_surface/d1_eq_game12/r01/2026-06-06_1331_eq_Game1_Game2/iteration_1/node_memory/Tree_0_0/followups/turn_006.md",
+          "decision_state_summary": "equiv / prhl_module / relational_program, 2 goals, goal 309 chars",
+          "decision_view_path": "artifacts/eval_suite/wave1_recover_both/l4_checked_action_surface/d1_eq_game12/r01/2026-06-06_1331_eq_Game1_Game2/iteration_1/node_memory/Tree_0_0/workspace_views/turn_006.json",
+          "deterministic_signals": [],
+          "goal_chars": 309,
+          "inspect_topics": [
+            "goal_info",
+            "call_site_options",
+            "call_invariant_skeleton",
+            "call_subgoals",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "align"
+          ],
+          "intent": {
+            "intent": "probe_tactic",
+            "payload": {
+              "tactic": "sim."
+            }
+          },
+          "intent_summary": "probe sim",
+          "manager_action_summary": [
+            "tactic probe (829 ms)"
+          ],
+          "manager_result_at": "2026-06-06T20:33:16+00:00",
+          "manager_result_path": "artifacts/eval_suite/wave1_recover_both/l4_checked_action_surface/d1_eq_game12/r01/2026-06-06_1331_eq_Game1_Game2/iteration_1/node_memory/Tree_0_0/manager_results/turn_007.json",
+          "manager_seconds": 0.829,
+          "manager_time": "829 ms",
+          "node": "Tree-0.0",
+          "node_dir": "artifacts/eval_suite/wave1_recover_both/l4_checked_action_surface/d1_eq_game12/r01/2026-06-06_1331_eq_Game1_Game2/iteration_1/node_memory/Tree_0_0",
+          "ok": true,
+          "result_followup_path": "artifacts/eval_suite/wave1_recover_both/l4_checked_action_surface/d1_eq_game12/r01/2026-06-06_1331_eq_Game1_Game2/iteration_1/node_memory/Tree_0_0/followups/turn_007.md",
+          "result_state_summary": "equiv / prhl_module / relational_program, 2 goals, goal 309 chars",
+          "result_summary": "accepted probe",
+          "result_view_path": "artifacts/eval_suite/wave1_recover_both/l4_checked_action_surface/d1_eq_game12/r01/2026-06-06_1331_eq_Game1_Game2/iteration_1/node_memory/Tree_0_0/workspace_views/turn_007.json",
+          "turn": 7,
+          "usage": {
+            "cache_creation_input_tokens": 2715,
+            "cache_read_input_tokens": 52219,
+            "input_tokens": 2,
+            "output_tokens": 203
+          },
+          "view_chars": 11500,
+          "view_id": "T0.0-7",
+          "workspace_view_path": "artifacts/eval_suite/wave1_recover_both/l4_checked_action_surface/d1_eq_game12/r01/2026-06-06_1331_eq_Game1_Game2/iteration_1/node_memory/Tree_0_0/workspace_views/turn_006.json"
+        },
+        {
+          "action_submitted_at": "2026-06-06T20:33:23.798000+00:00",
+          "action_time": "+01:35",
+          "agent_think": "7.8 s",
+          "agent_think_path": "artifacts/eval_suite/wave1_recover_both/l4_checked_action_surface/d1_eq_game12/r01/2026-06-06_1331_eq_Game1_Game2/iteration_1/node_memory/Tree_0_0/thinking/turn_008.md",
+          "agent_think_seconds": 7.798,
+          "decision_followup_path": "artifacts/eval_suite/wave1_recover_both/l4_checked_action_surface/d1_eq_game12/r01/2026-06-06_1331_eq_Game1_Game2/iteration_1/node_memory/Tree_0_0/followups/turn_007.md",
+          "decision_state_summary": "equiv / prhl_module / relational_program, 2 goals, goal 309 chars",
+          "decision_view_path": "artifacts/eval_suite/wave1_recover_both/l4_checked_action_surface/d1_eq_game12/r01/2026-06-06_1331_eq_Game1_Game2/iteration_1/node_memory/Tree_0_0/workspace_views/turn_007.json",
+          "deterministic_signals": [
+            "commit_without_probe_check_not_inferred"
+          ],
+          "goal_chars": 309,
+          "inspect_topics": [
+            "goal_info",
+            "call_site_options",
+            "call_invariant_skeleton",
+            "call_subgoals",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "align"
+          ],
+          "intent": {
+            "intent": "commit_tactic",
+            "payload": {
+              "tactic": "sim."
+            }
+          },
+          "intent_summary": "commit sim",
+          "manager_action_summary": [
+            "tactic commit (202 ms)"
+          ],
+          "manager_result_at": "2026-06-06T20:33:24+00:00",
+          "manager_result_path": "artifacts/eval_suite/wave1_recover_both/l4_checked_action_surface/d1_eq_game12/r01/2026-06-06_1331_eq_Game1_Game2/iteration_1/node_memory/Tree_0_0/manager_results/turn_008.json",
+          "manager_seconds": 0.202,
+          "manager_time": "202 ms",
+          "node": "Tree-0.0",
+          "node_dir": "artifacts/eval_suite/wave1_recover_both/l4_checked_action_surface/d1_eq_game12/r01/2026-06-06_1331_eq_Game1_Game2/iteration_1/node_memory/Tree_0_0",
+          "ok": true,
+          "result_followup_path": "artifacts/eval_suite/wave1_recover_both/l4_checked_action_surface/d1_eq_game12/r01/2026-06-06_1331_eq_Game1_Game2/iteration_1/node_memory/Tree_0_0/followups/turn_008.md",
+          "result_state_summary": "pRHL / call_site / relational_program, 1 goal, goal 1398 chars",
+          "result_summary": "accepted commit",
+          "result_view_path": "artifacts/eval_suite/wave1_recover_both/l4_checked_action_surface/d1_eq_game12/r01/2026-06-06_1331_eq_Game1_Game2/iteration_1/node_memory/Tree_0_0/workspace_views/turn_008.json",
+          "turn": 8,
+          "usage": {
+            "cache_creation_input_tokens": 1035,
+            "cache_read_input_tokens": 54934,
+            "input_tokens": 2,
+            "output_tokens": 543
+          },
+          "view_chars": 16197,
+          "view_id": "T0.0-8",
+          "workspace_view_path": "artifacts/eval_suite/wave1_recover_both/l4_checked_action_surface/d1_eq_game12/r01/2026-06-06_1331_eq_Game1_Game2/iteration_1/node_memory/Tree_0_0/workspace_views/turn_007.json"
+        },
+        {
+          "action_submitted_at": "2026-06-06T20:33:39.144000+00:00",
+          "action_time": "+01:51",
+          "agent_think": "15.1 s",
+          "agent_think_path": "artifacts/eval_suite/wave1_recover_both/l4_checked_action_surface/d1_eq_game12/r01/2026-06-06_1331_eq_Game1_Game2/iteration_1/node_memory/Tree_0_0/thinking/turn_009.md",
+          "agent_think_seconds": 15.144,
+          "decision_followup_path": "artifacts/eval_suite/wave1_recover_both/l4_checked_action_surface/d1_eq_game12/r01/2026-06-06_1331_eq_Game1_Game2/iteration_1/node_memory/Tree_0_0/followups/turn_008.md",
+          "decision_state_summary": "pRHL / call_site / relational_program, 1 goal, goal 1398 chars",
+          "decision_view_path": "artifacts/eval_suite/wave1_recover_both/l4_checked_action_surface/d1_eq_game12/r01/2026-06-06_1331_eq_Game1_Game2/iteration_1/node_memory/Tree_0_0/workspace_views/turn_008.json",
+          "deterministic_signals": [],
+          "goal_chars": 1398,
+          "inspect_topics": [
+            "goal_info",
+            "call_site_options",
+            "call_invariant_skeleton",
+            "call_subgoals",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "align"
+          ],
+          "intent": {
+            "intent": "probe_tactic",
+            "payload": {
+              "tactic": "wp."
+            }
+          },
+          "intent_summary": "probe wp",
+          "manager_action_summary": [
+            "tactic probe (856 ms)"
+          ],
+          "manager_result_at": "2026-06-06T20:33:40+00:00",
+          "manager_result_path": "artifacts/eval_suite/wave1_recover_both/l4_checked_action_surface/d1_eq_game12/r01/2026-06-06_1331_eq_Game1_Game2/iteration_1/node_memory/Tree_0_0/manager_results/turn_009.json",
+          "manager_seconds": 0.856,
+          "manager_time": "856 ms",
+          "node": "Tree-0.0",
+          "node_dir": "artifacts/eval_suite/wave1_recover_both/l4_checked_action_surface/d1_eq_game12/r01/2026-06-06_1331_eq_Game1_Game2/iteration_1/node_memory/Tree_0_0",
+          "ok": true,
+          "result_followup_path": "artifacts/eval_suite/wave1_recover_both/l4_checked_action_surface/d1_eq_game12/r01/2026-06-06_1331_eq_Game1_Game2/iteration_1/node_memory/Tree_0_0/followups/turn_009.md",
+          "result_state_summary": "pRHL / call_site / relational_program, 1 goal, goal 1398 chars",
+          "result_summary": "accepted probe",
+          "result_view_path": "artifacts/eval_suite/wave1_recover_both/l4_checked_action_surface/d1_eq_game12/r01/2026-06-06_1331_eq_Game1_Game2/iteration_1/node_memory/Tree_0_0/workspace_views/turn_009.json",
+          "turn": 9,
+          "usage": {
+            "cache_creation_input_tokens": 3741,
+            "cache_read_input_tokens": 55969,
+            "input_tokens": 2,
+            "output_tokens": 857
+          },
+          "view_chars": 23601,
+          "view_id": "T0.0-9",
+          "workspace_view_path": "artifacts/eval_suite/wave1_recover_both/l4_checked_action_surface/d1_eq_game12/r01/2026-06-06_1331_eq_Game1_Game2/iteration_1/node_memory/Tree_0_0/workspace_views/turn_008.json"
+        },
+        {
+          "action_submitted_at": "2026-06-06T20:33:53.805000+00:00",
+          "action_time": "+02:05",
+          "agent_think": "13.8 s",
+          "agent_think_path": "artifacts/eval_suite/wave1_recover_both/l4_checked_action_surface/d1_eq_game12/r01/2026-06-06_1331_eq_Game1_Game2/iteration_1/node_memory/Tree_0_0/thinking/turn_010.md",
+          "agent_think_seconds": 13.805,
+          "decision_followup_path": "artifacts/eval_suite/wave1_recover_both/l4_checked_action_surface/d1_eq_game12/r01/2026-06-06_1331_eq_Game1_Game2/iteration_1/node_memory/Tree_0_0/followups/turn_009.md",
+          "decision_state_summary": "pRHL / call_site / relational_program, 1 goal, goal 1398 chars",
+          "decision_view_path": "artifacts/eval_suite/wave1_recover_both/l4_checked_action_surface/d1_eq_game12/r01/2026-06-06_1331_eq_Game1_Game2/iteration_1/node_memory/Tree_0_0/workspace_views/turn_009.json",
+          "deterministic_signals": [
+            "commit_without_probe_check_not_inferred"
+          ],
+          "goal_chars": 1398,
+          "inspect_topics": [
+            "goal_info",
+            "call_site_options",
+            "call_invariant_skeleton",
+            "call_subgoals",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "align"
+          ],
+          "intent": {
+            "intent": "commit_tactic",
+            "payload": {
+              "tactic": "wp."
+            }
+          },
+          "intent_summary": "commit wp",
+          "manager_action_summary": [
+            "tactic commit (195 ms)"
+          ],
+          "manager_result_at": "2026-06-06T20:33:54+00:00",
+          "manager_result_path": "artifacts/eval_suite/wave1_recover_both/l4_checked_action_surface/d1_eq_game12/r01/2026-06-06_1331_eq_Game1_Game2/iteration_1/node_memory/Tree_0_0/manager_results/turn_010.json",
+          "manager_seconds": 0.195,
+          "manager_time": "195 ms",
+          "node": "Tree-0.0",
+          "node_dir": "artifacts/eval_suite/wave1_recover_both/l4_checked_action_surface/d1_eq_game12/r01/2026-06-06_1331_eq_Game1_Game2/iteration_1/node_memory/Tree_0_0",
+          "ok": true,
+          "result_followup_path": "artifacts/eval_suite/wave1_recover_both/l4_checked_action_surface/d1_eq_game12/r01/2026-06-06_1331_eq_Game1_Game2/iteration_1/node_memory/Tree_0_0/followups/turn_010.md",
+          "result_state_summary": "pRHL / call_site / relational_program, 1 goal, goal 1274 chars",
+          "result_summary": "accepted commit",
+          "result_view_path": "artifacts/eval_suite/wave1_recover_both/l4_checked_action_surface/d1_eq_game12/r01/2026-06-06_1331_eq_Game1_Game2/iteration_1/node_memory/Tree_0_0/workspace_views/turn_010.json",
+          "turn": 10,
+          "usage": {
+            "cache_creation_input_tokens": 1684,
+            "cache_read_input_tokens": 59710,
+            "input_tokens": 131,
+            "output_tokens": 894
+          },
+          "view_chars": 28009,
+          "view_id": "T0.0-10",
+          "workspace_view_path": "artifacts/eval_suite/wave1_recover_both/l4_checked_action_surface/d1_eq_game12/r01/2026-06-06_1331_eq_Game1_Game2/iteration_1/node_memory/Tree_0_0/workspace_views/turn_009.json"
+        },
+        {
+          "action_submitted_at": "2026-06-06T20:34:07.127000+00:00",
+          "action_time": "+02:19",
+          "agent_think": "13.1 s",
+          "agent_think_path": "artifacts/eval_suite/wave1_recover_both/l4_checked_action_surface/d1_eq_game12/r01/2026-06-06_1331_eq_Game1_Game2/iteration_1/node_memory/Tree_0_0/thinking/turn_011.md",
+          "agent_think_seconds": 13.127,
+          "decision_followup_path": "artifacts/eval_suite/wave1_recover_both/l4_checked_action_surface/d1_eq_game12/r01/2026-06-06_1331_eq_Game1_Game2/iteration_1/node_memory/Tree_0_0/followups/turn_010.md",
+          "decision_state_summary": "pRHL / call_site / relational_program, 1 goal, goal 1274 chars",
+          "decision_view_path": "artifacts/eval_suite/wave1_recover_both/l4_checked_action_surface/d1_eq_game12/r01/2026-06-06_1331_eq_Game1_Game2/iteration_1/node_memory/Tree_0_0/workspace_views/turn_010.json",
+          "deterministic_signals": [],
+          "goal_chars": 1274,
+          "inspect_topics": [
+            "goal_info",
+            "call_site_options",
+            "call_invariant_skeleton",
+            "call_subgoals",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "align"
+          ],
+          "intent": {
+            "intent": "probe_tactic",
+            "payload": {
+              "tactic": "rnd (fun (x : ptxt) => x +^ (if b{1} then m0{1} else m1{1}))."
+            }
+          },
+          "intent_summary": "probe rnd (fun (x : ptxt) => x +^ (if b{1} then m0{1} else m1{1}))",
+          "manager_action_summary": [
+            "tactic probe (873 ms)"
+          ],
+          "manager_result_at": "2026-06-06T20:34:08+00:00",
+          "manager_result_path": "artifacts/eval_suite/wave1_recover_both/l4_checked_action_surface/d1_eq_game12/r01/2026-06-06_1331_eq_Game1_Game2/iteration_1/node_memory/Tree_0_0/manager_results/turn_011.json",
+          "manager_seconds": 0.873,
+          "manager_time": "873 ms",
+          "node": "Tree-0.0",
+          "node_dir": "artifacts/eval_suite/wave1_recover_both/l4_checked_action_surface/d1_eq_game12/r01/2026-06-06_1331_eq_Game1_Game2/iteration_1/node_memory/Tree_0_0",
+          "ok": true,
+          "result_followup_path": "artifacts/eval_suite/wave1_recover_both/l4_checked_action_surface/d1_eq_game12/r01/2026-06-06_1331_eq_Game1_Game2/iteration_1/node_memory/Tree_0_0/followups/turn_011.md",
+          "result_state_summary": "pRHL / call_site / relational_program, 1 goal, goal 1274 chars",
+          "result_summary": "accepted probe",
+          "result_view_path": "artifacts/eval_suite/wave1_recover_both/l4_checked_action_surface/d1_eq_game12/r01/2026-06-06_1331_eq_Game1_Game2/iteration_1/node_memory/Tree_0_0/workspace_views/turn_011.json",
+          "turn": 11,
+          "usage": {
+            "cache_creation_input_tokens": 4172,
+            "cache_read_input_tokens": 61394,
+            "input_tokens": 2,
+            "output_tokens": 883
+          },
+          "view_chars": 22722,
+          "view_id": "T0.0-11",
+          "workspace_view_path": "artifacts/eval_suite/wave1_recover_both/l4_checked_action_surface/d1_eq_game12/r01/2026-06-06_1331_eq_Game1_Game2/iteration_1/node_memory/Tree_0_0/workspace_views/turn_010.json"
+        },
+        {
+          "action_submitted_at": "2026-06-06T20:34:31.802000+00:00",
+          "action_time": "+02:43",
+          "agent_think": "23.8 s",
+          "agent_think_path": "artifacts/eval_suite/wave1_recover_both/l4_checked_action_surface/d1_eq_game12/r01/2026-06-06_1331_eq_Game1_Game2/iteration_1/node_memory/Tree_0_0/thinking/turn_012.md",
+          "agent_think_seconds": 23.802,
+          "decision_followup_path": "artifacts/eval_suite/wave1_recover_both/l4_checked_action_surface/d1_eq_game12/r01/2026-06-06_1331_eq_Game1_Game2/iteration_1/node_memory/Tree_0_0/followups/turn_011.md",
+          "decision_state_summary": "pRHL / call_site / relational_program, 1 goal, goal 1274 chars",
+          "decision_view_path": "artifacts/eval_suite/wave1_recover_both/l4_checked_action_surface/d1_eq_game12/r01/2026-06-06_1331_eq_Game1_Game2/iteration_1/node_memory/Tree_0_0/workspace_views/turn_011.json",
+          "deterministic_signals": [
+            "commit_without_probe_check_not_inferred"
+          ],
+          "goal_chars": 1274,
+          "inspect_topics": [
+            "goal_info",
+            "call_site_options",
+            "call_invariant_skeleton",
+            "call_subgoals",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "align"
+          ],
+          "intent": {
+            "intent": "commit_tactic",
+            "payload": {
+              "tactic": "rnd (fun (x : ptxt) => x +^ (if b{1} then m0{1} else m1{1}))."
+            }
+          },
+          "intent_summary": "commit rnd (fun (x : ptxt) => x +^ (if b{1} then m0{1} else m1{1}))",
+          "manager_action_summary": [
+            "tactic commit (198 ms)"
+          ],
+          "manager_result_at": "2026-06-06T20:34:32+00:00",
+          "manager_result_path": "artifacts/eval_suite/wave1_recover_both/l4_checked_action_surface/d1_eq_game12/r01/2026-06-06_1331_eq_Game1_Game2/iteration_1/node_memory/Tree_0_0/manager_results/turn_012.json",
+          "manager_seconds": 0.198,
+          "manager_time": "198 ms",
+          "node": "Tree-0.0",
+          "node_dir": "artifacts/eval_suite/wave1_recover_both/l4_checked_action_surface/d1_eq_game12/r01/2026-06-06_1331_eq_Game1_Game2/iteration_1/node_memory/Tree_0_0",
+          "ok": true,
+          "result_followup_path": "artifacts/eval_suite/wave1_recover_both/l4_checked_action_surface/d1_eq_game12/r01/2026-06-06_1331_eq_Game1_Game2/iteration_1/node_memory/Tree_0_0/followups/turn_012.md",
+          "result_state_summary": "pRHL / call_site / relational_program, 1 goal, goal 1697 chars",
+          "result_summary": "accepted commit",
+          "result_view_path": "artifacts/eval_suite/wave1_recover_both/l4_checked_action_surface/d1_eq_game12/r01/2026-06-06_1331_eq_Game1_Game2/iteration_1/node_memory/Tree_0_0/workspace_views/turn_012.json",
+          "turn": 12,
+          "usage": {
+            "cache_creation_input_tokens": 2008,
+            "cache_read_input_tokens": 65566,
+            "input_tokens": 2,
+            "output_tokens": 1624
+          },
+          "view_chars": 28106,
+          "view_id": "T0.0-12",
+          "workspace_view_path": "artifacts/eval_suite/wave1_recover_both/l4_checked_action_surface/d1_eq_game12/r01/2026-06-06_1331_eq_Game1_Game2/iteration_1/node_memory/Tree_0_0/workspace_views/turn_011.json"
+        },
+        {
+          "action_submitted_at": "2026-06-06T20:35:08.139000+00:00",
+          "action_time": "+03:20",
+          "agent_think": "36.1 s",
+          "agent_think_path": "artifacts/eval_suite/wave1_recover_both/l4_checked_action_surface/d1_eq_game12/r01/2026-06-06_1331_eq_Game1_Game2/iteration_1/node_memory/Tree_0_0/thinking/turn_013.md",
+          "agent_think_seconds": 36.139,
+          "decision_followup_path": "artifacts/eval_suite/wave1_recover_both/l4_checked_action_surface/d1_eq_game12/r01/2026-06-06_1331_eq_Game1_Game2/iteration_1/node_memory/Tree_0_0/followups/turn_012.md",
+          "decision_state_summary": "pRHL / call_site / relational_program, 1 goal, goal 1697 chars",
+          "decision_view_path": "artifacts/eval_suite/wave1_recover_both/l4_checked_action_surface/d1_eq_game12/r01/2026-06-06_1331_eq_Game1_Game2/iteration_1/node_memory/Tree_0_0/workspace_views/turn_012.json",
+          "deterministic_signals": [
+            "manager_error:cannot infer the set of equalities"
+          ],
+          "goal_chars": 1697,
+          "inspect_topics": [
+            "goal_info",
+            "call_site_options",
+            "call_invariant_skeleton",
+            "call_subgoals",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "align"
+          ],
+          "intent": {
+            "intent": "probe_tactic",
+            "payload": {
+              "tactic": "sim."
+            }
+          },
+          "intent_summary": "probe sim",
+          "manager_action_summary": [
+            "tactic probe (861 ms)"
+          ],
+          "manager_result_at": "2026-06-06T20:35:09+00:00",
+          "manager_result_path": "artifacts/eval_suite/wave1_recover_both/l4_checked_action_surface/d1_eq_game12/r01/2026-06-06_1331_eq_Game1_Game2/iteration_1/node_memory/Tree_0_0/manager_results/turn_013.json",
+          "manager_seconds": 0.861,
+          "manager_time": "861 ms",
+          "node": "Tree-0.0",
+          "node_dir": "artifacts/eval_suite/wave1_recover_both/l4_checked_action_surface/d1_eq_game12/r01/2026-06-06_1331_eq_Game1_Game2/iteration_1/node_memory/Tree_0_0",
+          "ok": true,
+          "result_followup_path": "artifacts/eval_suite/wave1_recover_both/l4_checked_action_surface/d1_eq_game12/r01/2026-06-06_1331_eq_Game1_Game2/iteration_1/node_memory/Tree_0_0/followups/turn_013.md",
+          "result_state_summary": "pRHL / call_site / relational_program, 1 goal, goal 1697 chars",
+          "result_summary": "rejected probe: cannot infer the set of equalities",
+          "result_view_path": "artifacts/eval_suite/wave1_recover_both/l4_checked_action_surface/d1_eq_game12/r01/2026-06-06_1331_eq_Game1_Game2/iteration_1/node_memory/Tree_0_0/workspace_views/turn_013.json",
+          "turn": 13,
+          "usage": {
+            "cache_creation_input_tokens": 5049,
+            "cache_read_input_tokens": 67574,
+            "input_tokens": 2,
+            "output_tokens": 2512
+          },
+          "view_chars": 23194,
+          "view_id": "T0.0-13",
+          "workspace_view_path": "artifacts/eval_suite/wave1_recover_both/l4_checked_action_surface/d1_eq_game12/r01/2026-06-06_1331_eq_Game1_Game2/iteration_1/node_memory/Tree_0_0/workspace_views/turn_012.json"
+        },
+        {
+          "action_submitted_at": "2026-06-06T20:35:14+00:00",
+          "action_time": "+03:26",
+          "agent_think": "5 s",
+          "agent_think_path": "",
+          "agent_think_seconds": 5.0,
+          "decision_followup_path": "artifacts/eval_suite/wave1_recover_both/l4_checked_action_surface/d1_eq_game12/r01/2026-06-06_1331_eq_Game1_Game2/iteration_1/node_memory/Tree_0_0/followups/turn_013.md",
+          "decision_state_summary": "pRHL / call_site / relational_program, 1 goal, goal 1697 chars",
+          "decision_view_path": "artifacts/eval_suite/wave1_recover_both/l4_checked_action_surface/d1_eq_game12/r01/2026-06-06_1331_eq_Game1_Game2/iteration_1/node_memory/Tree_0_0/workspace_views/turn_013.json",
+          "deterministic_signals": [],
+          "goal_chars": 1697,
+          "inspect_topics": [
+            "diagnose",
+            "goal_info",
+            "call_site_options",
+            "call_invariant_skeleton",
+            "call_subgoals",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "align"
+          ],
+          "intent": {},
+          "intent_summary": "unknown",
+          "manager_action_summary": [],
+          "manager_result_at": "2026-06-06T20:35:14+00:00",
+          "manager_result_path": "artifacts/eval_suite/wave1_recover_both/l4_checked_action_surface/d1_eq_game12/r01/2026-06-06_1331_eq_Game1_Game2/iteration_1/node_memory/Tree_0_0/manager_results/turn_014.json",
+          "manager_seconds": 0,
+          "manager_time": "",
+          "node": "Tree-0.0",
+          "node_dir": "artifacts/eval_suite/wave1_recover_both/l4_checked_action_surface/d1_eq_game12/r01/2026-06-06_1331_eq_Game1_Game2/iteration_1/node_memory/Tree_0_0",
+          "ok": false,
+          "result_followup_path": "artifacts/eval_suite/wave1_recover_both/l4_checked_action_surface/d1_eq_game12/r01/2026-06-06_1331_eq_Game1_Game2/iteration_1/node_memory/Tree_0_0/followups/turn_014.md",
+          "result_state_summary": "pRHL / call_site / relational_program, 1 goal, goal 1697 chars",
+          "result_summary": "repair / unhealthy",
+          "result_view_path": "artifacts/eval_suite/wave1_recover_both/l4_checked_action_surface/d1_eq_game12/r01/2026-06-06_1331_eq_Game1_Game2/iteration_1/node_memory/Tree_0_0/workspace_views/turn_014.json",
+          "turn": 14,
+          "usage": {},
+          "view_chars": 23725,
+          "view_id": "T0.0-14",
+          "workspace_view_path": "artifacts/eval_suite/wave1_recover_both/l4_checked_action_surface/d1_eq_game12/r01/2026-06-06_1331_eq_Game1_Game2/iteration_1/node_memory/Tree_0_0/workspace_views/turn_013.json"
+        },
+        {
+          "action_submitted_at": "2026-06-06T20:35:45+00:00",
+          "action_time": "+03:57",
+          "agent_think": "31 s",
+          "agent_think_path": "",
+          "agent_think_seconds": 31.0,
+          "decision_followup_path": "artifacts/eval_suite/wave1_recover_both/l4_checked_action_surface/d1_eq_game12/r01/2026-06-06_1331_eq_Game1_Game2/iteration_1/node_memory/Tree_0_0/followups/turn_014.md",
+          "decision_state_summary": "pRHL / call_site / relational_program, 1 goal, goal 1697 chars",
+          "decision_view_path": "artifacts/eval_suite/wave1_recover_both/l4_checked_action_surface/d1_eq_game12/r01/2026-06-06_1331_eq_Game1_Game2/iteration_1/node_memory/Tree_0_0/workspace_views/turn_014.json",
+          "deterministic_signals": [],
+          "goal_chars": 1697,
+          "inspect_topics": [
+            "diagnose",
+            "goal_info",
+            "call_site_options",
+            "call_invariant_skeleton",
+            "call_subgoals",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "align"
+          ],
+          "intent": {},
+          "intent_summary": "unknown",
+          "manager_action_summary": [],
+          "manager_result_at": "2026-06-06T20:35:45+00:00",
+          "manager_result_path": "artifacts/eval_suite/wave1_recover_both/l4_checked_action_surface/d1_eq_game12/r01/2026-06-06_1331_eq_Game1_Game2/iteration_1/node_memory/Tree_0_0/manager_results/turn_015.json",
+          "manager_seconds": 0,
+          "manager_time": "",
+          "node": "Tree-0.0",
+          "node_dir": "artifacts/eval_suite/wave1_recover_both/l4_checked_action_surface/d1_eq_game12/r01/2026-06-06_1331_eq_Game1_Game2/iteration_1/node_memory/Tree_0_0",
+          "ok": false,
+          "result_followup_path": "artifacts/eval_suite/wave1_recover_both/l4_checked_action_surface/d1_eq_game12/r01/2026-06-06_1331_eq_Game1_Game2/iteration_1/node_memory/Tree_0_0/followups/turn_015.md",
+          "result_state_summary": "pRHL / call_site / relational_program, 1 goal, goal 1697 chars",
+          "result_summary": "repair / unhealthy",
+          "result_view_path": "artifacts/eval_suite/wave1_recover_both/l4_checked_action_surface/d1_eq_game12/r01/2026-06-06_1331_eq_Game1_Game2/iteration_1/node_memory/Tree_0_0/workspace_views/turn_015.json",
+          "turn": 15,
+          "usage": {},
+          "view_chars": 23725,
+          "view_id": "T0.0-15",
+          "workspace_view_path": "artifacts/eval_suite/wave1_recover_both/l4_checked_action_surface/d1_eq_game12/r01/2026-06-06_1331_eq_Game1_Game2/iteration_1/node_memory/Tree_0_0/workspace_views/turn_014.json"
+        },
+        {
+          "action_submitted_at": "2026-06-06T20:35:48.825000+00:00",
+          "action_time": "+04:00",
+          "agent_think": "3.8 s",
+          "agent_think_path": "artifacts/eval_suite/wave1_recover_both/l4_checked_action_surface/d1_eq_game12/r01/2026-06-06_1331_eq_Game1_Game2/iteration_1/node_memory/Tree_0_0/thinking/turn_016.md",
+          "agent_think_seconds": 3.825,
+          "decision_followup_path": "artifacts/eval_suite/wave1_recover_both/l4_checked_action_surface/d1_eq_game12/r01/2026-06-06_1331_eq_Game1_Game2/iteration_1/node_memory/Tree_0_0/followups/turn_015.md",
+          "decision_state_summary": "pRHL / call_site / relational_program, 1 goal, goal 1697 chars",
+          "decision_view_path": "artifacts/eval_suite/wave1_recover_both/l4_checked_action_surface/d1_eq_game12/r01/2026-06-06_1331_eq_Game1_Game2/iteration_1/node_memory/Tree_0_0/workspace_views/turn_015.json",
+          "deterministic_signals": [],
+          "goal_chars": 1697,
+          "inspect_topics": [
+            "diagnose",
+            "goal_info",
+            "call_site_options",
+            "call_invariant_skeleton",
+            "call_subgoals",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "align"
+          ],
+          "intent": {
+            "intent": "probe_tactic",
+            "payload": {
+              "tactic": "conseq (_ : _ ==> ={glob A, Log.qs, LRO.m, pk, b} /\\ Game1.r{1} = Game2.r{2})."
+            }
+          },
+          "intent_summary": "probe conseq (_ : _ ==> ={glob A, Log.qs, LRO.m, pk, b} /\\ Game1.r{1} = Gam...",
+          "manager_action_summary": [
+            "tactic probe (175 ms)"
+          ],
+          "manager_result_at": "2026-06-06T20:35:49+00:00",
+          "manager_result_path": "artifacts/eval_suite/wave1_recover_both/l4_checked_action_surface/d1_eq_game12/r01/2026-06-06_1331_eq_Game1_Game2/iteration_1/node_memory/Tree_0_0/manager_results/turn_016.json",
+          "manager_seconds": 0.175,
+          "manager_time": "175 ms",
+          "node": "Tree-0.0",
+          "node_dir": "artifacts/eval_suite/wave1_recover_both/l4_checked_action_surface/d1_eq_game12/r01/2026-06-06_1331_eq_Game1_Game2/iteration_1/node_memory/Tree_0_0",
+          "ok": true,
+          "result_followup_path": "artifacts/eval_suite/wave1_recover_both/l4_checked_action_surface/d1_eq_game12/r01/2026-06-06_1331_eq_Game1_Game2/iteration_1/node_memory/Tree_0_0/followups/turn_016.md",
+          "result_state_summary": "pRHL / call_site / seq_cut, 1 goal, goal 1697 chars",
+          "result_summary": "accepted probe",
+          "result_view_path": "artifacts/eval_suite/wave1_recover_both/l4_checked_action_surface/d1_eq_game12/r01/2026-06-06_1331_eq_Game1_Game2/iteration_1/node_memory/Tree_0_0/workspace_views/turn_016.json",
+          "turn": 16,
+          "usage": {
+            "cache_creation_input_tokens": 5775,
+            "cache_read_input_tokens": 79446,
+            "input_tokens": 2,
+            "output_tokens": 223
+          },
+          "view_chars": 23725,
+          "view_id": "T0.0-16",
+          "workspace_view_path": "artifacts/eval_suite/wave1_recover_both/l4_checked_action_surface/d1_eq_game12/r01/2026-06-06_1331_eq_Game1_Game2/iteration_1/node_memory/Tree_0_0/workspace_views/turn_015.json"
+        },
+        {
+          "action_submitted_at": "2026-06-06T20:36:04.807000+00:00",
+          "action_time": "+04:16",
+          "agent_think": "15.8 s",
+          "agent_think_path": "artifacts/eval_suite/wave1_recover_both/l4_checked_action_surface/d1_eq_game12/r01/2026-06-06_1331_eq_Game1_Game2/iteration_1/node_memory/Tree_0_0/thinking/turn_017.md",
+          "agent_think_seconds": 15.807,
+          "decision_followup_path": "artifacts/eval_suite/wave1_recover_both/l4_checked_action_surface/d1_eq_game12/r01/2026-06-06_1331_eq_Game1_Game2/iteration_1/node_memory/Tree_0_0/followups/turn_016.md",
+          "decision_state_summary": "pRHL / call_site / seq_cut, 1 goal, goal 1697 chars",
+          "decision_view_path": "artifacts/eval_suite/wave1_recover_both/l4_checked_action_surface/d1_eq_game12/r01/2026-06-06_1331_eq_Game1_Game2/iteration_1/node_memory/Tree_0_0/workspace_views/turn_016.json",
+          "deterministic_signals": [
+            "commit_without_probe_check_not_inferred"
+          ],
+          "goal_chars": 1697,
+          "inspect_topics": [
+            "goal_info",
+            "call_site_options",
+            "call_subgoals",
+            "align",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms"
+          ],
+          "intent": {
+            "intent": "commit_tactic",
+            "payload": {
+              "tactic": "conseq (_ : _ ==> ={glob A, Log.qs, LRO.m, pk, b} /\\ Game1.r{1} = Game2.r{2})."
+            }
+          },
+          "intent_summary": "commit conseq (_ : _ ==> ={glob A, Log.qs, LRO.m, pk, b} /\\ Game1.r{1} = Gam...",
+          "manager_action_summary": [
+            "tactic commit (193 ms)"
+          ],
+          "manager_result_at": "2026-06-06T20:36:05+00:00",
+          "manager_result_path": "artifacts/eval_suite/wave1_recover_both/l4_checked_action_surface/d1_eq_game12/r01/2026-06-06_1331_eq_Game1_Game2/iteration_1/node_memory/Tree_0_0/manager_results/turn_017.json",
+          "manager_seconds": 0.193,
+          "manager_time": "193 ms",
+          "node": "Tree-0.0",
+          "node_dir": "artifacts/eval_suite/wave1_recover_both/l4_checked_action_surface/d1_eq_game12/r01/2026-06-06_1331_eq_Game1_Game2/iteration_1/node_memory/Tree_0_0",
+          "ok": true,
+          "result_followup_path": "artifacts/eval_suite/wave1_recover_both/l4_checked_action_surface/d1_eq_game12/r01/2026-06-06_1331_eq_Game1_Game2/iteration_1/node_memory/Tree_0_0/followups/turn_017.md",
+          "result_state_summary": "ambient / ambient_logic / relational_program, 2 goals, goal 1453 chars",
+          "result_summary": "accepted commit",
+          "result_view_path": "artifacts/eval_suite/wave1_recover_both/l4_checked_action_surface/d1_eq_game12/r01/2026-06-06_1331_eq_Game1_Game2/iteration_1/node_memory/Tree_0_0/workspace_views/turn_017.json",
+          "turn": 17,
+          "usage": {
+            "cache_creation_input_tokens": 1274,
+            "cache_read_input_tokens": 85221,
+            "input_tokens": 2,
+            "output_tokens": 995
+          },
+          "view_chars": 29582,
+          "view_id": "T0.0-17",
+          "workspace_view_path": "artifacts/eval_suite/wave1_recover_both/l4_checked_action_surface/d1_eq_game12/r01/2026-06-06_1331_eq_Game1_Game2/iteration_1/node_memory/Tree_0_0/workspace_views/turn_016.json"
+        },
+        {
+          "action_submitted_at": "2026-06-06T20:36:14+00:00",
+          "action_time": "+04:26",
+          "agent_think": "9 s",
+          "agent_think_path": "artifacts/eval_suite/wave1_recover_both/l4_checked_action_surface/d1_eq_game12/r01/2026-06-06_1331_eq_Game1_Game2/iteration_1/node_memory/Tree_0_0/thinking/turn_018.md",
+          "agent_think_seconds": 9.0,
+          "decision_followup_path": "artifacts/eval_suite/wave1_recover_both/l4_checked_action_surface/d1_eq_game12/r01/2026-06-06_1331_eq_Game1_Game2/iteration_1/node_memory/Tree_0_0/followups/turn_017.md",
+          "decision_state_summary": "ambient / ambient_logic / relational_program, 2 goals, goal 1453 chars",
+          "decision_view_path": "artifacts/eval_suite/wave1_recover_both/l4_checked_action_surface/d1_eq_game12/r01/2026-06-06_1331_eq_Game1_Game2/iteration_1/node_memory/Tree_0_0/workspace_views/turn_017.json",
+          "deterministic_signals": [],
+          "goal_chars": 1453,
+          "inspect_topics": [
+            "goal_info",
+            "call_site_options",
+            "call_invariant_skeleton",
+            "call_subgoals",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "align"
+          ],
+          "intent": {
+            "intent": "probe_tactic",
+            "payload": {
+              "tactic": "smt(addpK dptxt_funi dptxt_fu)."
+            }
+          },
+          "intent_summary": "probe smt(addpK dptxt_funi dptxt_fu)",
+          "manager_action_summary": [
+            "tactic probe (1.0 s)"
+          ],
+          "manager_result_at": "2026-06-06T20:36:15+00:00",
+          "manager_result_path": "artifacts/eval_suite/wave1_recover_both/l4_checked_action_surface/d1_eq_game12/r01/2026-06-06_1331_eq_Game1_Game2/iteration_1/node_memory/Tree_0_0/manager_results/turn_018.json",
+          "manager_seconds": 1.0,
+          "manager_time": "1 s",
+          "node": "Tree-0.0",
+          "node_dir": "artifacts/eval_suite/wave1_recover_both/l4_checked_action_surface/d1_eq_game12/r01/2026-06-06_1331_eq_Game1_Game2/iteration_1/node_memory/Tree_0_0",
+          "ok": true,
+          "result_followup_path": "artifacts/eval_suite/wave1_recover_both/l4_checked_action_surface/d1_eq_game12/r01/2026-06-06_1331_eq_Game1_Game2/iteration_1/node_memory/Tree_0_0/followups/turn_018.md",
+          "result_state_summary": "ambient / ambient_logic / relational_program, 2 goals, goal 1453 chars",
+          "result_summary": "accepted probe",
+          "result_view_path": "artifacts/eval_suite/wave1_recover_both/l4_checked_action_surface/d1_eq_game12/r01/2026-06-06_1331_eq_Game1_Game2/iteration_1/node_memory/Tree_0_0/workspace_views/turn_018.json",
+          "turn": 18,
+          "usage": {
+            "cache_creation_input_tokens": 4185,
+            "cache_read_input_tokens": 86495,
+            "input_tokens": 2,
+            "output_tokens": 683
+          },
+          "view_chars": 16328,
+          "view_id": "T0.0-18",
+          "workspace_view_path": "artifacts/eval_suite/wave1_recover_both/l4_checked_action_surface/d1_eq_game12/r01/2026-06-06_1331_eq_Game1_Game2/iteration_1/node_memory/Tree_0_0/workspace_views/turn_017.json"
+        },
+        {
+          "action_submitted_at": "2026-06-06T20:36:19.674000+00:00",
+          "action_time": "+04:31",
+          "agent_think": "4.7 s",
+          "agent_think_path": "artifacts/eval_suite/wave1_recover_both/l4_checked_action_surface/d1_eq_game12/r01/2026-06-06_1331_eq_Game1_Game2/iteration_1/node_memory/Tree_0_0/thinking/turn_019.md",
+          "agent_think_seconds": 4.674,
+          "decision_followup_path": "artifacts/eval_suite/wave1_recover_both/l4_checked_action_surface/d1_eq_game12/r01/2026-06-06_1331_eq_Game1_Game2/iteration_1/node_memory/Tree_0_0/followups/turn_018.md",
+          "decision_state_summary": "ambient / ambient_logic / relational_program, 2 goals, goal 1453 chars",
+          "decision_view_path": "artifacts/eval_suite/wave1_recover_both/l4_checked_action_surface/d1_eq_game12/r01/2026-06-06_1331_eq_Game1_Game2/iteration_1/node_memory/Tree_0_0/workspace_views/turn_018.json",
+          "deterministic_signals": [
+            "commit_without_probe_check_not_inferred"
+          ],
+          "goal_chars": 1453,
+          "inspect_topics": [
+            "goal_info",
+            "call_site_options",
+            "call_invariant_skeleton",
+            "call_subgoals",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "align"
+          ],
+          "intent": {
+            "intent": "commit_tactic",
+            "payload": {
+              "tactic": "smt(addpK dptxt_funi dptxt_fu)."
+            }
+          },
+          "intent_summary": "commit smt(addpK dptxt_funi dptxt_fu)",
+          "manager_action_summary": [
+            "tactic commit (326 ms)"
+          ],
+          "manager_result_at": "2026-06-06T20:36:20+00:00",
+          "manager_result_path": "artifacts/eval_suite/wave1_recover_both/l4_checked_action_surface/d1_eq_game12/r01/2026-06-06_1331_eq_Game1_Game2/iteration_1/node_memory/Tree_0_0/manager_results/turn_019.json",
+          "manager_seconds": 0.326,
+          "manager_time": "326 ms",
+          "node": "Tree-0.0",
+          "node_dir": "artifacts/eval_suite/wave1_recover_both/l4_checked_action_surface/d1_eq_game12/r01/2026-06-06_1331_eq_Game1_Game2/iteration_1/node_memory/Tree_0_0",
+          "ok": true,
+          "result_followup_path": "artifacts/eval_suite/wave1_recover_both/l4_checked_action_surface/d1_eq_game12/r01/2026-06-06_1331_eq_Game1_Game2/iteration_1/node_memory/Tree_0_0/followups/turn_019.md",
+          "result_state_summary": "pRHL / call_site / relational_program, 1 goal, goal 845 chars",
+          "result_summary": "accepted commit",
+          "result_view_path": "artifacts/eval_suite/wave1_recover_both/l4_checked_action_surface/d1_eq_game12/r01/2026-06-06_1331_eq_Game1_Game2/iteration_1/node_memory/Tree_0_0/workspace_views/turn_019.json",
+          "turn": 19,
+          "usage": {
+            "cache_creation_input_tokens": 1286,
+            "cache_read_input_tokens": 90680,
+            "input_tokens": 2,
+            "output_tokens": 252
+          },
+          "view_chars": 20383,
+          "view_id": "T0.0-19",
+          "workspace_view_path": "artifacts/eval_suite/wave1_recover_both/l4_checked_action_surface/d1_eq_game12/r01/2026-06-06_1331_eq_Game1_Game2/iteration_1/node_memory/Tree_0_0/workspace_views/turn_018.json"
+        },
+        {
+          "action_submitted_at": "2026-06-06T20:36:24.900000+00:00",
+          "action_time": "+04:36",
+          "agent_think": "4.9 s",
+          "agent_think_path": "artifacts/eval_suite/wave1_recover_both/l4_checked_action_surface/d1_eq_game12/r01/2026-06-06_1331_eq_Game1_Game2/iteration_1/node_memory/Tree_0_0/thinking/turn_020.md",
+          "agent_think_seconds": 4.9,
+          "decision_followup_path": "artifacts/eval_suite/wave1_recover_both/l4_checked_action_surface/d1_eq_game12/r01/2026-06-06_1331_eq_Game1_Game2/iteration_1/node_memory/Tree_0_0/followups/turn_019.md",
+          "decision_state_summary": "pRHL / call_site / relational_program, 1 goal, goal 845 chars",
+          "decision_view_path": "artifacts/eval_suite/wave1_recover_both/l4_checked_action_surface/d1_eq_game12/r01/2026-06-06_1331_eq_Game1_Game2/iteration_1/node_memory/Tree_0_0/workspace_views/turn_019.json",
+          "deterministic_signals": [],
+          "goal_chars": 845,
+          "inspect_topics": [
+            "goal_info",
+            "call_site_options",
+            "call_invariant_skeleton",
+            "call_subgoals",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "align"
+          ],
+          "intent": {
+            "intent": "probe_tactic",
+            "payload": {
+              "tactic": "sim."
+            }
+          },
+          "intent_summary": "probe sim",
+          "manager_action_summary": [
+            "tactic probe (1.1 s)"
+          ],
+          "manager_result_at": "2026-06-06T20:36:26+00:00",
+          "manager_result_path": "artifacts/eval_suite/wave1_recover_both/l4_checked_action_surface/d1_eq_game12/r01/2026-06-06_1331_eq_Game1_Game2/iteration_1/node_memory/Tree_0_0/manager_results/turn_020.json",
+          "manager_seconds": 1.1,
+          "manager_time": "1.1 s",
+          "node": "Tree-0.0",
+          "node_dir": "artifacts/eval_suite/wave1_recover_both/l4_checked_action_surface/d1_eq_game12/r01/2026-06-06_1331_eq_Game1_Game2/iteration_1/node_memory/Tree_0_0",
+          "ok": true,
+          "result_followup_path": "artifacts/eval_suite/wave1_recover_both/l4_checked_action_surface/d1_eq_game12/r01/2026-06-06_1331_eq_Game1_Game2/iteration_1/node_memory/Tree_0_0/followups/turn_020.md",
+          "result_state_summary": "pRHL / call_site / relational_program, 1 goal, goal 845 chars",
+          "result_summary": "accepted probe",
+          "result_view_path": "artifacts/eval_suite/wave1_recover_both/l4_checked_action_surface/d1_eq_game12/r01/2026-06-06_1331_eq_Game1_Game2/iteration_1/node_memory/Tree_0_0/workspace_views/turn_020.json",
+          "turn": 20,
+          "usage": {
+            "cache_creation_input_tokens": 3155,
+            "cache_read_input_tokens": 91966,
+            "input_tokens": 131,
+            "output_tokens": 258
+          },
+          "view_chars": 18531,
+          "view_id": "T0.0-20",
+          "workspace_view_path": "artifacts/eval_suite/wave1_recover_both/l4_checked_action_surface/d1_eq_game12/r01/2026-06-06_1331_eq_Game1_Game2/iteration_1/node_memory/Tree_0_0/workspace_views/turn_019.json"
+        },
+        {
+          "action_submitted_at": "2026-06-06T20:36:33.839000+00:00",
+          "action_time": "+04:45",
+          "agent_think": "7.8 s",
+          "agent_think_path": "artifacts/eval_suite/wave1_recover_both/l4_checked_action_surface/d1_eq_game12/r01/2026-06-06_1331_eq_Game1_Game2/iteration_1/node_memory/Tree_0_0/thinking/turn_021.md",
+          "agent_think_seconds": 7.839,
+          "decision_followup_path": "artifacts/eval_suite/wave1_recover_both/l4_checked_action_surface/d1_eq_game12/r01/2026-06-06_1331_eq_Game1_Game2/iteration_1/node_memory/Tree_0_0/followups/turn_020.md",
+          "decision_state_summary": "pRHL / call_site / relational_program, 1 goal, goal 845 chars",
+          "decision_view_path": "artifacts/eval_suite/wave1_recover_both/l4_checked_action_surface/d1_eq_game12/r01/2026-06-06_1331_eq_Game1_Game2/iteration_1/node_memory/Tree_0_0/workspace_views/turn_020.json",
+          "deterministic_signals": [
+            "commit_without_probe_check_not_inferred"
+          ],
+          "goal_chars": 845,
+          "inspect_topics": [
+            "goal_info",
+            "call_site_options",
+            "call_invariant_skeleton",
+            "call_subgoals",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "align"
+          ],
+          "intent": {
+            "intent": "commit_tactic",
+            "payload": {
+              "tactic": "sim."
+            }
+          },
+          "intent_summary": "commit sim",
+          "manager_action_summary": [
+            "tactic commit (161 ms)"
+          ],
+          "manager_result_at": "2026-06-06T20:36:34+00:00",
+          "manager_result_path": "artifacts/eval_suite/wave1_recover_both/l4_checked_action_surface/d1_eq_game12/r01/2026-06-06_1331_eq_Game1_Game2/iteration_1/node_memory/Tree_0_0/manager_results/turn_021.json",
+          "manager_seconds": 0.161,
+          "manager_time": "161 ms",
+          "node": "Tree-0.0",
+          "node_dir": "artifacts/eval_suite/wave1_recover_both/l4_checked_action_surface/d1_eq_game12/r01/2026-06-06_1331_eq_Game1_Game2/iteration_1/node_memory/Tree_0_0",
+          "ok": true,
+          "result_followup_path": "artifacts/eval_suite/wave1_recover_both/l4_checked_action_surface/d1_eq_game12/r01/2026-06-06_1331_eq_Game1_Game2/iteration_1/node_memory/Tree_0_0/followups/turn_021.md",
+          "result_state_summary": "ambient / closed_candidate, goal 25 chars",
+          "result_summary": "accepted commit",
+          "result_view_path": "artifacts/eval_suite/wave1_recover_both/l4_checked_action_surface/d1_eq_game12/r01/2026-06-06_1331_eq_Game1_Game2/iteration_1/node_memory/Tree_0_0/workspace_views/turn_021.json",
+          "turn": 21,
+          "usage": {
+            "cache_creation_input_tokens": 3143,
+            "cache_read_input_tokens": 95121,
+            "input_tokens": 2,
+            "output_tokens": 420
+          },
+          "view_chars": 21123,
+          "view_id": "T0.0-21",
+          "workspace_view_path": "artifacts/eval_suite/wave1_recover_both/l4_checked_action_surface/d1_eq_game12/r01/2026-06-06_1331_eq_Game1_Game2/iteration_1/node_memory/Tree_0_0/workspace_views/turn_020.json"
+        },
+        {
+          "action_submitted_at": "2026-06-06T20:36:38.841000+00:00",
+          "action_time": "+04:50",
+          "agent_think": "4.8 s",
+          "agent_think_path": "artifacts/eval_suite/wave1_recover_both/l4_checked_action_surface/d1_eq_game12/r01/2026-06-06_1331_eq_Game1_Game2/iteration_1/node_memory/Tree_0_0/thinking/turn_022.md",
+          "agent_think_seconds": 4.841,
+          "decision_followup_path": "artifacts/eval_suite/wave1_recover_both/l4_checked_action_surface/d1_eq_game12/r01/2026-06-06_1331_eq_Game1_Game2/iteration_1/node_memory/Tree_0_0/followups/turn_021.md",
+          "decision_state_summary": "ambient / closed_candidate, goal 25 chars",
+          "decision_view_path": "artifacts/eval_suite/wave1_recover_both/l4_checked_action_surface/d1_eq_game12/r01/2026-06-06_1331_eq_Game1_Game2/iteration_1/node_memory/Tree_0_0/workspace_views/turn_021.json",
+          "deterministic_signals": [
+            "commit_without_probe_check_not_inferred"
+          ],
+          "goal_chars": 25,
+          "inspect_topics": [
+            "goal_info"
+          ],
+          "intent": {
+            "intent": "commit_tactic",
+            "payload": {
+              "tactic": "qed."
+            }
+          },
+          "intent_summary": "commit qed",
+          "manager_action_summary": [
+            "tactic commit (159 ms)"
+          ],
+          "manager_result_at": "2026-06-06T20:36:39+00:00",
+          "manager_result_path": "artifacts/eval_suite/wave1_recover_both/l4_checked_action_surface/d1_eq_game12/r01/2026-06-06_1331_eq_Game1_Game2/iteration_1/node_memory/Tree_0_0/manager_results/turn_022.json",
+          "manager_seconds": 0.159,
+          "manager_time": "159 ms",
+          "node": "Tree-0.0",
+          "node_dir": "artifacts/eval_suite/wave1_recover_both/l4_checked_action_surface/d1_eq_game12/r01/2026-06-06_1331_eq_Game1_Game2/iteration_1/node_memory/Tree_0_0",
+          "ok": true,
+          "result_followup_path": "artifacts/eval_suite/wave1_recover_both/l4_checked_action_surface/d1_eq_game12/r01/2026-06-06_1331_eq_Game1_Game2/iteration_1/node_memory/Tree_0_0/followups/turn_022.md",
+          "result_state_summary": "complete / unknown / closed_candidate, 0 goals, goal 11 chars",
+          "result_summary": "accepted commit",
+          "result_view_path": "artifacts/eval_suite/wave1_recover_both/l4_checked_action_surface/d1_eq_game12/r01/2026-06-06_1331_eq_Game1_Game2/iteration_1/node_memory/Tree_0_0/workspace_views/turn_022.json",
+          "turn": 22,
+          "usage": {
+            "cache_creation_input_tokens": 1493,
+            "cache_read_input_tokens": 98264,
+            "input_tokens": 2,
+            "output_tokens": 125
+          },
+          "view_chars": 5267,
+          "view_id": "T0.0-22",
+          "workspace_view_path": "artifacts/eval_suite/wave1_recover_both/l4_checked_action_surface/d1_eq_game12/r01/2026-06-06_1331_eq_Game1_Game2/iteration_1/node_memory/Tree_0_0/workspace_views/turn_021.json"
+        }
+      ],
+      "run_dir": "artifacts/eval_suite/wave1_recover_both/l4_checked_action_surface/d1_eq_game12/r01/2026-06-06_1331_eq_Game1_Game2/iteration_1",
+      "turn_count": 22
+    }
+  ],
+  "schema_version": 1
+}

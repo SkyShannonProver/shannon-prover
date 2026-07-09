@@ -1,0 +1,57 @@
+{
+ "current_goal": {
+  "lines": [
+   "Current goal (remaining: 3)",
+   "",
+   "Type variables: <none>",
+   "",
+   "&m: {}",
+   "------------------------------------------------------------------------",
+   "forall &1 &2,",
+   "  (glob A){2} = (glob A){m} /\\ (glob A){1} = (glob A){m} =>",
+   "  forall (k0 : key),",
+   "    k0 \\in dkey =>",
+   "    (!false =>",
+   "     (glob A){1} = (glob A){2} /\\",
+   "     inv empty<:nonce * C.counter, poly_in> empty<:nonce * C.counter,",
+   "       poly_in> empty<:nonce * C.counter, poly_out> empty<:nonce * C.counter,",
+   "       poly_out> empty<:ciphertext, plaintext> empty<:ciphertext, plaintext>",
+   "       [] [] [] [] 0 0 empty<:nonce, associated_data * message * tag>) &&",
+   "    forall (result_L result_R : bool) (A_L : (glob A)) (lenc_L : nonce list)",
+   "      (ndec_L : int) (lc_L : ciphertext list) (log_L : (ciphertext,",
+   "      plaintext) fmap) (m_L : (nonce * C.counter, poly_in) fmap)",
+   "      (m_L0 : (nonce * C.counter, poly_out) fmap) (A_R : (glob A))",
+   "      (lenc_R : nonce list) (ndec_R : int) (bad1_R : bool) (log_R : (nonce,",
+   "      associated_data * message * tag) fmap) (m_R : (nonce * C.counter,",
+   "      poly_in) fmap) (lc_R : ciphertext list) (log_R0 : (ciphertext,",
+   "      plaintext) fmap) (m_R0 : (nonce * C.counter, poly_out) fmap),",
+   "      (!bad1_R =>",
+   "       result_L = result_R /\\",
+   "       A_L = A_R /\\",
+   "       inv m_L m_R m_L0 m_R0 log_L log_R0 lc_L lc_R lenc_L lenc_R ndec_L",
+   "         ndec_R log_R) =>",
+   "      bad1_R \\/",
+   "      inv m_L m_R m_L0 m_R0 log_L log_R0 lc_L lc_R lenc_L lenc_R ndec_L",
+   "        ndec_R log_R",
+   "[470|check]>"
+  ],
+  "view_focus": "relational_program",
+  "goal_type": "ambient"
+ },
+ "proof_status": {
+  "status": "open",
+  "remaining_goals": 3,
+  "remaining_goals_known": true,
+  "goal_type": "ambient",
+  "view_focus": "relational_program",
+  "current_layer": "ambient_logic"
+ },
+ "last_result": {
+  "intent": "commit_tactic",
+  "tactic": "inline*; auto.",
+  "payload": {
+   "tactic": "inline*; auto."
+  },
+  "result": "EasyCrypt accepted the committed tactic."
+ }
+}

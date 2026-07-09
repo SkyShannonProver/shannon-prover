@@ -1,0 +1,20 @@
+{
+  "turn": 79,
+  "handled_intent": {
+    "intent": "probe_tactic",
+    "payload": {
+      "tactic": "proc; while (DoubleQuery.bad <=> DoubleQuery.bad{2}); inline*; auto; smt()."
+    }
+  },
+  "ok": true,
+  "manager_note": "Read-only tactic probe. Use any goal-after-probe text as a preview only; there is no probe step to undo.",
+  "manager_actions": [
+    {
+      "action": "tactic probe",
+      "outcome": "The read-only probe tool failed before EasyCrypt could validate this tactic. The committed proof state was not changed; use the error summary as a backend health signal, not as proof that the tactic is invalid.",
+      "timing": "1.6 s",
+      "error_summary": "cannot prove goal (strict)"
+    }
+  ],
+  "view_refreshed": true
+}

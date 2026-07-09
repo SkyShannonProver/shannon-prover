@@ -1,0 +1,57 @@
+{
+ "current_goal": {
+  "lines": [
+   "Current goal (remaining: 5)",
+   "",
+   "Type variables: <none>",
+   "",
+   "&m: {}",
+   "------------------------------------------------------------------------",
+   "Context : hr: {b, forged, b0, b1 : bool, i : int, n : nonce, ns : nonce list,",
+   "              r : poly_in, t : poly_out}",
+   "",
+   "pre =",
+   "  ns = undup (map (fun (p : ciphertext) => p.`1) Mem.lc) /\\",
+   "  i = 0 /\\ UFCMA.bad1 /\\ size Mem.lc <= qdec",
+   "",
+   "(1----)  while (i < size ns) {                                                         ",
+   "(1.1--)    n <- nth witness<:nonce> ns i                                               ",
+   "(1.2--)    if ((n, C.ofintd 0) \\in ROout.m) {                                          ",
+   "(1.2.1)      r <@ RO.get(n, C.ofintd 0)                                                ",
+   "(1.2.2)      forged <- forged || test_poly_in n Mem.lc r (oget UFCMA.log.[n])          ",
+   "(1.2--)    } else {                                                                    ",
+   "(1.2?1)      r <@ RO.get(n, C.ofintd 0)                                                ",
+   "(1.2?2)      t <@                                                                      ",
+   "(     )        UFCMA(RO).set_bad2(map                                                  ",
+   "(     )                             (fun (c : ciphertext) =>                           ",
+   "(     )                                c.`4 - poly1305_eval r (topol c.`2 c.`3))       ",
+   "(     )                             (filter (fun (c : ciphertext) => c.`1 = n) Mem.lc))",
+   "(1.2?3)      ROout.set((n, C.ofintd 0), witness<:poly_out>)                            ",
+   "(1.2--)    }                                                                           ",
+   "(1.3--)    i <- i + 1                                                                  ",
+   "(1----)  }                                                                             ",
+   "",
+   "post = UFCMA.bad1",
+   "",
+   "[541|check]>"
+  ],
+  "view_focus": "procedure_frontier",
+  "goal_type": "hoare"
+ },
+ "proof_status": {
+  "status": "open",
+  "remaining_goals": 5,
+  "remaining_goals_known": true,
+  "goal_type": "hoare",
+  "view_focus": "procedure_frontier",
+  "current_layer": "procedure_body"
+ },
+ "last_result": {
+  "intent": "commit_tactic",
+  "tactic": "sp.",
+  "payload": {
+   "tactic": "sp."
+  },
+  "result": "EasyCrypt accepted the committed tactic."
+ }
+}

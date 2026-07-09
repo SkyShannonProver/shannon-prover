@@ -1,0 +1,45 @@
+{
+  "kind": "agent_view_run_report",
+  "timestamp": "2026-06-10_1742_PIR_correct",
+  "lemma": "PIR_correct",
+  "source_file": "eval/examples/PIR.ec",
+  "model": "claude-opus-4-8",
+  "surface_profile": "l4_checked_action_surface",
+  "trees": 1,
+  "eval_mode": true,
+  "outcome": "proved",
+  "committed_proofs": [
+    {
+      "tree": "Tree_0_0",
+      "tactics": [
+        "move=> hi0.",
+        "byphoare (_: i = i0 ==> res = a i0) => //.",
+        "proc; inline *; wp; sp.",
+        "while (0 <= j <= N /\\ i = i0 /\\ big predT a PIR.s +^ big predT a PIR.s' = (if i0 < j then a i0 else zerow)) (N - j).",
+        "auto.",
+        "move=> &hr H; split.",
+        "smt(dbool_ll).",
+        "move=> _ v hv.",
+        "rewrite /predT /=.",
+        "case (j{hr} = i{hr}) => hji.",
+        "case v => hv2.",
+        "rewrite /predT in H; split.",
+        "smt(BBS.big_cons xorwA xorwC xorw0 xorwK).",
+        "smt().",
+        "rewrite /predT in H; smt(BBS.big_cons xorwA xorwC xorw0 xorwK).",
+        "rewrite /predT in H; smt(BBS.big_cons xorwA xorwC xorw0 xorwK).",
+        "skip; smt(BBS.big_nil xorwA xorwC xorw0).",
+        "qed."
+      ],
+      "source": "session",
+      "proved": true
+    }
+  ],
+  "turn_count": 54,
+  "views_copied": 55,
+  "run_iteration_dir": "artifacts/eval_suite/rerun_iclass/l4_checked_action_surface/pir_correct/r01/2026-06-10_1742_PIR_correct/iteration_1",
+  "commit": "b9952510",
+  "commit_full": "b99525104f61f6420c44f6b6e697772041399243",
+  "branch": "mcp-v0",
+  "dirty": true
+}

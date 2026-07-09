@@ -1,0 +1,21 @@
+{
+  "turn": 19,
+  "handled_intent": {
+    "intent": "commit_tactic",
+    "payload": {
+      "tactic": "skip => &hr Hi0; split; first by smt(N_pos)."
+    }
+  },
+  "ok": true,
+  "manager_note": "Commit attempt did not change the committed EasyCrypt proof state; use the returned result and latest view before trying the next proof intent.",
+  "manager_actions": [
+    {
+      "action": "tactic commit",
+      "outcome": "EasyCrypt rejected the committed tactic. Use the error summary and current goal to revise the proof step.",
+      "timing": "979 ms",
+      "error_summary": "[error] cannot find lemma `N_pos'"
+    }
+  ],
+  "view_refreshed": true,
+  "surface_turn_hash": "2a8c3bf145e9d30b1350b2b728863d8f2472dec2"
+}

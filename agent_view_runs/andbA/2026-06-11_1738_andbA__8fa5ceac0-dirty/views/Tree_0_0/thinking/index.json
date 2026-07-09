@@ -1,0 +1,73 @@
+{
+  "node": "Tree-0.0",
+  "discovery": "recorded_session_id",
+  "transcripts": [
+    "~/.claude/projects/<PROJECT>/62c3d798-e154-431f-bc50-d378207520fe.jsonl"
+  ],
+  "turns": [
+    {
+      "turn": 1,
+      "intent": "commit_tactic",
+      "payload_key": "smt().",
+      "thinking_chars": 0,
+      "text_chars": 159,
+      "tokens": {
+        "output_tokens": 1418,
+        "input_tokens": 5,
+        "cache_read_input_tokens": 60171,
+        "cache_creation_input_tokens": 36137
+      },
+      "session_id": "62c3d798-e154-431f-bc50-d378207520fe",
+      "timestamp": "2026-06-12T00:39:04.404Z",
+      "file": "thinking/turn_001.md"
+    },
+    {
+      "turn": 2,
+      "intent": "commit_tactic",
+      "payload_key": "by move=> b1 b2 b3; apply/blockP=> i ge0_gti_n; rewrite !andbE // andwA.",
+      "thinking_chars": 0,
+      "text_chars": 104,
+      "tokens": {
+        "output_tokens": 1301,
+        "input_tokens": 6,
+        "cache_read_input_tokens": 103784,
+        "cache_creation_input_tokens": 3657
+      },
+      "session_id": "62c3d798-e154-431f-bc50-d378207520fe",
+      "timestamp": "2026-06-12T00:39:39.492Z",
+      "file": "thinking/turn_002.md"
+    },
+    {
+      "turn": 3,
+      "intent": "commit_tactic",
+      "payload_key": "qed.",
+      "thinking_chars": 0,
+      "text_chars": 70,
+      "tokens": {
+        "output_tokens": 128,
+        "input_tokens": 2,
+        "cache_read_input_tokens": 37260,
+        "cache_creation_input_tokens": 1256
+      },
+      "session_id": "62c3d798-e154-431f-bc50-d378207520fe",
+      "timestamp": "2026-06-12T00:39:47.017Z",
+      "file": "thinking/turn_003.md"
+    },
+    {
+      "turn": 4,
+      "intent": "finish",
+      "payload_key": "",
+      "thinking_chars": 0,
+      "text_chars": 73,
+      "tokens": {
+        "output_tokens": 138,
+        "input_tokens": 2,
+        "cache_read_input_tokens": 38516,
+        "cache_creation_input_tokens": 1122
+      },
+      "session_id": "62c3d798-e154-431f-bc50-d378207520fe",
+      "timestamp": "2026-06-12T00:39:53.410Z",
+      "file": "thinking/turn_004.md"
+    }
+  ]
+}

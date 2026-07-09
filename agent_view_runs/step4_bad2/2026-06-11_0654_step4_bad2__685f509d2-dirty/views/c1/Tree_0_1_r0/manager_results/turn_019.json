@@ -1,0 +1,19 @@
+{
+  "turn": 19,
+  "handled_intent": {
+    "intent": "commit_tactic",
+    "payload": {
+      "tactic": "move=> &hr _; apply mulr_ge0; [by apply StdBigop.Bigreal.sumr_ge0=> a _ /=; smt(size_ge0) | rewrite /pr1_poly_out; smt(ge0_mu1 ge0_mu)]."
+    }
+  },
+  "ok": true,
+  "manager_note": "Committed tactic accepted; the EasyCrypt proof state changed.",
+  "manager_actions": [
+    {
+      "action": "tactic commit",
+      "outcome": "EasyCrypt accepted the committed tactic.",
+      "timing": "276 ms"
+    }
+  ],
+  "view_refreshed": true
+}

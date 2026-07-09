@@ -1,0 +1,549 @@
+{
+  "last_result": {
+    "intent": "commit_tactic",
+    "payload": {
+      "tactic": "rcondt{2} 2."
+    },
+    "manager_action": "commit_tactic",
+    "result": "EasyCrypt accepted the committed tactic.",
+    "effect": "EasyCrypt accepted a proof-state change; the refreshed view is based on the new committed state.",
+    "proof_state": "The committed EasyCrypt proof state changed.",
+    "tactic": "rcondt{2} 2."
+  },
+  "current_goal": {
+    "lines": [
+      "Current goal (remaining: 9)",
+      "",
+      "Type variables: <none>",
+      "",
+      "&m: {}",
+      "nth0: int",
+      "H: 0 <= nth0 < qdec",
+      "------------------------------------------------------------------------",
+      "forall &m0,",
+      "  hoare[ t0 <$ $dpoly_out :",
+      "          ((Mem.lc{m0} = Mem.lc /\\",
+      "            Mem.log{m0} = Mem.log /\\",
+      "            (BNR.lenc{m0}, BNR.ndec{m0}) = (BNR.lenc, BNR.ndec) /\\",
+      "            UFCMA.log{m0} = UFCMA.log /\\",
+      "            UFCMA.cbad1{m0} = UFCMA.cbad1 /\\",
+      "            UFCMA_l.lbad1{m0} = UFCMA_l.lbad1 /\\",
+      "            RO.m{m0} = RO.m /\\",
+      "            SplitC2.I2.RO.m{m0} = SplitC2.I2.RO.m /\\",
+      "            SplitD.ROF.RO.m{m0} = SplitD.ROF.RO.m) /\\",
+      "           (n{m0} = n /\\",
+      "            a{m0} = a /\\ c1{m0} = c1 /\\ p0{m0} = p0 /\\ lt{m0} = lt) /\\",
+      "           p{m0} = p /\\",
+      "           UFCMA_li.i = nth0 /\\",
+      "           UFCMA_li.cbadi = b2i (nth0 < size UFCMA_l.lbad1) /\\",
+      "           UFCMA_li.badi =",
+      "           (nth0 < size UFCMA_l.lbad1 /\\",
+      "            (nth (w1, w2) UFCMA_l.lbad1 nth0).`1 =",
+      "            (nth (w1, w2) UFCMA_l.lbad1 nth0).`2)) /\\",
+      "          UFCMA.cbad1{m0} < qenc /\\ size lt{m0} <= qdec ==>",
+      "          UFCMA.cbad1 < qenc /\\ size lt <= qdec]",
+      "[439|check]>"
+    ],
+    "text_fully_shown": true,
+    "truncated": false,
+    "goal_type": "ambient",
+    "view_focus": "ambient_logic",
+    "source": {
+      "label": "Parsed from EasyCrypt pretty goal text",
+      "ground_truth": false
+    }
+  },
+  "proof_status": {
+    "status": "open",
+    "remaining_goals": 9,
+    "remaining_goals_known": true,
+    "goal_type": "ambient",
+    "view_focus": "ambient_logic",
+    "current_layer": "ambient_logic"
+  },
+  "candidate_moves": {
+    "navigation": [
+      {
+        "id": "ambient_definition_unfold",
+        "proof_family": "ambient_logic",
+        "episode": "ambient_definition_unfold",
+        "route": "unfold_visible_definitions_then_simplify",
+        "confidence": "medium",
+        "confidence_reason": "The current pure goal exposes unfoldable local definitions, but no compact lemma pack is visible yet.",
+        "valid_for": "current_view_only",
+        "why_now": "current ambient goal is blocked on visible definitions; unfold the semantic head(s) before asking SMT or local simplification to close.",
+        "fast_track_probe": {
+          "tactic": "move=> *; rewrite /qdec /w1 /w2; auto => />.",
+          "preconditions": [
+            "Use only when these definitions are visible in the current goal.",
+            "Probe the unfold/simplify block first.",
+            "If it leaves a residual goal, inspect lemma_hints before guessing external lemmas."
+          ],
+          "expected_next_shape": "The definition-heavy ambient goal simplifies, closes, or exposes a smaller lemma/arithmetic residual."
+        },
+        "anti_routes": [
+          {
+            "route": "smt_before_unfold",
+            "reason": "SMT often cannot use opaque local definitions until they are unfolded.",
+            "scope": "avoid_until_visible_definitions_opened"
+          }
+        ],
+        "repair_if_fails": [
+          {
+            "failure": "syntax",
+            "next": "inspect tactic_forms for rewrite and simplification forms"
+          },
+          {
+            "failure": "lemma",
+            "next": "inspect lemma_hints after the unfold exposes the residual shape"
+          },
+          {
+            "failure": "route",
+            "next": "try only the rewrite prefix, then reread the refreshed view"
+          }
+        ],
+        "lemma_pack": []
+      }
+    ],
+    "moves": [
+      {
+        "title": "Read-only tactic probe",
+        "category": "probe",
+        "tactic": "rewrite /qdec.",
+        "applicability": "This tactic-shaped option should be checked with a read-only probe before committing it.",
+        "effect": "This is a read-only probe; it asks EasyCrypt what would happen without changing the committed proof state.",
+        "evidence": [
+          "`qdec` occurs in the residual goal and resolves as an unfoldable op/pred/abbrev, not as an SMT lemma hint."
+        ],
+        "source": "proof-state analysis",
+        "derivation": "read-only probe surfaced from proof-state analysis",
+        "verified": "read_only_probe_suggestion",
+        "guarantee": "read-only probe shape; proof state unchanged; probe then decide; reversible"
+      }
+    ],
+    "route_health": [
+      {
+        "signal": "local_tool_not_ready",
+        "confidence": "medium",
+        "message": "`sim` is usually useful after branch, sampling, and postcondition alignment. The current frontier still shows unmatched structure.",
+        "evidence": [
+          "recent `sim` rejection",
+          "visible branch/sampling/frontier mismatch"
+        ],
+        "recommended_next": {
+          "intent": "inspect_context",
+          "payload": {
+            "topic": "align"
+          }
+        },
+        "recovery_class": "residual_program_surgery_available",
+        "checkpoint_policy": "current_state_residual_work_visible"
+      }
+    ]
+  },
+  "program_frontier": {
+    "authority": "proof-state analysis",
+    "view_focus": "ambient_logic"
+  },
+  "call_site_surface": {},
+  "seq_cut_surface": {
+    "seq_candidate_id": "cp_16_b229067f4a3af78c",
+    "state": "inside_seq_scope",
+    "cut_position": {
+      "left_count": 11,
+      "right_count": 11,
+      "tactic": "seq 11 11 : (={Mem.lc, Mem.log, glob BNR, UFCMA.log, UFCMA.cbad1, UFCMA_l.lbad1, RO.m, SplitC2.I2.RO.m, SplitD.ROF.RO.m} /\\ ={n, a, c1, p0, lt} /\\ p{1} = p{2} /\\ UFCMA_li.i{2} = nth0 /\\ UFCMA_li.cbadi{2} = b2i (nth0 < size UFCMA_l.lbad1{2}) /\\ UFCMA_li.badi{2} = (nth0 < size UFCMA_l.lbad1{2} /\\ (nth (w1, w2) UFCMA_l.lbad1{2} nth0).`1 = (nth (w1, w2) UFCMA_l.lbad1{2} nth0).`2))."
+    },
+    "obligation_count": 9,
+    "obligation_kinds": [
+      "quantified",
+      "probability_or_loss"
+    ],
+    "branch_focus": {
+      "remaining_goals": 9,
+      "latest_event_head": "rcondt"
+    },
+    "residual_frontier": {
+      "current_layer": "ambient_logic",
+      "view_focus": "ambient_logic",
+      "live_call_site_count": 0,
+      "goal_contains_call_site": false,
+      "latest_seq_tactic_index": 16,
+      "tactics_after_latest_seq": 5
+    }
+  },
+  "pure_tail_surface": {
+    "state": "quantified_ambient_tail",
+    "obligation_families": [
+      {
+        "family": "sampling_bijection",
+        "evidence": [
+          "distribution or lossless token remains visible"
+        ],
+        "effect": "The remaining pure goal may include invertibility or lossless side conditions from an earlier sampling alignment.",
+        "limitations": "No distribution lemma is selected by this surface."
+      },
+      {
+        "family": "constructor_projection",
+        "selectors": [
+          ".`1",
+          ".`2"
+        ],
+        "tuple_equality_count": 2,
+        "effect": "The pure goal exposes tuple/record projections or constructor equalities that can connect program variables to map/list keys.",
+        "limitations": "Projection equalities are reported only when visible in the current text."
+      },
+      {
+        "family": "quantified_residual_logic",
+        "evidence": [
+          "universal quantifier visible",
+          "implication residual visible"
+        ],
+        "effect": "The current proof point is dominated by local logical obligations rather than program-frontier movement.",
+        "limitations": "Quantifier names are not normalized across EasyCrypt pretty-printer variants."
+      }
+    ],
+    "effect": "Summarizes verifier-visible pure-goal structure after program frontier actions have been discharged or hidden by local proof steps.",
+    "limitations": [
+      "This panel records syntactic and proof-state facts from the current view.",
+      "It does not choose a tactic or instantiate a lemma."
+    ]
+  },
+  "application_context": {
+    "selected_handles": [
+      {
+        "title": "Read-only tactic probe",
+        "tactic": "rewrite /qdec.",
+        "why_relevant": "`qdec` occurs in the residual goal and resolves as an unfoldable op/pred/abbrev, not as an SMT lemma hint.",
+        "derivation": "read-only probe surfaced from current-state analysis",
+        "verified": "read_only_probe_suggestion",
+        "guarantee": "read-only probe shape; proof state unchanged; probe then decide; reversible"
+      }
+    ]
+  },
+  "facts_and_diagnostics": {
+    "facts": {
+      "unfoldable_goal_heads": [
+        {
+          "name": "qdec",
+          "unqualified_name": "qdec",
+          "declaration_kind": "op",
+          "unfold_tactic": "rewrite /qdec.",
+          "smt_argument_role": "not_a_lemma_hint"
+        },
+        {
+          "name": "w1",
+          "unqualified_name": "w1",
+          "declaration_kind": "op",
+          "unfold_tactic": "rewrite /w1.",
+          "smt_argument_role": "not_a_lemma_hint"
+        },
+        {
+          "name": "w2",
+          "unqualified_name": "w2",
+          "declaration_kind": "op",
+          "unfold_tactic": "rewrite /w2.",
+          "smt_argument_role": "not_a_lemma_hint"
+        },
+        {
+          "name": "qenc",
+          "unqualified_name": "qenc",
+          "declaration_kind": "op",
+          "unfold_tactic": "rewrite /qenc.",
+          "smt_argument_role": "not_a_lemma_hint"
+        }
+      ],
+      "unfoldable_goal_head_count": 4
+    },
+    "fact_note": "Only current-frontier facts are shown here; the full proof context artifact keeps the compiler/internal details.",
+    "notes": [
+      {
+        "message": "Current residual goal mentions unfoldable definition(s): qdec, w1, w2, qenc. Use `rewrite /NAME` before SMT when those predicates block simplification; these names are not smt(...) lemma hints.",
+        "severity": "info"
+      }
+    ]
+  },
+  "recovery_diagnosis_surface": {
+    "kind": "recovery_diagnosis_surface",
+    "recovery_class": "residual_program_surgery_available",
+    "confidence": "medium",
+    "checkpoint_policy": "current_state_residual_work_visible",
+    "evidence": [
+      "recent `sim` rejection",
+      "visible branch/sampling/frontier mismatch"
+    ],
+    "available_local_work": [
+      {
+        "kind": "pure_tail_obligation_families",
+        "items": [
+          "sampling_bijection",
+          "constructor_projection",
+          "quantified_residual_logic"
+        ]
+      },
+      {
+        "kind": "residual_program_surgery",
+        "source_signal": "local_tool_not_ready",
+        "evidence": [
+          "recent `sim` rejection",
+          "visible branch/sampling/frontier mismatch"
+        ]
+      }
+    ],
+    "related_checkpoints": [
+      {
+        "checkpoint_id": "cp_21_b229067f4a3af78c",
+        "semantic_id": "before_branch_work",
+        "semantic_ids": [
+          "before_branch_work",
+          "before_call_obligation_work"
+        ],
+        "label": "Before latest call-obligation tactic #21",
+        "committed_step_index": 21,
+        "undo_scope": "call_obligation_local",
+        "restored_proof_layer": "call_obligation",
+        "restored_affordances": {
+          "call_route": "committed",
+          "call_obligation": "preserved",
+          "later_local_work": "not_committed"
+        },
+        "why_checkpoint": "call-obligation local boundary; selecting it keeps the opened call obligation and removes later local work"
+      },
+      {
+        "checkpoint_id": "cp_17_b229067f4a3af78c",
+        "semantic_id": "after_seq_opened",
+        "semantic_ids": [
+          "after_seq_opened",
+          "before_branch_work"
+        ],
+        "label": "After seq opened / before branch work #17",
+        "committed_step_index": 17,
+        "undo_scope": "branch_local",
+        "restored_proof_layer": "seq_obligations_opened",
+        "restored_affordances": {
+          "seq_cut": "committed",
+          "branch_work": "not_committed"
+        },
+        "why_checkpoint": "seq-local branch boundary; selecting it keeps the seq cut and removes branch-local work after it"
+      }
+    ],
+    "related_surfaces": [
+      "seq_cut_surface",
+      "pure_tail_surface",
+      "structural_checkpoints"
+    ],
+    "limitations": [
+      "does not prescribe a conseq, sim, wp, or skip script",
+      "reports residual program evidence before pure-tail obligations"
+    ]
+  },
+  "inspect_lookup_handles": {
+    "effect": "All handles here are read-only manager requests; the committed EasyCrypt proof state stays unchanged.",
+    "manager_note": "Some requests may ask EasyCrypt or name resolution; wait for the manager result before choosing the next proof intent.",
+    "ask_manager_for": [
+      {
+        "intent": "inspect_context",
+        "payload": {
+          "topic": "rewrite_candidates"
+        },
+        "use_when": "proof-state analysis extracted multiple EC operator tokens from the current goal; use native AST/operator search before regex search.",
+        "returns": "manager-provided read-only context for this proof route"
+      },
+      {
+        "intent": "inspect_context",
+        "payload": {
+          "topic": "goal_info"
+        },
+        "use_when": "Need parsed goal shape, resolved names, or KB pattern hints.",
+        "returns": "parsed goal structure and names"
+      },
+      {
+        "intent": "inspect_context",
+        "payload": {
+          "topic": "lemma_hints"
+        },
+        "use_when": "Need local or standard-library lemma names before rewriting a pure goal.",
+        "returns": "nearby lemma hints and qualified-name lookup guidance"
+      },
+      {
+        "intent": "inspect_context",
+        "payload": {
+          "topic": "tactic_forms",
+          "name": "rewrite"
+        },
+        "use_when": "Need the valid EasyCrypt form for rewrite, apply, conseq, while, or SMT setup.",
+        "returns": "valid tactic forms and common traps"
+      }
+    ]
+  },
+  "structural_checkpoints": {
+    "items": [
+      {
+        "checkpoint_id": "cp_21_b229067f4a3af78c",
+        "semantic_id": "before_branch_work",
+        "semantic_ids": [
+          "before_branch_work",
+          "before_call_obligation_work"
+        ],
+        "label": "Before latest call-obligation tactic #21",
+        "committed_step_index": 21,
+        "committed_tactic": "rcondt{2} 2.",
+        "restored_proof_layer": "call_obligation",
+        "restored_affordances": {
+          "call_route": "committed",
+          "call_obligation": "preserved",
+          "later_local_work": "not_committed"
+        },
+        "undo_scope": "call_obligation_local",
+        "why_checkpoint": "call-obligation local boundary; selecting it keeps the opened call obligation and removes later local work",
+        "effect_if_selected": "Undo committed tactic #21 and every committed tactic after it in this node.",
+        "submit": {
+          "intent": "undo_to_checkpoint",
+          "payload": {
+            "checkpoint_id": "cp_21_b229067f4a3af78c"
+          }
+        }
+      },
+      {
+        "checkpoint_id": "cp_17_b229067f4a3af78c",
+        "semantic_id": "after_seq_opened",
+        "semantic_ids": [
+          "after_seq_opened",
+          "before_branch_work"
+        ],
+        "label": "After seq opened / before branch work #17",
+        "committed_step_index": 17,
+        "committed_tactic": "wp; while (={p2, c2, n, a, p0, Mem.lc, Mem.log, glob BNR, UFCMA.log, UFCMA.cbad1, UFCMA_l.lbad1, RO.m, SplitC2.I2.RO.m, SplitD.ROF.RO.m} /\\ p{1} = p{2} /\\ UFCMA_li.i{2} = nth0 /\\ UFCMA_li.cbadi{2} = b2i (nth0 < size UFCMA_l.lbad1{2}) /\\ UFCMA_li.badi{2} = (nth0 < size UFCMA_l.lbad1{2} /\\ (nth (w1, w2) UFCMA_l.lbad1{2} nth0).`1 = (nth (w1, w2) UFCMA_l.lbad1{2} nth0).`2)); auto.",
+        "restored_proof_layer": "seq_obligations_opened",
+        "restored_affordances": {
+          "seq_cut": "committed",
+          "branch_work": "not_committed"
+        },
+        "undo_scope": "branch_local",
+        "why_checkpoint": "seq-local branch boundary; selecting it keeps the seq cut and removes branch-local work after it",
+        "effect_if_selected": "Undo committed tactic #17 and every committed tactic after it in this node.",
+        "submit": {
+          "intent": "undo_to_checkpoint",
+          "payload": {
+            "checkpoint_id": "cp_17_b229067f4a3af78c"
+          }
+        }
+      },
+      {
+        "checkpoint_id": "cp_10_b229067f4a3af78c",
+        "semantic_id": "after_call_opened",
+        "semantic_ids": [
+          "after_call_opened"
+        ],
+        "label": "After call opened / before obligation work #10",
+        "committed_step_index": 10,
+        "committed_tactic": "proc.",
+        "restored_proof_layer": "call_obligations_opened",
+        "restored_affordances": {
+          "call_route": "committed",
+          "call_obligation_work": "not_committed"
+        },
+        "undo_scope": "call_local",
+        "why_checkpoint": "call-local boundary; selecting it keeps the call tactic and removes work committed after the call opened",
+        "effect_if_selected": "Undo committed tactic #10 and every committed tactic after it in this node.",
+        "submit": {
+          "intent": "undo_to_checkpoint",
+          "payload": {
+            "checkpoint_id": "cp_10_b229067f4a3af78c"
+          }
+        }
+      },
+      {
+        "checkpoint_id": "cp_9_b229067f4a3af78c",
+        "semantic_id": "before_call_route",
+        "semantic_ids": [
+          "before_call_route"
+        ],
+        "label": "Before call invariant #9",
+        "committed_step_index": 9,
+        "committed_tactic": "call (_: Mem.lc{1} = Mem.lc{2} /\\ Mem.log{1} = Mem.log{2} /\\ BNR.lenc{1} = BNR.lenc{2} /\\ BNR.ndec{1} = BNR.ndec{2} /\\ UFCMA.log{1} = UFCMA.log{2} /\\ UFCMA.cbad1{1} = UFCMA.cbad1{2} /\\ UFCMA_l.lbad1{1} = UFCMA_l.lbad1{2} /\\ RO.m{1} = RO.m{2} /\\ SplitC2.I2.RO.m{1} = SplitC2.I2.RO.m{2} /\\ SplitD.ROF.RO.m{1} = SplitD.ROF.RO.m{2} /\\ UFCMA_li.i{2} = nth0 /\\ UFCMA_li.cbadi{2} = b2i (nth0 < size UFCMA_l.lbad1{2}) /\\ UFCMA_li.badi{2} = (nth0 < size UFCMA_l.lbad1{2} /\\ (nth (w1, w2) UFCMA_l.lbad1{2} nth0).`1 = (nth (w1, w2) UFCMA_l.lbad1{2} nth0).`2)).",
+        "restored_proof_layer": "pre_call_route",
+        "restored_affordances": {
+          "call_route": "not_committed",
+          "call_obligation_work": "not_committed"
+        },
+        "undo_scope": "call_local",
+        "why_checkpoint": "call invariant introduction point; later oracle/branch obligations often reveal missing preserved facts or an over-strong equality from this tactic",
+        "effect_if_selected": "Undo committed tactic #9 and every committed tactic after it in this node.",
+        "submit": {
+          "intent": "undo_to_checkpoint",
+          "payload": {
+            "checkpoint_id": "cp_9_b229067f4a3af78c"
+          }
+        }
+      },
+      {
+        "checkpoint_id": "cp_16_b229067f4a3af78c",
+        "semantic_id": "before_seq_cut",
+        "semantic_ids": [
+          "before_seq_cut"
+        ],
+        "label": "Before seq cut #16",
+        "committed_step_index": 16,
+        "committed_tactic": "seq 11 11 : (={Mem.lc, Mem.log, glob BNR, UFCMA.log, UFCMA.cbad1, UFCMA_l.lbad1, RO.m, SplitC2.I2.RO.m, SplitD.ROF.RO.m} /\\ ={n, a, c1, p0, lt} /\\ p{1} = p{2} /\\ UFCMA_li.i{2} = nth0 /\\ UFCMA_li.cbadi{2} = b2i (nth0 < size UFCMA_l.lbad1{2}) /\\ UFCMA_li.badi{2} = (nth0 < size UFCMA_l.lbad1{2} /\\ (nth (w1, w2) UFCMA_l.lbad1{2} nth0).`1 = (nth (w1, w2) UFCMA_l.lbad1{2} nth0).`2)).",
+        "restored_proof_layer": "pre_seq_cut",
+        "restored_affordances": {
+          "seq_cut": "not_committed",
+          "call_site_state": "as_before_seq_cut"
+        },
+        "undo_scope": "seq_local",
+        "why_checkpoint": "seq-cut boundary; selecting it restores the proof state before this cut was committed",
+        "effect_if_selected": "Undo committed tactic #16 and every committed tactic after it in this node.",
+        "submit": {
+          "intent": "undo_to_checkpoint",
+          "payload": {
+            "checkpoint_id": "cp_16_b229067f4a3af78c"
+          }
+        }
+      },
+      {
+        "checkpoint_id": "cp_14_b229067f4a3af78c",
+        "semantic_id": "last_call_site_boundary",
+        "semantic_ids": [
+          "last_call_site_boundary"
+        ],
+        "label": "Before inline expansion #14",
+        "committed_step_index": 14,
+        "committed_tactic": "inline*.",
+        "restored_proof_layer": "pre_inline_frontier",
+        "restored_affordances": {
+          "call_site_handles": "as_before_inline"
+        },
+        "undo_scope": "call_site_boundary",
+        "why_checkpoint": "inline boundary; selecting it restores the proof state before this expansion",
+        "effect_if_selected": "Undo committed tactic #14 and every committed tactic after it in this node.",
+        "submit": {
+          "intent": "undo_to_checkpoint",
+          "payload": {
+            "checkpoint_id": "cp_14_b229067f4a3af78c"
+          }
+        }
+      },
+      {
+        "checkpoint_id": "cp_15_b229067f4a3af78c",
+        "semantic_id": "resume_start",
+        "semantic_ids": [
+          "resume_start"
+        ],
+        "label": "Return to resume start",
+        "committed_step_index": 15,
+        "committed_tactic": "seq 13 13 : (={Mem.lc, Mem.log, glob BNR, UFCMA.log, UFCMA.cbad1, UFCMA_l.lbad1, RO.m, SplitC2.I2.RO.m, SplitD.ROF.RO.m} /\\ ={n, a, c1, p0, t0} /\\ p{1} = p{2} /\\ UFCMA_li.i{2} = nth0 /\\ UFCMA_li.cbadi{2} = b2i (nth0 < size UFCMA_l.lbad1{2}) /\\ UFCMA_li.badi{2} = (nth0 < size UFCMA_l.lbad1{2} /\\ (nth (w1, w2) UFCMA_l.lbad1{2} nth0).`1 = (nth (w1, w2) UFCMA_l.lbad1{2} nth0).`2)).",
+        "restored_proof_layer": "resume_handoff",
+        "undo_scope": "resume_local",
+        "why_checkpoint": "resume boundary; selecting it preserves the verified replay prefix and removes tactics committed after resume",
+        "effect_if_selected": "Undo committed tactic #15 and every committed tactic after it in this node.",
+        "submit": {
+          "intent": "undo_to_checkpoint",
+          "payload": {
+            "checkpoint_id": "cp_15_b229067f4a3af78c"
+          }
+        }
+      }
+    ]
+  }
+}

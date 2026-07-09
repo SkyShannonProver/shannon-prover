@@ -1,0 +1,53 @@
+{
+  "kind": "agent_view_run_report",
+  "timestamp": "2026-06-10_1517_step2_3",
+  "lemma": "step2_3",
+  "source_file": "eval/examples/ChaChaPoly/chacha_poly.ec",
+  "model": "claude-opus-4-8",
+  "surface_profile": "l1_goal_projection",
+  "trees": 1,
+  "eval_mode": true,
+  "outcome": "proved",
+  "committed_proofs": [
+    {
+      "tree": "Tree_0_0",
+      "tactics": [
+        "congr.",
+        "rewrite -(SplitC2.pr_RO_split (G8(A)) (fun _ (r:bool) => r) &m ()).",
+        "simplify.",
+        "have ->: Pr[CCA_game(CCA_CPA_Adv(A), RealOrcls(GenChaChaPoly(CCRO(FinRO)))).main() @ &m : res] = Pr[MainD(G4(A), FinRO).distinguish() @ &m : res].",
+        "byequiv => //; proc; inline *; sim.",
+        "have h_dout : forall (_ : nonce * C.counter), is_lossless dblock by move=> _; apply dblock_ll.",
+        "have h2 := pr_RO_FinRO_D h_dout (G4(A)) &m () (fun (r:bool) => r); rewrite /= in h2; rewrite -h2.",
+        "have ->: Pr[MainD(G4(A), RO).distinguish() @ &m : res] = Pr[Split0.IdealAll.MainD(G4(A), Split0.IdealAll.RO).distinguish() @ &m : res] by byequiv => //; proc; inline *; sim.",
+        "have hA := SplitD.pr_RO_split (G4(A)) (fun _ (r:bool) => r) &m (); rewrite /= in hA; rewrite hA.",
+        "have ->: Pr[Split0.IdealAll.MainD(G4(A), RO_DOM(ROT.RO, ROF.RO)).distinguish() @ &m : res] = Pr[Split0.IdealAll.MainD(G6(A), ROT.RO).distinguish() @ &m : res] by byequiv => //; proc; inline *; sim.",
+        "have ->: Pr[Split0.IdealAll.MainD(G6(A), ROT.RO).distinguish() @ &m : res] = Pr[Split0.IdealAll.MainD(G6(A), Split0.IdealAll.RO).distinguish() @ &m : res] by byequiv => //; proc; inline *; sim.",
+        "have hB := SplitC1.pr_RO_split (G6(A)) (fun _ (r:bool) => r) &m (); rewrite /= in hB; rewrite hB.",
+        "have ->: Pr[Split0.IdealAll.MainD(G6(A), SplitC1.RO_Pair(SplitC1.I1.RO, SplitC1.I2.RO)).distinguish() @ &m : res] = Pr[Split1.IdealAll.MainD(G8(A), Split1.IdealAll.RO).distinguish() @ &m : res] by byequiv => //; proc; inline *; sim.",
+        "done.",
+        "rewrite -(SplitC2.pr_RO_split (G9(A)) (fun _ (r:bool) => r) &m ()).",
+        "simplify.",
+        "have ->: Pr[UFCMA_poly(A, FinRO).main() @ &m : res] = Pr[MainD(G5(A), FinRO).distinguish() @ &m : res] by byequiv => //; proc; inline *; sim.",
+        "have h_dout : forall (_ : nonce * C.counter), is_lossless dblock by move=> _; apply dblock_ll. have hC := pr_RO_FinRO_D h_dout (G5(A)) &m () (fun (r:bool) => r); rewrite /= in hC; rewrite -hC.",
+        "have ->: Pr[MainD(G5(A), RO).distinguish() @ &m : res] = Pr[Split0.IdealAll.MainD(G5(A), Split0.IdealAll.RO).distinguish() @ &m : res] by byequiv => //; proc; inline *; sim.",
+        "have hA := SplitD.pr_RO_split (G5(A)) (fun _ (r:bool) => r) &m (); rewrite /= in hA; rewrite hA.",
+        "have ->: Pr[Split0.IdealAll.MainD(G5(A), RO_DOM(ROT.RO, ROF.RO)).distinguish() @ &m : res] = Pr[Split0.IdealAll.MainD(G7(A), ROT.RO).distinguish() @ &m : res] by byequiv => //; proc; inline *; sim.",
+        "have ->: Pr[Split0.IdealAll.MainD(G7(A), ROT.RO).distinguish() @ &m : res] = Pr[Split0.IdealAll.MainD(G7(A), Split0.IdealAll.RO).distinguish() @ &m : res] by byequiv => //; proc; inline *; sim.",
+        "have hB := SplitC1.pr_RO_split (G7(A)) (fun _ (r:bool) => r) &m (); rewrite /= in hB; rewrite hB.",
+        "have ->: Pr[Split0.IdealAll.MainD(G7(A), SplitC1.RO_Pair(SplitC1.I1.RO, SplitC1.I2.RO)).distinguish() @ &m : res] = Pr[Split1.IdealAll.MainD(G9(A), Split1.IdealAll.RO).distinguish() @ &m : res] by byequiv => //; proc; inline *; sim.",
+        "done.",
+        "qed."
+      ],
+      "source": "session",
+      "proved": true
+    }
+  ],
+  "turn_count": 33,
+  "views_copied": 34,
+  "run_iteration_dir": "artifacts/eval_suite/rerun_struct_core/l1_goal_projection/step2_3/r01/2026-06-10_1517_step2_3/iteration_1",
+  "commit": "b9952510",
+  "commit_full": "b99525104f61f6420c44f6b6e697772041399243",
+  "branch": "mcp-v0",
+  "dirty": true
+}

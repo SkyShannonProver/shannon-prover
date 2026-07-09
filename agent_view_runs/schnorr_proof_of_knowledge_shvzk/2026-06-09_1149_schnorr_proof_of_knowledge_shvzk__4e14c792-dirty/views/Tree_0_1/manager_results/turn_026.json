@@ -1,0 +1,15 @@
+{
+  "turn": 26,
+  "handled_intent": {
+    "intent": "undo_last_step"
+  },
+  "ok": true,
+  "manager_note": "Undo request was handled by the manager; the latest view is authoritative.",
+  "manager_actions": [
+    {
+      "action": "probe undo boundary",
+      "outcome": "The previous action was a read-only probe, so there is no probe step to undo. `undo_last_step` would undo the most recent committed tactic, not that probe."
+    }
+  ],
+  "view_refreshed": true
+}

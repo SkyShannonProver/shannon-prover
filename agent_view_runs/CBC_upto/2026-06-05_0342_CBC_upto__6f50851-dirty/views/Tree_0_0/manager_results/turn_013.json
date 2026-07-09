@@ -1,0 +1,22 @@
+{
+  "turn": 13,
+  "handled_intent": {
+    "intent": "inspect_context",
+    "payload": {
+      "topic": "diagnose"
+    }
+  },
+  "ok": true,
+  "manager_note": "Read-only context. Accepted/rejected tactic or call text inside a preview is route-selection information, not the current proof-state error.",
+  "manager_actions": [
+    {
+      "action": "inspect diagnose",
+      "outcome": "The manager returned read-only context for the current goal.",
+      "timing": "385 ms",
+      "content": {
+        "preview": "No known diagnosis for this error. Error: [error] invalid goal shape Tactic: byequiv (_: ={glob A} ==> ={DoubleQuery.bad} /\\ (!DoubleQuery.bad{2} => ={res})) => //. === ProofIR Diagnostic === byequiv failed while Pr-route context is still visible TACTIC REJECTED: `byequiv (_: ={glob A} ==> ={DoubleQuery.bad} /\\ (!DoubleQuery.bad{2} => ={res})) => //.`. Reason: ProofIR sees Pr normalization, rewrite, or path options as route context, not mandatory prerequisites. Cause: `byequiv` opens pRHL. On some goals this is intended; on others a matching Pr handle gives a smaller proof. Repair: 1. If pursuing a Pr rewrite/path route, relevant handle(s) include: DQ_Sample_Compute_pr, doublequery_eq, success_eq_random, CPA_direct_eq. 2. If direct program equivalence remains cleaner, refine the byequiv pre/post or inspect the pRHL goal instead of exhausting every Pr handle. General suggestions: - Read the goal state carefully - Try a simpler version of the tactic - Use -search to verify lemma names - Step back: if stuck >5 min, reconsider the approach (Pitfall P4)"
+      }
+    }
+  ],
+  "view_refreshed": true
+}

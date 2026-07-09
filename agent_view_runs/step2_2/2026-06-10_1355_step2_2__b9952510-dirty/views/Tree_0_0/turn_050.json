@@ -1,0 +1,942 @@
+{
+  "last_result": {
+    "intent": "commit_tactic",
+    "payload": {
+      "tactic": "smt(Hcrux hge0i hlei hi hz hns hlc hro hk)."
+    },
+    "manager_action": "commit_tactic",
+    "result": "EasyCrypt rejected the committed tactic. Use the error summary and current goal to revise the proof step.",
+    "effect": "The manager attempted to commit a tactic; use the result and latest goal to decide what changed.",
+    "proof_state": "The committed EasyCrypt proof state was not changed.",
+    "tactic": "smt(Hcrux hge0i hlei hi hz hns hlc hro hk).",
+    "error_summary": "[error] cannot find lemma `Hcrux'"
+  },
+  "current_goal": {
+    "lines": [
+      "Current goal (remaining: 3)",
+      "",
+      "Type variables: <none>",
+      "",
+      "&m: {}",
+      "h1: Pr[CPA_game(CCA_CPA_Adv(A), RealOrcls(StLSke(St))).main() @ &m : res] =",
+      "    Pr[CPA_game(CCA_CPA_Adv(A), RealOrcls(GenChaChaPoly(CCRO(FinRO)))).main",
+      "       () @ &m : res]",
+      "ha: Pr[UFCMA(A, St).main() @ &m :",
+      "       exists (c : ciphertext),",
+      "         (c \\in Mem.lc) /\\",
+      "         dec StLSke.gs Mem.k c <> None<:nonce * associated_data * bytes>] =",
+      "    Pr[CPA_game(CCA_CPA_Adv(A), RealOrcls(GenChaChaPoly(CCRO(FinRO)))).main",
+      "       () @ &m :",
+      "       exists (c : ciphertext),",
+      "         (c \\in Mem.lc) /\\",
+      "         dec RO.m Mem.k c <> None<:nonce * associated_data * bytes>]",
+      "&m0: {b : bool}",
+      "z: int",
+      "&hr: {forged, b : bool, i : int, n : nonce, ns : nonce list,",
+      "     x : nonce * C.counter, r : poly_in, s : poly_out, bl : block}",
+      "hge0i: 0 <= i{hr}",
+      "hlei: i{hr} <= size ns{hr}",
+      "hns: ns{hr} = undup (map (fun (p : ciphertext) => p.`1) Mem.lc{hr})",
+      "hlc: Mem.lc{m0} = Mem.lc{hr}",
+      "hro: RO.m{m0} = RO.m{hr}",
+      "hk: Mem.k{m0} = Mem.k{hr}",
+      "IH: forall (c : ciphertext),",
+      "      c \\in Mem.lc{hr} =>",
+      "      dec RO.m{hr} Mem.k{hr} c <> None<:nonce * associated_data * bytes> =>",
+      "      c.`1 \\in take i{hr} ns{hr} => forged{hr}",
+      "hi: i{hr} < size ns{hr}",
+      "hz: size ns{hr} - i{hr} = z",
+      "Hcrux: forall (c : ciphertext),",
+      "         c \\in Mem.lc{hr} =>",
+      "         dec RO.m{hr} Mem.k{hr} c <> None<:nonce * associated_data * bytes> =>",
+      "         c.`1 \\in take (i{hr} + 1) ns{hr} =>",
+      "         forged{hr} ||",
+      "         test_poly (nth witness<:nonce> ns{hr} i{hr}) Mem.lc{hr}",
+      "           (mk_rs",
+      "              (oget RO.m{hr}.[nth witness<:nonce> ns{hr} i{hr}, C.ofintd 0])).`1",
+      "           (mk_rs",
+      "              (oget RO.m{hr}.[nth witness<:nonce> ns{hr} i{hr}, C.ofintd 0])).`2",
+      "------------------------------------------------------------------------",
+      "(0 <= i{hr} + 1 <= size ns{hr} /\\",
+      " ns{hr} = undup (map (fun (p : ciphertext) => p.`1) Mem.lc{hr}) /\\",
+      " Mem.lc{m0} = Mem.lc{hr} /\\",
+      " RO.m{m0} = RO.m{hr} /\\",
+      " Mem.k{m0} = Mem.k{hr} /\\",
+      " forall (c : ciphertext),",
+      "   c \\in Mem.lc{hr} =>",
+      "   dec RO.m{hr} Mem.k{hr} c <> None<:nonce * associated_data * bytes> =>",
+      "   c.`1 \\in take (i{hr} + 1) ns{hr} =>",
+      "   forged{hr} ||",
+      "   test_poly (nth witness<:nonce> ns{hr} i{hr}) Mem.lc{hr}",
+      "     (mk_rs (oget RO.m{hr}.[nth witness<:nonce> ns{hr} i{hr}, C.ofintd 0])).`1",
+      "     (mk_rs (oget RO.m{hr}.[nth witness<:nonce> ns{hr} i{hr}, C.ofintd 0])).`2) /\\",
+      "size ns{hr} - (i{hr} + 1) < z",
+      "[337|check]>"
+    ],
+    "text_fully_shown": true,
+    "truncated": false,
+    "goal_type": "ambient",
+    "view_focus": "ambient_logic",
+    "source": {
+      "label": "Parsed from EasyCrypt pretty goal text",
+      "ground_truth": false
+    }
+  },
+  "proof_status": {
+    "status": "open",
+    "remaining_goals": 3,
+    "remaining_goals_known": true,
+    "goal_type": "ambient",
+    "view_focus": "ambient_logic",
+    "current_layer": "ambient_logic"
+  },
+  "candidate_moves": {
+    "moves": [
+      {
+        "category": "strategy",
+        "tactic_shape": "split.",
+        "applicability": "Use this as route-selection context; it is not a tactic to run as-is.",
+        "source": "proof-state analysis"
+      },
+      {
+        "title": "Read-only tactic probe",
+        "category": "probe",
+        "tactic": "rewrite /dec.",
+        "applicability": "This tactic-shaped option should be checked with a read-only probe before committing it.",
+        "effect": "This is a read-only probe; it asks EasyCrypt what would happen without changing the committed proof state.",
+        "source": "proof-state analysis",
+        "derivation": "read-only probe surfaced from proof-state analysis",
+        "verified": "read_only_probe_suggestion",
+        "guarantee": "read-only probe shape; proof state unchanged; probe then decide; reversible"
+      },
+      {
+        "title": "Residual closing tactic",
+        "category": "probe",
+        "tactic": "auto => />.",
+        "applicability": "This tactic-shaped option should be checked with a read-only probe before committing it.",
+        "effect": "This is a read-only probe; it asks EasyCrypt what would happen without changing the committed proof state.",
+        "source": "proof-state analysis",
+        "derivation": "read-only probe surfaced from proof-state analysis",
+        "verified": "read_only_probe_suggestion",
+        "guarantee": "read-only probe shape; proof state unchanged; probe then decide; reversible"
+      },
+      {
+        "title": "Read-only tactic probe",
+        "category": "probe",
+        "tactic": "smt().",
+        "applicability": "This tactic-shaped option should be checked with a read-only probe before committing it.",
+        "effect": "This is a read-only probe; it asks EasyCrypt what would happen without changing the committed proof state.",
+        "source": "proof-state analysis",
+        "derivation": "read-only probe surfaced from proof-state analysis",
+        "verified": "read_only_probe_suggestion",
+        "guarantee": "read-only probe shape; proof state unchanged; probe then decide; reversible"
+      }
+    ],
+    "route_health": [
+      {
+        "signal": "possible_boundary_gap",
+        "confidence": "high",
+        "message": "Recent residual goals and local repair failures suggest a previous while invariant boundary may need to be revisited.",
+        "evidence": [
+          "residual concept cluster: list/index arithmetic structure",
+          "recent local repair failures: 2",
+          "likely place to re-check: before committed tactic #17",
+          "residual terms not obvious in boundary: nth"
+        ],
+        "concept_diff": {
+          "residual_cluster": "list/index arithmetic structure",
+          "residual_mentions": [
+            "map",
+            "nth",
+            "size",
+            "take"
+          ],
+          "boundary_mentions": [
+            "map",
+            "size",
+            "take"
+          ],
+          "shared_mentions": [
+            "map",
+            "size",
+            "take"
+          ],
+          "residual_terms_not_obvious_in_boundary": [
+            "nth"
+          ],
+          "how_to_read": "Heuristic boundary-vs-residual concept comparison. Use it to decide whether to revisit the boundary; it is not an invariant recipe."
+        },
+        "useful_inspections": [
+          {
+            "intent": "inspect_context",
+            "payload": {
+              "topic": "lemma_hints"
+            },
+            "why": "Use this as context before deciding whether the earlier boundary should be strengthened."
+          },
+          {
+            "intent": "lookup_symbol",
+            "payload": {
+              "symbol": "sampleto2"
+            },
+            "why": "Read the declaration as context only; the manager is not suggesting this as the invariant."
+          },
+          {
+            "intent": "lookup_symbol",
+            "payload": {
+              "symbol": "valid_key"
+            },
+            "why": "Read the declaration as context only; the manager is not suggesting this as the invariant."
+          }
+        ],
+        "recovery_class": "boundary_repair_evidence",
+        "checkpoint_policy": "boundary_checkpoint_visible",
+        "related_checkpoints": [
+          {
+            "label": "Before while invariant #17",
+            "tactic_index": 17,
+            "committed_step_index": 17,
+            "why_checkpoint": "Revisit this while invariant boundary; residual goals now repeatedly mention list/index arithmetic structure, including terms not obvious in the boundary formula."
+          }
+        ]
+      },
+      {
+        "signal": "seq_cut_mismatch",
+        "confidence": "medium",
+        "message": "Recent rejected work is inside the current seq-cut scope.",
+        "evidence": [
+          "latest seq cut tactic #14: seq 2 2 : (={glob A, Mem.lc, Mem.k, RO.m}).",
+          "recent rejected tactic head: smt",
+          "mismatch kind: branch_obligation"
+        ],
+        "related_checkpoints": [
+          {
+            "semantic_id": "after_seq_opened",
+            "label": "Before committed tactic #15",
+            "tactic_index": 15,
+            "committed_step_index": 15,
+            "undo_scope": "branch_local",
+            "why_checkpoint": "seq-local boundary associated with recent rejected work inside the current seq scope"
+          },
+          {
+            "checkpoint_id": "cp_14_244fe5d4bf6b51a2",
+            "semantic_id": "before_seq_cut",
+            "semantic_ids": [
+              "before_seq_cut"
+            ],
+            "label": "Before seq cut #14",
+            "committed_step_index": 14,
+            "committed_tactic": "seq 2 2 : (={glob A, Mem.lc, Mem.k, RO.m}).",
+            "restored_proof_layer": "pre_seq_cut",
+            "restored_affordances": {
+              "seq_cut": "not_committed",
+              "call_site_state": "as_before_seq_cut"
+            },
+            "undo_scope": "seq_local",
+            "why_checkpoint": "seq-cut boundary; selecting it restores the proof state before this cut was committed",
+            "effect_if_selected": "Undo committed tactic #14 and every committed tactic after it in this node.",
+            "submit": {
+              "intent": "undo_to_checkpoint",
+              "payload": {
+                "checkpoint_id": "cp_14_244fe5d4bf6b51a2"
+              }
+            }
+          },
+          {
+            "checkpoint_id": "cp_15_244fe5d4bf6b51a2",
+            "semantic_id": "after_seq_opened",
+            "semantic_ids": [
+              "after_seq_opened",
+              "before_branch_work"
+            ],
+            "label": "After seq opened / before branch work #15",
+            "committed_step_index": 15,
+            "committed_tactic": "sim.",
+            "restored_proof_layer": "seq_obligations_opened",
+            "restored_affordances": {
+              "seq_cut": "committed",
+              "branch_work": "not_committed"
+            },
+            "undo_scope": "branch_local",
+            "why_checkpoint": "seq-local branch boundary; selecting it keeps the seq cut and removes branch-local work after it",
+            "effect_if_selected": "Undo committed tactic #15 and every committed tactic after it in this node.",
+            "submit": {
+              "intent": "undo_to_checkpoint",
+              "payload": {
+                "checkpoint_id": "cp_15_244fe5d4bf6b51a2"
+              }
+            }
+          },
+          {
+            "checkpoint_id": "cp_36_244fe5d4bf6b51a2",
+            "semantic_id": "before_branch_work",
+            "semantic_ids": [
+              "before_branch_work"
+            ],
+            "label": "Before latest branch-local tactic #36",
+            "committed_step_index": 36,
+            "committed_tactic": "have hf := IH c hcmem hdec hc1; smt().",
+            "restored_proof_layer": "seq_branch",
+            "restored_affordances": {
+              "seq_cut": "committed",
+              "earlier_branch_work": "preserved"
+            },
+            "undo_scope": "branch_local",
+            "why_checkpoint": "latest branch-local step inside the current seq scope",
+            "effect_if_selected": "Undo committed tactic #36 and every committed tactic after it in this node.",
+            "submit": {
+              "intent": "undo_to_checkpoint",
+              "payload": {
+                "checkpoint_id": "cp_36_244fe5d4bf6b51a2"
+              }
+            }
+          }
+        ],
+        "recovery_class": "seq_midpoint_repair_evidence",
+        "checkpoint_policy": "seq_local_checkpoint_visible"
+      }
+    ]
+  },
+  "program_frontier": {
+    "authority": "proof-state analysis",
+    "view_focus": "ambient_logic"
+  },
+  "call_site_surface": {},
+  "seq_cut_surface": {
+    "seq_candidate_id": "cp_14_244fe5d4bf6b51a2",
+    "state": "inside_seq_scope",
+    "cut_position": {
+      "left_count": 2,
+      "right_count": 2,
+      "tactic": "seq 2 2 : (={glob A, Mem.lc, Mem.k, RO.m})."
+    },
+    "obligation_count": 3,
+    "obligation_kinds": [
+      "quantified",
+      "probability_or_loss"
+    ],
+    "branch_focus": {
+      "remaining_goals": 3,
+      "latest_event_head": "smt"
+    },
+    "residual_frontier": {
+      "current_layer": "ambient_logic",
+      "view_focus": "ambient_logic",
+      "live_call_site_count": 0,
+      "goal_contains_call_site": false,
+      "latest_seq_tactic_index": 14,
+      "tactics_after_latest_seq": 22
+    }
+  },
+  "pure_tail_surface": {
+    "state": "map_membership_tail",
+    "goal_operators": [
+      "hr",
+      "size",
+      "ns",
+      "undup",
+      "map",
+      "ciphertext",
+      "Mem.lc",
+      "m0"
+    ],
+    "visible_hypotheses": [
+      "h1: Pr[CPA_game(CCA_CPA_Adv(A), RealOrcls(StLSke(St))).main() @ &m : res] =",
+      "hge0i: 0 <= i{hr}",
+      "hlei: i{hr} <= size ns{hr}",
+      "hns: ns{hr} = undup (map (fun (p : ciphertext) => p.`1) Mem.lc{hr})",
+      "hlc: Mem.lc{m0} = Mem.lc{hr}",
+      "hro: RO.m{m0} = RO.m{hr}"
+    ],
+    "obligation_families": [
+      {
+        "family": "sampling_bijection",
+        "evidence": [
+          "add/sub expression remains visible"
+        ],
+        "effect": "The remaining pure goal may include invertibility or lossless side conditions from an earlier sampling alignment.",
+        "limitations": "No distribution lemma is selected by this surface."
+      },
+      {
+        "family": "map_update_projection",
+        "update_count": 0,
+        "lookup_count": 1,
+        "sample_lookup_terms": [
+          "nth witness<:nonce> ns{hr} i{hr}, C.ofintd 0"
+        ],
+        "visible_key_cases": [
+          {
+            "lookup_term": "nth witness<:nonce> ns{hr} i{hr}, C.ofintd 0",
+            "case": "key_case_unresolved",
+            "evidence": "No equality/projection path to an update key is visible in this goal text."
+          }
+        ],
+        "effect": "The pure goal contains finite-map update or lookup structure whose key/projection equalities are verifier-visible facts.",
+        "limitations": "The surface does not rewrite any map expression."
+      },
+      {
+        "family": "constructor_projection",
+        "selectors": [
+          ".`1",
+          ".`2"
+        ],
+        "constructors": [
+          "mk_rs"
+        ],
+        "tuple_equality_count": 0,
+        "effect": "The pure goal exposes tuple/record projections or constructor equalities that can connect program variables to map/list keys.",
+        "limitations": "Projection equalities are reported only when visible in the current text."
+      },
+      {
+        "family": "quantified_residual_logic",
+        "evidence": [
+          "universal quantifier visible",
+          "implication residual visible"
+        ],
+        "effect": "The current proof point is dominated by local logical obligations rather than program-frontier movement.",
+        "limitations": "Quantifier names are not normalized across EasyCrypt pretty-printer variants."
+      }
+    ],
+    "membership_decomposition_surface": {
+      "source_shapes": [
+        "map_membership"
+      ],
+      "membership_hypotheses": [
+        "(c \\in Mem.lc) /\\ dec StLSke.gs Mem.k c <> None<:nonce * associated_data * bytes>] = Pr[CPA_game(CCA_CPA_Adv(A), RealOrcls(GenChaChaPoly(CCRO(FinRO)))).main",
+        "(c \\in Mem.lc) /\\ dec RO.m Mem.k c <> None<:nonce * associated_data * bytes>] &m0: {b : bool}",
+        "c \\in Mem.lc{hr} => dec RO.m{hr} Mem.k{hr} c <> None<:nonce * associated_data * bytes> =>",
+        "c.`1 \\in take i{hr} ns{hr} => forged{hr}",
+        "c.`1 \\in take (i{hr} + 1) ns{hr} => forged{hr} || test_poly (nth witness<:nonce> ns{hr} i{hr}) Mem.lc{hr}"
+      ],
+      "visible_destructors": [
+        {
+          "source_shape": "map_membership",
+          "source_count": 2,
+          "effect": "Exposes a preimage term for a mapped membership source.",
+          "limitations": "The concrete preimage name depends on the local proof context."
+        }
+      ],
+      "effect": "Summarizes list/map/filter membership sources whose local case facts are visible in the current pure tail.",
+      "limitations": [
+        "No destructor tactic is chosen by this surface.",
+        "The panel does not assume which membership branch is true."
+      ]
+    },
+    "existential_witness_surface": {
+      "binders": [
+        {
+          "name": "c",
+          "type": "ciphertext"
+        },
+        {
+          "name": "c",
+          "type": "ciphertext"
+        }
+      ],
+      "candidate_sources": [
+        {
+          "source": "membership_member",
+          "term": "c",
+          "why_visible": "A visible membership fact binds this member term."
+        },
+        {
+          "source": "membership_member",
+          "term": "c.`1",
+          "why_visible": "A visible membership fact binds this member term."
+        }
+      ],
+      "effect": "Lists verifier-visible term sources that can instantiate local existentials in the pure tail.",
+      "limitations": [
+        "No witness is selected by this surface.",
+        "Candidate terms may still require local equality or membership facts."
+      ]
+    },
+    "map_update_lookup_surface": {
+      "lookup_terms": [
+        "nth witness<:nonce> ns{hr} i{hr}, C.ofintd 0"
+      ],
+      "key_cases": [
+        {
+          "lookup_term": "nth witness<:nonce> ns{hr} i{hr}, C.ofintd 0",
+          "case": "key_case_unresolved",
+          "evidence": "No equality/projection path to an update key is visible in this goal text."
+        }
+      ],
+      "effect": "Summarizes finite-map update and lookup keys that determine same-key versus different-key local obligations.",
+      "limitations": [
+        "This surface does not perform a rewrite or case split.",
+        "A key case marked unresolved only means no equality path is visible in this goal text."
+      ]
+    },
+    "gap_analysis": [
+      {
+        "signal": "local_membership_decomposition_available",
+        "confidence": "medium",
+        "gap": "Visible membership sources carry local case facts that can expose the key, projection, or witness relation, but those source facts are not separated in the current context.",
+        "evidence": [
+          "membership source shapes: map_membership",
+          "existential binders: c, c",
+          "membership fact: (c \\in Mem.lc) /\\ dec StLSke.gs Mem.k c <> None<:nonce * associated_data * bytes>] = Pr[CPA_game(CCA_CPA_Adv(A), Real..."
+        ],
+        "observed_risk": "local_membership_source_not_exposed",
+        "reversible_to": [
+          {
+            "checkpoint_id": "cp_15_244fe5d4bf6b51a2",
+            "semantic_id": "seq_cut_mismatch",
+            "semantic_ids": [
+              "seq_cut_mismatch",
+              "after_seq_opened",
+              "before_branch_work"
+            ],
+            "label": "After seq opened / before branch work #15",
+            "undo_scope": "branch_local",
+            "restored_affordances": {
+              "seq_cut": "committed",
+              "branch_work": "not_committed"
+            },
+            "submit": {
+              "intent": "undo_to_checkpoint",
+              "payload": {
+                "checkpoint_id": "cp_15_244fe5d4bf6b51a2"
+              }
+            }
+          },
+          {
+            "checkpoint_id": "cp_36_244fe5d4bf6b51a2",
+            "semantic_id": "before_branch_work",
+            "semantic_ids": [
+              "before_branch_work"
+            ],
+            "label": "Before latest branch-local tactic #36",
+            "undo_scope": "branch_local",
+            "restored_affordances": {
+              "seq_cut": "committed",
+              "earlier_branch_work": "preserved"
+            },
+            "submit": {
+              "intent": "undo_to_checkpoint",
+              "payload": {
+                "checkpoint_id": "cp_36_244fe5d4bf6b51a2"
+              }
+            }
+          }
+        ]
+      }
+    ],
+    "related_checkpoints": [
+      {
+        "checkpoint_id": "cp_15_244fe5d4bf6b51a2",
+        "semantic_id": "seq_cut_mismatch",
+        "semantic_ids": [
+          "seq_cut_mismatch",
+          "after_seq_opened",
+          "before_branch_work"
+        ],
+        "label": "After seq opened / before branch work #15",
+        "undo_scope": "branch_local",
+        "restored_affordances": {
+          "seq_cut": "committed",
+          "branch_work": "not_committed"
+        },
+        "submit": {
+          "intent": "undo_to_checkpoint",
+          "payload": {
+            "checkpoint_id": "cp_15_244fe5d4bf6b51a2"
+          }
+        }
+      },
+      {
+        "checkpoint_id": "cp_36_244fe5d4bf6b51a2",
+        "semantic_id": "before_branch_work",
+        "semantic_ids": [
+          "before_branch_work"
+        ],
+        "label": "Before latest branch-local tactic #36",
+        "undo_scope": "branch_local",
+        "restored_affordances": {
+          "seq_cut": "committed",
+          "earlier_branch_work": "preserved"
+        },
+        "submit": {
+          "intent": "undo_to_checkpoint",
+          "payload": {
+            "checkpoint_id": "cp_36_244fe5d4bf6b51a2"
+          }
+        }
+      },
+      {
+        "checkpoint_id": "cp_14_244fe5d4bf6b51a2",
+        "semantic_id": "before_seq_cut",
+        "semantic_ids": [
+          "before_seq_cut"
+        ],
+        "label": "Before seq cut #14",
+        "undo_scope": "seq_local",
+        "restored_affordances": {
+          "seq_cut": "not_committed",
+          "call_site_state": "as_before_seq_cut"
+        },
+        "submit": {
+          "intent": "undo_to_checkpoint",
+          "payload": {
+            "checkpoint_id": "cp_14_244fe5d4bf6b51a2"
+          }
+        }
+      },
+      {
+        "checkpoint_id": "cp_17_244fe5d4bf6b51a2",
+        "semantic_id": "possible_boundary_gap",
+        "semantic_ids": [
+          "possible_boundary_gap"
+        ],
+        "label": "Before while invariant #17",
+        "undo_scope": "structural_boundary",
+        "submit": {
+          "intent": "undo_to_checkpoint",
+          "payload": {
+            "checkpoint_id": "cp_17_244fe5d4bf6b51a2"
+          }
+        }
+      }
+    ],
+    "effect": "Summarizes verifier-visible pure-goal structure after program frontier actions have been discharged or hidden by local proof steps.",
+    "limitations": [
+      "This panel records syntactic and proof-state facts from the current view.",
+      "It does not choose a tactic or instantiate a lemma."
+    ]
+  },
+  "application_context": {},
+  "facts_and_diagnostics": {
+    "facts": {
+      "unfoldable_goal_heads": [
+        {
+          "name": "dec",
+          "unqualified_name": "dec",
+          "declaration_kind": "op",
+          "unfold_tactic": "rewrite /dec.",
+          "smt_argument_role": "not_a_lemma_hint"
+        },
+        {
+          "name": "test_poly",
+          "unqualified_name": "test_poly",
+          "declaration_kind": "op",
+          "unfold_tactic": "rewrite /test_poly.",
+          "smt_argument_role": "not_a_lemma_hint"
+        },
+        {
+          "name": "mk_rs",
+          "unqualified_name": "mk_rs",
+          "declaration_kind": "op",
+          "unfold_tactic": "rewrite /mk_rs.",
+          "smt_argument_role": "not_a_lemma_hint"
+        }
+      ],
+      "unfoldable_goal_head_count": 3
+    },
+    "fact_note": "Only current-frontier facts are shown here; the full proof context artifact keeps the compiler/internal details.",
+    "notes": [
+      {
+        "message": "Current residual goal mentions unfoldable definition(s): dec, test_poly, mk_rs. Use `rewrite /NAME` before SMT when those predicates block simplification; these names are not smt(...) lemma hints.",
+        "severity": "info"
+      }
+    ]
+  },
+  "recovery_diagnosis_surface": {
+    "kind": "recovery_diagnosis_surface",
+    "recovery_class": "local_pure_surgery_available",
+    "confidence": "medium",
+    "checkpoint_policy": "current_state_local_work_visible",
+    "evidence": [
+      "pure_tail_surface exposes current-state local proof work",
+      "structural route-health signal remains available as evidence: seq_cut_mismatch",
+      "no frame_obligation_ledger boundary drop is visible in this view"
+    ],
+    "available_local_work": [
+      {
+        "kind": "pure_tail_obligation_families",
+        "items": [
+          "sampling_bijection",
+          "map_update_projection",
+          "constructor_projection",
+          "quantified_residual_logic"
+        ]
+      },
+      {
+        "kind": "membership_decomposition_sources",
+        "items": [
+          "map_membership"
+        ]
+      },
+      {
+        "kind": "existential_witness_sources",
+        "items": [
+          "membership_member",
+          "membership_member"
+        ]
+      },
+      {
+        "kind": "map_update_lookup_cases",
+        "items": [
+          "{'lookup_term': 'nth witness<:nonce> ns{hr} i{hr}, C.ofintd 0', 'case': 'key_case_unresolved', 'evidence': 'No equality/projection path to an update key is visible in this goal text.'}"
+        ]
+      }
+    ],
+    "related_checkpoints": [
+      {
+        "semantic_id": "after_seq_opened",
+        "label": "Before committed tactic #15",
+        "tactic_index": 15,
+        "committed_step_index": 15,
+        "undo_scope": "branch_local",
+        "why_checkpoint": "seq-local boundary associated with recent rejected work inside the current seq scope"
+      },
+      {
+        "checkpoint_id": "cp_14_244fe5d4bf6b51a2",
+        "semantic_id": "before_seq_cut",
+        "semantic_ids": [
+          "before_seq_cut"
+        ],
+        "label": "Before seq cut #14",
+        "committed_step_index": 14,
+        "undo_scope": "seq_local",
+        "restored_proof_layer": "pre_seq_cut",
+        "restored_affordances": {
+          "seq_cut": "not_committed",
+          "call_site_state": "as_before_seq_cut"
+        },
+        "why_checkpoint": "seq-cut boundary; selecting it restores the proof state before this cut was committed"
+      },
+      {
+        "checkpoint_id": "cp_15_244fe5d4bf6b51a2",
+        "semantic_id": "after_seq_opened",
+        "semantic_ids": [
+          "after_seq_opened",
+          "before_branch_work"
+        ],
+        "label": "After seq opened / before branch work #15",
+        "committed_step_index": 15,
+        "undo_scope": "branch_local",
+        "restored_proof_layer": "seq_obligations_opened",
+        "restored_affordances": {
+          "seq_cut": "committed",
+          "branch_work": "not_committed"
+        },
+        "why_checkpoint": "seq-local branch boundary; selecting it keeps the seq cut and removes branch-local work after it"
+      },
+      {
+        "checkpoint_id": "cp_36_244fe5d4bf6b51a2",
+        "semantic_id": "before_branch_work",
+        "semantic_ids": [
+          "before_branch_work"
+        ],
+        "label": "Before latest branch-local tactic #36",
+        "committed_step_index": 36,
+        "undo_scope": "branch_local",
+        "restored_proof_layer": "seq_branch",
+        "restored_affordances": {
+          "seq_cut": "committed",
+          "earlier_branch_work": "preserved"
+        },
+        "why_checkpoint": "latest branch-local step inside the current seq scope"
+      },
+      {
+        "checkpoint_id": "cp_15_244fe5d4bf6b51a2",
+        "semantic_id": "seq_cut_mismatch",
+        "semantic_ids": [
+          "seq_cut_mismatch",
+          "after_seq_opened",
+          "before_branch_work"
+        ],
+        "label": "After seq opened / before branch work #15",
+        "undo_scope": "branch_local",
+        "restored_affordances": {
+          "seq_cut": "committed",
+          "branch_work": "not_committed"
+        }
+      }
+    ],
+    "related_surfaces": [
+      "seq_cut_surface",
+      "pure_tail_surface",
+      "structural_checkpoints"
+    ],
+    "limitations": [
+      "does not select a destructor, witness, rewrite, or SMT lemma",
+      "reported checkpoints are recovery references, not a default route"
+    ]
+  },
+  "inspect_lookup_handles": {
+    "effect": "All handles here are read-only manager requests; the committed EasyCrypt proof state stays unchanged.",
+    "manager_note": "Some requests may ask EasyCrypt or name resolution; wait for the manager result before choosing the next proof intent.",
+    "ask_manager_for": [
+      {
+        "intent": "inspect_context",
+        "payload": {
+          "topic": "diagnose"
+        },
+        "use_when": "The latest transition recorded an error.",
+        "returns": "manager-provided read-only context for this proof route"
+      },
+      {
+        "intent": "inspect_context",
+        "payload": {
+          "topic": "hint"
+        },
+        "use_when": "pivot.RHS matches your goal.Pr#1 literally \u2014 `apply <pivot>.` or `rewrite <pivot>.` are direct route candidates",
+        "returns": "manager-provided read-only context for this proof route"
+      },
+      {
+        "intent": "inspect_context",
+        "payload": {
+          "topic": "goal_info"
+        },
+        "use_when": "Need parsed goal shape, resolved names, or KB pattern hints.",
+        "returns": "parsed goal structure and names"
+      },
+      {
+        "intent": "inspect_context",
+        "payload": {
+          "topic": "lemma_hints"
+        },
+        "use_when": "Need local or standard-library lemma names before rewriting a pure goal.",
+        "returns": "nearby lemma hints and qualified-name lookup guidance"
+      },
+      {
+        "intent": "inspect_context",
+        "payload": {
+          "topic": "tactic_forms",
+          "name": "rewrite"
+        },
+        "use_when": "Need the valid EasyCrypt form for rewrite, apply, conseq, while, or SMT setup.",
+        "returns": "valid tactic forms and common traps"
+      }
+    ],
+    "lookup_candidates": [
+      {
+        "symbol": "pr_CCP_OCCP",
+        "use_when": "Resolve exact signature for `pr_CCP_OCCP` only when this handle route is being tested."
+      }
+    ]
+  },
+  "structural_checkpoints": {
+    "items": [
+      {
+        "checkpoint_id": "cp_17_244fe5d4bf6b51a2",
+        "semantic_id": "possible_boundary_gap",
+        "semantic_ids": [
+          "possible_boundary_gap"
+        ],
+        "label": "Before while invariant #17",
+        "committed_step_index": 17,
+        "committed_tactic": "while{2} (0 <= i{2} <= size ns{2} /\\ ns{2} = undup (map (fun (p : ciphertext) => p.`1) Mem.lc{2}) /\\ Mem.lc{1} = Mem.lc{2} /\\ RO.m{1} = RO.m{2} /\\ Mem.k{1} = Mem.k{2} /\\ (forall (c : ciphertext), (c \\in Mem.lc{2}) => dec RO.m{2} Mem.k{2} c <> None => (c.`1 \\in take i{2} ns{2}) => forged{2})) (size ns{2} - i{2}).",
+        "restored_proof_layer": "pre_branch_or_loop",
+        "undo_scope": "structural_boundary",
+        "why_checkpoint": "Revisit this while invariant boundary; residual goals now repeatedly mention list/index arithmetic structure, including terms not obvious in the boundary formula.",
+        "effect_if_selected": "Undo committed tactic #17 and every committed tactic after it in this node.",
+        "submit": {
+          "intent": "undo_to_checkpoint",
+          "payload": {
+            "checkpoint_id": "cp_17_244fe5d4bf6b51a2"
+          }
+        }
+      },
+      {
+        "checkpoint_id": "cp_15_244fe5d4bf6b51a2",
+        "semantic_id": "seq_cut_mismatch",
+        "semantic_ids": [
+          "seq_cut_mismatch",
+          "after_seq_opened",
+          "before_branch_work"
+        ],
+        "label": "After seq opened / before branch work #15",
+        "committed_step_index": 15,
+        "committed_tactic": "sim.",
+        "restored_proof_layer": "seq_obligations_opened",
+        "restored_affordances": {
+          "seq_cut": "committed",
+          "branch_work": "not_committed"
+        },
+        "undo_scope": "branch_local",
+        "why_checkpoint": "seq-local branch boundary; selecting it keeps the seq cut and removes branch-local work after it",
+        "effect_if_selected": "Undo committed tactic #15 and every committed tactic after it in this node.",
+        "submit": {
+          "intent": "undo_to_checkpoint",
+          "payload": {
+            "checkpoint_id": "cp_15_244fe5d4bf6b51a2"
+          }
+        }
+      },
+      {
+        "checkpoint_id": "cp_36_244fe5d4bf6b51a2",
+        "semantic_id": "before_branch_work",
+        "semantic_ids": [
+          "before_branch_work"
+        ],
+        "label": "Before latest branch-local tactic #36",
+        "committed_step_index": 36,
+        "committed_tactic": "have hf := IH c hcmem hdec hc1; smt().",
+        "restored_proof_layer": "seq_branch",
+        "restored_affordances": {
+          "seq_cut": "committed",
+          "earlier_branch_work": "preserved"
+        },
+        "undo_scope": "branch_local",
+        "why_checkpoint": "latest branch-local step inside the current seq scope",
+        "effect_if_selected": "Undo committed tactic #36 and every committed tactic after it in this node.",
+        "submit": {
+          "intent": "undo_to_checkpoint",
+          "payload": {
+            "checkpoint_id": "cp_36_244fe5d4bf6b51a2"
+          }
+        }
+      },
+      {
+        "checkpoint_id": "cp_14_244fe5d4bf6b51a2",
+        "semantic_id": "before_seq_cut",
+        "semantic_ids": [
+          "before_seq_cut"
+        ],
+        "label": "Before seq cut #14",
+        "committed_step_index": 14,
+        "committed_tactic": "seq 2 2 : (={glob A, Mem.lc, Mem.k, RO.m}).",
+        "restored_proof_layer": "pre_seq_cut",
+        "restored_affordances": {
+          "seq_cut": "not_committed",
+          "call_site_state": "as_before_seq_cut"
+        },
+        "undo_scope": "seq_local",
+        "why_checkpoint": "seq-cut boundary; selecting it restores the proof state before this cut was committed",
+        "effect_if_selected": "Undo committed tactic #14 and every committed tactic after it in this node.",
+        "submit": {
+          "intent": "undo_to_checkpoint",
+          "payload": {
+            "checkpoint_id": "cp_14_244fe5d4bf6b51a2"
+          }
+        }
+      },
+      {
+        "checkpoint_id": "cp_19_244fe5d4bf6b51a2",
+        "semantic_id": "last_call_site_boundary",
+        "semantic_ids": [
+          "last_call_site_boundary"
+        ],
+        "label": "Before inline expansion #19",
+        "committed_step_index": 19,
+        "committed_tactic": "inline FinRO.get.",
+        "restored_proof_layer": "pre_inline_frontier",
+        "restored_affordances": {
+          "call_site_handles": "as_before_inline"
+        },
+        "undo_scope": "call_site_boundary",
+        "why_checkpoint": "inline boundary; selecting it restores the proof state before this expansion",
+        "effect_if_selected": "Undo committed tactic #19 and every committed tactic after it in this node.",
+        "submit": {
+          "intent": "undo_to_checkpoint",
+          "payload": {
+            "checkpoint_id": "cp_19_244fe5d4bf6b51a2"
+          }
+        }
+      }
+    ]
+  }
+}

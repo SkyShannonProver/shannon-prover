@@ -1,0 +1,41 @@
+{
+  "turn": 5,
+  "handled_intent": {
+    "intent": "inspect_context",
+    "payload": {
+      "topic": "pr_bridge_routes"
+    }
+  },
+  "ok": true,
+  "manager_note": "Read-only context. Accepted/rejected tactic or call text inside a preview is route-selection information, not the current proof-state error.",
+  "manager_actions": [
+    {
+      "action": "inspect pr bridge routes",
+      "outcome": "The manager returned read-only context for the current goal.",
+      "timing": "1.6 s",
+      "content": {
+        "title": "Verified Pr Bridge Routes",
+        "notes": [
+          {
+            "message": "Every surfaced bridge option was accepted by the daemon against the current goal. Direct byequiv remains a risky fallback, not the preferred route."
+          }
+        ],
+        "items": [
+          {
+            "candidate": "have -> : Pr[CPA_game(CCA_CPA_Adv(A), RealOrcls(GenChaChaPoly(CCRO(FinRO)))).main\n   () @ &m : res] = Pr[MainD(G4(A), FinRO).distinguish() @ &m : res] by byequiv => //; proc; inline *; sim.",
+            "why": "Local adapter `G4(A)` normalizes wrapper endpoint `CPA_game(CCA_CPA_Adv(A),RealOrcls(GenChaChaPoly(CCRO(FinRO))))` to typed endpoint `MainD(G4(A),FinRO)` before Pr rewrite/split handles. The full chain was accepted by the daemon on the live goal.",
+            "effect": "commits a verified Pr bridge route; proof state changes only if the agent submits the shown manager intent",
+            "verification": "daemon-verified against the current goal",
+            "submit": {
+              "intent": "commit_tactic",
+              "payload": {
+                "tactic": "have -> : Pr[CPA_game(CCA_CPA_Adv(A), RealOrcls(GenChaChaPoly(CCRO(FinRO)))).main\n   () @ &m : res] = Pr[MainD(G4(A), FinRO).distinguish() @ &m : res] by byequiv => //; proc; inline *; sim."
+              }
+            }
+          }
+        ]
+      }
+    }
+  ],
+  "view_refreshed": true
+}

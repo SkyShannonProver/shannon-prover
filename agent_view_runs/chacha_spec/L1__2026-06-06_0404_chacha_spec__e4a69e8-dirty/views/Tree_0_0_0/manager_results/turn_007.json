@@ -1,0 +1,19 @@
+{
+  "turn": 7,
+  "handled_intent": {
+    "intent": "commit_tactic",
+    "payload": {
+      "tactic": "call (_: k = kv /\\ n = nv /\\ c = C.ofintd iv /\\ OCC.gs = gsv ==> res = cc gsv kv nv (C.ofintd iv))."
+    }
+  },
+  "ok": true,
+  "manager_note": "Committed tactic accepted; the EasyCrypt proof state changed.",
+  "manager_actions": [
+    {
+      "action": "tactic commit",
+      "outcome": "EasyCrypt accepted the committed tactic.",
+      "timing": "185 ms"
+    }
+  ],
+  "view_refreshed": true
+}

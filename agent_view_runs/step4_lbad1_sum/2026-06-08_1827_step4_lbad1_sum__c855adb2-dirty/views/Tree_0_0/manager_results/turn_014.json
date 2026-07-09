@@ -1,0 +1,22 @@
+{
+  "turn": 14,
+  "handled_intent": {
+    "intent": "lookup_symbol",
+    "payload": {
+      "symbol": "hasP"
+    }
+  },
+  "ok": true,
+  "manager_note": "Read-only context. Accepted/rejected tactic or call text inside a preview is route-selection information, not the current proof-state error.",
+  "manager_actions": [
+    {
+      "action": "symbol lookup",
+      "outcome": "The manager returned read-only context for the current goal.",
+      "timing": "1.2 s",
+      "content": {
+        "preview": "[WHERE-HIT] hasP (kind: lemma) * In [lemmas or axioms]: lemma hasP ['b, 'a]: forall (P : 'a -> 'b -> bool) (m : ('a, 'b) fmap), has P m <=> exists (x : 'a) (y : 'b), m.[x] = Some y /\\ P x y. (* List.hasP *) lemma hasP ['a]: forall (p : 'a -> bool) (s : 'a list), has p s <=> exists (x : 'a), (x \\in s) /\\ p x."
+      }
+    }
+  ],
+  "view_refreshed": true
+}

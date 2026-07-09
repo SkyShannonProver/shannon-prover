@@ -1,0 +1,18 @@
+{
+  "turn": 53,
+  "handled_intent": {
+    "intent": "fresh_restart",
+    "payload": {
+      "confirm": true
+    }
+  },
+  "ok": true,
+  "manager_note": "Fresh restart was confirmed; the latest view is the new branch start.",
+  "manager_actions": [
+    {
+      "action": "fresh restart menu",
+      "outcome": "Fresh restart is destructive. For route repair, prefer checkpoint rewind."
+    }
+  ],
+  "view_refreshed": true
+}

@@ -1,0 +1,252 @@
+{
+  "last_result": {
+    "intent": "commit_tactic",
+    "payload": {
+      "tactic": "rewrite prD4."
+    },
+    "manager_action": "commit_tactic",
+    "result": "EasyCrypt accepted the committed tactic.",
+    "effect": "EasyCrypt accepted a proof-state change; the refreshed view is based on the new committed state.",
+    "proof_state": "The committed EasyCrypt proof state changed.",
+    "tactic": "rewrite prD4."
+  },
+  "current_goal": {
+    "lines": [
+      "Current goal",
+      "",
+      "Type variables: <none>",
+      "",
+      "f: int -> int",
+      "finv: int -> int",
+      "hf: forall (i : int), 1 <= i <= 4 <=> 1 <= f i <= 4",
+      "hfinv: forall (i : int), 1 <= i <= 4 => f (finv i) = i /\\ finv (f i) = i",
+      "&1: {arg: {}}",
+      "&2: {arg: {}}",
+      "a: int",
+      "------------------------------------------------------------------------",
+      "(if 1 <= a <= 4 then 1%r / 4%r else 0%r) =",
+      "Pr[D6.sample() @ &2 : finv res = a]",
+      "[24|check]>"
+    ],
+    "text_fully_shown": true,
+    "truncated": false,
+    "goal_type": "probability",
+    "view_focus": "probability",
+    "source": {
+      "label": "Parsed from EasyCrypt pretty goal text",
+      "ground_truth": false
+    }
+  },
+  "proof_status": {
+    "status": "open",
+    "remaining_goals": 1,
+    "remaining_goals_known": true,
+    "goal_type": "probability",
+    "view_focus": "probability",
+    "current_layer": "pr"
+  },
+  "candidate_moves": {
+    "navigation": [
+      {
+        "id": "probability_phoare_loop",
+        "proof_family": "single_program_probability",
+        "episode": "top_level_probability",
+        "route": "case_split_then_byphoare_loop",
+        "confidence": "medium",
+        "confidence_reason": "The current goal is a single-program Pr[...] state and the current view exposes probability/phoare route evidence. The fast-track tactic is schematic, so confidence is capped until the current view or an inspect result supplies concrete terms.",
+        "valid_for": "current_view_only",
+        "why_now": "current goal contains a single Pr[...] probability expression; only one Pr[...] endpoint is visible; visible probability case predicate `1 <= a <= 4`; candidate/context evidence mentions byphoare, phoare, or probability frontiers.",
+        "fast_track_probe": {
+          "tactic": "byphoare (_: <pre> ==> <post>) => //; proc; inline *; wp; sp; while (INV) (VARIANT).",
+          "preconditions": [
+            "Use after the current branch/goal has a concrete single-program probability obligation.",
+            "Fill <pre>, <post>, INV, and VARIANT from the visible goal/program state.",
+            "For phoare loops, use exactly `while (INV) (VARIANT).`; do not add a colon or probability argument.",
+            "Probe the bounded block first; commit only the accepted block or accepted prefix."
+          ],
+          "expected_next_shape": "A phoare/probability loop obligation, or residual invariant/base subgoals that can be repaired locally."
+        },
+        "anti_routes": [
+          {
+            "route": "byequiv_first",
+            "reason": "This is not currently a relational Pr equality with two endpoints; starting with byequiv usually searches the wrong proof family.",
+            "scope": "avoid_first_unless_state_changes"
+          }
+        ],
+        "repair_if_fails": [
+          {
+            "failure": "syntax",
+            "next": "inspect tactic_forms for byphoare/phoare while forms"
+          },
+          {
+            "failure": "frontier",
+            "next": "inspect goal_info before choosing the probability route"
+          },
+          {
+            "failure": "invariant",
+            "next": "inspect subgoal_gap or inv_from_lemma for invariant shape"
+          },
+          {
+            "failure": "route",
+            "next": "downgrade this route and choose another current-view navigation item"
+          }
+        ],
+        "lemma_pack": []
+      }
+    ],
+    "moves": [
+      {
+        "title": "Proof-route context",
+        "category": "strategy",
+        "guidance": "Probabilistic VC plan: Pr loss-accounting via have-chain, rewrite Pr/mu rules, real-order smt",
+        "applicability": "Use this as route-selection context; it is not a tactic to run as-is.",
+        "source": "proof-state analysis"
+      }
+    ]
+  },
+  "program_frontier": {
+    "authority": "proof-state analysis",
+    "view_focus": "probability",
+    "focus": {
+      "pr_rewrite_candidates": 0,
+      "has_pr_normal_form": false,
+      "has_pr_arithmetic_plan": false,
+      "has_pr_obligation_plan": true,
+      "pr_obligation_primary_strategy": "inspect_semantic_bound_candidates",
+      "native_ast_search_hits": 0
+    },
+    "checks": [
+      "Pr resources are context: use them when they match the visible endpoint and simplify the goal.",
+      "Direct byequiv is a valid route when the goal is naturally a program equivalence."
+    ]
+  },
+  "call_site_surface": {},
+  "pure_tail_surface": {
+    "state": "quantified_ambient_tail",
+    "obligation_families": [
+      {
+        "family": "quantified_residual_logic",
+        "evidence": [
+          "universal quantifier visible",
+          "implication residual visible"
+        ],
+        "effect": "The current proof point is dominated by local logical obligations rather than program-frontier movement.",
+        "limitations": "Quantifier names are not normalized across EasyCrypt pretty-printer variants."
+      }
+    ],
+    "ambient_memory_translation": {
+      "state": "introduced_memories_visible",
+      "introduced_memory_bindings": [
+        "&1:",
+        "&2 :",
+        "&2:"
+      ],
+      "translation_facts": [
+        "Decorations identify the program memory from which a term is read.",
+        "Pretty-printer memory names and introduced proof-context names can differ."
+      ],
+      "effect": "Local claims in the pure tail depend on the currently introduced memory binders as well as displayed term decorations."
+    },
+    "effect": "Summarizes verifier-visible pure-goal structure after program frontier actions have been discharged or hidden by local proof steps.",
+    "limitations": [
+      "This panel records syntactic and proof-state facts from the current view.",
+      "It does not choose a tactic or instantiate a lemma."
+    ]
+  },
+  "application_context": {
+    "selected_handles": [
+      {
+        "title": "Proof-route context",
+        "why_relevant": "Probabilistic VC plan: Pr loss-accounting via have-chain, rewrite Pr/mu rules, real-order smt"
+      }
+    ]
+  },
+  "facts_and_diagnostics": {
+    "facts": {
+      "has_pr_normal_form": false,
+      "has_pr_arithmetic_plan": false,
+      "has_pr_obligation_plan": true,
+      "pr_obligation_primary_strategy": "inspect_semantic_bound_candidates",
+      "unfoldable_goal_head_count": 0
+    },
+    "fact_note": "Only current-frontier facts are shown here; the full proof context artifact keeps the compiler/internal details."
+  },
+  "recovery_diagnosis_surface": {
+    "kind": "recovery_diagnosis_surface",
+    "recovery_class": "local_pure_surgery_available",
+    "confidence": "medium",
+    "checkpoint_policy": "current_state_local_work_visible",
+    "evidence": [
+      "pure_tail_surface is visible for the current goal",
+      "current proof state has no program-frontier work before the logical residual"
+    ],
+    "available_local_work": [
+      {
+        "kind": "pure_tail_obligation_families",
+        "items": [
+          "quantified_residual_logic"
+        ]
+      }
+    ],
+    "related_surfaces": [
+      "pure_tail_surface"
+    ],
+    "limitations": [
+      "does not select a destructor, witness, rewrite, or SMT lemma",
+      "reported checkpoints are recovery references, not a default route"
+    ]
+  },
+  "inspect_lookup_handles": {
+    "effect": "All handles here are read-only manager requests; the committed EasyCrypt proof state stays unchanged.",
+    "manager_note": "Some requests may ask EasyCrypt or name resolution; wait for the manager result before choosing the next proof intent.",
+    "ask_manager_for": [
+      {
+        "intent": "inspect_context",
+        "payload": {
+          "topic": "goal_info"
+        },
+        "use_when": "Need parsed goal shape, resolved names, or KB pattern hints.",
+        "returns": "parsed goal structure and names"
+      },
+      {
+        "intent": "inspect_context",
+        "payload": {
+          "topic": "pr_bridge_routes"
+        },
+        "use_when": "Current Pr equality may need a manager-verified bridge route (game-hop or scheme/endpoint normalization) before direct byequiv/proc lowering.",
+        "returns": "daemon-verified, committable Pr bridge routes with manager-owned intent payloads"
+      },
+      {
+        "intent": "inspect_context",
+        "payload": {
+          "topic": "equiv_bridge_lemmas"
+        },
+        "use_when": "Need pRHL/procedure-equivalence bridge lemma names or context after checking pr_bridge_routes.",
+        "returns": "context-only equiv bridge lemma candidates (names to look up/apply); not a verified Pr route"
+      },
+      {
+        "intent": "inspect_context",
+        "payload": {
+          "topic": "lemma_hints"
+        },
+        "use_when": "Need local lemma hints before choosing a Pr-level proof route.",
+        "returns": "nearby lemma hints and proof-route context"
+      },
+      {
+        "intent": "inspect_context",
+        "payload": {
+          "topic": "tactic_forms",
+          "name": "while"
+        },
+        "use_when": "Need exact byphoare/phoare-loop tactic syntax before probing the probability route.",
+        "returns": "valid `while` forms and common traps"
+      }
+    ],
+    "lookup_candidates": [
+      {
+        "symbol": "prD6",
+        "use_when": "Source-scan fallback found a Pr inequality/bound candidate with overlapping game or event structure. Treat the name as unconfirmed until `-where` resolves it in the current EasyCrypt environment."
+      }
+    ]
+  }
+}

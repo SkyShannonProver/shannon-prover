@@ -1,0 +1,746 @@
+{
+  "description": "Execution-level tactic reference indexed by (goal_type, tactic). It stores syntax and failure modes only, not concrete proof scripts or examples.",
+  "version": "1.0",
+  "goal_types": {
+    "ambient": {
+      "tactics": {
+        "absurd": {
+          "syntax": "absurd.",
+          "pitfalls": [],
+          "when_to_abandon": "",
+          "errors": {
+            "unknown_absurd_absurd_unknown_not_fou": {
+              "level": "execution",
+              "pattern": "unknown.*absurd|absurd.*unknown|not.*found.*absurd",
+              "diagnosis": "`absurd` is not a standard EasyCrypt tactic. EC does not have Coq's `absurd`.",
+              "fix": "To prove a goal by contradiction given `h : !P` and you want to show `P`, use `exfalso` then prove `False`, or structure the proof differently:\n  (1) If goal is `P` and you have `notBad : !Bad`, use `apply notBad`.\n  (2) For a boolean negation `!P`, use `apply/negP => h; ...`.\n  (3) `by move: hypothesis; rewrite ...` to derive contradiction directly."
+            }
+          },
+          "smt_hints": [],
+          "related_entries": [],
+          "source": {}
+        },
+        "algebra": {
+          "syntax": "algebra or ring or field",
+          "pitfalls": [],
+          "when_to_abandon": "",
+          "errors": {},
+          "smt_hints": [],
+          "related_entries": [
+            "algebra_ring_tactic",
+            "algebra_tactic"
+          ],
+          "source": {
+            "migrated_from": [
+              "algebra_ring_tactic",
+              "algebra_tactic"
+            ]
+          }
+        },
+        "apply": {
+          "syntax": "apply <lemma_or_hypothesis>.",
+          "pitfalls": [],
+          "when_to_abandon": "",
+          "errors": {
+            "the_given_proof_term_proves": {
+              "level": "execution",
+              "pattern": "the given proof-term proves",
+              "diagnosis": "Module path mismatch. The subgoal's module paths (e.g., B_DDH.CCA.log) don't match the lemma's paths (e.g., CCA.log).",
+              "fix": "If you used 3-arg call (_: bad, Inv, true), switch to 2-arg call (_: bad, Inv). The 2-arg form lets EasyCrypt auto-resolve module aliases, making apply work.",
+              "pitfall_ref": "P2"
+            },
+            "cannot_infer_module_arguments": {
+              "level": "execution",
+              "pattern": "cannot infer module arguments",
+              "diagnosis": "Section-exported lemma has implicit module parameters that EC can't infer.",
+              "fix": "Try apply (lemma_name ExplicitModule). If that also fails, inline the lemma's proof argument directly. Check the section header for `declare module` to find which module to pass."
+            }
+          },
+          "smt_hints": [],
+          "related_entries": [
+            "mu_mem_le_mu1",
+            "negP_inductive_negation"
+          ],
+          "source": {
+            "migrated_from": [
+              "mu_mem_le_mu1",
+              "negP_inductive_negation"
+            ]
+          }
+        },
+        "case": {
+          "syntax": "case: <hypothesis>.",
+          "pitfalls": [],
+          "when_to_abandon": "",
+          "errors": {},
+          "smt_hints": [],
+          "related_entries": [
+            "case_vs_elim_inductive",
+            "boolean_case_no_hypothesis_intro"
+          ],
+          "source": {
+            "migrated_from": [
+              "case_vs_elim_inductive",
+              "boolean_case_no_hypothesis_intro"
+            ]
+          }
+        },
+        "crush": {
+          "syntax": "/#.",
+          "pitfalls": [],
+          "when_to_abandon": "",
+          "errors": {},
+          "smt_hints": [],
+          "related_entries": [
+            "crush_closer"
+          ],
+          "source": {
+            "migrated_from": [
+              "crush_closer"
+            ]
+          }
+        },
+        "field": {
+          "syntax": "field.",
+          "pitfalls": [],
+          "when_to_abandon": "",
+          "errors": {},
+          "smt_hints": [],
+          "related_entries": [
+            "mulrK_field_division",
+            "field_subr_eq0_denominator"
+          ],
+          "source": {
+            "migrated_from": [
+              "mulrK_field_division",
+              "field_subr_eq0_denominator"
+            ]
+          }
+        },
+        "general": {
+          "syntax": "general.",
+          "pitfalls": [],
+          "when_to_abandon": "",
+          "errors": {
+            "unknown_lemma_unknown_identifier_unkno": {
+              "level": "execution",
+              "pattern": "unknown.*lemma|unknown.*identifier|unknown.*operator",
+              "diagnosis": "The lemma/identifier name is not in scope.",
+              "fix": "(1) Use -search to find the correct name: python3 session_cli.py -d .ec_session -search 'partial_name'. (2) Use -clones to check if a clone renamed it. (3) Check the qualified path: the lemma may need a module prefix (e.g., GP.ZModE.ZModpField.mulrK instead of mulrK)."
+            },
+            "parse_error": {
+              "level": "execution",
+              "pattern": "parse error",
+              "diagnosis": "Syntax error in the tactic. Common causes: (1) missing '.' at end of tactic, (2) shell '!' → '\\!' escaping (session_cli strips this automatically), (3) apostrophe in a primed EC name (Exp', G', H') broke shell single-quote wrapping: `-c 'call Exp'.proc.'` terminates the quote at `Exp'`, sending a truncated tactic to EasyCrypt, (4) incorrect EC keyword or missing `proc`/`skip`.",
+              "fix": "For primed names (apostrophes): use stdin/heredoc instead of -c:\n  printf '%s' 'your tactic.' | python3 session_cli.py -next\n  or: python3 session_cli.py -next <<'TACTEOF'\n        your tactic.\n      TACTEOF\nFor other parse errors: check EC syntax carefully.\nRedirect artifacts ('2>&1' in tactic) are auto-stripped by session_cli."
+            }
+          },
+          "smt_hints": [],
+          "related_entries": [],
+          "source": {}
+        },
+        "rewrite": {
+          "syntax": "rewrite <rule>.",
+          "pitfalls": [],
+          "when_to_abandon": "If \"nothing to rewrite\", the target expression is not in the goal — check goal state. If rewriting loops or diverges, the rewrite direction is wrong — try rewriting the other way. These are EXECUTION issues. Rewrite is rarely the wrong strategy for ambient goals.",
+          "errors": {
+            "nothing_to_rewrite": {
+              "level": "execution",
+              "pattern": "nothing to rewrite",
+              "diagnosis": "The goal doesn't contain the pattern being rewritten.",
+              "fix": "Check the goal state carefully — a prior tactic may have simplified the expression. Try: (1) print the goal with -next -c 'idtac.'. (2) The rewrite target may need a different qualified name."
+            }
+          },
+          "smt_hints": [],
+          "related_entries": [
+            "pr_mu_not",
+            "pr_mu_eq",
+            "group_algebra_normalization",
+            "eq_iff_boolean_symmetry",
+            "rewrite_pred1_for_field",
+            "big_consT_rewrite_before_smt",
+            "rewrite_via_have_hypothesis",
+            "dinter1E_measure_equality",
+            "iff_hypothesis_backward_direction",
+            "pr_term_have_rewrite",
+            "rewrite_in_hypothesis_idiom"
+          ],
+          "source": {
+            "migrated_from": [
+              "pr_mu_not",
+              "pr_mu_eq",
+              "group_algebra_normalization",
+              "eq_iff_boolean_symmetry",
+              "rewrite_pred1_for_field",
+              "big_consT_rewrite_before_smt",
+              "rewrite_via_have_hypothesis",
+              "dinter1E_measure_equality",
+              "iff_hypothesis_backward_direction",
+              "pr_term_have_rewrite",
+              "rewrite_in_hypothesis_idiom"
+            ]
+          }
+        },
+        "rnd": {
+          "syntax": "rnd <distribution_or_bijection>.",
+          "pitfalls": [],
+          "when_to_abandon": "",
+          "errors": {
+            "support_not_compatible_explicit_biject": {
+              "level": "execution",
+              "pattern": "support.*not compatible.*explicit bijection",
+              "diagnosis": "Bare rnd (no bijection) failed because distributions differ.",
+              "fix": "Provide an explicit bijection: rnd (fun x => f x) (fun x => g x). The two functions must be inverses."
+            }
+          },
+          "smt_hints": [],
+          "related_entries": [],
+          "source": {}
+        },
+        "skip": {
+          "syntax": "skip.",
+          "pitfalls": [],
+          "when_to_abandon": "",
+          "errors": {
+            "instruction_list_is_not_empty": {
+              "level": "strategy",
+              "pattern": "instruction list is not empty",
+              "diagnosis": "Program still has unconsumed statements.",
+              "fix": "Use sp; skip instead of skip. Or apply wp/auto first to consume remaining statements before skip/smt."
+            }
+          },
+          "smt_hints": [],
+          "related_entries": [],
+          "source": {}
+        },
+        "smt": {
+          "syntax": "smt(<optional_hints>).",
+          "pitfalls": [
+            {
+              "ref": "P11",
+              "summary": "`smt()` is available — use it for arithmetic, algebraic, and logical goals"
+            }
+          ],
+          "when_to_abandon": "If smt() times out, try: (1) add specific hints smt(lemma1 lemma2), (2) decompose with have, (3) for group algebra use algebra/ring instead. If smt fails even with hints, the goal may need manual decomposition first (EXECUTION, not strategy — smt IS the right closer, you just need to prepare the goal).",
+          "errors": {
+            "cannot_prove_goal_strict": {
+              "level": "execution",
+              "pattern": "cannot prove goal.*strict",
+              "diagnosis": "SMT solver timeout or insufficient lemma hints.",
+              "fix": "Try: (1) add specific lemma hints: smt(lemma1 lemma2). (2) Decompose the goal with `have -> : expr1 = expr2 by ...` then retry smt. (3) For group algebra: use `algebra` or `rewrite log_bij !(logg1, logrzM, logDr); ring`. (4) For multiple conjuncts: `do !split; try algebra; smt()`."
+            },
+            "connection_error_why3server": {
+              "level": "execution",
+              "pattern": "Connection error.*why3server",
+              "diagnosis": "why3server not running. SMT-dependent tactics (smt, auto => /#) need why3.",
+              "fix": "Run the command with dangerouslyDisableSandbox: true, or ensure why3server is on PATH (check ~/.opam/easycrypt/lib/why3/why3server)."
+            },
+            "cannot_find_lemma": {
+              "level": "execution",
+              "pattern": "cannot find lemma",
+              "diagnosis": "Wrong lemma name in smt() hints, OR the lemma is section-local (declared inside a `section ... end` block) and therefore not accessible by name from smt().",
+              "fix": "1. Use -search to find the correct name: python3 session_cli.py -d .ec_session -search 'partial_name'. Also check -clones for clone-renamed lemmas. 2. If the lemma IS found but is section-local (inside `section ... end` in the file), do NOT pass it to smt(). Instead, bind it as a local hypothesis: `have hkey := section_local_lemma args.` then use `smt()` without the name, or `move: hkey => /#`. See P18 in decision_tree.md."
+            }
+          },
+          "smt_hints": [
+            "mu_bounded",
+            "dt_ll",
+            "expD",
+            "expM"
+          ],
+          "related_entries": [],
+          "source": {
+            "migrated_from": [
+              "P11"
+            ]
+          }
+        },
+        "split": {
+          "syntax": "split.",
+          "pitfalls": [],
+          "when_to_abandon": "",
+          "errors": {
+            "nothing_to_eliminate_invalid_intro_patte": {
+              "level": "execution",
+              "pattern": "nothing to eliminate|invalid intro.pattern",
+              "diagnosis": "The current goal doesn't support this intro-pattern. Common cause: you are in the wrong subgoal direction (e.g., trying to split an already-consumed conjunction), or the tactic is applied to a goal that is not a product/conjunction/negation.",
+              "fix": "Print the current goal with `-next -c 'idtac.'` to check the goal shape. If you are trying to handle the backward direction of an iff, use `apply/negP => bad; case: bad.` instead of `split. move=> ...`. For a negation goal (!P), use `move=> h; apply ...` rather than `split`."
+            }
+          },
+          "smt_hints": [],
+          "related_entries": [
+            "split_on_boolean_conjunction"
+          ],
+          "source": {
+            "migrated_from": [
+              "split_on_boolean_conjunction"
+            ]
+          }
+        },
+        "w": {
+          "syntax": "apply <constructor_or_hypothesis>.",
+          "pitfalls": [],
+          "when_to_abandon": "",
+          "errors": {
+            "tactic_failed_ill_typed_ill_typed_bad_a": {
+              "level": "execution",
+              "pattern": "tactic failed|ill.typed|ill typed|bad.*application|not a function",
+              "diagnosis": "Using a constructor as a rewrite view with `/Constructor` doesn't work — constructors are not iff lemmas. To prove a goal by constructing an inductive witness, use `apply Constructor` directly (not `/Constructor`).",
+              "fix": "Pattern for proving negation of an inductive predicate by providing a witness:\n  case (P x) => //.\n  by move=> h; apply notBad; apply Constructor.\nOr inline: `apply/negP => h; apply notBad; exact (Constructor _ _ h).`\nFor a Bool-valued predicate: `move=> /negP h; apply notBad; exact (...)`."
+            }
+          },
+          "smt_hints": [],
+          "related_entries": [],
+          "source": {}
+        }
+      }
+    },
+    "general": {
+      "tactics": {
+        "apply": {
+          "syntax": "apply (<lemma_name> <explicit_module_args>).",
+          "pitfalls": [],
+          "when_to_abandon": "",
+          "errors": {},
+          "smt_hints": [],
+          "related_entries": [
+            "section_export_module_params",
+            "clone_renamed_lemmas"
+          ],
+          "source": {
+            "migrated_from": [
+              "section_export_module_params",
+              "clone_renamed_lemmas"
+            ]
+          }
+        },
+        "islossless": {
+          "syntax": "islossless.",
+          "pitfalls": [],
+          "when_to_abandon": "",
+          "errors": {},
+          "smt_hints": [],
+          "related_entries": [
+            "islossless_tactic"
+          ],
+          "source": {
+            "migrated_from": [
+              "islossless_tactic"
+            ]
+          }
+        },
+        "session": {
+          "syntax": "Use shell-safe session names or stdin for tactic strings that contain apostrophes.",
+          "pitfalls": [
+            {
+              "ref": "P8",
+              "summary": "Do not use full-file EasyCrypt verification as the success check after session_cli"
+            }
+          ],
+          "when_to_abandon": "",
+          "errors": {},
+          "smt_hints": [],
+          "related_entries": [
+            "session_name_apostrophe",
+            "session_cli_lemma_scope"
+          ],
+          "source": {
+            "migrated_from": [
+              "session_name_apostrophe",
+              "session_cli_lemma_scope",
+              "P8"
+            ]
+          }
+        }
+      }
+    },
+    "hoare": {
+      "tactics": {
+        "while": {
+          "syntax": "while (<invariant>).",
+          "pitfalls": [
+            {
+              "ref": "P9",
+              "summary": "hoare while requires ONE argument; phoare while requires TWO (not three)"
+            }
+          ],
+          "when_to_abandon": "hoare while takes ONE argument (invariant only, no variant). If you get an arity error, check: are you in hoare or phoare? (P9). If the invariant subgoal is unprovable, reformulate the invariant (EXECUTION).",
+          "errors": {},
+          "smt_hints": [],
+          "related_entries": [],
+          "source": {
+            "migrated_from": [
+              "P9"
+            ]
+          }
+        }
+      }
+    },
+    "pRHL": {
+      "tactics": {
+        "apply": {
+          "syntax": "apply <equiv_lemma>.",
+          "pitfalls": [
+            {
+              "ref": "P1",
+              "summary": "Prefer `apply` over inlining when a local equiv lemma exists"
+            }
+          ],
+          "when_to_abandon": "",
+          "errors": {},
+          "smt_hints": [],
+          "related_entries": [],
+          "source": {
+            "migrated_from": [
+              "P1"
+            ]
+          }
+        },
+        "auto": {
+          "syntax": "auto.",
+          "pitfalls": [],
+          "when_to_abandon": "",
+          "errors": {
+            "cannot_prove_goal": {
+              "level": "execution",
+              "pattern": "cannot prove goal",
+              "diagnosis": "auto => /> gave identity coupling but the postcondition needs non-trivial variable relationships. Common when G1 reparameterizes samplings.",
+              "fix": "Don't use auto for the entire sampling block. Use interleaved per-variable coupling: swap{2} -1; rnd (fun z => z + w*x2) (fun z => z - w*x2); rnd; wp. Repeat per variable pair. See Pitfall P3.",
+              "pitfall_ref": "P3"
+            }
+          },
+          "smt_hints": [],
+          "related_entries": [],
+          "source": {}
+        },
+        "call": {
+          "syntax": "call (_: <invariant>).",
+          "pitfalls": [
+            {
+              "ref": "P2",
+              "summary": "Prefer 2-arg `call` when you plan to `apply`"
+            },
+            {
+              "ref": "P6",
+              "summary": "Prefer `-inv-from-lemma` over hand-copying the invariant"
+            }
+          ],
+          "when_to_abandon": "If call fails with \"the given proof-term proves\" after apply, switch from 3-arg to 2-arg call form (P2). If call repeatedly fails regardless of form, the oracle invariant may be wrong (EXECUTION — use -inv-from-lemma). If the goal is not at a procedure call, call is inapplicable (STRATEGY).",
+          "errors": {},
+          "smt_hints": [],
+          "related_entries": [
+            "oracle_equiv_shared_state",
+            "call_bad_event_2arg_vs_3arg"
+          ],
+          "source": {
+            "migrated_from": [
+              "oracle_equiv_shared_state",
+              "call_bad_event_2arg_vs_3arg",
+              "P2",
+              "P6"
+            ]
+          }
+        },
+        "proc": {
+          "syntax": "proc.",
+          "pitfalls": [],
+          "when_to_abandon": "",
+          "errors": {
+            "expecting_a_goal_of_the_form": {
+              "level": "strategy",
+              "pattern": "expecting a goal of the form",
+              "diagnosis": "Tactic expects a different goal shape. Two common causes: (1) Compound tactic (byequiv; proc.) applied inner tactic to ambient goals. (2) Goal is in ambient logic, not a program judgment.",
+              "fix": "(1) Use separate lines: byequiv => //. then proc. separately. (2) If post-pRHL ambient goal: use `by auto => />` or `by smt()`. If group expressions: `rewrite expM` before auto."
+            }
+          },
+          "smt_hints": [],
+          "related_entries": [],
+          "source": {}
+        },
+        "rcondt": {
+          "syntax": "rcondt{side} <pos>.",
+          "pitfalls": [],
+          "when_to_abandon": "",
+          "errors": {},
+          "smt_hints": [],
+          "related_entries": [
+            "rcondt_rcondf"
+          ],
+          "source": {
+            "migrated_from": [
+              "rcondt_rcondf"
+            ]
+          }
+        },
+        "rnd": {
+          "syntax": "rnd.  or  rnd <bijection>.",
+          "pitfalls": [
+            {
+              "ref": "P3",
+              "summary": "Avoid `auto => />` for the reparameterized bijection step"
+            },
+            {
+              "ref": "P7",
+              "summary": "The DDH input coupling needs a division bijection, not identity"
+            }
+          ],
+          "when_to_abandon": "If all rnd forms fail with \"nothing to introduce\" or \"cannot infer set of equalities\", the goal is NOT at a sampling statement. This is a STRATEGY issue: use wp first to reach the sampling, or switch to bypr (probability equality) / call (oracle invocation). If rnd accepts but produces an unprovable subgoal, the coupling function is wrong — try a different bijection, not a different tactic.",
+          "errors": {},
+          "smt_hints": [
+            "bij_inj",
+            "expD",
+            "expgK",
+            "addrK",
+            "subrK"
+          ],
+          "related_entries": [
+            "rnd_one_sided",
+            "interleaved_sampling_coupling",
+            "rnd_variable_scoping"
+          ],
+          "source": {
+            "migrated_from": [
+              "rnd_one_sided",
+              "interleaved_sampling_coupling",
+              "rnd_variable_scoping",
+              "P3",
+              "P7"
+            ]
+          }
+        },
+        "seq": {
+          "syntax": "seq <left_count> <right_count> : (<intermediate_condition>).",
+          "pitfalls": [],
+          "when_to_abandon": "",
+          "errors": {},
+          "smt_hints": [],
+          "related_entries": [
+            "seq_split",
+            "pre_reference"
+          ],
+          "source": {
+            "migrated_from": [
+              "seq_split",
+              "pre_reference"
+            ]
+          }
+        },
+        "swap": {
+          "syntax": "swap{side} <pos> <offset>.",
+          "pitfalls": [],
+          "when_to_abandon": "If swap fails with \"not independent\", the statements have a data dependency. This is EXECUTION — try swapping on the other side, or use wp/call first to consume the dependent statement. If ALL swap attempts fail, consider: the programs may need inline or restructuring first (STRATEGY).",
+          "errors": {
+            "not_independent": {
+              "level": "execution",
+              "pattern": "not independent",
+              "diagnosis": "The two statements have a variable read/write dependency.",
+              "fix": "Try: (1) swap on the other side (swap{2} instead of swap{1}). (2) Apply wp/call first to consume dependent statements, then swap. (3) Use -align to check which swaps are safe."
+            },
+            "too_large_by_too_small_by": {
+              "level": "execution",
+              "pattern": "too large by|too small by",
+              "diagnosis": "Swap offset is out of bounds.",
+              "fix": "EC tells you the correction: 'too large by N' means reduce offset by N. Recount statement positions — they change after prior swaps."
+            }
+          },
+          "smt_hints": [],
+          "related_entries": [
+            "swap_syntax",
+            "swap_minus_one_idiom"
+          ],
+          "source": {
+            "migrated_from": [
+              "swap_syntax",
+              "swap_minus_one_idiom"
+            ]
+          }
+        },
+        "while": {
+          "syntax": "while (<invariant>).",
+          "pitfalls": [],
+          "when_to_abandon": "If the while invariant subgoals are unprovable after 3+ attempts with different invariants, the invariant formulation is wrong (EXECUTION). If while itself is rejected, check goal type: hoare while takes 1 arg, phoare while takes 2 (P9).",
+          "errors": {},
+          "smt_hints": [],
+          "related_entries": [
+            "pRHL_while_subgoal_closers"
+          ],
+          "source": {
+            "migrated_from": [
+              "pRHL_while_subgoal_closers"
+            ]
+          }
+        }
+      }
+    },
+    "phoare": {
+      "tactics": {
+        "congr": {
+          "syntax": "congr.",
+          "pitfalls": [],
+          "when_to_abandon": "",
+          "errors": {
+            "not_a_congruence": {
+              "level": "execution",
+              "pattern": "not a congruence",
+              "diagnosis": "congr requires both sides to have matching structure (1 - Pr[:E]).",
+              "fix": "If the subtraction is flipped (Pr[:E] = 1 - Pr[:!E] instead of Pr[:!E] = 1 - Pr[:E]), congr won't work. Use: have ll : Pr[:true] = 1%r via byphoare, then rewrite Pr[mu_not] ll /#."
+            }
+          },
+          "smt_hints": [],
+          "related_entries": [],
+          "source": {}
+        },
+        "conseq": {
+          "syntax": "conseq <lossless_fact> <hoare_fact>.",
+          "pitfalls": [],
+          "when_to_abandon": "",
+          "errors": {},
+          "smt_hints": [],
+          "related_entries": [
+            "conseq_split_lossless_hoare"
+          ],
+          "source": {
+            "migrated_from": [
+              "conseq_split_lossless_hoare"
+            ]
+          }
+        },
+        "inline": {
+          "syntax": "inline <procedure>.  or  inline *.",
+          "pitfalls": [
+            {
+              "ref": "P12",
+              "summary": "For LRO-based proofs, inline scheme procedures selectively and defer `inline LRO.o`"
+            }
+          ],
+          "when_to_abandon": "",
+          "errors": {},
+          "smt_hints": [],
+          "related_entries": [],
+          "source": {
+            "migrated_from": [
+              "P12"
+            ]
+          }
+        },
+        "move": {
+          "syntax": "move=> <intro_pattern>.",
+          "pitfalls": [
+            {
+              "ref": "P10",
+              "summary": "Pair equality in phoare ambient goals requires `/=` before `-> ->` destructuring"
+            }
+          ],
+          "when_to_abandon": "",
+          "errors": {},
+          "smt_hints": [],
+          "related_entries": [],
+          "source": {
+            "migrated_from": [
+              "P10"
+            ]
+          }
+        },
+        "rnd": {
+          "syntax": "rnd <predicate_or_bijection>.",
+          "pitfalls": [],
+          "when_to_abandon": "",
+          "errors": {
+            "nothing_to_introduce_cannot_infer_set_o": {
+              "level": "execution",
+              "pattern": "nothing to introduce|cannot infer.*set of equalities",
+              "diagnosis": "rnd bijection can't be applied — goal may not be at a sampling statement, or the bijection function type doesn't match.",
+              "fix": "Check with -align that both sides are at matching <$ statements. Use wp first to consume deterministic statements before rnd. For rnd in phoare: rnd (pred1 var) or rnd predT."
+            }
+          },
+          "smt_hints": [],
+          "related_entries": [],
+          "source": {}
+        },
+        "while": {
+          "syntax": "while (<invariant>) (<variant>).",
+          "pitfalls": [],
+          "when_to_abandon": "phoare while takes TWO arguments (invariant, variant). If you get an arity error with 1 arg, you are in phoare not hoare (P9). Three args is also wrong. If the variant subgoal is unprovable, the decreasing measure is wrong (EXECUTION).",
+          "errors": {},
+          "smt_hints": [],
+          "related_entries": [
+            "phoare_while_three_args"
+          ],
+          "source": {
+            "migrated_from": [
+              "phoare_while_three_args"
+            ]
+          }
+        },
+        "seq": {
+          "syntax": "seq <position> : (<intermediate_condition>).",
+          "pitfalls": [],
+          "when_to_abandon": "If both fragments need nontrivial probability reasoning (neither contributes 0), use conseq to split losslessness + hoare instead.",
+          "errors": {
+            "post_true_confusion": {
+              "level": "execution",
+              "pattern": "post = true.*Bound = 0|Bound = 0%r",
+              "diagnosis": "The subgoal with post=true and Bound=0%r is the LOSSLESSNESS/DETERMINISM fragment (subgoal 1), not a lost invariant. The conjunction invariant you specified appears as the pre of subgoal 2, not the post of subgoal 1.",
+              "fix": "Close subgoal 1 (Bound=0, post=true) with `hoare. auto.` or `wp. skip. smt().`. Subgoal 2 will have your invariant as its precondition and the full probability bound."
+            }
+          },
+          "smt_hints": [],
+          "related_entries": [
+            "conseq_split_lossless_hoare",
+            "phoare_loop_invariant"
+          ],
+          "source": {
+            "derived_from": "trace_analysis"
+          }
+        }
+      }
+    },
+    "probability": {
+      "tactics": {
+        "byequiv": {
+          "syntax": "byequiv (_: <pre> ==> <post>)=> //.",
+          "pitfalls": [],
+          "when_to_abandon": "If byequiv produces an equiv goal that seems unrelated to the probability claim, check the direction — byequiv may have swapped left/right programs. Use explicit postcondition: byequiv (_: pre ==> post). If the probability goal has explicit closed-form lemmas (prD4, prD6), consider bypr instead — it avoids the equiv obligation entirely (P13).",
+          "errors": {},
+          "smt_hints": [],
+          "related_entries": [
+            "byequiv_explicit_postcondition",
+            "self_coupling_byequiv_event",
+            "byequiv_local_hypothesis_direction",
+            "byequiv_direction_have_naming"
+          ],
+          "source": {
+            "migrated_from": [
+              "byequiv_explicit_postcondition",
+              "self_coupling_byequiv_event",
+              "byequiv_local_hypothesis_direction",
+              "byequiv_direction_have_naming"
+            ]
+          }
+        },
+        "byphoare": {
+          "syntax": "byphoare (_: <pre> ==> <post>)=> //.",
+          "pitfalls": [],
+          "when_to_abandon": "If the goal is a probability EQUALITY (not inequality), byphoare produces a phoare judgment with a fixed bound that may not match. For Pr[M]=Pr[N] goals use byequiv. For Pr[M]=1%r correctness goals use byphoare => //; proc; inline *; auto. For Pr[M]<=p upper-bound goals, byphoare => //. is always the correct opener — do not use smt() here.",
+          "errors": {
+            "smt_on_probability_inequality": {
+              "level": "strategy",
+              "pattern": "error-0-101|error-0-6",
+              "diagnosis": "smt() was applied directly to a Pr[M @ &m : E] <= p goal or to a phoare subgoal requiring program reasoning. SMT cannot discharge program probability bounds.",
+              "fix": "Use byphoare => //. to convert the probability bound to a phoare judgment, then proceed with proc; seq; while tactics. Never close a probability inequality with smt() directly."
+            }
+          },
+          "smt_hints": [],
+          "related_entries": [
+            "byphoare_precondition_binding"
+          ],
+          "source": {
+            "migrated_from": [
+              "byphoare_precondition_binding"
+            ]
+          }
+        }
+      }
+    }
+  }
+}

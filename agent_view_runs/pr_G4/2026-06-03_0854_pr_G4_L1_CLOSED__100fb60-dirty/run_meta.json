@@ -1,0 +1,27 @@
+{
+  "kind": "agent_view_run_report",
+  "timestamp": "2026-06-03_0854_pr_G4_L1_CLOSED",
+  "lemma": "pr_G4",
+  "source_file": "eval/examples/cramer-shoup/cramer_shoup.ec",
+  "model": "claude-opus-4-8",
+  "surface_profile": "l1_goal_projection",
+  "trees": 1,
+  "eval_mode": true,
+  "outcome": "proved",
+  "resume_chunks": 3,
+  "resume_lineage": [
+    "tmp/wt/l1/artifacts/eval_suite/prg4_l1_opus48/l1_goal_projection/cs_pr_G4/r01/2026-06-03_0854_pr_G4/iteration_1",
+    "tmp/wt/l1/artifacts/resume_loop/PRG4b-L1/chunk1/2026-06-03_0924_pr_G4/iteration_1",
+    "tmp/wt/l1/artifacts/resume_loop/PRG4b-L1/chunk2/2026-06-03_0954_pr_G4/iteration_1"
+  ],
+  "committed_proof_tactics": 87,
+  "committed_proof_source": "session",
+  "committed_proof_tree": "Tree_0_0",
+  "turn_count": 110,
+  "views_copied": 113,
+  "run_iteration_dir": "tmp/wt/l1/artifacts/resume_loop/PRG4b-L1/chunk2/2026-06-03_0954_pr_G4/iteration_1",
+  "commit": "100fb60",
+  "commit_full": "100fb6091adfea49598bf9a702119ff476f8306e",
+  "branch": "eval-suite",
+  "dirty": true
+}

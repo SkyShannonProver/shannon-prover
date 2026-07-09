@@ -1,0 +1,179 @@
+{
+  "last_result": {
+    "intent": "lookup_symbol",
+    "payload": {
+      "symbol": "ROIN.RO_LRO_D"
+    },
+    "effect": "This asks the manager for information only; it does not change the EasyCrypt proof state.",
+    "result": "The manager returned read-only context for the current goal.",
+    "content": {
+      "preview": "[WHERE-MISS] ROIN.RO_LRO_D not found. tried: ROIN.RO_LRO_D, MB.ROIN.RO_LRO_D, NonceCount.ROIN.RO_LRO_D, Poly_in.ROIN.RO_LRO_D, Poly_out.ROIN.RO_LRO_D, TPoly.ROIN.RO_LRO_D, Extra_block.ROIN.RO_LRO_D, Block.ROIN.RO_LRO_D, FiniteRO.ROIN.RO_LRO_D, Indist.ROIN.RO_LRO_D, OpCCinit.ROIN.RO_LRO_D, OpCCRO.ROIN.RO_LRO_D, CCA_UFCMA.ROIN.RO_LRO_D, Split0.ROIN.RO_LRO_D, SplitD.ROIN.RO_LRO_D, SplitC1.ROIN.RO_LRO_D, Split1.ROIN.RO_LRO_D, SplitC2.ROIN.RO_LRO_D, IPNonce.ROIN.RO_LRO_D, Byte.ROIN.RO_LRO_D, Key.ROIN.RO_LRO_D, Nonce.ROIN.RO_LRO_D, C.ROIN.RO_LRO_D, MB.I1.ROIN.RO_LRO_D, MB.I2.ROIN.RO_LRO_D, MB.RO.ROIN.RO_LRO_D, MB.RO_Pair.ROIN.RO_LRO_D, MB.ROF.ROIN.RO_LRO_D, MB.ROin.ROIN.RO_LRO_D, MB.ROout.ROIN.RO_LRO_D, NonceCount.I1.ROIN.RO_LRO_D hint: no declaration resolved in the current EasyCrypt context or source-scan fallback. Use a more exact qualified name, or ask the manager for `goal_info` / `lemma_hints` before trying to apply it."
+    }
+  },
+  "current_goal": {
+    "lines": [
+      "Current goal",
+      "",
+      "Type variables: <none>",
+      "",
+      "&m: {}",
+      "------------------------------------------------------------------------",
+      "Pr[UFCMA3(RO).distinguish() @ &m : res] <=",
+      "qdec%r * maxr pr_zeropol pr1_poly_out",
+      "[386|check]>"
+    ],
+    "text_fully_shown": true,
+    "truncated": false,
+    "goal_type": "probability",
+    "view_focus": "probability",
+    "source": {
+      "label": "Parsed from EasyCrypt pretty goal text",
+      "ground_truth": false
+    }
+  },
+  "proof_status": {
+    "status": "open",
+    "remaining_goals": 1,
+    "remaining_goals_known": true,
+    "goal_type": "probability",
+    "view_focus": "probability",
+    "current_layer": "pr"
+  },
+  "candidate_moves": {
+    "moves": [
+      {
+        "category": "strategy",
+        "tactic_shape": "Probabilistic VC plan: Pr loss-accounting via have-chain, rewrite Pr/mu rules, real-order smt",
+        "applicability": "Use this as route-selection context; it is not a tactic to run as-is.",
+        "source": "proof-state analysis"
+      },
+      {
+        "category": "strategy",
+        "tactic_shape": "rewrite pr_RO_split.",
+        "applicability": "Use this as route-selection context; it is not a tactic to run as-is.",
+        "source": "proof-state analysis"
+      },
+      {
+        "category": "strategy",
+        "tactic_shape": "-where pr_CCP_OCCP",
+        "applicability": "Use this as route-selection context; it is not a tactic to run as-is.",
+        "source": "proof-state analysis"
+      }
+    ]
+  },
+  "program_frontier": {
+    "authority": "proof-state analysis",
+    "view_focus": "probability",
+    "focus": {
+      "pr_rewrite_candidates": 5,
+      "has_pr_normal_form": false,
+      "has_pr_arithmetic_plan": false,
+      "has_pr_obligation_plan": true,
+      "native_ast_search_hits": 0
+    }
+  },
+  "call_site_surface": {},
+  "application_context": {
+    "selected_handles": [
+      {
+        "title": "Read-only tactic probe",
+        "tactic": "byphoare.",
+        "why_relevant": "program-difference analysis found this tactic while comparing the current programs/probability expressions. Unverified call/ecall items are structural hints only; proof-state analysis or a daemon probe must establish frontier readiness before they become runnable.",
+        "confidence": "medium",
+        "source": "program-difference analysis",
+        "derivation": "read-only probe surfaced from program-difference analysis",
+        "verified": "read_only_probe_suggestion",
+        "guarantee": "read-only probe shape; proof state unchanged; probe then decide; reversible"
+      }
+    ]
+  },
+  "facts_and_diagnostics": {
+    "facts": {
+      "has_pr_normal_form": false,
+      "has_pr_arithmetic_plan": false,
+      "has_pr_obligation_plan": true,
+      "unfoldable_goal_heads": [
+        {
+          "name": "pr1_poly_out",
+          "unqualified_name": "pr1_poly_out",
+          "declaration_kind": "op",
+          "unfold_tactic": "rewrite /pr1_poly_out.",
+          "smt_argument_role": "not_a_lemma_hint"
+        }
+      ],
+      "unfoldable_goal_head_count": 1
+    },
+    "fact_note": "Only current-frontier facts are shown here; the full proof context artifact keeps the compiler/internal details.",
+    "notes": [
+      {
+        "message": "Some imported or cross-scope handles may need lookup if that route is being tested; use lookup_candidates for the concrete symbol instead of treating the whole list as a to-do queue.",
+        "severity": "info"
+      }
+    ]
+  },
+  "inspect_lookup_handles": {
+    "effect": "All handles here are read-only manager requests; the committed EasyCrypt proof state stays unchanged.",
+    "manager_note": "Some requests may ask EasyCrypt or name resolution; wait for the manager result before choosing the next proof intent.",
+    "ask_manager_for": [
+      {
+        "intent": "inspect_context",
+        "payload": {
+          "topic": "hint"
+        },
+        "use_when": "Direct `apply`/`rewrite` does not match the raw endpoint yet, but this is a live Pr bridge checkpoint. If pursuing this Pr-bridge route, inspect it with `-where pr_CCP_OCCP` and probe a small intermediate Pr equality to one instantiated...",
+        "returns": "manager-provided read-only context for this proof route"
+      },
+      {
+        "intent": "inspect_context",
+        "payload": {
+          "topic": "goal_info"
+        },
+        "use_when": "Need parsed goal shape, resolved names, or KB pattern hints.",
+        "returns": "parsed goal structure and names"
+      },
+      {
+        "intent": "inspect_context",
+        "payload": {
+          "topic": "pr_bridge_routes"
+        },
+        "use_when": "Current Pr equality may need a manager-verified bridge route (game-hop or scheme/endpoint normalization) before direct byequiv/proc lowering.",
+        "returns": "daemon-verified, committable Pr bridge routes with manager-owned intent payloads"
+      },
+      {
+        "intent": "inspect_context",
+        "payload": {
+          "topic": "equiv_bridge_lemmas"
+        },
+        "use_when": "Need pRHL/procedure-equivalence bridge lemma names or context after checking pr_bridge_routes.",
+        "returns": "context-only equiv bridge lemma candidates (names to look up/apply); not a verified Pr route"
+      },
+      {
+        "intent": "inspect_context",
+        "payload": {
+          "topic": "lemma_hints"
+        },
+        "use_when": "Need local lemma hints before choosing a Pr-level proof route.",
+        "returns": "nearby lemma hints and proof-route context"
+      },
+      {
+        "intent": "inspect_context",
+        "payload": {
+          "topic": "tactic_forms",
+          "name": "while"
+        },
+        "use_when": "Need exact byphoare/phoare-loop tactic syntax before probing the probability route.",
+        "returns": "valid `while` forms and common traps"
+      }
+    ],
+    "lookup_candidates": [
+      {
+        "symbol": "pr_RO_split",
+        "use_when": "Resolve exact signature for `pr_RO_split` only when this handle route is being tested."
+      },
+      {
+        "symbol": "pr_CCP_OCCP",
+        "use_when": "Resolve exact signature for `pr_CCP_OCCP` only when this handle route is being tested."
+      }
+    ]
+  }
+}

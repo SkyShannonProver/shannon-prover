@@ -1,0 +1,20 @@
+{
+  "turn": 21,
+  "handled_intent": {
+    "intent": "commit_tactic",
+    "payload": {
+      "tactic": "move=> &2 hinv hc1 hltq hge hlt t1 _ tL _; rewrite size_cat size_map nth_cat; have -> /= : (nth0 < size UFCMA_l.lbad1{2}) = false; 1: by smt(); split; 1: by smt(); move=> _; rewrite (nth_map witness) /=; smt()."
+    }
+  },
+  "ok": true,
+  "manager_note": "Commit attempt did not change the committed EasyCrypt proof state; use the returned result and latest view before trying the next proof intent.",
+  "manager_actions": [
+    {
+      "action": "tactic commit",
+      "outcome": "EasyCrypt rejected the committed tactic. Use the error summary and current goal to revise the proof step.",
+      "timing": "1.9 s",
+      "error_summary": "[error] invalid focus index: 1"
+    }
+  ],
+  "view_refreshed": true
+}

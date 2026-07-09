@@ -1,0 +1,39 @@
+{
+  "last_result": {},
+  "current_goal": {
+    "goal_type": "phoare",
+    "lines": [
+      "Current goal",
+      "",
+      "Type variables: <none>",
+      "",
+      "_mk: mK",
+      "_ek: block",
+      "_c: block list",
+      "------------------------------------------------------------------------",
+      "pre = key = (_ek, _mk) /\\ c = _c",
+      "",
+      "    MEE(PRPc.PseudoRP, MAC).dec ",
+      "    [=] 1%r",
+      "",
+      "post =",
+      "  res =",
+      "  mee_dec AESi hmac_sha256 _ek _mk (head witness<:block> _c) (behead _c)"
+    ],
+    "source": {
+      "ground_truth": false,
+      "label": "Parsed from EasyCrypt pretty goal text"
+    },
+    "text_fully_shown": true,
+    "truncated": false,
+    "view_focus": "procedure_frontier"
+  },
+  "proof_status": {
+    "current_layer": "procedure_entry",
+    "goal_type": "phoare",
+    "remaining_goals": 1,
+    "remaining_goals_known": true,
+    "status": "open",
+    "view_focus": "procedure_frontier"
+  }
+}

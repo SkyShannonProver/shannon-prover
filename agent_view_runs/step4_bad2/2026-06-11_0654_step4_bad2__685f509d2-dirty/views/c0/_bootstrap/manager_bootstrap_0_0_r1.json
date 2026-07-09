@@ -1,0 +1,1365 @@
+{
+  "file": "artifacts/eval_suite/cc_step4_bad2_fable_l4np/l4_checked_action_surface/cc_step4_bad2_l4np/r01/source/ChaChaPoly/chacha_poly.ec",
+  "include_dirs": [
+    "artifacts/eval_suite/cc_step4_bad2_fable_l4np/l4_checked_action_surface/cc_step4_bad2_l4np/r01/source/ChaChaPoly",
+    "easycrypt-src/theories"
+  ],
+  "kind": "manager_session_bootstrap",
+  "lemma": "step4_bad2",
+  "manager_actions": [
+    {
+      "agent_observation": {
+        "effect": "This manager intent does not change the EasyCrypt proof state.",
+        "manager_action": "start",
+        "result": "The manager completed this proof-level request."
+      },
+      "argv": [
+        ".venv/bin/python3",
+        "core/easycrypt/session_cli.py",
+        "-d",
+        ".ec_session_prover_tree_0_0_r1",
+        "-start",
+        "-f",
+        "artifacts/eval_suite/cc_step4_bad2_fable_l4np/l4_checked_action_surface/cc_step4_bad2_l4np/r01/source/ChaChaPoly/chacha_poly.ec",
+        "-I",
+        "artifacts/eval_suite/cc_step4_bad2_fable_l4np/l4_checked_action_surface/cc_step4_bad2_l4np/r01/source/ChaChaPoly",
+        "-I",
+        "easycrypt-src/theories",
+        "-lemma",
+        "step4_bad2"
+      ],
+      "duration_ms": 1542,
+      "exit_code": 0,
+      "label": "start",
+      "mutates_proof_state": true,
+      "stderr_chars": 0,
+      "stderr_preview": "",
+      "stdout_chars": 5420,
+      "stdout_has_workspace_view": true,
+      "stdout_lines": 155
+    },
+    {
+      "agent_observation": {
+        "effect": "EasyCrypt accepted a proof-state change; the refreshed view is based on the new committed state.",
+        "manager_action": "replay_prefix_step_1",
+        "proof_state": "The committed EasyCrypt proof state changed.",
+        "result": "The manager completed this proof-level request.",
+        "tactic": "have -> : Pr[UFCMA(ROIN.RO).distinguish() @ &m : res \\/ UFCMA.bad2] = Pr[UFCMA3(ROIN.RO).distinguish() @ &m : res]."
+      },
+      "argv": [
+        ".venv/bin/python3",
+        "core/easycrypt/session_cli.py",
+        "-d",
+        ".ec_session_prover_tree_0_0_r1",
+        "-next",
+        "-c",
+        "have -> : Pr[UFCMA(ROIN.RO).distinguish() @ &m : res \\/ UFCMA.bad2] = Pr[UFCMA3(ROIN.RO).distinguish() @ &m : res]."
+      ],
+      "duration_ms": 1892,
+      "exit_code": 0,
+      "label": "replay_prefix_step_1",
+      "mutates_proof_state": true,
+      "stderr_chars": 0,
+      "stderr_preview": "",
+      "stdout_chars": 6899,
+      "stdout_has_workspace_view": true,
+      "stdout_lines": 2
+    },
+    {
+      "agent_observation": {
+        "effect": "EasyCrypt accepted a proof-state change; the refreshed view is based on the new committed state.",
+        "manager_action": "replay_prefix_step_2",
+        "proof_state": "The committed EasyCrypt proof state changed.",
+        "result": "The manager completed this proof-level request.",
+        "tactic": "byequiv equiv_step4 => // /#."
+      },
+      "argv": [
+        ".venv/bin/python3",
+        "core/easycrypt/session_cli.py",
+        "-d",
+        ".ec_session_prover_tree_0_0_r1",
+        "-next",
+        "-c",
+        "byequiv equiv_step4 => // /#."
+      ],
+      "duration_ms": 550,
+      "exit_code": 0,
+      "label": "replay_prefix_step_2",
+      "mutates_proof_state": true,
+      "stderr_chars": 0,
+      "stderr_preview": "",
+      "stdout_chars": 7430,
+      "stdout_has_workspace_view": true,
+      "stdout_lines": 2
+    },
+    {
+      "agent_observation": {
+        "effect": "EasyCrypt accepted a proof-state change; the refreshed view is based on the new committed state.",
+        "manager_action": "replay_prefix_step_3",
+        "proof_state": "The committed EasyCrypt proof state changed.",
+        "result": "The manager completed this proof-level request.",
+        "tactic": "have -> : Pr[UFCMA3(ROIN.RO).distinguish() @ &m : res] = Pr[UFCMA3(ROIN.LRO).distinguish() @ &m : res]."
+      },
+      "argv": [
+        ".venv/bin/python3",
+        "core/easycrypt/session_cli.py",
+        "-d",
+        ".ec_session_prover_tree_0_0_r1",
+        "-next",
+        "-c",
+        "have -> : Pr[UFCMA3(ROIN.RO).distinguish() @ &m : res] = Pr[UFCMA3(ROIN.LRO).distinguish() @ &m : res]."
+      ],
+      "duration_ms": 545,
+      "exit_code": 0,
+      "label": "replay_prefix_step_3",
+      "mutates_proof_state": true,
+      "stderr_chars": 0,
+      "stderr_preview": "",
+      "stdout_chars": 6728,
+      "stdout_has_workspace_view": true,
+      "stdout_lines": 2
+    },
+    {
+      "agent_observation": {
+        "effect": "EasyCrypt accepted a proof-state change; the refreshed view is based on the new committed state.",
+        "manager_action": "replay_prefix_step_4",
+        "proof_state": "The committed EasyCrypt proof state changed.",
+        "result": "The manager completed this proof-level request.",
+        "tactic": "byequiv (ROIN.FullEager.RO_LRO_D UFCMA3 _) => //; move=> _; apply dpoly_in_ll."
+      },
+      "argv": [
+        ".venv/bin/python3",
+        "core/easycrypt/session_cli.py",
+        "-d",
+        ".ec_session_prover_tree_0_0_r1",
+        "-next",
+        "-c",
+        "byequiv (ROIN.FullEager.RO_LRO_D UFCMA3 _) => //; move=> _; apply dpoly_in_ll."
+      ],
+      "duration_ms": 564,
+      "exit_code": 0,
+      "label": "replay_prefix_step_4",
+      "mutates_proof_state": true,
+      "stderr_chars": 0,
+      "stderr_preview": "",
+      "stdout_chars": 7479,
+      "stdout_has_workspace_view": true,
+      "stdout_lines": 2
+    },
+    {
+      "agent_observation": {
+        "effect": "EasyCrypt accepted a proof-state change; the refreshed view is based on the new committed state.",
+        "manager_action": "replay_prefix_step_5",
+        "proof_state": "The committed EasyCrypt proof state changed.",
+        "result": "The manager completed this proof-level request.",
+        "tactic": "byphoare => //."
+      },
+      "argv": [
+        ".venv/bin/python3",
+        "core/easycrypt/session_cli.py",
+        "-d",
+        ".ec_session_prover_tree_0_0_r1",
+        "-next",
+        "-c",
+        "byphoare => //."
+      ],
+      "duration_ms": 183,
+      "exit_code": 0,
+      "label": "replay_prefix_step_5",
+      "mutates_proof_state": true,
+      "stderr_chars": 0,
+      "stderr_preview": "",
+      "stdout_chars": 9066,
+      "stdout_has_workspace_view": true,
+      "stdout_lines": 2
+    },
+    {
+      "agent_observation": {
+        "effect": "EasyCrypt accepted a proof-state change; the refreshed view is based on the new committed state.",
+        "manager_action": "replay_prefix_step_6",
+        "proof_state": "The committed EasyCrypt proof state changed.",
+        "result": "The manager completed this proof-level request.",
+        "tactic": "proc."
+      },
+      "argv": [
+        ".venv/bin/python3",
+        "core/easycrypt/session_cli.py",
+        "-d",
+        ".ec_session_prover_tree_0_0_r1",
+        "-next",
+        "-c",
+        "proc."
+      ],
+      "duration_ms": 198,
+      "exit_code": 0,
+      "label": "replay_prefix_step_6",
+      "mutates_proof_state": true,
+      "stderr_chars": 0,
+      "stderr_preview": "",
+      "stdout_chars": 18861,
+      "stdout_has_workspace_view": true,
+      "stdout_lines": 2
+    },
+    {
+      "agent_observation": {
+        "effect": "EasyCrypt accepted a proof-state change; the refreshed view is based on the new committed state.",
+        "manager_action": "replay_prefix_step_7",
+        "proof_state": "The committed EasyCrypt proof state changed.",
+        "result": "The manager completed this proof-level request.",
+        "tactic": "seq 6 : (UF.forged = false /\\ UFCMA.bad2 = false /\\ ROIN.RO.m = empty) (1%r) (qdec%r * maxr pr_zeropol pr1_poly_out) (0%r) (1%r)."
+      },
+      "argv": [
+        ".venv/bin/python3",
+        "core/easycrypt/session_cli.py",
+        "-d",
+        ".ec_session_prover_tree_0_0_r1",
+        "-next",
+        "-c",
+        "seq 6 : (UF.forged = false /\\ UFCMA.bad2 = false /\\ ROIN.RO.m = empty) (1%r) (qdec%r * maxr pr_zeropol pr1_poly_out) (0%r) (1%r)."
+      ],
+      "duration_ms": 188,
+      "exit_code": 0,
+      "label": "replay_prefix_step_7",
+      "mutates_proof_state": true,
+      "stderr_chars": 0,
+      "stderr_preview": "",
+      "stdout_chars": 12989,
+      "stdout_has_workspace_view": true,
+      "stdout_lines": 2
+    },
+    {
+      "agent_observation": {
+        "effect": "EasyCrypt accepted a proof-state change; the refreshed view is based on the new committed state.",
+        "manager_action": "replay_prefix_step_8",
+        "proof_state": "The committed EasyCrypt proof state changed.",
+        "result": "The manager completed this proof-level request.",
+        "tactic": "trivial."
+      },
+      "argv": [
+        ".venv/bin/python3",
+        "core/easycrypt/session_cli.py",
+        "-d",
+        ".ec_session_prover_tree_0_0_r1",
+        "-next",
+        "-c",
+        "trivial."
+      ],
+      "duration_ms": 184,
+      "exit_code": 0,
+      "label": "replay_prefix_step_8",
+      "mutates_proof_state": true,
+      "stderr_chars": 0,
+      "stderr_preview": "",
+      "stdout_chars": 12101,
+      "stdout_has_workspace_view": true,
+      "stdout_lines": 2
+    },
+    {
+      "agent_observation": {
+        "effect": "EasyCrypt accepted a proof-state change; the refreshed view is based on the new committed state.",
+        "manager_action": "replay_prefix_step_9",
+        "proof_state": "The committed EasyCrypt proof state changed.",
+        "result": "The manager completed this proof-level request.",
+        "tactic": "trivial."
+      },
+      "argv": [
+        ".venv/bin/python3",
+        "core/easycrypt/session_cli.py",
+        "-d",
+        ".ec_session_prover_tree_0_0_r1",
+        "-next",
+        "-c",
+        "trivial."
+      ],
+      "duration_ms": 196,
+      "exit_code": 0,
+      "label": "replay_prefix_step_9",
+      "mutates_proof_state": true,
+      "stderr_chars": 0,
+      "stderr_preview": "",
+      "stdout_chars": 16273,
+      "stdout_has_workspace_view": true,
+      "stdout_lines": 2
+    },
+    {
+      "agent_observation": {
+        "effect": "EasyCrypt accepted a proof-state change; the refreshed view is based on the new committed state.",
+        "manager_action": "replay_prefix_step_10",
+        "proof_state": "The committed EasyCrypt proof state changed.",
+        "result": "The manager completed this proof-level request.",
+        "tactic": "if."
+      },
+      "argv": [
+        ".venv/bin/python3",
+        "core/easycrypt/session_cli.py",
+        "-d",
+        ".ec_session_prover_tree_0_0_r1",
+        "-next",
+        "-c",
+        "if."
+      ],
+      "duration_ms": 197,
+      "exit_code": 0,
+      "label": "replay_prefix_step_10",
+      "mutates_proof_state": true,
+      "stderr_chars": 0,
+      "stderr_preview": "",
+      "stdout_chars": 16394,
+      "stdout_has_workspace_view": true,
+      "stdout_lines": 2
+    },
+    {
+      "agent_observation": {
+        "effect": "EasyCrypt accepted a proof-state change; the refreshed view is based on the new committed state.",
+        "manager_action": "replay_prefix_step_11",
+        "proof_state": "The committed EasyCrypt proof state changed.",
+        "result": "The manager completed this proof-level request.",
+        "tactic": "sp."
+      },
+      "argv": [
+        ".venv/bin/python3",
+        "core/easycrypt/session_cli.py",
+        "-d",
+        ".ec_session_prover_tree_0_0_r1",
+        "-next",
+        "-c",
+        "sp."
+      ],
+      "duration_ms": 196,
+      "exit_code": 0,
+      "label": "replay_prefix_step_11",
+      "mutates_proof_state": true,
+      "stderr_chars": 0,
+      "stderr_preview": "",
+      "stdout_chars": 15358,
+      "stdout_has_workspace_view": true,
+      "stdout_lines": 2
+    },
+    {
+      "agent_observation": {
+        "effect": "EasyCrypt accepted a proof-state change; the refreshed view is based on the new committed state.",
+        "manager_action": "replay_prefix_step_12",
+        "proof_state": "The committed EasyCrypt proof state changed.",
+        "result": "The manager completed this proof-level request.",
+        "tactic": "seq 2 : (UF.forged) (BRA.big predT (fun (n0 : nonce) => (size (filter (fun (c : ciphertext) => c.`1 = n0) Mem.lc))%r) ns1 * pr_zeropol) (1%r) (1%r) (BRA.big predT (fun (n0 : nonce) => (size (filter (fun (c : ciphertext) => c.`1 = n0) Mem.lc))%r) ns2 * pr1_poly_out)."
+      },
+      "argv": [
+        ".venv/bin/python3",
+        "core/easycrypt/session_cli.py",
+        "-d",
+        ".ec_session_prover_tree_0_0_r1",
+        "-next",
+        "-c",
+        "seq 2 : (UF.forged) (BRA.big predT (fun (n0 : nonce) => (size (filter (fun (c : ciphertext) => c.`1 = n0) Mem.lc))%r) ns1 * pr_zeropol) (1%r) (1%r) (BRA.big predT (fun (n0 : nonce) => (size (filter (fun (c : ciphertext) => c.`1 = n0) Mem.lc))%r) ns2 * pr1_poly_out)."
+      ],
+      "duration_ms": 190,
+      "exit_code": 0,
+      "label": "replay_prefix_step_12",
+      "mutates_proof_state": true,
+      "stderr_chars": 0,
+      "stderr_preview": "",
+      "stdout_chars": 13663,
+      "stdout_has_workspace_view": true,
+      "stdout_lines": 2
+    },
+    {
+      "agent_observation": {
+        "effect": "EasyCrypt accepted a proof-state change; the refreshed view is based on the new committed state.",
+        "manager_action": "replay_prefix_step_13",
+        "proof_state": "The committed EasyCrypt proof state changed.",
+        "result": "The manager completed this proof-level request.",
+        "tactic": "trivial."
+      },
+      "argv": [
+        ".venv/bin/python3",
+        "core/easycrypt/session_cli.py",
+        "-d",
+        ".ec_session_prover_tree_0_0_r1",
+        "-next",
+        "-c",
+        "trivial."
+      ],
+      "duration_ms": 191,
+      "exit_code": 0,
+      "label": "replay_prefix_step_13",
+      "mutates_proof_state": true,
+      "stderr_chars": 0,
+      "stderr_preview": "",
+      "stdout_chars": 13571,
+      "stdout_has_workspace_view": true,
+      "stdout_lines": 2
+    },
+    {
+      "agent_observation": {
+        "effect": "EasyCrypt accepted a proof-state change; the refreshed view is based on the new committed state.",
+        "manager_action": "replay_prefix_step_14",
+        "proof_state": "The committed EasyCrypt proof state changed.",
+        "result": "The manager completed this proof-level request.",
+        "tactic": "wp."
+      },
+      "argv": [
+        ".venv/bin/python3",
+        "core/easycrypt/session_cli.py",
+        "-d",
+        ".ec_session_prover_tree_0_0_r1",
+        "-next",
+        "-c",
+        "wp."
+      ],
+      "duration_ms": 191,
+      "exit_code": 0,
+      "label": "replay_prefix_step_14",
+      "mutates_proof_state": true,
+      "stderr_chars": 0,
+      "stderr_preview": "",
+      "stdout_chars": 13012,
+      "stdout_has_workspace_view": true,
+      "stdout_lines": 2
+    },
+    {
+      "agent_observation": {
+        "effect": "EasyCrypt accepted a proof-state change; the refreshed view is based on the new committed state.",
+        "manager_action": "replay_prefix_step_15",
+        "proof_state": "The committed EasyCrypt proof state changed.",
+        "result": "The manager completed this proof-level request.",
+        "tactic": "while (true) (size ns1 - i)."
+      },
+      "argv": [
+        ".venv/bin/python3",
+        "core/easycrypt/session_cli.py",
+        "-d",
+        ".ec_session_prover_tree_0_0_r1",
+        "-next",
+        "-c",
+        "while (true) (size ns1 - i)."
+      ],
+      "duration_ms": 182,
+      "exit_code": 0,
+      "label": "replay_prefix_step_15",
+      "mutates_proof_state": true,
+      "stderr_chars": 0,
+      "stderr_preview": "",
+      "stdout_chars": 7818,
+      "stdout_has_workspace_view": true,
+      "stdout_lines": 2
+    },
+    {
+      "agent_observation": {
+        "effect": "This manager intent does not change the EasyCrypt proof state.",
+        "manager_action": "agent_view",
+        "result": "The manager completed this proof-level request."
+      },
+      "argv": [
+        ".venv/bin/python3",
+        "core/easycrypt/session_cli.py",
+        "-d",
+        ".ec_session_prover_tree_0_0_r1",
+        "-agent-view"
+      ],
+      "duration_ms": 166,
+      "exit_code": 0,
+      "label": "agent_view",
+      "mutates_proof_state": false,
+      "stderr_chars": 0,
+      "stderr_preview": "",
+      "stdout_chars": 7610,
+      "stdout_has_workspace_view": true,
+      "stdout_lines": 211
+    }
+  ],
+  "node": "Tree-0.0.r1",
+  "replay_prefix": [
+    "have -> : Pr[UFCMA(ROIN.RO).distinguish() @ &m : res \\/ UFCMA.bad2] = Pr[UFCMA3(ROIN.RO).distinguish() @ &m : res].",
+    "byequiv equiv_step4 => // /#.",
+    "have -> : Pr[UFCMA3(ROIN.RO).distinguish() @ &m : res] = Pr[UFCMA3(ROIN.LRO).distinguish() @ &m : res].",
+    "byequiv (ROIN.FullEager.RO_LRO_D UFCMA3 _) => //; move=> _; apply dpoly_in_ll.",
+    "byphoare => //.",
+    "proc.",
+    "seq 6 : (UF.forged = false /\\ UFCMA.bad2 = false /\\ ROIN.RO.m = empty) (1%r) (qdec%r * maxr pr_zeropol pr1_poly_out) (0%r) (1%r).",
+    "trivial.",
+    "trivial.",
+    "if.",
+    "sp.",
+    "seq 2 : (UF.forged) (BRA.big predT (fun (n0 : nonce) => (size (filter (fun (c : ciphertext) => c.`1 = n0) Mem.lc))%r) ns1 * pr_zeropol) (1%r) (1%r) (BRA.big predT (fun (n0 : nonce) => (size (filter (fun (c : ciphertext) => c.`1 = n0) Mem.lc))%r) ns2 * pr1_poly_out).",
+    "trivial.",
+    "wp.",
+    "while (true) (size ns1 - i)."
+  ],
+  "replay_prefix_count": 15,
+  "replay_prefix_requested_count": 15,
+  "schema_version": 2,
+  "session_dir": ".ec_session_prover_tree_0_0_r1",
+  "session_tag": "prover_tree_0_0_r1",
+  "snapshot": {
+    "execution_refs": {
+      "manager_action_count": 17,
+      "manager_actions": [
+        {
+          "agent_observation": {
+            "effect": "This manager intent does not change the EasyCrypt proof state.",
+            "manager_action": "start",
+            "result": "The manager completed this proof-level request."
+          },
+          "argv": [
+            ".venv/bin/python3",
+            "core/easycrypt/session_cli.py",
+            "-d",
+            ".ec_session_prover_tree_0_0_r1",
+            "-start",
+            "-f",
+            "artifacts/eval_suite/cc_step4_bad2_fable_l4np/l4_checked_action_surface/cc_step4_bad2_l4np/r01/source/ChaChaPoly/chacha_poly.ec",
+            "-I",
+            "artifacts/eval_suite/cc_step4_bad2_fable_l4np/l4_checked_action_surface/cc_step4_bad2_l4np/r01/source/ChaChaPoly",
+            "-I",
+            "easycrypt-src/theories",
+            "-lemma",
+            "step4_bad2"
+          ],
+          "duration_ms": 1542,
+          "exit_code": 0,
+          "label": "start",
+          "mutates_proof_state": true,
+          "stderr_chars": 0,
+          "stderr_preview": "",
+          "stdout_chars": 5420,
+          "stdout_has_workspace_view": true,
+          "stdout_lines": 155
+        },
+        {
+          "agent_observation": {
+            "effect": "EasyCrypt accepted a proof-state change; the refreshed view is based on the new committed state.",
+            "manager_action": "replay_prefix_step_1",
+            "proof_state": "The committed EasyCrypt proof state changed.",
+            "result": "The manager completed this proof-level request.",
+            "tactic": "have -> : Pr[UFCMA(ROIN.RO).distinguish() @ &m : res \\/ UFCMA.bad2] = Pr[UFCMA3(ROIN.RO).distinguish() @ &m : res]."
+          },
+          "argv": [
+            ".venv/bin/python3",
+            "core/easycrypt/session_cli.py",
+            "-d",
+            ".ec_session_prover_tree_0_0_r1",
+            "-next",
+            "-c",
+            "have -> : Pr[UFCMA(ROIN.RO).distinguish() @ &m : res \\/ UFCMA.bad2] = Pr[UFCMA3(ROIN.RO).distinguish() @ &m : res]."
+          ],
+          "duration_ms": 1892,
+          "exit_code": 0,
+          "label": "replay_prefix_step_1",
+          "mutates_proof_state": true,
+          "stderr_chars": 0,
+          "stderr_preview": "",
+          "stdout_chars": 6899,
+          "stdout_has_workspace_view": true,
+          "stdout_lines": 2
+        },
+        {
+          "agent_observation": {
+            "effect": "EasyCrypt accepted a proof-state change; the refreshed view is based on the new committed state.",
+            "manager_action": "replay_prefix_step_2",
+            "proof_state": "The committed EasyCrypt proof state changed.",
+            "result": "The manager completed this proof-level request.",
+            "tactic": "byequiv equiv_step4 => // /#."
+          },
+          "argv": [
+            ".venv/bin/python3",
+            "core/easycrypt/session_cli.py",
+            "-d",
+            ".ec_session_prover_tree_0_0_r1",
+            "-next",
+            "-c",
+            "byequiv equiv_step4 => // /#."
+          ],
+          "duration_ms": 550,
+          "exit_code": 0,
+          "label": "replay_prefix_step_2",
+          "mutates_proof_state": true,
+          "stderr_chars": 0,
+          "stderr_preview": "",
+          "stdout_chars": 7430,
+          "stdout_has_workspace_view": true,
+          "stdout_lines": 2
+        },
+        {
+          "agent_observation": {
+            "effect": "EasyCrypt accepted a proof-state change; the refreshed view is based on the new committed state.",
+            "manager_action": "replay_prefix_step_3",
+            "proof_state": "The committed EasyCrypt proof state changed.",
+            "result": "The manager completed this proof-level request.",
+            "tactic": "have -> : Pr[UFCMA3(ROIN.RO).distinguish() @ &m : res] = Pr[UFCMA3(ROIN.LRO).distinguish() @ &m : res]."
+          },
+          "argv": [
+            ".venv/bin/python3",
+            "core/easycrypt/session_cli.py",
+            "-d",
+            ".ec_session_prover_tree_0_0_r1",
+            "-next",
+            "-c",
+            "have -> : Pr[UFCMA3(ROIN.RO).distinguish() @ &m : res] = Pr[UFCMA3(ROIN.LRO).distinguish() @ &m : res]."
+          ],
+          "duration_ms": 545,
+          "exit_code": 0,
+          "label": "replay_prefix_step_3",
+          "mutates_proof_state": true,
+          "stderr_chars": 0,
+          "stderr_preview": "",
+          "stdout_chars": 6728,
+          "stdout_has_workspace_view": true,
+          "stdout_lines": 2
+        },
+        {
+          "agent_observation": {
+            "effect": "EasyCrypt accepted a proof-state change; the refreshed view is based on the new committed state.",
+            "manager_action": "replay_prefix_step_4",
+            "proof_state": "The committed EasyCrypt proof state changed.",
+            "result": "The manager completed this proof-level request.",
+            "tactic": "byequiv (ROIN.FullEager.RO_LRO_D UFCMA3 _) => //; move=> _; apply dpoly_in_ll."
+          },
+          "argv": [
+            ".venv/bin/python3",
+            "core/easycrypt/session_cli.py",
+            "-d",
+            ".ec_session_prover_tree_0_0_r1",
+            "-next",
+            "-c",
+            "byequiv (ROIN.FullEager.RO_LRO_D UFCMA3 _) => //; move=> _; apply dpoly_in_ll."
+          ],
+          "duration_ms": 564,
+          "exit_code": 0,
+          "label": "replay_prefix_step_4",
+          "mutates_proof_state": true,
+          "stderr_chars": 0,
+          "stderr_preview": "",
+          "stdout_chars": 7479,
+          "stdout_has_workspace_view": true,
+          "stdout_lines": 2
+        },
+        {
+          "agent_observation": {
+            "effect": "EasyCrypt accepted a proof-state change; the refreshed view is based on the new committed state.",
+            "manager_action": "replay_prefix_step_5",
+            "proof_state": "The committed EasyCrypt proof state changed.",
+            "result": "The manager completed this proof-level request.",
+            "tactic": "byphoare => //."
+          },
+          "argv": [
+            ".venv/bin/python3",
+            "core/easycrypt/session_cli.py",
+            "-d",
+            ".ec_session_prover_tree_0_0_r1",
+            "-next",
+            "-c",
+            "byphoare => //."
+          ],
+          "duration_ms": 183,
+          "exit_code": 0,
+          "label": "replay_prefix_step_5",
+          "mutates_proof_state": true,
+          "stderr_chars": 0,
+          "stderr_preview": "",
+          "stdout_chars": 9066,
+          "stdout_has_workspace_view": true,
+          "stdout_lines": 2
+        },
+        {
+          "agent_observation": {
+            "effect": "EasyCrypt accepted a proof-state change; the refreshed view is based on the new committed state.",
+            "manager_action": "replay_prefix_step_6",
+            "proof_state": "The committed EasyCrypt proof state changed.",
+            "result": "The manager completed this proof-level request.",
+            "tactic": "proc."
+          },
+          "argv": [
+            ".venv/bin/python3",
+            "core/easycrypt/session_cli.py",
+            "-d",
+            ".ec_session_prover_tree_0_0_r1",
+            "-next",
+            "-c",
+            "proc."
+          ],
+          "duration_ms": 198,
+          "exit_code": 0,
+          "label": "replay_prefix_step_6",
+          "mutates_proof_state": true,
+          "stderr_chars": 0,
+          "stderr_preview": "",
+          "stdout_chars": 18861,
+          "stdout_has_workspace_view": true,
+          "stdout_lines": 2
+        },
+        {
+          "agent_observation": {
+            "effect": "EasyCrypt accepted a proof-state change; the refreshed view is based on the new committed state.",
+            "manager_action": "replay_prefix_step_7",
+            "proof_state": "The committed EasyCrypt proof state changed.",
+            "result": "The manager completed this proof-level request.",
+            "tactic": "seq 6 : (UF.forged = false /\\ UFCMA.bad2 = false /\\ ROIN.RO.m = empty) (1%r) (qdec%r * maxr pr_zeropol pr1_poly_out) (0%r) (1%r)."
+          },
+          "argv": [
+            ".venv/bin/python3",
+            "core/easycrypt/session_cli.py",
+            "-d",
+            ".ec_session_prover_tree_0_0_r1",
+            "-next",
+            "-c",
+            "seq 6 : (UF.forged = false /\\ UFCMA.bad2 = false /\\ ROIN.RO.m = empty) (1%r) (qdec%r * maxr pr_zeropol pr1_poly_out) (0%r) (1%r)."
+          ],
+          "duration_ms": 188,
+          "exit_code": 0,
+          "label": "replay_prefix_step_7",
+          "mutates_proof_state": true,
+          "stderr_chars": 0,
+          "stderr_preview": "",
+          "stdout_chars": 12989,
+          "stdout_has_workspace_view": true,
+          "stdout_lines": 2
+        },
+        {
+          "agent_observation": {
+            "effect": "EasyCrypt accepted a proof-state change; the refreshed view is based on the new committed state.",
+            "manager_action": "replay_prefix_step_8",
+            "proof_state": "The committed EasyCrypt proof state changed.",
+            "result": "The manager completed this proof-level request.",
+            "tactic": "trivial."
+          },
+          "argv": [
+            ".venv/bin/python3",
+            "core/easycrypt/session_cli.py",
+            "-d",
+            ".ec_session_prover_tree_0_0_r1",
+            "-next",
+            "-c",
+            "trivial."
+          ],
+          "duration_ms": 184,
+          "exit_code": 0,
+          "label": "replay_prefix_step_8",
+          "mutates_proof_state": true,
+          "stderr_chars": 0,
+          "stderr_preview": "",
+          "stdout_chars": 12101,
+          "stdout_has_workspace_view": true,
+          "stdout_lines": 2
+        },
+        {
+          "agent_observation": {
+            "effect": "EasyCrypt accepted a proof-state change; the refreshed view is based on the new committed state.",
+            "manager_action": "replay_prefix_step_9",
+            "proof_state": "The committed EasyCrypt proof state changed.",
+            "result": "The manager completed this proof-level request.",
+            "tactic": "trivial."
+          },
+          "argv": [
+            ".venv/bin/python3",
+            "core/easycrypt/session_cli.py",
+            "-d",
+            ".ec_session_prover_tree_0_0_r1",
+            "-next",
+            "-c",
+            "trivial."
+          ],
+          "duration_ms": 196,
+          "exit_code": 0,
+          "label": "replay_prefix_step_9",
+          "mutates_proof_state": true,
+          "stderr_chars": 0,
+          "stderr_preview": "",
+          "stdout_chars": 16273,
+          "stdout_has_workspace_view": true,
+          "stdout_lines": 2
+        },
+        {
+          "agent_observation": {
+            "effect": "EasyCrypt accepted a proof-state change; the refreshed view is based on the new committed state.",
+            "manager_action": "replay_prefix_step_10",
+            "proof_state": "The committed EasyCrypt proof state changed.",
+            "result": "The manager completed this proof-level request.",
+            "tactic": "if."
+          },
+          "argv": [
+            ".venv/bin/python3",
+            "core/easycrypt/session_cli.py",
+            "-d",
+            ".ec_session_prover_tree_0_0_r1",
+            "-next",
+            "-c",
+            "if."
+          ],
+          "duration_ms": 197,
+          "exit_code": 0,
+          "label": "replay_prefix_step_10",
+          "mutates_proof_state": true,
+          "stderr_chars": 0,
+          "stderr_preview": "",
+          "stdout_chars": 16394,
+          "stdout_has_workspace_view": true,
+          "stdout_lines": 2
+        },
+        {
+          "agent_observation": {
+            "effect": "EasyCrypt accepted a proof-state change; the refreshed view is based on the new committed state.",
+            "manager_action": "replay_prefix_step_11",
+            "proof_state": "The committed EasyCrypt proof state changed.",
+            "result": "The manager completed this proof-level request.",
+            "tactic": "sp."
+          },
+          "argv": [
+            ".venv/bin/python3",
+            "core/easycrypt/session_cli.py",
+            "-d",
+            ".ec_session_prover_tree_0_0_r1",
+            "-next",
+            "-c",
+            "sp."
+          ],
+          "duration_ms": 196,
+          "exit_code": 0,
+          "label": "replay_prefix_step_11",
+          "mutates_proof_state": true,
+          "stderr_chars": 0,
+          "stderr_preview": "",
+          "stdout_chars": 15358,
+          "stdout_has_workspace_view": true,
+          "stdout_lines": 2
+        },
+        {
+          "agent_observation": {
+            "effect": "EasyCrypt accepted a proof-state change; the refreshed view is based on the new committed state.",
+            "manager_action": "replay_prefix_step_12",
+            "proof_state": "The committed EasyCrypt proof state changed.",
+            "result": "The manager completed this proof-level request.",
+            "tactic": "seq 2 : (UF.forged) (BRA.big predT (fun (n0 : nonce) => (size (filter (fun (c : ciphertext) => c.`1 = n0) Mem.lc))%r) ns1 * pr_zeropol) (1%r) (1%r) (BRA.big predT (fun (n0 : nonce) => (size (filter (fun (c : ciphertext) => c.`1 = n0) Mem.lc))%r) ns2 * pr1_poly_out)."
+          },
+          "argv": [
+            ".venv/bin/python3",
+            "core/easycrypt/session_cli.py",
+            "-d",
+            ".ec_session_prover_tree_0_0_r1",
+            "-next",
+            "-c",
+            "seq 2 : (UF.forged) (BRA.big predT (fun (n0 : nonce) => (size (filter (fun (c : ciphertext) => c.`1 = n0) Mem.lc))%r) ns1 * pr_zeropol) (1%r) (1%r) (BRA.big predT (fun (n0 : nonce) => (size (filter (fun (c : ciphertext) => c.`1 = n0) Mem.lc))%r) ns2 * pr1_poly_out)."
+          ],
+          "duration_ms": 190,
+          "exit_code": 0,
+          "label": "replay_prefix_step_12",
+          "mutates_proof_state": true,
+          "stderr_chars": 0,
+          "stderr_preview": "",
+          "stdout_chars": 13663,
+          "stdout_has_workspace_view": true,
+          "stdout_lines": 2
+        },
+        {
+          "agent_observation": {
+            "effect": "EasyCrypt accepted a proof-state change; the refreshed view is based on the new committed state.",
+            "manager_action": "replay_prefix_step_13",
+            "proof_state": "The committed EasyCrypt proof state changed.",
+            "result": "The manager completed this proof-level request.",
+            "tactic": "trivial."
+          },
+          "argv": [
+            ".venv/bin/python3",
+            "core/easycrypt/session_cli.py",
+            "-d",
+            ".ec_session_prover_tree_0_0_r1",
+            "-next",
+            "-c",
+            "trivial."
+          ],
+          "duration_ms": 191,
+          "exit_code": 0,
+          "label": "replay_prefix_step_13",
+          "mutates_proof_state": true,
+          "stderr_chars": 0,
+          "stderr_preview": "",
+          "stdout_chars": 13571,
+          "stdout_has_workspace_view": true,
+          "stdout_lines": 2
+        },
+        {
+          "agent_observation": {
+            "effect": "EasyCrypt accepted a proof-state change; the refreshed view is based on the new committed state.",
+            "manager_action": "replay_prefix_step_14",
+            "proof_state": "The committed EasyCrypt proof state changed.",
+            "result": "The manager completed this proof-level request.",
+            "tactic": "wp."
+          },
+          "argv": [
+            ".venv/bin/python3",
+            "core/easycrypt/session_cli.py",
+            "-d",
+            ".ec_session_prover_tree_0_0_r1",
+            "-next",
+            "-c",
+            "wp."
+          ],
+          "duration_ms": 191,
+          "exit_code": 0,
+          "label": "replay_prefix_step_14",
+          "mutates_proof_state": true,
+          "stderr_chars": 0,
+          "stderr_preview": "",
+          "stdout_chars": 13012,
+          "stdout_has_workspace_view": true,
+          "stdout_lines": 2
+        },
+        {
+          "agent_observation": {
+            "effect": "EasyCrypt accepted a proof-state change; the refreshed view is based on the new committed state.",
+            "manager_action": "replay_prefix_step_15",
+            "proof_state": "The committed EasyCrypt proof state changed.",
+            "result": "The manager completed this proof-level request.",
+            "tactic": "while (true) (size ns1 - i)."
+          },
+          "argv": [
+            ".venv/bin/python3",
+            "core/easycrypt/session_cli.py",
+            "-d",
+            ".ec_session_prover_tree_0_0_r1",
+            "-next",
+            "-c",
+            "while (true) (size ns1 - i)."
+          ],
+          "duration_ms": 182,
+          "exit_code": 0,
+          "label": "replay_prefix_step_15",
+          "mutates_proof_state": true,
+          "stderr_chars": 0,
+          "stderr_preview": "",
+          "stdout_chars": 7818,
+          "stdout_has_workspace_view": true,
+          "stdout_lines": 2
+        },
+        {
+          "agent_observation": {
+            "effect": "This manager intent does not change the EasyCrypt proof state.",
+            "manager_action": "agent_view",
+            "result": "The manager completed this proof-level request."
+          },
+          "argv": [
+            ".venv/bin/python3",
+            "core/easycrypt/session_cli.py",
+            "-d",
+            ".ec_session_prover_tree_0_0_r1",
+            "-agent-view"
+          ],
+          "duration_ms": 166,
+          "exit_code": 0,
+          "label": "agent_view",
+          "mutates_proof_state": false,
+          "stderr_chars": 0,
+          "stderr_preview": "",
+          "stdout_chars": 7610,
+          "stdout_has_workspace_view": true,
+          "stdout_lines": 211
+        }
+      ]
+    },
+    "goal_hash": "8eb7cfd8f913f778cf367ee7fce72ce7a47daeaf",
+    "node_id": "Tree-0.0.r1",
+    "proof_context_view_artifact": "",
+    "session_dir": ".ec_session_prover_tree_0_0_r1",
+    "session_epoch": 1,
+    "session_tag": "prover_tree_0_0_r1",
+    "state_version": 1,
+    "workspace_view_artifact": ""
+  },
+  "workspace_view": {
+    "candidate_moves": {
+      "moves": [
+        {
+          "applicability": "Use this as route-selection context; it is not a tactic to run as-is.",
+          "category": "strategy",
+          "source": "proof-state analysis",
+          "tactic_shape": "auto => />; smt(nth0 nth_default size_ge0 mem_take mem_drop).",
+          "title": "Residual closing tactic"
+        },
+        {
+          "applicability": "Use this as route-selection context; it is not a tactic to run as-is.",
+          "category": "strategy",
+          "source": "proof-state analysis",
+          "tactic_shape": "skip."
+        },
+        {
+          "applicability": "This tactic-shaped option is concrete for the current goal; commit it only if it matches your proof plan.",
+          "category": "commit",
+          "derivation": "candidate tactic surfaced from proof-state analysis",
+          "effect": "Committing this tactic would change the EasyCrypt proof state if EasyCrypt accepts it.",
+          "guarantee": "candidate tactic shape; proof state unchanged; decide; reversible",
+          "source": "proof-state analysis",
+          "tactic": "auto.",
+          "title": "Concrete tactic candidate",
+          "verified": "static_candidate"
+        },
+        {
+          "applicability": "Use this as route-selection context; it is not a tactic to run as-is.",
+          "category": "strategy",
+          "source": "proof-state analysis",
+          "tactic_shape": "smt()."
+        },
+        {
+          "applicability": "Use this as route-selection context; it is not a tactic to run as-is.",
+          "category": "strategy",
+          "source": "proof-state analysis",
+          "tactic_shape": "wp."
+        }
+      ]
+    },
+    "current_goal": {
+      "goal_type": "phoare",
+      "lines": [
+        "Current goal (remaining: 9)",
+        "",
+        "Type variables: <none>",
+        "",
+        "&m: {}",
+        "------------------------------------------------------------------------",
+        "forall (z : int),",
+        "  phoare[ n <- nth witness<:nonce> ns1 i; ...; i <- i + 1; :",
+        "           i < size ns1 /\\ size ns1 - i = z ==> size ns1 - i < z] = 1%r",
+        "[399|check]>"
+      ],
+      "source": {
+        "ground_truth": false,
+        "label": "Parsed from EasyCrypt pretty goal text"
+      },
+      "text_fully_shown": true,
+      "truncated": false,
+      "view_focus": "procedure_frontier"
+    },
+    "facts_and_diagnostics": {
+      "fact_note": "Only current-frontier facts are shown here; the full proof context artifact keeps the compiler/internal details.",
+      "facts": {
+        "has_invariant_skeleton": false,
+        "unfoldable_goal_head_count": 0
+      }
+    },
+    "inspect_lookup_handles": {
+      "ask_manager_for": [
+        {
+          "intent": "inspect_context",
+          "payload": {
+            "topic": "goal_info"
+          },
+          "returns": "manager-provided read-only context for this proof route",
+          "use_when": "No fresh recommendation is available; parse the current goal."
+        },
+        {
+          "intent": "inspect_context",
+          "payload": {
+            "topic": "call_site_options"
+          },
+          "returns": "call-ready/oracle-equiv context for the current frontier, plus the BODY of the procedure(s) called here (functor aliases resolved) so you can see which oracles/state your call invariant must preserve",
+          "use_when": "The current procedure frontier exposes a call route."
+        },
+        {
+          "intent": "inspect_context",
+          "payload": {
+            "invariant": "<the EasyCrypt invariant expression inside call (_: ...)>",
+            "topic": "call_subgoals"
+          },
+          "returns": "a read-only preview of the obligations caused by that candidate invariant, including pre/init, call-preservation, oracle-side, postcondition, missing-fact signals, and extra conjuncts that may create avoidable obligations",
+          "use_when": "You are considering `call (_: Inv)` and already have a concrete invariant expression you want to test first."
+        },
+        {
+          "intent": "inspect_context",
+          "payload": {
+            "name": "call",
+            "topic": "tactic_forms"
+          },
+          "returns": "valid tactic forms and common traps",
+          "use_when": "Need the valid form for call, while, seq, rnd, or rewrite."
+        },
+        {
+          "intent": "inspect_context",
+          "payload": {
+            "name": "sp",
+            "topic": "tactic_forms"
+          },
+          "returns": "valid `sp` forms and common traps"
+        },
+        {
+          "intent": "inspect_context",
+          "payload": {
+            "name": "while",
+            "topic": "tactic_forms"
+          },
+          "returns": "valid `while` forms and common traps",
+          "use_when": "Need the valid one-sided hoare/phoare loop form."
+        },
+        {
+          "intent": "inspect_context",
+          "payload": {
+            "name": "wp",
+            "topic": "tactic_forms"
+          },
+          "returns": "valid indexed `wp` forms and suffix traps",
+          "use_when": "Mid-proof suffix may need indexed `wp` to absorb a tail before a cut."
+        },
+        {
+          "intent": "inspect_context",
+          "payload": {
+            "name": "swap",
+            "topic": "tactic_forms"
+          },
+          "returns": "valid `swap` forms and statement-order traps",
+          "use_when": "Statement order may need a small `swap` before `sp` or `wp`."
+        },
+        {
+          "intent": "inspect_context",
+          "payload": {
+            "name": "rcondt",
+            "topic": "tactic_forms"
+          },
+          "returns": "valid `rcondt` forms and guard-obligation traps",
+          "use_when": "A guarded branch may need `rcondt` after a case split or invariant fact."
+        },
+        {
+          "intent": "inspect_context",
+          "payload": {
+            "name": "rcondf",
+            "topic": "tactic_forms"
+          },
+          "returns": "valid `rcondf` forms and guard-obligation traps",
+          "use_when": "A guarded branch may need `rcondf` after a case split or invariant fact."
+        },
+        {
+          "intent": "inspect_context",
+          "payload": {
+            "name": "conseq",
+            "topic": "tactic_forms"
+          },
+          "returns": "valid `conseq` forms and pre/post-weakening traps",
+          "use_when": "A suffix proof may need `conseq` to weaken the pre/postcondition before closing."
+        },
+        {
+          "intent": "inspect_context",
+          "payload": {
+            "name": "rnd",
+            "topic": "tactic_forms"
+          },
+          "returns": "valid `rnd` forms, including one-sided sampling",
+          "use_when": "A sampling step may need `rnd` to reduce it to a distribution/probability fact."
+        }
+      ],
+      "effect": "All handles here are read-only manager requests; the committed EasyCrypt proof state stays unchanged.",
+      "manager_note": "Some requests may ask EasyCrypt or name resolution; wait for the manager result before choosing the next proof intent."
+    },
+    "kind": "prover_workspace_view",
+    "last_result": {},
+    "program_frontier": {
+      "authority": "proof-state analysis",
+      "checks": [
+        "Keep one-sided instrumentation as a map, not as a tactic recipe."
+      ],
+      "focus": {
+        "callable_now_lemmas": 0,
+        "frontier_call_sites": 0,
+        "has_invariant_skeleton": false,
+        "live_call_sites": 0,
+        "live_callable_lemmas": 0,
+        "oracle_obligation_handles": 0
+      },
+      "view_focus": "procedure_frontier"
+    },
+    "proof_status": {
+      "current_layer": "procedure_body",
+      "goal_type": "phoare",
+      "remaining_goals": 9,
+      "remaining_goals_known": true,
+      "status": "open",
+      "view_focus": "procedure_frontier"
+    },
+    "pure_tail_surface": {
+      "effect": "Summarizes verifier-visible pure-goal structure after program frontier actions have been discharged or hidden by local proof steps.",
+      "goal_operators": [
+        "int",
+        "phoare",
+        "nth",
+        "witness",
+        "nonce",
+        "ns1",
+        "size"
+      ],
+      "limitations": [
+        "This panel records syntactic and proof-state facts from the current view.",
+        "It does not choose a tactic or instantiate a lemma."
+      ],
+      "obligation_families": [
+        {
+          "effect": "The current proof point is dominated by local logical obligations rather than program-frontier movement.",
+          "evidence": [
+            "universal quantifier visible",
+            "implication residual visible"
+          ],
+          "family": "quantified_residual_logic",
+          "limitations": "Quantifier names are not normalized across EasyCrypt pretty-printer variants."
+        }
+      ],
+      "state": "quantified_ambient_tail"
+    },
+    "recovery_diagnosis_surface": {
+      "available_local_work": [
+        {
+          "items": [
+            "quantified_residual_logic"
+          ],
+          "kind": "pure_tail_obligation_families"
+        }
+      ],
+      "checkpoint_policy": "current_state_local_work_visible",
+      "confidence": "medium",
+      "evidence": [
+        "pure_tail_surface is visible for the current goal",
+        "current proof state has no program-frontier work before the logical residual"
+      ],
+      "kind": "recovery_diagnosis_surface",
+      "limitations": [
+        "does not select a destructor, witness, rewrite, or SMT lemma",
+        "reported checkpoints are recovery references, not a default route"
+      ],
+      "recovery_class": "local_pure_surgery_available",
+      "related_checkpoints": [
+        {
+          "checkpoint_id": "cp_15_5ab41d41a69ed809",
+          "committed_step_index": 15,
+          "label": "Before latest branch-local tactic #15",
+          "restored_affordances": {
+            "earlier_branch_work": "preserved",
+            "seq_cut": "committed"
+          },
+          "restored_proof_layer": "seq_branch",
+          "semantic_id": "before_branch_work",
+          "semantic_ids": [
+            "before_branch_work"
+          ],
+          "undo_scope": "branch_local",
+          "why_checkpoint": "latest branch-local step inside the current seq scope"
+        },
+        {
+          "checkpoint_id": "cp_13_5ab41d41a69ed809",
+          "committed_step_index": 13,
+          "label": "After seq opened / before branch work #13",
+          "restored_affordances": {
+            "branch_work": "not_committed",
+            "seq_cut": "committed"
+          },
+          "restored_proof_layer": "seq_obligations_opened",
+          "semantic_id": "after_seq_opened",
+          "semantic_ids": [
+            "after_seq_opened",
+            "before_branch_work"
+          ],
+          "undo_scope": "branch_local",
+          "why_checkpoint": "seq-local branch boundary; selecting it keeps the seq cut and removes branch-local work after it"
+        },
+        {
+          "checkpoint_id": "cp_12_5ab41d41a69ed809",
+          "committed_step_index": 12,
+          "label": "Before seq cut #12",
+          "restored_affordances": {
+            "call_site_state": "as_before_seq_cut",
+            "seq_cut": "not_committed"
+          },
+          "restored_proof_layer": "pre_seq_cut",
+          "semantic_id": "before_seq_cut",
+          "semantic_ids": [
+            "before_seq_cut"
+          ],
+          "undo_scope": "seq_local",
+          "why_checkpoint": "seq-cut boundary; selecting it restores the proof state before this cut was committed"
+        }
+      ],
+      "related_surfaces": [
+        "seq_cut_surface",
+        "pure_tail_surface",
+        "structural_checkpoints"
+      ]
+    },
+    "reference": {
+      "collapsed": [
+        "seq_cut_surface"
+      ],
+      "note": "Panels collapsed for focus. The essentials for THIS phase are in the focus above; the rest were noise here (a flat view of all of them is what disorients). If you genuinely need a precise field from one, ask with `inspect_context`."
+    },
+    "schema_version": 2,
+    "structural_checkpoints": {
+      "items": [
+        {
+          "checkpoint_id": "cp_15_5ab41d41a69ed809",
+          "committed_step_index": 15,
+          "committed_tactic": "while (true) (size ns1 - i).",
+          "effect_if_selected": "Undo committed tactic #15 and every committed tactic after it in this node.",
+          "label": "Before latest branch-local tactic #15",
+          "restored_affordances": {
+            "earlier_branch_work": "preserved",
+            "seq_cut": "committed"
+          },
+          "restored_proof_layer": "seq_branch",
+          "semantic_id": "before_branch_work",
+          "semantic_ids": [
+            "before_branch_work"
+          ],
+          "submit": {
+            "intent": "undo_to_checkpoint",
+            "payload": {
+              "checkpoint_id": "cp_15_5ab41d41a69ed809"
+            }
+          },
+          "undo_scope": "branch_local",
+          "why_checkpoint": "latest branch-local step inside the current seq scope"
+        },
+        {
+          "checkpoint_id": "cp_13_5ab41d41a69ed809",
+          "committed_step_index": 13,
+          "committed_tactic": "trivial.",
+          "effect_if_selected": "Undo committed tactic #13 and every committed tactic after it in this node.",
+          "label": "After seq opened / before branch work #13",
+          "restored_affordances": {
+            "branch_work": "not_committed",
+            "seq_cut": "committed"
+          },
+          "restored_proof_layer": "seq_obligations_opened",
+          "semantic_id": "after_seq_opened",
+          "semantic_ids": [
+            "after_seq_opened",
+            "before_branch_work"
+          ],
+          "submit": {
+            "intent": "undo_to_checkpoint",
+            "payload": {
+              "checkpoint_id": "cp_13_5ab41d41a69ed809"
+            }
+          },
+          "undo_scope": "branch_local",
+          "why_checkpoint": "seq-local branch boundary; selecting it keeps the seq cut and removes branch-local work after it"
+        },
+        {
+          "checkpoint_id": "cp_12_5ab41d41a69ed809",
+          "committed_step_index": 12,
+          "committed_tactic": "seq 2 : (UF.forged) (BRA.big predT (fun (n0 : nonce) => (size (filter (fun (c : ciphertext) => c.`1 = n0) Mem.lc))%r) ns1 * pr_zeropol) (1%r) (1%r) (BRA.big predT (fun (n0 : nonce) => (size (filter (fun (c : ciphertext) => c.`1 = n0) Mem.lc))%r) ns2 * pr1_poly_out).",
+          "effect_if_selected": "Undo committed tactic #12 and every committed tactic after it in this node.",
+          "label": "Before seq cut #12",
+          "restored_affordances": {
+            "call_site_state": "as_before_seq_cut",
+            "seq_cut": "not_committed"
+          },
+          "restored_proof_layer": "pre_seq_cut",
+          "semantic_id": "before_seq_cut",
+          "semantic_ids": [
+            "before_seq_cut"
+          ],
+          "submit": {
+            "intent": "undo_to_checkpoint",
+            "payload": {
+              "checkpoint_id": "cp_12_5ab41d41a69ed809"
+            }
+          },
+          "undo_scope": "seq_local",
+          "why_checkpoint": "seq-cut boundary; selecting it restores the proof state before this cut was committed"
+        }
+      ]
+    },
+    "view_hash": "0edbbe9e6323c0e04f0ea9acce6d40b1344a9862"
+  }
+}

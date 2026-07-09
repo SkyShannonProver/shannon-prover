@@ -1,0 +1,19 @@
+{
+  "turn": 11,
+  "handled_intent": {
+    "intent": "commit_tactic",
+    "payload": {
+      "tactic": "rewrite -Heq (gen_CTR_encrypt_bytes_cons take_xor (cc gs0) k0 n0 iv p{hr} htake_xor) /take_xor //."
+    }
+  },
+  "ok": true,
+  "manager_note": "Committed tactic accepted; the EasyCrypt proof state changed.",
+  "manager_actions": [
+    {
+      "action": "tactic commit",
+      "outcome": "EasyCrypt accepted the committed tactic.",
+      "timing": "244 ms"
+    }
+  ],
+  "view_refreshed": true
+}

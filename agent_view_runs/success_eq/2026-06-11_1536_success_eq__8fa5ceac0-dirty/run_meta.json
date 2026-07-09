@@ -1,0 +1,41 @@
+{
+  "kind": "agent_view_run_report",
+  "timestamp": "2026-06-11_1536_success_eq",
+  "lemma": "success_eq",
+  "source_file": "eval/examples/MEE-CBC/CBC.eca",
+  "model": "claude-fable-5",
+  "surface_profile": "l1_goal_projection",
+  "trees": 2,
+  "eval_mode": true,
+  "outcome": "proved",
+  "committed_proofs": [
+    {
+      "tree": "Tree_0_0",
+      "tactics": [
+        "byequiv=> //=."
+      ],
+      "source": "session",
+      "proved": false
+    },
+    {
+      "tree": "Tree_0_1",
+      "tactics": [
+        "byequiv=> //=.",
+        "proc.",
+        "call (_: ={k}(RCPA_Wrap,PRP)).",
+        "by conseq enc_eq.",
+        "by inline *; auto.",
+        "qed."
+      ],
+      "source": "session",
+      "proved": true
+    }
+  ],
+  "turn_count": 8,
+  "views_copied": 10,
+  "run_iteration_dir": "artifacts/eval_suite/mee_sweep_l1_all/l1_goal_projection/mee_success_eq/r01/2026-06-11_1536_success_eq/iteration_1",
+  "commit": "8fa5ceac0",
+  "commit_full": "8fa5ceac0a4c7ed08e53023adcaade43f89a6de8",
+  "branch": "mcp-v0",
+  "dirty": true
+}

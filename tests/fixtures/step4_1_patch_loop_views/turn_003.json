@@ -1,0 +1,52 @@
+{
+ "current_goal": {
+  "lines": [
+   "Current goal (remaining: 5)",
+   "",
+   "Type variables: <none>",
+   "",
+   "&m: {}",
+   "&2: {}",
+   "------------------------------------------------------------------------",
+   "Context : 1: {c : ciphertext, p : plaintext option}",
+   "Bound   : [=] 1%r",
+   "",
+   "pre = true",
+   "",
+   "(1--)  p <- None<:plaintext>                                                        ",
+   "(2--)  if (check_cipher BNR.ndec c) {                                               ",
+   "(2.1)    p <@                                                                       ",
+   "(   )      CPA_CCA_Orcls(                                                           ",
+   "(   )        RealOrcls(                                                             ",
+   "(   )          GenChaChaPoly(                                                       ",
+   "(   )            CCRO(                                                              ",
+   "(   )              SplitD.RO_DOM(                                                   ",
+   "(   )                       SplitC1.RO_Pair(                                        ",
+   "(   )                                 SplitC2.RO_Pair(SplitC2.I1.RO, SplitC2.I2.RO),",
+   "(   )                                 SplitC1.I2.RO), SplitD.ROF.RO))))).dec(c)     ",
+   "(2.2)    BNR.ndec <- BNR.ndec + 1                                                   ",
+   "(2--)  }                                                                            ",
+   "",
+   "post = true",
+   "[467|check]>"
+  ],
+  "view_focus": "procedure_frontier",
+  "goal_type": "phoare"
+ },
+ "proof_status": {
+  "status": "open",
+  "remaining_goals": 5,
+  "remaining_goals_known": true,
+  "goal_type": "phoare",
+  "view_focus": "procedure_frontier",
+  "current_layer": "procedure_body"
+ },
+ "last_result": {
+  "intent": "commit_tactic",
+  "tactic": "move=> &2 _; proc.",
+  "payload": {
+   "tactic": "move=> &2 _; proc."
+  },
+  "result": "EasyCrypt accepted the committed tactic."
+ }
+}

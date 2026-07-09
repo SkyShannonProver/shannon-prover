@@ -1,0 +1,19 @@
+{
+  "turn": 30,
+  "handled_intent": {
+    "intent": "commit_tactic",
+    "payload": {
+      "tactic": "apply (ler_trans (PKE_.qD%r * (1%r / (order - 1)%r))); last by smt()."
+    }
+  },
+  "ok": true,
+  "manager_note": "Committed tactic accepted; the EasyCrypt proof state changed.",
+  "manager_actions": [
+    {
+      "action": "tactic commit",
+      "outcome": "EasyCrypt accepted the committed tactic.",
+      "timing": "380 ms"
+    }
+  ],
+  "view_refreshed": true
+}

@@ -1,0 +1,63 @@
+{
+  "kind": "agent_view_run_report",
+  "timestamp": "2026-06-11_1713_Conclusion",
+  "lemma": "Conclusion",
+  "source_file": "eval/examples/MEE-CBC/CBC.eca",
+  "model": "claude-fable-5",
+  "surface_profile": "l1_goal_projection",
+  "trees": 2,
+  "eval_mode": true,
+  "outcome": "proved",
+  "committed_proofs": [
+    {
+      "tree": "Tree_0_0",
+      "tactics": [
+        "move=> A_run_ll.",
+        "have QBll: forall (O <: RCPA_Oracles{-QueryBounder(A)}), islossless O.enc => islossless QueryBounder(A, O).distinguish.",
+        "move=> O O_ll; proc.",
+        "call (A_run_ll (<: QueryBounder(A, O).O') _).",
+        "proc; sp; if=> //.",
+        "by wp; call O_ll.",
+        "by while true (size p + 1 - i); auto=> /#.",
+        "by auto.",
+        "have Red := reduction (QueryBounder(A)) &m QBll.",
+        "have B1 := Bound_by_PRP_PRF A A_run_ll &m.",
+        "have B2 := Bound_by_Birthday A A_run_ll &m.",
+        "apply (ler_trans _ _ _ Red).",
+        "rewrite -RField.addrA RealOrder.ler_add2l."
+      ],
+      "source": "session",
+      "proved": false
+    },
+    {
+      "tree": "Tree_0_1",
+      "tactics": [
+        "move=> A_run_ll.",
+        "have QBA_ll: forall (O <: RCPA_Oracles{-QueryBounder(A)}), islossless O.enc => islossless QueryBounder(A, O).distinguish.",
+        "move=> O O_enc_ll; proc.",
+        "call (A_run_ll (<: QueryBounder(A, O).O') _).",
+        "proc; sp; if=> //.",
+        "by wp; call O_enc_ll; auto.",
+        "by while true (size p + 1 - i); auto=> /#.",
+        "by auto.",
+        "have := reduction (QueryBounder(A)) &m QBA_ll.",
+        "have := Bound_by_PRP_PRF A A_run_ll &m.",
+        "have := Bound_by_Birthday A A_run_ll &m.",
+        "have hmu: 0%r <= mu1 dBlock witness<:block> by smt(mu_bounded).",
+        "have hn: 1 <= q * ell by smt(gt0_q gt0_ell).",
+        "have ->: (q * ell) ^ 2 = q * ell * (q * ell) by rewrite expr2.",
+        "smt().",
+        "qed."
+      ],
+      "source": "session",
+      "proved": true
+    }
+  ],
+  "turn_count": 35,
+  "views_copied": 37,
+  "run_iteration_dir": "artifacts/eval_suite/mee_sweep_l1_v2/l1_goal_projection/mee_Conclusion/r01/2026-06-11_1713_Conclusion/iteration_1",
+  "commit": "8fa5ceac0",
+  "commit_full": "8fa5ceac0a4c7ed08e53023adcaade43f89a6de8",
+  "branch": "mcp-v0",
+  "dirty": true
+}

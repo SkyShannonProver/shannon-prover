@@ -1,0 +1,148 @@
+#! /usr/bin/env python3
+
+# --------------------------------------------------------------------
+import sys, os, re, time, errno, itertools as it, io
+
+# --------------------------------------------------------------------
+MODES = dict(
+    raw        = False,
+    emacs      = False,
+    javascript = False,
+    latex      = False,
+    python     = False,
+    template   = True )
+
+# --------------------------------------------------------------------
+def _options():
+    from optparse import OptionParser
+
+    parser = OptionParser(usage = 'Usage: %prog [options] <args...>')
+
+    parser.add_option(
+        '-m', '--mode',
+        default = 'raw',
+        help    = 'output mode (%s)' % '|'.join(MODES.keys()))
+
+    (options, args) = parser.parse_args()
+    if ':' in options.mode:
+        options.mode = tuple(options.mode.split(':', 1))
+    else:
+        options.mode = (options.mode, None)
+
+    options.template = options.mode[1]
+    options.mode     = options.mode[0]
+
+    if options.mode not in MODES:
+        parser.error("invalid mode: `%s'" % (options.mode,))
+
+    if MODES[options.mode] is not (options.template is not None):
+        if MODES[options.mode]:
+            parser.error("this mode expects an argument")
+        else:
+            parser.error("this mode does not expect an argument")
+
+    if len(args) != 0:
+        parser.error('this program does not take any argument')
+
+    return options
+
+# --------------------------------------------------------------------
+def _do_raw(keywords, options):
+    for k in sorted(keywords.keys()):
+        print("%s: %s" % (k, ", ".join(sorted(keywords[k]))))
+
+# --------------------------------------------------------------------
+def _do_emacs(keywords, options):
+    print("; Generated on %s" % (time.ctime(),))
+    print
+    for k in sorted(keywords.keys()):
+        print("(defvar easycrypt-%s-keywords '(" % (k,))
+        for v in keywords[k]:
+            print("  \"%s\"" % (v,))
+        print("))")
+        print()
+    print("(provide 'easycrypt-keywords)")
+
+# --------------------------------------------------------------------
+def _do_javascript(keywords, options):
+    print("// Generated on %s" % (time.ctime(),))
+    print('var cKeywords = "%s"' % \
+            (' '.join(sorted(set(it.chain(*keywords.values()))))))
+    print("// END")
+
+# --------------------------------------------------------------------
+def _do_template(keywords, options, template):
+    def _sub(m):
+        return '|'.join(sorted(keywords.get(m.group(1), [])))
+
+    with open(template, 'r') as stream:
+        template = stream.read()
+    template = re.sub(r'\$([a-zA-Z]+)', _sub, template)
+
+    sys.stdout.write(template)
+
+# --------------------------------------------------------------------
+def _do_latex(keywords, options):
+    buffer = io.StringIO()
+
+    print("%% Generated on %s" % (time.ctime(),), file=buffer)
+    print(file=buffer)
+    print("""\
+\\lstdefinelanguage{easycrypt-kw}{
+  morekeywords=[1]{%s},
+  morekeywords=[2]{%s},
+  morekeywords=[3]{%s},
+  morekeywords=[4]{%s},
+  morekeywords=[5]{%s},
+  morekeywords=[6]{%s},
+}
+""" % (
+    ','.join(keywords.get('prog'     , [])),
+    ','.join(keywords.get('global'   , [])),
+    ','.join(keywords.get('tactic'   , [])),
+    ','.join(keywords.get('tactical' , [])),
+    ','.join(keywords.get('bytac'    , [])),
+    ','.join(keywords.get('dangerous', [])),
+    ), file=buffer)
+
+    NOCMD = ['beta', 'delta', 'iota', 'gamma', 'zeta']
+
+    for v in it.chain(*keywords.values()):
+        if v in NOCMD:
+            continue
+        print(
+            '\\def\\%(macro)s{\\ensuretext{\\ls[language=easycrypt]"%(name)s"}}' % \
+            dict(macro = v.capitalize().replace('_', ''), name = v),
+            file=buffer)
+
+    sys.stdout.write(buffer.getvalue())
+
+# --------------------------------------------------------------------
+def _do_python(keywords, options):
+    wd = max(*[len(x) for x in keywords.keys()])
+    print("keywords = dict(")
+    for k in sorted(keywords.keys()):
+        print("    %-*s = [%s]," % (wd, k, ', '.join(["'%s'" % x for x in keywords[k]])))
+    print(")")
+
+# --------------------------------------------------------------------
+def process():
+    options  = _options()
+    keywords = dict()
+
+    for line in sys.stdin:
+        line = re.sub(r'\s+', '', line)
+        mtch = re.search(r'^"(.*?)",(.*?);\(\*KW:(.*?)\*\)$', line)
+
+        if mtch is not None:
+            keywords.setdefault(mtch.group(3), []).append(mtch.group(1))
+
+    callback = '_do_%s' % (options.mode,)
+    callback = getattr(sys.modules[__name__], callback)
+    args     = [] if options.template is None else [options.template]
+
+    callback(keywords, options, *args)
+
+# --------------------------------------------------------------------
+if __name__ == '__main__':
+    process()

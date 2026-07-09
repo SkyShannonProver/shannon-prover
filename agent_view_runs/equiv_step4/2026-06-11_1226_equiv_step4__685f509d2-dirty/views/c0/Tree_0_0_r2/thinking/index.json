@@ -1,0 +1,265 @@
+{
+  "node": "Tree-0.0.r2",
+  "discovery": "content_match",
+  "transcripts": [
+    "~/.claude/projects/<PROJECT>--worktrees-s23-l4np-resume/351c551b-47e9-4b44-8771-01f4aa096d11.jsonl"
+  ],
+  "turns": [
+    {
+      "turn": 1,
+      "intent": "commit_tactic",
+      "payload_key": "by auto => />.",
+      "thinking_chars": 0,
+      "text_chars": 231,
+      "tokens": {
+        "output_tokens": 629,
+        "input_tokens": 1,
+        "cache_read_input_tokens": 14531,
+        "cache_creation_input_tokens": 49342
+      },
+      "session_id": "351c551b-47e9-4b44-8771-01f4aa096d11",
+      "timestamp": "2026-06-11T16:09:32.068Z",
+      "file": "thinking/turn_001.md"
+    },
+    {
+      "turn": 2,
+      "intent": "commit_tactic",
+      "payload_key": "proc.",
+      "thinking_chars": 0,
+      "text_chars": 147,
+      "tokens": {
+        "output_tokens": 586,
+        "input_tokens": 2,
+        "cache_read_input_tokens": 63873,
+        "cache_creation_input_tokens": 2848
+      },
+      "session_id": "351c551b-47e9-4b44-8771-01f4aa096d11",
+      "timestamp": "2026-06-11T16:09:44.130Z",
+      "file": "thinking/turn_002.md"
+    },
+    {
+      "turn": 3,
+      "intent": "commit_tactic",
+      "payload_key": "seq 5 5 : (={UFCMA.bad2, UFCMA.cbad2, UFCMA.log, Mem.lc, RO.m, ROout.m}).",
+      "thinking_chars": 0,
+      "text_chars": 95,
+      "tokens": {
+        "output_tokens": 388,
+        "input_tokens": 2,
+        "cache_read_input_tokens": 66721,
+        "cache_creation_input_tokens": 4757
+      },
+      "session_id": "351c551b-47e9-4b44-8771-01f4aa096d11",
+      "timestamp": "2026-06-11T16:10:00.552Z",
+      "file": "thinking/turn_003.md"
+    },
+    {
+      "turn": 4,
+      "intent": "commit_tactic",
+      "payload_key": "sim.",
+      "thinking_chars": 0,
+      "text_chars": 0,
+      "tokens": {
+        "output_tokens": 165,
+        "input_tokens": 2,
+        "cache_read_input_tokens": 71478,
+        "cache_creation_input_tokens": 3600
+      },
+      "session_id": "351c551b-47e9-4b44-8771-01f4aa096d11",
+      "timestamp": "2026-06-11T16:10:06.736Z",
+      "file": ""
+    },
+    {
+      "turn": 5,
+      "intent": "lookup_symbol",
+      "payload_key": "iter_cat",
+      "thinking_chars": 0,
+      "text_chars": 0,
+      "tokens": {
+        "output_tokens": 3961,
+        "input_tokens": 2,
+        "cache_read_input_tokens": 75078,
+        "cache_creation_input_tokens": 3260
+      },
+      "session_id": "351c551b-47e9-4b44-8771-01f4aa096d11",
+      "timestamp": "2026-06-11T16:11:03.150Z",
+      "file": ""
+    },
+    {
+      "turn": 6,
+      "intent": "commit_tactic",
+      "payload_key": "sp 1 1; if.",
+      "thinking_chars": 0,
+      "text_chars": 0,
+      "tokens": {
+        "output_tokens": 8818,
+        "input_tokens": 2,
+        "cache_read_input_tokens": 78338,
+        "cache_creation_input_tokens": 5098
+      },
+      "session_id": "351c551b-47e9-4b44-8771-01f4aa096d11",
+      "timestamp": "2026-06-11T16:13:01.995Z",
+      "file": ""
+    },
+    {
+      "turn": 7,
+      "intent": "commit_tactic",
+      "payload_key": "by move=> &1 &2 />.",
+      "thinking_chars": 0,
+      "text_chars": 0,
+      "tokens": {
+        "output_tokens": 111,
+        "input_tokens": 2,
+        "cache_read_input_tokens": 83436,
+        "cache_creation_input_tokens": 10515
+      },
+      "session_id": "351c551b-47e9-4b44-8771-01f4aa096d11",
+      "timestamp": "2026-06-11T16:13:10.146Z",
+      "file": ""
+    },
+    {
+      "turn": 8,
+      "intent": "commit_tactic",
+      "payload_key": "sp 3 3.",
+      "thinking_chars": 0,
+      "text_chars": 79,
+      "tokens": {
+        "output_tokens": 393,
+        "input_tokens": 2,
+        "cache_read_input_tokens": 93951,
+        "cache_creation_input_tokens": 3313
+      },
+      "session_id": "351c551b-47e9-4b44-8771-01f4aa096d11",
+      "timestamp": "2026-06-11T16:13:20.693Z",
+      "file": "thinking/turn_008.md"
+    },
+    {
+      "turn": 9,
+      "intent": "commit_tactic",
+      "payload_key": "",
+      "thinking_chars": 0,
+      "text_chars": 0,
+      "tokens": {
+        "output_tokens": 2249,
+        "input_tokens": 2,
+        "cache_read_input_tokens": 97264,
+        "cache_creation_input_tokens": 4311
+      },
+      "session_id": "351c551b-47e9-4b44-8771-01f4aa096d11",
+      "timestamp": "2026-06-11T16:13:52.418Z",
+      "file": ""
+    },
+    {
+      "turn": 10,
+      "intent": "commit_tactic",
+      "payload_key": "transitivity{1} { Iter(Orcl).iters(ns1, ns2); } (={ns1, ns2, UF.forged, UFCMA.bad2, UFCMA.cbad2, UFCMA.log, Mem.lc, RO.m, ROout.m} ==> ={UF.forged, UFCMA.bad2}) (={ns1, ns2, UF.forged, UFCMA.bad2, UFCMA.cbad2, UFCMA.log, Mem.lc, RO.m, ROout.m} /\\ uniq ns2{2} /\\ (forall n0, n0 \\in ns1{2} => (n0, C.ofintd 0) \\in ROout.m{2}) /\\ (forall n0, n0 \\in ns2{2} => (n0, C.ofintd 0) \\notin ROout.m{2}) ==> ={UF.forged, UFCMA.bad2}).",
+      "thinking_chars": 0,
+      "text_chars": 63,
+      "tokens": {
+        "output_tokens": 571,
+        "input_tokens": 2,
+        "cache_read_input_tokens": 101575,
+        "cache_creation_input_tokens": 5373
+      },
+      "session_id": "351c551b-47e9-4b44-8771-01f4aa096d11",
+      "timestamp": "2026-06-11T16:14:02.588Z",
+      "file": "thinking/turn_010.md"
+    },
+    {
+      "turn": 11,
+      "intent": "commit_tactic",
+      "payload_key": "by move=> &1 &2 />; exists UF.forged{2} UFCMA.bad2{2} UFCMA.cbad2{2} UFCMA.log{2} RO.m{2} Mem.lc{2} ROout.m{2} ns1{2} ns2{2}; smt(filter_uniq undup_uniq mem_filter).",
+      "thinking_chars": 0,
+      "text_chars": 135,
+      "tokens": {
+        "output_tokens": 1184,
+        "input_tokens": 2,
+        "cache_read_input_tokens": 106948,
+        "cache_creation_input_tokens": 4124
+      },
+      "session_id": "351c551b-47e9-4b44-8771-01f4aa096d11",
+      "timestamp": "2026-06-11T16:14:21.408Z",
+      "file": "thinking/turn_011.md"
+    },
+    {
+      "turn": 12,
+      "intent": "commit_tactic",
+      "payload_key": "by move=> &1 &2 H; exists UF.forged{2} UFCMA.bad2{2} UFCMA.cbad2{2} UFCMA.log{2} RO.m{2} Mem.lc{2} ROout.m{2} ns1{2} ns2{2}; smt(filter_uniq undup_uniq mem_filter).",
+      "thinking_chars": 0,
+      "text_chars": 100,
+      "tokens": {
+        "output_tokens": 787,
+        "input_tokens": 2,
+        "cache_read_input_tokens": 111072,
+        "cache_creation_input_tokens": 5759
+      },
+      "session_id": "351c551b-47e9-4b44-8771-01f4aa096d11",
+      "timestamp": "2026-06-11T16:14:43.059Z",
+      "file": "thinking/turn_012.md"
+    },
+    {
+      "turn": 13,
+      "intent": "commit_tactic",
+      "payload_key": "move=> &1 &2 [#] hns2 hns12 hns22 hns1 hns11 hns21 hf2 hf1 hb hc hl hlc hr ho hsz.",
+      "thinking_chars": 0,
+      "text_chars": 157,
+      "tokens": {
+        "output_tokens": 6181,
+        "input_tokens": 2,
+        "cache_read_input_tokens": 116831,
+        "cache_creation_input_tokens": 5446
+      },
+      "session_id": "351c551b-47e9-4b44-8771-01f4aa096d11",
+      "timestamp": "2026-06-11T16:16:18.868Z",
+      "file": "thinking/turn_013.md"
+    },
+    {
+      "turn": 14,
+      "intent": "commit_tactic",
+      "payload_key": "(have ens: ns{1} = ns{2} by rewrite hns1 hns2 hlc); (have ens1: ns1{1} = ns1{2} by rewrite hns11 hns12 ho ens); (have ens2: ns2{1} = ns2{2} by rewrite hns21 hns22 ho ens); exists UF.forged{2} UFCMA.bad2{2} UFCMA.cbad2{2} UFCMA.log{2} RO.m{2} Mem.lc{2} ROout.m{2} ns1{2} ns2{2}; rewrite ens1 ens2 hf1 hf2 hb hc hl hlc hr ho /=; rewrite hns22 hns12 hns2; split; [by apply/filter_uniq/undup_uniq | split; [by move=> n0; rewrite mem_filter /= => -[] | by move=> n0; rewrite mem_filter /= => -[]]].",
+      "thinking_chars": 0,
+      "text_chars": 172,
+      "tokens": {
+        "output_tokens": 3171,
+        "input_tokens": 2,
+        "cache_read_input_tokens": 122277,
+        "cache_creation_input_tokens": 10136
+      },
+      "session_id": "351c551b-47e9-4b44-8771-01f4aa096d11",
+      "timestamp": "2026-06-11T16:17:01.885Z",
+      "file": "thinking/turn_014.md"
+    },
+    {
+      "turn": 15,
+      "intent": "commit_tactic",
+      "payload_key": "by smt().",
+      "thinking_chars": 0,
+      "text_chars": 67,
+      "tokens": {
+        "output_tokens": 187,
+        "input_tokens": 2,
+        "cache_read_input_tokens": 132413,
+        "cache_creation_input_tokens": 4849
+      },
+      "session_id": "351c551b-47e9-4b44-8771-01f4aa096d11",
+      "timestamp": "2026-06-11T16:17:08.527Z",
+      "file": "thinking/turn_015.md"
+    },
+    {
+      "turn": 16,
+      "intent": "commit_tactic",
+      "payload_key": "by call (iter_cat Orcl); auto => />.",
+      "thinking_chars": 0,
+      "text_chars": 25,
+      "tokens": {
+        "output_tokens": 859,
+        "input_tokens": 2,
+        "cache_read_input_tokens": 137262,
+        "cache_creation_input_tokens": 2092
+      },
+      "session_id": "351c551b-47e9-4b44-8771-01f4aa096d11",
+      "timestamp": "2026-06-11T16:17:25.789Z",
+      "file": "thinking/turn_016.md"
+    }
+  ]
+}

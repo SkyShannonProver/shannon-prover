@@ -1,0 +1,249 @@
+{
+  "node": "Tree-0.0",
+  "discovery": "content_match",
+  "transcripts": [
+    "~/.claude/projects/<PROJECT>-tmp-wt-l1/420ddf0e-a769-49f3-83cb-e3b3c3d9112b.jsonl"
+  ],
+  "turns": [
+    {
+      "turn": 1,
+      "intent": "commit_tactic",
+      "payload_key": "byphoare => //.",
+      "thinking_chars": 0,
+      "text_chars": 489,
+      "session_id": "420ddf0e-a769-49f3-83cb-e3b3c3d9112b",
+      "timestamp": "2026-06-03T15:56:46.007Z",
+      "file": "thinking/turn_001.md"
+    },
+    {
+      "turn": 2,
+      "intent": "commit_tactic",
+      "payload_key": "proc.",
+      "thinking_chars": 0,
+      "text_chars": 65,
+      "session_id": "420ddf0e-a769-49f3-83cb-e3b3c3d9112b",
+      "timestamp": "2026-06-03T15:56:51.593Z",
+      "file": "thinking/turn_002.md"
+    },
+    {
+      "turn": 3,
+      "intent": "commit_tactic",
+      "payload_key": "seq 21 : ((G3.a, G3.a_, G3.c, G3.d) \\in G3.cilog) ((PKE_.qD%r / order%r) ^ 3 * (PKE_.qD%r / (order - 1)%r)) 1%r 1%r 0%r.",
+      "thinking_chars": 0,
+      "text_chars": 270,
+      "session_id": "420ddf0e-a769-49f3-83cb-e3b3c3d9112b",
+      "timestamp": "2026-06-03T15:59:59.174Z",
+      "file": "thinking/turn_003.md"
+    },
+    {
+      "turn": 4,
+      "intent": "commit_tactic",
+      "payload_key": "have ll_dec : islossless G4.O.dec by islossless.",
+      "thinking_chars": 0,
+      "text_chars": 521,
+      "session_id": "420ddf0e-a769-49f3-83cb-e3b3c3d9112b",
+      "timestamp": "2026-06-03T16:03:10.494Z",
+      "file": "thinking/turn_004.md"
+    },
+    {
+      "turn": 5,
+      "intent": "commit_tactic",
+      "payload_key": "wp; do 4! rnd predT; call (choose_ll G4.O ll_dec); auto.",
+      "thinking_chars": 0,
+      "text_chars": 219,
+      "session_id": "420ddf0e-a769-49f3-83cb-e3b3c3d9112b",
+      "timestamp": "2026-06-03T16:03:55.881Z",
+      "file": "thinking/turn_005.md"
+    },
+    {
+      "turn": 6,
+      "intent": "commit_tactic",
+      "payload_key": "wp.",
+      "thinking_chars": 0,
+      "text_chars": 137,
+      "session_id": "420ddf0e-a769-49f3-83cb-e3b3c3d9112b",
+      "timestamp": "2026-06-03T16:04:09.433Z",
+      "file": "thinking/turn_006.md"
+    },
+    {
+      "turn": 7,
+      "intent": "commit_tactic",
+      "payload_key": "rnd predT.",
+      "thinking_chars": 0,
+      "text_chars": 57,
+      "session_id": "420ddf0e-a769-49f3-83cb-e3b3c3d9112b",
+      "timestamp": "2026-06-03T16:04:15.974Z",
+      "file": "thinking/turn_007.md"
+    },
+    {
+      "turn": 8,
+      "intent": "commit_tactic",
+      "payload_key": "auto; call (_: true); auto.",
+      "thinking_chars": 0,
+      "text_chars": 220,
+      "session_id": "420ddf0e-a769-49f3-83cb-e3b3c3d9112b",
+      "timestamp": "2026-06-03T16:04:46.401Z",
+      "file": "thinking/turn_008.md"
+    },
+    {
+      "turn": 9,
+      "intent": "commit_tactic",
+      "payload_key": "seq 13 : (size G3.cilog <= PKE_.qD) 1%r ((PKE_.qD%r / order%r) ^ 3 * (PKE_.qD%r / (order - 1)%r)) 0%r 1%r.",
+      "thinking_chars": 0,
+      "text_chars": 484,
+      "session_id": "420ddf0e-a769-49f3-83cb-e3b3c3d9112b",
+      "timestamp": "2026-06-03T16:07:09.192Z",
+      "file": "thinking/turn_009.md"
+    },
+    {
+      "turn": 10,
+      "intent": "commit_tactic",
+      "payload_key": "auto; call (_: true); auto.",
+      "thinking_chars": 0,
+      "text_chars": 109,
+      "session_id": "420ddf0e-a769-49f3-83cb-e3b3c3d9112b",
+      "timestamp": "2026-06-03T16:07:16.044Z",
+      "file": "thinking/turn_010.md"
+    },
+    {
+      "turn": 11,
+      "intent": "commit_tactic",
+      "payload_key": "auto; call (_: true); auto.",
+      "thinking_chars": 0,
+      "text_chars": 144,
+      "session_id": "420ddf0e-a769-49f3-83cb-e3b3c3d9112b",
+      "timestamp": "2026-06-03T16:08:01.244Z",
+      "file": "thinking/turn_011.md"
+    },
+    {
+      "turn": 12,
+      "intent": "undo_to_checkpoint",
+      "payload_key": "",
+      "thinking_chars": 0,
+      "text_chars": 366,
+      "session_id": "420ddf0e-a769-49f3-83cb-e3b3c3d9112b",
+      "timestamp": "2026-06-03T16:10:34.924Z",
+      "file": "thinking/turn_012.md"
+    },
+    {
+      "turn": 13,
+      "intent": "undo_to_checkpoint",
+      "payload_key": "{\"checkpoint_id\": \"cp_7_c5822fcae3bff6ca\"}",
+      "thinking_chars": 0,
+      "text_chars": 277,
+      "session_id": "420ddf0e-a769-49f3-83cb-e3b3c3d9112b",
+      "timestamp": "2026-06-03T16:10:49.185Z",
+      "file": "thinking/turn_013.md"
+    },
+    {
+      "turn": 14,
+      "intent": "commit_tactic",
+      "payload_key": "seq 13 : (size G3.cilog <= PKE_.qD /\\ G1.w <> zero /\\ G1.g_ = g ^ G1.w) 1%r ((PKE_.qD%r / order%r) ^ 3 * (PKE_.qD%r / (order - 1)%r)) 0%r 1%r.",
+      "thinking_chars": 0,
+      "text_chars": 88,
+      "session_id": "420ddf0e-a769-49f3-83cb-e3b3c3d9112b",
+      "timestamp": "2026-06-03T16:11:04.971Z",
+      "file": "thinking/turn_014.md"
+    },
+    {
+      "turn": 15,
+      "intent": "commit_tactic",
+      "payload_key": "auto; call (_: true); auto.",
+      "thinking_chars": 0,
+      "text_chars": 44,
+      "session_id": "420ddf0e-a769-49f3-83cb-e3b3c3d9112b",
+      "timestamp": "2026-06-03T16:11:09.688Z",
+      "file": "thinking/turn_015.md"
+    },
+    {
+      "turn": 16,
+      "intent": "commit_tactic",
+      "payload_key": "auto; call (_: true); auto.",
+      "thinking_chars": 0,
+      "text_chars": 36,
+      "session_id": "420ddf0e-a769-49f3-83cb-e3b3c3d9112b",
+      "timestamp": "2026-06-03T16:11:14.927Z",
+      "file": "thinking/turn_016.md"
+    },
+    {
+      "turn": 17,
+      "intent": "commit_tactic",
+      "payload_key": "wp.",
+      "thinking_chars": 0,
+      "text_chars": 106,
+      "session_id": "420ddf0e-a769-49f3-83cb-e3b3c3d9112b",
+      "timestamp": "2026-06-03T16:11:47.571Z",
+      "file": "thinking/turn_017.md"
+    },
+    {
+      "turn": 18,
+      "intent": "commit_tactic",
+      "payload_key": "conseq (: _ ==> ((g ^ G1.u, G1.g_ ^ G1.u', g ^ r', g ^ r) \\in G3.cilog)) (: _ ==> size G3.cilog <= PKE_.qD /\\ G1.w <> zero /\\ G1.g_ = g ^ G1.w).",
+      "thinking_chars": 0,
+      "text_chars": 996,
+      "session_id": "420ddf0e-a769-49f3-83cb-e3b3c3d9112b",
+      "timestamp": "2026-06-03T16:20:14.540Z",
+      "file": "thinking/turn_018.md"
+    },
+    {
+      "turn": 19,
+      "intent": "commit_tactic",
+      "payload_key": "by move=> &hr />.",
+      "thinking_chars": 0,
+      "text_chars": 110,
+      "session_id": "420ddf0e-a769-49f3-83cb-e3b3c3d9112b",
+      "timestamp": "2026-06-03T16:20:36.135Z",
+      "file": "thinking/turn_019.md"
+    },
+    {
+      "turn": 20,
+      "intent": "commit_tactic",
+      "payload_key": "auto.",
+      "thinking_chars": 0,
+      "text_chars": 73,
+      "session_id": "420ddf0e-a769-49f3-83cb-e3b3c3d9112b",
+      "timestamp": "2026-06-03T16:20:47.995Z",
+      "file": "thinking/turn_020.md"
+    },
+    {
+      "turn": 21,
+      "intent": "commit_tactic",
+      "payload_key": "conseq (: _ ==> ((g ^ G1.u, G1.g_ ^ G1.u', g ^ r', g ^ r) \\in G3.cilog) /\\ size G3.cilog <= PKE_.qD /\\ G1.w <> zero /\\ G1.g_ = g ^ G1.w) (: _ ==> size G3.cilog <= PKE_.qD /\\ G1.w <> zero /\\ G1.g_ = g ^ G1.w).",
+      "thinking_chars": 0,
+      "text_chars": 295,
+      "session_id": "420ddf0e-a769-49f3-83cb-e3b3c3d9112b",
+      "timestamp": "2026-06-03T16:23:20.001Z",
+      "file": "thinking/turn_021.md"
+    },
+    {
+      "turn": 22,
+      "intent": "commit_tactic",
+      "payload_key": "by move=> &hr />.",
+      "thinking_chars": 0,
+      "text_chars": 34,
+      "session_id": "420ddf0e-a769-49f3-83cb-e3b3c3d9112b",
+      "timestamp": "2026-06-03T16:23:27.044Z",
+      "file": "thinking/turn_022.md"
+    },
+    {
+      "turn": 23,
+      "intent": "commit_tactic",
+      "payload_key": "by move=> &hr /> *.",
+      "thinking_chars": 0,
+      "text_chars": 46,
+      "session_id": "420ddf0e-a769-49f3-83cb-e3b3c3d9112b",
+      "timestamp": "2026-06-03T16:23:38.224Z",
+      "file": "thinking/turn_023.md"
+    },
+    {
+      "turn": 24,
+      "intent": "commit_tactic",
+      "payload_key": "auto.",
+      "thinking_chars": 0,
+      "text_chars": 59,
+      "session_id": "420ddf0e-a769-49f3-83cb-e3b3c3d9112b",
+      "timestamp": "2026-06-03T16:23:42.526Z",
+      "file": "thinking/turn_024.md"
+    }
+  ]
+}

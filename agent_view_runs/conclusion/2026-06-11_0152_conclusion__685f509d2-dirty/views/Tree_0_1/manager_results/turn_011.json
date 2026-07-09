@@ -1,0 +1,19 @@
+{
+  "turn": 11,
+  "handled_intent": {
+    "intent": "commit_tactic",
+    "payload": {
+      "tactic": "have hb2 := step4_bad2 &m; have hb1 := step4_bad1 &m."
+    }
+  },
+  "ok": true,
+  "manager_note": "Committed tactic accepted; the EasyCrypt proof state changed.",
+  "manager_actions": [
+    {
+      "action": "tactic commit",
+      "outcome": "EasyCrypt accepted the committed tactic.",
+      "timing": "762 ms"
+    }
+  ],
+  "view_refreshed": true
+}

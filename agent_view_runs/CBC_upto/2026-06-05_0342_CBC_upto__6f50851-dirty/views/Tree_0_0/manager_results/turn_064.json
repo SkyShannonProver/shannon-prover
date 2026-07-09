@@ -1,0 +1,19 @@
+{
+  "turn": 64,
+  "handled_intent": {
+    "intent": "commit_tactic",
+    "payload": {
+      "tactic": "move=> B; conseq f_eq (_: true ==> true) (_: DoubleQuery.bad = B ==> B => DoubleQuery.bad)."
+    }
+  },
+  "ok": true,
+  "manager_note": "Committed tactic accepted; the EasyCrypt proof state changed.",
+  "manager_actions": [
+    {
+      "action": "tactic commit",
+      "outcome": "EasyCrypt accepted the committed tactic.",
+      "timing": "219 ms"
+    }
+  ],
+  "view_refreshed": true
+}

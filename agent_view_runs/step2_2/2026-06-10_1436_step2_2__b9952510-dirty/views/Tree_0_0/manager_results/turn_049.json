@@ -1,0 +1,19 @@
+{
+  "turn": 49,
+  "handled_intent": {
+    "intent": "commit_tactic",
+    "payload": {
+      "tactic": "move=> c Hc Hdec; rewrite (take_nth witness) 1:/# mem_rcons in_cons."
+    }
+  },
+  "ok": true,
+  "manager_note": "Committed tactic accepted; the EasyCrypt proof state changed.",
+  "manager_actions": [
+    {
+      "action": "tactic commit",
+      "outcome": "EasyCrypt accepted the committed tactic.",
+      "timing": "283 ms"
+    }
+  ],
+  "view_refreshed": true
+}

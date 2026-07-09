@@ -1,0 +1,20 @@
+{
+  "turn": 17,
+  "handled_intent": {
+    "intent": "commit_tactic",
+    "payload": {
+      "tactic": "smt(sxor_cons sxor2_cons)."
+    }
+  },
+  "ok": true,
+  "manager_note": "Committed tactic accepted; the EasyCrypt proof state changed.",
+  "manager_actions": [
+    {
+      "action": "tactic commit",
+      "outcome": "EasyCrypt accepted the committed tactic.",
+      "timing": "352 ms"
+    }
+  ],
+  "view_refreshed": true,
+  "surface_turn_hash": "8d446195e345b1297bae3781c8b2cc6deff56c9d"
+}

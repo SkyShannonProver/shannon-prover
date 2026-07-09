@@ -1,0 +1,79 @@
+(* -------------------------------------------------------------------- *)
+open EcSymbols
+open EcPath
+open EcAst
+open EcTypes
+open EcDecl
+open EcModules
+
+(* -------------------------------------------------------------------- *)
+type theory = theory_item list
+
+and theory_item = {
+  ti_item   : theory_item_r;
+  ti_import : bool;
+}
+
+and theory_item_r =
+  | Th_type      of (symbol * tydecl)
+  | Th_operator  of (symbol * operator)
+  | Th_axiom     of (symbol * axiom)
+  | Th_modtype   of (symbol * top_module_sig)
+  | Th_module    of top_module_expr
+  | Th_theory    of (symbol * ctheory)
+  | Th_export    of EcPath.path * is_local
+  | Th_instance  of (ty_params * EcTypes.ty) * tcinstance * is_local
+  | Th_baserw    of symbol * is_local
+  | Th_addrw     of EcPath.path * EcPath.path list * is_local
+  (* reduction rule does not survive to section so no locality *)
+  | Th_reduction of (EcPath.path * rule_option * rule option) list
+  | Th_auto      of auto_rule
+  | Th_alias     of (symbol * path)
+
+and thsource = {
+  ths_base : EcPath.path;
+}
+
+and ctheory = {
+  cth_items  : theory;
+  cth_mode   : thmode;
+  cth_loca   : is_local;
+  cth_source : thsource option;
+}
+
+and tcinstance = [ `Ring of ring | `Field of field | `General of EcPath.path ]
+and thmode     = [ `Abstract | `Concrete ]
+
+and rule_pattern =
+  | Rule of top_rule_pattern * rule_pattern list
+  | Int  of EcBigInt.zint
+  | Var  of EcIdent.t
+
+and top_rule_pattern =
+  [`Op of (EcPath.path * EcTypes.ty list) | `Tuple | `Proj of int]
+
+and rule = {
+  rl_tyd   : EcDecl.ty_params;
+  rl_vars  : (EcIdent.t * EcTypes.ty) list;
+  rl_cond  : EcCoreFol.form list;
+  rl_ptn   : rule_pattern;
+  rl_tg    : EcCoreFol.form;
+  rl_prio  : int;
+}
+
+and rule_option = {
+  ur_delta  : bool;
+  ur_eqtrue : bool;
+}
+
+and auto_rule = {
+  level    : int;
+  base     : symbol option;
+  axioms   : (path * [`Rigid | `Default]) list;
+  locality : is_local;
+}
+
+val mkitem : import:bool -> theory_item_r -> theory_item
+
+(* -------------------------------------------------------------------- *)
+val module_expr_of_module_sig : EcIdent.t -> mty_mr -> module_sig -> module_expr

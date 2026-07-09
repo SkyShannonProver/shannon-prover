@@ -1,0 +1,22 @@
+{
+  "turn": 2,
+  "handled_intent": {
+    "intent": "inspect_context",
+    "payload": {
+      "topic": "lemma_index"
+    }
+  },
+  "ok": true,
+  "manager_note": "Read-only context. Accepted/rejected tactic or call text inside a preview is route-selection information, not the current proof-state error.",
+  "manager_actions": [
+    {
+      "action": "inspect lemma index",
+      "outcome": "The manager returned read-only context for the current goal.",
+      "timing": "189 ms",
+      "content": {
+        "preview": "=== CBC.eca: 24 lemma statement(s) (signatures only \u2014 proofs are NOT shown) === These are every lemma declared in the current file. Use them to plan which lemmas you can apply/rewrite/bridge with; `lookup_symbol` for the exact declaration of any one before using it. L42 [lemma, top_level] addrA: lemma addrA <- addbA, L43 [lemma, top_level] addrC: lemma addrC <- addbC, L44 [lemma, top_level] add0r: lemma add0r <- add0b, L45 [lemma, top_level] addNr: lemma addNr <- addbK. (* -------------------------------------------------------------------- *) (** Let P, Pi: key -> block -> block be a PRP and its inverse **) op P : key -> block -> block. op Pi: key -> block -> block. (* TODO: if dBlock is modified to not cover the whole type block, modify the axiom below to restrict the bijection *) L143 [lemma, top_level] dBlocks_ll: lemma dBlocks_ll l: is_lossless (dBlocks l) L187 [equiv, in_section] Random_Ideal: equiv Random_Ideal: Random.enc ~ Ideal.enc: size p{1} = size p{2} ==> ={res}. L261 [lemma, top_level] CBC_Oracle_enc_eq: lemma CBC_Oracle_enc_eq (P <: PRF) (P' <: PRF) (I: (glob P) -> (glob P') -> bool): equiv [P.f ~ P'.f: ={arg} /\\ I (glob P){1} (glob P'){2} ==> ={res} /\\ I (glob P)..."
+      }
+    }
+  ],
+  "view_refreshed": true
+}

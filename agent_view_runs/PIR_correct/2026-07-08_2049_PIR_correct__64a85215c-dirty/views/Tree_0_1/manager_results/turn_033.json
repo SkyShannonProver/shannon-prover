@@ -1,0 +1,20 @@
+{
+  "turn": 33,
+  "handled_intent": {
+    "intent": "commit_tactic",
+    "payload": {
+      "tactic": "have hz : A +^ B +^ A +^ B = zerow by rewrite -xorwA xorwK."
+    }
+  },
+  "ok": true,
+  "manager_note": "Committed tactic accepted; the EasyCrypt proof state changed.",
+  "manager_actions": [
+    {
+      "action": "tactic commit",
+      "outcome": "EasyCrypt accepted the committed tactic.",
+      "timing": "149 ms"
+    }
+  ],
+  "view_refreshed": true,
+  "surface_turn_hash": "7395ada7b82872dea8cb792fa61fb5b3323adcd2"
+}

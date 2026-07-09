@@ -1,0 +1,16 @@
+{
+  "turn": 31,
+  "handled_intent": {
+    "intent": "finish"
+  },
+  "ok": false,
+  "repair_prompt": "The current view shows that all EasyCrypt goals are closed, but the lemma has not been saved with `qed.` yet. The manager did not finish this node and did not change the committed proof state.\n\nSubmit exactly this proof intent next:\n{\"intent\": \"commit_tactic\", \"payload\": {\"tactic\": \"qed.\"}}\n\nAfter `qed.` is accepted and the refreshed view shows `candidate_closed` or `verified`, you may finish.",
+  "manager_note": "Finish was rejected because the closed candidate still needs `qed.`.",
+  "manager_actions": [
+    {
+      "action": "finish requires qed",
+      "outcome": "The manager did not finish because the current view still requires `qed.` to save the closed proof candidate."
+    }
+  ],
+  "view_refreshed": true
+}

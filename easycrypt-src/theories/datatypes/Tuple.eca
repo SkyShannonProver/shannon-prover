@@ -1,0 +1,110 @@
+(* -------------------------------------------------------------------- *)
+require import AllCore List StdOrder StdBigop.
+(*---*) import StdOrder.IntOrder StdBigop.Bigint.BIA.
+require import FinType.
+
+pragma +implicits.
+
+(* -------------------------------------------------------------------- *)
+type t.
+
+clone import FinType as Support with type t <- t.
+
+(* -------------------------------------------------------------------- *)
+theory WordN.
+op cross1 (x : 'a) (s : 'a list list) : 'a list list =
+  map (fun w => x :: w) s.
+
+op cross (s : 'a list) (a : 'a list list) =
+  flatten (map (fun x => cross1 x a) s).
+end WordN.
+
+import WordN.
+
+op wordn (n : int) : t list list =
+  foldl (fun s i => cross enum s) [[]] (iota_ 0 n).
+
+lemma wordn0 n : n <= 0 => wordn n = [[]].
+proof. by move=> le0_n; rewrite /wordn iota0. qed.
+
+lemma wordnS n : 0 <= n => wordn (n + 1) = cross enum (wordn n).
+proof. by move=> geo_0; rewrite /wordn iotaSr //= -cats1 foldl_cat. qed.
+
+(* -------------------------------------------------------------------- *)
+lemma wordn_size i : all (fun x => size x = max 0 i) (wordn i).
+proof.
+apply/allP=> w; case: (lezWP 0 i); last first.
+  by move=> _ le0_i; rewrite wordn0 // mem_seq1 ?ler_maxl.
+move=> ge0_i; rewrite ler_maxr //; elim: i ge0_i w.
+  by rewrite wordn0.
+move=> i ge0_i ih w; rewrite wordnS // => /flatten_mapP /=.
+by case=> x [_ /mapP] [s [/ih h ->]] /=; rewrite h addzC.
+qed.
+
+(* -------------------------------------------------------------------- *)
+lemma size_wordn i : size (wordn i) = card ^ (max 0 i).
+proof.
+case: (lezWP 0 i)=> [le|_ le]; last first.
+  by rewrite ler_maxl ?wordn0 //= expr0.
+rewrite ler_maxr //; elim: i le.
+  by rewrite wordn0 // expr0.
+move=> i le0_i ih; rewrite wordnS // size_flatten /=.
+rewrite -map_comp (@eq_map _ (fun x => card^i)).
+  by move=> x /=; rewrite /(\o) size_map.
+rewrite Bigint.sumzE big_map /(\o) /predT /=.
+by rewrite Bigint.big_constz count_predT -/card mulzC exprS.
+qed.
+
+(* -------------------------------------------------------------------- *)
+lemma wordnP i s : mem (wordn i) s <=> size s = max 0 i.
+proof.
+split; first by move: s; apply/allP/wordn_size.
+case: (lezWP 0 i)=> [ge0_i|_ le0_i]; last first.
+  by rewrite ler_maxl ?wordn0 // => /size_eq0.
+rewrite ler_maxr //; elim: i ge0_i s.
+  by move=> s /size_eq0; rewrite wordn0.
+move=> i geo_i ih [//= /eq_sym|]; first by rewrite addz1_neq0.
+move=> x s /=; rewrite addzC => /addIz /ih {ih} si.
+rewrite wordnS //; pose f := fun x => cross1 x (wordn i).
+apply/flattenP=> /=; exists (f x); rewrite -/f.
+by rewrite (@map_f f) ?enumP /f //=; apply/mapP; exists s.
+qed.
+
+(* -------------------------------------------------------------------- *)
+lemma uniq_wordn i : uniq (wordn i).
+proof.
+case: (i <= 0) => [/wordn0 ->//|/ltrNge/ltrW].
+elim/intind: i => [|i ge0_i ih]; first by rewrite wordn0.
+rewrite wordnS // &(uniq_flatten_map) /= ?enum_uniq.
++ by move=> x; rewrite map_inj_in_uniq ?ih.
+move=> x y _ _ /hasP [s []] /mapP[t1 /= [_ ->]].
+by case/mapP=> t2 /= [_ [->]].
+qed.
+
+(* -------------------------------------------------------------------- *)
+lemma word_spec i (s : t list) : size s = max 0 i =>
+  count (pred1 s) (wordn i) = 1.
+proof.
+by rewrite -wordnP => swi; rewrite count_uniq_mem ?uniq_wordn swi.
+qed.
+
+(* -------------------------------------------------------------------- *)
+lemma in_wordn_size i (s : t list) : mem (wordn i) s => size s = max 0 i.
+proof. by rewrite wordnP. qed.
+
+(* -------------------------------------------------------------------- *)
+lemma word_spec_cat i j : 0 <= i => 0 <= j =>
+  perm_eq (wordn (i + j)) (allpairs (++) (wordn i) (wordn j)).
+proof.
+move=> ge0_i ge0_j; apply/uniq_perm_eq; first by apply/uniq_wordn.
+  apply/allpairs_uniq; try by apply/uniq_wordn.
+  move=> x1 x2 y1 y2 si1 si2 ti1 ti2; rewrite eqseq_cat //.
+  by rewrite (in_wordn_size si1) (in_wordn_size si2).
+move=> x; rewrite wordnP ler_maxr 1:addz_ge0 // allpairsP.
+split=> [sz|[] [x1 x2] /= [sz1] [sz2] ->]; last first.
+  by rewrite size_cat (in_wordn_size sz1) (in_wordn_size sz2) !ler_maxr.
+exists (take i x, drop i x) => /=; rewrite !wordnP cat_take_drop /=.
+rewrite size_drop // sz addzAC !ler_maxr //=.
+rewrite size_take ?ler_maxr //; case: (i < size x)=> //=.
+by rewrite -lezNgt eqz_leq sz => -> /=; rewrite lez_addl.
+qed.

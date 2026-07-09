@@ -1,0 +1,19 @@
+{
+  "turn": 26,
+  "handled_intent": {
+    "intent": "commit_tactic",
+    "payload": {
+      "tactic": "have hmu1 : forall (z : ZModE.exp), mu1 (dt \\ pred1 G1.u{hr}) z <= 1%r / (order - 1)%r by move=> z; rewrite dexcepted1E; case: (pred1 G1.u{hr} z) => _; rewrite ?dt1E; smt(dt_ll gt1_q)."
+    }
+  },
+  "ok": true,
+  "manager_note": "Committed tactic accepted; the EasyCrypt proof state changed.",
+  "manager_actions": [
+    {
+      "action": "tactic commit",
+      "outcome": "EasyCrypt accepted the committed tactic.",
+      "timing": "611 ms"
+    }
+  ],
+  "view_refreshed": true
+}

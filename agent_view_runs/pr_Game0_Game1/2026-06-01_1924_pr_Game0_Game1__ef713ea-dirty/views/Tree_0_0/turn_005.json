@@ -1,0 +1,62 @@
+{
+  "last_result": {
+    "intent": "commit_tactic",
+    "payload": {
+      "tactic": "proc."
+    },
+    "manager_action": "commit_tactic",
+    "result": "EasyCrypt accepted the committed tactic.",
+    "effect": "EasyCrypt accepted a proof-state change; the refreshed view is based on the new committed state.",
+    "proof_state": "The committed EasyCrypt proof state changed.",
+    "tactic": "proc."
+  },
+  "current_goal": {
+    "lines": [
+      "Current goal (remaining: 4)",
+      "",
+      "Type variables: <none>",
+      "",
+      "&m: {}",
+      "------------------------------------------------------------------------",
+      "&1 (left ) : {b, b' : bool, m0, m1 : ptxt, c : rand * ptxt, pk : pkey,",
+      "             sk : skey}",
+      "&2 (right) : {b, b' : bool, m0, m1, h : ptxt, c : rand * ptxt, pk : pkey,",
+      "             sk : skey}",
+      "",
+      "pre =",
+      "  (glob A){1} = (glob A){2} /\\ LRO.m{1} = LRO.m{2} /\\ Log.qs{1} = Log.qs{2}",
+      "",
+      "Log(LRO).init()                 (1)  Log(LRO).init()               ",
+      "(pk, sk) <@ BR93(LRO).keygen()  (2)  (pk, sk) <$ dkeys             ",
+      "(m0, m1) <@ A(Log(LRO)).a1(pk)  (3)  (m0, m1) <@ A(Log(LRO)).a1(pk)",
+      "b <$ {0,1}                      (4)  b <$ {0,1}                    ",
+      "c <@                            (5)  Game1.r <$ drand              ",
+      "  BR93(LRO).enc(pk,             ( )                                ",
+      "    if b then m0 else m1)       ( )                                ",
+      "b' <@ A(Log(LRO)).a2(c)         (6)  h <$ dptxt                    ",
+      "                                (7)  c <-                          ",
+      "                                ( )    (f pk Game1.r,              ",
+      "                                ( )     h +^ if b then m0 else m1) ",
+      "                                (8)  b' <@ A(Log(LRO)).a2(c)       ",
+      "",
+      "post = b'{1} = b{1} => b'{2} = b{2} \\/ (Game1.r{2} \\in Log.qs{2})",
+      "[72|check]>"
+    ],
+    "text_fully_shown": true,
+    "truncated": false,
+    "goal_type": "pRHL",
+    "view_focus": "seq_cut",
+    "source": {
+      "label": "Parsed from EasyCrypt pretty goal text",
+      "ground_truth": false
+    }
+  },
+  "proof_status": {
+    "status": "open",
+    "remaining_goals": 4,
+    "remaining_goals_known": true,
+    "goal_type": "pRHL",
+    "view_focus": "seq_cut",
+    "current_layer": "call_site"
+  }
+}

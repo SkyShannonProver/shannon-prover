@@ -1,0 +1,19 @@
+{
+  "turn": 39,
+  "handled_intent": {
+    "intent": "commit_tactic",
+    "payload": {
+      "tactic": "inline{2} EncRnd.cc."
+    }
+  },
+  "ok": true,
+  "manager_note": "Committed tactic accepted; the EasyCrypt proof state changed.",
+  "manager_actions": [
+    {
+      "action": "tactic commit",
+      "outcome": "EasyCrypt accepted the committed tactic.",
+      "timing": "510 ms"
+    }
+  ],
+  "view_refreshed": true
+}

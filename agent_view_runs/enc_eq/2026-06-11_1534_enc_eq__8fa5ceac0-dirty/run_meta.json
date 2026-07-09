@@ -1,0 +1,41 @@
+{
+  "kind": "agent_view_run_report",
+  "timestamp": "2026-06-11_1534_enc_eq",
+  "lemma": "enc_eq",
+  "source_file": "eval/examples/MEE-CBC/CBC.eca",
+  "model": "claude-fable-5",
+  "surface_profile": "l1_goal_projection",
+  "trees": 2,
+  "eval_mode": true,
+  "outcome": "proved",
+  "committed_proofs": [
+    {
+      "tree": "Tree_0_0",
+      "tactics": [
+        "proc; inline *; wp.",
+        "while (={i, s} /\\ key0{1} = PRP.k{2} /\\ p1{1} = p{2} /\\ c1{1} = c{2}); by auto.",
+        "qed."
+      ],
+      "source": "session",
+      "proved": true
+    },
+    {
+      "tree": "Tree_0_1",
+      "tactics": [
+        "proc; inline *; wp.",
+        "while (={i, s} /\\ key0{1} = PRP.k{2} /\\ p1{1} = p{2} /\\ c1{1} = c{2}).",
+        "auto.",
+        "auto."
+      ],
+      "source": "session",
+      "proved": false
+    }
+  ],
+  "turn_count": 8,
+  "views_copied": 10,
+  "run_iteration_dir": "artifacts/eval_suite/mee_sweep_l1_all/l1_goal_projection/mee_enc_eq/r01/2026-06-11_1534_enc_eq/iteration_1",
+  "commit": "8fa5ceac0",
+  "commit_full": "8fa5ceac0a4c7ed08e53023adcaade43f89a6de8",
+  "branch": "mcp-v0",
+  "dirty": true
+}

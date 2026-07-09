@@ -1,0 +1,19 @@
+{
+  "turn": 28,
+  "handled_intent": {
+    "intent": "probe_tactic",
+    "payload": {
+      "tactic": "rewrite big_cons /=; rewrite /predT in H; smt(xorwA xorwC xorw0 xorwK)."
+    }
+  },
+  "ok": true,
+  "manager_note": "Read-only tactic probe. Use any goal-after-probe text as a preview only; there is no probe step to undo.",
+  "manager_actions": [
+    {
+      "action": "tactic probe",
+      "outcome": "NO PROGRESS \u2014 EasyCrypt ACCEPTED this probe but it did not change the goal, so nothing was committed (it auto-reverts). This is NOT a syntax or type error \u2014 there is no error to fix. The tactic is a no-op at this goal (e.g. the call is already effectively inlined, or it needs a different / positional form). Re-trying this exact tactic will no-op again \u2014 pick a different tactic.",
+      "timing": "1.2 s"
+    }
+  ],
+  "view_refreshed": true
+}

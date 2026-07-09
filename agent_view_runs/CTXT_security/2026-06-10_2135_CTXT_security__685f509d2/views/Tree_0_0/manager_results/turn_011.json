@@ -1,0 +1,19 @@
+{
+  "turn": 11,
+  "handled_intent": {
+    "intent": "commit_tactic",
+    "payload": {
+      "tactic": "have enc_corr_eq: forall _k _p, equiv [E.enc ~ E.enc : ={glob E, k, p} /\\ k{1} = _k /\\ p{1} = _p ==> ={glob E, res} /\\ dec _k res{1} = Some _p]."
+    }
+  },
+  "ok": true,
+  "manager_note": "Committed tactic accepted; the EasyCrypt proof state changed.",
+  "manager_actions": [
+    {
+      "action": "tactic commit",
+      "outcome": "EasyCrypt accepted the committed tactic.",
+      "timing": "167 ms"
+    }
+  ],
+  "view_refreshed": true
+}

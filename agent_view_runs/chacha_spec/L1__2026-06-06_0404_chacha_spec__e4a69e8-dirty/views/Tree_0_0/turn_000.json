@@ -1,0 +1,38 @@
+{
+  "last_result": {},
+  "current_goal": {
+    "goal_type": "phoare",
+    "lines": [
+      "Current goal",
+      "",
+      "Type variables: <none>",
+      "",
+      "k0: key",
+      "n0: nonce",
+      "p0: message",
+      "gs0: globS",
+      "------------------------------------------------------------------------",
+      "pre = k = k0 /\\ n = n0 /\\ p = p0 /\\ OCC.gs = gs0",
+      "",
+      "    ChaCha(OCC(I)).enc ",
+      "    [=] 1%r",
+      "",
+      "post = res = gen_CTR_encrypt_bytes take_xor (cc gs0) k0 n0 1 p0"
+    ],
+    "source": {
+      "ground_truth": false,
+      "label": "Parsed from EasyCrypt pretty goal text"
+    },
+    "text_fully_shown": true,
+    "truncated": false,
+    "view_focus": "procedure_frontier"
+  },
+  "proof_status": {
+    "current_layer": "procedure_entry",
+    "goal_type": "phoare",
+    "remaining_goals": 1,
+    "remaining_goals_known": true,
+    "status": "open",
+    "view_focus": "procedure_frontier"
+  }
+}

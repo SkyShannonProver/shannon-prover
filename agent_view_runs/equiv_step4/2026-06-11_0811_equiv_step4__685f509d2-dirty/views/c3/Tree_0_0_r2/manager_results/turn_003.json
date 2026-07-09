@@ -1,0 +1,19 @@
+{
+  "turn": 3,
+  "handled_intent": {
+    "intent": "commit_tactic",
+    "payload": {
+      "tactic": "seq 4 2 : (UF.forged{1} = UF.forged{2} /\\ UFCMA.bad2{1} = UFCMA.bad2{2} /\\ UFCMA.cbad2{1} = UFCMA.cbad2{2} /\\ UFCMA.log{1} = UFCMA.log{2} /\\ Mem.lc{1} = Mem.lc{2} /\\ RO.m{1} = RO.m{2} /\\ SplitC2.I2.RO.m{1} = SplitC2.I2.RO.m{2} /\\ l2{1} = ns2{2} /\\ uniq ns2{2} /\\ (forall n0, n0 \\in ns2{2} => (n0, C.ofintd 0) \\notin SplitC2.I2.RO.m{2}))."
+    }
+  },
+  "ok": true,
+  "manager_note": "Committed tactic accepted; the EasyCrypt proof state changed.",
+  "manager_actions": [
+    {
+      "action": "tactic commit",
+      "outcome": "EasyCrypt accepted the committed tactic.",
+      "timing": "386 ms"
+    }
+  ],
+  "view_refreshed": true
+}

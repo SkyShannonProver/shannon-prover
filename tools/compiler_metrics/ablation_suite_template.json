@@ -1,0 +1,34 @@
+{
+  "suite": "my_ablation",
+  "profiles": [
+    "l1_goal_projection",
+    "l4_checked_action_surface"
+  ],
+  "defaults": {
+    "eval_mode": true,
+    "skip_regression": true,
+    "max_iterations": 1,
+    "timeout_minutes": 90,
+    "repeats": 1,
+    "output_dir": "artifacts/eval_suite",
+    "source_isolation": true,
+    "strip_proofs": true
+  },
+  "targets": [
+    {
+      "id": "my_lemma_1",
+      "file": "eval/examples/PIR.ec",
+      "lemma": "is_restr_Ueq",
+      "include_dir": "easycrypt-src/theories",
+      "timeout_minutes": 90
+    },
+    {
+      "id": "my_lemma_2_multifile",
+      "file": "eval/examples/MEE-CBC/FunctionalSpec.ec",
+      "lemma": "cbc_correct",
+      "copy_root": "eval/examples/MEE-CBC",
+      "include_dir": "easycrypt-src/theories",
+      "timeout_minutes": 90
+    }
+  ]
+}

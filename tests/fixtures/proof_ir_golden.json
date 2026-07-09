@@ -1,0 +1,2285 @@
+[
+ {
+  "id": 0,
+  "input": {
+   "current_goal": {
+    "active_goal_preview": "Current goal\n------------------------------------------------------------------------\nequiv[ P.f ~ P'.f : true ==> ={res}] =>\nequiv[ O(P).enc ~ O(P').enc : true ==> ={res}]",
+    "goal_type": "ambient",
+    "parsed_goal": {
+     "ambient_shape": "logical",
+     "goal_type": "ambient"
+    }
+   }
+  },
+  "sha256": "c7bcd52c3d814e0f809eed1c3869722d0fa10b45e06579d290b67cf4ac78585c"
+ },
+ {
+  "id": 1,
+  "input": {
+   "current_goal": {
+    "active_goal_preview": "Current goal\n------------------------------------------------------------------------\nforall &1 &2,\n  p{1} = p{2} /\\ I (glob P){1} (glob P'){2} =>\n  c{1} = c{2}",
+    "goal_type": "ambient",
+    "parsed_goal": {
+     "ambient_shape": "logical",
+     "goal_type": "ambient"
+    }
+   }
+  },
+  "sha256": "b98020e7e28acfc08824b532904b7dd58a2e03d860bf32c4b775914e517c3697"
+ },
+ {
+  "id": 2,
+  "input": {
+   "current_goal": {
+    "active_goal_preview": "Current goal\n------------------------------------------------------------------------\nforall (sR : block), sR \\in dBlock => sR = sR",
+    "goal_type": "ambient",
+    "parsed_goal": {
+     "ambient_shape": "logical",
+     "goal_type": "ambient"
+    }
+   }
+  },
+  "sha256": "a02fd095d4d42d649e0828a2b5dce9bc8ad25aebd961c6a31ce8c5020fc4ff38"
+ },
+ {
+  "id": 3,
+  "input": {
+   "current_goal": {
+    "active_goal_preview": "Current goal\n------------------------------------------------------------------------\nx = x",
+    "goal_type": "ambient",
+    "parsed_goal": {
+     "ambient_shape": "logical",
+     "goal_type": "ambient"
+    }
+   }
+  },
+  "sha256": "39664871c2a0525bede246e1130fe81ccf0aa0dfbfdebe9d80d8381a3e3f98e0"
+ },
+ {
+  "id": 4,
+  "input": {
+   "current_goal": {
+    "active_goal_preview": "Current goal\n\n&1 (left ) : {i : int} [programs are in sync]\n&2 (right) : {i : int}\n\npre = true\npost = i{1} = i{2}",
+    "goal_type": "pRHL",
+    "parsed_goal": {
+     "goal_type": "pRHL",
+     "left_statements": [],
+     "right_statements": []
+    }
+   }
+  },
+  "sha256": "128d23b7e04df94efeac73542de6e0dd6c78e46e094e4124a22e566813533777"
+ },
+ {
+  "id": 5,
+  "input": {
+   "current_goal": {
+    "active_goal_preview": "Current goal\n\n------------------------------------------------------------------------\n- Pr[G.main() @ &m : res] = - Pr[G'.main() @ &m : res]",
+    "goal_type": "probability",
+    "parsed_goal": {
+     "goal_type": "probability",
+     "pr_rewrite_candidates": [
+      {
+       "lemma": "pr_Game_Game'"
+      }
+     ],
+     "prob_form": "eq"
+    }
+   },
+   "proof_state": {
+    "latest_transition": {
+     "latest_error": "cannot apply byequiv",
+     "tactic": "byequiv => //."
+    }
+   }
+  },
+  "sha256": "400a897a507091ad085a33f5cf8af456843d5606a65b6a6e43e8fc9ca81ec01e"
+ },
+ {
+  "id": 6,
+  "input": {
+   "current_goal": {
+    "active_goal_preview": "Current goal\n\n------------------------------------------------------------------------\n- Pr[G.main() @ &m : res] = - Pr[G'.main() @ &m : res]",
+    "goal_type": "probability",
+    "parsed_goal": {
+     "goal_type": "probability",
+     "prob_form": "eq",
+     "raw_text": "- Pr[G.main() @ &m : res] = - Pr[G'.main() @ &m : res]"
+    }
+   }
+  },
+  "sha256": "fee724c2061fe3ea3197967256d4c4b3c3a7d1eaa93bad2be3715815c829283a"
+ },
+ {
+  "id": 7,
+  "input": {
+   "current_goal": {
+    "active_goal_preview": "Current goal\n\n------------------------------------------------------------------------\nPr[Game(RO).main() @ &m : res \\/ Bad.flag] <= q%r * eps",
+    "goal_type": "probability",
+    "parsed_goal": {
+     "goal_type": "probability",
+     "pr_rewrite_candidates": [
+      {
+       "lemma": "pr_RO_split"
+      }
+     ],
+     "prob_form": "ineq"
+    }
+   }
+  },
+  "sha256": "617261406d6adf0022c13a05e9b9f2b8d9b3d00edfa55c4fa2179ad351bcb35b"
+ },
+ {
+  "id": 8,
+  "input": {
+   "current_goal": {
+    "active_goal_preview": "Current goal\n\n------------------------------------------------------------------------\nPr[Left.main() @ &m : res] <= Pr[Right.main() @ &m : res]",
+    "goal_type": "probability",
+    "parsed_goal": {
+     "goal_type": "probability",
+     "lhs_game": "Left",
+     "prob_form": "ineq",
+     "rhs_game": "Right",
+     "strategy_hint": "byequiv",
+     "suggested_tactics": [
+      "byequiv=> //=."
+     ]
+    }
+   }
+  },
+  "sha256": "b703c7a102a6d8d97f5eee7fc79fad5b5224cd82cab915e0918403853ed5474a"
+ },
+ {
+  "id": 9,
+  "input": {
+   "current_goal": {
+    "active_goal_preview": "Current goal\n\n------------------------------------------------------------------------\n`| Pr[G0.main() @ &m : res] - Pr[G1.main() @ &m : res] | <=\nPr[BadGame.main() @ &m : BadGame.bad] + eps",
+    "goal_type": "probability",
+    "parsed_goal": {
+     "goal_type": "probability",
+     "prob_form": "adv_diff_ineq"
+    }
+   }
+  },
+  "sha256": "9a682e6750887db6d3d53f88e7d33260d97b13f854001922638ad4b55e051b48"
+ },
+ {
+  "id": 10,
+  "input": {
+   "current_goal": {
+    "active_goal_preview": "Current goal\n\n------------------------------------------------------------------------\n`|Pr[RP_RFc.PRFt.IND(PRPi, RP_RFc.DBounder(PRPF_Adv(QueryBounder(A)))).main() @ &m : res] - Pr[RP_RFc.PRFt.IND(RP_RFc.PRFi.PRFi, RP_RFc.DBounder(PRPF_Adv(QueryBounder(A)))).main() @ &m : res]| <= eps",
+    "goal_type": "probability",
+    "parsed_goal": {
+     "goal_type": "probability",
+     "prob_form": "adv_diff_ineq"
+    }
+   }
+  },
+  "sha256": "a244349c648f81170b657082e219ee2acf3a7cbb33dfb6f8deccc78139a2ba36"
+ },
+ {
+  "id": 11,
+  "input": {
+   "current_goal": {
+    "active_goal_preview": "Current goal\n\n------------------------------------------------------------------------\npre = true\n\nM.f [=] 1%r\n\npost = true\n",
+    "goal_type": "phoare",
+    "parsed_goal": {
+     "goal_type": "phoare",
+     "suggested_tactics": [
+      "proc.",
+      "islossless."
+     ]
+    }
+   }
+  },
+  "sha256": "724a9bd15ccce522d2db51f474bb08e0b7de30e975c64ad7dcd23d69fe19c54c"
+ },
+ {
+  "id": 12,
+  "input": {
+   "current_goal": {
+    "active_goal_preview": "Current goal\n\n------------------------------------------------------------------------\nx \\in take n xs => size (take n xs) <= size xs",
+    "goal_type": "ambient",
+    "parsed_goal": {
+     "ambient_shape": "implication",
+     "goal_type": "ambient"
+    }
+   }
+  },
+  "sha256": "583753fa58ea8aed342df926df6b2eaed91a1dd0b225702975b247179afebfb5"
+ },
+ {
+  "id": 13,
+  "input": {
+   "current_goal": {
+    "active_goal_preview": "Current goal\n\nH: equiv[ P.f ~ P'.f : true ==> ={res}]\nH0: equiv[ P.g ~ P'.g : true ==> ={res}]\n------------------------------------------------------------------------\nforall &m (A(O : RCPA_Oracles) <: RCPA_Adversary{-P}),\n  Pr[G(A).main() @ &m : res] = Pr[G'(A).main() @ &m : res]",
+    "goal_type": "probability",
+    "parsed_goal": {
+     "goal_type": "probability",
+     "intro_required": true,
+     "prob_form": "eq"
+    }
+   }
+  },
+  "sha256": "51097e8561407ace192a4c549116890afb81da91ff80af5101abdc64bd9c9875"
+ },
+ {
+  "id": 14,
+  "input": {
+   "current_goal": {
+    "active_goal_preview": "Current goal\n\nH: equiv[ P.init ~ P'.init : true ==> ={glob P}]\n------------------------------------------------------------------------\nequiv[ P.f ~ P'.f : true ==> ={res}] =>\nPr[G.main() @ &m : res] = Pr[G'.main() @ &m : res]",
+    "goal_type": "probability",
+    "parsed_goal": {
+     "goal_type": "probability",
+     "intro_required": true,
+     "prob_form": "eq"
+    }
+   }
+  },
+  "sha256": "4b9ede8f1086cf86a2d5c1e8bc876c10b6509803cf6f6d61752fa3a61399a8e9"
+ },
+ {
+  "id": 15,
+  "input": {
+   "current_goal": {
+    "active_goal_preview": "Current goal\n\nHf: equiv[ P.f  ~ P'.f :\n            arg{1} = arg{2} ==> ={res}]\n------------------------------------------------------------------------\n&1 (left) : {s : block}\n&2 (right) : {s : block}\n",
+    "goal_type": "pRHL",
+    "parsed_goal": {
+     "goal_type": "pRHL",
+     "left_statements": [
+      {
+       "pos": 1,
+       "pos_path": "1",
+       "procedure": "P.f",
+       "text": "s <@ P.f(x);",
+       "type": "CALL"
+      }
+     ],
+     "right_statements": [
+      {
+       "pos": 1,
+       "pos_path": "1",
+       "procedure": "P'.f",
+       "text": "s <@ P'.f(x);",
+       "type": "CALL"
+      }
+     ]
+    }
+   }
+  },
+  "sha256": "7bd048a5a08b2d9bdbab3b0386460564c35d8911b7b467f8bc1c1766a3412339"
+ },
+ {
+  "id": 16,
+  "input": {
+   "current_goal": {
+    "active_goal_preview": "Current goal\n\nHf: equiv[ P.f ~ P'.f : true ==> ={res}]\n------------------------------------------------------------------------\n&1 (left) : {i : int}\n&2 (right) : {i : int}\n",
+    "goal_type": "pRHL",
+    "parsed_goal": {
+     "goal_type": "pRHL",
+     "left_statements": [
+      {
+       "pos": 1,
+       "pos_path": "1",
+       "text": "while (i < n) {",
+       "type": "WHILE"
+      },
+      {
+       "pos": 1,
+       "pos_path": "1.1",
+       "procedure": "P.f",
+       "text": "x <@ P.f();",
+       "type": "CALL"
+      }
+     ],
+     "right_statements": [
+      {
+       "pos": 1,
+       "pos_path": "1",
+       "text": "while (i < n) {",
+       "type": "WHILE"
+      },
+      {
+       "pos": 1,
+       "pos_path": "1.1",
+       "procedure": "P'.f",
+       "text": "x <@ P'.f();",
+       "type": "CALL"
+      }
+     ]
+    }
+   }
+  },
+  "sha256": "b6353b59f2d0ad2e1da6ba76d59762e90ddf826ff516b8543cac4b2afc868751"
+ },
+ {
+  "id": 17,
+  "input": {
+   "current_goal": {
+    "active_goal_preview": "phoare[ G4.main : true ==> (G3.a, G3.a_, G3.c, G3.d) \\in G3.cilog ] <= (PKE_.qD%r / order%r)",
+    "goal_type": "phoare",
+    "parsed_goal": {
+     "goal_type": "phoare",
+     "left_statements": [
+      {
+       "pos": 1,
+       "pos_path": "1",
+       "text": "y <$ dt;",
+       "type": "SAMPLE",
+       "vars_written": [
+        "y"
+       ]
+      }
+     ],
+     "post": "post = (G3.a, G3.a_, G3.c, G3.d) \\in G3.cilog",
+     "suggested_tactics": [
+      "seq 23 : ((G3.a, G3.a_, G3.c, G3.d) \\in G3.cilog) 1%r 1%r 0%r _.",
+      "rnd."
+     ]
+    }
+   }
+  },
+  "sha256": "5d260c414c148ed3ff13f69ae69da12734f541b2cb8137c1237b43c0a581f923"
+ },
+ {
+  "id": 18,
+  "input": {
+   "current_goal": {
+    "active_goal_preview": "pre = ={ek}\n\nm <$ dbytes32          (1)  m <$ dbytes32\nz <$ dbytes32          (2)  z <$ dbytes32\n\npost = ={m, z}",
+    "goal_type": "pRHL",
+    "parsed_goal": {
+     "goal_type": "pRHL",
+     "left_statements": [
+      {
+       "pos": 1,
+       "pos_path": "1",
+       "text": "m <$ dbytes32;",
+       "type": "SAMPLE",
+       "vars_written": [
+        "m"
+       ]
+      },
+      {
+       "pos": 2,
+       "pos_path": "2",
+       "text": "z <$ dbytes32;",
+       "type": "SAMPLE",
+       "vars_written": [
+        "z"
+       ]
+      }
+     ],
+     "post": "post = ={m, z}",
+     "right_statements": [
+      {
+       "pos": 1,
+       "pos_path": "1",
+       "text": "m <$ dbytes32;",
+       "type": "SAMPLE",
+       "vars_written": [
+        "m"
+       ]
+      },
+      {
+       "pos": 2,
+       "pos_path": "2",
+       "text": "z <$ dbytes32;",
+       "type": "SAMPLE",
+       "vars_written": [
+        "z"
+       ]
+      }
+     ],
+     "suggested_tactics": [
+      "wp.",
+      "auto => />."
+     ]
+    }
+   }
+  },
+  "sha256": "66b9b22cd7966cfabf2ff8094481a5b2333587fb3c04c45e1f69672a49daa497"
+ },
+ {
+  "id": 19,
+  "input": {
+   "current_goal": {
+    "active_goal_preview": "pre = ={p, c}\n\nwhile (i < size p) { ... if (mem qs s) { bad <- true; } }\n\npost = Compute.bad{2} = (DoubleQuery.bad{1} \\/ mem DoubleQuery.qs (s + nth witness p i)){1}",
+    "goal_type": "pRHL",
+    "parsed_goal": {
+     "goal_type": "pRHL",
+     "left_statements": [
+      {
+       "pos": 1,
+       "pos_path": "1",
+       "text": "while (i < size p) {",
+       "type": "WHILE",
+       "vars_read": [
+        "i",
+        "p"
+       ]
+      },
+      {
+       "pos": 2,
+       "pos_path": "1.1",
+       "text": "if (mem qs s) {",
+       "type": "IF"
+      }
+     ],
+     "post": "post = Compute.bad{2} = (DoubleQuery.bad{1} \\/ mem DoubleQuery.qs (s + nth witness p i)){1}",
+     "right_statements": [
+      {
+       "pos": 1,
+       "pos_path": "1",
+       "text": "while (i < size p) {",
+       "type": "WHILE",
+       "vars_read": [
+        "i",
+        "p"
+       ]
+      },
+      {
+       "pos": 2,
+       "pos_path": "1.1",
+       "text": "s <$ dblock;",
+       "type": "SAMPLE",
+       "vars_written": [
+        "s"
+       ]
+      }
+     ],
+     "suggested_tactics": [
+      "while (...).",
+      "rcondt{1} 2.",
+      "rnd."
+     ]
+    }
+   }
+  },
+  "sha256": "118e8ba8b36ce6114c01379aff1cf0a50a3d225af262d0d5d50c69fc40dc2e43"
+ },
+ {
+  "id": 20,
+  "input": {
+   "current_goal": {
+    "active_goal_preview": "pre = true\n\n        (1)  t1 <$ dtag\n\npost = forall (t0_0 : tag), t0_0 \\in dtag => t0_0 = t1{2}",
+    "goal_type": "pRHL",
+    "parsed_goal": {
+     "goal_type": "pRHL",
+     "post": "post = forall (t0_0 : tag), t0_0 \\in dtag => t0_0 = t1{2}",
+     "right_statements": [
+      {
+       "distribution": "dtag",
+       "pos": 1,
+       "pos_path": "1",
+       "text": "t1 <$ dtag;",
+       "type": "SAMPLE",
+       "vars_written": [
+        "t1"
+       ]
+      }
+     ],
+     "suggested_tactics": [
+      "rnd{2}.",
+      "auto."
+     ]
+    }
+   }
+  },
+  "sha256": "365cb4eed1e96d9b2a7934bab7480453632ce9e2bae2297967033a0ba0bbf644"
+ },
+ {
+  "id": 21,
+  "input": {
+   "current_goal": {
+    "active_goal_preview": "pre = true\n\nr <$ dR              (1)\ns <$ dS              (2)  t <$ dS\n\npost = t{2} = s{1} + offset{1}",
+    "goal_type": "pRHL",
+    "parsed_goal": {
+     "goal_type": "pRHL",
+     "left_statements": [
+      {
+       "pos": 1,
+       "pos_path": "1",
+       "text": "r <$ dR;",
+       "type": "SAMPLE",
+       "vars_written": [
+        "r"
+       ]
+      },
+      {
+       "pos": 2,
+       "pos_path": "2",
+       "text": "s <$ dS;",
+       "type": "SAMPLE",
+       "vars_written": [
+        "s"
+       ]
+      }
+     ],
+     "post": "post = t{2} = s{1} + offset{1}",
+     "right_statements": [
+      {
+       "pos": 1,
+       "pos_path": "1",
+       "text": "t <$ dS;",
+       "type": "SAMPLE",
+       "vars_written": [
+        "t"
+       ]
+      }
+     ],
+     "suggested_tactics": [
+      "wp.",
+      "auto => />."
+     ]
+    }
+   }
+  },
+  "sha256": "4e2def526f942ae0b603d4a2cac43c6097b5c7aac0f0e735f11d5663534b59e6"
+ },
+ {
+  "id": 22,
+  "input": {
+   "current_goal": {
+    "active_goal_preview": "pre = true\n\ns <$ dT              (1)  t <$ dT\n\npost = t{2} = s{1} + mask{2}",
+    "goal_type": "pRHL",
+    "parsed_goal": {
+     "goal_type": "pRHL",
+     "left_statements": [
+      {
+       "pos": 1,
+       "pos_path": "1",
+       "text": "s <$ dT;",
+       "type": "SAMPLE",
+       "vars_written": [
+        "s"
+       ]
+      }
+     ],
+     "post": "post = t{2} = s{1} + mask{2}",
+     "right_statements": [
+      {
+       "pos": 1,
+       "pos_path": "1",
+       "text": "t <$ dT;",
+       "type": "SAMPLE",
+       "vars_written": [
+        "t"
+       ]
+      }
+     ],
+     "suggested_tactics": [
+      "wp.",
+      "auto => />."
+     ]
+    }
+   }
+  },
+  "sha256": "e5999bb709212d3c7c7c16ff2d5040b03e98702a3e8aeae1b2fbe5c7e862ec88"
+ },
+ {
+  "id": 23,
+  "input": {
+   "current_goal": {
+    "active_goal_preview": "pre = true\nleft program contains c <@ EncRnd.cc(n, p)\npost = ={res}\n",
+    "goal_type": "pRHL",
+    "parsed_goal": {
+     "goal_type": "pRHL",
+     "suggested_tactics": [
+      "wp."
+     ]
+    }
+   }
+  },
+  "sha256": "4c459eb9bfade4f5e8b472be999396679dcbbdf961449fbf49d56a1b800f9425"
+ },
+ {
+  "id": 24,
+  "input": {
+   "current_goal": {
+    "goal_type": "equiv",
+    "parsed_goal": {
+     "goal_type": "equiv",
+     "lhs_proc": "O(P).enc",
+     "rhs_proc": "O(P').enc"
+    }
+   }
+  },
+  "sha256": "98fa2d382e2ba67bb793d2cd048b423a2989b8f8937d1ae1a4768c63d3ad3d59"
+ },
+ {
+  "id": 25,
+  "input": {
+   "current_goal": {
+    "goal_type": "pRHL",
+    "parsed_goal": {
+     "call_equiv_candidates": {
+      "ChaCha.enc": [
+       "chacha_enc1"
+      ],
+      "Poly.mac": [
+       "poly_mac1"
+      ]
+     },
+     "goal_type": "pRHL",
+     "left_statements": [
+      {
+       "pos": 1,
+       "pos_path": "1",
+       "procedure": "Poly.mac",
+       "text": "t <@ Poly.mac(n, a, c);",
+       "type": "CALL"
+      },
+      {
+       "pos": 2,
+       "pos_path": "2",
+       "procedure": "ChaCha.enc",
+       "text": "c <@ ChaCha.enc(n, p);",
+       "type": "CALL"
+      }
+     ],
+     "right_statements": [
+      {
+       "pos": 1,
+       "pos_path": "1",
+       "procedure": "D.O.Poly.mac",
+       "text": "t <@ D.O.Poly.mac(n, a, c);",
+       "type": "CALL"
+      },
+      {
+       "pos": 2,
+       "pos_path": "2",
+       "procedure": "D.O.ChaCha.enc",
+       "text": "c <@ D.O.ChaCha.enc(n, p);",
+       "type": "CALL"
+      }
+     ]
+    }
+   }
+  },
+  "sha256": "913b1709ef56abc135f79b8d10b66dee932fba88ebe07a8e20dbc2106cab57b1"
+ },
+ {
+  "id": 26,
+  "input": {
+   "current_goal": {
+    "goal_type": "pRHL",
+    "parsed_goal": {
+     "call_equiv_candidates": {
+      "EncRnd.cc": [
+       "equ_cc"
+      ]
+     },
+     "goal_type": "pRHL",
+     "left_statements": [
+      {
+       "pos": 1,
+       "pos_path": "1",
+       "procedure": "EncRnd.cc",
+       "text": "c <@ EncRnd.cc(n, p);",
+       "type": "CALL",
+       "vars_read": [
+        "n",
+        "p"
+       ],
+       "vars_written": [
+        "c"
+       ]
+      },
+      {
+       "pos": 2,
+       "pos_path": "2",
+       "text": "lt <- map f Mem.lc;",
+       "type": "ASSIGN",
+       "vars_read": [
+        "Mem.lc"
+       ],
+       "vars_written": [
+        "lt"
+       ]
+      },
+      {
+       "pos": 3,
+       "pos_path": "3",
+       "text": "t0 <$ dpoly_out;",
+       "type": "SAMPLE",
+       "vars_written": [
+        "t0"
+       ]
+      },
+      {
+       "pos": 4,
+       "pos_path": "4",
+       "text": "if (cbad < q /\\ size lt <= qdec) {",
+       "type": "IF",
+       "vars_read": [
+        "cbad",
+        "lt"
+       ],
+       "vars_written": [
+        "lbad1",
+        "cbad"
+       ]
+      }
+     ],
+     "post": "post = c{1} = c{2} /\\ badi{2}",
+     "pre": "pre = true",
+     "right_statements": [
+      {
+       "pos": 1,
+       "pos_path": "1",
+       "procedure": "EncRnd.cc",
+       "text": "c <@ EncRnd.cc(n, p);",
+       "type": "CALL",
+       "vars_read": [
+        "n",
+        "p"
+       ],
+       "vars_written": [
+        "c"
+       ]
+      },
+      {
+       "pos": 2,
+       "pos_path": "2",
+       "text": "lt <- map f Mem.lc;",
+       "type": "ASSIGN",
+       "vars_read": [
+        "Mem.lc"
+       ],
+       "vars_written": [
+        "lt"
+       ]
+      },
+      {
+       "pos": 3,
+       "pos_path": "3",
+       "text": "t0 <$ dpoly_out;",
+       "type": "SAMPLE",
+       "vars_written": [
+        "t0"
+       ]
+      },
+      {
+       "pos": 4,
+       "pos_path": "4",
+       "text": "if (cbad < q /\\ size lt <= qdec) {",
+       "type": "IF",
+       "vars_read": [
+        "cbad",
+        "lt",
+        "badi",
+        "cbadi"
+       ],
+       "vars_written": [
+        "lbad1",
+        "cbad",
+        "badi",
+        "cbadi"
+       ]
+      }
+     ],
+     "suggested_tactics": [
+      "wp.",
+      "sim."
+     ]
+    }
+   }
+  },
+  "sha256": "90de9a2c9442b4edc22021523bd7b1e99cf98768279dc877990ee0ca8c8aa7cf"
+ },
+ {
+  "id": 27,
+  "input": {
+   "current_goal": {
+    "goal_type": "pRHL",
+    "parsed_goal": {
+     "call_equiv_candidates": {
+      "L.f": [
+       "Lf_Rf_eq"
+      ]
+     },
+     "goal_type": "pRHL",
+     "left_statements": [
+      {
+       "pos": 1,
+       "procedure": "L.f",
+       "text": "x <@ L.f();",
+       "type": "CALL"
+      }
+     ],
+     "right_statements": [
+      {
+       "pos": 1,
+       "procedure": "R.f",
+       "text": "y <@ R.f();",
+       "type": "CALL"
+      }
+     ]
+    }
+   }
+  },
+  "sha256": "1a1ff047b909f3eb57543633a218f8f6c714243e1b9b4c119fef171b1dd1fb06"
+ },
+ {
+  "id": 28,
+  "input": {
+   "current_goal": {
+    "goal_type": "pRHL",
+    "parsed_goal": {
+     "call_equiv_candidates": {
+      "M.f": [
+       "M_N_equiv"
+      ],
+      "N.g": [
+       "M_N_equiv"
+      ]
+     },
+     "goal_type": "pRHL",
+     "left_statements": [
+      {
+       "pos": 1,
+       "pos_path": "1",
+       "procedure": "M.f",
+       "text": "x <@ M.f();",
+       "type": "CALL"
+      },
+      {
+       "pos": 2,
+       "pos_path": "2",
+       "text": "z <- x;",
+       "type": "ASSIGN"
+      }
+     ],
+     "post": "={res}",
+     "pre": "true",
+     "right_statements": [
+      {
+       "pos": 1,
+       "pos_path": "1",
+       "procedure": "N.g",
+       "text": "y <@ N.g();",
+       "type": "CALL"
+      },
+      {
+       "pos": 2,
+       "pos_path": "2",
+       "text": "w <- y;",
+       "type": "ASSIGN"
+      }
+     ]
+    }
+   }
+  },
+  "sha256": "ded82e6fe2e73994b1a5bdf16fa2d403e020396be917a482fe085e572aba3c0a"
+ },
+ {
+  "id": 29,
+  "input": {
+   "current_goal": {
+    "goal_type": "pRHL",
+    "parsed_goal": {
+     "call_equiv_candidates": {
+      "M.f": [
+       "M_f_equiv"
+      ]
+     },
+     "goal_type": "pRHL",
+     "left_statements": [
+      {
+       "pos": 1,
+       "pos_path": "1",
+       "procedure": "M.f",
+       "text": "x <@ M.f();",
+       "type": "CALL"
+      },
+      {
+       "pos": 2,
+       "pos_path": "2",
+       "text": "z <- x;",
+       "type": "ASSIGN"
+      }
+     ],
+     "right_statements": []
+    }
+   },
+   "proof_state": {
+    "latest_transition": {
+     "latest_error": "the given proof-term proves a different judgment",
+     "tactic": "call M_f_equiv."
+    }
+   }
+  },
+  "sha256": "3a99a3bc4b94d51a3a05a7afdf80d607eebeceba19f1304b9270d938157027c7"
+ },
+ {
+  "id": 30,
+  "input": {
+   "current_goal": {
+    "goal_type": "pRHL",
+    "parsed_goal": {
+     "call_equiv_candidates": {
+      "M.f": [
+       "M_f_equiv"
+      ]
+     },
+     "goal_type": "pRHL",
+     "left_statements": [
+      {
+       "pos": 1,
+       "pos_path": "1",
+       "procedure": "M.f",
+       "text": "x <@ M.f();",
+       "type": "CALL"
+      },
+      {
+       "pos": 2,
+       "pos_path": "2",
+       "text": "z <- x;",
+       "type": "ASSIGN"
+      }
+     ],
+     "right_statements": []
+    }
+   }
+  },
+  "sha256": "063f7a7ded4722469ce1fb1edf471286dd01adc73a5858b42ecb4a44be2fec51"
+ },
+ {
+  "id": 31,
+  "input": {
+   "current_goal": {
+    "goal_type": "pRHL",
+    "parsed_goal": {
+     "call_equiv_candidates": {
+      "M.f": [
+       "M_f_equiv"
+      ]
+     },
+     "goal_type": "pRHL",
+     "left_statements": [
+      {
+       "pos": 1,
+       "pos_path": "1",
+       "text": "z <- x;",
+       "type": "ASSIGN"
+      },
+      {
+       "pos": 2,
+       "pos_path": "2",
+       "procedure": "M.f",
+       "text": "x <@ M.f();",
+       "type": "CALL"
+      }
+     ],
+     "right_statements": [
+      {
+       "pos": 1,
+       "pos_path": "1",
+       "procedure": "M.f",
+       "text": "x <@ M.f();",
+       "type": "CALL"
+      },
+      {
+       "pos": 2,
+       "pos_path": "2",
+       "text": "z <- x;",
+       "type": "ASSIGN"
+      }
+     ]
+    }
+   }
+  },
+  "sha256": "42a1e42112409d376f02f008a582718d2579628fe7391ddbf6145453912050b5"
+ },
+ {
+  "id": 32,
+  "input": {
+   "current_goal": {
+    "goal_type": "pRHL",
+    "parsed_goal": {
+     "call_equiv_candidates": {
+      "M.f": [
+       "M_f_equiv"
+      ]
+     },
+     "goal_type": "pRHL",
+     "left_statements": [
+      {
+       "pos": 1,
+       "procedure": "M.f",
+       "text": "x <@ M.f();",
+       "type": "CALL"
+      }
+     ],
+     "right_statements": []
+    }
+   }
+  },
+  "sha256": "ddefce8faf34cc6bf13847af988bf081a6935cc46c3f065a8c7930eeb26bd45f"
+ },
+ {
+  "id": 33,
+  "input": {
+   "current_goal": {
+    "goal_type": "pRHL",
+    "parsed_goal": {
+     "call_equiv_candidates": {
+      "Poly.mac": [
+       "poly_mac1"
+      ]
+     },
+     "goal_type": "pRHL",
+     "left_statements": [
+      {
+       "pos": 1,
+       "pos_path": "1",
+       "procedure": "Poly.mac",
+       "text": "t' <@ Poly.mac(n, c0);",
+       "type": "CALL",
+       "vars_read": [
+        "k",
+        "n",
+        "c0"
+       ],
+       "vars_written": [
+        "t'"
+       ]
+      },
+      {
+       "pos": 2,
+       "pos_path": "2",
+       "text": "if (t' = t) {",
+       "type": "IF",
+       "vars_read": [
+        "t'",
+        "t"
+       ]
+      }
+     ],
+     "post": "post = ={n, t, result} /\\ c0{1} = c{2}",
+     "pre": "pre = k{1} = Mem.k{1} /\\ Mem.k{1} = Block.k{2}",
+     "right_statements": [
+      {
+       "pos": 1,
+       "pos_path": "1",
+       "procedure": "O.Poly.mac",
+       "text": "t <@ O.Poly.mac(n, c);",
+       "type": "CALL",
+       "vars_read": [
+        "Block.k",
+        "n",
+        "c"
+       ],
+       "vars_written": [
+        "t"
+       ]
+      },
+      {
+       "pos": 2,
+       "pos_path": "2",
+       "text": "if (t' = t) {",
+       "type": "IF",
+       "vars_read": [
+        "t'",
+        "t"
+       ]
+      }
+     ]
+    }
+   }
+  },
+  "sha256": "3fa53a18aa113494faaa8b03af898bb613524f8a2792bd6873db6731fa8e1502"
+ },
+ {
+  "id": 34,
+  "input": {
+   "current_goal": {
+    "goal_type": "pRHL",
+    "parsed_goal": {
+     "goal_type": "pRHL",
+     "left_statements": [
+      {
+       "pos": 1,
+       "pos_path": "1",
+       "procedure": "A(O).forge",
+       "text": "b <@ A(O).forge();",
+       "type": "CALL",
+       "vars_written": [
+        "b"
+       ]
+      },
+      {
+       "pos": 2,
+       "pos_path": "2",
+       "text": "CTXT_Wrap.win <- b;",
+       "type": "ASSIGN",
+       "vars_read": [
+        "b"
+       ],
+       "vars_written": [
+        "CTXT_Wrap.win"
+       ]
+      }
+     ],
+     "post": "post = CTXT_Wrap.win{1} => MACa.SUF_CMA.SUF_Wrap.win{2}",
+     "pre": "!MACa.SUF_CMA.SUF_Wrap.win{2}",
+     "right_statements": [
+      {
+       "pos": 1,
+       "pos_path": "1",
+       "text": "MACa.SUF_CMA.SUF_Wrap.win <- false;",
+       "type": "ASSIGN",
+       "vars_written": [
+        "MACa.SUF_CMA.SUF_Wrap.win"
+       ]
+      }
+     ],
+     "suggested_tactics": [
+      "sim.",
+      "wp."
+     ]
+    }
+   }
+  },
+  "sha256": "2ca136116db38acb04536f9b6e82fca86177012a0b952d3dbff7906c63ec13ba"
+ },
+ {
+  "id": 35,
+  "input": {
+   "current_goal": {
+    "goal_type": "pRHL",
+    "parsed_goal": {
+     "goal_type": "pRHL",
+     "left_statements": [
+      {
+       "pos": 1,
+       "pos_path": "1",
+       "procedure": "CPA_game.main",
+       "text": "b <@ CPA_game(Adv, UFCMA_l.O).main();",
+       "type": "CALL",
+       "vars_written": [
+        "b"
+       ]
+      }
+     ],
+     "post": "post = (let tt = nth (w1,w2) UFCMA_l.lbad1{1} nth0 in tt.`1 = tt.`2) => UFCMA_li.badi{2}",
+     "pre": "pre = UFCMA_li.badi{2} = false /\\ UFCMA_l.lbad1{1} = []",
+     "right_statements": [
+      {
+       "pos": 1,
+       "pos_path": "1",
+       "procedure": "CPA_game.main",
+       "text": "b <@ CPA_game(Adv, UFCMA_li.O).main();",
+       "type": "CALL",
+       "vars_written": [
+        "b"
+       ]
+      }
+     ],
+     "suggested_tactics": [
+      "call (_: Inv).",
+      "sim."
+     ]
+    }
+   }
+  },
+  "sha256": "38285100970f4609fae34da8896b9bff69ae3588534c1c1ce95eef85f2329bb6"
+ },
+ {
+  "id": 36,
+  "input": {
+   "current_goal": {
+    "goal_type": "pRHL",
+    "parsed_goal": {
+     "goal_type": "pRHL",
+     "left_statements": [
+      {
+       "pos": 1,
+       "pos_path": "1",
+       "procedure": "E.dec",
+       "text": "p <@ E.dec(k, c);",
+       "type": "CALL",
+       "vars_written": [
+        "p"
+       ]
+      },
+      {
+       "pos": 2,
+       "pos_path": "2",
+       "text": "res <- p <> None;",
+       "type": "ASSIGN",
+       "vars_read": [
+        "p"
+       ],
+       "vars_written": [
+        "res"
+       ]
+      }
+     ],
+     "post": "post = ={res}",
+     "pre": "pre = true",
+     "right_statements": [
+      {
+       "pos": 1,
+       "pos_path": "1",
+       "text": "res <- b;",
+       "type": "ASSIGN",
+       "vars_read": [
+        "b"
+       ],
+       "vars_written": [
+        "res"
+       ]
+      }
+     ],
+     "suggested_tactics": [
+      "sim.",
+      "wp."
+     ]
+    }
+   }
+  },
+  "sha256": "78d94b89de5200aac55f5d9cb74144e2df4db81a94098ec59242683accbb0a2a"
+ },
+ {
+  "id": 37,
+  "input": {
+   "current_goal": {
+    "goal_type": "pRHL",
+    "parsed_goal": {
+     "goal_type": "pRHL",
+     "left_statements": [
+      {
+       "pos": 1,
+       "pos_path": "1",
+       "procedure": "G8.distinguish",
+       "text": "r <@ G8(BNR_Adv(A), RO).distinguish(x);",
+       "type": "CALL",
+       "vars_written": [
+        "r"
+       ]
+      }
+     ],
+     "post": "r{1} = b{2}",
+     "pre": "(glob A){1} = (glob A){m}",
+     "right_statements": [
+      {
+       "pos": 1,
+       "pos_path": "1",
+       "procedure": "CCA_CPA_Adv.main",
+       "text": "b <@ CCA_CPA_Adv(BNR_Adv(A), EncRnd).main();",
+       "type": "CALL",
+       "vars_written": [
+        "b"
+       ]
+      }
+     ]
+    }
+   }
+  },
+  "sha256": "80f9aa14a4041b801a753ee3d2cecee3da6eafc73cd62c90be586f21283ab790"
+ },
+ {
+  "id": 38,
+  "input": {
+   "current_goal": {
+    "goal_type": "pRHL",
+    "parsed_goal": {
+     "goal_type": "pRHL",
+     "left_statements": [
+      {
+       "pos": 1,
+       "pos_path": "1",
+       "text": "RealOrcls(GenChaChaPoly(OCC(IFinRO))).init()",
+       "type": "ASSIGN"
+      }
+     ],
+     "post": "post = ((glob A){1} = (glob A){2}) && forall (result_L result_R : bool), result_L = result_R",
+     "right_statements": [
+      {
+       "pos": 1,
+       "pos_path": "1",
+       "text": "FinRO.init()",
+       "type": "ASSIGN"
+      }
+     ],
+     "suggested_tactics": [
+      "sim.",
+      "wp.",
+      "auto => />."
+     ]
+    }
+   }
+  },
+  "sha256": "b94ec017cd09b80038316cd83d0afedcf0d5c1e8f308b3166fe338cb85d7d6f3"
+ },
+ {
+  "id": 39,
+  "input": {
+   "current_goal": {
+    "goal_type": "pRHL",
+    "parsed_goal": {
+     "goal_type": "pRHL",
+     "left_statements": [
+      {
+       "pos": 1,
+       "pos_path": "1",
+       "text": "c1 <- c;",
+       "type": "ASSIGN",
+       "vars_read": [
+        "c"
+       ],
+       "vars_written": [
+        "c1"
+       ]
+      }
+     ],
+     "post": "post = c1{1} = c1{2} /\\ badi{2}",
+     "pre": "pre = true",
+     "right_statements": [
+      {
+       "pos": 1,
+       "pos_path": "1",
+       "text": "c1 <- c;",
+       "type": "ASSIGN",
+       "vars_read": [
+        "c"
+       ],
+       "vars_written": [
+        "c1"
+       ]
+      },
+      {
+       "pos": 2,
+       "pos_path": "2",
+       "text": "badi <- badi || test;",
+       "type": "ASSIGN",
+       "vars_read": [
+        "badi",
+        "test"
+       ],
+       "vars_written": [
+        "badi"
+       ]
+      }
+     ],
+     "suggested_tactics": [
+      "sim.",
+      "wp."
+     ]
+    }
+   }
+  },
+  "sha256": "27d6c1af6fc2219d9f70cc8739721e6fc57d29649e705ac040892b2e43df97a5"
+ },
+ {
+  "id": 40,
+  "input": {
+   "current_goal": {
+    "goal_type": "pRHL",
+    "parsed_goal": {
+     "goal_type": "pRHL",
+     "left_statements": [
+      {
+       "pos": 1,
+       "pos_path": "1",
+       "text": "k <- Mem.k;",
+       "type": "ASSIGN",
+       "vars_written": [
+        "k"
+       ]
+      },
+      {
+       "pos": 2,
+       "pos_path": "2",
+       "text": "(n, a, c, t) <- nact;",
+       "type": "ASSIGN",
+       "vars_written": [
+        "n",
+        "a",
+        "c",
+        "t"
+       ]
+      },
+      {
+       "pos": 3,
+       "pos_path": "3",
+       "procedure": "Poly.mac",
+       "text": "t' <@ Poly.mac(k, n, a, c);",
+       "type": "CALL",
+       "vars_written": [
+        "t'"
+       ]
+      },
+      {
+       "pos": 4,
+       "pos_path": "4",
+       "text": "if (t = t') {",
+       "type": "IF"
+      }
+     ],
+     "right_statements": [
+      {
+       "pos": 1,
+       "pos_path": "1",
+       "text": "(n, a, c, t) <- nact;",
+       "type": "ASSIGN",
+       "vars_written": [
+        "n",
+        "a",
+        "c",
+        "t"
+       ]
+      },
+      {
+       "pos": 2,
+       "pos_path": "2",
+       "procedure": "D.O.Poly.mac",
+       "text": "t' <@ D.O.Poly.mac(n, a, c);",
+       "type": "CALL",
+       "vars_written": [
+        "t'"
+       ]
+      },
+      {
+       "pos": 3,
+       "pos_path": "3",
+       "text": "if (t = t') {",
+       "type": "IF"
+      }
+     ],
+     "suggested_tactics": [
+      "wp.",
+      "auto => />."
+     ]
+    }
+   }
+  },
+  "sha256": "95efa8809669036c32ee8fc91b8193ff43c69e6efb78e2fe452a373f9acb1e0a"
+ },
+ {
+  "id": 41,
+  "input": {
+   "current_goal": {
+    "goal_type": "pRHL",
+    "parsed_goal": {
+     "goal_type": "pRHL",
+     "left_statements": [
+      {
+       "pos": 1,
+       "pos_path": "1",
+       "text": "r <$ d;",
+       "type": "SAMPLE"
+      },
+      {
+       "pos": 2,
+       "pos_path": "2",
+       "procedure": "A.guess",
+       "text": "x <@ A.guess();",
+       "type": "CALL"
+      }
+     ],
+     "right_statements": [
+      {
+       "pos": 1,
+       "pos_path": "1",
+       "procedure": "A.guess",
+       "text": "x <@ A.guess();",
+       "type": "CALL"
+      },
+      {
+       "pos": 2,
+       "pos_path": "2",
+       "text": "r <$ d;",
+       "type": "SAMPLE"
+      }
+     ]
+    }
+   },
+   "external_recommendations": [
+    {
+     "action": "swap{1} 11 -9.",
+     "confidence": "verified",
+     "id": "probe.auto_swap_align.0",
+     "kind": "tactic_candidate",
+     "metadata": {
+      "epistemic_status": "daemon_probe_accepted"
+     },
+     "producer": "AUTO-SWAP-ALIGN",
+     "verified": true
+    }
+   ]
+  },
+  "sha256": "904bfc9786958a14f7caf4cc5d75f5af28ac65d33f0a7632759b2e119c17387e"
+ },
+ {
+  "id": 42,
+  "input": {
+   "current_goal": {
+    "goal_type": "pRHL",
+    "parsed_goal": {
+     "goal_type": "pRHL",
+     "left_statements": [
+      {
+       "pos": 1,
+       "pos_path": "1",
+       "text": "result <- true;",
+       "type": "ASSIGN",
+       "vars_written": [
+        "result"
+       ]
+      },
+      {
+       "pos": 2,
+       "pos_path": "2",
+       "text": "n <- n;",
+       "type": "ASSIGN",
+       "vars_written": [
+        "n"
+       ]
+      },
+      {
+       "pos": 3,
+       "pos_path": "3",
+       "text": "a <- a;",
+       "type": "ASSIGN",
+       "vars_written": [
+        "a"
+       ]
+      },
+      {
+       "pos": 4,
+       "pos_path": "4",
+       "procedure": "ChaCha.enc",
+       "text": "c0 <@ ChaCha.enc(n, p);",
+       "type": "CALL",
+       "vars_written": [
+        "c0"
+       ]
+      },
+      {
+       "pos": 5,
+       "pos_path": "5",
+       "procedure": "Poly.mac",
+       "text": "t' <@ Poly.mac(n, a, c0);",
+       "type": "CALL",
+       "vars_written": [
+        "t'"
+       ]
+      },
+      {
+       "pos": 6,
+       "pos_path": "6",
+       "text": "if (t = t') { result <- true; }",
+       "type": "IF",
+       "vars_written": [
+        "result"
+       ]
+      }
+     ],
+     "post": "post = (n{1}, a{1}, c0{1}, t{1}) = (n{2}, a{2}, c{2}, t{2}) /\\ c0{1} = c{2}",
+     "pre": "pre = k{1} = Mem.k{1} /\\ Mem.k{1} = IndBlock.k{2}",
+     "right_statements": [
+      {
+       "pos": 1,
+       "pos_path": "1",
+       "text": "result <- true;",
+       "type": "ASSIGN",
+       "vars_written": [
+        "result"
+       ]
+      },
+      {
+       "pos": 2,
+       "pos_path": "2",
+       "procedure": "D.O.ChaCha.enc",
+       "text": "c <@ D.O.ChaCha.enc(n, p);",
+       "type": "CALL",
+       "vars_written": [
+        "c"
+       ]
+      },
+      {
+       "pos": 3,
+       "pos_path": "3",
+       "procedure": "D.O.Poly.mac",
+       "text": "t <@ D.O.Poly.mac(n, a, c);",
+       "type": "CALL",
+       "vars_written": [
+        "t"
+       ]
+      },
+      {
+       "pos": 4,
+       "pos_path": "4",
+       "text": "if (t = t') { result <- true; }",
+       "type": "IF",
+       "vars_written": [
+        "result"
+       ]
+      }
+     ]
+    }
+   }
+  },
+  "sha256": "d1c3c89da9ffddae5c42aa4dd02e5a44dea176f68ad5a77583b3dd47acbd76c5"
+ },
+ {
+  "id": 43,
+  "input": {
+   "current_goal": {
+    "goal_type": "pRHL",
+    "parsed_goal": {
+     "goal_type": "pRHL",
+     "left_statements": [
+      {
+       "pos": 1,
+       "pos_path": "1",
+       "text": "s <$ dT;",
+       "type": "SAMPLE",
+       "vars_written": [
+        "s"
+       ]
+      }
+     ],
+     "post": "post = t{2} = s{1} + mask{2}",
+     "right_statements": [
+      {
+       "pos": 1,
+       "pos_path": "1",
+       "text": "t <$ dT;",
+       "type": "SAMPLE",
+       "vars_written": [
+        "t"
+       ]
+      }
+     ],
+     "suggested_tactics": [
+      "rnd.",
+      "wp."
+     ]
+    }
+   }
+  },
+  "sha256": "86742e761e2285f1e8752d7eb2d21c7eb5b2fb8c4949b9e18e76eb25e1a43a41"
+ },
+ {
+  "id": 44,
+  "input": {
+   "current_goal": {
+    "goal_type": "pRHL",
+    "parsed_goal": {
+     "goal_type": "pRHL",
+     "left_statements": [
+      {
+       "pos": 1,
+       "pos_path": "1",
+       "text": "x <- a;",
+       "type": "ASSIGN",
+       "vars_written": [
+        "x"
+       ]
+      },
+      {
+       "pos": 2,
+       "pos_path": "2",
+       "text": "while (i < n) {",
+       "type": "WHILE",
+       "vars_read": [
+        "i",
+        "n"
+       ]
+      },
+      {
+       "pos": 3,
+       "pos_path": "3",
+       "text": "r <$ d;",
+       "type": "SAMPLE",
+       "vars_written": [
+        "r"
+       ]
+      }
+     ],
+     "post": "post = ={x, i} /\\ 0 <= i{1}",
+     "right_statements": [
+      {
+       "pos": 1,
+       "pos_path": "1",
+       "text": "x <- a;",
+       "type": "ASSIGN",
+       "vars_written": [
+        "x"
+       ]
+      },
+      {
+       "pos": 2,
+       "pos_path": "2",
+       "text": "r <$ d;",
+       "type": "SAMPLE",
+       "vars_written": [
+        "r"
+       ]
+      },
+      {
+       "pos": 3,
+       "pos_path": "3",
+       "text": "while (i < n) {",
+       "type": "WHILE",
+       "vars_read": [
+        "i",
+        "n"
+       ]
+      }
+     ],
+     "suggested_tactics": [
+      "wp.",
+      "auto => />."
+     ]
+    }
+   }
+  },
+  "sha256": "1fdb9e122f9247504e621f32b7636e4de9f6cbf3115f9c1e284020a923735997"
+ },
+ {
+  "id": 45,
+  "input": {
+   "current_goal": {
+    "goal_type": "pRHL",
+    "parsed_goal": {
+     "goal_type": "pRHL",
+     "left_statements": [
+      {
+       "pos": 1,
+       "pos_path": "1",
+       "text": "x <- a;",
+       "type": "ASSIGN",
+       "vars_written": [
+        "x"
+       ]
+      },
+      {
+       "pos": 2,
+       "pos_path": "2",
+       "text": "while (i < n) {",
+       "type": "WHILE",
+       "vars_read": [
+        "i",
+        "n"
+       ]
+      },
+      {
+       "pos": 3,
+       "pos_path": "3",
+       "text": "r <$ d;",
+       "type": "SAMPLE",
+       "vars_written": [
+        "r"
+       ]
+      }
+     ],
+     "post": "post = ={x, i} /\\ bad{1} = bad{2}",
+     "right_statements": [
+      {
+       "pos": 1,
+       "pos_path": "1",
+       "text": "x <- a;",
+       "type": "ASSIGN",
+       "vars_written": [
+        "x"
+       ]
+      },
+      {
+       "pos": 2,
+       "pos_path": "2",
+       "text": "r <$ d;",
+       "type": "SAMPLE",
+       "vars_written": [
+        "r"
+       ]
+      },
+      {
+       "pos": 3,
+       "pos_path": "3",
+       "text": "while (i < n) {",
+       "type": "WHILE",
+       "vars_read": [
+        "i",
+        "n"
+       ]
+      }
+     ],
+     "suggested_tactics": [
+      "wp.",
+      "rnd.",
+      "while (...)."
+     ]
+    }
+   }
+  },
+  "sha256": "6dbe6d2986ba956322ce4bdb236dfc9ab6d4675cd5b87bf7c28ac8e83708ca36"
+ },
+ {
+  "id": 46,
+  "input": {
+   "current_goal": {
+    "goal_type": "pRHL",
+    "parsed_goal": {
+     "goal_type": "pRHL",
+     "left_statements": [
+      {
+       "pos": 1,
+       "pos_path": "1",
+       "text": "x <- a;",
+       "type": "ASSIGN"
+      },
+      {
+       "pos": 2,
+       "pos_path": "2",
+       "text": "if (x \\in m) {",
+       "type": "IF"
+      }
+     ],
+     "right_statements": [
+      {
+       "pos": 1,
+       "pos_path": "1",
+       "text": "x <- a;",
+       "type": "ASSIGN"
+      },
+      {
+       "pos": 4,
+       "pos_path": "4",
+       "text": "if (x \\in m) {",
+       "type": "IF"
+      }
+     ],
+     "suggested_tactics": [
+      "wp.",
+      "auto => />."
+     ]
+    }
+   }
+  },
+  "sha256": "aa57325cbdb077ee78050feb2cc92a1d29ffb7349c8db57d85f4e0e40b1c6d06"
+ },
+ {
+  "id": 47,
+  "input": {
+   "current_goal": {
+    "goal_type": "pRHL",
+    "parsed_goal": {
+     "goal_type": "pRHL",
+     "left_statements": [
+      {
+       "pos": 1,
+       "pos_path": "1",
+       "text": "x <- x;",
+       "type": "ASSIGN",
+       "vars_written": [
+        "x"
+       ]
+      },
+      {
+       "pos": 2,
+       "pos_path": "2",
+       "text": "y <- y;",
+       "type": "ASSIGN",
+       "vars_written": [
+        "y"
+       ]
+      }
+     ],
+     "post": "x{1} = x{2}",
+     "pre": "true",
+     "right_statements": [
+      {
+       "pos": 1,
+       "pos_path": "1",
+       "text": "x <- x;",
+       "type": "ASSIGN",
+       "vars_written": [
+        "x"
+       ]
+      }
+     ]
+    }
+   }
+  },
+  "sha256": "9bcce8f0473e083ebe5315133bdc36e043e501caff1e48b6e978cebe4bfcc59b"
+ },
+ {
+  "id": 48,
+  "input": {
+   "current_goal": {
+    "goal_type": "pRHL",
+    "parsed_goal": {
+     "goal_type": "pRHL",
+     "left_statements": [
+      {
+       "pos": 1,
+       "procedure": "L.enc",
+       "text": "c <@ L.enc(k);",
+       "type": "CALL",
+       "vars_read": [
+        "k",
+        "p"
+       ]
+      }
+     ],
+     "post": "={Mem.k, Mem.log, RO.m} /\\ StLSke.gs{1} = RO.m{2}",
+     "right_statements": [
+      {
+       "pos": 1,
+       "procedure": "R.enc",
+       "text": "c <@ R.enc(k);",
+       "type": "CALL",
+       "vars_read": [
+        "k"
+       ]
+      }
+     ]
+    }
+   }
+  },
+  "sha256": "b2491272a3619f72afb717a213beab1eadbaee379e16bbbae5f4d50247c69d82"
+ },
+ {
+  "id": 49,
+  "input": {
+   "current_goal": {
+    "goal_type": "pRHL",
+    "parsed_goal": {
+     "goal_type": "pRHL",
+     "left_statements": [
+      {
+       "pos": 1,
+       "procedure": "L.f",
+       "text": "x <@ L.f(k, n, c0);",
+       "type": "CALL",
+       "vars_read": [
+        "k",
+        "n",
+        "c0"
+       ]
+      }
+     ],
+     "post": "post = ={n, result} /\\ c0{1} = c{2}",
+     "pre": "pre = k{1} = Mem.k{1} /\\ Mem.k{1} = Block.k{2}",
+     "right_statements": [
+      {
+       "pos": 1,
+       "procedure": "R.f",
+       "text": "x <@ R.f(Block.k, n, c);",
+       "type": "CALL",
+       "vars_read": [
+        "Block.k",
+        "n",
+        "c"
+       ]
+      }
+     ]
+    }
+   }
+  },
+  "sha256": "45827445379bf5661bb7a75d6c85862f741c87f942338fb97906136b152fc11e"
+ },
+ {
+  "id": 50,
+  "input": {
+   "current_goal": {
+    "goal_type": "pRHL",
+    "parsed_goal": {
+     "goal_type": "pRHL",
+     "left_statements": [
+      {
+       "pos": 1,
+       "text": "while (i < size p) {",
+       "type": "WHILE",
+       "vars_read": [
+        "while",
+        "i",
+        "p"
+       ],
+       "vars_written": []
+      },
+      {
+       "pos": 1,
+       "pos_path": "1.1",
+       "text": "pi <- nth witness<:block> p i",
+       "type": "ASSIGN",
+       "vars_read": [
+        "i",
+        "witness",
+        "p",
+        "nth",
+        "block"
+       ],
+       "vars_written": [
+        "pi"
+       ]
+      },
+      {
+       "pos": 1,
+       "pos_path": "1.2",
+       "procedure": "P.f",
+       "text": "s <@ P.f(Block.(-) s pi)",
+       "type": "CALL",
+       "vars_read": [
+        "Block.",
+        "P.f",
+        "pi"
+       ],
+       "vars_written": [
+        "s"
+       ]
+      }
+     ],
+     "post": "post = c{1} = c{2} /\\ I (glob P){1} (glob P'){2}",
+     "right_statements": [
+      {
+       "pos": 1,
+       "text": "while (i < size p) {",
+       "type": "WHILE",
+       "vars_read": [
+        "while",
+        "i",
+        "p"
+       ],
+       "vars_written": []
+      },
+      {
+       "pos": 1,
+       "pos_path": "1.1",
+       "text": "pi <- nth witness<:block> p i",
+       "type": "ASSIGN",
+       "vars_read": [
+        "i",
+        "witness",
+        "p",
+        "nth",
+        "block"
+       ],
+       "vars_written": [
+        "pi"
+       ]
+      },
+      {
+       "pos": 1,
+       "pos_path": "1.2",
+       "procedure": "P'.f",
+       "text": "s <@ P'.f(Block.(-) s pi)",
+       "type": "CALL",
+       "vars_read": [
+        "Block.",
+        "P'.f",
+        "pi"
+       ],
+       "vars_written": [
+        "s"
+       ]
+      }
+     ]
+    }
+   }
+  },
+  "sha256": "e3a9f2fcf542f7f10696c9cfb70cf9730d006fc981d6bebe66243478be396c9b"
+ },
+ {
+  "id": 51,
+  "input": {
+   "current_goal": {
+    "goal_type": "phoare",
+    "parsed_goal": {
+     "goal_type": "phoare",
+     "suggested_tactics": [
+      "proc."
+     ]
+    }
+   }
+  },
+  "sha256": "b613a9857452d133b6b927fa2f909d728482ba886ccde596f65a0037b918e697"
+ },
+ {
+  "id": 52,
+  "input": {
+   "current_goal": {
+    "goal_type": "phoare",
+    "parsed_goal": {
+     "goal_type": "phoare",
+     "suggested_tactics": [
+      "wp.",
+      "auto."
+     ]
+    }
+   }
+  },
+  "sha256": "99d41a166504a0c306cad0877f975ff9a1591c8b13074e52dd791a246239cf55"
+ },
+ {
+  "id": 53,
+  "input": {
+   "current_goal": {
+    "goal_type": "phoare",
+    "parsed_goal": {
+     "goal_type": "phoare"
+    }
+   }
+  },
+  "sha256": "a1e32db39c1bc5706c177b01e532b729975580635dbe3b65e6634191bec74df4"
+ },
+ {
+  "id": 54,
+  "input": {
+   "current_goal": {
+    "goal_type": "probability",
+    "parsed_goal": {
+     "goal_type": "probability",
+     "lhs_game": "CCA_game(A, RealOrcls(ChaChaPoly))",
+     "prob_form": "eq",
+     "rhs_game": "Indist.Distinguish(D(A), IndBlock)"
+    }
+   },
+   "external_recommendations": [
+    {
+     "action": "-where pr_CCP_OCCP",
+     "action_type": "inspection_action",
+     "confidence": "medium",
+     "id": "auto_pivot.0",
+     "metadata": {
+      "tag": "DISJOINT"
+     },
+     "producer": "AUTO-PIVOT"
+    }
+   ]
+  },
+  "sha256": "d3fdd877a832ca145d584a912e14f180b4ec37743d3c36813e5867ef087256cb"
+ },
+ {
+  "id": 55,
+  "input": {
+   "current_goal": {
+    "goal_type": "probability",
+    "parsed_goal": {
+     "goal_type": "probability",
+     "lhs_game": "G",
+     "prob_form": "eq",
+     "rhs_game": "G'"
+    }
+   }
+  },
+  "sha256": "0038ba09c9d138c1137ac5bad47bdc084328dbcec9c22509068ace850565213f"
+ },
+ {
+  "id": 56,
+  "input": {
+   "current_goal": {
+    "goal_type": "probability",
+    "parsed_goal": {
+     "goal_type": "probability",
+     "lhs_game": "G0",
+     "pr_rewrite_candidates": [
+      "pr_G0_G1"
+     ],
+     "prob_form": "eq",
+     "rhs_game": "G1",
+     "strategy_hint": "byequiv",
+     "suggested_tactics": [
+      "byequiv => //.",
+      "rewrite ..."
+     ]
+    }
+   }
+  },
+  "sha256": "80e496762ed57fd45c63719b11621716185e6eab6802a2e4e01fd5f4a36751bb"
+ },
+ {
+  "id": 57,
+  "input": {
+   "current_goal": {
+    "goal_type": "probability",
+    "parsed_goal": {
+     "goal_type": "probability",
+     "lhs_game": "G0",
+     "pr_rewrite_candidates": [
+      {
+       "lemma": "pr_RO_FinRO_D"
+      }
+     ],
+     "prob_form": "eq",
+     "rhs_game": "G1",
+     "strategy_hint": "byequiv",
+     "suggested_tactics": [
+      "byequiv => //."
+     ]
+    }
+   }
+  },
+  "sha256": "ffceeb059ed01aa8a37aa34c76e80901664f7ce3d264ba8071882a1c664d36a1"
+ },
+ {
+  "id": 58,
+  "input": {
+   "current_goal": {
+    "goal_type": "probability",
+    "parsed_goal": {
+     "goal_type": "probability",
+     "lhs_game": "G0",
+     "prob_form": "eq",
+     "rhs_game": "G1",
+     "strategy_hint": "byequiv",
+     "suggested_tactics": [
+      "byequiv => //.",
+      "rewrite ..."
+     ]
+    }
+   },
+   "proof_state": {
+    "latest_transition": {
+     "goals_after": 2,
+     "goals_before": 1,
+     "tactic": "have -> :\n  Pr[G0.main() @ &m : res] = Pr[G1.main() @ &m : res]."
+    }
+   }
+  },
+  "sha256": "d57b2b836868e6f4aa50388959ef4d942c75ac187600a24770ca9a339ad86de6"
+ },
+ {
+  "id": 59,
+  "input": {
+   "current_goal": {
+    "goal_type": "probability",
+    "parsed_goal": {
+     "goal_type": "probability",
+     "pr_rewrite_candidates": [
+      "pr_CCP_OCCP"
+     ],
+     "prob_form": "eq"
+    }
+   },
+   "proof_state": {
+    "latest_transition": {
+     "tactic": "rewrite -(OpCCinit.pr_CCP_OCCP I_stateless G1 &m)."
+    }
+   }
+  },
+  "sha256": "f9bc229c9895785aef8345f0c3ad088f9e7f94f20fcd1f72a6735d3b8acf3e75"
+ },
+ {
+  "id": 60,
+  "input": {
+   "current_goal": {
+    "goal_type": "probability",
+    "parsed_goal": {
+     "goal_type": "probability",
+     "pr_rewrite_candidates": [
+      {
+       "lemma": "pr_RO_FinRO_D"
+      }
+     ],
+     "prob_form": "eq"
+    }
+   }
+  },
+  "sha256": "9c90ffa9c005508692ab3dbbc496a10cb3fe45fd32dd5cebafbb907b978c6867"
+ }
+]

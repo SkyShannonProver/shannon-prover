@@ -1,0 +1,150 @@
+{
+  "kind": "agent_view_timeline_report",
+  "run_count": 1,
+  "runs": [
+    {
+      "chronological": false,
+      "first_action_at": "2026-06-12T00:24:35.900000+00:00",
+      "label": "2026-06-11_1723_dblock_uffu",
+      "node_count": 1,
+      "rows": [
+        {
+          "action_submitted_at": "2026-06-12T00:24:35.900000+00:00",
+          "action_time": "+00:00",
+          "agent_think": "",
+          "agent_think_path": "artifacts/eval_suite/mee_sweep_l1_v2/l1_goal_projection/mee_dblock_uffu/r01/2026-06-11_1723_dblock_uffu/iteration_1/node_memory/Tree_0_0/thinking/turn_001.md",
+          "agent_think_seconds": null,
+          "decision_followup_path": "",
+          "decision_state_summary": "ambient / ambient_logic, 1 goal, goal 151 chars",
+          "decision_view_path": "artifacts/eval_suite/mee_sweep_l1_v2/l1_goal_projection/mee_dblock_uffu/r01/2026-06-11_1723_dblock_uffu/iteration_1/manager_bootstrap_0_0.json",
+          "deterministic_signals": [
+            "commit_without_probe_check_not_inferred"
+          ],
+          "goal_chars": 151,
+          "inspect_topics": [],
+          "intent": {
+            "intent": "commit_tactic",
+            "payload": {
+              "tactic": "by split; [exact/DBlock.dunifin_ll | exact/DBlock.dunifin_funi]."
+            }
+          },
+          "intent_summary": "commit by split; [exact/DBlock.dunifin_ll | exact/DBlock.dunifin_funi]",
+          "manager_action_summary": [
+            "tactic commit (1.1 s)"
+          ],
+          "manager_result_at": "2026-06-12T00:24:37+00:00",
+          "manager_result_path": "artifacts/eval_suite/mee_sweep_l1_v2/l1_goal_projection/mee_dblock_uffu/r01/2026-06-11_1723_dblock_uffu/iteration_1/node_memory/Tree_0_0/manager_results/turn_001.json",
+          "manager_seconds": 1.1,
+          "manager_time": "1.1 s",
+          "node": "Tree-0.0",
+          "node_dir": "artifacts/eval_suite/mee_sweep_l1_v2/l1_goal_projection/mee_dblock_uffu/r01/2026-06-11_1723_dblock_uffu/iteration_1/node_memory/Tree_0_0",
+          "ok": true,
+          "result_followup_path": "artifacts/eval_suite/mee_sweep_l1_v2/l1_goal_projection/mee_dblock_uffu/r01/2026-06-11_1723_dblock_uffu/iteration_1/node_memory/Tree_0_0/followups/turn_001.md",
+          "result_state_summary": "ambient / closed_candidate, goal 25 chars",
+          "result_summary": "accepted commit",
+          "result_view_path": "artifacts/eval_suite/mee_sweep_l1_v2/l1_goal_projection/mee_dblock_uffu/r01/2026-06-11_1723_dblock_uffu/iteration_1/node_memory/Tree_0_0/workspace_views/turn_001.json",
+          "turn": 1,
+          "usage": {
+            "cache_creation_input_tokens": 39001,
+            "cache_read_input_tokens": 124370,
+            "input_tokens": 9,
+            "output_tokens": 1661
+          },
+          "view_chars": 695,
+          "view_id": "T0.0-1",
+          "workspace_view_path": "artifacts/eval_suite/mee_sweep_l1_v2/l1_goal_projection/mee_dblock_uffu/r01/2026-06-11_1723_dblock_uffu/iteration_1/manager_bootstrap_0_0.json"
+        },
+        {
+          "action_submitted_at": "2026-06-12T00:24:41.843000+00:00",
+          "action_time": "+00:06",
+          "agent_think": "4.8 s",
+          "agent_think_path": "artifacts/eval_suite/mee_sweep_l1_v2/l1_goal_projection/mee_dblock_uffu/r01/2026-06-11_1723_dblock_uffu/iteration_1/node_memory/Tree_0_0/thinking/turn_002.md",
+          "agent_think_seconds": 4.843,
+          "decision_followup_path": "artifacts/eval_suite/mee_sweep_l1_v2/l1_goal_projection/mee_dblock_uffu/r01/2026-06-11_1723_dblock_uffu/iteration_1/node_memory/Tree_0_0/followups/turn_001.md",
+          "decision_state_summary": "ambient / closed_candidate, goal 25 chars",
+          "decision_view_path": "artifacts/eval_suite/mee_sweep_l1_v2/l1_goal_projection/mee_dblock_uffu/r01/2026-06-11_1723_dblock_uffu/iteration_1/node_memory/Tree_0_0/workspace_views/turn_001.json",
+          "deterministic_signals": [
+            "commit_without_probe_check_not_inferred"
+          ],
+          "goal_chars": 25,
+          "inspect_topics": [
+            "goal_info"
+          ],
+          "intent": {
+            "intent": "commit_tactic",
+            "payload": {
+              "tactic": "qed."
+            }
+          },
+          "intent_summary": "commit qed",
+          "manager_action_summary": [
+            "tactic commit (157 ms)"
+          ],
+          "manager_result_at": "2026-06-12T00:24:42+00:00",
+          "manager_result_path": "artifacts/eval_suite/mee_sweep_l1_v2/l1_goal_projection/mee_dblock_uffu/r01/2026-06-11_1723_dblock_uffu/iteration_1/node_memory/Tree_0_0/manager_results/turn_002.json",
+          "manager_seconds": 0.157,
+          "manager_time": "157 ms",
+          "node": "Tree-0.0",
+          "node_dir": "artifacts/eval_suite/mee_sweep_l1_v2/l1_goal_projection/mee_dblock_uffu/r01/2026-06-11_1723_dblock_uffu/iteration_1/node_memory/Tree_0_0",
+          "ok": true,
+          "result_followup_path": "artifacts/eval_suite/mee_sweep_l1_v2/l1_goal_projection/mee_dblock_uffu/r01/2026-06-11_1723_dblock_uffu/iteration_1/node_memory/Tree_0_0/followups/turn_002.md",
+          "result_state_summary": "complete / unknown / closed_candidate, 0 goals, goal 11 chars",
+          "result_summary": "accepted commit",
+          "result_view_path": "artifacts/eval_suite/mee_sweep_l1_v2/l1_goal_projection/mee_dblock_uffu/r01/2026-06-11_1723_dblock_uffu/iteration_1/node_memory/Tree_0_0/workspace_views/turn_002.json",
+          "turn": 2,
+          "usage": {
+            "cache_creation_input_tokens": 1043,
+            "cache_read_input_tokens": 34894,
+            "input_tokens": 2,
+            "output_tokens": 152
+          },
+          "view_chars": 3096,
+          "view_id": "T0.0-2",
+          "workspace_view_path": "artifacts/eval_suite/mee_sweep_l1_v2/l1_goal_projection/mee_dblock_uffu/r01/2026-06-11_1723_dblock_uffu/iteration_1/node_memory/Tree_0_0/workspace_views/turn_001.json"
+        },
+        {
+          "action_submitted_at": "2026-06-12T00:24:47+00:00",
+          "action_time": "+00:11",
+          "agent_think": "5 s",
+          "agent_think_path": "",
+          "agent_think_seconds": 5.0,
+          "decision_followup_path": "artifacts/eval_suite/mee_sweep_l1_v2/l1_goal_projection/mee_dblock_uffu/r01/2026-06-11_1723_dblock_uffu/iteration_1/node_memory/Tree_0_0/followups/turn_002.md",
+          "decision_state_summary": "complete / unknown / closed_candidate, 0 goals, goal 11 chars",
+          "decision_view_path": "artifacts/eval_suite/mee_sweep_l1_v2/l1_goal_projection/mee_dblock_uffu/r01/2026-06-11_1723_dblock_uffu/iteration_1/node_memory/Tree_0_0/workspace_views/turn_002.json",
+          "deterministic_signals": [],
+          "goal_chars": 11,
+          "inspect_topics": [
+            "verify",
+            "goal_info"
+          ],
+          "intent": {
+            "intent": "finish"
+          },
+          "intent_summary": "finish",
+          "manager_action_summary": [
+            "finish"
+          ],
+          "manager_result_at": "2026-06-12T00:24:47+00:00",
+          "manager_result_path": "artifacts/eval_suite/mee_sweep_l1_v2/l1_goal_projection/mee_dblock_uffu/r01/2026-06-11_1723_dblock_uffu/iteration_1/node_memory/Tree_0_0/manager_results/turn_003.json",
+          "manager_seconds": 0.0,
+          "manager_time": "",
+          "node": "Tree-0.0",
+          "node_dir": "artifacts/eval_suite/mee_sweep_l1_v2/l1_goal_projection/mee_dblock_uffu/r01/2026-06-11_1723_dblock_uffu/iteration_1/node_memory/Tree_0_0",
+          "ok": true,
+          "result_followup_path": "artifacts/eval_suite/mee_sweep_l1_v2/l1_goal_projection/mee_dblock_uffu/r01/2026-06-11_1723_dblock_uffu/iteration_1/node_memory/Tree_0_0/followups/turn_003.md",
+          "result_state_summary": "complete / unknown / closed_candidate, 0 goals, goal 11 chars",
+          "result_summary": "finish requested",
+          "result_view_path": "artifacts/eval_suite/mee_sweep_l1_v2/l1_goal_projection/mee_dblock_uffu/r01/2026-06-11_1723_dblock_uffu/iteration_1/node_memory/Tree_0_0/workspace_views/turn_003.json",
+          "turn": 3,
+          "usage": {},
+          "view_chars": 2136,
+          "view_id": "T0.0-3",
+          "workspace_view_path": "artifacts/eval_suite/mee_sweep_l1_v2/l1_goal_projection/mee_dblock_uffu/r01/2026-06-11_1723_dblock_uffu/iteration_1/node_memory/Tree_0_0/workspace_views/turn_002.json"
+        }
+      ],
+      "run_dir": "artifacts/eval_suite/mee_sweep_l1_v2/l1_goal_projection/mee_dblock_uffu/r01/2026-06-11_1723_dblock_uffu/iteration_1",
+      "turn_count": 3
+    }
+  ],
+  "schema_version": 1
+}

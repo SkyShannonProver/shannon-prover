@@ -1,0 +1,536 @@
+{
+  "last_result": {
+    "intent": "inspect_context",
+    "payload": {
+      "topic": "lemma_index"
+    },
+    "effect": "This asks the manager for information only; it does not change the EasyCrypt proof state.",
+    "result": "The manager returned read-only context for the current goal.",
+    "content": {
+      "preview": "=== chacha_poly.ec: 51 lemma statement(s) (signatures only \u2014 proofs are NOT shown) === These are every lemma declared in the current file. Use them to plan which lemmas you can apply/rewrite/bridge with; `lookup_symbol` for the exact declaration of any one before using it. L14 [lemma, top_level] map2_zip: lemma map2_zip (f:'a -> 'b -> 'c) s t : map2 f s t = map (fun (p:'a * 'b) => f p.`1 p.`2) (zip s t). L21 [lemma, top_level] size_map2: lemma size_map2 (f:'a -> 'b -> 'c) (l1:'a list) l2 : size (map2 f l1 l2) = min (size l1) (size l2). L27 [lemma, top_level] nth_map2: lemma nth_map2 dfla dflb dflc (f:'a -> 'b -> 'c) (l1:'a list) l2 i: 0 <= i < min (size l1) (size l2) => nth dflc (map2 f l1 l2) i = f (nth dfla l1 i) (nth dflb l2 i). L54 [lemma, top_level] xorK1: lemma xorK1 b1 b2 : b1 = b1 +^ b2 +^ b2. L134 [lemma, top_level] dblock_ll: lemma dblock_ll : is_lossless dblock. L140 [lemma, top_level] dblock_uni: lemma dblock_uni: is_uniform dblock. L146 [lemma, top_level] dblock_fu: lemma dblock_fu: is_full dblock. L152 [lemma, top_level] dblock_funi: lemma dblock_funi: is_funiform dblock. L163 [lemma, top_level] nth_xor: lemma nth_xor x y i : 0 <= i < block_size => nth Byte.zero (b..."
+    }
+  },
+  "current_goal": {
+    "lines": [
+      "Current goal",
+      "",
+      "Type variables: <none>",
+      "",
+      "&m: {}",
+      "------------------------------------------------------------------------",
+      "Pr[UFCMA(RO).distinguish() @ &m : UFCMA.bad1] <=",
+      "Pr[UFCMA_l.f() @ &m :",
+      "   size UFCMA_l.lbad1 <= qdec /\\",
+      "   exists (tt : tag * tag), (tt \\in UFCMA_l.lbad1) /\\ tt.`1 = tt.`2]"
+    ],
+    "text_fully_shown": true,
+    "truncated": false,
+    "goal_type": "probability",
+    "view_focus": "probability",
+    "source": {
+      "label": "Parsed from EasyCrypt pretty goal text",
+      "ground_truth": false
+    }
+  },
+  "proof_status": {
+    "status": "open",
+    "remaining_goals": 1,
+    "remaining_goals_known": true,
+    "goal_type": "probability",
+    "view_focus": "probability",
+    "current_layer": "pr"
+  },
+  "candidate_moves": {
+    "navigation": [
+      {
+        "id": "probability_budget_ledger_route",
+        "profile_gate": "navigator_upgrade",
+        "proof_family": "probability_budget_ledger",
+        "episode": "product_bound_resource_accounting",
+        "route": "event_budget_decomposition_before_local_sampling",
+        "confidence": "high",
+        "confidence_reason": "The current probability goal has a product bound with visible factor slots and event obligations.",
+        "valid_for": "current_view_only",
+        "why_now": "Treat the product bound as a resource ledger before committing sampling, split, seq, or direct call steps.",
+        "primary_next_action": {
+          "intent": "inspect_context",
+          "payload": {
+            "topic": "probability_budget_ledger"
+          }
+        },
+        "factor_slots": [
+          {
+            "id": "B1",
+            "expr": "Pr[UFCMA_l.f() @ &m : size UFCMA_l.lbad1 <= qdec /\\ exists (tt : tag * tag), (tt \\in UFCMA_l.lbad1) /\\ tt.`1 = tt.`2]",
+            "grouped_factor": "Pr[UFCMA_l.f() @ &m : size UFCMA_l.lbad1 <= qdec /\\ exists (tt : tag * tag), (tt \\in UFCMA_l.lbad1) /\\ tt.`1 = tt.`2]",
+            "grouped_factor_index": 1,
+            "source": "top_level_product",
+            "role": "finite_domain_point_mass"
+          }
+        ],
+        "event_obligations": [
+          {
+            "id": "E1",
+            "event": "UFCMA.bad1",
+            "event_kind": "bad_or_win_event",
+            "bridge_family": "bad_event_or_union_bound",
+            "candidate_factor_ids": [
+              "B1"
+            ]
+          }
+        ],
+        "route_plan": [
+          "stay_at_probability_or_event_level",
+          "decompose product budget into factor obligations",
+          "descend to sampling only after per-point bound is explicit"
+        ],
+        "anti_routes": [
+          {
+            "route": "single_rnd_for_whole_product_budget",
+            "reason": "A single accepted `rnd` step, or a compact `do N!rnd`, may leave a subgoal that charges local samples against the entire product budget."
+          },
+          {
+            "route": "accepted_phoare_split_as_route_quality",
+            "reason": "EasyCrypt may accept `phoare split !`, but the residual goals can still be a bad route under a product budget."
+          },
+          {
+            "route": "seq_cut_allocates_product_budget_to_prefix",
+            "reason": "A plausible `seq K : side_fact` can move the small product budget onto a high-probability prefix or deterministic side condition."
+          }
+        ],
+        "repair_if_fails": [
+          {
+            "failure": "local_sampling_residual",
+            "next": "inspect probability_budget_ledger before committing another rnd/seq/split route"
+          },
+          {
+            "failure": "wrong_budget_branch",
+            "next": "use undo_to_checkpoint to return before the budget-misallocated seq/split"
+          }
+        ]
+      }
+    ],
+    "moves": [
+      {
+        "title": "Proof-route context",
+        "category": "strategy",
+        "guidance": "Pr arithmetic plan: step1 -> step2_3",
+        "applicability": "Use this as route-selection context; it is not a tactic to run as-is.",
+        "source": "proof-state analysis"
+      },
+      {
+        "title": "Proof-route context",
+        "category": "strategy",
+        "guidance": "Probabilistic VC plan: query-counter loss accounting via have-chain, rewrite Pr/mu rules, real-order smt, byequiv/bad-event bridge",
+        "applicability": "Use this as route-selection context; it is not a tactic to run as-is.",
+        "source": "proof-state analysis"
+      }
+    ]
+  },
+  "program_frontier": {
+    "authority": "proof-state analysis",
+    "view_focus": "probability",
+    "focus": {
+      "pr_rewrite_candidates": 5,
+      "has_pr_normal_form": false,
+      "has_pr_arithmetic_plan": true,
+      "has_pr_obligation_plan": true,
+      "pr_obligation_primary_strategy": "use_pr_arithmetic_chain",
+      "native_ast_search_hits": 0
+    },
+    "checks": [
+      "Pr resources are context: use them when they match the visible endpoint and simplify the goal.",
+      "Direct byequiv is a valid route when the goal is naturally a program equivalence."
+    ]
+  },
+  "call_site_surface": {},
+  "application_context": {
+    "selected_handles": [
+      {
+        "title": "Proof-route context",
+        "why_relevant": "Pr arithmetic plan: step1 -> step2_3"
+      },
+      {
+        "title": "Proof-route context",
+        "why_relevant": "Probabilistic VC plan: query-counter loss accounting via have-chain, rewrite Pr/mu rules, real-order smt, byequiv/bad-event bridge"
+      },
+      {
+        "title": "Probability budget ledger",
+        "kind": "route-selection context",
+        "why_relevant": "A product probability budget is visible; check the budget/event shape before treating a locally accepted sampling, split, or call step as proof progress.",
+        "budget_shape": "product_bound",
+        "bound": "Pr[UFCMA_l.f() @ &m : size UFCMA_l.lbad1 <= qdec /\\ exists (tt : tag * tag), (tt \\in UFCMA_l.lbad1) /\\ tt.`1 = tt.`2]",
+        "event_kind": "bad_or_win_event",
+        "budget_ledger": {
+          "schema_version": 1,
+          "kind": "probability_budget_ledger",
+          "status": "complete",
+          "source": "single_program_probability_goal",
+          "bound_relation": "<=",
+          "total_bound": "Pr[UFCMA_l.f() @ &m : size UFCMA_l.lbad1 <= qdec /\\ exists (tt : tag * tag), (tt \\in UFCMA_l.lbad1) /\\ tt.`1 = tt.`2]",
+          "grouped_factors": [
+            "Pr[UFCMA_l.f() @ &m : size UFCMA_l.lbad1 <= qdec /\\ exists (tt : tag * tag), (tt \\in UFCMA_l.lbad1) /\\ tt.`1 = tt.`2]"
+          ],
+          "factor_slots": [
+            {
+              "id": "B1",
+              "expr": "Pr[UFCMA_l.f() @ &m : size UFCMA_l.lbad1 <= qdec /\\ exists (tt : tag * tag), (tt \\in UFCMA_l.lbad1) /\\ tt.`1 = tt.`2]",
+              "grouped_factor": "Pr[UFCMA_l.f() @ &m : size UFCMA_l.lbad1 <= qdec /\\ exists (tt : tag * tag), (tt \\in UFCMA_l.lbad1) /\\ tt.`1 = tt.`2]",
+              "grouped_factor_index": 1,
+              "source": "top_level_product",
+              "role": "finite_domain_point_mass"
+            }
+          ],
+          "event_obligations": [
+            {
+              "id": "E1",
+              "event": "UFCMA.bad1",
+              "event_kind": "bad_or_win_event",
+              "bridge_family": "bad_event_or_union_bound",
+              "candidate_factor_ids": [
+                "B1"
+              ]
+            }
+          ],
+          "route_plan": [
+            "stay_at_probability_or_event_level",
+            "decompose product budget into factor obligations",
+            "descend to sampling only after per-point bound is explicit"
+          ],
+          "unsafe_lowerings": [
+            {
+              "route": "single_rnd_for_whole_product_budget",
+              "reason": "A single accepted `rnd` step, or a compact `do N!rnd`, may leave a subgoal that charges local samples against the entire product budget."
+            },
+            {
+              "route": "accepted_phoare_split_as_route_quality",
+              "reason": "EasyCrypt may accept `phoare split !`, but the residual goals can still be a bad route under a product budget."
+            },
+            {
+              "route": "seq_cut_allocates_product_budget_to_prefix",
+              "reason": "A plausible `seq K : side_fact` can move the small product budget onto a high-probability prefix or deterministic side condition."
+            }
+          ],
+          "read_as": "A probability budget ledger: factor slots are the resources in the product bound, and event obligations are the proof events that should spend those resources before local sampling cleanup."
+        },
+        "factor_slots": [
+          {
+            "id": "B1",
+            "expr": "Pr[UFCMA_l.f() @ &m : size UFCMA_l.lbad1 <= qdec /\\ exists (tt : tag * tag), (tt \\in UFCMA_l.lbad1) /\\ tt.`1 = tt.`2]",
+            "grouped_factor": "Pr[UFCMA_l.f() @ &m : size UFCMA_l.lbad1 <= qdec /\\ exists (tt : tag * tag), (tt \\in UFCMA_l.lbad1) /\\ tt.`1 = tt.`2]",
+            "grouped_factor_index": 1,
+            "source": "top_level_product",
+            "role": "finite_domain_point_mass"
+          }
+        ],
+        "event_obligations": [
+          {
+            "id": "E1",
+            "event": "UFCMA.bad1",
+            "event_kind": "bad_or_win_event",
+            "bridge_family": "bad_event_or_union_bound",
+            "candidate_factor_ids": [
+              "B1"
+            ]
+          }
+        ],
+        "forbidden_routes": [
+          {
+            "route": "single_rnd_for_whole_product_budget",
+            "reason": "A single accepted `rnd` step, or a compact `do N!rnd`, may leave a subgoal that charges local samples against the entire product budget."
+          },
+          {
+            "route": "accepted_phoare_split_as_route_quality",
+            "reason": "EasyCrypt may accept `phoare split !`, but the residual goals can still be a bad route under a product budget."
+          },
+          {
+            "route": "seq_cut_allocates_product_budget_to_prefix",
+            "reason": "A plausible `seq K : side_fact` can move the small product budget onto a high-probability prefix or deterministic side condition."
+          }
+        ],
+        "likely_proof_family": [
+          "probability-level decomposition before local sampling",
+          "split the event/budget before descending into procedure proof"
+        ],
+        "useful_fact_handles": [
+          {
+            "symbol": "mulr_ge0",
+            "why": "Product-bound side conditions often need non-negativity of factors."
+          },
+          {
+            "symbol": "divr_ge0",
+            "why": "Ratio factors in the bound usually need numerator/denominator non-negativity."
+          },
+          {
+            "symbol": "expr_ge0",
+            "why": "Powered ratio factors often need exponent non-negativity closure."
+          },
+          {
+            "symbol": "mulr_gt0",
+            "why": "Strict positivity is useful when rewriting ratio-over-itself side conditions."
+          },
+          {
+            "symbol": "divr_gt0",
+            "why": "Strictly positive denominator/numerator facts support positive ratio factors."
+          },
+          {
+            "symbol": "expr_gt0",
+            "why": "Powered positive ratio factors stay positive."
+          },
+          {
+            "symbol": "divrr",
+            "why": "B/B residuals often close by rewriting `divrr` after proving B is nonzero."
+          }
+        ],
+        "side_condition_recipe": [
+          {
+            "name": "ratio positivity",
+            "useful_handles": [
+              "PKE_.qD_pos",
+              "gt1_q",
+              "divr_gt0",
+              "expr_gt0",
+              "mulr_gt0"
+            ]
+          },
+          {
+            "name": "B_over_B residual",
+            "read_as": "When a residual becomes a budget divided by the same budget, treat it as B/B: establish B <> 0 or B > 0, then rewrite with `divrr`.",
+            "useful_handles": [
+              "divrr",
+              "mulr_gt0",
+              "divr_gt0",
+              "expr_gt0"
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "facts_and_diagnostics": {
+    "facts": {
+      "has_pr_normal_form": false,
+      "has_pr_arithmetic_plan": true,
+      "has_pr_obligation_plan": true,
+      "pr_obligation_primary_strategy": "use_pr_arithmetic_chain",
+      "unfoldable_goal_heads": [
+        {
+          "name": "qdec",
+          "unqualified_name": "qdec",
+          "declaration_kind": "op",
+          "unfold_tactic": "rewrite /qdec.",
+          "smt_argument_role": "not_a_lemma_hint"
+        }
+      ],
+      "unfoldable_goal_head_count": 1
+    },
+    "fact_note": "Only current-frontier facts are shown here; the full proof context artifact keeps the compiler/internal details.",
+    "probability_budget": {
+      "kind": "probability_budget",
+      "budget_shape": "product_bound",
+      "source": "single_program_probability_goal",
+      "bound_relation": "<=",
+      "bound": "Pr[UFCMA_l.f() @ &m : size UFCMA_l.lbad1 <= qdec /\\ exists (tt : tag * tag), (tt \\in UFCMA_l.lbad1) /\\ tt.`1 = tt.`2]",
+      "factors": [
+        "Pr[UFCMA_l.f() @ &m : size UFCMA_l.lbad1 <= qdec /\\ exists (tt : tag * tag), (tt \\in UFCMA_l.lbad1) /\\ tt.`1 = tt.`2]"
+      ],
+      "event_shape": {
+        "text": "UFCMA.bad1",
+        "kind": "bad_or_win_event",
+        "mentions": [
+          "UFCMA.bad1"
+        ]
+      },
+      "budget_ledger": {
+        "schema_version": 1,
+        "kind": "probability_budget_ledger",
+        "status": "complete",
+        "source": "single_program_probability_goal",
+        "bound_relation": "<=",
+        "total_bound": "Pr[UFCMA_l.f() @ &m : size UFCMA_l.lbad1 <= qdec /\\ exists (tt : tag * tag), (tt \\in UFCMA_l.lbad1) /\\ tt.`1 = tt.`2]",
+        "grouped_factors": [
+          "Pr[UFCMA_l.f() @ &m : size UFCMA_l.lbad1 <= qdec /\\ exists (tt : tag * tag), (tt \\in UFCMA_l.lbad1) /\\ tt.`1 = tt.`2]"
+        ],
+        "factor_slots": [
+          {
+            "id": "B1",
+            "expr": "Pr[UFCMA_l.f() @ &m : size UFCMA_l.lbad1 <= qdec /\\ exists (tt : tag * tag), (tt \\in UFCMA_l.lbad1) /\\ tt.`1 = tt.`2]",
+            "grouped_factor": "Pr[UFCMA_l.f() @ &m : size UFCMA_l.lbad1 <= qdec /\\ exists (tt : tag * tag), (tt \\in UFCMA_l.lbad1) /\\ tt.`1 = tt.`2]",
+            "grouped_factor_index": 1,
+            "source": "top_level_product",
+            "role": "finite_domain_point_mass"
+          }
+        ],
+        "event_obligations": [
+          {
+            "id": "E1",
+            "event": "UFCMA.bad1",
+            "event_kind": "bad_or_win_event",
+            "bridge_family": "bad_event_or_union_bound",
+            "candidate_factor_ids": [
+              "B1"
+            ]
+          }
+        ],
+        "route_plan": [
+          "stay_at_probability_or_event_level",
+          "decompose product budget into factor obligations",
+          "descend to sampling only after per-point bound is explicit"
+        ],
+        "unsafe_lowerings": [
+          {
+            "route": "single_rnd_for_whole_product_budget",
+            "reason": "A single accepted `rnd` step, or a compact `do N!rnd`, may leave a subgoal that charges local samples against the entire product budget."
+          },
+          {
+            "route": "accepted_phoare_split_as_route_quality",
+            "reason": "EasyCrypt may accept `phoare split !`, but the residual goals can still be a bad route under a product budget."
+          },
+          {
+            "route": "seq_cut_allocates_product_budget_to_prefix",
+            "reason": "A plausible `seq K : side_fact` can move the small product budget onto a high-probability prefix or deterministic side condition."
+          }
+        ],
+        "read_as": "A probability budget ledger: factor slots are the resources in the product bound, and event obligations are the proof events that should spend those resources before local sampling cleanup."
+      },
+      "likely_proof_family": [
+        "probability-level decomposition before local sampling",
+        "split the event/budget before descending into procedure proof"
+      ],
+      "useful_fact_handles": [
+        {
+          "symbol": "mulr_ge0",
+          "why": "Product-bound side conditions often need non-negativity of factors."
+        },
+        {
+          "symbol": "divr_ge0",
+          "why": "Ratio factors in the bound usually need numerator/denominator non-negativity."
+        },
+        {
+          "symbol": "expr_ge0",
+          "why": "Powered ratio factors often need exponent non-negativity closure."
+        },
+        {
+          "symbol": "mulr_gt0",
+          "why": "Strict positivity is useful when rewriting ratio-over-itself side conditions."
+        },
+        {
+          "symbol": "divr_gt0",
+          "why": "Strictly positive denominator/numerator facts support positive ratio factors."
+        },
+        {
+          "symbol": "expr_gt0",
+          "why": "Powered positive ratio factors stay positive."
+        },
+        {
+          "symbol": "divrr",
+          "why": "B/B residuals often close by rewriting `divrr` after proving B is nonzero."
+        }
+      ],
+      "side_condition_recipe": [
+        {
+          "name": "ratio positivity",
+          "useful_handles": [
+            "PKE_.qD_pos",
+            "gt1_q",
+            "divr_gt0",
+            "expr_gt0",
+            "mulr_gt0"
+          ]
+        },
+        {
+          "name": "B_over_B residual",
+          "read_as": "When a residual becomes a budget divided by the same budget, treat it as B/B: establish B <> 0 or B > 0, then rewrite with `divrr`.",
+          "useful_handles": [
+            "divrr",
+            "mulr_gt0",
+            "divr_gt0",
+            "expr_gt0"
+          ]
+        }
+      ],
+      "anti_routes": [
+        {
+          "route": "single_rnd_for_whole_product_budget",
+          "reason": "A single accepted `rnd` step, or a compact `do N!rnd`, may leave a subgoal that charges local samples against the entire product budget."
+        },
+        {
+          "route": "accepted_phoare_split_as_route_quality",
+          "reason": "EasyCrypt may accept `phoare split !`, but the residual goals can still be a bad route under a product budget."
+        },
+        {
+          "route": "seq_cut_allocates_product_budget_to_prefix",
+          "reason": "A plausible `seq K : side_fact` can move the small product budget onto a high-probability prefix or deterministic side condition."
+        }
+      ],
+      "read_as": "Advisory middle-end context for route selection; this is not a proof script or tactic order."
+    },
+    "notes": [
+      {
+        "message": "Some imported or cross-scope handles may need lookup if that route is being tested; use lookup_candidates for the concrete symbol instead of treating the whole list as a to-do queue.",
+        "severity": "info"
+      }
+    ]
+  },
+  "inspect_lookup_handles": {
+    "effect": "All handles here are read-only manager requests; the committed EasyCrypt proof state stays unchanged.",
+    "manager_note": "Some requests may ask EasyCrypt or name resolution; wait for the manager result before choosing the next proof intent.",
+    "ask_manager_for": [
+      {
+        "intent": "inspect_context",
+        "payload": {
+          "topic": "rewrite_candidates"
+        },
+        "use_when": "Goal is a Pr inequality; EC native search can retrieve probability upper-bound lemmas while staying at the Pr layer.",
+        "returns": "manager-provided read-only context for this proof route"
+      },
+      {
+        "intent": "inspect_context",
+        "payload": {
+          "topic": "goal_info"
+        },
+        "use_when": "Need parsed goal shape, resolved names, or KB pattern hints.",
+        "returns": "parsed goal structure and names"
+      },
+      {
+        "intent": "inspect_context",
+        "payload": {
+          "topic": "pr_bridge_routes"
+        },
+        "use_when": "Current Pr equality may need a manager-verified bridge route (game-hop or scheme/endpoint normalization) before direct byequiv/proc lowering.",
+        "returns": "daemon-verified, committable Pr bridge routes with manager-owned intent payloads"
+      },
+      {
+        "intent": "inspect_context",
+        "payload": {
+          "topic": "equiv_bridge_lemmas"
+        },
+        "use_when": "Need pRHL/procedure-equivalence bridge lemma names or context after checking pr_bridge_routes.",
+        "returns": "context-only equiv bridge lemma candidates (names to look up/apply); not a verified Pr route"
+      },
+      {
+        "intent": "inspect_context",
+        "payload": {
+          "topic": "lemma_hints"
+        },
+        "use_when": "Need local lemma hints before choosing a Pr-level proof route.",
+        "returns": "nearby lemma hints and proof-route context"
+      },
+      {
+        "intent": "inspect_context",
+        "payload": {
+          "topic": "tactic_forms",
+          "name": "while"
+        },
+        "use_when": "Need exact byphoare/phoare-loop tactic syntax before probing the probability route.",
+        "returns": "valid `while` forms and common traps"
+      }
+    ],
+    "lookup_candidates": [
+      {
+        "symbol": "pr_RO_split",
+        "use_when": "Resolve `pr_RO_split` only if the Pr upper-bound plan needs endpoint normalization; this is secondary to bound-lemma search for the current frontier."
+      }
+    ]
+  }
+}

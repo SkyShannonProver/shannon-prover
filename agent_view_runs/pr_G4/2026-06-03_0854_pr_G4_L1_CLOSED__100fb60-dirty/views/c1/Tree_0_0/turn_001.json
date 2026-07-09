@@ -1,0 +1,614 @@
+{
+  "last_result": {
+    "intent": "commit_tactic",
+    "payload": {
+      "tactic": "conseq (: _ ==> (g ^ G1.u \\in map (fun (t : ciphertext) => t.`1) G3.cilog) /\\ (G1.g_ ^ G1.u' \\in map (fun (t : ciphertext) => t.`2) G3.cilog) /\\ (g ^ r' \\in map (fun (t : ciphertext) => t.`3) G3.cilog) /\\ (g ^ r \\in map (fun (t : ciphertext) => t.`4) G3.cilog) /\\ size G3.cilog <= PKE_.qD /\\ G1.w <> zero /\\ G1.g_ = g ^ G1.w)."
+    },
+    "manager_action": "commit_tactic",
+    "result": "EasyCrypt accepted the committed tactic.",
+    "effect": "EasyCrypt accepted a proof-state change; the refreshed view is based on the new committed state.",
+    "proof_state": "The committed EasyCrypt proof state changed.",
+    "tactic": "conseq (: _ ==> (g ^ G1.u \\in map (fun (t : ciphertext) => t.`1) G3.cilog) /\\ (G1.g_ ^ G1.u' \\in map (fun (t : ciphertext) => t.`2) G3.cilog) /\\ (g ^ r' \\in map (fun (t : ciphertext) => t.`3) G3.cilog) /\\ (g ^ r \\in map (fun (t : ciphertext) => t.`4) G3.cilog) /\\ size G3.cilog <= PKE_.qD /\\ G1.w <> zero /\\ G1.g_ = g ^ G1.w)."
+  },
+  "current_goal": {
+    "lines": [
+      "Current goal (remaining: 7)",
+      "",
+      "Type variables: <none>",
+      "",
+      "&m: {}",
+      "------------------------------------------------------------------------",
+      "forall &hr,",
+      "  size G3.cilog{hr} <= PKE_.qD /\\",
+      "  G1.w{hr} <> zero /\\ G1.g_{hr} = g ^ G1.w{hr} =>",
+      "  forall (u u' r0 r'0 : ZModE.exp),",
+      "    ((g ^ u, G1.g_{hr} ^ u', g ^ r'0, g ^ r0) \\in G3.cilog{hr}) /\\",
+      "    size G3.cilog{hr} <= PKE_.qD /\\",
+      "    G1.w{hr} <> zero /\\ G1.g_{hr} = g ^ G1.w{hr} =>",
+      "    (g ^ u \\in map (fun (t : PKE_.ciphertext) => t.`1) G3.cilog{hr}) /\\",
+      "    (G1.g_{hr} ^ u' \\in map (fun (t : PKE_.ciphertext) => t.`2) G3.cilog{hr}) /\\",
+      "    (g ^ r'0 \\in map (fun (t : PKE_.ciphertext) => t.`3) G3.cilog{hr}) /\\",
+      "    (g ^ r0 \\in map (fun (t : PKE_.ciphertext) => t.`4) G3.cilog{hr}) /\\",
+      "    size G3.cilog{hr} <= PKE_.qD /\\",
+      "    G1.w{hr} <> zero /\\ G1.g_{hr} = g ^ G1.w{hr}",
+      "[154|check]>"
+    ],
+    "text_fully_shown": true,
+    "truncated": false,
+    "goal_type": "ambient",
+    "view_focus": "ambient_logic",
+    "source": {
+      "label": "Parsed from EasyCrypt pretty goal text",
+      "ground_truth": false
+    }
+  },
+  "proof_status": {
+    "status": "open",
+    "remaining_goals": 7,
+    "remaining_goals_known": true,
+    "goal_type": "ambient",
+    "view_focus": "ambient_logic",
+    "current_layer": "ambient_logic"
+  },
+  "candidate_moves": {
+    "navigation": [
+      {
+        "id": "ambient_operator_local_lemma",
+        "proof_family": "ambient_logic",
+        "episode": "ambient_local_lemma",
+        "route": "unfold_local_head_then_smt_lemma_pack",
+        "confidence": "medium",
+        "confidence_reason": "The current pure goal exposes relevant list/local symbols, but the goal is large or the local evidence is partial.",
+        "valid_for": "current_view_only",
+        "why_now": "current ambient goal mentions list/subtype/local conversion operators that often close after unfolding the local head and supplying qualified lemma names.",
+        "fast_track_probe": {
+          "tactic": "move=> *; smt(size_map).",
+          "preconditions": [
+            "Use only when the visible goal is a pure ambient/list obligation.",
+            "Lookup any non-trivial cross-file lemma before using it if its signature is unknown.",
+            "Probe the block; if it fails, shorten to the intro/unfold prefix."
+          ],
+          "expected_next_shape": "The pure list/subtype obligation closes, or the remaining goal points to one missing local lemma/unfold."
+        },
+        "anti_routes": [
+          {
+            "route": "smt_without_local_lemma_pack",
+            "reason": "Blind SMT often misses cloned/local qualified names.",
+            "scope": "avoid_until_lemma_pack_checked"
+          },
+          {
+            "route": "unqualified_local_symbol_guessing",
+            "reason": "Prefer the qualified/local name shown by lookup or lemma_hints.",
+            "scope": "avoid_after_first_unknown_identifier"
+          }
+        ],
+        "repair_if_fails": [
+          {
+            "failure": "lemma",
+            "next": "inspect lemma_hints or lookup_symbol for the missing qualified name"
+          },
+          {
+            "failure": "syntax",
+            "next": "inspect tactic_forms for rewrite/apply/SMT setup"
+          },
+          {
+            "failure": "route",
+            "next": "try a smaller unfold/rewrite prefix before changing proof family"
+          }
+        ],
+        "lemma_pack": [
+          {
+            "symbol": "size_map",
+            "role": "list size over map"
+          }
+        ]
+      }
+    ],
+    "moves": [
+      {
+        "title": "Read-only tactic probe",
+        "category": "probe",
+        "tactic": "move=> &hr H.",
+        "applicability": "This tactic-shaped option should be checked with a read-only probe before committing it.",
+        "effect": "This is a read-only probe; it asks EasyCrypt what would happen without changing the committed proof state.",
+        "evidence": [
+          "ambient goal has a leading implication before the proof judgment"
+        ],
+        "source": "proof-state analysis",
+        "derivation": "read-only probe surfaced from proof-state analysis",
+        "verified": "read_only_probe_suggestion",
+        "guarantee": "read-only probe shape; proof state unchanged; probe then decide; reversible"
+      },
+      {
+        "title": "Residual closing tactic",
+        "category": "probe",
+        "tactic": "auto => />.",
+        "applicability": "This tactic-shaped option should be checked with a read-only probe before committing it.",
+        "effect": "This is a read-only probe; it asks EasyCrypt what would happen without changing the committed proof state.",
+        "evidence": [
+          "Ambient front-end found a pure residual goal; simplify before asking SMT to solve the remaining logic."
+        ],
+        "source": "proof-state analysis",
+        "derivation": "read-only probe surfaced from proof-state analysis",
+        "verified": "read_only_probe_suggestion",
+        "guarantee": "read-only probe shape; proof state unchanged; probe then decide; reversible"
+      },
+      {
+        "title": "Read-only tactic probe",
+        "category": "probe",
+        "tactic": "smt().",
+        "applicability": "This tactic-shaped option should be checked with a read-only probe before committing it.",
+        "effect": "This is a read-only probe; it asks EasyCrypt what would happen without changing the committed proof state.",
+        "evidence": [
+          "Ambient front-end leaves a pure logical/algebraic residue after local simplification."
+        ],
+        "source": "proof-state analysis",
+        "derivation": "read-only probe surfaced from proof-state analysis",
+        "verified": "read_only_probe_suggestion",
+        "guarantee": "read-only probe shape; proof state unchanged; probe then decide; reversible"
+      }
+    ],
+    "route_health": [
+      {
+        "signal": "local_membership_decomposition_available",
+        "confidence": "medium",
+        "message": "Current pure-tail obligations expose list/map/filter membership source structure whose local facts are not separated in the current context.",
+        "evidence": [
+          "membership source shapes: map_membership",
+          "membership fact: ((g ^ u, G1.g_{hr} ^ u', g ^ r'0, g ^ r0) \\in G3.cilog{hr}) /\\ size G3.cilog{hr} <= PKE_.qD /\\"
+        ],
+        "observed_gap": "Visible membership sources carry local case facts that can expose the key, projection, or witness relation, but those source facts are not separated in the current context.",
+        "observed_risk": "local_membership_source_not_exposed",
+        "related_surface": "pure_tail_surface.membership_decomposition_surface",
+        "companion_surfaces": [
+          "pure_tail_surface.existential_witness_surface",
+          "pure_tail_surface.map_update_lookup_surface"
+        ],
+        "recovery_class": "local_pure_surgery_available",
+        "checkpoint_policy": "current_state_local_work_visible"
+      }
+    ]
+  },
+  "program_frontier": {
+    "authority": "proof-state analysis",
+    "view_focus": "ambient_logic"
+  },
+  "call_site_surface": {},
+  "seq_cut_surface": {
+    "seq_candidate_id": "cp_7_1f36d0c76ea98e17",
+    "state": "inside_seq_scope",
+    "cut_position": {
+      "left_count": 13,
+      "tactic": "seq 13 : (size G3.cilog <= PKE_.qD /\\ G1.w <> zero /\\ G1.g_ = g ^ G1.w) 1%r ((PKE_.qD%r / order%r) ^ 3 * (PKE_.qD%r / (order - 1)%r)) 0%r 1%r."
+    },
+    "obligation_count": 7,
+    "obligation_kinds": [
+      "quantified",
+      "probability_or_loss"
+    ],
+    "branch_focus": {
+      "remaining_goals": 7,
+      "latest_event_head": "conseq"
+    },
+    "residual_frontier": {
+      "current_layer": "ambient_logic",
+      "view_focus": "ambient_logic",
+      "live_call_site_count": 0,
+      "goal_contains_call_site": false,
+      "latest_seq_tactic_index": 7,
+      "tactics_after_latest_seq": 11
+    }
+  },
+  "pure_tail_surface": {
+    "state": "quantified_ambient_tail",
+    "obligation_families": [
+      {
+        "family": "constructor_projection",
+        "selectors": [
+          ".`1",
+          ".`2",
+          ".`3",
+          ".`4"
+        ],
+        "tuple_equality_count": 0,
+        "effect": "The pure goal exposes tuple/record projections or constructor equalities that can connect program variables to map/list keys.",
+        "limitations": "Projection equalities are reported only when visible in the current text."
+      },
+      {
+        "family": "quantified_residual_logic",
+        "evidence": [
+          "universal quantifier visible",
+          "implication residual visible"
+        ],
+        "effect": "The current proof point is dominated by local logical obligations rather than program-frontier movement.",
+        "limitations": "Quantifier names are not normalized across EasyCrypt pretty-printer variants."
+      }
+    ],
+    "membership_decomposition_surface": {
+      "source_shapes": [
+        "map_membership"
+      ],
+      "membership_hypotheses": [
+        "((g ^ u, G1.g_{hr} ^ u', g ^ r'0, g ^ r0) \\in G3.cilog{hr}) /\\ size G3.cilog{hr} <= PKE_.qD /\\",
+        "(g ^ u \\in map (fun (t : PKE_.ciphertext) => t.`1) G3.cilog{hr}) /\\ (G1.g_{hr} ^ u' \\in map (fun (t : PKE_.ciphertext) => t.`2) G3.cilog{hr}) /\\ (g ^ r'0 \\in map (fun (t : PKE_.ciphertext) => t.`3) G3.cilog{hr}) /\\ (g...",
+        "(G1.g_{hr} ^ u' \\in map (fun (t : PKE_.ciphertext) => t.`2) G3.cilog{hr}) /\\ (g ^ r'0 \\in map (fun (t : PKE_.ciphertext) => t.`3) G3.cilog{hr}) /\\ (g ^ r0 \\in map (fun (t : PKE_.ciphertext) => t.`4) G3.cilog{hr}) /\\ s...",
+        "(g ^ r'0 \\in map (fun (t : PKE_.ciphertext) => t.`3) G3.cilog{hr}) /\\ (g ^ r0 \\in map (fun (t : PKE_.ciphertext) => t.`4) G3.cilog{hr}) /\\ size G3.cilog{hr} <= PKE_.qD /\\",
+        "(g ^ r0 \\in map (fun (t : PKE_.ciphertext) => t.`4) G3.cilog{hr}) /\\ size G3.cilog{hr} <= PKE_.qD /\\"
+      ],
+      "visible_destructors": [
+        {
+          "source_shape": "map_membership",
+          "source_count": 4,
+          "effect": "Exposes a preimage term for a mapped membership source.",
+          "limitations": "The concrete preimage name depends on the local proof context."
+        }
+      ],
+      "effect": "Summarizes list/map/filter membership sources whose local case facts are visible in the current pure tail.",
+      "limitations": [
+        "No destructor tactic is chosen by this surface.",
+        "The panel does not assume which membership branch is true."
+      ]
+    },
+    "gap_analysis": [
+      {
+        "signal": "local_membership_decomposition_available",
+        "confidence": "medium",
+        "gap": "Visible membership sources carry local case facts that can expose the key, projection, or witness relation, but those source facts are not separated in the current context.",
+        "evidence": [
+          "membership source shapes: map_membership",
+          "membership fact: ((g ^ u, G1.g_{hr} ^ u', g ^ r'0, g ^ r0) \\in G3.cilog{hr}) /\\ size G3.cilog{hr} <= PKE_.qD /\\"
+        ],
+        "observed_risk": "local_membership_source_not_exposed",
+        "reversible_to": [
+          {
+            "checkpoint_id": "cp_8_1f36d0c76ea98e17",
+            "semantic_id": "after_seq_opened",
+            "semantic_ids": [
+              "after_seq_opened",
+              "before_branch_work"
+            ],
+            "label": "After seq opened / before branch work #8",
+            "undo_scope": "branch_local",
+            "restored_affordances": {
+              "seq_cut": "committed",
+              "branch_work": "not_committed"
+            },
+            "submit": {
+              "intent": "undo_to_checkpoint",
+              "payload": {
+                "checkpoint_id": "cp_8_1f36d0c76ea98e17"
+              }
+            }
+          },
+          {
+            "checkpoint_id": "cp_7_1f36d0c76ea98e17",
+            "semantic_id": "before_seq_cut",
+            "semantic_ids": [
+              "before_seq_cut"
+            ],
+            "label": "Before seq cut #7",
+            "undo_scope": "seq_local",
+            "restored_affordances": {
+              "seq_cut": "not_committed",
+              "call_site_state": "as_before_seq_cut"
+            },
+            "submit": {
+              "intent": "undo_to_checkpoint",
+              "payload": {
+                "checkpoint_id": "cp_7_1f36d0c76ea98e17"
+              }
+            }
+          }
+        ]
+      }
+    ],
+    "related_checkpoints": [
+      {
+        "checkpoint_id": "cp_8_1f36d0c76ea98e17",
+        "semantic_id": "after_seq_opened",
+        "semantic_ids": [
+          "after_seq_opened",
+          "before_branch_work"
+        ],
+        "label": "After seq opened / before branch work #8",
+        "undo_scope": "branch_local",
+        "restored_affordances": {
+          "seq_cut": "committed",
+          "branch_work": "not_committed"
+        },
+        "submit": {
+          "intent": "undo_to_checkpoint",
+          "payload": {
+            "checkpoint_id": "cp_8_1f36d0c76ea98e17"
+          }
+        }
+      },
+      {
+        "checkpoint_id": "cp_7_1f36d0c76ea98e17",
+        "semantic_id": "before_seq_cut",
+        "semantic_ids": [
+          "before_seq_cut"
+        ],
+        "label": "Before seq cut #7",
+        "undo_scope": "seq_local",
+        "restored_affordances": {
+          "seq_cut": "not_committed",
+          "call_site_state": "as_before_seq_cut"
+        },
+        "submit": {
+          "intent": "undo_to_checkpoint",
+          "payload": {
+            "checkpoint_id": "cp_7_1f36d0c76ea98e17"
+          }
+        }
+      },
+      {
+        "checkpoint_id": "cp_18_1f36d0c76ea98e17",
+        "semantic_id": "before_branch_work",
+        "semantic_ids": [
+          "before_branch_work",
+          "resume_start"
+        ],
+        "label": "Return to resume start",
+        "undo_scope": "resume_local",
+        "restored_affordances": {
+          "seq_cut": "committed",
+          "earlier_branch_work": "preserved"
+        },
+        "submit": {
+          "intent": "undo_to_checkpoint",
+          "payload": {
+            "checkpoint_id": "cp_18_1f36d0c76ea98e17"
+          }
+        }
+      }
+    ],
+    "effect": "Summarizes verifier-visible pure-goal structure after program frontier actions have been discharged or hidden by local proof steps.",
+    "limitations": [
+      "This panel records syntactic and proof-state facts from the current view.",
+      "It does not choose a tactic or instantiate a lemma."
+    ]
+  },
+  "application_context": {
+    "selected_handles": [
+      {
+        "title": "Read-only tactic probe",
+        "tactic": "move=> &hr H.",
+        "why_relevant": "ambient goal has a leading implication before the proof judgment",
+        "derivation": "read-only probe surfaced from current-state analysis",
+        "verified": "read_only_probe_suggestion",
+        "guarantee": "read-only probe shape; proof state unchanged; probe then decide; reversible"
+      },
+      {
+        "title": "Residual closing tactic",
+        "tactic": "auto => />.",
+        "why_relevant": "Ambient front-end found a pure residual goal; simplify before asking SMT to solve the remaining logic.",
+        "derivation": "surfaced from current-state analysis; not daemon-checked on this goal",
+        "verified": "unverified_suggestion",
+        "guarantee": "not verified on the current goal; probe before committing; reversible"
+      }
+    ]
+  },
+  "facts_and_diagnostics": {
+    "facts": {
+      "unfoldable_goal_head_count": 0
+    },
+    "fact_note": "Only current-frontier facts are shown here; the full proof context artifact keeps the compiler/internal details."
+  },
+  "recovery_diagnosis_surface": {
+    "kind": "recovery_diagnosis_surface",
+    "recovery_class": "local_pure_surgery_available",
+    "confidence": "medium",
+    "checkpoint_policy": "current_state_local_work_visible",
+    "evidence": [
+      "membership source shapes: map_membership",
+      "membership fact: ((g ^ u, G1.g_{hr} ^ u', g ^ r'0, g ^ r0) \\in G3.cilog{hr}) /\\ size G3.cilog{hr} <= PKE_.qD /\\"
+    ],
+    "available_local_work": [
+      {
+        "kind": "pure_tail_obligation_families",
+        "items": [
+          "constructor_projection",
+          "quantified_residual_logic"
+        ]
+      },
+      {
+        "kind": "membership_decomposition_sources",
+        "items": [
+          "map_membership"
+        ]
+      }
+    ],
+    "related_checkpoints": [
+      {
+        "checkpoint_id": "cp_8_1f36d0c76ea98e17",
+        "semantic_id": "after_seq_opened",
+        "semantic_ids": [
+          "after_seq_opened",
+          "before_branch_work"
+        ],
+        "label": "After seq opened / before branch work #8",
+        "undo_scope": "branch_local",
+        "restored_affordances": {
+          "seq_cut": "committed",
+          "branch_work": "not_committed"
+        }
+      },
+      {
+        "checkpoint_id": "cp_7_1f36d0c76ea98e17",
+        "semantic_id": "before_seq_cut",
+        "semantic_ids": [
+          "before_seq_cut"
+        ],
+        "label": "Before seq cut #7",
+        "undo_scope": "seq_local",
+        "restored_affordances": {
+          "seq_cut": "not_committed",
+          "call_site_state": "as_before_seq_cut"
+        }
+      },
+      {
+        "checkpoint_id": "cp_8_1f36d0c76ea98e17",
+        "semantic_id": "after_seq_opened",
+        "semantic_ids": [
+          "after_seq_opened",
+          "before_branch_work"
+        ],
+        "label": "After seq opened / before branch work #8",
+        "committed_step_index": 8,
+        "undo_scope": "branch_local",
+        "restored_proof_layer": "seq_obligations_opened",
+        "restored_affordances": {
+          "seq_cut": "committed",
+          "branch_work": "not_committed"
+        },
+        "why_checkpoint": "seq-local branch boundary; selecting it keeps the seq cut and removes branch-local work after it"
+      },
+      {
+        "checkpoint_id": "cp_7_1f36d0c76ea98e17",
+        "semantic_id": "before_seq_cut",
+        "semantic_ids": [
+          "before_seq_cut"
+        ],
+        "label": "Before seq cut #7",
+        "committed_step_index": 7,
+        "undo_scope": "seq_local",
+        "restored_proof_layer": "pre_seq_cut",
+        "restored_affordances": {
+          "seq_cut": "not_committed",
+          "call_site_state": "as_before_seq_cut"
+        },
+        "why_checkpoint": "seq-cut boundary; selecting it restores the proof state before this cut was committed"
+      }
+    ],
+    "related_surfaces": [
+      "pure_tail_surface.membership_decomposition_surface",
+      "seq_cut_surface",
+      "pure_tail_surface",
+      "structural_checkpoints",
+      "pure_tail_surface.existential_witness_surface",
+      "pure_tail_surface.map_update_lookup_surface"
+    ],
+    "limitations": [
+      "does not select a destructor, witness, rewrite, or SMT lemma",
+      "reported checkpoints are recovery references, not a default route"
+    ]
+  },
+  "inspect_lookup_handles": {
+    "effect": "All handles here are read-only manager requests; the committed EasyCrypt proof state stays unchanged.",
+    "manager_note": "Some requests may ask EasyCrypt or name resolution; wait for the manager result before choosing the next proof intent.",
+    "ask_manager_for": [
+      {
+        "intent": "inspect_context",
+        "payload": {
+          "topic": "rewrite_candidates"
+        },
+        "use_when": "Goal relates map and membership; native search should surface map/mem lemmas.",
+        "returns": "manager-provided read-only context for this proof route"
+      },
+      {
+        "intent": "inspect_context",
+        "payload": {
+          "topic": "goal_info"
+        },
+        "use_when": "Need parsed goal shape, resolved names, or KB pattern hints.",
+        "returns": "parsed goal structure and names"
+      },
+      {
+        "intent": "inspect_context",
+        "payload": {
+          "topic": "lemma_hints"
+        },
+        "use_when": "Need local or standard-library lemma names before rewriting a pure goal.",
+        "returns": "nearby lemma hints and qualified-name lookup guidance"
+      },
+      {
+        "intent": "inspect_context",
+        "payload": {
+          "topic": "tactic_forms",
+          "name": "rewrite"
+        },
+        "use_when": "Need the valid EasyCrypt form for rewrite, apply, conseq, while, or SMT setup.",
+        "returns": "valid tactic forms and common traps"
+      }
+    ]
+  },
+  "structural_checkpoints": {
+    "items": [
+      {
+        "checkpoint_id": "cp_18_1f36d0c76ea98e17",
+        "semantic_id": "before_branch_work",
+        "semantic_ids": [
+          "before_branch_work",
+          "resume_start"
+        ],
+        "label": "Return to resume start",
+        "committed_step_index": 18,
+        "committed_tactic": "conseq (: _ ==> (g ^ G1.u \\in map (fun (t : ciphertext) => t.`1) G3.cilog) /\\ (G1.g_ ^ G1.u' \\in map (fun (t : ciphertext) => t.`2) G3.cilog) /\\ (g ^ r' \\in map (fun (t : ciphertext) => t.`3) G3.cilog) /\\ (g ^ r \\in map (fun (t : ciphertext) => t.`4) G3.cilog) /\\ size G3.cilog <= PKE_.qD /\\ G1.w <> zero /\\ G1.g_ = g ^ G1.w).",
+        "restored_proof_layer": "resume_handoff",
+        "restored_affordances": {
+          "seq_cut": "committed",
+          "earlier_branch_work": "preserved"
+        },
+        "undo_scope": "resume_local",
+        "why_checkpoint": "resume boundary; selecting it preserves the verified replay prefix and removes tactics committed after resume",
+        "effect_if_selected": "Undo committed tactic #18 and every committed tactic after it in this node.",
+        "submit": {
+          "intent": "undo_to_checkpoint",
+          "payload": {
+            "checkpoint_id": "cp_18_1f36d0c76ea98e17"
+          }
+        }
+      },
+      {
+        "checkpoint_id": "cp_8_1f36d0c76ea98e17",
+        "semantic_id": "after_seq_opened",
+        "semantic_ids": [
+          "after_seq_opened",
+          "before_branch_work"
+        ],
+        "label": "After seq opened / before branch work #8",
+        "committed_step_index": 8,
+        "committed_tactic": "auto; call (_: true); auto.",
+        "restored_proof_layer": "seq_obligations_opened",
+        "restored_affordances": {
+          "seq_cut": "committed",
+          "branch_work": "not_committed"
+        },
+        "undo_scope": "branch_local",
+        "why_checkpoint": "seq-local branch boundary; selecting it keeps the seq cut and removes branch-local work after it",
+        "effect_if_selected": "Undo committed tactic #8 and every committed tactic after it in this node.",
+        "submit": {
+          "intent": "undo_to_checkpoint",
+          "payload": {
+            "checkpoint_id": "cp_8_1f36d0c76ea98e17"
+          }
+        }
+      },
+      {
+        "checkpoint_id": "cp_7_1f36d0c76ea98e17",
+        "semantic_id": "before_seq_cut",
+        "semantic_ids": [
+          "before_seq_cut"
+        ],
+        "label": "Before seq cut #7",
+        "committed_step_index": 7,
+        "committed_tactic": "seq 13 : (size G3.cilog <= PKE_.qD /\\ G1.w <> zero /\\ G1.g_ = g ^ G1.w) 1%r ((PKE_.qD%r / order%r) ^ 3 * (PKE_.qD%r / (order - 1)%r)) 0%r 1%r.",
+        "restored_proof_layer": "pre_seq_cut",
+        "restored_affordances": {
+          "seq_cut": "not_committed",
+          "call_site_state": "as_before_seq_cut"
+        },
+        "undo_scope": "seq_local",
+        "why_checkpoint": "seq-cut boundary; selecting it restores the proof state before this cut was committed",
+        "effect_if_selected": "Undo committed tactic #7 and every committed tactic after it in this node.",
+        "submit": {
+          "intent": "undo_to_checkpoint",
+          "payload": {
+            "checkpoint_id": "cp_7_1f36d0c76ea98e17"
+          }
+        }
+      }
+    ]
+  }
+}

@@ -1,0 +1,19 @@
+{
+  "turn": 3,
+  "handled_intent": {
+    "intent": "commit_tactic",
+    "payload": {
+      "tactic": "have dec_ph: forall ge k0 c0, phoare [E.dec: (glob E) = ge /\\ k = k0 /\\ c = c0 ==> (glob E) = ge /\\ res = dec k0 c0] = 1%r by move=> ge k0 c0; conseq E_dec_ll (dec_sem ge k0 c0)."
+    }
+  },
+  "ok": true,
+  "manager_note": "Committed tactic accepted; the EasyCrypt proof state changed.",
+  "manager_actions": [
+    {
+      "action": "tactic commit",
+      "outcome": "EasyCrypt accepted the committed tactic.",
+      "timing": "527 ms"
+    }
+  ],
+  "view_refreshed": true
+}

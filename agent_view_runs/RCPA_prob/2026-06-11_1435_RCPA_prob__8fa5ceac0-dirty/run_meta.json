@@ -1,0 +1,44 @@
+{
+  "kind": "agent_view_run_report",
+  "timestamp": "2026-06-11_1435_RCPA_prob",
+  "lemma": "RCPA_prob",
+  "source_file": "eval/examples/MEE-CBC/RCPA_CMA.ec",
+  "model": "claude-fable-5",
+  "surface_profile": "l1_goal_projection",
+  "trees": 2,
+  "eval_mode": true,
+  "outcome": "proved",
+  "committed_proofs": [
+    {
+      "tree": "Tree_0_0",
+      "tactics": [
+        "byequiv=> //=.",
+        "proc; inline *.",
+        "wp; call (_: ={glob E, glob M} /\\ RCPA_Wrap.k{1} = (SKEa.RCPA.RCPA_Wrap.k, RCPAa.mk){2}).",
+        "proc; inline *.",
+        "wp; call (_: true); wp; call (_: true); auto.",
+        "wp; call (_: true); call (_: true); auto.",
+        "qed."
+      ],
+      "source": "session",
+      "proved": true
+    },
+    {
+      "tree": "Tree_0_1",
+      "tactics": [
+        "byequiv=> //.",
+        "proc; inline *.",
+        "wp; call (_: ={glob E, glob M} /\\ RCPA_Wrap.k{1} = (SKEa.RCPA.RCPA_Wrap.k{2}, RCPAa.mk{2}))."
+      ],
+      "source": "session",
+      "proved": false
+    }
+  ],
+  "turn_count": 11,
+  "views_copied": 13,
+  "run_iteration_dir": "artifacts/eval_suite/mee_renamed3_fable_l1/l1_goal_projection/mee_RCPA_prob/r01/2026-06-11_1435_RCPA_prob/iteration_1",
+  "commit": "8fa5ceac0",
+  "commit_full": "8fa5ceac0a4c7ed08e53023adcaade43f89a6de8",
+  "branch": "mcp-v0",
+  "dirty": true
+}

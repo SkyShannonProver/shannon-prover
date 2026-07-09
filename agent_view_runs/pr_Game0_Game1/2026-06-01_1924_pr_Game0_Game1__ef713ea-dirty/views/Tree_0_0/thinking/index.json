@@ -1,0 +1,149 @@
+{
+  "node": "Tree-0.0",
+  "discovery": "content_match",
+  "transcripts": [
+    "~/.claude/projects/<PROJECT>--claude-worktrees-ablation-l1-l4/a461d2c6-c4cb-4e5e-89e6-7f23ff5db8a4.jsonl"
+  ],
+  "turns": [
+    {
+      "turn": 1,
+      "intent": "commit_tactic",
+      "payload_key": "byequiv (_ : ={glob A, glob LRO, glob Log} ==> !(Game1.r \\in Log.qs){2} => ={res}) : (Game1.r \\in Log.qs) => //.",
+      "thinking_chars": 7949,
+      "text_chars": 415,
+      "session_id": "a461d2c6-c4cb-4e5e-89e6-7f23ff5db8a4",
+      "timestamp": "2026-06-02T02:26:03.223Z",
+      "file": "thinking/turn_001.md"
+    },
+    {
+      "turn": 2,
+      "intent": "commit_tactic",
+      "payload_key": "byequiv (_ : ={glob A, glob LRO, glob Log} ==> !(Game1.r \\in Log.qs){2} => ={res}) : (Game1.r \\in Log.qs).",
+      "thinking_chars": 7821,
+      "text_chars": 209,
+      "session_id": "a461d2c6-c4cb-4e5e-89e6-7f23ff5db8a4",
+      "timestamp": "2026-06-02T02:28:11.205Z",
+      "file": "thinking/turn_002.md"
+    },
+    {
+      "turn": 3,
+      "intent": "commit_tactic",
+      "payload_key": "have h : Pr[BR93_CPA(A).main() @ &m : res] <= Pr[Game1.main() @ &m : res \\/ Game1.r \\in Log.qs].",
+      "thinking_chars": 15077,
+      "text_chars": 144,
+      "session_id": "a461d2c6-c4cb-4e5e-89e6-7f23ff5db8a4",
+      "timestamp": "2026-06-02T02:31:54.465Z",
+      "file": "thinking/turn_003.md"
+    },
+    {
+      "turn": 4,
+      "intent": "commit_tactic",
+      "payload_key": "byequiv (_ : ={glob A, glob LRO, glob Log} ==> res{1} => (res{2} \\/ (Game1.r{2} \\in Log.qs{2}))).",
+      "thinking_chars": 1760,
+      "text_chars": 219,
+      "session_id": "a461d2c6-c4cb-4e5e-89e6-7f23ff5db8a4",
+      "timestamp": "2026-06-02T02:32:29.778Z",
+      "file": "thinking/turn_004.md"
+    },
+    {
+      "turn": 5,
+      "intent": "commit_tactic",
+      "payload_key": "proc.",
+      "thinking_chars": 2229,
+      "text_chars": 183,
+      "session_id": "a461d2c6-c4cb-4e5e-89e6-7f23ff5db8a4",
+      "timestamp": "2026-06-02T02:33:05.815Z",
+      "file": "thinking/turn_005.md"
+    },
+    {
+      "turn": 6,
+      "intent": "commit_tactic",
+      "payload_key": "inline{1} BR93(LRO).keygen; inline{1} BR93(LRO).enc.",
+      "thinking_chars": 3257,
+      "text_chars": 280,
+      "session_id": "a461d2c6-c4cb-4e5e-89e6-7f23ff5db8a4",
+      "timestamp": "2026-06-02T02:33:59.327Z",
+      "file": "thinking/turn_006.md"
+    },
+    {
+      "turn": 7,
+      "intent": "commit_tactic",
+      "payload_key": "inline{1} LRO.o.",
+      "thinking_chars": 10390,
+      "text_chars": 265,
+      "session_id": "a461d2c6-c4cb-4e5e-89e6-7f23ff5db8a4",
+      "timestamp": "2026-06-02T02:36:10.844Z",
+      "file": "thinking/turn_007.md"
+    },
+    {
+      "turn": 8,
+      "intent": "commit_tactic",
+      "payload_key": "seq 5 4 : (={glob A, glob LRO, glob Log, pk, sk, m0, m1, b}).",
+      "thinking_chars": 1722,
+      "text_chars": 170,
+      "session_id": "a461d2c6-c4cb-4e5e-89e6-7f23ff5db8a4",
+      "timestamp": "2026-06-02T02:36:48.447Z",
+      "file": "thinking/turn_008.md"
+    },
+    {
+      "turn": 9,
+      "intent": "commit_tactic",
+      "payload_key": "sim.",
+      "thinking_chars": 3221,
+      "text_chars": 123,
+      "session_id": "a461d2c6-c4cb-4e5e-89e6-7f23ff5db8a4",
+      "timestamp": "2026-06-02T02:37:41.164Z",
+      "file": "thinking/turn_009.md"
+    },
+    {
+      "turn": 10,
+      "intent": "commit_tactic",
+      "payload_key": "call (_ : true); auto.",
+      "thinking_chars": 2368,
+      "text_chars": 140,
+      "session_id": "a461d2c6-c4cb-4e5e-89e6-7f23ff5db8a4",
+      "timestamp": "2026-06-02T02:38:21.003Z",
+      "file": "thinking/turn_010.md"
+    },
+    {
+      "turn": 11,
+      "intent": "commit_tactic",
+      "payload_key": "inline *; wp; rnd; auto.",
+      "thinking_chars": 2337,
+      "text_chars": 188,
+      "session_id": "a461d2c6-c4cb-4e5e-89e6-7f23ff5db8a4",
+      "timestamp": "2026-06-02T02:38:52.564Z",
+      "file": "thinking/turn_011.md"
+    },
+    {
+      "turn": 12,
+      "intent": "commit_tactic",
+      "payload_key": "call (_ : ={Log.qs} /\\ eq_except (pred1 Game1.r{2}) LRO.m{1} LRO.m{2}).",
+      "thinking_chars": 44951,
+      "text_chars": 349,
+      "session_id": "a461d2c6-c4cb-4e5e-89e6-7f23ff5db8a4",
+      "timestamp": "2026-06-02T02:48:00.218Z",
+      "file": "thinking/turn_012.md"
+    },
+    {
+      "turn": 13,
+      "intent": "undo_to_checkpoint",
+      "payload_key": "",
+      "thinking_chars": 8031,
+      "text_chars": 526,
+      "session_id": "a461d2c6-c4cb-4e5e-89e6-7f23ff5db8a4",
+      "timestamp": "2026-06-02T02:49:37.403Z",
+      "file": "thinking/turn_013.md"
+    },
+    {
+      "turn": 14,
+      "intent": "undo_to_checkpoint",
+      "payload_key": "{\"checkpoint_id\": \"cp_9_02d6368229aa15c2\"}",
+      "thinking_chars": 12870,
+      "text_chars": 113,
+      "session_id": "a461d2c6-c4cb-4e5e-89e6-7f23ff5db8a4",
+      "timestamp": "2026-06-02T02:52:27.613Z",
+      "file": "thinking/turn_014.md"
+    }
+  ]
+}

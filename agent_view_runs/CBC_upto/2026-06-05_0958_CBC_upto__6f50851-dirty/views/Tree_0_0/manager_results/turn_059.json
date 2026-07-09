@@ -1,0 +1,19 @@
+{
+  "turn": 59,
+  "handled_intent": {
+    "intent": "commit_tactic",
+    "payload": {
+      "tactic": "call (_: DoubleQuery.bad, ={DoubleQuery.qs} /\\ fdom PRFi.m{1} = DoubleQuery.qs{1} /\\ DoubleQuery.bad{1} = DoubleQuery.bad{2}, DoubleQuery.bad{1} = DoubleQuery.bad{2})."
+    }
+  },
+  "ok": true,
+  "manager_note": "Committed tactic accepted; the EasyCrypt proof state changed.",
+  "manager_actions": [
+    {
+      "action": "tactic commit",
+      "outcome": "EasyCrypt accepted the committed tactic.",
+      "timing": "153 ms"
+    }
+  ],
+  "view_refreshed": true
+}

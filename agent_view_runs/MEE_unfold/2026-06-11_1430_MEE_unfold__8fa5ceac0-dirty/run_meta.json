@@ -1,0 +1,46 @@
+{
+  "kind": "agent_view_run_report",
+  "timestamp": "2026-06-11_1430_MEE_unfold",
+  "lemma": "MEE_unfold",
+  "source_file": "eval/examples/MEE-CBC/MAC_then_Pad_then_CBC.eca",
+  "model": "claude-fable-5",
+  "surface_profile": "l1_goal_projection",
+  "trees": 2,
+  "eval_mode": true,
+  "outcome": "proved",
+  "committed_proofs": [
+    {
+      "tree": "Tree_0_0",
+      "tactics": [
+        "byequiv=> //.",
+        "proc; inline *.",
+        "wp; call (_: ={RCPA_Wrap.k, RCPA_QueryBounder.qC}).",
+        "proc; sp; if=> //.",
+        "inline *."
+      ],
+      "source": "session",
+      "proved": false
+    },
+    {
+      "tree": "Tree_0_1",
+      "tactics": [
+        "byequiv=> //=.",
+        "proc; inline *.",
+        "wp; call (_: ={RCPA_Wrap.k, RCPA_QueryBounder.qC}); last by auto.",
+        "proc; sp; if=> //=; last by sim.",
+        "wp; inline *.",
+        "wp; while (={i0, s} /\\ c1{1} = c4{2} /\\ p'{1} = p3{2} /\\ ek{1} = key0{2}); auto=> />.",
+        "qed."
+      ],
+      "source": "session",
+      "proved": true
+    }
+  ],
+  "turn_count": 14,
+  "views_copied": 16,
+  "run_iteration_dir": "artifacts/eval_suite/mee_renamed3_fable_l1/l1_goal_projection/mee_MEE_unfold/r01/2026-06-11_1430_MEE_unfold/iteration_1",
+  "commit": "8fa5ceac0",
+  "commit_full": "8fa5ceac0a4c7ed08e53023adcaade43f89a6de8",
+  "branch": "mcp-v0",
+  "dirty": true
+}

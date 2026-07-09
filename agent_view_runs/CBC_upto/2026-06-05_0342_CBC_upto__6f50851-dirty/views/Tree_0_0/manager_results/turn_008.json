@@ -1,0 +1,23 @@
+{
+  "turn": 8,
+  "handled_intent": {
+    "intent": "inspect_context",
+    "payload": {
+      "topic": "tactic_forms",
+      "name": "byequiv"
+    }
+  },
+  "ok": true,
+  "manager_note": "Read-only context. Accepted/rejected tactic or call text inside a preview is route-selection information, not the current proof-state error.",
+  "manager_actions": [
+    {
+      "action": "inspect tactic forms",
+      "outcome": "The manager returned read-only context for the current goal.",
+      "timing": "207 ms",
+      "content": {
+        "preview": "=== `byequiv` tactic \u2014 argument forms === Current proof mode: probability Form 1: byequiv => //. Use when: Convert a `Pr[G1.main() @ &m : res] = Pr[G2.main() @ &m : res]` or `Pr[...] <= Pr[...]` goal into an equiv goal that EC can check with `proc; inline *; sim/;auto`. The `=> //` closes any trivial side-conditions (like initial glob equalities) by `trivial`. Example: byequiv => //. (* opens equiv goal *) Form 2: byequiv LEMMA. Use when: Use a pre-declared equiv lemma to close the Pr equality in one step. The lemma's statement must match the two Pr terms. Example: byequiv H_main. Form 3: byequiv LEMMA => //. Use when: Combine: apply lemma + close trivial side-conditions. Example: byequiv H_main => //. Form 4: byequiv (_: PRE ==> POST). Use when: Specify custom PRE/POST for the equiv goal (different from defaults `={glob A}` / `={res}`). Example: byequiv (_: ={glob A} ==> res{1} => res{2} \\/ bad{2}). \u26a0\ufe0f Common mistake: Using `byequiv => //.` on a goal that's NOT a Pr-equality (e.g., `Pr + Pr <= Pr + Pr`). EC reports `invalid goal shape`. Apply `apply ler_add` / `apply ler_add2l` to split the sum first, then `byequiv` on each Pr. See also: byphoare, bypr, apply (run `-tactic-form..."
+      }
+    }
+  ],
+  "view_refreshed": true
+}

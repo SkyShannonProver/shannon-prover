@@ -1,0 +1,24 @@
+{
+  "turn": 13,
+  "handled_intent": {
+    "intent": "inspect_context",
+    "payload": {
+      "topic": "call_subgoals",
+      "invariant": "={glob Mem, glob BNR} /\\ StLSke.gs{1} = RO.m{2}"
+    }
+  },
+  "ok": true,
+  "manager_note": "Read-only context. Accepted/rejected tactic or call text inside a preview is route-selection information, not the current proof-state error.",
+  "manager_actions": [
+    {
+      "action": "call-obligation preview",
+      "outcome": "The previewed call did not typecheck against the daemon; no tactic was committed.",
+      "timing": "121 ms",
+      "content": {
+        "title": "Call Obligation Preview",
+        "preview": "=== Call subgoal preview === `call (_: ={glob Mem, glob BNR} /\\ StLSke.gs{1} = RO.m{2}...)` was rejected by the daemon BEFORE we could preview subgoals: unknown module: BNR Common causes: \u2022 invariant has a typo / unresolved name \u2192 check with `-where <ident>` \u2022 invariant uses a side annotation incorrectly ({1} vs {2}) \u2192 re-read the goal's pre to see which side each var lives on \u2022 the trailing call doesn't take this invariant \u2014 if it's a non-adversary call (named `call LEMMA`), use `call <lemma_name>` not `call (_: I)`"
+      }
+    }
+  ],
+  "view_refreshed": true
+}

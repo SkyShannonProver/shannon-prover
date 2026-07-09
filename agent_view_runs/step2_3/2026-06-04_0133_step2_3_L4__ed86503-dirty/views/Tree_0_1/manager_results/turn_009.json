@@ -1,0 +1,22 @@
+{
+  "turn": 9,
+  "handled_intent": {
+    "intent": "lookup_symbol",
+    "payload": {
+      "symbol": "SplitC1.pr_RO_split"
+    }
+  },
+  "ok": true,
+  "manager_note": "Read-only context. Accepted/rejected tactic or call text inside a preview is route-selection information, not the current proof-state error.",
+  "manager_actions": [
+    {
+      "action": "symbol lookup",
+      "outcome": "The manager returned read-only context for the current goal.",
+      "timing": "1.2 s",
+      "content": {
+        "preview": "[WHERE-HIT] SplitC1.pr_RO_split (kind: lemma) * In [lemmas or axioms]: (* SplitC1.pr_RO_split *) lemma pr_RO_split: forall (D0(G : Split0.IdealAll.RO) <: Split0.IdealAll.RO_Distinguisher{-Split0.IdealAll.RO, -SplitC1.I1.RO, -SplitC1.I2.RO}) (p : (glob D) -> bool -> bool) &m (x0 : unit), Pr[Split0.IdealAll.MainD(D0, Split0.IdealAll.RO).distinguish(x0) @ &m : p (glob D0) res] = Pr[Split0.IdealAll.MainD(D0, SplitC1.RO_Pair(SplitC1.I1.RO, SplitC1.I2.RO)).distinguish (x0) @ &m : p (glob D0) res]."
+      }
+    }
+  ],
+  "view_refreshed": true
+}

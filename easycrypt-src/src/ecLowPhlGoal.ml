@@ -1,0 +1,835 @@
+(* -------------------------------------------------------------------- *)
+open EcParsetree
+open EcUtils
+open EcAst
+open EcTypes
+open EcModules
+open EcMemory
+open EcFol
+open EcEnv
+open EcPV
+open EcCoreGoal
+open EcMatching.Position
+open EcSubst
+
+module Zpr = EcMatching.Zipper
+
+(* -------------------------------------------------------------------- *)
+type lv_subst_t = (lpattern * form) * (prog_var * memory * form) list
+
+(* -------------------------------------------------------------------- *)
+type hlform = [`Any | `Pred | `Stmt]
+
+type hlkind = [
+  | `Hoare  of hlform
+  | `EHoare of hlform
+  | `PHoare of hlform
+  | `Equiv  of hlform
+  | `Eager
+]
+
+and hlkinds = hlkind list
+
+let hlkinds_Xhl_r (form : hlform) : hlkinds =
+  [`Hoare form; `EHoare form; `PHoare form; `Equiv form]
+
+let hlkinds_Xhl = hlkinds_Xhl_r `Any
+
+let hlkinds_all : hlkinds =
+  [`Hoare `Any; `EHoare `Any; `PHoare `Any; `Equiv `Any; `Eager]
+
+(* -------------------------------------------------------------------- *)
+let tc_error_noXhl ?(kinds : hlkinds option) pf =
+  let string_of_form =
+    function `Pred -> "[F]" | `Stmt -> "[S]" | `Any -> "" in
+
+  let string_of_kind kind =
+    let kind, fm =
+      match kind with
+      | `Hoare  fm -> ("hoare" , fm)
+      | `EHoare fm -> ("ehoare", fm)
+      | `PHoare fm -> ("phoare", fm)
+      | `Equiv  fm -> ("equiv" , fm)
+      | `Eager     -> ("eager" , `Any)
+    in
+      Printf.sprintf "%s%s" kind (fm |> string_of_form)
+  in
+
+  tc_error_lazy pf (fun fmt ->
+    Format.fprintf fmt "expecting a goal of the form: %s"
+      (String.concat ", " (List.map string_of_kind (odfl [] kinds))))
+
+(* -------------------------------------------------------------------- *)
+let as_phl (kind : hlkind) (dx : unit -> 'a) (pe : proofenv) =
+  try dx () with DestrError _ -> tc_error_noXhl ~kinds:[kind] pe
+
+(* -------------------------------------------------------------------- *)
+let s_first proj s =
+  match s.s_node with
+  | []     -> None
+  | i :: r ->
+      try  let i = proj i in Some (i, stmt r)
+      with Not_found -> None
+
+let s_last proj s =
+  match List.rev s.s_node with
+  | []     -> None
+  | i :: r ->
+      try  let i = proj i in Some (i, stmt (List.rev r))
+      with Not_found -> None
+
+(* -------------------------------------------------------------------- *)
+let pf_first_gen _kind proj pe s =
+  match s_first proj s with
+  | None   -> tc_error pe "invalid first instruction"
+  | Some x -> x
+
+let pf_last_gen _kind proj pe s =
+  match s_last proj s with
+  | None   -> tc_error pe "invalid last instruction"
+  | Some x -> x
+
+(* -------------------------------------------------------------------- *)
+let pf_first_asgn   pe st = pf_first_gen  "asgn"   destr_asgn   pe st
+let pf_first_rnd    pe st = pf_first_gen  "rnd"    destr_rnd    pe st
+let pf_first_call   pe st = pf_first_gen  "call"   destr_call   pe st
+let pf_first_if     pe st = pf_first_gen  "if"     destr_if     pe st
+let pf_first_match  pe st = pf_first_gen  "match"  destr_match  pe st
+let pf_first_while  pe st = pf_first_gen  "while"  destr_while  pe st
+let pf_first_raise  pe st = pf_first_gen  "raise"  destr_raise  pe st
+
+(* -------------------------------------------------------------------- *)
+let pf_last_asgn   pe st = pf_last_gen  "asgn"   destr_asgn   pe st
+let pf_last_rnd    pe st = pf_last_gen  "rnd"    destr_rnd    pe st
+let pf_last_call   pe st = pf_last_gen  "call"   destr_call   pe st
+let pf_last_if     pe st = pf_last_gen  "if"     destr_if     pe st
+let pf_last_match  pe st = pf_last_gen  "match"  destr_match  pe st
+let pf_last_while  pe st = pf_last_gen  "while"  destr_while  pe st
+let pf_last_raise  pe st = pf_last_gen  "raise"  destr_raise  pe st
+
+(* -------------------------------------------------------------------- *)
+let tc1_first_asgn   tc st = pf_first_asgn   !!tc st
+let tc1_first_rnd    tc st = pf_first_rnd    !!tc st
+let tc1_first_call   tc st = pf_first_call   !!tc st
+let tc1_first_if     tc st = pf_first_if     !!tc st
+let tc1_first_match  tc st = pf_first_match  !!tc st
+let tc1_first_while  tc st = pf_first_while  !!tc st
+let tc1_first_raise  tc st = pf_first_raise  !!tc st
+
+(* -------------------------------------------------------------------- *)
+let tc1_last_asgn   tc st = pf_last_asgn   !!tc st
+let tc1_last_rnd    tc st = pf_last_rnd    !!tc st
+let tc1_last_call   tc st = pf_last_call   !!tc st
+let tc1_last_if     tc st = pf_last_if     !!tc st
+let tc1_last_match  tc st = pf_last_match  !!tc st
+let tc1_last_while  tc st = pf_last_while  !!tc st
+let tc1_last_raise  tc st = pf_last_raise  !!tc st
+
+(* -------------------------------------------------------------------- *)
+(* TODO: use in change pos *)
+
+let pf_pos_last_gen msg test pe s =
+  match List.orindex test s.s_node with
+  | None -> tc_error pe "can not find the last %s instruction" msg
+  | Some i -> i
+
+let pf_pos_last_asgn   pe s = pf_pos_last_gen "asgn"   is_asgn   pe s
+let pf_pos_last_rnd    pe s = pf_pos_last_gen "rnd"    is_rnd    pe s
+let pf_pos_last_call   pe s = pf_pos_last_gen "call"   is_call   pe s
+let pf_pos_last_if     pe s = pf_pos_last_gen "if"     is_if     pe s
+let pf_pos_last_match  pe s = pf_pos_last_gen "match"  is_match  pe s
+let pf_pos_last_while  pe s = pf_pos_last_gen "while"  is_while  pe s
+let pf_pos_last_raise pe s = pf_pos_last_gen "raise"  is_raise pe s
+
+
+let tc1_pos_last_asgn   tc s = pf_pos_last_asgn   !!tc s
+let tc1_pos_last_rnd    tc s = pf_pos_last_rnd    !!tc s
+let tc1_pos_last_call   tc s = pf_pos_last_call   !!tc s
+let tc1_pos_last_if     tc s = pf_pos_last_if     !!tc s
+let tc1_pos_last_match  tc s = pf_pos_last_match  !!tc s
+let tc1_pos_last_while  tc s = pf_pos_last_while  !!tc s
+let tc1_pos_last_raise  tc s = pf_pos_last_raise  !!tc s
+
+(* -------------------------------------------------------------------- *)
+let pf_as_hoareF   pe c = as_phl (`Hoare  `Pred) (fun () -> destr_hoareF   c) pe
+let pf_as_hoareS   pe c = as_phl (`Hoare  `Stmt) (fun () -> destr_hoareS   c) pe
+let pf_as_ehoareF  pe c = as_phl (`Hoare  `Pred) (fun () -> destr_eHoareF  c) pe
+let pf_as_ehoareS  pe c = as_phl (`Hoare  `Stmt) (fun () -> destr_eHoareS  c) pe
+let pf_as_bdhoareF pe c = as_phl (`PHoare `Pred) (fun () -> destr_bdHoareF c) pe
+let pf_as_bdhoareS pe c = as_phl (`PHoare `Stmt) (fun () -> destr_bdHoareS c) pe
+let pf_as_equivF   pe c = as_phl (`Equiv  `Pred) (fun () -> destr_equivF   c) pe
+let pf_as_equivS   pe c = as_phl (`Equiv  `Stmt) (fun () -> destr_equivS   c) pe
+let pf_as_eagerF   pe c = as_phl `Eager          (fun () -> destr_eagerF   c) pe
+
+(* -------------------------------------------------------------------- *)
+let tc1_as_hoareF   tc = pf_as_hoareF   !!tc (FApi.tc1_goal tc)
+let tc1_as_hoareS   tc = pf_as_hoareS   !!tc (FApi.tc1_goal tc)
+let tc1_as_ehoareF  tc = pf_as_ehoareF  !!tc (FApi.tc1_goal tc)
+let tc1_as_ehoareS  tc = pf_as_ehoareS  !!tc (FApi.tc1_goal tc)
+let tc1_as_bdhoareF tc = pf_as_bdhoareF !!tc (FApi.tc1_goal tc)
+let tc1_as_bdhoareS tc = pf_as_bdhoareS !!tc (FApi.tc1_goal tc)
+let tc1_as_equivF   tc = pf_as_equivF   !!tc (FApi.tc1_goal tc)
+let tc1_as_equivS   tc = pf_as_equivS   !!tc (FApi.tc1_goal tc)
+let tc1_as_eagerF   tc = pf_as_eagerF   !!tc (FApi.tc1_goal tc)
+
+(* -------------------------------------------------------------------- *)
+let is_program_logic (f : form) (ks : hlkind list) =
+  let do1 (k : hlkind) =
+    match f.f_node, k with
+    | FhoareF   _, `Hoare  (`Any | `Pred) -> true
+    | FeHoareF  _, `EHoare (`Any | `Pred) -> true
+    | FbdHoareF _, `PHoare (`Any | `Pred) -> true
+    | FequivF   _, `Equiv  (`Any | `Pred) -> true
+    | FhoareS   _, `Hoare  (`Any | `Stmt) -> true
+    | FeHoareS  _, `EHoare (`Any | `Stmt) -> true
+    | FbdHoareS _, `PHoare (`Any | `Stmt) -> true
+    | FequivS   _, `Equiv  (`Any | `Stmt) -> true
+    | FeagerF   _, `Eager                 -> true
+    | _          , _                      -> false
+  in
+
+  List.exists do1 ks
+
+(* -------------------------------------------------------------------- *)
+let tc1_get_stmt side tc =
+  let concl = FApi.tc1_goal tc in
+  match side, concl.f_node with
+  | None, FhoareS hs -> hs.hs_m, hs.hs_s
+  | None, FeHoareS hs -> hs.ehs_m, hs.ehs_s
+  | None, FbdHoareS hs -> hs.bhs_m, hs.bhs_s
+  | Some _ , (FhoareS _ | FbdHoareS _) ->
+      tc_error_noXhl ~kinds:[`Hoare `Stmt; `PHoare `Stmt] !!tc
+  | Some `Left, FequivS es   -> es.es_ml, es.es_sl
+  | Some `Right, FequivS es  -> es.es_mr, es.es_sr
+  | None, FequivS _ ->
+      tc_error_noXhl ~kinds:[`Equiv `Stmt] !!tc
+  | _            ->
+      tc_error_noXhl ~kinds:(hlkinds_Xhl_r `Stmt) !!tc
+
+(* ------------------------------------------------------------------ *)
+let tc1_process_codepos_or_range tc (side, cpor) =
+  let me, _ = tc1_get_stmt side tc in
+  let env = FApi.tc1_env tc in
+  let env = EcEnv.Memory.push_active_ss me env in
+  EcTyping.trans_codepos_or_range env cpor
+
+(* ------------------------------------------------------------------ *)
+let tc1_process_codegap_range tc (side, cgr) =
+  let me, _ = tc1_get_stmt side tc in
+  let env = FApi.tc1_env tc in
+  let env = EcEnv.Memory.push_active_ss me env in
+  EcTyping.trans_codegap_range env cgr
+
+(* ------------------------------------------------------------------ *)
+let tc1_process_codepos tc (side, cpos) =
+  let me, _ = tc1_get_stmt side tc in
+  let env = FApi.tc1_env tc in
+  let env = EcEnv.Memory.push_active_ss me env in
+  EcTyping.trans_codepos env cpos
+
+(* ------------------------------------------------------------------ *)
+let tc1_process_codepos1 tc (side, cpos) =
+  let me, _ = tc1_get_stmt side tc in
+  let env = FApi.tc1_env tc in
+  let env = EcEnv.Memory.push_active_ss me env in
+  EcTyping.trans_codepos1 env cpos
+
+(* -------------------------------------------------------------------- *)
+let hl_set_stmt (side : side option) (f : form) (s : stmt) =
+  match side, f.f_node with
+  | None       , FhoareS   hs -> f_hoareS (snd hs.hs_m) (hs_pr hs) s (hs_po hs)
+  | None       , FeHoareS  hs -> f_eHoareS (snd hs.ehs_m) (ehs_pr hs) s (ehs_po hs)
+  | None       , FbdHoareS hs -> f_bdHoareS (snd hs.bhs_m) (bhs_pr hs) s (bhs_po hs) hs.bhs_cmp (bhs_bd hs)
+  | Some `Left , FequivS   es -> f_equivS (snd es.es_ml) (snd es.es_mr) (es_pr es) s es.es_sr (es_po es)
+  | Some `Right, FequivS   es -> f_equivS (snd es.es_ml) (snd es.es_mr) (es_pr es) es.es_sl s (es_po es)
+  | _          , _            -> assert false
+
+(* -------------------------------------------------------------------- *)
+let get_pre f =
+  match f.f_node with
+  | FhoareF hf   -> Some (Inv_ss (hf_pr hf))
+  | FhoareS hs   -> Some (Inv_ss (hs_pr hs))
+  | FeHoareF hf  -> Some (Inv_ss (ehf_pr hf))
+  | FeHoareS hs  -> Some (Inv_ss (ehs_pr hs))
+  | FbdHoareF hf -> Some (Inv_ss (bhf_pr hf))
+  | FbdHoareS hs -> Some (Inv_ss (bhs_pr hs))
+  | FequivF ef   -> Some (Inv_ts (ef_pr ef))
+  | FequivS es   -> Some (Inv_ts (es_pr es))
+  | _            -> None
+
+let tc1_get_pre tc =
+  match get_pre (FApi.tc1_goal tc) with
+  | None   -> tc_error_noXhl ~kinds:hlkinds_Xhl !!tc
+  | Some f -> f
+
+(* -------------------------------------------------------------------- *)
+let get_post f =
+  match f.f_node with
+  | FhoareF hf   -> Some (Inv_hs (hf_po hf))
+  | FhoareS hs   -> Some (Inv_hs (hs_po hs))
+  | FeHoareF hf  -> Some (Inv_ss (ehf_po hf))
+  | FeHoareS hs  -> Some (Inv_ss (ehs_po hs))
+  | FbdHoareF hf -> Some (Inv_ss (bhf_po hf))
+  | FbdHoareS hs -> Some (Inv_ss (bhs_po hs))
+  | FequivF ef   -> Some (Inv_ts (ef_po ef))
+  | FequivS es   -> Some (Inv_ts (es_po es))
+  | _            -> None
+
+let tc1_get_post tc =
+  match get_post (FApi.tc1_goal tc) with
+  | None   -> tc_error_noXhl ~kinds:hlkinds_Xhl !!tc
+  | Some f -> f
+
+
+(* -------------------------------------------------------------------- *)
+let set_pre ~pre f =
+  match f.f_node, pre with
+ | FhoareF hf, Inv_ss pre   ->
+    let pre = ss_inv_rebind pre hf.hf_m in
+    f_hoareF pre hf.hf_f (hf_po hf)
+ | FhoareS hs, Inv_ss pre   ->
+    let pre = ss_inv_rebind pre (fst hs.hs_m) in
+    f_hoareS (snd hs.hs_m) pre hs.hs_s (hs_po hs)
+ | FeHoareF hf, Inv_ss pre  ->
+    let pre = ss_inv_rebind pre hf.ehf_m in
+    f_eHoareF pre hf.ehf_f (ehf_po hf)
+ | FeHoareS hs, Inv_ss pre  ->
+    let pre = ss_inv_rebind pre (fst hs.ehs_m) in
+    f_eHoareS (snd hs.ehs_m) pre hs.ehs_s (ehs_po hs)
+ | FbdHoareF hf, Inv_ss pre ->
+    let pre = ss_inv_rebind pre hf.bhf_m in
+    f_bdHoareF pre hf.bhf_f (bhf_po hf) hf.bhf_cmp (bhf_bd hf)
+ | FbdHoareS hs, Inv_ss pre ->
+    let pre = ss_inv_rebind pre (fst hs.bhs_m) in
+    f_bdHoareS (snd hs.bhs_m) pre hs.bhs_s (bhs_po hs) hs.bhs_cmp (bhs_bd hs)
+ | FequivF ef, Inv_ts pre   ->
+    let pre = ts_inv_rebind pre ef.ef_ml ef.ef_mr in
+    f_equivF pre ef.ef_fl ef.ef_fr (ef_po ef)
+ | FequivS es, Inv_ts pre   ->
+    let pre = ts_inv_rebind pre (fst es.es_ml) (fst es.es_mr) in
+    f_equivS (snd es.es_ml) (snd es.es_mr) pre es.es_sl es.es_sr (es_po es)
+ | _            -> assert false
+
+(* -------------------------------------------------------------------- *)
+let get_memenvs_pre (env : env) (f : form) =
+  match f.f_node with
+  | FhoareF hf   -> Some [fst (EcEnv.Fun.hoareF_memenv hf.hf_m hf.hf_f env)]
+  | FhoareS hs   -> Some [hs.hs_m]
+  | FeHoareF hf  -> Some [fst (EcEnv.Fun.hoareF_memenv hf.ehf_m hf.ehf_f env)]
+  | FeHoareS hs  -> Some [hs.ehs_m]
+  | FbdHoareF hf -> Some [fst (EcEnv.Fun.hoareF_memenv hf.bhf_m hf.bhf_f env)]
+  | FbdHoareS hs -> Some [hs.bhs_m]
+  | FequivF ef   -> Some (List.of_pair (fst (EcEnv.Fun.equivF_memenv ef.ef_ml ef.ef_mr ef.ef_fl ef.ef_fr env)))
+  | FequivS es   -> Some [es.es_ml; es.es_mr]
+  | _            -> None
+
+(* -------------------------------------------------------------------- *)
+let push_memenvs_pre (hyps : LDecl.hyps) (f : form) =
+  match get_memenvs_pre (LDecl.toenv hyps) f with
+  | Some [m] ->
+    let m = (EcIdent.create "&hr", snd m) in
+    let hyps = EcEnv.LDecl.push_active_ss m hyps in
+    ([m], hyps)
+  | Some [ml; mr] ->
+    let ml = (EcIdent.create "&1", snd ml) in
+    let mr = (EcIdent.create "&2", snd mr) in
+    let hyps = EcEnv.LDecl.push_active_ts ml mr hyps in
+    ([ml; mr], hyps)
+  | _ -> assert false
+
+(* -------------------------------------------------------------------- *)
+type logicS = [
+  | `Hoare   of sHoareS
+  | `BdHoare of bdHoareS
+  | `Equiv   of equivS
+  | `EHoare  of eHoareS
+]
+
+let get_logicS (f : form) : logicS =
+  match f.f_node with
+  | FhoareS   hs -> `Hoare   hs
+  | FbdHoareS hs -> `BdHoare hs
+  | FequivS   hs -> `Equiv   hs
+  | FeHoareS  hs -> `EHoare  hs
+  | _ -> destr_error "<program logic> (S)"
+
+let hoareS_read (env : env) (hs : sHoareS) : EcPV.pmvs =
+  EcPV.form_read env PMVS.empty (f_hoareS_r hs)
+
+let bdHoareS_read (env : env) (hs : bdHoareS) : pmvs =
+  form_read env PMVS.empty (f_bdHoareS_r hs)
+
+let equivS_read (env : env) (hs : equivS) : pmvs =
+  form_read env PMVS.empty (f_equivS_r hs)
+
+let eHoareS_read (env : env) (hs : eHoareS) : pmvs =
+  form_read env PMVS.empty (f_eHoareS_r hs)
+
+let logicS_read (env : env) (f : logicS) =
+  match f with
+  | `Hoare   hs -> hoareS_read   env hs
+  | `BdHoare hs -> bdHoareS_read env hs
+  | `Equiv   hs -> equivS_read   env hs
+  | `EHoare  hs -> eHoareS_read  env hs
+
+let logicS_post_read (env : env) (f : logicS) =
+  let add pvs inv = EcPV.form_read env pvs inv in
+
+  match f with
+  | `Hoare hs ->
+      POE.fold add EcPV.PMVS.empty (hs_po hs).hsi_inv
+  | `EHoare hs ->
+      add EcPV.PMVS.empty (ehs_po hs).inv
+  | `BdHoare hs ->
+      add (add EcPV.PMVS.empty (bhs_po hs).inv) (bhs_bd hs).inv
+  | `Equiv es ->
+      add EcPV.PMVS.empty (es_po es).inv
+
+(* -------------------------------------------------------------------- *)
+exception InvalidSplit of [ `Instr of codepos1 | `Gap of codegap1 ]
+
+(* -------------------------------------------------------------------- *)
+let s_split env i s =
+  let module Pos = EcMatching.Position in
+  try  Pos.split_at_cgap1 env i s
+  with Pos.InvalidCPos -> raise (InvalidSplit (`Gap i))
+
+(* -------------------------------------------------------------------- *)
+let s_split_i env i s =
+  let module Pos = EcMatching.Position in
+  try  Pos.find_by_cpos1 ~rev:false env i s
+  with Pos.InvalidCPos -> raise (InvalidSplit (`Instr i))
+
+(* -------------------------------------------------------------------- *)
+let o_split ?rev env i s =
+  let module Pos = EcMatching.Position in
+  try  Pos.may_split_at_cgap1 ?rev env i s
+  with Pos.InvalidCPos -> raise (InvalidSplit (`Gap(oget i)))
+
+(* -------------------------------------------------------------------- *)
+(* Gap processing functions *)
+let tc1_process_codegap1 tc (side, g) =
+  let me, _ = tc1_get_stmt side tc in
+  let env = FApi.tc1_env tc in
+  let env = EcEnv.Memory.push_active_ss me env in
+  EcTyping.trans_codegap1 env g
+
+(* -------------------------------------------------------------------- *)
+let tc1_process_codegap tc (side, g) =
+  let me, _ = tc1_get_stmt side tc in
+  let env = FApi.tc1_env tc in
+  let env = EcEnv.Memory.push_active_ss me env in
+  EcTyping.trans_codegap env g
+
+(* -------------------------------------------------------------------- *)
+let t_hS_or_bhS_or_eS ?th ?teh ?tbh ?te tc =
+  match (FApi.tc1_goal tc).f_node with
+  | FhoareS  _ when EcUtils.is_some th  -> (oget th ) tc
+  | FeHoareS  _ when EcUtils.is_some teh -> (oget teh) tc
+  | FbdHoareS _ when EcUtils.is_some tbh -> (oget tbh) tc
+  | FequivS   _ when EcUtils.is_some te  -> (oget te ) tc
+  | _ ->
+    let kinds = List.flatten [
+       if EcUtils.is_some th  then [`Hoare  `Stmt] else [];
+       if EcUtils.is_some teh then [`EHoare `Stmt] else [];
+       if EcUtils.is_some tbh then [`PHoare `Stmt] else [];
+       if EcUtils.is_some te  then [`Equiv  `Stmt] else []]
+    in tc_error_noXhl ~kinds !!tc
+
+let t_hF_or_bhF_or_eF ?th ?teh ?tbh ?te ?teg tc =
+  let texn tc =
+    let kinds = List.flatten [
+         if EcUtils.is_some th  then [`Hoare  `Pred] else [];
+         if EcUtils.is_some teh then [`EHoare `Pred] else [];
+         if EcUtils.is_some tbh then [`PHoare `Pred] else [];
+         if EcUtils.is_some te  then [`Equiv  `Pred] else [];
+         if EcUtils.is_some teg then [`Eager       ] else []]
+    in tc_error_noXhl ~kinds !!tc in
+  let tx f tc =
+    match f.f_node with
+    | FhoareF  _ when EcUtils.is_some th  -> (oget th ) tc
+    | FeHoareF  _ when EcUtils.is_some teh -> (oget teh) tc
+    | FbdHoareF _ when EcUtils.is_some tbh -> (oget tbh) tc
+    | FequivF   _ when EcUtils.is_some te  -> (oget te ) tc
+    | FeagerF   _ when EcUtils.is_some teg -> (oget teg) tc
+    | _ -> raise EcProofTyping.NoMatch in
+  EcLowGoal.t_lazy_match ~texn tx tc
+
+
+(* -------------------------------------------------------------------- *)
+let tag_sym_with_side ?mc name m =
+  match mc with
+  | Some (ml, mr) -> if EcIdent.id_equal m ml  then (name ^ "_L")
+                  else if EcIdent.id_equal m mr then (name ^ "_R")
+                  else    name
+  | None -> name
+
+(* -------------------------------------------------------------------- *)
+let id_of_pv ?mc pv m =
+  let id = symbol_of_pv pv in
+  let id = tag_sym_with_side ?mc id m in
+    EcIdent.create id
+
+(* -------------------------------------------------------------------- *)
+let id_of_mp ?mc mp m =
+  let name =
+    match mp.EcPath.m_top with
+    | `Local id -> EcIdent.name id
+    | _ -> assert false
+  in
+    EcIdent.create (tag_sym_with_side ?mc name m)
+
+(* -------------------------------------------------------------------- *)
+let lv_subst ?c_pre m lv f = c_pre, lv, m, f
+
+(* -------------------------------------------------------------------- *)
+let mk_let_of_lv_substs_nolet env (lets, f) =
+  if List.is_empty lets then f
+  else
+    let ps, s =
+      List.fold_left (fun (ps, s) (c_pre, lv,m,f1) ->
+        let c_pre = omap (PVM.subst env s) c_pre in
+        let f1 = PVM.subst env s f1 in
+        let s =
+          match lv, f1.f_node with
+          | LvVar (pv,_), _ -> PVM.add env pv m f1 s
+          | LvTuple vs, Ftuple fs ->
+            List.fold_left2 (fun s (pv,_) f -> PVM.add env pv m f s) s vs fs
+          | LvTuple vs, _ ->
+            List.fold_lefti
+              (fun s i (pv,ty) -> PVM.add env pv m (f_proj f i ty) s)
+              s vs in
+        let ps =
+          match c_pre with None -> ps | Some p -> p::ps in
+        ps, s) ([], PVM.empty) lets in
+    let f = PVM.subst env s f in
+    f_ands_simpl (List.rev ps) f
+
+let add_lv_subst ?mc env lv m s =
+  match lv with
+  | LvVar (pv,t) ->
+    let id = id_of_pv ?mc pv m in
+    let s = PVM.add env pv m (f_local id t) s in
+    LSymbol(id, t), s
+
+  | LvTuple pvs ->
+    let s, ids =
+      List.map_fold (fun s (pv,t) ->
+        let id = id_of_pv ?mc pv m in
+        let s = PVM.add env pv m (f_local id t) s in
+        s, (id,t)) s pvs in
+    LTuple ids, s
+
+let mk_let_of_lv_substs_let ?mc env (lets, f) =
+  if List.is_empty lets then f
+  else
+    let accu,s =
+      List.fold_left (fun (accu,s) (c_pre, lv,m,f1) ->
+        let c_pre = omap (PVM.subst env s) c_pre in
+        let f1 = PVM.subst env s f1 in
+        let lv, s = add_lv_subst ?mc env lv m s in
+        (c_pre,lv,f1)::accu, s) ([],PVM.empty) lets in
+    (* accu is the sequence of let in reverse order *)
+    let f = PVM.subst env s f in
+    (* compute the fv *)
+    let _, fvlets =
+      List.fold_left (fun (fv2,lets) (c_pre, lp,f1 as lpf) ->
+        let fv = EcIdent.fv_diff fv2 (lp_fv lp) in
+        let fv = EcIdent.fv_union (f_fv f1) fv in
+        let fv = omap_dfl (fun c_pre -> EcIdent.fv_union fv (f_fv c_pre)) fv c_pre in
+        fv, (lpf,fv2)::lets) (f.f_fv,[]) accu in
+    (* fvlets is the sequence of let in the right order *)
+    (* build the lets and perform the substitution/simplification *)
+    let add_id fv (accu,s) (id,ty) f1 =
+      match EcIdent.Mid.find_opt id fv with
+      | None   -> (accu, s)
+      | Some i ->
+        if   i = 1 || can_subst f1
+        then accu, Fsubst.f_bind_local s id f1
+        else (LSymbol(id,ty), f1)::accu, s in
+
+    let rlets, s =
+      List.fold_left (fun (rlets,s) ((c_pre, lp,f1),fv) ->
+        let c_pre = omap (Fsubst.f_subst s) c_pre in
+        let f1 = Fsubst.f_subst s f1 in
+        let rlet, s =
+          match lp, f1.f_node with
+          | LRecord _, _ -> assert false
+          | LSymbol idt, _ -> add_id fv ([], s) idt f1
+          | LTuple ids, Ftuple fs -> List.fold_left2 (add_id fv) ([],s) ids fs
+          | LTuple ids, _ ->
+            let used =
+              List.fold_left (fun u (id, _) ->
+                  match u, EcIdent.Mid.find_opt id fv with
+                  | Some i1, Some i2 -> Some (i1+i2)
+                  | None, i | i, None -> i) None ids in
+            match used with
+            | None -> [], s
+            | Some i ->
+              let (rlet,s), fx =
+                if i = 1 || can_subst f1 then ([],s), f1
+                else
+                  let x = EcIdent.create "tpl" in
+                  let ty = ttuple (List.map snd ids) in
+                  let lpx = LSymbol(x,ty) in
+                  let fx = f_local x ty in
+                  ([lpx,f1],s), fx in
+              List.fold_lefti (fun accus i (_,ty as idt) ->
+                add_id fv accus idt (f_proj fx i ty)) (rlet, s) ids in
+        (c_pre, rlet) :: rlets, s)
+        ([],Fsubst.f_subst_id) fvlets in
+    List.fold_left (fun f2 (c_pre, lpf) ->
+      let f2 = List.fold_left (fun f2 (lp,f1) -> f_let lp f1 f2) f2 lpf in
+      let c_pre = odfl f_true c_pre in
+      f_and_simpl c_pre f2) (Fsubst.f_subst s f) rlets
+
+
+let mk_let_of_lv_substs ?(uselet=true) ?mc env letsf =
+  if uselet then mk_let_of_lv_substs_let ?mc env letsf
+  else mk_let_of_lv_substs_nolet env letsf
+
+(* -------------------------------------------------------------------- *)
+let subst_form_lv ?mc env lv t f =
+  let m = f.m in
+  assert (f.m = t.m);
+  let lets = lv_subst f.m lv t.inv in
+  {m; inv = mk_let_of_lv_substs ?mc env ([lets], f.inv)}
+
+let subst_form_lv_left env lv t f =
+  let ml, mr = f.ml, f.mr in
+  assert (f.ml = t.ml);
+  assert (f.mr = t.mr);
+  let lets = lv_subst f.ml lv t.inv in
+  {ml;mr;inv=mk_let_of_lv_substs ~mc:(ml, mr) env ([lets], f.inv)}
+
+let subst_form_lv_right env lv t f =
+  let ml, mr = f.ml, f.mr in
+  assert (f.mr = t.mr);
+  assert (f.ml = t.ml);
+  let lets = lv_subst f.mr lv t.inv in
+  {ml;mr;inv=mk_let_of_lv_substs ~mc:(ml, mr) env ([lets], f.inv)}
+
+(* -------------------------------------------------------------------- *)
+(* Remark: m and mc are only used to create sensible fresh names with id_of_pv *)
+let generalize_subst_ ?mc env m uelts uglob =
+  let create (pv, ty) = id_of_pv ?mc pv m, GTty ty in
+  let b = List.map create uelts in
+  let s =
+    List.fold_left2
+      (fun s (pv, ty) (id, _) ->
+        Mpv.add env pv (f_local id ty) s)
+      Mpv.empty uelts b
+  in
+  let create mp = id_of_mp ?mc mp m, GTty (tglob (EcPath.mget_ident mp)) in
+  let b' = List.map create uglob in
+  let s  =
+    List.fold_left2
+      (fun s mp (id, _) ->
+        Mpv.add_glob env mp (f_local id (tglob (EcPath.mget_ident mp))) s)
+      s uglob b'
+  in
+    (b', b, s)
+
+let generalize_mod__ ?mc env modi m f =
+  let (melts, mglob) = PV.ntr_elements modi in
+
+  (* 1. Compute the prog-vars and the globals used in [f] *)
+  let fv = PV.fv env m f in
+  let felts, fglob = PV.ntr_elements fv in
+
+  (* 2. Split [modi] into two parts:
+   *    the one used in the free-vars and the others *)
+  let (uelts, nelts) = List.partition (fun (pv, _) -> PV.mem_pv env pv modi) felts in
+  let (uglob, nglob) = List.partition (fun mp -> PV.mem_glob env mp modi) fglob in
+
+  (* 3. We build the related substitution *)
+
+  (* 3.a. Add the global variables *)
+
+  let (bd', bd, s ) = generalize_subst_ ?mc env m uelts uglob in
+   (* 3.b. Check that the modify variables does not clash with
+           the variables not generalized *)
+  let restrs =
+    List.fold_left (fun r mp ->
+      let restr = NormMp.get_restr_use env mp in
+      EcPath.Mm.add mp restr r) EcPath.Mm.empty mglob in
+  List.iter (fun (npv,_) ->
+    if is_glob npv then
+      let check1 mp restr =  Mpv.check_npv_mp env (get_glob npv) mp restr in
+      EcPath.Mm.iter check1 restrs) nelts;
+  List.iter (fun mp ->
+    let restr = NormMp.get_restr_use env mp in
+    let check (npv,_) =
+      if is_glob npv then
+        Mpv.check_npv_mp env (get_glob npv) mp restr in
+    List.iter check melts;
+    let check mp' restr' = Mpv.check_mp_mp env mp restr mp' restr' in
+    EcPath.Mm.iter check restrs) nglob;
+
+  (* 3.c. Perform the substitution *)
+  let s = PVM.of_mpv s m in
+  let f = PVM.subst env s f in
+  {inv=f_forall_simpl (bd'@bd) f; m}, (bd', uglob), (bd, uelts)
+
+let generalize_subst env m uelts uglob =
+  let (b',b,f) = generalize_subst_ env m uelts uglob in
+  b'@b, f
+
+let generalize_mod_ env modi f =
+  generalize_mod__ env modi f.m f.inv
+
+let generalize_mod_left_ env modi f =
+  let ml, mr = f.ml, f.mr in
+  let res, bd', bd =
+    generalize_mod__ ~mc:(ml, mr) env modi ml f.inv in
+  ({ml; mr; inv=res.inv}, bd', bd)
+
+let generalize_mod_right_ env modi f =
+  let ml, mr = f.ml, f.mr in
+  let res, bd', bd =
+    generalize_mod__ ~mc:(ml, mr) env modi mr f.inv in
+  ({ml; mr; inv=res.inv}, bd', bd)
+
+let generalize_mod_ss_inv env modi f =
+  let res, _, _ = generalize_mod_ env modi f in
+  res
+
+let generalize_mod_left env modi f =
+  let res, _, _ = generalize_mod_left_ env modi f in
+  res
+
+let generalize_mod_right env modi f =
+  let res, _, _ = generalize_mod_right_ env modi f in
+  res
+
+let generalize_mod_ts_inv env modil modir f =
+  let res = generalize_mod_right env modir f in
+  generalize_mod_left env modil res
+
+
+(* -------------------------------------------------------------------- *)
+let abstract_info env f1 =
+  let f   = EcEnv.NormMp.norm_xfun env f1 in
+  let top = EcPath.m_functor f.EcPath.x_top in
+  let def = EcEnv.Fun.by_xpath f env in
+
+  let oi  =
+    match def.f_def with
+    | FBabs oi -> oi
+    | _ ->
+      let ppe = EcPrinting.PPEnv.ofenv env in
+        if EcPath.x_equal f1 f then
+          EcCoreGoal.tacuerror
+            "The function %a should be abstract"
+            (EcPrinting.pp_funname ppe) f1
+        else
+          EcCoreGoal.tacuerror
+            "The function %a, which reduces to %a, should be abstract"
+            (EcPrinting.pp_funname ppe) f1
+            (EcPrinting.pp_funname ppe) f
+  in
+    (top, f, oi, def.f_sig)
+
+(* -------------------------------------------------------------------- *)
+let abstract_info2 env fl' fr' =
+  let (topl, fl, oil, sigl) = abstract_info env fl' in
+  let (topr, fr, oir, sigr) = abstract_info env fr' in
+  let fl1 = EcPath.xpath topl fl.EcPath.x_sub in
+  let fr1 = EcPath.xpath topr fr.EcPath.x_sub in
+    if not (EcPath.x_equal fl1 fr1) then begin
+      let ppe = EcPrinting.PPEnv.ofenv env in
+        EcCoreGoal.tacuerror
+          "function %a reduces to %a and %a reduces to %a, %a and %a should be equal"
+          (EcPrinting.pp_funname ppe) fl'
+          (EcPrinting.pp_funname ppe) fl1
+          (EcPrinting.pp_funname ppe) fr'
+          (EcPrinting.pp_funname ppe) fr1
+          (EcPrinting.pp_funname ppe) fl1
+          (EcPrinting.pp_funname ppe) fr1
+    end;
+    ((topl, fl, oil, sigl), (topr, fr, oir, sigr))
+
+(* -------------------------------------------------------------------- *)
+type code_txenv = proofenv * LDecl.hyps
+
+type 'a code_tx =
+     code_txenv -> 'a -> form pair -> memenv * stmt
+   -> memenv * stmt * form list
+
+type 'a zip_t =
+     code_txenv -> form pair -> memenv -> Zpr.zipper
+  -> memenv * Zpr.zipper * form list
+
+let t_fold f (cenv : code_txenv) (cpos : codepos) (_ : form * form) (state, s) =
+  try
+    let env = EcEnv.LDecl.toenv (snd cenv) in
+    let (me, f) = Zpr.fold env cenv cpos (fun _ -> f) state s in
+      ((me, f, []) : memenv * _ * form list)
+  with InvalidCPos -> tc_error (fst cenv) "invalid code position"
+
+let t_zip f (cenv : code_txenv) (cpos : codepos) (prpo : form * form) (state, s) =
+  try
+    let env = EcEnv.LDecl.toenv (snd cenv) in
+    let (me, zpr, gs) = f cenv prpo state (Zpr.zipper_of_cpos env cpos s) in
+      ((me, Zpr.zip zpr, gs) : memenv * _ * form list)
+  with InvalidCPos -> tc_error (fst cenv) "invalid code position"
+
+let t_code_transform (side : oside) ?(bdhoare = false) cpos tr tx tc =
+  let pf = FApi.tc1_penv tc in
+
+  match side with
+  | None -> begin
+      let (hyps, concl) = FApi.tc1_flat tc in
+
+      match concl.f_node with
+      | FhoareS hs ->
+          let pr, po = hs_pr hs, hs_po hs in
+          let po = po.hsi_inv.main in
+          let (me, stmt, cs) =
+            tx (pf, hyps) cpos (pr.inv, po) (hs.hs_m, hs.hs_s) in
+          let concl =
+            f_hoareS (snd me) (hs_pr hs) stmt (hs_po hs)
+          in
+          FApi.xmutate1 tc (tr None) (cs @ [concl])
+
+      | FbdHoareS bhs when bdhoare ->
+          let pr, po = bhs_pr bhs, bhs_po bhs in
+          let (me, stmt, cs) =
+            tx (pf, hyps) cpos (pr.inv, po.inv) (bhs.bhs_m, bhs.bhs_s) in
+          let concl = f_bdHoareS (snd me) (bhs_pr bhs) stmt (bhs_po bhs)
+                      bhs.bhs_cmp (bhs_bd bhs) in
+          FApi.xmutate1 tc (tr None) (cs @ [concl])
+
+      | _ ->
+        let kinds =
+            (if bdhoare then [`PHoare `Stmt] else [])
+          @ [`Hoare `Stmt] in
+
+        tc_error_noXhl ~kinds:kinds pf
+  end
+
+  | Some side ->
+      let hyps      = FApi.tc1_hyps tc in
+      let es        = tc1_as_equivS tc in
+      let pre, post = es_pr es, es_po es in
+      let me, stmt     =
+        match side with
+        | `Left  -> (es.es_ml, es.es_sl)
+        | `Right -> (es.es_mr, es.es_sr) in
+      let (_, mt), stmt, cs = tx (pf, hyps) cpos (pre.inv, post.inv) (me, stmt) in
+      let concl =
+        match side with
+        | `Left  -> f_equivS mt (snd es.es_mr) (es_pr es) stmt es.es_sr (es_po es)
+        | `Right -> f_equivS (snd es.es_ml) mt (es_pr es) es.es_sl stmt (es_po es)
+      in
+
+      FApi.xmutate1 tc (tr (Some side)) (cs @ [concl])
+
+(* -------------------------------------------------------------------- *)
+let get_single tc = function
+  | Single f -> f
+  | Double _ -> tc_error !!tc "a single formula is expected here, can't use \"p | f\""
+
+let get_double tc = function
+  | Single _ -> tc_error !!tc "a double formula is expected here, use \"p | f\""
+  | Double (p, f) -> p, f

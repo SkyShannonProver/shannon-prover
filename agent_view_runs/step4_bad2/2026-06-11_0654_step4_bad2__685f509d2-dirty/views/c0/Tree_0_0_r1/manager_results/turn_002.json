@@ -1,0 +1,18 @@
+{
+  "turn": 2,
+  "handled_intent": {
+    "intent": "undo_to_checkpoint",
+    "payload": {
+      "checkpoint_id": "cp_15_5ab41d41a69ed809"
+    }
+  },
+  "ok": true,
+  "manager_note": "The requested rewind did NOT execute \u2014 the manager returned a checkpoint menu (the target was stale or not reachable from this scope; read the menu's notice). No proof state changed.",
+  "manager_actions": [
+    {
+      "action": "checkpoint menu",
+      "outcome": "Choose the committed tactic you want to rewind before."
+    }
+  ],
+  "view_refreshed": true
+}

@@ -1,0 +1,39 @@
+{
+  "kind": "agent_view_run_report",
+  "timestamp": "2026-06-11_0152_poly_spec",
+  "lemma": "poly_spec",
+  "source_file": "eval/examples/ChaChaPoly/chacha_poly.ec",
+  "model": "claude-fable-5",
+  "surface_profile": "l4_checked_action_surface",
+  "trees": 2,
+  "eval_mode": true,
+  "outcome": "proved",
+  "committed_proofs": [
+    {
+      "tree": "Tree_0_0",
+      "tactics": [
+        "proc.",
+        "inline *.",
+        "auto => />.",
+        "qed."
+      ],
+      "source": "session",
+      "proved": true
+    },
+    {
+      "tree": "Tree_0_1",
+      "tactics": [
+        "proc; inline *; wp; skip => />."
+      ],
+      "source": "session",
+      "proved": false
+    }
+  ],
+  "turn_count": 6,
+  "views_copied": 8,
+  "run_iteration_dir": "artifacts/eval_suite/night_specs_fable_l4np/l4_checked_action_surface/cc_poly_spec/r01/2026-06-11_0152_poly_spec/iteration_1",
+  "commit": "685f509d2",
+  "commit_full": "685f509d2678739057061c570c67d41c0342d619",
+  "branch": "HEAD",
+  "dirty": true
+}

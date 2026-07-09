@@ -1,0 +1,19 @@
+{
+  "turn": 13,
+  "handled_intent": {
+    "intent": "commit_tactic",
+    "payload": {
+      "tactic": "conseq (_ : _ ==> (G3.a, G3.a_, G3.c, G3.d) \\in G3.cilog) (_ : _ ==> size G3.cilog <= PKE_.qD)."
+    }
+  },
+  "ok": true,
+  "manager_note": "Committed tactic accepted; the EasyCrypt proof state changed.",
+  "manager_actions": [
+    {
+      "action": "tactic commit",
+      "outcome": "EasyCrypt accepted the committed tactic.",
+      "timing": "360 ms"
+    }
+  ],
+  "view_refreshed": true
+}

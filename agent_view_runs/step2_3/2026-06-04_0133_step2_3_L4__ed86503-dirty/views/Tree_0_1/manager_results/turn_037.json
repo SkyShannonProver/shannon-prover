@@ -1,0 +1,19 @@
+{
+  "turn": 37,
+  "handled_intent": {
+    "intent": "commit_tactic",
+    "payload": {
+      "tactic": "rewrite -(SplitC1.pr_RO_split (G7(A)) (fun _ b => b) &m ()) /=."
+    }
+  },
+  "ok": true,
+  "manager_note": "Committed tactic accepted; the EasyCrypt proof state changed.",
+  "manager_actions": [
+    {
+      "action": "tactic commit",
+      "outcome": "EasyCrypt accepted the committed tactic.",
+      "timing": "568 ms"
+    }
+  ],
+  "view_refreshed": true
+}

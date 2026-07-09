@@ -1,0 +1,19 @@
+{
+  "turn": 14,
+  "handled_intent": {
+    "intent": "commit_tactic",
+    "payload": {
+      "tactic": "(have ens: ns{1} = ns{2} by rewrite hns1 hns2 hlc); (have ens1: ns1{1} = ns1{2} by rewrite hns11 hns12 ho ens); (have ens2: ns2{1} = ns2{2} by rewrite hns21 hns22 ho ens); exists UF.forged{2} UFCMA.bad2{2} UFCMA.cbad2{2} UFCMA.log{2} RO.m{2} Mem.lc{2} ROout.m{2} ns1{2} ns2{2}; rewrite ens1 ens2 hf1 hf2 hb hc hl hlc hr ho /=; rewrite hns22 hns12 hns2; split; [by apply/filter_uniq/undup_uniq | split; [by move=> n0; rewrite mem_filter /= => -[] | by move=> n0; rewrite mem_filter /= => -[]]]."
+    }
+  },
+  "ok": true,
+  "manager_note": "Committed tactic accepted; the EasyCrypt proof state changed.",
+  "manager_actions": [
+    {
+      "action": "tactic commit",
+      "outcome": "EasyCrypt accepted the committed tactic.",
+      "timing": "329 ms"
+    }
+  ],
+  "view_refreshed": true
+}

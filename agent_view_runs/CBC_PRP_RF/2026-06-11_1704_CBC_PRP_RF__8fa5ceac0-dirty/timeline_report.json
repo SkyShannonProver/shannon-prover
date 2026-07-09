@@ -1,0 +1,249 @@
+{
+  "kind": "agent_view_timeline_report",
+  "run_count": 1,
+  "runs": [
+    {
+      "chronological": false,
+      "first_action_at": "2026-06-12T00:05:14.400000+00:00",
+      "label": "2026-06-11_1704_CBC_PRP_RF",
+      "node_count": 2,
+      "rows": [
+        {
+          "action_submitted_at": "2026-06-12T00:05:14.400000+00:00",
+          "action_time": "+00:00",
+          "agent_think": "",
+          "agent_think_path": "artifacts/eval_suite/mee_sweep_l1_v2/l1_goal_projection/mee_CBC_PRP_RF/r01/2026-06-11_1704_CBC_PRP_RF/iteration_1/node_memory/Tree_0_0/thinking/turn_001.md",
+          "agent_think_seconds": null,
+          "decision_followup_path": "",
+          "decision_state_summary": "probability / pr / probability, 1 goal, goal 570 chars",
+          "decision_view_path": "artifacts/eval_suite/mee_sweep_l1_v2/l1_goal_projection/mee_CBC_PRP_RF/r01/2026-06-11_1704_CBC_PRP_RF/iteration_1/manager_bootstrap_0_0.json",
+          "deterministic_signals": [
+            "commit_without_probe_check_not_inferred"
+          ],
+          "goal_chars": 570,
+          "inspect_topics": [],
+          "intent": {
+            "intent": "commit_tactic",
+            "payload": {
+              "tactic": "rewrite (refactor_abstract PRP &m) (refactor_abstract PRFi &m)."
+            }
+          },
+          "intent_summary": "commit rewrite (refactor_abstract PRP &m) (refactor_abstract PRFi &m)",
+          "manager_action_summary": [
+            "tactic commit (1.6 s)"
+          ],
+          "manager_result_at": "2026-06-12T00:05:16+00:00",
+          "manager_result_path": "artifacts/eval_suite/mee_sweep_l1_v2/l1_goal_projection/mee_CBC_PRP_RF/r01/2026-06-11_1704_CBC_PRP_RF/iteration_1/node_memory/Tree_0_0/manager_results/turn_001.json",
+          "manager_seconds": 1.6,
+          "manager_time": "1.6 s",
+          "node": "Tree-0.0",
+          "node_dir": "artifacts/eval_suite/mee_sweep_l1_v2/l1_goal_projection/mee_CBC_PRP_RF/r01/2026-06-11_1704_CBC_PRP_RF/iteration_1/node_memory/Tree_0_0",
+          "ok": true,
+          "result_followup_path": "artifacts/eval_suite/mee_sweep_l1_v2/l1_goal_projection/mee_CBC_PRP_RF/r01/2026-06-11_1704_CBC_PRP_RF/iteration_1/node_memory/Tree_0_0/followups/turn_001.md",
+          "result_state_summary": "probability / pr / probability, 1 goal, goal 554 chars",
+          "result_summary": "accepted commit",
+          "result_view_path": "artifacts/eval_suite/mee_sweep_l1_v2/l1_goal_projection/mee_CBC_PRP_RF/r01/2026-06-11_1704_CBC_PRP_RF/iteration_1/node_memory/Tree_0_0/workspace_views/turn_001.json",
+          "turn": 1,
+          "usage": {
+            "cache_creation_input_tokens": 44545,
+            "cache_read_input_tokens": 125056,
+            "input_tokens": 9,
+            "output_tokens": 2553
+          },
+          "view_chars": 1130,
+          "view_id": "T0.0-1",
+          "workspace_view_path": "artifacts/eval_suite/mee_sweep_l1_v2/l1_goal_projection/mee_CBC_PRP_RF/r01/2026-06-11_1704_CBC_PRP_RF/iteration_1/manager_bootstrap_0_0.json"
+        },
+        {
+          "action_submitted_at": "2026-06-12T00:05:22.836000+00:00",
+          "action_time": "+00:08",
+          "agent_think": "6.8 s",
+          "agent_think_path": "artifacts/eval_suite/mee_sweep_l1_v2/l1_goal_projection/mee_CBC_PRP_RF/r01/2026-06-11_1704_CBC_PRP_RF/iteration_1/node_memory/Tree_0_0/thinking/turn_002.md",
+          "agent_think_seconds": 6.836,
+          "decision_followup_path": "artifacts/eval_suite/mee_sweep_l1_v2/l1_goal_projection/mee_CBC_PRP_RF/r01/2026-06-11_1704_CBC_PRP_RF/iteration_1/node_memory/Tree_0_0/followups/turn_001.md",
+          "decision_state_summary": "probability / pr / probability, 1 goal, goal 554 chars",
+          "decision_view_path": "artifacts/eval_suite/mee_sweep_l1_v2/l1_goal_projection/mee_CBC_PRP_RF/r01/2026-06-11_1704_CBC_PRP_RF/iteration_1/node_memory/Tree_0_0/workspace_views/turn_001.json",
+          "deterministic_signals": [
+            "commit_without_probe_check_not_inferred"
+          ],
+          "goal_chars": 554,
+          "inspect_topics": [
+            "hint",
+            "goal_info",
+            "pr_bridge_routes",
+            "equiv_bridge_lemmas",
+            "lemma_hints",
+            "tactic_forms"
+          ],
+          "intent": {
+            "intent": "commit_tactic",
+            "payload": {
+              "tactic": "smt()."
+            }
+          },
+          "intent_summary": "commit smt()",
+          "manager_action_summary": [
+            "tactic commit (164 ms)"
+          ],
+          "manager_result_at": "2026-06-12T00:05:23+00:00",
+          "manager_result_path": "artifacts/eval_suite/mee_sweep_l1_v2/l1_goal_projection/mee_CBC_PRP_RF/r01/2026-06-11_1704_CBC_PRP_RF/iteration_1/node_memory/Tree_0_0/manager_results/turn_002.json",
+          "manager_seconds": 0.164,
+          "manager_time": "164 ms",
+          "node": "Tree-0.0",
+          "node_dir": "artifacts/eval_suite/mee_sweep_l1_v2/l1_goal_projection/mee_CBC_PRP_RF/r01/2026-06-11_1704_CBC_PRP_RF/iteration_1/node_memory/Tree_0_0",
+          "ok": true,
+          "result_followup_path": "artifacts/eval_suite/mee_sweep_l1_v2/l1_goal_projection/mee_CBC_PRP_RF/r01/2026-06-11_1704_CBC_PRP_RF/iteration_1/node_memory/Tree_0_0/followups/turn_002.md",
+          "result_state_summary": "ambient / closed_candidate, goal 25 chars",
+          "result_summary": "accepted commit",
+          "result_view_path": "artifacts/eval_suite/mee_sweep_l1_v2/l1_goal_projection/mee_CBC_PRP_RF/r01/2026-06-11_1704_CBC_PRP_RF/iteration_1/node_memory/Tree_0_0/workspace_views/turn_002.json",
+          "turn": 2,
+          "usage": {
+            "cache_creation_input_tokens": 1395,
+            "cache_read_input_tokens": 38019,
+            "input_tokens": 2,
+            "output_tokens": 181
+          },
+          "view_chars": 6051,
+          "view_id": "T0.0-2",
+          "workspace_view_path": "artifacts/eval_suite/mee_sweep_l1_v2/l1_goal_projection/mee_CBC_PRP_RF/r01/2026-06-11_1704_CBC_PRP_RF/iteration_1/node_memory/Tree_0_0/workspace_views/turn_001.json"
+        },
+        {
+          "action_submitted_at": "2026-06-12T00:05:31.852000+00:00",
+          "action_time": "+00:17",
+          "agent_think": "8.9 s",
+          "agent_think_path": "artifacts/eval_suite/mee_sweep_l1_v2/l1_goal_projection/mee_CBC_PRP_RF/r01/2026-06-11_1704_CBC_PRP_RF/iteration_1/node_memory/Tree_0_0/thinking/turn_003.md",
+          "agent_think_seconds": 8.852,
+          "decision_followup_path": "artifacts/eval_suite/mee_sweep_l1_v2/l1_goal_projection/mee_CBC_PRP_RF/r01/2026-06-11_1704_CBC_PRP_RF/iteration_1/node_memory/Tree_0_0/followups/turn_002.md",
+          "decision_state_summary": "ambient / closed_candidate, goal 25 chars",
+          "decision_view_path": "artifacts/eval_suite/mee_sweep_l1_v2/l1_goal_projection/mee_CBC_PRP_RF/r01/2026-06-11_1704_CBC_PRP_RF/iteration_1/node_memory/Tree_0_0/workspace_views/turn_002.json",
+          "deterministic_signals": [
+            "commit_without_probe_check_not_inferred"
+          ],
+          "goal_chars": 25,
+          "inspect_topics": [
+            "goal_info"
+          ],
+          "intent": {
+            "intent": "commit_tactic",
+            "payload": {
+              "tactic": "qed."
+            }
+          },
+          "intent_summary": "commit qed",
+          "manager_action_summary": [
+            "tactic commit (148 ms)"
+          ],
+          "manager_result_at": "2026-06-12T00:05:32+00:00",
+          "manager_result_path": "artifacts/eval_suite/mee_sweep_l1_v2/l1_goal_projection/mee_CBC_PRP_RF/r01/2026-06-11_1704_CBC_PRP_RF/iteration_1/node_memory/Tree_0_0/manager_results/turn_003.json",
+          "manager_seconds": 0.148,
+          "manager_time": "148 ms",
+          "node": "Tree-0.0",
+          "node_dir": "artifacts/eval_suite/mee_sweep_l1_v2/l1_goal_projection/mee_CBC_PRP_RF/r01/2026-06-11_1704_CBC_PRP_RF/iteration_1/node_memory/Tree_0_0",
+          "ok": true,
+          "result_followup_path": "artifacts/eval_suite/mee_sweep_l1_v2/l1_goal_projection/mee_CBC_PRP_RF/r01/2026-06-11_1704_CBC_PRP_RF/iteration_1/node_memory/Tree_0_0/followups/turn_003.md",
+          "result_state_summary": "complete / unknown / closed_candidate, 0 goals, goal 11 chars",
+          "result_summary": "accepted commit",
+          "result_view_path": "artifacts/eval_suite/mee_sweep_l1_v2/l1_goal_projection/mee_CBC_PRP_RF/r01/2026-06-11_1704_CBC_PRP_RF/iteration_1/node_memory/Tree_0_0/workspace_views/turn_003.json",
+          "turn": 3,
+          "usage": {
+            "cache_creation_input_tokens": 1079,
+            "cache_read_input_tokens": 39414,
+            "input_tokens": 2,
+            "output_tokens": 123
+          },
+          "view_chars": 2980,
+          "view_id": "T0.0-3",
+          "workspace_view_path": "artifacts/eval_suite/mee_sweep_l1_v2/l1_goal_projection/mee_CBC_PRP_RF/r01/2026-06-11_1704_CBC_PRP_RF/iteration_1/node_memory/Tree_0_0/workspace_views/turn_002.json"
+        },
+        {
+          "action_submitted_at": "2026-06-12T00:05:39+00:00",
+          "action_time": "+00:25",
+          "agent_think": "7 s",
+          "agent_think_path": "",
+          "agent_think_seconds": 7.0,
+          "decision_followup_path": "artifacts/eval_suite/mee_sweep_l1_v2/l1_goal_projection/mee_CBC_PRP_RF/r01/2026-06-11_1704_CBC_PRP_RF/iteration_1/node_memory/Tree_0_0/followups/turn_003.md",
+          "decision_state_summary": "complete / unknown / closed_candidate, 0 goals, goal 11 chars",
+          "decision_view_path": "artifacts/eval_suite/mee_sweep_l1_v2/l1_goal_projection/mee_CBC_PRP_RF/r01/2026-06-11_1704_CBC_PRP_RF/iteration_1/node_memory/Tree_0_0/workspace_views/turn_003.json",
+          "deterministic_signals": [],
+          "goal_chars": 11,
+          "inspect_topics": [
+            "verify",
+            "goal_info"
+          ],
+          "intent": {
+            "intent": "finish"
+          },
+          "intent_summary": "finish",
+          "manager_action_summary": [
+            "finish"
+          ],
+          "manager_result_at": "2026-06-12T00:05:39+00:00",
+          "manager_result_path": "artifacts/eval_suite/mee_sweep_l1_v2/l1_goal_projection/mee_CBC_PRP_RF/r01/2026-06-11_1704_CBC_PRP_RF/iteration_1/node_memory/Tree_0_0/manager_results/turn_004.json",
+          "manager_seconds": 0.0,
+          "manager_time": "",
+          "node": "Tree-0.0",
+          "node_dir": "artifacts/eval_suite/mee_sweep_l1_v2/l1_goal_projection/mee_CBC_PRP_RF/r01/2026-06-11_1704_CBC_PRP_RF/iteration_1/node_memory/Tree_0_0",
+          "ok": true,
+          "result_followup_path": "artifacts/eval_suite/mee_sweep_l1_v2/l1_goal_projection/mee_CBC_PRP_RF/r01/2026-06-11_1704_CBC_PRP_RF/iteration_1/node_memory/Tree_0_0/followups/turn_004.md",
+          "result_state_summary": "complete / unknown / closed_candidate, 0 goals, goal 11 chars",
+          "result_summary": "finish requested",
+          "result_view_path": "artifacts/eval_suite/mee_sweep_l1_v2/l1_goal_projection/mee_CBC_PRP_RF/r01/2026-06-11_1704_CBC_PRP_RF/iteration_1/node_memory/Tree_0_0/workspace_views/turn_004.json",
+          "turn": 4,
+          "usage": {},
+          "view_chars": 2136,
+          "view_id": "T0.0-4",
+          "workspace_view_path": "artifacts/eval_suite/mee_sweep_l1_v2/l1_goal_projection/mee_CBC_PRP_RF/r01/2026-06-11_1704_CBC_PRP_RF/iteration_1/node_memory/Tree_0_0/workspace_views/turn_003.json"
+        },
+        {
+          "action_submitted_at": "2026-06-12T00:05:22.500000+00:00",
+          "action_time": "+00:08",
+          "agent_think": "",
+          "agent_think_path": "artifacts/eval_suite/mee_sweep_l1_v2/l1_goal_projection/mee_CBC_PRP_RF/r01/2026-06-11_1704_CBC_PRP_RF/iteration_1/node_memory/Tree_0_1/thinking/turn_001.md",
+          "agent_think_seconds": null,
+          "decision_followup_path": "",
+          "decision_state_summary": "probability / pr / probability, 1 goal, goal 570 chars",
+          "decision_view_path": "artifacts/eval_suite/mee_sweep_l1_v2/l1_goal_projection/mee_CBC_PRP_RF/r01/2026-06-11_1704_CBC_PRP_RF/iteration_1/manager_bootstrap_0_1.json",
+          "deterministic_signals": [
+            "commit_without_probe_check_not_inferred"
+          ],
+          "goal_chars": 570,
+          "inspect_topics": [],
+          "intent": {
+            "intent": "commit_tactic",
+            "payload": {
+              "tactic": "rewrite (refactor_abstract PRP &m) (refactor_abstract PRFi &m)."
+            }
+          },
+          "intent_summary": "commit rewrite (refactor_abstract PRP &m) (refactor_abstract PRFi &m)",
+          "manager_action_summary": [
+            "tactic commit (1.5 s)"
+          ],
+          "manager_result_at": "2026-06-12T00:05:24+00:00",
+          "manager_result_path": "artifacts/eval_suite/mee_sweep_l1_v2/l1_goal_projection/mee_CBC_PRP_RF/r01/2026-06-11_1704_CBC_PRP_RF/iteration_1/node_memory/Tree_0_1/manager_results/turn_001.json",
+          "manager_seconds": 1.5,
+          "manager_time": "1.5 s",
+          "node": "Tree-0.1",
+          "node_dir": "artifacts/eval_suite/mee_sweep_l1_v2/l1_goal_projection/mee_CBC_PRP_RF/r01/2026-06-11_1704_CBC_PRP_RF/iteration_1/node_memory/Tree_0_1",
+          "ok": true,
+          "result_followup_path": "artifacts/eval_suite/mee_sweep_l1_v2/l1_goal_projection/mee_CBC_PRP_RF/r01/2026-06-11_1704_CBC_PRP_RF/iteration_1/node_memory/Tree_0_1/followups/turn_001.md",
+          "result_state_summary": "probability / pr / probability, 1 goal, goal 554 chars",
+          "result_summary": "accepted commit",
+          "result_view_path": "artifacts/eval_suite/mee_sweep_l1_v2/l1_goal_projection/mee_CBC_PRP_RF/r01/2026-06-11_1704_CBC_PRP_RF/iteration_1/node_memory/Tree_0_1/workspace_views/turn_001.json",
+          "turn": 1,
+          "usage": {
+            "cache_creation_input_tokens": 44545,
+            "cache_read_input_tokens": 125056,
+            "input_tokens": 9,
+            "output_tokens": 2553
+          },
+          "view_chars": 1130,
+          "view_id": "T0.1-1",
+          "workspace_view_path": "artifacts/eval_suite/mee_sweep_l1_v2/l1_goal_projection/mee_CBC_PRP_RF/r01/2026-06-11_1704_CBC_PRP_RF/iteration_1/manager_bootstrap_0_1.json"
+        }
+      ],
+      "run_dir": "artifacts/eval_suite/mee_sweep_l1_v2/l1_goal_projection/mee_CBC_PRP_RF/r01/2026-06-11_1704_CBC_PRP_RF/iteration_1",
+      "turn_count": 5
+    }
+  ],
+  "schema_version": 1
+}

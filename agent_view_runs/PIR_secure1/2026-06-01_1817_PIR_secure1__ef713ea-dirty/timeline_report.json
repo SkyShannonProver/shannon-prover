@@ -1,0 +1,372 @@
+{
+  "kind": "agent_view_timeline_report",
+  "run_count": 1,
+  "runs": [
+    {
+      "chronological": false,
+      "first_action_at": "2026-06-02T01:18:29.400000+00:00",
+      "label": "2026-06-01_1817_PIR_secure1",
+      "node_count": 2,
+      "rows": [
+        {
+          "action_submitted_at": "2026-06-02T01:18:29.400000+00:00",
+          "action_time": "+00:00",
+          "agent_think": "",
+          "agent_think_path": "artifacts/eval_suite/l1_l4_surface_ablation/l1_goal_projection/pir_secure1_exec/r01/2026-06-01_1817_PIR_secure1/iteration_1/node_memory/Tree_0_0/thinking/turn_001.md",
+          "agent_think_seconds": null,
+          "decision_followup_path": "",
+          "decision_state_summary": "equiv / prhl_module / relational_program, 1 goal, goal 175 chars",
+          "decision_view_path": "artifacts/eval_suite/l1_l4_surface_ablation/l1_goal_projection/pir_secure1_exec/r01/2026-06-01_1817_PIR_secure1/iteration_1/manager_bootstrap_0_0.json",
+          "deterministic_signals": [
+            "commit_without_probe_check_not_inferred"
+          ],
+          "goal_chars": 175,
+          "inspect_topics": [],
+          "intent": {
+            "intent": "commit_tactic",
+            "payload": {
+              "tactic": "proc."
+            }
+          },
+          "intent_summary": "commit proc",
+          "manager_action_summary": [
+            "tactic commit (1.6 s)"
+          ],
+          "manager_result_at": "2026-06-02T01:18:31+00:00",
+          "manager_result_path": "artifacts/eval_suite/l1_l4_surface_ablation/l1_goal_projection/pir_secure1_exec/r01/2026-06-01_1817_PIR_secure1/iteration_1/node_memory/Tree_0_0/manager_results/turn_001.json",
+          "manager_seconds": 1.6,
+          "manager_time": "1.6 s",
+          "node": "Tree-0.0",
+          "node_dir": "artifacts/eval_suite/l1_l4_surface_ablation/l1_goal_projection/pir_secure1_exec/r01/2026-06-01_1817_PIR_secure1/iteration_1/node_memory/Tree_0_0",
+          "ok": true,
+          "result_followup_path": "artifacts/eval_suite/l1_l4_surface_ablation/l1_goal_projection/pir_secure1_exec/r01/2026-06-01_1817_PIR_secure1/iteration_1/node_memory/Tree_0_0/followups/turn_001.md",
+          "result_state_summary": "pRHL / verification_residue / relational_program, 1 goal, goal 1066 chars",
+          "result_summary": "accepted commit",
+          "result_view_path": "artifacts/eval_suite/l1_l4_surface_ablation/l1_goal_projection/pir_secure1_exec/r01/2026-06-01_1817_PIR_secure1/iteration_1/node_memory/Tree_0_0/workspace_views/turn_001.json",
+          "turn": 1,
+          "view_chars": 734,
+          "view_id": "T0.0-1",
+          "workspace_view_path": "artifacts/eval_suite/l1_l4_surface_ablation/l1_goal_projection/pir_secure1_exec/r01/2026-06-01_1817_PIR_secure1/iteration_1/manager_bootstrap_0_0.json"
+        },
+        {
+          "action_submitted_at": "2026-06-02T01:18:56.734000+00:00",
+          "action_time": "+00:27",
+          "agent_think": "25.7 s",
+          "agent_think_path": "artifacts/eval_suite/l1_l4_surface_ablation/l1_goal_projection/pir_secure1_exec/r01/2026-06-01_1817_PIR_secure1/iteration_1/node_memory/Tree_0_0/thinking/turn_002.md",
+          "agent_think_seconds": 25.734,
+          "decision_followup_path": "artifacts/eval_suite/l1_l4_surface_ablation/l1_goal_projection/pir_secure1_exec/r01/2026-06-01_1817_PIR_secure1/iteration_1/node_memory/Tree_0_0/followups/turn_001.md",
+          "decision_state_summary": "pRHL / verification_residue / relational_program, 1 goal, goal 1066 chars",
+          "decision_view_path": "artifacts/eval_suite/l1_l4_surface_ablation/l1_goal_projection/pir_secure1_exec/r01/2026-06-01_1817_PIR_secure1/iteration_1/node_memory/Tree_0_0/workspace_views/turn_001.json",
+          "deterministic_signals": [
+            "commit_without_probe_check_not_inferred"
+          ],
+          "goal_chars": 1066,
+          "inspect_topics": [],
+          "intent": {
+            "intent": "commit_tactic",
+            "payload": {
+              "tactic": "inline *."
+            }
+          },
+          "intent_summary": "commit inline *",
+          "manager_action_summary": [
+            "tactic commit (266 ms)"
+          ],
+          "manager_result_at": "2026-06-02T01:18:57+00:00",
+          "manager_result_path": "artifacts/eval_suite/l1_l4_surface_ablation/l1_goal_projection/pir_secure1_exec/r01/2026-06-01_1817_PIR_secure1/iteration_1/node_memory/Tree_0_0/manager_results/turn_002.json",
+          "manager_seconds": 0.266,
+          "manager_time": "266 ms",
+          "node": "Tree-0.0",
+          "node_dir": "artifacts/eval_suite/l1_l4_surface_ablation/l1_goal_projection/pir_secure1_exec/r01/2026-06-01_1817_PIR_secure1/iteration_1/node_memory/Tree_0_0",
+          "ok": true,
+          "result_followup_path": "artifacts/eval_suite/l1_l4_surface_ablation/l1_goal_projection/pir_secure1_exec/r01/2026-06-01_1817_PIR_secure1/iteration_1/node_memory/Tree_0_0/followups/turn_002.md",
+          "result_state_summary": "pRHL / verification_residue / relational_program, 1 goal, goal 1066 chars",
+          "result_summary": "rejected commit: manager reported rejection",
+          "result_view_path": "artifacts/eval_suite/l1_l4_surface_ablation/l1_goal_projection/pir_secure1_exec/r01/2026-06-01_1817_PIR_secure1/iteration_1/node_memory/Tree_0_0/workspace_views/turn_002.json",
+          "turn": 2,
+          "view_chars": 1928,
+          "view_id": "T0.0-2",
+          "workspace_view_path": "artifacts/eval_suite/l1_l4_surface_ablation/l1_goal_projection/pir_secure1_exec/r01/2026-06-01_1817_PIR_secure1/iteration_1/node_memory/Tree_0_0/workspace_views/turn_001.json"
+        },
+        {
+          "action_submitted_at": "2026-06-02T01:19:17.500000+00:00",
+          "action_time": "+00:48",
+          "agent_think": "20.5 s",
+          "agent_think_path": "artifacts/eval_suite/l1_l4_surface_ablation/l1_goal_projection/pir_secure1_exec/r01/2026-06-01_1817_PIR_secure1/iteration_1/node_memory/Tree_0_0/thinking/turn_003.md",
+          "agent_think_seconds": 20.5,
+          "decision_followup_path": "artifacts/eval_suite/l1_l4_surface_ablation/l1_goal_projection/pir_secure1_exec/r01/2026-06-01_1817_PIR_secure1/iteration_1/node_memory/Tree_0_0/followups/turn_002.md",
+          "decision_state_summary": "pRHL / verification_residue / relational_program, 1 goal, goal 1066 chars",
+          "decision_view_path": "artifacts/eval_suite/l1_l4_surface_ablation/l1_goal_projection/pir_secure1_exec/r01/2026-06-01_1817_PIR_secure1/iteration_1/node_memory/Tree_0_0/workspace_views/turn_002.json",
+          "deterministic_signals": [
+            "commit_without_probe_check_not_inferred"
+          ],
+          "goal_chars": 1066,
+          "inspect_topics": [],
+          "intent": {
+            "intent": "commit_tactic",
+            "payload": {
+              "tactic": "wp."
+            }
+          },
+          "intent_summary": "commit wp",
+          "manager_action_summary": [
+            "tactic commit (1.5 s)"
+          ],
+          "manager_result_at": "2026-06-02T01:19:19+00:00",
+          "manager_result_path": "artifacts/eval_suite/l1_l4_surface_ablation/l1_goal_projection/pir_secure1_exec/r01/2026-06-01_1817_PIR_secure1/iteration_1/node_memory/Tree_0_0/manager_results/turn_003.json",
+          "manager_seconds": 1.5,
+          "manager_time": "1.5 s",
+          "node": "Tree-0.0",
+          "node_dir": "artifacts/eval_suite/l1_l4_surface_ablation/l1_goal_projection/pir_secure1_exec/r01/2026-06-01_1817_PIR_secure1/iteration_1/node_memory/Tree_0_0",
+          "ok": true,
+          "result_followup_path": "artifacts/eval_suite/l1_l4_surface_ablation/l1_goal_projection/pir_secure1_exec/r01/2026-06-01_1817_PIR_secure1/iteration_1/node_memory/Tree_0_0/followups/turn_003.md",
+          "result_state_summary": "pRHL / verification_residue / relational_program, 1 goal, goal 1066 chars",
+          "result_summary": "rejected commit: manager reported rejection",
+          "result_view_path": "artifacts/eval_suite/l1_l4_surface_ablation/l1_goal_projection/pir_secure1_exec/r01/2026-06-01_1817_PIR_secure1/iteration_1/node_memory/Tree_0_0/workspace_views/turn_003.json",
+          "turn": 3,
+          "view_chars": 1938,
+          "view_id": "T0.0-3",
+          "workspace_view_path": "artifacts/eval_suite/l1_l4_surface_ablation/l1_goal_projection/pir_secure1_exec/r01/2026-06-01_1817_PIR_secure1/iteration_1/node_memory/Tree_0_0/workspace_views/turn_002.json"
+        },
+        {
+          "action_submitted_at": "2026-06-02T01:18:53.500000+00:00",
+          "action_time": "+00:24",
+          "agent_think": "",
+          "agent_think_path": "artifacts/eval_suite/l1_l4_surface_ablation/l1_goal_projection/pir_secure1_exec/r01/2026-06-01_1817_PIR_secure1/iteration_1/node_memory/Tree_0_1/thinking/turn_001.md",
+          "agent_think_seconds": null,
+          "decision_followup_path": "",
+          "decision_state_summary": "equiv / prhl_module / relational_program, 1 goal, goal 175 chars",
+          "decision_view_path": "artifacts/eval_suite/l1_l4_surface_ablation/l1_goal_projection/pir_secure1_exec/r01/2026-06-01_1817_PIR_secure1/iteration_1/manager_bootstrap_0_1.json",
+          "deterministic_signals": [
+            "commit_without_probe_check_not_inferred"
+          ],
+          "goal_chars": 175,
+          "inspect_topics": [],
+          "intent": {
+            "intent": "commit_tactic",
+            "payload": {
+              "tactic": "proc; inline *; wp."
+            }
+          },
+          "intent_summary": "commit proc; inline *; wp",
+          "manager_action_summary": [
+            "tactic commit (1.5 s)"
+          ],
+          "manager_result_at": "2026-06-02T01:18:55+00:00",
+          "manager_result_path": "artifacts/eval_suite/l1_l4_surface_ablation/l1_goal_projection/pir_secure1_exec/r01/2026-06-01_1817_PIR_secure1/iteration_1/node_memory/Tree_0_1/manager_results/turn_001.json",
+          "manager_seconds": 1.5,
+          "manager_time": "1.5 s",
+          "node": "Tree-0.1",
+          "node_dir": "artifacts/eval_suite/l1_l4_surface_ablation/l1_goal_projection/pir_secure1_exec/r01/2026-06-01_1817_PIR_secure1/iteration_1/node_memory/Tree_0_1",
+          "ok": true,
+          "result_followup_path": "artifacts/eval_suite/l1_l4_surface_ablation/l1_goal_projection/pir_secure1_exec/r01/2026-06-01_1817_PIR_secure1/iteration_1/node_memory/Tree_0_1/followups/turn_001.md",
+          "result_state_summary": "pRHL / verification_residue / relational_program, 1 goal, goal 1024 chars",
+          "result_summary": "accepted commit",
+          "result_view_path": "artifacts/eval_suite/l1_l4_surface_ablation/l1_goal_projection/pir_secure1_exec/r01/2026-06-01_1817_PIR_secure1/iteration_1/node_memory/Tree_0_1/workspace_views/turn_001.json",
+          "turn": 1,
+          "view_chars": 734,
+          "view_id": "T0.1-1",
+          "workspace_view_path": "artifacts/eval_suite/l1_l4_surface_ablation/l1_goal_projection/pir_secure1_exec/r01/2026-06-01_1817_PIR_secure1/iteration_1/manager_bootstrap_0_1.json"
+        },
+        {
+          "action_submitted_at": "2026-06-02T01:19:08.705000+00:00",
+          "action_time": "+00:39",
+          "agent_think": "13.7 s",
+          "agent_think_path": "artifacts/eval_suite/l1_l4_surface_ablation/l1_goal_projection/pir_secure1_exec/r01/2026-06-01_1817_PIR_secure1/iteration_1/node_memory/Tree_0_1/thinking/turn_002.md",
+          "agent_think_seconds": 13.705,
+          "decision_followup_path": "artifacts/eval_suite/l1_l4_surface_ablation/l1_goal_projection/pir_secure1_exec/r01/2026-06-01_1817_PIR_secure1/iteration_1/node_memory/Tree_0_1/followups/turn_001.md",
+          "decision_state_summary": "pRHL / verification_residue / relational_program, 1 goal, goal 1024 chars",
+          "decision_view_path": "artifacts/eval_suite/l1_l4_surface_ablation/l1_goal_projection/pir_secure1_exec/r01/2026-06-01_1817_PIR_secure1/iteration_1/node_memory/Tree_0_1/workspace_views/turn_001.json",
+          "deterministic_signals": [
+            "commit_without_probe_check_not_inferred"
+          ],
+          "goal_chars": 1024,
+          "inspect_topics": [],
+          "intent": {
+            "intent": "commit_tactic",
+            "payload": {
+              "tactic": "while (={PIR.s, j})."
+            }
+          },
+          "intent_summary": "commit while (={PIR.s, j})",
+          "manager_action_summary": [
+            "tactic commit (295 ms)"
+          ],
+          "manager_result_at": "2026-06-02T01:19:09+00:00",
+          "manager_result_path": "artifacts/eval_suite/l1_l4_surface_ablation/l1_goal_projection/pir_secure1_exec/r01/2026-06-01_1817_PIR_secure1/iteration_1/node_memory/Tree_0_1/manager_results/turn_002.json",
+          "manager_seconds": 0.295,
+          "manager_time": "295 ms",
+          "node": "Tree-0.1",
+          "node_dir": "artifacts/eval_suite/l1_l4_surface_ablation/l1_goal_projection/pir_secure1_exec/r01/2026-06-01_1817_PIR_secure1/iteration_1/node_memory/Tree_0_1",
+          "ok": true,
+          "result_followup_path": "artifacts/eval_suite/l1_l4_surface_ablation/l1_goal_projection/pir_secure1_exec/r01/2026-06-01_1817_PIR_secure1/iteration_1/node_memory/Tree_0_1/followups/turn_002.md",
+          "result_state_summary": "pRHL / verification_residue / relational_program, 2 goals, goal 945 chars",
+          "result_summary": "accepted commit",
+          "result_view_path": "artifacts/eval_suite/l1_l4_surface_ablation/l1_goal_projection/pir_secure1_exec/r01/2026-06-01_1817_PIR_secure1/iteration_1/node_memory/Tree_0_1/workspace_views/turn_002.json",
+          "turn": 2,
+          "view_chars": 1908,
+          "view_id": "T0.1-2",
+          "workspace_view_path": "artifacts/eval_suite/l1_l4_surface_ablation/l1_goal_projection/pir_secure1_exec/r01/2026-06-01_1817_PIR_secure1/iteration_1/node_memory/Tree_0_1/workspace_views/turn_001.json"
+        },
+        {
+          "action_submitted_at": "2026-06-02T01:19:19.754000+00:00",
+          "action_time": "+00:50",
+          "agent_think": "10.8 s",
+          "agent_think_path": "artifacts/eval_suite/l1_l4_surface_ablation/l1_goal_projection/pir_secure1_exec/r01/2026-06-01_1817_PIR_secure1/iteration_1/node_memory/Tree_0_1/thinking/turn_003.md",
+          "agent_think_seconds": 10.754,
+          "decision_followup_path": "artifacts/eval_suite/l1_l4_surface_ablation/l1_goal_projection/pir_secure1_exec/r01/2026-06-01_1817_PIR_secure1/iteration_1/node_memory/Tree_0_1/followups/turn_002.md",
+          "decision_state_summary": "pRHL / verification_residue / relational_program, 2 goals, goal 945 chars",
+          "decision_view_path": "artifacts/eval_suite/l1_l4_surface_ablation/l1_goal_projection/pir_secure1_exec/r01/2026-06-01_1817_PIR_secure1/iteration_1/node_memory/Tree_0_1/workspace_views/turn_002.json",
+          "deterministic_signals": [
+            "commit_without_probe_check_not_inferred"
+          ],
+          "goal_chars": 945,
+          "inspect_topics": [],
+          "intent": {
+            "intent": "commit_tactic",
+            "payload": {
+              "tactic": "auto."
+            }
+          },
+          "intent_summary": "commit auto",
+          "manager_action_summary": [
+            "tactic commit (246 ms)"
+          ],
+          "manager_result_at": "2026-06-02T01:19:20+00:00",
+          "manager_result_path": "artifacts/eval_suite/l1_l4_surface_ablation/l1_goal_projection/pir_secure1_exec/r01/2026-06-01_1817_PIR_secure1/iteration_1/node_memory/Tree_0_1/manager_results/turn_003.json",
+          "manager_seconds": 0.246,
+          "manager_time": "246 ms",
+          "node": "Tree-0.1",
+          "node_dir": "artifacts/eval_suite/l1_l4_surface_ablation/l1_goal_projection/pir_secure1_exec/r01/2026-06-01_1817_PIR_secure1/iteration_1/node_memory/Tree_0_1",
+          "ok": true,
+          "result_followup_path": "artifacts/eval_suite/l1_l4_surface_ablation/l1_goal_projection/pir_secure1_exec/r01/2026-06-01_1817_PIR_secure1/iteration_1/node_memory/Tree_0_1/followups/turn_003.md",
+          "result_state_summary": "pRHL / verification_residue / relational_program, 1 goal, goal 589 chars",
+          "result_summary": "accepted commit",
+          "result_view_path": "artifacts/eval_suite/l1_l4_surface_ablation/l1_goal_projection/pir_secure1_exec/r01/2026-06-01_1817_PIR_secure1/iteration_1/node_memory/Tree_0_1/workspace_views/turn_003.json",
+          "turn": 3,
+          "view_chars": 1827,
+          "view_id": "T0.1-3",
+          "workspace_view_path": "artifacts/eval_suite/l1_l4_surface_ablation/l1_goal_projection/pir_secure1_exec/r01/2026-06-01_1817_PIR_secure1/iteration_1/node_memory/Tree_0_1/workspace_views/turn_002.json"
+        },
+        {
+          "action_submitted_at": "2026-06-02T01:19:25.770000+00:00",
+          "action_time": "+00:56",
+          "agent_think": "5.8 s",
+          "agent_think_path": "artifacts/eval_suite/l1_l4_surface_ablation/l1_goal_projection/pir_secure1_exec/r01/2026-06-01_1817_PIR_secure1/iteration_1/node_memory/Tree_0_1/thinking/turn_004.md",
+          "agent_think_seconds": 5.77,
+          "decision_followup_path": "artifacts/eval_suite/l1_l4_surface_ablation/l1_goal_projection/pir_secure1_exec/r01/2026-06-01_1817_PIR_secure1/iteration_1/node_memory/Tree_0_1/followups/turn_003.md",
+          "decision_state_summary": "pRHL / verification_residue / relational_program, 1 goal, goal 589 chars",
+          "decision_view_path": "artifacts/eval_suite/l1_l4_surface_ablation/l1_goal_projection/pir_secure1_exec/r01/2026-06-01_1817_PIR_secure1/iteration_1/node_memory/Tree_0_1/workspace_views/turn_003.json",
+          "deterministic_signals": [
+            "commit_without_probe_check_not_inferred"
+          ],
+          "goal_chars": 589,
+          "inspect_topics": [],
+          "intent": {
+            "intent": "commit_tactic",
+            "payload": {
+              "tactic": "auto."
+            }
+          },
+          "intent_summary": "commit auto",
+          "manager_action_summary": [
+            "tactic commit (230 ms)"
+          ],
+          "manager_result_at": "2026-06-02T01:19:26+00:00",
+          "manager_result_path": "artifacts/eval_suite/l1_l4_surface_ablation/l1_goal_projection/pir_secure1_exec/r01/2026-06-01_1817_PIR_secure1/iteration_1/node_memory/Tree_0_1/manager_results/turn_004.json",
+          "manager_seconds": 0.23,
+          "manager_time": "230 ms",
+          "node": "Tree-0.1",
+          "node_dir": "artifacts/eval_suite/l1_l4_surface_ablation/l1_goal_projection/pir_secure1_exec/r01/2026-06-01_1817_PIR_secure1/iteration_1/node_memory/Tree_0_1",
+          "ok": true,
+          "result_followup_path": "artifacts/eval_suite/l1_l4_surface_ablation/l1_goal_projection/pir_secure1_exec/r01/2026-06-01_1817_PIR_secure1/iteration_1/node_memory/Tree_0_1/followups/turn_004.md",
+          "result_state_summary": "ambient / closed_candidate, goal 25 chars",
+          "result_summary": "accepted commit",
+          "result_view_path": "artifacts/eval_suite/l1_l4_surface_ablation/l1_goal_projection/pir_secure1_exec/r01/2026-06-01_1817_PIR_secure1/iteration_1/node_memory/Tree_0_1/workspace_views/turn_004.json",
+          "turn": 4,
+          "view_chars": 1410,
+          "view_id": "T0.1-4",
+          "workspace_view_path": "artifacts/eval_suite/l1_l4_surface_ablation/l1_goal_projection/pir_secure1_exec/r01/2026-06-01_1817_PIR_secure1/iteration_1/node_memory/Tree_0_1/workspace_views/turn_003.json"
+        },
+        {
+          "action_submitted_at": "2026-06-02T01:19:29.789000+00:00",
+          "action_time": "+01:00",
+          "agent_think": "3.8 s",
+          "agent_think_path": "artifacts/eval_suite/l1_l4_surface_ablation/l1_goal_projection/pir_secure1_exec/r01/2026-06-01_1817_PIR_secure1/iteration_1/node_memory/Tree_0_1/thinking/turn_005.md",
+          "agent_think_seconds": 3.789,
+          "decision_followup_path": "artifacts/eval_suite/l1_l4_surface_ablation/l1_goal_projection/pir_secure1_exec/r01/2026-06-01_1817_PIR_secure1/iteration_1/node_memory/Tree_0_1/followups/turn_004.md",
+          "decision_state_summary": "ambient / closed_candidate, goal 25 chars",
+          "decision_view_path": "artifacts/eval_suite/l1_l4_surface_ablation/l1_goal_projection/pir_secure1_exec/r01/2026-06-01_1817_PIR_secure1/iteration_1/node_memory/Tree_0_1/workspace_views/turn_004.json",
+          "deterministic_signals": [
+            "commit_without_probe_check_not_inferred"
+          ],
+          "goal_chars": 25,
+          "inspect_topics": [],
+          "intent": {
+            "intent": "commit_tactic",
+            "payload": {
+              "tactic": "qed."
+            }
+          },
+          "intent_summary": "commit qed",
+          "manager_action_summary": [
+            "tactic commit (211 ms)"
+          ],
+          "manager_result_at": "2026-06-02T01:19:30+00:00",
+          "manager_result_path": "artifacts/eval_suite/l1_l4_surface_ablation/l1_goal_projection/pir_secure1_exec/r01/2026-06-01_1817_PIR_secure1/iteration_1/node_memory/Tree_0_1/manager_results/turn_005.json",
+          "manager_seconds": 0.211,
+          "manager_time": "211 ms",
+          "node": "Tree-0.1",
+          "node_dir": "artifacts/eval_suite/l1_l4_surface_ablation/l1_goal_projection/pir_secure1_exec/r01/2026-06-01_1817_PIR_secure1/iteration_1/node_memory/Tree_0_1",
+          "ok": true,
+          "result_followup_path": "artifacts/eval_suite/l1_l4_surface_ablation/l1_goal_projection/pir_secure1_exec/r01/2026-06-01_1817_PIR_secure1/iteration_1/node_memory/Tree_0_1/followups/turn_005.md",
+          "result_state_summary": "complete / unknown / closed_candidate, 0 goals, goal 11 chars",
+          "result_summary": "accepted commit",
+          "result_view_path": "artifacts/eval_suite/l1_l4_surface_ablation/l1_goal_projection/pir_secure1_exec/r01/2026-06-01_1817_PIR_secure1/iteration_1/node_memory/Tree_0_1/workspace_views/turn_005.json",
+          "turn": 5,
+          "view_chars": 795,
+          "view_id": "T0.1-5",
+          "workspace_view_path": "artifacts/eval_suite/l1_l4_surface_ablation/l1_goal_projection/pir_secure1_exec/r01/2026-06-01_1817_PIR_secure1/iteration_1/node_memory/Tree_0_1/workspace_views/turn_004.json"
+        },
+        {
+          "action_submitted_at": "2026-06-02T01:19:33+00:00",
+          "action_time": "+01:04",
+          "agent_think": "3 s",
+          "agent_think_path": "",
+          "agent_think_seconds": 3.0,
+          "decision_followup_path": "artifacts/eval_suite/l1_l4_surface_ablation/l1_goal_projection/pir_secure1_exec/r01/2026-06-01_1817_PIR_secure1/iteration_1/node_memory/Tree_0_1/followups/turn_005.md",
+          "decision_state_summary": "complete / unknown / closed_candidate, 0 goals, goal 11 chars",
+          "decision_view_path": "artifacts/eval_suite/l1_l4_surface_ablation/l1_goal_projection/pir_secure1_exec/r01/2026-06-01_1817_PIR_secure1/iteration_1/node_memory/Tree_0_1/workspace_views/turn_005.json",
+          "deterministic_signals": [],
+          "goal_chars": 11,
+          "inspect_topics": [],
+          "intent": {
+            "intent": "finish"
+          },
+          "intent_summary": "finish",
+          "manager_action_summary": [
+            "finish"
+          ],
+          "manager_result_at": "2026-06-02T01:19:33+00:00",
+          "manager_result_path": "artifacts/eval_suite/l1_l4_surface_ablation/l1_goal_projection/pir_secure1_exec/r01/2026-06-01_1817_PIR_secure1/iteration_1/node_memory/Tree_0_1/manager_results/turn_006.json",
+          "manager_seconds": 0.0,
+          "manager_time": "",
+          "node": "Tree-0.1",
+          "node_dir": "artifacts/eval_suite/l1_l4_surface_ablation/l1_goal_projection/pir_secure1_exec/r01/2026-06-01_1817_PIR_secure1/iteration_1/node_memory/Tree_0_1",
+          "ok": true,
+          "result_followup_path": "artifacts/eval_suite/l1_l4_surface_ablation/l1_goal_projection/pir_secure1_exec/r01/2026-06-01_1817_PIR_secure1/iteration_1/node_memory/Tree_0_1/followups/turn_006.md",
+          "result_state_summary": "complete / unknown / closed_candidate, 0 goals, goal 11 chars",
+          "result_summary": "finish requested",
+          "result_view_path": "artifacts/eval_suite/l1_l4_surface_ablation/l1_goal_projection/pir_secure1_exec/r01/2026-06-01_1817_PIR_secure1/iteration_1/node_memory/Tree_0_1/workspace_views/turn_006.json",
+          "turn": 6,
+          "view_chars": 779,
+          "view_id": "T0.1-6",
+          "workspace_view_path": "artifacts/eval_suite/l1_l4_surface_ablation/l1_goal_projection/pir_secure1_exec/r01/2026-06-01_1817_PIR_secure1/iteration_1/node_memory/Tree_0_1/workspace_views/turn_005.json"
+        }
+      ],
+      "run_dir": "artifacts/eval_suite/l1_l4_surface_ablation/l1_goal_projection/pir_secure1_exec/r01/2026-06-01_1817_PIR_secure1/iteration_1",
+      "turn_count": 9
+    }
+  ],
+  "schema_version": 1
+}

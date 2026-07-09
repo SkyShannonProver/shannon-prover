@@ -1,0 +1,2020 @@
+{
+  "description": "Generic proof-strategy KB. Entries describe reusable goal shapes, decision criteria, and tactic categories; concrete lemma proof scripts and examples are not stored here.",
+  "how_to_use": [
+    "Use strategies for roadmap-level decomposition only.",
+    "Match patterns by structural_description and indicators, then instantiate from the live EasyCrypt goal.",
+    "Use typical_tactics and reasoning_hints as generic guidance, not as a stored proof script.",
+    "Use ec_syntax and ec_tactics for tactic syntax and failure diagnosis."
+  ],
+  "strategies": [
+    {
+      "id": "ind_cpa_ddh",
+      "crypto_type": "security_reduction",
+      "description": "IND chosen-plaintext security via DDH reduction: embed <G_real> inside <assumption_game>0, extract an intermediate game <G_mid> with a uniform mask, show Pr[<G_mid>]=1/2, then combine the bounds.",
+      "slot_semantics": {
+        "<G_real>": "the concrete IND chosen-plaintext game module",
+        "<G_mid>": "the intermediate game whose ciphertext uses a uniformly independent mask (induced by the <assumption_game>1 form)",
+        "<assumption_game>": "the hardness-assumption experiment family (DDH0 / DDH1)",
+        "<A>": "the IND chosen-plaintext adversary (schematic module)",
+        "<reduction>": "the constructed reduction module wrapping <A> to attack <assumption_game>",
+        "<scheme>": "the encryption-scheme module",
+        "<challenge_bit>": "the uniformly sampled challenge bit variable inside <G_mid>"
+      },
+      "phases": [
+        {
+          "goal": "Pr[<G_real> @ &m : res] = Pr[<assumption_game>0(<reduction>(A)) @ &m : res]",
+          "goal_shape_ref": "pr_eq",
+          "phase": 1
+        },
+        {
+          "goal": "Pr[<assumption_game>1(<reduction>(A)) @ &m : res] = Pr[<G_mid> @ &m : res]",
+          "goal_shape_ref": "pr_eq",
+          "phase": 2
+        },
+        {
+          "goal": "Pr[<G_mid> @ &m : res] = 1/2",
+          "goal_shape_ref": "pr_half",
+          "phase": 3
+        },
+        {
+          "goal": "`|Pr[<G_real> @ &m : res] - 1/2| <= |Pr[<assumption_game>0(<reduction>(A)) @ &m : res] - Pr[<assumption_game>1(<reduction>(A)) @ &m : res]|`",
+          "goal_shape_ref": "bound_ineq",
+          "phase": 4
+        }
+      ],
+      "source": {
+        "derived_from": "trace_analysis"
+      }
+    },
+    {
+      "id": "ind_cca_game_hop",
+      "crypto_type": "security_reduction",
+      "description": "IND chosen-ciphertext security via a hardness-assumption reduction with game-hopping: embed <G_real> inside <assumption_game>0, chain intermediate games <G_mid>_i with bad events, and bound the adversary advantage. Generalizes to any chosen-ciphertext-secure scheme reduced to a hardness assumption via game hops.",
+      "slot_semantics": {
+        "<G_real>": "the concrete IND chosen-ciphertext game module",
+        "<G_mid>": "family of intermediate games (G1, G2, ...) used as way-stations in the hop chain",
+        "<assumption_game>": "the hardness-assumption experiment family with variants 0/1 (e.g. DDH0_ex / DDH1_ex)",
+        "<A>": "the IND chosen-ciphertext adversary (schematic module)",
+        "<A_neg>": "the adversary variant that returns the negation of A's guess (used to remove the 1/2)",
+        "<scheme>": "the encryption-scheme module under attack",
+        "<reduction>": "the reduction module wrapping <A> to attack <assumption_game>",
+        "<shared_state>": "the set of ghost variables shared by both sides inside the oracle (e.g. the decryption log, the target ciphertext, and the secret key)",
+        "<oracle_equiv_lemma>": "a pre-proved local equiv lemma that the 2-arg call uses to discharge oracle subgoals",
+        "<bad_var>": "the boolean bad-event variable tracked by the instrumented game",
+        "<Inv>": "the full-state invariant preserved by both oracles outside the bad branch",
+        "<bound>": "the concrete probability bound on the bad event (e.g. q_dec/|order|)",
+        "<reparam_pair>": "a pair of samplings that must be coupled via an interleaved swap -1; rnd (bij); rnd; wp sequence because one variable is an affine function of the other",
+        "<tcr_bound>": "the advantage bound of the auxiliary assumption used in the final theorem (e.g. target-collision-resistance)",
+        "<starting_lemma>": "auxiliary inequality lemma instantiated with `&m` that the final have-chain starts from (e.g., an `aux1 &m` bounding Pr[<G_real>] by an intermediate-game Pr-term plus a constant)",
+        "<prog_0>": "the full Pr-bracket program term `Module.method() @ &m` on the LHS of the first hop's rewrite",
+        "<prog_1>": "the full Pr-bracket program term that is both the RHS of the first hop and the LHS of the second",
+        "<prog_2>": "the full Pr-bracket program term on the RHS of the second hop",
+        "<event>": "the common event expression carried across hops (typically `res` or `res \\/ <bad_var>`)",
+        "<hop_lemma_1>": "the byequiv lemma name discharging the first game-hop rewrite",
+        "<hop_lemma_2>": "the byequiv lemma name discharging the second game-hop rewrite"
+      },
+      "variants": [
+        {
+          "name": "have_chain_final_assembly",
+          "conditions": "A family of per-hop byequiv lemmas has been pre-proved (each discharging one game-hop's `Pr[<prog_i> : <event>] = Pr[<prog_{i+1}> : <event>]`), together with an auxiliary inequality lemma `<starting_lemma>` providing the initial bound. The top-level theorem is assembled as a flat `have`-chain that instantiates `<starting_lemma>` and successively rewrites the intermediate Pr-term through the pre-proved hops (`+ by byequiv <hop_lemma_i>`), accumulating side-bounds, finishing with `smt (mu_bounded)`. Applies when the variant-reduction proof is structured as many small lemmas rather than one long byequiv.",
+          "phases": [
+            {
+              "goal": "equiv [<G_real> ~ <assumption_game>0(<reduction>(A)) : ={glob A} ==> ={res}]",
+              "goal_shape_ref": "pr_eq",
+              "phase": 1
+            },
+            {
+              "goal": "equiv [<assumption_game>1(<reduction>(A)) ~ <G_mid> : ={glob A} ==> ={res}] (with bad-event tracking)",
+              "goal_shape_ref": "pr_eq",
+              "phase": 2
+            },
+            {
+              "goal": "Chain <G_mid>_1 -> <G_mid>_2 -> ... -> <G_mid>_final of intermediate games",
+              "goal_shape_ref": "pr_eq",
+              "phase": 3
+            },
+            {
+              "goal": "Pr[<G_mid>_final @ &m : <bad_var>] <= <bound>",
+              "goal_shape_ref": "bound_ineq",
+              "phase": 4
+            },
+            {
+              "goal": "Negated-adversary bridge: Pr[<G_real>(A) @ &m : res] = 1 - Pr[<G_real>(<A_neg>) @ &m : res]",
+              "goal_shape_ref": "pr_eq",
+              "phase": 5
+            },
+            {
+              "goal": "`|Pr[<G_real> @ &m : res] - 1/2| <= |Pr[<assumption_game>0(<reduction>(A)) @ &m : res] - Pr[<assumption_game>1(<reduction>(A)) @ &m : res]| + <tcr_bound> + <bound>`",
+              "goal_shape_ref": "bound_ineq",
+              "phase": 6
+            }
+          ]
+        }
+      ],
+      "phases": [
+        {
+          "goal": "equiv [<G_real> ~ <assumption_game>0(<reduction>(A)) : ={glob A} ==> ={res}]",
+          "goal_shape_ref": "pr_eq",
+          "phase": 1
+        },
+        {
+          "goal": "equiv [<assumption_game>1(<reduction>(A)) ~ <G_mid> : ={glob A} ==> ={res}] (with bad-event tracking)",
+          "goal_shape_ref": "pr_eq",
+          "phase": 2
+        },
+        {
+          "goal": "Chain <G_mid>_1 -> <G_mid>_2 -> ... -> <G_mid>_final of intermediate games",
+          "goal_shape_ref": "pr_eq",
+          "phase": 3
+        },
+        {
+          "goal": "Pr[<G_mid>_final @ &m : <bad_var>] <= <bound>",
+          "goal_shape_ref": "bound_ineq",
+          "phase": 4
+        },
+        {
+          "goal": "Negated-adversary bridge: Pr[<G_real>(A) @ &m : res] = 1 - Pr[<G_real>(<A_neg>) @ &m : res]",
+          "goal_shape_ref": "pr_eq",
+          "phase": 5
+        },
+        {
+          "goal": "`|Pr[<G_real> @ &m : res] - 1/2| <= |Pr[<assumption_game>0(<reduction>(A)) @ &m : res] - Pr[<assumption_game>1(<reduction>(A)) @ &m : res]| + <tcr_bound> + <bound>`",
+          "goal_shape_ref": "bound_ineq",
+          "phase": 6
+        }
+      ],
+      "source": {
+        "derived_from": "experiment_analysis"
+      }
+    },
+    {
+      "id": "correctness_scheme",
+      "crypto_type": "correctness",
+      "description": "Prove <op_dec>(<op_enc>(m)) = m for an encryption or commitment scheme",
+      "slot_semantics": {
+        "<scheme>": "the scheme module (e.g. <scheme>, <scheme>)",
+        "<correctness_game>": "the correctness game functor applied to the scheme",
+        "<op_enc>": "the encrypt procedure on the scheme",
+        "<op_dec>": "the decrypt procedure on the scheme"
+      },
+      "phases": [
+        {
+          "goal": "hoare or byphoare: <correctness_game>.main : true ==> res",
+          "goal_shape_ref": "hoare",
+          "phase": 1
+        }
+      ],
+      "source": {
+        "derived_from": "trace_analysis"
+      }
+    },
+    {
+      "id": "perfect_hiding",
+      "crypto_type": "hiding",
+      "description": "Perfect hiding for a commitment scheme: commitment reveals no information about the message",
+      "slot_semantics": {
+        "<hiding_lemma>": "the top-level perfect-hiding lemma that composes the two intermediate bounds",
+        "<pr_eq_lemma>": "the intermediate lemma showing Pr[Real(A)] = Pr[Ideal(A)]",
+        "<pr_half_lemma>": "the intermediate lemma showing Pr[Ideal(A)] = 1/2"
+      },
+      "phases": [
+        {
+          "goal": "Pr[Real(A)] = Pr[Ideal(A)] -- real and ideal games are equivalent",
+          "goal_shape_ref": "pr_eq",
+          "phase": 1
+        },
+        {
+          "goal": "Pr[Ideal(A)] = 1/2 -- ideal game is a coin flip",
+          "goal_shape_ref": "pr_half",
+          "phase": 2
+        },
+        {
+          "goal": "<hiding_lemma>: combine the two previous bounds",
+          "goal_shape_ref": "bound_ineq",
+          "phase": 3
+        }
+      ],
+      "source": {
+        "derived_from": "trace_analysis"
+      }
+    },
+    {
+      "id": "computational_binding",
+      "crypto_type": "binding",
+      "description": "Computational binding: extracting a discrete log witness from a binding break",
+      "phases": [
+        {
+          "goal": "Pr[Binding(A)] <= Pr[DLog(Red(A))]",
+          "goal_shape_ref": "pr_eq",
+          "phase": 1
+        },
+        {
+          "goal": "algebraic extraction: from two openings (m,d) and (m',d') with m!=m', extract x = (d-d')/(m'-m)",
+          "goal_shape_ref": "hoare",
+          "phase": 2
+        }
+      ],
+      "source": {
+        "derived_from": "trace_analysis"
+      }
+    },
+    {
+      "id": "sigma_protocol",
+      "crypto_type": "sigma_protocol",
+      "description": "Sigma protocol verification: completeness, special soundness, and SHVZK",
+      "phases": [
+        {
+          "goal": "completeness_ll: islossless Completeness(Sigma).main",
+          "goal_shape_ref": "lossless",
+          "phase": 1
+        },
+        {
+          "goal": "completeness: R h w => Pr[Completeness : res] = 1",
+          "goal_shape_ref": "pr_half",
+          "phase": 2
+        },
+        {
+          "goal": "special_soundness: extract witness from two transcripts",
+          "goal_shape_ref": "hoare",
+          "phase": 3
+        },
+        {
+          "goal": "shvzk: Pr[gameIdeal] = Pr[gameReal]",
+          "goal_shape_ref": "pr_eq",
+          "phase": 4
+        }
+      ],
+      "source": {
+        "derived_from": "trace_analysis"
+      }
+    },
+    {
+      "id": "game_hop_chain",
+      "crypto_type": "security_reduction",
+      "description": "Game-hopping security proof: chain of intermediate games with bounds at each hop",
+      "phases": [
+        {
+          "goal": "For each hop: Pr[G_i] = Pr[G_{i+1}] or |Pr[G_i] - Pr[G_{i+1}]| <= bound_i",
+          "goal_shape_ref": "pr_eq",
+          "phase": 1
+        },
+        {
+          "goal": "Combine all hops: have h0 := hop0 &m; have h1 := hop1 &m; ...; smt()",
+          "goal_shape_ref": "bound_ineq",
+          "phase": 2
+        }
+      ],
+      "source": {
+        "derived_from": "trace_analysis"
+      }
+    },
+    {
+      "id": "uniformity_proof",
+      "crypto_type": "uniformity",
+      "description": "Prove that a program output is uniformly distributed over a set",
+      "phases": [
+        {
+          "goal": "Pr[M : output = x] = f(x) for all x -- compute the exact distribution",
+          "goal_shape_ref": "pr_distr",
+          "phase": 1
+        },
+        {
+          "goal": "equiv: output distributions are identical for different inputs",
+          "goal_shape_ref": "pr_eq",
+          "phase": 2
+        }
+      ],
+      "source": {
+        "derived_from": "trace_analysis"
+      }
+    },
+    {
+      "id": "pir_correctness",
+      "crypto_type": "correctness",
+      "description": "<scheme>-correctness via lossless + hoare while loop with XOR invariant",
+      "slot_semantics": {
+        "<scheme>": "the scheme module (e.g. <program>)",
+        "<main_proc>": "the main procedure of <scheme> (usually main)",
+        "<loop_inv>": "the loop invariant predicate (typically an XOR identity over big sums)",
+        "<loop_bounds>": "side conjuncts on the loop counter(s), e.g. 0 <= j <= N",
+        "<loop_variant>": "the variant expression that strictly decreases (e.g. N - j)"
+      },
+      "phases": [
+        {
+          "goal": "islossless <scheme>.<main_proc>",
+          "goal_shape_ref": "lossless",
+          "phase": 1
+        },
+        {
+          "goal": "hoare: <scheme>.<main_proc> : arg = i0 ==> res = a(i0)",
+          "goal_shape_ref": "hoare",
+          "phase": 2
+        },
+        {
+          "goal": "Pr[<scheme>.<main_proc>(i0) @ &m : res = a(i0)] = 1%r",
+          "goal_shape_ref": "pr_eq",
+          "phase": 3
+        }
+      ],
+      "source": {
+        "derived_from": "trace_analysis"
+      }
+    },
+    {
+      "id": "adversary_negation",
+      "crypto_type": "structural",
+      "description": "Prove Pr[<G_real>(<A_neg>) @ &m : res] = 1 - Pr[<G_real>(A) @ &m : res] where <A_neg> negates A's guess output. Split into byequiv + rewrite Pr[mu_not] + losslessness.",
+      "slot_semantics": {
+        "<G_real>": "the security experiment game module parameterized by the adversary",
+        "<A_neg>": "the adversary wrapper that runs A and returns the negation of A's guess",
+        "<oracle_state>": "the set of ghost variables representing the oracle's shared state (identical on both sides)",
+        "<A_ll>": "the losslessness axiom/lemma for the abstract adversary procedure"
+      },
+      "phases": [
+        {
+          "goal": "Pr[<G_real>(<A_neg>) @ &m : res] = Pr[<G_real>(A) @ &m : !res]",
+          "goal_shape_ref": "pr_eq",
+          "phase": 1
+        },
+        {
+          "goal": "Pr[<G_real>(A) @ &m : !res] = 1 - Pr[<G_real>(A) @ &m : res]",
+          "goal_shape_ref": "pr_eq",
+          "phase": 2
+        },
+        {
+          "goal": "Pr[<G_real>(A) @ &m : true] = 1",
+          "goal_shape_ref": "lossless",
+          "phase": 3
+        }
+      ],
+      "source": {
+        "derived_from": "trace_analysis"
+      }
+    }
+  ],
+  "ec_syntax": [
+    {
+      "id": "pr_mu_not",
+      "description": "Rewrite Pr[M @ &m : !E] to Pr[M @ &m : true] - Pr[M @ &m : E]",
+      "syntax": "rewrite Pr [mu_not]",
+      "requires": "Losslessness proof to simplify Pr[M : true] = 1",
+      "source": {
+        "derived_from": "trace_analysis"
+      }
+    },
+    {
+      "id": "pr_mu_eq",
+      "description": "Rewrite Pr[M @ &m : E = true] to Pr[M @ &m : E] (remove trivial = true)",
+      "syntax": "Various approaches: /= or rewrite eqT or congr",
+      "requires": "Goal has (E = true) or (E = false) inside Pr",
+      "source": {
+        "derived_from": "trace_analysis"
+      }
+    },
+    {
+      "id": "swap_syntax",
+      "description": "Reorder program statements in pRHL goals",
+      "syntax": "swap{side} pos offset -- moves statement at <pos> forward by <offset> positions on <side> (1=left, 2=right). Also: swap{side} [from..to] offset for ranges.",
+      "requires": "Statements must be independent (no read/write dependency). Read the goal state to count statement positions.",
+      "error_fix": "Check which variable is read/written. Try swapping on the other side ({2} instead of {1}), or use seq to split the program at a safe point.",
+      "source": {
+        "derived_from": "trace_analysis"
+      }
+    },
+    {
+      "id": "rnd_one_sided",
+      "description": "Discard an extra sampling on one side of a byequiv",
+      "syntax": "rnd{1} or rnd{2}",
+      "requires": "One side has a sampling that the other doesn't",
+      "source": {
+        "derived_from": "trace_analysis"
+      }
+    },
+    {
+      "id": "conseq_split_lossless_hoare",
+      "description": "Split a phoare goal into losslessness + hoare, then combine",
+      "syntax": "have Hll : islossless M.proc. ... have Hh : hoare [...]. ... by conseq Hll Hh.",
+      "requires": "A phoare goal that is easier to prove as separate lossless + functional correctness. CRITICAL: Hll must be an `islossless M.proc` pHL judgment, NOT a `Pr[M.proc @ &m : true] = 1%r` probability bound. These look similar but are different types. Using a Pr bound as Hll causes: 'do not know how to combine hoareF and _ and _ into phoareF'.",
+      "source": {
+        "derived_from": "trace_analysis"
+      }
+    },
+    {
+      "id": "rcondt_rcondf",
+      "description": "Force a conditional branch in a program to take the true or false path",
+      "syntax": "rcondt{side} pos -- force the if-then-else at statement <pos> to take the true branch (generates a sub-goal to prove the condition is true). rcondf for the false branch.",
+      "requires": "A pRHL goal with an if-then-else. Read the goal state to find which statement position the conditional is at.",
+      "source": {
+        "derived_from": "trace_analysis"
+      }
+    },
+    {
+      "id": "seq_split",
+      "description": "Split a pRHL goal at specific program positions",
+      "syntax": "seq left_count right_count : (intermediate_condition). -- splits the pRHL proof at a program point, proving the first <left_count> statements on the left match the first <right_count> on the right.",
+      "requires": "When call or sim can't handle the full program -- split into two parts. Read the goal state to count statements on each side.",
+      "source": {
+        "derived_from": "trace_analysis"
+      }
+    },
+    {
+      "id": "mulrK_field_division",
+      "description": "Cancel multiplication to perform field division in exponent algebra",
+      "syntax": "GP.ZModE.ZModpField.mulrK or ZPF.mulrK",
+      "requires": "A goal of the form x * y / y = x or equivalent in a ZModField",
+      "source": {
+        "derived_from": "trace_analysis"
+      }
+    },
+    {
+      "id": "islossless_tactic",
+      "description": "One-shot tactic to prove islossless goals. Handles proc + inline + rnd predT chain automatically.",
+      "syntax": "islossless",
+      "requires": "Goal must be an islossless judgment. All distributions must be lossless.",
+      "source": {
+        "derived_from": "external_analysis"
+      }
+    },
+    {
+      "id": "algebra_ring_tactic",
+      "description": "Close group/ring/field equalities without smt hints",
+      "syntax": "algebra or ring or field",
+      "requires": "Goal is a polynomial equality in a ring or field (group exponents, ZModField, etc.)",
+      "source": {
+        "derived_from": "external_analysis"
+      }
+    },
+    {
+      "id": "crush_closer",
+      "description": "Close trivial arithmetic/logic goals with /# (crush)",
+      "syntax": "/#",
+      "requires": "Goal is a trivial arithmetic or logic obligation (e.g., after byequiv => //)",
+      "source": {
+        "derived_from": "external_analysis"
+      }
+    },
+    {
+      "id": "mu_mem_le_mu1",
+      "description": "Bound probability of membership: Pr[x in L] <= |L| * max_mu1",
+      "syntax": "apply (ler_trans ((size l)%r * r)). + by apply mu_mem_le_mu1. apply ler_wpmul2r; smt(mu_bounded). by apply le_fromint.",
+      "requires": "Goal is a probability bound involving set membership and distribution weight",
+      "source": {
+        "derived_from": "external_analysis"
+      }
+    },
+    {
+      "id": "pre_reference",
+      "description": "Reference current precondition in seq/while conditions with #pre",
+      "syntax": "#pre",
+      "requires": "Inside a seq or while condition where you want to extend the current precondition",
+      "source": {
+        "derived_from": "external_analysis"
+      }
+    },
+    {
+      "id": "section_export_module_params",
+      "description": "When a lemma is exported from a section with a module declaration (e.g., `declare module A : Adv`), applying it outside the section may fail with 'cannot infer module arguments'.",
+      "syntax": "apply (lemma_name Module). -- pass the module explicitly",
+      "requires": "Error: 'cannot infer module arguments' when applying a section-exported lemma",
+      "source": {
+        "derived_from": "experiment_analysis"
+      }
+    },
+    {
+      "id": "clone_renamed_lemmas",
+      "description": "After `clone Theory as Alias`, lemma names from Theory are renamed under the Alias prefix. The original names are no longer in scope. CRITICAL: when unqualified names are used in `rewrite !name`, EC silently makes zero rewrites (no error, no progress) rather than reporting an error.",
+      "syntax": "Alias.lemma_name",
+      "requires": "Error: 'unknown identifier' when using a lemma from a cloned theory; OR `rewrite !name` succeeds without changing the goal (silent zero-rewrite).",
+      "source": {
+        "derived_from": "experiment_analysis"
+      }
+    },
+    {
+      "id": "algebra_tactic",
+      "description": "Close group/field exponent equalities in one shot. Handles expressions like g^a^b = g^(a*b), g^a * g^b = g^(a+b), and complex multi-variable group algebra.",
+      "syntax": "algebra",
+      "requires": "Goal is a group/ring/field equality over exponents (ZModField). Works on goals left by `auto => />` in equiv proofs.",
+      "source": {
+        "derived_from": "experiment_analysis"
+      }
+    },
+    {
+      "id": "group_algebra_normalization",
+      "description": "Normalize group exponent expressions using logarithm bijection and ring arithmetic. Converts nested exponentiation (g^a^b, (g^a * g^b)^c) to flat form (g^(a*b), g^(a*c + b*c)).",
+      "syntax": "have -> : <nested_group_expr> = <flat_group_expr> by rewrite log_bij !(logg1, logrzM, logDr); ring.",
+      "requires": "Goal contains group expressions with nested exponentiation that need to be shown equal. Common after `auto => />` in byequiv proofs.",
+      "source": {
+        "derived_from": "experiment_analysis"
+      }
+    },
+    {
+      "id": "eq_iff_boolean_symmetry",
+      "description": "Close goals of the form (a = b) = (b = a) using eq_iff.",
+      "syntax": "rewrite eq_iff",
+      "requires": "Goal has a boolean equality with swapped sides, typically after `do !split` in an equiv postcondition.",
+      "source": {
+        "derived_from": "experiment_analysis"
+      }
+    },
+    {
+      "id": "oracle_equiv_shared_state",
+      "description": "Prove oracle equivalence in byequiv proofs. THREE forms depending on context: (A) identical oracle with shared state, (B) oracle with bad-event tracking and a local equiv lemma, (C) oracle with bad-event tracking proved inline.",
+      "syntax": "(A) call (_: ={state}). + by sim.\n(B) call (_: bad_var, Inv). + by apply local_lemma.\n(C) call (_: bad_var, Inv). + by proc; inline *; auto => />; ...",
+      "requires": "A byequiv goal with adversary/oracle calls on both sides.",
+      "source": {
+        "derived_from": "experiment_analysis"
+      }
+    },
+    {
+      "id": "call_bad_event_2arg_vs_3arg",
+      "description": "The `call` tactic with bad-event coupling has a 2-argument and 3-argument form. They generate DIFFERENT oracle subgoals with different module path handling. Using the wrong form causes `apply` to fail.",
+      "syntax": "2-arg: call (_: bad_var, Inv).\n3-arg: call (_: bad_var, Inv, frame).",
+      "requires": "A byequiv goal with adversary/oracle call and bad-event tracking.",
+      "source": {
+        "derived_from": "experiment_analysis"
+      }
+    },
+    {
+      "id": "interleaved_sampling_coupling",
+      "description": "Coupling for reparameterized samplings in game hops. When one game samples (x1, x2) directly and the other computes x1 = x - w*x2, use interleaved swap/rnd/wp per variable pair instead of auto.",
+      "syntax": "swap -1. rnd (fun z => z + G1.w{2} * G1.x2{2}) (fun z => z - G1.w{2} * G1.x2{2}). rnd. wp.",
+      "requires": "A pRHL goal where one side has reparameterized samplings (e.g., G1 computes G1.x1 = G1.x - w*G1.x2 after sampling G1.x and G1.x2 independently).",
+      "source": {
+        "derived_from": "experiment_analysis"
+      }
+    },
+    {
+      "id": "rnd_variable_scoping",
+      "description": "In pRHL `rnd (f) (g)` bijection functions, any variable reference is safe as long as the referenced variable is still in the program (not yet consumed by rnd) when the rnd executes. Both {1} locals and {2} module globals work. The danger is referencing a variable that has ALREADY been consumed by a previous rnd — it becomes a free variable separate from the quantified coupling variable.",
+      "syntax": "SAFE: rnd (fun z => z + G1.w{2} * G1.z2{2}) ...  (* G1.z2 still in program *)\nSAFE: rnd (fun z => z + G1.w{2} * z2{1}) ...    (* z2 still in program *)\nSAFE: rnd (fun z => z / x{1}) ...                (* x still in program *)\nUNSAFE: rnd coupled z2 first, THEN rnd (fun z => z + w * z2{1}) ... (* z2{1} already consumed *)",
+      "requires": "A pRHL rnd with bijection where the bijection function references other program variables.",
+      "error_fix": "Use `swap -1` before the bijection rnd to ensure the referenced variable is still alive. See swap_minus_one_idiom.",
+      "source": {
+        "derived_from": "experiment_analysis"
+      }
+    },
+    {
+      "id": "swap_minus_one_idiom",
+      "description": "The `swap -1` idiom for reparameterized sampling coupling. Before each bijection rnd, use `swap -1` to swap the last two left-side samplings so the bijection variable (z1) is below the identity variable (z2). This is simpler than computing absolute swap positions.",
+      "syntax": "swap -1; rnd (bijection); rnd; wp.",
+      "requires": "A pRHL goal where the last two left-side samplings are a variable pair (e.g., z1 then z2) that need coupled with a reparameterized pair on the right (G1.z then G1.z2).",
+      "source": {
+        "derived_from": "experiment_analysis"
+      }
+    },
+    {
+      "id": "split_on_boolean_conjunction",
+      "description": "The `split` tactic behaves differently on Prop-level `/\\` vs boolean `&&`. On `&&`, `split` alone silently does nothing (no error, no effect). Use `split => [intro1 | intro2]` with intro patterns to decompose `&&`.",
+      "syntax": "split => [? _ | eqName]; 1: by field.",
+      "requires": "Goal contains a boolean `&&` conjunction, typically after `auto =>` in pRHL postcondition closure.",
+      "source": {
+        "derived_from": "experiment_analysis"
+      }
+    },
+    {
+      "id": "rewrite_pred1_for_field",
+      "description": "The `field` tactic needs an explicit `x <> zero` hypothesis. After `supp_dexcepted`, the non-zero condition is in the form `! pred1 zero x` which `field` cannot use. Use `rewrite /pred1` to unfold it.",
+      "syntax": "rewrite /pred1 => -[] InxL HxL.",
+      "requires": "A hypothesis like `(xL \\in dt) /\\ ! pred1 zero xL` in context, typically produced by `move: H => /supp_dexcepted.` after a `dt \\ pred1 zero` sampling.",
+      "source": {
+        "derived_from": "experiment_analysis"
+      }
+    },
+    {
+      "id": "negP_inductive_negation",
+      "description": "Convert boolean negation `!P args` into propositional form `P args -> false` using `apply/negP`, enabling introduction and case analysis on an inductively-defined predicate P. The pattern `apply/negP. move=> h. case: h.` is the canonical idiom for destructuring a negated inductive predicate.",
+      "syntax": "apply/negP. move=> h_bad. case: h_bad.",
+      "requires": "Goal is `! P args` where P is an inductively-defined predicate (declared with `inductive`). Cannot directly introduce or case-split on `! P` without converting to propositional form first.",
+      "source": {
+        "derived_from": "trace_analysis"
+      }
+    },
+    {
+      "id": "case_vs_elim_inductive",
+      "description": "Use `case: h.` (not `elim: h.`) to perform case analysis on a hypothesis `h: P args` where P is an inductively-defined predicate. `elim: h.` fails with '[error] don't know what to eliminate' because `elim:` is for structural induction on inductive TYPES (nat, list), not predicates defined with `inductive`.",
+      "syntax": "case: h_bad.    (* correct: opens one subgoal per constructor *)\nelim: h_bad.    (* WRONG: '[error] don't know what to eliminate' *)",
+      "requires": "Hypothesis `h: P args` where P is defined with the `inductive` keyword (e.g., `inductive Bad logP m = | Cycle of ... | Collision of ...`). After `apply/negP. move=> h_bad.`, use `case: h_bad.` to split on constructors.",
+      "source": {
+        "derived_from": "trace_analysis"
+      }
+    },
+    {
+      "id": "boolean_case_no_hypothesis_intro",
+      "description": "When case-splitting on a boolean expression with `case: (bool_expr)`, no new named hypothesis is produced — the boolean value is substituted into the goal. Adding an intro pattern like `h` after the `=>` causes '[error] invalid intro-pattern: nothing to introduce'. Use the pattern without intro, or use `apply/negP` to convert a boolean negation into a propositional form where introduction is valid.",
+      "syntax": "case: (bool_expr) => //=.            (* correct: no intro, just closes trivial cases *)\ncase: (bool_expr) => //= h.          (* WRONG: 'nothing to introduce' *)\n(* Alternative for the non-trivial branch: introduce a proof via move=> first, then apply/negP *)\nmove=> h_mem; apply/negP => h_neg.   (* correct: h_mem from first intro, h_neg from negP flip *)",
+      "requires": "Goal contains a boolean subexpression to case-split on. The split substitutes the boolean value into the goal rather than creating a named hypothesis. This differs from splitting on a Prop, which does introduce named hypotheses.",
+      "source": {
+        "derived_from": "trace_analysis"
+      }
+    },
+    {
+      "id": "session_name_apostrophe",
+      "description": "Lemma names containing apostrophes (e.g., Exp', G'') cause shell quoting corruption in session_cli -next/-chain -c '...' commands. The apostrophe in the session directory name (-d argument) prematurely terminates the single-quoted -c argument, silently appending shell tokens (like 2>&1) into the tactic string, causing parse errors.",
+      "syntax": "# WRONG: directory contains apostrophe\npython3 session_cli.py -d .ec_session_Exp'_1 -next -c 'byequiv=> //.'\n# Shell sees: -c 'byequiv=> //.' 2>&1' (apostrophe in dir name closes the quote!)\n# Tactic received by EasyCrypt: byequiv=> //. 2>&1 -> parse error\n\n# CORRECT option 1: sanitize directory name (replace apostrophe with _prime)\npython3 session_cli.py -d .ec_session_Exp_prime_1 -next -c 'byequiv=> //.'\n\n# CORRECT option 2: use double-quotes for the -c value\npython3 session_cli.py -d .ec_session_<game>_prime -next -c \"byequiv=> //.\"",
+      "requires": "Lemma name or any CLI argument contains single-quote characters (apostrophes). Common EasyCrypt names: Exp', G', G1', and any prime-variant of a module or game.",
+      "error_fix": "Check the session directory name (-d argument) for apostrophes or other shell-special characters. Rename to a sanitized form without special characters. Re-issue the failing tactic command using the sanitized name.",
+      "source": {
+        "derived_from": "trace_analysis"
+      }
+    },
+    {
+      "id": "byequiv_explicit_postcondition",
+      "description": "When `byequiv=> //.` is accepted by EasyCrypt but the resulting sub-goal cannot be closed, the default result-equality postcondition is too weak. Supply an explicit postcondition naming the shared internal state variables the proof needs to track. Required when the event in the outer Pr[...] goal is defined over module state rather than the return value, and the two games share that state through structurally different procedures.",
+      "syntax": "byequiv (_: ={glob A} ==> ={Mod1.var1, Mod2.var2})=> //.",
+      "requires": "The outer lemma proves Pr[G1 @ &m : event] = Pr[G2 @ &m : event] where event is a predicate over internal module state (not just res). The two games must share those state variables through their oracle calls, even if their top-level procedure structures differ.",
+      "error_fix": "Identify which module state variables appear in the event expression (e.g., `Bad P.logP F.m` touches P.logP and F.m). Supply them in the postcondition: `byequiv (_: ={glob A} ==> ={P.logP, F.m})=> //.` The precondition `={glob A}` (adversary state equal at start) is standard for security games.",
+      "source": {
+        "derived_from": "trace_analysis"
+      }
+    },
+    {
+      "id": "phoare_while_three_args",
+      "description": "The while tactic for phoare goals takes TWO arguments (invariant, variant); EasyCrypt infers probability=1%r automatically. The three-argument form `while (inv) (var) 1%r` causes a parse error at the `1%r` token in some EC versions. The hoare while rule takes ONE argument (invariant only — no variant). Using two args on a hoare goal causes an `invalid arguments` arity error.",
+      "syntax": "while (invariant) (variant_expr)   -- phoare (2 args, EC infers prob=1%r)\nwhile (invariant)                    -- hoare  (1 arg, no variant needed)",
+      "requires": "Goal is a phoare or hoare judgment with a while loop.",
+      "source": {
+        "derived_from": "trace_analysis"
+      }
+    },
+    {
+      "id": "big_consT_rewrite_before_smt",
+      "description": "When a goal contains `big predT F (x::s)` over a cloned or abstract type (e.g., word), smt fails even when big_consT is passed as a hint. The rewrite must happen explicitly before smt.",
+      "syntax": "rewrite !big_consT /=",
+      "requires": "Goal contains big-sum terms over cons-lists (e.g., `big predT F (elem::tail)`). Type is a cloned algebraic structure (word, etc.).",
+      "source": {
+        "derived_from": "trace_analysis"
+      }
+    },
+    {
+      "id": "field_subr_eq0_denominator",
+      "description": "Close the field denominator non-zero side condition arising in discrete log extraction proofs. CRITICAL: rewrite log-form hypotheses into the goal BEFORE calling field, so the denominator normalizes to x - y (not (-y) + x), enabling the subr_eq0 rewrite to close the side condition.",
+      "syntax": "rewrite Hr_l Hr'_l. field. rewrite GP.ZModE.ZModpRing.subr_eq0; exact Hneq.",
+      "requires": "Goal involves field division where the denominator is ch - ch' from scalar subtraction; hypothesis Hneq: ch <> ch' is in context; log-form hypotheses expressing responses as linear functions of loge h (Hr_l, Hr'_l) have been proved with have.",
+      "source": {
+        "derived_from": "trace_analysis"
+      }
+    },
+    {
+      "id": "rewrite_via_have_hypothesis",
+      "description": "Rewrite with a lemma that requires a proof argument alongside term arguments. EasyCrypt's rewrite tactic does not accept proof hypotheses as trailing explicit arguments when wildcards occupy the term positions — the total argument count exceeds what rewrite expects. The fix: materialize the instantiated equation via have, then rewrite with the local hypothesis.",
+      "syntax": "have H := lemma arg1 arg2 ... proof_hyp; rewrite H",
+      "requires": "Lemma has type `A -> B -> ... -> (membership_or_typing_proof) -> (lhs = rhs)`. Attempting `rewrite (lemma _ _ ... proof_hyp)` fails with 'too many arguments'.",
+      "source": {
+        "derived_from": "trace_analysis"
+      }
+    },
+    {
+      "id": "dinter1E_measure_equality",
+      "description": "Prove mu1 [a..b] x = mu1 [a..b] y when both x and y are known to be in [a..b]. Use dinter1E (unconditional equation form) NOT supp_dinter1E (conditional implication) or dinter_uni (uniformity predicate). dinter1E unfolds both sides to the same if-expression, which closes by reflexivity once the bound hypotheses are substituted.",
+      "syntax": "rewrite !dinter1E Hx Hy.",
+      "requires": "Hypotheses Hx: a <= x <= b and Hy: a <= y <= b in context. Goal shape: mu1 [a..b] x = mu1 [a..b] y.",
+      "source": {
+        "derived_from": "trace_analysis"
+      }
+    },
+    {
+      "id": "iff_hypothesis_backward_direction",
+      "description": "Use an iff hypothesis hf: A <=> B to derive A from a hypothesis HB: B (backward direction). Correct: `move: HB; rewrite -hf` or `apply hf`. Wrong: `rewrite hf` (forward direction) which transforms the goal A into B, then the `by` block has no closer.",
+      "syntax": "have Ha: A by (move: HB; rewrite -hf).\n(* or *)\nhave Ha: A by apply hf.",
+      "requires": "Hypothesis hf: A <=> B and hypothesis HB: B in context. Goal (or sub-goal of a have) requires proving A.",
+      "source": {
+        "derived_from": "trace_analysis"
+      }
+    },
+    {
+      "id": "pr_term_have_rewrite",
+      "description": "Rewrite a Pr[M @ &m : E] term by substituting a closed-form equation via `have -> :=`. The standard `rewrite (prLemma args)` tactic is accepted by EasyCrypt but produces NO_PROGRESS on Pr[...] terms because probability expressions are opaque to the rewrite engine. The fix: introduce the equation as a local rewrite hypothesis with `have -> := prLemma args`, which rewrites the Pr term in place.",
+      "syntax": "have -> := prLemma arg1 arg2 ... argN.",
+      "requires": "A lemma `prLemma : forall args, Pr[M @ &m : E] = expr` (a probability equality proved e.g. via byphoare). The lemma must match the Pr[...] term in the goal.",
+      "source": {
+        "derived_from": "trace_analysis"
+      }
+    },
+    {
+      "id": "self_coupling_byequiv_event",
+      "description": "Prove Pr[M @ &m : P res] = Pr[M @ &m : Q res] when P and Q are equivalent post-conditions related by a bijection (e.g., `finv res = a` vs `res = f a`). Strategy: introduce as a `have ->` goal, prove via byequiv coupling M with itself (identity coupling on shared loop state), then close the bijection ambient goal with smt().",
+      "syntax": "have ->: Pr[M @ &m : P res] = Pr[M @ &m : Q res].\nbyequiv (_: ={arg} ==> (P res{1}) = (Q res{2})) => //.\nproc; while (={shared_loop_vars}).\nauto.   (* while body *)\nauto.   (* while init *)\nsmt().  (* ambient bijection goal *)\nmove=> _ _ _; smt().",
+      "requires": "Both sides are the SAME program M. P and Q are related by a bijection so that `P r = Q r` is provable by smt() with bijection hypotheses (hf, hfinv) in scope. The loop invariant is equality of all shared loop variables.",
+      "source": {
+        "derived_from": "trace_analysis"
+      }
+    },
+    {
+      "id": "pRHL_while_subgoal_closers",
+      "description": "After `while (Inv)` in a pRHL (byequiv) proof, use plain `auto.` for the while body subgoal and the init subgoal. Do NOT use `auto => />` — the view simplification can eliminate patterns needed by subsequent tactics and produces ambient goals harder to close. Follow with `smt()` for the ambient bijection or logic goal. For post-loop goals requiring explicit intro, use `move=>` then `smt()`.",
+      "syntax": "proc; while (={shared_vars} /\\ invariant).\nauto.    (* body subgoal *)\nauto.    (* init subgoal *)\nsmt().   (* ambient bijection/logic goal *)",
+      "requires": "A pRHL goal `M ~ M : pre ==> post` (same program, identity coupling). The loop body is structurally identical on both sides. The invariant tracks shared loop variables. Outer-scope bijection hypotheses (e.g., hf, hfinv) are accessible to smt() without naming them as hints.",
+      "source": {
+        "derived_from": "trace_analysis"
+      }
+    },
+    {
+      "id": "byphoare_precondition_binding",
+      "description": "When a lemma has an outer variable (e.g., i0) and the procedure uses a different argument name (e.g., i), plain `byphoare => //` leaves them as separate free variables. Use `byphoare (_: i = i0 /\\ additional_pre ==> _) => //` to explicitly bind them. This allows `-> ` substitution in subsequent intro patterns and ensures the while invariant can use i0 throughout.",
+      "syntax": "byphoare (_: proc_arg = outer_var /\\ additional_precond ==> _) => //.",
+      "requires": "Goal is `Pr[M.proc(proc_arg) @ &m : post] = bound`. The outer lemma has a universally quantified variable `outer_var` that is not syntactically the same as `proc_arg`.",
+      "source": {
+        "derived_from": "trace_analysis"
+      }
+    },
+    {
+      "id": "rewrite_in_hypothesis_idiom",
+      "description": "EasyCrypt does not support Coq-style `rewrite X in H.`. To rewrite inside a hypothesis H using equation X, push H onto the goal stack, apply the rewrite, then re-introduce it.",
+      "syntax": "move: H; rewrite X /= => H.",
+      "requires": "Hypothesis H in context contains a subterm that equation X can rewrite. Goal need not mention H directly.",
+      "source": {
+        "derived_from": "trace_analysis"
+      }
+    },
+    {
+      "id": "session_cli_lemma_scope",
+      "description": "When session_cli is started with `-f <target_file>`, only lemmas and axioms defined BEFORE the target lemma in the file are in scope. Definitions appearing after the target lemma (even in the same file) are NOT available, even though they appear in the same file.",
+      "syntax": "(awareness only — no tactic fix; check file positions before using a lemma as an smt hint)",
+      "requires": "Using session_cli -f <target_file> to prove a lemma that may reference axioms or lemmas declared later in the file.",
+      "source": {
+        "derived_from": "trace_analysis"
+      }
+    },
+    {
+      "id": "byequiv_local_hypothesis_direction",
+      "description": "When applying `byequiv H` where H is a local equiv hypothesis (created via `have H := EquivLemma args`), EasyCrypt silently accepts the tactic but makes NO PROGRESS if the goal's Pr[...] program matches the RIGHT side of H's equiv. `byequiv` expects the goal's program to be on the LEFT of the equiv — if it is on the right, the tactic is a silent no-op, not an error. Similarly, `rewrite -(prDX k &m)` on a goal about the wrong program also makes no progress.",
+      "syntax": "# WRONG (silent no-op when goal is about the right-side program):\nhave H := EquivLemma args.   (* H: equiv [left_prog ~ right_prog : ...] *)\nbyequiv H => //.              (* accepted, but goal unchanged *)\n\n# CORRECT — use have H + rewrite -H (see byequiv_direction_have_naming):\nhave H : Pr[left_prog @ &m : E] = Pr[right_prog @ &m : E].\n  byequiv (EquivLemma args) => //.\nrewrite -H.\napply prLeft.",
+      "requires": "A local equiv hypothesis or equiv lemma where the goal's program is the RIGHT side. Goal is `Pr[right_prog @ &m : E] = <closed_form>` but the equiv has left_prog on the left.",
+      "source": {
+        "derived_from": "trace_analysis"
+      }
+    },
+    {
+      "id": "inline_functor_instantiation",
+      "description": "Use `inline *` (not named `inline Mod.proc`) to inline concrete procedure calls in pRHL goals when any called procedure comes from a functor-instantiated module. Functor-applied procedures (e.g., CPA_game(Adv, Oracle).main) are not addressable by their qualified name; EasyCrypt reports 'unknown procedure: Mod.proc' for any named inline attempt on them.",
+      "syntax": "inline *.",
+      "requires": "pRHL goal where at least one program calls a procedure from a module instantiated by functor application (e.g., CPA_game(Adv, Oracle) or CCA_CPA_Adv(BNR_Adv(A))).",
+      "error_fix": "Replace the named inline with `inline *`. Do not spend time searching the file for the procedure name — functor-instantiated module procedures are intentionally not in scope under those qualified names. The procedure exists and is callable, but its EasyCrypt-internal name is resolved through the functor application, not the qualified path.",
+      "source": {
+        "derived_from": "trace_analysis"
+      }
+    },
+    {
+      "id": "byequiv_direction_have_naming",
+      "description": "When using byequiv to prove a probability equality, the direction of the resulting equality is determined by the equiv lemma's program order: if the lemma is `equiv [X ~ Y : ...]`, byequiv proves `Pr[X @ &m : E] = Pr[Y @ &m : E]`. If your goal has Pr[Y...] on the left (or needs the reverse direction), use a named hypothesis `have H: Pr[X @ &m : E] = Pr[Y @ &m : E]` (matching the equiv direction), then `rewrite -H` to substitute in the correct direction in the main goal. Avoid `have -> : Pr[Y...] = Pr[X...]` — the byequiv subgoal will be in the wrong direction.",
+      "syntax": "have H: Pr[left_program @ &m : E] = Pr[right_program @ &m : E].\n  byequiv (equiv_lemma ...) => //.\nrewrite -H.",
+      "requires": "An equiv lemma `equiv [left_program ~ right_program : ...]` in scope.",
+      "source": {
+        "derived_from": "trace_analysis"
+      }
+    }
+  ],
+  "patterns": [
+    {
+      "id": "conseq_split_pr_one",
+      "structural_description": "Single-program probability-one goal (Pr[G]=1) where the procedure contains a while loop with a non-trivial correctness invariant. Direct byphoare gets stuck because losslessness and correctness are entangled in the phoare judgment.",
+      "indicators": [
+        "Pr[M.main(...) @ &m : post] = 1%r",
+        "procedure body has while loop",
+        "post-condition involves state accumulated across loop iterations"
+      ],
+      "reasoning_hints": [
+        "The key insight is SEPARATION: split Pr[...]=1 into (1) losslessness (easy) and (2) hoare correctness (hard) via conseq, then handle each independently.",
+        "For while loops with threshold-dependent behavior (e.g., loop behaves differently before and after index i), use a TWO-PHASE case-split invariant: `if j <= i then Phase1 else Phase2`.",
+        "Use `conseq (_: _ ==> semantic_pred) => //` to bridge from the raw post-condition to a cleaner semantic predicate, then prove the bridge separately.",
+        "The losslessness half is always the same pattern: while (true) (N-j) + rnd predT + smt(dist_ll)."
+      ],
+      "common_failure": "Trying to find one while-loop invariant that simultaneously proves losslessness AND correctness. This is much harder than proving them separately.",
+      "fallback": "If the while loop is simple enough, direct byphoare without conseq may work: byphoare => //; proc; inline *; auto => />; smt(...).",
+      "source": {
+        "derived_from": "external_analysis"
+      }
+    },
+    {
+      "id": "two_phase_while_invariant",
+      "structural_description": "While loop where behavior changes at a threshold index (e.g., processing element i in a list of N elements). Before the threshold, one property holds; after it, a different property holds.",
+      "indicators": [
+        "while loop with counter j from 0 to N",
+        "conditional inside loop body: if (j = i) or if (j < i)",
+        "state accumulation differs before/after the threshold"
+      ],
+      "reasoning_hints": [
+        "The invariant must handle THREE cases in the loop body: (1) j < threshold (before), (2) j = threshold (transition), (3) j > threshold (after).",
+        "At the transition point (j = threshold), the 'before' invariant provides the precondition needed to establish the 'after' invariant.",
+        "Use `case: (j{m} = threshold) => [->|Hneq]` to split the threshold case, then `subst` or `rewrite` to simplify.",
+        "Common pattern: before threshold, lists are equal; after threshold, lists satisfy an XOR/sum/difference relation."
+      ],
+      "common_failure": "Using a single invariant without case split. The invariant becomes too complex and smt/auto cannot close the loop body obligation.",
+      "fallback": "If the loop is simple (no threshold behavior), a single invariant suffices: while (simple_inv) (N-j).",
+      "source": {
+        "derived_from": "external_analysis"
+      }
+    },
+    {
+      "id": "equiv_sampling_swap_bijection",
+      "structural_description": "Two-sided equiv (Pr[G1]=Pr[G2]) where after proc;inline*, programs have aligned structure but sampling order differs, or one side has extra masking (OTP). Needs swap to align, then rnd bijection.",
+      "indicators": [
+        "Two-column program after inline*",
+        "Both sides have <$ sampling",
+        "One side has extra multiplication/XOR on a sampled value"
+      ],
+      "typical_tactics": [
+        "byequiv => //",
+        "proc; inline *",
+        "swap{side} pos offset",
+        "rnd (fun x => x + mask) (fun x => x - mask)",
+        "wp; call; auto"
+      ],
+      "common_failure": "swap_not_independent",
+      "fallback": "Check read/write dependencies between statements. Try swapping on the other side (swap{2}) if swap{1} fails. If statements truly depend, use seq to split the program at a safe point (read goal to determine statement counts). For complex closings after auto, write conseq with explicit postcondition BEFORE auto, not after.",
+      "reasoning_hints": [
+        "Compare left/right programs side by side to find sampling misalignment",
+        "swap{side} pos offset moves the statement at <pos> forward by <offset> positions on the given side (1=left, 2=right)",
+        "You must read the current goal state to determine the correct N and M -- count statement positions after inline *",
+        "wp consumes deterministic assignments from the bottom up"
+      ],
+      "source": {
+        "derived_from": "goal_state_analysis"
+      }
+    },
+    {
+      "id": "equiv_sim_structural",
+      "structural_description": "Two-sided equiv where programs are structurally identical or nearly so. sim or call+sim closes it.",
+      "indicators": [
+        "Two-column program after inline*",
+        "Left and right programs have same structure",
+        "No sampling order mismatch"
+      ],
+      "typical_tactics": [
+        "byequiv => //",
+        "proc; inline *; wp; sim",
+        "or: proc; call (_: invariant); sim"
+      ],
+      "source": {
+        "derived_from": "goal_state_analysis"
+      }
+    },
+    {
+      "id": "equiv_coupling_loop",
+      "structural_description": "Two-sided equiv where programs have a while loop and coupling is done inside the loop body via rnd bijection. Two sub-cases: (A) precondition equates the differing parameter across sides — identity or simple bijection suffices, loop invariant includes the parameter; (B) precondition is 'true' (differing parameters allowed) — the sampling result's effect on output depends on whichever value the parameter has on each side, so a conditional bijection must compensate for the parameter difference, and the loop invariant must NOT include the differing parameter.",
+      "indicators": [
+        "while loop in program",
+        "rnd with conditional bijection inside loop body",
+        "precondition is 'true' or does not fix a parameter that governs a conditional inside the loop"
+      ],
+      "slot_semantics": {
+        "<loop_inv>": "the loop invariant (omit the differing parameter when precondition is true)",
+        "<cond_l>": "the boolean condition on side {1} that governs the conditional branch inside the loop body",
+        "<cond_r>": "the boolean condition on side {2} that governs the conditional branch inside the loop body"
+      },
+      "reasoning_hints": [
+        "Sub-case A (same parameter): loop invariant includes the parameter (={shared_vars, param}); identity coupling or simple bijection works because both programs behave symmetrically.",
+        "Sub-case B (differing parameter, true precondition): do NOT put the differing parameter in the loop invariant. The coupling function must compensate: if the parameter value causes the same conditional branch on both sides, pass b through; otherwise flip b. Pattern: rnd (fun b => if (condition_left) = (condition_right) then b else !b).",
+        "Choosing identity coupling (fun b => b) when the precondition is 'true' will fail: the bijection does not equate the distributions when the parameter differs across sides.",
+        "The 'condition_left = condition_right' equality check determines whether the loop variable is on the same side of the differing parameter on both executions — if yes, no flip needed; if no, flip compensates."
+      ],
+      "common_failure": "identity_coupling_insufficient",
+      "fallback": "If rnd (fun b => b) or simple bijection fails, check whether the precondition is 'true' (inputs can differ). If so, identify the conditional inside the loop that depends on the differing parameter, and write a conditional bijection: rnd (fun b => if (cond{1}) = (cond{2}) then b else !b). Drop the differing parameter from the loop invariant.",
+      "source": {
+        "derived_from": "goal_state_analysis"
+      }
+    },
+    {
+      "id": "phoare_coinflip_half",
+      "structural_description": "Prove Pr[game]=1/2 via byphoare. The game returns b'=b where b is uniform and independent of adversary. Use swap to move b to end, rnd (pred1 b'), then show all prior steps are lossless.",
+      "indicators": [
+        "Pr[...] = 1%r/2%r in goal",
+        "Program has b <$ {0,1} and b' <@ A.guess(...)"
+      ],
+      "typical_tactics": [
+        "byphoare => //",
+        "proc",
+        "swap (move b to end)",
+        "rnd (pred1 b')",
+        "call _ll; wp; rnd predT; ... skip => />",
+        "smt(dbool1E dt_ll)"
+      ],
+      "common_failure": "cannot_prove_goal_strict",
+      "fallback": "Ensure all adversary calls are consumed (via call + losslessness lemma) before rnd (pred1 b'). The rnd must be the very last sampling.",
+      "reasoning_hints": [
+        "The key insight: b is sampled AFTER the adversary runs, so b is independent of b'",
+        "Use swap to move the uniform bit sampling to the very end of the program so rnd (pred1 ...) can consume it",
+        "You must read the goal state to find which position the bit sampling is at and compute the swap offset",
+        "rnd (pred1 guess_var) says: for any fixed guess, Pr[bit = guess] = 1/2 because bit is uniform",
+        "All prior procedure calls must be shown lossless (call oracle_ll for each oracle) before rnd consumes the bit"
+      ],
+      "smt_hints": [
+        "DBool.dbool1E",
+        "dt_ll",
+        "DBool.dbool_ll"
+      ],
+      "source": {
+        "derived_from": "goal_state_analysis"
+      }
+    },
+    {
+      "id": "phoare_loop_invariant",
+      "structural_description": "Prove a probability or hoare property about a program with a while loop. Need loop invariant + variant for termination.",
+      "indicators": [
+        "Program has while loop",
+        "byphoare or hoare goal",
+        "Need to track loop counter and accumulated state"
+      ],
+      "slot_semantics": {
+        "<invariant>": "the loop invariant predicate (a property preserved by the loop body)",
+        "<variant>": "the loop variant (a natural-number expression that strictly decreases each iteration)",
+        "<bounds>": "side conjuncts on the loop counter(s), e.g. 0 <= j <= N",
+        "<smt_bag>": "the bag of smt hints used to close the residual algebraic subgoal"
+      },
+      "common_failure": "cannot_prove_goal_strict",
+      "fallback": "Strengthen the loop invariant. Common missing pieces: loop counter bounds (0 <= j <= N), index constraints (0 <= i0 < N).",
+      "reasoning_hints": [
+        "The invariant must hold at loop entry (auto closes the base case)",
+        "The variant must decrease and be non-negative",
+        "For XOR-based invariants: big predT a s +^ big predT a s' = target",
+        "sp (simplify program) before while moves assignments into context",
+        "HOARE while takes ONE arg (<invariant> only). PHOARE while takes TWO args (<invariant>, <variant>). The 3-arg phoare form `while (<invariant>) (<variant>) 1%r.` causes a syntax error in some EC versions — use 2 args, probability is inferred. Using 2 args on a HOARE goal causes 'invalid arguments' — use 1 arg.",
+        "After `while (<invariant>); auto.` on a hoare goal, the loop body obligation has shape `((<invariant> /\\ rest) /\\ guard) ==> ...` — introduce with `[[Hinv Hrest] HjN2]` (TWO levels). Three-level `[[[Hinv...]]]` fails with 'invalid intro-pattern: nothing to eliminate'.",
+        "big_consT must be a rewrite (`rewrite !big_consT /=`), NOT an smt hint. Passing it to smt as `smt(big_consT ...)` does not unfold big-sums and will fail.",
+        "After `while (<invariant>); auto.` on a HOARE goal, the remaining combined base+post goal has shape: `forall &hr, (pre_cond) => (<invariant>_at_entry) /\\ forall exit_vars, !guard => <invariant>_at_exit => postcondition`. Close with: `move=> &hr [-> [-> [-> H]]]; split; [by rewrite !big_nil xorw0_or_similar | move=> v1 v2 j0 Hguard [Hinv [Hj _]]; smt()]`. The two parts are: (1) base case — prove invariant holds at entry (j=0, s=[], s'=[]) using big_nil to reduce big-sums over empty lists; (2) postcondition case — prove that when guard is false (j>=N) and i0 was in range (0<=i0<N), the invariant implies the desired postcondition."
+      ],
+      "smt_hints": [
+        "xorwK",
+        "xorwA",
+        "xorwC",
+        "xorw0",
+        "big_nil"
+      ],
+      "source": {
+        "derived_from": "goal_state_analysis"
+      }
+    },
+    {
+      "id": "lossless_chain",
+      "structural_description": "Prove islossless (procedure terminates with probability 1). Two variants: (A) no while loop — chain of rnd predT for each sampling, call _ll for each oracle call, working backward; (B) while loop — procedure fills a log or counter via repeated sampling from a lossless distribution until a size bound is reached, standard rnd predT chain will NOT work, use while (true) (size_bound - current_size) to establish termination.",
+      "indicators": [
+        "islossless in goal",
+        "pre = true, post = true, bound [=] 1%r",
+        "Variant B: program body contains a while loop that samples from a distribution and accumulates results into a list or log"
+      ],
+      "typical_tactics": [
+        "VARIANT A (no while loop): proc; inline *; wp",
+        "rnd predT; rnd predT; ... skip => />",
+        "smt(dt_ll dbool_ll)",
+        "or: islossless (one-shot)",
+        "VARIANT B (while loop): proc.",
+        "while (true) (size_bound - size current_log). auto => />; smt(dist_ll size_ge0).",
+        "auto => />; smt(dist_ll size_ge0)."
+      ],
+      "common_failure": "cannot_close_goal",
+      "fallback": "Check all distributions are lossless. Conditional distributions (dexcepted) need special handling. If rnd predT chain is stuck, the procedure likely has a while loop — switch to Variant B.",
+      "reasoning_hints": [
+        "Work backward: wp consumes deterministic steps, rnd predT consumes each sampling",
+        "For oracle calls, use call Oc_ll where Oc_ll proves the oracle is lossless",
+        "Order: call first, then wp, then rnd, then skip",
+        "WHILE LOOP CASE: If the procedure has a while loop (e.g., filling a log until size reaches n), rnd predT chain cannot handle the loop. Instead, use `while (true) (n - size log)` to reduce to two obligations: (1) loop body terminates with prob >= 1 per iteration (use auto + smt(dist_ll) to discharge), (2) variant is non-negative before the loop (use auto + smt(size_ge0)). The variant expression must decrease strictly: size grows by 1 each iteration, so n - size decreases. Key SMT hints: dist_ll proves the sampling distribution is lossless; size_ge0 proves size is non-negative ensuring the variant bound is reachable."
+      ],
+      "smt_hints": [
+        "dt_ll",
+        "DBool.dbool_ll",
+        "dseed_ll",
+        "size_ge0"
+      ],
+      "source": {
+        "derived_from": "goal_state_analysis"
+      }
+    },
+    {
+      "id": "rewrite_chain_conclusion",
+      "structural_description": "Combine previously proved lemma bounds via rewrite chain. Typically the final theorem in a security proof.",
+      "indicators": [
+        "Goal is |Pr[...] - ...| <= ... or Pr[...] <= ...",
+        "All intermediate lemmas already proved"
+      ],
+      "typical_tactics": [
+        "by rewrite (lemma1 &m) (lemma2 &m) -(lemma3 &m).",
+        "or: rewrite ...; smt()."
+      ],
+      "source": {
+        "derived_from": "goal_state_analysis"
+      }
+    },
+    {
+      "id": "have_chain_game_hop",
+      "structural_description": "Game-hopping proof: assemble probability bounds from intermediate lemmas. Three variants differ in how the intermediate lemmas are marshalled into the final goal. (A) `have_chain_smt` — materialise each intermediate lemma with `have h_i := <lem_i> &m.`, then close with one `smt()` call that sees all h_i. Useful when the chain combines equalities and inequalities with distances / absolute values. (B) `ler_trans_assembly` — when the final goal has shape `Pr[<G_real>] <= Pr[<G_ideal>] + <bound>`, split via `apply (ler_trans (Pr[<G_ideal>] + Pr[<G_bad> : <bad_event>]))`, discharge the first subgoal with <game_hop_lemma>, cancel the shared summand with `apply ler_add2l`, and close the residual `Pr[<bad_event>] <= <bound>` with `byphoare <bad_bound_lemma> => //`. (C) `direct_smt_with_named_lemmas` — when every intermediate result is a named local lemma in scope and the arithmetic chain is simple, a single `smt(<lemmas>)` listing them all closes the goal.",
+      "slot_semantics": {
+        "<G_real>": "the concrete real-game module appearing on the left of the final inequality",
+        "<G_ideal>": "the idealized game module appearing on the right of the final inequality",
+        "<G_bad>": "the instrumented game module carrying the bad-event variable (variant B only)",
+        "<bad_event>": "the predicate/variable expressing the bad event inside <G_bad> (variant B only)",
+        "<bound>": "the concrete numeric bound on the bad-event probability (variant B only)",
+        "<game_hop_lemma>": "in variant B, the lemma stating `Pr[<G_real>] <= Pr[<G_ideal>] + Pr[<G_bad> : <bad_event>]`",
+        "<bad_bound_lemma>": "in variant B, the phoare/byphoare lemma stating `Pr[<G_bad> : <bad_event>] <= <bound>`",
+        "<lemmas>": "space-separated list of named local lemmas to pass into `smt(...)` (variants A & C). Each lemma must already be parameterized by &m where applicable, so `smt` can see the instantiated probabilities.",
+        "<lem1>": "first lemma of the have-chain (variant A)",
+        "<lem2>": "second lemma of the have-chain (variant A)",
+        "<lem3>": "third lemma of the have-chain (variant A; may be absent for short chains)",
+        "<lem4>": "fourth lemma of the have-chain (variant A; optional)",
+        "<lem5>": "fifth lemma of the have-chain (variant A; optional)",
+        "<lem6>": "sixth lemma of the have-chain (variant A; optional)"
+      },
+      "indicators": [
+        "Goal is a probability inequality `Pr[<G_real>] <= ... + ...` (possibly with distances / absolute values)",
+        "The file already declares several local lemmas bounding intermediate Pr[] expressions, each parameterized by &m",
+        "The final lemma's proof argument is short (a few tactics at most) and does not itself manipulate pRHL programs"
+      ],
+      "variants": [
+        {
+          "name": "have_chain_smt",
+          "conditions": "(1) The final-lemma proof introduces 2-6 named local lemmas with `have h_i := <lem_i> &m.`, then closes with a single `smt()` or `smt(hints)` that sees every h_i; (2) no `byequiv` / `byphoare` / `ler_trans` invoked inside the final lemma; (3) intermediate results include both equalities and inequalities (possibly with distances or absolute values) that smt needs to chain after materialisation."
+        },
+        {
+          "name": "ler_trans_assembly",
+          "conditions": "(1) The final-lemma statement has shape `Pr[<G_real>.main() @ &m : res] <= Pr[<G_ideal>.main() @ &m : res] + <bound>`; (2) the file has a <game_hop_lemma> proving `Pr[<G_real>] <= Pr[<G_ideal>] + Pr[<G_bad> : <bad_event>]`; (3) the file has a phoare / byphoare <bad_bound_lemma> bounding `Pr[<G_bad> : <bad_event>] <= <bound>`; (4) the proof uses `apply (ler_trans ...)` to split, `apply ler_add2l` to cancel the shared `Pr[<G_ideal>]` summand, and `byphoare` to discharge the residual bad-event bound."
+        },
+        {
+          "name": "direct_smt_with_named_lemmas",
+          "conditions": "(1) Every intermediate Pr[] result is already a named local lemma in scope, parameterized by &m; (2) the arithmetic chain is simple (sequence of <= and = steps, no absolute values or distance lemmas); (3) the final-lemma proof argument is a single `smt(<lem1> <lem2> ...)` call that lists every relevant lemma; (4) no preliminary `have` steps, no `byequiv` / `byphoare` / `ler_trans`."
+        }
+      ],
+      "reasoning_hints": [
+        "Use `direct_smt_with_named_lemmas` FIRST when every intermediate Pr[] fact is a named local lemma and the chain is purely algebraic — no distances, no absolute values. A single `smt(<lem1> <lem2> ...)` often closes the goal. This is the cheapest recipe to try.",
+        "Use `have_chain_smt` when `direct_smt_with_named_lemmas` times out, or when the chain involves distances / absolute values / non-linear steps. Materializing each lemma with `have h_i := <lem_i> &m.` exposes the instantiated Pr values to smt, which lets the solver chain them even when direct lemma application would miss unification.",
+        "Use `ler_trans_assembly` when: (1) the goal is exactly `Pr[<G_real>] <= Pr[<G_ideal>] + <bound>`; (2) there exist two complementary local lemmas — a game-hop bound and a phoare/byphoare bad-event bound. The `ler_trans` splits into a bound-via-bad-event step + a bad-event-probability step, `ler_add2l` cancels the shared Pr[<G_ideal>] summand, and `byphoare` discharges the residual.",
+        "For `ler_trans_assembly`: scan file-local lemmas BEFORE starting. If you can identify both a game-hop bound lemma and a phoare/byphoare bad-event bound lemma, Variant B is the right approach.",
+        "EC lemma names used: `ler_trans` (transitivity of <= on reals), `ler_add2l` (left-addition cancellation: `x + a <= x + b <=> a <= b`)."
+      ],
+      "common_failure": "ler_trans_wrong_intermediate",
+      "fallback": "For `direct_smt_with_named_lemmas`: if smt() with all named lemmas times out, switch to `have_chain_smt` — materialize each lemma with `have h_i := <lem_i> &m.`, then `smt(h0 h1 ...)` sees them. For `have_chain_smt`: if smt() cannot close, include specific hints `smt(h0 h1 mu_bounded)`. For `ler_trans_assembly`: ensure the `ler_trans` intermediate expression matches the <game_hop_lemma> statement exactly (`Pr[<G_ideal>] + Pr[<G_bad> : <bad_event>]`). If `ler_add2l` does not apply, the goal is not in the `Pr[<G_ideal>] + X <= Pr[<G_ideal>] + Y` canonical form — rewrite it there first.",
+      "source": {
+        "derived_from": "goal_state_analysis"
+      }
+    },
+    {
+      "id": "set_fset_membership",
+      "structural_description": "Pure logic/set theory: prove fset equality, membership, or project-local restriction properties. No program, just set rewriting.",
+      "indicators": [
+        "Goal involves fset, <restr_op>, <restr_pred>, mem_oflist, mem_iota",
+        "No Pr[] or program statements"
+      ],
+      "slot_semantics": {
+        "<restr_op>": "a project-local set-restriction operator (e.g. restr in <program>)",
+        "<restr_pred>": "a project-local set-restriction predicate (e.g. is_restr in <program>)",
+        "<restr_lemma_bag>": "project-local lemmas relating <restr_op> and <restr_pred> (e.g. nin_is_restr)"
+      },
+      "common_failure": "nothing_to_rewrite",
+      "fallback": "Use have to introduce intermediate facts about membership. For negation, use negP or apply/negP.",
+      "reasoning_hints": [
+        "fsetP converts set equality to pointwise membership: S1 = S2 <=> forall x, x in S1 <=> x in S2",
+        "Unfold /<restr_op>, /<restr_pred> to expose the underlying set operations",
+        "in_fsetI (intersection), in_fsetU (union), in_fset1 (singleton), mem_oflist, mem_iota for range sets"
+      ],
+      "smt_hints": [
+        "in_fsetI",
+        "in_fsetU",
+        "in_fset1",
+        "mem_oflist",
+        "mem_iota",
+        "<restr_lemma_bag>"
+      ],
+      "source": {
+        "derived_from": "goal_state_analysis"
+      }
+    },
+    {
+      "id": "algebraic_identity",
+      "structural_description": "Pure algebraic/logic identity: XOR cancellation, <op>/format roundtrip, arithmetic. No program.",
+      "indicators": [
+        "Goal is a pure equality or implication",
+        "Involves +^, ||, <op>, format, ring operations"
+      ],
+      "slot_semantics": {
+        "<op>": "a scheme-local operator whose round-trip or algebraic identity is the target of the lemma (e.g. an encoding/decoding op or a bit-level helper)"
+      },
+      "source": {
+        "derived_from": "goal_state_analysis"
+      }
+    },
+    {
+      "id": "byequiv_one_liner",
+      "structural_description": "Trivial program equivalence: apply an existing equiv lemma directly.",
+      "indicators": [
+        "Goal is Pr[G1]=Pr[G2]",
+        "An equiv lemma for exactly this pair already exists"
+      ],
+      "typical_tactics": [
+        "by byequiv lemma_name."
+      ],
+      "source": {
+        "derived_from": "goal_state_analysis"
+      }
+    },
+    {
+      "id": "correctness_proc_auto",
+      "structural_description": "<op_dec> inverts <op_enc>: show <op_dec>(<op_enc>(m))=m for an encryption or commitment scheme. When the goal is a single-program probability bound (the game always succeeds), open with a single-sided probabilistic tactic (byphoare), NOT a two-sided relational tactic — relational tactics require a matching right-side program that does not exist for single-program goals. After opening, expand the game body and the concrete scheme procedures, then close with auto. If auto does not close it, supply explicit algebraic lemma hints for key-injectivity, additive-cancellation (e.g., XOR cancellation), and distribution losslessness.",
+      "indicators": [
+        "hoare or byphoare goal",
+        "correctness game (encrypt then decrypt)",
+        "Pr[<correctness_game>.main(m) @ &m : res] = 1%r — single-program probability, use byphoare not byequiv"
+      ],
+      "slot_semantics": {
+        "<scheme>": "the scheme module (e.g. <scheme>, <scheme>)",
+        "<correctness_game>": "the correctness game module applied to the scheme",
+        "<op_enc>": "the encrypt procedure name on the scheme",
+        "<op_dec>": "the decrypt procedure name on the scheme",
+        "<op_keygen>": "the keygen procedure name on the scheme",
+        "<hash_op>": "the hash/random-oracle op used for masking in the scheme",
+        "<d_keys>": "the key distribution sampled by <op_keygen>",
+        "<d_rand>": "the randomness distribution sampled by <op_enc>",
+        "<d_ptxt>": "the plaintext distribution (appearing in the correctness game)",
+        "<ll_keys>": "losslessness lemma for <d_keys>",
+        "<ll_rand>": "losslessness lemma for <d_rand>",
+        "<ll_ptxt>": "losslessness lemma for <d_ptxt>",
+        "<trapdoor_lemma>": "lemma stating fi sk (f pk r) = r under the key predicate"
+      },
+      "reasoning_hints": [
+        "CRITICAL: Pr[<correctness_game>.main(m) @ &m : res] = 1%r is a single-program probability bound — open with byphoare, NOT byequiv. byequiv is for two-program relational reasoning and will require constructing a matching right-side program that does not exist here.",
+        "After byphoare=> //, proc expands the game and inline expands the concrete scheme modules. The goal reduces to showing the algebraic identity <op_dec>(<op_enc>(m)) = m holds for all sampled randomness.",
+        "For XOR-based <hash_op> encryption (e.g., Bellare-Rogaway 1993 style): <op_enc> computes (trapdoor_function r, <hash_op>(r) XOR m); <op_dec> inverts the trapdoor to recover r, looks up <hash_op>(r), and unmasks. The key algebraic identity is <hash_op>(r) XOR (<hash_op>(r) XOR m) = m, captured by addpK.",
+        "Losslessness of the plaintext distribution (<ll_ptxt>) is needed to discharge the distribution weight side condition.",
+        "LRO inline order (critical): for LRO-based schemes, use selective inline naming the scheme procedures (<op_keygen>, <op_enc>, <op_dec>) but NOT LRO.o. After wp., inline LRO.o separately. Using inline * prematurely expands all oracle calls, introducing redundant variables (x, x0, r1, r2 from double LRO.o expansion) that complicate the ambient goal without benefit.",
+        "After `wp. inline LRO.o. wp; auto => />.`, the goal reduces to a three-level nested forall over distribution weight obligations (<d_keys>, <d_rand>, <d_ptxt>). Discharge each weight with the corresponding losslessness lemma (<ll_keys>, <ll_rand>, <ll_ptxt>), then case-split on LRO.m membership: use mem_set for the contradiction branch (r notin m.[r<-v] is always false) and get_set_sameE for the positive branch (resolve double-set lookup), then additive cancellation."
+      ],
+      "smt_hints": [
+        "<trapdoor_lemma> (trapdoor function injectivity / one-way inverse: fi sk (f pk r) = r) — materialize via `have HfK := <trapdoor_lemma> pk sk r Hkeys; rewrite HfK` (direct rewrite with wildcards fails: too many arguments)",
+        "addpK (XOR cancellation: x +^ (x +^ m) = m) — apply via `rewrite get_set_sameE /= -addA addKp`",
+        "<ll_ptxt> (plaintext distribution is lossless) — apply via `exact <ll_ptxt>`"
+      ],
+      "common_failure": "starting with byequiv on a single-program Pr[...]=1%r goal — byequiv requires a two-sided relational judgment and will fail or produce unresolvable sub-goals",
+      "fallback": "NOTE: smt() may be unavailable in some sandbox environments — do NOT use `auto with smt(...)` blindly. For LRO-based schemes: use selective inline (scheme procedures only, NOT inline *), then wp, then inline LRO.o, then wp; auto => />. Then manually: (1) move=> &hr, (2) split; first exact <ll_keys>, (3) move=> _ [pk sk] /= Hkeys _; split; first exact <ll_rand>, (4) move=> _ r _ _; split; first exact <ll_ptxt>, (5) move=> _ h1 _ _; have HfK := <trapdoor_lemma> pk sk r Hkeys; rewrite HfK, (6) split — case-split on r \\in LRO.m, (7) for r-notin branch: contradiction via mem_set, (8) for r-in branch: get_set_sameE then additive cancellation.",
+      "source": {
+        "derived_from": "goal_state_analysis"
+      }
+    },
+    {
+      "id": "bypr_uniformity",
+      "structural_description": "Prove distribution uniformity or bijection-induced distribution equality via bypr: reduce the equiv goal `<G_real> ~ <G_ideal> : true ==> res{1} = <inverse_fn> res{2}` to showing Pr[<G_real> outputs a] = Pr[<G_ideal> outputs <inverse_fn> a] for all a. This leverages explicit point-probability lemmas <pr_closed_real> / <pr_closed_ideal> on both sides and avoids the bijection measure-equality obligation that arises in the rnd-coupling approach.",
+      "slot_semantics": {
+        "<G_real>": "one of the two samplers (appears on the left of the equiv)",
+        "<G_ideal>": "the other sampler (appears on the right of the equiv)",
+        "<pr_closed_real>": "explicit point-probability lemma for <G_real> (Pr[<G_real> = a] = expr)",
+        "<pr_closed_ideal>": "explicit point-probability lemma for <G_ideal> (Pr[<G_ideal> = a] = expr)",
+        "<fwd_fn>": "forward bijection argument mapping <G_real>'s output domain to <G_ideal>'s",
+        "<inverse_fn>": "inverse bijection argument; the RHS of the postcondition is <inverse_fn> res{2}",
+        "<domain_iff>": "the hypothesis of the form `forall i, in_domain i <=> in_domain (<fwd_fn> i)`",
+        "<inverse_spec>": "the hypothesis `forall i, in_domain i => <fwd_fn>(<inverse_fn> i)=i /\\ <inverse_fn>(<fwd_fn> i)=i`"
+      },
+      "indicators": [
+        "equiv goal about output distributions",
+        "Need to show same distribution for different inputs or bijection-related inputs",
+        "Explicit point-probability lemmas (<pr_closed_real> / <pr_closed_ideal>, or byphoare-proved values) are available for both programs",
+        "The rnd bijection approach would require proving mu1 D x = mu1 D (<inverse_fn> x) as a sub-obligation"
+      ],
+      "reasoning_hints": [
+        "bypr reduces an equiv goal `<G_real> ~ <G_ideal> : true ==> res{1} = <inverse_fn> res{2}` to showing: for all a, Pr[<G_real> = a] = Pr[<G_ideal> = <inverse_fn> a]. Each side is then computed directly via an explicit probability lemma (<pr_closed_real>, <pr_closed_ideal>).",
+        "PREFER bypr over proc + transitivity + rnd bijection when explicit point-probability lemmas exist for both programs. The rnd approach requires proving mu1 D x = mu1 D (<inverse_fn> x) as an inline obligation, which needs additional lemmas (dinter1E) and range hypotheses about <inverse_fn>. bypr bypasses this by reducing to arithmetic on the explicit probability values.",
+        "Event transformation: after bypr, the right-side event `res{2} = a` may need to be transformed to `res{2} = <inverse_fn> (<fwd_fn> a)` or similar. Use <domain_iff> (the bijection range hypothesis) and <inverse_spec> to relate the two forms.",
+        "For the backward event direction (<inverse_fn> side): derive `in_domain a` from `in_domain (<fwd_fn> a)` using the backward iff direction. Correct: `have Ha: <domain> by (move: Hr; rewrite -<domain_iff>). have [_ ->] := <inverse_spec> a Ha.` See ec_syntax iff_hypothesis_backward_direction."
+      ],
+      "common_failure": "Using `rewrite <domain_iff>` instead of `rewrite -<domain_iff>` when extracting A from the hypothesis `A <=> B` with B in context. See ec_syntax iff_hypothesis_backward_direction for the full pattern.",
+      "fallback": "If bypr produces a goal that is hard to close via point-probability arithmetic, fall back to proc + transitivity{1} + rnd bijection. If the rnd approach produces a mu1 equality sub-obligation, close it with `rewrite !dinter1E Hx Hy` (see ec_syntax dinter1E_measure_equality) after establishing both endpoints are in range.",
+      "source": {
+        "derived_from": "goal_state_analysis"
+      }
+    },
+    {
+      "id": "abstract_module_apply",
+      "structural_description": "Apply an abstract lemma from a cloned theory (e.g., DLog.dlog_standard_reduction, Ad1.pr_abs). The proof is essentially instantiating the abstract result.",
+      "indicators": [
+        "Goal matches an abstract lemma signature",
+        "Proof is apply or have := lemma"
+      ],
+      "typical_tactics": [
+        "apply (Theory.lemma args).",
+        "or: have := Theory.lemma args &m."
+      ],
+      "source": {
+        "derived_from": "goal_state_analysis"
+      }
+    },
+    {
+      "id": "byphoare_completeness",
+      "structural_description": "Prove Pr[game]=1 (completeness) for a sigma protocol. The game always succeeds when the witness <witness> satisfies the relation <relation>. The game samples a masking term and a <chal> uniformly, then checks a verification equation; the check always passes because the group exponent arithmetic and losslessness of the distributions are sufficient to close the ambient goal.",
+      "indicators": [
+        "Pr[...] = 1%r",
+        "Completeness or correctness game for a sigma protocol",
+        "Game contains two or more samplings (e.g., masking term and <chal>)",
+        "Verification equation holds when the witness <witness> satisfies the relation <relation>"
+      ],
+      "slot_semantics": {
+        "<relation>": "the sigma-protocol relation predicate (often an abbreviation in the .ec file, e.g. R_DL)",
+        "<witness>": "the witness component of the relation precondition pair passed to byphoare",
+        "<witness_pair>": "the full (statement, witness) pair used as the byphoare precondition",
+        "<chal>": "the challenge variable sampled by the game",
+        "<dist>": "the distribution sampled at each rnd predT step",
+        "<ll_lemma>": "losslessness lemma for <dist>",
+        "<fu_lemma>": "full-support lemma for <dist>"
+      },
+      "reasoning_hints": [
+        "Two rnd predT applications (one per sampling) generate a doubly-nested ambient goal: outer `weight <dist> = 1%r &&` conjoined with inner `forall v0, v0 \\in <dist> => predT v0 <=> weight <dist> = 1%r && forall v1, v1 \\in <dist> => predT v1 <=> verification_equation`.",
+        "Do NOT manually decompose this nested structure with split/apply <ll_lemma> — this is laborious and fragile. Delegate the entire closure to smt.",
+        "The simplifier `/=` (in `move=> &hr /=`) is required before any `->` destructuring when the ambient goal precondition contains a pair equality `(a, b) = (c, d)`. Without `/=`, the pair equality is not flattened into `a = c /\\ b = d`, so `-> ->` silently fails to substitute.",
+        "<ll_lemma>: establishes weight <dist> = 1%r (losslessness of the <chal>/masking distribution).",
+        "<fu_lemma>: establishes full support — every element is in the distribution's support.",
+        "expD / expM: group exponent arithmetic laws (e.g., g^a * g^b = g^(a+b), (g^a)^b = g^(a*b)) needed to verify the protocol equation.",
+        "If the relation <relation> is defined as an abbreviation, do NOT try `rewrite /<relation> in Hyp` to unfold it before smt — the rewrite may have no effect if <relation> is a notation. The SMT backend resolves the relation directly from its definition."
+      ],
+      "smt_hints": [
+        "<ll_lemma>",
+        "<fu_lemma>",
+        "expD",
+        "expM"
+      ],
+      "common_failure": "tactic_accepted_wrong_effect — `move=> &hr [[-> ->] _]` is accepted but does not substitute the memory-indexed variables from the pair equality (e.g., `x{hr}` and `w{hr}` persist). Root cause: EasyCrypt does not split a pair equality `(a, b) = (c, d)` into rewrite hypotheses without the `/=` simplifier.",
+      "fallback": "Use `move=> &hr /=` instead of `move=> &hr [[-> ->] _]`. The `/=` simplifier flattens the pair equality into a propositional conjunction, after which `move=> [-> ->]` works. Then close the entire goal with `smt(<ll_lemma> <fu_lemma> expD expM)` — no manual split/apply needed.",
+      "source": {
+        "derived_from": "trace_analysis"
+      }
+    },
+    {
+      "id": "byphoare_special_soundness",
+      "structural_description": "Prove extraction from two accepting transcripts (sigma protocol special soundness). Use byphoare with argument precondition encoding the two transcripts. After opening and fully expanding the procedure body, use auto => /> (NOT wp; skip) to reduce the boolean post-condition — this avoids a stuck state with boolean && conjunctions that standard tactics cannot decompose. Then close the remaining propositional goal by splitting into the witness equation and the hypothesis equations, using loge algebra and field for discrete log extraction.",
+      "indicators": [
+        "Two transcripts with different challenges",
+        "Extract witness via division in exponent",
+        "Boolean postcondition with <relation>, msg, and hypothesis equalities after proc; inline *"
+      ],
+      "slot_semantics": {
+        "<relation>": "the sigma-protocol relation predicate (often an abbreviation in the .ec file, e.g. R_DL)",
+        "<transcript_args>": "the argument tuple encoding both transcripts, e.g. (h, msg, ch, r, ch', r')"
+      },
+      "reasoning_hints": [
+        "CRITICAL: Use auto => /> instead of wp; skip after proc; inline *. The wp; skip tactic produces a goal with boolean `&&` conjunctions from program-level if-then-else residuals. Tactics like split, do !split, apply/andP, rewrite ... /= all silently have no effect on boolean `&&`.",
+        "auto => /> automatically reduces the boolean postcondition, discharges if-then-else branches, and introduces hypotheses, giving a clean propositional goal: ch <> ch' => g^r = msg * h^ch => g^r' = msg * h^ch' => <relation> h ((r - r') / (ch - ch')) /\\ msg * h^ch = g^r /\\ msg * h^ch' = g^r'.",
+        "After auto => />, use move=> Hneq Hr Hr' to name the three hypotheses, then split the triple conjunction manually into (1) the <relation> witness goal, (2) the eq_sym Hr goal, (3) the eq_sym Hr' goal.",
+        "For the witness goal: rewrite /<relation> followed by rewrite log_bij loggK reduces the group equality to an exponent equality. Then prove Hr_l / Hr'_l expressing responses as linear functions of loge h.",
+        "ORDERING CRITICAL: substitute Hr_l and Hr'_l with 'rewrite Hr_l Hr'_l.' BEFORE calling 'field.'. This makes field produce denominator ch - ch' (not (-ch') + ch), enabling 'rewrite GP.ZModE.ZModpRing.subr_eq0; exact Hneq.' to close the side condition.",
+        "For the Hr / Hr' goals: 'by rewrite eq_sym Hr.' and 'by rewrite eq_sym Hr'.' close these directly."
+      ],
+      "common_failure": "wp_skip_produces_boolean_conjunction — after proc; inline *, using wp; skip produces a goal with boolean `&&` conjunctions. Tactics split, do !split, apply/andP; split, rewrite Hkey (eq_sym Hr) (eq_sym Hr') Hneq /= all silently accept but have no effect. Scrapping wp; skip and using auto => /> instead is the fix, not debugging the boolean split.",
+      "fallback": "Undo to proc; inline * and replace wp; skip with auto => />. This is a complete substitution. After auto => />, the goal is propositional and standard split/exact/rewrite tactics apply. If field produces (-ch') + ch instead of ch - ch', the fix is to rewrite Hr_l Hr'_l into the goal BEFORE calling field.",
+      "smt_hints": [
+        "loggK",
+        "logDr",
+        "logrzM",
+        "log_bij"
+      ],
+      "source": {
+        "derived_from": "trace_analysis"
+      }
+    },
+    {
+      "id": "bad_event_abstraction",
+      "structural_description": "Prove a bound of the shape `|Pr[<M1>(A).main : <E1>] - Pr[<M2>(A).main : <E2>]| <= Pr[<M2>(A).main : <bad_event>]` by applying an abstract up-to-bad lemma whose statement has that shape. The lemma takes the two games, a negated-adversary functor <neg_adv>, and explicit predicate/event parameters; after `apply`, the remaining subgoals concern the negated-adversary equivalence and complement probabilities for events on each game.",
+      "indicators": [
+        "Goal has shape `|Pr[<M1>(A).main : <E1>] - Pr[<M2>(A).main : <E2>]| <= Pr[<M2>(A).main : <bad_event>]`",
+        "Proof context defines or imports a negated-adversary functor (a module type that wraps an adversary oracle)",
+        "File declares schematic games <M1>/<M2> plus adversary A and exposes an abstract reusable up-to-bad lemma"
+      ],
+      "slot_semantics": {
+        "<abs_lemma>": "the abstract up-to-bad lemma being applied (takes M1 M2 N A predicates, yields the absolute-difference bound)",
+        "<M1>": "the first game module",
+        "<M2>": "the second game module",
+        "<E1>": "the event predicate on <M1>'s glob/res",
+        "<E2>": "the event predicate on <M2>'s glob/res",
+        "<bad_event>": "the bad-event predicate on <M2>'s glob",
+        "<eqN1>": "equiv relating <M1>(<neg_adv>(A)) to <M1>(A) with complemented <E1> post",
+        "<eqN2>": "equiv relating <M2>(<neg_adv>(A)) to <M2>(A) with complemented <E2> post and preserved <bad_event>",
+        "<llM1>": "islossless lemma for <M1>(A).main",
+        "<llM2>": "islossless lemma for <M2>(A).main",
+        "<neg_adv>": "the negated-adversary functor (module type wrapping A's oracles)"
+      },
+      "common_failure": "congr_shape_mismatch: `rewrite Pr[mu_not]; congr; byphoare <llM>.` assumes both sides already have the shape `1 - Pr[:E]`. If the subtraction is flipped so one side reads `Pr[:E] = 1 - Pr[:!E]`, congr will refuse to unify. Secondary failure: using `smt(<llM>)` for a `weight d = 1%r` sub-goal — smt may silently stall where `exact <llM>` succeeds immediately.",
+      "fallback": "When `congr` refuses to unify because the subtraction polarity is flipped, introduce the islossless fact as a named hypothesis: `have ll : Pr[<M>(A).main(vx) @ &m : true] = 1%r` proved `by byphoare (_: _ ==> true)=> //; exact <llM>.`, then `rewrite Pr[mu_not] ll /#` to close the arithmetic residual. Prefer `exact <llM>` (not `smt(<llM>)`) for lossless weight obligations.",
+      "reasoning_hints": [
+        "Structure: `apply <abs_lemma>` yields five follow-up obligations — the two negated-adversary equivalences (closed with `byequiv <eqN1>` / `byequiv <eqN2>`), the two complement-probability identities for <E1> / <E2> on <M1>(A) / <M2>(A), and the preservation of <bad_event> under negation of the adversary.",
+        "The complement-probability identities are proved by: (a) rewriting the negated-adversary probability as the complement of the plain-adversary probability using <eqN1>/<eqN2>, then (b) invoking `rewrite Pr[mu_not]` together with an islossless fact `Pr[<M>(A).main(vx) @ &m : true] = 1%r` (proved by `byphoare + exact <llM>`), then `ring` + `smt()`.",
+        "Scoping: the abstract lemma's predicate arguments <E1>, <E2>, <bad_event> are higher-order functions over `glob <M>` / `glob A` / `res`. Pass them as-is to `apply`; do not expand the predicate body inline."
+      ],
+      "smt_hints": [
+        "mu_bounded"
+      ],
+      "source": {
+        "derived_from": "goal_state_analysis"
+      }
+    },
+    {
+      "id": "equiv_transitivity",
+      "structural_description": "Prove equiv via transitivity: show G1 ~ G_mid and G_mid ~ G2. Used when direct equiv is hard due to structural mismatch between two game variants. An explicit postcondition captures only the state variables that differ between the two game variants; a transitivity step then introduces an intermediate program by structural insertion. Both equiv conditions (left and right) must be stated around the intermediate body.",
+      "indicators": [
+        "byequiv with transitivity{1}",
+        "Intermediate game or module",
+        "Two game variants that share most state but differ in a few variables (e.g., log, random oracle map)",
+        "Custom byequiv postcondition with explicit state variable equalities"
+      ],
+      "typical_tactics": [
+        "byequiv (_: ={glob A} ==> ={state_var1, state_var2})=> //",
+        "proc",
+        "transitivity{1} { <intermediate_body> } (<left_precondition> ==> <left_postcondition>) (<right_precondition> ==> <right_postcondition>)",
+        "(prove left hop: byequiv or sim)",
+        "(prove right hop: byequiv or sim)"
+      ],
+      "reasoning_hints": [
+        "The byequiv postcondition must capture EXACTLY the state variables that differ between the two game variants — not the full state. Over-specifying causes byequiv to fail; under-specifying leaves the final rewrite unsolvable.",
+        "transitivity{1} introduces an intermediate program body inline. The two precondition/postcondition pairs specify the two hops: left is G1 ~ G_mid, right is G_mid ~ G2.",
+        "The intermediate body is typically a re-ordered or re-initialized version of one of the games (e.g., init oracles before running adversary, or resample before sampling)."
+      ],
+      "common_failure": "wrong postcondition variables in byequiv — if too few variables are captured, the final goal cannot be closed; if too many, byequiv rejects",
+      "fallback": "Read the final goal shape after byequiv to identify which variables appear unrelated; adjust the postcondition to include exactly those variables.",
+      "source": {
+        "derived_from": "goal_state_analysis"
+      }
+    },
+    {
+      "id": "phoare_abstract_islossless",
+      "structural_description": "Losslessness subgoal for an abstract module call: the goal is islossless A(O).<adv_proc> (or phoare[A(O).<adv_proc> : true ==> true] = 1%r) where A is an abstract adversary with a section axiom like 'forall O, islossless O.<oracle_proc> => islossless A(O).<adv_proc>'. The oracle O is a concrete module (e.g., <concrete_oracle>).",
+      "indicators": [
+        "Goal is phoare[A(O).<adv_proc> : true ==> true] = 1%r",
+        "A is an abstract module (declared in a section)",
+        "There is a section axiom: forall (O <: ORC{-A}), islossless O.<oracle_proc> => islossless A(O).<adv_proc>",
+        "O is a concrete oracle module"
+      ],
+      "slot_semantics": {
+        "<adv_proc>": "the adversary procedure whose losslessness we are trying to prove (e.g. choose, guess)",
+        "<oracle_proc>": "the oracle procedure referenced in the section losslessness axiom",
+        "<concrete_oracle>": "the concrete oracle module being passed as O (e.g. CCA(Scheme,A).O)",
+        "<ll_axiom>": "the section losslessness axiom name bound to <adv_proc>"
+      },
+      "common_failure": "apply_ll_axiom_module_inference",
+      "fallback": "Do NOT try 'apply <ll_axiom>' directly on the islossless goal -- EasyCrypt cannot infer the module argument O and gives 'cannot infer module arguments'. Do NOT try 'proc' without an invariant -- gives 'abstract, provide invariant'. The correct tactic is 'proc (true)' which generates 4 subgoals. The section axiom subgoal (subgoal 3) matches the axiom exactly, so 'exact <ll_axiom>' works there.",
+      "reasoning_hints": [
+        "proc (true) for abstract modules in phoare generates 4 subgoals: pre-preservation, post-preservation, losslessness axiom, oracle losslessness",
+        "The invariant 'true' is simplest -- subgoals 1 and 2 become 'forall _, true => true' which is trivial",
+        "Subgoal 3 is in the EXACT form of the section axiom (universally quantified over O), so exact/apply works",
+        "Subgoal 4 is islossless for the concrete oracle, which islossless handles automatically"
+      ],
+      "source": {
+        "derived_from": "trace_analysis"
+      }
+    },
+    {
+      "id": "inductive_negation_contradiction",
+      "structural_description": "Pure logic: prove a boolean property by contradiction using an inductive predicate. A negation-of-inductive-predicate hypothesis is in context. The proof case-splits on the target property; in the failing branch, the inductive predicate's constructor is applied to build a witness; the contradiction with the negation hypothesis closes the goal.",
+      "indicators": [
+        "Goal is a boolean property (uniqueness, disjointness, membership condition)",
+        "Context contains a negation of an inductively-defined predicate as hypothesis",
+        "The inductive predicate has a constructor whose precondition is the negation of the goal property"
+      ],
+      "typical_tactics": [
+        "case: (goal_property) => // h_failing_case.",
+        "have: IndPred args by apply/Constructor.",
+        "by move: h_neg."
+      ],
+      "common_failure": "constructor_used_as_view: writing `/Constructor` directly inside the case expression (e.g., `case: (cond) => // /Constructor.`) fails because constructors are not boolean rewriting lemmas and cannot be used as SSReflect views. Also: `apply absurd` is not a valid EasyCrypt tactic; `smt(Constructor)` may fail if the SMT backend is unavailable.",
+      "fallback": "Use an explicit `have: IndPred args by apply/Constructor.` to construct the inductive witness, then `by move: h_neg.` to close by contradiction. The `have:` + `move:` two-step is the canonical EC idiom for this shape of contradiction.",
+      "reasoning_hints": [
+        "Case-splitting on the goal property yields two branches: the trivial branch (property holds, `//` closes it) and the failing branch (h_failing_case: property is false)",
+        "In the failing branch, the inductive predicate's constructor fires precisely when the goal property fails — use `apply/Constructor` to build the witness",
+        "Moving the negation hypothesis (move: h_neg.) unifies it with the just-constructed witness and closes the goal by False elimination"
+      ],
+      "smt_hints": [],
+      "source": {
+        "derived_from": "trace_analysis"
+      }
+    },
+    {
+      "id": "inductive_negation_iff",
+      "structural_description": "Pure logic: prove that the negation of an inductive predicate is equivalent to a conjunction of conditions, one per constructor. Each constructor's firing condition is the negation of exactly one conjunct. Forward direction: from the negation hypothesis, derive each conjunct by case-splitting on the condition and deriving a contradiction via the corresponding constructor. Backward direction: from the conjunction, refute each constructor by showing one of its preconditions is denied by the conjunction.",
+      "indicators": [
+        "Goal is `! IndPred args <=> (cond1 /\\ cond2 /\\ ...)`",
+        "The inductive predicate has named constructors, each requiring conditions that correspond to negating one conjunct",
+        "Forward direction must derive each conjunct from the negation of the predicate",
+        "Backward direction must prove the negation from the conjunction"
+      ],
+      "typical_tactics": [
+        "split.",
+        "(forward) move=> h_neg; split.",
+        "(prove cond1 by contradiction) case: (cond1_expr) => //. move=> h_fail. apply h_neg. apply/Ctor1.",
+        "(prove cond2 by contradiction) move=> arg. case: (cond2_expr arg) => //=. move=> h_mem. apply/negP => h_other. apply h_neg. exact (Ctor2 arg h_mem h_other).",
+        "(backward) move=> [h_cond1 h_cond2]. apply/negP => h_bad. case: h_bad.",
+        "(Ctor1 branch) by rewrite h_cond1.",
+        "(Ctor2 branch) move=> arg h_mem h_other. move: (h_cond2 arg). by rewrite h_mem h_other."
+      ],
+      "reasoning_hints": [
+        "Forward: for each conjunct cond_i, case-split on cond_i_expr; the trivially-true branch is closed by `//`; in the failing branch, the corresponding constructor's precondition is satisfied — apply the negation hypothesis then the constructor",
+        "Two equivalent idioms for the contradiction step: (A) `apply h_neg; apply/Constructor` — apply h_neg turns goal to IndPred, then apply Constructor proves it; (B) `exact (Constructor arg1 arg2 ...)` for direct multi-argument instantiation",
+        "Backward: always starts with `apply/negP => h_bad; case: h_bad.` — see ec_syntax negP_inductive_negation. Each constructor branch is closed by showing one of its preconditions is contradicted by a conjunct",
+        "NEVER use `smt(Constructor)` to prove an inductive predicate goal — SMT backends cannot reason about EC inductive constructors and will fail if why3 is unavailable. Use `apply/Constructor` or `exact (Constructor args)` directly"
+      ],
+      "common_failure": "constructor_as_view_or_smt: (1) writing `/Constructor` directly in a case expression as an SSReflect view — constructors are not rewriting lemmas; (2) using `smt(Constructor)` — unreliable and fails when why3 is unavailable; (3) using `elim: h_bad.` instead of `case: h_bad.` in the backward direction — see ec_syntax case_vs_elim_inductive; (4) mixing intro patterns between forward and backward subgoals after a complex split",
+      "fallback": "If stuck on a constructor branch in the forward direction: use `have: IndPred args by apply/Constructor.` + `by move: h_neg.` (two-step form). For multi-argument constructors, `exact (Constructor arg1 arg2 ...)` explicitly instantiates all arguments. See ec_syntax negP_inductive_negation for backward direction details and inductive_negation_contradiction pattern for individual contradiction steps.",
+      "smt_hints": [],
+      "source": {
+        "derived_from": "trace_analysis"
+      }
+    },
+    {
+      "id": "eager_lazy_game_equiv",
+      "structural_description": "Two games <G_lazy> and <G_eager> relate lazy sampling (an oracle <oracle_lazy> generates randomness on-demand, updating <accum_state> on each call) to eager sampling (all randomness is batch-resampled at game end via a dedicated <resample_proc> procedure). Direct program equivalence fails because the structures differ: <G_lazy> samples inside each oracle call, while <G_eager> runs <resample_proc> after the adversary finishes. The equivalence uses a transitivity argument through an intermediate program that runs init; adversary; <resample_proc>, reducing the obligation to an eager/lazy permutation of independent sampling operations on <accum_state>.",
+      "indicators": [
+        "Left game calls a lazy oracle <oracle_lazy> that samples fresh randomness on each call and updates <accum_state> (e.g., a query log and/or a memoization map)",
+        "Right game <G_eager> calls the same oracle but runs a batch <resample_proc> after the adversary finishes",
+        "Goal shape: Pr[<G_lazy> @ &m : <event>] = Pr[<G_eager> @ &m : <event>]",
+        "After byequiv + proc, the two programs differ in length because the right side runs <resample_proc> at the end",
+        "<event> is over <accum_state> (e.g., a bad predicate over a log and a map)"
+      ],
+      "slot_semantics": {
+        "<G_lazy>": "the lazy-sampling game module (instantiated with the lazy oracle)",
+        "<G_eager>": "the eager-sampling game module (adds batch resample after the adversary, OR simply adds a logging side-effect while keeping the call structure identical)",
+        "<oracle_lazy>": "the lazy oracle module whose per-call body samples and accumulates state",
+        "<resample_proc>": "the batch eager-resample procedure run at game end (typically a counter-bounded while loop rebuilding the log) — only relevant for the transitivity variant",
+        "<accum_state>": "the shared variables the two games must agree on as postcondition of byequiv (e.g., a query log and a memoization map) — appears in the top-level byequiv post",
+        "<event>": "the predicate evaluated over <accum_state> on both sides",
+        "<state_eq_pre>": "the intermediate equality used as invariant when coupling <G_lazy> to the intermediate program (transitivity variant)",
+        "<eager_body_ll>": "losslessness lemma for <oracle_lazy>'s per-call body (needed when reducing under `eager`)",
+        "<call_inv>": "the state invariant preserved by the oracle across the per-call boundary; used as the sole argument of `call (_: <call_inv>)` in the direct variant when both games share identical oracle-call sequences and differ only by a logging-style side-effect (direct variant)",
+        "<intermediate_block>": "the literal statement block inserted by `transitivity{1} { ... }`, matching <G_eager>'s structure: init subroutines, adversary call, then <resample_proc> (transitivity variant)"
+      },
+      "variants": [
+        {
+          "name": "direct_byequiv_preserved_state",
+          "conditions": "Both <G_lazy> and <G_eager> share the identical top-level call structure (same sequence of oracle / adversary calls, same number of statements on each side). <G_eager> differs from <G_lazy> only by an extra logging side-effect inside the oracle (e.g., pushing the sampled value into a seed log). The goal shape is `Pr[<G_lazy> @ &m : res] = Pr[<G_eager> @ &m : res]` with res-only event — not a `Bad`-predicate event. A single `call (_: <call_inv>)` + `sim` on each per-oracle subgoal suffices."
+        },
+        {
+          "name": "transitivity_through_resample",
+          "conditions": "<G_eager> runs <resample_proc> AFTER the adversary, so the two top-level programs differ in length (the right side has extra statements after the adversary call). The goal shape is `Pr[<G_lazy> @ &m : <event>] = Pr[<G_eager> @ &m : <event>]` where <event> is a predicate over <accum_state> (typically a `Bad` predicate over a log and a map). Requires splitting the obligation via `transitivity{1}` with an intermediate program that mimics <G_eager>'s structure, then discharging the remaining eager obligation via the `eager` tactic family."
+        }
+      ],
+      "common_failure": "stuck_on_eager_obligation: after transitivity{1} and dispatching obligations 1-3, the eager obligation (shape `eager[ <resample_proc>;, <oracle_lazy> ~ <oracle_lazy>, <resample_proc>; ]`) requires specialized reasoning about permuting independent samples. Standard tactics (sim, proc, auto, rnd without explicit bijection, call) do not close it. Two distinct failure modes: (A) swap_not_independent — <oracle_lazy> has a while loop whose guard reads the sampled variable (rejection-sampling). Additional swap configurations cannot succeed. (B) eager_proc_failed — <resample_proc> itself contains a while loop, so `eager proc` and `eager proc; wp.` both fail; the fix requires inlining both programs and handling the loop directly. Diagnose by checking WHICH program has the while loop before choosing a fix strategy.",
+      "fallback": "If the eager tactic family is unavailable or fails: (1) Restate the lemma to avoid the lazy-to-eager equality — bound Pr[<G_lazy>] by Pr[<G_eager>] + Pr[<event>] via `have` + up-to-bad instead of equality. (2) Seq-based coupling: split at each oracle-call boundary with `seq` and show each call produces the same distribution independently using `rnd` / `auto`. (3) Express <resample_proc>'s distribution as a bijection on the full <accum_state> vector and discharge with `rnd` + explicit bijection. (4) When <oracle_lazy> uses rejection sampling and swap fails, prove the lazy-eager equivalence for <oracle_lazy> in isolation as a standalone sub-lemma (`eager [<resample_proc> : <oracle_lazy>] => //`) before composing. (5) When `eager proc` itself fails and <resample_proc> contains a while loop: use `inline *; wp.` to expose raw statements from both <resample_proc> and <oracle_lazy>, then handle the loop with `splitwhile` / `while`, and close the oracle-body portion with `rnd` coupling. If a branch has 0 probability (e.g., a freshly sampled element is not in <accum_state> by a uniqueness/uniq invariant), use `rcondf` with that 0-probability argument (typically discharged via `rnd; wp; auto` + a losslessness lemma for the sampled distribution).",
+      "reasoning_hints": [
+        "Key insight: a lazy oracle that accumulates state on each call is equivalent to an eager version that batch-resamples at the end because sampling is i.i.d. and independent samples can be permuted.",
+        "EasyCrypt's eager tactic family (`eager`, `eager_seq`, `eager_if`) discharges the permutation obligation — `eager [ <resample_proc> : <oracle_lazy> ] ...` proves moving <resample_proc> from after to before each oracle call preserves the joint distribution.",
+        "The transitivity intermediate must match <G_eager>'s structure exactly: run init; adversary; <resample_proc> (in that order).",
+        "Obligation 3 (lazy-to-intermediate) is typically easy: the two programs are identical except for the extra <resample_proc> at the end; use `seq` to split at the adversary-call boundary, then `sim` or `auto`.",
+        "Obligation 4 (eager) is the hard part; when the standard `eager proc` flow fails, diagnose whether the while loop lives in <oracle_lazy> (rejection sampling — do NOT retry swap) or in <resample_proc> (eager_proc_failed — inline both and handle the loop directly).",
+        "If no eager tactic applies, seq-based coupling (split at each oracle-call boundary; prove per-call distribution equality) is the next fallback.",
+        "When <resample_proc> contains a counter-bounded while loop that rebuilds a log, `eager proc` cannot decompose it automatically. After `inline *; wp.`, use `splitwhile` / `eager_while` / direct loop tactics. A probability-0 argument (e.g., a freshly sampled element is not in <accum_state> by a uniq invariant) can enable `rcondf` to eliminate an unreachable branch."
+      ],
+      "smt_hints": [],
+      "source": {
+        "derived_from": "trace_analysis"
+      }
+    },
+    {
+      "id": "identity_byequiv_reduction",
+      "structural_description": "Prove a probability goal for a complex sampler <G_real> by reducing to a simpler sampler <G_ideal> via a parametric equiv lemma <pr_lemma> instantiated with identity functions. A parametric equiv lemma relates two samplers where a bijection function argument maps the left output to the right output. When both samplers produce the same distribution (the bijection is trivially the identity), instantiate both function arguments with the identity function. The equiv then asserts that both programs produce equal outputs, giving a direct probability equality. Close the goal by rewriting with the known closed-form lemma <pr_closed> for the simpler sampler. This avoids bypr case-analysis and the measure-equality obligation from transitivity+rnd.",
+      "slot_semantics": {
+        "<G_real>": "the complex sampler whose probability is being computed (target of the Pr goal)",
+        "<G_ideal>": "the simpler sampler whose probability is already known in closed form",
+        "<pr_lemma>": "the parametric equiv lemma `equiv [<G_ideal> ~ <G_real> : true ==> res{1} = <inverse_fn> res{2}]` with two bijection arguments",
+        "<pr_closed>": "the closed-form probability lemma for <G_ideal> (e.g. prDX k &m : Pr[<G_ideal>() @ &m : res = k] = <closed_form>)",
+        "<inverse_fn>": "the inverse bijection argument of <pr_lemma> (both sides are instantiated with `fun x => x` here)"
+      },
+      "indicators": [
+        "Parametric equiv lemma <pr_lemma> with two function arguments (f and <inverse_fn>) exists in scope",
+        "Both programs produce the same distribution (bijection is the identity)",
+        "A closed-form probability lemma <pr_closed> is proved for the simpler program <G_ideal>",
+        "Goal is Pr[<G_real> @ &m : res = k] = <closed_form>"
+      ],
+      "reasoning_hints": [
+        "When both bijection arguments are the identity, the postcondition `res{1} = <inverse_fn> res{2}` simplifies to `res{1} = res{2}`, which is the self-coupling needed to relate the two Pr terms.",
+        "This approach is strictly simpler than bypr_uniformity (no per-value case analysis, no domain sub-goals) or transitivity+rnd (no measure-equality obligation) when the bijection is trivially the identity.",
+        "Use a named `have H` (not `have ->`) so the equality direction can be controlled via `rewrite -H`. byequiv proves Pr[<G_ideal>...] = Pr[<G_real>...] (left~right order in <pr_lemma>); `rewrite -H` replaces Pr[<G_real>...] in the goal with Pr[<G_ideal>...]. See ec_syntax byequiv_direction_have_naming."
+      ],
+      "common_failure": "direction_mismatch_have_arrow: using `have -> : Pr[<G_real>...] = Pr[<G_ideal>...]` forces the byequiv subgoal to require the equiv in the reverse direction, which fails or is immediately undone. Fix: use `have H: Pr[<G_ideal>...] = Pr[<G_real>...]` (matching <pr_lemma>'s left~right program order), then `rewrite -H`. Additionally, after `rewrite -H`, use `apply <pr_closed>` to close the goal — NOT `exact (<pr_closed> k &m)`. `exact` requires the term to match the goal type exactly (including all implicit arguments); if there is any type mismatch, EC accepts the tactic silently but makes no progress. `apply <pr_closed>` uses unification and handles implicit argument instantiation automatically.",
+      "fallback": "If identity instantiation fails (precondition side-goals are not closed by `//`), the bijection is not trivially the identity — use bypr_uniformity (P13) with explicit <pr_closed> lemmas for both programs, or R10 (transitivity with bridge lemmas for rejection-sampling programs).",
+      "smt_hints": [],
+      "source": {
+        "derived_from": "trace_analysis"
+      }
+    },
+    {
+      "id": "self_transitivity_bijection",
+      "structural_description": "Equiv goal where the postcondition relates the two outputs through a bijection or mapping function (e.g., res{1} = <bij>(res{2}) or res{1} = <bij_inv> res{2}), and both programs <sampler_l> and <sampler_r> draw from related distributions.",
+      "indicators": [
+        "equiv [A ~ B : pre ==> res{1} = <bij>(res{2})]",
+        "<bij> is a bijection between the output domains",
+        "A and B each draw from distributions that are equal up to <bij>",
+        "existing equiv lemmas show A ~ C and B ~ C for some intermediate C"
+      ],
+      "slot_semantics": {
+        "<sampler_l>": "the left-hand sampling procedure (program A)",
+        "<sampler_r>": "the right-hand sampling procedure (program B)",
+        "<bij>": "the forward bijection relating the two outputs",
+        "<bij_inv>": "the inverse of <bij>",
+        "<dist_eq_lemma>": "an existing equiv lemma witnessing distributional equality of <sampler_l> and <sampler_r>"
+      },
+      "reasoning_hints": [
+        "KEY INSIGHT: The intermediate program is one of the ORIGINAL programs (<sampler_l> itself), NOT a third bridging program. The split is on the POSTCONDITION, not the program.",
+        "Transitivity decomposes the bijection postcondition into: (1) self-equivalence of <sampler_l> with the mapping as postcondition, and (2) distributional equality of <sampler_l> and <sampler_r>.",
+        "For the self-equivalence subgoal (<sampler_l> ~ <sampler_l> with bijection), use `proc; rnd <bij> <bij_inv>` or `proc; rnd (fun x => <bij> x) (fun x => <bij_inv> x)` to couple the two copies via the bijection.",
+        "For the distributional equality subgoal (<sampler_l> ~ <sampler_r> with ={res}), look for existing equiv lemmas (<dist_eq_lemma>) that show the two sampling procedures produce the same distribution.",
+        "Do NOT look for a third intermediate program from a clone — the clone's SampleDirect/SampleWithTest procedures are for the distributional equality part, not the transitivity intermediate.",
+        "If the file has clone-provided equiv lemmas (e.g., from WhileSamplingFixedTest), use them to close the distributional equality subgoal, NOT as the transitivity intermediate."
+      ],
+      "common_failure": "Using a clone's intermediate program (e.g., SampleDirect) as the transitivity target instead of one of the original programs. This creates overly complex subgoals because the clone programs have different internal structure.",
+      "fallback": "If self-transitivity doesn't work, try bypr (res{1}) (<bij_inv> res{2}) to reduce to probability equality, then prove each side separately using byphoare or existing probability lemmas.",
+      "source": {
+        "derived_from": "external_analysis"
+      }
+    },
+    {
+      "id": "ddh0_byequiv_swap_identity",
+      "structural_description": "Embed <G_real> (an IND chosen-plaintext encryption game) into <assumption_game> (the DDH0 experiment) by byequiv. Both programs draw the same group elements but in a different order. The <assumption_game> ciphertext component is the base raised to the product of two exponents (<sk_sample> times <enc_rand>), not a fresh independent draw. After swap alignment all random draws couple via identity — no extra-mask bijection or reparameterization is needed. The only non-trivial step is closing the group exponent algebra: base raised to exponent A then to exponent B equals base raised to the product A*B.",
+      "slot_semantics": {
+        "<G_real>": "the concrete IND chosen-plaintext game module (left of the equiv)",
+        "<assumption_game>": "the DDH0 experiment game module (right of the equiv)",
+        "<A>": "the IND chosen-plaintext adversary",
+        "<reduction>": "the constructed reduction module wrapping <A> to attack <assumption_game>",
+        "<scheme>": "the encryption-scheme module",
+        "<sk_sample>": "the secret-key exponent sampled by <G_real>",
+        "<enc_rand>": "the encryption-randomness exponent sampled by <G_real>",
+        "<bit_sample>": "the uniformly sampled bit variable"
+      },
+      "indicators": [
+        "Goal is Pr[<G_real> @ &m : res] = Pr[<assumption_game>(<reduction>(<A>)) @ &m : res]",
+        "After inline *, both programs have the same set of random draws, differing only in order",
+        "<assumption_game> passes (g^x, g^y, g^(x*y)) to the adversary — z is NOT independently drawn",
+        "No extra masking term beyond what both sides share",
+        "No reparameterization of sampling variables"
+      ],
+      "reasoning_hints": [
+        "<assumption_game> uses z = <sk_sample> * <enc_rand> (deterministic), so the ciphertext group element on the <assumption_game> side is structurally equivalent to base^(<sk_sample>)^(<enc_rand>) on the <G_real> side — no additional randomness is introduced and every rnd couples via identity.",
+        "Because no extra masking or reparameterization occurs, oracle calls close with call (_: true) (identical shared state), and every rnd statement couples trivially after alignment.",
+        "The smt(expM) hint closes the group exponent equation g^a^b = g^(a*b), which arises because one side computes the product exponent directly and the other applies exponentiation twice. If smt(expM) leaves a conjunction open, use progress to decompose it and then close the algebra subgoal with by rewrite expM.",
+        "CONTRAST with the DDH1 variant of this pattern: in that variant the ciphertext group element z is independently and uniformly drawn, so a non-trivial rnd bijection is required to couple z with the masking term. Pitfalls P3 (avoid identity for reparameterized pairs) and P7 (division bijection for DDH input) apply only to DDH1-based or chosen-ciphertext proofs — they do NOT apply here.",
+        "If the planner suggests a bijection (e.g., fun z => z + <sk_sample> * <enc_rand>), that is the DDH1 recipe misapplied. For the DDH0 case, plain rnd (identity) is correct.",
+        "SWAP DIRECTION: after inline *, prefer swap{1} (the <G_real> side) over swap{2} (the <assumption_game> side). The <assumption_game> side often contains intermediate group-element assignments (computed from just-drawn values) between its rnd statements. These create read-write dependencies that cause swap{2} to fail with 'the two statements are not independent, the first statement writes X which is read by the second'. The <G_real> side's rnd statements are typically free of such intermediate assignments and can be reordered with swap{1}."
+      ],
+      "smt_hints": [
+        "expM"
+      ],
+      "common_failure": "Two failure modes: (1) Applying a non-trivial bijection rnd (e.g., fun z => z + <sk_sample> * <enc_rand>) following P3/P7 guidance, which is scoped to DDH1-based or chosen-ciphertext proofs — this creates unsolvable bijection side-conditions; use plain rnd (identity coupling) after swap alignment instead. (2) swap{2} blocked by intermediate assignments: after inline *, the <assumption_game> side often has intermediate group-element assignments (e.g., base^exponent computed from a just-sampled value) between sampling statements, creating read-write dependencies that cause swap{2} to fail with 'the two statements are not independent'. Fix: switch to swap{1} and align sampling order on the <G_real> (left) side instead.",
+      "fallback": "If swap alignment is unclear after inline *, run 'python3 core/easycrypt/session_cli.py -align' to request concrete swap suggestions for the inlined goal. If swap{2} fails with a dependency error, try swap{1} to align from the <G_real> (left) side instead. If smt(expM) does not close the algebra goal alone, the goal may be a conjunction — use progress. to decompose it into individual subgoals, then close the group algebra subgoal with by rewrite expM.",
+      "source": {
+        "derived_from": "trace_analysis"
+      },
+      "scheme_specific": true
+    },
+    {
+      "id": "up_to_bad_eq_except",
+      "structural_description": "Probability inequality `Pr[<G_real> @ &m : res] <= Pr[<G_lazy> @ &m : res] + Pr[<G_lazy> @ &m : <bad_event>]` where <G_real> and <G_lazy> share the same random oracle <oracle> but differ in how they treat one specific input <bad_input>. Use a `have`-decomposition into (i) an equivalence coupling giving `res{1} => res{2} \\/ <bad_event>{2}` with oracle memories agreeing everywhere except at <bad_input> (captured by `eq_except (pred1 <bad_input>) <oracle_map>{1} <oracle_map>{2}`), and (ii) a union bound on the RHS.",
+      "indicators": [
+        "Goal is `Pr[<G_real> @ &m : res] <= Pr[<G_lazy> @ &m : res] + Pr[<G_lazy> @ &m : <bad_event>]`",
+        "<G_real> and <G_lazy> differ only in oracle handling of one specific input <bad_input>",
+        "File has a `declare module` adversary with losslessness axioms",
+        "Section has a random oracle <oracle> shared between games"
+      ],
+      "slot_semantics": {
+        "<G_real>": "the real game module (starting game in the up-to-bad hop)",
+        "<G_lazy>": "the instrumented game that additionally tracks the bad event",
+        "<oracle>": "the random oracle module (its `.o` procedure is the one inlined before the `call`)",
+        "<oracle_map>": "the oracle's memoization map (field of <oracle>)",
+        "<log>": "the query-log set recorded by the oracle composition (e.g. Log.qs when composing Log(<oracle>))",
+        "<bad_input>": "the specific oracle input where the two games diverge (side-2 value)",
+        "<bad_event>": "the bad predicate in post-condition position (typically `<bad_input> \\in <log>`)",
+        "<adv_a2_ll>": "losslessness lemma for the bad-event-phase adversary procedure",
+        "<sampling_ll>": "losslessness lemma for the oracle's sampling distribution (e.g. dptxt_ll, drand_ll)",
+        "<inv_dom>": "domain-subset invariant carried in the preliminary call (forall x, x \\in <oracle_map> => x \\in <log>)",
+        "<shared_state>": "tuple of shared module-state fields that remain equal on both sides through the main adversary call (e.g. seed + log)",
+        "<rel_inv>": "relational invariant (named op or inductive predicate) tying the two sides' oracle maps together, carried inside the main call's invariant"
+      },
+      "variants": [
+        {
+          "name": "two_phase_adversary_with_dom_inv",
+          "conditions": "(1) proof uses an intermediate `have h1: Pr[<G_real>] <= Pr[<G_lazy>: res \\/ <bad_event>]` decomposition followed by a union-bound `have h2`; (2) adversary module has two procedures (pre-sampling `a1` and post-sampling `a2`), so the pRHL body has TWO `call` tactics (one 3-arg for `a2`, one 2-arg preliminary for `a1`); (3) bad event is a membership predicate `<bad_input> \\in <log>`; (4) oracle coupling uses `eq_except (pred1 <bad_input>) <oracle_map>{1} <oracle_map>{2}`."
+        },
+        {
+          "name": "single_phase_direct_byequiv_rel_inv",
+          "conditions": "(1) proof does NOT decompose via `have h1`/`have h2` — it starts directly with `byequiv (_: ... ==> res{1} => res{2} \\/ <bad_event>)=> //`; (2) adversary module has a single distinguisher/main procedure (one `call` tactic in the pRHL body); (3) bad event is a named op / inductive predicate applied to shared state (e.g. `<BadOp> <log> <oracle_map>`), not a `\\in` membership; (4) oracle coupling uses a custom relational invariant `<rel_inv>` (often an inductive predicate) rather than `eq_except`."
+        }
+      ],
+      "common_failure": "call_before_inline_oracle: issuing `call (_: <bad_event>, Inv)` before the body of <oracle>.o is visible to EC. The 3-argument call needs to see the oracle's concrete code to check preservation / losslessness; without inlining it, EC cannot discharge the oracle subgoals.",
+      "fallback": "The most common failure is calling `call (_: <bad_event>, Inv)` before inlining the oracle. EC needs to see the concrete oracle code — use selective `inline <oracle>.o` (or `inline{1} <oracle>.o; inline{2} <oracle>.o`) BEFORE the 3-arg call. Do NOT use `ler_trans` — it does not exist in EC; use the `have`-decomposition instead. If the call invariant is rejected, check that it includes BOTH the log equality (={<log>}) AND `eq_except (pred1 <bad_input>{2}) <oracle_map>{1} <oracle_map>{2}`. If a losslessness subgoal fails, search for the correct `_ll` lemma with `-search`.",
+      "reasoning_hints": [
+        "Before the 3-argument call, the oracle code must be visible to EC. Use selective `inline <oracle>.o` (or `inline{1}` / `inline{2}`) to expand just the oracle. `inline *` also works but may produce many statements, making `-align` output large. If `-align` reports >20 total statements, consider undoing and using selective inline instead.",
+        "SCOPING: in `call (_: <bad_event>, Inv)`, do NOT use {1}/{2} qualifiers inside <bad_event> (first arg). Only use {1}/{2} in Inv (second arg). Representative shape: `call (_: <bad_input> \\in <log>, ={<log>} /\\ eq_except (pred1 <bad_input>{2}) <oracle_map>{1} <oracle_map>{2})`. Using <bad_input>{2} inside <bad_event> causes 'unknown memory: &2'.",
+        "GOAL NAVIGATION: the have-decomposition creates multiple goals; the `call` tactic must be applied on the pRHL subgoal (after `byequiv + proc`), NOT on the ambient probability goal. Use `-goal-info` to confirm you're on the pRHL goal before applying `call`.",
+        "Do NOT use `ler_trans` — it does not exist in EC. Use `have`-decomposition: `have h: Pr[<G_real>] <= Pr[<G_lazy>: res \\/ <bad_event>]. + byequiv ...`",
+        "The 3-argument call form `call (_: <bad_event>, Inv)` produces 4 subgoals: (1) adversary losslessness (`exact/<adv_a2_ll>`), (2) oracle preserves Inv when <bad_event> is false (smt with eq_except lemmas), (3) oracle lossless when <bad_event> is true, (4) oracle lossless when <bad_event> is false.",
+        "The call invariant must include BOTH `={<log>}` (log equality) AND `eq_except (pred1 <bad_input>) <oracle_map>{1} <oracle_map>{2}` (memory agreement except at <bad_input>).",
+        "For subgoal 2 (oracle preserves Inv): use `smt(eq_except_set_eq eq_exceptP get_setE mem_set)` — these are the key eq_except reasoning lemmas.",
+        "For subgoals 3-4 (losslessness): use `proc; inline *; auto; smt(<sampling_ll>)` where <sampling_ll> is the losslessness lemma for the sampling distribution.",
+        "After the call, case-split on whether <bad_input> is in the oracle memory: `case: ((r \\in <oracle_map>){1}).` Then use `rcondt` / `rcondf` for the conditional branch.",
+        "The union bound step (`Pr[A \\/ B] <= Pr[A] + Pr[B]`) is proved by `rewrite Pr[mu_or]; smt(mu_bounded)`.",
+        "MULTI-GOAL WARNING: after `have h1: ... + byequiv => //=.`, EC may report 2-12 remaining goals. This is normal — they include side conditions from byequiv, the have continuation, and the union bound step. Do NOT restart the session; proceed with `proc. inline <oracle>.o.` on the pRHL subgoal.",
+        "PRELIMINARY CALL DOMAIN INVARIANT: when the proof has a two-phase adversary (A.a1 + A.a2) and the oracle is a logged composition, the preliminary call for A.a1 MUST include the domain-subset invariant `(forall x, x \\in <oracle_map> => x \\in <log>){1}`. Without it, after A.a1 completes, the main body cannot prove the else branch of the oracle conditional (where the sampled value is already in <oracle_map>): you cannot show `r \\in <oracle_map> => r \\in <log>` without having carried this relation as an inductive invariant. The invariant holds because the log is updated before the map. Oracle subgoal: `proc; inline *; auto=> />; smt(mem_set domE get_setE)`. See pattern `domain_invariant_logged_oracle`.",
+        "SWAP/RND BOTTOM-UP COUPLING ORDER: the `rnd` tactic closes sampling subgoals bottom-up (last remaining sampling first). After `-align`, verify that variables needed by later rnd calls do not appear after the variable handled by the earlier call; if they do, insert an extra swap to push the dependent variable past the independent one. Representative shape: for a oracle-then-encrypt scheme, the oracle-input sampler should come last so the identity coupling for the oracle reply closes first, then the message bit, then the scheme randomness.",
+        "STANDARD RESIDUAL SMT HINTS: after `inline*; auto=> />` closes program-level goals, the remaining ambient conditions are typically (1) `oget m.[x<-v].[x] = v` (`get_set_sameE`), (2) eq_except after a map update when the updated key is NOT in the predicate (`eq_except_setl`), (3) empty-map domain membership (`emptyE`). Close with `smt(get_set_sameE eq_except_setl emptyE)`.",
+        "SIM FAILURE ON ORACLE BODIES: if `sim.` fails with 'cannot infer equalities' on an oracle subgoal after inline, the oracle bodies are asymmetric — one side has extra instrumentation code. See pattern `asymmetric_oracle_coupling` for the manual decomposition (sp, peel shared structure with if/wp, handle the extra block with rcondt/rcondf + rnd or skip)."
+      ],
+      "smt_hints": [
+        "mu_bounded",
+        "eq_except_set_eq",
+        "eq_exceptP",
+        "get_setE",
+        "mem_set",
+        "get_set_sameE",
+        "eq_except_setl",
+        "emptyE"
+      ],
+      "source": {
+        "derived_from": "trace_analysis"
+      }
+    },
+    {
+      "id": "domain_invariant_logged_oracle",
+      "structural_description": "When proving equivalence of games that use a logged lazy random oracle composition (an oracle wrapper that logs all query inputs to a set <log> before delegating to the underlying lazy random oracle <oracle>), and the proof involves a multi-phase adversary that makes oracle calls before a critical sampling step, the adversary-call invariant must include a domain-subset relation: every key in <oracle_map> was also recorded in <log>. This invariant is established by initialization (both structures start empty) and is maintained by every oracle call (the log is updated before the map). Without it, the branch where a sampled value is already in <oracle_map> cannot be discharged, because the proof cannot connect map membership to log membership.",
+      "indicators": [
+        "Game uses a logged oracle composition <log_wrapper>(<oracle>) that logs all query inputs to <log>",
+        "Proof has a preliminary adversary call (e.g., A.a1) that runs before a key sampling step",
+        "After the sampling step, the proof must case-split on whether the sampled value is already in <oracle_map>",
+        "The else branch (sampled value already in <oracle_map>) requires proving the sampled value was also in <log>",
+        "Both a query log <log> and an oracle memoization map <oracle_map> appear in the game state"
+      ],
+      "slot_semantics": {
+        "<oracle>": "the underlying lazy random oracle module",
+        "<oracle_map>": "the memoization map of <oracle>",
+        "<log_wrapper>": "the logging oracle wrapper (e.g. Log(<oracle>)) that records queries into <log>",
+        "<log>": "the query-log set updated by <log_wrapper> before delegating to <oracle>",
+        "<inv_dom>": "the domain-subset invariant: forall x, x \\in <oracle_map> => x \\in <log>",
+        "<rel_inv>": "a named inductive predicate that bundles the domain-subset fact together with other cross-map relations (e.g. value agreement on shared keys)",
+        "<bad_event>": "the bad predicate used in the main 3-arg call when the invariant rides along with a bad-event coupling"
+      },
+      "variants": [
+        {
+          "name": "preliminary_call_forall_inv",
+          "conditions": "(1) adversary has two phases (pre-sampling and post-sampling); (2) proof emits a SEPARATE 2-arg `call` tactic for the preliminary phase, distinct from the main 3-arg bad-event call; (3) domain-subset invariant is stated as an explicit `forall x, x \\in <oracle_map> => x \\in <log>` conjunct in that preliminary call."
+        },
+        {
+          "name": "inductive_rel_inv_inside_main_call",
+          "conditions": "(1) adversary is single-phase (no separate preliminary call); (2) game uses a logged oracle wrapper that appends queries onto <log> before writing <oracle_map>; (3) the proof carries the domain-subset fact packaged inside a named inductive predicate <rel_inv> that also encodes value-agreement on shared keys; (4) <rel_inv> sits inside the main 3-arg bad-event `call (_: <bad_event>, Inv)`; NO separate preliminary call exists."
+        }
+      ],
+      "common_failure": "domain_invariant_missing_from_preliminary_call: the preliminary call is issued with just `={glob <log_wrapper>, glob <oracle>}` (without the domain-subset clause). The call itself succeeds; the failure appears later at the else branch of the <oracle> conditional, where the goal `x \\in <oracle_map>{1} => x \\in <log>{1}` cannot be proved. Fix: restart the byequiv proof and include <inv_dom> in the preliminary call invariant.",
+      "fallback": "If the else branch of the <oracle> conditional (where the queried value is already in <oracle_map>) is not provable — specifically, cannot show a value in <oracle_map> is also in <log> — the preliminary adversary call is missing the domain-subset invariant. Restart the byequiv proof and include `(forall x, x \\in <oracle_map> => x \\in <log>){1}` in the preliminary call invariant.",
+      "reasoning_hints": [
+        "WHY THE INVARIANT HOLDS: after init(), both <oracle_map> and <log> start empty. Every call to <log_wrapper>.o inserts the query input into <log> first, then into <oracle_map>. So `dom(<oracle_map>) ⊆ <log>` is an inductive invariant of any execution that starts from init().",
+        "WHEN NEEDED: include this invariant whenever you call an adversary phase that precedes a sampling step where the proof must reason about <oracle_map> containing (or not containing) the sampled value.",
+        "CONNECTION TO UP-TO-BAD: this pattern typically appears as the preliminary call (e.g., A.a1) inside a larger `up_to_bad_eq_except` proof. The main bad-event call (A.a2) uses a 3-argument bad-event coupling; the preliminary call uses a 2-argument coupling that carries the domain relation forward.",
+        "ORACLE SUBGOAL HINTS: the oracle-preserves-invariant subgoal is closed by `proc; inline *; auto=> />; smt(mem_set domE get_setE)`. Key lemmas: `mem_set` (x ∈ m.[k <- v] ↔ x = k ∨ x ∈ m), `domE` (x ∈ dom m ↔ m.[x] ≠ None), `get_setE` (m.[k <- v].[x] = if x = k then v else m.[x]).",
+        "PITFALL: omitting this invariant is NOT caught at the call site — the call succeeds with just `={glob <log_wrapper>, glob <oracle>}`. The failure appears later at the else branch of the <oracle> conditional. The fix requires restarting the byequiv proof and adding the invariant."
+      ],
+      "smt_hints": [
+        "mem_set",
+        "domE",
+        "get_setE",
+        "fdom_set"
+      ],
+      "source": {
+        "derived_from": "trace_analysis"
+      }
+    },
+    {
+      "id": "ambient_goal_decomposition",
+      "structural_description": "When auto or auto=> /> leaves multiple ambient subgoals involving maps, eq_except, or other first-order logic with if-then-else branches, decompose with progress. before attempting smt. Large ambient goals with conditional branches and map operations rarely close with a single smt call — progress. splits them into individually provable pieces that each need only one targeted smt hint.",
+      "indicators": [
+        "auto or auto=> /> accepted but goals remain (goal count > 0)",
+        "Remaining goal has if-then-else, map operations (oget, .[_], .[_ <- _]), or eq_except",
+        "A single smt call with many hints fails, times out, or returns STRICT_WARNING",
+        "Goal body is large (>10 lines) with nested forall/implies/conjunction"
+      ],
+      "typical_tactics": [
+        "Step 1 — Decompose the compound goal:",
+        "progress.",
+        "Step 2 — Close each subgoal individually with targeted smt:",
+        "smt(get_set_sameE).  (* map lookup after set: oget m.[x <- v].[x] = v *)",
+        "smt(eq_except_setl).  (* eq_except after map update at the excepted key *)",
+        "smt(eq_except_refl).  (* eq_except reflexivity: eq_except p m m *)",
+        "smt().  (* plain smt for simple logic or arithmetic *)"
+      ],
+      "common_failure": "single_large_smt",
+      "fallback": "If progress. generates too many subgoals (>10), apply auto=> /> first to simplify, then progress. on what remains. If individual smt calls fail, try adding domain lemmas: domE, mem_set, get_setE, fdom_set. If a subgoal involves oget on a key you just set, get_set_sameE is almost always the right hint.",
+      "reasoning_hints": [
+        "progress. is the ambient-logic analogue of proc;inline*;auto for pRHL — it breaks a compound conjunction/implication into manageable pieces",
+        "Common smt hints for map goals: get_set_sameE (m.[x<-v].[x] = v), get_setE (case split on key equality), eq_except_setl (updating at the excepted key preserves eq_except), domE (domain membership), mem_set (set membership after set insertion)",
+        "If you have been idle for >30s trying to find the right smt hints for an ambient goal, stop and use progress. first — decomposing is almost always faster than guessing the right hint combination for a large goal"
+      ],
+      "source": {
+        "derived_from": "trace_analysis"
+      }
+    },
+    {
+      "id": "probability_union_bound",
+      "structural_description": "Prove Pr[E \\/ F] <= Pr[E] + Pr[F] in an ambient probability goal. This commonly arises after a have-decomposition where h1 bounds by Pr[A \\/ B] but the main goal needs the bound in terms of Pr[A] + Pr[B]. Direct smt on the combined goal often fails because the solver must both rewrite the disjunction probability and perform arithmetic — splitting into two steps is more reliable.",
+      "indicators": [
+        "Goal involves Pr[...] <= Pr[...] + Pr[...]",
+        "A hypothesis h1 bounds by Pr[A \\/ B] but the goal needs Pr[A] + Pr[B]",
+        "Direct smt(mu_or mu_bounded) fails or gives STRICT_WARNING",
+        "Goal has the form: h1: X <= Pr[G: A \\/ B] |- X <= Pr[G: A] + Pr[G: B]"
+      ],
+      "typical_tactics": [
+        "Step 1 — Introduce the union bound as a separate hypothesis:",
+        "have h2: Pr[G.main() @ &m : A \\/ B] <= Pr[G.main() @ &m : A] + Pr[G.main() @ &m : B].",
+        "Step 2 — Prove h2 using the probability union bound lemma:",
+        "rewrite Pr[mu_or]; smt(mu_bounded).",
+        "Step 3 — Close main goal by transitivity (h1 and h2 are both in context):",
+        "smt()."
+      ],
+      "common_failure": "direct_smt_union_bound",
+      "fallback": "If rewrite Pr[mu_or] fails, the event expression may not syntactically match mu_or's pattern. Try: smt(Pr_mu_or mu_bounded) or apply mu_or manually. If smt() cannot combine h1 and h2 at Step 3, verify both hypotheses are in the current context (not discharged by a prior subgoal-closing tactic).",
+      "reasoning_hints": [
+        "mu_or is: Pr[A \\/ B] = Pr[A] + Pr[B] - Pr[A /\\ B]. Combined with mu_bounded (Pr[E] >= 0 for any E), this yields Pr[A \\/ B] <= Pr[A] + Pr[B].",
+        "The have-decomposition approach works because smt can handle simple real arithmetic when the hypotheses are in context, but struggles to combine rewriting (Pr[mu_or]) with arithmetic (mu_bounded) and transitivity (h1) in a single step.",
+        "After Step 2, the remaining goal has form: h1: X <= Pr[A \\/ B], h2: Pr[A \\/ B] <= Pr[A] + Pr[B] |- X <= Pr[A] + Pr[B]. This is just real-valued transitivity — plain smt() handles it."
+      ],
+      "source": {
+        "derived_from": "trace_analysis"
+      }
+    },
+    {
+      "id": "up_to_bad_fundamental_lemma",
+      "structural_description": "Prove `Pr[<G_real> @ &m : res] <= Pr[<G_lazy> @ &m : res] + Pr[<G_lazy> @ &m : <bad_event>]` between two games that differ only when a bad event holds, via a probabilistic coupling with a relational invariant. The core move is the 3-arg bad-event `call (_: <bad_event>, <rel_inv>)`, which generates 1 + 4K subgoals for K oracles (adversary losslessness, per-oracle relational equiv when <bad_event> is false, per-oracle phoare <bad_event>-preservation, and per-oracle losslessness). Two variants differ in how the outer Pr-inequality is attacked: (A) `direct_byequiv_inductive_bad` — when <bad_event> is a user-defined inductive predicate with named constructors and <rel_inv> is a custom relational predicate, `byequiv` is applied directly on the inequality with coupling post `res{1} => res{2} \\/ (<bad_event>){2}`; (B) `have_decomposition_with_eq_except` — when <bad_event> is a membership `x \\in S` and <rel_inv> is a map-level `eq_except`, prefix with `have h1: Pr[<G_real>] <= Pr[<G_lazy>: res \\/ <bad_event>]` and close with a `Pr[mu_or]` union bound.",
+      "indicators": [
+        "Goal is `Pr[<G_real> @ &m : res] <= Pr[<G_lazy> @ &m : res] + Pr[<G_lazy> @ &m : <bad_event>]`",
+        "Games share the same oracles but <G_lazy> additionally exposes the bad event",
+        "A relational invariant <rel_inv> connects the two game states when <bad_event> has not occurred",
+        "<bad_event> captures an exceptional condition (cycle / collision / membership) that voids the coupling"
+      ],
+      "slot_semantics": {
+        "<G_real>": "the starting game module (the template expands as `<G_real>.main()`)",
+        "<G_lazy>": "the instrumented game module that additionally tracks <bad_event>",
+        "<bad_event>": "a global-state predicate for the bad event (inductive predicate like `Bad <log> <map>` in variant A, or a membership like `<x> \\in <S>` in variant B) — must not carry a {1}/{2} qualifier when used as the first arg of `call`",
+        "<rel_inv>": "the relational invariant relating the two game states when <bad_event> is false (may use {1}/{2})",
+        "<adv_ll>": "the overall adversary losslessness lemma",
+        "<oracle_ll>": "per-oracle losslessness lemma (one per oracle in the game)",
+        "<dist_ll_1>": "losslessness lemma for the first sampling distribution inside an oracle (e.g. dseed_ll, dptxt_ll)",
+        "<dist_ll_2>": "losslessness lemma for the second sampling distribution inside an oracle (e.g. dout_ll)",
+        "<Ctor1>": "first constructor of the inductive <bad_event> type (variant A only)",
+        "<Ctor2>": "second constructor of the inductive <bad_event> type (variant A only)",
+        "<oracle>": "the oracle module name whose `o` method is inlined on the <G_lazy> side (variant B only; e.g. LRO)"
+      },
+      "variants": [
+        {
+          "name": "direct_byequiv_inductive_bad",
+          "conditions": "The goal is attacked by `byequiv` directly — no outer `have h1` decomposition, no `Pr[mu_or]` union bound. Prerequisites: (i) <bad_event> is declared in the file as an inductive type with >=2 named constructors; (ii) <rel_inv> is a user-defined relational predicate destructured via `move: H_inv => [...]` inside subgoals; (iii) adversary + each oracle have known losslessness lemmas. Characteristic opener: `byequiv ... proc. call (_: <bad_event>, <rel_inv>).`"
+        },
+        {
+          "name": "have_decomposition_with_eq_except",
+          "conditions": "The goal is proved in two stages: first `have h1: Pr[<G_real>] <= Pr[<G_lazy>: res \\/ <bad_event>]` via byequiv, then `have h2: Pr[<G_lazy>: res \\/ <bad_event>] <= Pr[<G_lazy>: res] + Pr[<G_lazy>: <bad_event>]` via `rewrite Pr[mu_or]`. Prerequisites: (i) <bad_event> is a simple membership / boolean expression (no inductive constructors); (ii) <rel_inv> is a map-level `eq_except` invariant between the two oracle maps; (iii) <G_lazy> side exposes an oracle module <oracle> whose `o` method is inlined immediately after `proc`."
+        }
+      ],
+      "common_failure": "bad_pred_uses_side_qualifier: `call (_: <bad_event>, <rel_inv>)` is rejected with 'unknown memory' when <bad_event> is written with a {2} qualifier. The first argument to the 3-arg call must be a global-state predicate (no {1}/{2}); only <rel_inv> (second arg) may use {1}/{2}. Secondary failure: closing `weight d = 1%r` with `smt(<dist_ll>)` — smt may silently stall where `exact <dist_ll>` succeeds.",
+      "fallback": "If `call (_: <bad_event>, <rel_inv>)` is rejected with 'unknown memory', remove any {2} qualifier from <bad_event>. If phoare bad-preservation goals cannot be closed by `auto` alone, manually introduce the quantifiers with `move=>` and decompose the weight/forall chain step by step. For constructor case-splits on <bad_event>, use `case: h_bad => [...]` to name constructor arguments before applying smt.",
+      "reasoning_hints": [
+        "VARIANT SELECTION: does the file declare <bad_event> as an inductive type with named constructors and <rel_inv> as a custom relational predicate? Use variant `direct_byequiv_inductive_bad`. Is <bad_event> a `x \\in S` membership and <rel_inv> an `eq_except (pred1 <x>) m1 m2`? Use `have_decomposition_with_eq_except`.",
+        "BAD PREDICATE SCOPING: the first argument to `call (_: <bad_event>, <rel_inv>)` must NOT use a {2} memory qualifier. It represents a predicate over the global state before the call, not a side-specific memory. Writing `<bad_event>{2}` in the first arg causes 'unknown memory: &2'. <rel_inv> (second arg) freely uses {1}/{2}. In the byequiv post-condition, wrap as `(<bad_event>){2}` so the {2} applies to the whole expression.",
+        "PHOARE BAD-PRESERVATION SUBGOAL SHAPE: after `proc; auto.` on a phoare bad-preservation goal, the residual has the shape `weight d1 = 1%r /\\ forall v, v \\in d1 => predT v <=> weight d2 = 1%r /\\ forall v0, v0 \\in d2 => predT v0 <=> <bad_event> new_state`. Discharge manually: `move=> &2 [[h_bad _] _]; split; first exact <dist_ll_1>. move=> v _; rewrite /predT /=; split; first exact <dist_ll_2>. move=> v0 _; case: branch_cond => h; case: h_bad => [? | r ??]; [apply <Ctor1>; smt | apply (<Ctor2> r); smt(mem_set)].` CRITICAL: use `exact <dist_ll>` (not `smt(<dist_ll>)`) for `weight d = 1%r` sub-goals — smt may silently fail here.",
+        "INVARIANT DESTRUCTURING: when <rel_inv> is an inductive predicate, destruct it before using in smt: `move: H_inv => [h_field1 h_field2]`. Without destructuring, smt cannot reason about user-defined predicates. See `inductive_type_smt_barrier` for the general pattern.",
+        "SUBGOAL COUNT: for a game with K oracles, expect 1 + 4K subgoals from `call (_: <bad_event>, <rel_inv>)`. For 2 oracles: 9 subgoals. Track them by goal count using `-goal-info` between transitions.",
+        "COMPARISON TO up_to_bad_eq_except: that pattern is the specialized RO-with-eq_except form (same skeleton as this pattern's variant B). This pattern is the generalization; its variant A extends the recipe to any user-defined inductive bad event + custom relational invariant.",
+        "SIM FAILURE ON ORACLE BODIES: if `sim.` fails on an oracle subgoal because <G_lazy> has extra conditional/sampling blocks, see pattern `asymmetric_oracle_coupling`. Do not retry `sim.`; manually decompose past the shared structure to the divergence point."
+      ],
+      "smt_hints": [
+        "mem_set",
+        "mu_bounded"
+      ],
+      "source": {
+        "derived_from": "trace_analysis"
+      }
+    },
+    {
+      "id": "inductive_type_smt_barrier",
+      "structural_description": "When an EasyCrypt proof goal involves a user-defined inductive predicate or type — either as a hypothesis to be used or as a goal to be constructed — automated SMT solving consistently fails because the SMT backend treats user-defined inductive types as opaque. The fix is always to destruct inductive hypotheses into their component parts before invoking automated solvers, and to apply constructors explicitly when building inductive goals. This applies equally to record-like predicates (defined as a conjunction of conditions) and sum-type bad events (with multiple constructors).",
+      "indicators": [
+        "smt() or smt(hints) silently fails (no-progress, no error) on a goal that looks provable",
+        "A hypothesis in context has a user-defined inductive predicate type (e.g., `<rel_inv> a b c`, `<bad_event> state mem`)",
+        "The goal or context contains constructor calls from a user-defined inductive type",
+        "progress. reveals sub-goals involving user-defined predicates that smt cannot discharge"
+      ],
+      "slot_semantics": {
+        "<bad_event>": "a user-defined inductive bad-event predicate (typically a sum type with named constructors)",
+        "<Ctor1>": "first constructor of the inductive type",
+        "<Ctor2>": "second constructor of the inductive type",
+        "<rel_inv>": "a user-defined inductive relational invariant predicate in context"
+      },
+      "common_failure": "smt_on_opaque_inductive: calling `smt()` or `smt(hints)` on a goal that still carries a user-defined inductive hypothesis. The SMT backend treats the inductive opaquely; it produces no progress and no error message. The fix is to destructure the hypothesis first.",
+      "fallback": "If destructuring reveals nested inductives, apply the approach recursively: destruct each layer before calling smt. If a predicate is abstract (declared but not defined in scope), search for destructor or projection lemmas in the file using `-search`.",
+      "reasoning_hints": [
+        "ROOT CAUSE: EasyCrypt's smt backend (Why3 + Z3 / Alt-Ergo) treats user-defined inductive types as opaque. It cannot unfold definitions or apply constructors automatically. After destructuring, sub-goals involve only standard types (bool, int, fmap, fset) that the solver handles natively.",
+        "DETECTION SIGNAL: `smt()` gives no-progress with no error message on a goal that appears provable. Check whether any hypothesis or goal term is a user-defined inductive predicate — this is the most reliable indicator.",
+        "RECORD-LIKE PREDICATES: a predicate defined as `pred <rel_inv> s1 s2 log = (cond1 s1 s2) /\\ (cond2 s2 log)` is destructured with `move: H => [h1 h2]`. Each component is a standard formula smt can reason about.",
+        "SUM-TYPE BAD EVENTS: an inductive `type <bad_event> = <Ctor1> of ... | <Ctor2> of ...` requires `case: H_bad => [args1 | args2]` to split into constructor cases. Handle each constructor separately before calling smt.",
+        "CONSTRUCTION: to prove `<rel_inv> new_s1 new_s2 new_log`, do NOT use `smt(<Ctor>)` — the SMT backend does not recognize constructors as proof hints. Instead: `split; [prove_field1 | prove_field2]` or `apply <Ctor>` followed by sub-goal discharge.",
+        "RELATED: the `up_to_bad_fundamental_lemma` pattern frequently triggers this barrier in oracle-equiv and phoare bad-preservation subgoals."
+      ],
+      "source": {
+        "derived_from": "trace_analysis"
+      }
+    },
+    {
+      "id": "asymmetric_oracle_coupling",
+      "structural_description": "In a pRHL proof, after inlining oracle bodies, sim. fails because one side has an extra conditional block with sampling that the other side lacks. This is common in game-hopping proofs where an instrumented game (G2) adds tracking code — bad-event flags, counters, extra sampling for detection — inside oracle bodies that are otherwise identical to the original game (G1). The extra block does not change the observable output but adds state updates, making the programs syntactically asymmetric. sim. requires structural symmetry and cannot handle this divergence.",
+      "indicators": [
+        "sim. fails with 'cannot infer the set of equalities' on a pRHL oracle body subgoal",
+        "After inline *, one side has an extra if-block or procedure call that the other lacks",
+        "The extra block samples a value and/or updates a flag/counter (bad-event tracking)",
+        "Both oracle bodies share the same initial structure (assignments, RO calls) but diverge at the instrumentation point",
+        "-goal-info reports oracle mismatch: left calls X.O.proc, right calls Y.O.proc"
+      ],
+      "typical_tactics": [
+        "Step 1 — Do NOT use sim. Use sp to consume shared initial assignments, then peel shared structure with if/wp/call.",
+        "Step 2 — At the divergence point (extra block on one side): use seq to split before/after, or rcondt/rcondf to enter/skip the conditional on the instrumented side.",
+        "Step 3 — Inside the extra block: rnd to couple extra sampling (if the sampled value appears in the postcondition), or wp;skip if the extra state is not in the postcondition.",
+        "Step 4 — After the extra block, the programs reconverge. Close the remaining shared tail with wp; auto or sim (if the tail is now syntactically equal).",
+        "Step 5 — The postcondition typically requires showing a monotone implication (flag_before => flag_after). Use case analysis on the flag state."
+      ],
+      "common_failure": "sim_on_asymmetric_oracle",
+      "fallback": "If you cannot identify the divergence point visually, use -align to see where the statement counts differ between left and right. The first position where the two sides have different statement types marks the divergence. If the asymmetric block involves a nested procedure call (<@), inline it first to expose the raw code.",
+      "reasoning_hints": [
+        "DIAGNOSIS: When sim. fails after inline *, compare the two programs visually or via -align. Look for a conditional or procedure call on ONE side that has no counterpart on the other. This is the instrumentation point.",
+        "WHY sim. FAILS: sim. auto-infers a coupling (set of equalities) by structurally matching left and right statements. When one side has extra statements (conditional, sampling, assignment), there is nothing to match them against, and sim. reports 'cannot infer the set of equalities'.",
+        "COMMON SHAPES: (a) Extra `if (counter = index) { v <$ dist; flag <- flag || v = target; }` — the game checks whether the current operation matches a tracked index and sets a flag. (b) Extra `log <- log ++ [entry]` — the game records an event for later analysis. (c) Extra `t <@ set_bad(args)` — a sub-procedure that samples and conditionally sets a bad-event flag.",
+        "HANDLING THE EXTRA BLOCK: If the extra block has a conditional `if (cond) { ... }`, use `rcondt` or `rcondf` on that side to enter or skip it, depending on what the invariant implies about `cond`. If the extra block samples a value used in the invariant, couple it with `rnd`. If the sampled value is purely local (not in invariant or postcondition), `wp; skip` suffices.",
+        "MONOTONE INVARIANT: In bad-event tracking, the invariant typically includes an implication like `(event_left => flag_right)`. This is monotone: once the flag is set, it stays set. When the extra block sets the flag, the implication is preserved vacuously. When it doesn't, the implication holds by the induction hypothesis.",
+        "ALTERNATIVE: Instead of inline * on the whole oracle, try call (_: Inv) at the oracle level with an explicit invariant that abstracts the asymmetric part. This avoids expanding the oracle body entirely, but requires knowing the right invariant upfront."
+      ],
+      "source": {
+        "derived_from": "trace_analysis"
+      }
+    }
+  ],
+  "closer_idioms": [
+    {
+      "id": "call_invariant_then_sim",
+      "trigger": "pRHL equiv subgoal just past `byequiv=> //; proc` where the body contains an adversary/oracle `call`; the two sides share a local invariant on state variables and the remaining code is syntactically identical after the call.",
+      "slot_semantics": {
+        "<invariant>": "the pRHL relational invariant relating the two sides' visible state (typically `={glob X, Y}` or `={state1, state2}`)."
+      },
+      "reasoning_hints": "After `proc` opens a pRHL equiv, the wrapper around the adversary/oracle `call` needs a relational assertion; after that the tails are lockstep and `sim` discharges them. `by sim` also handles any residual `skip` obligation.",
+      "source": {}
+    },
+    {
+      "id": "trivial_oracle_equiv_close",
+      "trigger": "Oracle-equivalence subgoal produced by `call (_: ...)` where the oracle body has no relevant side effects on the relational part (often a simple lookup/update shared by both sides).",
+      "slot_semantics": {},
+      "reasoning_hints": "When both oracles share the same implementation (or differ only in code that `auto` can reconcile), `proc; inline *; auto` walks the body and discharges the equiv without a custom invariant.",
+      "source": {}
+    },
+    {
+      "id": "ambient_simplify_close",
+      "trigger": "Ambient logic (non-pRHL) residual goal on pure arithmetic/boolean reasoning; remaining obligations are within `smt`'s reach after `auto`'s split.",
+      "slot_semantics": {},
+      "reasoning_hints": "`auto` discharges sampling/wp; `=> />` simplifies introduced hypotheses; `/#` is the `smt` shortcut that closes the remaining arithmetic/logic obligation. Works when no crypto-specific lemma is needed.",
+      "source": {}
+    },
+    {
+      "id": "sampling_ll_smt_close",
+      "trigger": "Terminal subgoal after `auto` still requires knowing that a specific distribution is lossless (for `byphoare` / while-loop termination / trivial oracle ll).",
+      "slot_semantics": {
+        "<sampling_ll>": "name of the lossless lemma for the distribution being sampled (e.g. `dt_ll`, `dbool_ll`, `dptxt_ll`, `drand_ll`)."
+      },
+      "reasoning_hints": "`auto` discharges sampling/wp; `smt(<sampling_ll>)` then closes the mass/positivity residue by feeding the losslessness lemma as a hint.",
+      "source": {}
+    },
+    {
+      "id": "rnd_bijection_additive_mask",
+      "trigger": "pRHL equiv where two samplings must be related by an invertible additive mask; typical pattern: one side samples `z` uniformly, the other samples `z + k` uniformly, and the group is uniform.",
+      "slot_semantics": {
+        "<mask_expr>": "the (side-tagged) masking term added on the left, e.g. `x0{1} * (if b{1} then m1{1} else m0{1})` or `e{1} * w0{1}`."
+      },
+      "reasoning_hints": "The `rnd (f) (g)` couple form supplies both directions of the bijection explicitly; EC then generates side-conditions requiring `f;g = id` and `g;f = id`, which are closed by `algebra`/`smt` on the additive-group axioms.",
+      "source": {}
+    },
+    {
+      "id": "rnd_bijection_xor_mask",
+      "trigger": "pRHL equiv where one side samples `h` and the other samples `h +^ m`; need to couple via XOR with a masking message.",
+      "slot_semantics": {
+        "<mask_expr>": "the (side-tagged) masking expression XOR-ed in, e.g. `if b then m1 else m0` or a choice-of-message term."
+      },
+      "reasoning_hints": "Because `+^` is an involution (`x +^ m +^ m = x`), the single-function `rnd f` form is enough — EC derives the inverse direction automatically. The residual is `algebra` / `smt(addpK ...)` style.",
+      "source": {}
+    },
+    {
+      "id": "pr_half_rnd_pred1_close",
+      "trigger": "Terminal `Pr[<G_mid> @ &m : res] = 1%r/2%r` obligation after `byphoare=> //; proc` where `res` is `b' = b` and `b` is the last uniformly-sampled bit independent of the adversary's guess.",
+      "slot_semantics": {
+        "<challenge_bit>": "the final uniformly-sampled challenge-bit variable in the game (typically `b` or `b'`)."
+      },
+      "reasoning_hints": "`rnd (pred1 <challenge_bit>)` reduces the probability to `mu_ pred1 = dbool1E = 1/2`. Follow up with `auto` / `smt(dt_ll DBool.dbool1E)` to close the mass and independence obligations.",
+      "source": {}
+    },
+    {
+      "id": "final_bound_pr_rewrite_chain",
+      "trigger": "Concluding equality `|Pr[<G_real>] - 1/2| = |Pr[<assumption_game>0] - Pr[<assumption_game>1]|` (or similar) that needs to be closed by rewriting the three bridge lemmas proved earlier in the section.",
+      "slot_semantics": {
+        "<pr_lemma_1>": "first bridge lemma instance (e.g. `cpa_ddh0 &m`).",
+        "<pr_lemma_2>": "second bridge lemma instance (e.g. `Gb_half &m`).",
+        "<pr_lemma_3>": "third bridge lemma instance (e.g. `ddh1_gb &m`)."
+      },
+      "reasoning_hints": "Final-assembly step: each bridge lemma is instantiated at `&m` and used as a rewrite (possibly backward with `-`). Order and direction must match so the two sides collapse to the same expression.",
+      "source": {}
+    },
+    {
+      "id": "byequiv_bridge_lemma_close",
+      "trigger": "Terminal equality `Pr[<G_left> @ &m : P] = Pr[<G_right> @ &m : P]` (or an inequality of matching shape) whose inner equiv has already been proved as a local `equiv` lemma.",
+      "slot_semantics": {
+        "<oracle_equiv_lemma>": "name of the pre-existing equiv lemma bridging the two games (e.g. `eq_Game1_Game2`, `CPA_G0`, `D6_Sample`)."
+      },
+      "reasoning_hints": "`byequiv` converts a `Pr[_] = Pr[_]` obligation into the equiv stored in the bridge lemma; `by` discharges the standard pre/post compatibility side-conditions, typically `true ==> true` or auto-unifiable.",
+      "source": {}
+    },
+    {
+      "id": "byequiv_post_first_sim_close",
+      "trigger": "Terminal `Pr[_] = Pr[_]` obligation where the main equiv is closed by `sim` and an auxiliary smt side-goal remains (typically post-mortem state compatibility).",
+      "slot_semantics": {
+        "<post>": "the equiv post-condition the bridge should preserve (e.g. `={arg, glob X} ==> ={<program>.s}` or `={glob X, glob Y}`)."
+      },
+      "reasoning_hints": "The parenthesized form `byequiv (: ...)` injects a tailored post/pre so the resulting equiv is closed by `sim`; `first by sim` handles the main equiv branch while the secondary `Pr` side condition falls through to `smt()`/`/#` downstream.",
+      "source": {}
+    },
+    {
+      "id": "rnd_additive_mask_skip_smt_close",
+      "trigger": "After an additive-bijection `rnd (fun d => d + <mask_expr>) (fun d => d - <mask_expr>)` coupling, three obligations remain: cancellation (`f;g = id`), mass-preservation of the uniform distribution, and image preservation.",
+      "slot_semantics": {
+        "<sampling_ll>": "the uniform/lossless lemma name for the domain distribution (e.g. `dt_ll`, `dseed_ll`).",
+        "<group_lemmas>": "name list for the underlying group-axiom lemmas (e.g. `expD expM`, `ZModpField.addrK ZModpField.subrK`)."
+      },
+      "reasoning_hints": "After `rnd (f) (g)` produces three side-conditions, `skip` closes the WP, `=> />` normalizes, `do!split` peels the conjunction, and `smt` discharges each piece using the uniform-lossless lemma plus the appropriate group axioms.",
+      "source": {}
+    },
+    {
+      "id": "adversary_ll_rnd_chain_close",
+      "trigger": "Phoare subgoal `Pr[G.main() @ &m : res] = 1/2` reduced by `byphoare=> //; proc; rnd (pred1 <b>)` where the body calls a two-stage adversary (`choose`/`guess`) whose losslessness is declared as axioms.",
+      "slot_semantics": {
+        "<guess_ll>": "name of the axiom/lemma witnessing `islossless A.guess` (or the second adversary stage).",
+        "<choose_ll>": "name of the axiom/lemma witnessing `islossless A.choose` (or the first adversary stage)."
+      },
+      "reasoning_hints": "After `rnd (pred1 b')`, the remaining program is `rnd; call A.choose; rnd; call A.guess; rnd` (reverse-of-program-order since we walk backwards under wp). Each `call X_ll` discharges a lossless adversary call; `rnd` / `skip` close the sampling side-conditions.",
+      "source": {}
+    },
+    {
+      "id": "byphoare_proc_inline_half",
+      "trigger": "Terminal goal `Pr[G.main() @ &m : res] = 1%r/2%r` where `G` is a simple guessing game that samples one final bit after calling the adversary.",
+      "slot_semantics": {
+        "<challenge_bit>": "the final uniformly-sampled challenge-bit variable whose value `res` collapses onto (typically `b'`)."
+      },
+      "reasoning_hints": "Compressed one-shot close for dice/coin-guessing probability equal to 1/2: `byphoare` converts `Pr = 1/2` into a phoare judgment, `proc` opens the body, `rnd (pred1 b')` reduces the final sampling to `mu_ pred1`, and `auto=> />` closes the mass obligation.",
+      "source": {}
+    },
+    {
+      "id": "unfold_op_invariant_sp_if_done_auto",
+      "coverage": "singleton",
+      "trigger": "Oracle subgoal opened by `call (_: <op> <args>)` where the invariant is a named operator/predicate. `smt()` alone cannot close because `<op>` stays opaque; unfolding it exposes the conjuncts that smt/auto can then dispatch. Typically the oracle body is `sp`-alignable prefix + `if` then branch-discharge.",
+      "slot_semantics": {
+        "<op>": "the named operator used as the call's invariant (must match an `op <op> ... = <conjunction>` definition in the file)",
+        "<L>": "number of statements to consume on side 1 before the `if` (read from the current pRHL goal)",
+        "<R>": "number of statements to consume on side 2 before the `if`"
+      },
+      "reasoning_hints": "After `call (_: <op> args)`, the post-condition contains `<op> args` opaquely. `rewrite /<op>` unfolds it to its definition (a conjunction of relational facts). `proc => /=` enters the oracle's proc body with beta-reduction. `sp L R` consumes aligned assignment prefixes. `if` splits the if-condition into 3 subgoals; branch 1 is typically trivially from the invariant (`done`), branch 2 discharged by `auto`.",
+      "source": {}
+    },
+    {
+      "id": "ecall_oracle_equiv_then_unfold_ambient_close",
+      "coverage": "singleton",
+      "trigger": "Inside a pRHL sub-proof, after inline/sp have exposed an oracle call-site on one side, when an `oracle_equiv` lemma (`equiv <NAME>`) discharges it via `ecall`. The resulting ambient residual typically needs a single predicate-unfold + `/#` close.",
+      "slot_semantics": {
+        "<oracle_equiv_lemma>": "a local `equiv <NAME>` lemma whose conclusion matches the current call-site's procedure pair",
+        "<call_site_vars>": "the concrete arguments passed to ecall; read them from the current pRHL goal call-site",
+        "<predicate>": "a named predicate (`op <predicate> = ...`) that gates the oracle's behavior; unfolding it exposes the boolean conditions the ambient residual needs"
+      },
+      "reasoning_hints": "`ecall` instantiates the equiv lemma on the current call-site's arguments, leaving an ambient residual that captures the lemma's preconditions. Unfolding `<predicate>` exposes the boolean conjuncts the preconditions depend on; `auto => />` simplifies; `/#` closes by linear arithmetic + boolean reasoning.",
+      "source": {}
+    },
+    {
+      "id": "phoare_seq_bound_decomposition",
+      "trigger": "phoare goal `[<proc> : <pre> ==> <post>] <= <bound>` where the program admits sequential decomposition: prove the first K statements maintain an intermediate predicate with one bound, the remaining statements with another. Typical entry: after `byphoare => //. proc.` peeled the program to a sequence; the standalone `seq K : (INV).` (pRHL form) is rejected because the goal is now phoare and needs explicit bound factors.",
+      "slot_semantics": {
+        "<K>": "split position (number of statements consumed by the prefix)",
+        "<intermediate_predicate>": "intermediate predicate that holds after the first K statements",
+        "<bound1>..<bound4>": "the four bound factors that PSeqMult/PSeqAdd rules consume — exact semantics depends on which rule EC picks; canonical 4-arg shape documented in the relevant EasyCrypt reference...) 1%r 1%r 0%r _ => //=`)"
+      },
+      "reasoning_hints": "Phoare seq differs from pRHL seq: the phoare form takes BOUND FACTORS in addition to the intermediate invariant. The 4-bound shape (the relevant EasyCrypt reference canonical) is the most general PSeqMult form; simpler PSeqAdd variants exist with fewer bounds. Do NOT use the pRHL `seq K L : (INV)` form on a phoare goal — it'll error on the missing bound argument. eca) before discovering the 4-bound form because no KB or tactic-forms entry surfaced it.",
+      "source": {}
+    },
+    {
+      "id": "fel_failure_event_lemma",
+      "trigger": "phoare bound proof on a procedure containing a `while` loop, where the bound takes the form `qN%r * pr_event` (max iterations × per-iteration probability of a bad event). The goal shape is `[<proc> : <pre> ==> <bad_event>] <= <max_iters>%r * <per_iter_bound>` after `byphoare`.",
+      "slot_semantics": {
+        "<pos>": "statement position to instrument (typically the position of the loop or counter assignment)",
+        "<counter>": "counter variable that increments each loop iteration (must be present in scope)",
+        "<step_fn>": "function from current counter value to bound for that iteration: `fun x => <expr involving x>`",
+        "<max_iters>": "upper bound on the counter (the qN parameter)",
+        "<bad_event>": "predicate over global state that 'bad' fires"
+      },
+      "reasoning_hints": "The failure-event lemma family bounds cumulative bad-event probability across a bounded loop by summing per-iteration contributions. It generates obligations for bad-event preservation and for the per-iteration new-failure bound. Use the tactic-forms helper to confirm the exact arity expected by the local EasyCrypt version.",
+      "source": {
+        "derived_from": "trace_analysis"
+      }
+    },
+    {
+      "id": "pr_disjunction_byphoare",
+      "trigger": "Goal of shape `Pr[<game>(<args>).<proc>() @ &m : <E1> \\/ <E2>] <= <bound>` (or the symmetric `<bound> >= Pr[...]`). Disjunction at the top level of the Pr event, single Pr term in the goal, bound side does not contain another Pr.",
+      "slot_semantics": {
+        "<game>": "the program whose execution is being bounded",
+        "<E1>": "first disjunct of the event predicate (boolean expression over post-state)",
+        "<E2>": "second disjunct (further `\\/` chains generalize the same way)",
+        "<bound>": "arithmetic upper-bound expression — typically `q * pr_event` or similar",
+        "<pre>": "phoare precondition; `true` works when the bound holds unconditionally"
+      },
+      "reasoning_hints": "EC's `mu_or` rewrites `mu d (predU p q) = mu d p + mu d q - mu d (predI p q)` — but `Pr[A : res]` decomposes to `mu (mu_x A) (fun r => res r)` and the body has no `predU` outermost. `rewrite Pr [mu_or]` therefore reports `Pr-rewrite: cannot find a pattern for mu_or`. The canonical path is `byphoare`, which carries the disjunction into a phoare postcondition where it can be handled by `phoare split <bound1> <bound2>` (independent bounds), `conseq` refactoring, or a direct proof if one disjunct is trivially false at the relevant program point.",
+      "source": {}
+    }
+  ]
+}

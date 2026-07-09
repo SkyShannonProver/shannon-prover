@@ -1,0 +1,176 @@
+{
+  "file": "artifacts/eval_suite/dice_d4d6_l1_opus48/l1_goal_projection/dice_d4_d6/r01/source/Dice4_6.ec",
+  "include_dirs": [
+    "artifacts/eval_suite/dice_d4d6_l1_opus48/l1_goal_projection/dice_d4_d6/r01/source",
+    "easycrypt-src/theories"
+  ],
+  "kind": "manager_session_bootstrap",
+  "lemma": "D4_D6",
+  "manager_actions": [
+    {
+      "agent_observation": {
+        "effect": "This manager intent does not change the EasyCrypt proof state.",
+        "manager_action": "start",
+        "result": "The manager completed this proof-level request."
+      },
+      "argv": [
+        "/Library/Developer/CommandLineTools/usr/bin/python3",
+        "core/easycrypt/session_cli.py",
+        "-d",
+        ".ec_session_prover_tree_0_0",
+        "-start",
+        "-f",
+        "artifacts/eval_suite/dice_d4d6_l1_opus48/l1_goal_projection/dice_d4_d6/r01/source/Dice4_6.ec",
+        "-I",
+        "artifacts/eval_suite/dice_d4d6_l1_opus48/l1_goal_projection/dice_d4_d6/r01/source",
+        "-I",
+        "easycrypt-src/theories",
+        "-lemma",
+        "D4_D6"
+      ],
+      "duration_ms": 1023,
+      "exit_code": 0,
+      "label": "start",
+      "mutates_proof_state": true,
+      "stderr_chars": 0,
+      "stderr_preview": "",
+      "stdout_chars": 12285,
+      "stdout_has_workspace_view": true,
+      "stdout_lines": 297
+    },
+    {
+      "agent_observation": {
+        "effect": "This manager intent does not change the EasyCrypt proof state.",
+        "manager_action": "agent_view",
+        "result": "The manager completed this proof-level request."
+      },
+      "argv": [
+        "/Library/Developer/CommandLineTools/usr/bin/python3",
+        "core/easycrypt/session_cli.py",
+        "-d",
+        ".ec_session_prover_tree_0_0",
+        "-agent-view"
+      ],
+      "duration_ms": 162,
+      "exit_code": 0,
+      "label": "agent_view",
+      "mutates_proof_state": false,
+      "stderr_chars": 0,
+      "stderr_preview": "",
+      "stdout_chars": 12170,
+      "stdout_has_workspace_view": true,
+      "stdout_lines": 292
+    }
+  ],
+  "node": "Tree-0.0",
+  "replay_prefix": [],
+  "replay_prefix_count": 0,
+  "schema_version": 2,
+  "session_dir": ".ec_session_prover_tree_0_0",
+  "session_tag": "prover_tree_0_0",
+  "snapshot": {
+    "execution_refs": {
+      "manager_action_count": 2,
+      "manager_actions": [
+        {
+          "agent_observation": {
+            "effect": "This manager intent does not change the EasyCrypt proof state.",
+            "manager_action": "start",
+            "result": "The manager completed this proof-level request."
+          },
+          "argv": [
+            "/Library/Developer/CommandLineTools/usr/bin/python3",
+            "core/easycrypt/session_cli.py",
+            "-d",
+            ".ec_session_prover_tree_0_0",
+            "-start",
+            "-f",
+            "artifacts/eval_suite/dice_d4d6_l1_opus48/l1_goal_projection/dice_d4_d6/r01/source/Dice4_6.ec",
+            "-I",
+            "artifacts/eval_suite/dice_d4d6_l1_opus48/l1_goal_projection/dice_d4_d6/r01/source",
+            "-I",
+            "easycrypt-src/theories",
+            "-lemma",
+            "D4_D6"
+          ],
+          "duration_ms": 1023,
+          "exit_code": 0,
+          "label": "start",
+          "mutates_proof_state": true,
+          "stderr_chars": 0,
+          "stderr_preview": "",
+          "stdout_chars": 12285,
+          "stdout_has_workspace_view": true,
+          "stdout_lines": 297
+        },
+        {
+          "agent_observation": {
+            "effect": "This manager intent does not change the EasyCrypt proof state.",
+            "manager_action": "agent_view",
+            "result": "The manager completed this proof-level request."
+          },
+          "argv": [
+            "/Library/Developer/CommandLineTools/usr/bin/python3",
+            "core/easycrypt/session_cli.py",
+            "-d",
+            ".ec_session_prover_tree_0_0",
+            "-agent-view"
+          ],
+          "duration_ms": 162,
+          "exit_code": 0,
+          "label": "agent_view",
+          "mutates_proof_state": false,
+          "stderr_chars": 0,
+          "stderr_preview": "",
+          "stdout_chars": 12170,
+          "stdout_has_workspace_view": true,
+          "stdout_lines": 292
+        }
+      ]
+    },
+    "goal_hash": "283fb0277a79b86ab288c73c8e0bdf6a467fc2b4",
+    "node_id": "Tree-0.0",
+    "proof_context_view_artifact": "",
+    "session_dir": ".ec_session_prover_tree_0_0",
+    "session_epoch": 1,
+    "session_tag": "prover_tree_0_0",
+    "state_version": 1,
+    "workspace_view_artifact": ""
+  },
+  "workspace_view": {
+    "current_goal": {
+      "goal_type": "ambient",
+      "lines": [
+        "Current goal",
+        "",
+        "Type variables: <none>",
+        "",
+        "f: int -> int",
+        "finv: int -> int",
+        "------------------------------------------------------------------------",
+        "(forall (i : int), 1 <= i <= 4 <=> 1 <= f i <= 4) =>",
+        "(forall (i : int), 1 <= i <= 4 => f (finv i) = i /\\ finv (f i) = i) =>",
+        "equiv[ D4.sample  ~ D6.sample : true ==> res{1} = finv res{2}]"
+      ],
+      "source": {
+        "ground_truth": false,
+        "label": "Parsed from EasyCrypt pretty goal text"
+      },
+      "text_fully_shown": true,
+      "truncated": false,
+      "view_focus": "relational_program"
+    },
+    "kind": "prover_workspace_view",
+    "last_result": {},
+    "proof_status": {
+      "current_layer": "ambient_logic",
+      "goal_type": "ambient",
+      "remaining_goals": 1,
+      "remaining_goals_known": true,
+      "status": "open",
+      "view_focus": "relational_program"
+    },
+    "schema_version": 2,
+    "view_hash": "caa60924002fe86c2d2b621322acfe845e07744e"
+  }
+}

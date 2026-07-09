@@ -1,0 +1,39 @@
+{
+ "current_goal": {
+  "lines": [
+   "Current goal (remaining: 4)",
+   "",
+   "Type variables: <none>",
+   "",
+   "&m: {}",
+   "------------------------------------------------------------------------",
+   "Context : hr: {b, forged, b0, b1 : bool, i : int, n : nonce, ns : nonce list,",
+   "              r : poly_in, t : poly_out}",
+   "",
+   "pre = UFCMA.bad1 /\\ ! size Mem.lc <= qdec",
+   "",
+   "",
+   "post = UFCMA.bad1",
+   "",
+   "[515|check]>"
+  ],
+  "view_focus": "procedure_frontier",
+  "goal_type": "hoare"
+ },
+ "proof_status": {
+  "status": "open",
+  "remaining_goals": 4,
+  "remaining_goals_known": true,
+  "goal_type": "hoare",
+  "view_focus": "procedure_frontier",
+  "current_layer": "procedure_body"
+ },
+ "last_result": {
+  "intent": "commit_tactic",
+  "tactic": "auto.",
+  "payload": {
+   "tactic": "auto."
+  },
+  "result": "EasyCrypt accepted the committed tactic."
+ }
+}
