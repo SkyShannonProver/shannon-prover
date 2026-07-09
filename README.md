@@ -19,7 +19,7 @@ auditable record of what the agent saw, chose, and proved.
 
 ## What this tool does — and what you bring
 
-A provable-security proof moves through three phases (paper, Fig. 1):
+A formal security proof moves through three phases (paper, Fig. 1):
 
 | Phase | Who | What |
 |---|---|---|

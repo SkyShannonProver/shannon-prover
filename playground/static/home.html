@@ -139,7 +139,7 @@
 
   <section id="phases">
     <h2>What this tool does — and what you bring</h2>
-    <p class="seclead">A provable-security proof moves through three phases
+    <p class="seclead">A formal security proof moves through three phases
     (<a href="https://arxiv.org/pdf/2607.02847" rel="noopener">our paper</a>, Fig.&nbsp;1).
     <strong>Shannon Prover's scope is Phase&nbsp;III</strong>: you bring the security model
     (Phase&nbsp;I) and the decomposition into lemma-level obligations (Phase&nbsp;II), and it
@@ -341,13 +341,17 @@ uv run python -m eval_suite.run --suite eval_suite/suites/demo_pir.json \
 <script>
 // Runtime adaptation: this page is served two ways — by playground/server.py
 // (live playground available) and as a static site (GitHub Pages, no backend).
-// Probe the backend once; without it, every playground entry point becomes a
-// "run it locally" pointer at the install section. One HTML, two deployments.
+// Without a backend, every playground entry point becomes a "run it locally"
+// pointer at the install section. GitHub Pages is detected SYNCHRONOUSLY from
+// the hostname so there is no async-probe window in which a click could reach
+// the raw (404) playground URL; the backend probe covers other static hosts.
 (function(){
-  fetch('/api/targets').then(function(r){if(!r.ok)throw 0;}).catch(function(){
+  function downgrade(){
+    if(downgrade.done)return; downgrade.done=true;
     document.querySelectorAll('a[href="playground"]').forEach(function(a){
       a.setAttribute('href','#install');
       a.setAttribute('title','the live playground runs locally — see the install steps');
+      if(a.classList.contains('cta'))a.textContent='playground (local)';
     });
     var card=document.querySelector('.cards a[href="#install"].card');
     if(card){
@@ -359,6 +363,8 @@ uv run python -m eval_suite.run --suite eval_suite/suites/demo_pir.json \
         '<li>then watch a live agent prove a lemma in your browser</li>';
       var go=card.querySelector('h3 .go'); if(go)go.textContent='↓';
     }
-  });
+  }
+  if(/\.github\.io$/.test(location.hostname)||location.protocol==='file:'){downgrade();return;}
+  fetch('/api/targets').then(function(r){if(!r.ok)throw 0;}).catch(downgrade);
 })();
 </script>
