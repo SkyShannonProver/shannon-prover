@@ -27,7 +27,14 @@
   .top nav{margin-left:auto;display:flex;gap:4px;flex-wrap:wrap}
   .top nav a{font-size:13px;color:var(--muted);padding:5px 11px;border-radius:8px}
   .top nav a:hover{background:var(--infobg);color:var(--info)}
-  .page{max-width:680px;margin:0 auto;padding:52px 24px 80px}
+  .page{max-width:760px;margin:0 auto;padding:52px 24px 80px}
+  .walk{margin-top:44px}
+  .walk h2{font-size:18px;font-weight:600;margin:0 0 6px}
+  .walk .lead{margin-bottom:20px}
+  figure{margin:0 0 26px}
+  figure img{width:100%;height:auto;display:block;border:.5px solid var(--line2);border-radius:10px;box-shadow:0 2px 10px rgba(0,0,0,.06)}
+  figcaption{font-size:13px;color:var(--muted);margin-top:8px;line-height:1.55}
+  figcaption .n{display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;border-radius:50%;background:var(--infobg);color:var(--info);font-weight:600;font-size:11.5px;margin-right:7px;vertical-align:-4px}
   .badge{display:inline-block;font-size:11px;padding:3px 10px;border-radius:6px;background:var(--warnbg);color:var(--warn);font-weight:600;margin-bottom:14px}
   h1{font-size:26px;font-weight:600;letter-spacing:-.01em;margin:0 0 12px}
   p{color:var(--muted);font-size:14px;margin:0 0 14px}
@@ -75,11 +82,48 @@ uv run --with fastapi --with "uvicorn[standard]" \
     uvicorn playground.server:app --host 127.0.0.1 --port 8000
 <span class="c"># then open http://127.0.0.1:8000/playground</span></code></pre>
 
-  <p>Pick a target file and a lemma, press start, and watch the agent work — every
-  panel it reads and every tactic it commits streams live, and you can flip between
+  <p>In the playground <strong>you sit where the agent sits</strong>: pick a target file
+  and a lemma, press start, read the same panel the agent reads, and submit one intent
+  per turn — EasyCrypt accepts or rejects each tactic live, and you can flip between
   <strong>Goal-only</strong> and <strong>Workbench</strong> mode mid-proof. Until then, the
-  <a href="../results/">benchmark browser</a> gives you the same experience over
-  recorded runs — every turn replayable, right here in the browser.</p>
+  <a href="../results/">benchmark browser</a> shows recorded agent runs — every turn
+  replayable, right here in the browser.</p>
+
+  <div class="walk">
+    <h2>What it looks like — a 60-second replay</h2>
+    <p class="lead">A real session against this repo: replaying, by hand, the 18-tactic
+    proof of <code>PIR_correct</code> that an agent found.</p>
+
+    <figure>
+      <img src="img/pg_1_start.png" alt="Playground right after starting a session: transcript on the left, the Workbench panel on the right showing the current probability goal and tactic-applicability facts"/>
+      <figcaption><span class="n">1</span>Pick <code>PIR.ec</code> / <code>PIR_correct</code>,
+      press Start. The right panel is exactly what the agent reads: the current goal plus
+      the compiler's factual cards — here, that this is a <code>Pr[...]</code> equality and
+      which tactic families even apply.</figcaption>
+    </figure>
+
+    <figure>
+      <img src="img/pg_2_midproof.png" alt="Mid-proof: six committed tactics in the transcript, the panel showing the while-loop verification condition with 4 goals remaining"/>
+      <figcaption><span class="n">2</span>Type tactics into the box — each Enter commits
+      through the same manager the agent uses. After the <code>byphoare</code> opener and
+      the <code>while</code> invariant, the panel re-renders with the loop verification
+      condition (<em>4 goals remaining</em>).</figcaption>
+    </figure>
+
+    <figure>
+      <img src="img/pg_3_goalonly.png" alt="The same proof state rendered in Goal-only mode: the panel collapses to just the bare EasyCrypt goal"/>
+      <figcaption><span class="n">3</span>Flip to <strong>Goal-only</strong> mid-proof:
+      same session, same proof state — the panel collapses to the bare goal. That is the
+      paper's interface ablation (L1 vs L4), live under your cursor.</figcaption>
+    </figure>
+
+    <figure>
+      <img src="img/pg_4_proved.png" alt="The finished session: qed committed, the panel reads candidate_closed, 0 goals, complete"/>
+      <figcaption><span class="n">4</span>Land the remaining goals and commit
+      <code>qed.</code> — the panel flips to <code>candidate_closed · 0 goals ·
+      complete</code>. Machine-checked, end to end.</figcaption>
+    </figure>
+  </div>
 
   <div class="btns">
     <a class="btn primary" href="https://github.com/SkyShannonProver/shannon-prover" rel="noopener">Get the source</a>

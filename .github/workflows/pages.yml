@@ -34,6 +34,7 @@ jobs:
           cp playground/static/home.html site/index.html
           cp bundle_browser/index.html site/results/index.html
           cp playground/static/pages_playground.html site/playground/index.html
+          cp -r playground/static/img site/playground/img
           python3 bundle_browser/build_manifest.py --public --out site/results/manifest.json
           cp -r agent_view_runs site/agent_view_runs
           rm -f site/agent_view_runs/INDEX.md
