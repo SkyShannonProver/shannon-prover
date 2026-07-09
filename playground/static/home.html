@@ -1,12 +1,12 @@
-<!-- Shannon Prover — main page. Served at / by playground/server.py; the two
-     click-through destinations are /playground and /results/. The page carries
-     the full intro + install instructions (no separate /start page): the paper's
-     Phase I/II/III framing (arXiv 2607.02847 — this system targets Phase III),
-     the MCP tool story (one tool, submit_proof_intent, wired automatically by
-     Claude Code per proof node), and the quickstart. Keep commands in sync with
-     .claude/commands/prove.md, easycrypt-src/README.md, playground/run.sh.
-     Stats strip is fetched live from /results/manifest.json and hides itself
-     if the manifest is unavailable. -->
+<!-- Shannon Prover — main page. Served at / by playground/server.py AND as
+     index.html of the static GitHub Pages deploy (links are relative so both
+     work; on Pages, "playground" resolves to the static explainer the Pages
+     workflow places there). The page carries the full intro + install
+     instructions (no separate /start page): the paper's Phase I/II/III framing
+     (arXiv 2607.02847 — this system targets Phase III), the MCP tool story
+     (one tool, submit_proof_intent, wired automatically by Claude Code per
+     proof node), and the quickstart. Keep commands in sync with
+     .claude/commands/prove.md, easycrypt-src/README.md, playground/run.sh. -->
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
 <title>Shannon Prover</title>
@@ -338,33 +338,7 @@ uv run python -m eval_suite.run --suite eval_suite/suites/demo_pir.json \
 </div>
 
 
-<script>
-// Runtime adaptation: this page is served two ways — by playground/server.py
-// (live playground available) and as a static site (GitHub Pages, no backend).
-// Without a backend, every playground entry point becomes a "run it locally"
-// pointer at the install section. GitHub Pages is detected SYNCHRONOUSLY from
-// the hostname so there is no async-probe window in which a click could reach
-// the raw (404) playground URL; the backend probe covers other static hosts.
-(function(){
-  function downgrade(){
-    if(downgrade.done)return; downgrade.done=true;
-    document.querySelectorAll('a[href="playground"]').forEach(function(a){
-      a.setAttribute('href','#install');
-      a.setAttribute('title','the live playground runs locally — see the install steps');
-      if(a.classList.contains('cta'))a.textContent='playground (local)';
-    });
-    var card=document.querySelector('.cards a[href="#install"].card');
-    if(card){
-      var p=card.querySelector('p');
-      if(p)p.textContent='Runs locally — clone the repo and start it with one command.';
-      var ul=card.querySelector('ul');
-      if(ul)ul.innerHTML='<li>install EasyCrypt and the Python environment (below)</li>'+
-        '<li>start the server: one uvicorn command</li>'+
-        '<li>then watch a live agent prove a lemma in your browser</li>';
-      var go=card.querySelector('h3 .go'); if(go)go.textContent='↓';
-    }
-  }
-  if(/\.github\.io$/.test(location.hostname)||location.protocol==='file:'){downgrade();return;}
-  fetch('/api/targets').then(function(r){if(!r.ok)throw 0;}).catch(downgrade);
-})();
-</script>
+<!-- No runtime adaptation needed: the relative "playground" links resolve to
+     the live app when served by playground/server.py, and to the static
+     playground/index.html explainer (pages_playground.html) on the GitHub
+     Pages deploy — the Pages workflow puts a real page at that path. -->

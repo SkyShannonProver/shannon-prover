@@ -1,0 +1,89 @@
+<!-- Static stand-in for /playground on the GitHub Pages deploy ONLY.
+     The Pages workflow copies this to site/playground/index.html, so the same
+     relative "playground" link that opens the live app on a local server lands
+     here on the hosted site. Never served by playground/server.py. -->
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Shannon Prover — playground runs locally</title>
+<style>
+  :root{
+    --bg:#faf9f7; --surface:#ffffff; --ink:#23211c; --muted:#6b6862; --hint:#9a968d;
+    --line:rgba(0,0,0,.12); --line2:rgba(0,0,0,.22);
+    --ok:#27500a; --okbg:#eaf3de; --warn:#854f0b; --warnbg:#faeeda;
+    --info:#0c447c; --infobg:#e6f1fb;
+    --mono:ui-monospace,SFMono-Regular,Menlo,monospace;
+    --sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+  }
+  @media(prefers-color-scheme:dark){:root{
+    --bg:#1a1916;--surface:#242320;--ink:#ece9e2;--muted:#a8a399;--hint:#6f6b62;
+    --line:rgba(255,255,255,.14);--line2:rgba(255,255,255,.26);
+    --ok:#c0dd97;--okbg:#27500a;--warn:#fac775;--warnbg:#633806;
+    --info:#b5d4f4;--infobg:#0c447c;}}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);font-size:14px;line-height:1.6}
+  a{color:var(--info);text-decoration:none}
+  .top{display:flex;align-items:center;gap:14px;padding:12px 22px;border-bottom:.5px solid var(--line);flex-wrap:wrap}
+  .top .brand{font-size:16px;font-weight:600;color:var(--ink)}
+  .top nav{margin-left:auto;display:flex;gap:4px;flex-wrap:wrap}
+  .top nav a{font-size:13px;color:var(--muted);padding:5px 11px;border-radius:8px}
+  .top nav a:hover{background:var(--infobg);color:var(--info)}
+  .page{max-width:680px;margin:0 auto;padding:52px 24px 80px}
+  .badge{display:inline-block;font-size:11px;padding:3px 10px;border-radius:6px;background:var(--warnbg);color:var(--warn);font-weight:600;margin-bottom:14px}
+  h1{font-size:26px;font-weight:600;letter-spacing:-.01em;margin:0 0 12px}
+  p{color:var(--muted);font-size:14px;margin:0 0 14px}
+  code{font-family:var(--mono);font-size:12.5px;background:var(--infobg);color:var(--info);padding:1px 5px;border-radius:4px}
+  pre{background:var(--surface);border:.5px solid var(--line);border-radius:10px;padding:12px 14px;overflow-x:auto;font-family:var(--mono);font-size:12.5px;line-height:1.7;margin:10px 0 18px}
+  pre code{background:transparent;color:var(--ink);padding:0}
+  pre .c{color:var(--hint)}
+  ol{margin:0 0 18px;padding-left:20px;color:var(--muted);font-size:14px}
+  ol li{margin:6px 0}
+  .btns{display:flex;gap:10px;margin-top:26px;flex-wrap:wrap}
+  .btn{display:inline-block;font-size:14px;padding:9px 18px;border-radius:9px;border:.5px solid var(--line2);color:var(--ink);background:var(--surface)}
+  .btn:hover{border-color:var(--info)}
+  .btn.primary{background:var(--infobg);color:var(--info);border-color:var(--infobg);font-weight:500}
+</style>
+
+<div class="top">
+  <a class="brand" href="../">Shannon Prover</a>
+  <nav>
+    <a href="../">home</a>
+    <a href="../results/">benchmark</a>
+    <a href="https://github.com/SkyShannonProver/shannon-prover" rel="noopener">source</a>
+  </nav>
+</div>
+
+<div class="page">
+  <span class="badge">runs locally</span>
+  <h1>The playground is a local experience</h1>
+  <p>Each playground session drives a <strong>live EasyCrypt process</strong>, and the
+  prover runs through <strong>your own Claude Code login</strong> — so it ships with the
+  repository instead of running on this website. Getting it on your screen takes about
+  a minute once the <a href="../#install">install steps</a> are done:</p>
+
+  <ol>
+    <li>Clone the source:</li>
+  </ol>
+<pre><code>git clone https://github.com/SkyShannonProver/shannon-prover.git
+cd shannon-prover</code></pre>
+  <ol start="2">
+    <li>Install EasyCrypt and the Python environment — see
+      <a href="../#install">the install steps</a> on the home page.</li>
+    <li>Start the server and open the playground:</li>
+  </ol>
+<pre><code>eval "$(opam env --switch=easycrypt)"
+uv run --with fastapi --with "uvicorn[standard]" \
+    uvicorn playground.server:app --host 127.0.0.1 --port 8000
+<span class="c"># then open http://127.0.0.1:8000/playground</span></code></pre>
+
+  <p>Pick a target file and a lemma, press start, and watch the agent work — every
+  panel it reads and every tactic it commits streams live, and you can flip between
+  <strong>Goal-only</strong> and <strong>Workbench</strong> mode mid-proof. Until then, the
+  <a href="../results/">benchmark browser</a> gives you the same experience over
+  recorded runs — every turn replayable, right here in the browser.</p>
+
+  <div class="btns">
+    <a class="btn primary" href="https://github.com/SkyShannonProver/shannon-prover" rel="noopener">Get the source</a>
+    <a class="btn" href="../results/">Browse recorded runs</a>
+    <a class="btn" href="../">← Home</a>
+  </div>
+</div>
