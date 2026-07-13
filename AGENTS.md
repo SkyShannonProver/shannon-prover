@@ -304,10 +304,7 @@ started.
 
 When `[EVAL MODE ACTIVE]` is present or `EVAL_TARGET_LEMMA` is set:
 
-- Do NOT read `knowledge/session_trace/processed/by_problem/`.
-- Do NOT read `knowledge/base/sources/proof_bank.jsonl`.
-- Do NOT search for the target lemma name in knowledge stores.
-- `knowledge/base/search_guide.py` is OK; it redacts target-naming lines.
+- Do NOT retrieve cached proofs or hints for the target lemma.
 - Reading the target `.ec` file and sibling lemmas in that file is OK.
 
 Violating these rules invalidates the eval result.
@@ -326,9 +323,8 @@ evaluated. Do not run paper-facing long evals from the main checkout.
   views, analysis, and search
 - `workflow/` — orchestrator, tree/racing supervisor, agents, manager facade,
   replay/audit tools
-- `workflow/validation/` — proof replay, session artifacts, prover UX/behavior,
-  and KB validators
+- `workflow/validation/` — proof replay, session artifacts, and prover
+  UX/behavior validators
 - `eval/` — local benchmark harness and proof examples
-- `knowledge/` — knowledge base and trace corpora
 - `easycrypt-src/theories/` — EasyCrypt standard library
 - `easycrypt-src/tests/` — EasyCrypt tactic examples

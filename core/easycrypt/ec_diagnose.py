@@ -25,16 +25,16 @@ class Diagnosis:
     tactic_pattern: str      # regex to match against the failing tactic (empty = any)
     diagnosis: str           # what likely went wrong
     suggestion: str          # what to try instead
-    pitfall: str = ""        # reference to Pitfall in decision_tree.md (e.g., "P2")
+    pitfall: str = ""        # catalogued pitfall id (e.g., "P2")
     source: str = ""         # which A/B test discovered this
     level: str = ""          # "execution" | "strategy" | "" (empty = unclassified)
-    when_to_abandon: str = ""  # from ec_tactics.json: when to switch strategy
+    when_to_abandon: str = ""  # legacy KB field: when to switch strategy
 
 
 # ---------------------------------------------------------------------------
 # Error-diagnosis patterns are hardcoded compiler-skeleton facts only.
 #
-# The KB pattern catalog (knowledge/base/agent/ec_tactics.json) was REMOVED as a
+# The KB pattern catalog was REMOVED as a
 # diagnose source: it was a heuristic advice catalog that (a) took precedence over
 # the hardcoded fact patterns below and (b) fed MCP-path-irrelevant boilerplate
 # (shell `!`/apostrophe-quoting causes from the legacy session_cli `-c '...'`
@@ -348,7 +348,7 @@ def _check_rnd_scoping(goal_state: str) -> str | None:
         f"Fix: add `swap -1.` before the bijection rnd to ensure the referenced "
         f"variable is still in the program when the bijection executes.\n"
         f"Pattern: swap -1. rnd (bijection). rnd. wp.\n"
-        f"See: rnd_variable_scoping and swap_minus_one_idiom in proof_guide.json"
+        "Pattern names: rnd_variable_scoping, swap_minus_one_idiom."
     )
 
 
@@ -438,7 +438,7 @@ def diagnose(
     lines.append(f"\nDiagnosis:  {best.diagnosis}")
     lines.append(f"\nSuggestion: {best.suggestion}")
     if best.pitfall:
-        lines.append(f"\nSee:        Pitfall {best.pitfall} in decision_tree.md")
+        lines.append(f"\nSee:        Pitfall {best.pitfall}")
     lines.append(f"\n(Source: {best.source})")
 
     # Append rnd scoping diagnosis if detected

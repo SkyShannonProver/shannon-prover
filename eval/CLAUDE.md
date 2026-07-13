@@ -9,15 +9,12 @@ Allowed context:
 - the target `.ec` file and sibling lemmas in that file
 - EasyCrypt theories under `easycrypt-src/theories/`
 - tactic examples under `easycrypt-src/tests/`
-- generic KB guidance via `knowledge/base/search_guide.py` and
-  `knowledge/base/agent/*`
 
 Forbidden context:
 
 - public internet or GitHub repositories
-- `knowledge/session_trace/processed/`
 - proof-bank or replay artifacts containing concrete tactic sequences
-- target-lemma-name searches in knowledge stores when eval mode is active
+- searches for cached target-lemma proofs when eval mode is active
 - invented lemmas or axioms; use only declarations visible in source or
   manager-provided context
 

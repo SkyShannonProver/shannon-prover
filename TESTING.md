@@ -4,12 +4,12 @@ Instructions for running A/B tests and prover-performance tests. When the user a
 
 ## When to use which pattern
 
-- **A/B test (two worktrees)**: comparing two code/KB states on the same lemma(s). Example: "test my changes on branch X against main on pr_Foo".
+- **A/B test (two worktrees)**: comparing two code states on the same lemma(s). Example: "test my changes on branch X against main on pr_Foo".
 - **Regression test (one worktree, N reruns)**: measuring variance of a single configuration. Example: "run pr_Foo 5 times on feature-x to check stability".
 - **Single-branch evaluation**: one worktree, one or more lemmas, capture metrics. Example: "test br93 lemma on my branch".
 - **Compiler smoke matrix**: fast offline tests for ProofIR/semantic-index facts without running EasyCrypt proof search. Use after changes under `core/easycrypt/analysis/`, especially Pr canonicalization, lemma indexing, bound planning, or menu rendering.
 - **Proof-bank replay audit**: deterministic replay of known tactics through `session_cli`, with structured event and tool-output checks. Use after changes to `core/easycrypt/`, `workflow/progress.py`, verifier acceptance logic, or inspection tools.
-- **Blind skill test (`--eval-mode`)**: measure prover capability on a lemma WITHOUT letting it paste a known proof. Use when you want to test real reasoning rather than "can the prover find the answer in the KB". See the "Honest skill testing" section.
+- **Blind skill test (`--eval-mode`)**: measure prover capability on a lemma WITHOUT letting it paste a known proof. Use when you want to test real reasoning rather than "can the prover find the answer in a cached proof". See the "Honest skill testing" section.
 
 The A/B pattern is the most elaborate; the others are simplifications of it.
 
@@ -292,22 +292,16 @@ python3 -m workflow.orchestrator \
 ```
 
 What it does:
-- Planner redacts any line in KB search results that contains the target lemma name before writing to `kb_search_results.txt` / embedding in the prover prompt.
-- `search_guide.py` (invoked by the prover at runtime) checks `EVAL_TARGET_LEMMA` env var and redacts matching lines on the fly.
-- Structural patterns stay visible: `typical_tactics`, `reasoning_hints`, `common_failure`, `fallback`, `indicators`. These rarely mention specific lemmas by name — only `instantiation`, `example`, and `source.lemmas` fields do.
-- Agent file/source policy denies reads of target proof caches:
-  `knowledge/session_trace/processed/by_problem/`,
-  `knowledge/base/sources/proof_bank.jsonl`, and
-  `workflow/proof_bank.jsonl`.
+- Agent file/source policy denies reads of target proof caches
+  (`workflow/proof_bank.jsonl`).
 - Proof-bank writes are opt-in in eval/live-smoke contexts; use
   `--record-proof-bank` only when intentionally adding the run result to the
   regression corpus.
 
 What it does NOT filter (manual steps if you want to be thorough):
 - Sibling lemmas in the target `.ec` file (legitimate context, but may leak proof shape).
-- Generic session-trace files under `knowledge/session_trace/processed/*.json` that the prover reads directly via `Read` tool — the target-specific ones under `by_problem/<file>/` are not filtered.
 
-If you want maximum blinding, also rename the target lemma temporarily or move `by_problem/<file>/` out of the knowledge dir before the run.
+If you want maximum blinding, also rename the target lemma temporarily before the run.
 
 ## Proof-node resume capsules
 
@@ -685,20 +679,12 @@ Silent asymmetries caused most of our confusion. Verify byte-identity, not just 
 
 ```bash
 md5 "$W_A/eval/examples/<file>.ec" "$W_B/eval/examples/<file>.ec"
-md5 "$W_A/knowledge/base/agent/proof_guide.json" "$W_B/knowledge/base/agent/proof_guide.json"
 md5 "$W_A/core/easycrypt/session_cli.py" "$W_B/core/easycrypt/session_cli.py"
 ```
 
-The three MD5s MUST match before launch. If they don't, the test is compromised.
+Both MD5s MUST match before launch. If they don't, the test is compromised.
 
-**Critical — KB drift**: after every successful run, the post-prover KB Improver writes to `proof_guide.json`. If you re-launch without re-syncing, the "winning" branch accumulates an advantage. ALWAYS re-sync before each A/B cycle:
-
-```bash
-# Copy from one branch to the other (pick one as authoritative)
-cp "$W_A/knowledge/base/agent/proof_guide.json" "$W_B/knowledge/base/agent/proof_guide.json"
-```
-
-Also diff ALL knowledge files + code files in `workflow/` and `core/easycrypt/` to be thorough; don't assume the asymmetry is just in one file.
+Also diff code files in `workflow/` and `core/easycrypt/` to be thorough; don't assume the asymmetry is just in one file.
 
 ### 4. Launch
 
@@ -756,7 +742,7 @@ Do NOT use `pkill -f "<branch>"` — the cwd is not in the process's args, so th
 
 ### 7. Clean up after each run
 
-BEFORE analysis, kill all orchestrators and clean state again. Re-sync KB.
+BEFORE analysis, kill all orchestrators and clean state again.
 
 ## Pitfalls we learned the hard way
 
@@ -764,24 +750,21 @@ BEFORE analysis, kill all orchestrators and clean state again. Re-sync KB.
 
 2. **Session cleanup must use `.ec_session*` wildcard, not `.ec_session_prover_*`.** Prover agents create arbitrary session names like `.ec_session_g0g1`, `.ec_session_red`, `.ec_session2`. These can contaminate subsequent runs.
 
-3. **`proof_guide.json` drifts after every successful run.** KB Improver writes new content. If you re-launch without re-syncing, you're measuring the drift, not the code change. Always `cp` one branch's proof_guide to the other before each A/B launch.
+3. **Diff count ≠ symmetry.** `diff | wc -l` may return 0 momentarily, then drift back. Use MD5 hashes instead; they're deterministic.
 
-4. **Diff count ≠ symmetry.** `diff | wc -l` may return 0 momentarily, then drift back. Use MD5 hashes instead; they're deterministic.
+4. **`.ec` file writes.** The prover writes proofs to the `.ec` file mid-run. If a prior run succeeded, the file has a real proof — the orchestrator's pre-check will skip. You MUST overwrite with `admit.` before each run.
 
-5. **`.ec` file writes.** The prover writes proofs to the `.ec` file mid-run. If a prior run succeeded, the file has a real proof — the orchestrator's pre-check will skip. You MUST overwrite with `admit.` before each run.
+5. **False-positive `[ALL_GOALS_CLOSED]`.** If the target lemma is pre-admitted in the session's context file, `smt(...). qed.` may report success trivially. This happens if `lemma_extract.py` produces an admit-form instead of an open `proof.`. Inspect `<session_dir>/extracted_*.ec` if you suspect this — the target lemma should end with `proof.` (open), not `admit.`.
 
-6. **False-positive `[ALL_GOALS_CLOSED]`.** If the target lemma is pre-admitted in the session's context file, `smt(...). qed.` may report success trivially. This happens if `lemma_extract.py` produces an admit-form instead of an open `proof.`. Inspect `<session_dir>/extracted_*.ec` if you suspect this — the target lemma should end with `proof.` (open), not `admit.`.
+6. **Multiple orphan orchestrators.** `nohup ... > file.log 2>&1 &` opens a new FD each time. If a prior orchestrator is still writing to the same path, you'll get interleaved logs. Always verify `ps ... | grep orchestrator | wc -l == 2` right after launch; kill any extras.
 
-7. **Multiple orphan orchestrators.** `nohup ... > file.log 2>&1 &` opens a new FD each time. If a prior orchestrator is still writing to the same path, you'll get interleaved logs. Always verify `ps ... | grep orchestrator | wc -l == 2` right after launch; kill any extras.
-
-8. **Don't trust one A/B trial.** LLM sampling variance is large. One A-over-B trial means nothing. Three in a row is suggestive; five is fairly conclusive (p ≈ 0.03 under null). But if prover inputs are byte-identical and results still diverge, suspect orchestrator-level non-determinism, not prover stochasticity.
+7. **Don't trust one A/B trial.** LLM sampling variance is large. One A-over-B trial means nothing. Three in a row is suggestive; five is fairly conclusive (p ≈ 0.03 under null). But if prover inputs are byte-identical and results still diverge, suspect orchestrator-level non-determinism, not prover stochasticity.
 
 ## Reporting results
 
 For each run record:
 - Branch, lemma, wall-clock time to `qed.`, tactic count, error count
 - Winning leaf in tree mode (Tree-0.0 vs 0.1 vs spawned child)
-- Whether the proof used the KB recipe vs went off-script
 - Whether verification passed (orchestrator reports `verified=True/False`)
 
 For A/B campaigns: report cumulative win counts + mean times, not just the last result.

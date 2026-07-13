@@ -86,7 +86,7 @@ class GoalInfo:
     suggested_tactics: list[str] = field(default_factory=list)
     warnings: list[str] = field(default_factory=list)
 
-    # Execution-level KB details per suggested tactic (from ec_tactics.json)
+    # Execution-level KB details per suggested tactic
     tactic_details: list[dict] = field(default_factory=list)
     # Plan-vs-reality check (if proof_plan.json is available)
     plan_check: Optional[dict] = None

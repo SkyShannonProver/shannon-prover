@@ -263,7 +263,6 @@ flowchart TD
     Observer --> Tree["workflow/progress.py"]
     Events --> Acceptance["workflow/proof_acceptance.py"]
     Acceptance --> Replay["workflow/validation/proof_replay.py"]
-    KB["knowledge/base/agent/*"] --> Agent
 ```
 
 The rule of thumb:
@@ -274,7 +273,7 @@ The rule of thumb:
 - EasyCrypt lifecycle and mutation are manager-owned through
   `ReplSessionManager`;
 - candidates and evidence are produced by ProofContextView, ProofIR, ToolViews,
-  diagnostics, and KB sources; `ProverWorkspaceView` only filters, orders,
+  and diagnostics; `ProverWorkspaceView` only filters, orders,
   words, and lints that material for the agent-facing surface;
 - workflow code accepts proofs only after event-contract validation and offline
   EasyCrypt verification.
@@ -290,7 +289,6 @@ core/easycrypt/       EasyCrypt backend: session runtime, events, projection,
                       workspace views, goal/ProofIR analysis, lemma search
 workflow/             orchestrator, tree supervisor, proof-node runtime +
                       manager + MCP server, agents, validation (replay/audit)
-knowledge/            prover-facing KB build/search (+ gitignored trace stores)
 eval/examples/        EasyCrypt benchmark corpus (data only)
 eval_suite/           benchmark runner + checked-in suites
 agent_view_runs/      committed run bundles (browse at /results/)

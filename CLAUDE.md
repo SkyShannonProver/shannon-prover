@@ -145,8 +145,7 @@ requests. For backend debugging, read only the session you explicitly started.
 When `[EVAL MODE ACTIVE]` is present or `EVAL_TARGET_LEMMA` is set:
 
 - Do NOT read target-specific prior traces or proof-bank entries.
-- Do NOT search for the target lemma name in knowledge stores.
-- `knowledge/base/search_guide.py` is OK; it self-redacts.
+- Do NOT retrieve cached proofs or hints for the target lemma.
 - Reading the target `.ec` file and sibling lemmas is OK.
 
 ## Testing
@@ -159,4 +158,3 @@ See `TESTING.md` for replay, regression, A/B, and long-run procedures.
 - `workflow/` — orchestrator, tree/racing supervisor, agents, manager facade
 - `workflow/validation/` — replay and audit validators
 - `eval/` — local EasyCrypt benchmark corpus
-- `knowledge/` — KB and trace corpora

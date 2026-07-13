@@ -221,7 +221,7 @@ def render_long_lived_agent_prompt(
     """Render the long-lived prover runtime/tool-protocol prompt.
 
     The trailing ``{profile_safe_prompt}`` block is the full turn-0 bootstrap
-    (lemma source + sibling lemmas + KB; ~14-20k tokens). When ``compact`` is set
+    (lemma source + sibling lemmas; ~14-20k tokens). When ``compact`` is set
     (the fresh-context continuation reopening — see FIX #2 /
     docs/design/fresh_context_continuation.md §Handoff) that heavy block is
     dropped and replaced by a thin ``compact_pointer`` so the fresh session opens

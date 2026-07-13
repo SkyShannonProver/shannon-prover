@@ -23,15 +23,11 @@ files stay small and operational; longer concepts and references live here.
 
 ## Architecture And Contracts
 
-- [Workflow design](../workflow/DESIGN.md) -- managed proof-node architecture,
-  orchestration, data flow, and agent phases.
 - [Validation and replay](../workflow/validation/README.md) -- event logs,
   ToolView, ProofContextView, ProverWorkspaceView, CommitResponse, acceptance,
   replay, and audits.
 - [Analysis compiler layer](../core/easycrypt/analysis/README.md) -- ProofIR,
   canonical frontends, resource layers, planners, and action rendering.
-- [Knowledge base design](../knowledge/base/DESIGN.md) -- KB policy, stores,
-  retrieval flow, schema notes, and validation.
 
 ## Reference
 

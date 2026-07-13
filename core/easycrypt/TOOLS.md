@@ -130,7 +130,7 @@ structural commits.
 
 **Principle: progressive, goal-state gated — not a constant dashboard.** A panel
 appears only when the *current* goal-state needs it, following the L1→L4 ladder
-(see `workflow/DESIGN.md` "Paper Eval Interface Ladder"): L1 is just current
+(see the "Paper eval interface ladder" doc, `docs/concepts/eval_interface_ladder.md`): L1 is just current
 goal / status / last result; route hypotheses, phase doors, and liveness/cost
 warnings are **L3** and must not appear unconditionally at an L1 state (e.g. a
 fresh `Pr[A]-Pr[B]=Pr[C]-Pr[D]` goal needs "this is a probability goal; `congr`
@@ -1301,4 +1301,3 @@ This way an MCP-backed agent sees the hook payloads as structured data on every 
 - [`docs/reports/insights/prover_style_analysis.md`](../../docs/reports/insights/prover_style_analysis.md) — failure-mode analysis that motivated the AUTO-* hooks, with v6 validation data.
 - `/CLAUDE.md` and `/AGENTS.md` (repo root) — operational rules (no-`admit.`, declaration lookup before `apply`, eval-mode redaction, no cross-session dir reads).
 - `/TESTING.md` (repo root) — test patterns (A/B, regression, single-branch).
-- `/knowledge/README.md` — KB structure that feeds `ec_goal_patterns` and the narrative schema.
