@@ -19,6 +19,7 @@ from typing import Any, Optional
 from core.easycrypt.committed_history import (
     closed_history_tactics,
     read_committed_tactics,
+    split_trailing_qed,
 )
 from workflow.agents.ec_services import (
     _claude_scratch_path,
@@ -107,15 +108,7 @@ def _extract_tactics_from_session(
             # Split off trailing "qed." embedded in the last tactic
             # e.g. "proc; islossless. qed." → ["proc; islossless.", "qed."]
             if tactics:
-                last = tactics[-1]
-                if re.search(r"\.\s*qed\.\s*$", last, re.IGNORECASE):
-                    without_qed = re.sub(r"\s*qed\.\s*$", "", last, flags=re.IGNORECASE).strip()
-                    if without_qed:
-                        tactics[-1] = without_qed
-                    else:
-                        tactics.pop()
-                    tactics.append("qed.")
-                return tactics
+                return split_trailing_qed(tactics)
 
     return []
 
@@ -759,6 +752,13 @@ def _write_and_verify_proof(
     Returns True if easycrypt verification passes. Reverts on failure.
     """
     content = ec_path.read_text(encoding="utf-8")
+
+    # Normalize a compound closer ("TAC. qed." committed as one step) into
+    # a separate standalone "qed." entry. The proof-block builder below
+    # filters standalone qed lines and appends its own "qed."; an embedded
+    # qed would survive that filter and yield a double qed that EasyCrypt
+    # rejects ("cannot process [save] outside a proof script").
+    tactics = split_trailing_qed(tactics)
 
     # Resolve the target declaration ONCE. Every later lookup in this cycle
     # (prune, block write, post-verify admit check, extracted verification)

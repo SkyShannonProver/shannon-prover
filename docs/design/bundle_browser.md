@@ -127,9 +127,6 @@ with `--public`. Review `PUBLIC_SOURCE` before any public deploy.
 3. **Public deploy:** `build_manifest.py --public`, ship `bundle_browser/` + the
    public subset of `agent_view_runs/` as flat files.
 
-`bundle_browser/` is classified feature-only in `playground/sync.sh`, so it is
-never pushed to the compiler trunk.
-
 ## 7. v1 limitations / roadmap
 
 - Older bundles predate followup/thinking capture → those panels show

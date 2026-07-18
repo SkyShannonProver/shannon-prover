@@ -12,6 +12,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import re
 import shutil
 from dataclasses import dataclass
 from pathlib import Path
@@ -300,7 +301,21 @@ def _is_bounded_declaration_start(line: str) -> bool:
         "section",
         "end section",
     )
-    return stripped.startswith(heads)
+    if not stripped.startswith(heads):
+        return False
+    # A real declaration names what it declares. Statement *continuation*
+    # lines can start with the anonymous judgment forms `equiv [ ... ]`,
+    # `hoare [ ... ]`, `phoare [ ... ]` at low indent (e.g. Perm3.simul_bad's
+    # `initialisation ... => \n equiv [ ... ]`); treating those as the next
+    # declaration truncates the proof-block search before `proof.` and makes
+    # the target look shell-less. Require an identifier after the keyword.
+    m = re.match(
+        r"(?:local\s+)?(?:lemma|theorem|equiv|hoare|phoare)\s+(?P<next>\S)",
+        stripped,
+    )
+    if m and not (m.group("next").isalpha() or m.group("next") == "_"):
+        return False
+    return True
 
 
 def _standalone_admit_offset(text: str) -> tuple[int, int] | None:
