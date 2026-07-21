@@ -142,6 +142,19 @@ def results_manifest() -> JSONResponse:
     return JSONResponse(build_multi(roots, public_only=False))
 
 
+# Direct-file previews of static/home.html resolve the benchmark link through
+# bundle_browser/. Keep those preview URLs backed by the same live browser and
+# manifest as /results/ instead of serving a second implementation.
+@app.get("/bundle_browser/index.html")
+def results_preview_index() -> HTMLResponse:
+    return results_index()
+
+
+@app.get("/bundle_browser/manifest.json")
+def results_preview_manifest() -> JSONResponse:
+    return results_manifest()
+
+
 _active = 0
 
 
@@ -163,6 +176,7 @@ def start_page() -> RedirectResponse:
 
 
 @app.get("/playground")
+@app.get("/playground/")
 def playground_page() -> HTMLResponse:
     return HTMLResponse((Path(__file__).parent / "static" / "index.html").read_text(encoding="utf-8"))
 

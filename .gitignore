@@ -19,6 +19,8 @@ artifacts/
 # Bundle-browser manifest is generated locally and LISTS private/CMAC bundles —
 # never commit it. The server builds it live; public deploys use --public.
 bundle_browser/manifest.json
+bundle_browser/manifest.js
+agent_view_runs/**/timeline_report.js
 .worktrees/
 worktrees/
 wt_*/

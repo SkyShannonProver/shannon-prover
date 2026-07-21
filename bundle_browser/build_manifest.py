@@ -15,6 +15,10 @@ badges them with a lock. REVIEW the allowlist before any public/hosted build.
 
   python3 bundle_browser/build_manifest.py            # local: all bundles
   python3 bundle_browser/build_manifest.py --public   # hosted: public tier-A only
+
+When ``--out`` ends in ``.js``, the same data is emitted as
+``window.SHANNON_MANIFEST = ...`` for direct-file previews where browsers block
+``fetch(file://.../manifest.json)``.
 """
 from __future__ import annotations
 import argparse
@@ -187,9 +191,74 @@ def build_multi(roots: list, public_only: bool) -> dict:
     }
 
 
+def write_timeline_scripts(root: str, data: dict) -> int:
+    """Write on-demand JS sidecars for direct-file benchmark previews.
+
+    Besides the timeline, each sidecar carries the bundle's recorded per-turn
+    views.  Browsers block ``fetch(file://...)`` even though they allow a local
+    script to load, so the benchmark can use this map when opened directly.
+    """
+    written = 0
+    for rec in data.get("bundles") or []:
+        bundle_dir = str(rec.get("dir") or "")
+        if not bundle_dir:
+            continue
+        timeline_json = os.path.join(root, RUNS_DIR, bundle_dir, "timeline_report.json")
+        if not os.path.isfile(timeline_json):
+            continue
+        try:
+            with open(timeline_json) as fh:
+                timeline = json.load(fh)
+        except Exception as exc:  # noqa: BLE001
+            print(f"skip {timeline_json}: {exc}", file=sys.stderr)
+            continue
+        timeline_js = os.path.splitext(timeline_json)[0] + ".js"
+        artifacts = {}
+        views_dir = os.path.join(os.path.dirname(timeline_json), "views")
+        if os.path.isdir(views_dir):
+            for dirpath, _, filenames in os.walk(views_dir):
+                for filename in filenames:
+                    if not filename.endswith((".json", ".md")):
+                        continue
+                    artifact_path = os.path.join(dirpath, filename)
+                    if os.path.getsize(artifact_path) == 0:
+                        continue
+                    rel_path = os.path.relpath(
+                        artifact_path, os.path.dirname(timeline_json)
+                    ).replace(os.sep, "/")
+                    try:
+                        if filename.endswith(".json"):
+                            with open(artifact_path) as fh:
+                                artifacts[rel_path] = json.load(fh)
+                        else:
+                            with open(artifact_path) as fh:
+                                artifacts[rel_path] = fh.read()
+                    except Exception as exc:  # noqa: BLE001
+                        print(f"skip {artifact_path}: {exc}", file=sys.stderr)
+        with open(timeline_js, "w") as fh:
+            fh.write("window.SHANNON_TIMELINES=window.SHANNON_TIMELINES||{};")
+            fh.write("window.SHANNON_TIMELINES[")
+            json.dump(bundle_dir, fh)
+            fh.write("]=")
+            json.dump(timeline, fh, separators=(",", ":"))
+            fh.write(";\nwindow.SHANNON_BUNDLE_ARTIFACTS=window.SHANNON_BUNDLE_ARTIFACTS||{};")
+            fh.write("window.SHANNON_BUNDLE_ARTIFACTS[")
+            json.dump(bundle_dir, fh)
+            fh.write("]=")
+            json.dump(artifacts, fh, separators=(",", ":"))
+            fh.write(";\n")
+        written += 1
+    return written
+
+
 def main() -> None:
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("--public", action="store_true", help="drop private (tier-C) bundles")
+    ap.add_argument(
+        "--timeline-js",
+        action="store_true",
+        help="also write timeline/artifact JS sidecars for direct-file previews",
+    )
     ap.add_argument("--root", default=REPO_ROOT, help="repo root (default: parent of bundle_browser/)")
     ap.add_argument(
         "--out",
@@ -198,10 +267,18 @@ def main() -> None:
     args = ap.parse_args()
     data = build(args.root, args.public)
     with open(args.out, "w") as fh:
-        json.dump(data, fh, indent=2)
+        if args.out.endswith(".js"):
+            fh.write("window.SHANNON_MANIFEST = ")
+            json.dump(data, fh, separators=(",", ":"))
+            fh.write(";\n")
+        else:
+            json.dump(data, fh, indent=2)
     pub = sum(1 for r in data["bundles"] if r["tier"] == "public")
     priv = data["count"] - pub
     print(f"wrote {args.out}: {data['count']} bundles ({pub} public, {priv} private)")
+    if args.timeline_js:
+        count = write_timeline_scripts(args.root, data)
+        print(f"wrote {count} timeline JS sidecars")
 
 
 if __name__ == "__main__":

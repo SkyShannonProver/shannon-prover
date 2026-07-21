@@ -47,10 +47,6 @@
   /* ---------- benchmark home ---------- */
   .bench{max-width:880px;margin:0 auto;padding:28px 24px 60px}
   .hero h2{font-size:26px;font-weight:600;margin:6px 0 4px;letter-spacing:-.01em}
-  .hero .tag{color:var(--muted);font-size:14px;max-width:640px}
-  .statstrip{display:flex;gap:28px;margin:20px 0 6px;flex-wrap:wrap}
-  .stat .n{font-size:22px;font-weight:600}
-  .stat .l{font-size:11px;color:var(--hint);text-transform:uppercase;letter-spacing:.05em}
   .board{margin-top:26px;border:.5px solid var(--line);background:var(--surface);border-radius:14px;padding:16px 18px}
   .board .bh{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;margin-bottom:4px}
   .board .bh h3{font-size:15px;font-weight:600;margin:0}
@@ -131,6 +127,7 @@ comes from unstandardized development runs; it is not a controlled comparison an
 represent final results. We'll keep updating as new experiments land.</div>
 <div id="view"><div class="empty">loading…</div></div>
 
+<script src="./manifest.js"></script>
 <script>
 (function(){
   var MANIFEST_URL='./manifest.json';
@@ -153,14 +150,35 @@ represent final results. We'll keep updating as new experiments land.</div>
     return cache[url];
   }
 
-  fetch(MANIFEST_URL).then(function(r){return r.json();}).then(function(d){
+  function getTimeline(bundle){
+    var key=bundle.dir, loaded=window.SHANNON_TIMELINES&&window.SHANNON_TIMELINES[key];
+    if(loaded)return Promise.resolve(loaded);
+    var base=(bundle.base||RUNS_URL)+key+'/timeline_report';
+    return getJSON(base+'.json').catch(function(fetchError){
+      return new Promise(function(resolve,reject){
+        var script=document.createElement('script');
+        script.src=base+'.js';
+        script.onload=function(){
+          var timeline=window.SHANNON_TIMELINES&&window.SHANNON_TIMELINES[key];
+          timeline?resolve(timeline):reject(fetchError);
+        };
+        script.onerror=function(){reject(fetchError);};
+        document.head.appendChild(script);
+      });
+    });
+  }
+
+  var manifestData=window.SHANNON_MANIFEST
+    ? Promise.resolve(window.SHANNON_MANIFEST)
+    : fetch(MANIFEST_URL).then(function(r){if(!r.ok)throw new Error(r.status);return r.json();});
+  manifestData.then(function(d){
     BUNDLES=(d.bundles||[]);
     BUNDLES.forEach(function(b){b.model=normModel(b.model);});
     byLemma={}; BUNDLES.forEach(function(b){(byLemma[b.lemma]=byLemma[b.lemma]||[]).push(b);});
     MODELS=aggregateModels(BUNDLES);
     document.getElementById('count').textContent=d.count+' recorded runs · '+d.generated_for+(d.generated_for==='local'?' (🔒 = private, hidden from public builds)':'');
     route();
-  }).catch(function(e){document.getElementById('view').innerHTML='<div class="empty">could not load manifest.json — run <code>python3 bundle_browser/build_manifest.py</code> first.<br>'+esc(e)+'</div>';});
+  }).catch(function(e){document.getElementById('view').innerHTML='<div class="empty">could not load benchmark data — run <code>python3 bundle_browser/build_manifest.py</code> first.<br>'+esc(e)+'</div>';});
 
   function aggregateModels(bundles){
     var agg={};
@@ -213,8 +231,6 @@ represent final results. We'll keep updating as new experiments land.</div>
 
   function renderBench(){
     var V=document.getElementById('view');
-    var total=BUNDLES.length, provedRuns=BUNDLES.filter(function(b){return b.proved;}).length;
-    var lemmas=Object.keys(byLemma).length;
     var main=MODELS.filter(function(a){return a.runs>=3;});
     var small=MODELS.filter(function(a){return a.runs<3;});
     var maxRate=Math.max.apply(null,main.map(function(a){return a.rate;}).concat([0.01]));
@@ -240,15 +256,6 @@ represent final results. We'll keep updating as new experiments land.</div>
     V.innerHTML='<div class="bench">'+
       '<div class="hero">'+
         '<h2>Can LLM agents write machine-checked cryptographic proofs?</h2>'+
-        '<div class="tag">Every result below is a recorded agent run against the EasyCrypt proof assistant — '+
-        'each turn the agent saw a structured proof-state panel, chose one action, and the checker accepted or rejected it. '+
-        'Click any run to replay exactly what the agent saw, thought, and committed.</div>'+
-      '</div>'+
-      '<div class="statstrip">'+
-        '<div class="stat"><div class="n">'+lemmas+'</div><div class="l">lemmas</div></div>'+
-        '<div class="stat"><div class="n">'+total+'</div><div class="l">recorded runs</div></div>'+
-        '<div class="stat"><div class="n">'+provedRuns+'</div><div class="l">proved runs</div></div>'+
-        '<div class="stat"><div class="n">'+MODELS.length+'</div><div class="l">models</div></div>'+
       '</div>'+
       '<div class="board">'+
         '<div class="bh"><h3>Model capability</h3><span class="pill p-warn">preview — observed runs, not a controlled benchmark</span></div>'+
@@ -366,7 +373,7 @@ represent final results. We'll keep updating as new experiments land.</div>
     M.innerHTML=renderHeader(b,null)+
       '<div class="legend" id="legend"></div>'+
       '<div class="steps" id="steps"><div class="note" style="padding:10px">loading timeline…</div></div><div id="panelhost"></div>';
-    getJSON((b.base||RUNS_URL)+b.dir+'/timeline_report.json').then(function(tl){
+    getTimeline(b).then(function(tl){
       var runs=tl.runs||[]; var rows=[];
       runs.forEach(function(run){(run.rows||[]).forEach(function(x){rows.push(x);});});
       selRows=rows;
@@ -483,11 +490,55 @@ represent final results. We'll keep updating as new experiments land.</div>
   function rel(p){ if(!p)return null; var i=p.indexOf('node_memory/'); if(i<0)return null;
     return 'views/'+p.slice(i+'node_memory/'.length).replace('/workspace_views/','/'); }
   function artURLs(row,kind){
-    var p={result:row.result_followup_path,saw:row.decision_followup_path,think:row.agent_think_path,manager:row.manager_result_path,audit:row.workspace_view_path}[kind];
-    var r=rel(p); if(!r)return [];
-    var base=(sel.base||RUNS_URL)+sel.dir+'/', tail=r.slice('views/'.length), urls=[base+r];
-    (sel.view_roots||[]).forEach(function(root){urls.push(base+'views/'+root+'/'+tail);});
-    return urls;
+    var paths={
+      result:[row.result_followup_path,row.result_view_path],
+      saw:[row.decision_followup_path,row.decision_view_path],
+      think:[row.agent_think_path],
+      manager:[row.manager_result_path],
+      audit:[row.workspace_view_path]
+    }[kind]||[];
+    var base=(sel.base||RUNS_URL)+sel.dir+'/', urls=[];
+    paths.forEach(function(p){
+      var r=rel(p);if(!r)return;
+      var tail=r.slice('views/'.length);
+      urls.push(base+r);
+      (sel.view_roots||[]).forEach(function(root){urls.push(base+'views/'+root+'/'+tail);});
+    });
+    return urls.filter(function(url,i){return urls.indexOf(url)===i;});
+  }
+
+  function embeddedArtifact(url){
+    var all=window.SHANNON_BUNDLE_ARTIFACTS&&window.SHANNON_BUNDLE_ARTIFACTS[sel.dir];
+    if(!all)return null;
+    var base=(sel.base||RUNS_URL)+sel.dir+'/', relpath=url.indexOf(base)===0?url.slice(base.length):url;
+    return Object.prototype.hasOwnProperty.call(all,relpath)?{value:all[relpath],url:url}:null;
+  }
+
+  function viewText(view){
+    if(!view||typeof view!=='object')return String(view||'');
+    var order=['last_result','proof_status','current_goal','program_frontier','application_context',
+      'facts_and_diagnostics','candidate_moves','call_site_surface','seq_cut_surface','pure_tail_surface',
+      'frame_obligation_ledger','recovery_diagnosis_surface','structural_checkpoints','route_replay_memory',
+      'inspect_lookup_handles','proof_map'];
+    Object.keys(view).forEach(function(key){if(order.indexOf(key)<0)order.push(key);});
+    var out=['// Reconstructed from the saved structured workspace view.'];
+    order.forEach(function(key){
+      if(view[key]===undefined||view[key]===null)return;
+      out.push('\n## '+key.replace(/_/g,' '));
+      if(key==='current_goal'&&Array.isArray(view[key].lines)){
+        out.push(view[key].lines.join('\n'));
+        var meta={};Object.keys(view[key]).forEach(function(k){if(k!=='lines')meta[k]=view[key][k];});
+        if(Object.keys(meta).length)out.push('\n'+JSON.stringify(meta,null,2));
+      }else out.push(typeof view[key]==='string'?view[key]:JSON.stringify(view[key],null,2));
+    });
+    return out.join('\n');
+  }
+
+  function artifactText(value,url,kind){
+    if(typeof value==='string')return value;
+    var isWorkspace=/\/views\/.*\/turn_\d+\.json$/.test(url)&&url.indexOf('/manager_results/')<0;
+    if((kind==='result'||kind==='saw')&&isWorkspace)return viewText(value);
+    return JSON.stringify(value,null,2);
   }
 
   function renderPanel(){
@@ -508,8 +559,10 @@ represent final results. We'll keep updating as new experiments land.</div>
     var i=0;
     (function next(){
       if(i>=urls.length){body.innerHTML='<span class="note">not captured for this run (no file at this step).</span>';return;}
-      fetch(urls[i++]).then(function(r){if(!r.ok)throw 0;return r.text();}).then(function(txt){
-        if(selKind==='manager'||selKind==='audit'){try{txt=JSON.stringify(JSON.parse(txt),null,2);}catch(e){}}
+      var url=urls[i++], embedded=embeddedArtifact(url);
+      if(embedded){body.textContent=hint+artifactText(embedded.value,embedded.url,selKind);return;}
+      fetch(url).then(function(r){if(!r.ok)throw 0;return r.text();}).then(function(txt){
+        if(/\.json$/.test(url)){try{txt=artifactText(JSON.parse(txt),url,selKind);}catch(e){}}
         body.textContent=hint+txt;
       }).catch(next);
     })();

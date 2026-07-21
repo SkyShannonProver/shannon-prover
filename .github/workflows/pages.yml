@@ -36,6 +36,7 @@ jobs:
           cp playground/static/pages_playground.html site/playground/index.html
           cp -r playground/static/img site/playground/img
           python3 bundle_browser/build_manifest.py --public --out site/results/manifest.json
+          python3 bundle_browser/build_manifest.py --public --timeline-js --out site/results/manifest.js
           cp -r agent_view_runs site/agent_view_runs
           rm -f site/agent_view_runs/INDEX.md
           touch site/.nojekyll
