@@ -27,7 +27,6 @@ class ProofNodeState:
     committed_tactics: list[str] = field(default_factory=list)
     replay_prefix: list[str] = field(default_factory=list)
     replay_prefix_count: int = 0
-    probe_alternatives: list[dict[str, Any]] = field(default_factory=list)
     restore_anchor: dict[str, Any] = field(default_factory=dict)
     route_memories: list[dict[str, Any]] = field(default_factory=list)
     route_event_facts: list[dict[str, Any]] = field(default_factory=list)
@@ -63,9 +62,6 @@ class ProofNodeState:
             "committed_tactics": list(self.committed_tactics),
             "replay_prefix": list(self.replay_prefix),
             "replay_prefix_count": self.replay_prefix_count,
-            "probe_alternatives": [
-                dict(item) for item in self.probe_alternatives
-            ],
             "restore_anchor": self.restore_anchor,
             "route_memories": [dict(item) for item in self.route_memories],
             "route_event_facts": [dict(item) for item in self.route_event_facts],
@@ -99,7 +95,6 @@ class ProofNodeStateManager:
         latest_observation: dict[str, Any] | None = None,
         replay_prefix: list[str] | None = None,
         replay_prefix_count: int = 0,
-        probe_alternatives: list[dict[str, Any]] | None = None,
         restore_anchor: dict[str, Any] | None = None,
         route_memories: list[dict[str, Any]] | None = None,
         route_event_facts: list[dict[str, Any]] | None = None,
@@ -116,11 +111,6 @@ class ProofNodeStateManager:
             committed_tactics=self.current_committed_tactics(),
             replay_prefix=list(replay_prefix or []),
             replay_prefix_count=max(0, int(replay_prefix_count or 0)),
-            probe_alternatives=[
-                dict(item)
-                for item in (probe_alternatives or [])
-                if isinstance(item, dict)
-            ],
             restore_anchor=dict(restore_anchor or {}),
             route_memories=[
                 dict(item)
@@ -138,5 +128,4 @@ class ProofNodeStateManager:
                 if isinstance(item, dict)
             ],
         )
-
 

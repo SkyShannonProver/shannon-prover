@@ -256,7 +256,7 @@ def test_event_summary_and_latest_error_helpers() -> None:
         assert latest.tactic == "bad."
 
 
-def test_event_summary_tracks_latest_attempt_and_prior_probe_failure() -> None:
+def test_event_summary_tracks_latest_attempt_and_prior_preflight_failure() -> None:
     with tempfile.TemporaryDirectory() as td:
         d = Path(td)
         append_event(d, "tactic.try_result", {
@@ -292,11 +292,11 @@ def test_event_summary_tracks_latest_attempt_and_prior_probe_failure() -> None:
         summary = summarize_events(read_events(d))
         assert summary.latest_attempt is not None
         assert summary.latest_attempt.tactic == "have h: 1 = 1 by done."
-        assert summary.latest_attempt.status == "probe_accepted"
+        assert summary.latest_attempt.status == "preflight_accepted"
         assert summary.latest_attempt.error == ""
         assert len(summary.recent_failed_attempts) == 1
         failure = summary.recent_failed_attempts[0]
-        assert failure.status == "probe_rejected"
+        assert failure.status == "preflight_rejected"
         assert failure.error == "wrong number of arguments"
 
 

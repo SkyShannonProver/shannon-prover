@@ -26,6 +26,12 @@ class PanelFact:
     details: Any = None
     audit_payload: Any = None
     source_refs: tuple[str, ...] = ()
+    authority: str = ""
+    state_scope: str = ""
+    novelty: str = ""
+    actionability: str = ""
+    semantic_boundary: str = ""
+    eligibility_reason: str = ""
 
     def to_dict(self) -> dict[str, Any]:
         return _drop_empty({
@@ -38,6 +44,12 @@ class PanelFact:
             "details": self.details,
             "audit_payload": self.audit_payload,
             "source_refs": list(self.source_refs),
+            "authority": self.authority,
+            "state_scope": self.state_scope,
+            "novelty": self.novelty,
+            "actionability": self.actionability,
+            "semantic_boundary": self.semantic_boundary,
+            "eligibility_reason": self.eligibility_reason,
         })
 
 

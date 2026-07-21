@@ -172,7 +172,7 @@ def _phase_legality(
         "native_ast_search": _legality("allowed", "EasyCrypt native AST search is read-only lemma retrieval."),
         "instantiated_template": _legality(
             "allowed",
-            "Typed instantiation templates are read-only candidates until probed.",
+            "Typed instantiation templates remain unverified candidates until EasyCrypt accepts them.",
         ),
         "call_named_equiv": _legality("allowed", "Named calls preserve procedure abstraction."),
         "call_invariant_skeleton": _legality("allowed", "Invariant calls preserve call-site structure."),
@@ -207,7 +207,7 @@ def _phase_legality(
         )
         table["instantiated_template"] = _legality(
             "preferred",
-            "A typed template has current-context bindings; probe it when the template matches the visible endpoint.",
+            "A typed template has current-context bindings but remains unverified until EasyCrypt accepts it.",
         )
         table["call_named_equiv"] = _legality("avoid", "No pRHL call site is exposed at Pr layer.")
         table["proc_open"] = _legality("avoid", "No program judgment is exposed at Pr layer.")
@@ -248,7 +248,7 @@ def _phase_legality(
         )
         table["instantiated_template"] = _legality(
             "preferred",
-            "A typed template keeps the candidate at the current call-site phase until EC probes it.",
+            "A typed template keeps the candidate at the current call-site phase until EasyCrypt validates it.",
         )
         table["signature_lookup"] = _legality("preferred", "Resolve call lemma signature before guessing arguments.")
         table["call_invariant_skeleton"] = _legality(
@@ -442,7 +442,7 @@ def _external_call_named_equiv_menu_items(
                         f"{source} found `{tactic}` as a named equiv candidate, "
                         "but ProofIR has not confirmed the usable EasyCrypt "
                         "scope/signature for this state. Inspect the name before "
-                        "probing the call."
+                        "submitting the call."
                     ),
                     preconditions=[
                         "run this read-only lookup before guessing call arguments",
@@ -479,7 +479,7 @@ def _external_call_named_equiv_menu_items(
         seen.add(key)
         action_text = tactic
         action_type = (
-            "probe_tactic"
+            "tactic_candidate"
             if verified and exact and status != "source_local_scope_check_required"
             else "strategy_hint"
         )
@@ -542,18 +542,6 @@ def _external_call_named_equiv_menu_items(
     return out
 
 
-_SWAP_WITH_ROUTE_OFFSET = re.compile(
-    r"^(swap(?:\{[12]\})?\s+(?:\[\d+\.\.\d+\]|\d+))\s+(-?\d+)\s*\.?\s*$"
-)
-
-
-def _swap_route_frame(tactic: str) -> str:
-    match = _SWAP_WITH_ROUTE_OFFSET.match(tactic.strip())
-    if not match:
-        return tactic.strip()
-    return f"{match.group(1)} <offset>."
-
-
 def _external_realignment_swap_menu_items(
     handles: dict[str, Any], *, layer: str
 ) -> list[dict[str, Any]]:
@@ -581,7 +569,10 @@ def _external_realignment_swap_menu_items(
             continue
         seen.add(tactic)
         source = str(candidate.get("producer") or "alignment analysis")
-        frame = _swap_route_frame(tactic)
+        structural_swap = _dict(candidate.get("structural_swap"))
+        frame = str(structural_swap.get("frame") or "").strip()
+        if not frame:
+            continue
         item = _menu_item(
             f"realignment_swap_{_safe_id(str(idx))}",
             tactic=frame,
@@ -601,6 +592,7 @@ def _external_realignment_swap_menu_items(
                 "verified_external_candidate": True,
                 "offset_policy": "route_dependent",
                 "not_unique": True,
+                "structural_swap": structural_swap,
             },
         )
         out.append(item)
@@ -624,7 +616,7 @@ def _candidate_menu(
             "intro",
             tactic=tactic if tactic.endswith(".") else tactic + ".",
             tactic_family="intro",
-            action_type="probe_tactic",
+            action_type="tactic_candidate",
             cost="cheap",
             why=str(
                 intro.get("reason")
@@ -640,7 +632,7 @@ def _candidate_menu(
             "proc_open",
             tactic=tactic,
             tactic_family="proc_open",
-            action_type="probe_tactic",
+            action_type="tactic_candidate",
             cost="cheap",
             why=(
                 "Expose the procedure bodies/call sites before lower-level "
@@ -719,7 +711,7 @@ def _candidate_menu(
                 "byequiv_bridge",
                 tactic="byequiv => //.",
                 tactic_family="probability_to_program",
-                action_type="probe_tactic",
+                action_type="tactic_candidate",
                 cost="cheap",
                 why=(
                     "Pure probability equality with no higher-level Pr rewrite/path "
@@ -750,7 +742,7 @@ def _candidate_menu(
                 "if_frontier",
                 tactic="if => //.",
                 tactic_family="procedure_transform",
-                action_type="strategy_hint" if live_call_behind_if else "probe_tactic",
+                action_type="strategy_hint" if live_call_behind_if else "tactic_candidate",
                 cost="moderate" if live_call_behind_if else "cheap",
                 why=(
                     (
@@ -868,7 +860,7 @@ def _candidate_menu(
                 f"call_{lemma}",
                 tactic=tactic,
                 tactic_family="call_named_equiv",
-                action_type="probe_tactic",
+                action_type="tactic_candidate",
                 cost="cheap",
                 why=(
                     f"Named call-level equiv `{lemma}` is resolved and matches "
@@ -1023,7 +1015,7 @@ def _candidate_menu(
                     why=(
                         "ProofIR assembled a dataflow invariant candidate and "
                         "sees a procedure-like call frontier. This read-only "
-                        "probe shows the actual EasyCrypt subgoals that "
+                        "preview shows the actual EasyCrypt subgoals that "
                         "`call (_: <candidate>)` would generate."
                     ),
                     preconditions=[
@@ -1047,7 +1039,7 @@ def _candidate_menu(
                 ),
                 preconditions=[
                     "fill or check any missing call preconditions before committing",
-                    "if the displayed invariant is too weak, strengthen it with live module state from pre/post before probing",
+                    "if the displayed invariant is too weak, strengthen it with live module state from pre/post before submitting",
                     "preview generated subgoals with `-call-subgoals -c <invariant>` when the residual order is unclear",
                     *(
                         [
@@ -1114,7 +1106,7 @@ def _candidate_menu(
             "residual_prhl_close",
             tactic="auto.",
             tactic_family="ambient_close",
-            action_type="probe_tactic",
+            action_type="tactic_candidate",
             cost="cheap",
             why=(
                 "The pRHL programs are synchronized and no call frontier is live; "
@@ -1156,7 +1148,7 @@ def _candidate_menu(
                     "ambient_unfold_goal_head",
                     tactic=tactic,
                     tactic_family="definition_unfold",
-                    action_type="probe_tactic",
+                    action_type="tactic_candidate",
                     cost="free",
                     why=(
                         f"`{name}` occurs in the residual goal and resolves "
@@ -1177,7 +1169,7 @@ def _candidate_menu(
             "ambient_simplify",
             tactic="auto => />.",
             tactic_family="ambient_close",
-            action_type="probe_tactic",
+            action_type="tactic_candidate",
             cost="cheap",
             why=(
                 "Ambient front-end found a pure residual goal; simplify before "
@@ -1192,7 +1184,7 @@ def _candidate_menu(
             "ambient_smt",
             tactic="smt().",
             tactic_family="ambient_close",
-            action_type="probe_tactic",
+            action_type="tactic_candidate",
             cost="moderate",
             why=(
                 "Ambient front-end leaves a pure logical/algebraic residue "
@@ -1471,7 +1463,7 @@ def _equiv_exact_closer_menu_items(handles: dict[str, Any]) -> list[dict[str, An
             tactic=tactic,
             tactic_family="call_named_equiv",
             action_type=(
-                "probe_tactic"
+                "tactic_candidate"
                 if bool(closer.get("fully_bound")) else
                 "strategy_hint"
             ),
@@ -1485,7 +1477,7 @@ def _equiv_exact_closer_menu_items(handles: dict[str, Any]) -> list[dict[str, An
                 *(
                     []
                     if bool(closer.get("fully_bound")) else
-                    ["inspect the lemma signature or fill unresolved premise arguments before probing"]
+                    ["inspect the lemma signature or fill unresolved premise arguments before submitting"]
                 ),
             ],
             preserves=["pRHL abstraction", "procedure bodies"],
@@ -1496,6 +1488,14 @@ def _equiv_exact_closer_menu_items(handles: dict[str, Any]) -> list[dict[str, An
                 "matched_rhs_proc": str(closer.get("rhs_proc") or ""),
                 "arguments": list(closer.get("arguments") or []),
                 "missing_arguments": list(closer.get("missing_arguments") or []),
+                "loaded_named_route": {
+                    "route_kind": str(closer.get("route_kind") or ""),
+                    "symbol": lemma,
+                    "matched_form": str(closer.get("matched_form") or tactic),
+                    "verification_status": str(
+                        closer.get("verification_status") or ""
+                    ),
+                },
             },
         ))
     return items
@@ -1602,6 +1602,22 @@ def _program_edit_script_menu_items(
                 []
             ),
             "live_fact_coverage": live_fact_coverage,
+            "structural_seq": (
+                {
+                    "form": (
+                        f"seq {int(action.get('left_statement_count') or 0)} "
+                        f"{int(action.get('right_statement_count') or 0)}"
+                    ),
+                    "left_position": str(
+                        int(action.get("left_statement_count") or 0)
+                    ),
+                    "right_position": str(
+                        int(action.get("right_statement_count") or 0)
+                    ),
+                }
+                if is_seq_cut else
+                {}
+            ),
         },
         program_rank=int(action.get("rank") or 9999),
         scheduler_role="program_frontier_exposure",
@@ -1674,12 +1690,12 @@ def _call_instantiation_hint(lemma: str, missing_slots: list[str]) -> str:
 def _instantiation_preconditions(missing_slots: list[str]) -> list[str]:
     if missing_slots:
         return [
-            "do not probe the naked `call <lemma>.` form while required slots are unbound",
+            "the naked `call <lemma>.` form is incomplete while required slots are unbound",
             "bind these roles from the current call site or lemma signature first: "
             + ", ".join(missing_slots[:6]),
         ]
     return [
-        "do not probe the naked `call <lemma>.` form until required signature slots are bound",
+        "the naked `call <lemma>.` form is incomplete until required signature slots are bound",
         "inspect the signature and current call-site arguments before choosing a call form",
     ]
 
@@ -1725,7 +1741,7 @@ def _instantiated_template_menu_items(handles: dict[str, Any]) -> list[dict[str,
                     why=(
                         f"Name resolution found value parameters for `{name}` "
                         "that come from current call-site program expressions. "
-                        "Lift those expressions with `exlim` before probing the "
+                        "Lift those expressions with `exlim` before submitting the "
                         "call lemma, instead of guessing naked call arguments."
                     ),
                     preconditions=[
@@ -1783,16 +1799,16 @@ def _instantiated_template_menu_items(handles: dict[str, Any]) -> list[dict[str,
             pr_normal = _dict(handles.get("pr_normal_form"))
             normal_kind = str(pr_normal.get("normalization_kind") or "")
             arithmetic_shell = normal_kind == "union_bound_or_additive_inequality"
-            action_type = "probe_tactic"
+            action_type = "tactic_candidate"
             cost = "cheap"
             why = (
                 f"Name resolution plus context binding produced a concrete "
-                f"candidate for `{name}`; probe it with EC before committing."
+                f"candidate for `{name}`; it remains unverified until EasyCrypt accepts it."
             )
             preconditions = [
                 "signature slots came from the resolved lemma declaration",
                 "argument candidates were extracted from current context/goal",
-                "probe with `-try` before committing the tactic",
+                "treat the tactic as an unverified candidate",
             ]
             if bound_family in {"pr_path_plan", "rewrite"} and arithmetic_shell:
                 action_type = "strategy_hint"
@@ -1801,12 +1817,12 @@ def _instantiated_template_menu_items(handles: dict[str, Any]) -> list[dict[str,
                     f"Name resolution can instantiate `{name}`, but the current "
                     "Pr goal is an additive/inequality shell; use this as "
                     "context for a Pr arithmetic/have-chain plan instead of a "
-                    "direct rewrite probe."
+                    "direct rewrite."
                 )
                 preconditions = [
                     "direct rewrite may fail when the lemma only matches a sub-expression under an inequality/additive shell",
                     "first build the appropriate intermediate inequality/equality or use a Pr arithmetic plan",
-                    "probe a concrete rewrite only after the matching side and direction are explicit",
+                    "a concrete rewrite needs an explicit matching side and direction",
                 ]
                 costs["pr_arithmetic_shell"] = normal_kind
             pr_elaboration = _compact_pr_elaboration(
@@ -1826,9 +1842,9 @@ def _instantiated_template_menu_items(handles: dict[str, Any]) -> list[dict[str,
                     "build an intermediate Pr equality or wrapper bridge first."
                 )
                 preconditions = [
-                    "do not probe this direct rewrite on the raw endpoint",
+                    "this direct rewrite does not match the raw endpoint",
                     "first expose a Pr endpoint matching the lemma signature",
-                    "then probe the instantiated rewrite after the endpoint match is explicit",
+                    "the instantiated rewrite becomes relevant after the endpoint match is explicit",
                 ]
                 costs["pr_endpoint_match"] = "missing"
             if (
@@ -1846,7 +1862,7 @@ def _instantiated_template_menu_items(handles: dict[str, Any]) -> list[dict[str,
                 preconditions = [
                     "naked `call (LEMMA args)` is valid only after the displayed values have been lifted or are already logical variables",
                     "otherwise prefer the corresponding `exlim ...; call (...)` strategy hint",
-                    "probe either form before committing",
+                    "choose the form whose value arguments are logical variables at this state",
                 ]
                 costs["call_elaboration_available"] = True
             if pr_elaboration:
@@ -1868,7 +1884,7 @@ def _instantiated_template_menu_items(handles: dict[str, Any]) -> list[dict[str,
                 cost=cost,
                 why=why,
                 preconditions=preconditions,
-                preserves=["proof state until the probe is accepted"],
+                preserves=["proof state until a tactic is committed"],
                 cost_factors=costs,
             )
             if "_" in _template_args(tactic):
@@ -1959,7 +1975,7 @@ def _pr_typed_bridge_chain_menu_items(handles: dict[str, Any]) -> list[dict[str,
             tactic=action,
             tactic_family="pr_path_plan",
             action_type=(
-                "probe_tactic"
+                "tactic_candidate"
                 if obligation_status == "complete" else
                 "strategy_hint"
             ),
@@ -1972,13 +1988,13 @@ def _pr_typed_bridge_chain_menu_items(handles: dict[str, Any]) -> list[dict[str,
                 if obligation_status == "complete" else
                 (
                     " This is only a partial bridge plan: it may open "
-                    "oracle/init/postlude obligations, so inspect/probe the "
+                    "oracle/init/postlude obligations, so inspect the "
                     "obligation map before committing it as a clean rewrite."
                 )
             ),
             preconditions=[
                 (
-                    "probe this full `have ... by ...` bridge; do not commit a naked `have` that only opens an obligation"
+                    "the full `have ... by ...` bridge includes its closer; a naked `have` only opens an obligation"
                     if obligation_status == "complete" else
                     "treat this as a bridge strategy until the generated obligations have a closure plan"
                 ),
@@ -2086,14 +2102,14 @@ def _pr_wrapper_bridge_menu_items(handles: dict[str, Any]) -> list[dict[str, Any
             f"pr_wrapper_bridge_{idx}",
             tactic=tactic,
             tactic_family="pr_path_plan",
-            action_type="probe_tactic",
+            action_type="tactic_candidate",
             cost="cheap",
             why=str(
                 candidate.get("reason")
                 or "Normalize an experiment-wrapper Pr endpoint when it makes the next Pr rewrite applicable."
             ),
             preconditions=[
-                "probe this have-bridge before committing it",
+                "this have-bridge remains an unverified candidate",
                 "the target Pr term is derived from the visible MainD endpoint and the matched Pr rewrite declaration",
                 "if the bridge fails, inspect the wrapper module definitions rather than guessing procedure arguments",
             ],

@@ -1,13 +1,8 @@
 """Load .env from the project root into os.environ (no extra dependencies).
 
-Also the single source of truth for parsing boolean env knobs. Hand-rolled
-``os.environ.get(...).lower() in ("1","true","yes","on")`` checks were scattered
-across ~8 modules; the danger for paper measurements is a *typo'd value*
-(``SHANNON_DISABLE_PROBE=ture``) silently reading as falsy, leaving probe ON and
-mislabelling an L4-no-probe ablation arm. :func:`env_bool` gives one vocabulary
-and a ``strict`` mode that fails loudly on an unrecognized value; the ablation
-kill-switches use it. (Audit §8 #11 — subset: helper + ablation knobs. The full
-typed-registry migration of the other knobs is deferred.)
+Also the single source of truth for parsing boolean environment knobs.
+:func:`env_bool` gives one vocabulary and a strict mode that fails loudly on
+unrecognized values.
 """
 
 from __future__ import annotations
@@ -32,8 +27,7 @@ KNOWN_ENV_FLAGS = frozenset({
     "SHANNON_BUNDLE_INTERNAL", "SHANNON_CTX_RESPAWN_MAX",
     "SHANNON_CTX_RESPAWN_MIN_RUNWAY_S", "SHANNON_CTX_WATERMARK_TOKENS",
     "SHANNON_CTX_WATERMARK_TURNS", "SHANNON_DEEP_GOAL_SHRINK_CHARS",
-    "SHANNON_DISABLE_CTX_RESPAWN", "SHANNON_DISABLE_PROBE",
-    "SHANNON_EC_DAEMON", "SHANNON_ENABLE_PROBE",
+    "SHANNON_DISABLE_CTX_RESPAWN", "SHANNON_EC_DAEMON",
     "SHANNON_FINISH_WITH_ADMIT_ALLOW_AFTER", "SHANNON_GIVE_UP_ALLOW_AFTER",
     "SHANNON_GIVE_UP_WINDOW_S", "SHANNON_LEGACY_DISPLAY",
     "SHANNON_MCP_DEBUG_LOG", "SHANNON_MCP_READY_TIMEOUT_S",

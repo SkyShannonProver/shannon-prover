@@ -232,7 +232,7 @@ class TurnRecord:
 
     fingerprint: str
     remaining: int | None
-    intent: str          # e.g. "commit_tactic", "probe_tactic", "inspect_context"
+    intent: str          # e.g. "commit_tactic" or a context topic
     tactic: str          # the tactic string for a commit/probe, else ""
     accepted: bool       # committed AND not errored/rejected
     errored: bool        # EC error / no-op / reject signal
@@ -359,7 +359,7 @@ def detect_patch_loop(
     span = recent[hits[0] : hits[-1] + 1]
     for r in span:
         head = _tactic_head(r.tactic)
-        if r.intent in ("commit_tactic", "probe_tactic") and head in _RESTRUCTURE_HEADS:
+        if r.intent == "commit_tactic" and head in _RESTRUCTURE_HEADS:
             return None  # a restructure happened — not a frozen patch loop
 
     # --- FLOOR-BETWEEN-ARRIVALS gate. For each excursion between consecutive

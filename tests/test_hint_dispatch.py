@@ -137,7 +137,7 @@ def test_candidates_to_recommendations_canonical_shape() -> None:
     assert rec["confidence"] == "verified"
     assert rec["producer"] == "AUTO-TEST"
     assert rec["why"] == "Test rationale."
-    assert rec["metadata"]["epistemic_status"] == "daemon_probe_accepted"
+    assert rec["metadata"]["epistemic_status"] == "easycrypt_preflight_accepted"
     assert rec["metadata"]["abstract_modules"] == ["A"]
     assert rec["source_refs"] == [{"kind": "module", "id": "A"}]
 

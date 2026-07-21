@@ -14,8 +14,10 @@ and consumers.
   `kind` when it is a standalone resource.
 - Empty lists and empty dictionaries are preferred over missing keys for known
   optional collections.
-- `action_type` must be one of `inspection_action`, `strategy_hint`,
-  `probe_tactic`, or a documented avoid/compatibility value.
+- `action_type` values describe compiler evidence such as
+  `inspection_action` or `strategy_hint`. Historical/internal
+  `probe_tactic` artifacts may remain parseable for replay, but are not an
+  advertised manager intent or a normal presentation action.
 - A fact that came from search or static analysis is evidence, not a verified
   proof step.
 - String fields preserve EasyCrypt spelling where useful; canonical fields use
@@ -188,6 +190,173 @@ Contract:
 - A candidate is not runnable until name resolution and instantiation binding
   say enough about its signature.
 
+## `MechanicalGoalCandidate`
+
+Producer:
+
+- `ec_lemma_index.py::mechanical_goal_candidates`
+
+Consumers:
+
+- `ec_proof_ir_handles.py`
+- `session_prover_workspace_view.py` compact projection
+- pure-tail and probability panel adapters
+
+Required fields:
+
+| Field | Meaning |
+| --- | --- |
+| `lemma` | Loaded declaration name |
+| `match_kind` | Exact conclusion, checked schema, or structural fingerprint kind |
+| `required_premises` | Premises still visible or requiring discharge |
+| `source_path` | Loaded source that supplied the declaration |
+| `authority` | Provenance tier for the match |
+| `declaration` | Loaded declaration text when available |
+
+For `match_kind = losslessness_obligation_match`, the candidate additionally
+carries `declared_procedure`, `instantiated_procedure`, ordered
+`parameter_bindings`, `direct_application`, and the instantiated
+`required_premises`.  The match covers the complete implication chain, not just
+the final `islossless` conclusion.  The target lemma is excluded by this
+producer before any downstream projection.
+
+Optional structural fields such as `shared_symbols`, `shared_structures`,
+`transform`, `inverse`, and `support_role` belong to the producer. The
+workspace projection is the one compact schema boundary; downstream analyzers
+must preserve projected extensions rather than maintain a second field list.
+
+Contract:
+
+- A structural fingerprint is mechanical relevance evidence, not a command.
+- A fixed ground literal matches only when the full declared left-hand term is
+  present; a distant occurrence of the literal is not an exact rewrite match.
+- Panels may group sibling matches for display but must preserve all loaded
+  lemma names in audit data.
+- Downstream analyzers must consume this projection; they must not reopen the
+  target source and build a second conclusion-matching roster.
+
+## `OneSidedLosslessnessCandidate`
+
+Producer:
+
+- `ec_lemma_index.py::semantic_one_sided_losslessness_candidates`
+
+Consumers:
+
+- `ec_proof_ir_handles.py`
+- `session_prover_workspace_view.py`
+- `call_site_surface`
+
+Required fields:
+
+| Field | Meaning |
+| --- | --- |
+| `lemma` | Loaded procedure-specific losslessness declaration |
+| `live_procedure` | Current one-sided call frontier procedure |
+| `declared_procedure` | Procedure in the loaded declaration |
+| `module_bindings` | Structural bindings from declared module slots to current modules |
+| `module_argument_terms` | EasyCrypt module arguments, including `<:` packaging |
+| `instantiated_lemma_head` | Lemma head with explicit module arguments |
+| `proof_argument_placeholders` | Remaining proof-premise slots represented by `_` |
+| `call_template` | Current mechanically instantiated `call (...)` form |
+| `required_premises` | Instantiated losslessness premises |
+| `verification_status` | What was matched and what remains unverified |
+
+Contract:
+
+- The live procedure and loaded declaration procedure must match after one
+  consistent module substitution.
+- Module argument syntax is produced here, not reconstructed by a panel.
+- The template is mechanical application evidence. It does not prove the
+  remaining premises or select a global proof route.
+
+## `ProgramObligation`
+
+Producer:
+
+- `ec_obligation_ir.py::one_sided_program_obligation`
+
+Consumers:
+
+- `session_prover_workspace_view.py` as
+  `program_frontier.program_obligation`
+- single-program panel and tactic-form taxonomy
+
+The currently supported kind is `procedure_losslessness`. It requires a
+single-program `phoare` goal with exact bound `[=] 1%r`, `pre = true`, and
+`post = true`.
+
+Contract:
+
+- This fact classifies the current obligation only.
+- It may make the `islossless` reference family visible.
+- It must not choose an invariant, loop variant, certificate, inline plan, or
+  closing tactic.
+
+## `ProcedureEntryTransition`
+
+Producer:
+
+- `ec_proof_action_surface.py` owns `proc_open` phase legality and its typed
+  candidate id.
+- `session_prover_workspace_view.py::_procedure_entry_transition` projects the
+  preferred transition without parsing candidate prose.
+
+Consumers:
+
+- `program_frontier.procedure_entry_transition`
+- the relational-program panel, state-action eligibility, and recovery panel
+
+Contract:
+
+- The fact exists only at `prhl_module` when ProofIR marks `proc_open` as
+  `preferred` and provides the exact `proc.` candidate.
+- The composer may lower this fact to the exact ready-to-submit
+  `commit_tactic` payload `{ "tactic": "proc." }`.
+- Presentation and recovery code consume this fact; they do not independently
+  infer module-entry legality from goal text, errors, or candidate prose.
+- No `proc.` action is exposed after the procedure body has been opened or when
+  the typed transition is absent.
+
+## `DistributionCertificate`
+
+Producer:
+
+- `ec_lemma_index.py::semantic_distribution_certificates`
+
+Consumers:
+
+- `ec_proof_ir_handles.py`
+- `session_prover_workspace_view.py` compact projection
+- `pure_tail_surface`
+- the `pure_logic` panel adapter
+
+Required fields:
+
+| Field | Meaning |
+| --- | --- |
+| `lemma` | Exact loaded declaration name |
+| `certificate_kind` | `distribution_losslessness` or `finite_interval_point_mass` |
+| `distribution` | Current EasyCrypt distribution spelling |
+| `canonical_distribution` | Canonical distribution key used for exact matching |
+| `declared_conclusion` | Loaded identity/certificate conclusion |
+| `parameter_bindings` | Mechanical binding of current terms to declaration slots |
+| `required_premises` | Premises still requiring proof |
+| `authority` | Loaded declaration/source authority |
+
+Finite-interval certificates may additionally carry `point`,
+`instantiated_identity`, `interval_cardinality`, and
+`loaded_supporting_facts`.
+
+Contract:
+
+- Losslessness matching is exact modulo the canonical equivalence between
+  `is_lossless d` and `weight d = 1%r` for the same `d`.
+- Finite-interval matching supports the current point-mass term and reports
+  the loaded identity plus premise shapes; it does not choose a rewrite or
+  discharge arithmetic.
+- No distribution lemma name is guessed from a distribution identifier.
+
 ## `NameResolutionFact`
 
 Producer:
@@ -259,7 +428,7 @@ Slot fields:
 Contract:
 
 - Low-confidence value slots must not emit runnable tactic templates.
-- Binding suggests arguments; backend probes still decide whether tactics work.
+- Binding suggests arguments; EasyCrypt validation still decides whether tactics work.
 
 ## `PrObligation`
 
@@ -400,7 +569,7 @@ Required fields:
 | `id` | Stable action identifier |
 | `tactic` | Command text or strategy text |
 | `tactic_family` | Phase/family classification |
-| `action_type` | Inspection, strategy, or probe classification |
+| `action_type` | Inspection, strategy, candidate, or runnable classification |
 | `cost` | Rough cost tier |
 | `why` | Why this action is shown |
 | `preconditions` | Conditions before use |
@@ -408,8 +577,8 @@ Required fields:
 | `destroys` | Abstractions/resources destroyed |
 | `cost_factors` | Machine-readable ranking details |
 | `confidence` | Confidence tier |
-| `readiness` | Stable user-facing readiness (`inspect_first`, `probe_first`, etc.) |
-| `effect` | Whether the action is read-only, planning-only, probe-only, mutating, or avoid |
+| `readiness` | Stable user-facing readiness (`inspect_first`, `needs_validation`, etc.) |
+| `effect` | Whether the action is read-only, planning-only, candidate-only, mutating, or avoid |
 | `provenance` | Source/authority metadata used by contract validation |
 
 Contract:
@@ -417,9 +586,10 @@ Contract:
 - `inspection_action` must not mutate proof state.
 - `strategy_hint` may be non-tactic prose and should not be sent directly as a
   tactic.
-- `probe_tactic` means probeable, not proven.
-- fallback or unresolved source/name facts must not become `probe_tactic` or
-  `runnable_tactic` before inspection.
+- Historical/internal `probe_tactic` values are replay labels, not an
+  agent-facing action type. They must not enter `SurfaceModel.actions`.
+- fallback or unresolved source/name facts must not become a runnable tactic
+  before inspection.
 - Action renderers consume existing facts; they do not discover new ones.
 
 ## `PrBridgeCandidate`
@@ -482,7 +652,9 @@ Required fields:
 
 Contract:
 
-- Fully-bound closers may become `probe_tactic`.
+- Fully-bound closers may become typed candidate evidence. Surface action
+  eligibility still decides whether any read-only lookup is shown; no public
+  tactic-probe action is created.
 - Closers with missing arguments must remain `strategy_hint`.
 - Source-scan closers are resource facts; future EC-native `-where` evidence may
   upgrade their authority.

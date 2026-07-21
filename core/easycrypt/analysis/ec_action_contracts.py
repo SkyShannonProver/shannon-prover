@@ -1,7 +1,7 @@
 """ActionCandidate contract helpers for the EasyCrypt analysis compiler.
 
 The action layer is a compiler backend boundary: facts become inspectable,
-probeable, or runnable suggestions here.  These helpers keep that boundary
+candidate, or runnable suggestions here.  These helpers keep that boundary
 explicit so fallback source scans and unresolved names cannot silently become
 committable proof steps.
 """
@@ -21,14 +21,14 @@ ACTION_CONTRACTS_KIND = "easycrypt_action_contracts"
 
 INSPECTION_ACTION = "inspection_action"
 STRATEGY_HINT = "strategy_hint"
-PROBE_TACTIC = "probe_tactic"
+TACTIC_CANDIDATE = "tactic_candidate"
 RUNNABLE_TACTIC = "runnable_tactic"
 AVOID_ACTION = "avoid_action"
 
 ACTION_TYPES = {
     INSPECTION_ACTION,
     STRATEGY_HINT,
-    PROBE_TACTIC,
+    TACTIC_CANDIDATE,
     RUNNABLE_TACTIC,
     AVOID_ACTION,
 }
@@ -42,7 +42,7 @@ SCHEDULER_ROLES = {
     "program_frontier_exposure",
     "local_control_transform",
     "probabilistic_vc",
-    "low_level_probe",
+    "candidate_validation",
     "residual_close",
     "fallback_lowering",
     "destructive_lowering",
@@ -53,7 +53,7 @@ SCHEDULER_ROLES = {
 READINESS_BY_ACTION_TYPE = {
     INSPECTION_ACTION: "inspect_first",
     STRATEGY_HINT: "not_directly_runnable",
-    PROBE_TACTIC: "probe_first",
+    TACTIC_CANDIDATE: "needs_validation",
     RUNNABLE_TACTIC: "ready_to_run",
     AVOID_ACTION: "do_not_run",
 }
@@ -61,7 +61,7 @@ READINESS_BY_ACTION_TYPE = {
 EFFECT_BY_ACTION_TYPE = {
     INSPECTION_ACTION: "read_only",
     STRATEGY_HINT: "planning_only",
-    PROBE_TACTIC: "probe_no_commit",
+    TACTIC_CANDIDATE: "candidate_only",
     RUNNABLE_TACTIC: "mutates_proof_state",
     AVOID_ACTION: "avoid",
 }
@@ -138,6 +138,30 @@ _PLACEHOLDER_NOISE_RE = re.compile(r"<[a-z][^>{}]*>")
 _SWAP_OFFSET_FRAME_RE = re.compile(
     r"^swap(?:\{[12]\})?\s+(?:\[\d+\.\.\d+\]|\d+)\s+<offset>\.?\s*$"
 )
+_REALIGNING_SWAP_RE = re.compile(
+    r"^(?P<head>swap(?:\{(?P<side>[12])\})?\s+"
+    r"(?P<source>\[\d+\.\.\d+\]|\d+))\s+"
+    r"(?P<offset>-?\d+)\s*\.?\s*$"
+)
+
+
+def realigning_swap_contract(tactic: str) -> dict[str, Any]:
+    """Parse a verified swap once at the compiler action boundary.
+
+    Presentation consumes this typed contract and never recovers source/offset
+    structure from tactic prose.
+    """
+    match = _REALIGNING_SWAP_RE.match(str(tactic or "").strip())
+    if not match:
+        return {}
+    source = match.group("source")
+    return {
+        "side": match.group("side") or "",
+        "source": source,
+        "source_position": source if source.isdigit() else "",
+        "accepted_offset": int(match.group("offset")),
+        "frame": f"{match.group('head')} <offset>.",
+    }
 
 
 def is_hardcoded_noise_move(tactic_text: str) -> bool:
@@ -264,11 +288,11 @@ def validate_action_candidate(candidate: dict[str, Any]) -> list[str]:
             f"invalid scheduler_role: {candidate.get('scheduler_role') or '<missing>'}"
         )
     if _fallback_or_unresolved(candidate) and action_type in {
-        PROBE_TACTIC,
+        TACTIC_CANDIDATE,
         RUNNABLE_TACTIC,
     }:
         errors.append(
-            "fallback or unresolved resource cannot be probeable/runnable before inspection"
+            "fallback or unresolved resource cannot be a tactic candidate/runnable before inspection"
         )
     return errors
 
@@ -382,8 +406,8 @@ def _typed_readiness(candidate: dict[str, Any]) -> str:
         return "typed_candidate"
     if action_type == RUNNABLE_TACTIC:
         return "ready"
-    if action_type == PROBE_TACTIC:
-        return "probe_ready"
+    if action_type == TACTIC_CANDIDATE:
+        return "needs_validation"
     return "unknown"
 
 
@@ -531,7 +555,7 @@ def _scheduler_role(candidate: dict[str, Any]) -> str:
     if family == "procedure_transform":
         head = tactic.split(None, 1)[0].rstrip(".") if tactic else ""
         if head in {"sim"}:
-            return "low_level_probe"
+            return "low_precision_candidate"
         if head in {"skip", "auto", "smt"}:
             return "residual_close"
         if (
@@ -636,7 +660,7 @@ __all__ = [
     "ACTION_TYPES",
     "AVOID_ACTION",
     "INSPECTION_ACTION",
-    "PROBE_TACTIC",
+    "TACTIC_CANDIDATE",
     "RUNNABLE_TACTIC",
     "SCHEDULER_ROLES",
     "STRATEGY_HINT",

@@ -251,7 +251,7 @@ def build_proof_context_view(
                 if len(stale_recs) < max_stale_recommendations:
                     stale_recs.append(normalized)
 
-    active_recs, suppressed_probe_count = _suppress_verified_duplicate_probes(
+    active_recs, suppressed_preflight_count = _suppress_verified_duplicate_preflights(
         active_recs,
     )
     proof_ir = _build_proof_ir_for_view(
@@ -283,7 +283,7 @@ def build_proof_context_view(
                 if isinstance(proof_ir.get("phase"), dict) else {}
             ),
         })
-    debug_refs["suppressed_probe_recommendation_count"] = suppressed_probe_count
+    debug_refs["suppressed_preflight_recommendation_count"] = suppressed_preflight_count
 
     if status in _CLOSED_STATUSES and active_recs:
         errors.append(_message(
@@ -733,7 +733,7 @@ def _classify_freshness(
     return "unknown_or_stale"
 
 
-def _suppress_verified_duplicate_probes(
+def _suppress_verified_duplicate_preflights(
     recommendations: list[dict[str, Any]],
 ) -> tuple[list[dict[str, Any]], int]:
     verified_tactics = {
@@ -743,7 +743,7 @@ def _suppress_verified_duplicate_probes(
         and (
             str(rec.get("confidence") or "") == "verified"
             or str(_recommendation_metadata(rec).get("epistemic_status") or "")
-                == "daemon_probe_accepted"
+                == "easycrypt_preflight_accepted"
         )
     }
     if not verified_tactics:
@@ -755,7 +755,7 @@ def _suppress_verified_duplicate_probes(
         action = str(rec.get("action") or "").strip()
         if (
             action in verified_tactics
-            and _recommendation_action_type(rec) == "probe_tactic"
+            and _recommendation_action_type(rec) == "tactic_candidate"
         ):
             suppressed += 1
             continue
@@ -862,7 +862,7 @@ def _safe_next_actions(
                 "structural); the session may be unhealthy."
             ),
         }]
-    # Tactic-audit-only errors mean the agent's last commit/probe
+    # Tactic-audit-only errors mean the last commit or private preflight
     # failed — that's normal proof iteration. We surface them via
     # ``latest_errors`` for transparency but do NOT preempt the
     # recommendation queue with a singleton ``diagnose`` action; if
@@ -907,7 +907,7 @@ def _safe_next_actions(
                 action_type == "runnable_tactic"
                 and (
                     str(rec.get("confidence") or "") == "verified"
-                    or epistemic_status == "daemon_probe_accepted"
+                    or epistemic_status == "easycrypt_preflight_accepted"
                 )
             )
             verified_chain = (
@@ -926,9 +926,9 @@ def _safe_next_actions(
                 kind = "commit_recommendation"
                 recommended_tool = "chain" if verified_chain else "next"
                 state_changed = True
-            elif action_type in {"probe_tactic", "runnable_tactic"}:
-                kind = "probe_recommendation"
-                recommended_tool = "try"
+            elif action_type in {"tactic_candidate", "runnable_tactic"}:
+                kind = "consider_strategy_hint"
+                recommended_tool = ""
                 state_changed = False
             else:
                 kind = "consider_recommendation"
@@ -988,11 +988,6 @@ def _safe_action_why(kind: str) -> str:
         return (
             "A verified recommendation is available; committing will mutate "
             "the proof state."
-        )
-    if kind == "probe_recommendation":
-        return (
-            "A non-mutating probe option is available; try it before deciding "
-            "whether to commit."
         )
     if kind == "consider_strategy_hint":
         return (
@@ -1165,7 +1160,7 @@ def _latest_errors(proof_state: dict[str, Any]) -> list[dict[str, Any]]:
     Each entry is tagged with an ``origin`` field that classifies its
     source:
 
-      * ``"tactic_audit"`` — the agent's last committed (or probed)
+      * ``"tactic_audit"`` — the last committed or privately validated
         tactic produced an error message. This is NORMAL proof
         iteration: ``apply foo.`` may fail with ``unknown lemma`` and
         the agent simply tries something else. It is NOT a session-
@@ -1327,7 +1322,7 @@ def _diagnostic_history(
         "policy": (
             "Errors without temporal_scope=current_attempt are historical "
             "diagnostics. They explain what failed before and must not be "
-            "attributed to an accepted current command/probe."
+            "attributed to an accepted current command or private preflight."
         ),
     }
 

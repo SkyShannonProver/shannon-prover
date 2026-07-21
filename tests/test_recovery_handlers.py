@@ -278,7 +278,7 @@ def test_recovery_handler_rewinds_checkpoint_and_records_route_memory(
     assert repl.rewound_before == 2
 
 
-def test_recovery_handler_probes_replay_suffix_chunk_and_marks_it_verified(
+def test_recovery_handler_verifies_replay_suffix_chunk_before_commit(
     tmp_path: Path,
 ) -> None:
     old_route = [
@@ -304,24 +304,18 @@ def test_recovery_handler_probes_replay_suffix_chunk_and_marks_it_verified(
         "available_chunks"
     ][0]
 
-    plan = handler.handle_probe_replay_suffix_chunk(
+    plan = handler.handle_commit_replay_suffix_chunk(
         AgentIntent(
-            intent="probe_replay_suffix_chunk",
+            intent="commit_replay_suffix_chunk",
             payload={"chunk_id": chunk["chunk_id"]},
         ),
     )
 
-    assert plan.kind == "nonmutating"
-    assert plan.observation["kind"] == "replay_suffix_probe"
-    assert plan.observation["status"] == "accepted"
-    assert plan.actions[0]["label"] == "scratch_replay"
+    assert plan.kind == "repl_call"
+    assert plan.observation["kind"] == "replay_suffix_commit"
     resolved = memory.resolve_replay_suffix_chunk(current_route, chunk["chunk_id"])
     assert resolved
     assert repl.verified_chunks == [[*current_route, *resolved["tactics"]]]
-    assert memory.replay_chunk_is_verified(
-        current_tactics=current_route,
-        chunk=resolved,
-    )
 
 
 def test_recovery_handler_confirms_fresh_restart_as_recovery_plan(

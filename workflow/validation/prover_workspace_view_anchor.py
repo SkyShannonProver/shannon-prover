@@ -106,7 +106,6 @@ def semantic_fingerprint(view: dict[str, Any]) -> dict[str, Any]:
             "keys": sorted(candidate.keys()),
             "move_heads": _candidate_move_heads(candidate),
             "navigation_intents": _navigation_intents(candidate),
-            "probe_heads": _probe_heads(candidate),
             "route_health_signals": _route_health_signals(candidate),
         },
         "surface_signals": _surface_signals(surface_payloads),
@@ -195,14 +194,6 @@ def compare_views(
         base_fp["candidate_moves"]["move_heads"],
         cand_fp["candidate_moves"]["move_heads"],
         "candidate move head disappeared",
-        severity="warning",
-    )
-    _require_subset(
-        diffs,
-        "candidate_moves.probe_heads",
-        base_fp["candidate_moves"]["probe_heads"],
-        cand_fp["candidate_moves"]["probe_heads"],
-        "probe alternative head disappeared",
         severity="warning",
     )
     _require_subset(
@@ -356,20 +347,6 @@ def _surface_shape(value: Any) -> dict[str, Any]:
 def _candidate_move_heads(candidate: dict[str, Any]) -> list[str]:
     heads: set[str] = set()
     for move in _iter_dicts(candidate.get("moves")):
-        head = _first_string(
-            move.get("head"),
-            move.get("tactic_head"),
-            _dig(move, "submit", "payload", "tactic"),
-            move.get("tactic"),
-        )
-        if head:
-            heads.add(_tactic_head(head))
-    return sorted(heads)
-
-
-def _probe_heads(candidate: dict[str, Any]) -> list[str]:
-    heads: set[str] = set()
-    for move in _iter_dicts(candidate.get("probe_alternatives")):
         head = _first_string(
             move.get("head"),
             move.get("tactic_head"),

@@ -11,10 +11,7 @@ Construction (verified against the real orchestrator path):
 """
 from __future__ import annotations
 
-import contextlib
-import io
 import json
-import os
 import uuid
 from pathlib import Path
 from typing import Any
@@ -35,7 +32,6 @@ from workflow.surface_profiles import ensure_supported_surface_profile
 from workflow.surface_profiles import schema_intents_for_surface_profile
 from core.easycrypt.session_workspace_view_manager import WorkspaceViewManager
 from workflow.proof_node_runtime import _render_manager_followup
-from workflow.surface_decision_context import merge_surface_decision_context
 from workflow.surface_turn_model import (
     compose_surface_turn,
     proof_surface_from_turn,
@@ -99,8 +95,8 @@ def _split_runtime_prompt(runtime_prompt: str) -> tuple[str, str]:
     return runtime_contract.rstrip(), _RUNTIME_TASK_MARKER + task_context
 
 
-def _strip_initial_workspace_view(prompt: str) -> str:
-    marker = "\n### Initial ProverWorkspaceView\n"
+def _strip_initial_proof_surface(prompt: str) -> str:
+    marker = "\n### Initial proof surface\n"
     if marker not in prompt:
         return prompt
     before, _ = prompt.split(marker, 1)
@@ -109,43 +105,6 @@ def _strip_initial_workspace_view(prompt: str) -> str:
         "Record which manager context is missing before choosing tactics.\n"
     )
     return before.replace(missing_note, "").rstrip() + "\n"
-
-
-def _planner_context_for_instructions(
-    *,
-    file: str,
-    lemma: str,
-    include_dir: str,
-    profile: str,
-    session_tag: str,
-):
-    """Use the default planner for L4-style instruction preview.
-
-    L1 is intentionally planner-free. Other profiles should show the same
-    planner-backed task context a normal prover handoff receives, while still
-    excluding the first-turn workspace view.
-    """
-    if profile == "l1_goal_projection":
-        return None
-    from workflow.agents.proof_planner import run as run_planner
-    from workflow.schemas.config import RunConfig
-
-    planner_dir = PROJECT_ROOT / "playground" / "node_memory" / session_tag / "planner"
-    planner_dir.mkdir(parents=True, exist_ok=True)
-    eval_target = os.environ.get("EVAL_TARGET_LEMMA", "").strip()
-    config = RunConfig(
-        file=file,
-        lemma=lemma,
-        include_dir=include_dir,
-        output_dir=str(planner_dir),
-        eval_mode=(eval_target == lemma),
-        surface_profile=profile,
-    )
-    # The planner emits human progress logs to stdout. In the web playground this
-    # endpoint may be called after the launching terminal has gone away; progress
-    # logging must not turn into a user-visible "Broken pipe" render failure.
-    with contextlib.redirect_stdout(io.StringIO()), contextlib.redirect_stderr(io.StringIO()):
-        return run_planner(config, planner_dir)
 
 
 def render_instructions(
@@ -158,22 +117,14 @@ def render_instructions(
 ) -> str:
     ensure_supported_surface_profile(profile)
     session_tag = session_tag or f"instructions_{''.join(c if c.isalnum() else '_' for c in lemma)[:40]}"
-    plan = _planner_context_for_instructions(
-        file=file,
-        lemma=lemma,
-        include_dir=include_dir,
-        profile=profile,
-        session_tag=session_tag,
-    )
     task_prompt = _build_prover_prompt(
         file,
         lemma,
         include_dir,
         session_tag=session_tag,
-        plan=plan,
         managed_session=None,
     )
-    task_prompt = _strip_initial_workspace_view(task_prompt)
+    task_prompt = _strip_initial_proof_surface(task_prompt)
     node_memory_dir = PROJECT_ROOT / "playground" / "node_memory" / session_tag
     runtime_prompt = render_long_lived_agent_prompt(
         task_prompt,
@@ -190,9 +141,9 @@ def render_instructions(
         (
             "This is the state-independent instruction context for the selected "
             "file, lemma, and surface profile. It excludes the first-turn "
-            "ProverWorkspaceView / proof panel, so it can be rendered before "
-            "starting a proof daemon. L4-style profiles use the default planner "
-            "context here; L1 remains planner-free. Hidden Claude Code "
+            "proof turn, so it can be rendered before starting a proof daemon. "
+            "No profile runs a planner for this static instruction preview. "
+            "Hidden Claude Code "
             "host/system messages are not available to the playground process."
         ),
         "## Runtime Contract (Generated)",
@@ -360,17 +311,11 @@ def surface_turn_of(
         profiled_full = view_manager.agent_display_view(raw_full) if raw_full else {}
     except Exception:
         profiled_full = dict(raw_full) if isinstance(raw_full, dict) else {}
-    view, profiled_full, decision_context = merge_surface_decision_context(
-        view,
-        profiled_full,
-    )
     raw_base = workspace_view_of(base_view)
     try:
         profiled_base = view_manager.agent_display_view(raw_base) if raw_base else {}
     except Exception:
         profiled_base = dict(raw_base) if isinstance(raw_base, dict) else {}
-    if decision_context and isinstance(profiled_base, dict):
-        profiled_base["decision_context"] = dict(decision_context)
     base_surface = {}
     if isinstance(raw_base, dict):
         base_surface = proof_surface_from_turn(raw_base.get("surface_turn") or {})

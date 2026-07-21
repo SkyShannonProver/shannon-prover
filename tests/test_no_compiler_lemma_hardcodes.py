@@ -52,7 +52,6 @@ def test_eval_facing_prompt_templates_have_no_benchmark_bridge_examples() -> Non
         "target",
         "easycrypt-src/theories",
         session_tag="no_hardcode_guard",
-        plan=None,
         managed_session=None,
     )
     # Only the base prover prompt is owned by this change-set. The

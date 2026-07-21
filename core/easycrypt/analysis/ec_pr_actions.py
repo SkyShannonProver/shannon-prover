@@ -41,7 +41,7 @@ def pr_normalization_menu_items(handles: dict[str, Any]) -> list[dict[str, Any]]
             "pr_normalize_congr",
             tactic=recommended_tactic,
             tactic_family="pr_normalization",
-            action_type="probe_tactic",
+            action_type="tactic_candidate",
             cost="cheap",
             why=(
                 str(pr_normal.get("reason") or "")
@@ -70,7 +70,7 @@ def pr_decomposition_bridge_menu_items(
         "pr_direct_byequiv_bridge",
         tactic="byequiv => //.",
         tactic_family="probability_to_program",
-        action_type="probe_tactic",
+        action_type="tactic_candidate",
         cost="cheap",
         why=str(
             obligation.get("reason")
@@ -108,7 +108,7 @@ def pr_byequiv_fallback_menu_items(
     ):
         return []
     fallback_action_type = (
-        "strategy_hint" if has_runnable_pr_frontend else "probe_tactic"
+        "strategy_hint" if has_runnable_pr_frontend else "tactic_candidate"
     )
     fallback_reason = (
         str(frontend.get("reason") or "") if has_runnable_pr_frontend else ""
@@ -116,7 +116,7 @@ def pr_byequiv_fallback_menu_items(
     if not fallback_reason:
         fallback_reason = (
             "No complete typed Pr path or runnable Pr rewrite is currently "
-            "available; pRHL lowering is a probeable alternative while "
+            "available; pRHL lowering is an unverified alternative while "
             "partial Pr handles remain contextual."
             if not has_runnable_pr_frontend else
             "The Pr front-end sees direct pRHL lowering as a fallback for "
@@ -182,7 +182,7 @@ def pr_rewrite_menu_items(
         tactic=f"rewrite {lemma}.",
         tactic_family="rewrite",
         action_type=(
-            "strategy_hint" if needs_lookup or needs_instantiation else "probe_tactic"
+            "strategy_hint" if needs_lookup or needs_instantiation else "tactic_candidate"
         ),
         cost=rewrite_cost,
         why=rewrite_why,
@@ -276,7 +276,7 @@ def resolution_preconditions(
         out = [f"name resolution has exact signature for `{lemma}`"]
         if resolved.get("requires_instantiation"):
             out.append(
-                f"instantiate required signature slots before probing the {action_word}"
+                f"instantiate required signature slots before submitting the {action_word}"
             )
         return out
     return (

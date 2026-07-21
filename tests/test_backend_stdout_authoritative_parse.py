@@ -205,51 +205,6 @@ def test_rejected_commit_surfaces_raw_ec_error_in_observation():
     assert "rejected" in str(obs.get("result") or "").lower()
 
 
-def test_rejected_probe_surfaces_raw_ec_error_in_observation():
-    # The L4 gap (MEE-CBC, 2026-06-06): a `probe_tactic` whose TACTIC was rejected
-    # still reports ok=true (the probe TOOL ran fine), so the old `not ok` recovery
-    # gate skipped it and the agent saw "EasyCrypt rejected this probe … use the error
-    # summary" with NO error — and guessed for minutes why `inline` failed. The
-    # recovery must also fire on status="probe_rejected".
-    stdout = (
-        '{"kind":"agent_view","ok":false,"status":"error","errors":'
-        '[{"message":"[error] cannot inline PRPc.PseudoRP.fi: abstract procedure"}]}\n'
-        "[TACTIC-EXECUTION-RESULT]\n"
-        '{"ok":true,"result":{"ok":true,"status":"probe_rejected"},'
-        '"execution":{"state_changed":false}}\n'
-    )
-    obs = agent_observation_from_command(
-        "probe_tactic",
-        ["sh", "-c", "inline PRPc.PseudoRP.fi."],
-        stdout=stdout,
-        stderr="",
-        exit_code=0,
-    )
-    assert obs.get("error_summary") == (
-        "[error] cannot inline PRPc.PseudoRP.fi: abstract procedure"
-    )
-    assert "rejected" in str(obs.get("result") or "").lower()
-
-
-def test_accepted_probe_never_gets_a_spurious_error_summary():
-    # The recovery is still gated on rejection: an ACCEPTED probe (ok=true,
-    # status=probe_accepted) must never pick up a stray earlier envelope error.
-    stdout = (
-        '{"kind":"agent_view","ok":false,"errors":[{"message":"[error] stale"}]}\n'
-        "[TACTIC-EXECUTION-RESULT]\n"
-        '{"ok":true,"result":{"ok":true,"status":"probe_accepted"},'
-        '"execution":{"state_changed":false}}\n'
-    )
-    obs = agent_observation_from_command(
-        "probe_tactic",
-        ["sh", "-c", "proc."],
-        stdout=stdout,
-        stderr="",
-        exit_code=0,
-    )
-    assert obs.get("error_summary") is None
-
-
 def test_no_progress_commit_says_no_progress_not_rejected_with_error():
     # EC ACCEPTS a no-op tactic but it changes nothing -> auto-reverts
     # (status=no_progress_reverted, errors=None). It must NOT render as "rejected —
@@ -297,31 +252,6 @@ def test_daemon_rejected_marker_in_raw_excerpt_is_recovered():
     payload = {"result": {"ok": False, "status": "error", "raw_excerpt":
         "==[ L0 ]==\n[DAEMON_REJECTED] conseq: not a phl/prhl judgement\n  EC daemon rejected"}}
     assert _error_summary(payload, "", ok=False) == "conseq: not a phl/prhl judgement"
-
-
-def test_rejected_probe_text_is_ec_rejection_not_tool_failure():
-    # A genuine EC rejection (ok=False, status not a tool error) must read "EasyCrypt
-    # rejected this probe", NOT "tool failed before EasyCrypt could validate" — the old
-    # `or not ok` mislabeled a real EC `unknown procedure` rejection as a transport
-    # failure that "doesn't prove the tactic invalid" (L4 step 8, 2026-06-06).
-    from workflow.proof_management.backend_actions import _manager_result_text
-    t = _manager_result_text("probe_tactic", "error", False)
-    assert "rejected this probe" in t.lower()
-    assert "before easycrypt could validate" not in t.lower()
-    # a true tool/transport error still routes to the tool-failure text
-    assert "tool failed" in _manager_result_text("probe_tactic", "probe_error", False).lower()
-
-
-def test_no_progress_probe_says_no_progress():
-    obs = agent_observation_from_command(
-        "probe_tactic", ["sh", "-c", "inline X."],
-        stdout=('[TACTIC-EXECUTION-RESULT]\n'
-                '{"ok":true,"result":{"ok":true,"status":"probe_no_progress"},'
-                '"execution":{"state_changed":false}}\n'),
-        stderr="", exit_code=0,
-    )
-    assert "NO PROGRESS" in obs["result"]
-    assert "use the error summary" not in obs["result"].lower()
 
 
 def test_accepted_commit_never_gets_a_spurious_error_summary():

@@ -21,10 +21,9 @@ from core.easycrypt.search.ec_tactic_forms import format_forms, get_forms, list_
 from workflow.surface_profiles import (  # type: ignore  # noqa: E402
     apply_workspace_view_surface_profile,
 )
-from workflow.surface_composer import (  # type: ignore  # noqa: E402
-    compose_surface_model,
+from workflow.surface_composer import compose_surface_model  # type: ignore  # noqa: E402
+from workflow.surface_panels import (  # type: ignore  # noqa: E402
     _extract_swap_offsets,
-    _invariant_frame,
     _render_surgery_skeleton,
 )
 from workflow.surface_action_preflight import action_preflight_key  # noqa: E402
@@ -85,7 +84,21 @@ def _context_view(
 def _call_panel_facts(view: dict) -> dict:
     v = dict(view)
     v.setdefault("proof_status", {"current_layer": "call_site"})
-    v.setdefault("program_frontier", {"focus": {"frontier_call_sites": 1}})
+    v.setdefault("program_frontier", {"current_frontier_scope": {"frontier": {
+        "kind": "left_call",
+        "left": {"head": "call", "statement": "x <@ M.f()"},
+    }}})
+    v.setdefault("call_site_surface", {"live_call_sites": [{
+        "side": "left",
+        "path": "1",
+        "procedure": "M.f",
+        "is_frontier_call": True,
+        "requires_cut_to_frontier": False,
+    }]})
+    v.setdefault("inspect_lookup_handles", {"ask_manager_for": [{
+        "intent": "call_site_options",
+        "payload": {},
+    }]})
     v["surface_action_preflight"] = {
         "schema_version": 1,
         "results": [{
@@ -97,7 +110,7 @@ def _call_panel_facts(view: dict) -> dict:
         }],
     }
     model = compose_surface_model(v, "l4_checked_action_surface").to_dict()
-    panel = model["primary_panel"]
+    panel = model.get("primary_panel") or {}
     return {item["key"]: item.get("value") for item in panel.get("facts", [])}
 
 
@@ -178,7 +191,7 @@ def test_probability_view_surfaces_canonical_inspect_topics() -> None:
     )
 
     topics = [
-        (handle.get("payload") or {}).get("topic")
+        handle.get("intent")
         for handle in slim["inspect_lookup_handles"].get("ask_manager_for", [])
     ]
 
@@ -198,6 +211,67 @@ def test_probability_view_surfaces_canonical_inspect_topics() -> None:
     assert "bridge_options" not in topics
     assert "bridge_lemmas" not in topics
     assert "goal_patterns" not in topics
+
+
+def test_prhl_module_projects_typed_procedure_entry_transition() -> None:
+    context = _context_view(
+        goal_type="equiv",
+        goal_text="pre = true\nL.f ~ R.f\npost = ={res}",
+        layer="prhl_module",
+        candidate_menu=[{
+            "id": "proc_open",
+            "tactic": "proc.",
+            "effect": "`proc` exposes call sites before lower-level proof passes.",
+        }],
+    )
+    context["proof_ir"]["phase"]["legality"] = {
+        "proc_open": {
+            "status": "preferred",
+            "reason": "`proc` exposes call sites before lower-level proof passes.",
+        },
+    }
+
+    slim = build_prover_workspace_view_from_context(context)
+
+    assert slim["program_frontier"]["procedure_entry_transition"] == {
+        "kind": "module_procedure_entry",
+        "current_layer": "prhl_module",
+        "transition": "proc_open",
+        "status": "preferred",
+        "tactic": "proc.",
+        "effect": "`proc` exposes call sites before lower-level proof passes.",
+        "authority": "proof-state analysis phase legality",
+    }
+
+
+def test_non_module_layer_does_not_project_procedure_entry_transition() -> None:
+    context = _context_view(
+        goal_type="pRHL",
+        goal_text="&1: {x:int}\npre = true\nx <- 0\npost = true",
+        layer="procedure_body",
+        candidate_menu=[{"id": "proc_open", "tactic": "proc."}],
+    )
+    context["proof_ir"]["phase"]["legality"] = {
+        "proc_open": {"status": "preferred"},
+    }
+
+    slim = build_prover_workspace_view_from_context(context)
+
+    assert "procedure_entry_transition" not in slim.get("program_frontier", {})
+
+
+def test_workspace_projection_preserves_parser_confirmed_true_postcondition() -> None:
+    context = _context_view(
+        goal_type="hoare",
+        goal_text="pre = P\nx <@ M.f()\npost = true",
+        layer="procedure_body",
+    )
+    context["proof_state"]["goal"]["post"] = "true"
+    context["proof_state"]["goal"]["trivial_postcondition"] = True
+
+    slim = build_prover_workspace_view_from_context(context)
+
+    assert slim["current_goal"]["trivial_postcondition"] is True
 
 
 def test_probability_view_omits_bridge_topics_when_single_pr() -> None:
@@ -319,7 +393,7 @@ def test_workspace_view_surfaces_relational_frontier_without_raw_ir() -> None:
     assert "proof_ir" not in slim
     handles = slim["inspect_lookup_handles"]["ask_manager_for"]
     assert all("cost" not in handle for handle in handles)
-    by_topic = {handle["payload"]["topic"]: handle for handle in handles}
+    by_topic = {handle["intent"]: handle for handle in handles}
     assert "call_subgoals" in by_topic
     assert "manager_note" in slim["inspect_lookup_handles"]
     assert "status" not in by_topic["call_subgoals"]
@@ -347,10 +421,10 @@ def test_workspace_view_manager_preserves_panel_order_and_latest_observation() -
         state_version=7,
         session_epoch=2,
         latest_observation={
-            "intent": "probe_tactic",
+            "intent": "commit_tactic",
             "tactic": "inline{1} 2.",
-            "status": "probe_rejected",
-            "effect": "read-only probe; proof state unchanged",
+            "status": "rejected",
+            "proof_state": "unchanged",
             "error_summary": "invalid position",
         },
     )
@@ -378,10 +452,10 @@ def test_workspace_view_manager_preserves_panel_order_and_latest_observation() -
     observation = view["last_result"]
     assert observation["tactic"] == "inline{1} 2."
     assert "status" not in observation
-    assert observation["result"].startswith("EasyCrypt rejected this probe.")
+    assert observation["result"].startswith("EasyCrypt rejected this proof step")
     assert (
-        observation["effect"]
-        == "This was read-only; it did not change the committed EasyCrypt proof state."
+        observation["proof_state"]
+        == "The committed EasyCrypt proof state was not changed."
     )
     assert observation["error_summary"] == "invalid position"
     assert manager.lint_agent_view(view) == []
@@ -663,7 +737,8 @@ def test_workspace_view_adds_call_invariant_inputs_for_visible_call_frontier() -
             ),
         }
     ]
-    assert inputs["inspect_if_unsure"]["topic"] == "call_subgoals"
+    assert inputs["inspect_if_unsure"]["intent"] == "call_subgoals"
+    assert inputs["inspect_if_unsure"]["payload"] == {}
     assert "extra conjuncts" in inputs["inspect_if_unsure"]["why"]
 
 
@@ -686,90 +761,59 @@ def test_frontier_exposes_call_survives_filtered_placeholder_skeleton() -> None:
     assert _frontier_exposes_call({}, "post = a{1} = b{2}", menu_without_call) is False
 
 
-def test_invariant_frame_surfaces_live_vars_not_the_guessed_predicate() -> None:
-    """The loop/cut invariant FRAME gives the live VARIABLES to relate (a liveness
-    fact) with the predicate BLANKED — never the scrubbed `suggested_invariant` guess.
-    Deep-searched from facts_and_diagnostics wherever the producer nests them. It is also
-    SHAPE-NEUTRAL: it must not prescribe the `={…} /\\ <pred>` template, which mis-nudges
-    on a divergent coupling (no equality part) — the audit's 误导 failure mode."""
-    view = {"facts_and_diagnostics": {"surface": {
-        "preserved_vars": ["PIR.s", "PIR.s'", "j", "i"],
-        "has_invariant_skeleton": True,
-        "suggested_invariant": "0 <= j < Top.N",  # a guess — must NOT appear in the frame
-    }}}
-    frame = _invariant_frame(view)
-    assert frame is not None
-    for v in ("PIR.s", "PIR.s'", "j", "i"):
-        assert v in frame
-    assert "0 <= j < Top.N" not in frame               # the guessed predicate is NOT surfaced
-    # shape-neutral: never prescribe `={…} /\ <pred>` as THE shape; the FORM is the agent's.
-    assert "={…} /\\ <your predicate>" not in frame
-    assert "yours to" in frame and "do NOT assume" in frame
-    # falls back through live_post_vars / prefix_read_vars at any nesting
-    assert _invariant_frame({"facts_and_diagnostics": {"x": {"live_post_vars": ["a", "b"]}}}) is not None
-    # no live-var facts -> no frame (graceful no-op, never a false skeleton)
-    assert _invariant_frame({"facts_and_diagnostics": {"surface": {"has_invariant_skeleton": False}}}) is None
-    assert _invariant_frame({}) is None
-
-
-def test_surgery_skeleton_kept_alive_by_invariant_frame_alone() -> None:
-    """Regression for the 'panel disappeared at the loop frontier' case: when there is
-    no frontier `where`/`split_points` but the live-var FACT is present, the surgery
-    skeleton must still render (carrying the frame) instead of returning None ->
-    falling through to the 100%-hardcoded fallback."""
-    skel = _render_surgery_skeleton({"facts_and_diagnostics": {"surface": {"preserved_vars": ["x", "y"]}}})
-    assert skel is not None
-    assert "invariant_frame" in skel
-    assert "`x`" in skel["invariant_frame"] and "`y`" in skel["invariant_frame"]
-
-
 def test_swap_offset_harvest_blanks_route_dependent_offset() -> None:
     """HINT_UNIQUENESS_POLICY V1 regression: the signed swap OFFSET is route-dependent
     (≥11 EC-valid offsets at the schnorr_shvzk frontier; only the route picks one), so it
     must NEVER be surfaced as a lone value. The harvest surfaces the source-position FRAME
     with the offset BLANKED (`<offset>`), mirroring `_extract_seq_positions` blanking the
     coupling. Items 111/117 saw `swap{2} 12 -2` when the route needed `-5`."""
-    view = {"candidate_moves": {"moves": [
-        {"tactic": "swap{1} 3 2.", "category": "commit"},
-        {"tactic": "swap [1..3] 2.", "category": "commit"},
-        {"tactic": "seq 8 7 : (={m} /\\ a{1} = b{2}).", "category": "commit"},  # NOT a swap
-        {"tactic": "auto.", "category": "commit"},                               # NOT a swap
-    ]}}
+    view = {"program_frontier": {"checked_structural_sources": {
+        "swap_sources": [
+            {"form": "swap{1} 3 <offset>.", "side": "1", "source_position": "3"},
+            {"form": "swap [1..3] <offset>.", "source_position": "1..3"},
+        ],
+    }}}
     frames = _extract_swap_offsets(view)
     # source-position frame is surfaced (the "a swap is available here" signal survives),
     # but the offset value is blanked, never the lone signed number.
     assert frames == [
-        "`swap{1} 3 <offset>.` -- a swap (static realignment) is available at this source; "
-        "YOU pick the offset that lands the next sample/rnd coupling, within the EC-valid range.",
-        "`swap [1..3] <offset>.` -- a swap (static realignment) is available at this source; "
-        "YOU pick the offset that lands the next sample/rnd coupling, within the EC-valid range.",
+        "`swap{1} 3 <offset>.` -- checked static-realignment source; the offset is not selected.",
+        "`swap [1..3] <offset>.` -- checked static-realignment source; the offset is not selected.",
     ]
     # the lone signed offset must NOT leak in any form
     assert all("swap{1} 3 2" not in f and "[1..3] 2" not in f for f in frames)
     # CRITICAL: two DIFFERENT offsets at the SAME source collapse to ONE frame — the
     # producer no longer leaks which arbitrary offset candidate_moves happened to compute.
-    same_source = {"candidate_moves": {"moves": [
-        {"tactic": "swap{2} 12 -2."},
-        {"tactic": "swap{2} 12 -5."},
-        {"tactic_shape": "swap{2} 12 <offset>."},
-    ]}}
+    same_source = {"program_frontier": {"checked_structural_sources": {
+        "swap_sources": [
+            {"form": "swap{2} 12 <offset>.", "side": "2", "source_position": "12"},
+        ],
+    }}}
     collapsed = _extract_swap_offsets(same_source)
     assert len(collapsed) == 1
     assert all("-2" not in f and "-5" not in f for f in collapsed)
-    # no swap moves -> no frames, never a placeholder
+    # Legacy tactic prose is not a fact source. No typed facts means no frames.
     assert _extract_swap_offsets({"candidate_moves": {"moves": [{"tactic": "auto."}]}}) == []
+    assert _extract_swap_offsets({
+        "candidate_moves": {"moves": [{"tactic": "swap{1} 3 2."}]}
+    }) == []
     assert _extract_swap_offsets({}) == []
     # wired into the surgery skeleton under `swap_offsets`
     skel = _render_surgery_skeleton(view)
     assert skel is not None and "swap_offsets" in skel
     assert any("swap{1} 3 <offset>" in s for s in skel["swap_offsets"])
     preblanked = _render_surgery_skeleton({
-        "candidate_moves": {"moves": [{"tactic_shape": "swap{2} 12 <offset>."}]}
+        "program_frontier": {"checked_structural_sources": {
+            "swap_sources": [{
+                "form": "swap{2} 12 <offset>.",
+                "side": "2",
+                "source_position": "12",
+            }],
+        }}
     })
     assert preblanked is not None
     assert preblanked["swap_offsets"] == [
-        "`swap{2} 12 <offset>.` -- a swap (static realignment) is available at this source; "
-        "YOU pick the offset that lands the next sample/rnd coupling, within the EC-valid range.",
+        "`swap{2} 12 <offset>.` -- checked static-realignment source; the offset is not selected.",
     ]
 
 
@@ -948,18 +992,19 @@ def test_workspace_view_lints_unreviewed_enum_values_with_path() -> None:
 def test_workspace_view_keeps_legacy_auto_pivot_as_inspect_handle_not_move() -> None:
     # The move list is sourced from the factual `candidate_menu`; a legacy
     # AUTO-PIVOT lookup (a heuristic kb-hint recommendation) is not a menu move,
-    # it surfaces only as an inspect/lookup handle. A daemon-verified proc probe
-    # in the menu renders as a ready move.
+    # it surfaces only as an inspect/lookup handle. A manager-preflighted proc
+    # candidate in the menu renders as a ready move.
     slim = build_prover_workspace_view_from_context(
         _context_view(
             goal_type="equiv",
             goal_text="equiv [ G8.main ~ CPA.main : ={glob A} ==> ={res} ]",
             layer="prhl_module",
             candidate_menu=[{
-                "id": "proof_ir.proc_open.probe",
-                "action_type": "probe_tactic",
+                "id": "proof_ir.proc_open.preflight",
+                "action_type": "runnable_tactic",
                 "tactic": "proc.",
                 "tactic_family": "proc_open",
+                "epistemic_status": "easycrypt_preflight_accepted",
                 "verified": True,
             }],
             actions=[
@@ -989,11 +1034,7 @@ def test_workspace_view_keeps_legacy_auto_pivot_as_inspect_handle_not_move() -> 
     assert "confidence" not in option
     assert option["tactic"] == "proc."
     assert option["source"] == "proof-state analysis"
-    assert (
-        "EasyCrypt accepted this tactic in a read-only probe on the current "
-        "goal; committing it would still be a separate proof-state change."
-        in option["evidence"]
-    )
+    assert option["evidence"] == ["EasyCrypt verified this against the current goal."]
     handles = slim["inspect_lookup_handles"]["lookup_candidates"]
     assert len(handles) == 1
     assert handles[0]["symbol"] == "CCP_OCCP"
@@ -1051,7 +1092,7 @@ def test_ambient_residual_uses_close_tools_not_call_tools() -> None:
 
     assert slim["current_goal"]["view_focus"] == "ambient_logic"
     by_topic = {
-        handle["payload"]["topic"]: handle
+        handle["intent"]: handle
         for handle in slim["inspect_lookup_handles"]["ask_manager_for"]
     }
     # Broad lemma_index is hidden; tactic forms remain state-selected.
@@ -1175,7 +1216,7 @@ def test_workspace_view_maps_native_search_handle_to_rewrite_candidates() -> Non
     )
 
     topics = [
-        (handle.get("payload") or {}).get("topic")
+        handle.get("intent")
         for handle in slim["inspect_lookup_handles"].get("ask_manager_for", [])
     ]
     assert "rewrite_candidates" in topics
@@ -1688,17 +1729,20 @@ def test_manager_classifies_seq_cut_from_coverage_resources() -> None:
     assert any("not evidence" in check for check in plan.frontier_checks)
 
     slim = build_prover_workspace_view_from_context(view)
-    by_topic = {
-        handle["payload"]["topic"]: handle
-        for handle in slim["inspect_lookup_handles"]["ask_manager_for"]
+    model = compose_surface_model(
+        slim,
+        "l4_checked_action_surface",
+    ).to_dict()
+    surfaced_intents = {
+        action["intent"] for action in model.get("actions", [])
     }
     # This seq_cut goal exposes no call frontier (no call site, no `<@`, no call
     # action), so the call-frontier inspect handles are NOT offered — clicking
     # them would only return an empty "no call route" result. The old broad
     # goal_info base is hidden; tactic_forms still surface through the composer.
-    assert "call_subgoals" not in by_topic
-    assert "call_site_options" not in by_topic
-    assert "goal_info" not in by_topic
+    assert "call_subgoals" not in surfaced_intents
+    assert "call_site_options" not in surfaced_intents
+    assert "goal_info" not in surfaced_intents
 
 
 def test_first_instruction_head_is_syntactic_not_a_buried_call() -> None:
@@ -1732,17 +1776,17 @@ def test_leading_statement_extracts_syntactic_head() -> None:
     assert _leading_statement("while (k < n) { a; b }").startswith("while")
 
 
-def test_seq_tactic_forms_lead_with_bdhoare_4bound_in_phoare_mode() -> None:
-    # PBound audit (2026-06-05): in a bd-hoare goal the `seq` form preview led with
-    # the pRHL `seq K L : (INV)` form and never showed the phoare 4-bound layout.
+def test_seq_tactic_forms_are_isolated_by_proof_mode() -> None:
+    # PBound audit (2026-06-05): a bd-hoare goal must expose the phoare 4-bound
+    # layout, while pRHL-only syntax must not leak across the mode boundary.
     from core.easycrypt.search.ec_tactic_forms import get_forms, format_forms  # type: ignore
     seq = get_forms("seq")
     ph = format_forms(seq, mode="phoare")
     pr = format_forms(seq, mode="pRHL")
-    assert "seq N : (R) P1 P2 P3 P4" in ph                       # the 4-bound layout exists
-    # in phoare mode it precedes the pRHL form; in pRHL mode the reverse
-    assert ph.index("seq N : (R) P1 P2 P3 P4") < ph.index("seq K L : (INVARIANT)")
-    assert pr.index("seq K L : (INVARIANT)") < pr.index("seq N : (R) P1 P2 P3 P4")
+    assert "seq N : (R) P1 P2 P3 P4" in ph
+    assert "seq K L : (INVARIANT)" not in ph
+    assert "seq K L : (INVARIANT)" in pr
+    assert "seq N : (R) P1 P2 P3 P4" not in pr
 
 
 def test_statement_head_treats_no_frontier_placeholder_as_no_head() -> None:

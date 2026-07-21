@@ -103,10 +103,10 @@ def test_try_stdout_tool_view_surfaces_probe_verdict_first() -> None:
 
     out = _stdout_tool_view(view)
 
-    assert list(out)[:4] == ["schema_version", "tool", "ok", "probe_result"]
-    assert out["probe_result"]["status"] == "probe_accepted"
-    assert out["probe_result"]["tactic"] == "byequiv => //."
-    assert out["next"]["primary_action"] == "commit_probe_result"
+    assert list(out)[:4] == ["schema_version", "tool", "ok", "preflight_result"]
+    assert out["preflight_result"]["status"] == "preflight_accepted"
+    assert out["preflight_result"]["tactic"] == "byequiv => //."
+    assert out["next"]["primary_action"] == "commit_preflight_result"
     assert "legacy_report" not in out["debug"]
 
 

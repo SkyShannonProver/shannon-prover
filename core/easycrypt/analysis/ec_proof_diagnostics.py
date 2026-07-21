@@ -172,7 +172,7 @@ def _call_failure_diagnostics(
                         "Use `wp`, `seq`, or a targeted transform to expose "
                         "the matching call as the last statement."
                     ),
-                    "Re-run `-agent-view` after exposing the frontier, then probe the named call lemma.",
+                    "Re-run `-agent-view` after exposing the frontier, then inspect the named call lemma.",
                     "Avoid `inline *` while this handle remains live.",
                 ],
                 evidence={
@@ -495,7 +495,7 @@ def _call_invariant_failure_diagnostics(
                 "usually preserves abstraction and avoids manual invariant gaps."
             ),
             repairs=[
-                f"Probe `{_named_call_tactic(named_frontier[0])}` first.",
+                f"Current named-call candidate: `{_named_call_tactic(named_frontier[0])}`.",
                 "Use `call (_: Inv)` only if no named call lemma matches the frontier.",
                 "If the named call fails, inspect its signature before falling back to a handcrafted invariant.",
             ],
@@ -524,7 +524,7 @@ def _call_invariant_failure_diagnostics(
             repairs=[
                 "Extend the invariant with: " + " /\\ ".join(missing[:6]) + ".",
                 "Prefer the generated `call_invariant_skeleton` or `program_edit_script_v2` slice invariant.",
-                "Probe the completed invariant with `-try` before committing it.",
+                "Use `call_subgoals` to inspect the completed invariant's obligations before committing it.",
             ],
             evidence={
                 "missing_conjuncts": missing,
@@ -711,7 +711,7 @@ def _lemma_failure_diagnostics(
                 repairs=[
                     _binding_repair(resources, name),
                     _binding_slot_repair(resources, name),
-                    "Probe the instantiated form with `-try` before committing it.",
+                    "Treat the instantiated form as unverified until EasyCrypt accepts it.",
                     "If any slot is still `_`, inspect the current goal and exact signature before guessing.",
                 ],
                 evidence={
@@ -915,7 +915,7 @@ def _byequiv_phase_mismatch_diagnostics(
         repairs = []
         if pr_normal.get("available"):
             repairs.append(
-                f"If the outer Pr shell is the blocker, probe normalization `{pr_normal.get('recommended_tactic') or 'congr.'}`."
+                f"If the outer Pr shell is the blocker, normalization candidate: `{pr_normal.get('recommended_tactic') or 'congr.'}`."
             )
         if pr_candidates:
             repairs.append(
@@ -1190,7 +1190,7 @@ def _binding_repair(resources: dict[str, Any], name: str) -> str:
     for template in templates:
         tactic = str(template.get("tactic") or "")
         if tactic:
-            return f"Probe the bound form: `{tactic}`."
+            return f"Bound candidate form: `{tactic}`."
     name_resolution = _dict(resources.get("name_resolution"))
     item = _item_for_name(name_resolution, name)
     action = str(item.get("signature_lookup_action") or "")
@@ -1386,14 +1386,14 @@ def _instantiation_repair(
                 "not the first repair."
             )
         if fallback:
-            return f"Probe the typed call elaboration: `{fallback}`."
+            return f"Typed call elaboration candidate: `{fallback}`."
     templates = [
         str(_dict(item).get("tactic") or item)
         for item in _list(binding.get("instantiated_templates"))
         if str(_dict(item).get("tactic") or item)
     ]
     if templates:
-        return f"Probe the bound form: `{templates[0]}`."
+        return f"Bound candidate form: `{templates[0]}`."
     resolution = _resolution_for_handle(proof_ir, handle)
     action = str(resolution.get("signature_lookup_action") or "")
     if action:

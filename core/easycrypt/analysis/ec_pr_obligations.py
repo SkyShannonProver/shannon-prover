@@ -138,7 +138,7 @@ def build_pr_obligation_plan(
                     "recommended_tactic": str(normal.get("recommended_tactic") or ""),
                     "goal_form": str(normal.get("goal_form") or ""),
                 },
-                "action_boundary": "probeable_tactic",
+                "action_boundary": "unverified_tactic_candidate",
             })
 
     arithmetic_chain = [

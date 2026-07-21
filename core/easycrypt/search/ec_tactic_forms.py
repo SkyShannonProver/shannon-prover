@@ -13,17 +13,20 @@ Observed failure modes:
 - used `conseq (_: X{hr})` instead of side-indexed memories such as `{1}`/`{2}`
 
 All four are "agent knows tactic, doesn't know the specific form". This
-module encodes the forms so agent can query via `-tactic-forms <name>`.
+module encodes the forms returned by the typed `tactic_forms` context intent.
 
 Public API:
     get_forms(name: str) -> Optional[TacticForms]
     format_forms(forms: TacticForms, mode: str = "") -> str
+    normalize_proof_mode(mode: str = "", goal_text: str = "") -> str
     list_all() -> list[str]                      # all covered tactic names
 """
 
 from __future__ import annotations
 from dataclasses import dataclass
 from typing import Optional
+
+from core.easycrypt.analysis.ec_goal_parser import classify_goal
 
 
 @dataclass
@@ -33,8 +36,8 @@ class TacticForm:
     example: str         # concrete example
     note: str = ""       # optional caveat
     modes: tuple = ()    # proof modes this form is FOR ("pRHL"/"phoare"/"hoare");
-                         # empty = applies to all. Mode-matching forms are listed
-                         # first when the goal's proof mode is known.
+                         # empty = applies to all. When the goal mode is known,
+                         # forms for other modes are not applicable and are omitted.
 
 
 @dataclass
@@ -66,9 +69,8 @@ _FORMS: dict[str, TacticForms] = {
                          "(one per oracle procedure the adversary may call).",
                 example="call (_: ={Mem.k, Mem.log} /\\ StLSke.gs{1} = RO.m{2}).",
                 note="Two pre-flight checks before writing the invariant: "
-                     "(a) Is there already a named equiv lemma that proves this "
-                     "correspondence? Inspect `lemma_index` or `equiv_bridge_lemmas`, "
-                     "then `lookup_symbol` for the exact declaration — if yes, prefer "
+                     "(a) If a surfaced named equiv lemma already proves this "
+                     "correspondence, prefer "
                      "Form 1 (`call LEMMA.`) instead of re-deriving via invariant. "
                      "(b) For an outer call to an abstract adversary's main (e.g. "
                      "`A.main`, `BNR_Adv(A).main`), do NOT include `={glob A}` in the "
@@ -123,8 +125,8 @@ _FORMS: dict[str, TacticForms] = {
                          "then call the fully applied lemma.",
                 example="exlim n{2}, RO.m{1}, ST.m{1} => n0 ro0 st0; "
                         "call (bridge_equiv n0 ro0 st0).",
-                note="Run `-sig LEMMA` FIRST to see how many universal parameters the "
-                     "equiv carries — count tokens between `equiv LEMMA` and the first "
+                note="Check the exact declaration first to see how many universal "
+                     "parameters the equiv carries — count tokens between `equiv LEMMA` and the first "
                      "`:`. Direct `ecall (LEMMA _ arg2 ...)` is an alternate EC form, "
                      "but it is syntax-sensitive for side-qualified program expressions; "
                      "prefer exlim/call when the arguments come from the current program "
@@ -134,14 +136,13 @@ _FORMS: dict[str, TacticForms] = {
         common_mistake="Three traps cluster on `call`. "
                       "(1) Using Form 2 (`call (_: Inv)`) when a named equiv already "
                       "proves the correspondence — re-proves everything from scratch "
-                      "and fans out subgoals per oracle. Inspect `lemma_index` or "
-                      "`equiv_bridge_lemmas`, then `lookup_symbol` for a named equiv "
-                      "that matches your procedures BEFORE writing an invariant. "
+                      "and fans out subgoals per oracle. Prefer a surfaced named equiv "
+                      "that matches the current procedures before writing an invariant. "
                       "(2) Using Form 1 (`call LEMMA.`) on an equiv with universal "
                       "parameters — EC errors `cannot infer all placeholders`. Fix is "
                       "Form 5 above: lift program expressions with `exlim`, then call "
-                      "the fully applied lemma. Always `-sig LEMMA` before the first "
-                      "call on a new lemma name. "
+                      "the fully applied lemma. Check the exact declaration before the "
+                      "first call on a new lemma name. "
                       "(3) `call` reports 'no effect' (tactic accepted, state unchanged). "
                       "The most common cause is NOT a wrong invariant — it's that LHS/RHS "
                       "bottoms aren't both a single trailing `<@` call. EC's `call` "
@@ -260,7 +261,7 @@ _FORMS: dict[str, TacticForms] = {
                          "section-exported lemmas outside their section — module-typed "
                          "parameters bound inside the section must be passed explicitly.",
                 example="apply (pr_RO_FinRO_D D &m () (fun x => x)).",
-                note="Run `-sig LEMMA` first to see the exact expected signature: "
+                note="Check LEMMA's exact declaration first to see the expected signature: "
                      "what's a module, what's a &m, what's a formula. Mismatches "
                      "produce 'cannot infer module arguments' or 'expecting proof-term "
                      "not formula'.",
@@ -279,8 +280,8 @@ _FORMS: dict[str, TacticForms] = {
             ),
         ],
         common_mistake="Guessing argument patterns by trial and error. Standard trap: "
-                      "apply LEMMA without realizing it's section-exported. Always run "
-                      "`-sig LEMMA` BEFORE the first `apply` to see if args are needed.",
+                      "apply LEMMA without realizing it's section-exported. Check its "
+                      "exact declaration before the first `apply` to see if args are needed.",
         see_also=["rewrite", "have"],
     ),
 
@@ -448,50 +449,98 @@ _FORMS: dict[str, TacticForms] = {
     ),
 
     # -----------------------------------------------------------------
+    "islossless": TacticForms(
+        name="islossless",
+        forms=[
+            TacticForm(
+                syntax="islossless.",
+                use_when=(
+                    "The current single-program goal is a `phoare [=] 1%r` "
+                    "obligation with literal `true` pre/postconditions."
+                ),
+                example="islossless.",
+                note=(
+                    "This decomposes the visible procedure body into mechanical "
+                    "losslessness obligations for calls, samples, branches, and "
+                    "loops. It does not choose a call certificate, loop invariant, "
+                    "termination measure, or inlining strategy."
+                ),
+                modes=("phoare",),
+            ),
+        ],
+        common_mistake=(
+            "Treating `islossless` as a generic program tactic. It is surfaced only "
+            "for the canonical probability-1 true/true procedure obligation."
+        ),
+        see_also=["call", "rnd", "while"],
+    ),
+
+    # -----------------------------------------------------------------
     "while": TacticForms(
         name="while",
         forms=[
             TacticForm(
-                syntax="while (INVARIANT) (VARIANT).",
-                use_when="One-sided phoare/probabilistic loop: the proof is already "
-                         "inside a `phoare` obligation and the loop needs both an "
-                         "invariant and a decreasing integer measure.",
-                example="while (0 <= j <= N /\\ oflist s = restr x j) (N - j).",
-                note="Do not append `: p`, `(p)`, or any probability argument. The "
-                     "second parenthesized argument is the termination measure; EC "
-                     "generates the probability/body side obligations after this step.",
+                syntax="while (INVARIANT).",
+                use_when="Single-program Hoare partial correctness: the current "
+                         "program frontier is a while loop and INVARIANT is preserved.",
+                example="while (0 <= i <= size xs).",
+                modes=("hoare",),
             ),
             TacticForm(
                 syntax="while (INVARIANT).",
                 use_when="Symmetric while: both sides have while loops that advance "
                          "together. Invariant holds between iterations.",
                 example="while (={p, c, i, n} /\\ OCC.gs{1} = RO.m{2}); auto.",
+                modes=("pRHL",),
             ),
             TacticForm(
-                syntax="while{1} (INVARIANT) (TERMINATION).",
-                use_when="One-sided while on LHS: LHS has a while, RHS doesn't (or has "
-                         "already been processed). Provide INVARIANT (holds each "
-                         "iteration) AND a TERMINATION measure (strictly decreasing "
-                         "integer that reaches 0 to end the loop).",
-                example="while{1} (0 <= i <= n) (n - i).",
-                note="Termination measure REQUIRED for one-sided while. EC won't "
-                     "accept without it.",
+                syntax="while{1} (INVARIANT). / while{2} (INVARIANT).",
+                use_when="One-sided pRHL loop: only the selected side is at a while "
+                         "frontier. This form opens the loop relation and a separate "
+                         "losslessness obligation without supplying an integer variant "
+                         "in the pRHL tactic itself.",
+                example="while{1} (ret{1} = ret{2}).",
+                note="This is a valid EasyCrypt form. Use the two-argument indexed "
+                     "form only when you want to supply an explicit integer variant.",
+                modes=("pRHL",),
             ),
             TacticForm(
-                syntax="while{2} (INVARIANT) (TERMINATION).",
-                use_when="One-sided while on RHS: symmetric to {1} form, just for RHS. "
-                         "Typical case: the RHS has a forgery-detection loop or lookup "
-                         "loop that the LHS doesn't.",
-                example="while{2} (0 <= i <= size ns /\\ forged = exists j, 0 <= j < i /\\ ...) (size ns - i).",
-                note="Common pattern: a forgery-detection or table-lookup loop on the "
-                     "RHS that scans for a witness while the LHS proceeds without it.",
+                syntax="while{1} (INVARIANT) (VARIANT). / while{2} (INVARIANT) (VARIANT).",
+                use_when="One-sided pRHL loop with an explicit integer variant on the "
+                         "selected side.",
+                example="while{2} (0 <= i <= size ns) (size ns - i).",
+                modes=("pRHL",),
+            ),
+            TacticForm(
+                syntax="while (INVARIANT).",
+                use_when="Single-program Phoare loop using EasyCrypt's reverse "
+                         "bounded-Hoare while rule without an explicit variant.",
+                example="while (0 <= i <= size xs).",
+                modes=("phoare",),
+            ),
+            TacticForm(
+                syntax="while (INVARIANT) (VARIANT).",
+                use_when="Single-program Phoare loop with an integer variant.",
+                example="while (0 <= j <= N /\\ oflist s = restr x j) (N - j).",
+                modes=("phoare",),
+            ),
+            TacticForm(
+                syntax="while (INVARIANT) (VARIANT) UPPER_BOUND DECREASE_PROBABILITY.",
+                use_when="Lower- or equal-bounded Phoare termination: VARIANT is an "
+                         "integer expression, UPPER_BOUND bounds it, and "
+                         "DECREASE_PROBABILITY is a lower bound on the probability of "
+                         "strict decrease in one iteration.",
+                example="while (true) (if test r then 1 else 0) 1 "
+                        "(mu sample (predC test)).",
+                note="EasyCrypt accepts this four-argument form for `[=]`/`[>=]` "
+                     "bounded-Hoare loops and generates the invariant, bound, body, "
+                     "and positive-progress obligations.",
+                modes=("phoare",),
             ),
         ],
-        common_mistake="Trying symmetric `sim` or `while (Inv)` when LHS and RHS "
-                      "programs are asymmetric (different number of loops, one-sided "
-                      "code). The fix is `while{1}` or `while{2}` with a termination "
-                      "measure. Detecting asymmetry: check if `proc; inline *; sim` "
-                      "leaves significant residual goal — if yes, programs diverged.",
+        common_mistake="Mixing proof modes: indexed `while{1}`/`while{2}` forms are "
+                      "pRHL forms, while the four-argument probabilistic-termination "
+                      "form belongs to a single-program Phoare goal.",
         see_also=["seq", "sim"],
     ),
 
@@ -564,9 +613,9 @@ _FORMS: dict[str, TacticForms] = {
                          "expert opener when one side has a small setup prefix before "
                          "an aligned branch.",
                 example="sp 0 1; inline *; if => //; auto.",
-                note="Read I and J from the current alignment/setup counts. Probe "
-                     "first; if EC says the first instruction is invalid after a "
-                     "larger block, retry the accepted prefix such as `sp 0 1.`.",
+                note="Read I and J from the current alignment/setup counts. If EC "
+                     "rejects a larger block because its first instruction is "
+                     "invalid, revise to the matching prefix such as `sp 0 1.`.",
             ),
             TacticForm(
                 syntax="sp; wp; skip => />.",
@@ -984,8 +1033,8 @@ _FORMS: dict[str, TacticForms] = {
         common_mistake="Using `transitivity M.proc (PRE ==> POST).` with a SINGLE "
                        "pre/post pair (Coq-style). pRHL transitivity requires TWO "
                        "pairs — one for each leg of the chain. EC errors with a parse "
-                       "issue or 'expected two specifications'. Run `-tactic-forms "
-                       "transitivity` BEFORE the first attempt to see all valid forms.",
+                       "issue or 'expected two specifications'. Use one of the "
+                       "two-specification forms above.",
         see_also=["byequiv", "conseq", "call"],
     ),
 
@@ -1162,7 +1211,7 @@ def format_forms(
     goal_text: str = "",
 ) -> str:
     """Pretty-print a TacticForms entry for stdout."""
-    normalized_mode = _normalize_mode(mode, goal_text)
+    normalized_mode = normalize_proof_mode(mode, goal_text)
     lines = [
         f"=== `{forms.name}` tactic — argument forms ===",
         "",
@@ -1170,20 +1219,22 @@ def format_forms(
     if normalized_mode:
         lines.append(f"Current proof mode: {normalized_mode}")
         lines.append("")
-    # List the forms RELEVANT to the current proof mode first: a bd-hoare goal
-    # should not see the pRHL `seq K L : (INV)` form before the phoare 4-bound form
-    # (PBound audit 2026-06-05). Stable sort: mode-specific match, then universal,
-    # then other-mode-specific.
+    # `TacticForm.modes` is applicability metadata, not a ranking hint. A bd-hoare
+    # goal must never receive pRHL-only syntax (and vice versa). Untagged forms are
+    # universal until their entry is split into mode-specific variants.
     rendered_forms = list(forms.forms)
     if normalized_mode:
-        def _mode_rank(f: "TacticForm") -> int:
-            fm = tuple(getattr(f, "modes", ()) or ())
-            if normalized_mode in fm:
-                return 0
-            if not fm:
-                return 1
-            return 2
-        rendered_forms = sorted(rendered_forms, key=_mode_rank)
+        rendered_forms = [
+            form for form in rendered_forms
+            if not tuple(getattr(form, "modes", ()) or ())
+            or normalized_mode in tuple(getattr(form, "modes", ()) or ())
+        ]
+    if not rendered_forms:
+        lines.append(
+            f"No `{forms.name}` argument form applies to the current "
+            f"{normalized_mode or 'unknown'} proof mode."
+        )
+        lines.append("")
     for i, f in enumerate(rendered_forms, 1):
         lines.append(f"Form {i}:  {f.syntax}")
         lines.append(f"  Use when: {f.use_when}")
@@ -1199,28 +1250,24 @@ def format_forms(
         lines.append(f"⚠️  Common mistake: {forms.common_mistake}")
         lines.append("")
     if forms.see_also:
-        lines.append(f"See also: {', '.join(forms.see_also)}  "
-                     f"(run `-tactic-forms <name>` for any of these)")
+        lines.append(f"See also: {', '.join(forms.see_also)}")
         lines.append("")
     return "\n".join(lines)
 
 
-def _normalize_mode(mode: str, goal_text: str = "") -> str:
+def normalize_proof_mode(mode: str = "", goal_text: str = "") -> str:
+    """Return the canonical presentation mode for tactic-form filtering."""
     explicit = (mode or "").strip().lower()
     if explicit in {"prhl", "equiv", "relational", "relational_program"}:
         return "pRHL"
     if explicit in {"phoare", "hoare", "probability", "ambient"}:
         return explicit
-    lowered = (goal_text or "").lower()
-    if "phoare [" in lowered:
-        return "phoare"
-    if "hoare [" in lowered:
-        return "hoare"
-    if "equiv [" in lowered or " ~ " in goal_text:
+    classified = classify_goal(goal_text or "") if goal_text else ""
+    if classified in {"pRHL", "equiv", "eager"}:
         return "pRHL"
-    if "pr[" in lowered:
-        return "probability"
-    return explicit
+    if classified in {"phoare", "hoare", "probability", "ambient"}:
+        return classified
+    return ""
 
 
 def _contextual_mode_notes(name: str, mode: str) -> list[str]:
@@ -1233,11 +1280,9 @@ def _contextual_mode_notes(name: str, mode: str) -> list[str]:
     if mode == "phoare":
         return [
             "Mode-specific note:",
-            "  In a phoare goal, the common loop form is `while (INVARIANT) (VARIANT).`",
-            "  The second argument is the decreasing termination measure, not a probability.",
-            "  Do not append a probability argument after the tactic; EasyCrypt generates",
-            "  the loop/body/probability side obligations after the while step.",
-            "  Example: `while (0 <= j <= N /\\ P j) (N - j).`",
+            "  Phoare supports invariant-only, invariant+variant, and a four-argument",
+            "  positive-progress form. The current goal and desired bound determine which",
+            "  rule applies; the four-argument form is not pRHL syntax.",
         ]
     if mode == "hoare":
         return [
@@ -1251,8 +1296,8 @@ def _contextual_mode_notes(name: str, mode: str) -> list[str]:
         return [
             "Mode-specific note:",
             "  In pRHL, `while (INVARIANT).` is the symmetric two-program form.",
-            "  Use `while{1}` or `while{2}` with a termination measure only when one",
-            "  side is at a loop frontier and the other side is not aligned there.",
+            "  For a one-sided loop, `while{1}`/`while{2}` accepts either just the",
+            "  relation invariant or the invariant plus an explicit integer variant.",
         ]
     return []
 

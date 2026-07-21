@@ -69,7 +69,7 @@ STATICALLY BLOCKED / UNCERTIFIED CANDIDATES:
         text,
         producer="align",
         why="static candidate",
-        action_type="probe_tactic",
+        action_type="tactic_candidate",
         metadata={"epistemic_status": "static_candidate_uncertified_by_ec"},
     )
 
@@ -88,7 +88,7 @@ STATICALLY BLOCKED / UNCERTIFIED CANDIDATES:
     assert "static_blocked_uncertified" in statuses
 
     guidance = _align_guidance_from_output(text)
-    assert guidance["primary_action"] == "choose_offset_then_probe"
+    assert guidance["primary_action"] == "choose_offset_then_commit"
     assert guidance["blocked_semantics"]["not_meaning"] == (
         "Swap is impossible or EC-rejected."
     )

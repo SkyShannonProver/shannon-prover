@@ -199,7 +199,6 @@ def _audit_command_summary(
     command_status = str(summary.get("command_status") or "")
     primary = str(action_partitions.get("primary_action") or "")
     commit_actions = _list(action_partitions.get("commit_actions"))
-    probe_actions = _list(action_partitions.get("probe_actions"))
     inspections = _list(action_partitions.get("inspect_actions"))
     strategy_actions = _list(action_partitions.get("strategy_actions"))
     recs = _list(action_partitions.get("recommendations"))
@@ -335,7 +334,6 @@ def _audit_command_summary(
         if not (
             actions
             or commit_actions
-            or probe_actions
             or inspections
             or strategy_actions
         ):
@@ -357,7 +355,6 @@ def _audit_command_summary(
         primary=primary,
         commit_actions=commit_actions,
         inspections=inspections,
-        probe_actions=probe_actions,
         strategy_actions=strategy_actions,
         actions=actions,
     ))
@@ -454,13 +451,13 @@ def _closed_no_suggestions(
         return
     bad_actions = [
         action for action in actions
-        if _dict(action).get("category") in {"commit", "probe", "strategy"}
+        if _dict(action).get("category") in {"commit", "strategy"}
     ]
     if bad_actions:
         issues.append(_issue(
             "error",
             "closed_state_has_action_suggestions",
-            "closed proof exposes commit/probe/strategy actions",
+            "closed proof exposes commit/strategy actions",
             artifact,
             step=step,
             command=command,
@@ -477,7 +474,6 @@ def _audit_primary_action(
     primary: str,
     commit_actions: list[Any],
     inspections: list[Any],
-    probe_actions: list[Any],
     strategy_actions: list[Any],
     actions: list[Any],
 ) -> list[ProverUxIssue]:
@@ -497,18 +493,6 @@ def _audit_primary_action(
             "error",
             "primary_try_tactic_without_tactic",
             "primary_action=try_tactic but commit_actions is empty",
-            artifact,
-            step=step,
-            command=command,
-            path=path,
-        ))
-    if primary == "probe_tactic" and not probe_actions and not any(
-        _dict(action).get("category") == "probe" for action in actions
-    ):
-        issues.append(_issue(
-            "error",
-            "primary_probe_tactic_without_probe",
-            "primary_action=probe_tactic but neither derived actions nor probe_actions contains a probe",
             artifact,
             step=step,
             command=command,
@@ -553,26 +537,15 @@ def _audit_prover_actions(
         cmd = str(action.get("command") or "")
         state_changed = action.get("state_changed")
         if category == "probe":
-            if state_changed is not False:
-                issues.append(_issue(
-                    "error",
-                    "probe_action_may_mutate_state",
-                    f"derived action[{idx}] is a probe but state_changed is not false",
-                    artifact,
-                    step=step,
-                    command=command,
-                    path=path,
-                ))
-            if "-try" not in cmd:
-                issues.append(_issue(
-                    "warning",
-                    "probe_action_missing_try_command",
-                    f"derived action[{idx}] is a probe but command does not show -try",
-                    artifact,
-                    step=step,
-                    command=command,
-                    path=path,
-                ))
+            issues.append(_issue(
+                "error",
+                "public_probe_action",
+                f"derived action[{idx}] exposes the retired probe category",
+                artifact,
+                step=step,
+                command=command,
+                path=path,
+            ))
         if category == "commit" and "-try" in cmd:
             issues.append(_issue(
                 "warning",
@@ -594,18 +567,6 @@ def _audit_prover_actions(
                     command=command,
                     path=path,
                 ))
-    if primary == "probe_tactic" and actions:
-        first = _dict(actions[0])
-        if first.get("category") != "probe":
-            issues.append(_issue(
-                "warning",
-                "primary_probe_not_first_action",
-                "primary_action=probe_tactic but the first unified action is not a probe",
-                artifact,
-                step=step,
-                command=command,
-                path=path,
-            ))
     return issues
 
 

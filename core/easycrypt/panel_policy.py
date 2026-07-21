@@ -64,7 +64,7 @@ OPTION_CONTAINER = re.compile(
     r"(candidate_moves\.moves|\.recommendations|selected_handles|"
     r"named_call_templates)")
 EXCLUDE_TACTIC_PATH = re.compile(
-    r"(limitations|risk_map|last_result|probe_alternatives|anti_route|"
+    r"(limitations|risk_map|last_result|anti_route|"
     r"structural_transitions)")
 _TACTIC_HEAD = re.compile(
     r"^\s*(have\b|rewrite\b|apply\b|call\b|byequiv\b|byphoare\b|bypr\b|"
@@ -132,15 +132,15 @@ def provenance_flags(view: dict[str, Any]) -> list[tuple[str, list[str]]]:
 
 
 _GUARANTEE = {
-    "daemon_accepted_on_current_goal": (
-        "locally valid on the current goal (daemon-accepted); NOT a claim it is "
+    "easycrypt_verified_on_current_goal": (
+        "locally valid on the current goal (EasyCrypt-verified); NOT a claim it is "
         "the optimal route or that it reaches qed; reversible — commit, read the "
         "new state, undo if worse"),
-    "read_only_probe_suggestion": (
-        "read-only probe shape; proof state unchanged; probe then decide; "
-        "reversible"),
+    "unverified_tactic_candidate": (
+        "candidate derived from current-state analysis; not yet accepted by "
+        "EasyCrypt; committing it is the proof-state decision"),
     "unverified_suggestion": (
-        "not verified on the current goal; probe before committing; reversible"),
+        "route-selection context only; not verified on the current goal"),
 }
 
 
@@ -148,12 +148,19 @@ def attach_provenance(view: dict[str, Any]) -> int:
     """Fill honest `derivation`/`verified`/`guarantee` markers on every
     committable tactic option that lacks them, so the agent is never misled
     about how an option arose or what it guarantees. Values reflect the entry's
-    *actual* status — a probe is marked a probe, never "verified". Only fills
-    missing markers (producer-supplied ones win). Returns count stamped."""
+    *actual* status. Only EasyCrypt evidence earns the verified marker; static
+    candidates remain unverified. Producer-supplied markers win. Returns the
+    number of entries stamped."""
     def _classify(entry: dict[str, Any]) -> tuple[str, str]:
         conf = str(entry.get("confidence") or "").lower()
         producer = str(entry.get("producer") or "")
         source = str(entry.get("source") or "")
+        metadata = entry.get("metadata") if isinstance(entry.get("metadata"), dict) else {}
+        epistemic = str(
+            entry.get("epistemic_status")
+            or metadata.get("epistemic_status")
+            or ""
+        )
         category = str(entry.get("category") or "").lower()
         title = str(entry.get("title") or "")
         # "Verified" status may be inferred ONLY from producer-supplied
@@ -166,32 +173,38 @@ def attach_provenance(view: dict[str, Any]) -> int:
         verified_marker = (
             isinstance(vflag, str)
             and vflag not in ("", "unverified_suggestion",
-                              "read_only_probe_suggestion"))
-        if (conf == "verified" or vflag is True or verified_marker
-                or "daemon" in trusted or "proofir" in trusted
-                or "typed bridge" in trusted):
+                              "unverified_tactic_candidate"))
+        if (
+            conf in {"verified", "verified_by_easycrypt"}
+            or vflag is True
+            or verified_marker
+            or epistemic in {
+                "easycrypt_preflight_accepted",
+                "easycrypt_verified",
+                "verified_by_easycrypt",
+            }
+        ):
             src = source or producer or "ProofIR typed frontend"
-            return ("daemon_accepted_on_current_goal",
-                    f"type-matched + daemon-probed on the current goal (source: {src})")
-        if (category in ("try", "probe") or "probe" in trusted
-                or "read-only" in title.lower()):
-            return ("read_only_probe_suggestion",
-                    f"read-only probe surfaced from "
+            return ("easycrypt_verified_on_current_goal",
+                    f"type-matched + EasyCrypt-verified on the current goal (source: {src})")
+        if category == "candidate":
+            return ("unverified_tactic_candidate",
+                    f"candidate surfaced from "
                     f"{source or producer or 'current-state analysis'}")
         src = source or producer or "current-state analysis"
         return ("unverified_suggestion",
-                f"surfaced from {src}; not daemon-checked on this goal")
+                f"surfaced from {src}; not EasyCrypt-verified on this goal")
 
     entries = [(entry, str(entry.get("tactic") or entry.get("action") or "").strip(),
                 _classify(entry)) for _jp, entry in find_option_tactics(view)]
-    # A tactic that is daemon-accepted in one entry is the same verified option
+    # A tactic that EasyCrypt accepted in one entry is the same verified option
     # wherever else it appears (e.g. a thin selected_handles twin) — upgrade it
     # so the agent is never told a verified option is "unverified".
     verified_tactics = {tac for _e, tac, (v, _d) in entries
-                        if tac and v == "daemon_accepted_on_current_goal"}
+                        if tac and v == "easycrypt_verified_on_current_goal"}
     stamped = 0
     for entry, tac, (verified, derivation) in entries:
-        if tac in verified_tactics and verified != "daemon_accepted_on_current_goal":
+        if tac in verified_tactics and verified != "easycrypt_verified_on_current_goal":
             verified, derivation = _classify({"source": "proofir typed bridge frontend"})
         if all(m in entry for m in REQUIRED_TACTIC_MARKERS):
             continue

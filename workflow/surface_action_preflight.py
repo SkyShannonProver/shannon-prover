@@ -13,9 +13,8 @@ import re
 from typing import Any
 
 from core.easycrypt.value_shapes import drop_empty as _drop_empty
-from workflow.context_intents import direct_context_request, intent_spec
+from workflow.context_intents import intent_spec
 from workflow.surface_action_choices import (
-    bridge_probe_claim_choices_for_view,
     call_invariants_from_text,
     call_subgoal_invariant_choices_for_view,
     inv_from_lemma_choices_for_view,
@@ -23,7 +22,8 @@ from workflow.surface_action_choices import (
 )
 
 
-PREFLIGHT_SCHEMA_VERSION = 1
+PREFLIGHT_SCHEMA_VERSION = 2
+PREFLIGHT_CANDIDATE_LIMIT = 4
 DYNAMIC_PREFLIGHT_INTENTS = frozenset({
     "call_site_options",
     "pr_bridge_routes",
@@ -34,7 +34,6 @@ DYNAMIC_PREFLIGHT_INTENTS = frozenset({
     "lemma_hints",
     "subgoal_gap",
     "inv_from_lemma",
-    "bridge_probe",
     "call_subgoals",
 })
 
@@ -43,7 +42,6 @@ _RUNNABLE_OR_VERIFIED_INTENTS = frozenset({
     "pr_bridge_routes",
     "verified_pivot_options",
     "rewrite_candidates",
-    "bridge_probe",
 })
 
 _SKELETON_INTENTS = frozenset({
@@ -78,7 +76,7 @@ def surface_preflight_candidates(view: dict[str, Any]) -> list[dict[str, Any]]:
     for ask in asks or []:
         if not isinstance(ask, dict):
             continue
-        action = direct_context_request(ask)
+        action = dict(ask)
         intent = str(action.get("intent") or "").strip()
         spec = intent_spec(intent)
         if spec is None or not spec.advertised:
@@ -121,17 +119,39 @@ def preflight_result_for_action(
     action = action_summary if isinstance(action_summary, dict) else {}
     observation = action.get("agent_observation")
     observation = observation if isinstance(observation, dict) else {}
-    eligible, reason = _displayable_result(str(intent or ""), observation, action)
+    intent_name = str(intent or "")
+    eligible, reason = _displayable_result(intent_name, observation, action)
+    candidates = (
+        _typed_candidate_evidence(_summary_content(action))
+        if eligible
+        else []
+    )
+    ready_count = sum(
+        1 for candidate in candidates
+        if isinstance(candidate.get("submit"), dict)
+    )
     return _drop_empty({
-        "intent": str(intent or ""),
+        "intent": intent_name,
         "payload": payload,
-        "key": action_preflight_key(str(intent or ""), payload),
+        "key": action_preflight_key(intent_name, payload),
         "eligible": eligible,
         "reason": reason,
         "source": "manager_readonly_preflight",
         "backend_label": action.get("label"),
         "exit_code": action.get("exit_code"),
         "content_hash": _content_hash(observation.get("content")),
+        "result_kind": (
+            "ready_to_submit_candidates"
+            if ready_count
+            else "verified_candidates"
+            if candidates
+            else "displayable_context"
+            if eligible
+            else ""
+        ),
+        "candidate_count": len(candidates),
+        "ready_submission_count": ready_count,
+        "candidates": candidates,
     })
 
 
@@ -165,6 +185,55 @@ def preflight_result(
     return {}
 
 
+def preflight_candidate_evidence(
+    view: dict[str, Any],
+    intent: str,
+    payload: dict[str, Any] | None = None,
+) -> list[dict[str, Any]]:
+    """Return typed candidate evidence retained by current-state preflight.
+
+    This is the canonical projection boundary for preflight output.  Surface
+    composers must not recover executable candidates from legacy prose or raw
+    ``candidate_moves`` values.
+    """
+    result = preflight_result(view, intent, payload or {})
+    if not result.get("eligible"):
+        return []
+    return [
+        dict(item)
+        for item in result.get("candidates") or []
+        if isinstance(item, dict) and str(item.get("candidate") or "").strip()
+    ]
+
+
+def matching_preflight_submission(
+    view: dict[str, Any],
+    intent: str,
+    payload: dict[str, Any],
+) -> dict[str, Any]:
+    """Return the retained candidate whose submit payload matches exactly."""
+    clean_payload = _stable_payload(payload)
+    for result in _preflight_results(view):
+        if not result.get("eligible"):
+            continue
+        source_intent = str(result.get("intent") or "")
+        for candidate in result.get("candidates") or []:
+            if not isinstance(candidate, dict):
+                continue
+            submit = candidate.get("submit")
+            if not isinstance(submit, dict):
+                continue
+            if (
+                str(submit.get("intent") or "") == intent
+                and _stable_payload(_payload(submit)) == clean_payload
+            ):
+                return {
+                    "source_intent": source_intent,
+                    "candidate": dict(candidate),
+                }
+    return {}
+
+
 def _displayable_result(
     intent: str,
     observation: dict[str, Any],
@@ -189,6 +258,78 @@ def _displayable_result(
     return False, "preflight returned no displayable content"
 
 
+def _typed_candidate_evidence(content: dict[str, Any]) -> list[dict[str, Any]]:
+    items = content.get("items")
+    out: list[dict[str, Any]] = []
+    seen: set[str] = set()
+    for item in items if isinstance(items, list) else []:
+        if not isinstance(item, dict):
+            continue
+        submit = _sanitized_submit(item.get("submit"))
+        verification = str(item.get("verification") or "").strip()
+        verified = (
+            "daemon-verified" in verification.lower()
+            and "not daemon-verified" not in verification.lower()
+        )
+        if not submit and not verified:
+            continue
+        candidate = str(item.get("candidate") or "").strip()
+        if not candidate and submit.get("intent") == "commit_tactic":
+            candidate = str(_payload(submit).get("tactic") or "").strip()
+        if not candidate:
+            continue
+        clean = _drop_empty({
+            "candidate": candidate,
+            "why": _bounded_text(item.get("why")),
+            "effect": _bounded_text(item.get("effect")),
+            "verification": _bounded_text(verification),
+            "submit": submit,
+        })
+        identity = json.dumps(
+            submit or {"candidate": candidate},
+            ensure_ascii=False,
+            sort_keys=True,
+            default=str,
+        )
+        if identity in seen:
+            continue
+        seen.add(identity)
+        out.append(clean)
+        if len(out) >= PREFLIGHT_CANDIDATE_LIMIT:
+            break
+    return out
+
+
+def _sanitized_submit(value: Any) -> dict[str, Any]:
+    submit = value if isinstance(value, dict) else {}
+    intent = str(submit.get("intent") or "").strip()
+    spec = intent_spec(intent)
+    if spec is None or not spec.advertised:
+        return {}
+    payload = _payload(submit)
+    allowed_fields = set(spec.payload_fields)
+    if any(key not in allowed_fields for key in payload):
+        return {}
+    if spec.payload_fields and not payload:
+        return {}
+    if any(is_placeholder(value) for value in payload.values()):
+        return {}
+    return {"intent": intent, "payload": payload}
+
+
+def _bounded_text(value: Any, limit: int = 800) -> str:
+    text = str(value or "").strip()
+    if len(text) <= limit:
+        return text
+    return text[: limit - 3].rstrip() + "..."
+
+
+def _preflight_results(view: dict[str, Any]) -> list[dict[str, Any]]:
+    preflight = view.get("surface_action_preflight") if isinstance(view, dict) else {}
+    results = preflight.get("results") if isinstance(preflight, dict) else []
+    return [dict(item) for item in results or [] if isinstance(item, dict)]
+
+
 def _expanded_preflight_candidates(
     view: dict[str, Any],
     intent: str,
@@ -204,17 +345,6 @@ def _expanded_preflight_candidates(
         return [
             {"intent": intent, "payload": {**payload, "lemma": lemma_name}}
             for lemma_name in lemmas
-        ]
-    if intent == "bridge_probe":
-        claim = str(payload.get("claim") or "").strip()
-        claims = (
-            bridge_probe_claim_choices_for_view(view)
-            if is_placeholder(claim)
-            else [claim] if _valid_bridge_claim(claim) else []
-        )
-        return [
-            {"intent": intent, "payload": {**payload, "claim": bridge_claim}}
-            for bridge_claim in claims
         ]
     if intent == "call_subgoals":
         invariant = str(payload.get("invariant") or "").strip()
@@ -422,18 +552,13 @@ def _valid_choice_text(text: str) -> bool:
     return bool(value and not is_placeholder(value) and "..." not in value)
 
 
-def _valid_bridge_claim(text: str) -> bool:
-    value = str(text or "").strip()
-    return bool(_valid_choice_text(value) and value.count("Pr[") >= 2 and "=" in value)
-
-
 def _surface_requests_intent(view: dict[str, Any], intent: str) -> bool:
     handles = view.get("inspect_lookup_handles") if isinstance(view, dict) else {}
     asks = handles.get("ask_manager_for") if isinstance(handles, dict) else []
     for ask in asks or []:
         if not isinstance(ask, dict):
             continue
-        action = direct_context_request(ask)
+        action = dict(ask)
         if str(action.get("intent") or "").strip() == intent:
             return True
     return False
@@ -465,4 +590,3 @@ def _invariants_from_content(content: dict[str, Any]) -> list[str]:
             if _valid_choice_text(inv) and inv not in out:
                 out.append(inv)
     return out
-

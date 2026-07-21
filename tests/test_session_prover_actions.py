@@ -16,7 +16,7 @@ from core.easycrypt.session_prover_actions import (  # type: ignore  # noqa: E40
 )
 
 
-def test_probe_recommendation_becomes_non_mutating_try_action() -> None:
+def test_tactic_candidate_becomes_non_mutating_strategy_action() -> None:
     actions = build_prover_actions(
         session_dir=Path(".ec_session_test"),
         proof_state={
@@ -29,7 +29,7 @@ def test_probe_recommendation_becomes_non_mutating_try_action() -> None:
             "producer": "align",
             "action": "swap{1} 7 -5.",
             "why": "Static candidate; EC has not tried it.",
-            "action_type": "probe_tactic",
+            "action_type": "tactic_candidate",
             "confidence": "medium",
             "evidence_refs": ["epistemic.align"],
             "metadata": {
@@ -38,13 +38,11 @@ def test_probe_recommendation_becomes_non_mutating_try_action() -> None:
         }],
     )
 
-    assert primary_action_from_actions(actions) == "probe_tactic"
-    assert actions[0]["category"] == "probe"
-    assert actions[0]["tool"] == "try"
+    assert primary_action_from_actions(actions) == "consider_strategy_hint"
+    assert actions[0]["category"] == "strategy"
     assert actions[0]["state_changed"] is False
-    assert "-try -c" in actions[0]["command"]
-    assert actions[0]["prover_contract"]["role"] == "probe_option"
-    assert "not guaranteed" in actions[0]["prover_contract"]["not_meaning"]
+    assert actions[0]["prover_contract"]["role"] == "tactic_candidate"
+    assert "not a runnable action" in actions[0]["prover_contract"]["not_meaning"]
     assert validate_prover_actions(actions).ok is True
 
 
@@ -72,7 +70,7 @@ def test_candidate_closed_verify_action_uses_session_lemma_when_available() -> N
     assert validate_prover_actions(actions).ok is True
 
 
-def test_validate_actions_rejects_mutating_probe() -> None:
+def test_validate_actions_rejects_retired_probe_category() -> None:
     validation = validate_prover_actions([{
         "id": "bad.probe",
         "category": "probe",
@@ -85,10 +83,10 @@ def test_validate_actions_rejects_mutating_probe() -> None:
     }])
 
     assert validation.ok is False
-    assert any("state_changed=false" in err for err in validation.errors)
+    assert any("category must be one of" in err for err in validation.errors)
 
 
-def test_probe_template_becomes_strategy_action() -> None:
+def test_candidate_template_becomes_strategy_action() -> None:
     actions = build_prover_actions(
         session_dir=Path(".ec_session_test"),
         proof_state={
@@ -101,7 +99,7 @@ def test_probe_template_becomes_strategy_action() -> None:
             "producer": "bridge-lemmas",
             "action": "transitivity M ... .",
             "why": "Template needs an intermediate module.",
-            "action_type": "probe_tactic",
+            "action_type": "tactic_candidate",
             "confidence": "medium",
             "metadata": {
                 "epistemic_status": "template_requires_instantiation",
@@ -114,7 +112,7 @@ def test_probe_template_becomes_strategy_action() -> None:
     assert validate_prover_actions(actions).ok is True
 
 
-def test_call_inv_template_becomes_strategy_even_if_marked_probe() -> None:
+def test_call_inv_template_becomes_strategy() -> None:
     actions = build_prover_actions(
         session_dir=Path(".ec_session_test"),
         proof_state={
@@ -127,7 +125,7 @@ def test_call_inv_template_becomes_strategy_even_if_marked_probe() -> None:
             "producer": "AUTO-DIFF",
             "action": "call (_: Inv).",
             "why": "Template needs an explicit invariant.",
-            "action_type": "probe_tactic",
+            "action_type": "tactic_candidate",
             "confidence": "medium",
             "metadata": {
                 "epistemic_status": "template_requires_instantiation",
@@ -140,7 +138,7 @@ def test_call_inv_template_becomes_strategy_even_if_marked_probe() -> None:
     assert validate_prover_actions(actions).ok is True
 
 
-def test_unverified_runnable_recommendation_becomes_probe() -> None:
+def test_unverified_runnable_recommendation_becomes_strategy() -> None:
     actions = build_prover_actions(
         session_dir=Path(".ec_session_test"),
         proof_state={
@@ -158,11 +156,10 @@ def test_unverified_runnable_recommendation_becomes_probe() -> None:
         }],
     )
 
-    assert primary_action_from_actions(actions) == "probe_tactic"
-    assert actions[0]["category"] == "probe"
-    assert actions[0]["tool"] == "try"
+    assert primary_action_from_actions(actions) == "consider_strategy_hint"
+    assert actions[0]["category"] == "strategy"
     assert actions[0]["state_changed"] is False
-    assert actions[0]["epistemic_status"] == "static_candidate_uncertified_by_ec"
+    assert actions[0]["epistemic_status"] == "strategy"
     assert validate_prover_actions(actions).ok is True
 
 
@@ -182,7 +179,7 @@ def test_verified_runnable_recommendation_becomes_commit() -> None:
             "action_type": "runnable_tactic",
             "confidence": "verified",
             "metadata": {
-                "epistemic_status": "daemon_probe_accepted",
+                "epistemic_status": "easycrypt_preflight_accepted",
             },
         }],
     )
@@ -190,7 +187,7 @@ def test_verified_runnable_recommendation_becomes_commit() -> None:
     assert actions[0]["category"] == "commit"
     assert actions[0]["tool"] == "next"
     assert actions[0]["state_changed"] is True
-    assert actions[0]["epistemic_status"] == "daemon_probe_accepted"
+    assert actions[0]["epistemic_status"] == "easycrypt_preflight_accepted"
     assert actions[0]["prover_contract"]["role"] == "verified_commit_candidate"
     assert validate_prover_actions(actions).ok is True
 
@@ -237,11 +234,11 @@ def test_stale_prior_error_status_does_not_preempt_positive_action() -> None:
             "kind": "tactic_candidate",
             "producer": "try",
             "action": "sp.",
-            "why": "Daemon accepted this tactic after an earlier failed probe.",
+            "why": "EasyCrypt accepted this tactic during private preflight.",
             "action_type": "runnable_tactic",
             "confidence": "verified",
             "metadata": {
-                "epistemic_status": "daemon_probe_accepted",
+                "epistemic_status": "easycrypt_preflight_accepted",
             },
         }],
         latest_errors=[{
@@ -358,12 +355,12 @@ def test_action_menu_preserves_call_routes_when_context_candidates_crowd_menu() 
 
 def main() -> int:
     tests = [
-        test_probe_recommendation_becomes_non_mutating_try_action,
+        test_tactic_candidate_becomes_non_mutating_strategy_action,
         test_candidate_closed_verify_action_uses_session_lemma_when_available,
-        test_validate_actions_rejects_mutating_probe,
-        test_probe_template_becomes_strategy_action,
-        test_call_inv_template_becomes_strategy_even_if_marked_probe,
-        test_unverified_runnable_recommendation_becomes_probe,
+        test_validate_actions_rejects_retired_probe_category,
+        test_candidate_template_becomes_strategy_action,
+        test_call_inv_template_becomes_strategy,
+        test_unverified_runnable_recommendation_becomes_strategy,
         test_verified_runnable_recommendation_becomes_commit,
         test_verified_chain_recommendation_becomes_commit,
         test_stale_prior_error_status_does_not_preempt_positive_action,

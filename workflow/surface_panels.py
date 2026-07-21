@@ -1,30 +1,23 @@
-"""Panel builders for the prover surface (the SurfaceModel sections).
+"""Typed candidate-panel builders for the prover surface.
 
 Extracted verbatim from workflow/surface_composer.py: the seven panel
 builders (primary/context-result/recover/call/pure/opener/deep) and their
-helpers. The composer composes; this module renders panels. Imports flow
+helpers. Builders organize candidate facts; the composer applies the sole
+fact/action eligibility contracts and renderers only render. Imports flow
 composer -> panels -> whole-program -> core scanners, never backwards.
 """
 from __future__ import annotations
 
 import re
-from dataclasses import replace
 from typing import Any
-from core.easycrypt.search.ec_tactic_forms import list_all as _list_tactic_form_names
 from workflow.context_intents import (
     INTENT_CLASS_CONTEXT_TOPIC,
-    INTENT_CLASS_PROBE_PREVIEW,
     INTENT_CLASS_SYMBOL_LOOKUP,
-    direct_context_request,
     intent_class,
     intent_is_read_only,
     intent_is_retrieval,
     intent_payload_fields,
     intent_spec,
-)
-from workflow.surface_action_eligibility import (
-    filter_surface_actions,
-    has_current_call_surface_context,
 )
 from workflow.surface_model import _drop_empty
 from workflow.surface_model import (
@@ -36,8 +29,21 @@ from workflow.surface_model import (
     last_action_needs_attention,
     surface_model_to_dict,
 )
+from workflow.surface_action_preflight import preflight_candidate_evidence
 from workflow.surface_markdown import markdown_code_span as _code_span
-from workflow.surface_state_predicates import goal_has_program as _current_goal_has_program
+from workflow.surface_state_predicates import (
+    goal_has_program as _current_goal_has_program,
+    preferred_procedure_entry_transition,
+)
+from workflow.surface_structural_facts import (
+    checked_seq_sources,
+    checked_swap_sources,
+    loaded_named_routes,
+)
+from workflow.surface_tactic_forms import (
+    SUPPORTED_TACTIC_FORM_NAMES as _SUPPORTED_TACTIC_FORM_NAMES,
+    compose_tactic_form_actions,
+)
 
 from core.easycrypt.analysis.ec_pr_terms import (
     extract_pr_terms as _extract_pr_terms,
@@ -47,8 +53,10 @@ from core.easycrypt.analysis.ec_pr_terms import (
     top_level_colon as _top_level_colon,
     top_level_relation as _top_level_relation,
 )
+from core.easycrypt.analysis.ec_program_statements import (
+    statement_is_procedure_call,
+)
 from workflow.surface_whole_program import (
-    _PROC_CALL_RE,
     _SETUP_ANNOTATION_RE,
     _SETUP_SUMMARY_RE,
     _WHOLE_PROGRAM_OBSERVATION_LIMIT,
@@ -84,7 +92,6 @@ from workflow.surface_whole_program import (
     _shared_call_label_position_observation,
     _should_show_whole_program_structure,
     _side_has_guard_before_while,
-    _statement_is_proc_call,
     _strip_setup_call_tag,
     _visible_call_labels,
     _visible_call_labels_differ,
@@ -97,16 +104,15 @@ from workflow.surface_whole_program import (
 )
 
 
-_SUPPORTED_TACTIC_FORM_NAMES = frozenset(_list_tactic_form_names())
-
-
 PANEL_TITLES = {
     "deep_surgery": "Surgery -- align or decompose the two sides",
+    "single_program": "Single-Program Frontier",
     "failure_recovery": "Recover -- last committed tactic was rejected",
     "call_site": "Call Frontier",
     "context_result": "Requested Context",
     "pure_logic": "Pure Logic Residual",
     "opener": "Probability Goal",
+    "relational_program": "Relational Goal",
 }
 
 
@@ -218,28 +224,181 @@ def _primary_panel(
         panel = _opener_panel(view, actions)
     elif phase == "deep_surgery":
         panel = _deep_panel(view, actions)
+    elif phase == "single_program":
+        panel = _single_program_panel(view, actions)
+    elif phase == "relational_program":
+        panel = _relational_program_panel(view, actions)
     else:
         panel = None
-    if phase == "context_result":
-        return panel
-    return _with_decision_context_facts(view, panel)
+    return panel
 
 
-def _with_decision_context_facts(
+def _single_program_panel(
     view: dict[str, Any],
-    panel: PanelModel | None,
-) -> PanelModel | None:
-    if panel is None:
+    actions: tuple[PanelAction, ...],
+) -> PanelModel:
+    """Current one-sided ProgramIR facts, without relational surgery language."""
+    frontier = view.get("program_frontier") if isinstance(view.get("program_frontier"), dict) else {}
+    scope = frontier.get("current_frontier_scope") if isinstance(frontier.get("current_frontier_scope"), dict) else {}
+    facts: list[PanelFact] = []
+    setup = scope.get("setup") if isinstance(scope.get("setup"), dict) else {}
+    setup_items = []
+    for side in ("left", "right"):
+        item = setup.get(side) if isinstance(setup.get(side), dict) else {}
+        if not item:
+            continue
+        setup_items.append(_drop_empty({
+            "side": side,
+            "paths": item.get("paths"),
+            "summary": item.get("summary"),
+        }))
+    if setup_items:
+        facts.append(PanelFact(
+            "setup_before_frontier",
+            "Setup before current frontier",
+            setup_items,
+            kind="program_ir_fact",
+            source_refs=("program_frontier.current_frontier_scope.setup",),
+        ))
+    current = scope.get("frontier") if isinstance(scope.get("frontier"), dict) else {}
+    current_items = []
+    for side in ("left", "right"):
+        item = current.get(side) if isinstance(current.get(side), dict) else {}
+        if item:
+            current_items.append(_drop_empty({
+                "side": side,
+                "path": item.get("path"),
+                "head": item.get("head"),
+                "statement": item.get("statement"),
+            }))
+    if current_items:
+        facts.append(PanelFact(
+            "current_frontier",
+            "Current frontier",
+            current_items,
+            kind="program_ir_fact",
+            source_refs=("program_frontier.current_frontier_scope.frontier",),
+        ))
+    obligation = (
+        frontier.get("program_obligation")
+        if isinstance(frontier.get("program_obligation"), dict) else {}
+    )
+    if obligation.get("kind") == "procedure_losslessness":
+        facts.append(PanelFact(
+            "program_obligation",
+            "Procedure losslessness obligation",
+            _drop_empty({
+                "goal_type": obligation.get("goal_type"),
+                "bound": (
+                    f"[{obligation.get('bound_relation')}] "
+                    f"{obligation.get('bound_value')}"
+                ),
+                "precondition": obligation.get("precondition"),
+                "postcondition": obligation.get("postcondition"),
+                "limitations": obligation.get("limitations"),
+            }),
+            summary=(
+                "The current single-program goal is the canonical "
+                "`phoare [=] 1%r` encoding of procedure losslessness."
+            ),
+            details=obligation,
+            audit_payload=obligation,
+            kind="state_fact",
+            role="primary",
+            source_refs=("program_frontier.program_obligation",),
+            authority=str(obligation.get("authority") or "pretty_text_fallback"),
+        ))
+    losslessness_fact = _one_sided_losslessness_fact(view)
+    if losslessness_fact is not None:
+        facts.append(losslessness_fact)
+    lookahead = [
+        _drop_empty({
+            "side": item.get("side"),
+            "path": item.get("path"),
+            "head": item.get("head"),
+            "statement": item.get("statement"),
+        })
+        for item in scope.get("lookahead_after_frontier") or []
+        if isinstance(item, dict)
+    ]
+    if lookahead:
+        facts.append(PanelFact(
+            "bounded_lookahead",
+            "Next structural statement",
+            lookahead[:2],
+            kind="program_ir_fact",
+            role="supporting",
+            source_refs=("program_frontier.current_frontier_scope.lookahead_after_frontier",),
+        ))
+    seq = view.get("seq_cut_surface") if isinstance(view.get("seq_cut_surface"), dict) else {}
+    seq_scope = seq.get("seq_scope") if isinstance(seq.get("seq_scope"), dict) else {}
+    if seq_scope:
+        facts.append(PanelFact(
+            "active_seq_scope",
+            "Active seq scope",
+            seq_scope,
+            kind="program_ir_fact",
+            role="supporting",
+            source_refs=("seq_cut_surface.seq_scope",),
+        ))
+    named_routes = _loaded_named_routes_fact(view)
+    if named_routes is not None:
+        facts.append(named_routes)
+    return PanelModel(
+        panel_id="single_program",
+        phase="single_program",
+        title=PANEL_TITLES["single_program"],
+        facts=tuple(facts),
+        actions=actions,
+        display_policy=DisplayPolicy(verbosity="focused"),
+        source_refs=("program_frontier.current_frontier_scope", "seq_cut_surface"),
+    )
+
+
+def _relational_program_panel(
+    view: dict[str, Any],
+    actions: tuple[PanelAction, ...],
+) -> PanelModel:
+    facts: list[PanelFact] = []
+    procedure_entry = _procedure_entry_fact(view)
+    if procedure_entry is not None:
+        facts.append(procedure_entry)
+    named_routes = _loaded_named_routes_fact(view)
+    if named_routes is not None:
+        facts.append(named_routes)
+    return PanelModel(
+        panel_id="relational_program",
+        phase="relational_program",
+        title=PANEL_TITLES["relational_program"],
+        facts=tuple(facts),
+        actions=actions,
+        display_policy=DisplayPolicy(verbosity="focused"),
+        source_refs=(
+            "program_frontier.procedure_entry_transition",
+            "application_context.loaded_named_routes",
+        ),
+    )
+
+
+def _procedure_entry_fact(view: dict[str, Any]) -> PanelFact | None:
+    transition = preferred_procedure_entry_transition(view)
+    if not transition:
         return None
-    extra = _decision_context_panel_facts(view)
-    if not extra:
-        return panel
-    existing = {fact.key for fact in panel.facts}
-    facts = tuple(panel.facts) + tuple(fact for fact in extra if fact.key not in existing)
-    return replace(
-        panel,
-        facts=facts,
-        source_refs=tuple(dict.fromkeys((*panel.source_refs, "decision_context"))),
+    return PanelFact(
+        "procedure_body_entry",
+        "Procedure body entry",
+        {
+            "current_layer": transition["current_layer"],
+            "transition": transition["transition"],
+            "ready_to_submit": transition["tactic"],
+            "effect": transition.get("effect"),
+        },
+        summary=(
+            "ProofIR marks `proc.` as the preferred legal transition that opens "
+            "this module-level procedure judgment."
+        ),
+        kind="program_ir_fact",
+        source_refs=("program_frontier.procedure_entry_transition",),
     )
 
 
@@ -337,10 +496,12 @@ def _recover_panel(
     rejected_tactic = str(lr.get("tactic") or _strip_label(str(focus.get("rejected") or ""))).strip()
     rejected_family = _tactic_family(rejected_tactic)
     automation_residual = _automation_residual_failure(lr, rejected_tactic)
+    procedure_entry = _procedure_entry_fact(view)
     head = _current_head(view, focus)
     applicable = (
         _automation_residual_families(view)
         if automation_residual else
+        ["proc"] if procedure_entry is not None else
         _applicable_tactic_families(head, focus, view)
     )
     facts: list[PanelFact] = []
@@ -377,13 +538,16 @@ def _recover_panel(
             kind="diagnostic",
             source_refs=("last_result", "current_goal"),
         ))
-    facts.append(PanelFact(
-        "current_frontier_head",
-        "Current frontier head",
-        head["label"],
-        kind="state_fact",
-        source_refs=("program_frontier",),
-    ))
+    if procedure_entry is not None:
+        facts.append(procedure_entry)
+    else:
+        facts.append(PanelFact(
+            "current_frontier_head",
+            "Current frontier head",
+            head["label"],
+            kind="state_fact",
+            source_refs=("program_frontier",),
+        ))
     if applicable:
         facts.append(PanelFact(
             "applicable_tactic_families",
@@ -428,16 +592,19 @@ def _recover_panel(
             kind="control_options",
             source_refs=("structural_checkpoints", "recovery_diagnosis_surface"),
         ))
-    panel_actions = tuple(filter_surface_actions(
+    recovery_actions = compose_tactic_form_actions(
         view,
         "recovery",
         "failure_recovery",
-        tuple(_recover_actions(
-            actions,
-            applicable,
-            include_context_lookups=automation_residual,
-        )),
-    ))
+        actions,
+        requested_names=applicable,
+    )
+    if automation_residual:
+        recovery_actions.extend(
+            action for action in actions
+            if action.intent in {"operator_lemmas", "lookup_symbol"}
+        )
+    panel_actions = tuple(recovery_actions)
     return PanelModel(
         panel_id="recovery",
         phase="failure_recovery",
@@ -521,24 +688,19 @@ def _call_panel(
     cs = view.get("call_site_surface") if isinstance(view.get("call_site_surface"), dict) else {}
     facts: list[PanelFact] = []
     facts.extend(_call_display_facts(view))
+    losslessness_fact = _one_sided_losslessness_fact(view)
+    if losslessness_fact is not None:
+        facts.append(losslessness_fact)
     facts.extend(_call_frontier_fact_items(view))
-    raw_fact = _call_raw_audit_fact(cs)
-    if raw_fact is not None:
-        facts.append(raw_fact)
-    if not facts:
-        facts.append(PanelFact(
-            "call_site_context",
-            "Call-site context",
-            "No current callable call-site facts were surfaced for this state.",
-            kind="empty_state",
-            source_refs=("call_site_surface", "proof_status"),
-        ))
+    uptobad = _up_to_bad_call_compatibility_fact(view)
+    if uptobad is not None:
+        facts.append(uptobad)
     return PanelModel(
         panel_id="call_site",
         phase="call_site",
         title=PANEL_TITLES["call_site"],
         facts=tuple(facts),
-        actions=tuple(filter_surface_actions(view, "call_site", "call_site", actions)),
+        actions=actions,
         display_policy=DisplayPolicy(verbosity="normal"),
         source_refs=("call_site_surface",),
     )
@@ -579,6 +741,34 @@ def _call_display_facts(view: dict[str, Any]) -> list[PanelFact]:
             ),
         ))
 
+    blocked_handles = []
+    for handle in cs.get("named_handles") or []:
+        if not isinstance(handle, dict) or handle.get("callable_now"):
+            continue
+        if _is_placeholder_handle(handle):
+            continue
+        symbol = str(handle.get("symbol") or handle.get("name") or "").strip()
+        if not symbol:
+            continue
+        blocked_handles.append(_drop_empty({
+            "symbol": symbol,
+            "status": "not callable in the current view",
+            "frontier_live": handle.get("frontier_live"),
+            "procedures": _short_procedure_list(handle.get("procedures")),
+        }))
+    if blocked_handles:
+        facts.append(PanelFact(
+            "blocked_named_handles",
+            "Named handles not currently callable",
+            blocked_handles[:6],
+            kind="state_fact",
+            role="diagnostic",
+            source_refs=(
+                "call_site_surface.named_handles",
+                "call_site_surface.frontier_blockers",
+            ),
+        ))
+
     near_frontier_fact = _near_frontier_bridge_fact(cs)
     if near_frontier_fact is not None:
         facts.append(near_frontier_fact)
@@ -605,17 +795,70 @@ def _call_display_facts(view: dict[str, Any]) -> list[PanelFact]:
                 role="supporting",
                 source_refs=("call_site_surface.named_call_templates",),
             ))
-    previews = cs.get("preview_effects")
-    if previews not in ({}, [], None, ""):
-        facts.append(PanelFact(
-            "preview_effects",
-            "Preview effects",
-            _compact_value(previews),
-            kind="state_fact",
-            role="supporting",
-            source_refs=("call_site_surface.preview_effects",),
-        ))
     return facts
+
+
+def _one_sided_losslessness_fact(view: dict[str, Any]) -> PanelFact | None:
+    cs = view.get("call_site_surface") if isinstance(view.get("call_site_surface"), dict) else {}
+    one_sided = (
+        cs.get("one_sided_call_surface")
+        if isinstance(cs.get("one_sided_call_surface"), dict) else {}
+    )
+    handles = [
+        item
+        for item in one_sided.get("visible_lossless_handles") or []
+        if isinstance(item, dict) and item.get("symbol") and item.get("procedure")
+    ]
+    if not handles:
+        return None
+    details = [
+        _drop_empty({
+            "lemma": item.get("symbol"),
+            "live_procedure": item.get("procedure"),
+            "declared_procedure": item.get("declared_procedure"),
+            "module_bindings": item.get("parameter_bindings"),
+            "module_arguments": item.get("module_argument_terms"),
+            "instantiated_lemma_head": item.get("instantiated_lemma_head"),
+            "call_template": item.get("call_template"),
+            "required_premises": item.get("required_premises"),
+            "match_kind": item.get("match_kind"),
+            "verification_status": item.get("verification_status"),
+            "authority": item.get("authority"),
+        })
+        for item in handles[:5]
+    ]
+    summary_parts = []
+    for item in details:
+        text = f"`{item['lemma']}` matches live `{item['live_procedure']}`"
+        bindings = item.get("module_bindings")
+        if isinstance(bindings, dict) and bindings:
+            rendered = ", ".join(
+                f"`{name}` -> `{value}`" for name, value in bindings.items()
+            )
+            text += f" with {rendered}"
+        premises = item.get("required_premises")
+        if isinstance(premises, list) and premises:
+            text += "; required premise: " + ", ".join(
+                f"`{premise}`" for premise in premises
+            )
+        if item.get("call_template"):
+            text += f"; instantiated form: `{item['call_template']}`"
+        summary_parts.append(text)
+    return PanelFact(
+        "one_sided_losslessness_certificates",
+        "Loaded losslessness certificates",
+        {"candidates": details},
+        kind="state_fact",
+        role="primary",
+        summary="; ".join(summary_parts),
+        details=details,
+        audit_payload=handles[:5],
+        source_refs=(
+            "call_site_surface.one_sided_call_surface.visible_lossless_handles",
+            "application_context.one_sided_losslessness_candidates",
+        ),
+        authority="loaded_declaration_shape_match",
+    )
 
 
 def _near_frontier_bridge_fact(cs: dict[str, Any]) -> PanelFact | None:
@@ -802,27 +1045,6 @@ def _call_candidate_detail(item: dict[str, Any]) -> str:
     return f"`{symbol}` matches " + " / ".join(str(x) for x in frontier)
 
 
-def _call_raw_audit_fact(cs: dict[str, Any]) -> PanelFact | None:
-    payload = _drop_empty({
-        "named_handles": cs.get("named_handles"),
-        "frontier_live_named_handles": cs.get("frontier_live_named_handles"),
-        "callable_now": cs.get("callable_now"),
-        "frontier_blockers": cs.get("frontier_blockers"),
-        "preview_effects": cs.get("preview_effects"),
-    })
-    if not payload:
-        return None
-    return PanelFact(
-        "call_site_raw_evidence",
-        "Call-site raw evidence",
-        {},
-        kind="audit_fact",
-        role="audit_only",
-        audit_payload=payload,
-        source_refs=("call_site_surface",),
-    )
-
-
 _PLACEHOLDER_HANDLE_SYMBOLS = {
     "lemma", "pair", "goal", "inv", "invariant", "predicate", "tac", "tactic",
     "pre", "post", "operator", "symbol", "handle", "name",
@@ -934,19 +1156,6 @@ def _pure_panel(
 ) -> PanelModel:
     pt = view.get("pure_tail_surface") if isinstance(view.get("pure_tail_surface"), dict) else {}
     facts: list[PanelFact] = []
-    lemma_routes = [
-        _drop_empty({"submit": item.get("submit"), "why": item.get("why"), "lemma": item.get("lemma")})
-        for item in pt.get("conclusion_lemma_routes") or []
-        if isinstance(item, dict) and item.get("submit")
-    ]
-    if lemma_routes:
-        facts.append(PanelFact(
-            "conclusion_lemma_routes",
-            "Conclusion matches local lemma",
-            lemma_routes,
-            kind="state_fact",
-            source_refs=("pure_tail_surface.conclusion_lemma_routes",),
-        ))
     intro_routes = [
         _drop_empty({"submit": item.get("submit"), "why": item.get("why"), "constructor": item.get("constructor")})
         for item in pt.get("inductive_intro_routes") or []
@@ -960,10 +1169,28 @@ def _pure_panel(
             kind="state_fact",
             source_refs=("pure_tail_surface.inductive_intro_routes",),
         ))
-    facts.extend(_obligation_shape_panel_facts(pt))
+    distribution_fact = _distribution_certificates_fact(view)
+    if distribution_fact is not None:
+        facts.append(distribution_fact)
+    mechanical_fact = _mechanical_goal_matches_fact(
+        view,
+        source="pure_tail_surface",
+    )
+    if mechanical_fact is not None:
+        facts.append(mechanical_fact)
+    hypothesis_graph = pt.get("local_hypothesis_graph") if isinstance(pt.get("local_hypothesis_graph"), dict) else {}
+    if hypothesis_graph.get("order_chains"):
+        facts.append(PanelFact(
+            "local_hypothesis_graph",
+            "Local order chains",
+            hypothesis_graph.get("order_chains"),
+            kind="state_fact",
+            source_refs=("pure_tail_surface.local_hypothesis_graph",),
+        ))
     facts.extend(_iter_successor_panel_facts(pt))
-    facts.extend(_memory_translation_panel_facts(pt))
     facts.extend(_integer_arithmetic_panel_facts(pt))
+    facts.extend(_list_normalization_panel_facts(pt))
+    facts.extend(_map_update_transport_panel_facts(pt))
     for key, label in (
         ("local_lemmas", "Matching local lemma routes"),
         ("alignment_gaps", "Alignment gaps"),
@@ -975,24 +1202,211 @@ def _pure_panel(
         value = pt.get(key)
         if value not in ({}, [], None, ""):
             facts.append(PanelFact(key, label, value, source_refs=(f"pure_tail_surface.{key}",)))
-    if not facts:
-        facts.append(PanelFact(
-            "pure_tail_context",
-            "Pure-tail context",
-            "No program frontier is visible in the current goal.",
-            kind="state_fact",
-            source_refs=("proof_status", "current_goal"),
-        ))
     return PanelModel(
         panel_id="pure_logic",
         phase="pure_logic",
         title=PANEL_TITLES["pure_logic"],
         facts=tuple(facts),
-        actions=tuple(filter_surface_actions(
-            view, "pure_logic", "pure_logic", tuple(_pure_actions(view, actions))
-        )),
+        actions=actions,
         display_policy=DisplayPolicy(verbosity="normal"),
         source_refs=("pure_tail_surface", "current_goal"),
+    )
+
+
+def _distribution_certificates_fact(view: dict[str, Any]) -> PanelFact | None:
+    pure = view.get("pure_tail_surface") if isinstance(view.get("pure_tail_surface"), dict) else {}
+    raw_items = [
+        item for item in pure.get("distribution_certificates") or []
+        if isinstance(item, dict)
+        and item.get("lemma")
+        and item.get("certificate_kind")
+    ]
+    if not raw_items:
+        return None
+    details: list[dict[str, Any]] = []
+    cardinality = ""
+    cardinality_facts: list[dict[str, Any]] = []
+    for item in raw_items[:6]:
+        kind = str(item.get("certificate_kind") or "")
+        if kind == "distribution_losslessness":
+            details.append(_drop_empty({
+                "kind": "losslessness",
+                "lemma": item.get("lemma"),
+                "distribution": item.get("distribution"),
+                "loaded_conclusion": item.get("declared_conclusion"),
+                "current_goal_form": item.get("goal_form"),
+                "remaining_premises": item.get("required_premises"),
+            }))
+        elif kind == "finite_interval_point_mass":
+            cardinality = cardinality or str(item.get("interval_cardinality") or "")
+            for support in item.get("loaded_supporting_facts") or []:
+                if not isinstance(support, dict) or not support.get("lemma"):
+                    continue
+                compact = _drop_empty({
+                    "lemma": support.get("lemma"),
+                    "fact": support.get("fact"),
+                    "remaining_premises": support.get("required_premises"),
+                })
+                if compact not in cardinality_facts:
+                    cardinality_facts.append(compact)
+            bindings = item.get("parameter_bindings") if isinstance(item.get("parameter_bindings"), dict) else {}
+            details.append(_drop_empty({
+                "kind": "finite-interval point mass",
+                "lemma": item.get("lemma"),
+                "distribution": item.get("distribution"),
+                "loaded_identity": item.get("declared_conclusion"),
+                "interval_bindings": _drop_empty({
+                    "lower": bindings.get("i"),
+                    "upper": bindings.get("j"),
+                    "point": "current point-mass point",
+                }),
+                "remaining_premise_shapes": [
+                    _distribution_premise_shape(premise)
+                    for premise in item.get("required_premises") or []
+                    if premise
+                ],
+            }))
+    if not details:
+        return None
+    rendered_details = list(details)
+    if cardinality or cardinality_facts:
+        rendered_details.append(_drop_empty({
+            "kind": "interval cardinality",
+            "expression": cardinality,
+            "loaded_facts": [
+                f"{item.get('lemma')}: {item.get('fact')}"
+                for item in cardinality_facts
+                if item.get("lemma") and item.get("fact")
+            ],
+        }))
+    return PanelFact(
+        "distribution_certificates",
+        "Loaded distribution facts",
+        _drop_empty({
+            "matches": details,
+            "interval_cardinality": cardinality,
+            "loaded_cardinality_facts": cardinality_facts,
+        }),
+        summary=(
+            "Loaded declarations structurally bound to the current distribution "
+            "obligation. They expose identities and premises; they do not select "
+            "a proof command or discharge the remaining arithmetic."
+        ),
+        details=rendered_details,
+        audit_payload=raw_items[:6],
+        kind="state_fact",
+        source_refs=("pure_tail_surface.distribution_certificates",),
+    )
+
+
+def _distribution_premise_shape(premise: str) -> str:
+    text = str(premise or "").strip()
+    if "\\in" in text and "dinter" in text:
+        return "current point membership in the displayed interval"
+    return text
+
+
+def _group_mechanical_matches(items: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """Compress structural siblings without hiding any loaded lemma names."""
+    groups: dict[tuple[Any, ...], list[dict[str, Any]]] = {}
+    order: list[tuple[Any, ...]] = []
+    for item in items:
+        kind = str(item.get("match_kind") or "")
+        if kind == "loaded_structural_fingerprint":
+            key = (
+                kind,
+                tuple(str(x) for x in item.get("shared_structures") or []),
+                tuple(str(x) for x in item.get("shared_types") or []),
+                tuple(str(x) for x in item.get("shared_symbols") or []),
+                tuple(str(x) for x in item.get("shared_applied_symbols") or []),
+            )
+        else:
+            key = (kind, str(item.get("lemma") or ""))
+        if key not in groups:
+            groups[key] = []
+            order.append(key)
+        groups[key].append(item)
+
+    out: list[dict[str, Any]] = []
+    for key in order:
+        group = groups[key]
+        first = group[0]
+        lemmas = [str(item.get("lemma") or "") for item in group if item.get("lemma")]
+        premises = {
+            str(item.get("lemma") or ""): item.get("required_premises")
+            for item in group
+            if item.get("lemma") and item.get("required_premises")
+        }
+        out.append(_drop_empty({
+            "lemmas": lemmas,
+            "match": (
+                first.get("match_kind")
+                if first.get("match_kind") != "loaded_structural_fingerprint"
+                else None
+            ),
+            "shared_symbols": first.get("shared_symbols"),
+            "shared_structures": first.get("shared_structures"),
+            "shared_types": first.get("shared_types"),
+            "shared_applied_symbols": first.get("shared_applied_symbols"),
+            "required_premises": premises,
+            "parameter_bindings": first.get("parameter_bindings"),
+            "declared_procedure": first.get("declared_procedure"),
+            "instantiated_procedure": first.get("instantiated_procedure"),
+            "direct_application": first.get("direct_application"),
+        }))
+    return out
+
+
+def _mechanical_goal_matches_fact(
+    view: dict[str, Any],
+    *,
+    source: str,
+    excluded_lemmas: set[str] | None = None,
+) -> PanelFact | None:
+    container = view.get(source) if isinstance(view.get(source), dict) else {}
+    raw_items = [
+        item for item in container.get("mechanical_goal_candidates") or []
+        if (
+            isinstance(item, dict)
+            and item.get("lemma")
+            and item.get("match_kind") != "loaded_left_inverse_support"
+            and str(item.get("lemma") or "") not in (excluded_lemmas or set())
+        )
+    ]
+    grouped = _group_mechanical_matches(raw_items)
+    if not grouped:
+        return None
+    return PanelFact(
+        "mechanical_goal_candidates",
+        "Loaded-context structural matches",
+        grouped[:8],
+        summary=(
+            "Loaded declarations whose exact conclusion or structural fingerprint "
+            "matches the current goal. Full declarations remain in audit JSON."
+        ),
+        details=grouped[:8],
+        audit_payload=raw_items[:8],
+        kind="state_fact",
+        source_refs=(f"{source}.mechanical_goal_candidates",),
+    )
+
+
+def _loaded_named_routes_fact(view: dict[str, Any]) -> PanelFact | None:
+    routes = list(loaded_named_routes(view))
+    if not routes:
+        return None
+    return PanelFact(
+        "loaded_named_routes",
+        "Loaded named route matches",
+        routes,
+        summary=(
+            "Typed ProofIR matched these loaded names to the current goal shape. "
+            "They are route evidence, not EasyCrypt-preflighted submissions."
+        ),
+        details=routes,
+        audit_payload=routes,
+        kind="state_fact",
+        source_refs=("application_context.loaded_named_routes",),
     )
 
 
@@ -1003,17 +1417,43 @@ def _opener_panel(
     goal = _goal_surface(view)
     text = str(goal.get("text") or "")
     pr_shape = _probability_structure_analysis(text)
-    facts = [
+    facts: list[PanelFact] = []
+    verified_routes = _verified_pr_bridge_routes_fact(view)
+    if verified_routes is not None:
+        facts.append(verified_routes)
+    endpoint_fact = _pr_endpoint_matches_fact(view)
+    if endpoint_fact is not None:
+        facts.append(endpoint_fact)
+    bound_routes_fact = _pr_bound_routes_fact(view)
+    if bound_routes_fact is not None:
+        facts.append(bound_routes_fact)
+    mechanical_fact = _mechanical_goal_matches_fact(
+        view,
+        source="application_context",
+    )
+    if mechanical_fact is not None:
+        facts.append(mechanical_fact)
+    named_routes = _loaded_named_routes_fact(view)
+    if named_routes is not None:
+        facts.append(named_routes)
+    facts.append(
         PanelFact(
             "probability_structure",
             "Probability structure",
             _probability_structure_summary(pr_shape),
             kind="state_fact",
             source_refs=("current_goal", "proof_status"),
-        ),
-    ]
+        )
+    )
     affordances = _probability_tactic_affordances(pr_shape)
-    if affordances:
+    if (
+        affordances
+        and endpoint_fact is None
+        and bound_routes_fact is None
+        and mechanical_fact is None
+        and named_routes is None
+        and verified_routes is None
+    ):
         facts.append(PanelFact(
             "tactic_affordances",
             "Tactic applicability",
@@ -1021,15 +1461,144 @@ def _opener_panel(
             kind="state_fact",
             source_refs=("current_goal", "tactic_forms"),
         ))
-    facts.extend(_unfoldable_goal_head_facts(view))
+    if (
+        endpoint_fact is None
+        and bound_routes_fact is None
+        and mechanical_fact is None
+        and named_routes is None
+        and verified_routes is None
+    ):
+        facts.extend(_unfoldable_goal_head_facts(view))
     return PanelModel(
         panel_id="opener",
         phase="opener",
         title=PANEL_TITLES["opener"],
         facts=tuple(facts),
-        actions=tuple(filter_surface_actions(view, "opener", "opener", actions)),
+        actions=actions,
         display_policy=DisplayPolicy(verbosity="normal"),
         source_refs=("current_goal", "facts_and_diagnostics"),
+    )
+
+
+def _verified_pr_bridge_routes_fact(view: dict[str, Any]) -> PanelFact | None:
+    candidates = preflight_candidate_evidence(view, "pr_bridge_routes")
+    if not candidates:
+        return None
+    ready_count = sum(
+        1 for candidate in candidates
+        if isinstance(candidate.get("submit"), dict)
+    )
+    details = [
+        _drop_empty({
+            "route": f"verified route {index}",
+            "candidate": (
+                candidate.get("candidate")
+                if not isinstance(candidate.get("submit"), dict)
+                else ""
+            ),
+            "verification": candidate.get("verification"),
+            "why": candidate.get("why"),
+            "effect": candidate.get("effect"),
+        })
+        for index, candidate in enumerate(candidates, start=1)
+    ]
+    count = len(candidates)
+    return PanelFact(
+        "verified_pr_bridge_routes",
+        "Verifier-checked Pr bridge routes",
+        details,
+        summary=(
+            f"Manager read-only preflight found {count} current-state route"
+            f"{'s' if count != 1 else ''}; "
+            + (
+                "exact ready submissions appear below."
+                if ready_count
+                else "verified candidates are shown as evidence; no ready submit payload was returned."
+            )
+        ),
+        details=details,
+        audit_payload=candidates,
+        kind="state_fact",
+        source_refs=("surface_action_preflight.results",),
+    )
+
+
+def _pr_endpoint_matches_fact(view: dict[str, Any]) -> PanelFact | None:
+    app = view.get("application_context") if isinstance(view.get("application_context"), dict) else {}
+    raw_matches = [
+        item for item in app.get("pr_endpoint_matches") or []
+        if isinstance(item, dict) and item.get("lemma")
+    ]
+    details: list[dict[str, Any]] = []
+    for item in raw_matches[:4]:
+        matches = [
+            match for match in item.get("exact_endpoint_matches") or []
+            if isinstance(match, dict)
+        ]
+        if not matches:
+            continue
+        match = matches[0]
+        details.append(_drop_empty({
+            "lemma": item.get("lemma"),
+            "matched_side": match.get("lemma_side"),
+            "rewrite_direction": match.get("rewrite_direction"),
+            "other_endpoint": match.get("other_endpoint"),
+            "required_premises": item.get("required_premises"),
+            "authority": item.get("authority"),
+        }))
+    if not details:
+        return None
+    count = len(details)
+    return PanelFact(
+        "pr_endpoint_matches",
+        "Loaded Pr endpoint matches",
+        details,
+        summary=(
+            f"{count} loaded lemma{'s' if count != 1 else ''} "
+            f"{'have' if count != 1 else 'has'} a left-hand Pr program endpoint "
+            "matching the current goal; the declared forward direction and outer "
+            "premises are shown below."
+        ),
+        details=details,
+        audit_payload=raw_matches,
+        kind="state_fact",
+        source_refs=("application_context.pr_endpoint_matches",),
+    )
+
+
+def _pr_bound_routes_fact(view: dict[str, Any]) -> PanelFact | None:
+    app = view.get("application_context") if isinstance(view.get("application_context"), dict) else {}
+    raw_routes = [
+        item for item in app.get("pr_bound_routes") or []
+        if isinstance(item, dict) and item.get("lemma")
+    ]
+    if not raw_routes:
+        return None
+    details = [
+        _drop_empty({
+            "lemma": item.get("lemma"),
+            "route_role": item.get("route_role"),
+            "exact_goal_endpoints": item.get("exact_goal_endpoints"),
+            "parameterized_goal_endpoints": item.get("parameterized_goal_endpoints"),
+            "parameter_bindings": item.get("parameter_bindings"),
+            "required_premises": item.get("required_premises"),
+            "authority": item.get("authority"),
+        })
+        for item in raw_routes[:6]
+    ]
+    return PanelFact(
+        "pr_bound_routes",
+        "Loaded Pr bound routes",
+        details,
+        summary=(
+            "Loaded declarations with exact current-goal Pr endpoints, plus any "
+            "strongly overlapping outer additive decomposition. This is the full "
+            "mechanically eligible route set, not a selected architecture."
+        ),
+        details=details,
+        audit_payload=raw_routes[:6],
+        kind="state_fact",
+        source_refs=("application_context.pr_bound_routes",),
     )
 
 
@@ -1063,11 +1632,9 @@ def _deep_panel(
         for key, label in (
             ("where", "Where"),
             ("branch_sample_alignment", "Guarded branch / random alignment"),
-            ("frontier_residual_staging", "Program/residual staging"),
             ("lookahead_after_frontier", "Lookahead after current frontier"),
             ("split_points", "Seq split points"),
             ("swap_offsets", "Swap offset frames"),
-            ("invariant_frame", "Invariant frame"),
         ):
             value = skeleton.get(key)
             if value not in ({}, [], None, ""):
@@ -1082,19 +1649,35 @@ def _deep_panel(
                         summary=_branch_sample_alignment_summary(value),
                         details=_branch_sample_alignment_details(value),
                         audit_payload=value,
-                        source_refs=("program_frontier", "candidate_moves"),
+                        source_refs=("program_frontier.current_frontier_scope",),
                     ))
                 else:
+                    source_refs = (
+                        ("program_frontier.checked_structural_sources.seq_sources",)
+                        if key == "split_points"
+                        else ("program_frontier.checked_structural_sources.swap_sources",)
+                        if key == "swap_offsets"
+                        else ("program_frontier.current_frontier_scope",)
+                    )
                     facts.append(PanelFact(
                         key,
                         label,
                         value,
-                        source_refs=("program_frontier", "candidate_moves", "facts_and_diagnostics"),
+                        source_refs=source_refs,
                     ))
     cs = view.get("call_site_surface") if isinstance(view.get("call_site_surface"), dict) else {}
     near_frontier_fact = _near_frontier_bridge_fact(cs)
     if near_frontier_fact is not None:
         facts.append(near_frontier_fact)
+    losslessness_fact = _one_sided_losslessness_fact(view)
+    if losslessness_fact is not None:
+        facts.append(losslessness_fact)
+    uptobad = _up_to_bad_call_compatibility_fact(view)
+    if uptobad is not None:
+        facts.append(uptobad)
+    named_routes = _loaded_named_routes_fact(view)
+    if named_routes is not None:
+        facts.append(named_routes)
     if not facts:
         frontier = view.get("program_frontier")
         if frontier not in ({}, [], None, "") and (
@@ -1112,7 +1695,7 @@ def _deep_panel(
         phase="deep_surgery",
         title=PANEL_TITLES["deep_surgery"],
         facts=tuple(facts),
-        actions=tuple(filter_surface_actions(view, "deep_surgery", "deep_surgery", _deep_actions(view, actions))),
+        actions=actions,
         display_policy=DisplayPolicy(
             lead_before_goal=_goal_is_large_for_surface(view),
             verbosity="normal",
@@ -1172,43 +1755,9 @@ def _whole_program_structure_fact(view: dict[str, Any]) -> PanelFact | None:
     )
 
 
-def _decision_context_panel_facts(view: dict[str, Any]) -> list[PanelFact]:
-    facts: list[PanelFact] = []
-    patch = _local_patch_loop_fact(view)
-    if patch is not None:
-        facts.append(patch)
-    uptobad = _up_to_bad_call_compatibility_fact(view)
-    if uptobad is not None:
-        facts.append(uptobad)
-    return facts
-
-
-def _local_patch_loop_fact(view: dict[str, Any]) -> PanelFact | None:
-    dc = view.get("decision_context") if isinstance(view.get("decision_context"), dict) else {}
-    entry = dc.get("local_patch_loop") if isinstance(dc.get("local_patch_loop"), dict) else {}
-    if not entry:
-        return None
-    value = _drop_empty({
-        "recurrences": entry.get("recurrences"),
-        "remaining_goals": entry.get("remaining"),
-        "observation": str(entry.get("text") or "").strip(),
-        "verification_status": "mechanical route-health observation; not a verdict or gate",
-    })
-    if not value.get("observation"):
-        return None
-    return PanelFact(
-        "local_patch_loop_observation",
-        "Patch-loop observation",
-        value,
-        kind="state_fact",
-        role="diagnostic",
-        source_refs=("decision_context.local_patch_loop",),
-    )
-
-
 def _up_to_bad_call_compatibility_fact(view: dict[str, Any]) -> PanelFact | None:
-    dc = view.get("decision_context") if isinstance(view.get("decision_context"), dict) else {}
-    entry = dc.get("up_to_bad_call") if isinstance(dc.get("up_to_bad_call"), dict) else {}
+    app = view.get("application_context") if isinstance(view.get("application_context"), dict) else {}
+    entry = app.get("up_to_bad_call") if isinstance(app.get("up_to_bad_call"), dict) else {}
     if not entry:
         return None
     bads = [
@@ -1250,7 +1799,7 @@ def _up_to_bad_call_compatibility_fact(view: dict[str, Any]) -> PanelFact | None
         value,
         kind="state_fact",
         role="diagnostic",
-        source_refs=("decision_context.up_to_bad_call",),
+        source_refs=("application_context.up_to_bad_call",),
     )
 
 
@@ -1274,17 +1823,6 @@ _LOAD_BEARING_CALL_TAIL = re.compile(r"\.(distinguish|main|enc|dec|cc|mac|game)\
 _LOAD_BEARING_RANK = ("distinguish", "enc", "dec", "cc", "mac", "main", "game")
 
 
-_SEQ_POSITION = re.compile(r"^(seq\s+\d+\s+\d+)\s*:")
-
-
-_SWAP_OFFSET = re.compile(
-    r"^(swap(?:\{[12]\})?\s+(?:\[\d+\.\.\d+\]|\d+))\s+(?:-?\d+|<offset>)\s*\.?\s*$"
-)
-
-
-_LIVE_VAR_FACT_KEYS = ("preserved_vars", "live_post_vars", "prefix_read_vars")
-
-
 def _rcond_branch_callouts(view: dict[str, Any]) -> list[str]:
     return [_rcond_branch_line(item) for item in _rcond_branch_items(view)]
 
@@ -1295,9 +1833,9 @@ def _rcond_branch_items(view: dict[str, Any]) -> list[dict[str, Any]]:
     guards = (pn or {}).get("branch_guards") if isinstance(pn, dict) else None
     if not isinstance(guards, list):
         return []
+    current_guards, lookahead_guards = _guard_scope_paths(view)
     out: list[dict[str, Any]] = []
     seen: set[tuple[str, str]] = set()
-    first_by_side: set[str] = set()
     for guard_info in guards:
         if not isinstance(guard_info, dict):
             continue
@@ -1310,22 +1848,54 @@ def _rcond_branch_items(view: dict[str, Any]) -> list[dict[str, Any]]:
             continue
         seen.add(key)
         guard = str(guard_info.get("guard") or "").strip()
-        is_first_for_side = side not in first_by_side
-        first_by_side.add(side)
+        is_current = key in current_guards
         indexed_forms = [f"rcondt{{{side}}} {path}", f"rcondf{{{side}}} {path}"]
         next_if_forms = (
             [f"rcondt{{{side}}} ^if{{{side}}}", f"rcondf{{{side}}} ^if{{{side}}}"]
-            if is_first_for_side else []
+            if is_current else []
         )
+        if is_current:
+            scope = "current frontier guard"
+        elif key in lookahead_guards:
+            scope = "lookahead after current frontier"
+        else:
+            scope = "later visible top-level guard"
         out.append(_drop_empty({
             "side": side,
             "position": path,
             "guard": guard,
             "indexed_forms": indexed_forms,
             "next_if_forms": next_if_forms,
-            "scope": "current top-level guard" if is_first_for_side else "additional visible top-level guard",
+            "scope": scope,
         }))
     return out
+
+
+def _guard_scope_paths(
+    view: dict[str, Any],
+) -> tuple[set[tuple[str, str]], set[tuple[str, str]]]:
+    frontier = view.get("program_frontier") if isinstance(view.get("program_frontier"), dict) else {}
+    scope = frontier.get("current_frontier_scope") if isinstance(frontier.get("current_frontier_scope"), dict) else {}
+    current = scope.get("frontier") if isinstance(scope.get("frontier"), dict) else {}
+    current_paths: set[tuple[str, str]] = set()
+    lookahead_paths: set[tuple[str, str]] = set()
+    side_index = {"left": "1", "right": "2"}
+    for side, index in side_index.items():
+        entry = current.get(side) if isinstance(current.get(side), dict) else {}
+        if str(entry.get("head") or "").strip() in {"if", "branch"}:
+            path = str(entry.get("path") or "").strip()
+            if path:
+                current_paths.add((index, path))
+    for entry in scope.get("lookahead_after_frontier") or []:
+        if not isinstance(entry, dict):
+            continue
+        if str(entry.get("head") or "").strip() not in {"if", "branch"}:
+            continue
+        index = side_index.get(str(entry.get("side") or "").strip())
+        path = str(entry.get("path") or "").strip()
+        if index and path:
+            lookahead_paths.add((index, path))
+    return current_paths, lookahead_paths
 
 
 def _rcond_branch_line(item: dict[str, Any]) -> str:
@@ -1435,7 +2005,7 @@ def _surgery_where(view: dict[str, Any], *, include_rcond: bool = True) -> list[
                 pos = ""
             calls = [
                 stmt for stmt in (_setup_statements(left) + _setup_statements(right))
-                if _statement_is_proc_call(stmt)
+                if statement_is_procedure_call(stmt)
             ]
             if calls:
                 load_bearing = _load_bearing_frontier_call(view)
@@ -1523,7 +2093,43 @@ def _surgery_where_from_current_scope(
         out.append(f"{subject}{pos} -- {connector}: {summary}")
     if left or right:
         out.append(_scope_frontier_line(left, right, synchronized=synchronized))
+    tail = (
+        scope.get("tactic_active_tail")
+        if isinstance(scope.get("tactic_active_tail"), dict)
+        else {}
+    )
+    tail_left = tail.get("left") if isinstance(tail.get("left"), dict) else {}
+    tail_right = tail.get("right") if isinstance(tail.get("right"), dict) else {}
+    if (tail_left or tail_right) and not _same_scope_entries(
+        left,
+        right,
+        tail_left,
+        tail_right,
+    ):
+        out.append(
+            _scope_frontier_line(
+                tail_left,
+                tail_right,
+                synchronized=synchronized,
+            ).replace("current frontier:", "suffix tactic boundary:", 1)
+        )
     return [line for line in out if line]
+
+
+def _same_scope_entries(
+    left: dict[str, Any],
+    right: dict[str, Any],
+    other_left: dict[str, Any],
+    other_right: dict[str, Any],
+) -> bool:
+    def key(entry: dict[str, Any]) -> tuple[str, str, str]:
+        return (
+            str(entry.get("path") or ""),
+            str(entry.get("head") or ""),
+            " ".join(str(entry.get("statement") or "").split()),
+        )
+
+    return key(left) == key(other_left) and key(right) == key(other_right)
 
 
 def _scope_setup_subject(
@@ -1569,7 +2175,7 @@ def _scope_setup_has_proc_call(*sides: dict[str, Any]) -> bool:
             continue
         if _setup_annotation_index(summary) != -1:
             return True
-        if any(_statement_is_proc_call(stmt) for stmt in _setup_statements(summary)):
+        if any(statement_is_procedure_call(stmt) for stmt in _setup_statements(summary)):
             return True
     return False
 
@@ -1672,7 +2278,22 @@ def _surgery_lookahead_after_frontier(view: dict[str, Any]) -> list[str]:
     items = scope.get("lookahead_after_frontier")
     if not isinstance(items, list):
         return []
-    valid_items = [item for item in items if isinstance(item, dict)]
+    tail = scope.get("tactic_active_tail") if isinstance(scope.get("tactic_active_tail"), dict) else {}
+    tail_paths = {
+        (side, str((tail.get(side) or {}).get("path") or "").strip())
+        for side in ("left", "right")
+        if isinstance(tail.get(side), dict)
+        and str((tail.get(side) or {}).get("path") or "").strip()
+    }
+    valid_items = [
+        item
+        for item in items
+        if isinstance(item, dict)
+        and (
+            str(item.get("side") or "").strip(),
+            str(item.get("path") or "").strip(),
+        ) not in tail_paths
+    ]
     paired = _paired_lookahead_lines(valid_items)
     if paired:
         return paired
@@ -1779,31 +2400,27 @@ def _branch_sample_alignment(view: dict[str, Any]) -> dict[str, Any]:
     # visible guards need to be normalized before that alignment work.
     if not guards and not (samples and swaps):
         return {}
-    if guards and samples and swaps:
+    has_current_guard = any(
+        item.get("scope") == "current frontier guard" for item in guards
+    )
+    if guards and samples and swaps and has_current_guard:
         display_label = "Guarded branch / random alignment"
         stage = "guarded branch normalization before random coupling"
-    elif guards and samples:
+    elif guards and samples and swaps:
+        display_label = "Random alignment with guarded lookahead"
+        stage = "current random alignment with later guarded branches"
+    elif guards and samples and has_current_guard:
         display_label = "Guarded branch with sample frontier"
         stage = "guarded branch normalization with sample frontier"
+    elif guards and samples:
+        display_label = "Sample frontier with guarded lookahead"
+        stage = "current sample with later guarded branches"
     elif guards:
         display_label = "Guarded branch normalization"
         stage = "guarded branch normalization"
     else:
         display_label = "Random alignment"
         stage = "random alignment preparation"
-    listed = []
-    if guards:
-        listed.append("visible guards")
-    if samples:
-        listed.append("sample frontiers")
-    if swaps:
-        listed.append("swap source frames")
-    listed_text = ", ".join(listed[:-1]) + (" and " if len(listed) > 1 else "") + listed[-1]
-    limitations = ["rcond truth direction"]
-    if swaps:
-        limitations.append("swap offsets")
-    if samples:
-        limitations.append("the rnd coupling map")
     return _drop_empty({
         "display_label": display_label,
         "stage": stage,
@@ -1817,13 +2434,6 @@ def _branch_sample_alignment(view: dict[str, Any]) -> dict[str, Any]:
             })
             for item in swaps[:8]
         ],
-        "contract": (
-            f"The surface lists {listed_text} only. It does not choose "
-            + ", ".join(limitations[:-1])
-            + (" or " if len(limitations) > 1 else "")
-            + limitations[-1]
-            + "."
-        ),
     })
 
 
@@ -1868,7 +2478,8 @@ def _branch_sample_alignment_details(value: Any) -> list[str]:
             forms = next_forms or item.get("indexed_forms") or []
             form_text = " / ".join(_code_span(str(form)) for form in forms[:2])
             guard_text = f" guard {_code_span(_inline_preview(guard, limit=96))}" if guard else ""
-            parts.append(f"side {side} position {pos}: {form_text}{guard_text}")
+            scope = str(item.get("scope") or "visible guard")
+            parts.append(f"{scope}, side {side} position {pos}: {form_text}{guard_text}")
         if parts:
             out.append("Visible guarded ifs: " + "; ".join(parts))
     swaps = value.get("swap_frames") if isinstance(value.get("swap_frames"), list) else []
@@ -1880,26 +2491,15 @@ def _branch_sample_alignment_details(value: Any) -> list[str]:
         ]
         if forms:
             out.append("Swap frames: " + "; ".join(forms))
-    contract = str(value.get("contract") or "").strip()
-    if contract:
-        out.append(contract)
     return out
 
 
 def _extract_seq_positions(view: dict[str, Any]) -> list[str]:
-    cm = view.get("candidate_moves")
-    if not isinstance(cm, dict):
-        return []
-    out: list[str] = []
-    for item in cm.get("moves") or []:
-        if not isinstance(item, dict):
-            continue
-        match = _SEQ_POSITION.match(str(item.get("tactic") or "").strip())
-        if match:
-            line = "`" + match.group(1) + " : (=?).` -- split point given; YOU fill the coupling."
-            if line not in out:
-                out.append(line)
-    return out
+    return [
+        _code_span(item["form"] + " : (=?).")
+        + " -- checked split positions; the cut formula is not selected."
+        for item in checked_seq_sources(view)
+    ]
 
 
 def _extract_swap_offsets(view: dict[str, Any]) -> list[str]:
@@ -1907,61 +2507,17 @@ def _extract_swap_offsets(view: dict[str, Any]) -> list[str]:
 
 
 def _swap_frame_items(view: dict[str, Any]) -> list[dict[str, Any]]:
-    cm = view.get("candidate_moves")
-    if not isinstance(cm, dict):
-        return []
     out: list[dict[str, Any]] = []
-    seen: set[str] = set()
-    for item in cm.get("moves") or []:
-        if not isinstance(item, dict):
-            continue
-        match = _SWAP_OFFSET.match(str(item.get("tactic") or item.get("tactic_shape") or "").strip())
-        if match:
-            form = match.group(1) + " <offset>."
-            if form in seen:
-                continue
-            seen.add(form)
-            display = (
-                _code_span(form) + " -- a swap (static realignment) is "
-                "available at this source; YOU pick the offset that lands the next "
-                "sample/rnd coupling, within the EC-valid range."
-            )
-            side_match = re.search(r"\{([12])\}", form)
-            source_match = re.search(r"swap(?:\{[12]\})?\s+(?:\[\d+\.\.\d+\]|(\d+))", form)
-            out.append(_drop_empty({
-                "form": form,
-                "display": display,
-                "side": side_match.group(1) if side_match else "",
-                "source_position": source_match.group(1) if source_match else "",
-            }))
+    for item in checked_swap_sources(view):
+        form = item["form"]
+        out.append(_drop_empty({
+            **item,
+            "display": (
+                _code_span(form)
+                + " -- checked static-realignment source; the offset is not selected."
+            ),
+        }))
     return out
-
-
-def _invariant_frame(view: dict[str, Any]) -> str | None:
-    found: dict[str, Any] = {}
-
-    def _walk(node: Any) -> None:
-        if isinstance(node, dict):
-            for key, val in node.items():
-                if key in _LIVE_VAR_FACT_KEYS and val and key not in found:
-                    found[key] = val
-                _walk(val)
-        elif isinstance(node, list):
-            for item in node:
-                _walk(item)
-
-    _walk(view.get("facts_and_diagnostics"))
-    vars_src = found.get("preserved_vars") or found.get("live_post_vars") or found.get("prefix_read_vars")
-    if not isinstance(vars_src, list):
-        return None
-    names = [str(v) for v in vars_src if v][:12]
-    if not names:
-        return None
-    return (
-        "must relate " + ", ".join("`" + name + "`" for name in names)
-        + " -- the live variables are a liveness fact; the relating invariant is yours "
-        "to write, in whatever form fits; do NOT assume an `={...}` shape."
-    )
 
 
 def _render_surgery_skeleton(view: dict[str, Any]) -> dict[str, Any] | None:
@@ -1970,72 +2526,20 @@ def _render_surgery_skeleton(view: dict[str, Any]) -> dict[str, Any] | None:
     lookahead = _surgery_lookahead_after_frontier(view)
     positions = _extract_seq_positions(view)
     swaps = _extract_swap_offsets(view)
-    frame = _invariant_frame(view)
-    if not where and not branch_sample and not lookahead and not positions and not swaps and not frame:
+    if not where and not branch_sample and not lookahead and not positions and not swaps:
         return None
     skeleton: dict[str, Any] = {
         "where": where or ["deep procedure body -- read the goal's two sides."],
     }
     if branch_sample:
         skeleton["branch_sample_alignment"] = branch_sample
-    staging = _frontier_residual_staging(view)
-    if staging:
-        skeleton["frontier_residual_staging"] = staging
     if lookahead:
         skeleton["lookahead_after_frontier"] = lookahead
     if positions:
         skeleton["split_points"] = positions
     if swaps and not branch_sample:
         skeleton["swap_offsets"] = swaps
-    if frame:
-        skeleton["invariant_frame"] = frame
     return skeleton
-
-
-def _frontier_residual_staging(view: dict[str, Any]) -> list[str]:
-    samples = _current_sample_frontiers(view)
-    if not samples:
-        return []
-    shapes = _list_residual_shapes(view)
-    if not shapes:
-        return []
-    frontier_bits: list[str] = []
-    for item in samples[:2]:
-        if not isinstance(item, dict):
-            continue
-        side = str(item.get("side") or "").strip()
-        statement = str(item.get("statement") or "").strip()
-        if statement:
-            frontier_bits.append(f"{side} {_code_span(statement)}")
-    if not frontier_bits:
-        return []
-    return [
-        "live sample frontier remains: " + "; ".join(frontier_bits),
-        "list/index residual shapes visible after the frontier: " + ", ".join(shapes),
-        "SMT/rewrite lemmas apply to the exposed residual; this fact does not choose the `rnd`/`skip`/coupling map.",
-    ]
-
-
-def _list_residual_shapes(view: dict[str, Any]) -> list[str]:
-    goal = _goal_surface(view)
-    text = str(goal.get("text") or "")
-    if not text:
-        return []
-    compact = " ".join(text.split())
-    patterns = [
-        ("nth", r"\bnth\b"),
-        ("size", r"\bsize\b"),
-        ("map", r"\b(?:map|List\.map)\b"),
-        ("cat/list append", r"\+\+"),
-        ("drop", r"\bdrop\b"),
-        ("take", r"\btake\b"),
-    ]
-    shapes = [label for label, pat in patterns if re.search(pat, compact)]
-    if "nth" in shapes:
-        return shapes[:5]
-    if "size" in shapes and any(shape in shapes for shape in ("map", "cat/list append", "drop", "take")):
-        return shapes[:5]
-    return []
 
 
 def _probability_goal_shape(text: str) -> str:
@@ -2203,140 +2707,6 @@ def _compact_value(value: Any, *, limit: int = 2000) -> Any:
     return text[: limit - 1] + "..."
 
 
-def _recover_actions(
-    actions: tuple[PanelAction, ...],
-    applicable: list[str],
-    *,
-    include_context_lookups: bool = False,
-) -> list[PanelAction]:
-    applicable = [
-        family for family in applicable
-        if family in _SUPPORTED_TACTIC_FORM_NAMES
-    ]
-    context_actions = [
-        action for action in actions
-        if action.intent in {"operator_lemmas", "lookup_symbol"}
-    ][:8]
-    if applicable:
-        tactic_actions = [
-            action for action in actions
-            if action.intent == "tactic_forms"
-            and str(action.payload.get("name") or "") in set(applicable)
-        ]
-        if tactic_actions:
-            return tactic_actions + (context_actions if include_context_lookups else [])
-        generated = [
-            PanelAction(
-                intent="tactic_forms",
-                payload={"name": family},
-                label=f"tactic_forms: {family}",
-                intent_class=INTENT_CLASS_CONTEXT_TOPIC,
-                read_only=True,
-                choices={"name": list(applicable)},
-                description="valid EasyCrypt forms for this tactic family",
-                source_refs=("surface_composer.recovery",),
-                eligibility_reason="tactic family matches the current proof phase",
-                state_scope="current_phase",
-            )
-            for family in applicable
-        ]
-        return generated + (context_actions if include_context_lookups else [])
-    return [
-        action for action in actions
-        if action.intent in {"tactic_forms", "operator_lemmas"}
-    ][:8]
-
-
-def _pure_actions(
-    view: dict[str, Any],
-    actions: tuple[PanelAction, ...],
-) -> list[PanelAction]:
-    out = list(actions)
-    pt = view.get("pure_tail_surface") if isinstance(view.get("pure_tail_surface"), dict) else {}
-    if _pure_tail_has_closing_lemma_route(pt):
-        has_apply = any(
-            action.intent == "tactic_forms"
-            and str(action.payload.get("name") or "").strip() == "apply"
-            for action in out
-        )
-        if not has_apply:
-            out.append(PanelAction(
-                intent="tactic_forms",
-                payload={"name": "apply"},
-                label="tactic_forms: apply",
-                intent_class=INTENT_CLASS_CONTEXT_TOPIC,
-                read_only=True,
-                description="valid EasyCrypt forms for applying a visible closing lemma",
-                source_refs=("pure_tail_surface.conclusion_lemma_routes", "pure_tail_surface.inductive_intro_routes"),
-            ))
-    arithmetic = (
-        pt.get("integer_arithmetic_surface")
-        if isinstance(pt.get("integer_arithmetic_surface"), dict) else {}
-    )
-    split_candidates = arithmetic.get("split_candidates") if isinstance(arithmetic, dict) else []
-    if split_candidates and "case" in _SUPPORTED_TACTIC_FORM_NAMES:
-        has_case = any(
-            action.intent == "tactic_forms"
-            and str(action.payload.get("name") or "").strip() == "case"
-            for action in out
-        )
-        if not has_case:
-            out.append(PanelAction(
-                intent="tactic_forms",
-                payload={"name": "case"},
-                label="tactic_forms: case",
-                intent_class=INTENT_CLASS_CONTEXT_TOPIC,
-                read_only=True,
-                description="valid EasyCrypt forms for splitting a visible condition",
-                source_refs=("pure_tail_surface.integer_arithmetic_surface.split_candidates",),
-            ))
-    return out
-
-
-def _pure_tail_has_closing_lemma_route(pt: dict[str, Any]) -> bool:
-    for key in ("conclusion_lemma_routes", "inductive_intro_routes"):
-        for item in pt.get(key) or []:
-            if not isinstance(item, dict):
-                continue
-            submit = str(item.get("submit") or "").strip()
-            if re.match(r"^(?:exact|apply)\b", submit):
-                return True
-    return False
-
-
-def _deep_actions(
-    view: dict[str, Any],
-    actions: tuple[PanelAction, ...],
-) -> list[PanelAction]:
-    out = list(actions)
-    families: list[str] = []
-    if _current_scope_setup_has_proc_call(view):
-        families.append("inline")
-    if _load_bearing_frontier_call(view):
-        families.extend(["inline", "call"])
-    if _extract_seq_positions(view):
-        families.append("seq")
-    for family in families:
-        if family not in _SUPPORTED_TACTIC_FORM_NAMES:
-            continue
-        if any(
-            action.intent == "tactic_forms"
-            and str(action.payload.get("name") or "").strip() == family
-            for action in out
-        ):
-            continue
-        out.append(PanelAction(
-            intent="tactic_forms",
-            payload={"name": family},
-            label=f"tactic_forms: {family}",
-            intent_class=INTENT_CLASS_CONTEXT_TOPIC,
-            read_only=True,
-            description="valid EasyCrypt forms for this tactic family",
-            source_refs=("surface_composer.deep_surgery",),
-        ))
-    return out
-
-
 def _current_scope_setup_has_proc_call(view: dict[str, Any]) -> bool:
     pf = view.get("program_frontier") if isinstance(view.get("program_frontier"), dict) else {}
     scope = pf.get("current_frontier_scope") if isinstance(pf.get("current_frontier_scope"), dict) else {}
@@ -2344,89 +2714,6 @@ def _current_scope_setup_has_proc_call(view: dict[str, Any]) -> bool:
     left_setup = setup.get("left") if isinstance(setup.get("left"), dict) else {}
     right_setup = setup.get("right") if isinstance(setup.get("right"), dict) else {}
     return _scope_setup_has_proc_call(left_setup, right_setup)
-
-
-def _obligation_shape_panel_facts(pt: dict[str, Any]) -> list[PanelFact]:
-    shape = (
-        pt.get("obligation_shape_surface")
-        if isinstance(pt.get("obligation_shape_surface"), dict) else {}
-    )
-    if not shape:
-        return []
-    facts: list[PanelFact] = []
-    premises = []
-    for item in shape.get("implication_premises") or []:
-        if not isinstance(item, dict):
-            continue
-        label = _inline_text(item.get("shape"))
-        text = _inline_text(item.get("text"))
-        if text:
-            premises.append(f"{label}: {text}" if label else text)
-    if premises:
-        facts.append(PanelFact(
-            "implication_premises",
-            "Pending premises",
-            premises,
-            kind="state_fact",
-            source_refs=("pure_tail_surface.obligation_shape_surface.implication_premises",),
-        ))
-    obligations = []
-    for item in shape.get("conclusion_obligations") or []:
-        if not isinstance(item, dict):
-            continue
-        label = _inline_text(item.get("shape"))
-        text = _inline_text(item.get("text"))
-        if text:
-            obligations.append(f"{label}: {text}" if label else text)
-    if obligations:
-        facts.append(PanelFact(
-            "conclusion_obligations",
-            "Conclusion obligations",
-            obligations,
-            kind="state_fact",
-            source_refs=("pure_tail_surface.obligation_shape_surface.conclusion_obligations",),
-        ))
-    return facts
-
-
-def _memory_translation_panel_facts(pt: dict[str, Any]) -> list[PanelFact]:
-    memory = (
-        pt.get("ambient_memory_translation")
-        if isinstance(pt.get("ambient_memory_translation"), dict) else {}
-    )
-    if not memory:
-        return []
-    terms = [
-        _inline_text(term)
-        for term in memory.get("decorated_terms") or []
-        if _inline_text(term)
-    ]
-    decorations = [
-        _inline_text(decoration)
-        for decoration in memory.get("visible_decorations") or []
-        if _inline_text(decoration)
-    ]
-    bindings = [
-        _inline_text(binding).rstrip(":")
-        for binding in memory.get("introduced_memory_bindings") or []
-        if _inline_text(binding)
-    ]
-    if not any((terms, decorations, bindings)):
-        return []
-    parts: list[str] = []
-    if terms:
-        parts.append("terms: " + ", ".join(terms[:8]))
-    if bindings:
-        parts.append("introduced memory: " + ", ".join(bindings[:4]))
-    elif decorations:
-        parts.append("decorations: " + ", ".join(decorations[:6]))
-    return [PanelFact(
-        "memory_decorated_terms",
-        "Memory-decorated terms",
-        "; ".join(parts),
-        kind="state_fact",
-        source_refs=("pure_tail_surface.ambient_memory_translation",),
-    )]
 
 
 def _iter_successor_panel_facts(pt: dict[str, Any]) -> list[PanelFact]:
@@ -2467,25 +2754,6 @@ def _integer_arithmetic_panel_facts(pt: dict[str, Any]) -> list[PanelFact]:
     if not arithmetic:
         return []
     facts: list[PanelFact] = []
-
-    shapes = [
-        _inline_text(item)
-        for item in arithmetic.get("visible_shapes") or []
-        if _inline_text(item)
-    ]
-    if shapes:
-        facts.append(PanelFact(
-            "integer_arithmetic_shapes",
-            "Integer/list arithmetic residual",
-            "; ".join(
-                shape
-                .replace("integer division %/", "%/")
-                .replace("integer modulo %%", "%%")
-                for shape in shapes
-            ),
-            kind="state_fact",
-            source_refs=("pure_tail_surface.integer_arithmetic_surface.visible_shapes",),
-        ))
 
     split_lines: list[str] = []
     for item in arithmetic.get("split_candidates") or []:
@@ -2547,6 +2815,115 @@ def _integer_arithmetic_panel_facts(pt: dict[str, Any]) -> list[PanelFact]:
             source_refs=("pure_tail_surface.integer_arithmetic_surface.lemma_families",),
         ))
     return facts
+
+
+def _list_normalization_panel_facts(pt: dict[str, Any]) -> list[PanelFact]:
+    surface = (
+        pt.get("list_normalization_surface")
+        if isinstance(pt.get("list_normalization_surface"), dict) else {}
+    )
+    if not surface:
+        return []
+
+    details: list[dict[str, Any]] = []
+    for item in surface.get("lemma_families") or []:
+        if not isinstance(item, dict):
+            continue
+        shape = _inline_text(item.get("shape"))
+        lemmas = [
+            _inline_text(lemma)
+            for lemma in item.get("lemma_names") or []
+            if _inline_text(lemma)
+        ]
+        if not shape or not lemmas:
+            continue
+        details.append(_drop_empty({
+            "shape": shape,
+            "loaded_family": lemmas,
+            "side_condition": _inline_text(item.get("side_condition")),
+        }))
+
+    for item in surface.get("nth_map_terms") or []:
+        if not isinstance(item, dict):
+            continue
+        details.append(_drop_empty({
+            "term": "nth over map",
+            "source_list": _inline_text(item.get("source_list")),
+            "index": _inline_text(item.get("index")),
+            "side_condition": _inline_text(item.get("side_condition")),
+            "side_condition_status": item.get("side_condition_status"),
+            "supporting_hypotheses": item.get("supporting_hypotheses"),
+        }))
+
+    for item in surface.get("prefix_successor_chains") or []:
+        if not isinstance(item, dict):
+            continue
+        details.append(_drop_empty({
+            "shape": _inline_text(item.get("shape")),
+            "term": (
+                f"map {item.get('mapper')} (take {item.get('index')} "
+                f"{item.get('source_list')})"
+            ),
+            "loaded_chain": [
+                _inline_text(step.get("lemma"))
+                for step in item.get("lemma_chain") or []
+                if isinstance(step, dict) and _inline_text(step.get("lemma"))
+            ],
+            "side_condition": _inline_text(item.get("side_condition")),
+            "side_condition_status": item.get("side_condition_status"),
+            "supporting_premises": item.get("supporting_premises"),
+        }))
+
+    if not details:
+        return []
+    return [PanelFact(
+        "list_normalization_routes",
+        "List normalization routes",
+        details,
+        summary=(
+            "Nested list terms in the current conclusion match these loaded stdlib "
+            "families. Any side-condition status is derived only from named local "
+            "hypotheses visible in this goal."
+        ),
+        details=details,
+        audit_payload=surface,
+        kind="state_fact",
+        source_refs=("pure_tail_surface.list_normalization_surface",),
+    )]
+
+
+def _map_update_transport_panel_facts(pt: dict[str, Any]) -> list[PanelFact]:
+    surface = (
+        pt.get("map_update_transport_surface")
+        if isinstance(pt.get("map_update_transport_surface"), dict) else {}
+    )
+    if not surface:
+        return []
+    lemmas = [
+        _inline_text(surface.get("lookup_normalization_lemma")),
+        _inline_text(surface.get("left_inverse_lemma")),
+    ]
+    value = _drop_empty({
+        "shape": _inline_text(surface.get("shape")),
+        "pointwise_relation": _inline_text(surface.get("pointwise_relation")),
+        "key_transform": _inline_text(surface.get("key_transform")),
+        "update_key_pair": surface.get("update_key_pair"),
+        "loaded_support": [lemma for lemma in lemmas if lemma],
+        "mechanical_effect": _inline_text(surface.get("effect")),
+    })
+    return [PanelFact(
+        "map_update_transport",
+        "Finite-map key transport",
+        value,
+        summary=(
+            "A visible pointwise map relation and corresponding transformed update keys "
+            "connect get/set normalization with loaded inverse evidence."
+        ),
+        details=value,
+        audit_payload=surface,
+        kind="state_fact",
+        source_refs=("pure_tail_surface.map_update_transport_surface",),
+    )]
 
 
 def _inline_text(value: Any) -> str:

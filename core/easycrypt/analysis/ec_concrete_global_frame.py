@@ -251,7 +251,7 @@ def write_map_for_goal(
         "fields": rows,
         "divergent_module_writes": focus_rows,
         "note": (
-            "Mechanical write-map (static source scan, no probe). `written_by` is "
+            "Mechanical write-map from static source analysis. `written_by` is "
             "every module body that mutates the field. A field with NO writer here "
             "is preserved by the call (clone-owned / read-only) → `={field}` holds "
             "trivially. Fields a divergent module writes are where the coupling "

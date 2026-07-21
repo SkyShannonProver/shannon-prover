@@ -105,7 +105,7 @@ def test_phase_emits_runnable_for_accepted_canonical_inv() -> None:
         assert rec["producer"] == "AUTO-ABSTRACT-ADV-CALL"
         assert (
             rec["metadata"]["epistemic_status"]
-            == "daemon_probe_accepted"
+            == "easycrypt_preflight_accepted"
         )
         assert rec["metadata"]["abstract_modules"] == ["A"]
     # Daemon was probed for all 3 canonical shapes; 2 accepted, 1 rejected.

@@ -649,7 +649,7 @@ def procedure_body_menu_items(
                 "use plain wp first when the sampling statement is still behind assignments",
                 *sampling_ordering_preconditions(obligations),
                 "choose between identity, translation/affine, boolean flip, product/componentwise, or one-sided lossless forms from the relation evidence",
-                "probe the filled tactic with EasyCrypt; this template is not a verified tactic",
+                "this template is not verified; a manager commit will report EasyCrypt's verdict",
             ],
             preserves=["sampling relation"],
             cost_factors={
@@ -762,7 +762,7 @@ def procedure_body_menu_items(
         if asymmetric_region.get("available"):
             sim_why = (
                 "The parser sees a sim-shaped residual, but ProcedureIR also "
-                "sees one-sided extra state updates. Treat sim as a cheap probe, "
+                "sees one-sided extra state updates. Treat sim as an unverified candidate, "
                 "not evidence that the instrumentation state is irrelevant."
             )
         one_sided = _dict(frontend.get("one_sided_call_site_summary"))
@@ -770,20 +770,20 @@ def procedure_body_menu_items(
         if one_sided.get("available"):
             sim_why = (
                 "The parser sees a sim-shaped residual, but ProcedureIR also "
-                "sees a one-sided call site. Treat sim as a cheap probe, not "
+                "sees a one-sided call site. Treat sim as an unverified candidate, not "
                 "evidence that the side-specific call/result bridge is absent."
             )
         elif result_map.get("direct_res_equality_risky"):
             sim_why = (
                 "The parser sees a sim-shaped residual, but ProcedureIR also "
                 "sees different result-producing expressions. Treat sim as a "
-                "cheap probe after auditing the result-expression bridge."
+                "candidate only after auditing the result-expression bridge."
             )
         items.append(menu_item(
             "procedure_sim_residual",
             tactic="sim.",
             tactic_family="procedure_transform",
-            action_type="probe_tactic",
+            action_type="tactic_candidate",
             cost="cheap",
             why=sim_why,
             preserves=["synchronized residual structure"],
@@ -842,7 +842,7 @@ def procedure_body_menu_items(
                 "procedure_auto_residual",
                 tactic=close,
                 tactic_family="ambient_close",
-                action_type="probe_tactic",
+                action_type="tactic_candidate",
                 cost="cheap",
                 why=auto_why,
                 preconditions=auto_preconditions,
@@ -865,7 +865,7 @@ def procedure_body_menu_items(
                 preconditions=[
                     "try the cheaper auto residual closer first when available",
                 ],
-                preserves=["proof state until probed"],
+                preserves=["proof state until submitted"],
             ),
         ])
     return items

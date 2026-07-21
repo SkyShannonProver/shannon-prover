@@ -9,7 +9,6 @@ import _pathsetup  # noqa: F401,E402  (repo root on sys.path)
 
 from core.easycrypt.analysis.ec_sampling_obligations import (  # noqa: E402
     build_sampling_obligation_frontend,
-    distribution_fact_candidates,
     sample_distribution,
     sample_var,
 )
@@ -20,7 +19,6 @@ def test_sample_var_and_distribution_parse_statement_fallbacks() -> None:
 
     assert sample_var(sample, sample["text"]) == "s"
     assert sample_distribution(sample, sample["text"]) == "dT"
-    assert "dT_uffu" in distribution_fact_candidates("dT")
 
 
 def test_sampling_frontend_classifies_translation_coupling() -> None:
@@ -63,7 +61,7 @@ def test_sampling_frontend_classifies_translation_coupling() -> None:
     assert affine["tactic_template"] == (
         "rnd (fun x => x + mask{2}) (fun x => x - mask{2})."
     )
-    assert "dT_funi" in obligation["required_evidence"]["candidate_distribution_facts"]
+    assert "candidate_distribution_facts" not in obligation["required_evidence"]
 
 
 def test_sampling_frontend_pairs_same_distribution_before_one_sided() -> None:

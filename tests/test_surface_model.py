@@ -3,14 +3,21 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
+import pytest
+
 from workflow.surface_composer import compose_surface_model
 from workflow.surface_action_preflight import (
     action_preflight_key,
     derived_preflight_candidates,
+    matching_preflight_submission,
     preflight_result_for_action,
     surface_preflight_candidates,
 )
-from workflow.surface_model import surface_model_to_dict
+from workflow.surface_action_eligibility import (
+    action_eligibility,
+    preflight_candidate_state_eligibility,
+)
+from workflow.surface_model import PanelAction, surface_model_to_dict
 from workflow.surface_turn_model import compose_surface_turn, render_surface_turn_markdown
 
 
@@ -61,21 +68,31 @@ def test_tactic_form_choices_have_one_contract_owner() -> None:
     composer = (ROOT / "workflow" / "surface_composer.py").read_text(encoding="utf-8")
     eligibility = (ROOT / "workflow" / "surface_action_eligibility.py").read_text(encoding="utf-8")
     owner = (ROOT / "workflow" / "surface_tactic_forms.py").read_text(encoding="utf-8")
+    panels = (ROOT / "workflow" / "surface_panels.py").read_text(encoding="utf-8")
 
-    assert "from workflow.surface_tactic_forms import tactic_form_names_for_state" in composer
-    assert "from workflow.surface_tactic_forms import" in eligibility
+    assert "from workflow.surface_tactic_forms import compose_tactic_form_actions" in composer
+    assert "from workflow.surface_tactic_forms import eligible_tactic_form_names" in eligibility
     assert "def eligible_tactic_form_names" in owner
-    assert "def tactic_form_names_for_state" in owner
-    assert "def tactic_form_names_for_state" not in eligibility
+    assert "def compose_tactic_form_actions" in owner
+    assert "def tactic_form_names_for_state" not in owner
     assert "_PROGRAM_TACTIC_FORMS" not in eligibility
+    assert "def _plain_actions" not in composer
+    assert "def _pure_actions" not in panels
+    assert "def _deep_actions" not in panels
 
 
 def test_panel_action_policy_has_one_contract_owner() -> None:
+    composer = (ROOT / "workflow" / "surface_composer.py").read_text(encoding="utf-8")
     eligibility = (ROOT / "workflow" / "surface_action_eligibility.py").read_text(encoding="utf-8")
     owner = (ROOT / "workflow" / "surface_action_policy.py").read_text(encoding="utf-8")
+    panels = (ROOT / "workflow" / "surface_panels.py").read_text(encoding="utf-8")
 
     assert "def panel_allowed_intents" in owner
     assert "PANEL_INTENTS" in owner
+    assert "filter_surface_actions" in composer
+    assert "filter_surface_facts" in composer
+    assert "filter_surface_actions" not in panels
+    assert "filter_surface_facts" not in panels
     assert "panel_allowed_intents" in eligibility
     assert "_PANEL_INTENTS" not in eligibility
 
@@ -205,7 +222,7 @@ def test_read_only_context_result_does_not_include_proof_state_decision_context(
         "kind": "prover_workspace_view",
         "proof_status": {"status": "open", "current_layer": "procedure_body"},
         "current_goal": {"lines": ["Current goal", "x = y"]},
-        "decision_context": {"up_to_bad_call": {
+        "application_context": {"up_to_bad_call": {
             "active_bad_events": ["UFCMA.bad1", "UFCMA.bad2"],
         }},
         "last_result": {
@@ -256,7 +273,7 @@ def test_surface_actions_collapse_repeated_choice_variants_once() -> None:
     assert actions[0]["choices"] == {"name": ["rewrite", "apply"]}
 
 
-def test_tactic_form_single_choice_still_renders_as_choice_action() -> None:
+def test_common_pure_tactic_form_is_not_a_persistent_reference_action() -> None:
     view = {
         "kind": "prover_workspace_view",
         "proof_status": {
@@ -270,10 +287,9 @@ def test_tactic_form_single_choice_still_renders_as_choice_action() -> None:
         ]},
     }
     model = surface_model_to_dict(compose_surface_model(view, "l4_checked_action_surface"))
-    actions = [a for a in model["actions"] if a["intent"] == "tactic_forms"]
-    assert len(actions) == 1
-    assert actions[0]["payload"] == {"name": "<name>"}
-    assert actions[0]["choices"] == {"name": ["rewrite"]}
+    assert "tactic_forms" not in {
+        action["intent"] for action in model.get("actions", [])
+    }
 
 
 def test_recover_surface_never_advertises_unsupported_tactic_form_choices() -> None:
@@ -497,7 +513,7 @@ def test_call_site_panel_collapses_raw_evidence_into_display_fact() -> None:
         "source": "source_equiv_declaration",
         "call_candidate_kind": "direct_current_call",
     }]
-    assert facts["call_site_raw_evidence"]["role"] == "audit_only"
+    assert "call_site_raw_evidence" not in facts
     assert "named_handles" not in facts
     assert "frontier_live_named_handles" not in facts
     assert "callable_now" not in facts
@@ -611,7 +627,74 @@ def test_operator_lemmas_is_not_dynamically_preflighted() -> None:
     assert "operator_lemmas" not in {item["intent"] for item in candidates}
 
 
-def test_operator_lemmas_surface_uses_goal_derived_choices_without_preflight() -> None:
+def test_preflight_state_gate_rejects_future_call_context() -> None:
+    view = {
+        "kind": "prover_workspace_view",
+        "proof_status": {"current_layer": "procedure_body", "goal_type": "pRHL"},
+        "current_goal": {"lines": ["x <- 0", "later: y <@ M.f()"]},
+        "program_frontier": {"current_frontier_scope": {"frontier": {
+            "kind": "assignment",
+            "left": {"head": "assignment", "statement": "x <- 0"},
+        }}},
+        "call_site_surface": {
+            "live_call_sites": [{
+                "procedure": "M.f",
+                "is_frontier_call": False,
+                "requires_cut_to_frontier": True,
+            }],
+        },
+    }
+
+    assert not preflight_candidate_state_eligibility(
+        view, "call_site_options", {}
+    ).eligible
+    assert not preflight_candidate_state_eligibility(
+        view, "call_invariant_skeleton", {}
+    ).eligible
+
+
+def test_preflight_state_gate_allows_current_call_frontier() -> None:
+    view = {
+        "kind": "prover_workspace_view",
+        "proof_status": {"current_layer": "call_site", "goal_type": "pRHL"},
+        "current_goal": {"lines": ["x <@ M.f()", "post"]},
+        "program_frontier": {"current_frontier_scope": {"frontier": {
+            "kind": "call",
+            "left": {"head": "call", "statement": "x <@ M.f()"},
+        }}},
+    }
+
+    assert preflight_candidate_state_eligibility(
+        view, "call_site_options", {}
+    ).eligible
+
+
+def test_preflight_state_gate_requires_concrete_context_for_call_subgoals() -> None:
+    generic_call = {
+        "kind": "prover_workspace_view",
+        "proof_status": {"current_layer": "call_site", "goal_type": "pRHL"},
+        "current_goal": {"lines": ["x <@ M.f()", "post"]},
+        "program_frontier": {"current_frontier_scope": {"frontier": {
+            "kind": "call",
+            "left": {"head": "call", "statement": "x <@ M.f()"},
+        }}},
+    }
+    concrete = {
+        **generic_call,
+        "call_site_surface": {
+            "frontier_live_named_handles": [{"symbol": "equiv_f"}],
+        },
+    }
+
+    assert not preflight_candidate_state_eligibility(
+        generic_call, "call_subgoals", {"invariant": "I"}
+    ).eligible
+    assert preflight_candidate_state_eligibility(
+        concrete, "call_subgoals", {"invariant": "I"}
+    ).eligible
+
+
+def test_operator_lemmas_is_not_a_persistent_surface_action() -> None:
     base = {
         "kind": "prover_workspace_view",
         "proof_status": {"current_layer": "ambient_logic", "goal_type": "ambient"},
@@ -623,13 +706,35 @@ def test_operator_lemmas_surface_uses_goal_derived_choices_without_preflight() -
     }
 
     hit_model = surface_model_to_dict(compose_surface_model(base, PROFILE))
-    ops = [
-        op
-        for action in hit_model["actions"]
-        if action["intent"] == "operator_lemmas"
-        for op in action["choices"]["operator"]
-    ]
-    assert ops == ["(^)"]
+    assert "operator_lemmas" not in {
+        action["intent"] for action in hit_model.get("actions", [])
+    }
+
+
+def test_operator_lemmas_is_hidden_at_program_frontier() -> None:
+    view = {
+        "kind": "prover_workspace_view",
+        "proof_status": {"current_layer": "procedure_body", "goal_type": "pRHL"},
+        "current_goal": {"lines": [
+            "&1: {x : int}",
+            "&2: {x : int}",
+            "----",
+            "x <- x + 1   (1)  x <- x + 1",
+        ]},
+        "program_frontier": {"current_frontier_scope": {"frontier": {
+            "kind": "assignment",
+            "left": {"head": "assignment", "statement": "x <- x + 1"},
+            "right": {"head": "assignment", "statement": "x <- x + 1"},
+        }}},
+        "inspect_lookup_handles": {"ask_manager_for": [
+            {"intent": "operator_lemmas", "payload": {"operator": "OPERATOR"}},
+        ]},
+    }
+
+    model = surface_model_to_dict(compose_surface_model(view, PROFILE))
+    assert "operator_lemmas" not in {
+        action["intent"] for action in model.get("actions", [])
+    }
 
 
 def test_pure_integer_residual_surfaces_mechanical_split_and_div_mod_choices() -> None:
@@ -661,8 +766,7 @@ def test_pure_integer_residual_surfaces_mechanical_split_and_div_mod_choices() -
         for fact in model["primary_panel"].get("facts", [])
     }
     assert "integer_arithmetic_surface" not in facts
-    assert "%/" in facts["integer_arithmetic_shapes"]
-    assert "%%" in facts["integer_arithmetic_shapes"]
+    assert "integer_arithmetic_shapes" not in facts
     assert facts["integer_arithmetic_split_candidates"][0].startswith(
         "block_size <= size p from size (drop block_size p)"
     )
@@ -672,25 +776,10 @@ def test_pure_integer_residual_surfaces_mechanical_split_and_div_mod_choices() -
         for family in facts["integer_arithmetic_lemma_families"]
     )
 
-    tactic_choices = [
-        name
-        for action in model["actions"]
-        if action["intent"] == "tactic_forms"
-        for name in action["choices"]["name"]
-    ]
-    assert {"rewrite", "case"} <= set(tactic_choices)
-
-    operator_choices = [
-        op
-        for action in model["actions"]
-        if action["intent"] == "operator_lemmas"
-        for op in action["choices"]["operator"]
-    ]
-    assert "(%/)" in operator_choices
-    assert "(%%)" in operator_choices
+    assert not model.get("actions")
 
 
-def test_pure_panel_surfaces_named_memory_decorations_as_short_fact() -> None:
+def test_pure_panel_does_not_repeat_memory_decorations_from_goal() -> None:
     from workflow.proof_management.analyzers.pure_tail import pure_tail_surface
 
     goal_lines = [
@@ -712,10 +801,257 @@ def test_pure_panel_surfaces_named_memory_decorations_as_short_fact() -> None:
         for fact in model["primary_panel"].get("facts", [])
     }
 
-    assert "memory_decorated_terms" in facts
-    assert "p{m}" in facts["memory_decorated_terms"]
-    assert "introduced memory: &m" in facts["memory_decorated_terms"]
+    assert "memory_decorated_terms" not in facts
     assert "ambient_memory_translation" not in facts
+
+
+def test_pure_panel_renders_typed_distribution_facts_without_tactic_recipe() -> None:
+    view = {
+        "kind": "prover_workspace_view",
+        "proof_status": {
+            "status": "open",
+            "remaining_goals": 2,
+            "current_layer": "ambient_logic",
+            "goal_type": "ambient",
+        },
+        "current_goal": {
+            "lines": [
+                "Current goal",
+                "----",
+                "mu1 [0..bound - 1] k = inv bound%r",
+            ],
+        },
+        "pure_tail_surface": {
+            "state": "ambient_pure_tail",
+            "distribution_certificates": [{
+                "lemma": "dinter1E",
+                "certificate_kind": "finite_interval_point_mass",
+                "distribution": "[0..bound - 1]",
+                "point": "k",
+                "instantiated_identity": (
+                    "mu1 (dinter 0 (bound - 1)) k = "
+                    "if 0 <= k <= bound - 1 then 1%r / bound%r else 0%r"
+                ),
+                "interval_cardinality": "bound",
+                "loaded_supporting_facts": [{
+                    "lemma": "bound_pos",
+                    "fact": "0 < bound",
+                }],
+            }],
+        },
+        "inspect_lookup_handles": {"ask_manager_for": []},
+    }
+
+    model = surface_model_to_dict(compose_surface_model(view, PROFILE))
+    facts = {
+        fact["key"]: fact
+        for fact in model["primary_panel"].get("facts", [])
+    }
+    certificate = facts["distribution_certificates"]
+
+    assert certificate["actionability"] == "high"
+    assert certificate["value"]["matches"][0]["lemma"] == "dinter1E"
+    assert certificate["value"]["loaded_cardinality_facts"][0]["lemma"] == "bound_pos"
+    assert "rewrite dinter1E" not in json.dumps(certificate)
+
+    turn = compose_surface_turn(
+        view,
+        PROFILE,
+        handled_intent={"intent": "commit_tactic", "payload": {"tactic": "rnd."}},
+        ok=True,
+    )
+    markdown = render_surface_turn_markdown(turn)
+    assert "dinter1E" in markdown
+    assert "bound_pos: 0 < bound" in markdown
+
+
+def test_fact_eligibility_rejects_unregistered_panel_fact_keys() -> None:
+    from workflow.surface_fact_eligibility import (
+        fact_eligibility,
+        validate_surface_fact_contract,
+    )
+    from workflow.surface_model import PanelFact
+
+    unknown = fact_eligibility(
+        {},
+        "pure_logic",
+        PanelFact("future_guess", "Future guess", "some text"),
+    )
+    known = fact_eligibility(
+        {},
+        "pure_logic",
+        PanelFact("local_hypothesis_graph", "Local order chains", ["H1", "H2"]),
+    )
+
+    assert unknown.eligible is False
+    assert "presentation contract" in unknown.reason
+    assert known.eligible is True
+    with pytest.raises(ValueError, match="future_guess"):
+        validate_surface_fact_contract(
+            "pure_logic",
+            [PanelFact("future_guess", "Future guess", "some text")],
+        )
+
+
+def test_filtered_empty_primary_panel_is_not_rendered() -> None:
+    view = {
+        "proof_status": {
+            "status": "open",
+            "remaining_goals": 1,
+            "remaining_goals_known": True,
+            "current_layer": "relational_program",
+            "goal_type": "pRHL",
+        },
+        "current_goal": {
+            "goal_type": "pRHL",
+            "lines": ["Current goal", "pre = true", "post = true"],
+        },
+        "program_frontier": {"current_frontier_scope": {}},
+        "inspect_lookup_handles": {"ask_manager_for": []},
+    }
+
+    model = surface_model_to_dict(compose_surface_model(view, PROFILE))
+
+    assert model.get("primary_panel") is None
+
+
+def test_relational_program_surfaces_only_typed_exact_named_routes() -> None:
+    view = {
+        "proof_status": {
+            "status": "open",
+            "remaining_goals": 1,
+            "remaining_goals_known": True,
+            "current_layer": "relational_program",
+            "goal_type": "equiv",
+        },
+        "current_goal": {
+            "goal_type": "equiv",
+            "lines": ["Current goal", "pre = true", "Proc1.f ~ Proc2.f", "post = true"],
+        },
+        "application_context": {
+            "loaded_named_routes": [{
+                "route_kind": "exact",
+                "symbol": "CBC_Oracle_enc_eq",
+                "matched_form": "exact/(CBC_Oracle_enc_eq P P' I Hf).",
+                "verification_status": "ProofIR name and current-goal shape match",
+            }],
+        },
+        "program_frontier": {"current_frontier_scope": {}},
+        "inspect_lookup_handles": {"ask_manager_for": []},
+    }
+
+    model = surface_model_to_dict(compose_surface_model(view, PROFILE))
+
+    panel = model["primary_panel"]
+    assert panel["panel_id"] == "relational_program"
+    fact = panel["facts"][0]
+    assert fact["key"] == "loaded_named_routes"
+    assert fact["value"][0]["symbol"] == "CBC_Oracle_enc_eq"
+    assert "proc." not in json.dumps(panel)
+
+
+def test_relational_program_does_not_surface_generic_candidate_move_as_route() -> None:
+    view = {
+        "proof_status": {
+            "status": "open",
+            "remaining_goals": 1,
+            "current_layer": "relational_program",
+            "goal_type": "equiv",
+        },
+        "current_goal": {
+            "goal_type": "equiv",
+            "lines": ["Current goal", "Proc1.f ~ Proc2.f"],
+        },
+        "candidate_moves": {"moves": [{
+            "category": "strategy",
+            "tactic_shape": "apply GuessedLemma.",
+            "source": "proof-state analysis",
+        }]},
+        "program_frontier": {"current_frontier_scope": {}},
+        "inspect_lookup_handles": {"ask_manager_for": []},
+    }
+
+    model = surface_model_to_dict(compose_surface_model(view, PROFILE))
+
+    assert model.get("primary_panel") is None
+
+
+def test_opener_surfaces_loaded_probability_rewrite_matches_not_generic_forms() -> None:
+    view = {
+        "proof_status": {"status": "open", "goal_type": "probability"},
+        "current_goal": {
+            "goal_type": "probability",
+            "lines": ["Pr[Sample.simple(s) @ &1 : res = a] = Pr[Sample.double(t, s) @ &2 : res = a]"],
+        },
+        "application_context": {
+            "mechanical_goal_candidates": [
+                {
+                    "lemma": "pr_sample_simple",
+                    "match_kind": "loaded_rewrite_head",
+                    "shared_symbols": ["Pr", "simple"],
+                },
+                {
+                    "lemma": "pr_sample_double",
+                    "match_kind": "loaded_rewrite_head",
+                    "shared_symbols": ["Pr", "double"],
+                    "required_premises": ["forall x, x \\in t => x \\in s"],
+                },
+            ],
+        },
+        "inspect_lookup_handles": {"ask_manager_for": []},
+    }
+
+    model = surface_model_to_dict(compose_surface_model(view, PROFILE))
+    facts = {item["key"]: item for item in model["primary_panel"]["facts"]}
+
+    assert "mechanical_goal_candidates" in facts
+    assert "tactic_affordances" not in facts
+    assert {name for group in facts["mechanical_goal_candidates"]["value"] for name in group["lemmas"]} == {
+        "pr_sample_simple",
+        "pr_sample_double",
+    }
+
+
+def test_opener_prefers_exact_loaded_pr_endpoint_fact_over_generic_tactic_table() -> None:
+    view = {
+        "proof_status": {"status": "open", "goal_type": "probability"},
+        "current_goal": {
+            "goal_type": "probability",
+            "lines": ["Pr[Game0.main() @ &m : res] <= eps"],
+        },
+        "application_context": {
+            "pr_endpoint_matches": [{
+                "lemma": "Bridge",
+                "lhs_game": "Game0.main()",
+                "rhs_game": "Game1.main()",
+                "required_premises": ["initialisation q"],
+                "exact_endpoint_matches": [{
+                    "lemma_side": "lhs",
+                    "rewrite_direction": "lhs_to_rhs",
+                    "other_endpoint": "Game1.main()",
+                }],
+                "authority": "source_scan_fallback",
+            }],
+        },
+        "inspect_lookup_handles": {"ask_manager_for": []},
+    }
+
+    model = surface_model_to_dict(compose_surface_model(view, PROFILE))
+    facts = {
+        fact["key"]: fact
+        for fact in model["primary_panel"]["facts"]
+    }
+
+    assert "pr_endpoint_matches" in facts
+    assert "tactic_affordances" not in facts
+    assert all(
+        action["intent"] != "tactic_forms"
+        for action in model.get("actions", [])
+    )
+    detail = facts["pr_endpoint_matches"]["details"][0]
+    assert detail["lemma"] == "Bridge"
+    assert detail["required_premises"] == ["initialisation q"]
+    assert detail["rewrite_direction"] == "lhs_to_rhs"
 
 
 def test_pure_panel_surfaces_only_decision_relevant_mechanical_shape_facts() -> None:
@@ -746,26 +1082,147 @@ def test_pure_panel_surfaces_only_decision_relevant_mechanical_shape_facts() -> 
     facts = {fact["key"]: fact.get("value") for fact in panel_facts}
 
     assert "goal_operators" not in facts
-    assert [fact["key"] for fact in panel_facts[:8]] == [
-        "implication_premises",
-        "conclusion_obligations",
+    assert [fact["key"] for fact in panel_facts[:4]] == [
         "iter_successor_shape",
-        "memory_decorated_terms",
-        "integer_arithmetic_shapes",
         "integer_arithmetic_split_candidates",
         "integer_arithmetic_b2i_guards",
         "integer_arithmetic_lemma_families",
     ]
-    assert facts["implication_premises"][0].startswith("iter equality premise:")
-    assert facts["implication_premises"][1].startswith("nonempty-list premise:")
-    assert any("iter equality obligation" in item for item in facts["conclusion_obligations"])
-    assert any("size/drop inequality obligation" in item for item in facts["conclusion_obligations"])
-    assert facts["memory_decorated_terms"].startswith("terms: p{m}")
+    assert "implication_premises" not in facts
+    assert "conclusion_obligations" not in facts
+    assert "memory_decorated_terms" not in facts
+    assert "integer_arithmetic_shapes" not in facts
     assert "count has top-level + 1" in facts["iter_successor_shape"][0]
     assert facts["integer_arithmetic_split_candidates"] == [
         "block_size <= size p{m} from size (drop block_size p{m})"
     ]
     assert "needs:" not in " ".join(facts["integer_arithmetic_lemma_families"])
+
+
+def test_pure_panel_groups_structural_lemma_families_without_losing_names() -> None:
+    view = {
+        "proof_status": {"status": "open", "goal_type": "ambient"},
+        "current_goal": {"goal_type": "ambient", "lines": ["m.[k <- v].[k] = Some v"]},
+        "pure_tail_surface": {
+            "mechanical_goal_candidates": [
+                {
+                    "lemma": "get_setE",
+                    "match_kind": "loaded_structural_fingerprint",
+                    "shared_structures": ["map update followed by lookup"],
+                },
+                {
+                    "lemma": "get_set_sameE",
+                    "match_kind": "loaded_structural_fingerprint",
+                    "shared_structures": ["map update followed by lookup"],
+                },
+                {
+                    "lemma": "PolyCancel",
+                    "match_kind": "loaded_structural_fingerprint",
+                    "shared_structures": ["add/sub cancellation equality"],
+                    "shared_types": ["poly_out"],
+                },
+            ],
+        },
+        "inspect_lookup_handles": {"ask_manager_for": []},
+    }
+
+    model = surface_model_to_dict(compose_surface_model(view, PROFILE))
+    fact = next(
+        item for item in model["primary_panel"]["facts"]
+        if item["key"] == "mechanical_goal_candidates"
+    )
+
+    assert len(fact["value"]) == 2
+    assert fact["value"][0]["lemmas"] == ["get_setE", "get_set_sameE"]
+    assert fact["value"][1]["lemmas"] == ["PolyCancel"]
+    assert all("declaration" not in item for item in fact["value"])
+    md = render_surface_turn_markdown(compose_surface_turn(view, PROFILE))
+    assert "get_setE" in md
+    assert "get_set_sameE" in md
+    assert "PolyCancel" in md
+
+
+def test_loaded_mechanical_matches_suppress_redundant_broad_reference_actions() -> None:
+    view = {
+        "proof_status": {"status": "open", "goal_type": "ambient"},
+        "current_goal": {"goal_type": "ambient", "lines": ["m.[k <- v].[k] = Some v"]},
+        "pure_tail_surface": {
+            "mechanical_goal_candidates": [{
+                "lemma": "get_set_sameE",
+                "match_kind": "loaded_structural_fingerprint",
+                "shared_structures": ["map update followed by lookup"],
+            }],
+        },
+        "inspect_lookup_handles": {"ask_manager_for": [
+            {
+                "intent": "operator_lemmas",
+                "payload": {"operator": "(_.[_ <- _].[_])"},
+                "requires_input": ["operator"],
+                "choices": {"operator": ["(_.[_ <- _].[_])"]},
+            },
+            {
+                "intent": "tactic_forms",
+                "payload": {"name": "rewrite"},
+                "requires_input": ["name"],
+                "choices": {"name": ["rewrite"]},
+            },
+        ]},
+    }
+
+    model = surface_model_to_dict(compose_surface_model(view, PROFILE))
+
+    assert model.get("actions", []) == []
+
+
+def test_pure_panel_renders_composed_list_and_map_transport_facts() -> None:
+    view = {
+        "proof_status": {"status": "open", "goal_type": "ambient"},
+        "current_goal": {"goal_type": "ambient", "lines": ["pure goal"]},
+        "pure_tail_surface": {
+            "list_normalization_surface": {
+                "prefix_successor_chains": [{
+                    "shape": "mapped take-prefix successor",
+                    "mapper": "encode",
+                    "index": "k",
+                    "source_list": "xs",
+                    "side_condition": "0 <= k < size xs",
+                    "side_condition_status": "visible",
+                    "lemma_chain": [
+                        {"lemma": "take_nth"},
+                        {"lemma": "map_rcons"},
+                        {"lemma": "cats1"},
+                    ],
+                }],
+            },
+            "map_update_transport_surface": {
+                "shape": "pointwise finite-map key transport",
+                "pointwise_relation": "forall x, left.[x] = right.[encode x]",
+                "key_transform": "encode",
+                "update_key_pair": {"source": "next", "transformed": "encode next"},
+                "lookup_normalization_lemma": "get_setE",
+                "left_inverse_lemma": "decode_encode",
+                "effect": "get/set normalization plus loaded inverse evidence",
+            },
+            "mechanical_goal_candidates": [{
+                "lemma": "decode_encode",
+                "match_kind": "loaded_left_inverse_support",
+                "transform": "encode",
+                "inverse": "decode",
+            }],
+        },
+        "inspect_lookup_handles": {"ask_manager_for": []},
+    }
+
+    model = surface_model_to_dict(compose_surface_model(view, PROFILE))
+    facts = {item["key"]: item for item in model["primary_panel"]["facts"]}
+
+    assert facts["list_normalization_routes"]["value"][0]["loaded_chain"] == [
+        "take_nth", "map_rcons", "cats1",
+    ]
+    assert facts["map_update_transport"]["value"]["loaded_support"] == [
+        "get_setE", "decode_encode",
+    ]
+    assert "mechanical_goal_candidates" not in facts
 
 
 def test_dynamic_route_actions_require_displayable_preflight() -> None:
@@ -795,6 +1252,12 @@ def test_dynamic_route_actions_require_displayable_preflight() -> None:
                     "items": [{
                         "candidate": "byequiv (_: ={glob G} ==> ={res}).",
                         "verification": "daemon-verified against the current goal",
+                        "submit": {
+                            "intent": "commit_tactic",
+                            "payload": {
+                                "tactic": "byequiv (_: ={glob G} ==> ={res})."
+                            },
+                        },
                     }],
                 },
             },
@@ -802,6 +1265,9 @@ def test_dynamic_route_actions_require_displayable_preflight() -> None:
     )
     assert context_only["eligible"] is False
     assert verified["eligible"] is True
+    assert verified["result_kind"] == "ready_to_submit_candidates"
+    assert verified["candidate_count"] == 1
+    assert verified["ready_submission_count"] == 1
 
     base = {
         "kind": "prover_workspace_view",
@@ -839,20 +1305,111 @@ def test_dynamic_route_actions_require_displayable_preflight() -> None:
     actionable = {
         **base,
         "surface_action_preflight": {
-            "schema_version": 1,
-            "results": [{
-                "intent": "pr_bridge_routes",
-                "payload": {},
-                "key": action_preflight_key("pr_bridge_routes", {}),
-                "eligible": True,
-                "reason": "preflight found a daemon-verified pr_bridge_routes option",
-            }],
+            "schema_version": 2,
+            "results": [verified],
         },
     }
     actionable_model = surface_model_to_dict(compose_surface_model(actionable, PROFILE))
-    assert "pr_bridge_routes" in {
-        action["intent"] for action in actionable_model.get("actions", [])
+    actions = actionable_model.get("actions", [])
+    assert "pr_bridge_routes" not in {action["intent"] for action in actions}
+    assert [action for action in actions if action["intent"] == "commit_tactic"] == [{
+        "intent": "commit_tactic",
+        "payload": {"tactic": "byequiv (_: ={glob G} ==> ={res})."},
+        "label": "Commit verified Pr bridge route 1",
+        "intent_class": "proof_mutation",
+        "read_only": False,
+        "description": "byequiv (_: ={glob G} ==> ={res}).",
+        "source_refs": ["surface_action_preflight.results"],
+        "eligibility_reason": (
+            "exact manager-preflighted submission from pr_bridge_routes"
+        ),
+        "state_scope": "surface_action_preflight",
+    }]
+    facts = {
+        fact["key"]: fact
+        for fact in actionable_model["primary_panel"]["facts"]
     }
+    assert facts["verified_pr_bridge_routes"]["summary"].startswith(
+        "Manager read-only preflight found 1 current-state route"
+    )
+    assert facts["verified_pr_bridge_routes"]["audit_payload"][0]["submit"] == {
+        "intent": "commit_tactic",
+        "payload": {"tactic": "byequiv (_: ={glob G} ==> ={res})."},
+    }
+
+    md = render_surface_turn_markdown({
+        "presentation_kind": "proof_state",
+        "proof_surface": actionable_model,
+    })
+    assert "### Ready proof action" in md
+    assert md.count("byequiv (_: ={glob G} ==> ={res}).") == 1
+
+
+def test_preflight_retains_multiple_typed_routes_and_rejects_invented_submit() -> None:
+    summary = {
+        "label": "inspect_pr_bridge_routes",
+        "exit_code": 0,
+        "agent_observation": {
+            "content": {
+                "title": "Verified Pr Bridge Routes",
+                "items": [
+                    {
+                        "candidate": "rewrite H1.",
+                        "why": "first verified route",
+                        "verification": "daemon-verified against the current goal",
+                        "submit": {
+                            "intent": "commit_tactic",
+                            "payload": {"tactic": "rewrite H1."},
+                        },
+                    },
+                    {
+                        "candidate": "rewrite H2.",
+                        "why": "second verified route",
+                        "verification": "daemon-verified against the current goal",
+                        "submit": {
+                            "intent": "commit_tactic",
+                            "payload": {"tactic": "rewrite H2."},
+                        },
+                    },
+                    {
+                        "candidate": "rewrite H2.",
+                        "verification": "daemon-verified against the current goal",
+                        "submit": {
+                            "intent": "commit_tactic",
+                            "payload": {"tactic": "rewrite H2."},
+                        },
+                    },
+                ],
+            },
+        },
+    }
+    result = preflight_result_for_action("pr_bridge_routes", {}, summary)
+    assert result["candidate_count"] == 2
+    assert [item["candidate"] for item in result["candidates"]] == [
+        "rewrite H1.", "rewrite H2.",
+    ]
+
+    view = {
+        "proof_status": {"goal_type": "probability"},
+        "current_goal": {"lines": ["Pr[G.main() @ &m : res] <= 1%r"]},
+        "surface_action_preflight": {
+            "schema_version": 2,
+            "results": [result],
+        },
+    }
+    assert matching_preflight_submission(
+        view, "commit_tactic", {"tactic": "rewrite H2."}
+    )["source_intent"] == "pr_bridge_routes"
+    assert not matching_preflight_submission(
+        view, "commit_tactic", {"tactic": "rewrite INVENTED."}
+    )
+    invented = PanelAction(
+        intent="commit_tactic",
+        payload={"tactic": "rewrite INVENTED."},
+        intent_class="proof_mutation",
+        read_only=False,
+    )
+    assert action_eligibility(view, "opener", "opener", invented).eligible is False
 
 
 def test_remaining_context_preflights_require_displayable_content() -> None:
@@ -1006,7 +1563,7 @@ def test_remaining_dynamic_actions_surface_only_after_preflight() -> None:
     assert {"equiv_bridge_lemmas", "lemma_hints", "subgoal_gap"} <= intents
 
 
-def test_choice_preflight_expands_inv_bridge_and_call_subgoal_inputs() -> None:
+def test_choice_preflight_expands_inv_and_call_subgoal_inputs() -> None:
     view = {
         "kind": "prover_workspace_view",
         "proof_status": {"current_layer": "call_site", "goal_type": "pRHL"},
@@ -1023,7 +1580,6 @@ def test_choice_preflight_expands_inv_bridge_and_call_subgoal_inputs() -> None:
         },
         "inspect_lookup_handles": {"ask_manager_for": [
             {"intent": "inv_from_lemma", "payload": {"lemma": "LEMMA"}},
-            {"intent": "bridge_probe", "payload": {"claim": "<claim>"}},
             {"intent": "call_subgoals", "payload": {"invariant": "<invariant>"}},
         ]},
     }
@@ -1033,9 +1589,6 @@ def test_choice_preflight_expands_inv_bridge_and_call_subgoal_inputs() -> None:
     for item in candidates:
         by_intent.setdefault(item["intent"], []).append(item["payload"])
     assert {"lemma": "equ_cc"} in by_intent["inv_from_lemma"]
-    assert {
-        "claim": "Pr[G.main() @ &m : res] = Pr[H.main() @ &m : res]"
-    } in by_intent["bridge_probe"]
     assert {
         "invariant": "={glob M} /\\ k{1} = k{2}"
     } in by_intent["call_subgoals"]
@@ -1074,7 +1627,7 @@ def test_call_subgoal_choices_ignore_explanatory_prose() -> None:
     assert payloads == ["={glob M} /\\ k{1} = k{2}"]
 
 
-def test_inv_bridge_and_call_subgoal_preflight_classifiers() -> None:
+def test_inv_and_call_subgoal_preflight_classifiers() -> None:
     inv_empty = preflight_result_for_action(
         "inv_from_lemma",
         {"lemma": "bad"},
@@ -1101,40 +1654,6 @@ def test_inv_bridge_and_call_subgoal_preflight_classifiers() -> None:
                     "items": [{
                         "candidate": "call (_: ={glob M} /\\ k{1} = k{2}).",
                         "why": "extracted from lemma precondition",
-                    }],
-                },
-            },
-        },
-    )
-    bridge_rejected = preflight_result_for_action(
-        "bridge_probe",
-        {"claim": "Pr[A] = Pr[B]"},
-        {
-            "label": "inspect_bridge_probe",
-            "exit_code": 0,
-            "agent_observation": {
-                "content": {
-                    "title": "Bridge Probe",
-                    "items": [{
-                        "candidate": "Decompose this bridge into smaller Pr equalities.",
-                        "verification": "not daemon-verified against the current goal",
-                    }],
-                },
-            },
-        },
-    )
-    bridge_verified = preflight_result_for_action(
-        "bridge_probe",
-        {"claim": "Pr[A] = Pr[B]"},
-        {
-            "label": "inspect_bridge_probe",
-            "exit_code": 0,
-            "agent_observation": {
-                "content": {
-                    "title": "Bridge Probe",
-                    "items": [{
-                        "candidate": "have -> : Pr[A] = Pr[B]. byequiv=>//.",
-                        "verification": "daemon-verified against the current goal",
                     }],
                 },
             },
@@ -1175,8 +1694,6 @@ def test_inv_bridge_and_call_subgoal_preflight_classifiers() -> None:
 
     assert inv_empty["eligible"] is False
     assert inv_hit["eligible"] is True
-    assert bridge_rejected["eligible"] is False
-    assert bridge_verified["eligible"] is True
     assert call_rejected["eligible"] is False
     assert call_hit["eligible"] is True
 
@@ -1247,7 +1764,7 @@ def test_call_invariant_skeleton_preflight_rejects_menu_placeholders() -> None:
     assert "incomplete" in result["reason"]
 
 
-def test_inv_bridge_and_call_subgoals_surface_only_after_preflight() -> None:
+def test_inv_and_call_subgoals_surface_only_after_preflight() -> None:
     call_base = {
         "kind": "prover_workspace_view",
         "proof_status": {"current_layer": "call_site", "goal_type": "pRHL"},
@@ -1298,43 +1815,6 @@ def test_inv_bridge_and_call_subgoals_surface_only_after_preflight() -> None:
     call_intents = {action["intent"] for action in call_model.get("actions", [])}
     assert {"inv_from_lemma", "call_subgoals"} <= call_intents
 
-    bridge_base = {
-        "kind": "prover_workspace_view",
-        "proof_status": {"current_layer": "pr", "goal_type": "probability"},
-        "current_goal": {
-            "lines": ["Pr[G.main() @ &m : res] = Pr[H.main() @ &m : res]"]
-        },
-        "inspect_lookup_handles": {"ask_manager_for": [
-            {"intent": "bridge_probe", "payload": {"claim": "<claim>"}},
-            {"intent": "goal_info", "payload": {}},
-        ]},
-    }
-    bridge_without = surface_model_to_dict(compose_surface_model(bridge_base, PROFILE))
-    assert "bridge_probe" not in {
-        action["intent"] for action in bridge_without.get("actions", [])
-    }
-    bridge_hits = {
-        **bridge_base,
-        "surface_action_preflight": {
-            "schema_version": 1,
-            "results": [{
-                "intent": "bridge_probe",
-                "payload": {"claim": "Pr[G.main() @ &m : res] = Pr[H.main() @ &m : res]"},
-                "key": action_preflight_key(
-                    "bridge_probe",
-                    {"claim": "Pr[G.main() @ &m : res] = Pr[H.main() @ &m : res]"},
-                ),
-                "eligible": True,
-                "reason": "preflight found a daemon-verified bridge_probe option",
-            }],
-        },
-    }
-    bridge_model = surface_model_to_dict(compose_surface_model(bridge_hits, PROFILE))
-    assert "bridge_probe" in {
-        action["intent"] for action in bridge_model.get("actions", [])
-    }
-
-
 def test_surface_actions_carry_state_eligibility_metadata() -> None:
     model = surface_model_to_dict(
         compose_surface_model(_assignment_recover_view(), "l4_checked_action_surface")
@@ -1342,3 +1822,184 @@ def test_surface_actions_carry_state_eligibility_metadata() -> None:
     for action in model["actions"]:
         assert action["eligibility_reason"]
         assert action["state_scope"]
+
+
+def test_trivial_pure_goal_has_no_lookup_or_tactic_reference_menu() -> None:
+    view = {
+        "kind": "prover_workspace_view",
+        "proof_status": {
+            "status": "open",
+            "remaining_goals": 1,
+            "current_layer": "ambient_logic",
+            "goal_type": "ambient",
+        },
+        "current_goal": {"lines": ["Current goal", "-----", "true"]},
+        "pure_tail_surface": {"goal_operators": ["true"]},
+        "inspect_lookup_handles": {"ask_manager_for": [
+            {"intent": "operator_lemmas", "payload": {"operator": "true"}},
+            {"intent": "tactic_forms", "payload": {"name": "rewrite"}},
+        ]},
+    }
+
+    model = surface_model_to_dict(compose_surface_model(view, PROFILE))
+    assert {action["intent"] for action in model.get("actions", [])}.isdisjoint({
+        "operator_lemmas", "tactic_forms",
+    })
+
+
+def test_opener_surfaces_loaded_pr_bound_route_set_without_generic_tactic_table() -> None:
+    view = {
+        "kind": "prover_workspace_view",
+        "proof_status": {
+            "status": "open",
+            "remaining_goals": 1,
+            "current_layer": "opener",
+            "goal_type": "probability",
+        },
+        "current_goal": {"lines": [
+            "Pr[G0.main() @ &m : res] <=",
+            "Pr[G1.main() @ &m : res] + Pr[G2.main() @ &m : bad]",
+        ]},
+        "application_context": {
+            "pr_bound_routes": [
+                {
+                    "lemma": "reduction",
+                    "route_role": "outer_bound_decomposition",
+                    "exact_goal_endpoints": ["G0.main", "G1.main", "G2.main"],
+                    "required_premises": ["0 <= eps"],
+                    "authority": "source_scan_fallback",
+                },
+                {
+                    "lemma": "Bound_G2",
+                    "route_role": "exact_visible_term_bound",
+                    "exact_goal_endpoints": ["G2.main"],
+                    "authority": "source_scan_fallback",
+                },
+            ],
+        },
+    }
+
+    model = surface_model_to_dict(compose_surface_model(view, PROFILE))
+    facts = {
+        item["key"]: item.get("value")
+        for item in model["primary_panel"]["facts"]
+    }
+
+    assert "pr_bound_routes" in facts
+    assert "tactic_affordances" not in facts
+    assert {item["lemma"] for item in facts["pr_bound_routes"]} == {
+        "reduction", "Bound_G2",
+    }
+
+
+def test_pure_panel_surfaces_compact_list_normalization_routes() -> None:
+    view = {
+        "kind": "prover_workspace_view",
+        "proof_status": {
+            "status": "open",
+            "remaining_goals": 1,
+            "current_layer": "ambient_logic",
+            "goal_type": "ambient",
+        },
+        "current_goal": {"lines": [
+            "hlo: size prefix <= i",
+            "hhi: i < size prefix + size xs",
+            "----",
+            "nth witness (map f xs) (i - size prefix) = rhs",
+        ]},
+        "pure_tail_surface": {
+            "list_normalization_surface": {
+                "lemma_families": [{
+                    "shape": "nth over map",
+                    "lemma_names": ["nth_map"],
+                    "side_condition": "0 <= index < size source_list",
+                }],
+                "nth_map_terms": [{
+                    "source_list": "xs",
+                    "index": "i - size prefix",
+                    "side_condition": "0 <= i - size prefix < size xs",
+                    "side_condition_status": "derivable_from_visible_linear_bounds",
+                    "supporting_hypotheses": ["hlo", "hhi"],
+                }],
+            },
+        },
+    }
+
+    model = surface_model_to_dict(compose_surface_model(view, PROFILE))
+    facts = {
+        item["key"]: item.get("value")
+        for item in model["primary_panel"]["facts"]
+    }
+
+    routes = facts["list_normalization_routes"]
+    assert routes[0]["loaded_family"] == ["nth_map"]
+    assert routes[1]["side_condition_status"] == (
+        "derivable_from_visible_linear_bounds"
+    )
+    assert routes[1]["supporting_hypotheses"] == ["hlo", "hhi"]
+
+
+def test_single_program_surfaces_live_losslessness_certificate_without_recipe() -> None:
+    view = {
+        "kind": "prover_workspace_view",
+        "proof_status": {
+            "status": "open",
+            "remaining_goals": 1,
+            "current_layer": "procedure_body",
+            "goal_type": "phoare",
+        },
+        "current_goal": {"lines": [
+            "Current goal",
+            "Ofll: islossless O.f",
+            "----",
+            "(1) D2(O).O.init()",
+            "(2) b <@ Adv_MAC_to_F(A, D2(O).O).guess()",
+        ]},
+        "program_frontier": {"current_frontier_scope": {
+            "setup": {"left": {"paths": ["1"], "summary": "D2(O).O.init()"}},
+            "frontier": {
+                "kind": "left_call",
+                "left": {
+                    "side": "left",
+                    "path": "2",
+                    "head": "call",
+                    "statement": "b <@ Adv_MAC_to_F(A, D2(O).O).guess()",
+                },
+            },
+        }},
+        "call_site_surface": {"one_sided_call_surface": {
+            "state": "one_sided_call_frontier",
+            "visible_lossless_handles": [{
+                "symbol": "Alossless_F",
+                "certificate_kind": "losslessness",
+                "procedure": "Adv_MAC_to_F(A,D2(O).O).guess",
+                "declared_procedure": "Adv_MAC_to_F(A,O).guess",
+                "parameter_bindings": {"O": "D2(O).O"},
+                "required_premises": ["islossless D2(O).O.f"],
+                "match_kind": "module_parameter_instantiation",
+                "verification_status": "loaded declaration shape match",
+            }],
+        }},
+        "inspect_lookup_handles": {"ask_manager_for": [{
+            "intent": "tactic_forms",
+            "payload": {"name": "inline"},
+        }]},
+    }
+
+    model = surface_model_to_dict(compose_surface_model(view, PROFILE))
+    facts = {
+        item["key"]: item
+        for item in model["primary_panel"]["facts"]
+    }
+    certificate = facts["one_sided_losslessness_certificates"]
+
+    assert certificate["actionability"] == "high"
+    assert certificate["value"]["candidates"][0]["lemma"] == "Alossless_F"
+    assert certificate["value"]["candidates"][0]["module_bindings"] == {
+        "O": "D2(O).O"
+    }
+    assert "call (" not in json.dumps(certificate)
+    tactic_action = next(
+        action for action in model["actions"] if action["intent"] == "tactic_forms"
+    )
+    assert set(tactic_action["choices"]["name"]) == {"call", "inline"}

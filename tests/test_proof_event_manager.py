@@ -145,21 +145,18 @@ def test_proof_event_manager_records_typed_intents() -> None:
     assert rows[1]["metadata"]["malformed_count"] == 2
 
 
-def test_proof_event_manager_projects_route_turns_and_probe_boundary() -> None:
+def test_proof_event_manager_projects_read_only_and_commit_turns() -> None:
     manager = ProofEventManager(node_id="Tree-unit")
 
-    probe = manager.record_route_turn(
-        intent="probe_tactic",
-        payload={"tactic": "wp."},
-        actions=[{"label": "probe", "agent_observation": "accepted"}],
-        observation={"status": "accepted"},
+    context = manager.record_route_turn(
+        intent="tactic_forms",
+        payload={"name": "wp"},
+        actions=[],
+        observation={"status": "ok"},
     )
 
-    assert probe["tactic"] == "wp."
-    assert probe["tactic_head"] == "wp"
-    assert probe["accepted"] is True
-    assert probe["changed"] is False
-    assert manager.latest_readonly_probe_event()["tactic"] == "wp."
+    assert context["intent"] == "tactic_forms"
+    assert context["changed"] is False
 
     commit = manager.record_route_turn(
         intent="commit_tactic",
@@ -169,4 +166,3 @@ def test_proof_event_manager_projects_route_turns_and_probe_boundary() -> None:
     )
 
     assert commit["changed"] is True
-    assert manager.latest_readonly_probe_event() == {}

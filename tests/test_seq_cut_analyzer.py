@@ -61,7 +61,7 @@ def test_seq_cut_analyzer_reports_committed_seq_scope() -> None:
     assert "postcondition" in surface["obligation_kinds"]
 
 
-def test_seq_cut_analyzer_reports_probe_preview() -> None:
+def test_seq_cut_analyzer_reports_accepted_view() -> None:
     analyzer = SeqCutAnalyzer()
     surface = analyzer.analyze(
         state=_state(
@@ -74,8 +74,8 @@ def test_seq_cut_analyzer_reports_probe_preview() -> None:
         )
     )
 
-    assert surface["state"] == "seq_probe_preview"
-    assert surface["seq_candidate_id"].startswith("probe_")
+    assert surface["state"] == "seq_view"
+    assert surface["seq_candidate_id"].startswith("accepted_")
     assert surface["obligation_count"] == 4
     assert surface["cut_position"]["left_count"] == 1
     assert surface["cut_position"]["right_count"] == 1

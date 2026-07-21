@@ -87,7 +87,7 @@ def _iter_jsonl(path: Path) -> list[dict[str, Any]]:
 def _intent_key(intent_name: str, payload: dict[str, Any]) -> str:
     """Normalized fingerprint of an intent payload, stable across the transcript
     and the timeline so the two can be matched position-by-position."""
-    if intent_name in {"probe_tactic", "commit_tactic"}:
+    if intent_name == "commit_tactic":
         return " ".join(str(payload.get("tactic") or "").split())
     if intent_name == "inspect_context":
         return str(payload.get("topic") or "")

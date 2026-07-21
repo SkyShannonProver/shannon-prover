@@ -1,5 +1,5 @@
-"""CLI handlers for commit-pipeline commands: -next, -prev, -try,
--bridge-probe, -chain, -write-back.
+"""CLI handlers for commit-pipeline commands and private validation: -next,
+-prev, -try, -chain, -write-back.
 
 These all interact with the session's tactic-history (history.ec /
 steps.log) and the daemon. Each handler mirrors the inline block it
@@ -29,12 +29,9 @@ from core.easycrypt.session_no_progress import detect_no_progress
 def handle_tactic_exec(session, args) -> int:
     """Canonical Proof Interaction Manager wrapper.
 
-    Existing flags remain compatibility shims; this entry point names the
-    manager-level execution mode directly.
+    This entry point names the manager-level state-changing execution mode directly.
     """
     mode = str(getattr(args, "tactic_exec", "") or "")
-    if mode == "probe":
-        return handle_try(session, args)
     if mode == "commit":
         return handle_next(session, args)
     if mode == "commit_chain":
@@ -42,7 +39,7 @@ def handle_tactic_exec(session, args) -> int:
     if mode == "undo":
         return handle_prev(session, args)
     sys.stderr.write(
-        "Unknown -tactic-exec mode. Use probe, commit, commit_chain, or undo.\n",
+        "Unknown -tactic-exec mode. Use commit, commit_chain, or undo.\n",
     )
     return 2
 
@@ -171,10 +168,10 @@ def _record_try_outcome(
     tool_error: bool = False,
     raw_output: str = "",
 ) -> None:
-    """Finalize a speculative probe as a TacticExecutionResult.
+    """Finalize private preflight validation as a TacticExecutionResult.
 
-    Probes don't mutate proof state, but their ToolView carries the
-    just-verified runnable rec (daemon_probe_accepted). Re-emitting an
+    Preflight does not mutate proof state, but its ToolView carries the
+    just-verified runnable rec (easycrypt_preflight_accepted). Re-emitting an
     ProofContextView here puts that rec inside the freshness window at the
     pre-commit goal — without this, the rec is only visible to a
     post-commit result on a *different* goal hash, where freshness classifies
@@ -183,22 +180,22 @@ def _record_try_outcome(
     candidate before the proof state moves to a different goal hash.
     """
     if tool_error:
-        status = "probe_error"
+        status = "preflight_error"
     elif accepted is True and not no_progress:
-        status = "probe_accepted"
+        status = "preflight_accepted"
     elif accepted is True and no_progress:
-        status = "probe_no_progress"
+        status = "preflight_no_progress"
     elif accepted is False:
-        status = "probe_rejected"
+        status = "preflight_rejected"
     else:
-        status = "probe_unknown"
+        status = "preflight_unknown"
     command = "try-chain" if is_chain else "try"
     try:
         _finalize_tactic_execution(
             session,
             command=command,
             live_tool_name="try",
-            execution_mode="probe",
+            execution_mode="preflight",
             status=status,
             attempted_tactics=[tactic] if tactic else [],
             accepted_count=0,
@@ -310,12 +307,12 @@ def _build_try_tool_view(session, result: dict, report: str) -> dict | None:
     if result.get("tool_error"):
         errors.append({
             "code": "try.tool_error",
-            "message": "Speculative probe could not run; inspect debug.legacy_report.",
+            "message": "Private EasyCrypt preflight could not run; inspect debug.legacy_report.",
             "severity": "error",
         })
     notes = [{
         "code": "try.state_unchanged",
-        "message": "Speculative probe did not mutate the committed proof state.",
+        "message": "Private EasyCrypt preflight did not mutate the committed proof state.",
     }]
     view = tool_view_from_projection(
         tool="try",
@@ -358,7 +355,7 @@ def _stdout_tool_view(view: dict) -> dict:
 
 
 def _stdout_try_tool_view(data: dict, parsed_result: dict) -> dict:
-    """Put the probe verdict before bulky proof-state fields.
+    """Put the preflight verdict before bulky proof-state fields.
 
     Claude previews only the first chunk of large outputs.  The first bytes of
     a `-try` stdout view must therefore answer the operational question:
@@ -369,16 +366,16 @@ def _stdout_try_tool_view(data: dict, parsed_result: dict) -> dict:
     accepted = parsed_result.get("accepted")
     no_progress = bool(parsed_result.get("no_progress_predicted"))
     tactic = str(parsed_result.get("tactic") or "")
-    probe_result = {
+    preflight_result = {
         "accepted": accepted,
         "status": (
-            "probe_accepted"
+            "preflight_accepted"
             if accepted is True and not no_progress else
-            "probe_no_progress"
+            "preflight_no_progress"
             if accepted is True and no_progress else
-            "probe_rejected"
+            "preflight_rejected"
             if accepted is False else
-            "probe_unknown"
+            "preflight_unknown"
         ),
         "tactic": tactic,
         "mutates_proof_state": False,
@@ -390,19 +387,19 @@ def _stdout_try_tool_view(data: dict, parsed_result: dict) -> dict:
         "schema_version": data.get("schema_version"),
         "tool": data.get("tool"),
         "ok": data.get("ok"),
-        "probe_result": probe_result,
+        "preflight_result": preflight_result,
     }
     if accepted is True and not no_progress and tactic:
         out["next"] = {
-            "primary_action": "commit_probe_result",
+            "primary_action": "commit_preflight_result",
             "tool": "next",
             "tactic": tactic,
             "state_changed": True,
-            "epistemic_status": "daemon_probe_accepted",
+            "epistemic_status": "easycrypt_preflight_accepted",
         }
     elif tactic:
         out["next"] = {
-            "primary_action": "do_not_commit_probe_result",
+            "primary_action": "do_not_commit_preflight_result",
             "tool": "",
             "tactic": tactic,
             "state_changed": False,
@@ -432,15 +429,15 @@ def _try_recommendations(result: dict, recommendation_cls) -> list:
     if accepted is True and not no_progress:
         closed = bool(result.get("goal_after_closed"))
         remaining = result.get("goal_after_remaining")
-        why = "Daemon probe accepted this tactic without mutating proof state."
+        why = "EasyCrypt preflight accepted this tactic without mutating proof state."
         if closed:
             why = (
-                "Daemon probe accepted this tactic and it would close all "
+                "EasyCrypt preflight accepted this tactic and it would close all "
                 "goals; commit it to make the proof state advance."
             )
         elif isinstance(remaining, int):
             why = (
-                "Daemon probe accepted this tactic and it would leave "
+                "EasyCrypt preflight accepted this tactic and it would leave "
                 f"{remaining} subgoal(s); commit it if that is the intended "
                 "decomposition."
             )
@@ -454,16 +451,16 @@ def _try_recommendations(result: dict, recommendation_cls) -> list:
             confidence="verified",
             preconditions=[
                 "proof_state.status == open",
-                "current goal unchanged since the probe",
+                "current goal unchanged since preflight",
             ],
             evidence_refs=[
-                "probe.try.result",
-                "epistemic.try.daemon_probe_accepted",
+                "preflight.try.result",
+                "epistemic.try.easycrypt_preflight_accepted",
             ],
             metadata={
-                "epistemic_status": "daemon_probe_accepted",
+                "epistemic_status": "easycrypt_preflight_accepted",
                 "state_changed": False,
-                "probe_mutates_proof_state": False,
+                "preflight_mutates_proof_state": False,
                 "recommended_commit_tool": "next",
                 "goal_after_closed": closed,
                 "goal_after_remaining": remaining,
@@ -473,14 +470,14 @@ def _try_recommendations(result: dict, recommendation_cls) -> list:
 
     if accepted is False or no_progress:
         status = (
-            "daemon_probe_no_progress"
-            if no_progress else "daemon_probe_rejected"
+            "easycrypt_preflight_no_progress"
+            if no_progress else "easycrypt_preflight_rejected"
         )
         why = (
-            "Daemon probe accepted this tactic but predicted no progress; "
+            "EasyCrypt preflight accepted this tactic but predicted no progress; "
             "committing would be auto-reverted."
             if no_progress else
-            "Daemon probe rejected this tactic; do not commit it in the "
+            "EasyCrypt preflight rejected this tactic; do not commit it in the "
             "current proof state."
         )
         return [recommendation_cls(
@@ -491,15 +488,15 @@ def _try_recommendations(result: dict, recommendation_cls) -> list:
             action_type="avoid_action",
             why=why,
             confidence="high",
-            preconditions=["current goal unchanged since the probe"],
+            preconditions=["current goal unchanged since preflight"],
             evidence_refs=[
-                "probe.try.result",
+                "preflight.try.result",
                 f"epistemic.try.{status}",
             ],
             metadata={
                 "epistemic_status": status,
                 "state_changed": False,
-                "probe_mutates_proof_state": False,
+                "preflight_mutates_proof_state": False,
                 "error_kind": str(result.get("error_kind") or ""),
                 "cost": "free",
             },
@@ -511,27 +508,27 @@ def _try_evidence(result: dict, proof_state: dict) -> dict:
     goal = proof_state.get("goal") if isinstance(proof_state.get("goal"), dict) else {}
     accepted = result.get("accepted")
     if accepted is True and not result.get("no_progress_predicted"):
-        status = "daemon_probe_accepted"
+        status = "easycrypt_preflight_accepted"
         meaning = "The EasyCrypt daemon accepted this tactic on the current state."
         not_meaning = "The tactic has not been committed to history.ec."
     elif result.get("no_progress_predicted"):
-        status = "daemon_probe_no_progress"
+        status = "easycrypt_preflight_no_progress"
         meaning = (
             "The daemon accepted the tactic, but session no-progress checks "
             "predict commit would auto-revert."
         )
         not_meaning = "This is not a useful commit candidate."
     elif accepted is False:
-        status = "daemon_probe_rejected"
+        status = "easycrypt_preflight_rejected"
         meaning = "The EasyCrypt daemon rejected this tactic on the current state."
         not_meaning = "This does not rule out related tactics after edits."
     else:
-        status = "daemon_probe_indeterminate"
-        meaning = "The speculative probe did not produce a boolean verdict."
+        status = "easycrypt_preflight_indeterminate"
+        meaning = "Preflight validation did not produce a boolean verdict."
         not_meaning = "No proof-state mutation occurred."
     return {
-        "probe": [{
-            "id": "probe.try.result",
+        "preflight": [{
+            "id": "preflight.try.result",
             "producer": "daemon.try_tactic",
             "accepted": accepted,
             "mutates_proof_state": False,
@@ -557,173 +554,6 @@ def _try_evidence(result: dict, proof_state: dict) -> dict:
         }],
     }
 
-
-# ─── -bridge-probe ───────────────────────────────────────────────────────
-
-def handle_bridge_probe(session, args) -> int:
-    """Speculative `have -> : <stmt>.` probe to test whether a Pr-level
-    bridge can close via sim/byequiv ladder."""
-    if args.from_file is not None:
-        stmt = open(args.from_file).read()
-    elif args.command is not None:
-        stmt = args.command
-    else:
-        stmt = sys.stdin.read()
-    if not stmt.strip():
-        sys.stderr.write(
-            "No bridge statement provided for -bridge-probe "
-            "(use -c 'Pr[A] = Pr[B]' or stdin).\n",
-        )
-        return 2
-    report = session.bridge_probe(stmt)
-    _record_bridge_probe_tool_view(session, stmt, report)
-    sys.stdout.write(report)
-    return 0
-
-
-def _record_bridge_probe_tool_view(session, stmt: str, report: str) -> None:
-    from core.easycrypt.session_projection import (  # type: ignore
-        projection_to_goal_info,
-        read_proof_state_projection,
-    )
-    from core.easycrypt.session_tool_view import record_tool_view, tool_view_from_projection  # type: ignore
-    try:
-        projection = read_proof_state_projection(
-            session.dir,
-            live_tool_name="bridge-probe",
-        )
-        accepted = "[BRIDGE-PROBE] accepted:  True" in report
-        recommendations = _bridge_probe_recommendations(stmt, report)
-        view = tool_view_from_projection(
-            tool="bridge-probe",
-            proof_state=projection_to_goal_info(projection),
-            recommendations=recommendations,
-            evidence={
-                "probe": [{
-                    "id": "probe.bridge_probe",
-                    "producer": "daemon.bridge_probe",
-                    "accepted": accepted,
-                    "candidate": _bridge_probe_candidate(stmt),
-                    "bridge_size": _bridge_probe_field(report, "bridge_size"),
-                    "closed_by": _bridge_probe_field(report, "closed_by"),
-                }],
-                "epistemic": [{
-                    "id": "epistemic.bridge_probe",
-                    "status": (
-                        "daemon_probe_accepted"
-                        if accepted else "daemon_probe_rejected"
-                    ),
-                    "meaning": (
-                        "The daemon tested the bridge against the current "
-                        "history without mutating proof state."
-                    ),
-                    "not_meaning": (
-                        "The tactic has already been committed to history."
-                    ),
-                }],
-                "raw": [{
-                    "id": "raw.bridge_probe_text",
-                    "format": "legacy_text",
-                    "preview": report[:1000],
-                }],
-            },
-            notes=[] if recommendations else [report.strip()],
-            debug={"legacy_text": report[:4000]},
-        )
-        record_tool_view(session, view)
-    except Exception:
-        pass
-
-
-def _bridge_probe_recommendations(stmt: str, report: str) -> list[dict]:
-    normalized_stmt = stmt.strip().rstrip(".")
-    if not normalized_stmt:
-        return []
-    accepted = "[BRIDGE-PROBE] accepted:  True" in report
-    closed_by = _bridge_probe_field(report, "closed_by")
-    if accepted and closed_by:
-        return [{
-            "id": "bridge_probe.commit.0",
-            "kind": "bridge_probe_commit",
-            "producer": "bridge-probe",
-            "action": f"have -> : {normalized_stmt}. {closed_by}",
-            "why": (
-                "The daemon bridge probe accepted this bridge and closer "
-                "against the current history."
-            ),
-            "action_type": "runnable_tactic",
-            "confidence": "verified",
-            "preconditions": [
-                "proof_state.status == open",
-                "history has not changed since the bridge probe",
-            ],
-            "source_refs": [],
-            "evidence_refs": ["probe.bridge_probe", "raw.bridge_probe_text"],
-            "metadata": {
-                "epistemic_status": "daemon_probe_accepted",
-                "state_changed": True,
-                "bridge_size": _bridge_probe_field(report, "bridge_size"),
-            },
-        }]
-    if "[BRIDGE-PROBE] VERDICT: TOO BIG" in report:
-        return [
-            {
-                "id": "bridge_probe.decompose.0",
-                "kind": "bridge_probe_strategy",
-                "producer": "bridge-probe",
-                "action": (
-                    "Decompose this bridge into smaller Pr equalities or add "
-                    "a hand-crafted invariant/rnd hint before committing."
-                ),
-                "why": (
-                    "The daemon could not close the full bridge with the "
-                    "sim/byequiv ladder."
-                ),
-                "action_type": "strategy_hint",
-                "confidence": "high",
-                "preconditions": ["proof_state.status == open"],
-                "source_refs": [],
-                "evidence_refs": ["probe.bridge_probe", "raw.bridge_probe_text"],
-                "metadata": {
-                    "epistemic_status": "daemon_probe_rejected",
-                    "state_changed": False,
-                    "bridge_size": _bridge_probe_field(report, "bridge_size"),
-                },
-            },
-            {
-                "id": "bridge_probe.avoid.0",
-                "kind": "bridge_probe_avoid",
-                "producer": "bridge-probe",
-                "action": (
-                    f"Do not commit `have -> : {normalized_stmt}.` as one "
-                    "unhinted bridge."
-                ),
-                "why": "The bridge probe rejected the unhinted full bridge.",
-                "action_type": "avoid_action",
-                "confidence": "high",
-                "preconditions": ["proof_state.status == open"],
-                "source_refs": [],
-                "evidence_refs": ["probe.bridge_probe", "raw.bridge_probe_text"],
-                "metadata": {
-                    "epistemic_status": "daemon_probe_rejected",
-                    "state_changed": False,
-                },
-            },
-        ]
-    return []
-
-
-def _bridge_probe_candidate(stmt: str) -> str:
-    normalized = stmt.strip().rstrip(".")
-    return f"have -> : {normalized}." if normalized else ""
-
-
-def _bridge_probe_field(report: str, field: str) -> str:
-    prefix = f"[BRIDGE-PROBE] {field}:"
-    for line in report.splitlines():
-        if line.startswith(prefix):
-            return line.split(":", 1)[1].strip()
-    return ""
 
 
 # ─── -chain ──────────────────────────────────────────────────────────────
@@ -763,7 +593,7 @@ def handle_chain(session, args) -> int:
 
     Sets `session._chain_skip_verify = True` for the duration so
     daemon-verified hook blocks (AUTO-PIVOT-VERIFIED, AUTO-CALL-READY,
-    etc.) skip their daemon probes — at 5+ candidates × ~200ms each
+    etc.) skip their daemon preflights — at 5+ candidates × ~200ms each
     × 75 steps that's 35+ min vs ~3 min when skipped. Agent gets these
     blocks back on the next single `-next`.
     """

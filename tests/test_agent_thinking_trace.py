@@ -69,7 +69,11 @@ def test_extract_turns_pairs_thinking_across_event_shapes(tmp_path: Path) -> Non
     assert [t.intent for t in turns] == [
         "probe_tactic", "commit_tactic", "inspect_context",
     ]
-    assert [t.key for t in turns] == ["byequiv => //.", "byequiv => //.", "goal_info"]
+    assert [t.key for t in turns] == [
+        '{"tactic": "byequiv => //."}',
+        "byequiv => //.",
+        "goal_info",
+    ]
     # thinking is paired even when it streamed in a separate event from the submit
     assert turns[1].thinking == "reason for commit"
     assert turns[2].thinking == "reason for inspect"
@@ -94,7 +98,7 @@ def test_write_node_thinking_uses_recorded_session(tmp_path: Path) -> None:
     assert "reason for commit" in body
     assert "commit_tactic" in body
     index = json.loads((node_dir / "thinking" / "index.json").read_text(encoding="utf-8"))
-    assert index["turns"][0]["payload_key"] == "byequiv => //."
+    assert index["turns"][0]["payload_key"] == '{"tactic": "byequiv => //."}'
     assert index["turns"][2]["intent"] == "inspect_context"
 
 

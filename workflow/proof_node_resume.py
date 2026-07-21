@@ -5,7 +5,7 @@ It is intentionally centered on the current architecture:
 
 - the accepted EasyCrypt prefix in the node-owned session history
 - the latest manager/node_memory workspace view
-- recent probes, failures, and accepted-but-uncommitted workbench entries
+- recent failures and accepted manager outcomes
 
 Capsules use ``resume.json`` and can be created from live ``.ec_session_*``
 directories before the next prover launch wipes them.
@@ -190,9 +190,9 @@ def _attempt_status(item: dict[str, Any]) -> str:
     intent = _intent_kind(item)
     text = _actions_text(item).lower()
     if "rejected" in text or "invalid" in text or "error" in text:
-        return "rejected_probe" if intent == "probe_tactic" else "failed"
+        return "failed"
     if "accepted" in text:
-        return "accepted_probe" if intent == "probe_tactic" else "accepted"
+        return "accepted"
     if intent_is_retrieval(intent):
         return "read_only_context"
     return "unknown"
@@ -325,38 +325,6 @@ def _recent_tactics(attempts: list[dict[str, Any]], *, limit: int = 12) -> list[
     return out[-limit:]
 
 
-def _accepted_probe_hints(attempts: list[dict[str, Any]], history: list[str]) -> list[dict[str, Any]]:
-    history_set = {t.strip() for t in history}
-    hints: list[dict[str, Any]] = []
-    for item in attempts:
-        if _intent_kind(item) != "probe_tactic":
-            continue
-        tactic = _intent_tactic(item)
-        if not tactic or tactic.strip() in history_set:
-            continue
-        if _attempt_status(item) != "accepted_probe":
-            continue
-        hints.append({
-            "turn": item.get("turn"),
-            "time": item.get("time"),
-            "tactic": tactic,
-            "outcome": _truncate(_actions_text(item), 260),
-        })
-    return hints[-5:]
-
-
-def _probe_alternatives_from_view(view: dict[str, Any]) -> list[dict[str, Any]]:
-    candidate_moves = _dict(view.get("candidate_moves"))
-    alternatives = candidate_moves.get("probe_alternatives")
-    if not isinstance(alternatives, list):
-        return []
-    return [
-        dict(item)
-        for item in alternatives
-        if isinstance(item, dict)
-    ][-6:]
-
-
 def _resume_prefix_count_from_handoff(
     *,
     view: dict[str, Any],
@@ -398,22 +366,6 @@ def _resume_prefix_count_from_handoff(
         if 0 < count < history_count:
             return count
     return max(0, history_count)
-
-
-def _rejected_probe_hints(attempts: list[dict[str, Any]]) -> list[dict[str, Any]]:
-    hints: list[dict[str, Any]] = []
-    for item in attempts:
-        if _intent_kind(item) != "probe_tactic":
-            continue
-        if _attempt_status(item) != "rejected_probe":
-            continue
-        hints.append({
-            "turn": item.get("turn"),
-            "time": item.get("time"),
-            "tactic": _intent_tactic(item),
-            "outcome": _truncate(_actions_text(item), 260),
-        })
-    return hints[-5:]
 
 
 def _latest_workspace_view(memory_dir: Path) -> dict[str, Any]:
@@ -680,8 +632,6 @@ def _copy_if_exists(src: Path, dst: Path) -> str:
 def _capsule_notes(
     *,
     view: dict[str, Any],
-    accepted_probe_hints: list[dict[str, Any]],
-    rejected_probe_hints: list[dict[str, Any]],
     latest_followup: str,
     lineage_events: list[dict[str, Any]] | None = None,
     lineage_briefing: dict[str, Any] | None = None,
@@ -714,13 +664,7 @@ def _capsule_notes(
     submit = _dict(recommended.get("submit"))
     payload = _dict(submit.get("payload"))
     tactic = str(payload.get("tactic") or structural.get("tactic") or "").strip()
-    if tactic and last_result.get("kind") == "accepted_probe_route_risk":
-        notes.append(
-            "Do not automatically commit the last accepted probe after resume; "
-            "route health marked it risky under the probability budget: "
-            f"{tactic}"
-        )
-    elif tactic:
+    if tactic:
         notes.append(
             "The last view offered an accepted structural transition; if the "
             "replayed view still matches, consider committing exactly: "
@@ -736,24 +680,6 @@ def _capsule_notes(
         route_memory_payload=dict(route_memory_payload or {}),
     ))
     notes.extend(_route_health_handoff_notes(view))
-
-    for hint in accepted_probe_hints[-3:]:
-        tactic = str(hint.get("tactic") or "").strip()
-        if tactic:
-            notes.append(
-                "Accepted read-only probe not yet necessarily committed: "
-                f"{tactic}"
-            )
-
-    for hint in rejected_probe_hints[-3:]:
-        tactic = str(hint.get("tactic") or "").strip()
-        outcome = str(hint.get("outcome") or "").strip()
-        if tactic:
-            notes.append(
-                "Avoid immediately retrying rejected probe shape: "
-                f"{tactic}"
-                + (f" ({outcome})" if outcome else "")
-            )
 
     if latest_followup:
         marker = "manager_note"
@@ -850,7 +776,7 @@ def _repair_memory_handoff_notes(
             f"Route replay memory available: {len(route_memories)} saved route(s); "
             f"latest discarded suffix has {len(suffix)} tactic(s)"
             + (f" and {len(chunks)} verifier-checkable chunk(s)" if chunks else "")
-            + ". Probe replay chunks before committing them."
+            + ". The manager validates replay chunks before committing them."
         )
         if reuse:
             message += " Reuse expectation: " + _truncate(reuse, 180) + "."
@@ -953,7 +879,6 @@ def _route_health_handoff_notes(view: dict[str, Any]) -> list[str]:
 def _score_capsule(
     *,
     history: list[str],
-    accepted_probe_hints: list[dict[str, Any]],
     view: dict[str, Any],
     route_family: dict[str, Any] | None = None,
 ) -> tuple[float, list[str]]:
@@ -961,9 +886,6 @@ def _score_capsule(
     score = float(len(history))
     if history:
         reasons.append(f"{len(history)} accepted replay tactic(s)")
-    if accepted_probe_hints:
-        score += 4.0
-        reasons.append("has accepted read-only probe handoff")
     remaining = _dict(view.get("proof_status")).get("remaining_goals")
     if isinstance(remaining, int):
         score += max(0.0, 10.0 - remaining)
@@ -1093,14 +1015,9 @@ def create_resume_capsules(
             timeline=timeline,
             history_count=len(history),
         )
-        probe_alternatives = _probe_alternatives_from_view(view)
-        accepted_hints = _accepted_probe_hints(attempts, history)
-        rejected_hints = _rejected_probe_hints(attempts)
         latest_followup = _read_text(memory_dir / "latest_followup.md", max_chars=12000) if memory_dir else ""
         notes = _capsule_notes(
             view=view,
-            accepted_probe_hints=accepted_hints,
-            rejected_probe_hints=rejected_hints,
             latest_followup=latest_followup,
             lineage_events=lineage_events,
             lineage_briefing=lineage_briefing,
@@ -1114,7 +1031,6 @@ def create_resume_capsules(
         recent_tactics = _recent_tactics(attempts, limit=16)
         score, reasons = _score_capsule(
             history=history,
-            accepted_probe_hints=accepted_hints,
             view=view,
             route_family=route_family,
         )
@@ -1211,10 +1127,7 @@ def create_resume_capsules(
             "handoff": {
                 "notes": notes,
                 "recent_tactics": recent_tactics,
-                "accepted_probe_hints": accepted_hints,
-                "rejected_probe_hints": rejected_hints,
                 "route_event_facts": route_event_facts[-12:],
-                "probe_alternatives": probe_alternatives,
                 "verified_route_options": [
                     {
                         "option_id": item.get("option_id"),
@@ -1335,13 +1248,6 @@ def load_resume_capsule(path: str | Path) -> ProofNodeResumeCapsule:
     ]
     if not route_event_facts:
         route_event_facts = _route_event_facts_from_rows(timeline, attempts)
-    probe_alternatives = [
-        dict(item)
-        for item in list(handoff.get("probe_alternatives") or [])
-        if isinstance(item, dict)
-    ]
-    if not probe_alternatives:
-        probe_alternatives = _probe_alternatives_from_view(latest_workspace_view)
     resume_prefix_count = _safe_int(replay.get("resume_prefix_count"))
     if resume_prefix_count <= 0:
         resume_prefix_count = _resume_prefix_count_from_handoff(
@@ -1355,7 +1261,6 @@ def load_resume_capsule(path: str | Path) -> ProofNodeResumeCapsule:
         "route_memory_payload": route_memory_payload,
         "checkpoint_payload": checkpoint_payload,
         "route_event_facts": route_event_facts,
-        "probe_alternatives": probe_alternatives,
         "verified_route_options": verified_route_options,
     }
 

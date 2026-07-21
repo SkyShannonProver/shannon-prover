@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import re
 from typing import Any
+from core.easycrypt.analysis.ec_program_statements import statement_is_procedure_call
 from workflow.surface_model import _drop_empty
 
 
@@ -74,7 +75,7 @@ def _whole_program_region_from_entry(entry: dict[str, Any]) -> dict[str, str]:
         return {}
     statement = str(entry.get("statement") or "").strip()
     head = _scope_entry_head(entry)
-    if not head and _statement_is_proc_call(statement):
+    if not head and statement_is_procedure_call(statement):
         head = "call"
     if not head:
         return {}
@@ -352,8 +353,9 @@ def _whole_program_observations(
     shared_call_position = _shared_call_label_position_observation(left_regions, right_regions)
     if shared_call_position:
         observations.append(shared_call_position)
-    if _is_same_shape_with_lookahead(left_regions, right_regions):
-        observations.append("visible top-level region sequence matches across sides")
+    # A matching region sequence is already visible in the two region rows and
+    # does not identify a boundary the prover would otherwise have to recover.
+    # Keep this panel for mismatches/reorderings/wrappers, not reassurance.
     if not wrapper_observations and _visible_call_labels_differ(left_regions, right_regions):
         observations.append("visible top-level call labels differ across sides")
     if current_left and current_right and current_left.get("kind") != current_right.get("kind"):
@@ -395,11 +397,6 @@ def _whole_program_region_text(regions: list[dict[str, str]]) -> str:
         omitted = len(regions) - _WHOLE_PROGRAM_RENDER_REGION_LIMIT
         labels.append(f"... ({omitted} more)")
     return " | ".join(labels)
-
-
-_PROC_CALL_RE = re.compile(
-    r"[A-Za-z_]\w*(?:\((?:[^()]|\([^()]*\))*\))?\.[A-Za-z_]\w*\s*\("
-)
 
 
 _SETUP_SUMMARY_RE = re.compile(r"^\d+\s+setup statement\(s\):\s*(.*)$")
@@ -446,16 +443,6 @@ def _setup_statements(text: Any) -> list[str]:
         s = match.group(1)
     parts = [p.strip() for p in s.split(";")]
     return [p for p in parts if p and not p.startswith("...")]
-
-
-def _statement_is_proc_call(text: Any) -> bool:
-    if not isinstance(text, str) or not text.strip():
-        return False
-    if "<@" in text:
-        return True
-    if "<-" in text:
-        return False
-    return bool(_PROC_CALL_RE.search(text))
 
 
 def _proc_module_method(proc: str) -> str:

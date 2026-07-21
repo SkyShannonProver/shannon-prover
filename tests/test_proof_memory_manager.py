@@ -129,8 +129,8 @@ def test_proof_memory_manager_surfaces_route_replay_memory() -> None:
     assert surface["kind"] == "route_replay_memory"
     assert surface["repair_episodes"][0]["episode_id"].startswith("repair_")
     route = surface["items"][0]
-    assert route["available_chunks"][0]["submit_probe"]["intent"] == (
-        "probe_replay_suffix_chunk"
+    assert route["available_chunks"][0]["submit_commit"]["intent"] == (
+        "commit_replay_suffix_chunk"
     )
     briefing = manager.lineage_briefing_surface(["proc."])
     assert briefing["negative_memories"][0]["avoid_pattern"] == (
@@ -267,7 +267,7 @@ def test_proof_memory_manager_surfaces_and_resolves_replay_chunks() -> None:
     )
     chunk = item["available_chunks"][0]
     assert chunk["first_tactic"] == "call (_: old_inv)."
-    assert chunk["submit_probe"]["intent"] == "probe_replay_suffix_chunk"
+    assert chunk["submit_commit"]["intent"] == "commit_replay_suffix_chunk"
 
     resolved = manager.resolve_replay_suffix_chunk(
         current_tactics,
@@ -329,12 +329,6 @@ def test_proof_memory_manager_renders_replay_chunk_observations() -> None:
         "tactics": ["wp.", "auto."],
     }
 
-    probe = manager.replay_suffix_probe_observation(
-        intent="probe_replay_suffix_chunk",
-        payload={"chunk_id": chunk["chunk_id"]},
-        chunk=chunk,
-        result={"ok": True, "accepted_count": 2},
-    )
     blocked = manager.replay_suffix_commit_blocked_observation(
         intent="commit_replay_suffix_chunk",
         payload={"chunk_id": chunk["chunk_id"]},
@@ -352,9 +346,6 @@ def test_proof_memory_manager_renders_replay_chunk_observations() -> None:
         chunk=chunk,
     )
 
-    assert probe["kind"] == "replay_suffix_probe"
-    assert probe["status"] == "accepted"
-    assert probe["chunk"]["submit_commit"]["intent"] == "commit_replay_suffix_chunk"
     assert blocked["kind"] == "replay_suffix_commit_blocked"
     assert blocked["failed_tactic"] == "auto."
     assert committed["kind"] == "replay_suffix_commit"

@@ -16,7 +16,6 @@ INTENT_CLASS_PROOF_MUTATION = "proof_mutation"
 INTENT_CLASS_PROOF_CONTROL = "proof_control"
 INTENT_CLASS_CONTEXT_TOPIC = "context_topic"
 INTENT_CLASS_SYMBOL_LOOKUP = "symbol_lookup"
-INTENT_CLASS_PROBE_PREVIEW = "probe_preview"
 INTENT_CLASS_LEGACY_WRAPPER = "legacy_wrapper"
 
 
@@ -65,7 +64,6 @@ CONTEXT_TOPIC_INTENTS = frozenset({
     "tactic_forms",
     "operator_lemmas",
     "inv_from_lemma",
-    "bridge_probe",
     "probability_budget_ledger",
     "checkpoints",
 })
@@ -75,7 +73,6 @@ CONTEXT_TOPIC_PAYLOAD_FIELDS: dict[str, tuple[str, ...]] = {
     "tactic_forms": ("name",),
     "operator_lemmas": ("operator",),
     "inv_from_lemma": ("lemma",),
-    "bridge_probe": ("claim",),
 }
 
 CONTEXT_TOPIC_DESCRIPTIONS: dict[str, str] = {
@@ -102,26 +99,12 @@ NON_ADVERTISED_CONTEXT_TOPICS = frozenset({
 
 
 _BASE_INTENT_SPECS: dict[str, IntentSpec] = {
-    "probe_tactic": IntentSpec(
-        "probe_tactic",
-        INTENT_CLASS_PROBE_PREVIEW,
-        True,
-        ("tactic",),
-        "speculative tactic check; does not change committed proof state",
-    ),
     "commit_tactic": IntentSpec(
         "commit_tactic",
         INTENT_CLASS_PROOF_MUTATION,
         False,
         ("tactic",),
         "apply a tactic to the committed EasyCrypt proof state",
-    ),
-    "probe_replay_suffix_chunk": IntentSpec(
-        "probe_replay_suffix_chunk",
-        INTENT_CLASS_PROBE_PREVIEW,
-        True,
-        ("chunk_id",),
-        "scratch-check a saved replay suffix chunk",
     ),
     "commit_replay_suffix_chunk": IntentSpec(
         "commit_replay_suffix_chunk",

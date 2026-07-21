@@ -5,6 +5,11 @@ import re
 from dataclasses import dataclass, field
 from typing import Any
 
+from core.easycrypt.analysis.ec_procedure_ref import (
+    parse_call_statement,
+    procedure_exact_key,
+)
+
 from workflow.proof_management.analyzers.common import (
     _dedupe_dicts,
     _dict,
@@ -17,9 +22,6 @@ from workflow.proof_management.analyzers.pure_tail import (
 )
 from workflow.proof_management.frame_facts import view_goal_text
 from workflow.proof_management.node_state import ProofNodeState
-from workflow.proof_management.transitions import (
-    is_broad_inline_tactic as _is_broad_inline_tactic,
-)
 
 
 @dataclass(frozen=True)
@@ -100,7 +102,6 @@ def call_site_surface(view: dict[str, Any]) -> dict[str, Any]:
         named_handles=named_handles,
     )
     residual_frontier = _call_site_residual_frontier(frontier)
-    preview_effects = _call_site_preview_effects(view)
     one_sided = _one_sided_call_surface(
         view,
         live_call_sites=live_call_sites,
@@ -111,7 +112,6 @@ def call_site_surface(view: dict[str, Any]) -> dict[str, Any]:
         named_handles,
         frontier_blockers,
         residual_frontier,
-        preview_effects,
         one_sided,
     )):
         return {}
@@ -129,8 +129,6 @@ def call_site_surface(view: dict[str, Any]) -> dict[str, Any]:
     wrapper_depth = _call_site_wrapper_depth(live_call_sites, named_handles)
     if wrapper_depth:
         result["wrapper_depth"] = wrapper_depth
-    if preview_effects:
-        result["preview_effects"] = preview_effects
     if one_sided:
         result["one_sided_call_surface"] = one_sided
     return _drop_empty(result)
@@ -178,7 +176,7 @@ def _workspace_view_without_stale_named_call_affordances(
         elif not any(
             _list(call_site.get(key))
             for key in ("live_call_sites", "callable_now")
-        ) and not call_site.get("preview_effects"):
+        ):
             raw.pop("call_site_surface", None)
     return raw
 
@@ -239,8 +237,11 @@ def _is_stale_named_call_affordance(item: dict[str, Any]) -> bool:
 
 
 def _compact_call_site(item: dict[str, Any]) -> dict[str, Any]:
+    statement = str(item.get("statement") or item.get("text") or "").strip()
+    parsed_call = parse_call_statement(statement) if statement else None
     procedure = str(
-        item.get("procedure")
+        (parsed_call.procedure if parsed_call else "")
+        or item.get("procedure")
         or item.get("proc")
         or item.get("callee")
         or ""
@@ -253,7 +254,7 @@ def _compact_call_site(item: dict[str, Any]) -> dict[str, Any]:
         "is_frontier_call": item.get("is_frontier_call"),
         "requires_cut_to_frontier": item.get("requires_cut_to_frontier"),
         "frontier_role": item.get("frontier_role"),
-        "text": _preview(str(item.get("text") or ""), limit=180),
+        "text": _preview(statement, limit=180),
     })
 
 
@@ -456,52 +457,6 @@ def _call_site_wrapper_depth(
     return max(dotted or [1])
 
 
-def _call_site_preview_effects(view: dict[str, Any]) -> dict[str, Any]:
-    last = _dict(view.get("last_result"))
-    tactic = str(
-        last.get("accepted_tactic")
-        or _dict(last.get("probe_preview")).get("tactic")
-        or ""
-    ).strip()
-    if not tactic or not _is_broad_inline_tactic(tactic.lower()):
-        return {}
-    preview_summary = _dict(last.get("preview_summary"))
-    probe_preview = _dict(last.get("probe_preview"))
-    goal_after = _dict(probe_preview.get("goal_after_probe"))
-    if not preview_summary and goal_after:
-        preview_summary = {
-            "line_count": goal_after.get("line_count"),
-            "char_count": goal_after.get("char_count"),
-            "truncated": goal_after.get("truncated"),
-            "remaining_goals": probe_preview.get("goal_after_remaining"),
-        }
-    current_goal = _dict(view.get("current_goal"))
-    after_lines = "\n".join(
-        str(line)
-        for line in _list(goal_after.get("lines"))
-        if isinstance(line, str)
-    )
-    return _drop_empty({
-        "tactic": tactic,
-        "kind": "broad_inline_preview",
-        "before": {
-            "line_count": current_goal.get("line_count"),
-            "char_count": current_goal.get("char_count"),
-            "goal_contains_call_site": _goal_text_contains_call_site(
-                view_goal_text(view, legacy_goal_text_fallback=True)
-            ),
-        },
-        "after": {
-            **preview_summary,
-            "goal_contains_call_site": (
-                _goal_text_contains_call_site(after_lines)
-                if after_lines else None
-            ),
-        },
-        "observed_risk": "broad_inline_can_reduce_call_site_handles",
-    })
-
-
 def _one_sided_call_surface(
     view: dict[str, Any],
     *,
@@ -520,7 +475,10 @@ def _one_sided_call_surface(
         if (
             not live_procedures
             or not item.get("procedure")
-            or str(item.get("procedure") or "").strip() in live_procedures
+            or _procedure_is_live(
+                str(item.get("procedure") or ""),
+                live_procedures,
+            )
         )
     ]
     hoare_handles = [
@@ -566,12 +524,29 @@ def _one_sided_live_call_sites(
 ) -> list[dict[str, Any]]:
     if not live_call_sites:
         return []
+    frontier = _dict(view.get("program_frontier"))
+    scope = _dict(frontier.get("current_frontier_scope"))
+    current = _dict(scope.get("frontier"))
+    if current:
+        current_calls = _current_frontier_call_procedures(current)
+        if not current_calls:
+            return []
+        live_call_sites = [
+            item for item in live_call_sites
+            if isinstance(item, dict)
+            and str(item.get("procedure") or "").strip()
+            and _procedure_is_live(
+                str(item.get("procedure") or ""),
+                current_calls,
+            )
+        ]
+        if not live_call_sites:
+            return []
     sides = {
         _normalize_call_side(item.get("side") or item.get("side_index"))
         for item in live_call_sites
     }
     sides.discard("")
-    frontier = _dict(view.get("program_frontier"))
     alignment = _dict(frontier.get("frontier_alignment"))
     first = _dict(alignment.get("first_instruction_alignment"))
     branch_alignment = str(first.get("branch_alignment") or "").lower()
@@ -588,6 +563,26 @@ def _one_sided_live_call_sites(
         for item in live_call_sites
         if item.get("procedure") or item.get("statement") or item.get("text")
     ][:4]
+
+
+def _current_frontier_call_procedures(
+    current_frontier: dict[str, Any],
+) -> set[str]:
+    procedures: set[str] = set()
+    for side in ("left", "right"):
+        item = _dict(current_frontier.get(side))
+        if str(item.get("head") or "").lower() != "call":
+            continue
+        statement = str(item.get("statement") or "")
+        parsed = parse_call_statement(statement) if statement else None
+        procedure = str(
+            parsed.procedure
+            if parsed is not None and parsed.procedure
+            else item.get("procedure") or ""
+        ).strip()
+        if procedure:
+            procedures.add(procedure)
+    return procedures
 
 
 def _normalize_call_side(value: Any) -> str:
@@ -653,6 +648,32 @@ def _goal_declaration_blocks(lines: list[str]) -> list[tuple[str, str]]:
 def _context_call_certificate_handles(view: dict[str, Any]) -> list[dict[str, Any]]:
     handles: list[dict[str, Any]] = []
     app_context = _dict(view.get("application_context"))
+    for item in _list(app_context.get("one_sided_losslessness_candidates")):
+        if not isinstance(item, dict):
+            continue
+        lemma = str(item.get("lemma") or item.get("name") or "").strip()
+        procedure = str(item.get("procedure") or "").strip()
+        if not lemma or not procedure:
+            continue
+        handles.append(_drop_empty({
+            "symbol": lemma,
+            "certificate_kind": "losslessness",
+            "procedure": procedure,
+            "declared_procedure": item.get("declared_procedure"),
+            "match_kind": item.get("match_kind"),
+            "parameter_bindings": item.get("parameter_bindings"),
+            "explicit_module_parameters": item.get("explicit_module_parameters"),
+            "module_argument_terms": item.get("module_argument_terms"),
+            "instantiated_lemma_head": item.get("instantiated_lemma_head"),
+            "proof_argument_placeholders": item.get("proof_argument_placeholders"),
+            "call_template": item.get("call_template"),
+            "required_premises": item.get("required_premises"),
+            "verification_status": item.get("verification_status"),
+            "authority": item.get("authority"),
+            "ec_ground_truth": item.get("ec_ground_truth"),
+            "source_path": item.get("source_path"),
+            "source": "application_context.one_sided_losslessness_candidates",
+        }))
     for item in _list(app_context.get("selected_handles")):
         if isinstance(item, dict):
             handle = _call_certificate_handle_from_mapping(
@@ -661,26 +682,15 @@ def _context_call_certificate_handles(view: dict[str, Any]) -> list[dict[str, An
             )
             if handle:
                 handles.append(handle)
-    candidate_moves = _dict(view.get("candidate_moves"))
-    for panel_name in ("moves", "navigation", "probe_alternatives"):
-        for item in _list(candidate_moves.get(panel_name)):
-            if isinstance(item, dict):
-                handle = _call_certificate_handle_from_mapping(
-                    item,
-                    source=f"candidate_moves.{panel_name}",
-                )
-                if handle:
-                    handles.append(handle)
-    lookup_handles = _dict(view.get("inspect_lookup_handles"))
-    for item in _list(lookup_handles.get("lookup_candidates")):
-        if isinstance(item, dict):
-            handle = _call_certificate_handle_from_mapping(
-                item,
-                source="inspect_lookup_handles.lookup_candidates",
-            )
-            if handle:
-                handles.append(handle)
     return handles
+
+
+def _procedure_is_live(procedure: str, live_procedures: set[str]) -> bool:
+    candidate_key = procedure_exact_key(procedure)
+    return any(
+        candidate_key == procedure_exact_key(live)
+        for live in live_procedures
+    )
 
 
 def _call_certificate_handle_from_mapping(
@@ -779,11 +789,6 @@ def _one_sided_direct_call_shape_failures(view: dict[str, Any]) -> list[dict[str
     last = _dict(view.get("last_result"))
     if last:
         candidates.append(last)
-    candidate_moves = _dict(view.get("candidate_moves"))
-    candidates.extend(
-        item for item in _list(candidate_moves.get("probe_alternatives"))
-        if isinstance(item, dict)
-    )
     failures: list[dict[str, Any]] = []
     for item in candidates:
         tactic = str(
@@ -951,10 +956,3 @@ def _view_has_live_call_site(view: dict[str, Any], goal_text: str) -> bool:
             if "call" in text.lower() or "<@" in text:
                 return True
     return False
-
-
-def _goal_text_contains_call_site(text: str) -> bool:
-    return "<@" in str(text or "") or bool(
-        re.search(r"\bcall\s+[A-Za-z_][A-Za-z0-9_.'`]*", str(text or ""))
-    )
-

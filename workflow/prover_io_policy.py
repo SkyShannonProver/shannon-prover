@@ -31,13 +31,9 @@ SESSION_CLI_AGENT_FORBIDDEN_LIFECYCLE_FLAGS = frozenset({
     "--force-restart",
 })
 
-SESSION_CLI_PROBE_FLAGS = frozenset({
-    "-try",
-    "-bridge-probe",
-    "-swap-search",
-})
-
 SESSION_CLI_READONLY_FLAGS = frozenset({
+    "-try",
+    "-swap-search",
     "-status",
     "-agent-view",
     "-episode-view",
@@ -187,7 +183,7 @@ def tactic_exec_mode(cmd: str) -> str:
 def is_session_cli_mutating_command(cmd: str) -> bool:
     mode = tactic_exec_mode(cmd)
     if mode:
-        return mode != "probe"
+        return True
     return bool(session_cli_flags(cmd) & SESSION_CLI_MUTATING_FLAGS)
 
 
@@ -898,13 +894,13 @@ def destructive_tool_denylist(
             SESSION_CLI_MUTATING_FLAGS | SESSION_CLI_AGENT_FORBIDDEN_LIFECYCLE_FLAGS
         )
     )
-    # `-tactic-exec {probe,commit,commit_chain,undo}` is the Canonical Proof
+    # `-tactic-exec {commit,commit_chain,undo}` is the Canonical Proof
     # Interaction Manager entry point — a manager-INTERNAL tactic-submission API
     # whose commit/commit_chain/undo modes mutate committed proof state. It lives
     # in its own argparse ``dest`` (NOT in SESSION_CLI_MUTATING_FLAGS), so deny it
     # explicitly. Unlike the read-only INSPECTION flags it is not part of the
     # agent's debug-signal vocabulary, so blocking every mode erases no signal
-    # (the agent submits/probes tactics through the MCP intents, never this).
+    # (the agent submits tactics through the MCP intent, never this).
     patterns.append("Bash(*session_cli*-tactic-exec*)")
     patterns.extend([
         "Edit(**/.ec_session_*/**)",

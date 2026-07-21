@@ -20,10 +20,17 @@ def _base_view() -> dict:
             "current_layer": "procedure_body",
             "goal_type": "pRHL",
         },
-        "current_goal": {"lines": ["Current goal", "x = y"], "line_count": 2},
+        "current_goal": {
+            "lines": ["Current goal", "while (i < n) {", "  x <- x + 1", "}"],
+            "line_count": 4,
+        },
+        "program_frontier": {"current_frontier_scope": {"frontier": {
+            "kind": "while_pair",
+            "left": {"head": "while", "statement": "while (i < n) {"},
+            "right": {"head": "while", "statement": "while (i < n) {"},
+        }}},
         "inspect_lookup_handles": {"ask_manager_for": [
-            {"intent": "tactic_forms", "payload": {"name": "apply"}},
-            {"intent": "tactic_forms", "payload": {"name": "rewrite"}},
+            {"intent": "tactic_forms", "payload": {"name": "while"}},
             {"intent": "operator_lemmas", "payload": {"operator": "size"}},
             {"intent": "inspect_context", "payload": {"topic": "goal_info"}},
             {"intent": "probe_tactic", "payload": {"tactic": "smt()."}},
@@ -81,10 +88,46 @@ def test_read_only_tactic_forms_is_overlay_and_preserves_base_surface() -> None:
     assert "committed proof state unchanged" not in md
 
 
+def test_module_entry_renders_exact_proc_as_ready_proof_action() -> None:
+    view = {
+        "kind": "prover_workspace_view",
+        "proof_status": {
+            "status": "open",
+            "remaining_goals": 1,
+            "view_focus": "relational_program",
+            "current_layer": "prhl_module",
+            "goal_type": "equiv",
+        },
+        "current_goal": {
+            "goal_type": "equiv",
+            "lines": ["pre = true", "L.f ~ R.f", "post = ={res}"],
+        },
+        "program_frontier": {
+            "procedure_entry_transition": {
+                "kind": "module_procedure_entry",
+                "current_layer": "prhl_module",
+                "transition": "proc_open",
+                "status": "preferred",
+                "tactic": "proc.",
+                "effect": "`proc` exposes call sites before lower-level proof passes.",
+            },
+        },
+        "inspect_lookup_handles": {"ask_manager_for": []},
+    }
+
+    turn = compose_surface_turn(view, PROFILE)
+    md = render_surface_turn_markdown(turn)
+
+    assert "### Ready proof action" in md
+    assert "### Need more? submit one read-only request" not in md
+    assert 'submit `{"intent": "commit_tactic", "payload": {"tactic": "proc."}}`' in md
+    assert '"tactic": "<tactic>"' not in md
+
+
 def test_read_only_markdown_keeps_proof_facts_before_overlay_result() -> None:
     base = {
         **_base_view(),
-        "decision_context": {"up_to_bad_call": {
+        "application_context": {"up_to_bad_call": {
             "active_bad_events": ["UFCMA.bad1", "UFCMA.bad2"],
         }},
     }
@@ -117,7 +160,7 @@ def test_read_only_markdown_keeps_proof_facts_before_overlay_result() -> None:
 def test_markdown_fact_values_preserve_easycrypt_fragments() -> None:
     view = {
         **_base_view(),
-        "decision_context": {"up_to_bad_call": {
+        "application_context": {"up_to_bad_call": {
             "active_bad_events": ["UFCMA.bad1", "UFCMA.bad2"],
         }},
     }
@@ -385,6 +428,91 @@ def test_bare_undo_to_checkpoint_is_typed_control_menu_without_base_update() -> 
         "intent": "undo_to_checkpoint",
         "payload": {"checkpoint_id": "before_call_route"},
     }
+
+    md = render_surface_turn_markdown(turn, goal_only=True)
+    assert "## Rewind targets" in md
+    assert "before_call_route" in md
+    assert "rewind to the call route boundary" in md
+    assert (
+        'submit `{"intent": "undo_to_checkpoint", "payload": '
+        '{"checkpoint_id": "before_call_route"}}`'
+    ) in md
+    assert "## 🎯 Current Goal" in md
+    assert "while (i < n)" in md
+    assert "No manager menu is available" not in md
+
+
+def test_invalid_amend_and_replay_renders_checkpoint_selection_menu_in_l1() -> None:
+    base = _base_view()
+    menu_view = {
+        **base,
+        "last_result": {
+            "intent": "amend_and_replay",
+            "kind": "checkpoint_selection",
+            "message": "Choose the committed tactic you want to rewind before.",
+            "notice": (
+                "amend_and_replay `index` must be a committed step in 1..34. "
+                "No proof state changed."
+            ),
+            "checkpoint_options": [
+                {
+                    "label": "Before seq cut #28",
+                    "committed_tactic": "seq 5 3 : (Mem.k{1} = IndBlock.k{2}).",
+                    "why_checkpoint": "seq-cut boundary",
+                    "submit": {
+                        "intent": "undo_to_checkpoint",
+                        "payload": {"checkpoint_id": "cp_28_3c9556cfc618b595"},
+                    },
+                }
+            ],
+        },
+    }
+
+    turn = compose_surface_turn(
+        menu_view,
+        "l1_goal_projection",
+        base_view=base,
+        handled_intent={
+            "intent": "amend_and_replay",
+            "payload": {"index": 99, "tactic": "seq 5 3 : true."},
+        },
+        goal_only=True,
+    )
+
+    assert turn["presentation_kind"] == "control_menu"
+    assert turn["base_surface_updates"] is False
+    expected_base = surface_model_to_dict(
+        compose_surface_model(base, "l1_goal_projection", goal_only=True)
+    )
+    assert turn["proof_surface"]["surface_model_hash"] == expected_base["surface_model_hash"]
+    menu = turn["control_menu"]
+    assert menu["title"] == "Rewind targets"
+    assert menu["items"][0]["submit"] == {
+        "intent": "undo_to_checkpoint",
+        "payload": {"checkpoint_id": "cp_28_3c9556cfc618b595"},
+    }
+
+    md = render_surface_turn_markdown(turn, goal_only=True)
+    assert "## Rewind targets" in md
+    assert "Before seq cut #28" in md
+    assert (
+        'submit `{"intent": "undo_to_checkpoint", "payload": '
+        '{"checkpoint_id": "cp_28_3c9556cfc618b595"}}`'
+    ) in md
+    assert "## 🎯 Current Goal" in md
+    assert "while (i < n)" in md
+
+
+def test_goal_only_proof_turn_remains_goal_only_without_control_menu() -> None:
+    turn = compose_surface_turn(_base_view(), "l1_goal_projection", goal_only=True)
+
+    md = render_surface_turn_markdown(turn, goal_only=True)
+
+    assert md.startswith("## 🎯 Current Goal")
+    assert "while (i < n)" in md
+    assert "## Rewind targets" not in md
+    assert "## Continue from unchanged proof state" not in md
+    assert "### Need more?" not in md
 
 
 def test_confirmed_rewind_updates_base_surface() -> None:

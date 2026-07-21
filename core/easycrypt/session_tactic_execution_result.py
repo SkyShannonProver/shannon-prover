@@ -79,7 +79,7 @@ def build_tactic_execution_result(
         rollback_count=rollback_count,
         history_committed=history_committed,
     )
-    candidate_after = _probe_candidate_after(
+    candidate_after = _preflight_candidate_after(
         mode=normalized_mode,
         status=status,
         tactic=(attempted_tactics[0] if attempted_tactics else ""),
@@ -93,11 +93,11 @@ def build_tactic_execution_result(
     )
     if candidate_after:
         inspect_handles.insert(1, {
-            "id": "probe_candidate_after",
+            "id": "preflight_candidate_after",
             "kind": "execution_panel",
             "source": "candidate_after.current_goal.lines",
             "description": (
-                "Speculative after-goal from an accepted probe; committed "
+                "Speculative after-goal from accepted preflight validation; committed "
                 "session state is unchanged."
             ),
         })
@@ -118,7 +118,7 @@ def build_tactic_execution_result(
             "keep_on_fail": bool(mutation.get("keep_on_fail")),
             "state_changed": state_changed,
             "history_committed": history_committed,
-            "probe_accepted": status == "probe_accepted",
+            "preflight_accepted": status == "preflight_accepted",
             "steps": chain_steps or _steps_from_mutation(
                 normalized_mode,
                 attempted_tactics,
@@ -227,7 +227,7 @@ def build_inspect_handles(
             "request": "diagnose",
             "tool": "-diagnose",
             "proof_state_effect": "does_not_change_proof_state_read_only",
-            "description": "Diagnose the latest tactic/probe error.",
+            "description": "Diagnose the latest tactic or preflight error.",
         },
         {
             "id": "episode_view",
@@ -331,7 +331,7 @@ def write_tactic_execution_result_artifact(
         "failed_tactic": str(execution.get("failed_tactic") or ""),
         "state_changed": bool(execution.get("state_changed")),
         "history_committed": bool(execution.get("history_committed")),
-        "probe_accepted": bool(execution.get("probe_accepted")),
+        "preflight_accepted": bool(execution.get("preflight_accepted")),
         "workspace_artifact": str(workspace.get("artifact") or ""),
         "workspace_chars": _int(workspace.get("workspace_chars")),
         "current_goal_text_fully_shown": workspace.get(
@@ -478,7 +478,7 @@ def validate_tactic_execution_result(
         errors.append(f"kind must be {TACTIC_EXECUTION_RESULT_KIND!r}")
     execution = _dict(data.get("execution"))
     mode = str(execution.get("mode") or "")
-    if mode not in {"probe", "commit", "commit_chain", "undo"}:
+    if mode not in {"preflight", "commit", "commit_chain", "undo"}:
         errors.append(f"execution.mode is invalid: {mode!r}")
     for key in ("attempted_count", "accepted_count", "rollback_count"):
         value = execution.get(key)
@@ -497,14 +497,14 @@ def validate_tactic_execution_result(
         if not isinstance(candidate_after, dict):
             errors.append("candidate_after must be a dict when present")
         elif candidate_after:
-            if candidate_after.get("kind") != "probe_candidate_after":
-                errors.append("candidate_after.kind must be 'probe_candidate_after'")
+            if candidate_after.get("kind") != "preflight_candidate_after":
+                errors.append("candidate_after.kind must be 'preflight_candidate_after'")
             current_goal = _dict(candidate_after.get("current_goal"))
             if not _list(current_goal.get("lines")) and not bool(
                 candidate_after.get("goal_after_closed")
             ):
                 errors.append(
-                    "candidate_after.current_goal.lines is required unless the probe closed"
+                    "candidate_after.current_goal.lines is required unless preflight closed the goal"
                 )
     if not _list(data.get("inspect_handles")):
         warnings.append("inspect_handles is empty")
@@ -514,7 +514,7 @@ def validate_tactic_execution_result(
 def _mode_from_command(command: str) -> str:
     command = str(command or "").strip()
     if command in {"try", "try-chain"}:
-        return "probe"
+        return "preflight"
     if command == "chain":
         return "commit_chain"
     if command == "prev":
@@ -526,8 +526,8 @@ def _normalize_mode(mode: str) -> str:
     mode = str(mode or "").strip()
     aliases = {
         "next": "commit",
-        "try": "probe",
-        "try-chain": "probe",
+        "try": "preflight",
+        "try-chain": "preflight",
         "chain": "commit_chain",
         "prev": "undo",
     }
@@ -541,7 +541,7 @@ def _history_committed(
     accepted_count: int,
     transition: dict[str, Any],
 ) -> bool:
-    if mode == "probe":
+    if mode == "preflight":
         return False
     if mode == "undo":
         return status == "undone"
@@ -558,7 +558,7 @@ def _state_changed(
     rollback_count: int,
     history_committed: bool,
 ) -> bool:
-    if mode == "probe":
+    if mode == "preflight":
         return False
     if mode == "undo":
         return status == "undone"
@@ -614,7 +614,7 @@ def _excerpt(text: str, *, limit: int = 1200) -> str:
     return text[:half].rstrip() + "\n...[snip]...\n" + text[-half:].lstrip()
 
 
-def _probe_candidate_after(
+def _preflight_candidate_after(
     *,
     mode: str,
     status: str,
@@ -622,16 +622,16 @@ def _probe_candidate_after(
     raw_result: str,
     raw_payload: dict[str, Any],
 ) -> dict[str, Any]:
-    """Extract the speculative after-goal from a probe transcript.
+    """Extract the speculative after-goal from a preflight transcript.
 
-    A probe intentionally leaves ``workspace.view`` at the committed state.
-    When EasyCrypt accepted the probe, the after-goal is still essential
+    Preflight intentionally leaves ``workspace.view`` at the committed state.
+    When EasyCrypt accepted the candidate, the after-goal is still essential
     reasoning context, so surface it as a separate candidate panel instead of
     forcing the prover to read the raw try artifact.
     """
-    if mode != "probe":
+    if mode != "preflight":
         return {}
-    if status not in {"probe_accepted", "probe_no_progress"}:
+    if status not in {"preflight_accepted", "preflight_no_progress"}:
         return {}
     text = str(raw_result or "")
     goal_after_closed = bool(re.search(
@@ -674,7 +674,7 @@ def _probe_candidate_after(
     if inferred:
         goal_panel["goal_type"] = inferred
     return _drop_empty({
-        "kind": "probe_candidate_after",
+        "kind": "preflight_candidate_after",
         "tactic": tactic,
         "status": status,
         "state_changed": False,
@@ -684,7 +684,7 @@ def _probe_candidate_after(
         "current_goal": goal_panel if lines else {},
         "raw_result_artifact": str(raw_payload.get("artifact") or ""),
         "note": (
-            "This is the speculative state after the probe. The committed "
+            "This is the speculative state after preflight. The committed "
             "workspace remains workspace.view."
         ),
     })
@@ -773,5 +773,3 @@ def _first_present(*values: Any) -> Any:
         if value is not None:
             return value
     return None
-
-

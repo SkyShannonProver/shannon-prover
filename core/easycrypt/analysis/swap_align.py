@@ -937,7 +937,7 @@ def format_analysis(result: AlignResult) -> str:
         lines.append("  meaning: static read/write scan found a source statement usable for realignment.")
         lines.append("  not_meaning: the signed offset is NOT unique and NOT a proof-route decision.")
         lines.append("  recommended_action: choose the offset that lands the next sample/rnd target;")
-        lines.append("  then probe that concrete swap if uncertain.")
+        lines.append("  then check that concrete swap against the current alignment.")
         for swap in result.swaps:
             lines.append(f"  {swap}")
         lines.append("")

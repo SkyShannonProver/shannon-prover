@@ -13,7 +13,7 @@ from typing import Any
 
 from workflow.context_intents import (
     INTENT_CLASS_CONTEXT_TOPIC,
-    INTENT_CLASS_PROBE_PREVIEW,
+    INTENT_CLASS_PROOF_MUTATION,
     INTENT_CLASS_PROOF_CONTROL,
     INTENT_CLASS_SYMBOL_LOOKUP,
     intent_class,
@@ -22,14 +22,19 @@ from workflow.context_intents import (
 from workflow.surface_model import PanelAction
 from workflow.surface_action_preflight import (
     action_needs_dynamic_preflight,
+    matching_preflight_submission,
     preflight_result,
 )
 from workflow.surface_action_choices import (
     is_placeholder as _choice_is_placeholder,
-    operator_query_is_valid_for_goal,
 )
 from workflow.surface_action_policy import panel_allowed_intents
-from workflow.surface_state_predicates import goal_has_program, is_relational_goal
+from workflow.surface_state_predicates import (
+    derive_surface_state,
+    goal_has_program,
+    is_relational_goal,
+    preferred_procedure_entry_transition,
+)
 from workflow.surface_tactic_forms import eligible_tactic_form_names
 from core.easycrypt.value_shapes import as_dict as _dict, as_list as _list
 
@@ -47,7 +52,6 @@ _CALL_CONTEXT_REQUIRES_CURRENT_FRONTIER = frozenset({
     "call_subgoals",
     "inv_from_lemma",
 })
-
 
 def has_current_call_surface_context(view: dict[str, Any]) -> bool:
     """True when call-context affordances are live at the current frontier.
@@ -71,6 +75,28 @@ def has_current_call_surface_context(view: dict[str, Any]) -> bool:
     return False
 
 
+def has_displayable_call_surface(view: dict[str, Any]) -> bool:
+    """Return whether the canonical surface should enter the call-site phase."""
+    current_call = has_current_call_surface_context(view)
+    preflight = _dict(view.get("surface_action_preflight"))
+    results = _list(preflight.get("results"))
+    for item in results:
+        if not isinstance(item, dict) or not item.get("eligible"):
+            continue
+        intent = str(item.get("intent") or "")
+        if intent not in {
+            "call_site_options",
+            "call_subgoals",
+            "call_invariant_skeleton",
+            "inv_from_lemma",
+        }:
+            continue
+        if intent != "call_site_options" and not current_call:
+            continue
+        return True
+    return False
+
+
 def filter_surface_actions(
     view: dict[str, Any],
     panel_id: str,
@@ -83,11 +109,102 @@ def filter_surface_actions(
     for action in actions or ():
         if allowed is not None and action.intent not in allowed:
             continue
-        result = action_eligibility(view, panel_id, phase, action)
+        candidate = action
+        result = action_eligibility(view, panel_id, phase, candidate)
         if not result.eligible:
             continue
-        out.append(_with_eligibility(action, result))
+        out.append(_with_eligibility(candidate, result))
     return out
+
+
+def preflight_candidate_state_eligibility(
+    view: dict[str, Any],
+    intent: str,
+    payload: dict[str, Any] | None = None,
+) -> ActionEligibilityResult:
+    """Cheap state gate applied before a manager-owned read-only preflight.
+
+    Dynamic preflight remains the authority on whether backend output is
+    displayable.  This gate only rejects candidates whose required proof-state
+    shape is already known to be absent, avoiding backend calls for the stable
+    protocol/profile roster emitted by the workspace producer.
+    """
+    del payload  # Payload expansion is owned by surface_action_preflight.
+    state = derive_surface_state(view)
+
+    if intent == "call_site_options":
+        if has_current_call_surface_context(view) or state.frontier_kind == "call":
+            return _yes(
+                "current proof state exposes a call frontier worth preflighting",
+                "call_frontier",
+                ("call_site_surface", "program_frontier.current_frontier_scope"),
+            )
+        return _no(
+            "no current call frontier; future or static calls do not justify preflight",
+            "call_frontier",
+            ("call_site_surface", "program_frontier.current_frontier_scope"),
+        )
+
+    if intent in _CALL_CONTEXT_REQUIRES_CURRENT_FRONTIER:
+        if has_current_call_surface_context(view):
+            return _yes(
+                "current frontier has concrete call context for this preflight",
+                "call_site_surface",
+                ("call_site_surface",),
+            )
+        return _no(
+            "call-context preflight requires a current callable/frontier-live handle",
+            "call_site_surface",
+            ("call_site_surface",),
+        )
+
+    if intent in {"pr_bridge_routes", "verified_pivot_options"}:
+        if state.goal_mode == "probability" and not state.has_program:
+            return _yes(
+                "current goal is a probability residual",
+                "probability_goal",
+                state.source_refs,
+            )
+        return _no(
+            "Pr bridge preflight requires a current probability residual",
+            "probability_goal",
+            state.source_refs,
+        )
+
+    if intent == "equiv_bridge_lemmas":
+        if not state.has_program and state.goal_mode in {"probability", "relational"}:
+            return _yes(
+                "current non-program goal can use an equivalence bridge lookup",
+                "bridge_goal",
+                state.source_refs,
+            )
+        return _no(
+            "equivalence bridge preflight is not current program-frontier work",
+            "bridge_goal",
+            state.source_refs,
+        )
+
+    if intent in {"rewrite_candidates", "lemma_hints"}:
+        if not state.has_program:
+            return _yes(
+                "current residual is non-program proof work",
+                "logical_residual",
+                state.source_refs,
+            )
+        return _no(
+            "lemma/rewrite preflight waits until program-frontier work is absent",
+            "logical_residual",
+            state.source_refs,
+        )
+
+    # Some dynamic analyzers, notably subgoal_gap, perform their own precise
+    # shape classification.  When no cheap exclusion is authoritative, let the
+    # read-only classifier decide instead of duplicating its semantics here.
+    return _yes(
+        "no authoritative cheap state exclusion; use dynamic preflight result",
+        "current_state",
+        state.source_refs,
+    )
 
 
 def action_eligibility(
@@ -99,12 +216,34 @@ def action_eligibility(
     spec = intent_spec(action.intent)
     if spec is None or not spec.advertised:
         return _no("intent is not advertised", "context_intents")
-    if intent_class(action.intent) == INTENT_CLASS_PROBE_PREVIEW:
-        return _no("probe preview is hidden by default", "context_intents")
     if intent_class(action.intent) == INTENT_CLASS_PROOF_CONTROL:
         return _no("proof control belongs to SurfaceTurnModel.control_menu", "surface_turn")
 
     intent = action.intent
+    if intent_class(intent) == INTENT_CLASS_PROOF_MUTATION:
+        transition = preferred_procedure_entry_transition(view)
+        if (
+            intent == "commit_tactic"
+            and transition
+            and action.payload == {"tactic": transition["tactic"]}
+        ):
+            return _yes(
+                "exact preferred procedure-entry transition from ProofIR",
+                "current_procedure_entry",
+                ("program_frontier.procedure_entry_transition",),
+            )
+        preflight_match = matching_preflight_submission(view, intent, action.payload)
+        if preflight_match:
+            source_intent = str(preflight_match.get("source_intent") or "preflight")
+            return _yes(
+                f"exact manager-preflighted submission from {source_intent}",
+                "surface_action_preflight",
+                ("surface_action_preflight.results",),
+            )
+        return _no(
+            "proof mutations require an exact typed current-state transition",
+            "program_frontier",
+        )
     if intent_class(intent) == INTENT_CLASS_SYMBOL_LOOKUP:
         return _yes("general symbol lookup", "global_lookup", action.source_refs)
     if intent in _CALL_CONTEXT_REQUIRES_CURRENT_FRONTIER and not has_current_call_surface_context(view):
@@ -133,7 +272,10 @@ def action_eligibility(
             ("surface_action_preflight",),
         )
     if intent == "operator_lemmas":
-        return _operator_lemmas_eligibility(view, action)
+        return _no(
+            "broad operator search is not a persistent surface action",
+            "current_goal",
+        )
     if intent == "tactic_forms":
         return _tactic_forms_eligibility(view, panel_id, phase, action)
     if intent == "proof_frontier":
@@ -169,29 +311,9 @@ def _tactic_forms_eligibility(
     if not names:
         return _no("tactic form needs a concrete state-derived tactic name", "current_goal")
     allowed = eligible_tactic_form_names(view, panel_id, phase)
-    if allowed is not None and not any(name in allowed for name in names):
-        return _no("tactic family is not relevant to this current proof phase", "program_frontier")
-    return _yes("tactic family matches the current proof phase", "current_phase", ("proof_status", "program_frontier"))
-
-
-def _operator_lemmas_eligibility(
-    view: dict[str, Any],
-    action: PanelAction,
-) -> ActionEligibilityResult:
-    queries = [
-        str(value).strip()
-        for value in _action_values(action, "operator")
-        if str(value).strip() and not _is_placeholder(value)
-    ]
-    if not queries:
-        return _no("operator lemma lookup needs a current-goal-derived operator", "current_goal")
-    if not any(operator_query_is_valid_for_goal(query, view) for query in queries):
-        return _no("operator query is not visible in the current goal", "current_goal")
-    return _yes(
-        "operator query is derived from the current goal",
-        "current_goal",
-        ("current_goal",),
-    )
+    if allowed is not None and not set(names).issubset(allowed):
+        return _no("tactic reference is not visible in this current proof phase", "program_frontier")
+    return _yes("tactic reference matches the canonical current-phase set", "current_phase", ("proof_status", "program_frontier"))
 
 
 def _action_values(action: PanelAction, field: str) -> list[Any]:
@@ -249,6 +371,3 @@ def _no(
     source_refs: tuple[str, ...] = (),
 ) -> ActionEligibilityResult:
     return ActionEligibilityResult(False, reason, source_refs, state_scope)
-
-
-

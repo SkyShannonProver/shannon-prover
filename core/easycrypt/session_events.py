@@ -47,8 +47,8 @@ class TacticAttempt:
     def failed(self) -> bool:
         return bool(self.error) or self.accepted is False or self.status in {
             "error",
-            "probe_rejected",
-            "probe_error",
+            "preflight_rejected",
+            "preflight_error",
         }
 
     def to_dict(self) -> dict[str, Any]:
@@ -319,7 +319,7 @@ EVENT_PAYLOAD_SCHEMAS: dict[str, dict[str, dict[str, _FIELD_TYPE]]] = {
             "failed_tactic": str,
             "state_changed": bool,
             "history_committed": bool,
-            "probe_accepted": bool,
+            "preflight_accepted": bool,
             "workspace_artifact": str,
             "workspace_chars": int,
             "current_goal_text_fully_shown": bool,
@@ -1052,13 +1052,13 @@ def _attempt_from_event(
         tool_status = str(payload.get("status") or "")
         tool_error = tool_status == "error" or bool(payload.get("tool_error"))
         if tool_error:
-            status = "probe_error"
+            status = "preflight_error"
         elif accepted is True:
-            status = "probe_accepted"
+            status = "preflight_accepted"
         elif accepted is False:
-            status = "probe_rejected"
+            status = "preflight_rejected"
         else:
-            status = "probe_unknown"
+            status = "preflight_unknown"
         error = str(payload.get("latest_error") or "").strip()
         if not error and (tool_error or accepted is False):
             error = _report_error_excerpt(str(payload.get("report") or ""))

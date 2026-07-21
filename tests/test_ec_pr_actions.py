@@ -37,7 +37,7 @@ def test_pr_normalization_menu_items_render_congr_probe() -> None:
 
     assert items[0]["id"] == "pr_normalize_congr"
     assert items[0]["tactic"] == "congr."
-    assert items[0]["action_type"] == "probe_tactic"
+    assert items[0]["action_type"] == "tactic_candidate"
 
 
 def test_pr_decomposition_bridge_menu_items_render_direct_bridge() -> None:
@@ -66,7 +66,7 @@ def test_pr_byequiv_fallback_menu_items_keep_probe_when_no_pr_action() -> None:
     )
 
     assert items[0]["id"] == "pr_byequiv_fallback"
-    assert items[0]["action_type"] == "probe_tactic"
+    assert items[0]["action_type"] == "tactic_candidate"
     assert items[0]["cost_factors"]["has_runnable_pr_frontend"] is False
 
 

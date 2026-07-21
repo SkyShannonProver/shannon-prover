@@ -105,7 +105,7 @@ def test_b7_genuine_op_still_offered(_patched_decls):
 #     populated side. Pre-fix only checked `right`, so a right-only row (left is
 #     the placeholder) was mislabeled "both sides" and erased the right content.
 # ---------------------------------------------------------------------------
-from workflow.surface_composer import _surgery_where
+from workflow.surface_panels import _surgery_where
 
 
 def _frontier_view(left: str, right: str, *, one_sided: bool = False):

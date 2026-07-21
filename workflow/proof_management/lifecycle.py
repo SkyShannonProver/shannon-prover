@@ -361,11 +361,6 @@ class ProofNodeLifecycleManager:
             for item in list(resume_context.get("route_event_facts") or [])
             if isinstance(item, dict)
         ]
-        probe_alternatives = [
-            dict(item)
-            for item in list(resume_context.get("probe_alternatives") or [])
-            if isinstance(item, dict)
-        ]
         verified_route_options = [
             dict(item)
             for item in list(resume_context.get("verified_route_options") or [])
@@ -388,12 +383,6 @@ class ProofNodeLifecycleManager:
         events = getattr(self.projection, "events", None)
         if events is not None and hasattr(events, "seed_resume_route_events"):
             events.seed_resume_route_events(route_events)
-        probe_manager = getattr(self.projection, "probe_alternatives", None)
-        if (
-            probe_manager is not None
-            and hasattr(probe_manager, "seed_for_snapshot")
-        ):
-            probe_manager.seed_for_snapshot(snapshot, probe_alternatives)
 
 
 def _daemon_attach_request(resume_context: dict[str, Any]) -> dict[str, Any] | None:

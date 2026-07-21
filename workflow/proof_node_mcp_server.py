@@ -241,7 +241,7 @@ def _submit_tool_description(
 def _payload_description(allowed_intents: list[str]) -> str:
     examples: list[str] = []
     allowed = set(allowed_intents)
-    if {"commit_tactic", "probe_tactic"} & allowed:
+    if "commit_tactic" in allowed:
         examples.append("{'tactic': 'smt().'}")
     if CONTEXT_TOPIC_INTENTS & allowed:
         examples.append(

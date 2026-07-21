@@ -136,7 +136,7 @@ def test_bridge_options_reports_unverified_candidates(tmp_path) -> None:
     assert result.evidence["context"][0]["candidate_count"] > 0
     assert any(
         item["accepted"] is False and item.get("error_message") == "sync failed"
-        for item in result.evidence["probe"]
+        for item in result.evidence["preflight"]
     )
 
 
@@ -371,7 +371,6 @@ def test_no_verified_route_surfaces_named_scan_fallback_as_context(tmp_path) -> 
     assert result.errors[0]["code"] == "bridge_options.no_verified_route"
     _assert_named_fallback_surfaced(result)
 
-
 def test_no_candidates_exit_also_surfaces_named_scan_fallback(tmp_path) -> None:
     # the coverage-gap case: typed frontend produces nothing (wrapper-to-wrapper Pr=Pr)
     phase = _bridge_phase_with_typed_candidates(
@@ -381,19 +380,3 @@ def test_no_candidates_exit_also_surfaces_named_scan_fallback(tmp_path) -> None:
         _PR_EQ_GOAL, DaemonHandle(cli=_RejectingCli(), dbe=_FakeDbe()))
     assert any(n.get("code") == "bridge_options.no_candidates" for n in (result.notes or []))
     _assert_named_fallback_surfaced(result)
-
-
-def test_goal_is_pr_bridge_candidate_requires_distinct_programs() -> None:
-    # FIX#3 (deep audit Tier-C): a Pr/equiv bridge relates a game HOP — two DISTINCT
-    # programs. A same-program union/big-sum bound and a single Pr are NOT bridges.
-    from core.easycrypt.session_prover_workspace_view import (  # type: ignore  # noqa: E402
-        _goal_is_pr_bridge_candidate,
-    )
-
-    assert _goal_is_pr_bridge_candidate(
-        "Pr[G1.main() @ &m : res] = Pr[G2.main() @ &m : res]"
-    )
-    assert not _goal_is_pr_bridge_candidate(
-        "Pr[A.f() @ &m : E] <= big predT (fun i => Pr[A.f() @ &m : E_i]) (iota_ 0 q)"
-    )
-    assert not _goal_is_pr_bridge_candidate("Pr[G.main() @ &m : res] <= 1%r / n%r")

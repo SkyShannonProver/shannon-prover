@@ -38,7 +38,6 @@ from workflow.proof_management import (
     ProofNodeLifecycleManager,
     ProofNodeStateManager,
     ProofStateSnapshot,
-    ProofProbeAlternativeManager,
     ProofProjectionPipeline,
     ProofRecoveryIntentHandler,
     ProofTurnExecutor,
@@ -51,13 +50,15 @@ from workflow.proof_management.checkpoint_surface import (
     checkpoint_id as _checkpoint_id,
     structural_checkpoints_surface,
 )
-from workflow.surface_profiles import _PROBE_INTENTS, probe_disabled
 from workflow.surface_action_preflight import (
     attach_surface_action_preflight,
     action_preflight_key,
     derived_preflight_candidates,
     preflight_result_for_action,
     surface_preflight_candidates,
+)
+from workflow.surface_action_eligibility import (
+    preflight_candidate_state_eligibility,
 )
 from workflow.proof_management.protocol_repair import (
     AgentIntent,
@@ -212,14 +213,12 @@ class ProofNodeManager:
             history_hash=_history_hash,
             confirmation_id=_confirmation_id,
         )
-        self.probe_alternatives = ProofProbeAlternativeManager()
         self.projection = ProofProjectionPipeline(
             workspace=self.workspace,
             node_state=self.node_state,
             checkpoints=self.checkpoints,
             proof_memory=self.proof_memory,
             events=self.events,
-            probe_alternatives=self.probe_alternatives,
             analyzers=self.analyzers,
             renderer=self.renderer,
             file_path=self.repl.file_path,
@@ -255,7 +254,6 @@ class ProofNodeManager:
             repl=self.repl,
             events=self.events,
             lineage=self.lineage,
-            probe_alternatives=self.probe_alternatives,
             latest_snapshot=lambda: self.latest_snapshot,
             latest_view=lambda: self.latest_view,
             set_latest_view=self._set_latest_view,
@@ -381,7 +379,17 @@ class ProofNodeManager:
                 attach_surface_action_preflight(full, preflight_results)
 
     def _surface_action_preflight_results(self, view: dict[str, Any]) -> list[dict[str, Any]]:
-        candidates = surface_preflight_candidates(view)
+        candidates = [
+            action
+            for action in surface_preflight_candidates(view)
+            if preflight_candidate_state_eligibility(
+                view,
+                str(action.get("intent") or ""),
+                action.get("payload")
+                if isinstance(action.get("payload"), dict)
+                else {},
+            ).eligible
+        ]
         if not candidates:
             return []
         results: list[dict[str, Any]] = []
@@ -462,9 +470,6 @@ class ProofNodeManager:
         give_up_gate = self._give_up_gate(parsed.intent)
         if give_up_gate is not None:
             return give_up_gate
-        probe_gate = self._probe_disabled_gate(parsed.intent)
-        if probe_gate is not None:
-            return probe_gate
         # ADAPTIVE: in the cheap phase the agent may NOT pull the richer levers — the
         # manager decides escalation from objective stall, not from the agent's reach.
         # Reaching for a gated intent is rejected with guidance; it still counts as a
@@ -477,7 +482,6 @@ class ProofNodeManager:
             intent=parsed.intent,
             latest_view=self.latest_view,
             surface_profile=self.escalation.effective_profile,
-            latest_readonly_probe_event=self.events.latest_readonly_probe_event(),
         )
         if preflight.should_handle:
             return self.turns.handle_preflight_decision(parsed.intent, preflight)
@@ -495,11 +499,6 @@ class ProofNodeManager:
             return self.turns.execute_recovery_plan(
                 parsed.intent,
                 self.recovery.handle_undo_to_checkpoint(parsed.intent),
-            )
-        if parsed.intent.intent == "probe_replay_suffix_chunk":
-            return self.turns.execute_recovery_plan(
-                parsed.intent,
-                self.recovery.handle_probe_replay_suffix_chunk(parsed.intent),
             )
         if parsed.intent.intent == "commit_replay_suffix_chunk":
             return self.turns.execute_recovery_plan(
@@ -569,83 +568,10 @@ class ProofNodeManager:
         )
 
     def _handle_inspect_diagnose(self, intent: "AgentIntent") -> ManagedTurn:
-        """`diagnose`, made probe-aware.
-
-        The backend `diagnose` reads the COMMITTED session only; a read-only
-        probe runs in an ephemeral process and never touches it, so after a
-        failed probe the committed-session diagnosis is empty ("No errors
-        found"). When the agent's most recent action was a rejected read-only
-        probe, surface that probe's own EasyCrypt error (a fact) alongside the
-        committed-session diagnosis, so the probe→diagnose loop is not blind.
-        """
-        turn = self.turns.repl_call(
+        """Return the backend diagnosis for the committed EasyCrypt session."""
+        return self.turns.repl_call(
             intent, lambda: self.repl.handle_intent(intent)
         )
-        try:
-            probe_evt = self.events.latest_readonly_probe_event() or {}
-        except Exception:
-            probe_evt = {}
-        err = str(probe_evt.get("error_summary") or "").strip()
-        if not err:
-            return turn
-        probe_tactic = str(probe_evt.get("tactic") or "").strip()
-        # Distinguish a probe-HARNESS failure (daemon/tool layer) from a real
-        # EasyCrypt rejection: labelling a tool failure "EasyCrypt rejected" tells
-        # the agent its tactic is wrong when EC never ruled on it (panel audit:
-        # diagnose harness-vs-EC — the agent self-diagnosed this for while{2}).
-        try:
-            from workflow.proof_management.probe_alternatives import is_probe_tool_error
-            tool_error = is_probe_tool_error(probe_evt)
-        except Exception:
-            tool_error = False
-        if tool_error:
-            note = (
-                "\n\n--- Last read-only probe (NOT the committed proof state) ---\n"
-                f"probe tactic: {probe_tactic}\n"
-                f"The probe TOOL failed before EasyCrypt could rule on the tactic: {err}\n"
-                "(This is a probe-harness/infrastructure failure, NOT an EasyCrypt "
-                "rejection and NOT a proof-state error. Do not treat it as evidence "
-                "the tactic is wrong — retry the probe, or commit the tactic to get a "
-                "real EasyCrypt verdict.)"
-            )
-        else:
-            goal_text = ""
-            try:
-                cg = (self.latest_view or {}).get("current_goal") or {}
-                goal_text = "\n".join(str(line) for line in (cg.get("lines") or []))
-            except Exception:
-                goal_text = ""
-            probe_diag = err
-            try:
-                from core.easycrypt.ec_diagnose import diagnose as _diagnose  # type: ignore
-            except Exception:
-                try:
-                    from ec_diagnose import diagnose as _diagnose  # type: ignore
-                except Exception:
-                    _diagnose = None  # type: ignore
-            if _diagnose is not None:
-                try:
-                    probe_diag = _diagnose(err, probe_tactic, goal_text)
-                except Exception:
-                    probe_diag = err
-            note = (
-                "\n\n--- Last read-only probe (NOT the committed proof state) ---\n"
-                f"probe tactic: {probe_tactic}\n"
-                f"EasyCrypt rejected the probe with: {err}\n"
-                "(A read-only probe never touches the committed session, so the "
-                "committed-session diagnosis above does not see it — this block is "
-                "the probe's own EasyCrypt error.)\n\n"
-                f"{probe_diag}"
-            )
-        for action in (turn.manager_actions or []):
-            if not isinstance(action, dict):
-                continue
-            if "diagnose" in str(action.get("label") or "") or "agent_observation" in action:
-                action["agent_observation"] = (
-                    str(action.get("agent_observation") or "") + note
-                )
-                break
-        return turn
 
     def _committed_admit_gate(self, intent: "AgentIntent"):
         """Block finish/qed while committed `admit.` tactics remain.
@@ -694,43 +620,6 @@ class ProofNodeManager:
             ok=False, workspace_view=view, snapshot=self.latest_snapshot,
             intent=intent, repair_prompt=prompt,
             manager_actions=[{"label": "committed_admit_gate", "admits": debt}],
-        )
-
-    def _probe_disabled_gate(self, intent: "AgentIntent"):
-        """Hard-reject probe intents when the probe lever is not agent-facing.
-
-        ``probe_disabled()`` removes probe from the offered menu/schema, but a
-        model may still submit ``probe_tactic`` from habit or stale context.
-        Menu-gating alone does NOT stop the probe from running — so without this
-        the manager executes the probe anyway and a "probe-off" run is silently
-        probe-ON (observed: 24/25 probes ran on a probe-off CBC_upto run, making
-        the comparison invalid). This makes probe-off authoritative: the probe
-        never executes; the agent is told to commit directly.
-
-        Returns a clarification ManagedTurn to deflect, or None to proceed.
-        """
-        if intent.intent not in _PROBE_INTENTS or not probe_disabled():
-            return None
-        self._audit({
-            "kind": "probe.disabled_reject",
-            "node": self.node_id,
-            "intent": intent.intent,
-        })
-        view = dict(self.latest_view) if isinstance(self.latest_view, dict) else {}
-        prompt = (
-            f"`{intent.intent}` is not an available proof intent on this surface. "
-            "Commits here are transactional — a failed `commit_tactic` auto-reverts "
-            "and costs nothing — so test your candidate by committing it directly "
-            "with `commit_tactic`. Use `undo_last_step` / `undo_to_checkpoint` to "
-            "back out, and direct context topics / `lookup_symbol` to gather context."
-        )
-        return ManagedTurn(
-            ok=False, workspace_view=view, snapshot=self.latest_snapshot,
-            intent=intent, repair_prompt=prompt,
-            manager_actions=[{
-                "label": "probe_disabled_reject",
-                "intent": intent.intent,
-            }],
         )
 
     def _give_up_gate(self, intent: "AgentIntent"):
@@ -784,12 +673,6 @@ class ProofNodeManager:
             f"{remaining} goal(s) still open"
             if isinstance(remaining, int) else "the proof still open"
         )
-        # Switch-aware: don't suggest `probe_tactic` when the probe lever is OFF
-        # (the manager would reject it). Commit directly instead.
-        probe_suggestion = (
-            ", or `probe_tactic` a hypothesis"
-            if not probe_disabled() else ""
-        )
         prompt = (
             f"You submitted `finish` with {goals_txt}. That is your call — if you "
             "have already considered the alternatives and are genuinely blocked, "
@@ -797,7 +680,7 @@ class ProofNodeManager:
             "PROVER REPORT.open_questions so it is captured. If you have not tried "
             "a different angle yet, one more turn is often worth it: a different "
             "tactic, direct context topics such as `diagnose` / `tactic_forms`, "
-            f"`lookup_symbol` a relevant lemma{probe_suggestion}. To "
+            "`lookup_symbol` a relevant lemma. To "
             "stop now, just submit `finish` again."
         )
         self._audit({

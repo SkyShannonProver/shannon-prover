@@ -377,8 +377,7 @@ to phases:
 **Consumers to update alongside** (avoid dangling reads): `workflow/agents/prover.py`
 (prefer/avoid prompt text, `:2248`), `workflow/tree/policy.py:377`,
 `core/easycrypt/commands/inspect_commands.py` (`suggested_tactics` / now
-`legacy_shape_tactic_templates`), `workflow/agents/proof_planner.py:355,1422`
-(path-diff strategy injection), `workflow/proof_node_resume.py:882-902`
+`legacy_shape_tactic_templates`), `workflow/proof_node_resume.py:882-902`
 (route-risk handoff), `workflow/proof_node_runtime.py:1533-1537,965-974`
 (route_health render + guidance).
 

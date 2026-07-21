@@ -796,7 +796,7 @@ def _plan_endpoint(
         "next_action": _path_next_action(path, endpoint),
         "saturation_condition": (
             "Pr endpoint path is live; stay at the Pr layer until every "
-            "agenda hop is consumed, probed, or rejected by EasyCrypt."
+            "agenda hop is consumed, validated, or rejected by EasyCrypt."
         ),
         "strategy": _strategy_text(path, relation, source, target),
     }
@@ -1100,10 +1100,10 @@ def _edge_readiness(edge: dict[str, Any]) -> str:
     hint = str(edge.get("action_hint") or "")
     kind = str(edge.get("edge_kind") or "")
     source_kind = str(raw.get("source_kind") or "")
-    if _truthy(raw.get("verified")) or source_kind in {"ec_probe", "verified_bridge"}:
+    if _truthy(raw.get("verified")) or source_kind in {"ec_preflight", "verified_bridge"}:
         return "ec_verified"
     if kind == "synthetic_bridge" and hint and "<" not in hint:
-        return "probe_ready_bridge"
+        return "preflight_ready_bridge"
     if kind == "pr_rewrite" and hint.startswith("rewrite ("):
         return "typed_instantiation_candidate"
     if kind == "pr_rewrite" and source_kind in {
@@ -1120,10 +1120,10 @@ def _edge_readiness(edge: dict[str, Any]) -> str:
 def _agenda_action_type(readiness: str) -> str:
     if readiness in {
         "ec_verified",
-        "probe_ready_bridge",
+        "preflight_ready_bridge",
         "typed_instantiation_candidate",
     }:
-        return "probe_tactic_if_current_endpoint_matches"
+        return "tactic_candidate_if_current_endpoint_matches"
     if readiness in {"signature_known_needs_instantiation", "needs_have_or_apply_form"}:
         return "inspection_then_strategy"
     return "inspection_action"
@@ -1141,7 +1141,7 @@ def _edge_required_before_commit(edge: dict[str, Any]) -> list[str]:
         )
     if str(edge.get("edge_kind") or "") == "synthetic_bridge":
         requirements.append(
-            "probe the bridge tactic before relying on it as a path edge"
+            "the bridge remains an unverified path edge until EasyCrypt accepts a manager commit"
         )
     requirements.append(
         "confirm the current Pr endpoint still matches the displayed `from` term"
@@ -1160,7 +1160,7 @@ def _agenda_why(edge: dict[str, Any], endpoint: dict[str, Any]) -> str:
 def _edge_authority_rank(edge: dict[str, Any]) -> int:
     raw = _dict(edge.get("raw_candidate"))
     source = str(raw.get("source_kind") or "")
-    if _truthy(raw.get("ec_ground_truth")) or source in {"ec_probe", "where_lookup_tool"}:
+    if _truthy(raw.get("ec_ground_truth")) or source in {"ec_preflight", "where_lookup_tool"}:
         return 0
     if source in {"ec_native_search", "native_ast_search", "instantiated_binding"}:
         return 1

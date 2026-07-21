@@ -14,10 +14,6 @@ def test_step_parser_supports_plain_and_prefixed_steps() -> None:
         "intent": "commit_tactic",
         "payload": {"tactic": "wp."},
     }
-    assert mvr._step_from_text("probe:wp.", default_intent="commit_tactic").to_dict() == {
-        "intent": "probe_tactic",
-        "payload": {"tactic": "wp."},
-    }
     assert mvr._step_from_text("inspect:goal_info", default_intent="commit_tactic").to_dict() == {
         "intent": "goal_info",
         "payload": {},

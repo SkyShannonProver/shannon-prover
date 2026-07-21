@@ -166,7 +166,7 @@ def candidates_to_recommendations(
 ) -> list[dict[str, Any]]:
     """Convert accepted ``Candidate``s into recommendation dicts in
     the canonical Layer-3 shape (``runnable_tactic``, verified,
-    ``daemon_probe_accepted``).
+    ``easycrypt_preflight_accepted``).
 
     Generators that need to emit a HookResult call this helper to
     avoid hand-rolling the rec dict (which historically was a frequent
@@ -175,7 +175,7 @@ def candidates_to_recommendations(
     producer = result.producer
     out: list[dict[str, Any]] = []
     for idx, cand in enumerate(result.accepted):
-        ev_id = f"probe.{producer.producer_name.lower().replace('-', '_')}.{idx}"
+        ev_id = f"preflight.{producer.producer_name.lower().replace('-', '_')}.{idx}"
         out.append({
             "id": f"{producer.producer_name.lower().replace('-', '_')}.{idx}",
             "kind": rec_kind,
@@ -192,7 +192,7 @@ def candidates_to_recommendations(
             ],
             "evidence_refs": [ev_id],
             "metadata": {
-                "epistemic_status": "daemon_probe_accepted",
+                "epistemic_status": "easycrypt_preflight_accepted",
                 "cost": "cheap",
                 **cand.metadata,
             },

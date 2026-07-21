@@ -245,6 +245,22 @@ def test_integer_arithmetic_surface_extracts_drop_div_mod_boundary() -> None:
     assert any("size p %% block_size <> 0" in guard for guard in arithmetic["b2i_guards"])
 
 
+def test_integer_arithmetic_surface_ignores_premise_only_modulo() -> None:
+    from workflow.proof_management.analyzers.pure_tail import pure_tail_surface
+
+    goal = (
+        "------------------------------------------------------------\n"
+        "forall x, x %% n = 0 =>\n"
+        "left x \\in log <=> right x \\in log"
+    )
+    surface = pure_tail_surface({
+        "proof_status": {"current_layer": "ambient_logic", "goal_type": "ambient"},
+        "current_goal": {"lines": goal.splitlines()},
+    })
+
+    assert "integer_arithmetic_surface" not in surface
+
+
 def test_pure_tail_reports_premise_conjunction_and_iter_successor_shapes() -> None:
     from workflow.proof_management.analyzers.pure_tail import pure_tail_surface
 
@@ -293,7 +309,11 @@ def test_pure_focus_panel_drops_bucket_and_family_for_operators() -> None:
         {"proof_status": {"current_layer": "ambient_logic"}, "pure_tail_surface": pt},
         "l4_checked_action_surface",
     ).to_dict()
-    focus = {item["key"]: item.get("value") for item in model["primary_panel"].get("facts", [])}
+    focus = {
+        item["key"]: item.get("value")
+        for item in (model.get("primary_panel") or {}).get("facts", [])
+    }
+    assert model.get("primary_panel") is None
     # The producer may keep goal_operators as raw mechanical facts for action choices,
     # but the normal proof panel no longer re-lists broad operator tokens as content.
     assert "goal_operators" not in focus
@@ -474,40 +494,37 @@ def _ambient_state(goal: str, *, file_path: str = "") -> ProofNodeState:
     )
 
 
-def test_conclusion_keyed_lemma_route_names_AaL() -> None:
-    # i3 `exact AaL.` — the goal IS the declared axiom `AaL` (alpha-renamed module
-    # args); the panel must NAME AaL, not dump `P0`/`P0.prg`/`islossless` as operators.
+def test_losslessness_route_is_projected_from_core_mechanical_candidates() -> None:
     goal = (
         "&m: {}\n"
         "------------------------------------------------------------\n"
         "forall (F0 <: ARF{-A}) (P0 <: APRG{-A}),\n"
         "  islossless P0.prg => islossless F0.f => islossless A(F0, P0).a"
     )
+    view = _view(goal)
+    view["application_context"] = {"mechanical_goal_candidates": [{
+        "lemma": "AaL",
+        "match_kind": "losslessness_obligation_match",
+        "parameter_bindings": {"F": "F0", "P": "P0"},
+        "direct_application": "exact AaL.",
+        "required_premises": ["islossless P0.prg", "islossless F0.f"],
+    }]}
+    surface = PureTailAnalyzer().analyze(
+        state=_ambient_state(goal, file_path=_PRG_EC), view=view
+    )
+    assert "conclusion_lemma_routes" not in surface
+    candidate = surface["mechanical_goal_candidates"][0]
+    assert candidate["lemma"] == "AaL"
+    assert candidate["direct_application"] == "exact AaL."
+
+
+def test_pure_tail_does_not_rescan_source_for_losslessness_routes() -> None:
+    goal = "&m: {}\n----\nislossless F.f"
     surface = PureTailAnalyzer().analyze(
         state=_ambient_state(goal, file_path=_PRG_EC), view=_view(goal)
     )
-    routes = surface["conclusion_lemma_routes"]
-    assert [r["lemma"] for r in routes] == ["AaL"]
-    assert routes[0]["submit"] == "exact AaL."
-
-
-def test_conclusion_keyed_lemma_route_names_PlogprgL_and_FfL() -> None:
-    # i26 `exact PlogprgL.` (goal tail `islossless Plog.prg`, lemma PlogprgL) and
-    # i51 `exact FfL.` (goal tail `islossless F.f`, lemma FfL): the conclusion is
-    # reached AFTER `move`-ing the `forall &2, Bad … =>` premises in, so the route is
-    # keyed on the FINAL (implication-tail) conclusion, not the whole goal.
-    for tail, expect in (("Plog.prg", "PlogprgL"), ("F.f", "FfL")):
-        goal = (
-            "&m: {}\n"
-            "------------------------------------------------------------\n"
-            f"forall &2, Bad P.logP{{2}} F.m{{2}} => islossless {tail}"
-        )
-        surface = PureTailAnalyzer().analyze(
-            state=_ambient_state(goal, file_path=_PRG_EC), view=_view(goal)
-        )
-        routes = surface["conclusion_lemma_routes"]
-        assert [r["lemma"] for r in routes] == [expect], (tail, routes)
-        assert routes[0]["submit"] == f"exact {expect}."
+    assert "conclusion_lemma_routes" not in surface
+    assert "mechanical_goal_candidates" not in surface
 
 
 def test_conclusion_keyed_lemma_route_silent_without_source() -> None:
@@ -554,16 +571,21 @@ def test_inductive_intro_route_does_not_fire_on_lossless_goal() -> None:
         state=_ambient_state(goal, file_path=_PRG_EC), view=_view(goal)
     )
     assert "inductive_intro_routes" not in surface
-    assert surface["conclusion_lemma_routes"]
+    assert "conclusion_lemma_routes" not in surface
 
 
-def test_pure_focus_panel_surfaces_lemma_and_intro_routes() -> None:
+def test_pure_focus_panel_surfaces_core_lemma_match_and_intro_routes() -> None:
     # The renderer turns the route dicts into readable `submit — why` bullets, placed
     # ABOVE the operator tokens (they NAME the closing move).
     from workflow.surface_composer import compose_surface_model
     pt = {
-        "conclusion_lemma_routes": [
-            {"lemma": "AaL", "submit": "exact AaL.", "why": "matches the goal."}
+        "mechanical_goal_candidates": [
+            {
+                "lemma": "AaL",
+                "match_kind": "losslessness_obligation_match",
+                "direct_application": "exact AaL.",
+                "required_premises": ["islossless P.prg", "islossless F.f"],
+            }
         ],
         "inductive_intro_routes": [
             {"constructor": "Cycle", "submit": "apply Cycle.", "why": "a constructor."}
@@ -575,7 +597,7 @@ def test_pure_focus_panel_surfaces_lemma_and_intro_routes() -> None:
         "l4_checked_action_surface",
     ).to_dict()
     focus = {item["key"]: item.get("value") for item in model["primary_panel"].get("facts", [])}
-    assert any("exact AaL." in str(s) for s in focus["conclusion_lemma_routes"])
+    assert any("exact AaL." in str(s) for s in focus["mechanical_goal_candidates"])
     assert any("apply Cycle." in str(s) for s in focus["inductive_intro_routes"])
     tactic_choices = {
         name
@@ -583,7 +605,9 @@ def test_pure_focus_panel_surfaces_lemma_and_intro_routes() -> None:
         if action["intent"] == "tactic_forms"
         for name in action["choices"]["name"]
     }
-    assert "apply" in tactic_choices
+    # Exact loaded submit routes already carry the applicable form. Repeating a
+    # generic apply reference page would add tokens without new state evidence.
+    assert "apply" not in tactic_choices
 
 
 # --- cc_step4_1 operator-route widening (panel audit 2026-06-28) -------------------------
@@ -633,3 +657,176 @@ def test_goal_operators_filter_promotion_does_not_invent_absent_operator() -> No
     ops = _goal_operators(goal)
     assert "filter" not in ops
     assert "map" in ops and "has" in ops  # the operators that ARE present still surface
+
+
+def test_pure_tail_hypothesis_graph_requires_an_exact_mechanical_chain() -> None:
+    from workflow.proof_management.analyzers.pure_tail import pure_tail_surface
+
+    view = {
+        "proof_status": {"current_layer": "ambient_logic", "goal_type": "ambient"},
+        "current_goal": {"lines": [
+            "Hcard: (card (cross s1 s2))%r <= q%r ^ 2 / 4%r",
+            "Hmu: mu d (fun k => k \\in cross s1 s2) <= (card (cross s1 s2))%r * eps",
+            "------------------------------------------------------------",
+            "mu d (fun k => k \\in cross s1 s2) <= q%r ^ 2 * eps / 4%r",
+        ]},
+    }
+    graph = pure_tail_surface(view)["local_hypothesis_graph"]
+    assert not graph.get("order_chains")
+
+
+def test_pure_tail_hypothesis_graph_reports_exact_order_chain() -> None:
+    from workflow.proof_management.analyzers.pure_tail import pure_tail_surface
+
+    view = {
+        "proof_status": {"current_layer": "ambient_logic", "goal_type": "ambient"},
+        "current_goal": {"lines": [
+            "Hxy: x <= y",
+            "Hyz: y <= z",
+            "------------------------------------------------------------",
+            "x <= z",
+        ]},
+    }
+    graph = pure_tail_surface(view)["local_hypothesis_graph"]
+
+    assert graph["order_chains"][0]["premises"] == ["Hxy", "Hyz"]
+    assert "submit" not in str(graph)
+    assert "No tactic" in graph["limitations"][0]
+
+
+def test_pure_tail_reports_nth_map_route_with_visible_index_bounds() -> None:
+    goal = r"""
+Current goal
+hlo: size prefix <= i
+hhi: i < size prefix + size xs
+------------------------------------------------------------
+nth witness (map f xs) (i - size prefix) = rhs
+"""
+    surface = PureTailAnalyzer().analyze(state=_state(_view(goal)), view=_view(goal))
+
+    normalization = surface["list_normalization_surface"]
+    assert any(
+        item["shape"] == "nth over map"
+        and item["lemma_names"] == ["nth_map"]
+        for item in normalization["lemma_families"]
+    )
+    term = normalization["nth_map_terms"][0]
+    assert term["source_list"] == "xs"
+    assert term["index"] == "i - size prefix"
+    assert term["side_condition_status"] == "derivable_from_visible_linear_bounds"
+    assert term["supporting_hypotheses"] == ["hlo", "hhi"]
+
+
+def test_pure_tail_uses_nth_out_route_on_visible_negative_index_branch() -> None:
+    goal = r"""
+Current goal
+h: ! 0 <= i < size l
+------------------------------------------------------------
+nth witness (map f l) i = f (nth witness l i)
+"""
+    surface = PureTailAnalyzer().analyze(state=_state(_view(goal)), view=_view(goal))
+
+    normalization = surface["list_normalization_surface"]
+    assert normalization["lemma_families"] == [{
+        "shape": "nth outside map bounds",
+        "lemma_names": ["nth_out", "size_map"],
+        "side_condition": "! (0 <= index < size source_list)",
+    }]
+    term = normalization["nth_map_terms"][0]
+    assert term["side_condition_status"] == "visible_false"
+    assert term["supporting_hypotheses"] == ["h"]
+
+
+def test_pure_tail_marks_nth_map_side_condition_visible_when_named_directly() -> None:
+    goal = r"""
+Current goal
+h: 0 <= i < size l
+------------------------------------------------------------
+nth witness (map f l) i = f (nth witness l i)
+"""
+    surface = PureTailAnalyzer().analyze(state=_state(_view(goal)), view=_view(goal))
+
+    term = surface["list_normalization_surface"]["nth_map_terms"][0]
+    assert term["side_condition_status"] == "visible_true"
+    assert term["supporting_hypotheses"] == ["h"]
+
+
+def test_list_normalization_requires_real_size_map_nesting() -> None:
+    goal = r"""
+Current goal
+------------------------------------------------------------
+size xs = size ys /\ map f zs = map f zs
+"""
+    surface = PureTailAnalyzer().analyze(state=_state(_view(goal)), view=_view(goal))
+
+    assert "list_normalization_surface" not in surface
+
+
+def test_pure_tail_composes_prefix_successor_and_map_key_transport() -> None:
+    goal = r"""
+Current goal
+------------------------------------------------------------
+forall &1 &2,
+  0 <= k{2} =>
+  k{2} < size order{2} =>
+  (forall x, left{2}.[x] = right{1}.[encode x]) =>
+  forall result,
+    map encode (take k{2} order{2}) ++
+      [encode (nth witness order{2} k{2})] =
+      map encode (take (k{2} + 1) order{2}) /\
+    forall x,
+      left{2}.[nth witness order{2} k{2} <- result].[x] =
+      right{1}.[encode (nth witness order{2} k{2}) <- result].[encode x]
+"""
+    view = _view(goal)
+    view["application_context"] = {
+        "mechanical_goal_candidates": [{
+            "lemma": "decode_encode",
+            "match_kind": "loaded_left_inverse_support",
+            "transform": "encode",
+            "inverse": "decode",
+            "support_role": "left_inverse_for_key_transport",
+        }],
+    }
+
+    surface = PureTailAnalyzer().analyze(state=_state(view), view=view)
+
+    prefix = surface["list_normalization_surface"]["prefix_successor_chains"][0]
+    assert [item["lemma"] for item in prefix["lemma_chain"]] == [
+        "take_nth", "map_rcons", "cats1",
+    ]
+    assert prefix["side_condition_status"] == "visible"
+    transport = surface["map_update_transport_surface"]
+    assert transport["key_transform"] == "encode"
+    assert transport["lookup_normalization_lemma"] == "get_setE"
+    assert transport["left_inverse_lemma"] == "decode_encode"
+
+
+def test_pure_tail_preserves_projected_compiler_fact_extensions() -> None:
+    goal = r"""
+Current goal
+------------------------------------------------------------
+weight dword = 1%r
+"""
+    view = _view(goal)
+    view["application_context"] = {
+        "distribution_certificates": [{
+            "lemma": "dword_ll",
+            "certificate_kind": "distribution_losslessness",
+            "distribution": "dword",
+            "declared_conclusion": "is_lossless dword",
+            "future_schema_field": {"producer_owned": True},
+        }],
+        "mechanical_goal_candidates": [{
+            "lemma": "dword_ll",
+            "match_kind": "exact_conclusion",
+            "future_match_field": "preserved",
+        }],
+    }
+
+    surface = PureTailAnalyzer().analyze(state=_state(view), view=view)
+
+    assert surface["distribution_certificates"][0]["future_schema_field"] == {
+        "producer_owned": True,
+    }
+    assert surface["mechanical_goal_candidates"][0]["future_match_field"] == "preserved"

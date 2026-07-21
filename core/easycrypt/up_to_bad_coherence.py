@@ -690,6 +690,6 @@ def coherence_flag(
         "guarantee": (
             "UNCERTIFIED suggestion — a structural coherence observation from the "
             "postcondition shape, NOT a verdict and NOT a gate. EC verifies any "
-            "tactic when you commit/probe it."
+            "tactic when EasyCrypt checks it."
         ),
     }

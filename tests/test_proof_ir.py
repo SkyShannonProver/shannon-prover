@@ -69,10 +69,8 @@ def test_action_contract_blocks_fallback_resource_as_probeable() -> None:
         },
     })
 
-    assert (
-        "fallback or unresolved resource cannot be probeable/runnable before inspection"
-        in validate_action_candidate(candidate)
-    )
+    assert candidate["action_type"] == "strategy_hint"
+    assert validate_action_candidate(candidate) == []
 
 
 def test_call_site_layer_tracks_live_callable_handles() -> None:
@@ -123,6 +121,84 @@ def test_call_site_layer_tracks_live_callable_handles() -> None:
     assert [x for x in ir["candidate_menu"] if x["id"] == "inline_all"] == []
     assert ir["diagnostics"][0]["code"] == "proof_ir.live_call_handles"
     assert "direct_current_call" in ir["diagnostics"][0]["repairs"][0]
+
+
+def test_proof_ir_projects_loaded_one_sided_losslessness_binding() -> None:
+    with tempfile.TemporaryDirectory() as td:
+        session = Path(td)
+        (session / "context.ec").write_text(
+            "section S.\n"
+            "declare module A <: AdvMac.\n"
+            "lemma Alossless_F (O <: PRF_Oracles{-Adv_MAC_to_F(A)}) :\n"
+            "  islossless O.f => islossless Adv_MAC_to_F(A, O).guess.\n"
+            "proof. admit. qed.\n"
+            "end section S.\n",
+            encoding="utf-8",
+        )
+        ir = build_proof_ir(
+            session_dir=session,
+            current_goal={
+                "goal_type": "phoare",
+                "active_goal_text": (
+                    "O : PRF_Oracle\n"
+                    "Ofll: islossless O.f\n"
+                    "----\n"
+                    "(1) D2(O).O.init()\n"
+                    "(2) b <@ Adv_MAC_to_F(A, D2(O).O).guess()"
+                ),
+                "lines": [
+                    "O : PRF_Oracle",
+                    "Ofll: islossless O.f",
+                    "----",
+                    "(1) D2(O).O.init()",
+                    "(2) b <@ Adv_MAC_to_F(A, D2(O).O).guess()",
+                ],
+                "parsed_goal": {
+                    "goal_type": "phoare",
+                },
+            },
+        )
+
+    candidates = ir["resources"]["handles"][
+        "one_sided_losslessness_candidates"
+    ]
+    assert [item["lemma"] for item in candidates] == ["Alossless_F"]
+    assert candidates[0]["procedure"] == "Adv_MAC_to_F(A,D2(O).O).guess"
+    assert candidates[0]["parameter_bindings"] == {"O": "D2(O).O"}
+    assert candidates[0]["call_template"] == (
+        "call (Alossless_F (<: D2(O).O) _)."
+    )
+
+
+def test_proof_ir_does_not_project_ambient_only_losslessness_rebinding() -> None:
+    with tempfile.TemporaryDirectory() as td:
+        session = Path(td)
+        (session / "context.ec").write_text(
+            "section S.\n"
+            "declare module EPRF <: PRF_Hiding.\n"
+            "axiom losslessEPRPf : islossless EPRF.f.\n"
+            "end section S.\n",
+            encoding="utf-8",
+        )
+        ir = build_proof_ir(
+            session_dir=session,
+            current_goal={
+                "goal_type": "phoare",
+                "active_goal_text": (
+                    "----\n"
+                    "(1) b <@ D2(O).F0.f(x)"
+                ),
+                "lines": [
+                    "----",
+                    "(1) b <@ D2(O).F0.f(x)",
+                ],
+                "parsed_goal": {"goal_type": "phoare"},
+            },
+        )
+
+    assert ir["resources"]["handles"][
+        "one_sided_losslessness_candidates"
+    ] == []
 
 
 def test_proof_ir_prefers_ec_native_program_artifact() -> None:
@@ -1258,7 +1334,7 @@ def test_sampling_obligation_frontend_classifies_translation_generically() -> No
     obligation = frontend["sampling_obligations"][0]
     assert obligation["relation_motif"]["motif"] == "translation_or_affine"
     assert obligation["same_distribution"] is True
-    assert "dT_uffu" in obligation["required_evidence"]["candidate_distribution_facts"]
+    assert "candidate_distribution_facts" not in obligation["required_evidence"]
     assert any(
         family["family"] == "translation_or_affine"
         for family in obligation["candidate_families"]
@@ -2063,8 +2139,8 @@ proof. by trivial. qed.
     assert candidate["name_resolution"]["resolution_status"] == (
         "resolved_local_declaration"
     )
-    assert candidate["action_type"] == "probe_tactic"
-    assert candidate["cost_factors"]["external_pr_path_requires_probe"] is True
+    assert candidate["action_type"] == "tactic_candidate"
+    assert candidate["cost_factors"]["external_pr_path_requires_easycrypt_validation"] is True
 
 
 def test_ambient_implication_gets_intro_candidate() -> None:
@@ -2315,7 +2391,7 @@ def test_current_goal_equiv_hypothesis_is_callable_handle() -> None:
         if item["id"] == "call_Hf"
     ][0]
     assert call_candidate["tactic"] == "call Hf."
-    assert call_candidate["action_type"] == "probe_tactic"
+    assert call_candidate["action_type"] == "tactic_candidate"
 
 
 def test_phase_legality_marks_inline_all_avoid_with_live_handles() -> None:
@@ -2497,7 +2573,7 @@ proof. by trivial. qed.
         if item["id"].startswith("equiv_exact_CBC_Oracle_enc_eq")
     ][0]
     assert exact["tactic"] == "exact/(CBC_Oracle_enc_eq P P' I P_f_eq)."
-    assert exact["action_type"] == "probe_tactic"
+    assert exact["action_type"] == "tactic_candidate"
 
 
 def test_ambient_lossless_closer_uses_module_proc_convention() -> None:
@@ -3013,7 +3089,7 @@ def test_probability_wrapper_bridge_normalizes_experiment_endpoint() -> None:
         if item["id"] == "pr_wrapper_bridge_0"
     ][0]
     assert menu_item["tactic_family"] == "pr_path_plan"
-    assert menu_item["action_type"] == "probe_tactic"
+    assert menu_item["action_type"] == "tactic_candidate"
 
 
 def test_typed_bridge_menu_surfaces_live_wrapper_even_without_complete_path() -> None:
@@ -3405,7 +3481,7 @@ Usage: apply (pr_RO_FinRO_D <module_arg1> <module_arg2> ... &m).
         if item["tactic_family"] == "instantiated_template"
     ]
     assert bound_candidates[0]["tactic"] == "rewrite (pr_RO_FinRO_D A &m)."
-    assert bound_candidates[0]["action_type"] == "probe_tactic"
+    assert bound_candidates[0]["action_type"] == "tactic_candidate"
     assert bound_candidates[0]["cost_factors"]["bound_tactic_family"] == "rewrite"
     assert "exact signature" in rewrite["preconditions"][0]
     assert all(item["tactic_family"] != "signature_lookup" for item in ir["candidate_menu"])

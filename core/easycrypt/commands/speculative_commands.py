@@ -135,13 +135,13 @@ def handle_align(session, args) -> int:
             why=(
                 "Static realignment frame. The source position is mechanical; "
                 "the offset is route-dependent. Fill the offset that lands the "
-                "next sample/rnd coupling target, then probe that concrete swap."
+                "next sample/rnd coupling target; a commit remains manager-checked."
             ),
             action_type="strategy_hint",
             metadata={
                 "epistemic_status": "route_dependent_swap_frame",
                 "state_changed": False,
-                "recommended_probe_tool": "try_after_filling_offset",
+                "validation_owner": "manager_commit",
             },
         ),
         guidance=_align_guidance_from_output(output),
@@ -263,11 +263,11 @@ def handle_suggest_close(session, args) -> int:
             "suggest_close", "closing_tactic", output,
             producer="suggest-close",
             why="The closing-tactic analyzer suggested this tactic.",
-            action_type="probe_tactic",
+            action_type="tactic_candidate",
             metadata={
                 "epistemic_status": "static_candidate_uncertified_by_ec",
                 "state_changed": False,
-                "recommended_probe_tool": "try",
+                "validation_owner": "manager_commit",
                 "cost": "cheap",
             },
         ),
@@ -520,9 +520,9 @@ def _verified_route_option_records(
     recommendations: list[dict],
     evidence: dict[str, list[dict]],
 ) -> list[dict]:
-    probe_by_id = {
+    preflight_by_id = {
         str(item.get("id") or ""): item
-        for item in (evidence.get("probe") or [])
+        for item in (evidence.get("preflight") or [])
         if isinstance(item, dict)
     }
     context = [
@@ -552,7 +552,9 @@ def _verified_route_option_records(
             str(ref) for ref in (rec.get("evidence_refs") or []) if str(ref)
         ]
         verification = [
-            probe_by_id[ref] for ref in evidence_refs if ref in probe_by_id
+            preflight_by_id[ref]
+            for ref in evidence_refs
+            if ref in preflight_by_id
         ]
         digest_source = _json.dumps({
             "topic": topic,
@@ -677,7 +679,7 @@ def _inv_from_lemma_recommendations(lemma_name: str, output: str) -> list[dict]:
             f"The invariant was extracted from the precondition of equiv "
             f"lemma `{lemma_name}`."
         ),
-        "action_type": "strategy_hint" if requires_instantiation else "probe_tactic",
+        "action_type": "strategy_hint" if requires_instantiation else "tactic_candidate",
         "confidence": "medium",
         "preconditions": [
             "proof_state.status == open",
@@ -694,7 +696,7 @@ def _inv_from_lemma_recommendations(lemma_name: str, output: str) -> list[dict]:
             ),
             "requires_instantiation": requires_instantiation,
             "state_changed": False,
-            "recommended_probe_tool": "try",
+            "validation_owner": "manager_commit",
         },
     }]
 
@@ -880,11 +882,11 @@ def _suggest_close_epistemic_evidence(output: str) -> list[dict]:
 def _suggest_close_guidance_from_output(output: str) -> dict:
     if "Suggested tactics" in output:
         return {
-            "primary_action": "probe",
+            "primary_action": "consider_strategy_hint",
             "epistemic_status": "static_analysis",
             "state_changed": False,
             "action_semantics": (
-                "Probe suggested closing tactics with -try before committing."
+                "These are static closing-tactic candidates; the manager checks any committed candidate."
             ),
         }
     return {
@@ -944,7 +946,7 @@ def _align_guidance_from_output(output: str) -> dict:
         "state_changed": False,
     }
     if "STATICALLY CERTIFIED SWAP FRAMES" in output:
-        guidance["primary_action"] = "choose_offset_then_probe"
+        guidance["primary_action"] = "choose_offset_then_commit"
         guidance["action_semantics"] = (
             "Treat the swap as a source-position frame. Choose the concrete "
             "offset from the next coupling/realignment target, then use -try "
@@ -971,7 +973,7 @@ def _record_swap_search_tool_view(session, projection, result) -> None:
             "kind": "swap_tactic",
             "producer": "swap-search",
             "action": tactic.strip(),
-            "why": "swap-search accepted this swap while probing the live session.",
+            "why": "swap-search accepted this swap during private EasyCrypt preflight.",
             "action_type": "runnable_tactic",
             "confidence": "verified",
             "preconditions": [
@@ -979,7 +981,7 @@ def _record_swap_search_tool_view(session, projection, result) -> None:
                 "current goal still matches the probed alignment state",
             ],
             "source_refs": [],
-            "evidence_refs": ["probe.swap_search"],
+            "evidence_refs": ["preflight.swap_search"],
             "metadata": {"attempts": result.attempts},
         })
     for idx, tactic in enumerate(result.hint_tactics or []):
@@ -1008,8 +1010,8 @@ def _record_swap_search_tool_view(session, projection, result) -> None:
                 "remaining_misaligned": int(result.remaining_misaligned),
                 "hint": result.hint or "",
             }],
-            "probe": [{
-                "id": "probe.swap_search",
+            "preflight": [{
+                "id": "preflight.swap_search",
                 "producer": "swap_search.search_swaps",
                 "accepted_swaps": list(result.accepted_swaps or []),
                 "error": result.error or "",

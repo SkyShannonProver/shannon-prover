@@ -135,7 +135,7 @@ def test_phase_emits_runnable_when_swap_accepted() -> None:
         assert rec["producer"] == "AUTO-SWAP-ALIGN"
         assert (
             rec["metadata"]["epistemic_status"]
-            == "daemon_probe_accepted"
+            == "easycrypt_preflight_accepted"
         )
 
 

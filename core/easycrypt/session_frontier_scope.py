@@ -117,7 +117,65 @@ def _current_frontier_scope(
     return _drop_empty({
         "setup": setup,
         "frontier": current,
+        "tactic_active_tail": _tactic_active_tail(
+            rows,
+            call_sites=call_sites,
+        ),
         "lookahead_after_frontier": lookahead,
+    })
+
+
+def _tactic_active_tail(
+    rows: list[dict[str, Any]],
+    *,
+    call_sites: list[dict[str, Any]],
+) -> dict[str, Any]:
+    """Return each side's last visible top-level structural statement.
+
+    ``frontier`` above is a program-reading coordinate: the first top-level
+    statement after the setup prefix.  EasyCrypt suffix tactics such as
+    ``while``, ``rnd``, and ``call`` instead require the relevant statement at
+    the end of the selected program.  Keeping this second coordinate explicit
+    prevents action policy from treating an earlier sample/call as executable
+    merely because it is the first unmatched statement.
+
+    Nested paths are deliberately ignored here.  A statement at ``2.1`` is
+    inside the top-level statement at ``2`` and is not a suffix boundary until
+    that enclosing branch/loop has been opened.
+    """
+    candidates: dict[str, list[tuple[tuple[int, ...], int, dict[str, Any]]]] = {
+        "left": [],
+        "right": [],
+    }
+    for idx, row in enumerate(rows):
+        role = _first_text(row.get("role"), default="").lower()
+        if "setup" in role or "residual after call" in role:
+            continue
+        for side in ("left", "right"):
+            text = _frontier_row_side_text(row, side)
+            if not text:
+                continue
+            path_key = _frontier_row_path_key(row, side, idx)
+            if len(path_key) != 1 or path_key[0] >= 10_000:
+                continue
+            entry = _frontier_scope_entry(
+                row,
+                side=side,
+                text=text,
+                path_key=path_key,
+                fallback_index=idx,
+                call_sites=call_sites,
+            )
+            if entry:
+                entry["authority"] = "top_level_program_ir"
+                candidates[side].append((path_key, idx, entry))
+
+    left = _last_scope_candidate(candidates["left"])
+    right = _last_scope_candidate(candidates["right"])
+    return _drop_empty({
+        "kind": _current_frontier_kind(left, right),
+        "left": left,
+        "right": right,
     })
 
 
@@ -295,6 +353,14 @@ def _first_scope_candidate(
     if not candidates:
         return {}
     return min(candidates, key=lambda item: (item[0], item[1]))[2]
+
+
+def _last_scope_candidate(
+    candidates: list[tuple[tuple[int, ...], int, dict[str, Any]]],
+) -> dict[str, Any]:
+    if not candidates:
+        return {}
+    return max(candidates, key=lambda item: (item[0], item[1]))[2]
 
 
 def _current_frontier_kind(left: dict[str, Any], right: dict[str, Any]) -> str:

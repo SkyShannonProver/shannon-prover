@@ -98,6 +98,30 @@ the user is scrolled, returning to the proof menu remains discoverable.
 
 - `context_intents.py` owns intent taxonomy.
 - `surface_profiles.py` gates profile-visible capabilities.
+- `surface_action_policy.py` owns which intent classes a panel may request.
+- `surface_tactic_forms.py` is the sole owner of both the current-state tactic
+  family taxonomy and which of those families earn a persistent reference
+  action. It is also the only layer that turns that decision into typed
+  `PanelAction` values.
+- `surface_action_eligibility.py` is the only state-dependent action visibility
+  gate for already-composed actions. It validates protocol/profile/state and
+  preflight requirements, owns the cheap state gate used before dynamic
+  preflight, and may suppress a broad reference action when a precise typed
+  fact replaces it; it does not maintain or rewrite an independent tactic-name
+  roster.
+- `surface_structural_facts.py` reads typed checked `seq`/`swap` metadata from
+  `program_frontier.checked_structural_sources` and typed named routes from
+  `application_context.loaded_named_routes`. It never parses candidate tactic
+  prose, selects a cut formula, or chooses a swap offset.
+- proof-state analyzers own mechanical fact production. They may preserve rich
+  audit evidence, but they do not decide final panel order or visibility.
+- `surface_panels.py` is the typed adapter from phase evidence to `PanelFact`.
+  It chooses which produced facts constitute each panel, but it does not run
+  EasyCrypt, invent facts, or apply an independent state-eligibility policy.
+- `surface_fact_eligibility.py` owns the per-panel fact-key registry and generic
+  admission metadata: authority, novelty, state scope, actionability, and
+  semantic boundary. It rejects audit-only, empty, unregistered, and
+  uncertified-gap facts; it does not repeat phase-specific semantic selection.
 - `surface_composer.py` composes proof-state `SurfaceModel`.
 - `surface_turn_model.py` composes and renders turn-level presentation.
 - The web UI renders `SurfaceTurnModel`; it does not parse raw manager result
@@ -110,6 +134,26 @@ the user is scrolled, returning to the proof menu remains discoverable.
 
 Legacy `inspect_context` may remain accepted for replay/back-compat, but it is
 not emitted by `SurfaceModel`, `SurfaceTurnModel`, markdown, or web actions.
+
+Dynamic action checks follow one order:
+
+```text
+protocol-valid -> profile-visible -> cheap state eligibility
+  -> manager read-only preflight when required -> rendered action
+```
+
+The cheap state gate may prove that an action cannot apply now (for example a
+future call while the current frontier is an assignment). It never promotes an
+action by itself; the dynamic result classifier remains authoritative for
+whether backend output is displayable.
+
+Generic tactic relevance is not itself enough to earn a persistent button.
+For example, a current call frontier is rendered as a mechanical frontier fact;
+concrete call help comes from checked named handles, bridge facts, or a
+non-empty `call_site_options` preflight. A second generic `call`/`ecall`
+reference button is omitted. Less familiar or indexed forms such as `inline`,
+`rnd`, `rcondt`/`rcondf`, `swap`, and `eager` may remain when the current state
+mechanically justifies them.
 
 Probe affordances are hidden by default upstream.  The web UI must not repair
 probe wording by text scrubbing.

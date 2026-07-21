@@ -590,7 +590,7 @@ def _build_goal_info_tool_view(
         "epistemic": _goal_info_epistemic_evidence(out),
         "kb": [],
         "retrieval": [],
-        "probe": [],
+        "preflight": [],
         "event": [{
             "id": "event.proof_state_projection",
             "producer": "session_projection",

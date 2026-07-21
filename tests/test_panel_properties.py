@@ -322,63 +322,12 @@ def _names(handles):
     return {(h.get("payload") or {}).get("name") for h in handles}
 
 
-def test_fix5_tactic_forms_gated_on_goal_structure():
-    # FIX-5 (cluster ⑤): the structure-specific forms are gated on the goal actually
-    # containing the structure at this frontier. `rnd`/`eager` need a `<$` sample;
-    # `rcondt`/`rcondf` need a live `if (…)` branch. `wp`/`swap`/`conseq` always stay.
-    # No goal_text -> full menu (the discoverability fallback / contract above).
-    assert {"rnd", "eager", "rcondt", "rcondf"} <= _names(_prhl_surgery_tactic_handles(True))
-    # sample-free, branch-free goal -> drop all four off-route forms
-    plain = _prhl_surgery_tactic_handles(True, goal_text="x0 <- a; y <- f x0; r <- g y")
-    assert {"rnd", "eager", "rcondt", "rcondf"}.isdisjoint(_names(plain))
-    assert {"wp", "swap", "conseq"} <= _names(plain)
-    # sample present -> rnd/eager kept; branch present -> rcondt/rcondf kept
-    sampled = _prhl_surgery_tactic_handles(True, goal_text="k <$ dkey; c <- e")
-    assert {"rnd", "eager"} <= _names(sampled) and {"rcondt", "rcondf"}.isdisjoint(_names(sampled))
-    branched = _prhl_surgery_tactic_handles(True, goal_text="if (b) { c <- e } else { c <- d }")
-    assert {"rcondt", "rcondf"} <= _names(branched) and {"rnd", "eager"}.isdisjoint(_names(branched))
-    # gating threads through the context-handles builder (the production path)
-    sample_free = _manager_context_handles("procedure_frontier", "equiv", goal_text="r <- f x")
-    assert {"rnd", "rcondt"}.isdisjoint(_names(sample_free))
-
-
-# ---------------------------------------------------------------------------
-# INV-8  probe outcome: accepted+closing / accepted+goal-after / rejected
-# ---------------------------------------------------------------------------
-from workflow.surface_turn_model import compose_surface_turn, render_surface_turn_markdown
-
-
-def _probe_head(pp, es=""):
-    v = {
-        "current_goal": {"lines": ["Current goal"]},
-        "last_result": {
-            "intent": "probe_tactic",
-            "tactic": "apply X.",
-            "probe_preview": pp,
-            "error_summary": es,
-        },
-    }
-    turn = compose_surface_turn(
-        v,
-        "l4_checked_action_surface",
-        handled_intent={"intent": "probe_tactic", "payload": {"tactic": "apply X."}},
-    )
-    return render_surface_turn_markdown(turn).split("\n")[0]
-
-
-def test_inv_probe_closing():
-    for pp in ({"goal_after_remaining": 0, "goal_after_probe": {}},
-               {"goal_after_closed": True, "goal_after_probe": {}}):
-        assert "CLOSES the proof" in _probe_head(pp)
-
-
-def test_inv_probe_preview_remaining():
-    h = _probe_head({"goal_after_remaining": 2, "goal_after_probe": {"lines": ["g"]}})
-    assert "Probe preview" in h and "CLOSES" not in h
-
-
-def test_inv_probe_rejected():
-    assert "Probe rejected" in _probe_head({}, es="parse error")
+def test_tactic_form_roster_producer_does_not_state_gate() -> None:
+    # The producer declares the profile/mode roster. Current-state filtering is
+    # owned only by surface_tactic_forms + surface_action_eligibility.
+    expected = {"wp", "swap", "rcondt", "rcondf", "conseq", "rnd", "eager"}
+    assert expected <= _names(_prhl_surgery_tactic_handles(True))
+    assert expected <= _names(_manager_context_handles("procedure_frontier", "equiv"))
 
 
 # ---------------------------------------------------------------------------

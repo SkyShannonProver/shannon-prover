@@ -552,7 +552,7 @@ def _action_plan_for_step(
         phase_order.append({
             "kind": "call_named_equiv",
             "tactic_family": "call_named_equiv",
-            "action_type": "probe_tactic_if_frontier_ready",
+            "action_type": "tactic_candidate_if_frontier_ready",
             "tactic_template": "call <matching lemma>.",
             "reason": (
                 "after exposure/alignment, consume the matching call-site "
@@ -1214,7 +1214,7 @@ def _fallback_handle_exposure_plan(
             {
                 "kind": "call_named_equiv",
                 "tactic_family": "call_named_equiv",
-                "action_type": "probe_tactic_if_frontier_ready",
+                "action_type": "tactic_candidate_if_frontier_ready",
                 "tactic_template": f"call {lemma}." if lemma else "call <matching lemma>.",
                 "lemma": lemma,
                 "reason": (
@@ -1553,7 +1553,7 @@ def _edit_slice_phase_order(
         return [_compact_phase_action({
             "kind": "call_named_equiv",
             "tactic_family": "call_named_equiv",
-            "action_type": "probe_tactic_if_frontier_ready",
+            "action_type": "tactic_candidate_if_frontier_ready",
             "tactic_template": "call <matching lemma>.",
             "reason": "consume the aligned call pair with a named equiv lemma",
         })]

@@ -361,7 +361,7 @@ def typed_field_resolution(
     bool``, if given, is called AT MOST ONCE on the assembled witness to confirm it
     applies on the live goal; otherwise the natural commit-time type-check
     verifies it. Returns ``{name, menus, template, fully_determined, witness,
-    probed}`` (``menus[i] = {param, fields, filled}``).
+    preflight_count}`` (``menus[i] = {param, fields, filled}``).
     """
     slots = slot_field_options(pred, pool)
     if not slots:
@@ -389,12 +389,12 @@ def typed_field_resolution(
         "template": template,
         "fully_determined": fully,
         "witness": witness,
-        "probed": 0,
+        "preflight_count": 0,
     }
     if verify is not None:
         try:
             res["verified_applies"] = bool(verify(witness))
-            res["probed"] = 1
+            res["preflight_count"] = 1
         except Exception:
             res["verified_applies"] = None
     return res

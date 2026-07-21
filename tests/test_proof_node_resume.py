@@ -193,7 +193,6 @@ def test_load_resume_capsule_recovers_resume_context_from_legacy_view(tmp_path):
         "legacy_resume_surface"
     ]
     assert context["route_event_facts"][0]["rejected"] is True
-    assert context["probe_alternatives"][0]["tactic"] == "auto."
 
 
 def test_legacy_continuation_checkpoint_is_retired(tmp_path):
@@ -303,7 +302,7 @@ def test_resume_capsule_records_repair_lineage_and_route_memory(tmp_path):
     assert "call boundary lost frame fact" in joined
     assert "={glob RO}" in joined
     assert "Route replay memory available" in joined
-    assert "Probe replay chunks before committing" in joined
+    assert "The manager validates replay chunks before committing them" in joined
     assert "={glob A}" in joined
 
     manifest_path = (

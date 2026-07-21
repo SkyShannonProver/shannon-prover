@@ -4,6 +4,14 @@ from __future__ import annotations
 import re
 from typing import Any
 
+from core.easycrypt.analysis.ec_obligation_ir import (
+    build_proof_obligation_ir,
+    local_order_chains,
+    named_local_formulas,
+    named_local_hypotheses,
+    split_top_level_token,
+    top_level_relation_parts,
+)
 from workflow.proof_management.common import coerce_string_list as _string_list
 from workflow.proof_management.analyzers.common import (
     _dedupe_dicts,
@@ -28,10 +36,10 @@ class PureTailAnalyzer:
         state: ProofNodeState,
         view: dict[str, Any] | None = None,
     ) -> dict[str, Any]:
-        # The aggregate node state carries the target `.ec` `file_path`; the two
-        # source-keyed routes below (conclusion-keyed local lemma names + local
-        # inductive intro constructors) read it directly. It is the only thing we
-        # need off `state` — everything else is a fact of the goal text / view.
+        # The aggregate node state carries the target `.ec` `file_path`.  Only
+        # local inductive-constructor analysis still needs the source here;
+        # loaded conclusion matches come from the canonical lemma-index
+        # projection in the workspace view.
         workspace_view = dict(view or {})
         return pure_tail_surface(workspace_view, source_path=getattr(state, "file_path", ""))
 
@@ -341,15 +349,7 @@ def _final_conclusion(goal_text: str) -> str:
     the turnstile, stripped of leading `forall …,` binders and of every `… =>`
     premise (an `exact LEMMA` discharges the goal AFTER `move`-ing the premises in).
     For `forall &2, Bad … => islossless Plog.prg` this is `islossless Plog.prg`."""
-    concl = _conclusion_text(goal_text)
-    if not concl:
-        return ""
-    # Drop a leading universal-quantifier prefix `forall <binders>,` (one level).
-    concl = re.sub(r"^\s*forall\b[^,]*,\s*", "", concl, count=1).strip()
-    # The real obligation is the LAST arm of the top-level `=>` implication chain.
-    # Split only on `=>` at paren-depth 0 so an inner `(a => b)` premise is kept whole.
-    arms = _split_top_level(concl, "=>")
-    return arms[-1].strip() if arms else concl
+    return build_proof_obligation_ir(goal_text).conclusion.text
 
 
 def _split_top_level(text: str, sep: str) -> list[str]:
@@ -372,92 +372,6 @@ def _split_top_level(text: str, sep: str) -> list[str]:
             continue
         i += 1
     out.append(text[start:])
-    return out
-
-
-def _lossless_target(text: str) -> str:
-    """If `text` is an `islossless <X>` / `is_lossless <d>` conclusion, return a
-    NORMALISED target key (`<X>` with any module-functor argument list `(F,P)`
-    dropped and memory annotations stripped), else ''. Normalising the functor args
-    makes `A(F0,P0).a` ≡ `A(F,P).a` ≡ `A.a`, so an alpha-renamed local axiom matches."""
-    m = re.match(r"\s*(?:islossless|is_lossless)\s+(.+?)\s*$", str(text or ""))
-    if not m:
-        return ""
-    target = m.group(1).strip().rstrip(".")
-    target = _strip_memory_annotations(target)
-    target = re.sub(r"\([^()]*\)", "", target)  # drop `(F0, P0)` functor-arg list
-    return re.sub(r"\s+", "", target)
-
-
-def _conclusion_lemma_routes(goal_text: str, source_path: str) -> list[dict[str, Any]]:
-    """GAP 1 — CONCLUSION-KEYED local lemma route. When the goal's final (pure /
-    ambient) obligation is a losslessness claim `islossless <X>`, scan the target
-    `.ec` for a file-local `lemma`/`axiom`/`declare axiom` whose own conclusion is
-    `islossless <X>` (module-functor args alpha-normalised) and surface its NAME as
-    an `exact <Name>` route — instead of treating `Plog.prg`/`P0`/`islossless` as
-    searchable operators (i3→AaL, i26→PlogprgL, i51→FfL).
-
-    Fires only on an ambient/pure-tail losslessness conclusion: a relational/program
-    goal (`~`, `equiv[`, `<@`, `{1}`/`{2}` on the conclusion head) is left alone."""
-    target = _lossless_target(_final_conclusion(goal_text))
-    if not target:
-        return []
-    source = _read_source_text(source_path)
-    if not source:
-        return []
-    routes: list[dict[str, Any]] = []
-    seen: set[str] = set()
-    for name, decl in _local_lemma_declarations(source):
-        decl_concl = _lossless_target(_decl_conclusion(decl))
-        if decl_concl and decl_concl == target and name not in seen:
-            seen.add(name)
-            routes.append({
-                "lemma": name,
-                "submit": f"exact {name}.",
-                "why": (
-                    f"`{name}` is a file-local lemma/axiom whose conclusion is this "
-                    f"exact losslessness goal."
-                ),
-            })
-    return routes[:4]
-
-
-def _decl_conclusion(declaration: str) -> str:
-    """The conclusion of a `lemma NAME (binders): <body>` declaration: the text after
-    the FIRST top-level `:` (the type ascription), with a leading `forall`/binder
-    prefix and `=>` premises peeled the same way as a goal conclusion.
-
-    A `declare axiom` has no `proof.`, so its captured text can spill past the
-    statement-ending `.` into following declarations/comments; we cut the body at its
-    first top-level statement terminator (a `.` that is not a dot-projection / a
-    decimal / inside brackets) so the spill cannot leak a spurious conclusion."""
-    decl = re.sub(r"\s+", " ", str(declaration or "")).strip().rstrip(".")
-    # The lemma signature is `<kw> NAME <binders> : <prop>`. Split on the first
-    # top-level `:` so binders carrying a `:` (`(m : ('a,'b) fmap)`) are not cut early.
-    parts = _split_top_level(decl, ":")
-    body = parts[-1].strip() if len(parts) > 1 else decl
-    body = body[:_statement_terminator_end(body)].strip()
-    body = re.sub(r"^\s*forall\b[^,]*,\s*", "", body, count=1).strip()
-    arms = _split_top_level(body, "=>")
-    return arms[-1].strip() if arms else body
-
-
-def _local_lemma_declarations(source: str) -> list[tuple[str, str]]:
-    """`(name, declaration-text)` for every `lemma`/`theorem`/`axiom` (incl.
-    `local`/`declare`) head in the source, declaration running up to its `proof.`
-    (or the next head). Mirrors `ec_lemma_index._declarations_from_text`'s head
-    regex; kept self-contained so the analyzer needs no live session index."""
-    heads = list(re.finditer(
-        r"\b(?:local\s+|declare\s+)*(?:equiv|lemma|theorem|axiom)\s+"
-        r"(?P<name>[A-Za-z_][A-Za-z0-9_']*)(?![A-Za-z0-9_'])",
-        source,
-    ))
-    out: list[tuple[str, str]] = []
-    for idx, match in enumerate(heads):
-        next_start = heads[idx + 1].start() if idx + 1 < len(heads) else len(source)
-        proof = re.search(r"\bproof\b", source[match.end():next_start])
-        cut = match.end() + proof.start() if proof else next_start
-        out.append((match.group("name"), source[match.start():cut]))
     return out
 
 
@@ -578,35 +492,55 @@ def pure_tail_surface(
     inductive_heads = _local_inductive_predicate_names(_read_source_text(source_path))
     operators = _goal_operators(goal_text, inductive_heads=inductive_heads)
     hypotheses = _visible_hypotheses(goal_text)
-    obligation_shape = _pure_logic_obligation_shape_surface(goal_text)
+    obligation_ir = build_proof_obligation_ir(goal_text).to_dict()
+    obligation_shape = _pure_logic_obligation_shape_surface(obligation_ir)
     memory = _ambient_memory_translation_surface(goal_text)
     membership = _membership_decomposition_surface(goal_text)
     witnesses = _existential_witness_surface(goal_text)
     lookup = _map_update_lookup_surface(goal_text)
     iter_successor = _iter_successor_surface(goal_text)
     integer_arithmetic = _integer_arithmetic_surface(goal_text)
+    list_normalization = _list_normalization_surface(goal_text)
+    hypothesis_graph = _local_hypothesis_graph(goal_text)
+    app = _dict(view.get("application_context"))
+    # application_context is the compact typed projection boundary for compiler
+    # handles.  Preserve those fact dictionaries here instead of maintaining a
+    # second field allowlist that can silently drop producer schema extensions.
+    mechanical_matches = [
+        dict(item)
+        for item in _list(app.get("mechanical_goal_candidates"))[:16]
+        if isinstance(item, dict) and item.get("lemma")
+    ]
+    distribution_certificates = [
+        dict(item)
+        for item in _list(app.get("distribution_certificates"))[:8]
+        if isinstance(item, dict) and item.get("lemma")
+    ]
+    map_update_transport = _map_update_transport_surface(
+        goal_text,
+        mechanical_matches,
+    )
     gaps = _pure_tail_gap_analysis(goal_text, view)
-    # NEW (panel-audit 2026-06-13, PRG.ec::Plog_Psample strands): two source-keyed
-    # routes that NAME the mechanical move instead of dumping the conclusion head as a
-    # searchable operator. Both read the target `.ec` directly (never raise without it).
-    lemma_routes = _conclusion_lemma_routes(goal_text, source_path)
     intro_routes = _inductive_intro_routes(goal_text, source_path)
     if not any((
         families, operators, hypotheses, obligation_shape, memory, membership,
-        witnesses, lookup, iter_successor, integer_arithmetic, gaps, lemma_routes,
-        intro_routes,
+        witnesses, lookup, iter_successor, integer_arithmetic, list_normalization,
+        hypothesis_graph, map_update_transport,
+        mechanical_matches, distribution_certificates, gaps, intro_routes,
     )):
         return {}
     return _drop_empty({
         "state": _pure_tail_state(goal_text),
-        # NEW (panel-audit 2026-06-13): the precise mechanical routes — keyed on the
-        # goal CONCLUSION, not on a token dump. These are surfaced ABOVE the operator
-        # tokens because they name the actual closing lemma / intro constructor.
-        "conclusion_lemma_routes": lemma_routes,
         "inductive_intro_routes": intro_routes,
+        "proof_obligation_ir": obligation_ir,
         "obligation_shape_surface": obligation_shape,
         "integer_arithmetic_surface": integer_arithmetic,
+        "list_normalization_surface": list_normalization,
+        "map_update_transport_surface": map_update_transport,
         "iter_successor_surface": iter_successor,
+        "local_hypothesis_graph": hypothesis_graph,
+        "mechanical_goal_candidates": mechanical_matches,
+        "distribution_certificates": distribution_certificates,
         # NEW-2 (2026-06-05): the REAL operators in the goal + the visible
         # propositional hypotheses — facts the agent can `lookup_symbol`, replacing
         # the fuzzy obligation-family BUCKET in the agent-facing panel. The family
@@ -632,6 +566,21 @@ def pure_tail_surface(
             "It does not choose a tactic or instantiate a lemma.",
         ],
     })
+
+
+def _local_hypothesis_graph(goal_text: str) -> dict[str, Any]:
+    """Exact local relation facts and mechanically verified order chains."""
+    hypotheses = named_local_hypotheses(goal_text)
+    chains = local_order_chains(goal_text)
+    if not hypotheses and not chains:
+        return {}
+    return {
+        "authority": "current_goal_context",
+        "exact_hypotheses": hypotheses[:8],
+        "order_chains": chains[:4],
+        "effect": "Records exact outer relations and mechanically composable order chains.",
+        "limitations": ["No tactic or semantic proof route is selected."],
+    }
 
 
 def looks_like_pure_tail_goal(goal_text: str, view: dict[str, Any]) -> bool:
@@ -665,6 +614,7 @@ def looks_like_pure_tail_goal(goal_text: str, view: dict[str, Any]) -> bool:
         or "%%" in text
         or "b2i" in lower
         or bool(re.search(r"\bsize\s*\(\s*drop\b", text))
+        or bool(build_proof_obligation_ir(text).conclusion.relation)
     )
     ambient_focus = (
         "ambient" in current_layer
@@ -1005,59 +955,43 @@ def _map_update_lookup_surface(goal_text: str) -> dict[str, Any]:
     })
 
 
-def _pure_logic_obligation_shape_surface(goal_text: str) -> dict[str, Any]:
-    concl = _conclusion_text(goal_text)
-    if not concl:
+def _pure_logic_obligation_shape_surface(obligation_ir: dict[str, Any]) -> dict[str, Any]:
+    if not obligation_ir:
         return {}
-    arms = [arm.strip() for arm in _split_top_level(concl, "=>") if arm.strip()]
-    premises = [
-        {
-            "shape": _premise_shape(arm),
-            "text": _preview(arm, limit=180),
-        }
-        for arm in arms[:-1]
+    binders = [
+        {"shape": _obligation_shape_label(str(item.get("kind") or ""), "binder"), "text": _preview(str(item.get("text") or ""), limit=180)}
+        for item in obligation_ir.get("binders") or []
+        if isinstance(item, dict) and item.get("text")
     ]
-    tail = arms[-1] if arms else concl
-    conjuncts = [
-        item.strip()
-        for item in _split_top_level(tail, "/\\")
-        if item.strip()
+    premises = [
+        {"shape": _obligation_shape_label(str(item.get("kind") or ""), "premise"), "text": _preview(str(item.get("text") or ""), limit=180)}
+        for item in obligation_ir.get("premises") or []
+        if isinstance(item, dict) and item.get("text")
     ]
     obligations = [
-        {
-            "shape": _conjunct_obligation_shape(item),
-            "text": _preview(item, limit=180),
-        }
-        for item in conjuncts
-    ] if len(conjuncts) > 1 else []
+        {"shape": _obligation_shape_label(str(item.get("kind") or ""), "obligation"), "text": _preview(str(item.get("text") or ""), limit=180)}
+        for item in obligation_ir.get("conclusion_parts") or []
+        if isinstance(item, dict) and item.get("text")
+    ]
     return _drop_empty({
+        "authority": obligation_ir.get("authority"),
+        "binders": binders[:4],
         "implication_premises": premises[:4],
         "conclusion_obligations": obligations[:4],
     })
 
 
-def _premise_shape(text: str) -> str:
-    compact = " ".join(str(text or "").split())
-    if re.search(r"\biter\b", compact) and "=" in compact:
-        return "iter equality premise"
-    if "<> []" in compact:
-        return "nonempty-list premise"
-    if "=" in compact:
-        return "equality premise"
-    if compact.lower().startswith("forall "):
-        return "quantified premise"
-    return "premise"
-
-
-def _conjunct_obligation_shape(text: str) -> str:
-    compact = " ".join(str(text or "").split())
-    if re.search(r"\biter\b", compact) and "=" in compact:
-        return "iter equality obligation"
-    if "size (drop" in compact and re.search(r"\s<\s", compact):
-        return "size/drop inequality obligation"
-    if "=" in compact:
-        return "equality obligation"
-    return "obligation"
+def _obligation_shape_label(kind: str, role: str) -> str:
+    labels = {
+        "forall_binder": "universal binder",
+        "exists_binder": "existential binder",
+        "iter_equality": "iter equality",
+        "nonempty_list": "nonempty-list",
+        "size_drop_inequality": "size/drop inequality",
+        "let_expression": "let expression",
+    }
+    base = labels.get(kind, kind.replace("_", " ") or "unknown")
+    return f"{base} {role}" if role in {"premise", "obligation"} else base
 
 
 def _iter_successor_surface(goal_text: str) -> dict[str, Any]:
@@ -1097,7 +1031,12 @@ def _integer_arithmetic_surface(goal_text: str) -> dict[str, Any]:
     boundaries implied by `size (drop n xs)`. It does not pick a branch, lemma
     instantiation, or tactic script.
     """
-    concl = _conclusion_text(goal_text)
+    # Arithmetic families describe the obligation being closed, not symbols
+    # that happen to occur only in an implication premise.  Premises remain
+    # available to the prover as side-condition evidence elsewhere in the
+    # typed obligation surface.
+    obligation = build_proof_obligation_ir(goal_text)
+    concl = obligation.conclusion.text or _conclusion_text(goal_text)
     if not concl:
         return {}
     size_drop_terms = _size_drop_terms(concl)
@@ -1167,6 +1106,430 @@ def _integer_arithmetic_surface(goal_text: str) -> dict[str, Any]:
             "No lemma is instantiated and no tactic script is selected.",
         ],
     })
+
+
+def _list_normalization_surface(goal_text: str) -> dict[str, Any]:
+    """Mechanical stdlib routes for nested list terms in a pure residual."""
+    obligation_ir = build_proof_obligation_ir(goal_text)
+    concl = obligation_ir.conclusion.text
+    if not concl:
+        return {}
+    families: list[dict[str, Any]] = []
+    size_inners = _size_application_inners(concl)
+    if _nth_sequence_has_marker(concl, "++"):
+        families.append({
+            "shape": "nth over concatenation",
+            "lemma_names": ["nth_cat"],
+        })
+    if any("++" in inner for inner in size_inners):
+        families.append({
+            "shape": "size of concatenation",
+            "lemma_names": ["size_cat"],
+        })
+    if any(re.search(r"\bmap\b", inner) for inner in size_inners):
+        families.append({
+            "shape": "size of map",
+            "lemma_names": ["size_map"],
+        })
+
+    nth_map_terms = _nth_map_terms(concl, goal_text)
+    if nth_map_terms:
+        if any(item.get("side_condition_status") == "visible_false" for item in nth_map_terms):
+            families.append({
+                "shape": "nth outside map bounds",
+                "lemma_names": ["nth_out", "size_map"],
+                "side_condition": "! (0 <= index < size source_list)",
+            })
+        if any(item.get("side_condition_status") != "visible_false" for item in nth_map_terms):
+            families.append({
+                "shape": "nth over map",
+                "lemma_names": ["nth_map"],
+                "side_condition": "0 <= index < size source_list",
+            })
+    prefix_successors = _mapped_take_prefix_successors(obligation_ir)
+    if not families and not prefix_successors:
+        return {}
+    return {
+        "lemma_families": families,
+        "nth_map_terms": nth_map_terms[:4],
+        "prefix_successor_chains": prefix_successors[:4],
+        "authority": "current_goal_and_visible_hypotheses",
+        "limitations": [
+            "The surface identifies matching stdlib families and visible side-condition evidence only.",
+            "It does not choose rewrite order or discharge a side condition.",
+        ],
+    }
+
+
+def _mapped_take_prefix_successors(obligation_ir: Any) -> list[dict[str, Any]]:
+    """Recognise ``map f (take k xs) ++ [f (nth d xs k)]`` successors.
+
+    This is a structural identity assembled from the current conclusion and
+    visible bounds.  The result names the loaded List lemma family but does
+    not select a tactic or claim that unrelated conjuncts are discharged.
+    """
+    out: list[dict[str, Any]] = []
+    parts = list(obligation_ir.conclusion_parts) or [obligation_ir.conclusion]
+    visible_premises = [str(item.text or "") for item in obligation_ir.premises]
+    for part in parts:
+        relation = top_level_relation_parts(str(part.text or ""))
+        if relation is None or relation[1] != "=":
+            continue
+        left, _equals, right = relation
+        left_apps = _map_take_applications(left)
+        right_apps = _map_take_applications(right)
+        for base_side, successor_side, base_apps, successor_apps in (
+            (left, right, left_apps, right_apps),
+            (right, left, right_apps, left_apps),
+        ):
+            for base in base_apps:
+                for successor in successor_apps:
+                    if (
+                        base["mapper"] != successor["mapper"]
+                        or _normalise_logic_term(base["source_list"])
+                        != _normalise_logic_term(successor["source_list"])
+                        or not _one_step_successor(successor["index"], base["index"])
+                        or not _mapped_nth_singleton_tail(base_side, base)
+                    ):
+                        continue
+                    lower = f"0 <= {base['index']}"
+                    upper = f"{base['index']} < {_size_application(base['source_list'])}"
+                    visible = [
+                        premise for premise in visible_premises
+                        if _normalise_logic_term(premise) in {
+                            _normalise_logic_term(lower),
+                            _normalise_logic_term(upper),
+                        }
+                    ]
+                    item = {
+                        "shape": "mapped take-prefix successor",
+                        "mapper": base["mapper"],
+                        "index": base["index"],
+                        "source_list": base["source_list"],
+                        "side_condition": f"0 <= {base['index']} < {_size_application(base['source_list'])}",
+                        "side_condition_status": (
+                            "visible" if len(visible) == 2 else "not_established"
+                        ),
+                        "supporting_premises": visible,
+                        "lemma_chain": [
+                            {
+                                "lemma": "take_nth",
+                                "role": "extend take k xs with the visible next nth element",
+                            },
+                            {
+                                "lemma": "map_rcons",
+                                "role": "push map through that one-element prefix extension",
+                            },
+                            {
+                                "lemma": "cats1",
+                                "role": "normalize appended-singleton and rcons forms",
+                            },
+                        ],
+                    }
+                    if item not in out:
+                        out.append(item)
+    return out
+
+
+def _map_take_applications(text: str) -> list[dict[str, Any]]:
+    source = str(text or "")
+    out: list[dict[str, Any]] = []
+    for match in re.finditer(r"\bmap\b", source):
+        mapper, cursor = _term_after(source, match.end())
+        take_term, end = _term_after(source, cursor)
+        words = _split_top_level_words(take_term)
+        if len(words) != 3 or words[0] != "take":
+            continue
+        out.append({
+            "mapper": mapper,
+            "index": _strip_enclosing_parens(words[1]),
+            "source_list": words[2],
+            "start": match.start(),
+            "end": end,
+        })
+    return out
+
+
+def _mapped_nth_singleton_tail(text: str, application: dict[str, Any]) -> bool:
+    tail = str(text or "")[int(application.get("end") or 0):].strip()
+    match = re.fullmatch(r"\+\+\s*\[(.+)\]", tail, flags=re.DOTALL)
+    if not match:
+        return False
+    element = match.group(1).strip()
+    mapper, cursor = _term_after(element, 0)
+    nth_term, end = _term_after(element, cursor)
+    if mapper != application.get("mapper") or element[end:].strip():
+        return False
+    words = _split_top_level_words(nth_term)
+    if len(words) < 4 or words[0] != "nth":
+        return False
+    return bool(
+        _normalise_logic_term(words[-2])
+        == _normalise_logic_term(str(application.get("source_list") or ""))
+        and _normalise_logic_term(words[-1])
+        == _normalise_logic_term(str(application.get("index") or ""))
+    )
+
+
+def _one_step_successor(candidate: str, base: str) -> bool:
+    parts = [
+        _strip_enclosing_parens(item.strip())
+        for item in _split_top_level(_strip_enclosing_parens(candidate), "+")
+    ]
+    return bool(
+        len(parts) == 2
+        and _normalise_logic_term(parts[0]) == _normalise_logic_term(base)
+        and _normalise_logic_term(parts[1]) == "1"
+    )
+
+
+def _strip_enclosing_parens(text: str) -> str:
+    value = str(text or "").strip()
+    while value.startswith("("):
+        close = _matching_parenthesis_index(value, 0)
+        if close != len(value) - 1:
+            break
+        value = value[1:-1].strip()
+    return value
+
+
+def _map_update_transport_surface(
+    goal_text: str,
+    mechanical_matches: list[dict[str, Any]],
+) -> dict[str, Any]:
+    """Compose pointwise key transport with finite-map get/set normalization."""
+    obligation_ir = build_proof_obligation_ir(goal_text)
+    conclusion = obligation_ir.conclusion.text
+    if "<-" not in conclusion or ".[" not in conclusion:
+        return {}
+    update_keys = _map_update_keys(conclusion)
+    if len(update_keys) < 2:
+        return {}
+    outer_binders = {
+        name
+        for binder_part in obligation_ir.binders
+        for name in re.findall(
+            r"[A-Za-z_][A-Za-z0-9_']*",
+            re.sub(r"^forall\s+", "", str(binder_part.text or "")),
+        )
+        if name not in {"forall"}
+    }
+    for premise in obligation_ir.premises:
+        premise_text = str(premise.text or "")
+        if (
+            ("forall" not in premise_text and not outer_binders)
+            or ".[" not in premise_text
+            or "=" not in premise_text
+        ):
+            continue
+        binder = re.search(
+            r"\bforall\s+(?:\(\s*)?([A-Za-z_][A-Za-z0-9_']*)\b",
+            premise_text,
+        )
+        variables = {binder.group(1)} if binder else outer_binders
+        transforms = [
+            match.group(1).rsplit(".", 1)[-1].strip("'")
+            for variable in variables
+            for match in re.finditer(
+                rf"\b([A-Za-z_][A-Za-z0-9_.']*)\s+{re.escape(variable)}\b",
+                premise_text,
+            )
+        ]
+        for transform in transforms:
+            pair = next(
+                (
+                    (base, transformed)
+                    for base in update_keys
+                    for transformed in update_keys
+                    if base != transformed
+                    and _normalise_logic_term(transformed)
+                    == _normalise_logic_term(f"{transform} ({base})")
+                ),
+                None,
+            )
+            if pair is None:
+                continue
+            inverse_match = next(
+                (
+                    item for item in mechanical_matches
+                    if item.get("match_kind") == "loaded_left_inverse_support"
+                    and item.get("transform") == transform
+                ),
+                {},
+            )
+            return _drop_empty({
+                "shape": "pointwise finite-map key transport",
+                "pointwise_relation": premise_text,
+                "key_transform": transform,
+                "update_key_pair": {"source": pair[0], "transformed": pair[1]},
+                "lookup_normalization_lemma": "get_setE",
+                "left_inverse_lemma": inverse_match.get("lemma"),
+                "left_inverse": inverse_match.get("inverse"),
+                "effect": (
+                    "get_setE exposes the same-key/different-key cases; a loaded "
+                    "left inverse for the displayed transform supplies injectivity evidence."
+                ),
+                "limitations": [
+                    "No key case or rewrite order is selected.",
+                    "The surface does not claim that the remaining value equality is automatic.",
+                ],
+            })
+    return {}
+
+
+def _size_application_inners(text: str) -> list[str]:
+    out: list[str] = []
+    source = str(text or "")
+    for match in re.finditer(r"\bsize\s*\(", source):
+        open_idx = source.find("(", match.start(), match.end())
+        close_idx = _matching_parenthesis_index(source, open_idx)
+        if close_idx < 0:
+            continue
+        inner = source[open_idx + 1:close_idx].strip()
+        if inner and inner not in out:
+            out.append(inner)
+    return out
+
+
+def _nth_sequence_has_marker(text: str, marker: str) -> bool:
+    source = str(text or "")
+    for match in re.finditer(r"\bnth\b", source):
+        default, cursor = _term_after(source, match.end())
+        if not default:
+            continue
+        sequence, _cursor = _term_after(source, cursor)
+        if sequence and marker in sequence:
+            return True
+    return False
+
+
+def _nth_map_terms(conclusion: str, goal_text: str) -> list[dict[str, Any]]:
+    hypotheses = named_local_hypotheses(goal_text)
+    formulas = named_local_formulas(goal_text)
+    out: list[dict[str, Any]] = []
+    source = str(conclusion or "")
+    for match in re.finditer(r"\(\s*map\b", source):
+        open_idx = match.start()
+        close_idx = _matching_parenthesis_index(source, open_idx)
+        if close_idx < 0:
+            continue
+        before = source[max(0, open_idx - 180):open_idx]
+        if not re.search(r"\bnth\b", before):
+            continue
+        map_inner = source[open_idx + 1:close_idx].strip()
+        words = _split_top_level_words(map_inner)
+        if len(words) < 3 or words[0] != "map":
+            continue
+        list_term = words[-1]
+        index, _end = _term_after(source, close_idx + 1)
+        if not index:
+            continue
+        side_condition = f"0 <= {index} < {_size_application(list_term)}"
+        evidence = _difference_index_evidence(index, list_term, hypotheses)
+        visible_true = _matching_named_formula(formulas, side_condition)
+        visible_false = _matching_named_formula(formulas, f"! ({side_condition})")
+        if not visible_false:
+            visible_false = _matching_named_formula(formulas, f"! {side_condition}")
+        if visible_true:
+            status = "visible_true"
+            evidence = [visible_true]
+        elif visible_false:
+            status = "visible_false"
+            evidence = [visible_false]
+        elif evidence:
+            status = "derivable_from_visible_linear_bounds"
+        else:
+            status = "not_established"
+        item = _drop_empty({
+            "source_list": _preview(list_term, limit=100),
+            "index": _preview(index, limit=140),
+            "side_condition": side_condition,
+            "side_condition_status": status,
+            "supporting_hypotheses": evidence,
+        })
+        if item not in out:
+            out.append(item)
+    return out
+
+
+def _matching_named_formula(
+    formulas: list[dict[str, str]],
+    expected: str,
+) -> str:
+    wanted = _normalise_logic_term(expected)
+    for item in formulas:
+        if _normalise_logic_term(item.get("formula", "")) == wanted:
+            return str(item.get("hypothesis") or "")
+    return ""
+
+
+def _matching_parenthesis_index(text: str, open_idx: int) -> int:
+    if open_idx < 0 or open_idx >= len(text) or text[open_idx] != "(":
+        return -1
+    depth = 0
+    for idx in range(open_idx, len(text)):
+        if text[idx] == "(":
+            depth += 1
+        elif text[idx] == ")":
+            depth -= 1
+            if depth == 0:
+                return idx
+    return -1
+
+
+def _term_after(text: str, start: int) -> tuple[str, int]:
+    pos = start
+    while pos < len(text) and text[pos].isspace():
+        pos += 1
+    if pos >= len(text):
+        return "", pos
+    if text[pos] == "(":
+        close = _matching_parenthesis_index(text, pos)
+        return (text[pos + 1:close].strip(), close + 1) if close >= 0 else ("", pos)
+    match = re.match(r"[A-Za-z_][A-Za-z0-9_.'`{}&]*", text[pos:])
+    if not match:
+        return "", pos
+    return match.group(0), pos + match.end()
+
+
+def _difference_index_evidence(
+    index: str,
+    list_term: str,
+    hypotheses: list[dict[str, str]],
+) -> list[str]:
+    parts = [part.strip() for part in _split_top_level(index, "-")]
+    if len(parts) != 2:
+        return []
+    base, offset = parts
+    offset_match = re.fullmatch(r"size\s+(.+)", offset.strip())
+    if not offset_match:
+        return []
+    prefix = offset_match.group(1).strip()
+    lower_name = ""
+    upper_name = ""
+    for item in hypotheses:
+        relation = str(item.get("outer_relation") or "")
+        left = _normalise_logic_term(str(item.get("left") or ""))
+        right = _normalise_logic_term(str(item.get("right") or ""))
+        if (
+            relation == "<="
+            and left == _normalise_logic_term(_size_application(prefix))
+            and right == _normalise_logic_term(base)
+        ):
+            lower_name = str(item.get("hypothesis") or "")
+        if (
+            relation == "<"
+            and left == _normalise_logic_term(base)
+            and right == _normalise_logic_term(
+                f"{_size_application(prefix)} + {_size_application(list_term)}"
+            )
+        ):
+            upper_name = str(item.get("hypothesis") or "")
+    return [name for name in (lower_name, upper_name) if name] if lower_name and upper_name else []
+
+
+def _normalise_logic_term(text: str) -> str:
+    return re.sub(r"\s+", "", str(text or "").replace("(", "").replace(")", ""))
 
 
 def _size_drop_terms(text: str) -> list[dict[str, str]]:

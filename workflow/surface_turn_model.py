@@ -11,11 +11,7 @@ import json
 from dataclasses import dataclass, field
 from typing import Any
 
-from workflow.context_intents import (
-    INTENT_CLASS_PROBE_PREVIEW,
-    intent_class,
-    intent_is_retrieval,
-)
+from workflow.context_intents import intent_is_retrieval
 from workflow.surface_composer import compose_surface_model_dict
 from workflow.surface_markdown import markdown_code_span as _md_code
 from workflow.surface_model import _drop_empty
@@ -23,6 +19,14 @@ from workflow.surface_model import last_action_needs_attention
 
 
 SURFACE_TURN_SCHEMA_VERSION = 1
+
+
+_CONTROL_MENU_INTENTS = frozenset({
+    "amend_and_replay",
+    "finish",
+    "fresh_restart",
+    "undo_to_checkpoint",
+})
 
 
 @dataclass(frozen=True)
@@ -144,15 +148,8 @@ def compose_surface_turn(
     changed = _proof_state_changed(manager_actions, current_view)
     control_menu = _control_menu_from_view(current_view, intent, repair_prompt)
 
-    is_probe = (
-        intent_class(intent) == INTENT_CLASS_PROBE_PREVIEW
-        and _has_probe_result(current_view)
-    )
-    is_retrieval = (
-        intent_is_retrieval(intent)
-        and _has_retrieval_result(current_view)
-    )
-    is_overlay = is_retrieval or is_probe
+    is_retrieval_intent = intent_is_retrieval(intent)
+    is_overlay = is_retrieval_intent and _has_retrieval_result(current_view)
     is_control_menu = control_menu is not None and not _control_intent_executed(intent, payload, changed, current_view)
 
     if is_overlay or is_control_menu:
@@ -166,7 +163,7 @@ def compose_surface_turn(
     else:
         proof_surface = current_surface
 
-    overlay_surface = current_surface if is_retrieval else None
+    overlay_surface = current_surface if is_overlay else None
     outcome = _turn_outcome(
         current_view,
         intent=intent,
@@ -179,8 +176,7 @@ def compose_surface_turn(
     )
     kind = _presentation_kind(
         intent,
-        is_retrieval=is_retrieval,
-        is_probe=is_probe,
+        is_retrieval=is_overlay,
         is_control_menu=is_control_menu,
         handled_intent=handled_intent,
     )
@@ -188,8 +184,7 @@ def compose_surface_turn(
         intent,
         payload=payload,
         ok=ok,
-        is_retrieval=is_retrieval,
-        is_probe=is_probe,
+        is_retrieval_intent=is_retrieval_intent,
         is_control_menu=is_control_menu,
         proof_state_changed=changed,
     )
@@ -230,19 +225,6 @@ def render_surface_turn_markdown(
     control = surface_turn.get("control_menu") if isinstance(surface_turn.get("control_menu"), dict) else None
     outcome = surface_turn.get("turn_outcome") if isinstance(surface_turn.get("turn_outcome"), dict) else {}
 
-    if goal_only:
-        body = _render_goal_only_surface(proof)
-        outcome_md = _render_turn_outcome(outcome)
-        if outcome_md and outcome.get("lead_before_goal"):
-            body = _join_sections(outcome_md, body)
-        elif outcome_md:
-            body = _join_sections(body, outcome_md)
-        return _join_sections(body, submit_line + anchor_block)
-
-    if kind == "probe_preview":
-        body = _render_turn_outcome(outcome)
-        return _join_sections(body, submit_line + anchor_block)
-
     if overlay:
         overlay_md = _render_overlay_surface(overlay)
         proof_md = _render_proof_surface(proof)
@@ -254,12 +236,25 @@ def render_surface_turn_markdown(
 
     if control:
         control_md = _render_control_menu(control)
-        proof_md = _render_proof_surface(
-            proof,
-            compact_goal=True,
-            heading="## Continue from unchanged proof state",
+        proof_md = (
+            _render_goal_only_surface(proof)
+            if goal_only
+            else _render_proof_surface(
+                proof,
+                compact_goal=True,
+                heading="## Continue from unchanged proof state",
+            )
         )
         return _join_sections(control_md, proof_md, submit_line + anchor_block)
+
+    if goal_only:
+        body = _render_goal_only_surface(proof)
+        outcome_md = _render_turn_outcome(outcome)
+        if outcome_md and outcome.get("lead_before_goal"):
+            body = _join_sections(outcome_md, body)
+        elif outcome_md:
+            body = _join_sections(body, outcome_md)
+        return _join_sections(body, submit_line + anchor_block)
 
     proof_md = _render_proof_surface(proof)
     outcome_md = _render_turn_outcome(outcome)
@@ -353,14 +348,6 @@ def _proof_state_changed(actions: list[dict[str, Any]], view: dict[str, Any]) ->
     return any(marker in text for marker in ("changed", "checkpoint_rewind", "checkpoint_restore", "confirmed"))
 
 
-def _has_probe_result(view: dict[str, Any]) -> bool:
-    lr = view.get("last_result") if isinstance(view.get("last_result"), dict) else {}
-    if "probe_preview" in lr:
-        return True
-    text = " ".join(str(lr.get(k) or "").lower() for k in ("result", "error_summary", "kind"))
-    return bool(text.strip())
-
-
 def _has_retrieval_result(view: dict[str, Any]) -> bool:
     lr = view.get("last_result") if isinstance(view.get("last_result"), dict) else {}
     content = lr.get("content")
@@ -384,8 +371,6 @@ def _turn_outcome(
     error = str(lr.get("error_summary") or "").strip()
     if not ok and repair_prompt:
         result = repair_prompt
-    elif intent_class(intent) == INTENT_CLASS_PROBE_PREVIEW:
-        result = _probe_outcome_text(lr, tactic)
     elif tactic:
         result = f"Last action: `{_short(tactic, 80)}` -- {result or '(no result reported)'}"
     if error and "EasyCrypt error:" not in result:
@@ -411,41 +396,12 @@ def _turn_outcome(
     )
 
 
-def _probe_outcome_text(last_result: dict[str, Any], tactic: str) -> str:
-    pp = last_result.get("probe_preview") if isinstance(last_result.get("probe_preview"), dict) else {}
-    goal_after = pp.get("goal_after_probe") if isinstance(pp, dict) else None
-    error = str(last_result.get("error_summary") or "").strip()
-    tac = _short(tactic or str(last_result.get("tactic") or ""), 80) or "(probe)"
-    remaining = pp.get("goal_after_remaining") if isinstance(pp, dict) else None
-    closed = not error and (
-        (isinstance(pp, dict) and pp.get("goal_after_closed") is True)
-        or remaining == 0
-        or (isinstance(remaining, str) and remaining.strip() == "0")
-    )
-    if closed:
-        return (
-            f"## Probe preview -- `{tac}` accepted; committing CLOSES the proof "
-            "(all goals discharged)"
-        )
-    if isinstance(goal_after, dict) and goal_after:
-        lines = goal_after.get("lines")
-        text = "\n".join(str(x) for x in lines) if isinstance(lines, list) else str(goal_after.get("text") or "")
-        rem = f" (remaining {remaining})" if remaining not in (None, "", "?") else ""
-        return (
-            f"## Probe preview -- `{tac}` accepted; committed state unchanged\n"
-            f"_committing this would produce{rem}:_\n```\n{text.rstrip()}\n```"
-        )
-    if error:
-        return f"## Probe rejected -- `{tac}`; committed state unchanged\n\nEasyCrypt error: {error}"
-    return str(last_result.get("result") or f"Probe returned for `{tac}`.").strip()
-
-
 def _control_menu_from_view(
     view: dict[str, Any],
     intent: str,
     repair_prompt: str,
 ) -> ControlMenu | None:
-    if intent not in {"undo_to_checkpoint", "fresh_restart", "finish"}:
+    if intent not in _CONTROL_MENU_INTENTS:
         return None
     lr = view.get("last_result") if isinstance(view.get("last_result"), dict) else {}
     items: list[ControlMenuItem] = []
@@ -461,8 +417,6 @@ def _control_menu_from_view(
         if not isinstance(submit, dict) or not submit.get("intent"):
             return
         if intent == "undo_to_checkpoint" and submit.get("intent") != "undo_to_checkpoint":
-            return
-        if intent_class(submit.get("intent")) == INTENT_CLASS_PROBE_PREVIEW:
             return
         items.append(ControlMenuItem(
             label=str(raw.get("label") or raw.get("title") or raw.get("message") or submit.get("intent") or "").strip(),
@@ -496,6 +450,7 @@ def _control_menu_from_view(
     if not items and not notice:
         return None
     title = {
+        "amend_and_replay": "Rewind targets",
         "undo_to_checkpoint": "Rewind targets",
         "fresh_restart": "Restart options",
         "finish": "Finish result",
@@ -529,14 +484,11 @@ def _presentation_kind(
     intent: str,
     *,
     is_retrieval: bool,
-    is_probe: bool,
     is_control_menu: bool,
     handled_intent: dict[str, Any],
 ) -> str:
     if not handled_intent:
         return "bootstrap"
-    if is_probe:
-        return "probe_preview"
     if is_retrieval:
         return "read_only_overlay"
     if is_control_menu:
@@ -549,14 +501,13 @@ def _base_surface_updates(
     *,
     payload: dict[str, Any],
     ok: bool,
-    is_retrieval: bool,
-    is_probe: bool,
+    is_retrieval_intent: bool,
     is_control_menu: bool,
     proof_state_changed: bool,
 ) -> bool:
     if not ok and not proof_state_changed:
         return False
-    if is_retrieval or is_probe or is_control_menu:
+    if is_retrieval_intent or is_control_menu:
         return False
     if intent == "finish":
         return False
@@ -735,7 +686,24 @@ def _render_actions(surface: dict[str, Any]) -> str:
     actions = [a for a in surface.get("actions") or [] if isinstance(a, dict)]
     if not actions:
         return ""
-    lines = ["### Need more? submit one read-only request"]
+    mutations = [action for action in actions if not bool(action.get("read_only", True))]
+    read_only = [action for action in actions if bool(action.get("read_only", True))]
+    sections: list[str] = []
+    if mutations:
+        sections.append(_render_action_group(
+            "### Ready proof action",
+            mutations,
+        ))
+    if read_only:
+        sections.append(_render_action_group(
+            "### Need more? submit one read-only request",
+            read_only,
+        ))
+    return _join_blocks(*sections)
+
+
+def _render_action_group(heading: str, actions: list[dict[str, Any]]) -> str:
+    lines = [heading]
     for action in actions[:10]:
         intent = str(action.get("intent") or "")
         payload = dict(action.get("payload") or {}) if isinstance(action.get("payload"), dict) else {}
@@ -823,4 +791,3 @@ def _join_sections(*blocks: str) -> str:
 def _short(value: str, limit: int) -> str:
     value = " ".join(str(value or "").split())
     return value if len(value) <= limit else value[: limit - 1] + "..."
-

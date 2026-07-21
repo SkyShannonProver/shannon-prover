@@ -35,7 +35,7 @@ def ambient_named_closer_menu_items(handles: dict[str, Any]) -> list[dict[str, A
             f"ambient_exact_{safe_id(lemma)}",
             tactic=tactic,
             tactic_family="ambient_close",
-            action_type="probe_tactic",
+            action_type="tactic_candidate",
             cost="cheap",
             why=str(
                 closer.get("reason")

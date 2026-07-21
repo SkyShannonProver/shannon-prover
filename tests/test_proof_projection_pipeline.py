@@ -76,17 +76,6 @@ class _Events:
         return [{"kind": "typed"}]
 
 
-class _ProbeAlternatives:
-    def alternatives_for_snapshot(self, snapshot):
-        return [{"tactic": "wp."}]
-
-    def workspace_view_with_alternatives(self, view, snapshot):
-        return {
-            **dict(view),
-            "candidate_moves": {"probe_alternatives": [{"tactic": "wp."}]},
-        }
-
-
 class _Analyzers:
     def analyze_route(self, *, state, workspace_view):
         return SimpleNamespace(
@@ -114,7 +103,6 @@ def test_projection_pipeline_uses_dynamic_project_context() -> None:
         checkpoints=_Checkpoints(),
         proof_memory=_ProofMemory(),
         events=_Events(),
-        probe_alternatives=_ProbeAlternatives(),
         analyzers=_Analyzers(),
         renderer=_Renderer(),
         file_path="initial.ec",
@@ -133,7 +121,6 @@ def test_projection_pipeline_uses_dynamic_project_context() -> None:
 
     assert result.state.file_path == "dynamic.ec"
     assert result.state.project_root == "/dynamic"
-    assert result.state.probe_alternatives == [{"tactic": "wp."}]
     assert result.view["rendered_file_path"] == "dynamic.ec"
     assert result.view["view_hash"] == "hash-7"
     assert result.view["ordered"] is True

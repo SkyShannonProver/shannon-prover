@@ -154,7 +154,7 @@ def test_inspect_handles_expose_goal_file_only_when_goal_truncated() -> None:
     )
 
 
-def test_tactic_execution_result_probe_never_changes_state() -> None:
+def test_tactic_execution_result_preflight_never_changes_state() -> None:
     raw = (
         "[TRY] tactic: inline *.\n"
         "[TRY] accepted: True\n"
@@ -171,11 +171,11 @@ def test_tactic_execution_result_probe_never_changes_state() -> None:
     )
     result = build_tactic_execution_result(
         Path("."),
-        mode="probe",
+        mode="preflight",
         command="try",
         commit_response=_commit_response(
             command="try",
-            status="probe_accepted",
+            status="preflight_accepted",
             accepted_count=0,
         ),
         workspace_view=_workspace_view(),
@@ -185,17 +185,17 @@ def test_tactic_execution_result_probe_never_changes_state() -> None:
         },
     )
 
-    assert result["execution"]["mode"] == "probe"
-    assert result["execution"]["probe_accepted"] is True
+    assert result["execution"]["mode"] == "preflight"
+    assert result["execution"]["preflight_accepted"] is True
     assert result["execution"]["state_changed"] is False
     assert result["execution"]["history_committed"] is False
-    assert result["candidate_after"]["kind"] == "probe_candidate_after"
+    assert result["candidate_after"]["kind"] == "preflight_candidate_after"
     assert result["candidate_after"]["state_changed"] is False
     assert result["candidate_after"]["current_goal"]["text_fully_shown"] is True
     assert result["candidate_after"]["current_goal"]["lines"][0] == "Current goal"
     assert result["candidate_after"]["raw_result_artifact"].endswith("try_after.txt")
     assert any(
-        handle["id"] == "probe_candidate_after"
+        handle["id"] == "preflight_candidate_after"
         for handle in result["inspect_handles"]
     )
     compact = format_tactic_execution_result(result)
@@ -228,11 +228,11 @@ def test_tactic_execution_result_try_chain_surfaces_candidate_after() -> None:
     )
     result = build_tactic_execution_result(
         Path("."),
-        mode="probe",
+        mode="preflight",
         command="try-chain",
         commit_response=_commit_response(
             command="try-chain",
-            status="probe_accepted",
+            status="preflight_accepted",
             accepted_count=0,
         ),
         workspace_view=_workspace_view(),

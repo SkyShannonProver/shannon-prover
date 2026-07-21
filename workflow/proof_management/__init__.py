@@ -32,7 +32,6 @@ from .health import backend_failure_health_event, timeout_health_event
 from .intent_preflight import (
     IntentPreflightDecision,
     preflight_intent,
-    probe_undo_boundary_observation,
 )
 from .protocol_repair import (
     ALLOWED_AGENT_INTENTS,
@@ -41,12 +40,6 @@ from .protocol_repair import (
     parse_agent_intent,
     view_allows_qed,
     view_requires_qed_before_finish,
-)
-from .probe_alternatives import (
-    ProofProbeAlternativeManager,
-    probe_alternative_entry,
-    snapshot_probe_key,
-    workspace_view_with_probe_alternatives,
 )
 from .projection import ProofProjectionPipeline, ProofProjectionResult
 from .recovery_handlers import (
@@ -69,7 +62,6 @@ from .route_family import (
     route_family_score_adjustment,
 )
 from .backend_actions import (
-    accepted_probe_preview_effects,
     agent_observation_from_command,
     command_summary,
     content_observation_from_payload,
@@ -116,7 +108,6 @@ __all__ = [
     "ProofNodeStateManager",
     "ProofProjectionPipeline",
     "ProofProjectionResult",
-    "ProofProbeAlternativeManager",
     "ProofRecoveryIntentHandler",
     "ProofStateSnapshot",
     "ProofTurnExecutor",
@@ -132,7 +123,6 @@ __all__ = [
     "RewindNote",
     "ResumeRouteCandidate",
     "RouteFamilyEvidence",
-    "accepted_probe_preview_effects",
     "agent_observation_from_command",
     "backend_failure_health_event",
     "build_resume_diversity_index",
@@ -149,8 +139,6 @@ __all__ = [
     "normalize_rewind_note",
     "parse_agent_intent",
     "preflight_intent",
-    "probe_alternative_entry",
-    "probe_undo_boundary_observation",
     "render_observation_view",
     "resume_diversity_candidate_summary",
     "resume_diversity_handoff_note",
@@ -159,13 +147,11 @@ __all__ = [
     "rewind_note_summary",
     "route_family_score_adjustment",
     "selection_menu_action",
-    "snapshot_probe_key",
     "snapshot_surface",
     "timeout_command_summary",
     "timeout_health_event",
     "view_allows_qed",
     "view_requires_qed_before_finish",
     "view_with_latest_observation",
-    "workspace_view_with_probe_alternatives",
     "workspace_view_from_payload",
 ]

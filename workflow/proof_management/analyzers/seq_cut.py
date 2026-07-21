@@ -55,16 +55,12 @@ def _seq_cut_surface(
     latest_seq = _latest_seq_tactic(tactics)
     last_result = _dict(view.get("last_result"))
     rewound_seq = _rewound_seq_cut_observation(last_result)
-    probe_tactic = str(
-        last_result.get("accepted_tactic")
-        or _dict(last_result.get("probe_preview")).get("tactic")
-        or ""
-    ).strip()
-    probe_is_seq = bool(probe_tactic and _tactic_head(probe_tactic) == "seq")
+    accepted_tactic = str(last_result.get("accepted_tactic") or "").strip()
+    accepted_is_seq = bool(accepted_tactic and _tactic_head(accepted_tactic) == "seq")
     if (
         "seq" not in view_focus
         and not latest_seq
-        and not probe_is_seq
+        and not accepted_is_seq
         and not rewound_seq
     ):
         return {}
@@ -73,7 +69,7 @@ def _seq_cut_surface(
         seq_tactic = str(rewound_seq.get("tactic") or "")
         seq_idx = int(rewound_seq.get("tactic_index") or 0)
     else:
-        seq_tactic = str(latest_seq.get("tactic") or probe_tactic or "")
+        seq_tactic = str(latest_seq.get("tactic") or accepted_tactic or "")
         seq_idx = int(latest_seq.get("tactic_index") or 0)
     history_hash = _history_hash(tactics) if tactics else ""
     if rewound_seq and rewound_seq.get("checkpoint_id"):
@@ -81,7 +77,7 @@ def _seq_cut_surface(
     elif seq_idx and history_hash:
         seq_candidate_id = _checkpoint_id(history_hash, seq_idx)
     elif seq_tactic:
-        seq_candidate_id = "probe_" + hashlib.sha1(
+        seq_candidate_id = "accepted_" + hashlib.sha1(
             seq_tactic.encode("utf-8")
         ).hexdigest()[:12]
     else:
@@ -89,8 +85,6 @@ def _seq_cut_surface(
     state_name = ""
     if rewound_seq:
         state_name = "before_rewound_seq_cut"
-    elif probe_is_seq and not seq_idx:
-        state_name = "seq_probe_preview"
     elif seq_idx and len(tactics) > seq_idx:
         state_name = "inside_seq_scope"
     elif seq_idx:
@@ -209,4 +203,3 @@ def _goal_text_contains_call_site(text: str) -> bool:
     return "<@" in str(text or "") or bool(
         re.search(r"\bcall\s+[A-Za-z_][A-Za-z0-9_.'`]*", str(text or ""))
     )
-

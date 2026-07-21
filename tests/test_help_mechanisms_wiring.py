@@ -338,11 +338,7 @@ def test_CATCH_manager_never_raises_on_malformed_turn() -> None:
     m.inject(bad)  # must not raise
 
 
-# ---- DELIVERY: sanitize preserves the decision_context panel keys ------------------
-# (2026-06-09 panel audit, governing finding: `_migrate_legacy_panels` ended with an
-# unconditional pop('decision_context'), so EVERY banner died in sanitize while the
-# dict-level tests above stayed green. These tests pin the repaired channel at the
-# exact layer that broke.)
+# ---- DELIVERY: decision_context is audit/internal, never presentation --------------
 from core.easycrypt.session_workspace_view_manager import (  # noqa: E402
     WorkspaceViewManager,
 )
@@ -389,26 +385,15 @@ def _view_with_signals() -> dict:
     }
 
 
-def test_SANITIZE_preserves_decision_context_panel_keys() -> None:
-    # The break the audit pinned: sanitize_agent_view -> _migrate_legacy_panels
-    # unconditionally popped decision_context. The panel keys must now survive
-    # sanitize verbatim (this is the test shape that would have caught the break:
-    # it exercises the REAL sanitize path, not the pre-sanitize dict).
+def test_SANITIZE_drops_decision_context_panel_keys() -> None:
     clean = WorkspaceViewManager().sanitize_agent_view(_view_with_signals())
-    dc = clean.get("decision_context")
-    assert isinstance(dc, dict), "decision_context dropped by sanitize"
-    assert dc["local_patch_loop"]["text"] == _PATCH_LOOP_ENTRY["text"]
-    assert dc["up_to_bad_call"]["text"] == _UP_TO_BAD_ENTRY["text"]
-    assert dc["local_patch_loop"]["certified"] is False
+    assert "decision_context" not in clean
+    assert clean["application_context"] == {"note": "n"}
 
 
-def test_SANITIZE_preserves_panel_keys_through_agent_display_view() -> None:
-    # agent_display_view = sanitize + order + metadata hiding: the full pipeline
-    # _render_manager_followup runs the turn view through.
+def test_SANITIZE_drops_decision_context_through_agent_display_view() -> None:
     shown = WorkspaceViewManager().agent_display_view(_view_with_signals())
-    dc = shown.get("decision_context")
-    assert isinstance(dc, dict)
-    assert set(dc) == {"local_patch_loop", "up_to_bad_call"}
+    assert "decision_context" not in shown
 
 
 def test_SANITIZE_still_drops_internal_decision_context_shapes() -> None:
@@ -428,9 +413,7 @@ def test_SANITIZE_still_drops_internal_decision_context_shapes() -> None:
     assert isinstance(clean.get("candidate_moves"), dict)  # migrated, not lost
 
 
-def test_SANITIZE_panel_keys_survive_alongside_legacy_migration() -> None:
-    # A decision_context carrying BOTH internal shapes and a panel signal: the
-    # internal part still migrates into candidate_moves, the signal survives.
+def test_SANITIZE_drops_panel_keys_alongside_legacy_migration() -> None:
     view = {
         "current_goal": {"lines": ["g"]},
         "decision_context": {
@@ -440,8 +423,7 @@ def test_SANITIZE_panel_keys_survive_alongside_legacy_migration() -> None:
         },
     }
     clean = WorkspaceViewManager().sanitize_agent_view(view)
-    dc = clean.get("decision_context")
-    assert isinstance(dc, dict) and set(dc) == {"up_to_bad_call"}
+    assert "decision_context" not in clean
     assert isinstance(clean.get("candidate_moves"), dict)
 
 
@@ -470,7 +452,7 @@ def _render_e2e(turn: ManagedTurn, tmp_path, *, full_view: dict | None,
     return followup, memory
 
 
-def test_E2E_CATCH_banner_reaches_followup_markdown_and_archives(tmp_path) -> None:
+def test_E2E_CATCH_internal_signal_does_not_reach_presentation(tmp_path) -> None:
     # A manager turn that genuinely FIRES, then the FULL production render path.
     m = _bare_manager()
     last = _drive_osc_loop(
@@ -484,33 +466,26 @@ def test_E2E_CATCH_banner_reaches_followup_markdown_and_archives(tmp_path) -> No
     full_view = _goal_view("LOOP-A", 5)
     followup, memory = _render_e2e(last, tmp_path, full_view=full_view)
 
-    # Landing point 1: the agent-read followup markdown. The raw decision_context
-    # signal is now rendered through SurfaceModel panel facts, not a Manager-signal
-    # side channel or raw JSON dump.
-    assert flag["text"] in followup
-    assert "Patch-loop observation" in followup
+    assert flag["text"] not in followup
+    assert "Patch-loop observation" not in followup
     assert "Manager signal" not in followup
-    assert '"local_patch_loop"' not in followup  # not a raw JSON dump
-    # Landing point 2: latest_workspace_view.json.
+    assert '"local_patch_loop"' not in followup
     latest = json.loads(memory.latest_view.read_text(encoding="utf-8"))
-    assert latest["decision_context"]["local_patch_loop"]["text"] == flag["text"]
-    # Landing point 3: the per-turn archived view + followup.
+    assert "decision_context" not in latest
     archived = json.loads(
         (memory.workspace_views_dir / "turn_005.json").read_text(encoding="utf-8")
     )
-    assert archived["decision_context"]["local_patch_loop"]["text"] == flag["text"]
-    assert flag["text"] in (memory.followups_dir / "turn_005.md").read_text(
+    assert "decision_context" not in archived
+    assert flag["text"] not in (memory.followups_dir / "turn_005.md").read_text(
         encoding="utf-8"
     )
 
 
-def test_E2E_CORRECT_banner_from_full_view_when_lean_view_lacks_it(tmp_path) -> None:
-    # The CORRECT signal is written by the view renderer into the FULL view; a
-    # lean surface profile may have stripped decision_context from the turn view.
-    # Delivery must still happen (merged from the full/audit view).
+def test_E2E_up_to_bad_fact_uses_application_context(tmp_path) -> None:
     lean_view = _goal_view("LOOP-A", 5)
+    lean_view["application_context"] = {"up_to_bad_call": dict(_UP_TO_BAD_ENTRY)}
     full_view = _goal_view("LOOP-A", 5)
-    full_view["decision_context"] = {"up_to_bad_call": dict(_UP_TO_BAD_ENTRY)}
+    full_view["application_context"] = {"up_to_bad_call": dict(_UP_TO_BAD_ENTRY)}
     turn = _commit_turn(lean_view, "call (_: ={glob A}).")
     followup, memory = _render_e2e(turn, tmp_path, full_view=full_view)
 
@@ -519,18 +494,13 @@ def test_E2E_CORRECT_banner_from_full_view_when_lean_view_lacks_it(tmp_path) -> 
     assert "call (_: UFCMA.bad1, <inv>)." in followup
     assert "Manager signal" not in followup
     latest = json.loads(memory.latest_view.read_text(encoding="utf-8"))
-    assert latest["decision_context"]["up_to_bad_call"]["candidate"] == (
-        _UP_TO_BAD_ENTRY["candidate"]
-    )
+    assert latest["application_context"]["up_to_bad_call"]["candidate"] == _UP_TO_BAD_ENTRY["candidate"]
 
 
-def test_PLAYGROUND_surface_turn_merges_full_view_decision_context_for_cards() -> None:
-    # The playground card must consume the same merged full-view signal as the
-    # agent-read followup. Otherwise the followup can show a fact that the human
-    # card silently drops.
+def test_PLAYGROUND_surface_turn_uses_typed_application_context_for_cards() -> None:
     lean_view = _goal_view("LOOP-A", 5)
+    lean_view["application_context"] = {"up_to_bad_call": dict(_UP_TO_BAD_ENTRY)}
     full_view = _goal_view("LOOP-A", 5)
-    full_view["decision_context"] = {"up_to_bad_call": dict(_UP_TO_BAD_ENTRY)}
 
     surface_turn = surface_turn_of(
         lean_view,
@@ -549,11 +519,12 @@ def test_PLAYGROUND_surface_turn_merges_full_view_decision_context_for_cards() -
     assert "Manager signal" not in json.dumps(surface_turn, ensure_ascii=False)
 
 
-def test_PLAYGROUND_readonly_overlay_does_not_capture_proof_state_decision_context() -> None:
-    # A read-only result is an overlay.  Proof-state decision_context facts must
+def test_PLAYGROUND_readonly_overlay_does_not_capture_proof_state_application_context() -> None:
+    # A read-only result is an overlay. Proof-state application facts must
     # remain on the base proof surface, not be appended to the requested context
     # result panel below the buttons.
     base_view = _goal_view("LOOP-A", 5)
+    base_view["application_context"] = {"up_to_bad_call": dict(_UP_TO_BAD_ENTRY)}
     readonly_view = {
         **_goal_view("LOOP-A", 5),
         "last_result": {
@@ -568,7 +539,6 @@ def test_PLAYGROUND_readonly_overlay_does_not_capture_proof_state_decision_conte
         },
     }
     full_view = _goal_view("LOOP-A", 5)
-    full_view["decision_context"] = {"up_to_bad_call": dict(_UP_TO_BAD_ENTRY)}
 
     surface_turn = surface_turn_of(
         readonly_view,
@@ -584,11 +554,12 @@ def test_PLAYGROUND_readonly_overlay_does_not_capture_proof_state_decision_conte
     assert "conseq tactic" in overlay_blob
 
 
-def test_PLAYGROUND_followup_uses_same_full_view_as_cards() -> None:
+def test_PLAYGROUND_followup_uses_same_typed_base_view_as_cards() -> None:
     # The followup tab and card tab must be two renderers over the same
     # SurfaceTurnModel inputs. In particular, a full-view decision_context fact
     # belongs to the base proof surface, before any read-only overlay.
     base_view = _goal_view("LOOP-A", 5)
+    base_view["application_context"] = {"up_to_bad_call": dict(_UP_TO_BAD_ENTRY)}
     readonly_view = {
         **_goal_view("LOOP-A", 5),
         "last_result": {
@@ -603,7 +574,6 @@ def test_PLAYGROUND_followup_uses_same_full_view_as_cards() -> None:
         },
     }
     full_view = _goal_view("LOOP-A", 5)
-    full_view["decision_context"] = {"up_to_bad_call": dict(_UP_TO_BAD_ENTRY)}
 
     md = render_followup(
         object(),
@@ -626,12 +596,7 @@ def test_E2E_empty_decision_context_renders_nothing(tmp_path) -> None:
     assert "decision_context" not in latest
 
 
-def test_E2E_production_builder_emits_decision_context_key() -> None:
-    # The producer-side dead-end the audit pinned: _workspace_panel returned a
-    # dict WITHOUT a decision_context key, so the enrichment's write was
-    # unreachable no matter what downstream did. Build a view through the REAL
-    # production builder (which also runs sanitize internally) and assert the
-    # signal key is on the final view.
+def test_E2E_production_builder_emits_typed_up_to_bad_fact() -> None:
     from core.easycrypt.session_prover_workspace_view import (
         build_prover_workspace_view_from_context,
     )
@@ -657,14 +622,12 @@ def test_E2E_production_builder_emits_decision_context_key() -> None:
         ],
     }
     view = build_prover_workspace_view_from_context(proof_context_view)
-    dc = view.get("decision_context")
-    assert isinstance(dc, dict), (
-        "production builder lost decision_context (dead-end write regression)"
-    )
-    entry = dc.get("up_to_bad_call")
+    app = view.get("application_context")
+    assert isinstance(app, dict)
+    entry = app.get("up_to_bad_call")
     assert isinstance(entry, dict)
     assert "UFCMA.bad1" in entry.get("active_bad_events", [])
-    assert entry.get("certified") is False
+    assert "candidate" not in entry
 
 
 def test_E2E_production_builder_omits_key_when_no_signal() -> None:
@@ -848,8 +811,8 @@ def test_SPECG_dedup_one_fire_per_episode_no_double_from_two_sources(tmp_path) -
 
 def test_SPECG_e2e_production_builder_emits_from_history_only(tmp_path) -> None:
     # End-to-end through the REAL production builder: the current goal carries NO
-    # `\/ bad`, the committed `history.ec` does -> the built view's decision_context
-    # carries up_to_bad_call (the Tree_0_1 FN, now delivered).
+    # `\/ bad`, the committed `history.ec` does -> the built view's typed
+    # application context carries up_to_bad_call.
     from core.easycrypt.session_prover_workspace_view import (
         _UP_TO_BAD_EPISODE_LATCH,
         build_prover_workspace_view_from_context,
@@ -874,18 +837,17 @@ def test_SPECG_e2e_production_builder_emits_from_history_only(tmp_path) -> None:
         "debug_refs": {"session_dir": scope},
     }
     view = build_prover_workspace_view_from_context(proof_context_view)
-    dc = view.get("decision_context")
-    assert isinstance(dc, dict), "history-sourced signal lost the decision_context key"
-    entry = dc.get("up_to_bad_call")
+    app = view.get("application_context")
+    assert isinstance(app, dict), "history-sourced signal lost the typed fact"
+    entry = app.get("up_to_bad_call")
     assert isinstance(entry, dict)
     assert set(entry.get("active_bad_events", [])) == {"UFCMA.bad1", "UFCMA.bad2"}
 
 
-def test_SPECG_e2e_history_sourced_banner_reaches_followup_markdown(tmp_path) -> None:
-    # The full delivery chain for the history-sourced fact: build the view through the
-    # production builder, then render the manager followup. The verbatim banner text
-    # must land in the agent-read markdown through SurfaceModel panel facts,
-    # proving the mechanism-layer fact is now AGENT-VISIBLE without a side channel.
+def test_SPECG_history_fact_waits_for_relevant_call_surface(tmp_path) -> None:
+    # History harvest may preserve the typed fact while the current subgoal is a
+    # non-program residue. Presentation waits until a call/deep surface makes it
+    # locally relevant.
     from core.easycrypt.session_prover_workspace_view import (
         _UP_TO_BAD_EPISODE_LATCH,
         build_prover_workspace_view_from_context,
@@ -910,12 +872,11 @@ def test_SPECG_e2e_history_sourced_banner_reaches_followup_markdown(tmp_path) ->
         "debug_refs": {"session_dir": scope},
     }
     full_view = build_prover_workspace_view_from_context(proof_context_view)
-    banner_text = full_view["decision_context"]["up_to_bad_call"]["text"]
-    turn = _commit_turn(_goal_view("LOOP-A", 5), "call (_: ={glob A}).")
+    assert full_view["application_context"]["up_to_bad_call"]["active_bad_events"]
+    turn = _commit_turn(full_view, "call (_: ={glob A}).")
     followup, memory = _render_e2e(turn, tmp_path / "mem", full_view=full_view)
-    assert banner_text not in followup
-    assert "Up-to-bad call compatibility" in followup
-    assert "call (_: (UFCMA.bad1 \\/ UFCMA.bad2), <inv>)." in followup
+    assert "Up-to-bad call compatibility" not in followup
+    assert "call (_: (UFCMA.bad1 \\/ UFCMA.bad2), <inv>)." not in followup
     assert "Manager signal" not in followup
     assert '"up_to_bad_call"' not in followup  # readable block, not a JSON dump
 

@@ -118,17 +118,6 @@ def inv_from_lemma_choices_for_view(view: dict[str, Any]) -> list[str]:
     return out[:6]
 
 
-def bridge_probe_claim_choices_for_view(view: dict[str, Any]) -> list[str]:
-    """Pr equality claims visible in the current goal or route candidates."""
-    out: list[str] = []
-    for text in [goal_text(view), *_walk_strings(view)]:
-        for claim in _pr_equality_claims(text):
-            _append_unique(out, claim)
-            if len(out) >= 4:
-                return out
-    return out
-
-
 def call_subgoal_invariant_choices_for_view(view: dict[str, Any]) -> list[str]:
     """Concrete invariants already visible in call/invariant candidates."""
     out: list[str] = []
@@ -328,17 +317,6 @@ def _call_tactic_names(text: str) -> list[str]:
     return out
 
 
-def _pr_equality_claims(text: str) -> list[str]:
-    compact = " ".join(str(text or "").split())
-    out: list[str] = []
-    pattern = re.compile(r"(Pr\[[^\]]+\]\s*=\s*Pr\[[^\]]+\])")
-    for match in pattern.finditer(compact):
-        claim = match.group(1).strip().rstrip(".")
-        if claim and claim.count("Pr[") >= 2:
-            out.append(claim)
-    return out
-
-
 def _looks_like_invariant(text: str) -> bool:
     if not _valid_invariant_choice(text):
         return False
@@ -369,5 +347,4 @@ def _valid_invariant_choice(inv: str) -> bool:
 def _append_unique(out: list[str], value: str) -> None:
     if value and value not in out:
         out.append(value)
-
 

@@ -194,7 +194,12 @@ def handle_tactic_forms(session, args) -> int:
     """Print the structured forms reference for a tactic name. If the
     name isn't covered, list the covered set and exit non-zero."""
     try:
-        from core.easycrypt.search.ec_tactic_forms import get_forms, format_forms, list_all
+        from core.easycrypt.search.ec_tactic_forms import (
+            format_forms,
+            get_forms,
+            list_all,
+            normalize_proof_mode,
+        )
     except Exception as exc:
         sys.stderr.write(f"ec_tactic_forms import failed: {exc}\n")
         return 1
@@ -209,7 +214,7 @@ def handle_tactic_forms(session, args) -> int:
         )
         return 1
     goal_text = _active_goal_text_for_tactic_forms(session)
-    mode = _proof_mode_for_tactic_forms(goal_text)
+    mode = normalize_proof_mode(goal_text=goal_text)
     output = format_forms(tf, mode=mode, goal_text=goal_text)
     _record_lookup_tool_view(
         session,
@@ -238,19 +243,6 @@ def _active_goal_text_for_tactic_forms(session) -> str:
         return str(session.get_active_goal_output() or "")
     except Exception:
         return ""
-
-
-def _proof_mode_for_tactic_forms(goal_text: str) -> str:
-    lowered = (goal_text or "").lower()
-    if "phoare [" in lowered:
-        return "phoare"
-    if "hoare [" in lowered:
-        return "hoare"
-    if "equiv [" in lowered or " ~ " in (goal_text or ""):
-        return "pRHL"
-    if "pr[" in lowered:
-        return "probability"
-    return "ambient"
 
 
 # ─── -bridge-lemmas ──────────────────────────────────────────────────────
@@ -388,7 +380,7 @@ def _bridge_lemma_recommendations(output: str) -> list[dict]:
                 "to the current equivalence/probability bridge."
             ),
             "action_type": (
-                "strategy_hint" if requires_instantiation else "probe_tactic"
+                "strategy_hint" if requires_instantiation else "tactic_candidate"
             ),
             "confidence": "medium",
             "preconditions": [
@@ -404,7 +396,7 @@ def _bridge_lemma_recommendations(output: str) -> list[dict]:
                     else "static_candidate_uncertified_by_ec"
                 ),
                 "state_changed": False,
-                "recommended_probe_tool": "try",
+                "validation_owner": "manager_commit",
                 "requires_instantiation": requires_instantiation,
             },
         })

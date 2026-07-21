@@ -34,13 +34,13 @@ EVIDENCE_BUCKETS = (
     "epistemic",
     "kb",
     "retrieval",
-    "probe",
+    "preflight",
     "event",
     "raw",
 )
 RECOMMENDATION_ACTION_TYPES = (
     "runnable_tactic",
-    "probe_tactic",
+    "tactic_candidate",
     "inspection_action",
     "strategy_hint",
     "avoid_action",

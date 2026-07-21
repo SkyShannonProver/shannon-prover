@@ -93,7 +93,6 @@ def canonical_sample_item(sample: dict[str, Any]) -> dict[str, Any]:
         "var": var,
         "distribution": distribution,
         "distribution_leaf": distribution_leaf(distribution),
-        "candidate_distribution_facts": distribution_fact_candidates(distribution),
     }
 
 
@@ -107,19 +106,6 @@ def sample_distribution(sample: dict[str, Any], text: str) -> str:
 
 def distribution_leaf(distribution: str) -> str:
     return _sample_distribution_leaf(distribution)
-
-
-def distribution_fact_candidates(distribution: str) -> list[str]:
-    leaf = distribution_leaf(distribution)
-    if not leaf:
-        return []
-    return _dedupe_strings([
-        f"{leaf}_ll",
-        f"{leaf}_fu",
-        f"{leaf}_funi",
-        f"{leaf}_uffu",
-        f"{leaf}_uni",
-    ])
 
 
 def sampling_obligation_body(parsed: dict[str, Any], goal_text: str) -> str:
@@ -391,11 +377,6 @@ def sampling_required_evidence(
     right_item: dict[str, Any],
     families: list[dict[str, Any]],
 ) -> dict[str, Any]:
-    facts = _dedupe_strings([
-        fact
-        for item in (left_item, right_item)
-        for fact in _list(_dict(item).get("candidate_distribution_facts"))
-    ])
     family_names = {str(_dict(item).get("family") or "") for item in families}
     algebra = []
     if "translation_or_affine" in family_names:
@@ -411,11 +392,11 @@ def sampling_required_evidence(
     if "identity" in family_names:
         algebra.append("same distribution or identity coupling side conditions")
     return {
-        "candidate_distribution_facts": facts[:8],
         "algebra_obligations": algebra,
         "strategy_boundary": (
             "ProofIR classifies the local sampling problem; the prover chooses "
-            "which coupling family to instantiate and probes it with EasyCrypt."
+            "which coupling family to instantiate; a manager commit reports "
+            "EasyCrypt's verdict."
         ),
     }
 
@@ -498,7 +479,6 @@ __all__ = [
     "canonical_sample_item",
     "coupling_families_for_relation",
     "dedupe_sampling_families",
-    "distribution_fact_candidates",
     "distribution_leaf",
     "first_unused_sample_index",
     "mentions_sided_var",

@@ -67,7 +67,7 @@ session. Use it as episode context only; do not run it again.
             "Record which manager context is missing before choosing tactics.\n"
         )
     return f"""{prefix_lines}{missing_view_note}
-### Initial ProverWorkspaceView
+### Initial proof surface
 
 The manager-produced agent-facing view at handoff — the same markdown surface you
 get on every later turn. If this handoff is truncated later, recover it from
@@ -202,12 +202,8 @@ def _scrub_session_cli_from_agent_prompt(prompt: str) -> str:
     prompt = prompt.replace("-goal-info", "current goal panel")
     prompt = prompt.replace("-episode-view", "episode_view")
     prompt = prompt.replace("-diagnose", "diagnose")
-    prompt = prompt.replace("workspace.view.suggested_next_steps", "workspace.view.candidate_moves")
-    prompt = prompt.replace("suggested_next_steps", "candidate_moves")
-    prompt = prompt.replace("next_actions", "candidate_moves")
     prompt = prompt.replace("next action", "proof option")
     prompt = prompt.replace("Next action", "Proof option")
-    prompt = prompt.replace("safe_next_actions", "compatibility action list")
     prompt = prompt.replace("Lookup first:", "Possible context:")
     prompt = prompt.replace(
         "after Pr handles are exhausted",
@@ -221,7 +217,6 @@ def _build_prover_prompt(
     lemma_name: str,
     include_dir: str,
     session_tag: Optional[str] = None,
-    plan=None,  # Optional[ProofPlan]
     managed_session: dict[str, Any] | None = None,
 ) -> str:
     """Build the task prompt for the Claude Code subagent."""
@@ -273,9 +268,8 @@ cross-file summaries, research context, or structural diffs.
 
 def _child_repair_context() -> str:
     return (
-        "- Read the latest ProverWorkspaceView to refresh the authoritative "
-        "state and decision context; ask for `diagnose` or `tactic_forms` "
-        "only if you need manager-side repair context."
+        "- Read the latest proof surface to refresh the authoritative state; "
+        "use only concrete read-only actions displayed on that surface."
     )
 
 
@@ -442,7 +436,6 @@ def _build_child_prover_prompt(
     session_tag: str,
     replay_prefix: list[str],
     negative_signal: list[str],
-    plan=None,
     parent_goal_state: str = "",
     discoveries: list[str] = None,
     blocked_openers: list[str] = None,

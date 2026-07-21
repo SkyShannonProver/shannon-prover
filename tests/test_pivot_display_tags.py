@@ -352,7 +352,7 @@ def test_verified_route_option_registry_keeps_only_verified_submits():
                 "confidence": "verified",
                 "preconditions": ["proof_state.status == open"],
                 "source_refs": [{"kind": "lemma", "id": "H"}],
-                "evidence_refs": ["probe.route.0"],
+                "evidence_refs": ["preflight.route.0"],
                 "metadata": {
                     "bindings": {"namespace": "M"},
                     "chain": ["rewrite H."],
@@ -373,8 +373,8 @@ def test_verified_route_option_registry_keeps_only_verified_submits():
         ],
         evidence={
             "context": [{"id": "context.route"}],
-            "probe": [{
-                "id": "probe.route.0",
+            "preflight": [{
+                "id": "preflight.route.0",
                 "accepted": True,
                 "producer": "ec_daemon.try_tactic",
             }],

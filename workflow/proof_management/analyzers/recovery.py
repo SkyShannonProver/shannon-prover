@@ -410,5 +410,4 @@ def _recovery_diagnosis_limitations(recovery_class: str) -> list[str]:
             "does not prescribe a conseq, sim, wp, or skip script",
             "reports residual program evidence before pure-tail obligations",
         ]
-    return ["classification is conservative and may need inspect/probe evidence"]
-
+    return ["classification is conservative and may need additional inspected evidence"]

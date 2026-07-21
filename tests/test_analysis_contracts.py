@@ -125,7 +125,7 @@ def test_schema_inventory_names_core_fact_shapes() -> None:
         "A fact that came from search or static analysis is evidence",
         "`inspection_action` must not mutate proof state",
         "`strategy_hint` may be non-tactic prose",
-        "`probe_tactic` means probeable, not proven",
+        "Historical/internal `probe_tactic` values are replay labels",
         "fallback or unresolved source/name facts must not become",
     ]:
         assert phrase in text

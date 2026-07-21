@@ -378,7 +378,7 @@ def test_pr_path_planner_uses_synthetic_bridge_edges_in_target_frontier() -> Non
     assert "distinguish()" in target_partial["hops"][0]["action_hint"]
     assert "distinguish(())" not in target_partial["hops"][0]["action_hint"]
     assert target_partial["agenda"][0]["action_type"] == (
-        "probe_tactic_if_current_endpoint_matches"
+        "tactic_candidate_if_current_endpoint_matches"
     )
     assert target_partial["agenda"][1]["readiness"] == (
         "typed_instantiation_candidate"

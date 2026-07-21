@@ -627,8 +627,6 @@ def run(
     kill_gap_tactics: int = 2,
     kill_gap_idle_seconds: int = 60,
     run_dir: Optional[Path] = None,
-    plan=None,  # Optional[ProofPlan] — avoid circular import
-    use_planner: bool = True,
     eval_mode: Optional[bool] = None,
     surface_profile: str | None = None,
     record_proof_bank: Optional[bool] = None,
@@ -654,12 +652,6 @@ def run(
     manager intent protocol for EasyCrypt proof interaction, Read/Bash for
     legitimate source context, and never owns session lifecycle.
     Traces are stored automatically by Claude Code.
-
-    Planner behavior:
-    - By default, a missing ``plan`` is filled by the deterministic proof
-      planner before launching Claude. This keeps manual smoke runs aligned
-      with the orchestrator workflow.
-    - Pass ``use_planner=False`` only for explicit planner-ablation tests.
 
     Long-lived managed prover mode:
     - "tree": Start one or more proof nodes, each with its own long-lived
@@ -764,56 +756,6 @@ def run(
         eval_mode=bool(eval_mode),
         explicit=record_proof_bank,
     )
-
-    # The deterministic planner is part of the normal prover contract. Keep
-    # this guard in the low-level entry point too, so direct live-smoke calls
-    # don't silently degrade into raw stdout/file-reading mode.
-    # l1_goal_projection is the planner-free minimal baseline: never run (or
-    # re-run) the planner for it, regardless of use_planner. Otherwise a None
-    # plan from the orchestrator's L1 gate would trip this fallback.
-    _l1_baseline = surface_profile == "l1_goal_projection"
-    if plan is None and use_planner and not _l1_baseline:
-        try:
-            from workflow.schemas.config import RunConfig
-            from workflow.agents.proof_planner import run as run_planner
-
-            planner_config = RunConfig(
-                file=file_path,
-                lemma=lemma_name,
-                include_dir=include_dir,
-                eval_mode=bool(eval_mode),
-            )
-            planner_config.prover.model = model
-            pstatus("Prover",
-                    "No plan supplied; running deterministic planner first")
-            plan = run_planner(planner_config, run_dir / "planner")
-        except Exception as e:
-            perror("Prover", f"Planner failed: {e}")
-            return ProverResult(
-                proved=False,
-                ec_file_verified=False,
-                error=(
-                    "planner failed; refusing to launch prover without "
-                    "planner context. Pass use_planner=False only for "
-                    "explicit planner-ablation experiments."
-                ),
-            )
-        if plan is None:
-            perror("Prover", "Planner returned no plan")
-            return ProverResult(
-                proved=False,
-                ec_file_verified=False,
-                error=(
-                    "planner returned no plan; refusing to launch prover "
-                    "without planner context. Pass use_planner=False only "
-                    "for explicit planner-ablation experiments."
-                ),
-            )
-    elif plan is None and (not use_planner or _l1_baseline):
-        pstatus("Prover",
-                "Planner-free baseline (l1_goal_projection)" if _l1_baseline
-                else "Planner disabled: raw-prover ablation mode",
-                "\033[33m")
 
     # --- Pre-flight: start from a clean persistent EC daemon. ---
     if _shutdown_ec_daemon(reason="pre-run cleanup"):
@@ -1015,7 +957,7 @@ def run(
             if replay_prefix:
                 prompt = _build_child_prover_prompt(
                     file_path, lemma_name, include_dir,
-                    session_tag, replay_prefix, negative_signal, plan=plan,
+                    session_tag, replay_prefix, negative_signal,
                     parent_goal_state=parent_goal_state,
                     discoveries=discoveries,
                     blocked_openers=blocked_openers,
@@ -1025,7 +967,7 @@ def run(
             else:
                 prompt = _build_prover_prompt(
                     file_path, lemma_name, include_dir,
-                    session_tag=session_tag, plan=plan,
+                    session_tag=session_tag,
                     managed_session=managed_session,
                 )
             prompt_path = run_dir / "prover_prompt.md"
@@ -1331,7 +1273,6 @@ def run(
 # ---------------------------------------------------------------------------
 # EC file verification
 # ---------------------------------------------------------------------------
-
 
 
 

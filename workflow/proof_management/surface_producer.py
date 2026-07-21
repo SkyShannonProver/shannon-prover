@@ -10,9 +10,6 @@ from __future__ import annotations
 import json
 from typing import Any, Callable, Optional
 
-from workflow.surface_profiles import probe_disabled
-
-
 class ManagerSurfaceProducer:
     """Owns manager-derived call-frontier structure facts."""
 
@@ -94,8 +91,7 @@ class ManagerSurfaceProducer:
                 if dcache[(lm, rm)]:
                     ac["oracle_module_diff"] = dcache[(lm, rm)]
 
-            # Static write-map (no probe): who mutates each frame-candidate field.
-            # Replaces the disabled probe-based concrete frame — kills the agent's
+            # Static write-map: who mutates each frame-candidate field. It reduces the agent's
             # single biggest head-simulation ("does UFCMA_li write lbad1 / where is
             # Mem.lc updated"). Keyed off the goal's qualified fields for relevance.
             from core.easycrypt.analysis.ec_concrete_global_frame import (
@@ -115,42 +111,5 @@ class ManagerSurfaceProducer:
                 if wm:
                     ac["write_map"] = wm
 
-            # Persistent probe-reflex nudge. The standing rule ("simulating EC is
-            # slow and wrong — probe it") lives in the prompt but gets forgotten
-            # mid-long-turn (measured: 412s turns head-simulating mechanical facts).
-            # Slot is present ONLY at a call frontier (not a global banner →
-            # resists blindness); content is state-specific and names the concrete
-            # probe. Mechanical-only: it never nudges away from the coupling math.
-            do_now: list[str] = []
-            ipv = ac.get("inline_preview") if isinstance(ac.get("inline_preview"), dict) else {}
-            call_at = ipv.get("call_at") or []
-            # Switch-aware: the "probe it" reflex nudge only makes sense when probe
-            # is ON; with the lever OFF the manager would reject the probe, so don't
-            # advertise it (the agent should `inline*` then commit the `call` directly).
-            if call_at and not probe_disabled():
-                do_now.append(
-                    f"`inline*` the concrete wrappers, THEN `probe_tactic` your "
-                    f"`call (_: ...)` at {', '.join(call_at)} to SEE the real oracle "
-                    f"obligations — don't simulate them in your head.")
-            if ac.get("write_map"):
-                do_now.append(
-                    "The `={...}` frame is mechanical — read `write_map` (who "
-                    "writes each field) and paste it; don't re-derive it.")
-            if do_now:
-                why = (
-                    "Measured: the biggest time sinks at this frontier are "
-                    "head-simulating MECHANICAL facts (which globals are in the "
-                    "frame, whether a `call`/`inline` form applies). Each is one "
-                    "cheap REVERSIBLE probe; only the coupling needs real thought."
-                    if not probe_disabled() else
-                    "Measured: the biggest time sinks at this frontier are "
-                    "head-simulating MECHANICAL facts (which globals are in the "
-                    "frame). Read them off the panels below and commit directly; "
-                    "only the coupling needs real thought."
-                )
-                ac["probe_dont_simulate"] = {
-                    "why": why,
-                    "do_now": do_now,
-                }
         except Exception:
             pass

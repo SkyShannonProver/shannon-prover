@@ -135,23 +135,6 @@ class ECDaemonClient:
         return self._call("try_chain", session_id=session_id,
                           params={"tactics": tactics}, timeout=timeout)
 
-    def bridge_probe(self, session_id: str, bridge_stmt: str,
-                     timeout: float = 600.0) -> dict:
-        """Test bridge economics: is ``bridge_stmt`` (an equality
-        claim suitable for ``have -> :``, typically ``Pr[A] = Pr[B]``)
-        closeable by a short sim-family closer? Returns
-        ``{accepted, closed_by, bridge_size, error}``.
-
-        Use BEFORE committing a ``have ->`` — if the probe says
-        ``too_big``, decompose at an intermediate checkpoint (find a
-        ``pr_*`` lemma that breaks the bridge into smaller pieces)
-        instead of forcing a one-shot ``have ->`` that'll require a
-        hand-crafted ``while`` invariant."""
-        return self._call("bridge_probe", session_id=session_id,
-                          params={"bridge_stmt": bridge_stmt,
-                                  "timeout": timeout},
-                          timeout=timeout + 30)
-
     def get_goal(self, session_id: str) -> dict:
         return self._call("get_goal", session_id=session_id)
 

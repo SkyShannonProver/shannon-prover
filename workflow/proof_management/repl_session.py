@@ -3,7 +3,6 @@ from __future__ import annotations
 
 import difflib
 import hashlib
-import re
 import shutil
 import subprocess
 import sys
@@ -557,16 +556,7 @@ class ReplSessionManager:
     ) -> tuple[ProofStateSnapshot, list[dict[str, Any]]]:
         with self._lock:
             actions: list[dict[str, Any]] = []
-            if intent.intent == "probe_tactic":
-                tactic = str(intent.payload.get("tactic") or "").strip()
-                if tactic:
-                    self._run_backend(
-                        "probe_tactic",
-                        ["-try", "-c", tactic],
-                        actions=actions,
-                        timeout=120,
-                    )
-            elif intent.intent == "commit_tactic":
+            if intent.intent == "commit_tactic":
                 tactic = str(intent.payload.get("tactic") or "").strip()
                 if tactic:
                     self._run_backend(
@@ -654,303 +644,6 @@ class ReplSessionManager:
                 pass
             return dict(actions[-1]) if actions else {}
 
-    def probe_goal_after(self, tactic: str) -> int | None:
-        """Speculatively probe ``tactic``; return the goal count that WOULD
-        remain if it were committed (0 if it closes the proof). ``None`` if the
-        probe is rejected or unparseable. The committed state is unchanged.
-
-        Reads the count from the raw ``-try`` stdout. NOTE: ``handle_intent``'s
-        reverted view and summarized actions do NOT carry this — validated
-        against a live EC session — so closure detection must go through here.
-        Used by manager-side speculative checks.
-        """
-        with self._lock:
-            return self._probe_goal_after_locked(tactic)
-
-    def _probe_goal_after_locked(self, tactic: str) -> int | None:
-        """``probe_goal_after`` body — caller already holds ``self._lock`` (so it
-        is reusable from the admit-skeleton transaction without re-locking)."""
-        tactic = str(tactic or "").strip()
-        if not tactic:
-            return None
-        try:
-            stdout = self._run_backend(
-                "probe_goal_after", ["-try", "-c", tactic], actions=[], timeout=120,
-            )
-        except Exception:
-            return None
-        if "No more goals" in stdout:
-            return 0
-        match = re.search(r"goal_after:\s*(\d+)\s*subgoal", stdout)
-        return int(match.group(1)) if match else None
-
-    def _skeleton_state_locked(self) -> tuple:
-        """(goal_type, remaining_goals) from a fresh -agent-view. Caller holds lock."""
-        try:
-            stdout = self._run_backend("skel_view", ["-agent-view"], actions=[], timeout=60)
-            payload = workspace_payload_from_stdout(stdout)
-            view = workspace_view_from_payload(payload if isinstance(payload, dict) else {})
-            ps = view.get("proof_status") if isinstance(view, dict) else {}
-            ps = ps if isinstance(ps, dict) else {}
-            return str(ps.get("goal_type") or ""), ps.get("remaining_goals")
-        except Exception:
-            return "", None
-
-    def admit_skeleton_probe(
-        self,
-        call_tactic: str,
-        *,
-        hints: tuple = (),
-        closers: tuple = ("auto.", "by auto.", "by smt().", "done.", "by done."),
-        max_admits: int = 24,
-    ) -> dict:
-        """Speculative admit-skeleton composability check (P3.2 + #1 fix).
-
-        Applies ``call_tactic`` (a ``call(I)``), ADMITS the spawned oracle/call
-        equivalences (goal_type ``equiv`` — the "if the oracles preserve I"
-        premise), then tries to CLOSE the continuation (the relational/ambient
-        residue — "then the lemma holds") with strong closers, then UNDOES
-        everything so the committed state is restored (undo rollback is
-        fingerprint-stable, live-validated).
-
-        The continuation is closed with the SMT ``hints`` fed in (e.g. the
-        in-scope lemmas), NOT a bare ``smt()`` — a bare closer false-negatives on
-        a hint-dependent continuation (the step4_badi establish-I case). The
-        result carries a THREE-WAY ``verdict`` so a closer failure is never
-        reported as a hard "not composable":
-          - ``composable``            — the continuation closed (I ⇒ goal, assuming
-                                        the oracles preserve I; a stronger I also
-                                        passes — NECESSARY-not-sufficient).
-          - ``likely_weak_invariant`` — it did not close and the residual carries a
-                                        NON-frame cross-side relation I does not
-                                        hold (I may be too weak).
-          - ``inconclusive``          — it did not close but the residual is local
-                                        (closers/hints were just insufficient; this
-                                        is NOT evidence that I is wrong).
-
-        Returns {applied, n_admitted, continuation_type, continuation_closed,
-        verdict, composable, vacuous, residual_signals, hints_used}."""
-        from workflow.proof_management.residual_signals import classify_call_subgoal
-
-        res: dict[str, Any] = {
-            "applied": False, "n_admitted": 0, "continuation_type": None,
-            "continuation_closed": False, "verdict": "inconclusive",
-            "composable": False, "vacuous": True, "residual_signals": None,
-            "hints_used": [str(h) for h in (hints or []) if str(h).strip()],
-            "rollback_ok": True, "error": None,
-        }
-        hint_str = " ".join(res["hints_used"])
-        effective_closers = (
-            (f"auto; smt({hint_str}).", f"by smt({hint_str}).") if hint_str else ()
-        ) + tuple(closers)
-        committed = 0
-        with self._lock:
-            # Precondition (safety): call(I) belongs on a relational-program goal.
-            # Applying it on an oracle/ambient subgoal can corrupt the committed
-            # history asymmetrically (found by review/e2e). Refuse without
-            # touching state.
-            gt0, _rem0 = self._skeleton_state_locked()
-            if str(gt0 or "").strip().lower() in ("equiv", "ambient", ""):
-                res["error"] = f"not_at_call_point(goal_type={gt0!r})"
-                return res
-            hist_len0 = self._committed_len_locked()
-            try:
-                self._run_backend(
-                    "skel_call", ["-next", "-c", str(call_tactic)], actions=[], timeout=180,
-                )
-                committed += 1
-                res["applied"] = True
-                # Admit oracle/call (equiv) subgoals until the continuation surfaces.
-                for _ in range(max_admits):
-                    gt, rem = self._skeleton_state_locked()
-                    if not rem or rem <= 0:
-                        break
-                    if classify_call_subgoal(gt) == "oracle":
-                        self._run_backend(
-                            "skel_admit", ["-next", "-c", "admit."], actions=[], timeout=120,
-                        )
-                        committed += 1
-                        res["n_admitted"] += 1
-                    else:
-                        break
-                gt, rem = self._skeleton_state_locked()
-                res["continuation_type"] = gt
-                if rem and rem > 0:
-                    for closer in effective_closers:
-                        ga = self._probe_goal_after_locked(closer)
-                        if ga is not None and ga < rem:
-                            self._run_backend(
-                                "skel_close", ["-next", "-c", closer], actions=[], timeout=120,
-                            )
-                            committed += 1
-                            res["continuation_closed"] = True
-                            break
-                    if res["continuation_closed"]:
-                        res["verdict"] = "composable"
-                    else:
-                        # Three-way verdict (#1 fix): a closer failure is NOT a hard
-                        # "not composable" (it false-negatives on hint-dependent
-                        # continuations). Use the residual: a non-frame cross-side
-                        # relation I lacks => likely_weak_invariant; else inconclusive.
-                        _, body = self._skeleton_continuation_text_locked()
-                        res["residual_signals"] = body
-                        frame: set = set()
-                        for grp in re.findall(r"=\s*\{([^}]*)\}", str(call_tactic)):
-                            for part in grp.split(","):
-                                if part.strip():
-                                    frame.add(part.strip())
-                        side = set((body or {}).get("side_tokens", []) or [])
-                        nonframe = {
-                            t for t in side
-                            if re.sub(r"\s*\{\s*[12]\s*\}\s*$", "", t).strip() not in frame
-                        }
-                        # Only call I "likely too weak" when the continuation is an
-                        # ambient establish/derive residue. A still-relational (pRHL)
-                        # continuation full of program vars just needs more proof
-                        # work, not a stronger I -> inconclusive.
-                        ct = str(res["continuation_type"] or "").strip().lower()
-                        res["verdict"] = (
-                            "likely_weak_invariant"
-                            if (nonframe and ct not in ("prhl", "equiv", "phoare"))
-                            else "inconclusive"
-                        )
-                # anti-vacuity (reviewer A): admitting everything and closing
-                # nothing is NOT a pass.
-                res["vacuous"] = not res["continuation_closed"]
-                res["composable"] = bool(res["continuation_closed"])
-            except Exception:
-                pass
-            finally:
-                for _ in range(committed):
-                    try:
-                        self._run_backend("skel_undo", ["-prev"], actions=[], timeout=60)
-                    except Exception:
-                        pass
-                # Post-verification (safety): the committed history MUST be back
-                # to where it started. If we somehow retained commits, undo them;
-                # if it drifted below (should not happen given the precondition),
-                # flag it so the caller does not trust the proof state.
-                hist_len1 = self._committed_len_locked()
-                if hist_len0 >= 0 and hist_len1 != hist_len0:
-                    guard = 0
-                    while hist_len1 > hist_len0 and guard < 8:
-                        try:
-                            self._run_backend("skel_recover", ["-prev"], actions=[], timeout=60)
-                        except Exception:
-                            break
-                        hist_len1 = self._committed_len_locked()
-                        guard += 1
-                    if hist_len1 != hist_len0:
-                        res["rollback_ok"] = False
-                        res["error"] = f"rollback_drift({hist_len0}->{hist_len1})"
-        return res
-
-    def unblock_probe(
-        self,
-        conjunct: str,
-        *,
-        closers: tuple = ("auto.", "by auto.", "by smt().", "done.", "by done.", "by sim."),
-    ) -> dict:
-        """Per-conjunct unblock probe (P3.3) — the discriminating weak-invariant
-        confirmation + the WHAT.
-
-        At the current (failed) leaf, speculatively introduce ``conjunct`` as a
-        hypothesis (``have _h: (conjunct).``), admit its proof obligation, then
-        check whether the leaf now CLOSES under a strong closer. If it does, the
-        conjunct unblocks the leaf — i.e. adding it to the invariant resolves this
-        obstruction (the WHAT). Everything is undone (state restored), with the
-        same safety guard as the admit-skeleton.
-
-        Returns {applied, unblocks, residual_signals, rollback_ok, error}.
-        ``unblocks=True`` means "this conjunct, IF carried by I, discharges the
-        leaf" (the conjunct itself still has to be establishable — it is admitted
-        here). Daemon evidence, not a hand-tuned score."""
-        res: dict[str, Any] = {
-            "applied": False, "unblocks": False, "residual_signals": None,
-            "rollback_ok": True, "error": None,
-        }
-        conjunct = str(conjunct or "").strip()
-        if not conjunct:
-            res["error"] = "empty_conjunct"
-            return res
-        committed = 0
-        with self._lock:
-            gt0, rem0 = self._skeleton_state_locked()
-            if not rem0 or rem0 <= 0:
-                res["error"] = "no_open_goal"
-                return res
-            hist_len0 = self._committed_len_locked()
-            try:
-                # introduce the candidate conjunct as a hypothesis (admit its proof)
-                self._run_backend(
-                    "unblock_have", ["-next", "-c", f"have _piece_h: ({conjunct})."],
-                    actions=[], timeout=120,
-                )
-                committed += 1
-                # admit the conjunct's own obligation; we test unblock, not that
-                # the conjunct holds.
-                self._run_backend(
-                    "unblock_admit", ["-next", "-c", "admit."], actions=[], timeout=120,
-                )
-                committed += 1
-                res["applied"] = True
-                # does the leaf now close (with the conjunct available)?
-                gt, rem = self._skeleton_state_locked()
-                if rem and rem > 0:
-                    for closer in closers:
-                        ga = self._probe_goal_after_locked(closer)  # speculative
-                        if ga is not None and ga < rem:
-                            res["unblocks"] = True
-                            break
-                    if not res["unblocks"]:
-                        _, sig = self._skeleton_continuation_text_locked()
-                        res["residual_signals"] = sig
-            except Exception:
-                pass
-            finally:
-                for _ in range(committed):
-                    try:
-                        self._run_backend("unblock_undo", ["-prev"], actions=[], timeout=60)
-                    except Exception:
-                        pass
-                hist_len1 = self._committed_len_locked()
-                if hist_len0 >= 0 and hist_len1 != hist_len0:
-                    guard = 0
-                    while hist_len1 > hist_len0 and guard < 8:
-                        try:
-                            self._run_backend("unblock_recover", ["-prev"], actions=[], timeout=60)
-                        except Exception:
-                            break
-                        hist_len1 = self._committed_len_locked()
-                        guard += 1
-                    if hist_len1 != hist_len0:
-                        res["rollback_ok"] = False
-                        res["error"] = f"rollback_drift({hist_len0}->{hist_len1})"
-        return res
-
-    def _committed_len_locked(self) -> int:
-        """Number of committed tactics. Caller holds lock. -1 on read failure."""
-        try:
-            return len(read_committed_tactics(
-                session_dir_path(self.session_dir, self.project_root)
-            ))
-        except Exception:
-            return -1
-
-    def _skeleton_continuation_text_locked(self) -> tuple:
-        """(goal_type, residual signals) of the current continuation. Caller holds lock."""
-        try:
-            stdout = self._run_backend("skel_view", ["-agent-view"], actions=[], timeout=60)
-            payload = workspace_payload_from_stdout(stdout)
-            view = workspace_view_from_payload(payload if isinstance(payload, dict) else {})
-            cg = view.get("current_goal") if isinstance(view, dict) else {}
-            cg = cg if isinstance(cg, dict) else {}
-            lines = cg.get("lines") if isinstance(cg.get("lines"), list) else []
-            text = "\n".join(str(x) for x in lines)
-            from workflow.proof_management.residual_signals import extract_residual_signals
-            return str(cg.get("goal_type") or ""), extract_residual_signals(text)
-        except Exception:
-            return "", None
 
     def _snapshot_from_agent_view(self, *, actions: list[dict[str, Any]]) -> ProofStateSnapshot:
         stdout = self._run_backend(
@@ -1051,9 +744,6 @@ class ReplSessionManager:
             topic = str(payload or "goal_info")
             payload = {}
         normalized = normalize_context_topic(topic)
-        # Back-compat: the agent-facing topics were renamed to expose the goal
-        # layer (pr_ vs equiv_) and verified-route vs context-lemmas status.
-        # Old names still resolve so in-flight runs / replay artifacts work.
         simple = {
             "goal_info": ["-goal-info"],
             "diagnose": ["-diagnose"],
@@ -1107,9 +797,6 @@ class ReplSessionManager:
         if normalized == "inv_from_lemma":
             lemma = str(payload.get("lemma") or payload.get("symbol") or "").strip()
             return ["-inv-from-lemma", lemma] if lemma else ["-goal-info"]
-        if normalized == "bridge_probe":
-            claim = str(payload.get("claim") or payload.get("formula") or "").strip()
-            return ["-bridge-probe", "-c", claim] if claim else ["-bridge-lemmas"]
         return ["-goal-info"]
 
 

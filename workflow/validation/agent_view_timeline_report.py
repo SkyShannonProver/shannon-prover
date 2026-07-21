@@ -646,7 +646,7 @@ def _manager_failure_hint(manager_actions: list[Any]) -> str:
     if any(marker in text for marker in (
         "rejected",
         "could not use",
-        "probe_error",
+        "preflight_error",
         "commit_error",
         "failed",
     )):

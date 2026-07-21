@@ -261,6 +261,37 @@ def test_current_frontier_scope_does_not_skip_earlier_right_sample() -> None:
     assert frontier["right"]["head"] == "sample"
 
 
+def test_current_frontier_scope_separates_program_head_from_tactic_active_tail() -> None:
+    alignment = {"rows": [
+        {
+            "role": "sample inside frontier",
+            "left": "r <$ sample",
+            "right": "no matching right-side sample at this frontier",
+            "location": {"left_path": "1"},
+        },
+        {
+            "role": "loop frontier",
+            "left": "while (test r) {",
+            "right": "no matching right-side loop at this frontier",
+            "location": {"left_path": "2"},
+        },
+        {
+            "role": "sample inside frontier",
+            "left": "r <$ sample",
+            "right": "no matching right-side sample at this frontier",
+            "location": {"left_path": "2.1"},
+        },
+    ]}
+
+    scope = M._current_frontier_scope(alignment, call_sites=[])
+
+    assert scope["frontier"]["left"]["path"] == "1"
+    assert scope["frontier"]["left"]["head"] == "sample"
+    assert scope["tactic_active_tail"]["left"]["path"] == "2"
+    assert scope["tactic_active_tail"]["left"]["head"] == "while"
+    assert scope["tactic_active_tail"]["left"]["authority"] == "top_level_program_ir"
+
+
 def test_current_frontier_scope_lookahead_keeps_top_level_regions_not_nested_calls() -> None:
     alignment = {"rows": [
         {

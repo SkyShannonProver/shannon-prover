@@ -178,13 +178,20 @@ def test_inspect_gate_allows_heuristic_topic_when_not_strict(monkeypatch) -> Non
     assert allowed is True
 
 
-def test_route_health_prompt_guidance_empty_under_strict(monkeypatch) -> None:
-    from workflow.agent_prompt_render import _route_health_guidance_for_profile
-    profile = resolve_surface_profile("l4_checked_action_surface")
-    monkeypatch.delenv(_ENV, raising=False)
-    assert _route_health_guidance_for_profile(profile) != ""   # advisory text present
-    monkeypatch.setenv(_ENV, "1")
-    assert _route_health_guidance_for_profile(profile) == ""    # gone under neutrality
+def test_long_lived_prompt_does_not_duplicate_route_health_contract(tmp_path) -> None:
+    from workflow.agent_prompt_render import render_long_lived_agent_prompt
+
+    prompt = render_long_lived_agent_prompt(
+        "ORIGINAL PROMPT",
+        host="127.0.0.1",
+        port=12345,
+        token="tok",
+        node_memory_dir=tmp_path,
+        max_turns=7,
+        surface_profile="l4_checked_action_surface",
+    )
+    assert "route_health" not in prompt
+    assert "candidate_moves" not in prompt
 
 
 # --- call-frontier focus panel: no generic family menu pushed (2026-06-26) -----
@@ -203,7 +210,8 @@ def test_call_focus_panel_drops_generic_family_menu_and_cross_prescription() -> 
         },
         "l4_checked_action_surface",
     ).to_dict()
-    focus = {item["key"]: item.get("value") for item in model["primary_panel"].get("facts", [])}
+    primary = model.get("primary_panel") or {}
+    focus = {item["key"]: item.get("value") for item in primary.get("facts", [])}
     assert "options" not in focus and "yours" not in focus
     blob = str(focus)
     assert "cross the call" not in blob

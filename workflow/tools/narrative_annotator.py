@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Legacy generator for structured proof narratives.
 
-This tool is no longer wired into the default planner/prover prompt path.
+This tool is not wired into the managed prover prompt path.
 Historical artifacts may still contain ``<file>.narrative.json`` files, but
 new L4 runs should rely on source context, structural diffs, workspace views,
 and runtime context topics instead of injecting a file-level proof story.
@@ -19,10 +19,10 @@ Our prover is trained bottom-up (pick a tactic, see the goal, pick
 another tactic). It never gets the top-down story. This tool fills
 that gap: it reads a ``.ec`` file, asks Claude to narrate the proof
 arc structurally, and writes the narrative as a sibling
-``<file>.narrative.json``. The planner used to inject this into the prover
-prompt as "project semantics"; that injection path has been removed because it
-was large, strategy-shaping, and not competitive with the L1 baseline in recent
-ChaChaPoly comparisons.
+``<file>.narrative.json``. A retired workflow planner used to inject this into
+the prover prompt as "project semantics"; that injection path has been removed
+because it was large, strategy-shaping, and not competitive with the L1
+baseline in recent ChaChaPoly comparisons.
 
 Strict eval safety starts here: the default input mode strips every proof
 body to ``admit.`` before sending content to the annotator. Raw-source
@@ -39,7 +39,7 @@ Usage
         [--input-mode proof-stripped|raw-source]
 
 One-time cost per file (~2-5 min, one Claude Opus call).
-Re-run when the file changes; output carries provenance hashes so planners
+Re-run when the file changes; output carries provenance hashes so consumers
 and runtime hooks can detect staleness and proof-body contamination.
 """
 

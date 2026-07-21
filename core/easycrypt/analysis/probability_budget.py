@@ -23,6 +23,7 @@ from core.easycrypt.analysis.ec_utils import (
     split_top_level_conjuncts as _split_top_level_conjuncts,
 )
 from core.easycrypt.analysis.ec_pr_canonical import parse_pr_terms
+from core.context_intents import direct_context_request
 
 
 def analyze_probability_budget(goal_text: str) -> dict[str, Any]:
@@ -190,13 +191,13 @@ def probability_budget_route_risk(
 
     evidence: list[str] = []
     if local_sampling:
-        evidence.append(f"recent accepted/probed local sampling under a {budget_label}")
+        evidence.append(f"recent accepted/preflighted local sampling under a {budget_label}")
     if seq_budget_cut:
         evidence.append(
-            f"recent accepted/probed `seq` cut may allocate the {seq_budget_label} to the wrong branch"
+            f"recent accepted/preflighted `seq` cut may allocate the {seq_budget_label} to the wrong branch"
         )
     if split_route:
-        evidence.append("recent accepted/probed `phoare split !` under a product budget")
+        evidence.append("recent accepted/preflighted `phoare split !` under a product budget")
     if bound_call_failure:
         evidence.append(str(latest.get("error_summary") or "direct call rejected by bound shape"))
     if one_sided_call_residual and (split_bound or direct_true_call):
@@ -260,14 +261,14 @@ def probability_budget_route_risk(
         "seq_budget_ledger": seq_ledger,
         "route_memory": bad_route_memory,
         "anti_routes": anti_routes,
-        "recommended_next": {
-            "intent": "inspect_context",
-            "payload": {"topic": "probability_budget_ledger"},
-        },
-        "primary_next_action": {
-            "intent": "inspect_context",
-            "payload": {"topic": "probability_budget_ledger"},
-        },
+        "recommended_next": direct_context_request({
+            "intent": "probability_budget_ledger",
+            "payload": {},
+        }),
+        "primary_next_action": direct_context_request({
+            "intent": "probability_budget_ledger",
+            "payload": {},
+        }),
         "useful_inspections": _probability_budget_useful_inspections(
             source=str(analysis.get("source") or ""),
             budget_shape=budget_shape,
@@ -290,27 +291,27 @@ def _probability_budget_useful_inspections(
         "product-bound ledger"
     )
     inspections: list[dict[str, Any]] = [
-            {
-                "intent": "inspect_context",
-                "payload": {"topic": "probability_budget_ledger"},
+            direct_context_request({
+                "intent": "probability_budget_ledger",
+                "payload": {},
                 "why": (
                     f"Read the {ledger_label} before committing local "
                     "sampling, split, seq, or call steps."
                 ),
-            },
-            {
-                "intent": "inspect_context",
-                "payload": {"topic": "lemma_hints"},
+            }),
+            direct_context_request({
+                "intent": "lemma_hints",
+                "payload": {},
                 "why": (
                     "Look for probability/event decomposition facts before "
                     "descending into local sampling or call tactics."
                 ),
-            },
-            {
-                "intent": "inspect_context",
-                "payload": {"topic": "tactic_forms", "name": "seq"},
+            }),
+            direct_context_request({
+                "intent": "tactic_forms",
+                "payload": {"name": "seq"},
                 "why": "Check one-sided `phoare [<=]` seq budget allocation before committing a cut.",
-            },
+            }),
         ]
     bridge = _dict(event_bound_bridge)
     point_route = _dict(bridge.get("point_mass_route"))
@@ -326,33 +327,33 @@ def _probability_budget_useful_inspections(
                 ),
             })
     if point_route:
-        inspections.insert(0, {
-            "intent": "inspect_context",
-            "payload": {"topic": "probability_budget_ledger"},
+        inspections.insert(0, direct_context_request({
+            "intent": "probability_budget_ledger",
+            "payload": {},
             "why": (
                 "The ledger has a list-membership point-mass route; read the "
                 "sample-to-factor assignments before more `seq` or `call` attempts."
             ),
-        })
+        }))
     if source == "single_program_probability_goal":
         inspections.append(
-            {
-                "intent": "inspect_context",
-                "payload": {"topic": "tactic_forms", "name": "fel"},
+            direct_context_request({
+                "intent": "tactic_forms",
+                "payload": {"name": "fel"},
                 "why": "Use only while the goal is still top-level `Pr[...] <= ...`.",
-            }
+            })
         )
     if one_sided_call_residual:
-        inspections.append({
-            "intent": "inspect_context",
-            "payload": {"topic": "tactic_forms", "name": "call"},
+        inspections.append(direct_context_request({
+            "intent": "tactic_forms",
+            "payload": {"name": "call"},
             "why": "A one-sided `[<=] 1%r` call may need `call (_: PRE ==> POST)`, not `call (_: true).`.",
-        })
-    inspections.append({
-        "intent": "inspect_context",
-        "payload": {"topic": "tactic_forms", "name": "phoare_split"},
+        }))
+    inspections.append(direct_context_request({
+        "intent": "tactic_forms",
+        "payload": {"name": "phoare_split"},
         "why": "Check split-bound direction before committing another split route.",
-    })
+    }))
     return inspections
 
 
@@ -1730,7 +1731,7 @@ def _event_bound_bridge_for_goal(
         ],
         "per_point_budget_hint": _per_point_budget_hint(goal_text, size_bound),
         "anti_route": (
-            "Do not treat an accepted multi-`rnd` probe as proof-route quality "
+            "Do not treat a privately accepted multi-`rnd` preflight as proof-route quality "
             "unless it exposes the per-point membership bound required by the list-size lemma."
         ),
         "read_as": (
@@ -1963,7 +1964,7 @@ def _event_accepted(event: dict[str, Any]) -> bool:
     status = str(event.get("status") or "").lower()
     return (
         bool(event.get("accepted"))
-        or status in {"accepted", "probe_accepted", "ok"}
+        or status in {"accepted", "preflight_accepted", "ok"}
     )
 
 

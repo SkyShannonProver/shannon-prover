@@ -548,108 +548,6 @@ class ECSubprocess(ECSessionLifecycle):
         finally:
             eph.teardown()
 
-    # ------------------------------------------------------------------
-    # Bridge economics — test if a `have ->` rewrite is "atomic"
-    # ------------------------------------------------------------------
-
-    # Ordered by cost/complexity. The earliest closer that succeeds
-    # tells us the bridge size. If NONE succeed, the bridge is too big
-    # and the prover should decompose it further (usually by finding an
-    # intermediate `pr_*` lemma to break it at).
-    # Closers are used as ``have -> : <stmt> <closer>.`` — single
-    # EC statement. The ``by ...`` syntax must be inlined (no
-    # intermediate dot) or EC fires two statements and we miss the
-    # second one's error in our single read-until-prompt. Each entry
-    # is ``(closer_tail, size_label)`` where closer_tail is everything
-    # after ``Pr[A]=Pr[B]`` up to (but not including) the terminating
-    # period — so the full tactic is ``have -> : <stmt> <tail>.``.
-    _BRIDGE_CLOSER_LADDER: list[tuple[str, str]] = [
-        # Trivial reflexive / identity closers:
-        ("by done",                                          "atomic"),
-        ("by trivial",                                       "atomic"),
-        # Sim-family closers — no hand-crafted hints needed:
-        ("by byequiv => //=; sim",                           "atomic"),
-        ("by byequiv => //=; proc; sim",                     "atomic"),
-        ("by byequiv => //=; proc; inline *; sim",           "small"),
-        ("by byequiv => //=; proc; inline *; wp; sim",       "small"),
-        ("by byequiv => //=; proc; inline *; wp; auto => />", "medium"),
-        ("by byequiv => //=; proc; inline *; wp; sim />",    "medium"),
-    ]
-
-    def bridge_probe(self, bridge_stmt: str,
-                     timeout: float = 120.0) -> dict:
-        """Test if ``bridge_stmt`` (an equality claim you'd put after
-        ``have -> :``, typically ``Pr[A] = Pr[B]``) is closeable via
-        a short sim-family closer. This is how you check *bridge
-        economics* before committing: a have-> that closes with
-        ``sim`` or ``byequiv+sim`` is an "atomic bridge"; one that
-        needs a hand-crafted ``while`` invariant is "too big" and
-        should be decomposed at an intermediate checkpoint.
-
-        Implementation: for each closer in
-        ``_BRIDGE_CLOSER_LADDER``, spawn an ephemeral EC, replay
-        setup + committed tactics, run
-        ``have -> : <bridge_stmt>. <closer>`` and see if EC closes.
-        Return the smallest closer that works, or an error if none do.
-
-        Returns:
-            {
-              "accepted": bool,  # True iff any ladder step closed
-              "closed_by": str | None,  # the exact closer that worked
-              "bridge_size": "atomic" | "small" | "medium" | "too_big",
-              "error": dict | None,  # error from final (deepest) attempt
-                                       # if all failed — tells caller WHY
-                                       # the bridge is too big
-            }
-        """
-        stmt = bridge_stmt.strip().rstrip(".")  # no trailing dot
-
-        # Ladder: try cheapest closer first.
-        # NOTE: we check ``outcome.accepted`` (did the whole chain run
-        # without EC erroring), NOT ``final_closed``. `have -> : X by
-        # closer.` is atomic: if the closer doesn't discharge X, EC
-        # throws. If it does, the have-> succeeds and the MAIN goal
-        # continues open (that's the whole point of have->; the main
-        # goal remains, just with the rewrite applied). So final_closed
-        # would always be False here — accepted is the right signal.
-        #
-        # IMPORTANT: the whole ``have -> : <stmt> <tail>.`` must be
-        # ONE EC statement (no dot in the middle). If split into two,
-        # EC prompts after the first and the lifecycle reader
-        # stops before seeing the closer's error — we'd report
-        # ``accepted=True`` falsely. So we splice with a single space
-        # and append exactly one trailing period.
-        last_err: Optional[dict] = None
-        for closer, size in self._BRIDGE_CLOSER_LADDER:
-            combined = f"have -> : {stmt} {closer}."
-            # Use try_chain on a single-element list so existing
-            # ephemeral-EC scaffolding handles replay + kill.
-            outcome = self.try_chain([combined], timeout=timeout)
-            if outcome.accepted:
-                return {
-                    "accepted": True,
-                    "closed_by": closer,
-                    "bridge_size": size,
-                    "error": None,
-                }
-            # Track the error for the report if we exhaust the ladder.
-            if outcome.error is not None:
-                last_err = outcome.error
-            elif outcome.steps and outcome.steps[-1].error is not None:
-                last_err = outcome.steps[-1].error
-
-        return {
-            "accepted": False,
-            "closed_by": None,
-            "bridge_size": "too_big",
-            "error": last_err or {
-                "kind": "bridge_too_big",
-                "raw": "no sim-family closer on the ladder closed the "
-                       "bridge; decompose it at an intermediate checkpoint "
-                       "(look for a pr_* lemma that breaks the gap into "
-                       "two smaller bridges).",
-            },
-        }
 
     def try_chain(self, tactics: list[str],
                   timeout: float = 180.0) -> ChainOutcome:
@@ -1203,14 +1101,6 @@ def _h_try_chain(srv: DaemonServer, sid: str, p: dict) -> dict:
     })
 
 
-def _h_bridge_probe(srv: DaemonServer, sid: str, p: dict) -> dict:
-    bridge_stmt = p["bridge_stmt"]
-    timeout = float(p.get("timeout", 120.0))
-    with srv.mgr.with_session(sid) as ec:
-        result = ec.bridge_probe(bridge_stmt, timeout=timeout)
-    return _ok_resp(result)
-
-
 def _h_adopt(srv: DaemonServer, sid: str, p: dict) -> dict:
     """Rename live session ``session_id`` -> ``params.new_session_id``.
 
@@ -1259,7 +1149,6 @@ _METHOD_TABLE = {
     "try_tactic": _h_try,
     "batch_try": _h_batch_try,
     "try_chain": _h_try_chain,
-    "bridge_probe": _h_bridge_probe,
     "get_goal": _h_goal,
     "adopt_session": _h_adopt,
     "session_info": _h_info,

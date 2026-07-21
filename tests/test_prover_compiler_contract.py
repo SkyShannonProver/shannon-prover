@@ -34,38 +34,20 @@ def _full_prompt() -> str:
 
 
 def test_handoff_describes_what_the_compiler_provides() -> None:
-    # The static handoff no longer inlines a fixed compiler-topic menu
-    # (CLAUDE.md: intent/topic menus are runtime-generated). It carries the
-    # rendered view surface plus a runtime-generated request menu with
-    # copyable submit shapes; the compiler-resource description (verified
-    # facts such as `pr_bridge_routes` / the call-invariant skeleton) lives
-    # in the runtime wrapper the agent sees combined with the handoff.
+    # The static handoff carries the same typed proof surface used on live
+    # turns. State-dependent context actions are composed at runtime instead
+    # of being advertised as a fixed prompt menu.
     out = _handoff()
-    assert "### Initial ProverWorkspaceView" in out
-    assert 'submit `{"intent"' in out, (
-        "handoff lost the runtime-generated request menu (no copyable "
-        "submit shape)"
-    )
+    assert "### Initial proof surface" in out
+    assert "raw workspace JSON is audit-only" in out
     assert "lemma_index" not in out
-    full = _full_prompt()
-    for topic in ("pr_bridge_routes", "call_invariant_skeleton"):
-        assert topic in full, (
-            f"compiler help `{topic}` not described anywhere on the combined "
-            "agent surface (handoff + runtime wrapper)"
-        )
 
 
 def test_handoff_states_the_trust_boundary() -> None:
     out = _full_prompt()
-    # The manager result is a static-analysis fact, not a verdict.
-    assert "STATIC-ANALYSIS FACT" in out
-    # "accepted on the current goal" is only a type-check, not a claim that it
-    # closes the proof or is the correct invariant.
-    assert "accepted ON THE CURRENT GOAL" in out
-    assert "is the best route" in out
-    assert "is the correct" in out
-    # backtrack-and-adjust is sanctioned: committing and undoing are normal play.
-    assert "COMMIT and UNDO freely" in out
+    assert "current authoritative proof surface rendered" in out
+    assert "from `SurfaceTurnModel`" in out
+    assert "raw full workspace JSON is an audit/replay artifact" in out
 
 
 def test_handoff_contract_is_eval_safe() -> None:

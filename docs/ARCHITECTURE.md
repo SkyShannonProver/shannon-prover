@@ -4,7 +4,7 @@ Shannon Prover is an event-driven pipeline in which an LLM agent proves
 EasyCrypt lemmas through **managed proof sessions**: the agent never touches
 EasyCrypt directly. Each turn it reads a rendered proof-state panel (the
 *followup*), replies with exactly one JSON intent (`commit_tactic`,
-`probe_tactic`, `lookup_symbol`, a context topic, …), and a manager owns
+`lookup_symbol`, a context topic, or a proof-control intent), and a manager owns
 everything else — session mutation, verification, view refresh. The central
 experimental axis is the **surface profile**: the same manager can show the
 agent a bare goal (`l1_goal_projection`) or the full compiler surface
@@ -120,7 +120,9 @@ commit refreshes like an IDE. The daemon-backed engines are reached only
 through explicit read-only inspection (`PivotStrategyPhase.inspect` routing
 into `session_pivot_bridge.py` / `session_pivot_invariants.py` /
 `session_pivot_routes.py`). Probe-based candidate verification on the commit
-path is a research opt-in (`SHANNON_ENABLE_PROBE`), off by default.
+path is not part of the current agent protocol. Manager-owned read-only action
+preflight may validate whether a context result is non-empty before surfacing
+its button, but it does not expose speculative tactic execution to the agent.
 
 ## Verifying a change
 

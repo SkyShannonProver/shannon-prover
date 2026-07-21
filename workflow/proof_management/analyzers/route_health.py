@@ -54,6 +54,7 @@ from workflow.proof_management.frame_facts import (
 from workflow.proof_management.node_state import ProofNodeState
 from workflow.proof_management.recovery import annotate_route_health_items
 from workflow.proof_management.transitions import structural_transition_surface
+from workflow.context_intents import direct_context_request
 
 
 @dataclass(frozen=True)
@@ -274,13 +275,13 @@ def structural_transition_items(
     items.append(
         structural_transition_surface(
             "wp.",
-            status="candidate_reversible_probe",
+            status="candidate_reversible_transition",
             why_here=(
                 "The current pRHL seq-cut exposes a large postcondition. "
-                "Probe `wp.` if you want to test entry into the real "
+                "Commit `wp.` only if you want to enter the real "
                 "post-wp suffix/surgery workbench."
             ),
-            submit_intent="probe_tactic",
+            submit_intent="commit_tactic",
         )
     )
     return items[:3]
@@ -474,13 +475,13 @@ def _call_abstraction_loss_signal(
         "primary_next_action": recommended_next,
         "repair_checkpoint": checkpoint,
         "useful_inspections": [
-            {
-                "intent": "inspect_context",
-                "payload": {"topic": "call_site_options"},
+            direct_context_request({
+                "intent": "call_site_options",
+                "payload": {},
                 "why": (
                     "Call-site context for the corresponding live frontier."
                 ),
-            },
+            }),
             {
                 "intent": "lookup_symbol",
                 "payload": {"symbol": symbol},
@@ -580,15 +581,15 @@ def _probability_budget_random_tuple_transition(goal_text: str) -> dict[str, Any
         )
         transition = structural_transition_surface(
             tactic,
-            status="candidate_reversible_probe",
+            status="candidate_reversible_transition",
             why_here=(
                 "The product-budget event is built from random samples that "
-                "currently sit immediately after a procedure call. Probe this "
-                "swap if you want to test moving that random tuple before the "
+                "currently sit immediately after a procedure call. Commit this "
+                "swap only if you want to move that random tuple before the "
                 "call, so the probability-budget route can reason about the "
                 "sampled event instead of charging local samples one by one."
             ),
-            submit_intent="probe_tactic",
+            submit_intent="commit_tactic",
         )
         transition["profile_gate"] = "l4_checked_action_surface"
         transition["detected_shape"] = {
@@ -710,14 +711,14 @@ def _boundary_gap_signal(
             + ", ".join(str(item) for item in residual_only[:6])
         )
     useful_inspections = [
-        {
-            "intent": "inspect_context",
-            "payload": {"topic": "lemma_hints"},
+        direct_context_request({
+            "intent": "lemma_hints",
+            "payload": {},
             "why": (
                 "Use this as context before deciding whether the earlier "
                 "boundary should be strengthened."
             ),
-        }
+        })
     ]
     for symbol in context_symbols[:2]:
         useful_inspections.append({
@@ -782,10 +783,10 @@ def _frontier_placement_signal(route_event_facts: list[dict[str, Any]]) -> dict[
         "confidence": "high",
         "message": message,
         "evidence": [str(latest.get("error_summary") or "")],
-        "recommended_next": {
-            "intent": "inspect_context",
-            "payload": {"topic": "align"},
-        },
+        "recommended_next": direct_context_request({
+            "intent": "align",
+            "payload": {},
+        }),
     }
 
 
@@ -802,7 +803,7 @@ def _seq_cut_mismatch_signal(
         item
         for item in route_event_facts[-6:]
         if item.get("rejected")
-        and str(item.get("intent") or "") in {"probe_tactic", "commit_tactic"}
+        and str(item.get("intent") or "") == "commit_tactic"
     ]
     if not rejected:
         return {}
@@ -889,10 +890,10 @@ def _local_tool_not_ready_signal(
             "recent `sim` rejection",
             "visible branch/sampling/frontier mismatch",
         ],
-        "recommended_next": {
-            "intent": "inspect_context",
-            "payload": {"topic": "align"},
-        },
+        "recommended_next": direct_context_request({
+            "intent": "align",
+            "payload": {},
+        }),
     }
 
 
@@ -905,12 +906,12 @@ def _prhl_surgery_sequence_signal(goal_text: str) -> dict[str, Any]:
     equal_vars = _extract_equal_vars_from_goal(goal_text)
     if len(equal_vars) >= 2:
         tactic = f"conseq (_: _ ==> ={{{', '.join(equal_vars[:8])}}})."
-        recommended_next = {"intent": "probe_tactic", "payload": {"tactic": tactic}}
+        recommended_next = {"intent": "commit_tactic", "payload": {"tactic": tactic}}
     else:
-        recommended_next = {
-            "intent": "inspect_context",
-            "payload": {"topic": "tactic_forms", "name": "conseq"},
-        }
+        recommended_next = direct_context_request({
+            "intent": "tactic_forms",
+            "payload": {"name": "conseq"},
+        })
     return {
         "signal": "prhl_surgery_sequence_needed",
         "confidence": "medium",
@@ -1249,4 +1250,3 @@ def _extract_equal_vars_from_goal(goal_text: str) -> list[str]:
         if item not in out and len(item) <= 32:
             out.append(item)
     return out[:10]
-

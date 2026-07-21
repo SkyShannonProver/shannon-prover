@@ -32,7 +32,6 @@ from workflow.proof_node_runtime import (  # noqa: E402
 )
 from workflow.agent_prompt_render import (  # noqa: E402
     _turn_interpretation,
-    _workspace_view_preview,
     render_long_lived_agent_prompt,
 )
 
@@ -58,7 +57,8 @@ def test_long_lived_prompt_explains_runtime_and_memory(tmp_path: Path) -> None:
     # §1 header
     assert "You are a long-lived prover agent for one proof node" in prompt
     assert "keep your own working memory" in prompt
-    assert "current authoritative `ProverWorkspaceView`" in prompt
+    assert "current authoritative proof surface rendered" in prompt
+    assert "`SurfaceTurnModel`" in prompt
     assert "Use MCP tools to interact with the manager" in prompt
     assert "structured MCP tool `submit_proof_intent`" in prompt
     assert "`LEGAL_PROOF_SO_FAR`" in prompt        # committed proof is read-on-demand now
@@ -66,27 +66,28 @@ def test_long_lived_prompt_explains_runtime_and_memory(tmp_path: Path) -> None:
     assert "no shell escaping or scratch files" in prompt
     # §2 Your MCP tools — one line per granted intent
     assert "## Your MCP tools" in prompt
-    assert "The current `intent` must be one of:" in prompt
     for intent in (
-        "`commit_tactic`", "`tactic_forms`", "`lookup_symbol`",
-        "`undo_last_step`", "`undo_to_checkpoint`", "`fresh_restart`",
-        "`finish`",
+        "`commit_tactic`", "`lookup_symbol`", "`undo_last_step`",
+        "`undo_to_checkpoint`", "`fresh_restart`", "`finish`",
     ):
         assert intent in prompt
+    # State-dependent context intents are advertised by SurfaceModel actions,
+    # not duplicated as a static roster in the long-lived prompt.
+    assert "`tactic_forms`" not in prompt
     assert "`goal_info`" not in prompt
     assert "`inspect_context`" not in prompt
     assert "`probe_tactic`" not in prompt
     assert "`request_restart`" not in prompt
     # §3 how to read what the manager returns
-    assert "## How to read what the manager returns" in prompt
-    assert "STATIC-ANALYSIS FACT" in prompt
-    assert "FORK, not a wall" in prompt
-    assert "candidate_moves" in prompt  # signal-weighing block (full surface)
-    # §4 how to play well + final-admit gate
-    assert "## How to play well" in prompt
-    assert "be brave: COMMIT and UNDO freely" in prompt
-    assert "A final proof must contain no committed `admit.` tactics" in prompt
-    assert "blocks `qed.` / `finish`" in prompt
+    assert "## How to read the manager surface" in prompt
+    assert "current-state mechanical evidence" in prompt
+    assert "not a proof strategy" in prompt
+    assert "candidate_moves" not in prompt
+    assert "route_health" not in prompt
+    # Strategy coaching and verifier policy belong to the manager/runtime, not
+    # the stable presentation prompt.
+    assert "## How to play well" not in prompt
+    assert "be brave: COMMIT and UNDO freely" not in prompt
     assert "tracked SCAFFOLD" not in prompt
     assert "scaffold debt" not in prompt
     # §5 runtime details
@@ -134,19 +135,14 @@ def test_l1_goal_projection_prompt_lists_only_l1_goal_projection_surface(tmp_pat
 
     assert "`commit_tactic`" in prompt
     assert "`finish`" in prompt
-    # L1 now has the full ACTION capability set (so the L1<->L4 comparison isolates the
-    # panel CONTENT, not capabilities) — including the index-addressed rewinds.
-    assert "`amend_and_replay`" in prompt
+    # L1 keeps the control surface while omitting derived context channels.
     assert "`undo_to_checkpoint`" in prompt
     # ...but it must NOT advertise the content-retrieval channels (the panel's value).
     assert "`probe_tactic`" not in prompt
     assert "`inspect_context`" not in prompt
     assert "`lookup_symbol`" not in prompt
     assert "semantic proof inspection" not in prompt
-    assert (
-        "`current_goal`, `proof_status`, `last_result`, and "
-        "`latest_observation`"
-    ) in prompt
+    assert "rendered `SurfaceTurnModel`" in prompt
     for hidden_panel in (
         "`program_frontier`",
         "`application_context`",
@@ -176,10 +172,9 @@ def test_mcp_schema_respects_l1_goal_projection_profile(monkeypatch, tmp_path: P
     intent_schema = tool["inputSchema"]["properties"]["intent"]
     payload_schema = tool["inputSchema"]["properties"]["payload"]
 
-    # L1 now exposes the SAME action capabilities as L4 (amend_and_replay +
-    # undo_to_checkpoint both reference a step by index off the proof_so_far panel L1
-    # renders, so L1 needs no checkpoint menu) — so the L1<->L4 comparison isolates
-    # the DERIVED panel content. L1 still lacks the content-retrieval channels.
+    # L1 exposes the same state-changing action capabilities as L4 so the comparison
+    # isolates derived panel content. A bare rewind request still returns its typed
+    # control menu; L1 lacks only the content-retrieval channels.
     assert intent_schema["enum"] == [
         "amend_and_replay",
         "commit_tactic",
@@ -194,145 +189,6 @@ def test_mcp_schema_respects_l1_goal_projection_profile(monkeypatch, tmp_path: P
     assert "{'topic': 'goal_info'}" not in payload_schema["description"]
     assert "{'symbol': 'LEMMA'}" not in payload_schema["description"]
 
-
-def test_workspace_view_preview_compacts_navigation() -> None:
-    preview = _workspace_view_preview({
-        "kind": "prover_workspace_view",
-        "current_goal": {"lines": ["goal"]},
-        "candidate_moves": {
-            "structural_transitions": [{
-                "id": "post_wp_surgery",
-                "kind": "structural_transition",
-                "status": "candidate_reversible_probe",
-                "tactic": "wp.",
-                "phase": "post-wp surgery",
-                "valid_for": "current_view_only",
-                "why_here": "large pRHL postcondition",
-                "decision": (
-                    "Probe this tactic if you want to test entry into the "
-                    "post-wp surgery phase."
-                ),
-                "recommended_next": {
-                    "label": "Probe this transition",
-                    "submit": {
-                        "intent": "probe_tactic",
-                        "payload": {"tactic": "wp."},
-                    },
-                },
-                "after_commit": (
-                    "The next authoritative view will expose the real "
-                    "post-wp surgery workbench."
-                ),
-            }],
-            "navigation": [{
-                "id": "probability_phoare_loop",
-                "episode": "top_level_probability",
-                "route": "case_split_then_byphoare_loop",
-                "confidence": "high",
-                "confidence_reason": "x" * 500,
-                "valid_for": "current_view_only",
-                "why_now": "y" * 500,
-                "fast_track_probe": {
-                    "tactic": "byphoare (_: <pre> ==> <post>) => //; " + "z" * 500,
-                    "preconditions": ["probe first"],
-                    "expected_next_shape": "loop obligations",
-                },
-                "anti_routes": [{"route": "byequiv_first", "reason": "wrong shape"}],
-                "repair_if_fails": [{"failure": "syntax", "next": "inspect tactic_forms"}],
-                "lemma_pack": [],
-            }],
-            "probe_alternatives": [{
-                "tactic": "wp.",
-                "probe_result": "accepted",
-                "status": "verified_on_current_state",
-                "how_to_use": "commit this exact tactic",
-                "structural_transition": {
-                    "id": "post_wp_surgery",
-                    "kind": "structural_transition",
-                    "status": "accepted_checkpoint",
-                    "tactic": "wp.",
-                    "phase": "post-wp surgery",
-                    "recommended_next": {
-                        "label": "Enter this transition",
-                        "submit": {
-                            "intent": "commit_tactic",
-                            "payload": {"tactic": "wp."},
-                        },
-                    },
-                    "after_commit": (
-                        "The next authoritative view will expose the real "
-                        "post-wp surgery workbench."
-                    ),
-                },
-                "goal_after_probe_summary": {
-                    "remaining_goals": 2,
-                    "first_lines": ["Current goal", "x = y"],
-                },
-            }],
-            "moves": [{"title": "probe", "category": "probe", "tactic": "wp."}],
-            "limitations": [{"kind": "template"}],
-        },
-    })
-
-    nav = preview["candidate_moves"]["navigation"][0]
-
-    assert nav["id"] == "probability_phoare_loop"
-    assert nav["valid_for"] == "current_view_only"
-    assert "truncated" in nav["confidence_reason"]
-    assert "truncated" in nav["fast_track_probe"]["tactic"]
-    assert (
-        preview["candidate_moves"]["structural_transitions"][0]["id"]
-        == "post_wp_surgery"
-    )
-    transition = preview["candidate_moves"]["probe_alternatives"][0]["structural_transition"]
-    assert transition["id"] == "post_wp_surgery"
-    assert transition["phase"] == "post-wp surgery"
-    assert "real post-wp surgery workbench" in transition["after_commit"]
-    assert transition["recommended_next"]["submit"] == {
-        "intent": "commit_tactic",
-        "payload": {"tactic": "wp."},
-    }
-    assert preview["candidate_moves"]["moves"][0]["tactic"] == "wp."
-
-
-def test_workspace_view_preview_shows_real_goals_whole() -> None:
-    # the goal is THE thing the agent acts on — a normal (even large) proof goal is
-    # shown WHOLE inline now (cap is 30k). A 5k-char goal must NOT truncate.
-    preview = _workspace_view_preview({
-        "kind": "prover_workspace_view",
-        "current_goal": {"lines": ["Current goal", "x" * 5000, "tail"],
-                         "text_fully_shown": True, "truncated": False},
-    })
-    goal = preview["current_goal"]
-    assert not goal.get("truncated")
-    assert "x" * 5000 in goal["lines_preview"]
-
-
-def test_workspace_view_preview_oversize_goal_nudges_undo_not_a_file() -> None:
-    # only a pathological goal (>30k, almost always a destructive `inline *`
-    # explosion) truncates — and it must NOT point the agent at a file (that read
-    # tripped the bridge-escape watchdog); it nudges undo instead.
-    from workflow.surface_turn_model import compose_surface_turn, render_surface_turn_markdown
-    preview = _workspace_view_preview({
-        "kind": "prover_workspace_view",
-        "current_goal": {"lines": ["x" * 100 for _ in range(400)],  # ~40k chars
-                         "text_fully_shown": True, "truncated": False},
-    })
-    goal = preview["current_goal"]
-    assert "lines" not in goal
-    assert goal["truncated"] is True
-    assert goal["truncation_scope"] == "inline_preview"
-    assert goal["oversize_consider_undo"] is True
-    assert "read_full_current_goal_lines_from" not in goal   # no file pointer
-    md = render_surface_turn_markdown(
-        compose_surface_turn(
-            preview,
-            "l1_goal_projection",
-            goal_only=True,
-        ),
-        goal_only=True,
-    )
-    assert "undo_last_step" in md and "latest_workspace_view.json" not in md
 
 
 def test_surface_turn_markdown_tiers_and_orders_by_goal_size() -> None:
@@ -357,8 +213,8 @@ def test_surface_turn_markdown_tiers_and_orders_by_goal_size() -> None:
     assert "## 🎯 Current Goal" in md and "## Surgery" in md
     assert md.index("Current Goal") < md.index("Surgery")
     assert "**Seq scope:**" in md and "aligned branch residual" in md
-    # reference gives the EXACT intent to submit, not a truncated panel dump
-    assert "submit `{" in md and '"intent": "tactic_forms"' in md
+    # A broad rewrite reference is not repeated on the persistent surface.
+    assert '"intent": "tactic_forms"' not in md
     # large goal -> the goal still leads; the panel is explanatory, not the proof-state anchor.
     large = {**base, "current_goal": {"lines_preview": "x = y", "truncated": True}}
     md2 = render_surface_turn_markdown(
@@ -441,87 +297,7 @@ def test_l1_surface_turn_surfaces_raw_ec_error_on_rejection() -> None:
     assert "EasyCrypt error" not in md_ok
 
 
-def test_probe_outcome_accept_leads_with_goal_after_not_unchanged_goal() -> None:
-    # A probe is a dry run: on ACCEPT the headline must be the goal-AFTER (what
-    # committing produces), NOT the unchanged committed goal — the agent probed
-    # precisely to see the change. (MEE-CBC L4: the old followup re-showed the
-    # unchanged goal and only POINTED at goal_after_probe in the JSON.)
-    from workflow.surface_turn_model import compose_surface_turn, render_surface_turn_markdown
-    view = {
-        "last_result": {
-            "intent": "probe_tactic",
-            "tactic": "proc.",
-            "result": "EasyCrypt accepted this read-only probe.",
-            "probe_preview": {
-                "goal_after_remaining": 1,
-                "goal_after_probe": {"lines": ["Current goal", "p <- None", "s <- head witness c"]},
-            },
-        },
-        "current_goal": {"lines": ["the OLD lemma statement"]},
-    }
-    md = render_surface_turn_markdown(
-        compose_surface_turn(
-            view,
-            "l4_checked_action_surface",
-            handled_intent={"intent": "probe_tactic", "payload": {"tactic": "proc."}},
-        )
-    )
-    assert "Probe preview" in md and "accepted" in md
-    assert "p <- None" in md and "s <- head witness c" in md     # the goal-AFTER is shown
-    assert "the OLD lemma statement" not in md                   # not the unchanged goal
-    assert "EasyCrypt error" not in md                           # accept != error
 
-
-def test_probe_outcome_reject_leads_with_ec_error_keeps_goal_as_context() -> None:
-    # On REJECT the headline is the EC error (the `why`); the committed goal stays
-    # as collapsed context. Mutually exclusive with the accept preview.
-    from workflow.surface_turn_model import compose_surface_turn, render_surface_turn_markdown
-    view = {
-        "last_result": {
-            "intent": "probe_tactic",
-            "tactic": "inline PRPc.PseudoRP.fi.",
-            "result": "EasyCrypt rejected this probe or could not use it.",
-            "error_summary": "[error] cannot inline PRPc.PseudoRP.fi: abstract procedure",
-        },
-        "current_goal": {"lines": ["Current goal"] + [f"line {i}" for i in range(20)]},
-    }
-    md = render_surface_turn_markdown(
-        compose_surface_turn(
-            view,
-            "l4_checked_action_surface",
-            handled_intent={
-                "intent": "probe_tactic",
-                "payload": {"tactic": "inline PRPc.PseudoRP.fi."},
-            },
-        )
-    )
-    assert "Probe rejected" in md
-    assert "EasyCrypt error:" in md and "abstract procedure" in md
-    assert "committing this would produce" not in md             # reject != preview
-    assert "committed state unchanged" in md.lower()
-
-
-def test_probe_preview_surface_replaces_goal_block() -> None:
-    from workflow.surface_turn_model import compose_surface_turn, render_surface_turn_markdown
-    # when a probe preview exists, SurfaceTurnModel leads with it (not the goal)
-    view = {
-        "last_result": {
-            "intent": "probe_tactic",
-            "tactic": "proc.",
-            "result": "EasyCrypt accepted this read-only probe.",
-            "probe_preview": {"goal_after_probe": {"lines": ["Current goal", "after"]}},
-        },
-        "current_goal": {"lines_preview": "x = y", "line_count": 1},
-    }
-    md = render_surface_turn_markdown(
-        compose_surface_turn(
-            view,
-            "l4_checked_action_surface",
-            handled_intent={"intent": "probe_tactic", "payload": {"tactic": "proc."}},
-        )
-    )
-    assert md.startswith("## Probe preview -- `proc.`")
-    assert "## 🎯 Current Goal" not in md                        # goal block replaced
 
 
 def test_surface_panel_markdown_blank_line_between_bullets_and_next_label() -> None:
@@ -577,93 +353,6 @@ def test_surface_turn_status_does_not_cram_truncated_last_tactic() -> None:
     assert "last `" not in status and "while" not in status
 
 
-def test_workspace_view_preview_preserves_accepted_probe_decision() -> None:
-    preview = _workspace_view_preview({
-        "kind": "prover_workspace_view",
-        "last_result": {
-            "kind": "accepted_structural_transition",
-            "message": "This structural transition probe was accepted.",
-            "question": "Do you want to enter the post-wp surgery workbench?",
-            "accepted_tactic": "wp.",
-            "structural_transition": {
-                "id": "post_wp_surgery",
-                "phase": "post-wp surgery",
-                "recommended_next": {
-                    "label": "Enter this transition",
-                    "submit": {
-                        "intent": "commit_tactic",
-                        "payload": {"tactic": "wp."},
-                    },
-                },
-            },
-            "recommended_next": {
-                "label": "Enter this transition",
-                "submit": {
-                    "intent": "commit_tactic",
-                    "payload": {"tactic": "wp."},
-                },
-            },
-            "guidance": (
-                "If yes, commit this exact tactic and read the real "
-                "post-commit workbench. If no, choose another probe or inspect "
-                "the current state. Do not solve the speculative preview in "
-                "your mental model."
-            ),
-        },
-        "current_goal": {"lines": ["goal"]},
-    })
-
-    assert preview["last_result"]["kind"] == "accepted_structural_transition"
-    assert preview["last_result"]["question"].startswith("Do you want to enter")
-    assert preview["last_result"]["structural_transition"]["id"] == "post_wp_surgery"
-    assert "mental model" in preview["last_result"]["guidance"]
-
-
-def test_turn_interpretation_spotlights_structural_probe_decision() -> None:
-    note = _turn_interpretation(
-        {"intent": "probe_tactic", "payload": {"tactic": "wp."}},
-        [{
-            "agent_observation": {
-                "kind": "accepted_structural_transition",
-                "structural_transition": {
-                    "id": "post_wp_surgery",
-                    "recommended_next": {
-                        "submit": {
-                            "intent": "commit_tactic",
-                            "payload": {"tactic": "wp."},
-                        },
-                    },
-                },
-            },
-        }],
-    )
-
-    assert "Accepted structural transition probe" in note
-    assert "last_result.structural_transition" in note
-    assert "mental model" in note
-
-
-def test_workspace_view_preview_preserves_menu_submit_payloads() -> None:
-    preview = _workspace_view_preview({
-        "kind": "prover_workspace_view",
-        "last_result": {
-            "kind": "fresh_restart_confirmation",
-            "message": "Fresh restart will erase all your committed tactics in this node.",
-            "options": [{
-                "label": "Undo last committed tactic",
-                "effect_if_selected": "This will undo the last committed tactic in this node.",
-                "submit": {"intent": "undo_last_step", "payload": {}},
-            }],
-        },
-        "current_goal": {"lines": ["goal"]},
-    })
-
-    assert preview["last_result"]["options"][0]["submit"] == {
-        "intent": "undo_last_step",
-        "payload": {},
-    }
-
-
 def test_node_memory_writes_curated_files(tmp_path: Path) -> None:
     memory = NodeMemory(tmp_path, "Tree-0.0")
     turn = ManagedTurn(
@@ -671,7 +360,7 @@ def test_node_memory_writes_curated_files(tmp_path: Path) -> None:
         workspace_view={"current_goal": {"lines": ["x = y"]}},
         repair_prompt="repair please",
         manager_actions=[{
-            "label": "probe_tactic",
+            "label": "commit_tactic",
             "exit_code": 1,
             "agent_observation": {"error_summary": "bad tactic"},
         }],
@@ -679,8 +368,8 @@ def test_node_memory_writes_curated_files(tmp_path: Path) -> None:
 
     memory.record_turn(
         turn_index=1,
-        raw_text='{"intent":"probe_tactic","payload":{"tactic":"bad."}}',
-        handled_intent={"intent": "probe_tactic", "payload": {"tactic": "bad."}},
+        raw_text='{"intent":"commit_tactic","payload":{"tactic":"bad."}}',
+        handled_intent={"intent": "commit_tactic", "payload": {"tactic": "bad."}},
         turn=turn,
     )
 
@@ -693,7 +382,7 @@ def test_node_memory_writes_curated_files(tmp_path: Path) -> None:
     failure = json.loads(
         (memory.dir / "failures.jsonl").read_text(encoding="utf-8").splitlines()[0]
     )
-    assert failure["intent"]["intent"] == "probe_tactic"
+    assert failure["intent"]["intent"] == "commit_tactic"
     assert failure["manager_actions"][0]["error_summary"] == "bad tactic"
 
 
@@ -922,7 +611,7 @@ def test_runtime_uses_one_agent_session_for_multiple_manager_turns(tmp_path: Pat
             assert env["SHANNON_SURFACE_PROFILE"] == ""
             for intent in (
                 {"intent": "tactic_forms", "payload": {"name": "wp"}},
-                {"intent": "probe_tactic", "payload": {"tactic": "smt()."}},
+                {"intent": "operator_lemmas", "payload": {"operator": "size"}},
             ):
                 response = submit_intent_to_bridge(
                     host=runtime.bridge.host,
@@ -946,8 +635,10 @@ def test_runtime_uses_one_agent_session_for_multiple_manager_turns(tmp_path: Pat
     assert result.text == "done"
     assert fake_agent.run_count == 1
     assert fake_agent.close_count == 1
-    assert handled == ["tactic_forms", "probe_tactic"]
-    assert (runtime.memory.dir / "attempts.jsonl").exists()
+    assert handled == ["tactic_forms", "operator_lemmas"]
+    # Read-only context turns are not proof attempts and must not create the
+    # historical tactic-attempt stream.
+    assert not (runtime.memory.dir / "attempts.jsonl").exists()
     assert not (runtime.memory.dir / "submit_intent.sh").exists()
     assert runtime._mcp_config_path.exists()
     assert "runtime_private" in str(runtime._mcp_config_path)
@@ -961,7 +652,9 @@ def test_runtime_uses_one_agent_session_for_multiple_manager_turns(tmp_path: Pat
             encoding="utf-8",
         ),
     )
-    assert turn_2_view["last_result"] == {"intent": "probe_tactic", "result": "ok"}
+    assert "last_result" not in turn_2_view
+    assert turn_2_view["surface_turn"]["turn_outcome"]["intent"] == "operator_lemmas"
+    assert turn_2_view["surface_turn"]["base_surface_updates"] is False
     assert fake_agent.responses
     # Per-turn followup points back to the compact agent-readable surface, not
     # the raw workspace audit JSON.
@@ -1208,14 +901,14 @@ def test_mcp_tool_arguments_preserve_long_tactic_without_shell_escaping() -> Non
     )
 
     text = intent_text_from_tool_arguments({
-        "intent": "probe_tactic",
+        "intent": "commit_tactic",
         "payload": {"tactic": tactic},
     })
     parsed = parse_agent_intent(text)
 
     assert parsed.ok
     assert parsed.intent is not None
-    assert parsed.intent.intent == "probe_tactic"
+    assert parsed.intent.intent == "commit_tactic"
     assert parsed.intent.payload["tactic"] == tactic
 
 
@@ -1267,7 +960,7 @@ def test_mcp_server_advertises_structured_submit_tool(monkeypatch, tmp_path: Pat
     assert "probe_replay_suffix_chunk" not in intent_enum
 
 
-def test_mcp_server_can_opt_into_probe_schema(monkeypatch, tmp_path: Path) -> None:
+def test_mcp_server_cannot_opt_into_retired_probe_schema(monkeypatch, tmp_path: Path) -> None:
     monkeypatch.setenv("SHANNON_ENABLE_PROBE", "1")
     monkeypatch.delenv("SHANNON_DISABLE_PROBE", raising=False)
     server = ProofNodeMcpServer(
@@ -1285,8 +978,8 @@ def test_mcp_server_can_opt_into_probe_schema(monkeypatch, tmp_path: Path) -> No
     })
 
     intent_enum = response["result"]["tools"][0]["inputSchema"]["properties"]["intent"]["enum"]
-    assert "probe_tactic" in intent_enum
-    assert "probe_replay_suffix_chunk" in intent_enum
+    assert "probe_tactic" not in intent_enum
+    assert "probe_replay_suffix_chunk" not in intent_enum
 
 
 def test_mcp_bridge_empty_response_becomes_tool_error(tmp_path: Path) -> None:
@@ -1355,54 +1048,6 @@ def test_mcp_stdio_framing_supports_newline_and_legacy_header() -> None:
         framing=header_framing,
     )
     assert header_out.getvalue().startswith(b"Content-Length: ")
-
-
-def test_probe_followup_is_scratchpad_minimal_no_anchor_no_panels(tmp_path) -> None:
-    # A probe is a scratchpad dry run: the followup is ONLY the outcome + the format
-    # reminder. No focus panel / status / manager-result / node-memory anchor — those
-    # are about the unchanged committed goal (re-stapling them every probe is what
-    # slows the L4 probe loop). Compaction recovery is owned by the system prompt.
-    from types import SimpleNamespace
-    mem = NodeMemory(tmp_path, "Tree-0.0")
-    accepted = ManagedTurn(
-        ok=True,
-        workspace_view={
-            "kind": "prover_workspace_view",
-            "proof_status": {"status": "open", "view_focus": "seq_cut",
-                             "current_layer": "procedure_body"},
-            "current_goal": {"lines": ["Current goal", "the OLD committed goal"]},
-            "deep_focus": {"toolbox": ["`case: (<g>)`"]},  # a focus panel that must NOT render
-            "last_result": {"tactic": "proc.", "probe_preview": {
-                "goal_after_remaining": 1,
-                "goal_after_probe": {"lines": ["Current goal", "AFTER proc: the while loop"]}}},
-        },
-        snapshot=SimpleNamespace(goal_hash="Hp", state_version=2),
-    )
-    fu = _render_manager_followup(
-        accepted, 8, {"intent": "probe_tactic", "payload": {"tactic": "proc."}}, mem)
-    assert "Probe preview" in fu and "AFTER proc: the while loop" in fu  # dry-run result leads
-    assert "the OLD committed goal" not in fu                            # not the unchanged goal
-    assert "Legal Node Memory Anchor" not in fu                          # anchor dropped on a probe
-    assert "Manager result (previous turn)" not in fu                    # no manager-result section
-    assert "Surgery" not in fu and "case:" not in fu                     # no focus panel
-    assert "submit_proof_intent" in fu                                   # format reminder kept
-
-    rejected = ManagedTurn(
-        ok=True,
-        workspace_view={
-            "kind": "prover_workspace_view",
-            "proof_status": {"status": "open"},
-            "current_goal": {"lines": ["Current goal"] + [f"l{i}" for i in range(20)]},
-            "last_result": {"tactic": "inline X.",
-                            "error_summary": "[error] cannot inline X: abstract procedure"},
-        },
-        snapshot=SimpleNamespace(goal_hash="Hr", state_version=2),
-    )
-    fr = _render_manager_followup(
-        rejected, 9, {"intent": "probe_tactic", "payload": {"tactic": "inline X."}}, mem)
-    assert "Probe rejected" in fr and "cannot inline X: abstract procedure" in fr
-    assert "Legal Node Memory Anchor" not in fr and "Manager result (previous turn)" not in fr
-    assert "submit_proof_intent" in fr
 
 
 def test_commit_followup_is_one_line_last_action_not_manager_result_section(tmp_path) -> None:

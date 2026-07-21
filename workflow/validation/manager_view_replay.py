@@ -28,7 +28,7 @@ silently ignored.
     --left artifacts/manager_view_replay_old \
     --right artifacts/manager_view_replay_current
 
-Replaying a REAL agent run's recorded behavior (so probe / inspect / lookup /
+Replaying a REAL agent run's recorded behavior (so inspect / lookup /
 undo intents are replayed too, not just committed tactics) and validating that
 the replay reproduces what the agent actually saw:
 
@@ -76,7 +76,7 @@ class StepSpec:
 
     @property
     def label(self) -> str:
-        if self.intent in {"probe_tactic", "commit_tactic"}:
+        if self.intent == "commit_tactic":
             return _compact(str(self.payload.get("tactic") or ""), 100)
         if self.intent == "inspect_context":
             return f"inspect:{self.payload.get('topic') or 'goal_info'}"
@@ -528,7 +528,6 @@ def _step_from_text(raw: str, *, default_intent: str) -> StepSpec:
             raise SystemExit("--step JSON must be an object")
         return StepSpec(str(obj.get("intent") or default_intent), dict(obj.get("payload") or {}))
     for prefix, intent, key in (
-        ("probe:", "probe_tactic", "tactic"),
         ("commit:", "commit_tactic", "tactic"),
         ("lookup:", "lookup_symbol", "symbol"),
     ):
@@ -600,10 +599,10 @@ def _steps_from_run(
     """Reconstruct the exact ordered intent stream the agent submitted in a run.
 
     The source-proof / proof-bank step sources only know committed tactics.  A
-    real managed run, however, records every intent (probe / inspect / lookup /
+    real managed run, however, records every intent (inspect / lookup /
     undo / commit) in each node's ``timeline.jsonl`` + ``manager_results/``.
     Replaying that full stream makes the captured view at each turn match the
-    agent's real decision surface, including post-probe previews.
+    agent's real decision surface, including read-only context overlays.
 
     Returns ``(steps, meta)`` where ``meta`` carries the auto-derived target
     (``file``/``lemma``/``include_dir``/``surface_profile``) and the node's saved
@@ -816,9 +815,9 @@ def _turn_acceptance(actions: Any) -> bool | None:
             if "accepted" in observation:
                 return bool(observation.get("accepted"))
             status = str(observation.get("status") or "").lower()
-            if status in {"probe_accepted", "accepted", "ok"}:
+            if status in {"preflight_accepted", "accepted", "ok"}:
                 return True
-            if status in {"probe_rejected", "rejected", "error", "failed"}:
+            if status in {"preflight_rejected", "rejected", "error", "failed"}:
                 return False
         if action.get("exit_code") not in (None, 0):
             return False
@@ -1064,8 +1063,8 @@ def main(argv: list[str] | None = None) -> int:
         action="append",
         default=[],
         help=(
-            "One step. Plain text is a tactic; prefixes probe:, commit:, "
-            "inspect:, lookup: choose the intent; JSON intent objects also work."
+            "One step. Plain text is a tactic; prefixes commit:, inspect:, "
+            "lookup: choose the intent; JSON intent objects also work."
         ),
     )
     p_replay.add_argument("--tactics-file", default="")
@@ -1075,7 +1074,7 @@ def main(argv: list[str] | None = None) -> int:
         help=(
             "Replay the agent's ACTUAL recorded intent stream from a managed run "
             "(an iteration dir such as .../iteration_1, or a node_memory/<node> "
-            "dir). Includes probe/inspect/lookup/undo, not just committed "
+            "dir). Includes inspect/lookup/undo, not just committed "
             "tactics, and auto-derives --file/--lemma/--include-dir/"
             "--surface-profile from the run unless given explicitly."
         ),
@@ -1104,7 +1103,7 @@ def main(argv: list[str] | None = None) -> int:
     )
     p_replay.add_argument(
         "--intent",
-        choices=["commit_tactic", "probe_tactic"],
+        choices=["commit_tactic"],
         default="commit_tactic",
         help="Default intent for plain tactics.",
     )

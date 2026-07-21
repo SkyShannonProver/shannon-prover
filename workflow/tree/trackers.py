@@ -171,7 +171,7 @@ def _proof_intent_tool_description(tool_input: object) -> str:
         return "submit_proof_intent malformed: missing intent"
     payload = tool_input.get("payload")
     payload = payload if isinstance(payload, dict) else {}
-    if intent in {"probe_tactic", "commit_tactic"}:
+    if intent == "commit_tactic":
         tactic = str(payload.get("tactic") or "").strip()
         if len(tactic) > 220:
             tactic = tactic[:217].rstrip() + "..."

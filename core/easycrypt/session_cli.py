@@ -230,7 +230,7 @@ def main(argv=None) -> int:
         help="SPECULATIVE: run a tactic WITHOUT committing it. Report "
              "acceptance + error (or goal_after) and leave session state "
              "unchanged. Requires the EC daemon (auto-spawn) and a session "
-             "opened with -f + -lemma. Use to probe `apply <pivot>` / "
+             "opened with -f + -lemma. Use to validate `apply <pivot>` / "
              "arg-pattern guesses cheaply instead of commit+rollback loops. "
              "Cost: ~50-500ms (daemon).")
     sess_grp.add_argument("-chain", action="store_true",
@@ -239,9 +239,9 @@ def main(argv=None) -> int:
              "after successful prefix instead of rolling back. "
              "Cost: ~50ms-3s per sub-tactic.")
     sess_grp.add_argument("-tactic-exec", dest="tactic_exec",
-        choices=["probe", "commit", "commit_chain", "undo"],
+        choices=["commit", "commit_chain", "undo"],
         help="Canonical Proof Interaction Manager entry point. Submit tactics "
-             "with mode probe|commit|commit_chain|undo and receive a "
+             "with mode commit|commit_chain|undo and receive a "
              "TacticExecutionResult workspace envelope.")
     sess_grp.add_argument("-checkpoint", metavar="NAME", dest="checkpoint_name",
         help="Save current proof state as a named checkpoint (tactic list "
@@ -427,14 +427,6 @@ def main(argv=None) -> int:
              "INSTEAD of `proc; inline *` when the RHS program contains "
              "a while-loop. BFS up to depth 3 to find chains. "
              "Cost: ~200ms (source scan).")
-    sugg_grp.add_argument("-bridge-probe", action="store_true",
-        dest="bridge_probe",
-        help="BRIDGE ECONOMICS: given a Pr-level equality (the thing "
-             "you'd put after `have -> :`), test whether it closes via "
-             "a short sim-family closer. If yes, it's an 'atomic' bridge "
-             "you can slot in safely. If no, decompose at an intermediate "
-             "checkpoint (pr_* lemma). Use via -c 'Pr[A] = Pr[B]'. "
-             "Cost: ~500ms (EC daemon).")
     sugg_grp.add_argument("-inv-from-lemma", metavar="LEMMA", dest="inv_from_lemma",
         help="Extract invariant from a local equiv lemma for use in "
              "`call (_: bad, Inv)`. "
@@ -451,7 +443,7 @@ def main(argv=None) -> int:
         dest="pivot_inspect",
         help="Read-only pivot/call-site inspection. `context` is cheap "
              "static context; `verified`, `call-site`, `bridge`, `rewrite`, "
-             "and `call-invariant-skeleton` may use daemon probes and should "
+             "and `call-invariant-skeleton` may use private EasyCrypt preflight and should "
              "be requested only when that goal shape makes the extra latency "
              "useful.")
     # === Modifier options (companions to action flags) ===
@@ -527,7 +519,7 @@ def main(argv=None) -> int:
         ('subgoal_gap', False), ('align', False), ('swap_search', False),
         # suggestion
         ('suggest_close', False), ('diagnose', False),
-        ('bridge_lemmas', False), ('bridge_probe', False),
+        ('bridge_lemmas', False),
         ('inv_from_lemma', None), ('tactic_forms', None),
         ('pivot_inspect', None),
     )
@@ -648,7 +640,7 @@ def main(argv=None) -> int:
                 # Balance the stream at the source: a handler that raises between
                 # tool.called and tool.result would otherwise leave a dangling
                 # tool.called that poisons the NEXT commit's event contract (the
-                # "probe accepted, commit rejected" mislabel). -start emits
+                # "preflight accepted, commit rejected" mislabel). -start emits
                 # tool.called only AFTER the handler, so nothing is dangling there.
                 if action_name != "start":
                     session.emit_event("tool.result", payload | {
@@ -671,7 +663,6 @@ def main(argv=None) -> int:
     if args.tactic_exec:
         from core.easycrypt.commands.commit_commands import handle_tactic_exec  # type: ignore
         action_name = {
-            "probe": "try",
             "commit": "next",
             "commit_chain": "chain",
             "undo": "prev",
@@ -679,7 +670,7 @@ def main(argv=None) -> int:
         return _run_action(
             action_name,
             handle_tactic_exec,
-            mutates_proof_state=args.tactic_exec != "probe",
+            mutates_proof_state=True,
         )
 
     if args.next:
@@ -693,10 +684,6 @@ def main(argv=None) -> int:
     if args.try_tactic:
         from core.easycrypt.commands.commit_commands import handle_try  # type: ignore
         return _run_action("try", handle_try, mutates_proof_state=False)
-
-    if args.bridge_probe:
-        from core.easycrypt.commands.commit_commands import handle_bridge_probe  # type: ignore
-        return _run_action("bridge-probe", handle_bridge_probe, mutates_proof_state=False)
 
     if args.align:
         from core.easycrypt.commands.speculative_commands import handle_align  # type: ignore

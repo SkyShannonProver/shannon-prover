@@ -22,7 +22,6 @@ from pathlib import Path
 from typing import Optional
 
 from workflow.schemas.config import RunConfig
-from workflow.schemas.proof_plan import ProofPlan
 from workflow.progress import (
     phase_start, phase_done, status, error as perror,
     pipeline_ui_init, pipeline_ui_phase, pipeline_ui_reset,
@@ -41,17 +40,7 @@ logger = logging.getLogger("workflow.orchestrator")
 # ---------------------------------------------------------------------------
 
 
-def run_proof_planner(
-    config: RunConfig,
-    run_dir: Path,
-) -> Optional[ProofPlan]:
-    """Run the Proof Planner agent (deterministic Phase 0 research)."""
-    from workflow.agents.proof_planner import run as run_planner
-    logger.info("PROOF PLANNER: planning proof for %s:%s", config.file, config.lemma)
-    return run_planner(config, run_dir)
-
-
-def run_prover(config: RunConfig, run_dir: Path, plan: Optional[ProofPlan] = None):
+def run_prover(config: RunConfig, run_dir: Path):
     """Run the Prover agent. Returns ProverResult."""
     from workflow.agents.prover import run as run_prover_agent
     logger.info("PROVER: starting proof attempt for %s:%s", config.file, config.lemma)
@@ -67,8 +56,6 @@ def run_prover(config: RunConfig, run_dir: Path, plan: Optional[ProofPlan] = Non
         warmup_seconds=config.prover.warmup_seconds,
         kill_gap_tactics=config.prover.kill_gap_tactics,
         kill_gap_idle_seconds=config.prover.kill_gap_idle_seconds,
-        plan=plan,
-        use_planner=bool(getattr(config, "use_planner", True)),
         eval_mode=bool(getattr(config, "eval_mode", False)),
         surface_profile=getattr(config, "surface_profile", None),
         record_proof_bank=getattr(config, "record_proof_bank", None),
@@ -170,7 +157,7 @@ def _duplicate_lemma_error(config: RunConfig) -> Optional[str]:
 
 @_restore_eval_env_on_exit
 def run(config: RunConfig) -> dict:
-    """Execute one proof-construction run: Phase 0 research → Phase 1 prove.
+    """Execute one managed proof-construction run.
 
     Single-pass. The old analyst/improver/regression/lab-note phases and their
     retry loop were removed; every run now measures raw proof-construction
@@ -269,59 +256,23 @@ def run(config: RunConfig) -> dict:
             "resume_capsules": [],
         })
     else:
-        # ── Phase 0: RESEARCH (Python, no LLM) ─────────────────────
-        plan = None
-        phase_start("Phase 0: RESEARCH")
-        _l1_baseline = (
-            getattr(config, "surface_profile", None) == "l1_goal_projection"
-        )
-        if _l1_baseline:
-            # l1_goal_projection is the planner-free minimal baseline. Its
-            # profile-safe prompt is intentionally minimal, so do not even run
-            # the planner: keeps the baseline pure and removes any leak risk
-            # via planner output.
-            status("Orchestrator",
-                   "Research skipped: l1_goal_projection is a planner-free baseline",
-                   "\033[33m")
-        elif getattr(config, "use_planner", True):
-            plan = run_proof_planner(config, iter_dir)
-            if plan is not None:
-                status("Orchestrator",
-                       f"Research: {plan.difficulty} difficulty, "
-                       f"{len(plan.context_brief.available_lemmas)} lemmas")
-            else:
-                phase_done("Phase 0: RESEARCH", "failed")
-                raise RuntimeError(
-                    "Proof planner failed; refusing to launch prover without "
-                    "planner context. Use --no-planner only for explicit "
-                    "planner-ablation experiments."
-                )
-        else:
-            status("Orchestrator",
-                   "Research skipped: planner disabled for ablation",
-                   "\033[33m")
-        phase_done("Phase 0: RESEARCH")
-
-        # Adaptive prover count based on plan difficulty (display only).
-        difficulty = plan.difficulty if (plan and plan.difficulty) else "medium"
-
         # Search topology is explicit config, independent of the compiler
         # surface profile.  Defaults still use tree mode with two initial
         # provers; callers that want one node set tree_initial_provers=1.
         prove_mode = config.prover.mode
         prove_count = config.prover.tree_initial_provers
 
-        # ── Phase 1: PROVE ──────────────────────────────────────────
-        phase_start("Phase 1: PROVE")
+        # ── PROVE ───────────────────────────────────────────────────
+        phase_start("PROVE")
         pipeline_ui_phase(1, "active",
-                          f"{prove_mode} mode, {prove_count} provers, {difficulty}")
-        prover_result = run_prover(config, iter_dir, plan=plan)
+                          f"{prove_mode} mode, {prove_count} provers")
+        prover_result = run_prover(config, iter_dir)
 
         proved = prover_result.proved
         verified = prover_result.ec_file_verified
         elapsed_prove = prover_result.elapsed_seconds
         skipped = prover_result.skipped
-        phase_done("Phase 1: PROVE",
+        phase_done("PROVE",
                    f"proved={proved}, verified={verified}, time={elapsed_prove:.0f}s")
         result_str = "✅ proved" if proved and verified else ("⚠️ unverified" if proved else "❌ failed")
         pipeline_ui_phase(1, "done", f"{result_str}, {elapsed_prove:.0f}s")
@@ -435,10 +386,6 @@ def main():
                         help="Blind the prover to the target lemma's existing proof: "
                              "prompt/rendering code blocks cached/prior proof "
                              "retrieval for the target lemma.")
-    parser.add_argument("--no-planner", action="store_true",
-                        help="Disable deterministic planner context injection. "
-                             "Use only for explicit ablation experiments; normal "
-                             "and eval runs keep planner enabled.")
     parser.add_argument("--surface-profile",
                         dest="surface_profile",
                         choices=surface_profile_names(include_unsupported=False),
@@ -522,8 +469,6 @@ def main():
         config.prover.effort = args.prover_effort
     if args.eval_mode:
         config.eval_mode = True
-    if args.no_planner:
-        config.use_planner = False
     if args.surface_profile:
         config.surface_profile = args.surface_profile
     if args.prover_mode:

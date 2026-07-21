@@ -55,7 +55,7 @@ _REASON_RE = re.compile(
 )
 _REPAIR_RE = re.compile(
     r"\b("
-    r"try|use|run|probe|inspect|undo|rerun|re-run|prefer|then|after|"
+    r"try|use|run|inspect|undo|rerun|re-run|prefer|then|after|"
     r"before|expose|route|follow|choose|supply|resolve|check|repair|"
     r"alternative|candidate|continue|read"
     r")\b",
@@ -170,7 +170,7 @@ def _lint_recommendations(
                     "negative_guidance_without_repair",
                     (
                         "Negative or avoid guidance must include a positive "
-                        "next route such as try/use/run/probe/inspect/undo."
+                        "next route such as use/run/inspect/undo."
                     ),
                     rec_path,
                 ))
@@ -191,14 +191,14 @@ def _lint_recommendation_conflicts(
     issues: list[TextLintIssue] = []
     for action, kinds in by_action.items():
         if "avoid_action" in kinds and (
-            "probe_tactic" in kinds or "runnable_tactic" in kinds
+            "tactic_candidate" in kinds or "runnable_tactic" in kinds
         ):
             issues.append(TextLintIssue(
                 "error",
                 "conflicting_guidance_for_same_action",
                 (
                     "The same tactic is exposed as both avoid guidance and a "
-                    "positive probe/commit recommendation."
+                    "positive candidate/commit recommendation."
                 ),
                 f"{path}[action={action}]",
             ))
@@ -286,10 +286,10 @@ def _negative_without_repair(text: str) -> bool:
 
 def _has_positive_route(rec: dict[str, Any]) -> bool:
     text = _recommendation_text(rec)
-    # "daemon probe predicted no progress" is evidence, not a route the prover
+    # A private preflight no-progress verdict is evidence, not a route the prover
     # can follow.  Strip common evidence phrasing before searching for repairs.
     route_text = re.sub(
-        r"\bdaemon\s+probe\s+predicted\b",
+        r"\b(?:daemon\s+probe|private\s+easycrypt\s+preflight)\s+predicted\b",
         "",
         text,
         flags=re.IGNORECASE,

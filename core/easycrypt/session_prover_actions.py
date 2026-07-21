@@ -6,8 +6,8 @@ into concrete actions that ProverWorkspaceView can present to the prover.
 
 The important distinction is epistemic:
 
-* ``probe`` actions should be tried with ``-try`` and do not mutate proof state.
-* ``commit`` actions are immediately runnable tactics for ``-next`` / ``-chain``.
+* ``strategy`` actions are non-executable candidates or require instantiation.
+* ``commit`` actions are EasyCrypt-verified tactics for ``-next`` / ``-chain``.
 * ``strategy`` actions require reasoning or instantiation before execution.
 * ``inspect`` / ``diagnose`` / ``verify`` actions call tools instead of tactics.
 """
@@ -26,7 +26,6 @@ from core.easycrypt.value_shapes import as_dict as _dict
 PROVER_ACTION_SCHEMA_VERSION = 1
 PROVER_ACTION_CATEGORIES = (
     "commit",
-    "probe",
     "inspect",
     "diagnose",
     "verify",
@@ -173,7 +172,7 @@ def prover_contract_for_recommendation(rec: dict[str, Any]) -> dict[str, str]:
     verified = (
         confidence == "verified"
         or epistemic in {
-            "daemon_probe_accepted",
+            "easycrypt_preflight_accepted",
             "daemon_chain_accepted",
             "easycrypt_verified",
             "verified_by_easycrypt",
@@ -195,30 +194,30 @@ def prover_contract_for_recommendation(rec: dict[str, Any]) -> dict[str, str]:
                 "nearby alternatives before mutating the proof state."
             ),
         )
-    if action_type == "probe_tactic":
+    if action_type == "tactic_candidate":
         if family == "pr_path_plan":
             meaning = (
-                "ProofIR generated this as a typed Pr-path probe from current "
+                "ProofIR generated this as a typed Pr-path candidate from current "
                 "endpoints, live handles, and local adapter structure."
             )
         else:
             meaning = (
-                f"{producer} generated this as a non-mutating tactic probe for "
+                f"{producer} generated this as an unverified tactic candidate for "
                 "the current goal."
             )
         return _prover_contract(
-            role="probe_option",
+            role="tactic_candidate",
             meaning=meaning,
             not_meaning=(
                 "It is not a proof obligation, not a forced next step, and "
-                "not guaranteed until EasyCrypt accepts the probe."
+                "not a runnable action until EasyCrypt validates it."
             ),
             expected_use=(
-                "Try it with `-try`; commit only after an accepted probe and "
-                "only if the resulting subgoal shape matches your plan."
+                "Use it as mechanical context. Submit a commit only when it "
+                "matches your proof plan; the manager will report EasyCrypt's result."
             ),
             failure_interpretation=(
-                "A rejected probe is evidence about this candidate/form, not "
+                "An EasyCrypt rejection is evidence about this candidate/form, not "
                 "a reason to distrust the whole proof state."
             ),
         )
@@ -257,7 +256,7 @@ def prover_contract_for_recommendation(rec: dict[str, Any]) -> dict[str, str]:
         not_meaning="It is not directly runnable as-is.",
         expected_use=(
             "Use it to choose among actions, fill missing arguments, or decide "
-            "which inspection/probe should come next."
+            "which inspection or candidate validation should come next."
         ),
     )
 
@@ -295,8 +294,6 @@ def primary_action_from_actions(actions: list[dict[str, Any]]) -> str:
         return "verify"
     if category == "diagnose":
         return "diagnose"
-    if category == "probe":
-        return "probe_tactic"
     if category == "commit":
         return "try_tactic"
     if category == "strategy":
@@ -329,9 +326,7 @@ def validate_prover_actions(actions: Any, *, label: str = "actions") -> ProverAc
             )
         if "state_changed" in action and not isinstance(action["state_changed"], bool):
             errors.append(f"{prefix}.state_changed must be a bool")
-        if category == "probe" and action.get("state_changed") is not False:
-            errors.append(f"{prefix} probe action must set state_changed=false")
-        if category in {"probe", "commit"} and not str(action.get("tactic") or "").strip():
+        if category == "commit" and not str(action.get("tactic") or "").strip():
             errors.append(f"{prefix}.{category} action must include a tactic")
         if category in {"inspect", "diagnose", "verify"} and not str(action.get("tool") or "").strip():
             errors.append(f"{prefix}.{category} action must include a tool")
@@ -374,24 +369,23 @@ def _action_from_recommendation(
             goal_hash=goal_hash,
         )
 
-    if action_type == "probe_tactic":
+    if action_type == "tactic_candidate":
         if requires_instantiation:
             return _recommendation_action(
                 f"{_safe_id(str(rec.get('id') or 'recommendation'))}.strategy",
                 category="strategy",
-                title="Instantiate probe tactic template",
+                title="Instantiate tactic candidate",
                 rec=rec,
                 goal_hash=goal_hash,
                 requires_instantiation=True,
             )
-        return _tactic_action(
-            f"{_safe_id(str(rec.get('id') or 'recommendation'))}.probe",
-            category="probe",
-            tactic=tactic_or_command,
-            session_dir=session_dir,
+        return _recommendation_action(
+            f"{_safe_id(str(rec.get('id') or 'recommendation'))}.candidate",
+            category="strategy",
+            title="Unverified tactic candidate",
             rec=rec,
             goal_hash=goal_hash,
-            requires_instantiation=requires_instantiation,
+            requires_instantiation=False,
         )
     if action_type == "avoid_action" or category == "warning":
         return _recommendation_action(
@@ -425,11 +419,10 @@ def _action_from_recommendation(
         )
     if action_type == "runnable_tactic" or category == "runnable_tactic" or _looks_like_tactic_kind(rec):
         if not _is_verified_commit_recommendation(rec):
-            return _tactic_action(
-                f"{_safe_id(str(rec.get('id') or 'recommendation'))}.probe",
-                category="probe",
-                tactic=tactic_or_command,
-                session_dir=session_dir,
+            return _recommendation_action(
+                f"{_safe_id(str(rec.get('id') or 'recommendation'))}.candidate",
+                category="strategy",
+                title="Unverified tactic candidate",
                 rec=rec,
                 goal_hash=goal_hash,
                 requires_instantiation=requires_instantiation,
@@ -489,28 +482,18 @@ def _tactic_action(
     requires_instantiation: bool,
 ) -> dict[str, Any]:
     metadata = _dict(rec.get("metadata"))
-    probe = category == "probe"
     contract = _dict(rec.get("prover_contract")) or prover_contract_for_recommendation(rec)
     return {
         "schema_version": PROVER_ACTION_SCHEMA_VERSION,
         "id": action_id,
         "category": category,
-        "title": (
-            "Probe tactic without changing proof state"
-            if probe else "Commit runnable tactic"
-        ),
-        "tool": "try" if probe else "next",
-        "command": _tactic_command(
-            "try" if probe else "next",
-            tactic,
-            session_dir=session_dir,
-        ),
+        "title": "Commit runnable tactic",
+        "tool": "next",
+        "command": _tactic_command("next", tactic, session_dir=session_dir),
         "tactic": tactic,
-        "state_changed": not probe,
-        "cost": str(metadata.get("cost") or ("cheap" if probe else "moderate")),
-        "epistemic_status": _epistemic_status(rec, default=(
-            "static_candidate_uncertified_by_ec" if probe else "unverified_candidate"
-        )),
+        "state_changed": True,
+        "cost": str(metadata.get("cost") or "moderate"),
+        "epistemic_status": _epistemic_status(rec, default="easycrypt_verified"),
         "confidence": str(rec.get("confidence") or ""),
         "why": str(rec.get("why") or "Structured recommendation produced this tactic."),
         "source": str(rec.get("producer") or rec.get("source") or ""),
@@ -910,7 +893,7 @@ def _is_verified_commit_recommendation(rec: dict[str, Any]) -> bool:
     status = str(metadata.get("epistemic_status") or rec.get("epistemic_status") or "")
     confidence = str(rec.get("confidence") or "")
     return confidence == "verified" or status in {
-        "daemon_probe_accepted",
+        "easycrypt_preflight_accepted",
         "daemon_chain_accepted",
         "easycrypt_verified",
         "verified_by_easycrypt",
@@ -975,5 +958,3 @@ def _string_list(value: Any) -> list[str]:
 
 def _safe_id(text: str) -> str:
     return re.sub(r"[^A-Za-z0-9_.-]+", "_", text).strip("_") or "action"
-
-

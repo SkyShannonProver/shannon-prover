@@ -13,7 +13,7 @@ from __future__ import annotations
 import re
 
 from core.easycrypt import session_prover_workspace_view as V
-from workflow import surface_composer as SC
+from workflow import surface_panels as SC
 
 _SETUP_PREFIX_RE = re.compile(r"^\d+\s+setup statement\(s\):")
 
@@ -36,7 +36,7 @@ def _setup_row_view(left: str):
 
 
 def test_statement_is_proc_call_detector() -> None:
-    is_call = V._statement_is_proc_call
+    is_call = V.statement_is_procedure_call
     # Real proc calls (from the equiv_step4 evidence).
     assert is_call("ROout.set((n, C.ofintd 0), witness)")
     assert is_call("Iter(Orcl).iter(ns)")
@@ -98,11 +98,11 @@ def test_leading_statement_parser_still_extracts_head() -> None:
     assert head.startswith("ROout.set"), head
 
 
-# --- Renderer side (workflow.surface_composer._surgery_where) ----------------
+# --- Panel composition side (workflow.surface_panels._surgery_where) ---------
 #
 # The producer flags the call, and the agent-facing surgery panel renderer must
 # keep that as structural evidence rather than tactic advice. For a multi-statement
-# summary row whose concatenated text contains a proc call, _statement_is_proc_call
+# summary row whose concatenated text contains a proc call, statement_is_procedure_call
 # on the whole summary short-circuits to False on the leading `<-` assignment, so
 # the renderer must split per-statement.
 

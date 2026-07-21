@@ -154,7 +154,7 @@ def render_call_site_route_options(
                 "\n[CALL-SITE-OPTIONS/CONTEXT_ONLY] ProofIR exposed a "
                 f"call-site route (`{state}`), but no fully concrete call "
                 "tactic template is currently available. Inspect the "
-                "route's missing slots/frontier blockers before probing "
+                "route's missing slots/frontier blockers before submitting "
                 "call tactics.\n"
             ),
             layer=3,
@@ -213,7 +213,7 @@ def render_call_site_route_options(
             _unprobed += len(_scan) - idx
             break
         tactic = str(candidate.get("tactic") or "").strip()
-        ev_id = f"probe.call_site.{idx}"
+        ev_id = f"preflight.call_site.{idx}"
         try:
             result = h.cli.try_tactic(h.dbe._session_id, tactic)
         except Exception as exc:
@@ -271,7 +271,7 @@ def render_call_site_route_options(
             layer=3,
             kind="recommendation",
             recommendations=[],
-            evidence={"context": [context_evidence], "probe": probe_evidence},
+            evidence={"context": [context_evidence], "preflight": probe_evidence},
             notes=[{
                 "code": "call_site_options.no_verified_call",
                 "message": (
@@ -303,7 +303,7 @@ def render_call_site_route_options(
                 "payload": {"tactic": tactic},
             }, ensure_ascii=True)
         )
-        ev_id = str(candidate.get("evidence_id") or f"probe.call_site.{idx - 1}")
+        ev_id = str(candidate.get("evidence_id") or f"preflight.call_site.{idx - 1}")
         recommendations.append({
             "id": f"call_site_options.verified.{idx - 1}",
             "kind": "call_site_tactic",
@@ -348,7 +348,7 @@ def render_call_site_route_options(
         layer=3,
         kind="recommendation",
         recommendations=recommendations,
-        evidence={"context": [context_evidence], "probe": probe_evidence},
+        evidence={"context": [context_evidence], "preflight": probe_evidence},
         notes=[{
             "code": "call_site_options.daemon_verified",
             "message": (
@@ -585,7 +585,7 @@ def try_rewrite_probe(self, raw_goal: str,
     accepted: list[tuple[str, str, str]] = []
     probe_evidence: list[dict[str, Any]] = []
     for (kind, tac), res_r in zip(deduped, results_r or []):
-        ev_id = f"probe.rewrite.{len(probe_evidence)}"
+        ev_id = f"preflight.rewrite.{len(probe_evidence)}"
         ok = bool(res_r.get("accepted")) and not bool(
             res_r.get("no_progress", False)
         )
@@ -628,7 +628,7 @@ def try_rewrite_probe(self, raw_goal: str,
             layer=2,
             kind="recommendation",
             recommendations=[],
-            evidence={"context": [context_evidence], "probe": probe_evidence},
+            evidence={"context": [context_evidence], "preflight": probe_evidence},
             notes=[{
                 "code": "rewrite_candidates.no_verified_rewrite",
                 "message": (
@@ -718,7 +718,7 @@ def try_rewrite_probe(self, raw_goal: str,
         layer=2,
         kind="recommendation",
         recommendations=recommendations,
-        evidence={"context": [context_evidence], "probe": probe_evidence},
+        evidence={"context": [context_evidence], "preflight": probe_evidence},
         notes=[{
             "code": "rewrite_candidates.daemon_verified",
             "message": (

@@ -9,6 +9,7 @@ ROOT = Path(__file__).resolve().parents[1]
 import _pathsetup  # noqa: F401,E402  (repo root on sys.path)
 
 from core.easycrypt.analysis.ec_procedure_ref import (  # noqa: E402
+    extract_visible_call_procedures,
     parse_call_argument_site,
     parse_call_statement,
     parse_procedure_application,
@@ -17,6 +18,32 @@ from core.easycrypt.analysis.ec_procedure_ref import (  # noqa: E402
     procedure_spine_key,
     procedure_tail_key,
 )
+
+
+def test_extract_visible_call_procedures_keeps_nested_module_identity() -> None:
+    goal = """\
+pre = true
+(1) D2(O).O.init()
+(2) b <@ Adv_MAC_to_F(A, D2(O).O).guess()
+post = true
+"""
+
+    assert extract_visible_call_procedures(goal) == [
+        "Adv_MAC_to_F(A,D2(O).O).guess"
+    ]
+
+
+def test_extract_visible_call_procedures_handles_multiline_module_application() -> None:
+    goal = """\
+c <@
+  Outer(
+    Inner(A, O),
+    F(X)).enc(p)
+"""
+
+    assert extract_visible_call_procedures(goal) == [
+        "Outer(Inner(A,O),F(X)).enc"
+    ]
 
 
 def test_parse_call_statement_keeps_functor_proc_and_value_args_separate() -> None:

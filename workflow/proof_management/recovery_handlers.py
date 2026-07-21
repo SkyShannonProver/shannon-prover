@@ -338,46 +338,6 @@ class ProofRecoveryIntentHandler:
             },
         )
 
-    def handle_probe_replay_suffix_chunk(
-        self,
-        intent: AgentIntent,
-    ) -> RecoveryTurnPlan:
-        resolved = self.proof_memory.resolve_replay_suffix_chunk(
-            self._committed_tactics(),
-            str(intent.payload.get("chunk_id") or ""),
-        )
-        if not resolved:
-            return self.replay_suffix_chunk_menu_plan(
-                intent,
-                notice=(
-                    "That replay chunk is no longer available for the current "
-                    "route memory. Choose from the current replay options."
-                ),
-            )
-
-        current_tactics = self._committed_tactics()
-        result = self.repl.verify_tactic_chunk_from_prefix(
-            current_tactics,
-            _string_list(resolved.get("tactics")),
-        )
-        if bool(result.get("ok")):
-            self.proof_memory.remember_verified_replay_chunk(
-                current_tactics=current_tactics,
-                chunk=resolved,
-            )
-        observation = self.proof_memory.replay_suffix_probe_observation(
-            intent=intent.intent,
-            payload=intent_payload_surface(intent),
-            chunk=resolved,
-            result=result,
-        )
-        return RecoveryTurnPlan(
-            kind="nonmutating",
-            observation=observation,
-            actions=_list(result.get("actions")),
-            audit_kind="replay_suffix_chunk.probed",
-        )
-
     def handle_commit_replay_suffix_chunk(
         self,
         intent: AgentIntent,
@@ -621,6 +581,5 @@ class ProofRecoveryIntentHandler:
             label="checkpoint_rewind_confirmation",
             audit_kind="checkpoint_rewind.confirmation_requested",
         )
-
 
 

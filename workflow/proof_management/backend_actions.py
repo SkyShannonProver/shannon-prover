@@ -7,18 +7,11 @@ from pathlib import Path
 from typing import Any
 from core.easycrypt.value_shapes import first_text as _first_text
 
-from workflow.proof_management.analyzers.pure_tail import (
-    _goal_text_contains_call_site,
-)
 from workflow.proof_management.common import (
     _dict,
     _drop_empty,
     _list,
     _preview,
-)
-from workflow.proof_management.transitions import (
-    is_broad_inline_tactic as _is_broad_inline_tactic,
-    structural_transition_surface as _render_structural_transition,
 )
 from workflow.proof_management.turn_view import intent_effect as _intent_effect
 
@@ -88,7 +81,7 @@ _TACTIC_EXECUTION_RESULT_MARKER = "[TACTIC-EXECUTION-RESULT]"
 def _tactic_execution_result_payload(text: str) -> dict[str, Any]:
     """Return the JSON object emitted under ``[TACTIC-EXECUTION-RESULT]``.
 
-    This is the authoritative result of a probe/commit/undo. Parsing it
+    This is the authoritative result of a commit/undo. Parsing it
     explicitly avoids ``_extract_json_object``'s "first decodable ``{``"
     heuristic, which can latch onto an earlier daemon-verify/AUTO-PIVOT phase
     emission (carrying its own ``ok: false``) and mislabel a successful
@@ -251,7 +244,7 @@ def _agent_observation_from_command(
     session_dir: Any = None,
 ) -> dict[str, Any]:
     # Parse the authoritative result, never "the first decodable JSON". Tactic
-    # exec (probe / commit / undo) emits a [TACTIC-EXECUTION-RESULT] block; read
+    # exec (commit / undo) emits a [TACTIC-EXECUTION-RESULT] block; read
     # it by marker so the verdict reflects the recorded result, not an earlier
     # daemon-verify/AUTO-PIVOT emission that happens to decode first (which
     # mislabeled successful multi-goal commits as "rejected"). Read-only
@@ -306,26 +299,6 @@ def _agent_observation_from_command(
             "effect": _action_effect(label, execution),
             "proof_state": _proof_state_observation(label, execution, status),
         }
-    probe_preview = _probe_preview_from_payload(label, payload)
-    if probe_preview:
-        observation["result"] = (
-            "EasyCrypt accepted this read-only probe. The committed proof "
-            "state was not changed; `goal_after_probe` shows the goal that "
-            "would be visible if this tactic were committed."
-        )
-        observation["probe_preview"] = probe_preview
-        preview_tactic = _first_text(
-            probe_preview.get("tactic"),
-            _first_list_text(execution.get("submitted_tactics")),
-            _command_arg_after(cmd, "-c"),
-            default="",
-        )
-        decision = _accepted_probe_decision_surface(
-            preview_tactic,
-            probe_preview,
-        )
-        if decision:
-            observation.update(decision)
     content = _content_observation_from_payload(label, payload, stdout)
     if content:
         observation["content"] = content
@@ -337,28 +310,15 @@ def _agent_observation_from_command(
     if tactic:
         observation["tactic"] = tactic
     error_summary = _error_summary(payload, stderr, ok=ok)
-    # A read-only `probe_tactic` whose TACTIC was rejected still reports ok=True (the
-    # probe TOOL ran fine; only EC rejected the tactic), so `not ok` alone MISSES it.
-    # That is the exact gap that left a rejected `inline` probe with no `why`, so the
-    # agent guessed for minutes why it failed (MEE-CBC L4, 2026-06-06). Recover the EC
-    # error whenever the step was rejected — a failed commit (`not ok`) OR a rejected
-    # probe (`status == "probe_rejected"`).
-    tactic_rejected = (not ok) or str(status).strip() == "probe_rejected"
-    if not error_summary and tactic_rejected:
+    if not error_summary and not ok:
         # The authoritative [TACTIC-EXECUTION-RESULT] block omits structured
         # `errors` on some rejections (e.g. "cannot infer all placeholders"); the
         # daemon's agent-view envelope (also in stdout) still carries the raw EC
         # error. Recover it so last_result says *why* the tactic was rejected —
-        # critical for L1 (commit) and for every L4 probe, whose result text already
-        # tells the agent to "use the error summary". Read-only: never alters a verdict.
+        # critical for commits whose result text tells the agent to use the summary.
         error_summary = _stdout_error_summary(stdout)
     if error_summary:
         observation["error_summary"] = error_summary
-    if label == "probe_tactic" and (
-        str(status).strip() == "probe_error"
-        or (not ok and str(status).strip() != "probe_rejected")
-    ):
-        observation["kind"] = "probe_tool_error"
     return _drop_empty(observation)
 
 
@@ -598,133 +558,6 @@ def _context_effect_text(value: Any) -> str:
     return normalized
 
 
-def _probe_preview_from_payload(
-    label: str,
-    payload: dict[str, Any],
-) -> dict[str, Any]:
-    if label != "probe_tactic":
-        return {}
-    candidate = _dict(payload.get("candidate_after"))
-    if str(candidate.get("status") or "") != "probe_accepted":
-        return {}
-    goal = _dict(candidate.get("current_goal"))
-    lines = [
-        str(item)
-        for item in _list(goal.get("lines"))
-        if isinstance(item, str)
-    ]
-    goal_after_probe = _drop_empty({
-        "lines": lines,
-        "line_count": goal.get("line_count") or len(lines),
-        "char_count": goal.get("char_count"),
-        "shown_lines": goal.get("shown_lines"),
-        "text_fully_shown": goal.get("text_fully_shown"),
-        "truncated": goal.get("truncated"),
-        "source": goal.get("source"),
-    })
-    if not goal_after_probe:
-        return {}
-    return _drop_empty({
-        "tactic": candidate.get("tactic"),
-        "outcome": "EasyCrypt accepted this read-only probe.",
-        "goal_after_remaining": candidate.get("goal_after_remaining"),
-        "effect": (
-            "This preview is speculative only; the committed EasyCrypt proof "
-            "state was not changed."
-        ),
-        "goal_after_probe": goal_after_probe,
-    })
-
-
-def _accepted_probe_decision_surface(
-    tactic: str,
-    preview: dict[str, Any],
-) -> dict[str, Any]:
-    transition = _render_structural_transition(
-        tactic,
-        status="accepted_checkpoint",
-        submit_intent="commit_tactic",
-    )
-    goal_after = _dict(preview.get("goal_after_probe"))
-    preview_summary = _drop_empty({
-        "remaining_goals": preview.get("goal_after_remaining"),
-        "line_count": goal_after.get("line_count"),
-        "char_count": goal_after.get("char_count"),
-        "truncated": goal_after.get("truncated"),
-    })
-    preview_effects = _accepted_probe_preview_effects(tactic, preview)
-    if transition.get("kind") == "closing_or_checking":
-        return _drop_empty({
-            "kind": "accepted_closing_probe",
-            "message": "This closing/checking probe was accepted.",
-            "accepted_tactic": tactic,
-            "closing_decision": transition,
-            "preview_summary": preview_summary,
-        })
-    if preview_effects:
-        transition = dict(transition)
-        commit_action = transition.pop("recommended_next", None)
-        if commit_action:
-            transition["available_commit"] = commit_action
-        transition["observed_risk"] = preview_effects.get("observed_risk")
-        return _drop_empty({
-            "kind": "accepted_structural_probe_preview",
-            "message": "This structural probe was accepted.",
-            "accepted_tactic": tactic,
-            "structural_transition": transition,
-            "effect": (
-                "Committing this accepted tactic would change the EasyCrypt "
-                "proof state and return a post-commit workspace view."
-            ),
-            "preview_effects": preview_effects,
-            "if_route_wrong": transition.get("if_wrong_after_commit"),
-            "preview_summary": preview_summary,
-        })
-    return _drop_empty({
-        "kind": "accepted_structural_transition",
-        "message": "This structural transition probe was accepted.",
-        "accepted_tactic": tactic,
-        "structural_transition": transition,
-        "question": f"Do you want to enter the {transition.get('phase')} workbench?",
-        "recommended_next": transition.get("recommended_next"),
-        "guidance": (
-            "If yes, commit this exact tactic and read the real post-commit "
-            "workbench. If no, choose another probe or inspect the current "
-            "state. Do not solve the speculative preview in your mental model."
-        ),
-        "if_route_wrong": transition.get("if_wrong_after_commit"),
-        "preview_summary": preview_summary,
-    })
-
-
-def _accepted_probe_preview_effects(
-    tactic: str,
-    preview: dict[str, Any],
-) -> dict[str, Any]:
-    if not _is_broad_inline_tactic(str(tactic or "").lower()):
-        return {}
-    goal_after = _dict(preview.get("goal_after_probe"))
-    lines = "\n".join(
-        str(line)
-        for line in _list(goal_after.get("lines"))
-        if isinstance(line, str)
-    )
-    return _drop_empty({
-        "kind": "broad_inline_preview",
-        "after": {
-            "remaining_goals": preview.get("goal_after_remaining"),
-            "line_count": goal_after.get("line_count"),
-            "char_count": goal_after.get("char_count"),
-            "truncated": goal_after.get("truncated"),
-            "goal_contains_call_site": (
-                _goal_text_contains_call_site(lines) if lines else None
-            ),
-        },
-        "observed_risk": "broad_inline_can_reduce_call_site_handles",
-        "reversible_to": "last_call_site_boundary",
-    })
-
-
 def _call_subgoal_preview_surface(preview: str) -> dict[str, Any]:
     normalized = preview.lower()
     if "accepted by daemon" in normalized:
@@ -765,45 +598,20 @@ def _read_only_result_text(status: str) -> str:
 def _manager_result_text(label: str, status: str, ok: bool) -> str:
     normalized = str(status or "").strip()
     # NO-PROGRESS: EasyCrypt ACCEPTED the tactic, but it changed nothing (structural
-    # no-op), so a commit auto-reverts (`no_progress_reverted`) and a probe reports
-    # `probe_no_progress`. This is NOT a syntax/type error — there is no error to
+    # no-op), so a commit auto-reverts (`no_progress_reverted`). This is NOT a syntax/type error — there is no error to
     # surface (errors=None). Routing it through the generic "rejected — use the error
     # summary" text misleads the agent into hunting a non-existent error: observed
     # live (MEE-CBC L1, 2026-06-06), the agent burned turns re-trying `inline` variants
     # that EC accepted-but-no-op'd, each time told to "use the error summary" with none
     # present. Say the truth instead: accepted, no effect, pick a different tactic.
-    if normalized in {"no_progress_reverted", "probe_no_progress"}:
-        verb = "probe" if label == "probe_tactic" else "commit"
+    if normalized == "no_progress_reverted":
         return (
-            f"NO PROGRESS — EasyCrypt ACCEPTED this {verb} but it did not change the "
+            "NO PROGRESS — EasyCrypt ACCEPTED this commit but it did not change the "
             "goal, so nothing was committed (it auto-reverts). This is NOT a syntax or "
             "type error — there is no error to fix. The tactic is a no-op at this goal "
             "(e.g. the call is already effectively inlined, or it needs a different / "
             "positional form). Re-trying this exact tactic will no-op again — pick a "
             "different tactic."
-        )
-    if label == "probe_tactic":
-        if ok and normalized == "probe_accepted":
-            return (
-                "EasyCrypt accepted this read-only probe. The committed proof "
-                "state was not changed."
-            )
-        if normalized in {"probe_error", "tool_error"}:
-            return (
-                "The read-only probe tool failed before EasyCrypt could "
-                "validate this tactic. The committed proof state was not "
-                "changed; use the error summary as a backend health signal, "
-                "not as proof that the tactic is invalid."
-            )
-        # EC validated and REJECTED the tactic. The daemon reports ok=False for a
-        # rejection, but this is a genuine EasyCrypt rejection — NOT a tool/transport
-        # failure. The old `or not ok` above mislabeled it as "tool failed before
-        # EasyCrypt could validate", contradicting the surfaced EC error (MEE-CBC L4
-        # 2026-06-06, probe `inline PseudoRP.fi.` → `unknown procedure`). The EC error
-        # is in error_summary.
-        return (
-            "EasyCrypt rejected this probe. The committed proof state was not "
-            "changed; the EasyCrypt error tells you why."
         )
     if label == "commit_tactic":
         if ok and normalized in {"ok", "accepted", "success"}:
@@ -813,11 +621,6 @@ def _manager_result_text(label: str, status: str, ok: bool) -> str:
         return (
             "EasyCrypt rejected the committed tactic. Use the error summary "
             "and current goal to revise the proof step."
-        )
-    if label == "probe_replay_suffix_chunk":
-        return (
-            "The manager checked an old route chunk in a scratch verifier "
-            "session; the committed proof state was not changed."
         )
     if label == "commit_replay_suffix_chunk":
         if ok:
@@ -938,16 +741,10 @@ def _timeout_observation(label: str, cmd: list[str], timeout: int) -> dict[str, 
 
 
 def _action_effect(label: str, execution: dict[str, Any]) -> str:
-    mode = _first_text(execution.get("mode"), default="")
     if label.startswith("inspect_") or label == "lookup_symbol":
         return (
             "This asks the manager for information only; it does not change "
             "the EasyCrypt proof state."
-        )
-    if label == "probe_tactic" or mode == "probe":
-        return (
-            "This is a read-only probe; it asks EasyCrypt what would happen "
-            "without changing the committed proof state."
         )
     if bool(execution.get("state_changed") or execution.get("history_committed")):
         return (
@@ -978,17 +775,13 @@ def _proof_state_observation(
     status: str,
 ) -> str:
     normalized = str(status or "").strip()
-    if label == "probe_replay_suffix_chunk":
-        return "The committed EasyCrypt proof state was not changed."
     if label == "commit_replay_suffix_chunk":
         return "The committed EasyCrypt proof state changed if the replay chunk was accepted."
-    if label == "probe_tactic" or _first_text(execution.get("mode"), default="") == "probe":
-        return "The committed EasyCrypt proof state was not changed."
-    if normalized in {"no_progress", "no_progress_reverted", "probe_no_progress"}:
+    if normalized in {"no_progress", "no_progress_reverted"}:
         return "The committed EasyCrypt proof state was not changed."
     if bool(execution.get("state_changed") or execution.get("history_committed")):
         return "The committed EasyCrypt proof state changed."
-    if normalized in {"probe_rejected", "failed", "error", "rejected"}:
+    if normalized in {"failed", "error", "rejected"}:
         return "The committed EasyCrypt proof state was not changed."
     if label.startswith("inspect_") or label == "lookup_symbol":
         return "The committed EasyCrypt proof state was not changed."
@@ -1018,7 +811,7 @@ def _error_summary(payload: dict[str, Any], stderr: str, *, ok: bool = False) ->
     # Structured EC error fields FIRST: a daemon/tactic rejection carries the clean
     # reason directly in result.error / result.failure_reason (e.g. "[error] unknown
     # procedure: PseudoRP.fi"). These were never read, so a `[DAEMON_REJECTED]`
-    # commit/probe landed error_summary=None and the agent was told to "use the error
+    # commit landed error_summary=None and the agent was told to "use the error
     # summary" with none present (root-caused by EC replay, MEE-CBC L1/L4 2026-06-06).
     structured = _first_text(result.get("error"), result.get("failure_reason"), default="")
     if structured.strip():
@@ -1046,8 +839,7 @@ def _error_summary(payload: dict[str, Any], stderr: str, *, ok: bool = False) ->
         elif str(item).strip():
             return _preview(str(item), limit=280)
     # Raw-stderr fallback — ONLY when the action FAILED. Structured proof errors
-    # (raw_excerpt / errors above) are read regardless of status, so a probe
-    # rejection still surfaces its detail. But session_cli also writes purely
+    # (raw_excerpt / errors above) are read regardless of status. But session_cli also writes purely
     # INFORMATIONAL notices to stderr on SUCCESS (exit 0) — notably the
     # "[session_cli] Restart #N: discarding K committed tactic(s) … Proceeding
     # with fresh session" line emitted when a checkpoint rewind restarts+replays.
@@ -1166,12 +958,7 @@ def _timeout_stream_text(value: Any) -> str:
 def _backend_args_mutate_proof_state(cmd: list[str]) -> bool:
     flags = set(str(part) for part in cmd)
     if "-tactic-exec" in flags:
-        try:
-            idx = cmd.index("-tactic-exec")
-            mode = str(cmd[idx + 1])
-        except (ValueError, IndexError):
-            mode = ""
-        return mode != "probe"
+        return True
     return bool(flags & {"-start", "-next", "-prev", "-chain", "-replay"})
 
 
@@ -1185,4 +972,3 @@ timeout_command_summary = _timeout_command_summary
 agent_observation_from_command = _agent_observation_from_command
 content_observation_from_payload = _content_observation_from_payload
 backend_args_mutate_proof_state = _backend_args_mutate_proof_state
-accepted_probe_preview_effects = _accepted_probe_preview_effects

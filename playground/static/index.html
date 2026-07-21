@@ -218,7 +218,7 @@
     <div class="panel"><div id="panelBody" class="empty">— start a session —</div></div>
     <div class="foot">
       <div class="hint">ⓘ flip to Goal-only → the right panel collapses to the goal box alone</div>
-      <div class="ask">💬 Ask the compiler — “how was <code>candidate_moves</code> built for this goal?” <span class="soon">soon</span></div>
+      <div class="ask">Ask the compiler <span class="soon">soon</span></div>
     </div>
   </div>
 </main>
@@ -303,11 +303,7 @@
 
   function intentClassOf(a){
     if(!a) return "unknown";
-    if(a.intent_class) return a.intent_class;
-    if(a.intent==="lookup_symbol") return "symbol_lookup";
-    if(["commit_tactic","commit_replay_suffix_chunk"].includes(a.intent)) return "proof_mutation";
-    if(["undo_last_step","undo_to_checkpoint","fresh_restart","finish","amend_and_replay"].includes(a.intent)) return "proof_control";
-    return "context_topic";
+    return a.intent_class||"unknown";
   }
   function intentClassLabel(cls){
     return ({
@@ -320,6 +316,7 @@
   }
   function askTopic(a){
     const p=a.payload||{};
+    if(a.read_only===false && a.label) return a.label;
     return p.topic||p.symbol||a.public_intent||a.intent;
   }
 
@@ -395,10 +392,12 @@
     return idx;
   }
   function renderSurfaceActions(model){
-    const actions=((model&&model.actions)||[]).filter(a=>a&&a.intent_class!=="probe_preview");
+    const actions=(model&&model.actions)||[];
     _asks=[];
     if(!actions.length) return '';
-    let h=`<div class="actionsurface"><div class="needlabel">Need more? <span class="faint">· click to run the same intent the agent sees</span></div>`;
+    const hasProofAction=actions.some(a=>!a.read_only);
+    const actionTitle=hasProofAction?'Available actions':'Need more?';
+    let h=`<div class="actionsurface"><div class="needlabel">${actionTitle} <span class="faint">· click to run the same intent the agent sees</span></div>`;
     const byClass={};
     actions.forEach(a=>{ const cls=intentClassOf(a); (byClass[cls]=byClass[cls]||[]).push(a); });
     Object.keys(byClass).forEach(cls=>{
@@ -661,7 +660,12 @@
         if(!payload[k]) return;  // empty -> cancel, don't run a placeholder search
       } }
     const detail=payload.operator||payload.symbol||payload.name||payload.topic||"";
-    sendIntent(intent,payload, intent==="lookup_symbol"?("lookup "+(payload.symbol||"")):("context "+intent+(detail?(" "+detail):"")));
+    const label=intentClassOf(ask)==="proof_mutation"
+      ? ("commit "+(payload.tactic||intent))
+      : intent==="lookup_symbol"
+        ? ("lookup "+(payload.symbol||""))
+        : ("context "+intent+(detail?(" "+detail):""));
+    sendIntent(intent,payload,label);
   }
   panelBody.addEventListener("click",e=>{
     if(e.target.closest("[data-close-drawer]")){closeDrawer();return;}

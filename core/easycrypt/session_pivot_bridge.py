@@ -205,7 +205,7 @@ def try_bridge_suggest(self, raw_goal: str,
     for i, (candidate, chain) in enumerate(probe_items):
         if len(verified) >= 3:
             break
-        ev_id = f"probe.pr_bridge.{len(probe_evidence)}"
+        ev_id = f"preflight.pr_bridge.{len(probe_evidence)}"
         result = results[i]
         if result is not None:
             producer = "ec_daemon.batch_try"
@@ -288,7 +288,7 @@ def try_bridge_suggest(self, raw_goal: str,
             evidence={
                 "deterministic": [gate_evidence],
                 "context": [context_evidence, *_fb_ctx],
-                "probe": probe_evidence,
+                "preflight": probe_evidence,
             },
             notes=[{
                 "code": "bridge_options.no_verified_route",
@@ -343,7 +343,7 @@ def try_bridge_suggest(self, raw_goal: str,
     )
     if _unprobed:
         out_lines.append(
-            f"  ({_unprobed} further candidate(s) were not probed under the "
+            f"  ({_unprobed} further candidate(s) were not preflighted under the "
             "inspect time budget — re-inspect if none of the above fit.)"
         )
     recommendations: list[dict] = []
@@ -354,7 +354,7 @@ def try_bridge_suggest(self, raw_goal: str,
             if str(step or "").strip()
         ]
         joined = " ".join(chain)
-        ev_id = str(candidate.get("evidence_id") or f"probe.pr_bridge.{idx}")
+        ev_id = str(candidate.get("evidence_id") or f"preflight.pr_bridge.{idx}")
         name = str(candidate.get("bridge_lemma") or candidate.get("base_lemma") or "")
         recommendations.append({
             "id": f"bridge_options.verified.{idx}",
@@ -407,7 +407,7 @@ def try_bridge_suggest(self, raw_goal: str,
         evidence={
             "deterministic": [gate_evidence],
             "context": [context_evidence],
-            "probe": probe_evidence,
+            "preflight": probe_evidence,
         },
         notes=[{
             "code": "bridge_options.daemon_verified",
@@ -492,7 +492,7 @@ def named_bridge_fallback_block(
     text = (
         "\n[BRIDGE-OPTIONS/NAMED-CANDIDATES] Same-file/context Pr=Pr rewrite-lemma "
         "candidate(s) whose endpoints match this goal (CANDIDATE, NOT daemon-verified "
-        "— inspect with lookup_symbol and verify with probe_tactic before "
+        "— inspect with lookup_symbol and verify with tactic_candidate before "
         f"committing): {names}\n"
     )
     ctx = [{

@@ -60,31 +60,15 @@ class _FakeLineage:
         self.turns.append({"node_id": node_id, "route_event": route_event})
 
 
-class _FakeProbeAlternatives:
-    def __init__(self) -> None:
-        self.records: list[dict[str, Any]] = []
-
-    def record(
-        self,
-        intent: AgentIntent,
-        snapshot: _Snapshot,
-        observation: dict[str, Any],
-    ) -> None:
-        self.records.append({
-            "intent": intent.intent,
-            "snapshot": snapshot.to_dict(),
-            "observation": dict(observation),
-        })
-
-
-def _executor(tmp_path: Path) -> tuple[ProofTurnExecutor, dict[str, Any], _FakeEvents, _FakeLineage, _FakeProbeAlternatives]:
+def _executor(
+    tmp_path: Path,
+) -> tuple[ProofTurnExecutor, dict[str, Any], _FakeEvents, _FakeLineage]:
     state: dict[str, Any] = {
         "snapshot": _Snapshot(),
         "view": {"last_result": {"result": "old"}},
     }
     events = _FakeEvents()
     lineage = _FakeLineage()
-    probes = _FakeProbeAlternatives()
 
     def project(snapshot: _Snapshot, observation: dict[str, Any] | None) -> dict[str, Any]:
         view = {
@@ -100,7 +84,6 @@ def _executor(tmp_path: Path) -> tuple[ProofTurnExecutor, dict[str, Any], _FakeE
         repl=_FakeRepl(),
         events=events,
         lineage=lineage,  # type: ignore[arg-type]
-        probe_alternatives=probes,  # type: ignore[arg-type]
         latest_snapshot=lambda: state.get("snapshot"),
         latest_view=lambda: dict(state.get("view") or {}),
         set_latest_view=lambda view: state.update({"view": dict(view)}),
@@ -109,13 +92,13 @@ def _executor(tmp_path: Path) -> tuple[ProofTurnExecutor, dict[str, Any], _FakeE
         run_dir=lambda: tmp_path,
         surface_profile="unit",
     )
-    return executor, state, events, lineage, probes
+    return executor, state, events, lineage
 
 
 def test_turn_executor_renders_menu_turn_without_backend_mutation(
     tmp_path: Path,
 ) -> None:
-    executor, state, events, _, _ = _executor(tmp_path)
+    executor, state, events, _ = _executor(tmp_path)
 
     turn = executor.menu_turn(
         AgentIntent("undo_to_checkpoint", {}),
@@ -133,16 +116,16 @@ def test_turn_executor_renders_menu_turn_without_backend_mutation(
 def test_turn_executor_records_successful_repl_turn(
     tmp_path: Path,
 ) -> None:
-    executor, _, events, lineage, probes = _executor(tmp_path)
+    executor, _, events, lineage = _executor(tmp_path)
     snapshot = _Snapshot()
 
     turn = executor.repl_call(
-        AgentIntent("probe_tactic", {"tactic": "wp."}),
+        AgentIntent("commit_tactic", {"tactic": "wp."}),
         lambda: (
             snapshot,
             [
                 {
-                    "label": "probe_tactic",
+                    "label": "commit_tactic",
                     "agent_observation": {"result": "accepted"},
                 }
             ],
@@ -151,19 +134,18 @@ def test_turn_executor_records_successful_repl_turn(
 
     assert turn.ok
     assert turn.workspace_view["last_result"]["result"] == "accepted"
-    assert events.route_turns[0]["intent"] == "probe_tactic"
+    assert events.route_turns[0]["intent"] == "commit_tactic"
     assert lineage.turns[0]["node_id"] == "Tree-unit"
-    assert probes.records[0]["intent"] == "probe_tactic"
     assert events.audits[-1]["kind"] == "agent_intent.handled"
 
 
 def test_turn_executor_surfaces_backend_failure_without_projection(
     tmp_path: Path,
 ) -> None:
-    executor, state, events, _, _ = _executor(tmp_path)
+    executor, state, events, _ = _executor(tmp_path)
 
     turn = executor.repl_call(
-        AgentIntent("inspect_context", {"topic": "goal_info"}),
+        AgentIntent("goal_info", {}),
         lambda: (_ for _ in ()).throw(
             ReplBackendError({
                 "label": "agent_view",
@@ -175,5 +157,5 @@ def test_turn_executor_surfaces_backend_failure_without_projection(
 
     assert not turn.ok
     assert turn.repair_prompt
-    assert state["view"]["last_result"]["intent"] == "inspect_context"
+    assert state["view"]["last_result"]["intent"] == "goal_info"
     assert events.audits[-1]["kind"] == "manager_action.backend_failure"

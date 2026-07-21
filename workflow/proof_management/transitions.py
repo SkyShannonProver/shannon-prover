@@ -15,7 +15,7 @@ def structural_transition_surface(
     submit_intent: str,
     why_here: str = "",
 ) -> dict[str, Any]:
-    descriptor = probe_transition_descriptor(tactic)
+    descriptor = transition_descriptor(tactic)
     submit: dict[str, Any] = {
         "intent": submit_intent,
         "payload": {"tactic": tactic},
@@ -33,13 +33,13 @@ def structural_transition_surface(
                 "Commit this exact tactic only if you want to try closing or "
                 "checking this obligation."
                 if submit_intent == "commit_tactic"
-                else "Probe this tactic only if you want to test a closing/checking step."
+                else "Use this candidate only if it matches the intended closing step."
             ),
             "recommended_next": {
                 "label": "Commit this exact tactic",
                 "submit": submit,
             } if submit_intent == "commit_tactic" else {
-                "label": "Probe this tactic",
+                "label": "Use this candidate",
                 "submit": submit,
             },
             "after_commit": descriptor.get("after_commit"),
@@ -53,11 +53,8 @@ def structural_transition_surface(
         )
         label = "Enter this transition"
     else:
-        decision = (
-            f"Probe this tactic if you want to test entry into the {phase} "
-            "phase."
-        )
-        label = "Probe this transition"
+        decision = f"Use this candidate only if you want to enter the {phase} phase."
+        label = "Use this transition"
     return _drop_empty({
         "id": descriptor.get("id"),
         "kind": "structural_transition",
@@ -76,7 +73,7 @@ def structural_transition_surface(
     })
 
 
-def probe_transition_descriptor(tactic: str) -> dict[str, str]:
+def transition_descriptor(tactic: str) -> dict[str, str]:
     text = normalize_tactic_for_transition(tactic)
     if matches_tactic_head(text, ("smt", "auto", "done", "trivial")):
         return {
@@ -214,5 +211,4 @@ def _transition_descriptor(
             "route is wrong."
         ),
     }
-
 

@@ -22,7 +22,6 @@ from typing import Any, Callable, Optional
 from workflow.proof_management.types import ManagedTurn
 from workflow.surface_profiles import (
     allowed_intents_for_surface_profile,
-    probe_disabled,
     resolve_surface_profile,
 )
 
@@ -113,12 +112,7 @@ class EscalationPolicy:
             "turns_since_progress": self._turns_since_progress,
             "state_version": self._state_version(),
         })
-        # Switch-aware: when probe is OFF it is never unlocked, so don't name it
-        # among the levels the escalation auto-unlocks.
-        unlocks = (
-            "`probe_tactic` / context topics / `lookup_symbol`"
-            if not probe_disabled() else "context topics / `lookup_symbol`"
-        )
+        unlocks = "context topics / `lookup_symbol`"
         msg = (
             f"`{intent.intent}` is not available yet. The manager has NOT judged you "
             "stuck — you have not accumulated enough no-progress / failed steps to "

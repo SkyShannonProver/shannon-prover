@@ -169,7 +169,7 @@ def try_relational_invariant(self, raw_goal: str,
         "field-threaded by TYPE + SCOPE, statically. Each slot's fields are "
         "type-matched (source var types) and filtered to what is IN SCOPE at "
         "this goal (read off the goal head EC printed) — no per-candidate "
-        "probing. " + applies_note + "The `{1}`/`{2}` sides + state fields "
+        "per-candidate EasyCrypt checks. " + applies_note + "The `{1}`/`{2}` sides + state fields "
         "are mechanical. This is a revisable starting point, NOT a claim it "
         "is the right/complete coupling: confirm the coupling, fill any typed "
         "menu by SEMANTICS, add the side conditions the obligations need, and "
@@ -221,7 +221,7 @@ def try_relational_invariant(self, raw_goal: str,
                 f"named coupling `{name}`: each slot type-matched to the "
                 "in-scope state fields (source var types), the {{1}}/{{2}} "
                 "sides read off its parameter names, and out-of-scope fields "
-                "dropped by reading the goal head (not probed); equally-typed "
+                "dropped by reading the goal head (no preflight needed); equally-typed "
                 "in-scope fields left as menus"
                 + (" — one batch check confirmed a witness applies here"
                    if verified else "")),
@@ -235,7 +235,7 @@ def try_relational_invariant(self, raw_goal: str,
                 if verified else
                 "the fields are type-correct (source types) and in scope at "
                 "this goal (goal head) — assembled STATICALLY, not "
-                "daemon-checked: EC verifies it when you commit/probe. The "
+                "daemon-checked: the manager asks EC to verify it when you commit. The "
                 "compiler did TYPE + SCOPE matching ONLY — not a claim it is "
                 "the correct/complete coupling, and it does not choose among "
                 "equally-typed fields (those stay menus)"),
@@ -532,7 +532,7 @@ def try_call_glob_invariant(self, raw_goal: str,
 
     def _probe(tac: str) -> dict[str, Any]:
         if _time.monotonic() + self._PROBE_EST_S > _probe_deadline:
-            return {"accepted": False, "error": "inspect probe budget exhausted"}
+            return {"accepted": False, "error": "inspect preflight budget exhausted"}
         try:
             r = h.cli.try_tactic(h.dbe._session_id, tac)
         except Exception as exc:
@@ -553,7 +553,7 @@ def try_call_glob_invariant(self, raw_goal: str,
                   "The invariant is purely semantic here — synthesize it "
                   "from the program/oracle state.\n"),
             layer=3, kind="recommendation", recommendations=[],
-            evidence={"probe": probe_trace})
+            evidence={"preflight": probe_trace})
 
     tactic = render_call_glob_tactic(accepted)
     inv = render_glob_invariant(accepted)
@@ -587,7 +587,7 @@ def try_call_glob_invariant(self, raw_goal: str,
                 "type-checks and spawns the oracle obligations on the "
                 "current goal; NOT a complete invariant and NOT a closer — "
                 "extend with semantic conjuncts; reversible"),
-            "evidence_refs": ["probe.call_invariant_skeleton"],
+            "evidence_refs": ["preflight.call_invariant_skeleton"],
             "metadata": {
                 "extend_required": True,
                 "submit": {"intent": "commit_tactic",
@@ -599,7 +599,7 @@ def try_call_glob_invariant(self, raw_goal: str,
                 "producer": "ec_call_glob_invariant",
                 "declared_modules": [m["name"] for m in mods],
                 "accepted_glob_modules": accepted}],
-            "probe": probe_trace},
+            "preflight": probe_trace},
         notes=[{
             "code": "call_invariant_skeleton.mechanical",
             "message": ("Compiler emits only the mechanical `={glob ...}` "

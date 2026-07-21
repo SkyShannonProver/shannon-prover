@@ -117,7 +117,7 @@ def _step_from_tactic_execution(
     transition_kind = (
         "closed" if candidate_closed else
         "state_changed" if state_changed else
-        "probe" if str(execution.get("mode") or "") == "probe" else
+        "preflight" if str(execution.get("mode") or "") == "preflight" else
         "no_state_change"
     )
     step = {
@@ -148,7 +148,7 @@ def _step_from_tactic_execution(
         "goals_before": None,
         "goals_after": num_remaining,
         "candidate_closed": candidate_closed,
-        "no_progress": str(result_panel.get("status") or "") == "probe_no_progress",
+        "no_progress": str(result_panel.get("status") or "") == "preflight_no_progress",
         "no_progress_reason": str(result_panel.get("failure_reason") or ""),
         "primary_action": str(metrics.get("primary_action") or ""),
         "runnable_tactic_count": _int(metrics.get("runnable_tactic_count")),
@@ -286,8 +286,6 @@ def _primary_action_from_workspace(action: dict[str, Any]) -> str:
         return "verify"
     if category == "diagnose":
         return "diagnose"
-    if category == "probe":
-        return "probe_tactic"
     if category == "commit":
         return "try_tactic"
     if category in {"strategy", "hint"}:

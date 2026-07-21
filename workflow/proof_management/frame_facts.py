@@ -340,7 +340,6 @@ def _is_frame_goal_text_key(key: str) -> bool:
     if normalized in {
         "current_goal",
         "goal_after",
-        "goal_after_probe",
         "goal_preview",
         "active_goal_text",
         "active_goal_preview",
@@ -406,4 +405,3 @@ def _first_text(*values: Any, default: str = "") -> str:
             if text.strip():
                 return text
     return default
-

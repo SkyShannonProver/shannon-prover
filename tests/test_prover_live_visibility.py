@@ -35,7 +35,7 @@ def test_prover_prompt_omits_session_cli_as_agent_interface() -> None:
     # reference panels were removed in a97b0ce9f).
     assert "## Target Source" in prompt
     assert "Target file: `eval/examples/SchnorrPK.ec`" in prompt
-    assert "Initial ProverWorkspaceView" in prompt
+    assert "Initial proof surface" in prompt
     assert "lemma_index" not in prompt
     # session_cli / legacy CLI must never be presented as the agent interface
     assert "session_cli.py" not in prompt
@@ -75,7 +75,7 @@ def test_prover_static_carries_view_field_gold() -> None:
     ]
     assert headings == [
         "## Target Source",
-        "### Initial ProverWorkspaceView",
+        "### Initial proof surface",
     ], f"unexpected static-prompt sections: {headings}"
     # the removed reference panels must stay gone
     assert "## A few specific things the view carries" not in prompt
@@ -117,7 +117,7 @@ def test_prover_prompt_embeds_manager_handoff_view() -> None:
     # one shown on every later turn) — not raw JSON. The goal text appears in
     # its Current Goal block; the full structured view lives separately in
     # LEGAL_LATEST_WORKSPACE_VIEW.
-    initial_view = prompt.split("### Initial ProverWorkspaceView", 1)[1]
+    initial_view = prompt.split("### Initial proof surface", 1)[1]
     assert "Current Goal" in initial_view
     assert "x = y" in initial_view
     assert '"schema_version"' not in initial_view

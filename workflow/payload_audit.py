@@ -21,9 +21,9 @@ from workflow.prover_io_policy import InformationSourceDecision
 
 _FULL_OUTPUT_RE = re.compile(r"Full output saved to:\s*(\S+)")
 _WORKSPACE_KIND_RE = re.compile(r'"kind"\s*:\s*"prover_workspace_view"')
-_PROBE_CANDIDATE_RE = re.compile(r'"kind"\s*:\s*"probe_candidate_after"')
+_PREFLIGHT_CANDIDATE_RE = re.compile(r'"kind"\s*:\s*"preflight_candidate_after"')
 _WORKSPACE_FIELD_RE = re.compile(r'"workspace"\s*:\s*\{\s*"view"\s*:\s*\{')
-_PROBE_CANDIDATE_FIELD_RE = re.compile(r'"candidate_after"\s*:\s*\{')
+_PREFLIGHT_CANDIDATE_FIELD_RE = re.compile(r'"candidate_after"\s*:\s*\{')
 
 
 def summarize_text_payload(text: str) -> dict[str, Any]:
@@ -42,9 +42,9 @@ def summarize_text_payload(text: str) -> dict[str, Any]:
         "contains_prover_workspace_view": bool(
             _WORKSPACE_KIND_RE.search(text) or _WORKSPACE_FIELD_RE.search(text)
         ),
-        "contains_probe_candidate_after": bool(
-            _PROBE_CANDIDATE_RE.search(text)
-            or _PROBE_CANDIDATE_FIELD_RE.search(text)
+        "contains_preflight_candidate_after": bool(
+            _PREFLIGHT_CANDIDATE_RE.search(text)
+            or _PREFLIGHT_CANDIDATE_FIELD_RE.search(text)
         ),
         "contains_proof_context_ref": contains_proof_context,
         "contains_proof_state_json": contains_proof_state,

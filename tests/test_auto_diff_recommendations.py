@@ -22,7 +22,7 @@ def test_auto_diff_unverified_call_is_structural_hint_only() -> None:
     assert by_action["call equ_cc."]["metadata"]["epistemic_status"] == (
         "static_call_alignment_not_frontier_verified"
     )
-    assert by_action["wp."]["action_type"] == "probe_tactic"
+    assert by_action["wp."]["action_type"] == "tactic_candidate"
 
 
 def test_auto_diff_daemon_ready_call_remains_runnable() -> None:

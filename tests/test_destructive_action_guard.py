@@ -741,19 +741,16 @@ def test_summarize_text_payload_marks_transport_features() -> None:
     assert summary["full_output_saved_to"] == ["/tmp/tool-results/x.txt"]
     assert summary["lines"] == 2
     assert summary["contains_prover_workspace_view"] is False
-    assert summary["contains_probe_candidate_after"] is False
 
 
 def test_summarize_text_payload_detects_agent_workspace_fields() -> None:
     summary = summarize_text_payload(
         '[TACTIC-EXECUTION-RESULT]\n'
-        '{"workspace":{"view":{"current_goal":{"lines":["g"]}}},'
-        '"candidate_after":{"status":"probe_accepted"}}\n'
+        '{"workspace":{"view":{"current_goal":{"lines":["g"]}}}}\n'
     )
 
     assert summary["contains_tactic_execution_result"] is True
     assert summary["contains_prover_workspace_view"] is True
-    assert summary["contains_probe_candidate_after"] is True
 
 
 def test_payload_audit_records_tool_use_and_result(tmp_path: Path) -> None:

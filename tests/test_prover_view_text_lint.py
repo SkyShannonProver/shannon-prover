@@ -99,8 +99,8 @@ def test_lint_rejects_conflicting_same_action_guidance() -> None:
             "recommendations": [{
                 "id": "try.commit",
                 "action": "inline *.",
-                "action_type": "probe_tactic",
-                "why": "Probe this tactic.",
+                "action_type": "tactic_candidate",
+                "why": "This is a candidate for the current goal.",
                 "confidence": "medium",
             }, {
                 "id": "proof_ir.avoid",

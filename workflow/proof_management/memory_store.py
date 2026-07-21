@@ -504,9 +504,9 @@ class ProofMemoryManager:
                     for chunk in chunks[:3]
                 ],
                 "interpretation": (
-                    "These chunks are old committed tactics after a rewind. A "
-                    "probe checks a chunk in a scratch verifier session before any "
-                    "state-changing replay commit."
+                    "These chunks are old committed tactics saved before a rewind. "
+                    "Submitting one replays it through the manager-owned verifier "
+                    "and commits it only if EasyCrypt accepts the chunk."
                 ),
             }))
         if not items:
@@ -539,31 +539,6 @@ class ProofMemoryManager:
             ),
             "notice": notice,
             "route_replay_memory": self.route_replay_memory_surface(current_tactics),
-        })
-
-    def replay_suffix_probe_observation(
-        self,
-        *,
-        intent: str,
-        payload: dict[str, Any],
-        chunk: dict[str, Any],
-        result: dict[str, Any],
-    ) -> dict[str, Any]:
-        ok = bool(result.get("ok"))
-        return _drop_empty({
-            "intent": intent,
-            "payload": _dict_or_empty(payload),
-            "kind": "replay_suffix_probe",
-            "message": (
-                "The manager checked this discarded route chunk in a scratch "
-                "EasyCrypt session. The committed proof state was not changed."
-            ),
-            "chunk": replay_chunk_public_surface(chunk),
-            "status": "accepted" if ok else "stopped_at_first_failure",
-            "accepted_tactic_count": _safe_int(result.get("accepted_count")),
-            "failed_tactic": result.get("failed_tactic"),
-            "failure_kind": result.get("failure_kind"),
-            "error": result.get("error"),
         })
 
     def replay_suffix_commit_blocked_observation(
@@ -918,7 +893,6 @@ def _legacy_route_replay_surface(surface: Any) -> dict[str, Any]:
             chunk_out = dict(chunk)
             if not _string_list(chunk_out.get("tactics")):
                 chunk_out.pop("submit_commit", None)
-                chunk_out.pop("submit_probe", None)
                 chunk_out["limitations"] = (
                     str(chunk_out.get("limitations") or "").strip()
                     + (
@@ -1238,10 +1212,6 @@ def replay_chunk_public_surface(chunk: dict[str, Any]) -> dict[str, Any]:
             "A changed invariant or branch shape can make only a prefix of the "
             "old chunk replayable."
         ),
-        "submit_probe": {
-            "intent": "probe_replay_suffix_chunk",
-            "payload": submit_payload,
-        },
         "submit_commit": {
             "intent": "commit_replay_suffix_chunk",
             "payload": submit_payload,
@@ -1285,4 +1255,3 @@ def _chunk_digest(tactics: list[str]) -> str:
     import hashlib
 
     return hashlib.sha1("\n".join(tactics).encode("utf-8")).hexdigest()[:8]
-

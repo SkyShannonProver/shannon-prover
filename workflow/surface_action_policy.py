@@ -10,6 +10,7 @@ from __future__ import annotations
 
 PANEL_INTENTS: dict[str, frozenset[str]] = {
     "recovery": frozenset({
+        "commit_tactic",
         "operator_lemmas",
         "rewrite_candidates",
         "pr_bridge_routes",
@@ -19,12 +20,14 @@ PANEL_INTENTS: dict[str, frozenset[str]] = {
         "lemma_hints",
         "subgoal_gap",
         "inv_from_lemma",
-        "bridge_probe",
         "tactic_forms",
         "call_site_options",
         "call_subgoals",
         "proof_frontier",
         "align",
+    }),
+    "relational_program": frozenset({
+        "commit_tactic",
     }),
     "call_site": frozenset({
         "call_site_options",
@@ -44,6 +47,7 @@ PANEL_INTENTS: dict[str, frozenset[str]] = {
         "tactic_forms",
     }),
     "opener": frozenset({
+        "commit_tactic",
         "operator_lemmas",
         "pr_bridge_routes",
         "verified_pivot_options",
@@ -51,7 +55,6 @@ PANEL_INTENTS: dict[str, frozenset[str]] = {
         "equiv_bridge_lemmas",
         "lemma_hints",
         "subgoal_gap",
-        "bridge_probe",
         "tactic_forms",
     }),
     "deep_surgery": frozenset({
@@ -63,6 +66,10 @@ PANEL_INTENTS: dict[str, frozenset[str]] = {
         "lemma_hints",
         "subgoal_gap",
         "inv_from_lemma",
+        "tactic_forms",
+    }),
+    "single_program": frozenset({
+        "proof_frontier",
         "tactic_forms",
     }),
 }

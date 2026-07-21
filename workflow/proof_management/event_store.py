@@ -127,17 +127,6 @@ class ProofEventManager:
             observation=observation,
         ))
 
-    def latest_readonly_probe_event(self) -> dict[str, Any]:
-        route_event_facts = self.route_event_facts
-        if not route_event_facts:
-            return {}
-        latest = route_event_facts[-1]
-        if latest.get("intent") != "probe_tactic":
-            return {}
-        if bool(latest.get("changed")):
-            return {}
-        return dict(latest)
-
     def recent_events(self, limit: int = 40) -> list[dict[str, Any]]:
         return [event.to_dict() for event in self.events[-max(1, int(limit)):]]
 
@@ -220,14 +209,12 @@ def _route_event_from_turn(
         or ""
     ).strip()
     accepted = (
-        status in {"accepted", "probe_accepted", "ok"}
-        or bool(observation.get("probe_preview"))
+        status in {"accepted", "ok"}
         or bool(execution.get("state_changed") or execution.get("history_committed"))
         or "accepted" in str(action.get("agent_observation") or "").lower()
     )
     rejected = bool(error_summary) or status in {
         "rejected",
-        "probe_rejected",
         "failed",
         "error",
     }
@@ -285,5 +272,3 @@ def _resume_route_event(
         "status": status,
         "resume_source": source,
     })
-
-

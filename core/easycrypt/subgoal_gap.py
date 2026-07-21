@@ -586,8 +586,6 @@ def analyze_session(session_dir: Path) -> str:
             out.append("  • `-bridge-lemmas`   — for `Pr[L.proc ~ R.proc] = ...` "
                        "or `Pr[A] = Pr[B]`, scan context for transitivity-chain "
                        "candidates.")
-            out.append("  • `-bridge-probe -c 'Pr[A] = Pr[B]'`  — daemon-test whether "
-                       "a short sim-chain closes a candidate Pr-bridge.")
             out.append("  • `ec_pr_path_diff` (auto-fired as [AUTO-DIFF]) — "
                        "compares the two game-functor application trees node-by-node.")
         elif info.goal_type == "ambient":

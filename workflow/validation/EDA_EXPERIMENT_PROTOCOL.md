@@ -5,11 +5,10 @@ experience worse, better, or unchanged. The default goal is regression safety:
 the EDA path is the desired architecture, so the experiment asks whether it
 breaks existing proof behavior or creates confusing prover views.
 
-Planner context is part of the default EDA prover contract, including eval
-mode. Eval mode redacts target-specific cached proof material, but it still
-runs the deterministic planner and injects the planner's structured context
-brief. Use `--no-planner` only for explicit planner-ablation experiments, e.g.
-when measuring the planner's effect for a paper.
+Normal and eval runs use the same lean target-pointer prompt. The proof-state
+surface profile is the experimental variable; no pre-run workflow planner or
+planner context is injected into either arm. Eval mode additionally redacts
+target-specific cached proof material.
 
 ## 1. Contract Preflight
 
@@ -54,21 +53,6 @@ python3 -m workflow.orchestrator \
   --prover-model claude-sonnet-4-6 \
   --prover-timeout-minutes 5 \
   --eval-mode
-```
-
-For a planner ablation only:
-
-```bash
-python3 -m workflow.orchestrator \
-  --file artifacts/live_smoke/SchnorrPK_smoke.ec \
-  --lemma schnorr_proof_of_knowledge_completeness_ll \
-  --include-dir easycrypt-src/theories \
-  --max-iterations 1 \
-  --skip-regression \
-  --prover-model claude-sonnet-4-6 \
-  --prover-timeout-minutes 5 \
-  --eval-mode \
-  --no-planner
 ```
 
 After the run, audit the recorded EasyCrypt session:

@@ -71,19 +71,15 @@ from workflow.ctx_respawn import (
     strip_closed_verdicts,
 )
 
-# Long-lived prompt, raw-view preview, and proof-so-far helpers.  Per-turn
+# Long-lived prompt and proof-so-far helpers. Per-turn
 # followup/card presentation is owned by workflow.surface_turn_model.
 from workflow.agent_prompt_render import (
     _agent_safe_action_summaries,
     _drop_empty,
     _md_proof_so_far,
     _turn_interpretation,
-    _workspace_view_preview,
     render_long_lived_agent_prompt,
 )
-from workflow.surface_decision_context import merge_surface_decision_context
-
-
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 CLAUDE_BIN = shutil.which("claude") or "claude"
 
@@ -246,9 +242,8 @@ class NodeMemory:
             ),
             "view_refreshed": bool(view),
         })
-        preview = _workspace_view_preview(view)
         surface_turn = compose_surface_turn(
-            preview,
+            view,
             self.surface_profile,
             handled_intent={},
             ok=True,
@@ -298,7 +293,7 @@ class NodeMemory:
         self._append_jsonl(self.timeline, _drop_empty(record))
 
         intent_name = str((handled_intent or {}).get("intent") or "")
-        if intent_name in {"probe_tactic", "commit_tactic"}:
+        if intent_name == "commit_tactic":
             self._append_jsonl(
                 self.attempts,
                 _drop_empty({
@@ -1354,19 +1349,11 @@ class ProofNodeRuntime:
 # No braces — safe to interpolate into the wrapper f-string.
 
 
-# `_INTERPRET_SIGNALS` names an accepted `probe_tactic` as an example of a VERIFIED
-# FACT. When the probe lever is OFF (`SHANNON_DISABLE_PROBE`) the agent has no probe,
-# so the example must not advertise it — use a daemon-verified non-probe fact instead.
-
-# Probe-OFF variant: identical except the VERIFIED FACTS example drops the
-# `probe_tactic` mention (the agent has no probe lever this run).
-
-
 # Part of §4 (how to play well): the final-admit gate.
 
 
 # §2: one-line description per MCP intent. The single home for "how to use the
-# manager" — absorbs what used to be scattered across rewind/probe guidance blocks.
+# manager" — absorbs what used to be scattered across rewind guidance blocks.
 
 
 def _read_latest_view(memory: "NodeMemory | None") -> dict[str, Any]:
@@ -1378,17 +1365,16 @@ def _read_latest_view(memory: "NodeMemory | None") -> dict[str, Any]:
         return {}
 
 
-def _profiled_preview_view(
+def _profiled_surface_view(
     view_manager: WorkspaceViewManager,
     raw_view: dict[str, Any] | None,
 ) -> dict[str, Any]:
     if not isinstance(raw_view, dict) or not raw_view:
         return {}
     try:
-        profiled = view_manager.agent_display_view(raw_view)
+        return view_manager.agent_display_view(raw_view)
     except Exception:
-        profiled = dict(raw_view)
-    return _workspace_view_preview(profiled)
+        return dict(raw_view)
 
 
 def _render_manager_followup(
@@ -1411,8 +1397,6 @@ def _render_manager_followup(
         if isinstance(turn.workspace_view, dict)
         else {}
     )
-    view, audit_view, decision_signals = merge_surface_decision_context(view, audit_view)
-
     health_event = (
         turn.health_event.to_dict()
         if getattr(turn, "health_event", None) is not None else {}
@@ -1429,14 +1413,13 @@ def _render_manager_followup(
         "view_refreshed": bool(view),
     })
 
-    preview = _workspace_view_preview(view)
     prior_view = base_view if isinstance(base_view, dict) and base_view else _read_latest_view(memory)
-    prior_preview = _profiled_preview_view(view_manager, prior_view)
+    prior_surface_view = _profiled_surface_view(view_manager, prior_view)
     prior_surface = proof_surface_from_turn(prior_view.get("surface_turn") or {})
     surface_turn = compose_surface_turn(
-        preview,
+        view,
         surface_profile,
-        base_view=prior_preview,
+        base_view=prior_surface_view,
         base_surface=prior_surface,
         handled_intent=handled_intent,
         ok=bool(turn.ok),

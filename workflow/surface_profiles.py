@@ -22,7 +22,6 @@ from workflow.view_neutrality import view_neutrality_strict
 from workflow.context_intents import (
     CONTEXT_TOPIC_INTENTS,
     MANAGER_INTENTS,
-    direct_context_request,
     intent_spec,
     is_context_topic_intent,
     normalize_context_topic,
@@ -79,7 +78,6 @@ UPGRADED_NAVIGATOR_INSPECT_TOPICS = PREVIEW_INSPECT_TOPICS | frozenset({
     "equiv_bridge_lemmas",
     "bridge_options",   # back-compat alias for pr_bridge_routes
     "bridge_lemmas",    # back-compat alias for equiv_bridge_lemmas
-    "bridge_probe",
     "call_site_options",
     "call_invariant_skeleton",
     "inv_from_lemma",
@@ -96,7 +94,7 @@ UPGRADED_NAVIGATOR_INSPECT_TOPICS = PREVIEW_INSPECT_TOPICS | frozenset({
 # probability budget ledger, un-verified equiv
 # bridge candidates). Removed from the offered set under view_neutrality_strict;
 # the factual / daemon-verified topics (align, call_subgoals,
-# pr_bridge_routes, bridge_probe, inv_from_lemma,
+# pr_bridge_routes, inv_from_lemma,
 # rewrite_candidates, subgoal_gap, proof_frontier, ...) stay. See
 # docs/design/compiler_view_boundary.md.
 _HEURISTIC_INSPECT_TOPICS = frozenset({
@@ -107,12 +105,6 @@ _HEURISTIC_INSPECT_TOPICS = frozenset({
     "bridge_lemmas",  # back-compat alias of equiv_bridge_lemmas
 })
 
-_PROBE_INSPECT_TOPICS = frozenset({
-    # Read-only inspect route whose name still advertises "probe" to the agent.
-    # Hide it alongside tactic probes unless the legacy probe surface is explicitly
-    # enabled.
-    "bridge_probe",
-})
 
 
 def effective_inspect_topics(
@@ -132,8 +124,6 @@ def effective_inspect_topics(
         topics = frozenset(topics) - _HEURISTIC_INSPECT_TOPICS
     else:
         topics = frozenset(topics)
-    if probe_disabled():
-        topics -= _PROBE_INSPECT_TOPICS
     return topics
 
 
@@ -213,8 +203,8 @@ SURFACE_PROFILE_REGISTRY: dict[str, SurfaceProfile] = {
         name="l4_preview_diagnostic",
         stage="l4_preview_diagnostic",
         description=(
-            "Diagnostic L4-minus-health profile: adds read-only tactic probes "
-            "and call-subgoal previews before commit, but omits the upgraded "
+            "Diagnostic L4-minus-health profile: adds read-only context and "
+            "call-subgoal previews, but omits the upgraded "
             "route-health and recovery surface."
         ),
         allowed_intents=ALL_MANAGER_INTENTS,
@@ -227,7 +217,7 @@ SURFACE_PROFILE_REGISTRY: dict[str, SurfaceProfile] = {
         stage="l4_checked_action_surface",
         description=(
             "L4 Verifier-Checked Action Surface: exposes checked previews, "
-            "post-probe goals, route health, recovery diagnosis, recovery "
+            "route health, recovery diagnosis, recovery "
             "signals, and selected diagnostics while demoting accepted "
             "partial openers that only create residual surgery."
         ),
@@ -239,10 +229,10 @@ SURFACE_PROFILE_REGISTRY: dict[str, SurfaceProfile] = {
         name="adaptive",
         stage="adaptive",
         description=(
-            "Adaptive surface: starts as L1 goal-only (cheap fast path, no probe/"
+            "Adaptive surface: starts as L1 goal-only (cheap fast path, no "
             "context-topic/lookup, no panels) and auto-escalates to the full L4 checked-"
             "action surface the moment the agent reaches for a richer intent "
-            "(probe/context-topic/lookup) or accumulates rejected commits. The MCP tool "
+            "(context-topic/lookup) or accumulates rejected commits. The MCP tool "
             "schema advertises all intents, but the manager only accepts the L4 "
             "ones after escalation. Once escalated it latches to L4."
         ),
@@ -301,20 +291,6 @@ def ensure_supported_surface_profile(name: str | None) -> SurfaceProfile | None:
     return profile
 
 
-# --- probe kill switch -------------------------------------------------------
-#
-# Read-only `probe_tactic` (dry-run a tactic before committing) is the L4 lever.
-# Empirically (equiv_step4 audit, docs/reports/insights/l4_panel_defects_equiv_step4.md
-# + the L1-vs-L4 probe audits) it was a NET throughput drag on this EasyCrypt backend:
-# an EC reject is NON-MUTATING and cheap to recover from (~1 turn, no undo), so probing
-# before every commit just doubled the round-trips (~40% of L4 effort, ~44-60% of probes
-# were probe→identical-commit) without buying the only thing probe uniquely prevents
-# (an accepted-but-wrong MUTATING commit, which doesn't occur here). Probe is now hidden
-# by default from the agent-facing MCP/view/prompt surface. Set SHANNON_ENABLE_PROBE=1
-# only for internal A/B runs that intentionally expose the old preview lever.
-_PROBE_INTENTS = frozenset({"probe_tactic", "probe_replay_suffix_chunk"})
-
-
 def _with_effective_context_intents(
     intents: frozenset[str],
     profile: "SurfaceProfile | None",
@@ -326,58 +302,21 @@ def _with_effective_context_intents(
     return (intents - CONTEXT_TOPIC_INTENTS) | (CONTEXT_TOPIC_INTENTS & topics)
 
 
-def probe_enabled() -> bool:
-    """True iff the read-only probe lever is explicitly enabled for this run.
-
-    Default is OFF: agents should not see ``probe_tactic`` in the MCP schema, prompt,
-    rendered workspace view, or manager menus. ``SHANNON_DISABLE_PROBE=1`` remains a
-    force-off override for old scripts and wins over ``SHANNON_ENABLE_PROBE=1``.
-
-    strict=True catches typo'd boolean values in either knob instead of silently
-    mislabelling an eval arm.
-    """
-    from core.env_loader import env_bool
-
-    if env_bool("SHANNON_DISABLE_PROBE", strict=True):
-        return False
-    return env_bool("SHANNON_ENABLE_PROBE", default=False, strict=True)
-
-
-def probe_disabled() -> bool:
-    """True iff the probe lever is unavailable to the agent-facing surface.
-
-    When true, `probe_tactic`/`probe_replay_suffix_chunk` are removed from the agent-facing
-    surface everywhere: the intent gate rejects them, the MCP tool schema does not
-    advertise them, the projected view drops probe affordances, and the prompt note says
-    so. Affects every profile (only L4-family profiles offered probe historically)."""
-    return not probe_enabled()
-
-
 def effective_allowed_intents(
     profile: "SurfaceProfile | None",
 ) -> "frozenset[str] | None":
-    """Intents actually accepted for a profile, after applying the probe kill switch.
-    Single source of truth used by the gate, the view-affordance flag, and the prompt
-    note (mirrors ``effective_inspect_topics`` for inspect topics)."""
+    """Intents accepted for a profile after context-topic gating."""
     if profile is None:
         return None
     intents = frozenset(profile.allowed_intents)
-    if probe_disabled():
-        intents -= _PROBE_INTENTS
     intents = _with_effective_context_intents(intents, profile)
     return intents
-
-
-def _profile_probe_enabled(profile: "SurfaceProfile | None") -> bool:
-    """Whether probe affordances should be shown/accepted for this profile (switch-aware)."""
-    eff = effective_allowed_intents(profile)
-    return bool(eff is not None and "probe_tactic" in eff)
 
 
 def allowed_intents_for_surface_profile(name: str | None) -> frozenset[str]:
     profile = resolve_surface_profile(name)
     if profile is None:
-        return ALL_MANAGER_INTENTS - _PROBE_INTENTS if probe_disabled() else ALL_MANAGER_INTENTS
+        return ALL_MANAGER_INTENTS
     return effective_allowed_intents(profile)
 
 
@@ -385,17 +324,13 @@ def schema_intents_for_surface_profile(name: str | None) -> frozenset[str]:
     """Intents advertised in the MCP tool schema. For an adaptive profile this is a
     SUPERSET of the currently-accepted intents (``allowed_intents``): the agent can
     see the richer levers from turn 1, but the manager only accepts the gated ones
-    once it escalates. Reaching for a gated lever IS the escalation request.
-    The probe kill switch (``SHANNON_DISABLE_PROBE``) also removes probe here so the
-    tool schema never advertises a lever the manager will reject."""
+    once it escalates. Reaching for a gated lever IS the escalation request."""
     profile = resolve_surface_profile(name)
     if profile is None:
         base = ALL_MANAGER_INTENTS
     else:
         base = profile.schema_intents if profile.schema_intents is not None else profile.allowed_intents
     base = frozenset(base)
-    if probe_disabled():
-        base -= _PROBE_INTENTS
     base = _with_effective_context_intents(base, profile)
     return base
 
@@ -407,8 +342,6 @@ def surface_profile_allows_intent(
 ) -> tuple[bool, str]:
     profile = resolve_surface_profile(name)
     if profile is None:
-        if intent in _PROBE_INTENTS and probe_disabled():
-            return False, "Probe intents are unavailable in this run; commit tactics directly."
         if intent == "inspect_context":
             return True, ""
         return True, ""
@@ -433,11 +366,6 @@ def surface_profile_allows_intent(
                 f"`{topic}`. Allowed topics: {allowed}."
             )
     if intent not in (effective_allowed_intents(profile) or frozenset()):
-        if intent in _PROBE_INTENTS and probe_disabled():
-            return False, (
-                "Probe intents are unavailable in this run; commit tactics directly — "
-                "a rejected commit is non-mutating."
-            )
         return False, (
             f"Surface profile `{profile.name}` hides manager intent "
             f"`{intent}` for this run."
@@ -453,7 +381,7 @@ def surface_profile_allows_intent(
 # suggestions, the probability budget ledger, invariant proposals) and are stripped
 # wherever they appear. There is no "advisory" middle mode — excluded, not shown.
 #
-# NOT stripped (facts that merely READ like help): `preview_effects` (probe-observed
+# NOT stripped (facts that merely READ like help): `preview_effects` (preflight-observed
 # counts), `head_to_tactic` (reduction legality), `invariant_must_carry` /
 # `frame_facts_at_risk` (frame), `rewind_targets` / `why_checkpoint` (real
 # checkpoints), `unfoldable_heads`, `toolbox` / `options` / `close_with`
@@ -462,7 +390,7 @@ def surface_profile_allows_intent(
 _HEURISTIC_KEYS = frozenset({
     # route recommendation / self-rated confidence
     "navigation", "route_health", "route", "confidence", "confidence_reason",
-    "why_now", "fast_track_probe", "repair_if_fails", "why_relevant",
+    "why_now", "repair_if_fails", "why_relevant",
     # anti-route / avoid / forbidden lowerings
     "avoid", "anti_routes", "anti_route", "forbidden_routes",
     "unsafe_lowerings", "route_plan", "allowed_boundary_moves",
@@ -546,7 +474,6 @@ def apply_workspace_view_surface_profile(
         kept = _keep_top_level(raw, set(_SEMANTIC_SURFACE_KEYS))
         kept["application_context"] = _filter_application_context(
             raw.get("application_context"),
-            allow_probe=_profile_probe_enabled(profile),
             include_probability_budget=False,
         )
         kept["facts_and_diagnostics"] = _filter_facts_and_diagnostics(
@@ -563,8 +490,6 @@ def apply_workspace_view_surface_profile(
             include_structural=False,
             include_upgrade_structural=False,
             include_route_health=False,
-            include_probe_alternatives=False,
-            allow_probe=_profile_probe_enabled(profile),
             allowed_inspect_topics=profile.allowed_inspect_topics,
         )
         return _with_profile_meta(kept, profile)
@@ -573,7 +498,6 @@ def apply_workspace_view_surface_profile(
         kept = _keep_top_level(raw, set(_SEMANTIC_SURFACE_KEYS))
         kept["application_context"] = _filter_application_context(
             raw.get("application_context"),
-            allow_probe=_profile_probe_enabled(profile),
             include_probability_budget=False,
         )
         kept["facts_and_diagnostics"] = _filter_facts_and_diagnostics(
@@ -590,8 +514,6 @@ def apply_workspace_view_surface_profile(
             include_structural=True,
             include_upgrade_structural=False,
             include_route_health=False,
-            include_probe_alternatives=False,
-            allow_probe=_profile_probe_enabled(profile),
             allowed_inspect_topics=profile.allowed_inspect_topics,
         )
         return _with_profile_meta(kept, profile)
@@ -615,7 +537,6 @@ def apply_workspace_view_surface_profile(
                     kept[key] = raw.get(key)
         kept["application_context"] = _filter_application_context(
             raw.get("application_context"),
-            allow_probe=_profile_probe_enabled(profile),
             include_probability_budget=profile.stage == "l4_checked_action_surface",
         )
         kept["facts_and_diagnostics"] = _filter_facts_and_diagnostics(
@@ -632,14 +553,7 @@ def apply_workspace_view_surface_profile(
             include_structural=True,
             include_upgrade_structural=profile.stage == "l4_checked_action_surface",
             include_route_health=profile.stage == "l4_checked_action_surface",
-            # Probe kill switch: do not even include the probe-alternatives panel when
-            # probe is disabled (else candidate_moves.probe_alternatives + its
-            # probe_result/goal_after_probe_summary children ride through — a leak the
-            # L1-sequence audit could not see, since L1 never probes so its recorded
-            # views carry no probe_alternatives).
-            include_probe_alternatives=_profile_probe_enabled(profile),
             demote_partial_commit_candidates=profile.stage == "l4_checked_action_surface",
-            allow_probe=_profile_probe_enabled(profile),
             allowed_inspect_topics=profile.allowed_inspect_topics,
         )
         return _with_profile_meta(_assemble_profile_raw_view(kept), profile)
@@ -728,7 +642,6 @@ def _assemble_profile_raw_view(kept: dict[str, Any]) -> dict[str, Any]:
 def _filter_application_context(
     value: Any,
     *,
-    allow_probe: bool,
     include_probability_budget: bool,
 ) -> Any:
     if not isinstance(value, dict):
@@ -746,9 +659,7 @@ def _filter_application_context(
                 and _is_probability_budget_handle(item)
             ):
                 continue
-            filtered_item = _filter_probe_surface(item, allow_probe=allow_probe)
-            if filtered_item is not None:
-                filtered.append(filtered_item)
+            filtered.append(dict(item))
         out["selected_handles"] = filtered
     return out
 
@@ -796,14 +707,10 @@ def _filter_inspect_lookup_handles(
             if not isinstance(request, dict):
                 continue
             if _manager_request_allowed(request, profile):
-                public_request = direct_context_request(request)
-                spec = intent_spec(public_request.get("intent"))
+                spec = intent_spec(request.get("intent"))
                 if spec is not None and not spec.advertised:
                     continue
-                if _profile_probe_enabled(profile):
-                    allowed_requests.append(public_request)
-                else:
-                    allowed_requests.append(_strip_probe_words(public_request))
+                allowed_requests.append(dict(request))
         out["ask_manager_for"] = allowed_requests
     return {
         key: item
@@ -819,9 +726,7 @@ def _filter_candidate_moves(
     include_structural: bool,
     include_upgrade_structural: bool,
     include_route_health: bool,
-    include_probe_alternatives: bool,
     demote_partial_commit_candidates: bool = False,
-    allow_probe: bool = True,
     allowed_inspect_topics: frozenset[str] | None = None,
 ) -> dict[str, Any]:
     if not isinstance(value, dict):
@@ -833,8 +738,6 @@ def _filter_candidate_moves(
         allowed.add("structural_transitions")
     if include_route_health:
         allowed.add("route_health")
-    if include_probe_alternatives:
-        allowed.add("probe_alternatives")
     out = {
         key: item
         for key, item in value.items()
@@ -845,9 +748,7 @@ def _filter_candidate_moves(
         for item in out["moves"]:
             if not isinstance(item, dict):
                 continue
-            move = _filter_probe_surface(item, allow_probe=allow_probe)
-            if move is None:
-                continue
+            move = dict(item)
             if demote_partial_commit_candidates:
                 move = _demote_partial_commit_candidate(move)
             moves.append(move)
@@ -856,7 +757,6 @@ def _filter_candidate_moves(
         out["navigation"] = [
             _filter_navigation_item(
                 item,
-                allow_probe=allow_probe,
                 allowed_inspect_topics=allowed_inspect_topics,
             )
             for item in out["navigation"]
@@ -867,13 +767,6 @@ def _filter_candidate_moves(
             )
         ]
     if isinstance(out.get("structural_transitions"), list):
-        out["structural_transitions"] = [
-            item
-            for item in out["structural_transitions"]
-            if not isinstance(item, dict)
-            or allow_probe
-            or not _contains_probe_intent(item)
-        ]
         out["structural_transitions"] = [
             item
             for item in out["structural_transitions"]
@@ -905,58 +798,12 @@ def _is_upgrade_profile_gate(item: dict[str, Any]) -> bool:
     }
 
 
-def _filter_probe_surface(
-    item: dict[str, Any],
-    *,
-    allow_probe: bool,
-) -> dict[str, Any] | None:
-    if allow_probe or not _contains_probe_intent(item):
-        return dict(item)
-    tactic = str(item.get("tactic") or "").strip()
-    if tactic:
-        # A move that is ALREADY a concrete commit candidate (`category:"commit"`) and only
-        # MENTIONS probe in a sub-field (e.g. a daemon-accepted "Invariant-call route" whose
-        # guarantee says "probe before committing") should keep its informative title/
-        # evidence — just scrub the probe wording. Only genericize moves that are themselves
-        # probe-flavored (category probe/strategy). Else disabling probe needlessly relabels
-        # good commit candidates to "Concrete tactic candidate" (cpa_ddh0 audit).
-        if str(item.get("category") or "") == "commit":
-            return _strip_probe_words(dict(item))
-        out = dict(item)
-        out["title"] = "Concrete tactic candidate"
-        out["category"] = "commit"
-        out["applicability"] = (
-            "This tactic-shaped option is concrete for the current goal; "
-            "commit it only if it matches your proof plan."
-        )
-        out["effect"] = (
-            "Committing this tactic would change the EasyCrypt proof state if "
-            "EasyCrypt accepts it."
-        )
-        return _strip_probe_words(out)
-    # No concrete `tactic`. DROP only a pure probe affordance (the move IS a probe
-    # offer with nothing else useful). A non-probe move that merely TRIPS
-    # `_contains_probe_intent` via some field — e.g. a "Named-call context" strategy
-    # move carrying `tactic_shape`/`symbol_hint`/`lookup_before_use` orientation — must
-    # be KEPT (scrubbed), else disabling probe also erases that orientation (the L4
-    # step4_badi/cpa_ddh0 audit found 13 such non-probe moves dropped).
-    intent = str(item.get("intent") or "")
-    category = str(item.get("category") or "")
-    if intent == "probe_tactic" or category == "probe":
-        return None
-    return _strip_probe_words(dict(item))
-
-
 def _filter_navigation_item(
     item: dict[str, Any],
     *,
-    allow_probe: bool,
     allowed_inspect_topics: frozenset[str] | None,
 ) -> dict[str, Any]:
     out = dict(item)
-    if not allow_probe:
-        out.pop("fast_track_probe", None)
-        out = _strip_probe_words(out)
     repairs = out.get("repair_if_fails")
     if isinstance(repairs, list):
         out["repair_if_fails"] = [
@@ -984,7 +831,7 @@ def _filter_route_health_item(
     inspections = out.get("useful_inspections")
     if isinstance(inspections, list):
         out["useful_inspections"] = [
-            direct_context_request(request) if isinstance(request, dict) else request
+            dict(request) if isinstance(request, dict) else request
             for request in inspections
             if not isinstance(request, dict)
             or _manager_request_topic_allowed(request, allowed_inspect_topics)
@@ -996,7 +843,7 @@ def _filter_route_health_item(
     ):
         out.pop("recommended_next", None)
     elif isinstance(recommended, dict):
-        out["recommended_next"] = direct_context_request(recommended)
+        out["recommended_next"] = dict(recommended)
     return {
         key: value
         for key, value in out.items()
@@ -1054,105 +901,13 @@ def _mentions_hidden_inspect_topic(
     return any(topic in text and topic not in allowed_inspect_topics for topic in known_topics)
 
 
-def _contains_probe_intent(value: Any) -> bool:
-    if isinstance(value, dict):
-        if value.get("intent") == "probe_tactic":
-            return True
-        category = str(value.get("category") or "").lower()
-        if category == "probe":
-            return True
-        return any(_contains_probe_intent(item) for item in value.values())
-    if isinstance(value, list):
-        return any(_contains_probe_intent(item) for item in value)
-    if isinstance(value, str):
-        return "probe" in value.lower()
-    return False
-
-
-# Phrase-level probe scrubs (applied longest/most-specific first), used when the probe
-# lever is disabled so the agent-facing view never OFFERS or INSTRUCTS a probe. The
-# audit (4 L1 sequences, equiv_step4/pr_12/step3/CBC_upto) found the old fixed table
-# missed: `read_only_probe_suggestion` (the move `verified` tag), `probe then decide`
-# (guarantee tails), `before using \`probe_tactic\``  (application_context.how_to_use),
-# sentence-leading `Probe ...` and `, then probe ...` (why_relevant / last_result
-# checkpoint recipes). We now (a) cover those phrases, (b) rewrite the probe INTENT
-# tokens to commit, and (c) fall back to a word-level `probe`->`check` scrub, then run
-# this recursively over the WHOLE projected view at the single exit (`_with_profile_meta`).
-_PROBE_PHRASE_SUBS: list[tuple[str, str]] = [
-    ("read_only_probe_suggestion", "static_candidate"),
-    ("verified_by_probe", "verified"),
-    ("Read-only tactic probe", "Concrete tactic candidate"),
-    ("read-only probe", "candidate tactic"),
-    ("Read-only probe", "Candidate tactic"),
-    ("before using `probe_tactic` or `commit_tactic`", "before using `commit_tactic`"),
-    ("before using `probe_tactic`", "before using `commit_tactic`"),
-    ("probe then decide", "decide"),
-    ("probe before committing", "check before committing"),
-    ("before probing", "before choosing"),
-    (", then probe ", ", then try "),
-    ("Probe the bounded block first; ", ""),
-    ("probe a smaller prefix", "try a smaller prefix"),
-    ("fast-track probe", "fast-track candidate"),
-    ("fast_track_probe", "fast_track_candidate"),
-]
-_PROBE_INTENT_RE = re.compile(r"\bprobe_(tactic|replay_suffix_chunk)\b")
-# No word boundary: must also catch snake_case mentions (`goal_after_probe`,
-# `accepted_closing_probe`) where `_` blocks `\b`. Runs AFTER _PROBE_INTENT_RE so the
-# intent tokens are already rewritten to commit_*.
-_PROBE_WORD_RE = re.compile(r"([Pp])robe(s|d)?")
-
-
-def _scrub_probe_text(text: str) -> str:
-    """Remove probe offers/instructions from one free-text string (probe-disabled mode)."""
-    for old, new in _PROBE_PHRASE_SUBS:
-        text = text.replace(old, new)
-    # probe_tactic / probe_replay_suffix_chunk -> the commit-side intent name
-    text = _PROBE_INTENT_RE.sub(lambda m: "commit_" + m.group(1), text)
-    text = text.replace("probing", "checking").replace("Probing", "Checking")
-    # generic fallback: ANY remaining "probe(s|d)?" token -> "check…". NO word boundary:
-    # snake_case mentions like `goal_after_probe` / `accepted_closing_probe` (which a
-    # word-boundary regex misses because `_` is a word char) must also be scrubbed.
-    text = _PROBE_WORD_RE.sub(
-        lambda m: ("C" if m.group(1) == "P" else "c") + "heck"
-        + {"": "", "s": "s", "d": "ed"}.get(m.group(2) or "", ""),  # probed->checked
-        text,
-    )
-    return text
-
-
-def _strip_probe_words(value: Any) -> Any:
-    """Recursively scrub probe offers/instructions from any view fragment (string/list/dict),
-    used only in probe-DISABLED contexts. DROPS any dict key whose name contains 'probe'
-    (e.g. `last_result.probe_preview`, `candidate_moves.probe_alternatives`,
-    `goal_after_probe`, `probe_result`) — these whole subtrees are probe affordances and a
-    value-only scrub left them visible (caught by the L4-bundle audit; invisible to L1
-    audits since L1 views carry no such keys). Scrubs probe wording in string values
-    (incl. bare strings in lists)."""
-    if isinstance(value, str):
-        return _scrub_probe_text(value)
-    if isinstance(value, list):
-        return [_strip_probe_words(entry) for entry in value]
-    if isinstance(value, dict):
-        return {
-            key: _strip_probe_words(item)
-            for key, item in value.items()
-            if "probe" not in str(key).lower()
-        }
-    return value
-
-
 def _demote_partial_commit_candidate(item: dict[str, Any]) -> dict[str, Any]:
     move = dict(item)
     if not _is_risky_partial_commit_candidate(move):
         return move
-    # Runs AFTER the probe filter, so it must be switch-aware: when probe is disabled it
-    # must NOT re-introduce a `category:"probe"` move or probe-worded evidence (the global
-    # exit scrub would otherwise mangle the controlled `category` enum to a non-probe word).
-    off = probe_disabled()
     lead = (
-        "Accepted tactic leaves residual subgoals; treat this as a partial opener, not as a route recommendation."
-        if off else
-        "Accepted probe leaves residual subgoals; treat this as a partial opener, not as a route recommendation."
+        "Accepted tactic leaves residual subgoals; treat this as a partial "
+        "opener, not as a route recommendation."
     )
     evidence = [
         lead,
@@ -1164,7 +919,7 @@ def _demote_partial_commit_candidate(item: dict[str, Any]) -> dict[str, Any]:
     ][:3]
     move.update({
         "title": "Accepted partial opener",
-        "category": "commit" if off else "probe",
+        "category": "commit",
         "effect": (
             "This tactic is known to be accepted, but it opens residual "
             "surgery. Commit it only if you intentionally want that local "
@@ -1215,7 +970,6 @@ def _with_profile_meta(
     # returns through here, so the neutrality strip is enforced in exactly one place.
     if view_neutrality_strict():
         view = enforce_view_neutrality(view)
-    view = _public_context_handles(view)
     if profile is None:
         return view
     meta = dict(view.get("surface_profile") or {})
@@ -1228,28 +982,4 @@ def _with_profile_meta(
         "paper_role": profile.paper_role,
     })
     view["surface_profile"] = meta
-    # Probe kill switch: scrub probe offers/instructions from the WHOLE projected view
-    # at the single exit, after all per-panel filtering and the meta description. The
-    # gate/schema already reject probe; this guarantees the agent-facing PANELS never
-    # show a probe affordance/instruction (verified tags, "probe then decide" guarantees,
-    # how_to_use/why_relevant text, last_result checkpoint recipes) for any profile.
-    if probe_disabled():
-        view = _strip_probe_words(view)
     return view
-
-
-def _public_context_handles(view: dict[str, Any]) -> dict[str, Any]:
-    handles = view.get("inspect_lookup_handles")
-    if not isinstance(handles, dict):
-        return view
-    requests = handles.get("ask_manager_for")
-    if not isinstance(requests, list):
-        return view
-    out = dict(view)
-    public_handles = dict(handles)
-    public_handles["ask_manager_for"] = [
-        direct_context_request(request) if isinstance(request, dict) else request
-        for request in requests
-    ]
-    out["inspect_lookup_handles"] = public_handles
-    return out

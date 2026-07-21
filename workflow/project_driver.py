@@ -57,17 +57,14 @@ def scan_admit_lemmas(file_path: Path) -> list[dict]:
     the file, classified as admit / proved / unknown. Dependency info is
     populated for admit lemmas so the caller can topo-sort.
     """
-    # Reuse planner's helpers — they already know the EC syntax and admit
-    # detection quirks.
-    sys.path.insert(0, str(_PROJECT_ROOT))
-    from workflow.agents.proof_planner import (
-        _extract_lemmas_from_ec,
-        _detect_admit_dependencies,
+    from workflow.easycrypt_source_inventory import (
+        detect_admit_dependencies,
+        extract_declarations,
     )
 
     content = file_path.read_text(encoding="utf-8")
-    lemmas = _extract_lemmas_from_ec(content)
-    dep_info = _detect_admit_dependencies(content, lemmas)
+    lemmas = extract_declarations(content)
+    dep_info = detect_admit_dependencies(content, lemmas)
 
     out = []
     for lem in lemmas:

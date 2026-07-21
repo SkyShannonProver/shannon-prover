@@ -341,7 +341,7 @@ def format_command_summary(summary: dict[str, Any]) -> str:
         "ok": bool(summary.get("ok")),
         "command": str(summary.get("command") or ""),
         "command_status": command_status,
-        "probe_accepted": command_status == "probe_accepted",
+        "preflight_accepted": command_status == "preflight_accepted",
         "proof_status": str(proof.get("status") or ""),
         "goal_type": str(proof.get("goal_type") or ""),
         "num_remaining": proof.get("num_remaining"),
@@ -515,9 +515,11 @@ def command_summary_action_partitions(summary: dict[str, Any]) -> dict[str, Any]
             "actions": _list(legacy_next.get("actions")),
             "safe_actions": _list(legacy_next.get("safe_next_actions")),
             "commit_actions": _list(legacy_next.get("runnable_tactics")),
-            "probe_actions": _list(legacy_next.get("probe_tactics")),
             "inspect_actions": _list(legacy_next.get("inspection_actions")),
-            "strategy_actions": _list(legacy_next.get("strategy_hints")),
+            "strategy_actions": [
+                *_list(legacy_next.get("tactic_candidates")),
+                *_list(legacy_next.get("strategy_hints")),
+            ],
             "avoid_actions": _list(legacy_next.get("warnings")),
             "recommendations": _list(legacy_next.get("recommendations")),
         }
@@ -550,7 +552,6 @@ def command_summary_action_partitions(summary: dict[str, Any]) -> dict[str, Any]
         "actions": actions,
         "safe_actions": _safe_next_from_workspace_actions(actions),
         "commit_actions": _bucket_workspace_actions(actions, "commit"),
-        "probe_actions": _bucket_workspace_actions(actions, "probe"),
         "inspect_actions": _inspection_actions_from_workspace(actions),
         "strategy_actions": _strategy_hints_from_workspace(actions),
         "avoid_actions": _warnings_from_workspace(actions),
@@ -571,7 +572,7 @@ def command_summary_workspace_metrics(summary: dict[str, Any]) -> dict[str, Any]
     legacy_next = _dict(summary.get("next"))
     if legacy_next and not _list(legacy_next.get("actions")):
         runnable = _list(legacy_next.get("runnable_tactics"))
-        probe = _list(legacy_next.get("probe_tactics"))
+        candidates = _list(legacy_next.get("tactic_candidates"))
         inspections = _list(legacy_next.get("inspection_actions"))
         strategy = _list(legacy_next.get("strategy_hints"))
         warnings = _list(legacy_next.get("warnings"))
@@ -582,12 +583,11 @@ def command_summary_workspace_metrics(summary: dict[str, Any]) -> dict[str, Any]
             "primary_action_id": str(legacy_next.get("primary_action_id") or ""),
             "action_count": sum(
                 len(items)
-                for items in (runnable, probe, inspections, strategy)
+                for items in (runnable, candidates, inspections, strategy)
             ),
             "runnable_tactic_count": len(runnable),
-            "probe_tactic_count": len(probe),
             "inspection_action_count": len(inspections),
-            "strategy_hint_count": len(strategy),
+            "strategy_hint_count": len(candidates) + len(strategy),
             "warning_count": len(warnings),
             "recommendation_count": len(recs),
         }
@@ -617,7 +617,6 @@ def command_summary_workspace_metrics(summary: dict[str, Any]) -> dict[str, Any]
         "primary_action_id": str(primary.get("id") or ""),
         "action_count": len(actions),
         "runnable_tactic_count": len(_bucket_workspace_actions(actions, "commit")),
-        "probe_tactic_count": len(_bucket_workspace_actions(actions, "probe")),
         "inspection_action_count": len(_inspection_actions_from_workspace(actions)),
         "strategy_hint_count": len(_strategy_hints_from_workspace(actions)),
         "warning_count": len(_warnings_from_workspace(actions)),
@@ -683,22 +682,22 @@ def _context_view_for_workspace(
         else "compat_actions_regenerated"
     )
 
-    probe_commit_rec = _probe_accepted_recommendation(
+    preflight_commit_rec = _preflight_accepted_recommendation(
         commit_response,
         proof_state=proof_state,
         current_goal=_dict(view.get("current_goal")),
     )
-    if probe_commit_rec and not _has_recommendation_id(
+    if preflight_commit_rec and not _has_recommendation_id(
         recs,
-        str(probe_commit_rec.get("id") or ""),
+        str(preflight_commit_rec.get("id") or ""),
     ):
-        recs = [probe_commit_rec, *recs]
+        recs = [preflight_commit_rec, *recs]
         guidance = dict(guidance)
         guidance["recommendations"] = recs
         view["guidance"] = guidance
-        input_source = "mutation_probe_result_plus_context"
+        input_source = "mutation_preflight_result_plus_context"
 
-    if not _list(view.get("actions")) or probe_commit_rec:
+    if not _list(view.get("actions")) or preflight_commit_rec:
         actions = build_prover_actions(
             session_dir=session_dir,
             proof_state=_dict(view.get("proof_state")),
@@ -707,10 +706,10 @@ def _context_view_for_workspace(
             latest_errors=latest_errors,
             command_ok=command_ok,
         )
-        if probe_commit_rec:
+        if preflight_commit_rec:
             actions = _prioritize_action_id(
                 actions,
-                f"{_safe_summary_id(str(probe_commit_rec['id']))}.commit",
+                f"{_safe_summary_id(str(preflight_commit_rec['id']))}.commit",
             )
         view["actions"] = actions
     return view, input_source
@@ -846,7 +845,7 @@ def _action_from_legacy_primary(legacy_next: dict[str, Any]) -> dict[str, Any]:
         "none": "none",
         "verify": "verify",
         "diagnose": "diagnose",
-        "probe_tactic": "probe",
+        "tactic_candidate": "strategy",
         "try_tactic": "commit",
         "consider_strategy_hint": "strategy",
         "inspect": "inspect",
@@ -1032,8 +1031,6 @@ def _primary_action_from_workspace_action(action: dict[str, Any]) -> str:
         return "verify"
     if category == "diagnose":
         return "diagnose"
-    if category == "probe":
-        return "probe_tactic"
     if category == "commit":
         return "try_tactic"
     if category == "strategy":
@@ -1049,8 +1046,6 @@ def _compat_tool_for_workspace_action(action: dict[str, Any]) -> str:
     category = str(action.get("category") or "")
     if category == "commit":
         return "next"
-    if category == "probe":
-        return "try"
     if category in {"inspect", "diagnose", "verify", "hint"}:
         return str(action.get("handle") or category)
     return ""
@@ -1059,7 +1054,6 @@ def _compat_tool_for_workspace_action(action: dict[str, Any]) -> str:
 def _action_type_from_category(category: str) -> str:
     return {
         "commit": "runnable_tactic",
-        "probe": "probe_tactic",
         "inspect": "inspection_action",
         "diagnose": "inspection_action",
         "verify": "inspection_action",
@@ -1071,7 +1065,6 @@ def _action_type_from_category(category: str) -> str:
 def _title_for_action(action: dict[str, Any]) -> str:
     return {
         "commit": "Commit runnable tactic",
-        "probe": "Probe tactic without changing proof state",
         "inspect": "Inspect proof state",
         "diagnose": "Diagnose latest error",
         "verify": "Verify closed proof",
@@ -1097,13 +1090,13 @@ def _json_clone(value: Any) -> dict[str, Any]:
     return cloned if isinstance(cloned, dict) else {}
 
 
-def _probe_accepted_recommendation(
+def _preflight_accepted_recommendation(
     commit_response: dict[str, Any],
     *,
     proof_state: dict[str, Any],
     current_goal: dict[str, Any],
 ) -> dict[str, Any]:
-    if str(commit_response.get("status") or "") != "probe_accepted":
+    if str(commit_response.get("status") or "") != "preflight_accepted":
         return {}
     mutation = _dict(commit_response.get("mutation"))
     tactic = next(
@@ -1127,16 +1120,16 @@ def _probe_accepted_recommendation(
         "kind": "tactic_candidate",
         "producer": "try",
         "action": tactic,
-        "why": "The last -try probe accepted this tactic without mutating proof state.",
+        "why": "The last private EasyCrypt preflight accepted this tactic without mutating proof state.",
         "action_type": "runnable_tactic",
         "confidence": "verified",
         "evidence_refs": [
-            "probe.try.result",
-            "epistemic.try.daemon_probe_accepted",
+            "preflight.try.result",
+            "epistemic.try.easycrypt_preflight_accepted",
         ],
         "metadata": {
             "cost": "cheap",
-            "epistemic_status": "daemon_probe_accepted",
+            "epistemic_status": "easycrypt_preflight_accepted",
             "recommended_commit_tool": "next",
             "source_goal_hash": goal_hash,
             "state_changed": False,
@@ -1245,7 +1238,7 @@ def validate_command_summary(data: dict[str, Any]) -> CommandSummaryValidation:
             errors.append("next.safe_next_actions must be a list")
         for key in (
             "runnable_tactics",
-            "probe_tactics",
+            "tactic_candidates",
             "inspection_actions",
             "strategy_hints",
             "warnings",

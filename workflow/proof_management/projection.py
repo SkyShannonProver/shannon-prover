@@ -26,7 +26,6 @@ class ProofProjectionPipeline:
         checkpoints: Any,
         proof_memory: Any,
         events: Any,
-        probe_alternatives: Any,
         analyzers: Any,
         renderer: Any,
         file_path: str,
@@ -38,7 +37,6 @@ class ProofProjectionPipeline:
         self.checkpoints = checkpoints
         self.proof_memory = proof_memory
         self.events = events
-        self.probe_alternatives = probe_alternatives
         self.analyzers = analyzers
         self.renderer = renderer
         self.file_path = str(file_path or "")
@@ -55,11 +53,7 @@ class ProofProjectionPipeline:
         file_path: str | None = None,
         project_root: str | None = None,
     ) -> ProofProjectionResult:
-        alternatives = self.probe_alternatives.alternatives_for_snapshot(snapshot)
-        raw_view = self.probe_alternatives.workspace_view_with_alternatives(
-            snapshot.raw_workspace_view,
-            snapshot,
-        )
+        raw_view = snapshot.raw_workspace_view
         base_view = self.workspace.project(
             raw_view,
             state_version=snapshot.state_version,
@@ -78,7 +72,6 @@ class ProofProjectionPipeline:
             latest_observation=latest_observation,
             replay_prefix=list(replay_prefix or []),
             replay_prefix_count=replay_prefix_count,
-            probe_alternatives=alternatives,
             restore_anchor=self.checkpoints.pre_rewind_restore_anchor,
             route_memories=[
                 memory.to_dict()

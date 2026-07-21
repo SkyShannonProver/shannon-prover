@@ -152,7 +152,7 @@ def test_typed_field_resolution_static_type_and_scope(monkeypatch):
 
     res = ri.typed_field_resolution(pred, pool, goal)
     assert res is not None and res["name"] == "cpl"
-    assert res["probed"] == 0                 # zero daemon probing
+    assert res["preflight_count"] == 0        # zero private EasyCrypt checks
     menus = {m["param"]["base"]: (sorted(m["fields"]), m["filled"]) for m in res["menus"]}
     # RO maps: both in scope, both fmap -> a 2-menu (agent picks poly_in/out).
     assert menus["m1"] == (["Rin.m", "Rout.m"], False)

@@ -6,7 +6,6 @@ import re
 from dataclasses import dataclass, field
 from typing import Any
 
-from workflow.surface_profiles import probe_disabled
 from workflow.context_intents import PROTOCOL_INTENTS
 from workflow.proof_management.transitions import strip_easycrypt_comments
 from core.easycrypt.value_shapes import as_dict_copy as _dict
@@ -20,33 +19,14 @@ ALLOWED_AGENT_INTENTS: set[str] = set(PROTOCOL_INTENTS)
 REPAIR_PROMPT = (
     "I could not read a proof intent from the last message. Please reply with "
     "exactly one JSON object like:\n"
-    '{"intent": "probe_tactic", "payload": {"tactic": "..."}}\n'
-    "or\n"
-    '{"intent": "tactic_forms", "payload": {"name": "wp"}}'
-)
-
-# Probe is hidden from the default agent-facing surface. When unavailable the
-# manager rejects stale/manual probe intents, so repair examples must not advertise
-# a `probe_tactic` affordance. Lead with the always-available `commit_tactic`
-# example instead. Mirrors the gating in `workflow.surface_profiles` for the
-# view/schema/prompt.
-_REPAIR_PROMPT_PROBE_OFF = (
-    "I could not read a proof intent from the last message. Please reply with "
-    "exactly one JSON object like:\n"
     '{"intent": "commit_tactic", "payload": {"tactic": "..."}}\n'
     "or\n"
     '{"intent": "tactic_forms", "payload": {"name": "wp"}}'
 )
 
-
 def repair_prompt_text() -> str:
-    """The protocol-repair example shown to the agent on an unreadable intent.
-
-    Switch-aware: when the probe lever is unavailable, the
-    example advertises `commit_tactic` instead of `probe_tactic`, so the recovery
-    message never offers an affordance the manager will reject. Computed at call
-    time because the env switch is a per-run setting."""
-    return _REPAIR_PROMPT_PROBE_OFF if probe_disabled() else REPAIR_PROMPT
+    """The protocol-repair example shown to the agent on an unreadable intent."""
+    return REPAIR_PROMPT
 
 
 def repair_prompt_text_for_streak(malformed_count: int) -> str:
@@ -58,7 +38,7 @@ def repair_prompt_text_for_streak(malformed_count: int) -> str:
     made more emphatic to break the loop: the agent's previous reply(ies) carried
     no valid intent and the manager did nothing, so the proof has not advanced.
     The escalated text leads with that explicit no-op framing and then repeats the
-    canonical one-JSON-object example (still probe-switch aware)."""
+    canonical one-JSON-object example."""
     base = repair_prompt_text()
     if malformed_count <= 1:
         return base
@@ -76,7 +56,7 @@ ADMIT_CLARIFICATION_PROMPT = (
     "Clarify the purpose by choosing the next proof intent:\n"
     "- If this was accidental, continue with a real non-admit proof tactic.\n"
     "- If you wanted to peek at later goals, use manager inspection such as "
-    "`subgoal_gap` or `call_subgoals`, or probe a non-admit "
+    "`subgoal_gap` or `call_subgoals`, or commit a non-admit "
     "structural tactic.\n"
     "- If you are stuck, report the blocker in your final PROVER REPORT or "
     "try a different proof route.\n\n"
@@ -121,8 +101,6 @@ class AgentIntentParse:
     ok: bool
     intent: AgentIntent | None = None
     error: str = ""
-    # Switch-aware default: computed per-instance so a no-probe run does not
-    # advertise a `probe_tactic` example in the recovery message.
     repair_prompt: str = field(default_factory=repair_prompt_text)
 
 
@@ -336,5 +314,4 @@ def _extract_json_object(text: str) -> dict[str, Any]:
         if isinstance(obj, dict):
             return obj
     return {}
-
 

@@ -32,15 +32,11 @@ from workflow.proof_management.analyzers.recovery import (  # noqa: E402
     workspace_view_with_recovery_consistent_route_health as _workspace_view_with_recovery_consistent_route_health,
 )
 from workflow.proof_management.backend_actions import (  # noqa: E402
-    agent_observation_from_command as _agent_observation_from_command,
     command_summary as _command_summary,
     content_observation_from_payload as _content_observation_from_payload,
 )
 from workflow.proof_management.recovery import (  # noqa: E402
     annotate_route_health_items as _annotate_route_health_items,
-)
-from workflow.proof_management.probe_alternatives import (  # noqa: E402
-    probe_alternative_entry as _probe_alternative_entry,
 )
 from workflow.proof_management import AgentIntent, parse_agent_intent  # noqa: E402
 from workflow.surface_profiles import apply_workspace_view_surface_profile  # noqa: E402
@@ -49,14 +45,14 @@ from tests.helpers.builders import make_manager  # noqa: E402
 
 def test_agent_intent_schema_is_proof_level_only() -> None:
     parsed = parse_agent_intent(
-        '{"intent": "probe_tactic", "payload": {"tactic": "byequiv=>//."}}'
+        '{"intent": "commit_tactic", "payload": {"tactic": "byequiv=>//."}}'
     )
 
     assert parsed.ok is True
     assert parsed.intent is not None
     data = parsed.intent.to_dict()
     assert data == {
-        "intent": "probe_tactic",
+        "intent": "commit_tactic",
         "payload": {"tactic": "byequiv=>//."},
     }
     for forbidden in (
@@ -481,98 +477,6 @@ def test_finish_allowed_after_qed_is_saved() -> None:
     assert backend_calls == ["finish"]
 
 
-def test_handled_intent_adds_latest_observation_to_view(monkeypatch) -> None:
-    monkeypatch.setenv("SHANNON_ENABLE_PROBE", "1")
-    monkeypatch.delenv("SHANNON_DISABLE_PROBE", raising=False)
-    manager = make_manager()
-
-    def handled(_intent):
-        snapshot = ProofStateSnapshot(
-            node_id="Tree-unit",
-            session_tag="unit",
-            session_dir=".ec_session_unit",
-            session_epoch=1,
-            state_version=4,
-            goal_hash="abc",
-            raw_workspace_view={
-                "kind": "prover_workspace_view",
-                "schema_version": 1,
-                "ok": True,
-                "current_goal": {"lines": ["Current goal", "x = y"]},
-                "proof_position": {"status": "open"},
-                "proof_frontier": {},
-                "recent_diagnostics": {},
-            },
-        )
-        return snapshot, [{
-            "label": "probe_tactic",
-            "agent_observation": {
-                "status": "probe_rejected",
-                "tactic": "inline{1} 2.",
-                "effect": "read-only probe; proof state unchanged",
-                "error_summary": "invalid position",
-            },
-        }]
-
-    manager.repl.handle_intent = handled  # type: ignore[method-assign]
-    turn = manager.handle_agent_message(
-        '{"intent": "probe_tactic", "payload": {"tactic": "inline{1} 2."}}'
-    )
-
-    observation = turn.workspace_view["last_result"]
-    assert observation["intent"] == "probe_tactic"
-    assert observation["payload"] == {"tactic": "inline{1} 2."}
-    assert "status" not in observation
-    assert observation["result"].startswith("EasyCrypt rejected this probe.")
-    assert (
-        observation["effect"]
-        == "This was read-only; it did not change the committed EasyCrypt proof state."
-    )
-    assert observation["error_summary"] == "invalid position"
-    assert list(turn.workspace_view)[:3] == [
-        "last_result",
-        "current_goal",
-        "proof_status",
-    ]
-
-
-def test_probe_tool_error_is_not_reported_as_tactic_rejection() -> None:
-    observation = _agent_observation_from_command(
-        "probe_tactic",
-        ["python3", "core/easycrypt/session_cli.py", "-try", "-c", "byequiv => //."],
-        stdout='''[TACTIC-EXECUTION-RESULT]
-{
-  "execution": {
-    "mode": "probe",
-    "state_changed": false,
-    "submitted_tactics": ["byequiv => //."]
-  },
-  "result": {
-    "ok": false,
-    "status": "probe_error",
-    "raw_excerpt": "[TRY] error: could not sync daemon to committed history (daemon spawn / session open / replay failed).\\n[TRY] sync_detail: daemon connection unavailable\\n"
-  },
-  "workspace": {
-    "view": {
-      "kind": "prover_workspace_view",
-      "current_goal": {"lines": ["Current goal", "x = y"]}
-    }
-  }
-}
-''',
-        stderr="",
-        exit_code=0,
-    )
-
-    assert observation["kind"] == "probe_tool_error"
-    assert "probe tool failed" in observation["result"]
-    assert "daemon connection unavailable" in observation["error_summary"]
-    alternative = _probe_alternative_entry("byequiv => //.", observation)
-    assert alternative["probe_result"] == "tool_error"
-    assert alternative["status"] == "probe_infrastructure_error"
-    assert "Do not treat this as evidence" in alternative["how_to_use"]
-
-
 def test_inspect_observation_does_not_surface_cost_field() -> None:
     content = _content_observation_from_payload(
         "inspect_call_site_options",
@@ -669,354 +573,6 @@ def test_call_subgoals_preview_is_explicitly_speculative_readonly() -> None:
     assert "was rejected by daemon" in content["preview"]
 
 
-def test_command_summary_marks_commit_as_mutating_and_probe_as_readonly() -> None:
-    commit = _command_summary(
-        "commit_tactic",
-        ["python3", "core/easycrypt/session_cli.py", "-next", "-c", "proc."],
-        subprocess.CompletedProcess(
-            args=[],
-            returncode=0,
-            stdout='{"ok": true, "result": {"status": "ok"}}',
-            stderr="",
-        ),
-    )
-    probe = _command_summary(
-        "probe_tactic",
-        ["python3", "core/easycrypt/session_cli.py", "-try", "-c", "proc."],
-        subprocess.CompletedProcess(
-            args=[],
-            returncode=0,
-            stdout='{"ok": true, "result": {"status": "probe_accepted"}}',
-            stderr="",
-        ),
-    )
-
-    assert commit["mutates_proof_state"] is True
-    assert probe["mutates_proof_state"] is False
-
-
-def test_probe_observation_surfaces_candidate_after_goal() -> None:
-    observation = _agent_observation_from_command(
-        "probe_tactic",
-        ["python3", "core/easycrypt/session_cli.py", "-try", "-c", "inline *."],
-        stdout='''{
-          "ok": true,
-          "result": {"status": "probe_accepted"},
-          "execution": {
-            "state_changed": false,
-            "submitted_tactics": ["inline *."]
-          },
-          "candidate_after": {
-            "status": "probe_accepted",
-            "tactic": "inline *.",
-            "goal_after_remaining": 1,
-            "current_goal": {
-              "line_count": 2,
-              "char_count": 32,
-              "lines": ["Current goal", "x <- y"],
-              "text_fully_shown": true,
-              "truncated": false
-            }
-          }
-        }''',
-        stderr="",
-        exit_code=0,
-    )
-
-    assert "EasyCrypt accepted this read-only probe" in observation["result"]
-    assert (
-        observation["proof_state"]
-        == "The committed EasyCrypt proof state was not changed."
-    )
-    assert observation["kind"] == "accepted_structural_probe_preview"
-    assert observation["message"] == "This structural probe was accepted."
-    transition = observation["structural_transition"]
-    assert transition["id"] == "lower_level_procedure_workbench"
-    assert transition["phase"] == "lower-level procedure"
-    assert transition["available_commit"] == {
-        "label": "Enter this transition",
-        "submit": {
-            "intent": "commit_tactic",
-            "payload": {"tactic": "inline *."},
-        },
-    }
-    assert "recommended_next" not in transition
-    assert observation["preview_effects"]["kind"] == "broad_inline_preview"
-    assert observation["preview_effects"]["observed_risk"] == (
-        "broad_inline_can_reduce_call_site_handles"
-    )
-    assert observation["preview_summary"] == {
-        "remaining_goals": 1,
-        "line_count": 2,
-        "char_count": 32,
-        "truncated": False,
-    }
-    preview = observation["probe_preview"]
-    assert "speculative_after_goal" not in observation
-    assert preview["outcome"] == "EasyCrypt accepted this read-only probe."
-    assert (
-        preview["effect"]
-        == "This preview is speculative only; the committed EasyCrypt proof state was not changed."
-    )
-    assert preview["goal_after_remaining"] == 1
-    assert "current_goal" not in preview
-    assert preview["goal_after_probe"]["lines"] == ["Current goal", "x <- y"]
-
-
-def test_accepted_closing_probe_gets_no_structural_workbench_prompt() -> None:
-    observation = _agent_observation_from_command(
-        "probe_tactic",
-        ["python3", "core/easycrypt/session_cli.py", "-try", "-c", "smt()."],
-        stdout='''{
-          "ok": true,
-          "result": {"status": "probe_accepted"},
-          "execution": {
-            "state_changed": false,
-            "submitted_tactics": ["smt()."]
-          },
-          "candidate_after": {
-            "status": "probe_accepted",
-            "tactic": "smt().",
-            "goal_after_remaining": 0,
-            "current_goal": {
-              "line_count": 0,
-              "char_count": 0,
-              "lines": [],
-              "text_fully_shown": true,
-              "truncated": false
-            }
-          }
-        }''',
-        stderr="",
-        exit_code=0,
-    )
-
-    assert observation["kind"] == "accepted_closing_probe"
-    assert "EasyCrypt accepted this read-only probe" in observation["result"]
-    assert observation["message"] == "This closing/checking probe was accepted."
-    assert "question" not in observation
-    decision = observation["closing_decision"]
-    assert decision["recommended_next"] == {
-        "label": "Commit this exact tactic",
-        "submit": {
-            "intent": "commit_tactic",
-            "payload": {"tactic": "smt()."},
-        },
-    }
-    assert "try closing or checking" in decision["decision"]
-    assert "Do not solve the speculative preview" not in json.dumps(observation)
-    assert "enter the" not in json.dumps(decision["recommended_next"])
-
-
-def _accepted_probe_observation(tactic: str) -> dict[str, object]:
-    payload = {
-        "ok": True,
-        "result": {"status": "probe_accepted"},
-        "execution": {
-            "state_changed": False,
-            "submitted_tactics": [tactic],
-        },
-        "candidate_after": {
-            "status": "probe_accepted",
-            "tactic": tactic,
-            "goal_after_remaining": 1,
-            "current_goal": {
-                "line_count": 2,
-                "char_count": 32,
-                "lines": ["Current goal", "after probe"],
-                "text_fully_shown": True,
-                "truncated": False,
-            },
-        },
-    }
-    return _agent_observation_from_command(
-        "probe_tactic",
-        ["python3", "core/easycrypt/session_cli.py", "-try", "-c", tactic],
-        stdout=json.dumps(payload),
-        stderr="",
-        exit_code=0,
-    )
-
-
-def test_probe_alternatives_accumulate_on_same_current_state(monkeypatch) -> None:
-    monkeypatch.setenv("SHANNON_ENABLE_PROBE", "1")
-    monkeypatch.delenv("SHANNON_DISABLE_PROBE", raising=False)
-    manager = make_manager()
-
-    def handled(intent: AgentIntent):
-        snapshot = ProofStateSnapshot(
-            node_id="Tree-unit",
-            session_tag="unit",
-            session_dir=".ec_session_unit",
-            session_epoch=1,
-            state_version=4,
-            goal_hash="abc",
-            raw_workspace_view={
-                "kind": "prover_workspace_view",
-                "schema_version": 1,
-                "ok": True,
-                "proof_status": {"status": "open", "remaining_goals": 1},
-                "current_goal": {"lines": ["Current goal", "x = y"]},
-                "candidate_moves": {"moves": []},
-            },
-        )
-        tactic = str(intent.payload.get("tactic") or "")
-        if tactic == "wp.":
-            observation = _agent_observation_from_command(
-                "probe_tactic",
-                ["python3", "core/easycrypt/session_cli.py", "-try", "-c", "wp."],
-                stdout='''{
-                  "ok": true,
-                  "result": {"status": "probe_accepted"},
-                  "execution": {
-                    "state_changed": false,
-                    "submitted_tactics": ["wp."]
-                  },
-                  "candidate_after": {
-                    "status": "probe_accepted",
-                    "tactic": "wp.",
-                    "goal_after_remaining": 2,
-                    "current_goal": {
-                      "line_count": 2,
-                      "char_count": 32,
-                      "lines": ["Current goal", "after wp"],
-                      "text_fully_shown": true,
-                      "truncated": false
-                    }
-                  }
-                }''',
-                stderr="",
-                exit_code=0,
-            )
-        else:
-            observation = {
-                "status": "probe_rejected",
-                "tactic": tactic,
-                "error_summary": "cannot infer the set of equalities",
-            }
-        return snapshot, [{
-            "label": "probe_tactic",
-            "agent_observation": observation,
-        }]
-
-    manager.repl.handle_intent = handled  # type: ignore[method-assign]
-
-    accepted_turn = manager.handle_agent_message(
-        '{"intent": "probe_tactic", "payload": {"tactic": "wp."}}'
-    )
-    accepted = accepted_turn.workspace_view["candidate_moves"]["probe_alternatives"]
-    assert accepted == [{
-        "tactic": "wp.",
-        "probe_result": "accepted",
-        "status": "verified_on_current_state",
-        "how_to_use": (
-            "This tactic was accepted by a read-only probe on the current "
-            "proof state. The transition record describes the checked "
-            "effect and any visible limitations."
-        ),
-        "structural_transition": {
-            "id": "post_wp_surgery",
-            "kind": "structural_transition",
-            "status": "accepted_checkpoint",
-            "tactic": "wp.",
-            "phase": "post-wp surgery",
-            "valid_for": "current_view_only",
-            "decision": (
-                "Commit this exact accepted tactic only if you want to "
-                "enter the post-wp surgery phase."
-            ),
-            "recommended_next": {
-                "label": "Enter this transition",
-                "submit": {
-                    "intent": "commit_tactic",
-                    "payload": {"tactic": "wp."},
-                },
-            },
-            "after_commit": (
-                "The next authoritative view will expose the real post-wp "
-                "surgery workbench, so you do not need to mentally simulate "
-                "now what will happen."
-            ),
-            "if_wrong_after_commit": (
-                "Use `undo_last_step` or `undo_to_checkpoint` if the "
-                "committed route is wrong."
-            ),
-        },
-        "goal_after_probe_summary": {
-            "remaining_goals": 2,
-            "first_lines": ["Current goal", "after wp"],
-            "truncated": False,   # size count (char_count) stripped from agent view
-        },
-    }]
-
-    rejected_turn = manager.handle_agent_message(
-        '{"intent": "probe_tactic", "payload": {"tactic": "sim."}}'
-    )
-    alternatives = rejected_turn.workspace_view["candidate_moves"]["probe_alternatives"]
-    assert [item["tactic"] for item in alternatives] == ["wp.", "sim."]
-    assert alternatives[0]["structural_transition"]["recommended_next"]["submit"] == {
-        "intent": "commit_tactic",
-        "payload": {"tactic": "wp."},
-    }
-    assert alternatives[1]["probe_result"] == "rejected"
-    assert alternatives[1]["status"] == "do_not_commit_unchanged"
-    assert "cannot infer" in alternatives[1]["error_summary"]
-    assert rejected_turn.workspace_view["last_result"]["tactic"] == "sim."
-
-
-def test_accepted_probe_structural_transition_covers_structural_tactics() -> None:
-    cases = {
-        "wp.": (
-            "post_wp_surgery",
-            "post-wp surgery",
-            "real post-wp surgery workbench",
-        ),
-        "call (_: Inv).": (
-            "call_obligations",
-            "call-obligation and invariant-subgoal",
-            "call obligations",
-        ),
-        "inline *.": (
-            "lower_level_procedure_workbench",
-            "lower-level procedure",
-            "may erase live call handles",
-        ),
-        "rcondt{2} 9.": (
-            "prhl_mid_surgery",
-            "pRHL mid-surgery",
-            "pRHL mid-surgery workbench",
-        ),
-    }
-    for tactic, (kind, phase, workbench_text) in cases.items():
-        entry = _probe_alternative_entry(
-            tactic,
-            _accepted_probe_observation(tactic),
-        )
-
-        transition = entry["structural_transition"]
-        assert transition["id"] == kind
-        assert transition["phase"] == phase
-        assert workbench_text in transition["after_commit"]
-        assert "undo_last_step" in transition["if_wrong_after_commit"]
-        commit_surface = transition.get("recommended_next") or transition.get("available_commit")
-        assert commit_surface["submit"] == {
-            "intent": "commit_tactic",
-            "payload": {"tactic": tactic},
-        }
-
-
-def test_accepted_closing_probe_does_not_claim_surgery_workbench() -> None:
-    entry = _probe_alternative_entry(
-        "smt().",
-        _accepted_probe_observation("smt()."),
-    )
-
-    decision = entry["closing_decision"]
-    assert decision["id"] == "closing_or_checking"
-    assert "try closing or checking" in decision["decision"]
-    assert "does not promise a new surgery workbench" in decision["after_commit"]
-
-
 def test_inspect_context_topics_map_to_manager_backend_tools() -> None:
     manager = make_manager()
 
@@ -1029,10 +585,6 @@ def test_inspect_context_topics_map_to_manager_backend_tools() -> None:
         "-inv-from-lemma",
         "H",
     ]
-    assert manager.repl._inspect_args({
-        "topic": "bridge_probe",
-        "claim": "Pr[A] = Pr[B]",
-    }) == ["-bridge-probe", "-c", "Pr[A] = Pr[B]"]
     assert manager.repl._inspect_args({"topic": "tactic_forms", "name": "call"}) == [
         "-tactic-forms",
         "call",
@@ -1236,45 +788,6 @@ def _record_route_event_facts(
 ) -> None:
     for event in events:
         manager.events.record_route_event(dict(event))
-
-
-def test_undo_after_readonly_probe_returns_boundary_menu(tmp_path: Path) -> None:
-    manager = _manager_with_view(tmp_path)
-    _record_route_event_facts(manager, [{
-        "intent": "probe_tactic",
-        "tactic": "swap [14..17] -1.",
-        "tactic_head": "swap",
-        "accepted": True,
-        "changed": False,
-        "status": "probe_accepted",
-    }])
-    backend_calls: list[str] = []
-
-    def fail_backend(_intent):
-        backend_calls.append("called")
-        raise AssertionError("undo after a read-only probe should not hit backend")
-
-    manager.repl.handle_intent = fail_backend  # type: ignore[method-assign]
-
-    turn = manager.handle_agent_message(
-        '{"intent":"undo_last_step","payload":{}}'
-    )
-
-    assert turn.ok is True
-    assert backend_calls == []
-    assert turn.manager_actions[0]["label"] == "probe_undo_boundary"
-    last = turn.workspace_view["last_result"]
-    assert last["kind"] == "probe_undo_boundary"
-    assert "no probe step to undo" in last["message"]
-    assert last["last_probe"]["tactic"] == "swap [14..17] -1."
-    assert last["options"][0]["submit"] == {
-        "intent": "commit_tactic",
-        "payload": {"tactic": "swap [14..17] -1."},
-    }
-    assert any(
-        option["submit"].get("intent") == "undo_to_checkpoint"
-        for option in last["options"]
-    )
 
 
 def test_parser_accepts_negotiated_rewind_and_restart_intents() -> None:
@@ -1790,17 +1303,15 @@ def test_route_replay_memory_surfaces_suffix_after_checkpoint_rewind(
     surface = turn.workspace_view["route_replay_memory"]
     chunk = surface["items"][0]["available_chunks"][0]
     assert chunk["first_tactic"] == "seq 5 3 : (old_midpoint)."
-    assert chunk["submit_probe"]["intent"] == "probe_replay_suffix_chunk"
+    assert chunk["submit_commit"]["intent"] == "commit_replay_suffix_chunk"
+    assert "submit_probe" not in chunk
     assert surface["kind"] == "route_replay_memory"
     assert surface["repair_episodes"]
 
 
 def test_route_replay_memory_replays_suffix_after_rewritten_boundary(
-    monkeypatch,
     tmp_path: Path,
 ) -> None:
-    monkeypatch.setenv("SHANNON_ENABLE_PROBE", "1")
-    monkeypatch.delenv("SHANNON_DISABLE_PROBE", raising=False)
     manager = _manager_with_view(tmp_path)
     history = Path(manager.repl.session_dir) / "history.ec"
     old_tactics = [
@@ -1857,22 +1368,14 @@ def test_route_replay_memory_replays_suffix_after_rewritten_boundary(
     manager.repl.verify_tactic_chunk_from_prefix = fake_verify  # type: ignore[method-assign]
     manager.repl.restore_committed_tactics = fake_restore  # type: ignore[method-assign]
 
-    probe = manager.handle_agent_message(json.dumps({
-        "intent": "probe_replay_suffix_chunk",
-        "payload": {"chunk_id": chunk["chunk_id"]},
-    }))
-
-    assert probe.workspace_view["last_result"]["kind"] == "replay_suffix_probe"
-    assert history.read_text(encoding="utf-8").splitlines() == current_tactics
-    assert verified[0][0] == current_tactics
-    assert verified[0][1] == ["call (_: old_inv).", "wp."]
-
     committed = manager.handle_agent_message(json.dumps({
         "intent": "commit_replay_suffix_chunk",
         "payload": {"chunk_id": chunk["chunk_id"]},
     }))
 
     assert committed.workspace_view["last_result"]["kind"] == "replay_suffix_commit"
+    assert verified[0][0] == current_tactics
+    assert verified[0][1] == ["call (_: old_inv).", "wp."]
     assert history.read_text(encoding="utf-8").splitlines() == [
         *current_tactics,
         "call (_: old_inv).",
@@ -1997,14 +1500,14 @@ proof. admit. qed.
     )
     _record_route_event_facts(manager, [
         {
-            "intent": "probe_tactic",
+            "intent": "commit_tactic",
             "tactic": "sim.",
             "tactic_head": "sim",
             "rejected": True,
             "error_summary": "cannot infer the set of equalities",
         },
         {
-            "intent": "probe_tactic",
+            "intent": "commit_tactic",
             "tactic": "smt().",
             "tactic_head": "smt",
             "rejected": True,
@@ -2095,14 +1598,14 @@ op inv_cpa roin roout log1 log2 lc1 lc2 lenc1 lenc2 ndec1 ndec2 =
     )
     _record_route_event_facts(manager, [
         {
-            "intent": "probe_tactic",
+            "intent": "commit_tactic",
             "tactic": "sim.",
             "tactic_head": "sim",
             "rejected": True,
             "error_summary": "cannot infer the set of equalities",
         },
         {
-            "intent": "probe_tactic",
+            "intent": "commit_tactic",
             "tactic": "smt().",
             "tactic_head": "smt",
             "rejected": True,
@@ -2296,7 +1799,7 @@ post = ={c1, c2}
     assert "lost_call_abstraction_boundary" not in signals
 
 
-def test_l4_call_site_surface_exposes_neutral_state_and_preview_effects(
+def test_l4_call_site_surface_exposes_neutral_current_state(
     tmp_path: Path,
 ) -> None:
     manager = _manager_with_view(tmp_path)
@@ -2353,33 +1856,7 @@ post = ={c1, c2}
             }
         ]
     }
-    observation = _agent_observation_from_command(
-        "probe_tactic",
-        ["python3", "core/easycrypt/session_cli.py", "-try", "-c", "inline *."],
-        stdout=json.dumps({
-            "ok": True,
-            "result": {"status": "probe_accepted"},
-            "execution": {
-                "state_changed": False,
-                "submitted_tactics": ["inline *."],
-            },
-            "candidate_after": {
-                "status": "probe_accepted",
-                "tactic": "inline *.",
-                "goal_after_remaining": 1,
-                "current_goal": {
-                    "line_count": 80,
-                    "char_count": 2400,
-                    "lines": ["Current goal", "x <- y"],
-                    "truncated": True,
-                },
-            },
-        }),
-        stderr="",
-        exit_code=0,
-    )
-
-    view = manager._project(snapshot, latest_observation=observation)
+    view = manager._project(snapshot)
     upgrade = apply_workspace_view_surface_profile(view, "l4_checked_action_surface")
 
     surface = upgrade["call_site_surface"]
@@ -2400,8 +1877,7 @@ post = ={c1, c2}
         if item["symbol"] == "old_equiv"
     )
     assert "tactic_shape" not in old_equiv
-    assert surface["preview_effects"]["kind"] == "broad_inline_preview"
-    assert surface["preview_effects"]["after"]["goal_contains_call_site"] is False
+    assert "preview_effects" not in surface
     assert "old_equiv" not in json.dumps(upgrade.get("candidate_moves", {}))
     assert "should" not in json.dumps(surface).lower()
 
@@ -2465,60 +1941,6 @@ post = p0{1} <> None<:ptxt>
     assert surface["packaging_evidence"]["confidence"] == "high"
     assert "phoare[PROC : PRE ==> POST] = 1%r" in json.dumps(surface)
     assert "should" not in json.dumps(surface).lower()
-
-
-def test_l4_one_sided_call_surface_records_direct_shape_failure_without_rewind(
-    tmp_path: Path,
-) -> None:
-    manager = _manager_with_view(tmp_path)
-    goal = """
-Current goal
-Hdec: hoare[ E.dec : true ==> res = None<:ptxt> ]
-------------------------------------------------------------------------
-&1 (left ) : {p0 : ptxt option, ek : eK, c0 : ctxt}
-&2 (right) : {b : bool}
-p0 <@ E.dec(ek, c0)        (1)
-post = p0{1} = None<:ptxt>
-"""
-    snapshot = _route_snapshot(manager, goal)
-    snapshot.raw_workspace_view["program_frontier"] = {
-        "call_sites": [
-            {
-                "side": "left",
-                "side_index": 1,
-                "procedure": "E.dec",
-                "statement": "p0 <@ E.dec(ek, c0)",
-            }
-        ],
-        "frontier_alignment": {
-            "first_instruction_alignment": {
-                "left_first": "p0 <@ E.dec(ek, c0)",
-                "right_first": "no matching right-side call at this frontier",
-                "branch_alignment": "one-sided_frontier",
-            }
-        },
-    }
-    snapshot.raw_workspace_view["candidate_moves"] = {
-        "probe_alternatives": [
-            {
-                "tactic": "ecall{1} (Hdec).",
-                "probe_result": "rejected",
-                "error_summary": "call: invalid goal shape",
-            }
-        ]
-    }
-
-    view = manager._project(snapshot)
-    upgrade = apply_workspace_view_surface_profile(view, "l4_checked_action_surface")
-
-    surface = upgrade["call_site_surface"]["one_sided_call_surface"]
-    assert surface["recent_direct_call_shape_failures"][0]["side"] == "left"
-    assert surface["recent_direct_call_shape_failures"][0]["classification"] == (
-        "direct_one_sided_call_shape_rejected"
-    )
-    assert surface["packaging_evidence"]["confidence"] == "medium"
-    assert "No losslessness or phoare certificate" in json.dumps(surface)
-    assert "recovery_diagnosis_surface" not in upgrade
 
 
 def test_l4_one_sided_call_surface_absent_for_paired_call_frontier(
@@ -2815,7 +2237,7 @@ def test_recovery_diagnosis_reports_seq_midpoint_repair_for_branch_mismatch(
         encoding="utf-8",
     )
     _record_route_event_facts(manager, [{
-        "intent": "probe_tactic",
+        "intent": "commit_tactic",
         "tactic": "smt().",
         "tactic_head": "smt",
         "rejected": True,
@@ -3095,7 +2517,7 @@ def test_recovery_diagnosis_prioritizes_local_pure_surgery_when_seq_noise_exists
         encoding="utf-8",
     )
     _record_route_event_facts(manager, [{
-        "intent": "probe_tactic",
+        "intent": "commit_tactic",
         "tactic": "smt(mem_cat mapP).",
         "tactic_head": "smt",
         "rejected": True,
@@ -3362,14 +2784,14 @@ def test_route_health_reports_sim_not_ready_and_frontier_placement(
     manager = _manager_with_view(tmp_path)
     _record_route_event_facts(manager, [
         {
-            "intent": "probe_tactic",
+            "intent": "commit_tactic",
             "tactic": "sim.",
             "tactic_head": "sim",
             "rejected": True,
             "error_summary": "cannot infer the set of equalities",
         },
         {
-            "intent": "probe_tactic",
+            "intent": "commit_tactic",
             "tactic": "while (Inv).",
             "tactic_head": "while",
             "rejected": True,
@@ -3420,7 +2842,7 @@ post =
     assert health["signal"] == "prhl_surgery_sequence_needed"
     assert health["recovery_class"] == "residual_program_surgery_available"
     assert health["checkpoint_policy"] == "current_state_residual_work_visible"
-    assert health["recommended_next"]["intent"] == "probe_tactic"
+    assert health["recommended_next"]["intent"] == "commit_tactic"
     assert health["recommended_next"]["payload"]["tactic"].startswith("conseq")
     diagnosis = view["recovery_diagnosis_surface"]
     assert diagnosis["recovery_class"] == "residual_program_surgery_available"
@@ -3462,19 +2884,16 @@ post =
     )
     transition = candidate_moves["structural_transitions"][0]
     assert transition["id"] == "post_wp_surgery"
-    assert transition["status"] == "candidate_reversible_probe"
+    assert transition["status"] == "candidate_reversible_transition"
     assert transition["recommended_next"]["submit"] == {
-        "intent": "probe_tactic",
+        "intent": "commit_tactic",
         "payload": {"tactic": "wp."},
     }
 
 
 def test_structural_transition_surfaces_random_tuple_swap_under_probability_budget(
-    monkeypatch,
     tmp_path: Path,
 ) -> None:
-    monkeypatch.setenv("SHANNON_ENABLE_PROBE", "1")
-    monkeypatch.delenv("SHANNON_DISABLE_PROBE", raising=False)
     manager = _manager_with_view(tmp_path)
     goal = r"""
 Current goal
@@ -3496,7 +2915,7 @@ post =
     transition = view["candidate_moves"]["structural_transitions"][0]
     assert transition["tactic"] == "swap [14..17] -1."
     assert transition["recommended_next"]["submit"] == {
-        "intent": "probe_tactic",
+        "intent": "commit_tactic",
         "payload": {"tactic": "swap [14..17] -1."},
     }
     assert transition["detected_shape"] == {
@@ -3621,7 +3040,7 @@ post =
     transition = view["candidate_moves"]["structural_transitions"][0]
     assert transition["id"] == "post_wp_surgery"
     assert transition["recommended_next"]["submit"] == {
-        "intent": "probe_tactic",
+        "intent": "commit_tactic",
         "payload": {"tactic": "wp."},
     }
 
@@ -3659,24 +3078,3 @@ def test_route_health_binds_checkpoint_menu_to_boundary_debt(
     assert option["label"] == "Before call invariant #3"
     assert option["tactic_index"] == 3
     assert "omitted lbad1/size" in option["why_checkpoint"]
-
-
-if __name__ == "__main__":
-    test_agent_intent_schema_is_proof_level_only()
-    test_malformed_intent_repairs_without_killing_node()
-    test_repeated_malformed_intent_reports_protocol_stuck()
-    test_adopt_bootstrap_seeds_latest_view_without_restart()
-    test_backend_timeout_returns_latest_view_with_health_event()
-    test_readonly_backend_failure_returns_manager_result_not_exception()
-    test_admit_tactic_gets_clarification_without_backend_commit()
-    test_qed_tactic_requires_closed_candidate_view()
-    test_qed_tactic_allowed_when_view_is_closed_candidate()
-    test_handled_intent_adds_latest_observation_to_view()
-    test_inspect_observation_does_not_surface_cost_field()
-    test_call_subgoals_preview_is_explicitly_speculative_readonly()
-    test_command_summary_marks_commit_as_mutating_and_probe_as_readonly()
-    test_probe_observation_surfaces_candidate_after_goal()
-    test_inspect_context_topics_map_to_manager_backend_tools()
-    test_repl_start_replays_prefix_with_chain_action()
-    test_fresh_restart_intent_restarts_current_node_with_force_restart()
-    print("PASS test_proof_node_manager")

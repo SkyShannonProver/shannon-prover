@@ -20,7 +20,10 @@ from core.easycrypt.session_candidate_status import (
 from core.context_intents import (
     CONTEXT_TOPIC_INTENTS,
     add_intent_contract,
+    direct_context_request,
+    intent_payload_fields,
     intent_spec,
+    normalize_context_topic,
 )
 from core.easycrypt.analysis.ec_utils import drop_empty_recursive as _drop_empty
 from core.easycrypt.value_shapes import (
@@ -135,15 +138,6 @@ AGENT_VIEW_METADATA_ORDER: tuple[str, ...] = (
 
 AGENT_HIDDEN_METADATA_FIELDS = frozenset(AGENT_VIEW_METADATA_ORDER)
 
-# Agent-deliverable `decision_context` PANEL keys — the flag-only help-mechanism
-# signals. Everything ELSE inside a legacy/internal `decision_context`
-# (proof_options, context_handles, limitations, call_invariant_inputs, ...) is
-# projected into `application_context` / `candidate_moves` and then dropped.
-DECISION_CONTEXT_PANEL_KEYS: tuple[str, ...] = (
-    "local_patch_loop",
-    "up_to_bad_call",
-)
-
 _LOW_LEVEL_INSPECT_TOPICS = frozenset({
     "inspect_context",
     "try",
@@ -152,7 +146,7 @@ _LOW_LEVEL_INSPECT_TOPICS = frozenset({
     "chain",
     "tactic_exec",
     "commit_tactic",
-    "probe_tactic",
+    "tactic_candidate",
 })
 
 _DIRECT_CONTEXT_TOPIC_INTENTS = CONTEXT_TOPIC_INTENTS
@@ -166,23 +160,13 @@ AGENT_ENUM_WORDING_REVIEWS: tuple[dict[str, str], ...] = (
         "example_context": "candidate_moves.moves[].applicability",
     },
     {
-        "raw_value": "probe_first",
-        "source": "ProofIR/action readiness",
-        "meaning": "The tactic-shaped option has not been committed and should be checked speculatively.",
-        "agent_wording": (
-            "This tactic-shaped option should be checked with a read-only probe "
-            "before committing it."
-        ),
-        "example_context": "candidate_moves.moves[].applicability",
-    },
-    {
         "raw_value": "needs_instantiation",
         "source": "ProofIR/action readiness",
         "meaning": "The item is a route template with missing proof-specific content.",
         "agent_wording": (
             "This is a proof-route template, not a complete tactic; fill in "
             "the missing invariant or tactic arguments from the current goal "
-            "before probing or committing it."
+            "before committing it."
         ),
         "example_context": "candidate_moves.moves[].applicability",
     },
@@ -202,26 +186,14 @@ AGENT_ENUM_WORDING_REVIEWS: tuple[dict[str, str], ...] = (
         "agent_wording": "The committed EasyCrypt proof state was not changed.",
         "example_context": "last_result.proof_state",
     },
-    {
-        "raw_value": "probe_accepted",
-        "source": "REPL/manager result",
-        "meaning": "EasyCrypt accepted a speculative tactic run without committing it.",
-        "agent_wording": (
-            "EasyCrypt accepted this read-only probe; committing it would be a "
-            "separate proof-state change."
-        ),
-        "example_context": "last_result.probe_preview",
-    },
 )
 
 AGENT_FORBIDDEN_BARE_ENUM_VALUES = frozenset(
     item["raw_value"] for item in AGENT_ENUM_WORDING_REVIEWS
 ) | frozenset({
-    "probe_rejected",
     "manager_action_recorded",
     "not_requested",
     "proof_state_effect",
-    "does_not_change_proof_state_probe_only",
     "does_not_change_proof_state_read_only",
     "does_not_change_proof_state_verification_check",
     "will_change_proof_state",
@@ -429,20 +401,10 @@ class WorkspaceViewManager:
         This keeps manager handoffs and tests that still construct v1-shaped
         fixtures readable without exposing legacy names to the agent.
 
-        The agent-deliverable mechanism signals (``DECISION_CONTEXT_PANEL_KEYS``)
-        are captured BEFORE the legacy-key pop and re-attached afterwards as a
-        panels-only ``decision_context`` — the legacy migration duties (project
-        ``proof_options``/``limitations`` into ``candidate_moves`` etc. when the
-        v2 keys are missing) are unchanged, but sanitize no longer destroys the
-        flag-only banners (2026-06-09 panel-audit delivery break).
+        Legacy ``decision_context`` fields are projected into their v2 owners
+        (``application_context`` and ``candidate_moves``), then removed. Normal
+        presentation never receives a second decision-context side channel.
         """
-        decision_panels: dict[str, Any] = {}
-        if isinstance(data.get("decision_context"), dict):
-            source = _dict(data.get("decision_context"))
-            for key in DECISION_CONTEXT_PANEL_KEYS:
-                value = source.get(key)
-                if isinstance(value, dict) and value:
-                    decision_panels[key] = value
         if "proof_status" not in data and isinstance(data.get("proof_position"), dict):
             old = _dict(data.get("proof_position"))
             current_goal = _dict(data.get("current_goal"))
@@ -491,8 +453,6 @@ class WorkspaceViewManager:
             "want_more_context",
         ):
             data.pop(key, None)
-        if decision_panels:
-            data["decision_context"] = decision_panels
 
     def _compact_inspect_lookup_handles(self, data: dict[str, Any]) -> None:
         """Keep the tool menu compact without losing read-only semantics."""
@@ -528,18 +488,14 @@ class WorkspaceViewManager:
             if topic == "suggest_close":
                 continue
             compact.pop("topic", None)
-            if intent == "inspect_context":
-                payload["topic"] = topic
-                public_intent = topic
-            else:
-                compact["intent"] = topic
-                payload.pop("topic", None)
-                public_intent = topic
+            compact["intent"] = topic
+            payload.pop("topic", None)
+            public_intent = topic
             spec = intent_spec(public_intent)
             if spec is not None and not spec.advertised:
                 continue
             compact["payload"] = payload
-            clean_ask.append(_drop_empty(add_intent_contract(compact)))
+            clean_ask.append(_drop_empty(direct_context_request(compact)))
         clean_lookup: list[dict[str, Any]] = []
         seen_lookup: set[str] = set()
         for item in lookup_candidates:
@@ -719,6 +675,20 @@ class WorkspaceViewManager:
     def _context_handle_from_action(self, action: dict[str, Any]) -> dict[str, Any]:
         if not action:
             return {}
+        exact_lookups = _lookup_candidates_from_handle_text(action)
+        if exact_lookups:
+            lookup = exact_lookups[0]
+            return _drop_empty(direct_context_request({
+                "category": str(action.get("category") or "").strip(),
+                "intent": "lookup_symbol",
+                "payload": {"symbol": lookup.get("symbol")},
+                "effect": _effect_text(action) or (
+                    "This asks the manager for information only; it does not "
+                    "change the EasyCrypt proof state."
+                ),
+                "use_when": lookup.get("use_when"),
+                "source": _human_source(str(action.get("source") or "").strip()),
+            }))
         topic = str(
             action.get("topic")
             or action.get("request")
@@ -731,27 +701,32 @@ class WorkspaceViewManager:
             or action.get("category")
             or ""
         ).strip()
-        kind = _semantic_handle(handle)
+        intent = _semantic_intent(handle)
+        if not intent:
+            return {}
         target = str(action.get("target") or topic or "").strip()
-        if (
-            not target
-            and kind == "inspect_context"
-            and handle
-            and handle != "inspect_context"
-        ):
-            target = handle
+        payload: dict[str, Any] = {}
+        fields = intent_payload_fields(intent)
+        for field_name in fields:
+            value = action.get(field_name)
+            if value is None and len(fields) == 1:
+                value = target
+            if value is not None and str(value).strip():
+                payload[field_name] = value
+        if intent == "lookup_symbol" and not payload.get("symbol"):
+            return {}
         why = str(action.get("why") or action.get("guidance") or "").strip()
-        return _drop_empty({
+        return _drop_empty(direct_context_request({
             "category": str(action.get("category") or "").strip(),
-            "kind": kind,
-            "target": target,
+            "intent": intent,
+            "payload": payload,
             "effect": _effect_text(action) or (
                 "This asks the manager for information only; it does not "
                 "change the EasyCrypt proof state."
             ),
             "use_when": why,
             "source": _human_source(str(action.get("source") or "").strip()),
-        })
+        }))
 
     def _limitation_from_action(self, action: dict[str, Any]) -> dict[str, Any]:
         return _drop_empty({
@@ -1241,7 +1216,7 @@ def _inspect_order_for(goal_family: str) -> tuple[str, ...]:
         )
     if goal_family == "failure_diagnostic":
         return base + (
-            "Read errors and diagnostics before probing another mutating tactic.",
+            "Read errors and diagnostics before submitting another mutating tactic.",
             "Ask the manager for diagnose for structured repair hints.",
             "For timeline/confusion, ask the manager for episode_view.",
         )
@@ -1392,11 +1367,6 @@ def _applicability(action: dict[str, Any]) -> str:
     category = str(action.get("category") or "").strip()
     if readiness == "ready_to_run":
         return "This tactic is already concrete for the current goal."
-    if readiness == "probe_first":
-        return (
-            "This tactic-shaped option should be checked with a read-only "
-            "probe before committing it."
-        )
     if readiness == "needs_instantiation":
         return _instantiation_applicability(action)
     if readiness == "reasoning_required" or category in {"strategy", "hint"}:
@@ -1432,14 +1402,6 @@ def _effect_text(action: dict[str, Any]) -> str:
             "EasyCrypt accepts it."
         )
     if effect in {
-        "does_not_change_proof_state_probe_only",
-        "probe_only",
-    } or category == "probe":
-        return (
-            "This is a read-only probe; it asks EasyCrypt what would happen "
-            "without changing the committed proof state."
-        )
-    if effect in {
         "does_not_change_proof_state_read_only",
         "does_not_change_proof_state_verification_check",
     } or category in {"inspect", "diagnose", "verify", "hint"}:
@@ -1459,12 +1421,6 @@ def _effect_text(action: dict[str, Any]) -> str:
 
 def _verification_evidence(action: dict[str, Any]) -> str:
     confidence = str(action.get("confidence") or "").strip()
-    if confidence == "verified_by_probe":
-        return (
-            "EasyCrypt accepted this tactic in a read-only probe on the "
-            "current goal; committing it would still be a separate proof-state "
-            "change."
-        )
     if confidence == "verified_by_easycrypt":
         return "EasyCrypt verified this against the current goal."
     return ""
@@ -1490,12 +1446,12 @@ def _demote_structural_named_call(
     option["title"] = "Named-call context"
     option["applicability"] = (
         "This named-call shape came from program comparison. Treat it as "
-        "context until a manager inspection or read-only probe confirms the "
+        "context until manager-owned EasyCrypt validation confirms the "
         "lemma matches the visible call frontier."
     )
     option["runnable_status"] = (
         "Not established as runnable from this panel; use the current "
-        "frontier and call-site context before deciding whether to probe it."
+        "frontier and call-site context before deciding whether to commit it."
     )
     limitations = list(option.get("limitations") or [])
     limitations.append(
@@ -1539,8 +1495,6 @@ def _proof_option_title(
         return "Program-shape context"
     if category == "commit":
         return "Concrete tactic candidate"
-    if category == "probe":
-        return "Read-only tactic probe"
     if category in {"strategy", "hint"} and (guidance or evidence):
         return "Proof-route context"
     return ""
@@ -1581,29 +1535,18 @@ def _humanize_latest_observation(observation: dict[str, Any]) -> dict[str, Any]:
         data["proof_state"] = "The committed EasyCrypt proof state changed."
     if str(data.get("effect") or "").strip():
         data["effect"] = _observation_effect_wording(str(data.get("effect") or ""))
-    preview = data.get("probe_preview")
-    if isinstance(preview, dict):
-        clean_preview = dict(preview)
-        preview_status = str(clean_preview.pop("status", "") or "").strip()
-        if preview_status == "probe_accepted" and not clean_preview.get("outcome"):
-            clean_preview["outcome"] = "EasyCrypt accepted this read-only probe."
-        if str(clean_preview.get("effect") or "").strip():
-            clean_preview["effect"] = _observation_effect_wording(
-                str(clean_preview.get("effect") or "")
-            )
-        data["probe_preview"] = clean_preview
     return _drop_empty(data)
 
 
 def _observation_status_wording(status: str) -> str:
-    if status == "probe_accepted":
+    if status == "preflight_accepted":
         return (
-            "EasyCrypt accepted this read-only probe. The committed proof "
+            "Private EasyCrypt preflight accepted this candidate. The committed proof "
             "state was not changed."
         )
-    if status == "probe_rejected":
+    if status == "preflight_rejected":
         return (
-            "EasyCrypt rejected this probe. The committed proof state was not "
+            "Private EasyCrypt preflight rejected this candidate. The proof state was not "
             "changed; use the error summary to revise the tactic."
         )
     if status in {"failed", "error", "rejected"}:
@@ -1617,7 +1560,6 @@ def _observation_effect_wording(effect: str) -> str:
     normalized = effect.strip()
     if normalized in {
         "read-only; proof state unchanged",
-        "read-only probe; proof state unchanged",
         "speculative only; proof state unchanged; not committed",
     }:
         return (
@@ -1639,17 +1581,17 @@ def _instantiation_applicability(action: dict[str, Any]) -> str:
         return (
             "This is a `call (_: Inv)` route template, not a complete tactic; "
             "fill in the invariant expression from the current goal before "
-            "probing or committing it."
+            "submitting it."
         )
     if family == "call_named_equiv" or tactic.startswith("call "):
         return (
             "This lemma-call shape is not a complete tactic yet; determine "
             "the missing module, procedure, or term arguments from the current "
-            "goal before probing it."
+            "goal before submitting it."
         )
     return (
         "This tactic shape still has placeholders; replace them with concrete "
-        "EasyCrypt arguments from the current goal before probing or committing "
+        "EasyCrypt arguments from the current goal before submitting "
         "it."
     )
 
@@ -1665,11 +1607,11 @@ def _instantiation_limitation(action: dict[str, Any]) -> str:
     if family == "call_named_equiv" or tactic.startswith("call "):
         return (
             "The call still needs concrete EasyCrypt arguments before it is a "
-            "tactic to probe or commit."
+            "tactic to submit."
         )
     return (
         "The displayed tactic is a template; fill every placeholder with "
-        "current-goal arguments before probing or committing it."
+        "current-goal arguments before submitting it."
     )
 
 
@@ -1679,7 +1621,7 @@ def _instantiation_guidance(action: dict[str, Any]) -> dict[str, Any]:
         return {
             "runnable_status": (
                 "Not yet; replace `Inv` with a concrete EasyCrypt invariant "
-                "before probing or committing this tactic."
+                "before submitting this tactic."
             ),
             "missing_input": [
                 "Concrete invariant expression inside `call (_: ...)`.",
@@ -1697,26 +1639,28 @@ def _instantiation_guidance(action: dict[str, Any]) -> dict[str, Any]:
                 ),
             ],
             "inspect_if_unsure": [
-                {
-                    "topic": "call_site_options",
+                direct_context_request({
+                    "intent": "call_site_options",
+                    "payload": {},
                     "why": (
                         "Shows the live call frontier and any named call or "
                         "oracle-equivalence handles."
                     ),
-                },
-                {
-                    "topic": "call_subgoals",
+                }),
+                direct_context_request({
+                    "intent": "call_subgoals",
+                    "payload": {},
                     "why": (
                         "After you have a candidate invariant, previews the "
                         "obligations and missing facts before changing the "
                         "proof state."
                     ),
-                },
-                {
-                    "topic": "tactic_forms",
-                    "name": "call",
+                }),
+                direct_context_request({
+                    "intent": "tactic_forms",
+                    "payload": {"name": "call"},
                     "why": "Shows the valid EasyCrypt forms for `call`.",
-                },
+                }),
             ],
             "limitations": [_instantiation_limitation(action)],
         }
@@ -1724,7 +1668,7 @@ def _instantiation_guidance(action: dict[str, Any]) -> dict[str, Any]:
         return {
             "runnable_status": (
                 "Not yet; replace the placeholder coupling or offset with "
-                "concrete EasyCrypt expressions before probing or committing "
+                "concrete EasyCrypt expressions before submitting "
                 "this tactic."
             ),
             "missing_input": [
@@ -1743,15 +1687,16 @@ def _instantiation_guidance(action: dict[str, Any]) -> dict[str, Any]:
                 ),
             ],
             "inspect_if_unsure": [
-                {
-                    "topic": "align",
+                direct_context_request({
+                    "intent": "align",
+                    "payload": {},
                     "why": "Shows whether the LHS/RHS sampling statements are aligned.",
-                },
-                {
-                    "topic": "tactic_forms",
-                    "name": "rnd",
+                }),
+                direct_context_request({
+                    "intent": "tactic_forms",
+                    "payload": {"name": "rnd"},
                     "why": "Shows the valid EasyCrypt forms for coupling samples.",
-                },
+                }),
             ],
             "limitations": [_instantiation_limitation(action)],
         }
@@ -1759,7 +1704,7 @@ def _instantiation_guidance(action: dict[str, Any]) -> dict[str, Any]:
         return {
             "runnable_status": (
                 "Not yet; fill the split condition, side, and loop position "
-                "before probing or committing this tactic."
+                "before submitting this tactic."
             ),
             "missing_input": [
                 "Concrete split condition for the loop phase boundary.",
@@ -1777,15 +1722,16 @@ def _instantiation_guidance(action: dict[str, Any]) -> dict[str, Any]:
                 ),
             ],
             "inspect_if_unsure": [
-                {
-                    "topic": "align",
+                direct_context_request({
+                    "intent": "align",
+                    "payload": {},
                     "why": "Shows whether the two loops or loop phases are aligned.",
-                },
-                {
-                    "topic": "tactic_forms",
-                    "name": "while",
+                }),
+                direct_context_request({
+                    "intent": "tactic_forms",
+                    "payload": {"name": "while"},
                     "why": "Shows related EasyCrypt loop tactic forms and common traps.",
-                },
+                }),
             ],
             "limitations": [_instantiation_limitation(action)],
         }
@@ -1793,8 +1739,8 @@ def _instantiation_guidance(action: dict[str, Any]) -> dict[str, Any]:
         return {
             "runnable_status": (
                 "Not yet; replace the wrapper placeholder with a concrete "
-                "procedure or occurrence from the current goal before probing "
-                "or committing this tactic."
+                "procedure or occurrence from the current goal before submitting "
+                "this tactic."
             ),
             "missing_input": [
                 "Concrete wrapper/procedure name, and occurrence selector if needed.",
@@ -1810,13 +1756,14 @@ def _instantiation_guidance(action: dict[str, Any]) -> dict[str, Any]:
                 ),
             ],
             "inspect_if_unsure": [
-                {
-                    "topic": "call_site_options",
+                direct_context_request({
+                    "intent": "call_site_options",
+                    "payload": {},
                     "why": (
                         "Shows whether a live call handle should be used before "
                         "lowering wrappers."
                     ),
-                },
+                }),
             ],
             "limitations": [_instantiation_limitation(action)],
         }
@@ -1824,7 +1771,7 @@ def _instantiation_guidance(action: dict[str, Any]) -> dict[str, Any]:
         return {
             "runnable_status": (
                 "Not yet; fill the missing EasyCrypt lemma, module, procedure, "
-                "or term arguments before probing or committing this tactic."
+                "or term arguments before submitting this tactic."
             ),
             "missing_input": [
                 "Concrete arguments required by the lemma or call form.",
@@ -1841,27 +1788,28 @@ def _instantiation_guidance(action: dict[str, Any]) -> dict[str, Any]:
                 ),
             ],
             "inspect_if_unsure": [
-                {
-                    "topic": "call_site_options",
+                direct_context_request({
+                    "intent": "call_site_options",
+                    "payload": {},
                     "why": "Shows call-site context and named call handles for this frontier.",
-                },
-                {
-                    "topic": "tactic_forms",
-                    "name": "call",
+                }),
+                direct_context_request({
+                    "intent": "tactic_forms",
+                    "payload": {"name": "call"},
                     "why": "Shows the valid EasyCrypt forms for `call`.",
-                },
-                {
+                }),
+                direct_context_request({
                     "intent": "lookup_symbol",
-                    "symbol": "<lemma or symbol name>",
+                    "payload": {"symbol": "<lemma or symbol name>"},
                     "why": "Shows the declaration/signature when a concrete symbol is known.",
-                },
+                }),
             ],
             "limitations": [_instantiation_limitation(action)],
         }
     return {
         "runnable_status": (
             "Not yet; replace every placeholder with concrete EasyCrypt terms "
-            "from the current goal before probing or committing this tactic."
+            "from the current goal before submitting this tactic."
         ),
         "missing_input": [
             "Concrete EasyCrypt arguments for every placeholder in the displayed tactic.",
@@ -1874,11 +1822,11 @@ def _instantiation_guidance(action: dict[str, Any]) -> dict[str, Any]:
             ),
         ],
         "inspect_if_unsure": [
-            {
-                "topic": "tactic_forms",
-                "name": _tactic_head(action) or "<tactic>",
+            direct_context_request({
+                "intent": "tactic_forms",
+                "payload": {"name": _tactic_head(action) or "<tactic>"},
                 "why": "Shows valid argument forms when this tactic has several shapes.",
-            },
+            }),
         ],
         "limitations": [_instantiation_limitation(action)],
     }
@@ -1996,34 +1944,21 @@ def _skip_enum_lint_path(path: str) -> bool:
     return any(token in path for token in syntax_fields)
 
 
-def _semantic_handle(handle: str) -> str:
+def _semantic_intent(handle: str) -> str:
     normalized = str(handle or "").strip().lstrip("-").replace("-", "_")
-    return {
+    mapped = {
         "where": "lookup_symbol",
         "signature": "lookup_symbol",
         "sig": "lookup_symbol",
+        "members": "lookup_symbol",
+        "check_lemma": "lookup_symbol",
         "search": "rewrite_candidates",
         "search_skeleton": "rewrite_candidates",
         "native_ast_search": "rewrite_candidates",
-        "members": "inspect_context",
-        "goal_info": "inspect_context",
-        "diagnose": "inspect_context",
-        "episode_view": "inspect_context",
-        "verify": "inspect_context",
-        # `hint` removed: it is a PHANTOM inspect topic — no `-hint` backend exists
-        # (pulling it fell through to -goal-info), offered 1011x / pulled 0x. The
-        # functional recommendation `category in {"strategy","hint"}` is a SEPARATE
-        # field and is unaffected.
-        "pivot_context": "inspect_context",
-        "verified_pivot_options": "inspect_context",
-        "call_site_options": "inspect_context",
-        "call_subgoals": "inspect_context",
-        "pr_bridge_routes": "inspect_context",
-        "equiv_bridge_lemmas": "inspect_context",
-        "bridge_options": "inspect_context",  # back-compat alias
-        "rewrite_candidates": "inspect_context",
-        "suggest_close": "inspect_context",
-    }.get(normalized, normalized or "inspect_context")
+    }.get(normalized, normalize_context_topic(normalized, default=""))
+    if mapped == "lookup_symbol" or mapped in CONTEXT_TOPIC_INTENTS:
+        return mapped
+    return ""
 
 
 def _dedupe(values: tuple[str, ...]) -> tuple[str, ...]:

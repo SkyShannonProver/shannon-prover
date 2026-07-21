@@ -85,7 +85,7 @@ def build_pr_elaboration(
             "message": (
                 "The current Pr endpoint does not match this lemma's endpoint "
                 "template. Build an intermediate Pr equality/wrapper bridge "
-                "before probing the rewrite."
+                "before submitting the rewrite."
             ),
             "lemma_endpoint_templates": [
                 str(_dict(term.get("endpoint")).get("canonical") or "")

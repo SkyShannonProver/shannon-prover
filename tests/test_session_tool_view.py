@@ -84,7 +84,7 @@ def test_recommendation_and_evidence_contract() -> None:
     )
     assert data["evidence"]["probe"][0]["accepted"] is True
     assert "runnable_tactic" in RECOMMENDATION_ACTION_TYPES
-    assert "probe_tactic" in RECOMMENDATION_ACTION_TYPES
+    assert "probe_tactic" not in RECOMMENDATION_ACTION_TYPES
     assert "epistemic" in EVIDENCE_BUCKETS
 
 
@@ -270,7 +270,80 @@ def test_tactic_forms_reports_phoare_while_mode() -> None:
     text = buf.getvalue()
     assert "Current proof mode: phoare" in text
     assert "while (INVARIANT) (VARIANT)." in text
-    assert "Do not append a probability argument" in text
+    assert (
+        "while (INVARIANT) (VARIANT) UPPER_BOUND DECREASE_PROBABILITY."
+        in text
+    )
+    assert "mu sample (predC test)" in text
+    assert "Form 1:  while{1}" not in text
+
+
+def test_tactic_forms_reports_pretty_prhl_while_mode() -> None:
+    import tempfile
+    from contextlib import redirect_stdout
+    from io import StringIO
+    from types import SimpleNamespace
+
+    with tempfile.TemporaryDirectory() as td:
+        session = open_session(Path(td))
+        session.curr.write_text(
+            "[1|check]>\nCurrent goal\n\n"
+            "&1 (left ) : {r : bool}\n"
+            "&2 (right) : {r : bool}\n"
+            "------------------------------------------------------------------------\n"
+            "pre = true\n\n"
+            "while (test r) {                  (1)  skip\n"
+            "  r <$ sample                    ( )\n"
+            "}\n\n"
+            "post = r{1} = r{2}\n"
+            "[2|check]>\n",
+            encoding="utf-8",
+        )
+        buf = StringIO()
+        with redirect_stdout(buf):
+            assert handle_tactic_forms(
+                session,
+                SimpleNamespace(tactic_forms="while"),
+            ) == 0
+
+    text = buf.getvalue()
+    assert "Current proof mode: pRHL" in text
+    assert "while{1} (INVARIANT). / while{2} (INVARIANT)." in text
+    assert "while{1} (INVARIANT) (VARIANT)." in text
+    assert "UPPER_BOUND DECREASE_PROBABILITY" not in text
+    assert "Termination measure REQUIRED" not in text
+
+
+def test_tactic_forms_reports_pretty_hoare_while_mode() -> None:
+    import tempfile
+    from contextlib import redirect_stdout
+    from io import StringIO
+    from types import SimpleNamespace
+
+    with tempfile.TemporaryDirectory() as td:
+        session = open_session(Path(td))
+        session.curr.write_text(
+            "[1|check]>\nCurrent goal\n\n"
+            "Context : hr: {i : int}\n"
+            "------------------------------------------------------------------------\n"
+            "pre = 0 <= i\n\n"
+            "while (i < 10) {\n  i <- i + 1\n}\n\n"
+            "post = i <= 10\n"
+            "[2|check]>\n",
+            encoding="utf-8",
+        )
+        buf = StringIO()
+        with redirect_stdout(buf):
+            assert handle_tactic_forms(
+                session,
+                SimpleNamespace(tactic_forms="while"),
+            ) == 0
+
+    text = buf.getvalue()
+    assert "Current proof mode: hoare" in text
+    assert "while (INVARIANT)." in text
+    assert "Form 1:  while{1}" not in text
+    assert "UPPER_BOUND DECREASE_PROBABILITY" not in text
 
 
 def test_tactic_forms_reports_phoare_rnd_mode() -> None:
@@ -388,6 +461,8 @@ def main() -> int:
         test_tool_view_artifact_payload_is_compact_and_indexable,
         test_lookup_tool_records_tool_view_event,
         test_tactic_forms_reports_phoare_while_mode,
+        test_tactic_forms_reports_pretty_prhl_while_mode,
+        test_tactic_forms_reports_pretty_hoare_while_mode,
         test_tactic_forms_reports_phoare_rnd_mode,
         test_tactic_forms_reports_generic_ecall_forms,
         test_tactic_forms_reports_indexed_sp_branch_opener,

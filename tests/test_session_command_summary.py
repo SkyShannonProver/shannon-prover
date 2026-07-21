@@ -188,7 +188,6 @@ def test_command_summary_does_not_promote_parser_shape_templates() -> None:
         rec.get("producer") == "goal-parser"
         for rec in next_block["recommendations"]
     )
-    assert next_block["probe_actions"] == []
     assert next_block["commit_actions"] == []
     # The point of this test: the goal-parser's shape templates (`sim.`/`wp.`)
     # are NOT promoted to commit/probe actions (asserted above). Whatever the
@@ -457,18 +456,17 @@ def test_command_summary_no_progress_keeps_fresh_guidance_first() -> None:
         "producer": "ProofIR",
         "action": "move=> H.",
         "why": "ambient goal has a leading implication",
-        "action_type": "probe_tactic",
+        "action_type": "tactic_candidate",
         "confidence": "medium",
-        "metadata": {"action_type": "probe_tactic"},
+        "metadata": {"action_type": "tactic_candidate"},
         "evidence_refs": [],
         "preconditions": [],
     }]
     agent_view["safe_next_actions"] = [{
         "id": "use.recommendation.0",
-        "kind": "probe_recommendation",
+        "kind": "consider_strategy_hint",
         "recommendation_id": "proof_ir.intro",
         "action": "move=> H.",
-        "recommended_tool": "try",
         "why": "Fresh structured guidance is available.",
     }]
 
@@ -480,9 +478,9 @@ def test_command_summary_no_progress_keeps_fresh_guidance_first() -> None:
 
     assert summary["ok"] is False
     next_block = command_summary_action_partitions(summary)
-    assert next_block["primary_action"] == "probe_tactic"
-    assert next_block["actions"][0]["category"] == "probe"
-    assert next_block["actions"][0]["tactic"] == "move=> H."
+    assert next_block["primary_action"] == "consider_strategy_hint"
+    assert next_block["actions"][0]["category"] == "strategy"
+    assert "tool" not in next_block["actions"][0]
     assert summary["transition"]["no_progress"] is True
     assert validate_command_summary(summary).ok is True
 
@@ -512,7 +510,6 @@ def test_command_summary_filters_phoare_bound_hint_on_equality_goal() -> None:
     actions = [r["action"] for r in next_block["recommendations"]]
     assert "proc." not in actions
     assert not any("failure-event" in action for action in actions)
-    assert next_block["probe_actions"] == []
     assert next_block["commit_actions"] == []
     assert validate_command_summary(summary).ok is True
 
@@ -557,7 +554,7 @@ def test_command_summary_keeps_placeholder_pivot_out_of_runnable_bucket() -> Non
     assert validate_command_summary(summary).ok is True
 
 
-def test_command_summary_promotes_probe_tactic_actions() -> None:
+def test_command_summary_keeps_tactic_candidates_as_strategy_actions() -> None:
     agent_view = _agent_view()
     agent_view["guidance"]["recommendations"] = [{
         "id": "align.swap.0",
@@ -565,7 +562,7 @@ def test_command_summary_promotes_probe_tactic_actions() -> None:
         "producer": "align",
         "action": "swap{1} 7 -5.",
         "why": "Static alignment found a candidate; EC has not tried it.",
-        "action_type": "probe_tactic",
+        "action_type": "tactic_candidate",
         "confidence": "medium",
         "evidence_refs": ["epistemic.align"],
         "metadata": {
@@ -573,7 +570,7 @@ def test_command_summary_promotes_probe_tactic_actions() -> None:
             "source_goal_hash": "goal-hash",
             "epistemic_status": "static_candidate_uncertified_by_ec",
             "state_changed": False,
-            "recommended_probe_tool": "try",
+            "validation_owner": "manager_commit",
         },
     }]
     agent_view["safe_next_actions"] = [{
@@ -591,11 +588,10 @@ def test_command_summary_promotes_probe_tactic_actions() -> None:
     )
 
     next_block = command_summary_action_partitions(summary)
-    assert next_block["primary_action"] == "probe_tactic"
-    assert next_block["probe_actions"][0]["tactic"] == "swap{1} 7 -5."
+    assert next_block["primary_action"] == "consider_strategy_hint"
+    assert next_block["strategy_actions"]
     action = next_block["actions"][0]
-    assert action["category"] == "probe"
-    assert action["tool"] == "try"
+    assert action["category"] == "strategy"
     assert action["state_changed"] is False
     assert "epistemic_status" not in action
     assert "confidence" not in action
@@ -704,15 +700,15 @@ def test_command_summary_buckets_verified_try_rec_as_runnable() -> None:
         "kind": "tactic_candidate",
         "producer": "try",
         "action": "swap{1} 7 -3.",
-        "why": "Daemon probe accepted this tactic without mutating proof state.",
+        "why": "Private EasyCrypt preflight accepted this tactic without mutating proof state.",
         "action_type": "runnable_tactic",
         "confidence": "verified",
         "evidence_refs": [
-            "probe.try.result",
-            "epistemic.try.daemon_probe_accepted",
+            "preflight.try.result",
+            "epistemic.try.easycrypt_preflight_accepted",
         ],
         "metadata": {
-            "epistemic_status": "daemon_probe_accepted",
+            "epistemic_status": "easycrypt_preflight_accepted",
             "state_changed": False,
             "recommended_commit_tool": "next",
             "source_goal_hash": "goal-hash",
@@ -822,10 +818,10 @@ def test_action_partitions_read_v2_workspace_actions() -> None:
     assert partitions["strategy_actions"] == []
 
 
-def test_command_summary_probe_accepted_prioritizes_commit_action() -> None:
+def test_command_summary_preflight_accepted_prioritizes_commit_action() -> None:
     response = _commit_response(
         ok=True,
-        status="probe_accepted",
+        status="preflight_accepted",
         proof_status="error",
         failed_tactic="",
         failure_reason="",
@@ -843,8 +839,8 @@ def test_command_summary_probe_accepted_prioritizes_commit_action() -> None:
 
     assert text.startswith("[COMMAND-SUMMARY]\n")
     assert "[COMMAND-SUMMARY] compact-head-safe " not in text
-    assert '"command_status": "probe_accepted"' in text
-    assert '"probe_accepted": true' in text
+    assert '"command_status": "preflight_accepted"' in text
+    assert '"preflight_accepted": true' in text
     assert "byequiv => //." in text
     next_block = command_summary_action_partitions(summary)
     assert next_block["primary_action"] == "try_tactic"
@@ -863,14 +859,14 @@ def main() -> int:
         test_command_summary_no_progress_keeps_fresh_guidance_first,
         test_command_summary_filters_phoare_bound_hint_on_equality_goal,
         test_command_summary_keeps_placeholder_pivot_out_of_runnable_bucket,
-        test_command_summary_promotes_probe_tactic_actions,
+        test_command_summary_keeps_tactic_candidates_as_strategy_actions,
         test_command_summary_buckets_verified_try_rec_as_runnable,
         test_command_summary_writes_artifact,
         test_command_summary_format_includes_tail_safe_compact_line,
         test_command_summary_v2_rejects_top_level_next,
         test_workspace_metrics_read_v2_without_old_next_buckets,
         test_action_partitions_read_v2_workspace_actions,
-        test_command_summary_probe_accepted_prioritizes_commit_action,
+        test_command_summary_preflight_accepted_prioritizes_commit_action,
     ]
     for test in tests:
         test()

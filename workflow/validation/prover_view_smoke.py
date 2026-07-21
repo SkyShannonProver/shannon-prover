@@ -200,7 +200,7 @@ def _audit_goal_info_tool_view(
             issues.append(_artifact_issue(
                 "error",
                 "goal_info_unverified_runnable",
-                "goal-info must emit static tactics as probe_tactic, not runnable_tactic",
+                "goal-info must emit static tactics as tactic_candidate or strategy_hint, not runnable_tactic",
                 artifact,
                 "tool_view",
             ))
@@ -214,32 +214,32 @@ def _audit_try_tool_view(
 ) -> list[ProverSurfaceIssue]:
     issues: list[ProverSurfaceIssue] = []
     recs = _recommendations(view)
-    for probe in _bucket(view, "probe"):
-        if probe.get("producer") != "daemon.try_tactic":
+    for result in _bucket(view, "preflight"):
+        if result.get("producer") != "daemon.try_tactic":
             continue
-        if probe.get("mutates_proof_state") is not False:
+        if result.get("mutates_proof_state") is not False:
             issues.append(_artifact_issue(
                 "error",
-                "try_probe_mutates_state",
-                "try probe evidence must set mutates_proof_state=false",
+                "preflight_mutates_state",
+                "preflight evidence must set mutates_proof_state=false",
                 artifact,
                 "tool_view",
             ))
-        accepted = probe.get("accepted")
-        no_progress = bool(probe.get("no_progress_predicted"))
-        tactic = str(probe.get("tactic") or "")
+        accepted = result.get("accepted")
+        no_progress = bool(result.get("no_progress_predicted"))
+        tactic = str(result.get("tactic") or "")
         if accepted is True and not no_progress:
             if not _has_rec(
                 recs,
                 tactic=tactic,
                 action_type="runnable_tactic",
-                epistemic="daemon_probe_accepted",
+                epistemic="easycrypt_preflight_accepted",
                 confidence="verified",
             ):
                 issues.append(_artifact_issue(
                     "error",
                     "accepted_try_missing_commit_recommendation",
-                    "accepted try probe must produce verified runnable_tactic guidance",
+                    "accepted preflight must produce verified runnable_tactic guidance",
                     artifact,
                     "tool_view",
                 ))
@@ -248,12 +248,12 @@ def _audit_try_tool_view(
                 recs,
                 tactic=tactic,
                 action_type="avoid_action",
-                epistemic="daemon_probe_rejected",
+                epistemic="easycrypt_preflight_rejected",
             ):
                 issues.append(_artifact_issue(
                     "error",
                     "rejected_try_missing_avoid",
-                    "rejected try probe must produce avoid_action guidance",
+                    "rejected preflight must produce avoid_action guidance",
                     artifact,
                     "tool_view",
                 ))
@@ -262,12 +262,12 @@ def _audit_try_tool_view(
                 recs,
                 tactic=tactic,
                 action_type="avoid_action",
-                epistemic="daemon_probe_no_progress",
+                epistemic="easycrypt_preflight_no_progress",
             ):
                 issues.append(_artifact_issue(
                     "error",
                     "no_progress_try_missing_avoid",
-                    "no-progress try probe must produce avoid_action guidance",
+                    "no-progress preflight must produce avoid_action guidance",
                     artifact,
                     "tool_view",
                 ))
@@ -324,36 +324,28 @@ def _audit_agent_view(view: dict[str, Any], *, artifact: Path) -> list[ProverSur
             ))
 
     actions = _list(view.get("actions"))
-    commit_tactics = {
-        str(action.get("tactic") or "")
-        for action in actions
-        if action.get("category") == "commit"
-    }
     for action in actions:
         if action.get("category") == "commit" and not _commit_action_is_verified(action):
             issues.append(_artifact_issue(
                 "error",
                 "commit_action_not_verified",
-                "commit actions must be daemon/probe verified; static candidates should be probe or strategy actions",
+                "commit actions must be EasyCrypt-verified; static candidates must remain strategy actions",
                 artifact,
                 "agent_view",
             ))
         if action.get("category") == "inspect":
             issues.extend(_audit_inspect_action(action, artifact=artifact, view_type="agent_view"))
-        if (
-            action.get("category") == "probe"
-            and str(action.get("tactic") or "") in commit_tactics
-        ):
+        if action.get("category") == "probe":
             issues.append(_artifact_issue(
                 "error",
-                "verified_commit_duplicate_probe",
-                "ProofContextView exposes both commit and probe actions for the same tactic",
+                "public_probe_action",
+                "ProofContextView must not expose a probe action",
                 artifact,
                 "agent_view",
             ))
     for item in _list(view.get("notes")):
         if str(item.get("code") or "") == "source.tool_view.note" and (
-            "Speculative probe did not mutate" in str(item.get("message") or "")
+            "Speculative preflight did not mutate" in str(item.get("message") or "")
         ):
             issues.append(_artifact_issue(
                 "warning",
@@ -367,7 +359,7 @@ def _audit_agent_view(view: dict[str, Any], *, artifact: Path) -> list[ProverSur
             issues.append(_artifact_issue(
                 "error",
                 "active_runnable_recommendation_not_verified",
-                "active runnable_tactic recommendations must be verified; static candidates should be probe_tactic or strategy_hint",
+                "active runnable_tactic recommendations must be verified; static candidates should be tactic_candidate or strategy_hint",
                 artifact,
                 "agent_view",
             ))
@@ -391,6 +383,7 @@ def _audit_command_summary(
             "warning", "command_summary_contract_warning", warn, artifact, "command_summary",
         ))
     proof = _dict(view.get("proof"))
+    next_block = _dict(view.get("next"))
     workspace_metrics = command_summary_workspace_metrics(view)
     if proof.get("status") == "candidate_closed":
         if workspace_metrics.get("primary_action") != "verify":
@@ -402,7 +395,7 @@ def _audit_command_summary(
                 "command_summary",
             ))
         if (
-            _int(workspace_metrics.get("probe_tactic_count"))
+            _int(workspace_metrics.get("strategy_hint_count"))
             or _int(workspace_metrics.get("runnable_tactic_count"))
         ):
             issues.append(_artifact_issue(
@@ -417,7 +410,7 @@ def _audit_command_summary(
             issues.append(_artifact_issue(
                 "error",
                 "summary_commit_action_not_verified",
-                "CommandSummary commit actions must be daemon/probe verified",
+                "CommandSummary commit actions must be EasyCrypt-verified",
                 artifact,
                 "command_summary",
             ))
@@ -526,9 +519,9 @@ def _commit_action_is_verified(action: dict[str, Any]) -> bool:
     metadata = _dict(action.get("metadata"))
     return (
         str(action.get("confidence") or "") == "verified"
-        or str(action.get("epistemic_status") or "") == "daemon_probe_accepted"
+        or str(action.get("epistemic_status") or "") == "easycrypt_preflight_accepted"
         or metadata.get("daemon_ready") is True
-        or str(metadata.get("epistemic_status") or "") == "daemon_probe_accepted"
+        or str(metadata.get("epistemic_status") or "") == "easycrypt_preflight_accepted"
     )
 
 
@@ -537,7 +530,7 @@ def _recommendation_is_verified(rec: dict[str, Any]) -> bool:
     return (
         str(rec.get("confidence") or "") == "verified"
         or metadata.get("daemon_ready") is True
-        or str(metadata.get("epistemic_status") or "") == "daemon_probe_accepted"
+        or str(metadata.get("epistemic_status") or "") == "easycrypt_preflight_accepted"
     )
 
 

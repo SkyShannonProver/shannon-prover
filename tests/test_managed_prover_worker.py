@@ -44,13 +44,13 @@ def test_manager_followup_hides_backend_argv() -> None:
             "view_hash": "abc",
         },
         manager_actions=[{
-            "label": "probe_tactic",
+            "label": "tactic_forms",
             "argv": ["python3", "core/easycrypt/session_cli.py"],
             "exit_code": 0,
             "stdout_has_workspace_view": True,
             "agent_observation": {
-                "status": "probe_accepted",
-                "effect": "read-only probe; proof state unchanged",
+                "status": "ok",
+                "effect": "read-only context; proof state unchanged",
             },
         }],
     )
@@ -58,7 +58,7 @@ def test_manager_followup_hides_backend_argv() -> None:
     text = _render_manager_followup(
         turn,
         turn_index=1,
-        handled_intent={"intent": "probe_tactic", "payload": {"tactic": "smt()."}},
+        handled_intent={"intent": "tactic_forms", "payload": {"name": "smt"}},
     )
 
     assert "exactly one proof intent" in text
@@ -72,7 +72,7 @@ def test_manager_followup_hides_backend_argv() -> None:
     # manager result is a readable summary, no machine-readable blob.
     assert "```json" not in text
     assert len(_json_blocks(text)) == 0
-    assert "Probe returned" in text
+    assert "Probe returned" not in text
     assert "### Manager result" not in text
     assert "you submitted" not in text
     # backend / freshness metadata never reaches the agent-facing markdown

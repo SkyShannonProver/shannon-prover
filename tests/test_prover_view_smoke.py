@@ -46,8 +46,8 @@ def _clean_goal_info_view(proof_state: dict) -> dict:
             "kind": "tactic_candidate",
             "producer": "goal-info",
             "action": "smt().",
-            "why": "Static parser candidate; probe before committing.",
-            "action_type": "probe_tactic",
+            "why": "Static parser candidate; validate through a manager commit.",
+            "action_type": "tactic_candidate",
             "confidence": "medium",
             "preconditions": [],
             "source_refs": [],
@@ -79,20 +79,20 @@ def _accepted_try_view(proof_state: dict, tactic: str = "smt().") -> dict:
             "kind": "tactic_candidate",
             "producer": "try",
             "action": tactic,
-            "why": "Daemon probe accepted this tactic.",
+            "why": "Private EasyCrypt preflight accepted this tactic.",
             "action_type": "runnable_tactic",
             "confidence": "verified",
             "preconditions": ["Commit with -next to mutate proof state."],
             "source_refs": [],
-            "evidence_refs": ["probe.try.result"],
+            "evidence_refs": ["preflight.try.result"],
             "metadata": {
-                "epistemic_status": "daemon_probe_accepted",
+                "epistemic_status": "easycrypt_preflight_accepted",
                 "state_changed": False,
             },
         }],
         evidence={
-            "probe": [{
-                "id": "probe.try.result",
+            "preflight": [{
+                "id": "preflight.try.result",
                 "producer": "daemon.try_tactic",
                 "tactic": tactic,
                 "accepted": True,
@@ -102,7 +102,7 @@ def _accepted_try_view(proof_state: dict, tactic: str = "smt().") -> dict:
         },
         notes=[{
             "code": "try.state_unchanged",
-            "message": "Speculative probe did not mutate the committed proof state.",
+            "message": "Speculative preflight did not mutate the committed proof state.",
         }],
     ).to_dict()
 
@@ -116,20 +116,20 @@ def _avoid_try_view(proof_state: dict, tactic: str = "simplify.") -> dict:
             "kind": "avoid_tactic",
             "producer": "try",
             "action": tactic,
-            "why": "Daemon probe predicted no progress.",
+            "why": "Private EasyCrypt preflight predicted no progress.",
             "action_type": "avoid_action",
             "confidence": "high",
             "preconditions": [],
             "source_refs": [],
-            "evidence_refs": ["probe.try.result"],
+            "evidence_refs": ["preflight.try.result"],
             "metadata": {
-                "epistemic_status": "daemon_probe_no_progress",
+                "epistemic_status": "easycrypt_preflight_no_progress",
                 "state_changed": False,
             },
         }],
         evidence={
-            "probe": [{
-                "id": "probe.try.result",
+            "preflight": [{
+                "id": "preflight.try.result",
                 "producer": "daemon.try_tactic",
                 "tactic": tactic,
                 "accepted": True,

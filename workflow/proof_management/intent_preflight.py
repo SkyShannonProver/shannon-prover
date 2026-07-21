@@ -53,7 +53,6 @@ def preflight_intent(
     intent: AgentIntent,
     latest_view: dict[str, Any],
     surface_profile: str | None,
-    latest_readonly_probe_event: dict[str, Any] | None = None,
 ) -> IntentPreflightDecision:
     # NOTE: `admit` is intentionally NOT blocked here. The manager gates
     # `qed`/`finish` while committed admits remain, and the orchestrator rejects
@@ -98,17 +97,6 @@ def preflight_intent(
             audit_extra={"reason": reason},
         )
 
-    if intent.intent == "undo_last_step" and latest_readonly_probe_event:
-        return IntentPreflightDecision(
-            kind="menu",
-            observation=probe_undo_boundary_observation(
-                intent=intent,
-                latest_probe=latest_readonly_probe_event,
-            ),
-            label="probe_undo_boundary",
-            audit_kind="undo_last_step.probe_boundary_guard",
-        )
-
     if intent.intent == "finish" and view_requires_qed_before_finish(latest_view):
         actions = [finish_requires_qed_action()]
         return IntentPreflightDecision(
@@ -121,54 +109,3 @@ def preflight_intent(
         )
 
     return IntentPreflightDecision()
-
-
-def probe_undo_boundary_observation(
-    *,
-    intent: AgentIntent,
-    latest_probe: dict[str, Any],
-) -> dict[str, Any]:
-    tactic = str(latest_probe.get("tactic") or "").strip()
-    accepted = bool(latest_probe.get("accepted"))
-    options: list[dict[str, Any]] = [
-        {
-            "label": "Show rewind choices",
-            "effect_if_selected": (
-                "This shows committed tactics you can rewind before; "
-                "it does not treat the read-only probe as an undo target."
-            ),
-            "submit": {"intent": "undo_to_checkpoint", "payload": {}},
-        },
-    ]
-    if accepted and tactic:
-        options.insert(0, {
-            "label": "Commit accepted probe",
-            "effect_if_selected": (
-                "This commits the exact tactic that was accepted by the "
-                "read-only probe and then returns the real post-commit view."
-            ),
-            "submit": {
-                "intent": "commit_tactic",
-                "payload": {"tactic": tactic},
-            },
-        })
-    return _drop_empty({
-        "intent": intent.intent,
-        "kind": "probe_undo_boundary",
-        "message": (
-            "The previous action was a read-only probe, so there is no "
-            "probe step to undo. `undo_last_step` would undo the most "
-            "recent committed tactic, not that probe."
-        ),
-        "last_probe": _drop_empty({
-            "tactic": tactic,
-            "accepted": accepted,
-            "status": latest_probe.get("status"),
-            "turn_index": latest_probe.get("turn_index"),
-        }),
-        "options": options,
-    })
-
-
-
-

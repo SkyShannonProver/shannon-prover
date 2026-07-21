@@ -637,7 +637,7 @@ def checkpoint_semantics(tactic: str) -> dict[str, str]:
                 "when the top-level route still looks right."
             ),
             "after_rewind_next": (
-                "Inspect `call_subgoals` or `subgoal_gap`, then probe a "
+                "Inspect `call_subgoals` or `subgoal_gap`, then commit a "
                 "revised `call (_: ...)` invariant or a smaller prefix."
             ),
         }
@@ -650,7 +650,7 @@ def checkpoint_semantics(tactic: str) -> dict[str, str]:
             ),
             "after_rewind_next": (
                 "Inspect `tactic_forms` for while syntax and `subgoal_gap`, "
-                "then probe a revised loop invariant."
+                "then commit a revised loop invariant."
             ),
         }
     if text.startswith("seq") or re.search(r"\bseq\s+\d+", text):
@@ -668,7 +668,7 @@ def checkpoint_semantics(tactic: str) -> dict[str, str]:
                     "the wrong residual."
                 ),
                 "after_rewind_next": (
-                    "Inspect `lemma_hints`, then probe a revised `seq` cut "
+                    "Inspect `lemma_hints`, then commit a revised `seq` cut "
                     "with a stronger midpoint assertion and explicit remaining "
                     "budget."
                 ),
@@ -682,7 +682,7 @@ def checkpoint_semantics(tactic: str) -> dict[str, str]:
                 "the midpoint."
             ),
             "after_rewind_next": (
-                "Inspect `align`, then probe a revised `seq` cut with the "
+                "Inspect `align`, then commit a revised `seq` cut with the "
                 "missing state facts."
             ),
         }
@@ -695,7 +695,7 @@ def checkpoint_semantics(tactic: str) -> dict[str, str]:
                 "or alignment step."
             ),
             "after_rewind_next": (
-                "Use `lookup_symbol` or `call_site_options` before probing "
+                "Use `lookup_symbol` or `call_site_options` before committing "
                 "the next call route."
             ),
         }
@@ -708,7 +708,7 @@ def checkpoint_semantics(tactic: str) -> dict[str, str]:
                 "frontier cleaner."
             ),
             "after_rewind_next": (
-                "Probe targeted `inline{1}`/`inline{2}` or inspect "
+                "Commit a targeted `inline{1}`/`inline{2}` or inspect "
                 "`call_site_options` before expanding more code."
             ),
         }
@@ -721,7 +721,7 @@ def checkpoint_semantics(tactic: str) -> dict[str, str]:
                 "be split differently."
             ),
             "after_rewind_next": (
-                "Inspect `diagnose`, then probe the opposite condition or a "
+                "Inspect `diagnose`, then commit the opposite condition or a "
                 "smaller condition proof."
             ),
         }
@@ -733,7 +733,7 @@ def checkpoint_semantics(tactic: str) -> dict[str, str]:
                 "or later indexed tactics need a different order."
             ),
             "after_rewind_next": (
-                "Inspect `align`, then probe a smaller or differently indexed "
+                "Inspect `align`, then commit a smaller or differently indexed "
                 "`swap`."
             ),
         }
@@ -745,7 +745,7 @@ def checkpoint_semantics(tactic: str) -> dict[str, str]:
                 "dropped a needed fact or kept an obligation too strong."
             ),
             "after_rewind_next": (
-                "Inspect `subgoal_gap`, then probe a weaker postcondition or "
+                "Inspect `subgoal_gap`, then commit a weaker postcondition or "
                 "stronger precondition."
             ),
         }
@@ -758,7 +758,7 @@ def checkpoint_semantics(tactic: str) -> dict[str, str]:
             ),
             "after_rewind_next": (
                 "Inspect `tactic_forms` for `rnd`, `rnd{1}`, or `rnd{2}`, "
-                "then probe the smallest sampling alignment step."
+                "then commit the smallest sampling alignment step."
             ),
         }
     if head == "sp":
@@ -769,7 +769,7 @@ def checkpoint_semantics(tactic: str) -> dict[str, str]:
                 "statements before a branch/call/sampling frontier."
             ),
             "after_rewind_next": (
-                "Inspect `align`, then probe indexed `sp i j` with smaller "
+                "Inspect `align`, then commit indexed `sp i j` with smaller "
                 "counts."
             ),
         }
@@ -782,7 +782,7 @@ def checkpoint_semantics(tactic: str) -> dict[str, str]:
                 "were preserved."
             ),
             "after_rewind_next": (
-                "Probe a smaller indexed `wp`, or inspect `align` / "
+                "Commit a smaller indexed `wp`, or inspect `align` / "
                 "`tactic_forms` before continuing."
             ),
         }
@@ -794,7 +794,7 @@ def checkpoint_semantics(tactic: str) -> dict[str, str]:
                 "were aligned or before the branch condition facts were live."
             ),
             "after_rewind_next": (
-                "Inspect `align`, then probe a smaller prefix or a conditional "
+                "Inspect `align`, then commit a smaller prefix or a conditional "
                 "proof with explicit side goals."
             ),
         }
@@ -817,9 +817,7 @@ def checkpoint_semantics(tactic: str) -> dict[str, str]:
             "the current blocker."
         ),
         "after_rewind_next": (
-            "Probe a smaller replacement step or inspect the current goal "
+            "Try a smaller replacement step or inspect the current goal "
             "before recommitting."
         ),
     }
-
-

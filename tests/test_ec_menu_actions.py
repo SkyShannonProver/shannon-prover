@@ -46,7 +46,7 @@ def test_ambient_named_closer_menu_items_render_probe_action() -> None:
 
     assert items[0]["id"] == "ambient_exact_dblock_ll"
     assert items[0]["tactic"] == "exact: dblock_ll."
-    assert items[0]["action_type"] == "probe_tactic"
+    assert items[0]["action_type"] == "tactic_candidate"
 
 
 def test_semantic_pr_bound_menu_items_render_where_lookup() -> None:

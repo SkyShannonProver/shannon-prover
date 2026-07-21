@@ -7,7 +7,7 @@ failure become another local if/else in `ec_proof_ir.py`.
 The short rule is:
 
 ```text
-parse/canonicalize -> index/resolve resources -> plan obligations -> render actions -> probe in backend
+parse/canonicalize -> index/resolve resources -> plan obligations -> project typed facts -> verify mutations in backend
 ```
 
 Each layer may enrich typed facts. Only the backend may mutate an EasyCrypt
@@ -42,7 +42,7 @@ When adding a new capability, answer these questions before writing code:
 2. Which downstream layer consumes that fact?
 3. Does the code depend on a project-specific name, or on declaration/goal
    shape visible in the current context?
-4. Is the output an inspection action, a strategy hint, or a probeable tactic?
+4. Is the output a typed fact, an inspection action, or a strategy hint?
 5. Which smoke test pins the behavior across benchmark styles?
 
 If a feature cannot answer these questions, it probably belongs in a different
@@ -177,6 +177,8 @@ May:
 - scan declarations visible to the current session as fallback recall
 - classify lemmas by statement shape, such as Pr equality, Pr inequality,
   additive bound, event union, or bad-event bound
+- match a complete loaded losslessness implication against the current
+  obligation and instantiate its module/premise slots
 - suggest read-only signature lookup actions
 - attach conservative instantiation candidates
 
@@ -189,6 +191,14 @@ Must not:
 - let a source scan override an EC-native `-where` or `-search-skeleton` fact
   for the same lemma
 - inspect stale `.ec_session_*` directories outside the current session
+- return the target lemma itself as a closing candidate
+
+`ec_lemma_index.py::mechanical_goal_candidates` is the sole loaded-declaration
+owner for exact current-goal conclusion matches. Downstream proof-management
+analyzers consume its workspace projection; they must not reopen the target
+source and maintain a second conclusion matcher. Procedure-specific one-sided
+losslessness matching and EasyCrypt module-argument packaging are likewise
+owned by `semantic_one_sided_losslessness_candidates` in this layer.
 
 Primary tests:
 
@@ -298,7 +308,8 @@ May:
 
 - render inspection actions such as `-where <lemma>`
 - render strategy hints for non-atomic plans
-- render probeable tactic templates only when their preconditions are explicit
+- render typed tactic templates only when their preconditions are explicit;
+  templates are evidence and are not an agent-facing probe intent
 - preserve cost, precondition, and proof-state preservation metadata
 
 Must not:
@@ -368,7 +379,8 @@ Modules:
 
 Inputs:
 
-- concrete inspection or probe commands selected by the agent/backend policy
+- concrete proof mutations and read-only inspections selected through the
+  manager protocol
 
 Outputs:
 
@@ -379,8 +391,9 @@ Outputs:
 May:
 
 - run EasyCrypt
-- mutate proof state
-- probe tactics
+- mutate proof state for committed proof intents
+- run hidden developer/backend checks when required by validation tooling;
+  these checks never become an advertised agent probe capability
 - verify proof files
 - cache current-session tool artifacts
 
@@ -388,7 +401,7 @@ Must not:
 
 - use stale sessions as proof sources
 - accept `admit.`
-- turn failed probes into accepted proof facts
+- turn failed internal checks into accepted proof facts
 - feed unstructured backend text into frontend logic without a typed artifact
 
 Primary tests:

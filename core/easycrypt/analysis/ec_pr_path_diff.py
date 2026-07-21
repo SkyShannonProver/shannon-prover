@@ -604,7 +604,7 @@ def _truncate(s: str, n: int) -> str:
 
 
 # ---------------------------------------------------------------------------
-# Lemma inventory extraction (shared between proof_planner and session_cli)
+# Lemma inventory extraction for current-session Pr path analysis.
 # ---------------------------------------------------------------------------
 
 
@@ -679,7 +679,7 @@ def extract_lemma_inventory(content: str) -> list[dict]:
 
 
 def classify_lemma_shape(lem: dict) -> str:
-    """Shape classifier shared with proof_planner. See planner docs."""
+    """Classify the statement shape for current-session Pr path analysis."""
     kind = lem.get("kind", "")
     stmt = lem.get("statement", "") or ""
     body_m = re.match(
@@ -858,7 +858,7 @@ def _pr_pair_verdict(goal_mod_expr: str, pivot_mod_expr: str,
             f"equiv; after `proc` the goal contains a call statement "
             f"and `call` is the tactic that matches there. Lower-level "
             f"`inline *` / `wp` / `sp` before the `call` would erase "
-            f"the call structure; probe the shown call plan first."
+            f"the call structure; keep the shown call plan as an unverified candidate."
         )
         return {
             "rank": _TAG_RANK_TABLE["UNFOLD"],
@@ -996,7 +996,7 @@ def _equiv_pair_verdict(gl: str, gr: str, pl: str, pr: str,
             f"equiv judgments, but after `proc` the goal has a "
             f"procedure-call statement. Lower-level "
             f"`inline *` / `wp` / `sp` before `call` would erase "
-            f"the call structure; probe the shown call plan first."
+            f"the call structure; keep the shown call plan as an unverified candidate."
         )
         return {
             "rank": _TAG_RANK_TABLE["UNFOLD"],
@@ -1072,7 +1072,8 @@ def pivot_applicability(pivot_statement: str,
                           Output includes the exact unfold sequence.
                           Use the shown order first. ``inline *`` or
                           ``wp/sp/auto`` before the apply can erase the
-                          procedure-call structure; probe the plan first.
+                          procedure-call structure; the plan remains unverified
+                          until a manager commit receives EasyCrypt's verdict.
       ``TOO_ABSTRACT``  — goal's module is inside pivot; pivot is more
                           general than the goal's current shape. Try
                           ``have := <pivot> <concrete_args>.`` to

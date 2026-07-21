@@ -139,7 +139,7 @@ class LoopMonitor:
             escaped = self._escape_run >= self._rearm_after
             head = _tactic_head(rec.tactic)
             restructure = (
-                rec.intent in ("commit_tactic", "probe_tactic")
+                rec.intent == "commit_tactic"
                 and head in _RESTRUCTURE_HEADS
             )
             # Full production rewind/restart vocabulary (incl. undo_to_checkpoint

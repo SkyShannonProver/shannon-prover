@@ -46,7 +46,7 @@ def _pivot_display_detail(lem: dict, detail: str) -> str:
         return (
             "Direct `apply`/`rewrite` does not match the raw endpoint yet, "
             "but this is a live Pr bridge checkpoint. If pursuing this "
-            f"Pr-bridge route, inspect it with `-where {name}` and probe a "
+            f"Pr-bridge route, inspect it with `-where {name}` and construct a "
             "small intermediate Pr equality to one instantiated side; "
             "otherwise treat it as context for route selection."
         )
@@ -792,7 +792,7 @@ class PivotStrategyPhase(CommitPhase):
                     f"        - if testing this route, inspect with `-where {lem['name']}`"
                 )
                 out.append(
-                    "        - build/probe the small intermediate Pr equality "
+                    "        - construct the small intermediate Pr equality "
                     "to one instantiated checkpoint side"
                 )
                 out.append(
@@ -804,7 +804,7 @@ class PivotStrategyPhase(CommitPhase):
             "shown immediately. UNFOLD → run the "
             "`inline{N}` chain first, THEN `apply`; lower-level "
             "`inline *`/`wp`/`sp`/`auto` before the shown `call` can "
-                "erase the call structure, so probe the displayed plan first. "
+                "erase the call structure, so validate the displayed plan before destructive steps. "
                 "TOO_ABSTRACT → pivot is too general; "
                 "instantiate with `have :=`. PR_CHECKPOINT → "
                 "Pr bridge context; inspect it only when testing that route. "
@@ -818,8 +818,7 @@ class PivotStrategyPhase(CommitPhase):
                 "for UNFOLD multi-step) and EC accepted "
                 "it — apply with high confidence. "
                 "Absence of /VERIFIED means the plan was "
-                "beyond the verification cap — probe it "
-                "yourself with `-try -c '<plan>'`."
+                "beyond the internal verification cap; it remains an unverified candidate."
             )
         layer = 2 if verification_ran else 3
         recommendations, evidence = self._pivot_structured_payload(
@@ -869,7 +868,7 @@ class PivotStrategyPhase(CommitPhase):
                 "detail": display_detail,
             })
             if name in tried:
-                probe_id = f"probe.auto_pivot.{idx}"
+                probe_id = f"preflight.auto_pivot.{idx}"
                 evidence_refs.append(probe_id)
                 probe.append({
                     "id": probe_id,
@@ -904,7 +903,7 @@ class PivotStrategyPhase(CommitPhase):
                 ),
                 "authority_rank": 80 if daemon_verified else 0,
                 "epistemic_status": (
-                    "daemon_probe_accepted"
+                    "easycrypt_preflight_accepted"
                     if daemon_verified else
                     "unverified_pivot_not_frontier_verified"
                 ),
@@ -944,7 +943,7 @@ class PivotStrategyPhase(CommitPhase):
             })
         evidence = {
             "deterministic": deterministic,
-            "probe": probe,
+            "preflight": probe,
         }
         return recommendations, evidence
 
@@ -967,7 +966,7 @@ class PivotStrategyPhase(CommitPhase):
         recommendations = []
         probe = []
         for idx, name in enumerate(sorted(names)):
-            ev_id = f"probe.auto_pivot_call_ready.{idx}"
+            ev_id = f"preflight.auto_pivot_call_ready.{idx}"
             recommendations.append({
                 "id": f"auto_pivot_call_ready.{idx}",
                 "kind": "call_tactic",
@@ -998,7 +997,7 @@ class PivotStrategyPhase(CommitPhase):
             layer=2,
             kind="recommendation",
             recommendations=recommendations,
-            evidence={"probe": probe},
+            evidence={"preflight": probe},
         )
 
     # ─── AUTO-BRIDGE-SUGGEST ───
@@ -1322,7 +1321,7 @@ class AutoDiffPhase(CommitPhase):
             if verified:
                 action_type = "runnable_tactic"
                 confidence = "verified"
-                epistemic_status = "daemon_probe_accepted"
+                epistemic_status = "easycrypt_preflight_accepted"
             elif needs_instantiation:
                 action_type = "strategy_hint"
                 confidence = "medium"
@@ -1332,7 +1331,7 @@ class AutoDiffPhase(CommitPhase):
                 confidence = "medium"
                 epistemic_status = "static_call_alignment_not_frontier_verified"
             else:
-                action_type = "probe_tactic"
+                action_type = "tactic_candidate"
                 confidence = "medium"
                 epistemic_status = "static_alignment_candidate_uncertified_by_ec"
             recs.append({
@@ -1344,7 +1343,7 @@ class AutoDiffPhase(CommitPhase):
                     "AUTO-DIFF found this tactic while comparing the "
                     "current programs/probability expressions. Unverified "
                     "call/ecall items are structural hints only; ProofIR or "
-                    "a daemon probe must establish frontier readiness before "
+                    "manager-owned EasyCrypt validation must establish frontier readiness before "
                     "they become runnable."
                 ),
                 "action_type": action_type,
@@ -1727,7 +1726,7 @@ class _AsymSeqGenerator:
                 f"RHS {proposal.right_m}). Synthesized invariant from "
                 f"{proposal.matched_pair_count} column-matches. "
                 f"Coverage: {proposal.coverage}. "
-                "Probe this split point; if the invariant is incomplete, "
+                "This split point is unverified; if the invariant is incomplete, "
                 "extend it with call-invariant carry-over and renamed-state "
                 "clauses not visible to swap_align."
             )
@@ -1821,7 +1820,7 @@ class HintDispatchPhase(CommitPhase):
                 continue
             text_lines = [
                 f"{r.producer.marker} daemon-verified candidates "
-                "(all probed against the live goal):",
+                "(all privately preflighted against the live goal):",
             ]
             for c in r.accepted:
                 text_lines.append(f"  ✓ {c.tactic}")
@@ -1841,7 +1840,7 @@ class HintDispatchPhase(CommitPhase):
                 layer=r.producer.layer,
                 kind="recommendation",
                 recommendations=recs,
-                evidence={"probe": probe_evidence},
+                evidence={"preflight": probe_evidence},
             ))
         return out
 
@@ -1858,4 +1857,3 @@ def make_default_hint_dispatch_phase(session) -> HintDispatchPhase:
         _SwapAlignGenerator(session),
         _AsymSeqGenerator(session),
     ])
-

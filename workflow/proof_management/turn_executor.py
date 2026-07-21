@@ -13,7 +13,6 @@ from typing import Any
 from .health import backend_failure_health_event, timeout_health_event
 from .intent_preflight import IntentPreflightDecision
 from .lineage import LemmaLineageStore
-from .probe_alternatives import ProofProbeAlternativeManager
 from .protocol_repair import (
     AgentIntent,
     backend_failure_repair_prompt,
@@ -41,7 +40,6 @@ class ProofTurnExecutor:
         repl: Any,
         events: Any,
         lineage: LemmaLineageStore,
-        probe_alternatives: ProofProbeAlternativeManager,
         latest_snapshot: Callable[[], ProofStateSnapshot | None],
         latest_view: Callable[[], dict[str, Any]],
         set_latest_view: Callable[[dict[str, Any]], None],
@@ -54,7 +52,6 @@ class ProofTurnExecutor:
         self.repl = repl
         self.events = events
         self.lineage = lineage
-        self.probe_alternatives = probe_alternatives
         self._latest_snapshot = latest_snapshot
         self._latest_view = latest_view
         self._set_latest_view = set_latest_view
@@ -230,7 +227,6 @@ class ProofTurnExecutor:
             else latest_observation_for_view(intent, actions)
         )
         self._record_route_event(intent, actions, observation)
-        self.probe_alternatives.record(intent, snapshot, observation)
         view = self._project(snapshot, observation)
         self._audit({
             "kind": "agent_intent.handled",

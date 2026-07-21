@@ -95,7 +95,7 @@ def test_provenance_flags_complete_markers_not_flagged():
                 "tactic": "rewrite foo.",
                 "derivation": "from current-state analysis",
                 "verified": "unverified_suggestion",
-                "guarantee": "probe before committing; reversible",
+                "guarantee": "manager validates on commit; reversible",
             }]
         }
     }
@@ -173,13 +173,18 @@ def test_attach_provenance_does_not_fabricate_verified_from_title():
 
 
 def test_attach_provenance_honors_producer_supplied_verified_marker():
-    # a producer that supplies a real `verified` marker (or daemon source) is
-    # classified as daemon-accepted.
+    # Only an explicit EasyCrypt verification marker earns verified status;
+    # a ProofIR/source label alone is not verification evidence.
     view = {"candidate_moves": {"moves": [
-        {"tactic": "byequiv => //.", "source": "ProofIR daemon-probed bridge"}]}}
+        {
+            "tactic": "byequiv => //.",
+            "source": "ProofIR bridge",
+            "verified": True,
+        }]}}
     attach_provenance(view)
-    assert view["candidate_moves"]["moves"][0]["verified"] == \
-        "daemon_accepted_on_current_goal"
+    move = view["candidate_moves"]["moves"][0]
+    assert move["verified"] is True
+    assert "EasyCrypt-verified" in move["guarantee"]
 
 
 # ── goal-dynamic panel ordering ──────────────────────────────────────────────

@@ -44,6 +44,34 @@ def parse_call_statement(
     return parse_procedure_application(target, strip_outer=strip_outer)
 
 
+def extract_visible_call_procedures(text: str) -> list[str]:
+    """Return complete procedure identities from visible ``<@`` calls.
+
+    This is the pretty-goal fallback below ProgramIR.  It understands nested
+    module applications such as ``Adv(A, D2(O).O).guess()`` and deliberately
+    returns only the procedure identity, not value arguments or a tactic.
+    ProgramIR remains authoritative when it has structured call sites; this
+    helper prevents consumers from inventing separate regex identities when
+    EasyCrypt exposes only its numbered pretty-printed program table.
+    """
+    source = str(text or "")
+    procedures: list[str] = []
+    seen: set[str] = set()
+    offset = 0
+    while True:
+        marker = source.find("<@", offset)
+        if marker < 0:
+            break
+        procedure = _procedure_after_call_marker(source, marker + 2)
+        if procedure:
+            key = procedure_exact_key(procedure)
+            if key and key not in seen:
+                seen.add(key)
+                procedures.append(procedure)
+        offset = marker + 2
+    return procedures
+
+
 def parse_call_argument_site(text: str) -> Optional[ProcedureCall]:
     """Parse a statement call target as legacy value-argument evidence."""
     source = str(text or "")
@@ -182,6 +210,49 @@ def shallow_call_procedure_from_statement(text: str) -> str:
     return match.group(1) if match else ""
 
 
+def _procedure_after_call_marker(text: str, start: int) -> str:
+    """Parse one qualified procedure path after a visible ``<@`` marker."""
+    source = str(text or "")
+    idx = start
+    while idx < len(source) and source[idx].isspace():
+        idx += 1
+    parts: list[str] = []
+    while idx < len(source):
+        match = re.match(r"[A-Za-z_][A-Za-z0-9_']*", source[idx:])
+        if match is None:
+            return ""
+        name = match.group(0)
+        idx += len(name)
+        while idx < len(source) and source[idx].isspace():
+            idx += 1
+
+        application = ""
+        if idx < len(source) and source[idx] == "(":
+            close_idx = matching_delimiter(source, idx, "(", ")")
+            if close_idx < 0:
+                return ""
+            application = source[idx : close_idx + 1]
+            idx = close_idx + 1
+            while idx < len(source) and source[idx].isspace():
+                idx += 1
+            if idx >= len(source) or source[idx] != ".":
+                if not parts:
+                    return ""
+                return _compact_procedure_path(parts + [name])
+
+        parts.append(name + application)
+        if idx >= len(source) or source[idx] != ".":
+            return ""
+        idx += 1
+        while idx < len(source) and source[idx].isspace():
+            idx += 1
+    return ""
+
+
+def _compact_procedure_path(parts: list[str]) -> str:
+    return re.sub(r"\s+", "", ".".join(parts)).strip(".")
+
+
 def _take_until_top_level_semicolon(text: str) -> str:
     depth = 0
     source = str(text or "")
@@ -261,6 +332,7 @@ def _top_level_dot_parts(text: str) -> list[str]:
 
 __all__ = [
     "ProcedureCall",
+    "extract_visible_call_procedures",
     "looks_like_qualified_procedure_application",
     "parse_call_argument_site",
     "parse_call_statement",

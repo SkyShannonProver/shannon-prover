@@ -96,9 +96,8 @@ def test_agent_view_promotes_current_tool_view_recommendation() -> None:
         assert recs[0]["metadata"]["source_goal_hash"] == (
             proof_state["goal"]["active_goal_hash"]
         )
-        assert view["actions"][0]["category"] == "probe"
-        assert view["actions"][0]["tool"] == "try"
-        assert view["actions"][0]["tactic"] == "smt()."
+        assert view["actions"][0]["category"] == "strategy"
+        assert view["actions"][0]["command"] == "smt()."
         assert view["guidance"]["stale_recommendation_count"] == 0
         assert view["evidence"]["deterministic"][0]["id"].endswith(
             "deterministic.goal_parser"
@@ -189,7 +188,7 @@ def test_agent_view_keeps_old_goal_recommendation_stale() -> None:
         assert view["notes"] == []
 
 
-def test_agent_view_promotes_probe_tactic_action() -> None:
+def test_agent_view_keeps_tactic_candidate_as_strategy_context() -> None:
     with tempfile.TemporaryDirectory() as td:
         d = Path(td)
         _write_open_goal(d)
@@ -204,7 +203,7 @@ def test_agent_view_promotes_probe_tactic_action() -> None:
                 "producer": "align",
                 "action": "swap{1} 7 -5.",
                 "why": "Static alignment found a candidate.",
-                "action_type": "probe_tactic",
+                "action_type": "tactic_candidate",
                 "confidence": "medium",
                 "preconditions": [],
                 "source_refs": [],
@@ -212,7 +211,7 @@ def test_agent_view_promotes_probe_tactic_action() -> None:
                 "metadata": {
                     "epistemic_status": "static_candidate_uncertified_by_ec",
                     "state_changed": False,
-                    "recommended_probe_tool": "try",
+                    "validation_owner": "manager_commit",
                 },
             }],
             evidence={
@@ -230,12 +229,11 @@ def test_agent_view_promotes_probe_tactic_action() -> None:
 
         assert validate_proof_context_view(view).ok is True
         action = view["actions"][0]
-        assert action["category"] == "probe"
-        assert action["tool"] == "try"
+        assert action["category"] == "strategy"
         assert action["state_changed"] is False
         assert action["epistemic_status"] == "static_candidate_uncertified_by_ec"
-        assert view["safe_next_actions"][0]["kind"] == "probe_recommendation"
-        assert view["safe_next_actions"][0]["recommended_tool"] == "try"
+        assert view["safe_next_actions"][0]["kind"] == "consider_strategy_hint"
+        assert "recommended_tool" not in view["safe_next_actions"][0]
 
 
 def test_agent_view_keeps_verified_byequiv_commit_with_only_partial_pr_handles() -> None:
@@ -289,7 +287,7 @@ def test_agent_view_keeps_verified_byequiv_commit_with_only_partial_pr_handles()
             "id": "pr_byequiv_fallback",
             "tactic": "byequiv => //.",
             "tactic_family": "probability_to_program",
-            "action_type": "probe_tactic",
+            "action_type": "tactic_candidate",
             "cost": "moderate",
             "why": "pRHL lowering is probeable while partial handles remain.",
             "confidence": "medium",
@@ -319,19 +317,19 @@ def test_agent_view_keeps_verified_byequiv_commit_with_only_partial_pr_handles()
                     "kind": "tactic_candidate",
                     "producer": "try",
                     "action": "byequiv => //.",
-                    "why": "Daemon probe accepted this tactic.",
+                    "why": "Private EasyCrypt preflight accepted this tactic.",
                     "action_type": "runnable_tactic",
                     "confidence": "verified",
                     "preconditions": [],
                     "source_refs": [],
-                    "evidence_refs": ["probe.try.result"],
+                    "evidence_refs": ["preflight.try.result"],
                     "metadata": {
-                        "epistemic_status": "daemon_probe_accepted",
+                        "epistemic_status": "easycrypt_preflight_accepted",
                     },
                 }],
                 evidence={
                     "probe": [{
-                        "id": "probe.try.result",
+                        "id": "preflight.try.result",
                         "active_goal_hash": proof_state["goal"]["active_goal_hash"],
                     }],
                 },
@@ -349,7 +347,7 @@ def test_agent_view_keeps_verified_byequiv_commit_with_only_partial_pr_handles()
     assert view["guidance"]["recommendations"][0]["action_type"] == "runnable_tactic"
 
 
-def test_agent_view_suppresses_probe_when_verified_commit_exists() -> None:
+def test_agent_view_suppresses_static_candidate_when_verified_commit_exists() -> None:
     with tempfile.TemporaryDirectory() as td:
         d = Path(td)
         _write_open_goal(d)
@@ -364,7 +362,7 @@ def test_agent_view_suppresses_probe_when_verified_commit_exists() -> None:
                 "producer": "goal-info",
                 "action": "smt().",
                 "why": "Static parser candidate.",
-                "action_type": "probe_tactic",
+                "action_type": "tactic_candidate",
                 "confidence": "medium",
                 "preconditions": [],
                 "source_refs": [],
@@ -386,20 +384,20 @@ def test_agent_view_suppresses_probe_when_verified_commit_exists() -> None:
                 "kind": "tactic_candidate",
                 "producer": "try",
                 "action": "smt().",
-                "why": "Daemon probe accepted this tactic.",
+                "why": "Private EasyCrypt preflight accepted this tactic.",
                 "action_type": "runnable_tactic",
                 "confidence": "verified",
                 "preconditions": [],
                 "source_refs": [],
-                "evidence_refs": ["probe.try.result"],
+                "evidence_refs": ["preflight.try.result"],
                 "metadata": {
-                    "epistemic_status": "daemon_probe_accepted",
+                    "epistemic_status": "easycrypt_preflight_accepted",
                 },
             }],
-            evidence={"probe": [{"id": "probe.try.result"}]},
+            evidence={"preflight": [{"id": "preflight.try.result"}]},
             notes=[{
                 "code": "try.state_unchanged",
-                "message": "Speculative probe did not mutate the committed proof state.",
+                "message": "Private preflight did not mutate the committed proof state.",
             }],
         ).to_dict()
         payload = write_tool_view_artifact(d, try_view)
@@ -414,7 +412,7 @@ def test_agent_view_suppresses_probe_when_verified_commit_exists() -> None:
         assert view["actions"][0]["category"] == "commit"
         assert view["safe_next_actions"][0]["kind"] == "commit_recommendation"
         assert view["safe_next_actions"][0]["recommended_tool"] == "next"
-        assert view["debug_refs"]["suppressed_probe_recommendation_count"] == 1
+        assert view["debug_refs"]["suppressed_preflight_recommendation_count"] == 1
         assert view["notes"] == []
 
 
@@ -432,17 +430,17 @@ def test_agent_view_safe_next_actions_skip_avoid_recommendations() -> None:
                 "kind": "avoid_tactic",
                 "producer": "try",
                 "action": "simplify.",
-                "why": "Daemon probe predicted no progress.",
+                "why": "Private EasyCrypt preflight predicted no progress.",
                 "action_type": "avoid_action",
                 "confidence": "high",
                 "preconditions": [],
                 "source_refs": [],
-                "evidence_refs": ["probe.try.result"],
+                "evidence_refs": ["preflight.try.result"],
                 "metadata": {
-                    "epistemic_status": "daemon_probe_no_progress",
+                    "epistemic_status": "easycrypt_preflight_no_progress",
                 },
             }],
-            evidence={"probe": [{"id": "probe.try.result"}]},
+            evidence={"preflight": [{"id": "preflight.try.result"}]},
         ).to_dict()
         payload = write_tool_view_artifact(d, tool_view)
         append_event(d, "tool.view.produced", payload)
@@ -537,7 +535,7 @@ def test_agent_view_artifact_and_handler_emit_event() -> None:
         out = json.loads(buf.getvalue())
         assert out["kind"] == PROVER_WORKSPACE_VIEW_KIND
         assert out["proof_status"]["status"] == "open"
-        assert out["inspect_lookup_handles"]["ask_manager_for"][0]["intent"] == "inspect_context"
+        assert out["inspect_lookup_handles"]["ask_manager_for"][0]["intent"] == "operator_lemmas"
         assert any(e.get("type") == "agent.view.produced" for e in read_events(d))
 
 
@@ -626,8 +624,8 @@ def test_agent_view_stdout_is_compact_prover_workspace_view() -> None:
                 },
             },
             "candidate_menu": [{
-                "id": "ambient.smt.probe",
-                "action_type": "probe_tactic",
+                "id": "ambient.smt.candidate",
+                "action_type": "tactic_candidate",
                 "tactic": "smt().",
                 "tactic_family": "ambient_close",
                 "why": "The parser saw an ambient equality.",
@@ -666,14 +664,13 @@ def test_agent_view_stdout_is_compact_prover_workspace_view() -> None:
     assert "goal_lens" not in slim
     assert slim["proof_status"]["current_layer"] == "ambient_logic"
     assert slim["facts_and_diagnostics"] == {}
-    assert slim["candidate_moves"]["moves"][0]["category"] == "probe"
-    assert slim["candidate_moves"]["moves"][0]["tactic"] == "smt()."
-    assert "command" not in slim["candidate_moves"]["moves"][0]
+    assert slim["candidate_moves"] == {}
+    assert "probe_tactic" not in text
     assert "full_context" not in slim["inspect_lookup_handles"]
     assert "effect" in slim["inspect_lookup_handles"]
     ask_manager_for = slim["inspect_lookup_handles"]["ask_manager_for"]
-    assert ask_manager_for[0]["intent"] == "inspect_context"
-    assert ask_manager_for[0]["payload"]["topic"]
+    assert ask_manager_for[0]["intent"] == "operator_lemmas"
+    assert ask_manager_for[0]["payload"]["operator"]
     assert "command" not in ask_manager_for[0]
     assert "cost" not in ask_manager_for[0]
     assert "runtime_note" not in ask_manager_for[0]
@@ -973,7 +970,7 @@ def test_agent_view_does_not_treat_undo_zero_steps_as_pending_qed() -> None:
                 "action": "byequiv=>//.",
                 "action_type": "runnable_tactic",
                 "metadata": {
-                    "epistemic_status": "daemon_probe_accepted",
+                    "epistemic_status": "easycrypt_preflight_accepted",
                     "goal_after_remaining": 1,
                     "goal_after_closed": False,
                 },
@@ -1000,9 +997,9 @@ def main() -> int:
         test_agent_view_promotes_current_tool_view_recommendation,
         test_agent_view_marks_placeholder_recommendation_as_strategy_hint,
         test_agent_view_keeps_old_goal_recommendation_stale,
-        test_agent_view_promotes_probe_tactic_action,
+        test_agent_view_keeps_tactic_candidate_as_strategy_context,
         test_agent_view_keeps_verified_byequiv_commit_with_only_partial_pr_handles,
-        test_agent_view_suppresses_probe_when_verified_commit_exists,
+        test_agent_view_suppresses_static_candidate_when_verified_commit_exists,
         test_agent_view_safe_next_actions_skip_avoid_recommendations,
         test_agent_view_accepts_latest_transition_diagnostic_without_goal_hash,
         test_agent_view_artifact_and_handler_emit_event,

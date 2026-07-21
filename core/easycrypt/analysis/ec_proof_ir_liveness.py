@@ -560,7 +560,7 @@ def _apply_legality_to_candidates(
                     liveness.get("live_callable_lemma_count") or 0
                 )
                 item["cost_factors"] = factors
-            if item.get("action_type") in {"probe_tactic", "runnable_tactic"}:
+            if item.get("action_type") in {"tactic_candidate", "runnable_tactic"}:
                 item["action_type"] = "avoid_action"
         out.append(item)
     # candidate_rank (heuristic preference) ordering removed (ranker removal,
@@ -600,7 +600,7 @@ def _apply_name_resolution_to_candidates(
                 if (
                     is_external
                     and not is_verified
-                    and item.get("action_type") in {"probe_tactic", "runnable_tactic"}
+                    and item.get("action_type") in {"tactic_candidate", "runnable_tactic"}
                 ):
                     item["action_type"] = "strategy_hint"
                     item["confidence"] = "low"
@@ -615,7 +615,7 @@ def _apply_name_resolution_to_candidates(
                 if (
                     is_external
                     and not is_verified
-                    and item.get("action_type") in {"probe_tactic", "runnable_tactic"}
+                    and item.get("action_type") in {"tactic_candidate", "runnable_tactic"}
                 ):
                     item["action_type"] = "strategy_hint"
                     item["confidence"] = "low"
@@ -629,9 +629,9 @@ def _apply_name_resolution_to_candidates(
                 # in the Pr graph, but it is not a checked compiler action.
                 # Keep it probeable while letting ProofIR's typed, instantiated
                 # templates rank first.
-                item["action_type"] = "probe_tactic"
+                item["action_type"] = "tactic_candidate"
                 factors = dict(item.get("cost_factors") or {})
-                factors["external_pr_path_requires_probe"] = True
+                factors["external_pr_path_requires_easycrypt_validation"] = True
                 item["cost_factors"] = factors
         out.append(item)
     return out

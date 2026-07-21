@@ -234,8 +234,10 @@ post = x \\in G3.cilog
         item["route"] for item in risk["anti_routes"]
     }
     assert risk["recommended_next"] == {
-        "intent": "inspect_context",
-        "payload": {"topic": "probability_budget_ledger"},
+        "intent": "probability_budget_ledger",
+        "payload": {},
+        "intent_class": "context_topic",
+        "read_only": True,
     }
     assert risk["budget_ledger"]["kind"] == "probability_budget_ledger"
     assert risk["primary_next_action"] == risk["recommended_next"]
@@ -265,7 +267,7 @@ post = (u, v, w, z) \\in G3.cilog
     )
 
     assert risk["signal"] == "probability_budget_route_risk"
-    assert "recent accepted/probed local sampling under a product probability budget" in risk["evidence"]
+    assert "recent accepted/preflighted local sampling under a product probability budget" in risk["evidence"]
 
 
 def test_route_health_suggests_event_bound_bridge_lookup() -> None:
@@ -323,7 +325,7 @@ post = size G3.cilog <= PKE_.qD
 
     assert risk["signal"] == "probability_budget_route_risk"
     assert risk["confidence"] == "high"
-    assert "recent accepted/probed `seq` cut may allocate the product budget to the wrong branch" in risk["evidence"]
+    assert "recent accepted/preflighted `seq` cut may allocate the product budget to the wrong branch" in risk["evidence"]
     assert "seq_cut_allocates_product_budget_to_prefix" in {
         item["route"] for item in risk["anti_routes"]
     }
@@ -404,7 +406,7 @@ post = (a, b, c, d) \\in G3.cilog
     )
 
     assert risk["signal"] == "probability_budget_route_risk"
-    assert "recent accepted/probed `seq` cut may allocate the product budget to the wrong branch" in risk["evidence"]
+    assert "recent accepted/preflighted `seq` cut may allocate the product budget to the wrong branch" in risk["evidence"]
 
 
 def test_route_health_warns_after_seq_unit_bound_under_product_budget() -> None:

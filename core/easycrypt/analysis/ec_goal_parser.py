@@ -18,7 +18,6 @@ import re
 import sys
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Optional
 
 
 # ---------------------------------------------------------------------------
@@ -88,8 +87,6 @@ class GoalInfo:
 
     # Execution-level KB details per suggested tactic
     tactic_details: list[dict] = field(default_factory=list)
-    # Plan-vs-reality check (if proof_plan.json is available)
-    plan_check: Optional[dict] = None
 
 
 # ---------------------------------------------------------------------------
@@ -99,6 +96,7 @@ class GoalInfo:
 # Structural markers unique to each goal type in EC's -emacs output.
 # These are stable across EC versions because they're part of the emacs protocol.
 _EAGER_RE = re.compile(r"eager\s*\[", re.MULTILINE)
+_EQUIV_KEYWORD_RE = re.compile(r"\bequiv\s*\[")
 _PRHL_SIDES_RE = re.compile(r"&[12]\s*\((?:left|right)\s*\)")  # "&1 (left )" or "&2 (right)"
 _PRHL_TILDE_RE = re.compile(r"\.\w+\s+~\s+\S")  # ".<proc> ~ " — any qualified procedure before tilde
 _PRHL_POS_RE = re.compile(r"\(\s*\d+[\s.\d-]*\)")  # ( 1--), (11.1), (1), ( 2) — EC statement position markers
@@ -137,14 +135,15 @@ def classify_goal(raw_text: str) -> str:
     6. probability — has "Pr[" (probability expression)
     7. ambient — everything else (pure logic)
     """
+    active = _extract_active_goal_block(raw_text)
     body = _extract_goal_body(raw_text)
 
     # 1. Eager: distinct "eager[" syntax — never appears in other goal types
-    if _EAGER_RE.search(body):
+    if _EAGER_RE.search(active):
         return "eager"
 
     # 2. pRHL (after proc/inline): "&1 (left )" and "(N)" position markers
-    if _PRHL_SIDES_RE.search(body) and _PRHL_POS_RE.search(body):
+    if _PRHL_SIDES_RE.search(active) and _PRHL_POS_RE.search(active):
         return "pRHL"
 
     # 2b. pRHL-residue: post-tactic ambient implication form. After
@@ -156,11 +155,14 @@ def classify_goal(raw_text: str) -> str:
     # Without this case, post-call/ecall stuck moments (the most common
     # real-world stuck state) get misclassified as `hoare` and fall out
     # of subgoal_gap's scope.
-    if _PRHL_SIDES_RE.search(body) and _PRE_POST_RE.search(body):
+    if _PRHL_SIDES_RE.search(active) and _PRE_POST_RE.search(active):
         return "pRHL"
 
-    # 3. equiv (before proc): "Game1.proc ~ Game2.proc" with pre/post
-    if _PRHL_TILDE_RE.search(body) and _PRE_POST_RE.search(body):
+    # 3. equiv (before proc): compact `equiv [...]` or the expanded
+    # "Game1.proc ~ Game2.proc" display with pre/post labels.
+    if _EQUIV_KEYWORD_RE.search(active):
+        return "equiv"
+    if _PRHL_TILDE_RE.search(active) and _PRE_POST_RE.search(active):
         return "equiv"
 
     # 3b. bd-hoare/phoare KEYWORD form: `phoare[ M : pre ==> post ] = bound`. EC's
@@ -221,6 +223,33 @@ def _extract_goal_body(raw_text: str) -> str:
             break
         if i > start and "Current goal" in lines[i]:
             end = i
+            break
+    return "\n".join(lines[start:end])
+
+
+def _extract_active_goal_block(raw_text: str) -> str:
+    """Return the active goal including variable/memory headers.
+
+    ``_extract_goal_body`` intentionally starts after EasyCrypt's horizontal
+    separator, which is appropriate for formula parsing but discards the
+    ``&1 (left)`` / ``&2 (right)`` headers used to identify pretty pRHL goals.
+    Classification therefore uses this wider block while downstream parsers
+    continue consuming the body-only projection.
+    """
+    lines = raw_text.splitlines()
+    start = 0
+    for index, line in enumerate(lines):
+        if "Current goal" in line:
+            start = index + 1
+            break
+    end = len(lines)
+    for index in range(start, len(lines)):
+        stripped = lines[index].strip()
+        if re.match(r"^\[\d+\|", stripped):
+            end = index
+            break
+        if index > start and "Current goal" in lines[index]:
+            end = index
             break
     return "\n".join(lines[start:end])
 
@@ -1194,8 +1223,6 @@ def goal_to_json(
         if info.ambient_shape:
             d["ambient_shape"] = info.ambient_shape
 
-    if info.plan_check:
-        d["plan_check"] = info.plan_check
 
     return d
 

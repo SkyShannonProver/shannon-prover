@@ -119,8 +119,6 @@ def intent_effect(intent_name: str) -> str:
     if is_context_topic_intent(intent_name) or intent_name in {
         "inspect_context",
         "lookup_symbol",
-        "probe_tactic",
-        "probe_replay_suffix_chunk",
     }:
         return (
             "This manager intent is read-only; it does not change the "
@@ -138,5 +136,4 @@ def intent_effect(intent_name: str) -> str:
             "the manager will return a refreshed workspace view afterward."
         )
     return "This manager intent does not change the EasyCrypt proof state."
-
 

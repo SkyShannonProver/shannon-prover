@@ -613,7 +613,7 @@ def _call_elaboration(
             "the current pRHL frontier still contains the displayed call-site expressions",
             "use this when the value arguments are program expressions rather than already-introduced logical variables",
             *preview_preconditions,
-            "probe with EasyCrypt before committing; this pass does not prove frontier compatibility",
+            "this pass does not prove frontier compatibility; a manager commit will report EasyCrypt's verdict",
         ],
         "strategy_boundary": (
             "Compiler provides typed argument plumbing. The prover still "

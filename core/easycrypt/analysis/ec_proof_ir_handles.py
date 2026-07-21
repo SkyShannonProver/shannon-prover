@@ -35,6 +35,10 @@ from core.easycrypt.analysis.ec_utils import (
     strip_outer_parens as _strip_outer_parens,
     top_level_token_index as _top_level_token_index,
 )
+from core.easycrypt.analysis.ec_action_contracts import (
+    normalize_action_candidate,
+    realigning_swap_contract,
+)
 
 from core.easycrypt.analysis.ec_equiv_closers import (
     _clean_proc,
@@ -46,6 +50,10 @@ from core.easycrypt.analysis.ec_equiv_closers import (
 )
 from core.easycrypt.analysis.ec_lemma_index import (
     build_semantic_lemma_index,
+    high_precision_pr_bound_routes,
+    mechanical_goal_candidates,
+    semantic_distribution_certificates,
+    semantic_one_sided_losslessness_candidates,
     semantic_pr_bound_candidates,
     semantic_pr_rewrite_candidates,
     session_context_files as _session_context_files,
@@ -66,6 +74,10 @@ from core.easycrypt.analysis.ec_procedure_frontend import (
 )
 from core.easycrypt.analysis.ec_program_ir import (
     annotate_callable_lemma_handles,
+)
+from core.easycrypt.analysis.ec_procedure_ref import (
+    extract_visible_call_procedures,
+    parse_call_statement,
 )
 
 from core.easycrypt.analysis.ec_dataflow_invariant import (
@@ -132,6 +144,25 @@ def _proof_handles(
         goal_text=goal_text,
         target_lemma=_session_target_lemma(session_dir),
     )
+    pr_bound_routes = high_precision_pr_bound_routes(
+        source_pr_bounds,
+        goal_text=goal_text,
+    )
+    mechanical_matches = mechanical_goal_candidates(
+        lemma_index,
+        goal_text=goal_text,
+        target_lemma=_session_target_lemma(session_dir),
+    )
+    one_sided_losslessness = semantic_one_sided_losslessness_candidates(
+        lemma_index,
+        procedures=_program_call_procedures(program_ir, goal_text=goal_text),
+        target_lemma=_session_target_lemma(session_dir),
+    )
+    distribution_certificates = semantic_distribution_certificates(
+        lemma_index,
+        goal_text=goal_text,
+        target_lemma=_session_target_lemma(session_dir),
+    )
     pr_rewrites = _dedupe_strings(
         _candidate_names(parsed.get("pr_rewrite_candidates"))
         + [
@@ -152,9 +183,13 @@ def _proof_handles(
     return {
         "callable_lemmas": call_handles,
         "semantic_lemma_index": _compact_semantic_lemma_index(lemma_index),
+        "mechanical_goal_candidates": mechanical_matches,
+        "one_sided_losslessness_candidates": one_sided_losslessness,
+        "distribution_certificates": distribution_certificates,
         "pr_rewrite_candidates": pr_rewrites,
         "pr_rewrite_candidate_details": source_pr_rewrites,
         "semantic_pr_bound_candidates": source_pr_bounds,
+        "high_precision_pr_bound_routes": pr_bound_routes,
         "pr_byequiv_frontend": _pr_byequiv_frontend(parsed, goal_type),
         "pr_clone_bound_apply_candidates": _pr_clone_bound_apply_candidates(
             parsed,
@@ -188,6 +223,36 @@ def _proof_handles(
         ),
         "adversary_invariant_skeleton": adversary_skeleton,
     }
+
+
+def _program_call_procedures(
+    program_ir: dict[str, Any],
+    *,
+    goal_text: str = "",
+) -> list[str]:
+    """Return full call targets, preferring the statement parser over shims.
+
+    Some shallow parser artifacts retain only a functor head in ``procedure``
+    (for example ``Adv_MAC_to_F``).  The statement still contains the exact
+    target ``Adv_MAC_to_F(A, D2(O).O).guess()``; use that authoritative shape
+    for semantic declaration matching without changing ProgramIR's structural
+    statement ownership.
+    """
+    procedures: list[str] = []
+    for site in _list(_dict(program_ir).get("call_sites")):
+        if not isinstance(site, dict):
+            continue
+        statement = str(site.get("statement") or site.get("text") or "")
+        parsed_call = parse_call_statement(statement) if statement else None
+        procedure = str(
+            parsed_call.procedure
+            if parsed_call and parsed_call.procedure
+            else site.get("procedure") or ""
+        ).strip()
+        if procedure:
+            procedures.append(procedure)
+    procedures.extend(extract_visible_call_procedures(goal_text))
+    return _dedupe_strings(procedures)
 
 
 def _callable_lemma_handles(parsed: dict[str, Any]) -> list[dict[str, Any]]:
@@ -1141,7 +1206,7 @@ def _external_candidates(recommendations: list[dict[str, Any]]) -> list[dict[str
         seen.add(action)
         family = _external_tactic_family(rec)
         cost = _family_cost(family, rec)
-        out.append({
+        candidate = {
             "id": str(rec.get("id") or f"external.{len(out)}"),
             "producer": str(rec.get("producer") or rec.get("source") or ""),
             "action": action,
@@ -1153,7 +1218,12 @@ def _external_candidates(recommendations: list[dict[str, Any]]) -> list[dict[str
             "cost": cost,
             "layer": _family_layer(family),
             "cost_factors": _family_cost_factors(family, rec),
-        })
+        }
+        if family == "realignment_swap":
+            candidate["structural_swap"] = realigning_swap_contract(
+                str(candidate.get("tactic") or "")
+            )
+        out.append(normalize_action_candidate(candidate))
     return out
 
 
@@ -1341,7 +1411,7 @@ def _is_verified_recommendation(rec: dict[str, Any]) -> bool:
     metadata = _dict(rec.get("metadata"))
     return (
         str(rec.get("confidence") or "") == "verified"
-        or str(metadata.get("epistemic_status") or "") == "daemon_probe_accepted"
+        or str(metadata.get("epistemic_status") or "") == "easycrypt_preflight_accepted"
         or metadata.get("daemon_verified") is True
     )
 

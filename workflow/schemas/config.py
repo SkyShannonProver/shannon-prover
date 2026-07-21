@@ -77,11 +77,6 @@ class RunConfig:
     # target lemma while leaving sibling source lemmas available.
     eval_mode: bool = False
 
-    # Planner is part of the default workflow, including eval mode. Disable
-    # only for explicit ablations, e.g. measuring prover performance without
-    # deterministic context extraction for a paper.
-    use_planner: bool = True
-
     # Optional paper-eval surface profile.  This controls only the
     # agent-facing proof-state surface and manager intents; EasyCrypt remains
     # the verifier, and tree/search topology is configured separately through

@@ -17,21 +17,18 @@ construction for paper-facing eval runs.
 - Writes provenance that records input mode, raw source hash, proof-stripped
   input hash, annotator input hash, model, and annotator version.
 
-`workflow/agents/proof_planner.py`
+Managed prover prompt/runtime
 
-- Owns prompt injection of narratives.
-- In eval mode, loads only narratives whose provenance proves
-  `input_mode=proof_stripped` and whose proof-stripped hash matches the current
-  source file.
-- Rejects legacy/no-provenance/raw-source/stale narratives completely.
-- Sanitizes target-lemma entries before prompt injection: only structural
-  fields such as `name`, `role`, and `hop` remain.
+- Does not inject offline narratives or a pre-run proof plan.
+- Gives the agent a target-file pointer, the manager-owned proof-state surface,
+  and legal source-reading access.
+- Keeps narrative annotation outside the normal proof runtime so semantic
+  summaries cannot become an implicit second presentation contract.
 
 `core/easycrypt/session_runtime.py`
 
 - Owns runtime access to sibling narrative JSON for backend hooks.
-- Enforces the same eval provenance gate as the planner so hooks cannot use a
-  tainted narrative that the prompt layer refused.
+- Enforces eval provenance for any explicitly enabled backend narrative hook.
 - Returns an empty narrative to hooks when provenance is missing, raw, or stale.
 
 Manager-owned proof compilers and EasyCrypt daemon checks

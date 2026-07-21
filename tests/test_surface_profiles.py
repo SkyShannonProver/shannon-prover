@@ -14,14 +14,14 @@ from workflow.surface_profiles import (  # noqa: E402
     surface_profile_allows_intent,
     surface_profile_names,
 )
-from workflow.surface_composer import (  # noqa: E402
+from workflow.surface_composer import compose_surface_model  # noqa: E402
+from workflow.surface_panels import (  # noqa: E402
     _load_bearing_frontier_call,
     _render_surgery_skeleton,
-    _statement_is_proc_call,
     _surgery_lookahead_after_frontier,
     _surgery_where,
-    compose_surface_model,
 )
+from core.easycrypt.analysis.ec_program_statements import statement_is_procedure_call
 from workflow.surface_model import surface_model_to_dict  # noqa: E402
 from workflow.surface_action_preflight import action_preflight_key  # noqa: E402
 
@@ -146,7 +146,7 @@ def test_call_skeleton_preflight_does_not_promote_noncallable_named_handle() -> 
 
     model = _model(view)
     blob = json.dumps(model, ensure_ascii=False)
-    assert model["primary_panel"]["panel_id"] == "deep_surgery"
+    assert model.get("primary_panel") is None
     assert model["status"]["current_layer"] == "call_site"
     assert model["status"]["surface_phase"] == "deep_surgery"
     assert "call_invariant_skeleton" not in {a["intent"] for a in model.get("actions", [])}
@@ -282,18 +282,17 @@ def _body_view(goal_type: str, *, layer: str = "procedure_body",
     }
 
 
-def test_single_sided_goal_never_routes_to_two_sided_surgery() -> None:
+def test_single_sided_goal_routes_to_single_program_surface() -> None:
     # PBound L4 (2209 trip): a single-sided `hoare[... ==> true]` first leg of a
     # bd-hoare `seq` got the TWO-SIDED surgery panel (sim/swap/coupling/"both
-    # sides"). The fresh agent distrusted the (correct) plain goal as "lossy" and
-    # burned the run on bypr/smt. A single-sided goal has no two sides — it must
-    # fall through to `plain` (bare goal), the exact form L1 proved PBound with.
+    # sides"). A single-sided goal has no two sides, but still benefits from a
+    # program-frontier surface that never emits relational alignment language.
     for gt in ("hoare", "phoare", "bdhoare"):
-        assert _phase(_body_view(gt)) == "plain", gt
+        assert _phase(_body_view(gt)) == "single_program", gt
         # also the seq_cut view_focus path, and the call_site-with-no-frontier-call path
-        assert _phase(_body_view(gt, view_focus="seq_cut")) == "plain", gt
+        assert _phase(_body_view(gt, view_focus="seq_cut")) == "single_program", gt
         assert _phase(_body_view(gt, layer="call_site",
-                                    frontier_call_sites=0)) == "plain", gt
+                                    frontier_call_sites=0)) == "single_program", gt
 
 
 def test_relational_goal_still_routes_to_surgery() -> None:
@@ -791,32 +790,6 @@ def test_sample_only_frontier_does_not_surface_random_alignment_block() -> None:
     assert "current sample" not in panel_blob
 
 
-def test_sample_frontier_with_list_residual_surfaces_staging_boundary() -> None:
-    view = {
-        "proof_status": {"status": "open", "remaining_goals": 9, "view_focus": "deep_surgery"},
-        "current_goal": {"goal_type": "pRHL", "lines": [
-            "t <$ dpoly_out                          (1--)  t <$ dpoly_out",
-            "post =",
-            "  (nth (w1, w2) (UFCMA_l.lbad1 ++ map (fun t => (t0, t)) lt) nth0).`1 =",
-            "  (nth (w1, w2) (UFCMA_l.lbad1 ++ map (fun t => (t0, t)) lt) nth0).`2",
-        ]},
-        "program_frontier": {"current_frontier_scope": {
-            "frontier": {
-                "kind": "sample",
-                "left": {"head": "sample", "path": "1", "statement": "t <$ dpoly_out"},
-                "right": {"head": "sample", "path": "1", "statement": "t <$ dpoly_out"},
-            },
-        }},
-    }
-
-    panel = _panel(view)
-    staging = _fact(panel, "frontier_residual_staging")
-    blob = json.dumps(staging, ensure_ascii=False)
-    assert "live sample frontier remains" in blob
-    assert "nth" in blob and "size" not in blob
-    assert "SMT/rewrite lemmas apply to the exposed residual" in blob
-
-
 def test_pure_residual_does_not_surface_program_staging_boundary() -> None:
     view = {
         "proof_status": {
@@ -873,7 +846,7 @@ def test_ambient_logic_residual_ignores_stale_program_frontier_metadata() -> Non
 
     model = _model(view)
     assert model["phase"] == "pure_logic"
-    assert model["primary_panel"]["panel_id"] == "pure_logic"
+    assert model.get("primary_panel") is None
     blob = json.dumps(model, ensure_ascii=False)
     assert "Program frontier" not in blob
     assert "Surgery -- align or decompose the two sides" not in blob
@@ -908,7 +881,7 @@ def test_ambient_logic_map_update_does_not_trigger_surgery() -> None:
 
     model = _model(view)
     assert model["phase"] == "pure_logic"
-    assert model["primary_panel"]["panel_id"] == "pure_logic"
+    assert model.get("primary_panel") is None
     blob = json.dumps(model, ensure_ascii=False)
     assert "Program frontier" not in blob
     assert "Surgery -- align or decompose the two sides" not in blob
@@ -938,12 +911,16 @@ def test_closed_candidate_does_not_render_empty_surgery_panel() -> None:
     assert "primary_panel" not in model
     assert model["status"]["remaining_goals"] == 0
     assert model["status"]["remaining_goals_known"] is True
+    assert all(
+        action["intent"] != "tactic_forms"
+        for action in model.get("actions", [])
+    )
     blob = json.dumps(model, ensure_ascii=False)
     assert "Program frontier" not in blob
     assert "Surgery -- align or decompose the two sides" not in blob
 
 
-def test_plain_hoare_side_condition_filters_stale_while_tactic_form() -> None:
+def test_single_program_hoare_filters_stale_while_tactic_form() -> None:
     view = {
         "proof_status": {
             "status": "open",
@@ -966,19 +943,14 @@ def test_plain_hoare_side_condition_filters_stale_while_tactic_form() -> None:
     }
 
     model = _model(view)
-    assert model["phase"] == "plain"
+    assert model["phase"] == "single_program"
     actions = [
         action for action in model.get("actions", [])
         if action["intent"] == "tactic_forms"
     ]
-    assert actions
-    choices = {
-        name
-        for action in actions
-        for name in action["choices"]["name"]
-    }
-    assert "while" not in choices
-    assert {"wp", "rewrite", "apply"} <= choices
+    # The stale `while` is filtered, and common `sp`/`wp`/`conseq` reference
+    # pages do not occupy the persistent surface.
+    assert not actions
 
 
 def test_plain_hoare_side_condition_keeps_while_only_when_loop_visible() -> None:
@@ -1031,6 +1003,10 @@ def test_deep_surgery_groups_guards_swaps_and_sample_frontier() -> None:
                         "statement": "t0 <$ dpoly_out",
                     },
                 },
+                "lookahead_after_frontier": [
+                    {"side": "left", "path": "13", "head": "if", "statement": "if (x2 \\notin SplitC2.I1.RO.m) {"},
+                    {"side": "right", "path": "3", "head": "if", "statement": "if (UFCMA.cbad1 < qenc /\\ size lt <= qdec) {"},
+                ],
             },
             "procedure_navigation": {"branch_guards": [
                 {"side_index": 1, "at_path": "13", "guard": "x2 \\notin SplitC2.I1.RO.m"},
@@ -1038,11 +1014,13 @@ def test_deep_surgery_groups_guards_swaps_and_sample_frontier() -> None:
                 {"side_index": 2, "at_path": "3", "guard": "UFCMA.cbad1 < qenc /\\ size lt <= qdec"},
                 {"side_index": 2, "at_path": "8", "guard": "x1 \\notin RO.m"},
             ]},
+            "checked_structural_sources": {
+                "swap_sources": [
+                    {"form": "swap{1} 16 <offset>.", "side": "1", "source_position": "16"},
+                    {"form": "swap{2} 8 <offset>.", "side": "2", "source_position": "8"},
+                ],
+            },
         },
-        "candidate_moves": {"moves": [
-            {"tactic": "swap{1} 16 -14."},
-            {"tactic": "swap{2} 8 -7."},
-        ]},
     }
 
     skel = _render_surgery_skeleton(view)
@@ -1051,20 +1029,18 @@ def test_deep_surgery_groups_guards_swaps_and_sample_frontier() -> None:
     assert "swap_offsets" not in skel
     assert not any("rcondt" in line for line in skel["where"])
     alignment = skel["branch_sample_alignment"]
-    assert alignment["stage"] == "guarded branch normalization before random coupling"
+    assert alignment["stage"] == "current random alignment with later guarded branches"
     assert alignment["current_sample_frontiers"][0]["statement"] == "t0 <$ dpoly_out"
-    assert alignment["visible_guarded_ifs"][0]["next_if_forms"] == [
-        "rcondt{1} ^if{1}",
-        "rcondf{1} ^if{1}",
-    ]
-    assert alignment["visible_guarded_ifs"][1].get("next_if_forms") in (None, [])
+    assert alignment["visible_guarded_ifs"][0]["scope"] == "lookahead after current frontier"
+    assert alignment["visible_guarded_ifs"][0].get("next_if_forms") in (None, [])
     assert alignment["swap_frames"][0]["form"] == "swap{1} 16 <offset>."
 
     panel = _model(view)["primary_panel"]
     blob = json.dumps(panel, ensure_ascii=False)
-    assert "Guarded branch / random alignment" in blob
+    assert "Random alignment with guarded lookahead" in blob
     assert "swap{1} 16 -14" not in blob
-    assert "rcondt{1} ^if{1}" in blob
+    assert "rcondt{1} 13" in blob
+    assert "rcondt{1} ^if{1}" not in blob
 
 
 def test_deep_surgery_surfaces_whole_program_structure_before_local_where() -> None:
@@ -1279,7 +1255,7 @@ def test_deep_surgery_surfaces_wrapper_call_setup_difference() -> None:
     ]
 
 
-def test_deep_surgery_surfaces_matching_top_level_region_sequence_with_lookahead() -> None:
+def test_deep_surgery_omits_redundant_matching_region_summary_with_lookahead() -> None:
     view = {
         "proof_status": {
             "status": "open",
@@ -1353,12 +1329,7 @@ def test_deep_surgery_surfaces_matching_top_level_region_sequence_with_lookahead
         },
     }
 
-    fact = _fact(_panel(view), "whole_program_structure")
-    assert fact["left_regions"] == (
-        "setup-block(1) | sample | call A.a1 | sample | sample | sample | call A.a2"
-    )
-    assert fact["right_regions"] == fact["left_regions"]
-    assert fact["observations"] == ["visible top-level region sequence matches across sides"]
+    assert "whole_program_structure" not in _panel_fact_dict(view)
     lookahead = _surgery_lookahead_after_frontier(view)
     assert lookahead == [
         "paired future regions:",
@@ -1759,11 +1730,11 @@ def test_statement_is_proc_call_handles_nested_module_instantiation() -> None:
     # FIX-B2/④ (exposed by the step2_1 i61 raw-frontier capture): a nested-module call
     # `RealOrcls(OChaChaPoly(IFinRO)).init()` is a PROCEDURE CALL — the single-paren-level
     # regex missed it, so the setup row advertised it as `sp`/`wp`-absorbable.
-    assert _statement_is_proc_call("RealOrcls(OChaChaPoly(IFinRO)).init()")
-    assert _statement_is_proc_call("Log(LRO).init()")          # single level still works
-    assert _statement_is_proc_call("Iter(O).iter(xs)")
-    assert not _statement_is_proc_call("x <- f a")             # assignment is absorbable
-    assert not _statement_is_proc_call("C.ofintd 0")           # operator application, not a call
+    assert statement_is_procedure_call("RealOrcls(OChaChaPoly(IFinRO)).init()")
+    assert statement_is_procedure_call("Log(LRO).init()")          # single level still works
+    assert statement_is_procedure_call("Iter(O).iter(xs)")
+    assert not statement_is_procedure_call("x <- f a")             # assignment is absorbable
+    assert not statement_is_procedure_call("C.ofintd 0")           # operator application, not a call
     # the setup row for such a call is rendered as structure, not tactic advice
     v = {"program_frontier": {"frontier_alignment": {"rows": [{
         "role": "setup / initialization",
@@ -1923,7 +1894,7 @@ def test_l4_deep_giant_goal_leads_with_focus_collapses_nav_bulk_keeps_signals() 
         _l4_view_with_panels(6000, view_focus="seq_cut"), "l4_checked_action_surface")
     assert "deep_focus" not in out
     model = _model(out)
-    assert model["primary_panel"]["panel_id"] == "deep_surgery"
+    assert model.get("primary_panel") is None
     # analysis SIGNAL panels are NOT dropped — a deep view can still carry a gap
     assert "seq_cut_surface" in out
     assert "pure_tail_surface" in out
@@ -2078,7 +2049,7 @@ def test_l4_sticky_failure_flag_without_rejected_commit_does_not_fire_recover() 
     view = _with_call_preflight(view)
     out = apply_workspace_view_surface_profile(view, "l4_checked_action_surface")
     assert "recover_focus" not in out
-    assert _model(out)["primary_panel"]["panel_id"] == "call_site"
+    assert _model(out).get("primary_panel") is None
 
 
 def _l4_pure_reject_view(goal_type: str = "probability", current_layer: str = "pr",
@@ -2197,8 +2168,8 @@ def test_recover_model_auto_strict_failure_is_not_head_mismatch() -> None:
     ]
     assert "rewrite" in names and "apply" in names
     assert "sp" not in names and "wp" not in names
-    assert any(action.get("intent") == "operator_lemmas"
-               for action in panel.get("actions", []))
+    assert not any(action.get("intent") == "operator_lemmas"
+                   for action in panel.get("actions", []))
 
 
 def test_l4_deep_focus_blanks_seq_coupling_and_drops_route_prescription(monkeypatch) -> None:
@@ -2339,13 +2310,14 @@ def test_pure_tail_surface_beats_stale_program_frontier_residue() -> None:
 
     model = _model(view)
     assert model["phase"] == "pure_logic"
-    assert model["primary_panel"]["panel_id"] == "pure_logic"
+    assert model.get("primary_panel") is None
 
 
-def test_prhl_module_without_pure_tail_keeps_no_primary_panel() -> None:
-    # Fable baseline replay: prhl_module goals may have no program frontier but also
-    # no derived pure-tail facts. Do not invent a generic "no frontier" panel; keep
-    # the old lean surface and only show eligible actions.
+def test_prhl_module_surfaces_typed_proc_entry_transition() -> None:
+    # Module-level pRHL/equiv goals have a typed ProofIR boundary before any
+    # statement frontier exists. Surface that exact boundary and its ready
+    # submission; do not force the agent to rediscover `proc.` by failed inline
+    # attempts or by parsing candidate prose.
     view = {
         "schema_version": 1, "kind": "prover_workspace_view",
         "proof_status": {
@@ -2359,7 +2331,19 @@ def test_prhl_module_without_pure_tail_keeps_no_primary_panel() -> None:
             "UFCMA_l.f ~ UFCMA_li.f",
             "post = res{1} = res{2}",
         ]},
-        "program_frontier": {"authority": "proof-state analysis", "view_focus": "relational_program"},
+        "program_frontier": {
+            "authority": "ProofIR compiler surface",
+            "view_focus": "relational_program",
+            "procedure_entry_transition": {
+                "kind": "module_procedure_entry",
+                "current_layer": "prhl_module",
+                "transition": "proc_open",
+                "status": "preferred",
+                "tactic": "proc.",
+                "effect": "`proc` exposes call sites before lower-level proof passes.",
+                "authority": "ProofIR phase legality",
+            },
+        },
         "inspect_lookup_handles": {"ask_manager_for": [
             {"intent": "operator_lemmas", "payload": {"operator": "nth"}},
         ]},
@@ -2367,7 +2351,102 @@ def test_prhl_module_without_pure_tail_keeps_no_primary_panel() -> None:
 
     model = _model(view)
     assert model["phase"] == "relational_program"
-    assert "primary_panel" not in model
+    panel = model["primary_panel"]
+    assert panel["panel_id"] == "relational_program"
+    facts = {item["key"]: item for item in panel["facts"]}
+    assert facts["procedure_body_entry"]["value"]["ready_to_submit"] == "proc."
+    actions = [
+        action for action in model["actions"]
+        if action["intent"] == "commit_tactic"
+    ]
+    assert actions == [{
+        "intent": "commit_tactic",
+        "payload": {"tactic": "proc."},
+        "label": "Open procedure body: proc.",
+        "intent_class": "proof_mutation",
+        "read_only": False,
+        "description": "`proc` exposes call sites before lower-level proof passes.",
+        "source_refs": ["program_frontier.procedure_entry_transition"],
+        "eligibility_reason": "exact preferred procedure-entry transition from ProofIR",
+        "state_scope": "current_procedure_entry",
+    }]
+
+
+def test_rejected_inline_at_prhl_module_recovers_with_exact_proc_transition() -> None:
+    view = {
+        "schema_version": 1, "kind": "prover_workspace_view",
+        "proof_status": {
+            "status": "open", "remaining_goals": 1,
+            "view_focus": "relational_program",
+            "current_layer": "prhl_module",
+            "goal_type": "equiv",
+        },
+        "last_result": {
+            "intent": "commit_tactic",
+            "tactic": "inline{1} 1.",
+            "result": "EasyCrypt rejected the committed tactic.",
+            "error_summary": "invalid first instruction",
+            "proof_state": "not changed",
+        },
+        "current_goal": {"goal_type": "equiv", "lines": [
+            "pre = arg{1} = arg{2}",
+            "UFCMA_l.f ~ UFCMA_li.f",
+            "post = res{1} = res{2}",
+        ]},
+        "program_frontier": {
+            "procedure_entry_transition": {
+                "kind": "module_procedure_entry",
+                "current_layer": "prhl_module",
+                "transition": "proc_open",
+                "status": "preferred",
+                "tactic": "proc.",
+                "effect": "`proc` exposes call sites before lower-level proof passes.",
+            },
+        },
+        "inspect_lookup_handles": {"ask_manager_for": []},
+    }
+
+    model = _model(view)
+    assert model["phase"] == "failure_recovery"
+    panel = model["primary_panel"]
+    assert panel["panel_id"] == "recovery"
+    facts = {item["key"]: item for item in panel["facts"]}
+    assert "procedure_body_entry" in facts
+    assert facts["applicable_tactic_families"]["value"] == ["proc"]
+    assert "current_frontier_head" not in facts
+    assert any(
+        action["intent"] == "commit_tactic"
+        and action["payload"] == {"tactic": "proc."}
+        for action in model["actions"]
+    )
+
+
+def test_relational_program_does_not_invent_proc_without_typed_transition() -> None:
+    view = {
+        "schema_version": 1, "kind": "prover_workspace_view",
+        "proof_status": {
+            "status": "open", "remaining_goals": 1,
+            "view_focus": "relational_program",
+            "current_layer": "procedure_body",
+            "goal_type": "equiv",
+        },
+        "current_goal": {"goal_type": "equiv", "lines": [
+            "pre = arg{1} = arg{2}",
+            "x <- y (1) x <- y",
+            "post = res{1} = res{2}",
+        ]},
+        "program_frontier": {"authority": "ProofIR compiler surface"},
+        "inspect_lookup_handles": {"ask_manager_for": []},
+    }
+
+    model = _model(view)
+    assert all(
+        not (
+            action["intent"] == "commit_tactic"
+            and action.get("payload") == {"tactic": "proc."}
+        )
+        for action in model.get("actions", [])
+    )
 
 
 def test_verification_residue_with_live_program_frontier_is_not_pure_fallback() -> None:
@@ -2450,10 +2529,9 @@ def test_l4_opener_focus_is_mechanical_only_no_budget_prescription(monkeypatch) 
 
 def test_l1_goal_only_has_action_capabilities_no_content_channels() -> None:
     # L1 has the SAME action capabilities as L4 so the L1<->L4 comparison isolates the
-    # DERIVED panel content, not capabilities. Both rewind intents (undo_to_checkpoint,
-    # amend_and_replay) reference a committed step BY INDEX off the proof_so_far panel
-    # L1 renders, so L1 needs no checkpoint menu. The content-RETRIEVAL channels
-    # (probe / inspect / lookup) stay OFF — they ARE the panel value under study.
+    # DERIVED panel content, not capabilities. Bare rewind requests render typed
+    # control menus in both profiles. The content-RETRIEVAL channels (probe / inspect /
+    # lookup) stay OFF — they ARE the panel value under study.
     def allows(name: str, intent: str) -> bool:
         return surface_profile_allows_intent(name, intent)[0]
 
@@ -2480,16 +2558,20 @@ def test_public_readonly_handles_carry_intent_contract() -> None:
         "current_goal": {"lines": ["Current goal", "x = y"]},
         "proof_status": {"status": "open"},
         "inspect_lookup_handles": {"ask_manager_for": [
-            {
-                "intent": "inspect_context",
-                "payload": {"topic": "tactic_forms", "name": "wp"},
-                "use_when": "need valid tactic syntax",
-            },
-            {
-                "intent": "lookup_symbol",
-                "payload": {"symbol": "size_cat"},
-                "use_when": "need declaration before applying it",
-            },
+                {
+                    "intent": "tactic_forms",
+                    "payload": {"name": "wp"},
+                    "intent_class": "context_topic",
+                    "read_only": True,
+                    "use_when": "need valid tactic syntax",
+                },
+                {
+                    "intent": "lookup_symbol",
+                    "payload": {"symbol": "size_cat"},
+                    "intent_class": "symbol_lookup",
+                    "read_only": True,
+                    "use_when": "need declaration before applying it",
+                },
         ]},
     }
 
@@ -2509,16 +2591,22 @@ def test_public_readonly_handles_carry_intent_contract() -> None:
 
 def test_profile_filter_does_not_state_gate_inspect_roster() -> None:
     # State-dependent visibility belongs to SurfaceModel eligibility, not to
-    # surface_profiles.  The profile filter only converts legacy wrappers to the
-    # public direct intents and applies the profile allowlist/probe policy.
+    # surface_profiles.  The profile filter only applies the profile allowlist
+    # and advertised-intent policy; producers already emit direct typed intents.
     import workflow.surface_profiles as M
+    from workflow.context_intents import direct_context_request
     prof = M.ensure_supported_surface_profile("l4_checked_action_surface")
 
     def req(topic, name=None):
-        p = {"topic": topic}
+        p = {}
         if name:
             p["name"] = name
-        return {"intent": "inspect_context", "payload": p, "use_when": "x", "returns": "y"}
+        return direct_context_request({
+            "intent": topic,
+            "payload": p,
+            "use_when": "x",
+            "returns": "y",
+        })
 
     handles = {"ask_manager_for": [
         req("goal_info"), req("tactic_forms", "sp"), req("tactic_forms", "rcondt"),
@@ -2552,14 +2640,176 @@ def test_program_surgery_tactic_forms_are_state_eligible_only_with_program() -> 
 
     with_program = {
         **no_program,
-        "current_goal": {"lines": ["x <- 0", "while (i < n) {"]},
+        "current_goal": {"lines": ["if (i < n) {", "  x <- x + 1", "}"]},
+        "program_frontier": {"current_frontier_scope": {"frontier": {
+            "kind": "if_pair",
+            "left": {"head": "if", "statement": "if (i < n) {"},
+            "right": {"head": "if", "statement": "if (i < n) {"},
+        }}},
     }
     model2 = surface_model_to_dict(compose_surface_model(with_program, "l4_checked_action_surface"))
     tf = [action for action in model2["actions"] if action["intent"] == "tactic_forms"]
-    assert tf and set(tf[0]["choices"]["name"]) == {"sp", "rcondt", "eager"}
+    assert tf and set(tf[0]["choices"]["name"]) == {"rcondt", "rcondf"}
 
 
-def test_operator_lemmas_prefilled_from_goal_operators() -> None:
+def test_single_program_tactic_forms_do_not_leak_future_sample_from_goal_text() -> None:
+    from workflow.surface_composer import compose_surface_model
+    from workflow.surface_model import surface_model_to_dict
+
+    view = {
+        "proof_status": {
+            "status": "open",
+            "current_layer": "procedure_body",
+            "goal_type": "phoare",
+        },
+        "current_goal": {"lines": [
+            "x <@ M.f();",
+            "y <$ d;",
+            "post",
+        ]},
+        "program_frontier": {"current_frontier_scope": {"frontier": {
+            "kind": "left_call",
+            "left": {"head": "call", "statement": "x <@ M.f()"},
+        }}},
+        "inspect_lookup_handles": {"ask_manager_for": [
+            {"intent": "tactic_forms", "payload": {"name": "call"}},
+            {"intent": "tactic_forms", "payload": {"name": "rnd"}},
+        ]},
+    }
+
+    model = surface_model_to_dict(
+        compose_surface_model(view, "l4_checked_action_surface")
+    )
+    choices = {
+        name
+        for action in model.get("actions", [])
+        if action["intent"] == "tactic_forms"
+        for name in action["choices"]["name"]
+    }
+    assert "inline" in choices
+    # The active single-program call family must not be hidden by the separate
+    # policy that keeps broad reference pages off the persistent surface.
+    assert "call" in choices
+    assert "ecall" not in choices
+    assert "rnd" not in choices
+
+
+def test_sample_lossless_menu_uses_suffix_tactic_boundary_not_program_head() -> None:
+    from workflow.surface_composer import compose_surface_model
+    from workflow.surface_model import surface_model_to_dict
+
+    view = {
+        "proof_status": {
+            "status": "open",
+            "current_layer": "procedure_body",
+            "goal_type": "pRHL",
+        },
+        "current_goal": {"lines": [
+            "r <$ sample                (1--)",
+            "while (test r) {           (2--)",
+            "  r <$ sample              (2.1)",
+            "}",
+        ]},
+        "program_frontier": {"current_frontier_scope": {
+            "frontier": {
+                "kind": "left_sample",
+                "left": {"path": "1", "head": "sample", "statement": "r <$ sample"},
+            },
+            "tactic_active_tail": {
+                "kind": "left_while",
+                "left": {
+                    "path": "2",
+                    "head": "while",
+                    "statement": "while (test r) {",
+                    "authority": "top_level_program_ir",
+                },
+            },
+            "lookahead_after_frontier": [
+                {"side": "left", "path": "2", "head": "while", "statement": "while (test r) {"},
+            ],
+        }},
+        "inspect_lookup_handles": {"ask_manager_for": [
+            {"intent": "tactic_forms", "payload": {"name": "rnd"}},
+            {"intent": "tactic_forms", "payload": {"name": "while"}},
+        ]},
+    }
+
+    model = surface_model_to_dict(
+        compose_surface_model(view, "l4_checked_action_surface")
+    )
+    choices = {
+        name
+        for action in model.get("actions", [])
+        if action["intent"] == "tactic_forms"
+        for name in action["choices"]["name"]
+    }
+    assert choices == {"while"}
+    where = next(
+        fact["value"]
+        for fact in model["primary_panel"]["facts"]
+        if fact["key"] == "where"
+    )
+    assert any("current frontier:" in line and "r <$ sample" in line for line in where)
+    assert any("suffix tactic boundary:" in line and "while (test r)" in line for line in where)
+    assert not any(
+        fact["key"] == "lookahead_after_frontier"
+        for fact in model["primary_panel"]["facts"]
+    )
+
+
+def test_single_program_losslessness_fact_is_the_sole_islossless_gate() -> None:
+    view = {
+        "proof_status": {
+            "status": "open",
+            "current_layer": "procedure_body",
+            "goal_type": "phoare",
+        },
+        "current_goal": {"lines": ["while (i < n) {", "  i <- i + 1", "}"]},
+        "program_frontier": {
+            "program_obligation": {
+                "kind": "procedure_losslessness",
+                "goal_type": "phoare",
+                "bound_relation": "=",
+                "bound_value": "1%r",
+                "precondition": "true",
+                "postcondition": "true",
+                "authority": "pretty_text_fallback",
+            },
+            "current_frontier_scope": {"frontier": {
+                "kind": "left_loop",
+                "left": {"head": "while", "statement": "while (i < n) {"},
+            }},
+        },
+    }
+
+    model = _model(view)
+    facts = {
+        item["key"]: item.get("value")
+        for item in model["primary_panel"]["facts"]
+    }
+    assert facts["program_obligation"]["bound"] == "[=] 1%r"
+    choices = {
+        name
+        for action in model.get("actions", [])
+        if action["intent"] == "tactic_forms"
+        for name in action["choices"]["name"]
+    }
+    assert "islossless" in choices
+
+    without_typed_fact = dict(view)
+    without_typed_fact["program_frontier"] = {
+        "current_frontier_scope": view["program_frontier"]["current_frontier_scope"],
+    }
+    choices_without = {
+        name
+        for action in _model(without_typed_fact).get("actions", [])
+        if action["intent"] == "tactic_forms"
+        for name in action["choices"]["name"]
+    }
+    assert "islossless" not in choices_without
+
+
+def test_operator_queries_are_extractable_but_not_persistently_advertised() -> None:
     # FIX-4 (content lever): the dead `operator_lemmas operator=OPERATOR` placeholder is
     # pre-filled with the goal's actual load-bearing operators (`^`, `++`, nth, ...) so the
     # agent gets ready-to-submit lemma searches for ITS goal, plus one generic pointer.
@@ -2590,13 +2840,9 @@ def test_operator_lemmas_prefilled_from_goal_operators() -> None:
         ]},
     }
     model = surface_model_to_dict(compose_surface_model(view, "l4_checked_action_surface"))
-    ops = [
-        op
-        for action in model["actions"]
-        if action["intent"] == "operator_lemmas"
-        for op in action["choices"]["operator"]
-    ]
-    assert ops == ["(^)"]
+    assert "operator_lemmas" not in {
+        action["intent"] for action in model.get("actions", [])
+    }
 
 
 def test_goal_head_operators_routes_named_ops_on_pure_goals() -> None:
@@ -2784,20 +3030,26 @@ def test_up_to_bad_coherence_is_panel_fact_not_manager_signal() -> None:
             "r <@ G9(BNR_Adv(A), RO).distinguish(x)",
             "post = ! (UFCMA.bad1{2} \\/ UFCMA.bad2{2}) => r{1} = forged{2}",
         ]},
-        "program_frontier": {"frontier_alignment": {"rows": [{
+        "program_frontier": {
+            "current_frontier_scope": {"frontier": {
+                "kind": "call_pair",
+                "left": {"head": "call", "statement": "r <@ G9(BNR_Adv(A), RO).distinguish(x)"},
+                "right": {"head": "call", "statement": "forged <@ UFCMA(RO).distinguish()"},
+            }},
+            "frontier_alignment": {"rows": [{
             "role": "setup / initialization",
             "left": "SplitC2.RO_Pair(SplitC2.I1.RO, SplitC2.I2.RO).init() "
                     "[call: SplitC2.RO_Pair(SplitC2.I1.RO, SplitC2.I2.RO).init() — use inline/call, not sp/wp]",
             "right": "4 setup statement(s): UFCMA.bad1 <- false; UFCMA.cbad1 <- 0; UFCMA.bad2 <- false; ...",
             "location": {"left_paths": ["1"], "right_paths": ["1", "2", "3", "4"]},
-        }]}},
+        }] }},
         "call_site_surface": {"frontier_blockers": [{
             "kind": "named_call_subject_absent_at_frontier",
             "symbol": "UFCMA_genCC",
             "subject_procedures": ["CPA_game.main"],
             "frontier_live_procedures": ["CPA_game.main", "G9.distinguish"],
         }]},
-        "decision_context": {"up_to_bad_call": {
+        "application_context": {"up_to_bad_call": {
             "text": "Consider the up-to-bad form call (_: (UFCMA.bad1 \\/ UFCMA.bad2), <inv>).",
             "active_bad_events": ["UFCMA.bad1", "UFCMA.bad2"],
             "candidate": "call (_: (UFCMA.bad1 \\/ UFCMA.bad2), <inv>).",
@@ -2828,7 +3080,10 @@ def test_up_to_bad_coherence_is_panel_fact_not_manager_signal() -> None:
         if action["intent"] == "tactic_forms"
         for name in action["choices"]["name"]
     }
-    assert {"call", "inline"} <= tactic_choices
+    # The panel already carries the exact up-to-bad call shape. The canonical
+    # state-eligibility owner therefore keeps only the still-useful inline
+    # reference, without a downstream worthiness filter.
+    assert tactic_choices == {"inline"}
 
 
 def test_up_to_bad_context_after_call_is_guarded_obligation_not_call_offer() -> None:
@@ -2848,7 +3103,7 @@ def test_up_to_bad_context_after_call_is_guarded_obligation_not_call_offer() -> 
             "left": "c0 <@ RealOrcls(GenChaChaPoly(...)).enc(p0)",
             "right": "c0 <@ UFCMA(RO).O.enc(p0)",
         }]}},
-        "decision_context": {"up_to_bad_call": {
+        "application_context": {"up_to_bad_call": {
             "active_bad_events": ["UFCMA.bad1", "UFCMA.bad2"],
             "candidate": "call (_: (UFCMA.bad1 \\/ UFCMA.bad2), <inv>).",
         }},

@@ -23,9 +23,12 @@ import shlex
 from pathlib import Path
 from typing import Any
 
+from core.context_intents import direct_context_request
 from core.easycrypt.analysis.probability_budget import analyze_probability_budget  # type: ignore
 from core.easycrypt.analysis.ec_obligation_gap import unconstrained_post_fields  # type: ignore
+from core.easycrypt.analysis.ec_obligation_ir import one_sided_program_obligation
 from core.easycrypt.analysis.ec_procedure_actions import procedure_navigation_map  # type: ignore
+from core.easycrypt.analysis.ec_program_statements import statement_is_procedure_call  # type: ignore
 from core.easycrypt.analysis.ec_action_contracts import is_hardcoded_noise_move  # type: ignore
 from core.easycrypt.value_shapes import (
     as_dict as _dict,
@@ -62,8 +65,11 @@ from core.easycrypt.session_candidate_status import (  # type: ignore
     goal_visibly_closed as _goal_visibly_closed,
     transition_can_mark_closed as _transition_can_mark_closed,
 )
+from core.easycrypt.session_surface_facts import (
+    checked_structural_sources,
+    loaded_named_routes,
+)
 from core.easycrypt.session_workspace_view_manager import (  # type: ignore
-    DECISION_CONTEXT_PANEL_KEYS,
     DEFAULT_GOAL_WINDOW_CHARS,
     DEFAULT_GOAL_WINDOW_LINES,
     WorkspaceViewManager,
@@ -286,6 +292,10 @@ def _state_panel(
         "preview": _preview(raw_goal),
         "goal_window": goal_window,
     }
+    if proof_goal.get("trivial_postcondition") is True:
+        # Preserve the parser-owned fact through the raw workspace contract.
+        # Surface composition decides whether the current panel should show it.
+        out["trivial_postcondition"] = True
     if projection_status != status:
         out["projection_status"] = projection_status
     return out
@@ -401,7 +411,7 @@ def _workspace_panel(
             plan=plan,
         ),
         "current_goal": current_goal_panel,
-        "program_frontier": _workspace_program_frontier(frontier),
+        "program_frontier": _workspace_program_frontier(frontier, proof_ir),
         "call_site_surface": _workspace_call_site_surface(navigation_context),
         "application_context": _workspace_application_context(
             decision_context,
@@ -430,29 +440,8 @@ def _workspace_panel(
             more_context=more_context,
             decision_context=decision_context,
             proof_ir=proof_ir,
-            offer_call_frontier=_frontier_exposes_call(frontier, goal_text, proof_ir),
-            offer_pr_bridge=_goal_is_pr_bridge_candidate(goal_text),
-            offer_equiv_bridge=_goal_has_live_bridge_target(goal_text),
-            offer_program_surgery=bool(_PROGRAM_BLOCK_RE.search(goal_text or "")),
         ),
     }
-    # Delivery wiring (2026-06-09 panel audit): the flag-only mechanism signals
-    # the enrichment wrote into the INTERNAL decision_context (CORRECT
-    # `up_to_bad_call`; reserved `scaffold_debt`) were a dead-end write — the
-    # panel dict never carried a `decision_context` key, so no banner could
-    # reach the agent regardless of downstream rendering. Emit ONLY the
-    # agent-deliverable panel keys (the internal proof_options/handles are
-    # already projected into application_context / candidate_moves above);
-    # an empty signal set emits NO key at all.
-    decision_signals = {
-        key: decision_context[key]
-        for key in DECISION_CONTEXT_PANEL_KEYS
-        if isinstance(decision_context, dict)
-        and isinstance(decision_context.get(key), dict)
-        and decision_context.get(key)
-    }
-    if decision_signals:
-        panel["decision_context"] = decision_signals
     return panel
 
 
@@ -479,6 +468,8 @@ def _workspace_current_goal(state: dict[str, Any]) -> dict[str, Any]:
             "ground_truth": source.get("ground_truth"),
         }),
     }
+    if state.get("trivial_postcondition") is True:
+        out["trivial_postcondition"] = True
     if not text_fully_shown:
         out["fallback"] = (
             "Read only this session's current.out because the inline goal "
@@ -519,7 +510,10 @@ def _workspace_proof_status(
     })
 
 
-def _workspace_program_frontier(frontier: dict[str, Any]) -> dict[str, Any]:
+def _workspace_program_frontier(
+    frontier: dict[str, Any],
+    proof_ir: dict[str, Any],
+) -> dict[str, Any]:
     return _drop_empty({
         "authority": frontier.get("authority"),
         "view_focus": frontier.get("family"),
@@ -528,8 +522,11 @@ def _workspace_program_frontier(frontier: dict[str, Any]) -> dict[str, Any]:
         "call_sites": frontier.get("call_sites"),
         "frontier_alignment": frontier.get("frontier_alignment"),
         "current_frontier_scope": frontier.get("current_frontier_scope"),
+        "program_obligation": frontier.get("program_obligation"),
+        "procedure_entry_transition": frontier.get("procedure_entry_transition"),
         "procedure_navigation": frontier.get("procedure_navigation"),
         "checks": frontier.get("checks"),
+        "checked_structural_sources": checked_structural_sources(proof_ir),
     })
 
 
@@ -648,8 +645,66 @@ def _workspace_application_context(
     probability_budget: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     invariant_inputs = _dict(decision_context.get("call_invariant_inputs"))
+    up_to_bad = _workspace_up_to_bad_call(decision_context)
+    handles = _dict(_dict(proof_ir.get("resources")).get("handles"))
+    named_routes = loaded_named_routes(proof_ir)
+    one_sided_losslessness = [
+        _drop_empty({
+            "lemma": item.get("lemma"),
+            "certificate_kind": item.get("certificate_kind"),
+            "procedure": item.get("procedure"),
+            "declared_procedure": item.get("declared_procedure"),
+            "match_kind": item.get("match_kind"),
+            "parameter_bindings": item.get("parameter_bindings"),
+            "explicit_module_parameters": item.get("explicit_module_parameters"),
+            "module_argument_terms": item.get("module_argument_terms"),
+            "instantiated_lemma_head": item.get("instantiated_lemma_head"),
+            "proof_argument_placeholders": item.get("proof_argument_placeholders"),
+            "call_template": item.get("call_template"),
+            "required_premises": item.get("required_premises"),
+            "verification_status": item.get("verification_status"),
+            "authority": item.get("authority"),
+            "ec_ground_truth": item.get("ec_ground_truth"),
+            "source_path": item.get("source_path"),
+            "declaration": item.get("declaration"),
+        })
+        for item in _as_dict_list(
+            handles.get("one_sided_losslessness_candidates")
+        )[:8]
+        if item.get("lemma") and item.get("procedure")
+    ]
+    distribution_certificates = [
+        _drop_empty({
+            "lemma": item.get("lemma"),
+            "certificate_kind": item.get("certificate_kind"),
+            "distribution": item.get("distribution"),
+            "canonical_distribution": item.get("canonical_distribution"),
+            "point": item.get("point"),
+            "goal_form": item.get("goal_form"),
+            "declared_conclusion": item.get("declared_conclusion"),
+            "match_kind": item.get("match_kind"),
+            "parameter_bindings": item.get("parameter_bindings"),
+            "instantiated_identity": item.get("instantiated_identity"),
+            "required_premises": item.get("required_premises"),
+            "interval_cardinality": item.get("interval_cardinality"),
+            "loaded_supporting_facts": item.get("loaded_supporting_facts"),
+            "verification_status": item.get("verification_status"),
+            "authority": item.get("authority"),
+            "ec_ground_truth": item.get("ec_ground_truth"),
+            "source_path": item.get("source_path"),
+            "declaration": item.get("declaration"),
+        })
+        for item in _as_dict_list(handles.get("distribution_certificates"))[:8]
+        if item.get("lemma") and item.get("certificate_kind")
+    ]
     if invariant_inputs:
-        return _call_invariant_application_context(invariant_inputs)
+        return _drop_empty({
+            **_call_invariant_application_context(invariant_inputs),
+            "one_sided_losslessness_candidates": one_sided_losslessness,
+            "distribution_certificates": distribution_certificates,
+            "loaded_named_routes": named_routes,
+            "up_to_bad_call": up_to_bad,
+        })
 
     context = _navigation_context(
         decision_context=decision_context,
@@ -659,13 +714,78 @@ def _workspace_application_context(
         evidence=evidence,
         plan=plan,
     )
+    mechanical_matches = [
+        _drop_empty({
+            "lemma": item.get("lemma"),
+            "match_kind": item.get("match_kind"),
+            "outer_relation": item.get("outer_relation"),
+            "shared_symbols": item.get("shared_symbols"),
+            "shared_structures": item.get("shared_structures"),
+            "shared_types": item.get("shared_types"),
+            "shared_applied_symbols": item.get("shared_applied_symbols"),
+            "required_premises": item.get("required_premises"),
+            "declared_procedure": item.get("declared_procedure"),
+            "instantiated_procedure": item.get("instantiated_procedure"),
+            "parameter_bindings": item.get("parameter_bindings"),
+            "direct_application": item.get("direct_application"),
+            "transform": item.get("transform"),
+            "inverse": item.get("inverse"),
+            "support_role": item.get("support_role"),
+            "source": item.get("source"),
+            "source_path": item.get("source_path"),
+            "authority": item.get("authority"),
+            "ec_ground_truth": item.get("ec_ground_truth"),
+            "declaration": item.get("declaration"),
+        })
+        for item in _as_dict_list(handles.get("mechanical_goal_candidates"))[:16]
+    ]
+    pr_endpoint_matches = [
+        _drop_empty({
+            "lemma": item.get("lemma"),
+            "lhs_game": item.get("lhs_game"),
+            "rhs_game": item.get("rhs_game"),
+            "required_premises": item.get("required_premises"),
+            "exact_endpoint_matches": [
+                match
+                for match in _as_dict_list(item.get("exact_endpoint_matches"))
+                if match.get("lemma_side") == "lhs"
+            ],
+            "source": item.get("source"),
+            "source_path": item.get("source_path"),
+            "authority": item.get("authority"),
+            "ec_ground_truth": item.get("ec_ground_truth"),
+            "declaration": item.get("declaration"),
+        })
+        for item in _as_dict_list(handles.get("pr_rewrite_candidate_details"))[:8]
+        if any(
+            match.get("lemma_side") == "lhs"
+            for match in _as_dict_list(item.get("exact_endpoint_matches"))
+        )
+    ]
+    pr_bound_routes = [
+        _drop_empty({
+            "lemma": item.get("lemma"),
+            "route_role": item.get("route_role"),
+            "exact_goal_endpoints": item.get("exact_goal_endpoints"),
+            "parameterized_goal_endpoints": item.get("parameterized_goal_endpoints"),
+            "parameter_bindings": item.get("parameter_bindings"),
+            "module_parameters": item.get("module_parameters"),
+            "declared_endpoints": item.get("declared_endpoints"),
+            "required_premises": item.get("required_premises"),
+            "authority": item.get("authority"),
+            "source_path": item.get("source_path"),
+            "declaration": item.get("declaration"),
+        })
+        for item in _as_dict_list(handles.get("high_precision_pr_bound_routes"))[:6]
+        if item.get("lemma")
+    ]
     selected: list[dict[str, Any]] = []
     for option in _workspace_proof_options(decision_context, context)[:2]:
         category = _first_text(option.get("category"), default="")
         tactic = _first_text(option.get("tactic"), default="")
         tactic_field = (
             {"tactic": tactic}
-            if category in {"commit", "probe"} and tactic else
+            if category == "commit" and tactic else
             {"tactic_shape": tactic}
             if tactic else
             {}
@@ -681,13 +801,34 @@ def _workspace_application_context(
             "runnable_status": option.get("runnable_status"),
             "missing_input": option.get("missing_input"),
             # Carry the option's structured provenance onto the thin twin so the
-            # provenance stamper does not mislabel a daemon-probe-accepted handle
-            # "unverified" right next to a "Daemon probe accepted…" why_relevant.
+            # provenance stamper does not mislabel an EasyCrypt-validated handle
+            # "unverified" next to accepted preflight evidence.
             "confidence": option.get("confidence"),
             "epistemic_status": option.get("epistemic_status"),
             "source": option.get("source"),
         }))
-    return _drop_empty({"selected_handles": selected})
+    return _drop_empty({
+        "selected_handles": selected,
+        "mechanical_goal_candidates": mechanical_matches,
+        "pr_endpoint_matches": pr_endpoint_matches,
+        "pr_bound_routes": pr_bound_routes,
+        "one_sided_losslessness_candidates": one_sided_losslessness,
+        "distribution_certificates": distribution_certificates,
+        "loaded_named_routes": named_routes,
+        "up_to_bad_call": up_to_bad,
+    })
+
+
+def _workspace_up_to_bad_call(decision_context: dict[str, Any]) -> dict[str, Any]:
+    """Project the mechanical compatibility fact onto the normal fact route."""
+    entry = _dict(decision_context.get("up_to_bad_call"))
+    return _drop_empty({
+        "active_bad_events": entry.get("active_bad_events"),
+        "post_relation_kind": entry.get("post_relation_kind"),
+        "offered_call_shape": entry.get("offered_call_shape"),
+        "source": entry.get("source"),
+        "verification_status": entry.get("verification_status"),
+    })
 
 
 def _call_invariant_application_context(inputs: dict[str, Any]) -> dict[str, Any]:
@@ -803,7 +944,7 @@ def _workspace_candidate_moves(
     # strategy bucket, keep only state-derived facts. Drop a fill-in TEMPLATE (it
     # carries `missing_input` instantiation guidance — `call (_: Inv)`,
     # `rnd (… <offset>)`) and hardcoded noise (bare shapes / placeholder / plan).
-    # Never touch a commit/probe/verified move (a fact, even when bare like `wp.`).
+    # Never touch a commit or EasyCrypt-verified move.
     moves = [
         m for m in moves
         if str(m.get("category") or "").lower() != "strategy"
@@ -995,7 +1136,8 @@ def _is_low_value_unfold_option(option: dict[str, Any], context: dict[str, Any])
 _MENU_ACTION_TYPE_TO_MOVE_CATEGORY = {
     "inspection_action": "inspect",
     "strategy_hint": "strategy",
-    "probe_tactic": "probe",
+    "tactic_candidate": "strategy",
+    "runnable_tactic": "commit",
 }
 
 
@@ -1006,7 +1148,7 @@ def _menu_item_to_action(item: dict[str, Any]) -> dict[str, Any]:
     The candidate move list is sourced from the typed ProofIR menu (the factual
     option space), not from the heuristic action ranker. A menu item carries no
     recommendation prose (no ``guidance``/``why_now``, no rank/confidence), so the
-    enrichment produces a fact-only option: ``action_type`` -> a runnable / probe
+    enrichment produces a fact-only option: ``action_type`` -> a runnable / candidate
     / inspect category, the parsed tactic shape, the daemon-``verified`` marker (a
     real provenance fact, kept per the view boundary §5), name-resolution status
     (so an unresolved lemma still gets a lookup hint), and the template-
@@ -1018,10 +1160,7 @@ def _menu_item_to_action(item: dict[str, Any]) -> dict[str, Any]:
     cost_factors = _dict(item.get("cost_factors"))
     tactic_family = _first_text(item.get("tactic_family"), default="")
     verified = bool(item.get("verified"))
-    category = (
-        "commit" if (action_type == "probe_tactic" and verified) else
-        _MENU_ACTION_TYPE_TO_MOVE_CATEGORY.get(action_type, "strategy")
-    )
+    category = _MENU_ACTION_TYPE_TO_MOVE_CATEGORY.get(action_type, "strategy")
     action: dict[str, Any] = {
         "category": category,
         "tactic": _first_text(item.get("tactic"), default=""),
@@ -1041,15 +1180,15 @@ def _menu_item_to_action(item: dict[str, Any]) -> dict[str, Any]:
         # A daemon-checked candidate is ready to run; this is a verified fact,
         # not a confidence guess (see _readiness / view-boundary §5). The
         # epistemic marker drives ready-to-run readiness; the matching
-        # confidence enum drives the "verified in a read-only probe" evidence.
+        # confidence enum records that EasyCrypt verified the candidate.
         epistemic = _first_text(
-            item.get("epistemic_status"), default="daemon_probe_accepted"
+            item.get("epistemic_status"), default="easycrypt_preflight_accepted"
         )
         action["epistemic_status"] = epistemic
         action["confidence"] = (
             "verified_by_easycrypt"
             if epistemic in {"easycrypt_verified", "verified_by_easycrypt"}
-            else "verified_by_probe"
+            else "verified_by_easycrypt"
         )
     action["readiness"] = _readiness(action)
     return action
@@ -1062,7 +1201,7 @@ def _compact_candidate_move(option: dict[str, Any]) -> dict[str, Any]:
     title = _first_text(option.get("title"), default="")
     tactic = _first_text(option.get("tactic"), default="")
     guidance = _preview(_first_text(option.get("guidance"), default=""), limit=220)
-    is_mutating_candidate = category in {"commit", "probe"}
+    is_mutating_candidate = category == "commit"
     name_status = _candidate_name_resolution_status(option)
     named_call_symbol = _symbol_hint_from_call_shape(tactic)
     unresolved_symbol = (
@@ -1137,14 +1276,14 @@ def _compact_candidate_move(option: dict[str, Any]) -> dict[str, Any]:
         if unresolved_symbol:
             _append_limitation(
                 move,
-                "Do not probe or commit the displayed tactic shape until "
+                "Do not commit the displayed tactic shape until "
                 "the lookup_symbol intent confirms the lemma exists in the "
                 "current scope.",
             )
         elif unresolved_or_unverified_call_symbol:
             _append_limitation(
                 move,
-                "Do not probe or commit the displayed call shape solely because "
+                "Do not commit the displayed call shape solely because "
                 "the name is visible; the current frontier still determines "
                 "whether it applies.",
             )
@@ -1222,30 +1361,16 @@ def _append_limitation(move: dict[str, Any], text: str) -> None:
     move["limitations"] = limitations
 
 
-# Inspect topics that only mean something at a CALL frontier. On a goal with
-# nothing to call they return an empty "no_route" / "no concrete call" result, so
-# offering them there is pure noise — a handle the agent/human clicks into an
-# empty panel. Gate them on the frontier actually exposing a call.
-_CALL_FRONTIER_TOPICS = frozenset({
-    "call_site_options",
-    "call_invariant_skeleton",
-    "call_subgoals",
-})
-
-
 def _frontier_exposes_call(
     frontier: dict[str, Any],
     goal_text: str,
     proof_ir: dict[str, Any] | None,
 ) -> bool:
-    """True when there is a call to reason about — a visible call site, a `<@`
-    call in the goal text, or a call tactic already in the proof-IR menu. Mirrors
-    the availability test `_call_invariant_inputs` uses, so the call-frontier
-    inspect handles are offered exactly when one of them could return content.
+    """Return whether call-frontier facts are available for fact enrichment.
 
-    Errs toward offering: a count-form summary (`resource_focus`, the no-raw-IR
-    path) or a named callable lemma is enough — only a frontier with no call
-    signal at all suppresses the handles."""
+    This is not an action-visibility gate.  The presentation composer delegates
+    that decision to ``surface_action_eligibility``.
+    """
     frontier = _dict(frontier)
     if _as_dict_list(frontier.get("call_sites")):
         return True
@@ -1261,67 +1386,11 @@ def _frontier_exposes_call(
     return _menu_offers_call_invariant(_dict(proof_ir))
 
 
-# Pr-bridge inspect topics relate TWO probabilities (a game hop / Pr-equality).
-# A single `Pr[P] = const`/bound is a direct byphoare-style computation with no
-# bridge, so on it they return an empty "no matching context" — offered noise.
-_PR_BRIDGE_TOPICS = frozenset({
-    "pr_bridge_routes",
-    "equiv_bridge_lemmas",
-})
-
-
-def _goal_is_pr_bridge_candidate(goal_text: str) -> bool:
-    """True when the goal compares >= 2 `Pr[...]` terms over DISTINCT programs — the
-    precondition for a Pr/equiv bridge (a game hop) to exist. A single Pr term (against
-    a constant or a non-Pr bound) is a direct computation, not a bridge. Several Pr over
-    the SAME program@memory (a union / big-sum / measure bound) is also not a bridge —
-    no second program to relate. (FIX#3, deep audit Tier-C: step4_lbad1_sum
-    `Pr[A:E] <= big(fun i => Pr[A:E_i])` over one program was offered pr_bridge_routes.)
-
-    Errs toward offering: when the program signatures cannot be read (non-`@`-style Pr),
-    a multi-Pr goal still gets the handles (their self-describing applicability tells the
-    agent to skip)."""
-    text = goal_text or ""
-    if len(re.findall(r"Pr\s*\[", text)) < 2:
-        return False
-    progs = re.findall(r"Pr\s*\[\s*([^:\]]*?@[^:\]]*?):", text)
-    # Drop ONLY when we can positively read >= 2 program signatures and they are all the
-    # same program (a same-program union/measure bound, not a game-hop bridge).
-    if len(progs) >= 2 and len({re.sub(r"\s+", "", p) for p in progs}) == 1:
-        return False
-    return True
-
-
-def _goal_has_live_bridge_target(goal_text: str) -> bool:
-    r"""True when the goal still has TWO distinct programs an equiv/bridge lemma could
-    relate. A bridge lemma relates `L.proc ~ R.proc` (or two Pr-game endpoints); it is
-    meaningless once EC has aligned the programs (`[programs are in sync]`) or the
-    relation has been reduced to a pure pre/post residual with no remaining two-program
-    structure. The live two-program signals are: a Pr-bridge candidate (>= 2 `Pr[` over
-    distinct programs), an `L.proc ~ R.proc` equiv header, or a still-unaligned
-    two-column program block. (FIX-EBL, panel re-audit cluster `EBL_RCD_EGR`:
-    Plog_Psample i11 program-empty residual, i35 in-sync coupled branch, i61 in-sync
-    post-only residual all got the equiv_bridge offer; the legit i0 `byequiv` Pr-bridge
-    is protected by the `Pr[` arm.)"""
-    text = goal_text or ""
-    if _goal_is_pr_bridge_candidate(text):
-        return True
-    if "[programs are in sync]" in text:
-        return False
-    if " ~ " in text:
-        return True
-    return any(_PROGRAM_BLOCK_RE.search(line) for line in text.splitlines())
-
-
 def _workspace_inspect_lookup_handles(
     *,
     more_context: dict[str, Any],
     decision_context: dict[str, Any],
     proof_ir: dict[str, Any] | None = None,
-    offer_call_frontier: bool = True,
-    offer_pr_bridge: bool = True,
-    offer_equiv_bridge: bool = True,
-    offer_program_surgery: bool = True,
 ) -> dict[str, Any]:
     ask_manager_for = _as_dict_list(more_context.get("ask_manager_for"))
     action_handles: list[dict[str, Any]] = []
@@ -1342,77 +1411,28 @@ def _workspace_inspect_lookup_handles(
             _lookup_candidates_from_handle_text({"command": item.get("tactic")})
         )
     for handle in _as_dict_list(decision_context.get("context_handles")):
-        if handle.get("kind") == "lookup_symbol":
+        request = direct_context_request(handle)
+        intent = _first_text(request.get("intent"), default="")
+        payload = _dict(request.get("payload"))
+        if intent == "lookup_symbol":
+            symbol = _first_text(payload.get("symbol"), default="")
+            if not symbol:
+                continue
             lookup_candidates.append(_drop_empty({
-                "symbol": handle.get("target"),
-                "use_when": handle.get("use_when"),
+                "symbol": symbol,
+                "use_when": request.get("use_when"),
             }))
             continue
-        lookup_candidates.extend(_lookup_candidates_from_handle_text(handle))
-        topic = _inspect_topic_from_context_handle(handle)
+        lookup_candidates.extend(_lookup_candidates_from_handle_text(request))
+        topic = _normalize_inspect_topic(intent)
         if not topic:
             continue
-        action_handles.append(_drop_empty({
-            "intent": "inspect_context",
-            "payload": {"topic": topic},
-            "use_when": handle.get("use_when"),
-            "returns": "manager-provided read-only context for this proof route",
-        }))
-    # Drop SPECULATIVE-menu handles that would return an empty result on this goal
-    # — call-frontier handles with no call, Pr-bridge handles with no second
-    # probability. Only the goal-class MENU (`ask_manager_for` from more_context)
-    # is gated; a handle the manager's analysis surfaced (a context handle /
-    # safe_next_action -> `action_handles`) is content-driven and always kept.
-    suppressed: set[str] = set()
-    if not offer_call_frontier:
-        suppressed |= _CALL_FRONTIER_TOPICS
-    if not offer_pr_bridge:
-        suppressed |= _PR_BRIDGE_TOPICS
-    if suppressed:
-        ask_manager_for = [
-            handle for handle in ask_manager_for
-            if _first_text(_dict(handle.get("payload")).get("topic"), default="")
-            not in suppressed
-        ]
-    # FIX-EBL (panel re-audit cluster `EBL_RCD_EGR`): `equiv_bridge_lemmas` on a goal
-    # with NO live two-program bridge target (in-sync / pure pre-post residual). Unlike
-    # the menu-side `_PR_BRIDGE_TOPICS` gate above (which only filters `ask_manager_for`),
-    # this offer arrives through the `inspect.bridge_or_align` SAFE-NEXT-ACTION fallback
-    # — a BLIND "sole manual entry point" emitted for ANY pRHL/equiv goal when the
-    # recommendation queue is empty — so it lands in `action_handles`, which the
-    # always-kept assumption above never filters. Suppress it from BOTH lists when the
-    # goal has no bridgeable two-program structure (Plog_Psample i11/i35/i61, next move
-    # `skip.`/`auto.`). A genuine `L.proc ~ R.proc` or Pr-bridge frontier keeps it
-    # (`_goal_has_live_bridge_target`), so the "missed demand" bridge case is preserved.
-    if not offer_equiv_bridge:
-        ask_manager_for = [
-            handle for handle in ask_manager_for
-            if _first_text(_dict(handle.get("payload")).get("topic"), default="")
-            != "equiv_bridge_lemmas"
-        ]
-        action_handles = [
-            handle for handle in action_handles
-            if _first_text(_dict(handle.get("payload")).get("topic"), default="")
-            != "equiv_bridge_lemmas"
-        ]
-    # RTF residual (panel re-audit cluster RTF): the program-surgery `tactic_forms` menu
-    # (call/sp/wp/swap/conseq/eager) fans out even on a goal with NO open program block —
-    # a collapsed post-predicate (`skip.`), a pure-sample frontier (`rnd.`), or an aligned
-    # residual (`auto.`). None of those forms can fire there, so offering them is an
-    # off-route nudge (Plog_Psample i42/i43 got the whole surgery menu on a `skip`/`rnd`
-    # leaf). `rnd`/`rcondt`/`rcondf` are gated separately by their own structure checks in
-    # `_prhl_surgery_tactic_handles`. Gated on a real program block (`<@` call or `( N-- )`
-    # two-column dump), so a genuine seq_cut/call surgery frontier keeps the full menu.
-    if not offer_program_surgery:
-        _surgery_forms = {"call", "sp", "wp", "swap", "conseq", "eager"}
-        def _is_surgery_form(handle: Any) -> bool:
-            payload = _dict(handle.get("payload"))
-            return (
-                _first_text(payload.get("topic"), default="") == "tactic_forms"
-                and _first_text(payload.get("name"), default="") in _surgery_forms
-            )
-        ask_manager_for = [h for h in ask_manager_for if not _is_surgery_form(h)]
-        action_handles = [h for h in action_handles if not _is_surgery_form(h)]
+        request["intent"] = topic
+        request.setdefault("payload", payload)
+        request.setdefault("returns", (
+            "manager-provided read-only context for this proof route"
+        ))
+        action_handles.append(direct_context_request(_drop_empty(request)))
     ask_manager_for = _dedupe_manager_handles(action_handles + ask_manager_for)
     return _drop_empty({
         "effect": (
@@ -1428,12 +1448,6 @@ def _workspace_inspect_lookup_handles(
         "files": more_context.get("files"),
         "current_session_fallback": more_context.get("current_session_fallback"),
     })
-
-
-def _inspect_topic_from_context_handle(handle: dict[str, Any]) -> str:
-    return _normalize_inspect_topic(
-        _first_text(handle.get("target"), handle.get("kind"), default="")
-    )
 
 
 # Bridge inspect topics were renamed to expose the goal layer (pr_ vs equiv_)
@@ -1462,7 +1476,7 @@ _LOW_LEVEL_INSPECT_TOPICS = frozenset({
     "chain",
     "tactic_exec",
     "commit_tactic",
-    "probe_tactic",
+    "tactic_candidate",
 })
 
 # Topics DROPPED FROM THE OFFERED MENU by the opus-4-8 panel audit (tools/panel_audit)
@@ -2039,8 +2053,8 @@ def _committed_history_uptobad_names(scope: str) -> set[str]:
 
     SPEC-G #1: the committed-history coherence fact (a `byequiv`/`equiv`/`conseq`/
     `byphoare` whose post admits a top-level `\/ bad` disjunct) was only reachable
-    through `inspect_context topic=call_invariant_skeleton`, a topic queried 0 times
-    on the six real sequences — so the agent never saw it. This harvests the SAME
+    only through the on-demand `call_invariant_skeleton` request, which was queried
+    0 times on the six real sequences — so the agent never saw it. This harvests the SAME
     active-bad set the hook path computes (`session_hook_phases._up_to_bad_call_
     coherence`) directly off `<session_dir>/history.ec`, so the per-turn pure-view
     enrichment can union it into the goal-local harvest. We do NOT spin up a parallel
@@ -2259,17 +2273,18 @@ def _call_invariant_inputs(
         }),
         "runnable_status": (
             "This section is not a tactic. It is a checklist for constructing "
-            "the concrete invariant before using `probe_tactic` or "
+            "the concrete invariant before using `tactic_candidate` or "
             "`commit_tactic`."
         ),
-        "inspect_if_unsure": {
-            "topic": "call_subgoals",
+        "inspect_if_unsure": direct_context_request({
+            "intent": "call_subgoals",
+            "payload": {},
             "why": (
                 "After you draft a concrete invariant, this preview shows the "
                 "obligations it creates and can reveal missing facts or extra "
                 "conjuncts that make the proof harder."
             ),
-        },
+        }),
     }
 
     selected_handles = _selected_call_equiv_handles(
@@ -2561,25 +2576,23 @@ def _workspace_want_more_context(
             "current_session_fallback": current_out,
         }
     )
-    diagnose_handle = {
-        "intent": "inspect_context",
-        "payload": {"topic": "diagnose"},
-        "use_when": "A tactic or probe failed and the latest error needs classification.",
-        "returns": "latest-error classification",
-    }
-    episode_handle = {
-        "intent": "inspect_context",
-        "payload": {"topic": "episode_view"},
-        "use_when": "Need the cross-step proof timeline or confusion history.",
-        "returns": "event timeline and goal-count transitions",
-    }
+    diagnose_handle = _manager_handle(
+        "diagnose",
+        "A tactic or private preflight failed and the latest error needs classification.",
+        "latest-error classification",
+    )
+    episode_handle = _manager_handle(
+        "episode_view",
+        "Need the cross-step proof timeline or confusion history.",
+        "event timeline and goal-count transitions",
+    )
     operator_lemmas_handle = _manager_handle(
         "operator_lemmas",
         "Need the lemmas that apply to an OPERATOR in your goal — project-local "
         "lemmas included (not just stdlib) — instead of guessing a lemma name.",
         "lemmas mentioning that operator, found by live EC `search` over the loaded "
         "context (statements; you pick which to apply)",
-        payload={"topic": "operator_lemmas", "operator": "OPERATOR"},
+        payload={"operator": "OPERATOR"},
         runtime_note=(
             "Live EC search (~seconds). Replace OPERATOR with a symbol from your goal "
             "(e.g. big, sxor2, +^) — OR a tighter term skeleton to narrow a long list, "
@@ -2597,7 +2610,7 @@ def _workspace_want_more_context(
         ]
     ask_manager_for = _dedupe_manager_handles(
         base_handles
-        + _manager_context_handles(plan.goal_family, goal_type, goal_text=goal_text)
+        + _manager_context_handles(plan.goal_family, goal_type)
     )
     return _drop_empty({
         "ask_manager_for": ask_manager_for,
@@ -2614,7 +2627,7 @@ _SINGLE_SIDED_GOAL_TYPES = frozenset({"hoare", "phoare", "bdhoare"})
 
 
 def _manager_context_handles(
-    goal_family: str, goal_type: str = "", *, goal_text: str = ""
+    goal_family: str, goal_type: str = ""
 ) -> list[dict[str, Any]]:
     # Unknown/empty goal_type -> treat as two-sided (keep the full toolbox); only
     # a DEFINITELY single-sided goal drops the two-sided-only handles.
@@ -2653,7 +2666,7 @@ def _manager_context_handles(
                 "tactic_forms",
                 "Need exact byphoare/phoare-loop tactic syntax before probing the probability route.",
                 "valid `while` forms and common traps",
-                payload={"topic": "tactic_forms", "name": "while"},
+                payload={"name": "while"},
             ),
         ],
         "relational_program": [
@@ -2685,7 +2698,7 @@ def _manager_context_handles(
                     "correspondences, set-membership)."
                 ),
                 runtime_note=(
-                    "May wait while the EasyCrypt daemon probes which module "
+                    "May wait while EasyCrypt validates which module "
                     "globs the call rule accepts."
                 ),
             ),
@@ -2702,7 +2715,6 @@ def _manager_context_handles(
                     "extra conjuncts that may create avoidable obligations"
                 ),
                 payload={
-                    "topic": "call_subgoals",
                     "invariant": "<the EasyCrypt invariant expression inside call (_: ...)>",
                 },
                 runtime_note=(
@@ -2714,15 +2726,15 @@ def _manager_context_handles(
                 "tactic_forms",
                 "A tactic has multiple EasyCrypt argument forms.",
                 "valid tactic forms and common traps",
-                payload={"topic": "tactic_forms", "name": "call"},
+                payload={"name": "call"},
             ),
             _manager_handle(
                 "tactic_forms",
                 "The frontier may need indexed `sp i j` before branch or call tactics.",
                 "valid `sp` forms and branch-frontier traps",
-                payload={"topic": "tactic_forms", "name": "sp"},
+                payload={"name": "sp"},
             ),
-            *_prhl_surgery_tactic_handles(two_sided, goal_text=goal_text),
+            *_prhl_surgery_tactic_handles(two_sided),
             _manager_handle(
                 "align",
                 "LHS/RHS statement order may need swap/alignment context.",
@@ -2752,7 +2764,6 @@ def _manager_context_handles(
                     "extra conjuncts that may create avoidable obligations"
                 ),
                 payload={
-                    "topic": "call_subgoals",
                     "invariant": "<the EasyCrypt invariant expression inside call (_: ...)>",
                 },
                 runtime_note=(
@@ -2764,21 +2775,21 @@ def _manager_context_handles(
                 "tactic_forms",
                 "Need the valid form for call, while, seq, rnd, or rewrite.",
                 "valid tactic forms and common traps",
-                payload={"topic": "tactic_forms", "name": "call"},
+                payload={"name": "call"},
             ),
             _manager_handle(
                 "tactic_forms",
                 "Need the valid indexed `sp i j` form before opening a branch frontier.",
                 "valid `sp` forms and common traps",
-                payload={"topic": "tactic_forms", "name": "sp"},
+                payload={"name": "sp"},
             ),
             _manager_handle(
                 "tactic_forms",
                 "Need the valid one-sided hoare/phoare loop form.",
                 "valid `while` forms and common traps",
-                payload={"topic": "tactic_forms", "name": "while"},
+                payload={"name": "while"},
             ),
-            *_prhl_surgery_tactic_handles(two_sided, goal_text=goal_text),
+            *_prhl_surgery_tactic_handles(two_sided),
         ],
         "seq_cut": [
             _manager_handle(
@@ -2803,7 +2814,6 @@ def _manager_context_handles(
                     "extra conjuncts that may create avoidable obligations"
                 ),
                 payload={
-                    "topic": "call_subgoals",
                     "invariant": "<the EasyCrypt invariant expression inside call (_: ...)>",
                 },
                 runtime_note=(
@@ -2820,20 +2830,20 @@ def _manager_context_handles(
                 "tactic_forms",
                 "Need the valid form for call, seq, while, rnd, or rewrite.",
                 "valid tactic forms and common traps",
-                payload={"topic": "tactic_forms", "name": "call"},
+                payload={"name": "call"},
             ),
             _manager_handle(
                 "tactic_forms",
                 "The visible cut/frontier may need indexed `sp i j` before branch tactics.",
                 "valid `sp` forms and branch-frontier traps",
-                payload={"topic": "tactic_forms", "name": "sp"},
+                payload={"name": "sp"},
             ),
-            *_prhl_surgery_tactic_handles(two_sided, goal_text=goal_text),
+            *_prhl_surgery_tactic_handles(two_sided),
         ],
         "failure_diagnostic": [
             _manager_handle(
                 "diagnose",
-                "The latest tactic/probe failed and the error needs classification.",
+                "The latest tactic or private preflight failed and the error needs classification.",
                 "failure classification and repair context",
             ),
             _manager_handle(
@@ -2853,16 +2863,14 @@ def _manager_context_handles(
                 "tactic_forms",
                 "Need the valid EasyCrypt form for rewrite, apply, conseq, while, or SMT setup.",
                 "valid tactic forms and common traps",
-                payload={"topic": "tactic_forms", "name": "rewrite"},
+                payload={"name": "rewrite"},
             ),
         ],
     }.get(goal_family, [])
     return _dedupe_manager_handles(common)
 
 
-def _prhl_surgery_tactic_handles(
-    two_sided: bool = True, *, goal_text: str = ""
-) -> list[dict[str, Any]]:
+def _prhl_surgery_tactic_handles(two_sided: bool = True) -> list[dict[str, Any]]:
     # wp/swap/rcondt/rcondf/conseq/rnd are all valid on a single program too; only
     # `eager`/`lazy` is two-sided-only. On a single-sided (hoare/phoare) goal we
     # drop `eager` AND replace the relational wording (`sim`, "smaller relation",
@@ -2885,39 +2893,39 @@ def _prhl_surgery_tactic_handles(
     handles = [
         _manager_handle(
             "tactic_forms", wp_when, wp_ret,
-            payload={"topic": "tactic_forms", "name": "wp"},
+            payload={"name": "wp"},
         ),
         _manager_handle(
             "tactic_forms", swap_when,
             "valid `swap` forms and statement-order traps",
-            payload={"topic": "tactic_forms", "name": "swap"},
+            payload={"name": "swap"},
         ),
         _manager_handle(
             "tactic_forms",
             "A guarded branch may need `rcondt` after a case split or invariant fact.",
             "valid `rcondt` forms and guard-obligation traps",
-            payload={"topic": "tactic_forms", "name": "rcondt"},
+            payload={"name": "rcondt"},
         ),
         _manager_handle(
             "tactic_forms",
             "A guarded branch may need `rcondf` after a case split or invariant fact.",
             "valid `rcondf` forms and guard-obligation traps",
-            payload={"topic": "tactic_forms", "name": "rcondf"},
+            payload={"name": "rcondf"},
         ),
         _manager_handle(
             "tactic_forms", conseq_when, conseq_ret,
-            payload={"topic": "tactic_forms", "name": "conseq"},
+            payload={"name": "conseq"},
         ),
         _manager_handle(
             "tactic_forms", rnd_when,
             "valid `rnd` forms, including one-sided sampling",
-            payload={"topic": "tactic_forms", "name": "rnd"},
+            payload={"name": "rnd"},
         ),
         _manager_handle(
             "tactic_forms",
             "A known statement-order mismatch may need an eager/lazy transformation.",
             "valid `eager` forms and when to prefer smaller surgery",
-            payload={"topic": "tactic_forms", "name": "eager"},
+            payload={"name": "eager"},
         ),
     ]
     if not two_sided:
@@ -2925,40 +2933,6 @@ def _prhl_surgery_tactic_handles(
             h for h in handles
             if (h.get("payload") or {}).get("name") != "eager"
         ]
-    # FIX-5 (panel re-audit cluster ⑤): gate the STRUCTURE-specific forms on the goal
-    # actually containing that structure at THIS frontier. `rnd`/`eager` need a `<$`
-    # sample; `rcondt`/`rcondf` need a live `if (…)` program branch. Offering them on a
-    # sample-free / branch-free goal is an off-route nudge toward a tactic that cannot
-    # fire (observed on sample-free and branch-free benchmark frontiers that still
-    # got the whole menu). Per-state correct: when the sample/branch is behind an inline it is not
-    # the immediate move, and the hint returns once EC surfaces the `<$`/`if`. `wp`/
-    # `swap`/`conseq` stay (generally applicable). Only when goal_text is known — an empty
-    # goal_text keeps the full discoverability menu (the no-context fallback / test contract).
-    if goal_text:
-        drop: set[str] = set()
-        if "<$" not in goal_text:
-            drop |= {"rnd", "eager"}
-        if not re.search(r"\bif\s*\(", goal_text):
-            drop |= {"rcondt", "rcondf"}
-        # FIX-EBL (panel re-audit cluster `EBL_RCD_EGR`): once EC prints
-        # `[programs are in sync]` the two programs are aligned statement-by-
-        # statement, so a guarded `if (…)` is RELATIONALLY COUPLED (the same
-        # guard on both sides) — `auto`/`sim` discharges it directly, with no
-        # case-split. The single-sided `rcondt{i}`/`rcondf{i}` (which force a
-        # guard-truth obligation to collapse ONE side) is then an off-route
-        # over-commitment, and `eager` cannot apply at all when the statement
-        # order already matches (no eager/lazy mismatch). Plog_Psample i35 got
-        # the whole branch/order menu on an in-sync coupled `if` whose move was
-        # `auto.`. Two-sided `swap`/`wp`/`conseq`/`rnd` stay (still in play in
-        # sync). Keyed on the printed marker, so a not-yet-aligned coupled
-        # branch (no marker) still gets the case-split handles.
-        if "[programs are in sync]" in goal_text:
-            drop |= {"rcondt", "rcondf", "eager"}
-        if drop:
-            handles = [
-                h for h in handles
-                if (h.get("payload") or {}).get("name") not in drop
-            ]
     return handles
 
 
@@ -2970,25 +2944,30 @@ def _manager_handle(
     payload: dict[str, Any] | None = None,
     runtime_note: str = "",
 ) -> dict[str, Any]:
-    return _drop_empty({
-        "intent": "inspect_context",
-        "payload": payload or {"topic": topic},
+    public_payload = dict(payload or {})
+    public_payload.pop("topic", None)
+    return direct_context_request(_drop_empty({
+        "intent": topic,
+        "payload": public_payload,
         "use_when": use_when,
         "returns": returns,
         "note": runtime_note,
-    })
+    }))
 
 
 def _dedupe_manager_handles(handles: list[dict[str, Any]]) -> list[dict[str, Any]]:
     seen: set[str] = set()
     out: list[dict[str, Any]] = []
     for handle in handles:
+        handle = direct_context_request(handle)
         payload = (
             dict(handle.get("payload"))
             if isinstance(handle.get("payload"), dict)
             else {}
         )
-        key = _normalize_inspect_topic(payload.get("topic") or handle.get("topic"))
+        key = _normalize_inspect_topic(
+            handle.get("intent")
+        )
         if key == "tactic_forms":
             name = _first_text(payload.get("name"), default="")
             if name:
@@ -2997,7 +2976,7 @@ def _dedupe_manager_handles(handles: list[dict[str, Any]]) -> list[dict[str, Any
             continue
         handle = dict(handle)
         handle.pop("topic", None)
-        payload["topic"] = key.split(":", 1)[0]
+        payload.pop("topic", None)
         handle["payload"] = payload
         seen.add(key)
         out.append(handle)
@@ -3089,12 +3068,59 @@ def _frontier_panel(
             {"rows": alignment_rows},
             call_sites=call_sites,
         ),
+        "program_obligation": one_sided_program_obligation(
+            _state_goal_text(state),
+            goal_type=_first_text(state.get("goal_type"), default=""),
+        ),
+        "procedure_entry_transition": _procedure_entry_transition(proof_ir),
         "procedure_navigation": procedure_navigation_map(
             procedure_frontend,
             setup_counts=_frontier_setup_counts({"rows": alignment_rows}),
         ),
         "checks": list(plan.frontier_checks),
     })
+
+
+def _procedure_entry_transition(proof_ir: dict[str, Any]) -> dict[str, Any]:
+    """Project the typed ProofIR module-entry transition into the workspace.
+
+    This is deliberately keyed by ProofIR ids/status, not candidate prose.  The
+    presentation pipeline may consume the resulting fact, but must not infer
+    procedure-entry legality again from the pretty goal or candidate text.
+    """
+    layer = str(proof_ir.get("current_layer") or "").strip()
+    if layer != "prhl_module":
+        return {}
+    phase = _dict(proof_ir.get("phase"))
+    proc_legality = _dict(_dict(phase.get("legality")).get("proc_open"))
+    if str(proc_legality.get("status") or "").strip() != "preferred":
+        return {}
+    candidate_menu = proof_ir.get("candidate_menu")
+    proc_item = next(
+        (
+            _dict(item)
+            for item in candidate_menu if isinstance(item, dict)
+            if str(_dict(item).get("id") or "").strip() == "proc_open"
+        ),
+        {},
+    ) if isinstance(candidate_menu, list) else {}
+    tactic = str(proc_item.get("tactic") or "").strip()
+    if tactic != "proc.":
+        return {}
+    return {
+        "kind": "module_procedure_entry",
+        "current_layer": layer,
+        "transition": "proc_open",
+        "status": "preferred",
+        "tactic": tactic,
+        "effect": str(
+            proc_legality.get("reason")
+            or proc_legality.get("rationale")
+            or proc_item.get("why")
+            or "Expose the procedure bodies and their current statement frontier."
+        ).strip(),
+        "authority": "ProofIR phase legality",
+    }
 
 
 def _frontier_local_goal_hints(
@@ -3865,33 +3891,6 @@ def _setup_absent_text(side: str, *, synchronized: bool) -> str:
     return f"no {label}-side setup before this frontier"
 
 
-# Panel-defect #1 (docs/reports/insights/l4_panel_defects_equiv_step4.md): a frontier
-# statement that is actually a procedure call (`x <@ M.p(..)`, or a bare `M.p(..)` /
-# `Iter(O).iter(..)` call) was being summarized as plain setup. Detect calls so the
-# producer can flag the prefix as procedure-call structure. Re-implemented locally
-# in core/ to stay consistent with workflow/surface_profiles._statement_is_proc_call
-# WITHOUT importing workflow/ into core/ (layering).
-_PROC_CALL_RE = re.compile(r"[A-Za-z_]\w*(?:\([^()]*\))?\.[A-Za-z_]\w*\s*\(")
-
-
-def _statement_is_proc_call(text: Any) -> bool:
-    """True iff a frontier statement is a procedure call.
-
-    - `x <@ M.p(..)` — explicit call operator -> call.
-    - `x <- e` — deterministic assignment -> NOT a call, even if its RHS mentions
-      a dotted operator; a proc result would use `<@`, never `<-`.
-    - bare `M.p(..)` / `Iter(O).iter(..)` (no `<-`/`<@`) -> call.
-    Operator applications like `C.ofintd 0` (no `.proc(` parens) are NOT calls.
-    """
-    if not isinstance(text, str) or not text.strip():
-        return False
-    if "<@" in text:
-        return True
-    if "<-" in text:
-        return False
-    return bool(_PROC_CALL_RE.search(text))
-
-
 def _setup_side_text(regions: list[dict[str, Any]], *, absent: str) -> str:
     if not regions:
         return absent
@@ -3906,7 +3905,7 @@ def _setup_side_text(regions: list[dict[str, Any]], *, absent: str) -> str:
     # append a factual annotation. The literal `"N setup statement(s):"` prefix is
     # preserved verbatim so the _leading_statement parser and the surface_profiles
     # setup parser contract are not broken.
-    call_stmts = [s for s in statements if _statement_is_proc_call(s)]
+    call_stmts = [s for s in statements if statement_is_procedure_call(s)]
     call_annotation = (
         f" [procedure-call prefix: {'; '.join(call_stmts[:2])}]"
         if call_stmts else ""
@@ -4463,7 +4462,7 @@ def _is_background_hint_action(action: dict[str, Any]) -> bool:
     if epistemic == "unverified_pivot_not_frontier_verified":
         return True
     return source == "AUTO-PIVOT" and epistemic not in {
-        "daemon_probe_accepted",
+        "easycrypt_preflight_accepted",
         "daemon_chain_accepted",
         "easycrypt_verified",
         "verified_by_easycrypt",
@@ -4486,7 +4485,7 @@ def _compact_action(
     proof_state_effect = _proof_state_effect(surface_category, readiness)
     if proof_state_effect:
         compact["proof_state_effect"] = proof_state_effect
-    if category in {"commit", "probe"}:
+    if category == "commit":
         compact["tactic"] = _first_text(
             action.get("tactic"),
             _tactic_from_command(action_text),
@@ -4526,15 +4525,13 @@ def _compact_safe_action(action: dict[str, Any]) -> dict[str, Any]:
     kind = _first_text(action.get("kind"), default="")
     category = {
         "commit_recommendation": "commit",
-        "probe_recommendation": "probe",
+        "candidate_recommendation": "strategy",
         "consider_strategy_hint": "strategy",
     }.get(kind, kind or "inspect")
     tool = _first_text(action.get("recommended_tool"), action.get("tool"), default="")
     if not tool:
         if category == "commit":
             tool = "next"
-        elif category == "probe":
-            tool = "try"
         elif category in {"inspect", "diagnose", "verify"}:
             tool = category
     action_text = _first_text(action.get("action"), action.get("tactic"), default="")
@@ -4543,8 +4540,6 @@ def _compact_safe_action(action: dict[str, Any]) -> dict[str, Any]:
         if bool(action.get("requires_instantiation"))
         else "ready_to_run"
         if category in {"commit", "verify"}
-        else "probe_first"
-        if category == "probe"
         else "inspect_first"
         if category in {"inspect", "diagnose"}
         else "reasoning_required"
@@ -4562,7 +4557,7 @@ def _compact_safe_action(action: dict[str, Any]) -> dict[str, Any]:
         compact["proof_state_effect"] = proof_state_effect
     if bool(action.get("requires_instantiation")):
         compact["needs_instantiation"] = True
-    if category in {"commit", "probe"} and action_text:
+    if category == "commit" and action_text:
         compact["tactic"] = action_text
     elif category in {"inspect", "diagnose", "verify"}:
         compact["handle"] = _handle_from_tool(tool or category)
@@ -4709,18 +4704,7 @@ def _readiness(action: dict[str, Any]) -> str:
     if category == "avoid":
         return "blocked"
     if category == "commit":
-        confidence = _first_text(action.get("confidence"), default="")
-        epistemic = _first_text(action.get("epistemic_status"), default="")
-        if confidence == "verified" or epistemic in {
-            "daemon_probe_accepted",
-            "daemon_chain_accepted",
-            "easycrypt_verified",
-            "verified_by_easycrypt",
-        }:
-            return "ready_to_run"
-        return "probe_first"
-    if category == "probe":
-        return "probe_first"
+        return "ready_to_run"
     if category in {"inspect", "diagnose"}:
         return "inspect_first"
     if category == "verify":
@@ -4735,8 +4719,6 @@ def _proof_state_effect(category: str, readiness: str) -> str:
         return "no_proof_state_effect"
     if category == "commit":
         return "will_change_proof_state"
-    if category == "probe":
-        return "does_not_change_proof_state_probe_only"
     if category == "verify":
         return "does_not_change_proof_state_verification_check"
     if category in {"inspect", "diagnose", "verify"}:
@@ -4759,10 +4741,10 @@ def _agent_confidence(
     if background_hint or epistemic == "unverified_pivot_not_frontier_verified":
         return ""
     if confidence == "verified" or epistemic in {
-        "daemon_probe_accepted",
+        "easycrypt_preflight_accepted",
         "daemon_chain_accepted",
     }:
-        return "verified_by_probe"
+        return "verified_by_easycrypt"
     if epistemic in {"easycrypt_verified", "verified_by_easycrypt"}:
         return "verified_by_easycrypt"
     if bool(action.get("requires_instantiation")) or epistemic == (
@@ -5020,5 +5002,3 @@ def _goal_line_list(value: Any) -> list[str]:
     if not isinstance(value, list):
         return []
     return [item for item in value if isinstance(item, str)]
-
-

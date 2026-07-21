@@ -374,7 +374,7 @@ def procedure_asymmetric_instrumentation_region(
         ],
         "why": (
             "Both sides share core written state, but one side has extra visible "
-            "state updates. Treat sim/wp as probes; inspect live-state coverage "
+            "state updates. Treat sim/wp as unverified candidates; inspect live-state coverage "
             "before committing a cut or invariant."
         ),
         "epistemic_status": "structural_classification_not_recipe",
