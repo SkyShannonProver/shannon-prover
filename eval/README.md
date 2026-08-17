@@ -16,6 +16,12 @@ suite configuration JSONs live in [`eval_suite/suites/`](../eval_suite/suites/).
 To run a target, see `eval_suite/README.md`; the shortest path is
 
 ```bash
-uv run python -m eval_suite.run --suite eval_suite/suites/demo_pir.json \
-    --profiles l4_checked_action_surface
+uv run python tools/bootstrap_easycrypt.py --verify-only
+uv run python -m eval_suite.run \
+    --suite eval_suite/suites/demo_pir.json \
+    --dry-run
 ```
+
+Remove `--dry-run` only after reviewing the frozen current suite, model,
+budget, source isolation, and output path. Historical suite/profile names are
+not accepted by the current runner.

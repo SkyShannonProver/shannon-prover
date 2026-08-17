@@ -1,15 +1,14 @@
-"""Panel-defect #3 root: the text-diff-only NO-PROGRESS heuristic false-positived on
+"""The text-diff-only no-progress heuristic once false-positived on
 hypothesis-adding / context-splitting tactics (`case (cond)`), which increase the open
 goal count while leaving the printed first-goal body unchanged, and got auto-reverted.
 
-See docs/reports/insights/l4_panel_defects_equiv_step4.md (Defect #3). The fix adds an
-open-goal-count-increase guard to detect_no_progress: a strict increase in EC's
+The current guard uses an open-goal-count increase: a strict increase in EC's
 `(remaining: N)` count is genuine progress. A truly idempotent tactic (same body, same
 count) is still flagged.
 """
 from __future__ import annotations
 
-from core.easycrypt.session_no_progress import detect_no_progress, _structural_fingerprint
+from core.easycrypt.session_no_progress import detect_no_progress
 
 # Goal body is byte-identical; only a hypothesis + a new subgoal were added (remaining 1->2).
 _PREV = """Current goal
@@ -70,12 +69,8 @@ _PRHL_CURR_CASE = (
 
 
 def test_fingerprint_identical_case_split_is_progress_via_count() -> None:
-    # Sanity: the fingerprint really IS identical (so without the count guard this
-    # would be flagged structural-fingerprint-equal).
-    assert (
-        _structural_fingerprint(_PRHL_PREV)
-        == _structural_fingerprint(_PRHL_CURR_CASE)
-    )
+    # The remaining-goal increase is authoritative even if most printed goal
+    # structure is unchanged.
     is_noop, reason = detect_no_progress(
         _PRHL_PREV, _PRHL_CURR_CASE, has_new_error=False
     )

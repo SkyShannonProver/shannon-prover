@@ -8,12 +8,14 @@ from contextlib import redirect_stdout
 from io import StringIO
 from pathlib import Path
 from types import SimpleNamespace
+from unittest.mock import patch
+
+import pytest
 
 import _pathsetup  # noqa: F401,E402  (repo root on sys.path)
 
 from core.easycrypt.commands.session_commands import handle_episode_view  # type: ignore  # noqa: E402
 from core.easycrypt.session_api import open_session  # type: ignore  # noqa: E402
-from core.easycrypt.session_command_summary import write_command_summary_artifact  # type: ignore  # noqa: E402
 from core.easycrypt.session_episode_timeline import (  # type: ignore  # noqa: E402
     build_session_episode_timeline,
     validate_session_episode_timeline,
@@ -22,69 +24,46 @@ from core.easycrypt.session_events import append_event, read_events  # type: ign
 from core.easycrypt.session_tactic_execution_result import (  # type: ignore  # noqa: E402
     write_tactic_execution_result_artifact,
 )
-from tests.helpers.builders import command_summary  # noqa: E402
+from tests.helpers.builders import (  # noqa: E402
+    append_bound_workspace_event,
+    bind_tactic_execution_workspace,
+    write_unchecked_tactic_execution_artifact,
+)
 from workflow.validation.prover_episode_timeline import (  # noqa: E402
     build_replay_root_timelines,
 )
 
 
-def _summary(
+def _replay_execution(
     *,
     tactic: str,
-    transition_kind: str,
     proof_status: str = "open",
     goal_hash: str = "goal-a",
-    primary_action: str = "try_tactic",
     num_remaining=1,
 ) -> dict:
-    runnable = [{
-        "id": "r0",
-        "tactic": "sim.",
-        "producer": "goal-parser",
-        "confidence": "medium",
-        "why": "parser",
-        "source": "deterministic",
-        "goal_hash": goal_hash,
-    }] if primary_action == "try_tactic" else []
-    return command_summary(
+    return _execution(
         tactic=tactic,
-        transition_kind=transition_kind,
         proof_status=proof_status,
         goal_hash=goal_hash,
-        primary_action=primary_action,
         num_remaining=num_remaining,
-        final_ready=False,
-        state_kind="open",
-        current_goal_type="pRHL",
-        preview="Current goal\n----\nx{1} = x{2}",
-        runnable=runnable,
-        recommendations=[],
-        agent_view="/tmp/agent.json",
-        commit_response="/tmp/commit.json",
-        with_action_fields=False,
     )
 
 
-def _append_summary(d: Path, summary: dict) -> None:
-    payload = write_command_summary_artifact(d, summary)
-    append_event(d, "command.summary.produced", payload)
-
-
-def _write_root(summaries: list[dict]) -> Path:
+def _write_root(results: list[dict]) -> Path:
     root = Path(tempfile.mkdtemp())
     proof_dir = root / "proof_A"
     proof_dir.mkdir()
-    for summary in summaries:
-        _append_summary(proof_dir, summary)
+    for result in results:
+        _append_execution(proof_dir, result)
     replay_summary = {
         "proof_id": "proof_A",
         "file": "eval/examples/A.ec",
         "lemma": "A",
-        "tactic_count": len(summaries),
-        "replayed_tactic_count": len(summaries),
+        "tactic_count": len(results),
+        "replayed_tactic_count": len(results),
         "outcome": "PASS",
         "consistency_warnings": 0,
-        "event_counts": {"command.summary.produced": len(summaries)},
+        "event_counts": {"tactic.execution.produced": len(results)},
         "artifact_dir": str(proof_dir),
         "session_dir": "/tmp/session-A",
         "runner": "inprocess",
@@ -93,12 +72,12 @@ def _write_root(summaries: list[dict]) -> Path:
     audit = {
         "warnings": [],
         "command_counts": {
-            "next": len(summaries),
+            "next": len(results),
             "audit_tool": 0,
-            "total": len(summaries),
+            "total": len(results),
         },
-        "event_counts": {"command.summary.produced": len(summaries)},
-        "proof_state": {"status": summaries[-1]["proof"]["status"]},
+        "event_counts": {"tactic.execution.produced": len(results)},
+        "proof_state": {"status": results[-1]["audit"]["proof_status"]},
     }
     (proof_dir / "summary.json").write_text(
         json.dumps(replay_summary), encoding="utf-8",
@@ -107,7 +86,7 @@ def _write_root(summaries: list[dict]) -> Path:
         json.dumps(audit), encoding="utf-8",
     )
     (proof_dir / "commands.json").write_text(
-        json.dumps([{"kind": "next"} for _ in summaries]), encoding="utf-8",
+        json.dumps([{"kind": "commit"} for _ in results]), encoding="utf-8",
     )
     (root / "summary.json").write_text(
         json.dumps([replay_summary]), encoding="utf-8",
@@ -117,18 +96,14 @@ def _write_root(summaries: list[dict]) -> Path:
 
 def test_prover_episode_timeline_uses_event_order_and_rolls_up_steps() -> None:
     root = _write_root([
-        _summary(
+        _replay_execution(
             tactic="wp.",
-            transition_kind="state_changed_same_goal_count",
             goal_hash="goal-a",
-            primary_action="try_tactic",
         ),
-        _summary(
+        _replay_execution(
             tactic="sim.",
-            transition_kind="closed",
-            proof_status="candidate_closed",
+            proof_status="session_closed_pending_verification",
             goal_hash="goal-b",
-            primary_action="verify",
             num_remaining=0,
         ),
     ])
@@ -141,9 +116,9 @@ def test_prover_episode_timeline_uses_event_order_and_rolls_up_steps() -> None:
     assert report["step_count"] == 2
     assert [step["tactic"] for step in steps] == ["wp.", "sim."]
     assert steps[1]["goal_hash_changed"] is True
-    assert "candidate_closed_verify_next" in steps[1]["prover_observations"]
-    assert timeline["rollup"]["candidate_closed_step"] == 2
-    assert timeline["rollup"]["final_primary_action"] == "verify"
+    assert "session_closed_verify_next" in steps[1]["prover_observations"]
+    assert timeline["rollup"]["session_completion_candidate_step"] == 2
+    assert timeline["rollup"]["final_proof_status"] == "session_closed_pending_verification"
 
 
 def _execution(
@@ -151,7 +126,6 @@ def _execution(
     tactic: str,
     proof_status: str = "open",
     goal_hash: str = "goal-a",
-    primary_category: str = "probe",
     num_remaining=1,
 ) -> dict:
     return {
@@ -160,7 +134,7 @@ def _execution(
         "ok": True,
         "execution": {
             "mode": "commit",
-            "command": "next",
+            "command": "commit",
             "submitted_tactics": [tactic],
             "attempted_count": 1,
             "accepted_count": 1,
@@ -172,28 +146,26 @@ def _execution(
         "result": {"ok": True, "status": "ok"},
         "workspace": {
             "view": {
+                "schema_version": 3,
+                "kind": "prover_workspace_view",
+                "ok": True,
+                "last_result": {},
                 "current_goal": {
                     "goal_type": "pRHL" if proof_status == "open" else "complete",
                     "lines": ["Current goal", "----", "x{1} = x{2}"],
                     "text_fully_shown": True,
                 },
-                "proof_position": {
+                "proof_status": {
                     "status": proof_status,
                     "remaining_goals": num_remaining,
                     "remaining_goals_known": True,
+                    "goal_identity_required": proof_status == "open",
+                    "goal_hash": goal_hash if proof_status == "open" else "",
                 },
-                "proof_frontier": {},
-                "facts_and_gaps": {},
-                "suggested_next_steps": {
-                    "primary": {"category": primary_category},
-                },
-                "recent_diagnostics": {},
-                "want_more_context": {},
             },
             "goal_chars": 32,
             "workspace_chars": 256,
         },
-        "inspect_handles": [],
         "audit": {
             "proof_status": proof_status,
             "goal_hash": goal_hash,
@@ -206,8 +178,52 @@ def _execution(
 
 
 def _append_execution(d: Path, result: dict) -> None:
+    bind_tactic_execution_workspace(d, result)
+    append_bound_workspace_event(d, result)
     payload = write_tactic_execution_result_artifact(d, result)
     append_event(d, "tactic.execution.produced", payload)
+
+
+def _append_unchecked_execution(d: Path, result: dict) -> None:
+    bind_tactic_execution_workspace(d, result)
+    append_bound_workspace_event(d, result)
+    payload = write_unchecked_tactic_execution_artifact(d, result)
+    append_event(d, "tactic.execution.produced", payload)
+
+
+def test_episode_timeline_rejects_superseded_v2_workspace_view() -> None:
+    with tempfile.TemporaryDirectory() as td:
+        d = Path(td)
+        result = _execution(tactic="wp.")
+        result["workspace"]["view"]["schema_version"] = 2
+        _append_unchecked_execution(d, result)
+
+        timeline = build_session_episode_timeline(d)
+
+    assert timeline["ok"] is False
+    assert timeline["steps"] == []
+    assert any(
+        "unsupported ProverWorkspaceView schema_version 2; expected 3"
+        in error["message"]
+        for error in timeline["errors"]
+    )
+
+
+def test_episode_timeline_rejects_unsupported_execution_envelope() -> None:
+    with tempfile.TemporaryDirectory() as td:
+        d = Path(td)
+        result = _execution(tactic="wp.")
+        result["schema_version"] = 0
+        _append_unchecked_execution(d, result)
+
+        timeline = build_session_episode_timeline(d)
+
+    assert timeline["ok"] is False
+    assert timeline["steps"] == []
+    assert any(
+        "schema_version must be 1, got 0" in error["message"]
+        for error in timeline["errors"]
+    )
 
 
 def test_session_episode_timeline_builds_live_view() -> None:
@@ -216,13 +232,11 @@ def test_session_episode_timeline_builds_live_view() -> None:
         _append_execution(d, _execution(
             tactic="wp.",
             goal_hash="goal-a",
-            primary_category="probe",
         ))
         _append_execution(d, _execution(
             tactic="sim.",
-            proof_status="candidate_closed",
+            proof_status="session_closed_pending_verification",
             goal_hash="goal-b",
-            primary_category="verify",
             num_remaining=0,
         ))
 
@@ -232,8 +246,137 @@ def test_session_episode_timeline_builds_live_view() -> None:
         assert timeline["source"] == "tactic_execution_result"
         assert timeline["step_count"] == 2
         assert [s["tactic"] for s in timeline["steps"]] == ["wp.", "sim."]
-        assert timeline["rollup"]["candidate_closed_step"] == 2
-        assert timeline["rollup"]["final_primary_action"] == "verify"
+        assert timeline["rollup"]["session_completion_candidate_step"] == 2
+        assert timeline["rollup"]["final_proof_status"] == "session_closed_pending_verification"
+
+
+def test_episode_timeline_preserves_duplicate_artifact_event_occurrences() -> None:
+    with tempfile.TemporaryDirectory() as td:
+        d = Path(td)
+        repeated = _execution(tactic="wp.")
+        _append_execution(d, repeated)
+        _append_execution(d, repeated)
+
+        timeline = build_session_episode_timeline(d)
+
+        assert timeline["step_count"] == 2
+        assert [step["event_index"] for step in timeline["steps"]] == [2, 4]
+
+
+def test_episode_timeline_treats_no_progress_as_guidance_not_failure() -> None:
+    with tempfile.TemporaryDirectory() as td:
+        d = Path(td)
+        result = _execution(tactic="simplify.")
+        result["ok"] = False
+        result["execution"].update({
+            "accepted_count": 0,
+            "rollback_count": 1,
+            "failed_tactic": "simplify.",
+            "failure_reason": "no progress; state reverted",
+            "state_changed": False,
+            "history_committed": False,
+            "steps": [{
+                "index": 1,
+                "tactic": "simplify.",
+                "status": "no_progress",
+            }],
+        })
+        result["result"] = {
+            "ok": False,
+            "status": "no_progress_reverted",
+            "failure_reason": "no progress; state reverted",
+        }
+        _append_execution(d, result)
+
+        timeline = build_session_episode_timeline(d)
+        step = timeline["steps"][0]
+
+        assert step["transition_kind"] == "no_progress"
+        assert step["no_progress"] is True
+        assert step["failed"] is False
+        assert "failed_command_repair_next" not in step["prover_observations"]
+        assert timeline["rollup"]["failed_command_count"] == 0
+
+
+def test_episode_timeline_separates_discharged_goals_from_closed_candidate() -> None:
+    with tempfile.TemporaryDirectory() as td:
+        d = Path(td)
+        _append_execution(d, _execution(
+            tactic="sim.",
+            proof_status="goals_discharged_pending_qed",
+            num_remaining=0,
+        ))
+
+        timeline = build_session_episode_timeline(d)
+        step = timeline["steps"][0]
+
+        assert "goals_discharged_qed_next" in step["prover_observations"]
+        assert step["goals_discharged"] is True
+        assert step["session_completion_candidate"] is False
+        assert timeline["rollup"]["goals_discharged_step"] == 1
+        assert timeline["rollup"]["session_completion_candidate_step"] == 0
+        assert any(
+            note["code"]
+            == "timeline.no_session_completion_candidate_step"
+            for note in timeline["notes"]
+        )
+
+
+def test_episode_timeline_rejects_forged_execution_event_payload() -> None:
+    with tempfile.TemporaryDirectory() as td:
+        d = Path(td)
+        _append_execution(d, _execution(tactic="wp."))
+        events_path = d / "events.jsonl"
+        events = read_events(d)
+        event = next(
+            item for item in events
+            if item.get("type") == "tactic.execution.produced"
+        )
+        event["payload"]["result_hash"] = "0" * 40
+        event["payload"]["status"] = "forged"
+        events_path.write_text(
+            "".join(json.dumps(item) + "\n" for item in events),
+            encoding="utf-8",
+        )
+
+        timeline = build_session_episode_timeline(d)
+
+        assert timeline["ok"] is False
+        assert timeline["steps"] == []
+        assert any(
+            error["code"] == "session_episode_timeline.execution_event_binding"
+            for error in timeline["errors"]
+        )
+
+
+def test_episode_timeline_does_not_use_orphan_for_unresolved_event() -> None:
+    with tempfile.TemporaryDirectory() as td:
+        d = Path(td)
+        _append_execution(d, _execution(tactic="wp."))
+        events_path = d / "events.jsonl"
+        events = read_events(d)
+        event = next(
+            item for item in events
+            if item.get("type") == "tactic.execution.produced"
+        )
+        event["payload"]["artifact"] = str(
+            d / "tactic_execution_results" / "missing.json"
+        )
+        events_path.write_text(
+            "".join(json.dumps(item) + "\n" for item in events),
+            encoding="utf-8",
+        )
+
+        timeline = build_session_episode_timeline(d)
+
+        assert timeline["ok"] is False
+        assert timeline["steps"] == []
+        assert {
+            error["code"] for error in timeline["errors"]
+        } >= {
+            "session_episode_timeline.execution_event_artifact_mismatch",
+            "session_episode_timeline.orphan_execution_artifact",
+        }
 
 
 def test_episode_view_handler_records_artifact_event() -> None:
@@ -241,9 +384,8 @@ def test_episode_view_handler_records_artifact_event() -> None:
         d = Path(td)
         _append_execution(d, _execution(
             tactic="sim.",
-            proof_status="candidate_closed",
+            proof_status="session_closed_pending_verification",
             goal_hash="goal-b",
-            primary_category="verify",
             num_remaining=0,
         ))
         session = open_session(d)
@@ -256,6 +398,18 @@ def test_episode_view_handler_records_artifact_event() -> None:
         events = read_events(d)
         assert any(e.get("type") == "episode.timeline.produced" for e in events)
         assert list((d / "episode_timelines").glob("*.json"))
+
+
+def test_episode_view_handler_fails_closed_when_recording_fails() -> None:
+    with tempfile.TemporaryDirectory() as td:
+        d = Path(td)
+        session = open_session(d)
+        with patch(
+            "core.easycrypt.session_episode_timeline.record_session_episode_timeline",
+            side_effect=RuntimeError("timeline write failed"),
+        ):
+            with pytest.raises(RuntimeError, match="timeline write failed"):
+                handle_episode_view(session, SimpleNamespace())
 
 
 def main() -> int:

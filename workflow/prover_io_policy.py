@@ -18,12 +18,6 @@ PolicyDecision = Literal["allow", "warn", "node_fatal", "deny"]
 
 SESSION_CLI_MUTATING_FLAGS = frozenset({
     "-start",
-    "-next",
-    "-prev",
-    "-chain",
-    "-checkpoint",
-    "-replay",
-    "-write-back",
 })
 
 SESSION_CLI_AGENT_FORBIDDEN_LIFECYCLE_FLAGS = frozenset({
@@ -33,29 +27,13 @@ SESSION_CLI_AGENT_FORBIDDEN_LIFECYCLE_FLAGS = frozenset({
 
 SESSION_CLI_READONLY_FLAGS = frozenset({
     "-try",
-    "-swap-search",
-    "-status",
-    "-agent-view",
     "-episode-view",
-    "-goal-json",
-    "-program-json",
-    "-goal-info",
-    "-subgoal-gap",
-    "-align",
-    "-diagnose",
-    "-suggest-close",
-    "-bridge-lemmas",
-    "-inv-from-lemma",
-    "-tactic-forms",
-    "-where",
-    "-members",
-    "-clones",
-    "-file-index",
-    "-check-lemma",
-    "-sig",
-    "-search",
-    "-search-skeleton",
-    "-lemma-hints",
+    "-managed-goal-view",
+    "-compiler-input-v2",
+    "-compiler-resource-load-v2",
+    "-native-semantic-batch-json",
+    "-native-state-projection-json",
+    "-verify",
 })
 
 _SESSION_CLI_INVOKE_RE = re.compile(
@@ -129,6 +107,23 @@ class InformationSourceDecision:
         return self.decision == "node_fatal"
 
 
+@dataclass(frozen=True)
+class TargetProofExposure:
+    """Observed tool output line that falls inside the target proof body."""
+
+    path: str
+    line: int
+    audit_code: str = "eval.target_proof_output_exposure"
+
+    def to_dict(self) -> dict[str, object]:
+        return {
+            "detected": True,
+            "audit_code": self.audit_code,
+            "path": self.path,
+            "line": self.line,
+        }
+
+
 
 def has_unquoted_shell_pipe(cmd: str) -> bool:
     """Return True when a shell pipeline appears outside quoted tactic text."""
@@ -191,7 +186,6 @@ def classify_bash_command(
     cmd: str,
     *,
     cwd: str | Path | None = None,
-    current_session_dir: str | Path | None = None,
     allowed_source_files: Sequence[str | Path] | None = None,
     allowed_node_memory_dirs: Sequence[str | Path] | None = None,
     target_lemma: str | None = None,
@@ -203,7 +197,6 @@ def classify_bash_command(
         source_decision = classify_shell_source_access(
             cmd,
             cwd=cwd,
-            current_session_dir=current_session_dir,
             allowed_source_files=allowed_source_files,
             allowed_node_memory_dirs=allowed_node_memory_dirs,
             target_lemma=target_lemma,
@@ -270,7 +263,6 @@ def classify_shell_source_access(
     cmd: str,
     *,
     cwd: str | Path | None = None,
-    current_session_dir: str | Path | None = None,
     allowed_source_files: Sequence[str | Path] | None = None,
     allowed_node_memory_dirs: Sequence[str | Path] | None = None,
     target_lemma: str | None = None,
@@ -284,6 +276,20 @@ def classify_shell_source_access(
     tokens = _shell_tokens(cmd)
     if not tokens:
         return None
+    wrapped_command = _wrapped_shell_command(tokens)
+    if wrapped_command is not None and wrapped_command != cmd:
+        # Codex reports command executions as ``/bin/bash -lc "..."`` while
+        # other providers expose the inner Bash/Read call directly.  Unwrap the
+        # transport shell here so provider choice cannot change the semantic
+        # information-source classification recorded by the audit layer.
+        return classify_shell_source_access(
+            wrapped_command,
+            cwd=cwd,
+            allowed_source_files=allowed_source_files,
+            allowed_node_memory_dirs=allowed_node_memory_dirs,
+            target_lemma=target_lemma,
+            eval_mode=eval_mode,
+        )
     read_like = any(_shell_basename(tok) in _SOURCE_AUDIT_COMMANDS for tok in tokens)
     path_tokens = [tok for tok in tokens if _looks_like_path_operand(tok)]
     if not read_like and not path_tokens:
@@ -299,7 +305,6 @@ def classify_shell_source_access(
         classify_read_path(
             tok,
             cwd=cwd,
-            current_session_dir=current_session_dir,
             allowed_source_files=allowed_source_files,
             allowed_node_memory_dirs=allowed_node_memory_dirs,
             target_lemma=target_lemma,
@@ -350,11 +355,28 @@ def classify_shell_source_access(
     return None
 
 
+def _wrapped_shell_command(tokens: Sequence[str]) -> str | None:
+    """Return the command passed to a conventional shell ``-c`` option.
+
+    This is deliberately syntax-only.  It does not execute or interpolate the
+    command; it exposes the already-tokenized inner command to the same source
+    policy used for an unwrapped provider event.
+    """
+
+    if not tokens or _shell_basename(tokens[0]) not in {"bash", "sh", "zsh"}:
+        return None
+    for index, token in enumerate(tokens[1:], start=1):
+        if not token.startswith("-") or token == "--":
+            continue
+        if "c" in token[1:] and index + 1 < len(tokens):
+            return str(tokens[index + 1])
+    return None
+
+
 def classify_read_path(
     file_path: str,
     *,
     cwd: str | Path | None = None,
-    current_session_dir: str | Path | None = None,
     allowed_source_files: Sequence[str | Path] | None = None,
     allowed_node_memory_dirs: Sequence[str | Path] | None = None,
     target_lemma: str | None = None,
@@ -574,11 +596,7 @@ def classify_read_path(
             reason="Background session_cli task output bypasses structured session state.",
             audit_code="read.background_task_output",
         )
-    if eval_mode and (
-        "knowledge/session_trace/processed/by_problem/" in normalized
-        or normalized.endswith("knowledge/base/sources/proof_bank.jsonl")
-        or normalized.endswith("workflow/proof_bank.jsonl")
-    ):
+    if eval_mode and "session_trace/processed/by_problem/" in normalized:
         return InformationSourceDecision(
             decision="deny",
             source_type="eval_proof_cache",
@@ -587,32 +605,16 @@ def classify_read_path(
             audit_code="read.eval_proof_cache",
         )
     if ".ec_session_" in normalized:
-        session_dir = _resolve_current_session_dir(cwd, current_session_dir)
-        path = resolved
-        if session_dir and _path_is_relative_to(path, session_dir):
-            return InformationSourceDecision(
-                decision="allow",
-                source_type="current_session_artifact",
-                authority="current_raw_session_artifact",
-                reason="Read stays inside the current session directory.",
-            )
-        if normalized.endswith("/current.out"):
-            return InformationSourceDecision(
-                decision="warn",
-                source_type="unknown_session_current_goal",
-                authority="raw_goal_text_unknown_session",
-                reason=(
-                    "A current.out read is only authoritative for the current "
-                    "session; verify the path matches the active -d session."
-                ),
-                audit_code="read.unknown_session_current_out",
-            )
         return InformationSourceDecision(
             decision="deny",
-            source_type="other_session_transcript",
-            authority="stale_proof_transcript",
-            reason="Reading other .ec_session_* transcripts can leak prior proofs.",
-            audit_code="read.other_session_transcript",
+            source_type="raw_session_artifact",
+            authority="backend_private_session_state",
+            reason=(
+                "Managed prover agents may read only the current node's curated "
+                "node_memory files; raw .ec_session_* artifacts stay behind the "
+                "ProofNodeManager boundary."
+            ),
+            audit_code="read.raw_session_artifact",
         )
     # Eval-mode answer-leak guard (last line of defense): an `.ec`/`.eca` that
     # would otherwise be allowed as a plain project/source file but still holds
@@ -882,10 +884,10 @@ def destructive_tool_denylist(
     # is manager-owned. Turn the post-hoc node-kill (``_track_session_hygiene...``)
     # into PREVENTION by hard-denying the MUTATING ``session_cli.py`` flags and any
     # write into the manager's ``.ec_session_*`` dirs at the tool boundary.
-    # READ-ONLY session_cli (``-status``/``-goal-info``/``-where``/...) stays
-    # allowed: a prover that reaches for it is the intentional
+    # Current read-only compiler/validation transports stay allowed: a prover
+    # that reaches for one is the intentional
     # ``session_cli.agent_call_debug_signal`` ("the view was insufficient" — see
-    # CLAUDE.md Session CLI Policy); blocking it would erase that signal. EC lemma
+    # repository Session CLI Policy); blocking it would erase that signal. EC lemma
     # names and ``.ec_session_<tag>`` dirs contain no ``-<flag>`` substrings, so the
     # mutating-flag globs do not false-match a read-only invocation.
     patterns.extend(
@@ -894,11 +896,11 @@ def destructive_tool_denylist(
             SESSION_CLI_MUTATING_FLAGS | SESSION_CLI_AGENT_FORBIDDEN_LIFECYCLE_FLAGS
         )
     )
-    # `-tactic-exec {commit,commit_chain,undo}` is the Canonical Proof
-    # Interaction Manager entry point — a manager-INTERNAL tactic-submission API
+    # `-tactic-exec {commit,commit_chain,undo}` is the canonical manager-internal
+    # tactic-submission API
     # whose commit/commit_chain/undo modes mutate committed proof state. It lives
-    # in its own argparse ``dest`` (NOT in SESSION_CLI_MUTATING_FLAGS), so deny it
-    # explicitly. Unlike the read-only INSPECTION flags it is not part of the
+    # in its own argparse ``dest`` (not in SESSION_CLI_MUTATING_FLAGS), so deny it
+    # explicitly. Unlike the read-only transports it is not part of the
     # agent's debug-signal vocabulary, so blocking every mode erases no signal
     # (the agent submits tactics through the MCP intent, never this).
     patterns.append("Bash(*session_cli*-tactic-exec*)")
@@ -1028,7 +1030,97 @@ def _target_source_answer_safety(path: Path, target_lemma: str | None) -> str:
     return "contains_substantive_target_proof"
 
 
+_SEARCH_RESULT_SOURCE_LINE_RE = re.compile(
+    r"^(?P<path>.+?\.eca?)(?P<sep>[:-])(?P<line>[0-9]+)(?P=sep)",
+)
+_SEARCH_RESULT_HEADING_RE = re.compile(r"^.+?\.eca?$")
+_SEARCH_RESULT_HEADING_LINE_RE = re.compile(r"^(?P<line>[0-9]+)[:-]")
+_ANSI_ESCAPE_RE = re.compile(r"\x1b\[[0-?]*[ -/]*[@-~]")
+
+
+def detect_target_proof_output_exposure(
+    result_text: str,
+    *,
+    target_lemma: str | None,
+    cwd: str | Path | None = None,
+) -> TargetProofExposure | None:
+    """Detect search output that printed a line from the target proof body.
+
+    Direct reads of a substantive target source are rejected by
+    :func:`classify_read_path`.  This closes the directory-search gap: commands
+    such as ``rg ... eval/examples`` name only a directory, then reveal a line
+    from a target proof in their output.  Ripgrep/grep context output carries
+    the source path and line number, so we bind that line to the actual local
+    lemma proof span.  We record only path/line evidence, never the proof text.
+    """
+
+    lemma = str(target_lemma or "").strip()
+    if not lemma or not result_text:
+        return None
+    # Cache both the source span and its answer-bearing disposition.  Apart
+    # from avoiding a second filesystem read for every matching output line,
+    # this binds the decision to one coherent source snapshot.
+    sources: dict[Path, tuple[tuple[int, int] | None, bool]] = {}
+    heading_source: Path | None = None
+    for raw_line in str(result_text).splitlines():
+        line = _ANSI_ESCAPE_RE.sub("", raw_line).strip()
+        match = _SEARCH_RESULT_SOURCE_LINE_RE.match(line)
+        if match is not None:
+            source = _resolve_path(cwd, match.group("path"))
+            line_number = int(match.group("line"))
+        elif _SEARCH_RESULT_HEADING_RE.fullmatch(line):
+            # ripgrep --heading emits the path once, followed by ``N:text`` or
+            # ``N-text`` rows. Preserve that path only for those typed rows.
+            heading_source = _resolve_path(cwd, line)
+            continue
+        else:
+            heading_match = _SEARCH_RESULT_HEADING_LINE_RE.match(line)
+            if heading_source is None or heading_match is None:
+                continue
+            source = heading_source
+            line_number = int(heading_match.group("line"))
+        if source not in sources:
+            try:
+                text = source.read_text(encoding="utf-8", errors="replace")
+            except OSError:
+                sources[source] = (None, False)
+            else:
+                span = _target_lemma_proof_span(text, lemma)
+                if span is None:
+                    sources[source] = (None, False)
+                else:
+                    start, end = span
+                    body = text[start:end]
+                    normalized = re.sub(
+                        r"\s+", " ", _strip_ec_comments(body)
+                    ).strip()
+                    substantive = bool(
+                        normalized
+                        and not re.fullmatch(
+                            r"(?:admit\s*\.\s*)+", normalized
+                        )
+                    )
+                    sources[source] = (
+                        (
+                            text.count("\n", 0, start) + 1,
+                            text.count("\n", 0, end) + 1,
+                        ),
+                        substantive,
+                    )
+        line_span, substantive = sources[source]
+        if line_span is None or not substantive:
+            continue
+        if line_span[0] <= line_number <= line_span[1]:
+            return TargetProofExposure(path=str(source), line=line_number)
+    return None
+
+
 def _target_lemma_proof_body(text: str, lemma: str) -> str | None:
+    span = _target_lemma_proof_span(text, lemma)
+    return text[span[0]:span[1]] if span is not None else None
+
+
+def _target_lemma_proof_span(text: str, lemma: str) -> tuple[int, int] | None:
     name = re.escape(lemma)
     decl_re = re.compile(
         rf"(?m)^\s*(?:local\s+)?(?:lemma|equiv|hoare|phoare)\s+{name}\b"
@@ -1047,11 +1139,14 @@ def _target_lemma_proof_body(text: str, lemma: str) -> str | None:
     if proof:
         after_proof = region[proof.end():]
         qed = re.search(r"\bqed\s*\.", after_proof)
-        return after_proof[: qed.start()] if qed else after_proof
+        start = match.end() + proof.end()
+        end = start + (qed.start() if qed else len(after_proof))
+        return start, end
     bare_admit = re.search(r"\badmit\s*\.", region)
     if bare_admit:
-        return region[bare_admit.start(): bare_admit.end()]
-    return ""
+        start = match.end() + bare_admit.start()
+        return start, match.end() + bare_admit.end()
+    return match.end(), match.end()
 
 
 def _strip_ec_comments(text: str) -> str:
@@ -1071,21 +1166,6 @@ def _strip_ec_comments(text: str) -> str:
             out.append(text[idx])
         idx += 1
     return "".join(out)
-
-
-def _resolve_current_session_dir(
-    cwd: str | Path | None,
-    current_session_dir: str | Path | None,
-) -> Path | None:
-    if current_session_dir is None:
-        return None
-    p = Path(current_session_dir)
-    if not p.is_absolute() and cwd is not None:
-        p = Path(cwd) / p
-    try:
-        return p.resolve()
-    except Exception:
-        return p.absolute()
 
 
 def _path_is_relative_to(path: Path, parent: Path) -> bool:

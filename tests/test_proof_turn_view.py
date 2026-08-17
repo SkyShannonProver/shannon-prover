@@ -14,29 +14,39 @@ from workflow.proof_management.turn_view import (
 
 
 def test_latest_observation_uses_first_agent_observation() -> None:
-    intent = AgentIntent("probe_tactic", {"tactic": "wp.", "node_id": "hidden"})
+    intent = AgentIntent("commit_tactic", {"tactic": "wp.", "node_id": "hidden"})
     observation = latest_observation_for_view(
         intent,
         [
-            {"label": "agent_view", "agent_observation": {"result": "skip"}},
-            {"label": "probe_tactic", "agent_observation": {"result": "accepted"}},
+            {
+                "label": "commit_tactic",
+                "outcome_kind": "accepted",
+                "proof_state_effect": "changed",
+                "proof_state_changed": True,
+                "needs_attention": False,
+                "agent_observation": {"result": "accepted"},
+            },
         ],
     )
 
     assert observation == {
-        "intent": "probe_tactic",
+        "intent": "commit_tactic",
         "payload": {"tactic": "wp."},
         "result": "accepted",
+        "outcome_kind": "accepted",
+        "proof_state_effect": "changed",
+        "proof_state_changed": True,
+        "needs_attention": False,
     }
 
 
-def test_latest_observation_has_readonly_fallback_effect() -> None:
-    intent = AgentIntent("inspect_context", {"topic": "goal_info"})
+def test_latest_observation_has_nonmutating_fallback_effect() -> None:
+    intent = AgentIntent("finish", {})
     observation = latest_observation_for_view(intent, [])
 
-    assert observation["intent"] == "inspect_context"
-    assert observation["payload"] == {"topic": "goal_info"}
-    assert "read-only" in observation["effect"]
+    assert observation["intent"] == "finish"
+    assert "payload" not in observation
+    assert "does not change" in observation["effect"]
 
 
 def test_view_with_latest_observation_replaces_stale_last_result() -> None:
@@ -53,17 +63,26 @@ def test_selection_menu_action_is_non_backend_observation() -> None:
     action = selection_menu_action("checkpoint_selection", {"kind": "menu"})
 
     assert action["label"] == "checkpoint_selection"
-    assert action["proof_state_effect"] == "selection_menu_only"
+    assert action["proof_state_effect"] == "unchanged"
+    assert action["outcome_kind"] == "control_menu"
     assert action["stdout_has_workspace_view"] is False
 
 
 def test_intent_payload_surface_filters_protocol_metadata() -> None:
     payload = intent_payload_surface(
-        AgentIntent("probe_tactic", {"tactic": "wp.", "node_id": "hidden"})
+        AgentIntent("commit_tactic", {"tactic": "wp.", "node_id": "hidden"})
     )
 
     assert payload == {"tactic": "wp."}
     assert "may change" in intent_effect("commit_tactic")
+
+    amend_payload = intent_payload_surface(
+        AgentIntent(
+            "amend_and_replay",
+            {"index": 3, "tactic": "seq 1 : true.", "node_id": "hidden"},
+        )
+    )
+    assert amend_payload == {"index": 3, "tactic": "seq 1 : true."}
 
 
 def test_render_observation_view_projects_snapshot_and_can_overlay() -> None:

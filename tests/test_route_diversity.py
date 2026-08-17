@@ -76,7 +76,10 @@ def test_resume_route_candidate_from_manifest_reads_lineage_family() -> None:
         path="capsule/resume.json",
         fallback_score=3.0,
         manifest={
-            "score": {"value": 5.0},
+            "score": {
+                "value": 5.0,
+                "route_family": {"family": "retired_score_owner"},
+            },
             "replay": {"tactic_count": 4},
             "lineage": {
                 "route_family": {

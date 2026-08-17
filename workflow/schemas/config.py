@@ -8,6 +8,35 @@ from pathlib import Path
 from typing import Optional
 
 from workflow.tree.policy import DEFAULT_TREE_INITIAL_PROVERS, TREE_MAX_ACTIVE_NODES
+from workflow.proof_state_compiler.profile_ids import (
+    DEFAULT_CURRENT_SURFACE_PROFILE,
+)
+from workflow.proof_state_compiler.profile_registry import (
+    normalize_current_surface_profile_id,
+)
+
+
+DEFAULT_CLAUDE_MODEL = "claude-opus-4-8"
+DEFAULT_CODEX_MODEL = "gpt-5.6-sol"
+SUPPORTED_AGENT_BACKENDS = frozenset({"claude", "codex"})
+
+
+def normalize_agent_backend(value: str | None) -> str:
+    backend = str(value or "codex").strip().lower()
+    if backend not in SUPPORTED_AGENT_BACKENDS:
+        supported = ", ".join(sorted(SUPPORTED_AGENT_BACKENDS))
+        raise ValueError(
+            f"unsupported prover agent backend {value!r}; expected one of: {supported}"
+        )
+    return backend
+
+
+def default_model_for_backend(value: str | None) -> str:
+    return (
+        DEFAULT_CODEX_MODEL
+        if normalize_agent_backend(value) == "codex"
+        else DEFAULT_CLAUDE_MODEL
+    )
 
 
 @dataclass
@@ -16,13 +45,12 @@ class ProverConfig:
     max_rounds: int = 40
     max_total_tactics: int = 1000
     max_stale_rounds: int = 4
-    # Release default: the broadly-available model at high effort, so an
-    # outside user's first run works without special access. Override per
-    # suite ("model"/"effort" keys) or --prover-model/--prover-effort.
-    model: str = "claude-opus-4-8"
+    # OpenAI Codex is the canonical proof-node agent. Claude remains an
+    # explicit experiment backend, never an implicit runtime default.
+    agent_backend: str = "codex"
+    model: str = ""
     effort: str = "high"
-    mode: str = "tree"  # long-lived managed proof nodes; legacy racing routes here
-    # Legacy racing requests are mapped to this many tree root nodes.
+    mode: str = "tree"
     parallelism: int = 4
     warmup_seconds: int = 180  # no killing during warmup (context reading + session start)
     kill_gap_tactics: int = 2  # kill worst prover if this many tactics behind leader
@@ -47,6 +75,13 @@ class ProverConfig:
     # The supervisor now protects valuable frontiers and treats replayed
     # prefix tactics as state recovery, so these defaults can favor honest
     # one-hour calibration runs over aggressive early pruning.
+
+    def __post_init__(self) -> None:
+        self.agent_backend = normalize_agent_backend(self.agent_backend)
+        if not str(self.model or "").strip():
+            self.model = default_model_for_backend(self.agent_backend)
+        if self.mode != "tree":
+            raise ValueError("unsupported prover mode; only 'tree' is current")
 
 
 @dataclass
@@ -77,22 +112,22 @@ class RunConfig:
     # target lemma while leaving sibling source lemmas available.
     eval_mode: bool = False
 
-    # Optional paper-eval surface profile.  This controls only the
+    # Current proof-state surface profile. This controls only the
     # agent-facing proof-state surface and manager intents; EasyCrypt remains
     # the verifier, and tree/search topology is configured separately through
     # ``prover.mode`` and ``prover.tree_initial_provers``.
-    surface_profile: Optional[str] = None
-
-    # None = context-aware default: record ordinary successful workflow proofs
-    # to workflow/proof_bank.jsonl, but do not write entries for eval/live-smoke
-    # runs unless explicitly opted in. True/False override that default.
-    record_proof_bank: Optional[bool] = None
+    surface_profile: str = DEFAULT_CURRENT_SURFACE_PROFILE
 
     # Proof-node resume capsules. These are produced by failed/interrupted
     # tree/eval runs and replay a verified tactic prefix before handing the
     # remaining state to the prover. They are for continuation debugging, not
     # from-scratch eval scoring.
     resume_capsules: list[str] = field(default_factory=list)
+
+    def __post_init__(self) -> None:
+        self.surface_profile = normalize_current_surface_profile_id(
+            self.surface_profile
+        )
 
     def to_dict(self) -> dict:
         return asdict(self)

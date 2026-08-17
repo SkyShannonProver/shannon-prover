@@ -1,15 +1,14 @@
 """Long-lived prover-agent runtime for one managed proof node.
 
-A worker process hosts exactly one ``ProofNodeRuntime``.  The runtime starts a
-manager-owned EasyCrypt node plus one long-lived Claude agent session.  Claude
-does not receive backend commands or own proof state; it calls the structured
+A worker process hosts exactly one ``ProofNodeRuntime``. The runtime starts a
+manager-owned EasyCrypt node plus one long-lived agent session. Claude Code or
+OpenAI Codex does not receive backend commands or own proof state; it calls the structured
 ``submit_proof_intent`` MCP tool, which proxies the existing JSON proof intents
 to the internal manager bridge, receives the refreshed ProverWorkspaceView, and
-keeps going in the same Claude session.
+keeps going in the same agent session.
 """
 from __future__ import annotations
 
-import functools
 import json
 import os
 import re
@@ -25,31 +24,30 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Callable
 
-from core.easycrypt.session_workspace_view_manager import WorkspaceViewManager
 from core.easycrypt.committed_history import (
     closed_history_tactics as _closed_history_tactics,
 )
+from core.easycrypt.proof_lifecycle import is_verified
 from workflow.proof_management.common import read_jsonl
 from workflow.proof_management.common import (
     node_memory_slug as _shared_node_memory_slug,
 )
-from workflow.surface_turn_model import (
-    compose_surface_turn,
-    proof_surface_from_turn,
-    render_surface_turn_markdown,
+from workflow.codex_event_protocol import (
+    codex_event_category,
+    codex_event_text,
 )
-
-# Gentle reminder prepended to `latest_workspace_view.json` for the L1
-# goal-projection baseline. That file is now audit/replay data rather than an
-# advertised recovery target, but an agent may still stumble into it through a
-# prior run or manual context. Keep the content full for replay/audit and lead
-# with this notice so the file is clearly off-surface.
-_L1_OFF_SURFACE_NOTICE = (
-    "Note for the L1 goal-projection agent: this file is the manager's full audit "
-    "view and is intentionally NOT part of your surface. Your current goal is already "
-    "shown in full in your latest manager followup — that inline goal is the complete "
-    "surface you are meant to act from. You do not need to open this file; decide your "
-    "next proof intent from the inline goal rather than from the panels below."
+from workflow.proof_management.lifecycle import (
+    require_proof_node_manager_bootstrap,
+)
+from workflow.proof_management.types import has_agent_observation_kind
+from workflow.proof_state_compiler.current_turn_presentation import (
+    compose_current_surface_turn,
+    current_proof_surface_from_turn,
+    render_current_surface_turn_markdown,
+    require_current_workspace_view,
+)
+from workflow.proof_state_compiler.profile_registry import (
+    normalize_current_surface_profile_id,
 )
 from workflow.proof_management import (
     ManagedTurn,
@@ -58,8 +56,10 @@ from workflow.proof_management import (
 from workflow.proof_node_manager import (
     ProofNodeManager,
 )
+from workflow.schemas.config import normalize_agent_backend
 from workflow.proof_management import parse_agent_intent
 from workflow.prover_io_policy import destructive_tool_denylist
+from workflow.eval_agent_confinement import EvalAgentConfinement
 from workflow.ctx_respawn import (
     CtxWatermarkDetector,
     build_accepted_spine,
@@ -71,17 +71,29 @@ from workflow.ctx_respawn import (
     strip_closed_verdicts,
 )
 
-# Long-lived prompt and proof-so-far helpers. Per-turn
-# followup/card presentation is owned by workflow.surface_turn_model.
+# Long-lived prompt and proof-so-far helpers. Per-turn presentation is owned by
+# proof_state_compiler.current_turn_presentation for every current profile.
 from workflow.agent_prompt_render import (
     _agent_safe_action_summaries,
     _drop_empty,
-    _md_proof_so_far,
-    _turn_interpretation,
+    render_committed_proof_markdown,
     render_long_lived_agent_prompt,
 )
+from workflow.agents.prover_prompt import bind_authoritative_managed_handoff
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 CLAUDE_BIN = shutil.which("claude") or "claude"
+CODEX_BIN = shutil.which("codex") or "codex"
+_CODEX_DISABLED_FEATURES = (
+    "apps",
+    "browser_use",
+    "computer_use",
+    "image_generation",
+    "in_app_browser",
+    "multi_agent",
+    "multi_agent_v2",
+    "plugins",
+    "standalone_web_search",
+)
 
 
 @dataclass(frozen=True)
@@ -89,6 +101,12 @@ class ClaudeRunResult:
     text: str
     session_id: str
     returncode: int
+    turns: int = 0
+
+
+# Provider-neutral name for new code; retain the historical import for tests
+# and downstream tooling that still imports ``ClaudeRunResult``.
+AgentRunResult = ClaudeRunResult
 
 
 # --- MCP stdio-spawn readiness watchdog (Task #5) ----------------------------
@@ -133,7 +151,9 @@ class NodeMemory:
     def __init__(self, run_dir: Path, node_id: str,
                  surface_profile: str | None = None) -> None:
         self.node_id = node_id
-        self.surface_profile = surface_profile
+        self.surface_profile = normalize_current_surface_profile_id(
+            surface_profile
+        )
         self.dir = Path(run_dir) / "node_memory" / _slug(node_id)
         self.dir.mkdir(parents=True, exist_ok=True)
         self.timeline = self.dir / "timeline.jsonl"
@@ -142,6 +162,12 @@ class NodeMemory:
         self.latest_result = self.dir / "latest_manager_result.json"
         self.latest_view = self.dir / "latest_workspace_view.json"
         self.latest_followup = self.dir / "latest_followup.md"
+        self.initial_followup = self.dir / "initial_followup.md"
+        self.initial_view = self.dir / "initial_workspace_view.json"
+        # Exact manager-bound task prompt passed to the provider session on its
+        # first launch. The orchestrator's ``prover_prompt_<node>.md`` is a
+        # pre-adoption construction artifact and cannot carry runnable actions.
+        self.initial_agent_prompt = self.dir / "initial_agent_prompt.md"
         # The agent's full step-numbered committed proof, refreshed every turn. It
         # is NOT in the per-turn prompt (that would bloat context on long proofs);
         # the standing prompt points the agent here to read it on demand (amend /
@@ -168,40 +194,49 @@ class NodeMemory:
                 encoding="utf-8",
             )
 
-    def record_bootstrap(self, bootstrap: dict[str, Any]) -> None:
+    def record_bootstrap(
+        self,
+        bootstrap: dict[str, Any],
+    ) -> None:
+        require_proof_node_manager_bootstrap(
+            bootstrap,
+            surface_profile=self.surface_profile,
+        )
         self._append_jsonl(
             self.timeline,
             {
                 "kind": "bootstrap",
                 "node": self.node_id,
-                "session_tag": bootstrap.get("session_tag"),
-                "session_dir": bootstrap.get("session_dir"),
+                "session_tag": bootstrap["session_tag"],
+                "session_dir": bootstrap["session_dir"],
                 # `replay_prefix_count` is the SEMANTIC resume count (where
                 # the lineage's ORIGINAL inherited prefix ended, propagated
                 # across respawns via resume_context); on a respawned node it
                 # is smaller than the actual starting history. Record the
                 # committed length too so audits don't conflate the two.
-                "replay_prefix_count": bootstrap.get("replay_prefix_count"),
+                "replay_prefix_count": bootstrap["replay_prefix_count"],
                 "replay_prefix_committed_count": len(
-                    bootstrap.get("replay_prefix") or []
+                    bootstrap["replay_prefix"]
                 ),
-                "snapshot": bootstrap.get("snapshot") or {},
+                "snapshot": bootstrap["snapshot"],
             },
         )
         self._write_bootstrap_handoff(bootstrap)
 
     def record_agent_session(
-        self, session_id: str, *, cwd: str | Path | None = None,
+        self,
+        session_id: str,
+        *,
+        cwd: str | Path | None = None,
+        agent_backend: str = "codex",
+        transcript_root: str | Path | None = None,
     ) -> None:
-        """Persist the prover's Claude session id for this node.
+        """Persist the prover agent's session/thread id for this node.
 
-        This is the correlation pointer the offline timeline tooling needs to
-        locate the node's *reasoning transcript* — the run's own artifacts
-        deliberately never store the agent's thinking text, but Claude Code keeps
-        it at ``~/.claude/projects/<slug>/<session_id>.jsonl``. Best-effort and
-        idempotent: a node that restarts/resumes spawns several sessions, so this
-        appends and skips a session id already recorded. Never raises into the
-        proof run.
+        Claude records include its external transcript pointer. Codex records
+        retain the thread id but intentionally do not guess at a private rollout
+        path. Best-effort and idempotent: a node that restarts/resumes may spawn
+        several sessions, so this appends and skips ids already recorded.
         """
         sid = str(session_id or "").strip()
         if not sid:
@@ -216,55 +251,64 @@ class NodeMemory:
                     "kind": "agent_session",
                     "node": self.node_id,
                     "session_id": sid,
-                    "transcript_path": _claude_transcript_path(sid, cwd),
+                    "agent_backend": agent_backend,
+                    "transcript_path": (
+                        _claude_transcript_path(
+                            sid, cwd, transcript_root=transcript_root
+                        )
+                        if agent_backend == "claude"
+                        else ""
+                    ),
                 }),
             )
         except Exception:
             return
 
-    def _write_bootstrap_handoff(self, bootstrap: dict[str, Any]) -> None:
+    def _write_bootstrap_handoff(
+        self,
+        bootstrap: dict[str, Any],
+    ) -> None:
         """Persist the initial current-state view before Claude's first turn."""
-        raw_view = bootstrap.get("workspace_view")
-        if not isinstance(raw_view, dict):
-            raw_view = {}
-        try:
-            view = WorkspaceViewManager().agent_display_view(raw_view)
-        except Exception:
-            view = dict(raw_view)
+        raw_view = bootstrap["workspace_view"]
+        canonical_view = require_current_workspace_view(
+            raw_view,
+            profile_id=self.surface_profile,
+            label="bootstrap current workspace view",
+        )
+        view = dict(canonical_view)
         result_payload = _drop_empty({
             "turn": 0,
             "kind": "bootstrap",
             "node": self.node_id,
             "message": "Initial current-state handoff for this proof node.",
-            "replay_prefix_count": bootstrap.get("replay_prefix_count"),
+            "replay_prefix_count": bootstrap["replay_prefix_count"],
             "replay_prefix_committed_count": len(
-                bootstrap.get("replay_prefix") or []
+                bootstrap["replay_prefix"]
             ),
             "view_refreshed": bool(view),
         })
-        surface_turn = compose_surface_turn(
+        surface_turn = compose_current_surface_turn(
             view,
             self.surface_profile,
             handled_intent={},
             ok=True,
-            goal_only=self.surface_profile == "l1_goal_projection",
+            compiler_markdown=bootstrap.get("compiler_markdown"),
         )
-        view = dict(view)
-        view["surface_turn"] = surface_turn
+        rendered_turn = render_current_surface_turn_markdown(surface_turn)
+        stored_view = dict(canonical_view)
+        stored_view["surface_turn"] = surface_turn
         followup = (
             "Initial manager handoff for this proof node.\n\n"
-            + render_surface_turn_markdown(
-                surface_turn,
-                goal_only=self.surface_profile == "l1_goal_projection",
-            )
+            + rendered_turn
             + "\n\n"
             + f"{_legal_node_memory_anchor(self)}\n"
         )
         self.write_latest_followup(
             turn_index=0,
             result_payload=result_payload,
-            workspace_view=view,
+            workspace_view=stored_view,
             followup_text=followup,
+            committed_tactics=tuple(bootstrap["replay_prefix"]),
         )
 
     def record_turn(
@@ -285,6 +329,7 @@ class NodeMemory:
             "ok": bool(turn.ok),
             "health_event": health,
             "manager_actions": actions,
+            "manager_observations": dict(turn.manager_observations),
             "state_version": (
                 turn.snapshot.state_version if turn.snapshot is not None else None
             ),
@@ -321,22 +366,8 @@ class NodeMemory:
     def _agent_facing_latest_view(
         self, workspace_view: dict[str, Any],
     ) -> dict[str, Any]:
-        """Content for ``latest_workspace_view.json``.
-
-        For the L1 goal-projection baseline, prepend ``_l1_surface_notice`` so an
-        agent that opens the audit file anyway is reminded it is off-surface.
-        Content is otherwise left FULL: resume/replay and the per-turn audit
-        archive read this same file and must stay intact, so this is a gentle
-        reminder, not a redaction. No-op for non-L1 profiles and idempotent if
-        the notice is already present.
-        """
-        if (
-            self.surface_profile == "l1_goal_projection"
-            and isinstance(workspace_view, dict)
-            and "_l1_surface_notice" not in workspace_view
-        ):
-            return {"_l1_surface_notice": _L1_OFF_SURFACE_NOTICE, **workspace_view}
-        return workspace_view
+        """Return the one minimal current workspace artifact shape."""
+        return dict(workspace_view) if isinstance(workspace_view, dict) else {}
 
     def write_latest_followup(
         self,
@@ -345,6 +376,7 @@ class NodeMemory:
         result_payload: dict[str, Any],
         workspace_view: dict[str, Any],
         followup_text: str,
+        committed_tactics: tuple[str, ...],
     ) -> None:
         """Persist the latest manager-authored current-state handoff.
 
@@ -352,11 +384,11 @@ class NodeMemory:
         current node's curated memory directory.  They are current-state
         transport, not proof-state authority and not historical search.
         """
-        # `latest_workspace_view.json` is kept for audit/replay, not advertised
-        # as the normal agent recovery surface. For L1 it leads with an
-        # off-surface notice in case a goal-only agent opens it anyway. The
-        # per-turn `workspace_views/<turn>.json` archive below stays FULL and
-        # un-annotated for audit/replay.
+        # NodeMemory keeps the curated manager surface that was available to
+        # this node, not the durable ProverWorkspaceView envelope.  Full views
+        # remain in the session-owned artifact/event stream.  For L1 the latest
+        # copy leads with an off-surface notice in case a goal-only agent opens
+        # it anyway; the per-turn copies remain unannotated for replay.
         agent_latest_view = self._agent_facing_latest_view(workspace_view)
         with self._lock:
             self.latest_result.write_text(
@@ -370,10 +402,7 @@ class NodeMemory:
             # The full step-numbered committed proof, for on-demand reading (the
             # standing prompt anchors LEGAL_PROOF_SO_FAR). Kept out of the per-turn
             # prompt so long proofs don't bloat context.
-            proof_md = _md_proof_so_far(
-                workspace_view.get("proof_so_far")
-                if isinstance(workspace_view, dict) else None
-            )
+            proof_md = render_committed_proof_markdown(committed_tactics)
             self.latest_proof.write_text(
                 proof_md or "### Proof so far (0 committed)\n(no committed steps yet)\n",
                 encoding="utf-8",
@@ -392,6 +421,15 @@ class NodeMemory:
                 followup_text,
                 encoding="utf-8",
             )
+            if turn_index == 0:
+                self.initial_followup.write_text(
+                    followup_text,
+                    encoding="utf-8",
+                )
+                self.initial_view.write_text(
+                    json.dumps(workspace_view, indent=2, sort_keys=False) + "\n",
+                    encoding="utf-8",
+                )
 
     def _is_failure(self, turn: ManagedTurn, actions: list[dict[str, Any]]) -> bool:
         if not turn.ok or turn.health_event is not None:
@@ -438,18 +476,18 @@ def _legal_node_memory_anchor(memory: NodeMemory) -> str:
 
 
 def _prover_system_anchor(memory: NodeMemory) -> str:
-    """Durable per-node anchor for the SYSTEM prompt (Claude preserves the system
-    prompt across context compaction, so this need not be re-sent every turn).
+    """Durable per-node anchor for the agent's standing prompt.
 
     Holds the two things that must survive a compaction: the one-intent-per-turn
-    invariant and the LEGAL_* durable file paths. Wired via
-    ClaudeAgentSession.run(system_prompt=...) -> `--append-system-prompt`."""
+    invariant and the LEGAL_* durable file paths. Claude receives it through
+    ``--append-system-prompt``; Codex receives it before the task prompt."""
     return (
         "## Prover runtime anchor (durable — persists across context compaction)\n\n"
         "You drive the proof ONLY through the MCP tool `submit_proof_intent`: exactly "
         "one intent object per turn, and NEVER end a turn without that call (a turn "
-        "with only text abandons the proof). The current goal and panels arrive in "
-        "each manager turn; these durable node-memory files are always available to "
+        "with only text abandons the proof). The current goal and any bounded "
+        "compiler output arrive in each manager turn; these durable node-memory "
+        "files are always available to "
         "read on demand:\n\n"
         f"{_legal_node_memory_anchor(memory)}"
     )
@@ -465,11 +503,13 @@ class ManagerBridgeServer:
         memory: NodeMemory,
         response_renderer: Callable[..., str],
         max_turns: int,
+        emit: Callable[[dict[str, Any]], None] | None = None,
     ) -> None:
         self.manager = manager
         self.memory = memory
         self.response_renderer = response_renderer
         self.max_turns = max(1, int(max_turns))
+        self.emit = emit or (lambda _event: None)
         self.token = secrets.token_urlsafe(24)
         self._turn_index = 0
         self._lock = threading.Lock()
@@ -478,6 +518,7 @@ class ManagerBridgeServer:
         self.host = "127.0.0.1"
         self.port = 0
         self.terminal_health: NodeHealthEvent | None = None
+        self.finish_accepted = False
 
     def start(self) -> None:
         outer = self
@@ -530,11 +571,11 @@ class ManagerBridgeServer:
             # of the kept prefix (repl_session._start_locked). Because this is a
             # ThreadingTCPServer, the lock is the *only* thing serializing
             # concurrent intents, so a multi-minute rewind here head-of-line
-            # blocks every other intent (even read-only context requests).
+            # blocks every other intent.
             #
             # Considered (Defect B option 2a) scoping this lock to JUST the
             # bookkeeping and running the EC replay outside it (or answering
-            # read-only intents with a "rewind in progress" status). DELIBERATELY
+            # concurrent intents with a "rewind in progress" status). DELIBERATELY
             # NOT DONE: it cannot be made correct without a non-trivial
             # concurrency redesign. `manager.repl` is mutated in place by the
             # replay (session epoch / state_version / on-disk session dir), and
@@ -551,6 +592,15 @@ class ManagerBridgeServer:
             # is never held past that budget. A safe 2a would need a dedicated
             # mutation/turn state machine and is left as future work.
             with self._lock:
+                if self.finish_accepted:
+                    return {
+                        "exit_code": 0,
+                        "text": (
+                            "MANAGER WORKER STOP: finish was already accepted. "
+                            "Stop submitting proof intents and return your "
+                            "concise PROVER REPORT."
+                        ),
+                    }
                 if self.terminal_health is not None:
                     health = self.terminal_health
                     return {
@@ -582,8 +632,28 @@ class ManagerBridgeServer:
                     handled_intent=handled,
                     turn=turn,
                 )
+                try:
+                    self.emit({
+                        "type": "system",
+                        "kind": "manager_turn.completed",
+                        "node": self.manager.node_id,
+                        "turn_index": turn_index,
+                    })
+                except Exception:
+                    # Telemetry is a projection of the completed manager turn;
+                    # a broken observer must not rewrite manager/EC semantics.
+                    self.manager._audit({
+                        "kind": "manager_turn.emit_failed",
+                        "node": self.manager.node_id,
+                        "turn": turn_index,
+                    })
                 if turn.health_event is not None:
                     self.terminal_health = turn.health_event
+                if has_agent_observation_kind(
+                    turn.manager_actions,
+                    "finish_accepted",
+                ):
+                    self.finish_accepted = True
                 rendered = self.response_renderer(
                     turn, turn_index, handled, self.memory,
                     full_view=getattr(self.manager, "latest_full_view", None),
@@ -633,13 +703,23 @@ class ClaudeAgentSession:
         session_tag: str,
         project_root: Path = PROJECT_ROOT,
         emit: Callable[[dict[str, Any]], None] | None = None,
+        on_session_id: Callable[[str], None] | None = None,
+        eval_confinement: EvalAgentConfinement | None = None,
     ) -> None:
         self.model = model
         self.effort = effort
         self.source_file = source_file
         self.session_tag = session_tag
         self.project_root = Path(project_root)
+        self.eval_confinement = eval_confinement
         self.emit = emit or (lambda event: None)
+        # Canonical session-registration hook: called exactly once per Claude
+        # session id, at the moment the id is first observed on the stream —
+        # i.e. at session CREATION, not at teardown. A watermark respawn or a
+        # supervisor kill can end a generation without a `result` event, so
+        # any registration deferred to end-of-run loses the current session.
+        self.on_session_id = on_session_id or (lambda session_id: None)
+        self._notified_session_ids: set[str] = set()
         self.proc: subprocess.Popen[str] | None = None
         self.session_id = ""
         # Set by the readiness watchdog when the MCP stdio server never came up
@@ -704,11 +784,12 @@ class ClaudeAgentSession:
             ])
         env = os.environ.copy()
         env["EC_SESSION_DIR"] = f".ec_session_{self.session_tag}"
-        env["SHANNON_LEGACY_DISPLAY"] = os.environ.get(
-            "SHANNON_LEGACY_DISPLAY",
-            "hidden",
-        )
         self.mcp_failed_to_start = False
+        # Each run() launches a NEW `claude` process, which mints a NEW session
+        # id — a stale id from the previous generation must never mask the
+        # continuation's id (that was exactly the bug that orphaned every
+        # post-respawn session from the run manifest).
+        self.session_id = ""
         # Each generation starts with a clean watermark detector: the fresh
         # context begins near the post-compact floor, so prior hot turns must not
         # carry over.
@@ -717,8 +798,13 @@ class ClaudeAgentSession:
         # Fresh generation -> fresh reasoning buffer (only the dying generation's
         # own recent reasoning should ever be forwarded on its respawn).
         self._recent_reasoning = []
+        launch_cmd = (
+            self.eval_confinement.wrap_command(cmd, agent_backend="claude")
+            if self.eval_confinement is not None
+            else cmd
+        )
         self.proc = subprocess.Popen(
-            cmd,
+            launch_cmd,
             cwd=str(self.project_root),
             env=env,
             stdout=subprocess.PIPE,
@@ -765,10 +851,12 @@ class ClaudeAgentSession:
                 continue
             if event.get("session_id") and not self.session_id:
                 self.session_id = str(event.get("session_id") or "")
+                self._notify_session_id(self.session_id)
             if event.get("type") == "result":
                 result_text = str(event.get("result") or "")
                 if event.get("session_id"):
                     self.session_id = str(event.get("session_id") or self.session_id)
+                    self._notify_session_id(self.session_id)
                 continue
             self.emit(event)
             # Keep the agent's recent reasoning in an in-memory ring buffer so a
@@ -820,6 +908,20 @@ class ClaudeAgentSession:
             session_id=self.session_id,
             returncode=returncode,
         )
+
+    def _notify_session_id(self, session_id: str) -> None:
+        """Fire the registration hook once per distinct session id.
+
+        Best-effort: a registration failure must never disturb the stream loop.
+        """
+        sid = str(session_id or "").strip()
+        if not sid or sid in self._notified_session_ids:
+            return
+        self._notified_session_ids.add(sid)
+        try:
+            self.on_session_id(sid)
+        except Exception:
+            pass
 
     def _capture_reasoning(self, event: dict[str, Any]) -> None:
         """Append one assistant message's TEXT to the in-memory ring buffer.
@@ -908,6 +1010,361 @@ class ClaudeAgentSession:
             self.proc.wait(timeout=10)
 
 
+def _toml_string(value: object) -> str:
+    """Return a JSON-escaped string, which is also a TOML basic string."""
+    return json.dumps(str(value), ensure_ascii=False)
+
+
+def _codex_item_text(item: dict[str, Any]) -> str:
+    """Compatibility wrapper over the shared Codex event contract."""
+
+    return codex_event_text(item)
+
+
+def _codex_mcp_overrides(mcp_config_path: Path | None) -> list[str]:
+    """Translate the existing per-node Claude MCP JSON into Codex ``-c`` args."""
+    if mcp_config_path is None:
+        return []
+    config = json.loads(mcp_config_path.read_text(encoding="utf-8"))
+    servers = config.get("mcpServers")
+    if not isinstance(servers, dict) or len(servers) != 1:
+        raise ValueError("proof-node MCP config must contain exactly one server")
+    name, server = next(iter(servers.items()))
+    if not isinstance(server, dict):
+        raise ValueError("proof-node MCP server config must be an object")
+    command = str(server.get("command") or "").strip()
+    if not command:
+        raise ValueError("proof-node MCP server config is missing command")
+    args = [str(value) for value in (server.get("args") or [])]
+    env = server.get("env") or {}
+    if not isinstance(env, dict):
+        raise ValueError("proof-node MCP server env must be an object")
+
+    prefix = f"mcp_servers.{name}"
+    overrides = [
+        f"{prefix}.command={_toml_string(command)}",
+        f"{prefix}.args={json.dumps(args, ensure_ascii=False)}",
+        f"{prefix}.required=true",
+        f"{prefix}.default_tools_approval_mode={_toml_string('approve')}",
+        f"{prefix}.startup_timeout_sec={int(_MCP_READY_TIMEOUT_S)}",
+        f"{prefix}.tool_timeout_sec={int(os.environ.get('SHANNON_MCP_TOOL_TIMEOUT_S', '300'))}",
+    ]
+    for key, value in sorted(env.items()):
+        overrides.append(f"{prefix}.env.{key}={_toml_string(value)}")
+    return overrides
+
+
+class CodexAgentSession(ClaudeAgentSession):
+    """One non-interactive OpenAI Codex CLI process for a proof node.
+
+    Codex receives the same private stdio MCP server as Claude Code. Its JSONL
+    events are normalized into the small Claude-style stream shape consumed by
+    the existing tree liveness and information-source auditors.
+    """
+
+    def _command(
+        self,
+        mcp_config_path: Path | None,
+        *,
+        resume_session_id: str = "",
+    ) -> list[str]:
+        # Eval mode already launches Codex inside the selective bubblewrap
+        # namespace owned by EvalAgentConfinement.  Starting Codex's own bwrap
+        # sandbox inside it is both redundant and non-functional on Linux:
+        # Bash tool calls fail before they can read even the allowed isolated
+        # source tree.  ``danger-full-access`` here means full access *inside*
+        # that outer namespace; non-eval runs retain Codex's read-only sandbox.
+        sandbox_mode = (
+            "danger-full-access"
+            if self.eval_confinement is not None
+            else "read-only"
+        )
+        if resume_session_id:
+            command = [
+                CODEX_BIN,
+                "exec",
+                "resume",
+                "--skip-git-repo-check",
+                "--json",
+                "--model",
+                self.model,
+                "--ignore-user-config",
+                "--strict-config",
+                "-c",
+                f"sandbox_mode={_toml_string(sandbox_mode)}",
+            ]
+        else:
+            command = [
+                CODEX_BIN,
+                "exec",
+                "-",
+                "--skip-git-repo-check",
+                "--json",
+                "--model",
+                self.model,
+                "--sandbox",
+                sandbox_mode,
+                "--ignore-user-config",
+                "--strict-config",
+            ]
+        command.extend([
+            "-c",
+            f"approval_policy={_toml_string('never')}",
+            "-c",
+            f"model_reasoning_effort={_toml_string(self.effort)}",
+            "-c",
+            f"web_search={_toml_string('disabled')}",
+        ])
+        for feature in _CODEX_DISABLED_FEATURES:
+            command.extend(["--disable", feature])
+        for override in _codex_mcp_overrides(mcp_config_path):
+            command.extend(["-c", override])
+        if resume_session_id:
+            command.extend([resume_session_id, "-"])
+        return command
+
+    def run(
+        self,
+        prompt: str,
+        *,
+        system_prompt: str = "",
+        mcp_config_path: Path | None = None,
+        mcp_debug_log: Path | None = None,
+    ) -> AgentRunResult:
+        env = os.environ.copy()
+        env["EC_SESSION_DIR"] = f".ec_session_{self.session_tag}"
+        self.mcp_failed_to_start = False
+        resume_session_id = self.session_id
+        self.last_turn_had_tool_call = False
+        self.ctx_pressure = False
+        self._recent_reasoning = []
+        self._ctx_detector.reset()
+
+        full_prompt = (
+            f"{system_prompt.strip()}\n\n{prompt}"
+            if system_prompt.strip()
+            else prompt
+        )
+        command = self._command(
+            mcp_config_path,
+            resume_session_id=resume_session_id,
+        )
+        launch_cmd = (
+            self.eval_confinement.wrap_command(command, agent_backend="codex")
+            if self.eval_confinement is not None
+            else command
+        )
+        self.proc = subprocess.Popen(
+            launch_cmd,
+            cwd=str(self.project_root),
+            env=env,
+            stdin=subprocess.PIPE,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True,
+        )
+        try:
+            if self.proc.stdin is not None:
+                self.proc.stdin.write(full_prompt)
+                self.proc.stdin.close()
+        except (BrokenPipeError, OSError):
+            pass
+
+        watchdog: threading.Thread | None = None
+        if mcp_config_path is not None and mcp_debug_log is not None:
+            watchdog = threading.Thread(
+                target=self._watch_mcp_readiness,
+                args=(mcp_debug_log, _MCP_READY_TIMEOUT_S),
+                name=f"mcp-readiness-codex-{self.session_tag}",
+                daemon=True,
+            )
+            watchdog.start()
+
+        stderr_chunks: list[str] = []
+
+        def _drain_stderr() -> None:
+            if self.proc is None or self.proc.stderr is None:
+                return
+            stderr_chunks.append(self.proc.stderr.read())
+
+        stderr_thread = threading.Thread(
+            target=_drain_stderr,
+            name=f"codex-stderr-{self.session_tag}",
+            daemon=True,
+        )
+        stderr_thread.start()
+
+        result_text = ""
+        error_texts: list[str] = []
+        emitted_tool_starts: set[str] = set()
+        codex_event_log = (
+            mcp_config_path.with_name("codex_events.jsonl")
+            if mcp_config_path is not None
+            else None
+        )
+        codex_event_stream = None
+        if codex_event_log is not None:
+            try:
+                codex_event_stream = codex_event_log.open(
+                    "a" if resume_session_id else "w",
+                    encoding="utf-8",
+                )
+            except OSError:
+                codex_event_stream = None
+        assert self.proc.stdout is not None
+        try:
+            for raw in self.proc.stdout:
+                line = raw.rstrip("\n")
+                if not line:
+                    continue
+                if codex_event_stream is not None:
+                    codex_event_stream.write(line + "\n")
+                    codex_event_stream.flush()
+                try:
+                    event = json.loads(line)
+                except json.JSONDecodeError:
+                    continue
+                event_type = str(event.get("type") or "")
+                if event_type == "thread.started":
+                    self.session_id = str(event.get("thread_id") or "")
+                    self._notify_session_id(self.session_id)
+                    self.emit({
+                        "type": "system",
+                        "subtype": "init",
+                        "session_id": self.session_id,
+                        "agent_backend": "codex",
+                    })
+                    continue
+
+                item = event.get("item")
+                if isinstance(item, dict):
+                    item_id = str(item.get("id") or "")
+                    item_type = str(item.get("type") or "")
+                    category = codex_event_category(event_type, item_type)
+                    if category == "tool":
+                        if item_type == "mcp_tool_call":
+                            self.last_turn_had_tool_call = True
+                        if item_id and item_id not in emitted_tool_starts:
+                            emitted_tool_starts.add(item_id)
+                            if item_type == "command_execution":
+                                tool_name = "Bash"
+                                tool_input: dict[str, Any] = {
+                                    "command": str(item.get("command") or "")
+                                }
+                            elif item_type == "mcp_tool_call":
+                                server = str(item.get("server") or "proof_node_manager")
+                                tool = str(item.get("tool") or item.get("name") or "tool")
+                                tool_name = f"mcp__{server}__{tool}"
+                                raw_args = item.get("arguments") or item.get("input") or {}
+                                tool_input = raw_args if isinstance(raw_args, dict) else {
+                                    "arguments": raw_args
+                                }
+                            else:
+                                tool_name = f"Codex::{item_type}"
+                                tool_input = {
+                                    "status": str(item.get("status") or ""),
+                                    "evidence": codex_event_text(item)[:1200],
+                                }
+                            self.emit({
+                                "type": "assistant",
+                                "session_id": self.session_id,
+                                "agent_backend": "codex",
+                                "message": {"content": [{
+                                    "type": "tool_use",
+                                    "id": item_id,
+                                    "name": tool_name,
+                                    "input": tool_input,
+                                }]},
+                            })
+                        if event_type == "item.completed" and item_id:
+                            self.emit({
+                                "type": "user",
+                                "session_id": self.session_id,
+                                "agent_backend": "codex",
+                                "message": {"content": [{
+                                    "type": "tool_result",
+                                    "tool_use_id": item_id,
+                                    "content": _codex_item_text(item),
+                                }]},
+                            })
+                        continue
+
+                    text_value = _codex_item_text(item)
+                    if category == "provider_error" and text_value:
+                        error_texts.append(text_value)
+                        self.emit({
+                            "type": "system",
+                            "session_id": self.session_id,
+                            "agent_backend": "codex",
+                            "codex_event_type": "item.error",
+                            "message": text_value,
+                        })
+                        continue
+                    if item_type == "agent_message" and event_type == "item.completed":
+                        result_text = text_value or result_text
+                        if text_value:
+                            self.emit({
+                                "type": "assistant",
+                                "session_id": self.session_id,
+                                "agent_backend": "codex",
+                                "message": {"content": [{
+                                    "type": "text", "text": text_value
+                                }]},
+                            })
+                        continue
+                    if item_type == "reasoning" and text_value:
+                        self._recent_reasoning.append(text_value)
+                        if len(self._recent_reasoning) > self._recent_reasoning_cap:
+                            del self._recent_reasoning[:-self._recent_reasoning_cap]
+                        continue
+
+                if event_type in {"turn.completed", "turn.failed", "error"}:
+                    event_message = _codex_item_text(event)
+                    if event_type in {"turn.failed", "error"} and event_message:
+                        error_texts.append(event_message)
+                    self.emit({
+                        "type": "system",
+                        "session_id": self.session_id,
+                        "agent_backend": "codex",
+                        "codex_event_type": event_type,
+                        "usage": event.get("usage") or {},
+                        "message": event_message,
+                    })
+        finally:
+            if codex_event_stream is not None:
+                codex_event_stream.close()
+
+        returncode = self.proc.wait()
+        stderr_thread.join(timeout=5)
+        if watchdog is not None:
+            watchdog.join(timeout=2)
+        stderr = "".join(stderr_chunks)
+        if (
+            mcp_debug_log is not None
+            and not _mcp_server_started(mcp_debug_log)
+        ):
+            self.mcp_failed_to_start = True
+        if returncode != 0 and not result_text:
+            result_text = "\n".join(dict.fromkeys(error_texts)).strip() or stderr.strip()
+        if self.session_id:
+            self.emit({
+                "type": "system",
+                "session_id": self.session_id,
+                "agent_backend": "codex",
+                "long_lived_agent": True,
+            })
+        return AgentRunResult(
+            text=result_text,
+            session_id=self.session_id,
+            returncode=returncode,
+        )
+
+
+def agent_session_class(agent_backend: str) -> type[ClaudeAgentSession]:
+    backend = normalize_agent_backend(agent_backend)
+    return CodexAgentSession if backend == "codex" else ClaudeAgentSession
+
+
 class ProofNodeRuntime:
     """Own one proof-node manager and one long-lived agent session."""
 
@@ -922,6 +1379,7 @@ class ProofNodeRuntime:
         session_tag: str,
         node_id: str,
         run_dir: Path,
+        agent_backend: str = "codex",
         model: str,
         effort: str = "high",
         max_turns: int = 1000,
@@ -929,6 +1387,18 @@ class ProofNodeRuntime:
         project_root: Path = PROJECT_ROOT,
         emit: Callable[[dict[str, Any]], None] | None = None,
     ) -> None:
+        require_proof_node_manager_bootstrap(
+            bootstrap,
+            label="proof-node runtime bootstrap",
+            surface_profile=surface_profile,
+            expected_identity={
+                "node_id": node_id,
+                "session_tag": session_tag,
+                "session_dir": f".ec_session_{session_tag}",
+                "file": file_path,
+                "lemma": lemma_name,
+            },
+        )
         self.prompt = prompt
         self.bootstrap = bootstrap
         self.file_path = file_path
@@ -937,12 +1407,24 @@ class ProofNodeRuntime:
         self.session_tag = session_tag
         self.node_id = node_id
         self.run_dir = Path(run_dir)
+        self.agent_backend = normalize_agent_backend(agent_backend)
         self.model = model
         self.effort = effort
         self.max_turns = max_turns
-        self.surface_profile = surface_profile
+        self.surface_profile = normalize_current_surface_profile_id(
+            surface_profile
+        )
         self.project_root = Path(project_root)
-        self.emit = emit or _emit_json
+        raw_emit = emit or _emit_json
+        emit_lock = threading.Lock()
+
+        def _emit_serialized(event: dict[str, Any]) -> None:
+            with emit_lock:
+                raw_emit(event)
+
+        # Provider, readiness, and bridge events originate on different
+        # threads. One serialized stream is the sole worker-event boundary.
+        self.emit = _emit_serialized
         self.manager = ProofNodeManager(
             file_path=file_path,
             lemma_name=lemma_name,
@@ -951,27 +1433,59 @@ class ProofNodeRuntime:
             node_id=node_id,
             run_dir=self.run_dir,
             project_root=self.project_root,
-            surface_profile=surface_profile,
+            surface_profile=self.surface_profile,
         )
         self.manager.adopt_bootstrap(bootstrap)
-        self.memory = NodeMemory(self.run_dir, node_id, surface_profile=surface_profile)
+        self.memory = NodeMemory(
+            self.run_dir,
+            node_id,
+            surface_profile=self.surface_profile,
+        )
         self._private_dir = self.run_dir / "runtime_private" / _slug(node_id)
         self._mcp_config_path = self._private_dir / "proof_node_mcp_config.json"
+        self.eval_confinement = EvalAgentConfinement.from_environment(
+            project_root=self.project_root,
+            source_file=file_path,
+            target_lemma=lemma_name,
+            node_memory_dir=self.memory.dir,
+            private_dir=self._private_dir,
+            include_dir=include_dir,
+        )
         self.memory.record_bootstrap(bootstrap)
         self.bridge = ManagerBridgeServer(
             manager=self.manager,
             memory=self.memory,
-            response_renderer=functools.partial(
-                _render_manager_followup, surface_profile=surface_profile),
+            response_renderer=lambda *args, **kwargs: render_manager_followup(
+                *args,
+                surface_profile=self.manager.surface_profile,
+                **kwargs,
+            ),
             max_turns=max_turns,
+            emit=self.emit,
         )
-        self.agent = ClaudeAgentSession(
+        self.agent = agent_session_class(self.agent_backend)(
             effort=self.effort,
             model=model,
             source_file=file_path,
             session_tag=session_tag,
             project_root=self.project_root,
+            eval_confinement=self.eval_confinement,
             emit=self.emit,
+            # Canonical registration boundary: every Claude session this node
+            # spawns (initial, MCP-spawn retry, ctx-respawn continuation) lands
+            # in node_memory/agent_sessions.jsonl the moment its id streams,
+            # so a later kill cannot orphan it. record_agent_session is
+            # idempotent per session id.
+            on_session_id=lambda sid: self.memory.record_agent_session(
+                sid,
+                cwd=self.project_root,
+                agent_backend=self.agent_backend,
+                transcript_root=(
+                    self.eval_confinement.claude_projects_host_dir
+                    if self.eval_confinement is not None
+                    else None
+                ),
+            ),
         )
 
     def _committed_count(self) -> int:
@@ -985,6 +1499,22 @@ class ProofNodeRuntime:
             return len(self.manager._current_committed_tactics())
         except Exception:
             return 0
+
+    def _proof_is_closed(self) -> bool:
+        try:
+            if bool(getattr(self.bridge, "finish_accepted", False)):
+                return True
+            proof_status = self.manager.latest_view.get("proof_status")
+            status = (
+                str(proof_status.get("status") or "").strip().lower()
+                if isinstance(proof_status, dict)
+                else ""
+            )
+            # A candidate-closed state still needs the agent's explicit
+            # ``finish`` intent so manager-owned replay/validation can run.
+            return is_verified(status)
+        except Exception:
+            return False
 
     def _made_progress(self, baseline: int) -> bool:
         """True iff ≥1 tactic was committed since this generation began.
@@ -1164,6 +1694,12 @@ class ProofNodeRuntime:
         return True
 
     def run(self) -> ClaudeRunResult:
+        eval_confinement = getattr(self, "eval_confinement", None)
+        if eval_confinement is not None:
+            confinement_probe = eval_confinement.probe(
+                agent_backend=self.agent_backend
+            )
+            eval_confinement.write_audit_record(confinement_probe)
         self.bridge.start()
         deadline = self._wall_deadline()
         try:
@@ -1181,6 +1717,14 @@ class ProofNodeRuntime:
                 max_turns=self.max_turns,
                 surface_profile=self.surface_profile,
             )
+            prompt = bind_authoritative_managed_handoff(
+                prompt,
+                self.memory.initial_followup.read_text(encoding="utf-8"),
+            )
+            # Persist at the launch boundary, after profile rendering and live
+            # manager binding, so audits can distinguish this exact task prompt
+            # from the orchestrator's provisional pre-adoption prompt.
+            self.memory.initial_agent_prompt.write_text(prompt, encoding="utf-8")
             mcp_debug_log = self._private_dir / "mcp_debug.jsonl"
             # Fresh-context continuation generation loop (Layers 1-2). Mirrors the
             # MCP-spawn-retry loop below: each iteration runs ONE Claude context
@@ -1229,6 +1773,36 @@ class ProofNodeRuntime:
                         mcp_config_path=self._mcp_config_path,
                         mcp_debug_log=mcp_debug_log,
                     )
+                codex_turn = 1
+                while (
+                    getattr(self, "agent_backend", "codex") == "codex"
+                    and result.returncode == 0
+                    and self.bridge.terminal_health is None
+                    and not self._proof_is_closed()
+                    and bool(getattr(self.agent, "last_turn_had_tool_call", False))
+                    and not self._turn_limit_exhausted()
+                    and codex_turn < self.max_turns
+                    # This resumes the same Codex thread against the same live
+                    # manager/EC session; it is not a cold context respawn.
+                    # The 180-second respawn runway below does not apply here.
+                    and (deadline is None or time.time() < deadline)
+                ):
+                    codex_turn += 1
+                    self.emit({
+                        "type": "system",
+                        "agent_backend": "codex",
+                        "codex_resume_turn": codex_turn,
+                        "session_id": result.session_id,
+                        "node": self.node_id,
+                    })
+                    result = self.agent.run(
+                        "Continue the same proof from the manager result already "
+                        "present in this thread. Submit the next single advertised "
+                        "proof intent now. Keep working until the proof is closed "
+                        "or you are genuinely blocked.",
+                        mcp_config_path=self._mcp_config_path,
+                        mcp_debug_log=mcp_debug_log,
+                    )
                 if generation >= max_respawns:
                     break
                 if deadline is not None and (deadline - time.time()) < min_runway_seconds():
@@ -1262,7 +1836,14 @@ class ProofNodeRuntime:
                 # joins need every session id, not just the final one (recorded
                 # after the loop) — otherwise all pre-swap turns are orphaned.
                 self.memory.record_agent_session(
-                    result.session_id, cwd=self.project_root
+                    result.session_id,
+                    cwd=self.project_root,
+                    agent_backend=getattr(self, "agent_backend", "codex"),
+                    transcript_root=(
+                        eval_confinement.claude_projects_host_dir
+                        if eval_confinement is not None
+                        else None
+                    ),
                 )
                 # Tear down ONLY the dead Claude child; bridge/manager/EC live on.
                 self.agent.close(f"context respawn {generation}")
@@ -1278,7 +1859,16 @@ class ProofNodeRuntime:
             self.bridge.close()
         # Persist the agent's Claude session id so offline timeline tooling can
         # find this node's reasoning transcript. Best-effort; never breaks the run.
-        self.memory.record_agent_session(result.session_id, cwd=self.project_root)
+        self.memory.record_agent_session(
+            result.session_id,
+            cwd=self.project_root,
+            agent_backend=getattr(self, "agent_backend", "codex"),
+            transcript_root=(
+                eval_confinement.claude_projects_host_dir
+                if eval_confinement is not None
+                else None
+            ),
+        )
         if self.bridge.terminal_health is not None and result.returncode == 0:
             health = self.bridge.terminal_health
             suffix = (
@@ -1290,7 +1880,7 @@ class ProofNodeRuntime:
                 session_id=result.session_id,
                 returncode=2,
             )
-        closed = closed_history_tactics(
+        closed = _closed_history_tactics(
             self.project_root / f".ec_session_{self.session_tag}"
         )
         if closed and "PROOF TACTICS:" not in result.text:
@@ -1301,7 +1891,12 @@ class ProofNodeRuntime:
                 session_id=result.session_id,
                 returncode=result.returncode,
             )
-        return result
+        return ClaudeRunResult(
+            text=result.text,
+            session_id=result.session_id,
+            returncode=result.returncode,
+            turns=self.bridge._turn_index,
+        )
 
     def _write_mcp_config(self, *, host: str, port: int, token: str) -> None:
         self._private_dir.mkdir(parents=True, exist_ok=True)
@@ -1324,10 +1919,6 @@ class ProofNodeRuntime:
                     ],
                     "env": {
                         "PYTHONPATH": str(self.project_root),
-                        "SHANNON_LEGACY_DISPLAY": os.environ.get(
-                            "SHANNON_LEGACY_DISPLAY",
-                            "hidden",
-                        ),
                         "SHANNON_MCP_DEBUG_LOG": str(
                             self._private_dir / "mcp_debug.jsonl"
                         ),
@@ -1343,10 +1934,7 @@ class ProofNodeRuntime:
         self._mcp_config_path.chmod(0o600)
 
 
-# §3 of the agent prompt: how to READ what the manager returns (facts, not
-# verdicts). The FACT/FORK framing is shown to every rung; the signal-weighing
-# block names panels/topics only the richer rungs grant, so it is gated to those.
-# No braces — safe to interpolate into the wrapper f-string.
+# Prompt constants below belong to the current manager presentation boundary.
 
 
 # Part of §4 (how to play well): the final-admit gate.
@@ -1365,19 +1953,7 @@ def _read_latest_view(memory: "NodeMemory | None") -> dict[str, Any]:
         return {}
 
 
-def _profiled_surface_view(
-    view_manager: WorkspaceViewManager,
-    raw_view: dict[str, Any] | None,
-) -> dict[str, Any]:
-    if not isinstance(raw_view, dict) or not raw_view:
-        return {}
-    try:
-        return view_manager.agent_display_view(raw_view)
-    except Exception:
-        return dict(raw_view)
-
-
-def _render_manager_followup(
+def render_manager_followup(
     turn: ManagedTurn,
     turn_index: int,
     handled_intent: dict[str, Any] | None,
@@ -1386,20 +1962,29 @@ def _render_manager_followup(
     surface_profile: str | None = None,
     base_view: dict[str, Any] | None = None,
 ) -> str:
-    goal_only = surface_profile == "l1_goal_projection"
-    view_manager = WorkspaceViewManager()
-    audit_view = (
-        view_manager.agent_display_view(full_view)
-        if isinstance(full_view, dict) and full_view else None
-    )
-    view = (
-        view_manager.agent_display_view(turn.workspace_view)
+    surface_profile = normalize_current_surface_profile_id(surface_profile)
+    canonical_view = (
+        require_current_workspace_view(
+            turn.workspace_view,
+            profile_id=surface_profile,
+            label="managed current turn workspace view",
+        )
         if isinstance(turn.workspace_view, dict)
         else {}
     )
+    audit_view = (
+        require_current_workspace_view(
+            full_view,
+            profile_id=surface_profile,
+            label="managed current full workspace view",
+        )
+        if isinstance(full_view, dict) and full_view
+        else None
+    )
     health_event = (
         turn.health_event.to_dict()
-        if getattr(turn, "health_event", None) is not None else {}
+        if getattr(turn, "health_event", None) is not None
+        else {}
     )
     actions = _agent_safe_action_summaries(turn.manager_actions)
     result_payload = _drop_empty({
@@ -1408,60 +1993,59 @@ def _render_manager_followup(
         "ok": bool(turn.ok),
         "repair_prompt": turn.repair_prompt,
         "health_event": health_event,
-        "manager_note": _turn_interpretation(handled_intent, turn.manager_actions),
         "manager_actions": actions,
-        "view_refreshed": bool(view),
+        "manager_observations": dict(turn.manager_observations),
+        "view_refreshed": bool(canonical_view),
     })
 
-    prior_view = base_view if isinstance(base_view, dict) and base_view else _read_latest_view(memory)
-    prior_surface_view = _profiled_surface_view(view_manager, prior_view)
-    prior_surface = proof_surface_from_turn(prior_view.get("surface_turn") or {})
-    surface_turn = compose_surface_turn(
-        view,
+    prior_view = (
+        base_view
+        if isinstance(base_view, dict) and base_view
+        else _read_latest_view(memory)
+    )
+    prior_surface = current_proof_surface_from_turn(
+        prior_view.get("surface_turn") if isinstance(prior_view, dict) else {}
+    )
+    surface_turn = compose_current_surface_turn(
+        canonical_view,
         surface_profile,
-        base_view=prior_surface_view,
         base_surface=prior_surface,
         handled_intent=handled_intent,
         ok=bool(turn.ok),
         repair_prompt=turn.repair_prompt,
         manager_actions=turn.manager_actions,
         health_event=health_event,
-        goal_only=goal_only,
+        compiler_markdown=turn.compiler_markdown,
     )
     result_payload["surface_turn_hash"] = surface_turn.get("surface_turn_hash")
-
-    target_view = audit_view if isinstance(audit_view, dict) else dict(view)
+    target_view = (
+        dict(audit_view)
+        if isinstance(audit_view, dict)
+        else dict(canonical_view)
+    )
     target_view["surface_turn"] = surface_turn
 
     if memory is None:
-        submit_line = (
-            "---\n\n"
-            "Submit exactly one proof intent for the next turn "
-            "(`submit_proof_intent`: one `intent` + `payload`).\n"
-        )
-        return render_surface_turn_markdown(
+        return render_current_surface_turn_markdown(
             surface_turn,
-            goal_only=goal_only,
-            submit_line=submit_line,
+            submit_line=(
+                "Submit exactly one proof intent for the next turn "
+                "(`submit_proof_intent`: one `intent` + `payload`).\n"
+            ),
         )
 
     submit_line = (
-        "---\n\n"
         "Submit exactly ONE proof intent via the `submit_proof_intent` MCP tool "
         "(only `intent` + `payload`; no node ids, hashes, request ids, or reasoning "
-        "fields).\n\n")
+        "fields).\n\n"
+    )
     anchor_block = (
-        "The current goal is shown in full above. If context is compacted or "
-        "this response is truncated, re-read `LEGAL_LATEST_FOLLOWUP` for the "
-        "same agent-readable surface; the raw workspace JSON is audit-only.\n")
-    if goal_only:
-        anchor_block = (
-            "The current goal above is your complete surface. "
-            "The raw workspace JSON is the manager's audit file, not part of "
-            "your surface — you do not need to open it.\n")
-    followup = render_surface_turn_markdown(
+        "The current goal above is your complete surface. "
+        "The raw workspace JSON is the manager's audit file, not part of "
+        "your surface — you do not need to open it.\n"
+    )
+    followup = render_current_surface_turn_markdown(
         surface_turn,
-        goal_only=goal_only,
         submit_line=submit_line,
         anchor_block=anchor_block,
     )
@@ -1470,12 +2054,9 @@ def _render_manager_followup(
         result_payload=result_payload,
         workspace_view=target_view,
         followup_text=followup,
+        committed_tactics=turn.committed_tactics,
     )
     return followup
-
-
-def closed_history_tactics(session_dir: Path) -> list[str]:
-    return _closed_history_tactics(session_dir)
 
 
 def _emit_json(event: dict[str, Any]) -> None:
@@ -1486,7 +2067,12 @@ def _slug(value: str) -> str:
     return _shared_node_memory_slug(value)
 
 
-def _claude_transcript_path(session_id: str, cwd: str | Path | None) -> str:
+def _claude_transcript_path(
+    session_id: str,
+    cwd: str | Path | None,
+    *,
+    transcript_root: str | Path | None = None,
+) -> str:
     """Best-effort path to the Claude Code session transcript for ``session_id``.
 
     Claude Code stores a session at ``~/.claude/projects/<slug>/<session_id>.jsonl``
@@ -1504,9 +2090,9 @@ def _claude_transcript_path(session_id: str, cwd: str | Path | None) -> str:
     except Exception:
         pass
     slug = re.sub(r"[^A-Za-z0-9]", "-", str(base))
-    return str(Path.home() / ".claude" / "projects" / slug / f"{session_id}.jsonl")
-
-
-# Public name: the worker, playground, and panel-audit tools render the
-# agent-facing followup through this entry point.
-render_manager_followup = _render_manager_followup
+    root = (
+        Path(transcript_root)
+        if transcript_root is not None
+        else Path.home() / ".claude" / "projects"
+    )
+    return str(root / slug / f"{session_id}.jsonl")

@@ -37,7 +37,7 @@ def test_same_error_in_both_action_lists_is_one_signal():
 def test_action_level_and_observation_level_same_error_is_one_signal():
     action = {"error_summary": "x", "agent_observation": {"error_summary": "x"}}
     sigs = _deterministic_signals(
-        intent={"intent": "probe_tactic"},
+        intent={"intent": "tactic_forms", "payload": {"name": "wp"}},
         manager_actions=[action],
         audit_manager_actions=None,
         workspace_view={},
@@ -47,7 +47,7 @@ def test_action_level_and_observation_level_same_error_is_one_signal():
 
 def test_distinct_errors_are_all_kept():
     sigs = _deterministic_signals(
-        intent={"intent": "probe_tactic"},
+        intent={"intent": "tactic_forms", "payload": {"name": "wp"}},
         manager_actions=[{"agent_observation": {"error_summary": "e1"}},
                          {"agent_observation": {"error_summary": "e2"}}],
         audit_manager_actions=[],

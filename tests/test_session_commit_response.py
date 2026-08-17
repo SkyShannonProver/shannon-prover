@@ -32,15 +32,11 @@ def test_commit_response_builds_and_writes_artifact() -> None:
         _start_event(d)
         response = build_commit_response(
             d,
-            command="next",
+            command="commit",
             status="ok",
             attempted_tactics=["smt()."],
             accepted_count=1,
-            agent_view_payload={
-                "artifact": str(d / "proof_context_views" / "agent.json"),
-                "view_hash": "a" * 40,
-            },
-            live_tool_name="next",
+            live_tool_name="commit",
             ok=True,
         )
 
@@ -53,17 +49,17 @@ def test_commit_response_builds_and_writes_artifact() -> None:
         artifact = Path(payload["artifact"])
         assert artifact.exists()
         assert len(payload["response_hash"]) == 40
-        assert payload["command"] == "next"
+        assert payload["command"] == "commit"
         assert payload["accepted_count"] == 1
         assert validate_commit_response(json.loads(artifact.read_text())).ok
 
 
 def test_commit_response_validation_rejects_bad_counts() -> None:
     data = {
-        "schema_version": 1,
+        "schema_version": 2,
         "kind": "commit_response",
         "ok": True,
-        "command": "chain",
+        "command": "commit_chain",
         "status": "ok",
         "proof_state": {},
         "latest_transition": {},
@@ -72,7 +68,6 @@ def test_commit_response_validation_rejects_bad_counts() -> None:
             "accepted_count": 2,
             "attempted_tactics": ["smt()."],
         },
-        "agent_view": {},
         "notes": [],
         "errors": [],
         "debug": {},
@@ -82,12 +77,42 @@ def test_commit_response_validation_rejects_bad_counts() -> None:
     assert any("cannot exceed" in err for err in validation.errors)
 
 
+def test_commit_response_validation_rejects_retired_agent_view_carrier() -> None:
+    data = {
+        "schema_version": 2,
+        "kind": "commit_response",
+        "ok": True,
+        "command": "commit",
+        "status": "ok",
+        "proof_state": {},
+        "latest_transition": {},
+        "mutation": {
+            "attempted_count": 0,
+            "accepted_count": 0,
+            "attempted_tactics": [],
+            "failed_tactic": "",
+            "failure_reason": "",
+            "keep_on_fail": False,
+            "rollback_count": 0,
+        },
+        "agent_view": {},
+        "notes": [],
+        "errors": [],
+        "debug": {},
+    }
+
+    validation = validate_commit_response(data)
+
+    assert validation.ok is False
+    assert any("retired field `agent_view`" in err for err in validation.errors)
+
+
 def _ok_current_out(d: Path) -> None:
     (d / "current.out").write_text(
         "[1|check]>\nCurrent goal\n----\nx = y\n[2|check]>\n", encoding="utf-8")
 
 
-def test_crashed_probe_does_not_mislabel_next_commit() -> None:
+def test_crashed_probe_does_not_mislabel_commit() -> None:
     # A read-only probe whose handler raised left a dangling `tool.called(try)`
     # with no `tool.result`. In the live commit view that stale, harmless log entry
     # must NOT flip a SUCCESSFUL commit to ok=false ("event contract is not valid") —
@@ -99,10 +124,10 @@ def test_crashed_probe_does_not_mislabel_next_commit() -> None:
         append_event(d, "tool.called", {"name": "try", "mutates_proof_state": False})
         append_event(d, "error.raised", {"phase": "cli_action", "action": "try"})
         # the live commit's own in-flight call (stripped as the live tool)
-        append_event(d, "tool.called", {"name": "next", "mutates_proof_state": True})
+        append_event(d, "tool.called", {"name": "commit", "mutates_proof_state": True})
         response = build_commit_response(
-            d, command="next", status="ok", attempted_tactics=["trivial."],
-            accepted_count=1, live_tool_name="next", ok=True)
+            d, command="commit", status="ok", attempted_tactics=["trivial."],
+            accepted_count=1, live_tool_name="commit", ok=True)
         assert response["ok"] is True
         assert not any(e["code"] == "proof_state.event_contract"
                        for e in response["errors"])
@@ -116,11 +141,11 @@ def test_dangling_mutating_call_still_fails_closed() -> None:
         d = Path(td)
         _ok_current_out(d)
         _start_event(d)
-        append_event(d, "tool.called", {"name": "chain", "mutates_proof_state": True})
-        append_event(d, "tool.called", {"name": "next", "mutates_proof_state": True})
+        append_event(d, "tool.called", {"name": "commit_chain", "mutates_proof_state": True})
+        append_event(d, "tool.called", {"name": "commit", "mutates_proof_state": True})
         response = build_commit_response(
-            d, command="next", status="ok", attempted_tactics=["x."],
-            accepted_count=1, live_tool_name="next", ok=True)
+            d, command="commit", status="ok", attempted_tactics=["x."],
+            accepted_count=1, live_tool_name="commit", ok=True)
         assert response["proof_state"]["event_contract"]["ok"] is False
 
 

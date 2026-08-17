@@ -2,9 +2,36 @@
 from __future__ import annotations
 
 import json
+import re
 import subprocess
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
+
+from core.easycrypt.session_tactic_execution_artifacts import (
+    read_bound_tactic_execution_event,
+)
+from core.easycrypt.session_compiler_input import (
+    read_bound_compiler_input_event,
+)
+from core.easycrypt.session_compiler_resources import (
+    read_bound_compiler_resource_load_event,
+)
+from core.easycrypt.session_native_semantics import (
+    read_bound_native_semantic_batch_event,
+)
+from core.easycrypt.session_native_state import read_bound_native_state_event
+from core.easycrypt.session_episode_timeline import (
+    read_bound_episode_timeline_event,
+)
+from core.easycrypt.session_workspace_artifact import (
+    read_bound_prover_workspace_event,
+)
+from core.easycrypt.session_events import validate_event
+from core.easycrypt.session_tactic_preflight import (
+    TACTIC_PREFLIGHT_EVENT_TYPE,
+    read_bound_tactic_preflight_event,
+)
 from core.easycrypt.value_shapes import first_text as _first_text
 
 from workflow.proof_management.common import (
@@ -14,16 +41,22 @@ from workflow.proof_management.common import (
     _preview,
 )
 from workflow.proof_management.turn_view import intent_effect as _intent_effect
+from workflow.managed_turn_outcome import classify_manager_action_outcome
+from workflow.proof_management.backend_invocation import (
+    BackendInvocationBoundary,
+    capture_backend_invocation,
+    resolve_backend_invocation,
+)
 
 def _iter_json_objects(text: str):
     """Yield every top-level decodable JSON object in ``text``, in order.
 
-    Backend command stdout is multi-section: human/hook display lines, legacy
+    Backend command stdout is multi-section: human/debug display lines,
     goal text (which contains brace-delimited fragments), candidate-option JSON
-    previews, daemon-verify emissions, and finally the authoritative result
-    block. Callers that need a *specific* object must select by marker or shape
-    rather than taking the first ``{`` (see _select_json_object); this generator
-    is the shared scan that makes that possible.
+    previews, and daemon-verify emissions. Only commands without an artifact
+    contract use stdout as their typed transport. Such callers select the
+    expected envelope by shape rather than taking the first ``{``; this
+    generator is the shared scan that makes that possible.
     """
     raw = text or ""
     decoder = json.JSONDecoder()
@@ -43,122 +76,108 @@ def _iter_json_objects(text: str):
         i += max(end, 1)
 
 
-def _extract_json_object(text: str) -> dict[str, Any]:
+def extract_json_object(text: str) -> dict[str, Any]:
     """First decodable JSON object. Heuristic — prefer marker/shape selection.
 
-    Retained as a last-resort fallback for command stdout that emits a single
-    unambiguous JSON envelope (read-only inspects, agent-view). For anything
-    whose stdout interleaves other JSON (tactic exec, workspace views) use
-    _tactic_execution_result_payload / _select_json_object instead, so the
-    parse never latches onto a stray earlier object.
+    Retained for commands whose current transport is one unambiguous typed JSON
+    envelope (notably start). Tactic execution, exact preflight, workspace, and episode
+    content are read only through their event-bound artifacts.
     """
     for obj in _iter_json_objects(text):
         return obj
     return {}
 
 
-def _select_json_object(text: str, predicate, *, last: bool = True) -> dict[str, Any]:
-    """Return a decodable JSON object in ``text`` satisfying ``predicate``.
-
-    ``last=True`` returns the freshest match (the authoritative result is
-    emitted after any preliminary/daemon-verify blocks); ``last=False`` returns
-    the first match. Returns ``{}`` if none match.
-    """
-    chosen: dict[str, Any] = {}
-    for obj in _iter_json_objects(text):
-        if predicate(obj):
-            chosen = obj
-            if not last:
-                break
-    return chosen
-
-
-# The backend prints the canonical, agent-facing tactic-exec result under this
-# marker (session_tactic_execution_result.format_tactic_execution_result).
-_TACTIC_EXECUTION_RESULT_MARKER = "[TACTIC-EXECUTION-RESULT]"
-
-
-def _tactic_execution_result_payload(text: str) -> dict[str, Any]:
-    """Return the JSON object emitted under ``[TACTIC-EXECUTION-RESULT]``.
-
-    This is the authoritative result of a commit/undo. Parsing it
-    explicitly avoids ``_extract_json_object``'s "first decodable ``{``"
-    heuristic, which can latch onto an earlier daemon-verify/AUTO-PIVOT phase
-    emission (carrying its own ``ok: false``) and mislabel a successful
-    multi-goal commit as "EasyCrypt rejected the committed tactic". Uses the
-    last marker occurrence so chained commits / re-verified steps report their
-    final state.
-    """
-    raw = text or ""
-    idx = raw.rfind(_TACTIC_EXECUTION_RESULT_MARKER)
-    if idx < 0:
-        return {}
-    for obj in _iter_json_objects(raw[idx + len(_TACTIC_EXECUTION_RESULT_MARKER):]):
-        return obj
-    return {}
-
-
-def _workspace_payload_from_stdout(text: str) -> dict[str, Any]:
-    """Authoritative ProverWorkspaceView object from an ``-agent-view`` stdout.
-
-    Selects by shape (``_looks_like_workspace_payload`` / the view's structural
-    keys) rather than first-``{``, so a stray JSON fragment emitted before the
-    view can never become the agent's whole visible state. Falls back to the
-    first object only if nothing matches.
-    """
-    def _is_view(obj: dict[str, Any]) -> bool:
-        return _looks_like_workspace_payload(obj) or any(
-            key in obj
-            for key in (
-                "current_goal",
-                "candidate_moves",
-                "proof_status",
-                "decision_context",
-                "proof_position",
-            )
-        )
-
-    return _select_json_object(text, _is_view, last=True) or _extract_json_object(text)
-
-
-def _workspace_view_from_payload(payload: dict[str, Any]) -> dict[str, Any]:
-    workspace = payload.get("workspace")
-    if isinstance(workspace, dict) and isinstance(workspace.get("view"), dict):
-        return workspace["view"]
-    if isinstance(payload.get("current_goal"), dict) and (
-        payload.get("kind") == "prover_workspace_view"
-        or "candidate_moves" in payload
-        or "proof_status" in payload
-        or "decision_context" in payload
-        or "proof_position" in payload
-    ):
-        return payload
-    return payload if isinstance(payload, dict) else {}
-
-
-def _command_summary(
+def backend_action_record(
     label: str,
     cmd: list[str],
     result: subprocess.CompletedProcess[str],
     duration_ms: int = 0,
     *,
-    session_dir: Any = None,
+    tactic_preflight_boundary: TacticPreflightInvocationBoundary | None = None,
+    tactic_execution_boundary: TacticExecutionInvocationBoundary | None = None,
+    authoritative_view_boundary: AuthoritativeViewInvocationBoundary | None = None,
+    authoritative_view_resolution: AuthoritativeViewResolution | None = None,
 ) -> dict[str, Any]:
     stdout = result.stdout or ""
     stderr = result.stderr or ""
+    mutates = backend_args_mutate_proof_state(cmd)
+    requires_preflight = _backend_args_require_tactic_preflight(cmd)
+    preflight_resolution = _tactic_preflight_from_invocation(
+        tactic_preflight_boundary,
+        exit_code=result.returncode,
+        required=requires_preflight,
+    )
+    tactic_execution_resolution = _tactic_execution_from_invocation(
+        tactic_execution_boundary,
+        exit_code=result.returncode,
+    )
+    aggregate_resolution = authoritative_view_resolution or (
+        resolve_authoritative_view_invocation(
+            authoritative_view_boundary,
+            exit_code=result.returncode,
+            required=_backend_args_require_authoritative_view(cmd),
+        )
+    )
+    requires_execution_result = _backend_args_require_tactic_execution_result(cmd)
+    outcome = _backend_action_outcome(
+        label,
+        stdout=stdout,
+        exit_code=result.returncode,
+        mutates_proof_state=mutates,
+        requires_execution_result=requires_execution_result,
+        tactic_execution_result=tactic_execution_resolution.result,
+        authoritative_payload=aggregate_resolution.payload,
+    )
+    contract_error = (
+        preflight_resolution.error
+        or tactic_execution_resolution.error
+        or aggregate_resolution.error
+    )
+    if contract_error:
+        outcome = {
+            **classify_manager_action_outcome(
+                status="backend_contract_error",
+                ok=False,
+                read_only=not mutates,
+                mutates_proof_state=mutates,
+                state_changed=False,
+            ).to_dict(),
+            "contract_error": contract_error,
+        }
+    elif preflight_resolution.required and preflight_resolution.artifact is not None:
+        view_ok = bool(preflight_resolution.artifact.get("ok"))
+        outcome = classify_manager_action_outcome(
+            status="ok" if view_ok else "error",
+            ok=view_ok and result.returncode == 0,
+            read_only=True,
+            mutates_proof_state=False,
+            state_changed=False,
+        ).to_dict()
+    execution_authority = _tactic_execution_authority(
+        tactic_execution_resolution
+    )
     return {
         "label": label,
         "argv": cmd,
         "exit_code": result.returncode,
         "duration_ms": int(duration_ms),
-        "mutates_proof_state": _backend_args_mutate_proof_state(cmd),
-        "agent_observation": _agent_observation_from_command(
+        "mutates_proof_state": mutates,
+        **outcome,
+        **(
+            {"execution_authority": execution_authority}
+            if execution_authority
+            else {}
+        ),
+        "agent_observation": agent_observation_from_command(
             label,
             cmd,
             stdout=stdout,
             stderr=stderr,
             exit_code=result.returncode,
-            session_dir=session_dir,
+            tactic_preflight_resolution=preflight_resolution,
+            tactic_execution_resolution=tactic_execution_resolution,
+            authoritative_view_resolution=aggregate_resolution,
         ),
         "stdout_chars": len(stdout),
         "stdout_lines": len(stdout.splitlines()),
@@ -166,16 +185,12 @@ def _command_summary(
         "stderr_preview": stderr[-1200:],
         "stdout_has_workspace_view": (
             "current_goal" in stdout
-            and (
-                "candidate_moves" in stdout
-                or "decision_context" in stdout
-                or "suggested_next_steps" in stdout
-            )
+            and "proof_status" in stdout
         ),
     }
 
 
-def _timeout_command_summary(
+def timeout_backend_action_record(
     label: str,
     cmd: list[str],
     exc: subprocess.TimeoutExpired,
@@ -184,6 +199,15 @@ def _timeout_command_summary(
 ) -> dict[str, Any]:
     stdout = _timeout_stream_text(exc.output)
     stderr = _timeout_stream_text(exc.stderr)
+    mutates = backend_args_mutate_proof_state(cmd)
+    outcome = classify_manager_action_outcome(
+        status="timeout",
+        ok=False,
+        read_only=not mutates,
+        mutates_proof_state=mutates,
+        state_changed=False,
+        timed_out=True,
+    ).to_dict()
     return {
         "label": label,
         "argv": cmd,
@@ -191,7 +215,8 @@ def _timeout_command_summary(
         "timed_out": True,
         "timeout_seconds": timeout,
         "duration_ms": int(duration_ms),
-        "mutates_proof_state": _backend_args_mutate_proof_state(cmd),
+        "mutates_proof_state": mutates,
+        **outcome,
         "agent_observation": _timeout_observation(label, cmd, timeout),
         "stdout_chars": len(stdout),
         "stdout_lines": len(stdout.splitlines()),
@@ -199,77 +224,635 @@ def _timeout_command_summary(
         "stderr_preview": stderr[-1200:],
         "stdout_has_workspace_view": (
             "current_goal" in stdout
-            and (
-                "candidate_moves" in stdout
-                or "decision_context" in stdout
-                or "suggested_next_steps" in stdout
-            )
+            and "proof_status" in stdout
         ),
     }
 
 
-def _latest_tool_view_artifact(session_dir: Any, cmd: list[str]) -> dict[str, Any] | None:
-    """Read the freshest persisted ToolView for this inspect's backend tool.
+@dataclass(frozen=True)
+class TacticPreflightInvocationBoundary:
+    """Event-stream position captured before one exact ``-try`` call."""
 
-    Inspect tools write a structured ToolView to
-    ``session_dir/tool_views/<tool>_*.json`` even when stdout carries only the
-    proof-state envelope. ``<tool>`` is the backend flag (e.g. ``-bridge-lemmas``
-    -> ``bridge-lemmas``)."""
-    try:
-        tool = next(
-            (a[1:] for a in cmd if isinstance(a, str) and a.startswith("-") and a != "-d"),
-            "",
-        )
-        if not tool:
-            return None
-        matches = sorted(
-            (Path(session_dir) / "tool_views").glob(f"{tool}_*.json"),
-            key=lambda p: p.stat().st_mtime,
-        )
-        if not matches:
-            return None
-        data = json.loads(matches[-1].read_text(encoding="utf-8"))
-        return data if isinstance(data, dict) else None
-    except Exception:
-        return None
+    invocation: BackendInvocationBoundary
+    expected_tactic: str
 
 
-def _agent_observation_from_command(
-    label: str,
+@dataclass(frozen=True)
+class TacticExecutionInvocationBoundary:
+    """Event-stream position captured before one mutating tactic action."""
+
+    invocation: BackendInvocationBoundary
+    expected_mode: str
+    expected_command: str
+    expected_tactics: tuple[str, ...] | None
+    submitted_tactics_may_be_prefix: bool = False
+
+
+@dataclass(frozen=True)
+class _TacticPreflightResolution:
+    required: bool = False
+    artifact: dict[str, Any] | None = None
+    event: dict[str, Any] | None = None
+    artifact_hash: str = ""
+    error: str = ""
+
+
+@dataclass(frozen=True)
+class _TacticExecutionResolution:
+    required: bool = False
+    result: dict[str, Any] | None = None
+    error: str = ""
+    event_id: str = ""
+    event_sequence: int = 0
+    artifact_ref: str = ""
+    artifact_hash: str = ""
+    hash_algorithm: str = ""
+
+
+@dataclass(frozen=True)
+class AuthoritativeViewInvocationBoundary:
+    """Current-call boundary for an authoritative view invocation."""
+
+    invocation: BackendInvocationBoundary
+    event_type: str
+
+
+@dataclass(frozen=True)
+class AuthoritativeViewResolution:
+    required: bool = False
+    payload: dict[str, Any] | None = None
+    artifact: Path | None = None
+    error: str = ""
+    event_id: str = ""
+    event_sequence: int = 0
+    event_payload: dict[str, Any] | None = None
+
+
+def _backend_args_require_tactic_preflight(cmd: list[str]) -> bool:
+    return not backend_args_mutate_proof_state(cmd) and "-try" in cmd
+
+
+def capture_tactic_preflight_invocation(
+    session_dir: Any,
     cmd: list[str],
+) -> TacticPreflightInvocationBoundary | None:
+    """Capture the lower event bound and exact tactic for one ``-try`` call.
+
+    The artifact is trusted only when produced inside the matching backend-call
+    event window. Capturing the byte offset avoids timestamp and mtime races.
+    """
+    if not _backend_args_require_tactic_preflight(cmd) or not session_dir:
+        return None
+    tactic = _command_arg_after(cmd, "-c") or _command_arg_after(
+        cmd, "--command"
+    )
+    if not tactic.strip():
+        return None
+    return TacticPreflightInvocationBoundary(
+        invocation=capture_backend_invocation(
+            session_dir,
+            action_name="try",
+            mutates_proof_state=False,
+        ),
+        expected_tactic=tactic.strip(),
+    )
+
+
+def capture_tactic_execution_invocation(
+    session_dir: Any,
+    cmd: list[str],
+) -> TacticExecutionInvocationBoundary | None:
+    """Capture the only legal lower bound for a mutating TER occurrence."""
+
+    if not _backend_args_require_tactic_execution_result(cmd):
+        return None
+    contract = _tactic_execution_request_contract(cmd)
+    if contract is None or not session_dir:
+        return None
+    action_name, expected_mode, expected_command, expected_tactics, allow_prefix = contract
+    return TacticExecutionInvocationBoundary(
+        invocation=capture_backend_invocation(
+            session_dir,
+            action_name=action_name,
+            mutates_proof_state=True,
+        ),
+        expected_mode=expected_mode,
+        expected_command=expected_command,
+        expected_tactics=expected_tactics,
+        submitted_tactics_may_be_prefix=allow_prefix,
+    )
+
+
+def capture_authoritative_view_invocation(
+    session_dir: Any,
+    cmd: list[str],
+) -> AuthoritativeViewInvocationBoundary | None:
+    """Capture one artifact-backed, read-only authoritative occurrence."""
+
+    contract = _authoritative_view_contract(cmd)
+    if contract is None or not session_dir or backend_args_mutate_proof_state(cmd):
+        return None
+    _, action_name, event_type = contract
+    return AuthoritativeViewInvocationBoundary(
+        invocation=capture_backend_invocation(
+            session_dir,
+            action_name=action_name,
+            mutates_proof_state=False,
+        ),
+        event_type=event_type,
+    )
+
+
+def _authoritative_view_contract(
+    cmd: list[str],
+) -> tuple[str, str, str] | None:
+    parts = [str(part) for part in cmd]
+    return next((item for item in (
+        (
+            "-managed-goal-view",
+            "managed-goal-view",
+            "prover.workspace_view.produced",
+        ),
+        ("-episode-view", "episode-view", "episode.timeline.produced"),
+        (
+            "-compiler-input-v2",
+            "compiler-input-v2",
+            "compiler.input.produced",
+        ),
+        (
+            "-compiler-resource-load-v2",
+            "compiler-resource-load-v2",
+            "compiler.resources.loaded",
+        ),
+        (
+            "-native-semantic-batch-json",
+            "native-semantic-batch",
+            "native.semantic.batch.produced",
+        ),
+        (
+            "-native-state-projection-json",
+            "native-state-projection",
+            "native.state.produced",
+        ),
+    ) if item[0] in parts), None)
+
+
+def _backend_args_require_authoritative_view(cmd: list[str]) -> bool:
+    return (
+        not backend_args_mutate_proof_state(cmd)
+        and _authoritative_view_contract(cmd) is not None
+    )
+
+
+def _tactic_execution_action_name(cmd: list[str]) -> str:
+    parts = [str(part) for part in cmd]
+    if "-tactic-exec" not in parts:
+        return ""
+    index = parts.index("-tactic-exec")
+    mode = parts[index + 1] if index + 1 < len(parts) else ""
+    return {
+        "commit": "commit",
+        "commit_chain": "commit_chain",
+        "undo": "undo",
+    }.get(mode, "")
+
+
+def _tactic_execution_request_contract(
+    cmd: list[str],
+) -> tuple[str, str, str, tuple[str, ...] | None, bool] | None:
+    """Return the exact manager request a TER must describe.
+
+    ``None`` tactics means the invocation did not carry an inspectable tactic
+    source (for example, an unsupported stdin-only caller). Manager-owned live
+    commits always use ``-c`` and therefore bind the submitted text exactly.
+    Chain failures report only the attempted prefix, so that one mode permits
+    a prefix of the requested chain while successful chains must still match
+    the whole request.
+    """
+
+    action_name = _tactic_execution_action_name(cmd)
+    if not action_name:
+        return None
+    mode, command = {
+        "commit": ("commit", "commit"),
+        "commit_chain": ("commit_chain", "commit_chain"),
+        "undo": ("undo", "undo"),
+    }[action_name]
+    if action_name == "undo":
+        return action_name, mode, command, (), False
+    raw = _command_arg_after(cmd, "-c") or _command_arg_after(cmd, "--command")
+    if not raw:
+        return action_name, mode, command, None, action_name == "commit_chain"
+    if action_name == "commit_chain":
+        tactics = _split_chain_tactics(raw)
+        return action_name, mode, command, tuple(tactics), True
+    return action_name, mode, command, (raw.strip(),), False
+
+
+def _split_chain_tactics(text: str) -> list[str]:
+    """Mirror the backend chain parser for request/result binding."""
+
+    tactics: list[str] = []
+    for part in re.split(r"\.\s", str(text or "").strip()):
+        normalized = part.strip().rstrip(".")
+        if normalized:
+            tactics.append(normalized + ".")
+    return tactics
+
+
+def _event_payload(event: dict[str, Any]) -> dict[str, Any]:
+    payload = event.get("payload")
+    return payload if isinstance(payload, dict) else {}
+
+
+def _read_bound_tactic_preflight(
+    boundary: TacticPreflightInvocationBoundary,
+    event: dict[str, Any],
+) -> tuple[dict[str, Any] | None, str, str]:
+    binding = read_bound_tactic_preflight_event(
+        boundary.invocation.session_dir,
+        event,
+        expected_tactic=boundary.expected_tactic,
+    )
+    if not binding.ok:
+        return None, "; ".join(binding.errors), binding.artifact_hash
+    return binding.data, "", binding.artifact_hash
+
+
+def _invocation_event_window(
+    boundary: (
+        TacticPreflightInvocationBoundary
+        | TacticExecutionInvocationBoundary
+        | AuthoritativeViewInvocationBoundary
+    ),
+    *,
+    exit_code: int | None,
+) -> tuple[list[dict[str, Any]], int, int, str]:
+    window = resolve_backend_invocation(
+        boundary.invocation,
+        exit_code=exit_code,
+    )
+    return (
+        list(window.events),
+        window.call_index,
+        window.result_index,
+        window.error,
+    )
+
+
+def _tactic_preflight_from_invocation(
+    boundary: TacticPreflightInvocationBoundary | None,
+    *,
+    exit_code: int | None,
+    required: bool = False,
+) -> _TacticPreflightResolution:
+    if boundary is None:
+        if required:
+            return _TacticPreflightResolution(
+                required=True,
+                error="missing pre-call tactic-preflight event boundary",
+            )
+        return _TacticPreflightResolution()
+    events, call_index, result_index, error = _invocation_event_window(
+        boundary,
+        exit_code=exit_code,
+    )
+    if error:
+        return _TacticPreflightResolution(required=True, error=error)
+    preflight_events = [
+        event for event in events[call_index + 1:result_index]
+        if event.get("type") == TACTIC_PREFLIGHT_EVENT_TYPE
+    ]
+    if len(preflight_events) != 1:
+        return _TacticPreflightResolution(
+            required=True,
+            error=(
+                "expected exactly one tactic.preflight.produced event for this "
+                "backend call"
+            ),
+        )
+    artifact, error, artifact_hash = _read_bound_tactic_preflight(
+        boundary, preflight_events[0]
+    )
+    if (
+        not error
+        and artifact is not None
+        and artifact.get("ok") is True
+        and exit_code not in (None, 0)
+    ):
+        return _TacticPreflightResolution(
+            required=True,
+            error=(
+                "successful tactic preflight contradicts the non-zero backend "
+                "process exit code"
+            ),
+        )
+    return _TacticPreflightResolution(
+        required=True,
+        artifact=artifact,
+        event=preflight_events[0],
+        artifact_hash=artifact_hash,
+        error=error,
+    )
+
+
+def resolve_authoritative_view_invocation(
+    boundary: AuthoritativeViewInvocationBoundary | None,
+    *,
+    exit_code: int | None,
+    required: bool = False,
+) -> AuthoritativeViewResolution:
+    if boundary is None:
+        if required:
+            return AuthoritativeViewResolution(
+                required=True,
+                error="missing pre-call authoritative view event boundary",
+            )
+        return AuthoritativeViewResolution()
+    window = resolve_backend_invocation(
+        boundary.invocation,
+        exit_code=exit_code,
+    )
+    if not window.ok:
+        return AuthoritativeViewResolution(required=True, error=window.error)
+    produced_event, error = window.exactly_one_produced_event(
+        boundary.event_type,
+    )
+    if error or produced_event is None:
+        return AuthoritativeViewResolution(required=True, error=error)
+    if boundary.event_type == "prover.workspace_view.produced":
+        binding = read_bound_prover_workspace_event(
+            boundary.invocation.session_dir,
+            produced_event,
+        )
+    elif boundary.event_type == "episode.timeline.produced":
+        binding = read_bound_episode_timeline_event(
+            boundary.invocation.session_dir,
+            produced_event,
+        )
+    elif boundary.event_type == "compiler.input.produced":
+        binding = read_bound_compiler_input_event(
+            boundary.invocation.session_dir,
+            produced_event,
+        )
+    elif boundary.event_type == "compiler.resources.loaded":
+        binding = read_bound_compiler_resource_load_event(
+            boundary.invocation.session_dir,
+            produced_event,
+        )
+    elif boundary.event_type == "native.semantic.batch.produced":
+        binding = read_bound_native_semantic_batch_event(
+            boundary.invocation.session_dir,
+            produced_event,
+        )
+    elif boundary.event_type == "native.state.produced":
+        binding = read_bound_native_state_event(
+            boundary.invocation.session_dir,
+            produced_event,
+        )
+    else:
+        return AuthoritativeViewResolution(
+            required=True,
+            error=f"unsupported authoritative view event: {boundary.event_type}",
+        )
+    if not binding.ok or binding.data is None:
+        return AuthoritativeViewResolution(
+            required=True,
+            artifact=binding.path,
+            error="; ".join(binding.errors),
+        )
+    if binding.data.get("ok") is True and exit_code not in (None, 0):
+        return AuthoritativeViewResolution(
+            required=True,
+            artifact=binding.path,
+            error=(
+                "successful authoritative view contradicts the non-zero "
+                "backend process exit code"
+            ),
+        )
+    return AuthoritativeViewResolution(
+        required=True,
+        payload=binding.data,
+        artifact=binding.path,
+        event_id=str(produced_event.get("event_id") or ""),
+        event_sequence=window.events.index(produced_event) + 1,
+        event_payload=dict(_event_payload(produced_event)),
+    )
+
+
+def _tactic_execution_from_invocation(
+    boundary: TacticExecutionInvocationBoundary | None,
+    *,
+    exit_code: int | None,
+) -> _TacticExecutionResolution:
+    if boundary is None:
+        return _TacticExecutionResolution()
+    if boundary.expected_mode != "undo" and boundary.expected_tactics is None:
+        return _TacticExecutionResolution(
+            required=True,
+            error=(
+                "could not bind the mutating backend call to an explicit "
+                "submitted tactic request"
+            ),
+        )
+    events, call_index, result_index, error = _invocation_event_window(
+        boundary,
+        exit_code=exit_code,
+    )
+    if error:
+        return _TacticExecutionResolution(required=True, error=error)
+    result_events = [
+        event for event in events[call_index + 1:result_index]
+        if event.get("type") == "tactic.execution.produced"
+    ]
+    if len(result_events) != 1:
+        return _TacticExecutionResolution(
+            required=True,
+            error=(
+                "expected exactly one tactic.execution.produced event for "
+                "this backend call"
+            ),
+        )
+    result_event = result_events[0]
+    binding = read_bound_tactic_execution_event(
+        boundary.invocation.session_dir,
+        result_event,
+        events=events,
+        expected_mode=boundary.expected_mode,
+        expected_command=boundary.expected_command,
+        expected_submitted_tactics=boundary.expected_tactics,
+        submitted_tactics_may_be_prefix=(
+            boundary.submitted_tactics_may_be_prefix
+        ),
+    )
+    if not binding.ok:
+        return _TacticExecutionResolution(
+            required=True,
+            error="; ".join(binding.errors),
+        )
+    if boundary.expected_mode == "undo":
+        undo_events = [
+            event for event in events[call_index + 1:result_index]
+            if event.get("type") == "tactic.undone"
+        ]
+        if len(undo_events) != 1:
+            return _TacticExecutionResolution(
+                required=True,
+                error=(
+                    "expected exactly one tactic.undone event for this "
+                    "undo backend call"
+                ),
+            )
+        undo_event = undo_events[0]
+        undo_issues = [
+            issue for issue in validate_event(undo_event)
+            if issue.severity == "error"
+        ]
+        if undo_issues:
+            return _TacticExecutionResolution(
+                required=True,
+                error=(
+                    "tactic.undone event contract is invalid: "
+                    + "; ".join(issue.format() for issue in undo_issues)
+                ),
+            )
+        resolved_session = str(boundary.invocation.session_dir.resolve())
+        if any(
+            undo_event.get(field_name) != resolved_session
+            for field_name in ("session_dir", "session_id")
+        ):
+            return _TacticExecutionResolution(
+                required=True,
+                error="tactic.undone event does not belong to the current session",
+            )
+        undo_status = str(_event_payload(undo_event).get("status") or "")
+        result_block = _event_payload(result_events[0])
+        expected_status = "undone" if undo_status == "ok" else "no_progress"
+        if undo_status not in {"ok", "empty"}:
+            return _TacticExecutionResolution(
+                required=True,
+                error=f"unsupported tactic.undone status: {undo_status!r}",
+            )
+        if result_block.get("status") != expected_status:
+            return _TacticExecutionResolution(
+                required=True,
+                error=(
+                    "TacticExecutionResult status does not match the "
+                    "tactic.undone outcome"
+                ),
+            )
+        expected_changed = undo_status == "ok"
+        if (
+            result_block.get("state_changed") is not expected_changed
+            or result_block.get("history_committed") is not expected_changed
+        ):
+            return _TacticExecutionResolution(
+                required=True,
+                error=(
+                    "TacticExecutionResult mutation flags do not match the "
+                    "tactic.undone outcome"
+                ),
+            )
+    if exit_code not in (None, 0) and binding.result.get("ok") is True:
+        return _TacticExecutionResolution(
+            required=True,
+            error=(
+                "successful TacticExecutionResult contradicts the non-zero "
+                "backend process exit code"
+            ),
+        )
+    return _TacticExecutionResolution(
+        required=True,
+        result=binding.result,
+        event_id=str(result_event.get("event_id") or ""),
+        event_sequence=events.index(result_event) + 1,
+        artifact_ref=(
+            "tactic_execution_results/" + binding.artifact.name
+            if binding.artifact is not None
+            else ""
+        ),
+        artifact_hash=binding.artifact_hash,
+        hash_algorithm="sha1",
+    )
+
+
+def _tactic_execution_authority(
+    resolution: _TacticExecutionResolution,
+) -> dict[str, Any]:
+    """Project only validated TER fields needed by later manager consumers."""
+
+    payload = resolution.result
+    if (
+        not resolution.required
+        or resolution.error
+        or not isinstance(payload, dict)
+        or not resolution.event_id
+        or resolution.event_sequence <= 0
+        or not resolution.artifact_ref
+        or not resolution.artifact_hash
+        or resolution.hash_algorithm not in {"sha1", "sha256"}
+    ):
+        return {}
+    execution = _dict(payload.get("execution"))
+    result = _dict(payload.get("result"))
+    submitted = execution.get("submitted_tactics")
+    if not (
+        isinstance(submitted, list)
+        and all(type(item) is str for item in submitted)
+    ):
+        return {}
+    return {
+        "authority_kind": "event_bound_tactic_execution_result",
+        "event_type": "tactic.execution.produced",
+        "event_id": resolution.event_id,
+        "event_sequence": resolution.event_sequence,
+        "artifact_ref": resolution.artifact_ref,
+        "artifact_hash": resolution.artifact_hash,
+        "hash_algorithm": resolution.hash_algorithm,
+        "submitted_tactics": list(submitted),
+        "status": str(result.get("status") or ""),
+        "state_changed": bool(execution.get("state_changed")),
+        "history_committed": bool(execution.get("history_committed")),
+        "structured_error": _first_text(
+            result.get("error"),
+            result.get("failure_reason"),
+            default="",
+        )[:1200],
+    }
+
+
+def _backend_action_outcome(
+    label: str,
     *,
     stdout: str,
-    stderr: str,
     exit_code: int | None,
-    session_dir: Any = None,
+    mutates_proof_state: bool,
+    requires_execution_result: bool,
+    tactic_execution_result: dict[str, Any] | None = None,
+    authoritative_payload: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
-    # Parse the authoritative result, never "the first decodable JSON". Tactic
-    # exec (commit / undo) emits a [TACTIC-EXECUTION-RESULT] block; read
-    # it by marker so the verdict reflects the recorded result, not an earlier
-    # daemon-verify/AUTO-PIVOT emission that happens to decode first (which
-    # mislabeled successful multi-goal commits as "rejected"). Read-only
-    # inspects / agent-view emit a single envelope, so the first-object fallback
-    # is unambiguous there.
-    payload = _tactic_execution_result_payload(stdout) or _extract_json_object(stdout)
-    # Inspect tools (e.g. -bridge-lemmas) persist their structured ToolView to
-    # session_dir/tool_views/ but emit only a proof-state envelope to stdout. Pull
-    # that ToolView in so its recommendations/notes reach the content builder
-    # instead of falling back to a truncated raw preview. EXCEPT topics with a
-    # richer dedicated content path (lemma_index roster / tactic_forms whole-text),
-    # which the generic ToolView (often just a placeholder note) must not shadow.
-    _tv_dedicated = {"inspect_lemma_index", "inspect_tactic_forms"}
-    if (
-        session_dir
-        and label.startswith("inspect_")
-        and label not in _tv_dedicated
-        and not isinstance(payload.get("tool_view"), dict)
-    ):
-        _tv = _latest_tool_view_artifact(session_dir, cmd)
-        if _tv and (
-            (_tv.get("guidance") or {}).get("recommendations")
-            or _tv.get("notes")
-        ):
-            payload = {**payload, "tool_view": _tv}
+    """Normalize the backend verdict before any presentation prose is built."""
+    if requires_execution_result:
+        payload = dict(tactic_execution_result or {})
+    elif authoritative_payload is not None:
+        payload = dict(authoritative_payload)
+    else:
+        payload = extract_json_object(stdout)
+    if requires_execution_result and not payload:
+        outcome = classify_manager_action_outcome(
+            status="backend_contract_error",
+            ok=False,
+            read_only=False,
+            mutates_proof_state=True,
+            state_changed=False,
+        ).to_dict()
+        return {
+            **outcome,
+            "contract_error": (
+                "mutating backend call is missing its required event-bound "
+                "TacticExecutionResult"
+            ),
+        }
     result = _dict(payload.get("result"))
     execution = _dict(payload.get("execution"))
     status = _first_text(
@@ -278,19 +861,125 @@ def _agent_observation_from_command(
         payload.get("status"),
         default="ok" if exit_code == 0 else "failed",
     )
+    payload_ok = payload.get("ok")
+    result_ok = result.get("ok")
+    if isinstance(payload_ok, bool):
+        ok = payload_ok
+    elif isinstance(result_ok, bool):
+        ok = result_ok
+    else:
+        ok = exit_code == 0
+    state_changed = bool(
+        execution.get("state_changed") or execution.get("history_committed")
+    )
+    return classify_manager_action_outcome(
+        status=status,
+        ok=ok,
+        read_only=_is_read_only_backend_action(label),
+        mutates_proof_state=mutates_proof_state,
+        state_changed=state_changed,
+    ).to_dict()
+
+
+def agent_observation_from_command(
+    label: str,
+    cmd: list[str],
+    *,
+    stdout: str,
+    stderr: str,
+    exit_code: int | None,
+    tactic_preflight_resolution: _TacticPreflightResolution | None = None,
+    tactic_execution_resolution: _TacticExecutionResolution | None = None,
+    authoritative_view_resolution: AuthoritativeViewResolution | None = None,
+) -> dict[str, Any]:
+    # Mutating proof actions consume the event-bound TER; exact compiler checks
+    # consume their tactic-preflight artifact; aggregate workspace/timeline
+    # actions consume their event-bound artifacts. Typed stdout is semantic
+    # transport only for commands without an artifact contract (notably start).
+    requires_execution_result = _backend_args_require_tactic_execution_result(cmd)
+    tactic_resolution = (
+        tactic_execution_resolution or _TacticExecutionResolution()
+    )
+    aggregate_resolution = authoritative_view_resolution or (
+        AuthoritativeViewResolution(
+            required=True,
+            error="missing pre-call authoritative view event boundary",
+        )
+        if _backend_args_require_authoritative_view(cmd)
+        else AuthoritativeViewResolution()
+    )
+    if requires_execution_result:
+        payload = dict(tactic_resolution.result or {})
+    elif aggregate_resolution.required:
+        # Aggregate stdout is human/debug display only.  Even a byte-for-byte
+        # valid object there is ignored unless the current-call produced event
+        # binds the persisted artifact.
+        payload = dict(aggregate_resolution.payload or {})
+    else:
+        payload = extract_json_object(stdout)
+    missing_execution_result = (
+        requires_execution_result and not tactic_resolution.result
+    )
+    execution_contract_error = tactic_resolution.error or (
+        "Missing required event-bound TacticExecutionResult."
+        if missing_execution_result else ""
+    )
+    resolution = tactic_preflight_resolution or (
+        _TacticPreflightResolution(
+            required=True,
+            error="missing pre-call tactic-preflight event boundary",
+        )
+        if _backend_args_require_tactic_preflight(cmd)
+        else _TacticPreflightResolution()
+    )
+    if resolution.required:
+        # The event-bound artifact is the sole verdict/content authority.
+        payload = {}
+        if resolution.artifact is not None:
+            payload["ok"] = bool(resolution.artifact.get("ok"))
+            payload["tactic_preflight"] = resolution.artifact
+    structured_contract_error = resolution.error or aggregate_resolution.error
+    result = _dict(payload.get("result"))
+    execution = _dict(payload.get("execution"))
+    status = _first_text(
+        result.get("status"),
+        payload.get("command_status"),
+        payload.get("status"),
+        default="ok" if exit_code == 0 else "failed",
+    )
+    if structured_contract_error or missing_execution_result:
+        status = "backend_contract_error"
     ok_value = payload.get("ok")
     result_ok = result.get("ok")
     if isinstance(ok_value, bool):
         ok = ok_value
     elif isinstance(result_ok, bool):
         ok = result_ok
+    elif structured_contract_error or missing_execution_result:
+        ok = False
     else:
         ok = exit_code == 0
-    read_only_context = _is_read_only_context_action(label)
-    if read_only_context and ok:
+    read_only_action = _is_read_only_backend_action(label)
+    if structured_contract_error:
+        observation = {
+            "manager_action": label,
+            "result": "The backend did not produce a trustworthy structured context view.",
+            "effect": "The read-only request did not change the proof state.",
+            "proof_state": "unchanged",
+            "contract_error": structured_contract_error,
+        }
+    elif missing_execution_result:
+        observation = {
+            "manager_action": label,
+            "result": "The mutating backend response violated the manager contract.",
+            "effect": "The proof-state effect is unknown; do not infer acceptance.",
+            "proof_state": "unknown",
+            "contract_error": execution_contract_error,
+        }
+    elif read_only_action and ok:
         observation: dict[str, Any] = {
             "effect": _action_effect(label, execution),
-            "result": _read_only_result_text(status),
+            "result": _read_only_result_text(label, status),
         }
     else:
         observation = {
@@ -299,7 +988,14 @@ def _agent_observation_from_command(
             "effect": _action_effect(label, execution),
             "proof_state": _proof_state_observation(label, execution, status),
         }
-    content = _content_observation_from_payload(label, payload, stdout)
+    # A missing or invalid current-call preflight artifact is a contract failure. Raw
+    # stdout remains backend/human debug evidence and is not promoted into the
+    # agent-visible context surface as a substitute.
+    content = (
+        {}
+        if structured_contract_error
+        else content_observation_from_payload(label, payload)
+    )
     if content:
         observation["content"] = content
     tactic = _first_text(
@@ -310,411 +1006,109 @@ def _agent_observation_from_command(
     if tactic:
         observation["tactic"] = tactic
     error_summary = _error_summary(payload, stderr, ok=ok)
-    if not error_summary and not ok:
-        # The authoritative [TACTIC-EXECUTION-RESULT] block omits structured
-        # `errors` on some rejections (e.g. "cannot infer all placeholders"); the
-        # daemon's agent-view envelope (also in stdout) still carries the raw EC
-        # error. Recover it so last_result says *why* the tactic was rejected —
-        # critical for commits whose result text tells the agent to use the summary.
-        error_summary = _stdout_error_summary(stdout)
     if error_summary:
         observation["error_summary"] = error_summary
-    return _drop_empty(observation)
+    return _compact_agent_observation(observation)
 
 
-# tactic_forms is a STATIC, BOUNDED argument-forms reference; the largest entry
-# (`call`) is ~5.4KB / 12 forms. The agent pulls it precisely to disambiguate a
-# form, so it must be shown WHOLE — the generic 1200-char preview lands mid-list
-# around Form 4, disproportionately the form the agent needs (e.g. `call`'s
-# upto-bad 3-arg form, `eager` Form 4). Generous fixed cap (fits all 21 covered
-# tactics + headroom) so the view stays bounded without clipping a real form.
-_TACTIC_FORMS_PREVIEW_LIMIT = 8000
-
-# lemma_index is an UNBOUNDED whole-file roster the agent pulls to see what is
-# available to apply/rewrite/bridge with; the generic 1200-char flatten-and-cut
-# dropped the load-bearing lemmas (chacha: 51 entries cut to ~9) and sliced the
-# last entry mid-signature. Generous budget that fits typical files whole; large
-# files degrade by cutting at a lemma boundary with an explicit count + escape.
-_LEMMA_INDEX_PREVIEW_LIMIT = 14000
-
-
-def _lemma_index_preview(text: str, *, limit: int) -> str:
-    """Keep WHOLE lemma entries (line structure preserved) up to `limit`; when a
-    large file overflows, cut at a lemma boundary and note how many were dropped so
-    the agent reaches for `lookup_symbol` instead of seeing a silently short list."""
-    text = (text or "").rstrip()
-    if len(text) <= limit:
-        return text
-    lines = text.split("\n")
-
-    def _entry(ln: str) -> bool:  # a lemma entry starts e.g. "L42 [lemma, top_level] addrA:"
-        return ln[:1] == "L" and ln[1:2].isdigit() and " [" in ln[:48]
-
-    starts = [i for i, ln in enumerate(lines) if _entry(ln)]
-    if not starts:
-        return text[: max(0, limit - 1)].rstrip() + "…"
-    bounds = starts + [len(lines)]
-    kept = ["\n".join(lines[: starts[0]])]
-    used = len(kept[0])
-    shown = 0
-    for k in range(len(starts)):
-        entry = "\n".join(lines[bounds[k] : bounds[k + 1]])
-        if used + len(entry) + 1 > limit:
-            break
-        kept.append(entry)
-        used += len(entry) + 1
-        shown += 1
-    note = (
-        f"\n… ({len(starts) - shown} more lemma(s) not shown — the file index is "
-        "large; `lookup_symbol <name>` for any specific lemma)"
-    )
-    return "\n".join(kept).rstrip() + note
-
-
-def _content_observation_from_payload(
+def content_observation_from_payload(
     label: str,
     payload: dict[str, Any],
-    stdout: str,
 ) -> dict[str, Any]:
-    content: dict[str, Any] = {}
-    topic = str(payload.get("topic") or "").strip()
-    if topic:
-        title = _context_topic_title(topic)
-        if title:
-            content["title"] = title
-    goal_info_surface = _goal_info_content_surface(label, payload)
-    if goal_info_surface:
-        content.update(goal_info_surface)
-    for key in ("runtime_note",):
-        if payload.get(key) not in (None, "", [], {}):
-            content[key] = payload.get(key)
-    items: list[dict[str, Any]] = []
-    observations = payload.get("observations")
-    if isinstance(observations, list) and observations:
-        items.extend(
-            _context_item_surface(obs)
-            for obs in observations
-            if isinstance(obs, dict)
-        )
-    tool_view = payload.get("tool_view")
-    if isinstance(tool_view, dict):
-        guidance = _dict(tool_view.get("guidance"))
-        recs = _list(guidance.get("recommendations"))
-        if recs:
-            # Prefer tool-view recommendations because they preserve the
-            # candidate/action string. They represent the same content as the
-            # legacy observations, so avoid showing both.
-            items = [
-                _context_item_surface(rec)
-                for rec in recs
-                if isinstance(rec, dict)
-            ]
-        notes = _list(tool_view.get("notes"))
-        if notes:
-            content["notes"] = [
-                _message_surface(note)
-                for note in notes
-                if isinstance(note, dict)
-            ][:3]
-    if items:
-        content["items"] = _dedupe_context_items(items)[:6]
-    else:
-        result_text = _context_content_result_text(payload)
-        if result_text:
-            content["result"] = result_text
-    if label == "inspect_call_subgoals":
-        preview = _text_preview(stdout, limit=1200)
-        if preview and not _looks_like_workspace_payload(payload):
-            call_surface = _call_subgoal_preview_surface(preview)
-            if content:
-                return _drop_empty({**content, **call_surface})
-            return call_surface
-    if label == "inspect_operator_lemmas":
-        # Live EC `search OP.` output — a lemma roster (like lemma_index), shown WHOLE so
-        # the project-local hits are not truncated mid-list. Merge with content so the
-        # generic "recorded as raw evidence" note does not short-circuit the preview.
-        preview = _lemma_index_preview(stdout, limit=_LEMMA_INDEX_PREVIEW_LIMIT)
-        if preview and not _looks_like_workspace_payload(payload):
-            return _drop_empty({**content, "preview": preview})
-    if content:
-        return _drop_empty(content)
-    if label.startswith("inspect_") or label == "lookup_symbol":
-        # Reference rosters the agent pulls to see in full get a generous preview
-        # (tactic_forms whole; lemma_index boundary-aware); every other inspect/
-        # lookup preview stays capped at 1200.
-        if label == "inspect_lemma_index":
-            preview = _lemma_index_preview(stdout, limit=_LEMMA_INDEX_PREVIEW_LIMIT)
-        else:
-            limit = (
-                _TACTIC_FORMS_PREVIEW_LIMIT
-                if label == "inspect_tactic_forms" else 1200
-            )
-            preview = _text_preview(stdout, limit=limit)
-        if preview and not _looks_like_workspace_payload(payload):
-            return {"preview": preview}
-    return {}
+    """Expose only exact-preflight evidence needed by certification."""
 
-
-def _goal_info_content_surface(label: str, payload: dict[str, Any]) -> dict[str, Any]:
-    tool = str(payload.get("tool") or "").strip().replace("_", "-")
-    if label != "inspect_goal_info" and tool != "goal-info":
+    if label != "exact_tactic_preflight":
         return {}
-
-    guidance = _dict(payload.get("guidance"))
-    goal_info = _dict(guidance.get("goal_info"))
-    proof_state = _dict(payload.get("proof_state"))
-    goal_state = _dict(proof_state.get("goal"))
-    history = _dict(proof_state.get("history"))
-    latest_transition = _dict(proof_state.get("latest_transition"))
-
-    content: dict[str, Any] = {"title": _context_topic_title("goal_info")}
-    if goal_info:
-        content["goal_info"] = goal_info
-    if goal_state:
-        content["goal_state"] = _drop_empty({
-            "state_kind": goal_state.get("state_kind"),
-            "goal_type": goal_state.get("goal_type"),
-            "num_remaining": goal_state.get("num_remaining"),
-            "num_remaining_determined": goal_state.get("num_remaining_determined"),
-            "proof_candidate_closed": goal_state.get("proof_candidate_closed"),
-            "active_goal_hash": goal_state.get("active_goal_hash"),
-            "authority": goal_state.get("authority"),
-            "ec_ground_truth": goal_state.get("ec_ground_truth"),
-        })
-    if history:
-        content["history"] = _drop_empty({
-            "tactic_count": history.get("tactic_count"),
-            "has_qed": history.get("has_qed"),
-            "latest_tactic": _preview(str(history.get("latest_tactic") or ""), limit=320),
-        })
-    if latest_transition:
-        content["latest_transition"] = _drop_empty({
-            "kind": latest_transition.get("kind"),
-            "status": latest_transition.get("status"),
-            "goals_before": latest_transition.get("goals_before"),
-            "goals_after": latest_transition.get("goals_after"),
-            "candidate_closed": latest_transition.get("candidate_closed"),
-            "no_progress": latest_transition.get("no_progress"),
-            "no_progress_reason": latest_transition.get("no_progress_reason"),
-            "latest_error": latest_transition.get("latest_error"),
-            "tactic": _preview(str(latest_transition.get("tactic") or ""), limit=320),
-        })
-
-    recommendations = _list(guidance.get("recommendations"))
-    if recommendations:
-        content["items"] = [
-            _context_item_surface(item)
-            for item in recommendations
-            if isinstance(item, dict)
-        ][:6]
-    notes = _list(payload.get("notes"))
-    if notes:
-        content["notes"] = [
-            _message_surface(note)
-            for note in notes
-            if isinstance(note, dict)
-        ][:3]
-    errors = _list(payload.get("errors"))
-    if errors:
-        content["errors"] = [
-            _message_surface(error)
-            for error in errors
-            if isinstance(error, dict)
-        ][:3]
-
-    return _drop_empty(content)
-
-
-def _context_item_surface(rec: dict[str, Any]) -> dict[str, Any]:
-    metadata = _dict(rec.get("metadata"))
-    confidence = str(rec.get("confidence") or "").strip()
-    verification = ""
-    if confidence == "verified":
-        verification = "daemon-verified against the current goal"
-    elif confidence:
-        verification = "not daemon-verified against the current goal"
+    preflight = _dict(payload.get("tactic_preflight"))
+    if not preflight:
+        return {}
     return _drop_empty({
-        "candidate": rec.get("action") or rec.get("candidate"),
-        "why": rec.get("why"),
-        "effect": _context_effect_text(metadata.get("effect") or rec.get("effect")),
-        "verification": verification,
-        "runtime_note": metadata.get("runtime_note"),
-        "submit": metadata.get("submit"),
+        "candidate": preflight.get("tactic"),
+        "accepted": preflight.get("accepted"),
+        "outcome_known": preflight.get("outcome_known"),
+        "proof_state": preflight.get("proof_state"),
+        "runnable_evidence": preflight.get("runnable_evidence"),
     })
 
 
-def _context_effect_text(value: Any) -> str:
-    normalized = str(value or "").strip()
-    if not normalized:
-        return ""
-    if normalized in {
-        "context only; proof state unchanged",
-        "read-only; proof state unchanged",
-    }:
+def _is_read_only_backend_action(label: str) -> bool:
+    return label in {
+        "exact_tactic_preflight",
+        "managed_goal_view",
+        "episode_view",
+        "compiler_input_v2",
+        "native_semantic_batch",
+        "native_state_projection",
+        "verify",
+    }
+
+
+def _read_only_result_text(label: str, status: str) -> str:
+    ok = str(status or "").strip() in {"", "ok", "available"}
+    if label == "exact_tactic_preflight":
         return (
-            "This is route-selection context only; it does not run a tactic "
-            "or change the EasyCrypt proof state."
+            "EasyCrypt checked the exact tactic without committing it."
+            if ok
+            else "EasyCrypt rejected the exact tactic without changing proof state."
         )
-    return normalized
-
-
-def _call_subgoal_preview_surface(preview: str) -> dict[str, Any]:
-    normalized = preview.lower()
-    if "accepted by daemon" in normalized:
-        result = (
-            "The previewed call typechecked against the daemon; no tactic was "
-            "committed."
-        )
-    elif "rejected by daemon" in normalized or "was rejected" in normalized:
-        result = (
-            "The previewed call did not typecheck against the daemon; no tactic "
-            "was committed."
-        )
-    else:
-        result = (
-            "The manager returned a call-obligation preview; no tactic was "
-            "committed."
-        )
-    return _drop_empty({
-        "title": "Call Obligation Preview",
-        "result": result,
-        "preview": preview,
-    })
-
-
-def _is_read_only_context_action(label: str) -> bool:
-    return label.startswith("inspect_") or label == "lookup_symbol"
-
-
-def _read_only_result_text(status: str) -> str:
-    normalized = str(status or "").strip()
-    if normalized in {"", "ok", "available"}:
-        return "The manager returned read-only context for the current goal."
-    if normalized == "no_matching_context":
-        return "Manager found no matching context for the current goal."
-    return "The manager returned read-only context for the current goal."
+    if label == "managed_goal_view":
+        return "The manager produced the authoritative current goal envelope."
+    if label == "episode_view":
+        return "The manager produced the authoritative session timeline."
+    return "The manager completed the read-only backend operation."
 
 
 def _manager_result_text(label: str, status: str, ok: bool) -> str:
     normalized = str(status or "").strip()
-    # NO-PROGRESS: EasyCrypt ACCEPTED the tactic, but it changed nothing (structural
-    # no-op), so a commit auto-reverts (`no_progress_reverted`). This is NOT a syntax/type error — there is no error to
-    # surface (errors=None). Routing it through the generic "rejected — use the error
-    # summary" text misleads the agent into hunting a non-existent error: observed
-    # live (MEE-CBC L1, 2026-06-06), the agent burned turns re-trying `inline` variants
-    # that EC accepted-but-no-op'd, each time told to "use the error summary" with none
-    # present. Say the truth instead: accepted, no effect, pick a different tactic.
-    if normalized == "no_progress_reverted":
-        return (
-            "NO PROGRESS — EasyCrypt ACCEPTED this commit but it did not change the "
-            "goal, so nothing was committed (it auto-reverts). This is NOT a syntax or "
-            "type error — there is no error to fix. The tactic is a no-op at this goal "
-            "(e.g. the call is already effectively inlined, or it needs a different / "
-            "positional form). Re-trying this exact tactic will no-op again — pick a "
-            "different tactic."
-        )
     if label == "commit_tactic":
-        if ok and normalized in {"ok", "accepted", "success"}:
-            return "EasyCrypt accepted the committed tactic."
-        if ok:
-            return "The manager finished the commit attempt and refreshed the workspace view."
-        return (
-            "EasyCrypt rejected the committed tactic. Use the error summary "
-            "and current goal to revise the proof step."
-        )
-    if label == "commit_replay_suffix_chunk":
-        if ok:
-            return "The manager committed a verifier-checked old route chunk."
-        return "The manager did not commit the old route chunk."
-    if label == "fresh_restart":
-        if ok:
+        if normalized == "partial_success":
             return (
-                "EasyCrypt restarted this node from the target lemma; prior "
-                "committed tactics in this node were discarded."
+                "EasyCrypt committed the successful tactic prefix and rejected "
+                "the remaining tactic."
             )
-        return "The manager could not restart this node."
-    if label == "undo_to_checkpoint":
-        if ok:
-            return "The manager rewound this branch to the selected checkpoint."
-        return "The manager could not rewind to the selected checkpoint."
-    if ok:
-        return "The manager completed this proof-level request."
-    return "The manager could not complete this proof-level request."
-
-
-def _context_topic_title(topic: str) -> str:
-    return {
-        "goal_info": "Parsed Goal Information",
-        "diagnose": "Latest Failure Diagnosis",
-        "episode_view": "Proof Timeline",
-        "proof_frontier": "Proof Frontier Context",
-        "pivot_context": "Pr Route Context",
-        "verified_pivot_options": "Verified Pr Route Options",
-        "call_site_options": "Call-Site Context",
-        "call_invariant_skeleton": "Call-Invariant Glob Skeleton",
-        "call_subgoals": "Call Obligation Preview",
-        "lemma_hints": "Lemma Hint Context",
-        "lemma_index": "Whole-File Lemma Index",
-        "operator_lemmas": "Operator → Loaded Lemmas (live EC search)",
-        "pr_bridge_routes": "Verified Pr Bridge Routes",
-        "equiv_bridge_lemmas": "Equiv Bridge Lemma Context",
-        "bridge_lemmas": "Equiv Bridge Lemma Context",   # back-compat alias
-        "bridge_options": "Verified Pr Bridge Routes",   # back-compat alias
-        "rewrite_candidates": "Rewrite Candidate Context",
-        "suggest_close": "Closing Context",
-        "tactic_forms": "Tactic Form Reference",
-        "align": "Left/Right Alignment Context",
-    }.get(topic, "")
-
-
-def _context_content_result_text(payload: dict[str, Any]) -> str:
-    status = str(payload.get("status") or "").strip()
-    if status == "no_matching_context":
-        return "No matching context was found for the current goal."
-    count = 0
-    observations = payload.get("observations")
-    if isinstance(observations, list):
-        count = len(observations)
-    tool_view = payload.get("tool_view")
-    if isinstance(tool_view, dict):
-        guidance = _dict(tool_view.get("guidance"))
-        recs = _list(guidance.get("recommendations"))
-        count = max(count, len(recs))
-    if count:
-        return f"{count} context item(s) returned."
-    if status in {"ok", "available"}:
-        return "Context returned."
-    return ""
-
-
-def _dedupe_context_items(items: list[dict[str, Any]]) -> list[dict[str, Any]]:
-    seen: set[str] = set()
-    out: list[dict[str, Any]] = []
-    for item in items:
-        clean = _drop_empty(item)
-        key = json.dumps(clean, sort_keys=True)
-        if not clean or key in seen:
-            continue
-        seen.add(key)
-        out.append(clean)
-    return out
-
-
-def _message_surface(message: dict[str, Any]) -> dict[str, Any]:
-    return _drop_empty({
-        "message": message.get("message"),
-        "severity": message.get("severity"),
-    })
-
-
-def _looks_like_workspace_payload(payload: dict[str, Any]) -> bool:
-    return bool(
-        payload.get("kind") == "prover_workspace_view"
-        or (
-            isinstance(payload.get("workspace"), dict)
-            and isinstance(_dict(payload.get("workspace")).get("view"), dict)
+        if normalized == "no_progress_reverted":
+            return (
+                "EasyCrypt accepted the tactic but the manager reverted it "
+                "as a no-op because it did not change the goal."
+            )
+        return (
+            "EasyCrypt accepted the committed tactic."
+            if ok
+            else "EasyCrypt rejected the committed tactic."
         )
-    )
+    if label == "fresh_restart":
+        return (
+            "EasyCrypt restarted this node from the target lemma."
+            if ok
+            else "The manager could not restart this node."
+        )
+    if label in {"undo_last_step", "undo_to_checkpoint"}:
+        return (
+            "The manager completed the requested rewind."
+            if ok
+            else "The manager could not complete the requested rewind."
+        )
+    if ok:
+        return f"The manager completed {label}."
+    return f"The manager could not complete {label} ({normalized or 'failed'})."
+
+
+def _compact_context_content(content: dict[str, Any]) -> dict[str, Any]:
+    return dict(content)
+
+
+def _compact_agent_observation(observation: dict[str, Any]) -> dict[str, Any]:
+    """Compact an observation without erasing nested schema-required fields."""
+
+    content = observation.get("content")
+    clean = _drop_empty({
+        key: value
+        for key, value in observation.items()
+        if key != "content"
+    })
+    if isinstance(content, dict) and content:
+        clean["content"] = _compact_context_content(content)
+    return clean
 
 
 def _timeout_observation(label: str, cmd: list[str], timeout: int) -> dict[str, Any]:
@@ -724,7 +1118,7 @@ def _timeout_observation(label: str, cmd: list[str], timeout: int) -> dict[str, 
         "effect": (
             "The attempted action may have touched the backend; the manager "
             "returned the last completed workspace view."
-            if _backend_args_mutate_proof_state(cmd)
+            if backend_args_mutate_proof_state(cmd)
             else (
                 "This was a read-only manager request; it did not change the "
                 "EasyCrypt proof state."
@@ -732,7 +1126,7 @@ def _timeout_observation(label: str, cmd: list[str], timeout: int) -> dict[str, 
         ),
         "proof_state": (
             "The manager could not confirm a new proof state before the timeout."
-            if _backend_args_mutate_proof_state(cmd)
+            if backend_args_mutate_proof_state(cmd)
             else "The committed EasyCrypt proof state was not changed."
         ),
         "tactic": _command_arg_after(cmd, "-c"),
@@ -741,7 +1135,7 @@ def _timeout_observation(label: str, cmd: list[str], timeout: int) -> dict[str, 
 
 
 def _action_effect(label: str, execution: dict[str, Any]) -> str:
-    if label.startswith("inspect_") or label == "lookup_symbol":
+    if label == "exact_tactic_preflight":
         return (
             "This asks the manager for information only; it does not change "
             "the EasyCrypt proof state."
@@ -775,15 +1169,13 @@ def _proof_state_observation(
     status: str,
 ) -> str:
     normalized = str(status or "").strip()
-    if label == "commit_replay_suffix_chunk":
-        return "The committed EasyCrypt proof state changed if the replay chunk was accepted."
     if normalized in {"no_progress", "no_progress_reverted"}:
         return "The committed EasyCrypt proof state was not changed."
     if bool(execution.get("state_changed") or execution.get("history_committed")):
         return "The committed EasyCrypt proof state changed."
     if normalized in {"failed", "error", "rejected"}:
         return "The committed EasyCrypt proof state was not changed."
-    if label.startswith("inspect_") or label == "lookup_symbol":
+    if label == "exact_tactic_preflight":
         return "The committed EasyCrypt proof state was not changed."
     if label == "fresh_restart":
         return "The EasyCrypt proof state was reset to the target lemma start."
@@ -826,7 +1218,10 @@ def _error_summary(payload: dict[str, Any], stderr: str, *, ok: bool = False) ->
     extracted = _extract_daemon_rejected(raw_excerpt)
     if extracted:
         return extracted
-    for item in _list(payload.get("errors")):
+    error_items = [
+        *_list(payload.get("errors")),
+    ]
+    for item in error_items:
         if isinstance(item, dict):
             text = _first_text(
                 item.get("message"),
@@ -848,27 +1243,6 @@ def _error_summary(payload: dict[str, Any], stderr: str, *, ok: bool = False) ->
     # misleading signal. Only fall back to stderr when the command did not succeed.
     if not ok and stderr.strip():
         return _preview(stderr.strip(), limit=280)
-    return ""
-
-
-def _stdout_error_summary(stdout: str) -> str:
-    """Recover the raw EasyCrypt error from any JSON object in a failed command's
-    stdout — used when the [TACTIC-EXECUTION-RESULT] block carried no structured
-    ``errors`` but the daemon agent-view envelope (also in stdout) did. Raw EC
-    text only; no heuristic classification (that stays in ec_error_classifier)."""
-    for obj in _iter_json_objects(stdout or ""):
-        for item in _list(obj.get("errors")):
-            if isinstance(item, dict):
-                text = _first_text(
-                    item.get("message"),
-                    item.get("diagnostic"),
-                    item.get("error"),
-                    default="",
-                )
-                if text:
-                    return _preview(text, limit=280)
-            elif str(item).strip():
-                return _preview(str(item), limit=280)
     return ""
 
 
@@ -933,20 +1307,6 @@ def _first_list_text(value: Any) -> str:
 
 
 
-def _text_preview(text: str, *, limit: int) -> str:
-    """Preview structured stdout without destroying its layout.
-
-    `tactic_forms`, call-subgoal previews, signatures, and many EasyCrypt inspect
-    outputs are already human-readable line-oriented text.  The generic `_preview`
-    intentionally flattens whitespace for one-line summaries, but using it for
-    returned context content turns forms/lemmas into an unreadable paragraph.
-    """
-    shown = str(text or "").rstrip()
-    if len(shown) <= limit:
-        return shown
-    return shown[: max(0, limit - 3)].rstrip() + "..."
-
-
 def _timeout_stream_text(value: Any) -> str:
     if value is None:
         return ""
@@ -955,20 +1315,20 @@ def _timeout_stream_text(value: Any) -> str:
     return str(value)
 
 
-def _backend_args_mutate_proof_state(cmd: list[str]) -> bool:
+def backend_args_mutate_proof_state(cmd: list[str]) -> bool:
     flags = set(str(part) for part in cmd)
     if "-tactic-exec" in flags:
         return True
-    return bool(flags & {"-start", "-next", "-prev", "-chain", "-replay"})
+    return "-start" in flags
 
 
+def _backend_args_require_tactic_execution_result(
+    cmd: list[str],
+) -> bool:
+    """Whether this action uses the current per-tactic execution contract.
 
+    Session start mutates lifecycle state but is not a tactic submission; it
+    has its own response contract.
+    """
 
-extract_json_object = _extract_json_object
-workspace_payload_from_stdout = _workspace_payload_from_stdout
-workspace_view_from_payload = _workspace_view_from_payload
-command_summary = _command_summary
-timeout_command_summary = _timeout_command_summary
-agent_observation_from_command = _agent_observation_from_command
-content_observation_from_payload = _content_observation_from_payload
-backend_args_mutate_proof_state = _backend_args_mutate_proof_state
+    return "-tactic-exec" in {str(part) for part in cmd}

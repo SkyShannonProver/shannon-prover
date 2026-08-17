@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Daemon-backed fast path for session_cli.
 
-When available, each ``-next`` call routes through a persistent
+When available, each managed commit routes through a persistent
 ``ec_daemon`` process instead of spawning a fresh ``easycrypt``
 subprocess. The daemon carries EC state in memory so every commit
 after the first costs ~50-100 ms instead of 1-2 s.
@@ -35,11 +35,12 @@ Usage from ``session_cli.Session.append_block``::
     else:
         # fall back to the slow _run_ec path
 
-See ``DaemonBackend.invalidate`` for the ``-prev``/``-start`` path.
+See ``DaemonBackend.invalidate`` for the undo/start path.
 """
 
 from __future__ import annotations
 
+import errno
 import hashlib
 import json
 import os
@@ -63,8 +64,7 @@ def _default_socket() -> str:
     the daemon's cwd vanished and EC crashed with
     ``Unix_error(ENOENT, "getcwd")`` — surfacing to callers as
     ``daemon unavailable`` / ``could not sync daemon to committed history`` and
-    silently disabling all daemon-verified producers (bridge_options,
-    call_site_options, rewrite_candidates) at deep proof states. Keying the
+    disabling native/preflight reads at deep proof states. Keying the
     socket on the current checkout keeps a reused daemon's cwd equal to the
     live checkout, so ``getcwd`` always succeeds. The managed prover overrides
     this with a per-run ``EC_DAEMON_SOCKET``.
@@ -132,6 +132,34 @@ _POISON_MARKERS = (
     "unix_error",
 )
 
+_STALE_SOCKET_ERRNOS = frozenset({
+    errno.ECONNREFUSED,
+    errno.ENOENT,
+})
+
+
+def _socket_probe_error(errno_value: int, socket_path: str) -> str:
+    """Describe a failed Unix-socket probe without treating it as stale.
+
+    A permission failure means the caller cannot establish whether the
+    listener is healthy.  It must therefore fail closed without unlinking a
+    possibly live daemon socket.  Unknown probe failures follow the same
+    conservative rule.
+    """
+
+    try:
+        detail = os.strerror(errno_value)
+    except (OverflowError, ValueError):
+        detail = "unknown socket error"
+    if errno_value in {errno.EACCES, errno.EPERM}:
+        kind = "daemon socket access denied"
+    else:
+        kind = "daemon socket probe failed"
+    return (
+        f"{kind}: {socket_path}: {detail} "
+        f"(errno={errno_value})"
+    )
+
 
 def _is_poison_error(exc: object) -> bool:
     """A live daemon whose working directory was deleted (e.g. spawned in a
@@ -184,7 +212,7 @@ class DaemonBackend:
 
     def invalidate(self) -> None:
         """Close the daemon session (best effort) and drop state file.
-        Call on ``-start`` / ``-prev`` / any operation that rewinds
+        Call on start / undo / any operation that rewinds
         or resets committed history."""
         cli = self._client
         if cli is None and os.path.exists(self.socket_path):
@@ -215,8 +243,7 @@ class DaemonBackend:
 
         Replay audit 2026-04-29: this exact stale-socket case caused
         all 5 verified-clean lemma replays to show 0 emits across
-        every daemon-dependent block (AUTO-PIVOT-VERIFIED,
-        AUTO-PIVOT-CALL-READY, AUTO-CALL-SUGGEST,
+        every daemon-dependent block (AUTO-PIVOT-VERIFIED, AUTO-CALL-SUGGEST,
         AUTO-BRIDGE-SUGGEST, AUTO-REWRITE-PROBE). The socket file
         was a week old; `os.path.exists()` returned True so we
         skipped spawning, then connect/list_sessions failed silently.
@@ -227,18 +254,27 @@ class DaemonBackend:
                 return self._client
             except Exception:
                 self._client = None
-        # Probe-and-respawn on stale socket: socket file present but
-        # nothing listening. connect_ex returns 0 on success, errno
-        # otherwise (typically ECONNREFUSED for orphan socket files).
+        # Probe-and-respawn on a *confirmed* stale socket: socket file present
+        # but nothing listening.  ``connect_ex`` also returns nonzero for
+        # permission and policy failures.  Those do not prove staleness and
+        # must never cause a potentially live socket to be unlinked.
         if os.path.exists(self.socket_path):
+            probe = None
             try:
                 probe = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
                 probe.settimeout(2)
                 rc = probe.connect_ex(self.socket_path)
-                probe.close()
+            except OSError as exc:
+                rc = exc.errno if exc.errno is not None else -1
             except Exception:
                 rc = -1
-            if rc != 0:
+            finally:
+                if probe is not None:
+                    try:
+                        probe.close()
+                    except Exception:
+                        pass
+            if rc in _STALE_SOCKET_ERRNOS:
                 # Stale: drop the file so _spawn_daemon's existence
                 # check doesn't short-circuit. Also drop the spawn
                 # lock — it may be from a long-dead process.
@@ -249,6 +285,9 @@ class DaemonBackend:
                         pass
                     except Exception:
                         pass
+            elif rc != 0:
+                self.last_error = _socket_probe_error(rc, self.socket_path)
+                return None
         if not os.path.exists(self.socket_path):
             if not self._spawn_daemon():
                 return None
@@ -347,7 +386,8 @@ class DaemonBackend:
         self.last_error = ""
         cli = self._ensure_daemon()
         if cli is None:
-            self.last_error = "daemon connection unavailable"
+            if not self.last_error:
+                self.last_error = "daemon connection unavailable"
             return False
 
         state = self._load_state()

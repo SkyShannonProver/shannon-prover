@@ -160,31 +160,6 @@ def test_bad_env_falls_back_to_default(monkeypatch):
 
 # --- Layer 2 classifier: proof-open ------------------------------------------
 
-def test_proof_is_open_true_when_open_with_goals():
-    view = {"proof_status": {"status": "open", "remaining_goals": 4}}
-    assert cr.proof_is_open(view) is True
-
-
-def test_proof_is_open_false_when_no_goals():
-    view = {"proof_status": {"status": "open", "remaining_goals": 0}}
-    assert cr.proof_is_open(view) is False
-
-
-def test_proof_is_open_false_for_candidate_and_complete():
-    assert cr.proof_is_open(
-        {"proof_status": {"status": "candidate_closed_pending_qed", "remaining_goals": 0}}
-    ) is False
-    assert cr.proof_is_open(
-        {"proof_status": {"status": "complete", "remaining_goals": 0}}
-    ) is False
-
-
-def test_proof_is_open_false_for_missing_or_thin_view():
-    assert cr.proof_is_open(None) is False
-    assert cr.proof_is_open({}) is False
-    assert cr.proof_is_open({"proof_status": "x"}) is False
-
-
 # --- handoff: dead-end ledger dedup + cap ------------------------------------
 
 # --- handoff: frontier brief + render ----------------------------------------
@@ -347,20 +322,6 @@ def test_no_respawn_when_terminal_health_set(monkeypatch):
     assert rt._should_respawn(_FakeResult(0), baseline=1) is False
 
 
-def test_give_up_ends_run_no_respawn(monkeypatch):
-    # CORE of the tightening: a clean give-up while the proof is still OPEN, with
-    # NO ctx_pressure, must NOT respawn (it ends the run = measurable give-up).
-    # REVERT-SENSITIVE: re-adding the premature-give-up branch (returncode==0 +
-    # terminal_health is None + proof_is_open) flips this to True and fails.
-    monkeypatch.delenv("SHANNON_DISABLE_CTX_RESPAWN", raising=False)
-    rt = _runtime_with(
-        _FakeManager(["proc", "inline", "auto"], _OPEN_VIEW),
-        _FakeBridge(terminal_health=None),
-        _FakeAgent(ctx_pressure=False),  # no token pressure, but proof open
-    )
-    assert rt._should_respawn(_FakeResult(0), baseline=1) is False
-
-
 def test_no_respawn_on_real_finish_closed_proof(monkeypatch):
     monkeypatch.delenv("SHANNON_DISABLE_CTX_RESPAWN", raising=False)
     rt = _runtime_with(
@@ -417,7 +378,7 @@ def test_tracker_marker_resets_idle_timers():
     t.session_id = ""
     t.result_text = ""
     t.finished = False
-    t.proved = False
+    t.completion_candidate_ready = False
     t.last_activity_time = 0.0
     t.last_progress_time = 0.0
     t.last_accept_time = 0.0
@@ -425,7 +386,7 @@ def test_tracker_marker_resets_idle_timers():
     t.context_respawn_count = 0
     # Stub the two end-of-line hooks so we exercise ONLY the marker branch
     # without needing a real session snapshot / display pipeline.
-    t._refresh_structured_success = lambda: None
+    t._refresh_completion_candidate = lambda: None
     # Avoid the assistant/user/tool branches; feed only the system marker.
     line = json.dumps({"type": "system", "context_respawn": 1, "node": "0.0"})
     # _process_line calls _handle_stream_event at the end; guard by stubbing.
@@ -479,9 +440,9 @@ def test_ctx_pressure_respawns_when_budget_remains(monkeypatch):
     assert rt._should_respawn(_FakeResult(0), baseline=1) is True
 
 
-# --- FIX #2: the fresh-context reopening is materially smaller than turn-0 -----
+# --- Fresh-context reopening preserves the same minimal profile boundary. -----
 
-def test_compact_prompt_drops_heavy_bootstrap():
+def test_current_prompt_never_embeds_unfiltered_heavy_bootstrap():
     from workflow.agent_prompt_render import render_long_lived_agent_prompt
 
     # A bulky turn-0 bootstrap stands in for the lemma source + siblings + KB.
@@ -495,12 +456,14 @@ def test_compact_prompt_drops_heavy_bootstrap():
         heavy, compact=True, compact_pointer="Target lemma `L` lives in `f.ec`",
         **common,
     )
-    # The heavy bootstrap is present in the normal opening, absent in the compact
-    # one (the fresh session re-reads source on demand instead).
-    assert "FULL_BOOTSTRAP_MARKER" in full
+    # Current profiles admit only the profile-safe target handoff.  Neither the
+    # initial nor respawn prompt may smuggle the old full-source bootstrap across
+    # the manager boundary.
+    assert "FULL_BOOTSTRAP_MARKER" not in full
     assert "FULL_BOOTSTRAP_MARKER" not in compact
-    # Compact is materially smaller and keeps the runtime/tool-protocol block.
-    assert len(compact) < len(full) / 2
+    # Respawn remains compact and both forms keep the runtime/tool protocol.
+    assert len(compact) <= len(full)
+    assert "submit_proof_intent" in full
     assert "submit_proof_intent" in compact
     assert "Target lemma `L` lives in `f.ec`" in compact
 
@@ -713,6 +676,11 @@ class _LoopMemory:
         self.latest_result = tmp / "latest_manager_result.json"
         self.latest_followup = tmp / "latest_followup.md"
         self.latest_proof = tmp / "proof_so_far.md"
+        self.initial_followup = tmp / "initial_followup.md"
+        self.initial_agent_prompt = tmp / "initial_agent_prompt.md"
+        self.initial_followup.write_text(
+            "Initial manager handoff.\n", encoding="utf-8"
+        )
 
     def record_agent_session(self, *a, **k):
         pass
@@ -728,7 +696,7 @@ def _loop_runtime(monkeypatch, tmp_path, *, agent, bridge, manager, env=None):
         M, "render_long_lived_agent_prompt",
         lambda *a, **k: "RUNTIME_PROMPT", raising=True,
     )
-    monkeypatch.setattr(M, "closed_history_tactics", lambda *a, **k: [], raising=True)
+    monkeypatch.setattr(M, "_closed_history_tactics", lambda *a, **k: [], raising=True)
 
     rt = ProofNodeRuntime.__new__(ProofNodeRuntime)
     rt.manager = manager
@@ -818,6 +786,34 @@ def test_loop_runway_guard_blocks_respawn(monkeypatch, tmp_path):
     assert len(rt.checkpoints) == 0
 
 
+def test_codex_same_thread_resume_uses_remaining_runway(monkeypatch, tmp_path):
+    """A Codex resume is not a cold respawn and may use the last three minutes."""
+    monkeypatch.delenv("SHANNON_DISABLE_CTX_RESPAWN", raising=False)
+    monkeypatch.setenv("SHANNON_CTX_RESPAWN_MAX", "0")
+    import time as _t
+    # Deliberately below the 180-second cold-respawn threshold, but still open.
+    monkeypatch.setenv("SHANNON_NODE_DEADLINE_EPOCH", repr(_t.time() + 30.0))
+
+    class _CodexLoopAgent(_LoopAgent):
+        def run(self, *args, **kwargs):
+            result = super().run(*args, **kwargs)
+            self.last_turn_had_tool_call = self.run_calls == 1
+            return result
+
+    agent = _CodexLoopAgent(script=[(0, False), (0, False)])
+    bridge = _LoopBridge()
+    manager = _LoopManager(_OPEN_VIEW)
+    rt = _loop_runtime(
+        monkeypatch, tmp_path, agent=agent, bridge=bridge, manager=manager
+    )
+    rt.agent_backend = "codex"
+
+    rt.run()
+
+    assert agent.run_calls == 2
+    assert len(rt.checkpoints) == 0
+
+
 def test_loop_no_respawn_on_clean_finish(monkeypatch, tmp_path):
     monkeypatch.delenv("SHANNON_DISABLE_CTX_RESPAWN", raising=False)
     monkeypatch.setenv("SHANNON_CTX_RESPAWN_MAX", "2")
@@ -844,6 +840,7 @@ def test_loop_no_respawn_on_clean_finish(monkeypatch, tmp_path):
 import workflow.progress as prog
 import workflow.tree.supervisor as sup
 import workflow.tree.trackers as trk
+from core.easycrypt.session_events import append_event
 
 
 def _write_live_session(cwd: Path, session_tag: str, tactics: list[str]) -> Path:
@@ -857,6 +854,13 @@ def _write_live_session(cwd: Path, session_tag: str, tactics: list[str]) -> Path
         "Current goal\n  goal after " + str(len(tactics)) + " tactics\n",
         encoding="utf-8",
     )
+    append_event(sess, "session.started", {
+        "file": "f.ec",
+        "lemma": "L",
+        "include_dirs": [],
+        "discarded_tactic_count": 0,
+        "restart_count": 1,
+    })
     return sess
 
 
@@ -881,18 +885,19 @@ def _write_stale_checkpoint_capsule(
     )
     manifest = {
         "kind": "proof_node_resume_capsule",
-        "capsule_version": 1,
+        "capsule_version": 2,
         "target": {"file": "f.ec", "lemma": "L", "include_dir": ""},
         "source": {},
         "replay": {
             "history_file": "history.ec",
             "tactic_count": len(tactics),
+            "resume_prefix_count": len(tactics),
             "current_goal_hash": "stalehash000",
             "current_goal_preview": "stale goal",
         },
-        "score": {"value": 1.0, "reasons": [], "route_family": {}},
+        "score": {"value": 1.0, "reasons": []},
         "lineage": {"route_family": {}},
-        "handoff": {"notes": []},
+        "handoff": {"notes": [], "route_event_facts": []},
     }
     (cap_dir / "resume.json").write_text(json.dumps(manifest), encoding="utf-8")
     return cap_dir / "resume.json"
@@ -1072,7 +1077,7 @@ def _gate_kwargs(**over):
     base = dict(
         respawn_disabled=False,
         already_respawned=False,
-        proved=False,
+        completion_candidate=False,
         supervisor_killed=False,
         worker_crashed=True,
         context_respawn_count=1,
@@ -1099,7 +1104,7 @@ def test_layer3_gate_one_shot_already_respawned():
 
 
 def test_layer3_gate_proved():
-    assert prog._layer3_gates_pass(**_gate_kwargs(proved=True)) is False
+    assert prog._layer3_gates_pass(**_gate_kwargs(completion_candidate=True)) is False
 
 
 def test_layer3_gate_no_context_respawn():
@@ -1133,7 +1138,7 @@ def test_layer3_gate_no_runway():
 # --- Layer-3 is CRASH-ONLY: a clean give-up must NOT pass the gate -----------
 #
 # With Layer-2 removed, a clean give-up exits gracefully (returncode 0 + a final
-# `result` event) and surfaces as `finished and not proved` — but it is a real,
+# `result` event) and surfaces as `finished and not completion_candidate` — but it is a real,
 # measurable agent decision and must end the run, never respawn. Only an abnormal
 # worker death (crash) is an infra death we recover by replay. Revert-sensitive:
 # deleting the `if not worker_crashed: return False` line flips the clean-give-up
@@ -1176,12 +1181,12 @@ def test_layer3_gate_allows_worker_self_exit():
 #
 # A faithful, minimal slice of `run_tree_prover`'s per-iteration tail (lines
 # ~3819-3828): scan `nodes.values()` (NOT `_active_nodes()`) for finished &
-# not-proved nodes and call `_maybe_layer3_crash_respawn`. We drive it with FAKE
+# not-completion_candidate nodes and call `_maybe_layer3_crash_respawn`. We drive it with FAKE
 # trackers/nodes — no subprocess / EC / claude — to assert (a) Layer-3 IS reached
 # for a degraded self-exit and (b) is NOT reached for a supervisor kill.
 #
 # COVERED: the finished-scan iterating `nodes.values()` (so a just-finished node
-#   is still seen), the `finished and not proved` predicate, and that the real
+#   is still seen), the `finished and not completion_candidate` predicate, and that the real
 #   `_maybe_layer3_crash_respawn` gate decision flows from the real tracker flags
 #   (we call the real `_layer3_gates_pass`, only stubbing the capsule/respawn I/O).
 # NOT COVERED (would need real subprocess plumbing): `poll_lines` stdout draining,
@@ -1202,11 +1207,11 @@ class _GateTracker:
     `returncode=0` to model a clean give-up.
     """
 
-    def __init__(self, *, finished, proved, supervisor_killed,
+    def __init__(self, *, finished, completion_candidate, supervisor_killed,
                  context_respawn_count=1, committed_count=5,
                  final_result_emitted=False, returncode=137):
         self.finished = finished
-        self.proved = proved
+        self.completion_candidate_ready = completion_candidate
         self.supervisor_killed = supervisor_killed
         self.context_respawn_count = context_respawn_count
         self.committed_count = committed_count
@@ -1228,12 +1233,12 @@ def _run_finished_scan(nodes, *, on_respawn_attempt):
 
     Iterates `nodes.values()` (the load-bearing choice: a finished/killed node is
     NOT in `_active_nodes()`, so scanning actives would skip it and Layer-3 would
-    never fire). For each finished-&-not-proved node it runs the REAL Layer-3
+    never fire). For each finished-&-not-completion_candidate node it runs the REAL Layer-3
     admission gate against the node's REAL tracker flags; `on_respawn_attempt`
     records which node ids passed the gate (would have been respawned).
     """
     for node in list(nodes.values()):
-        if node.tracker.finished and not node.tracker.proved:
+        if node.tracker.finished and not node.tracker.completion_candidate_ready:
             t = node.tracker
             rc = t.proc.returncode if getattr(t, "proc", None) is not None else None
             worker_crashed = (
@@ -1243,7 +1248,7 @@ def _run_finished_scan(nodes, *, on_respawn_attempt):
             if prog._layer3_gates_pass(
                 respawn_disabled=False,
                 already_respawned=bool(node.layer3_respawned),
-                proved=bool(t.proved),
+                completion_candidate=bool(t.completion_candidate_ready),
                 supervisor_killed=bool(getattr(t, "supervisor_killed", False)),
                 worker_crashed=worker_crashed,
                 context_respawn_count=int(getattr(t, "context_respawn_count", 0) or 0),
@@ -1263,7 +1268,7 @@ def test_loop_layer3_reached_for_degraded_self_exit():
     nodes = {
         "0.0": _GateNode(
             "0.0",
-            _GateTracker(finished=True, proved=False, supervisor_killed=False),
+            _GateTracker(finished=True, completion_candidate=False, supervisor_killed=False),
         )
     }
     _run_finished_scan(nodes, on_respawn_attempt=seen.append)
@@ -1277,7 +1282,7 @@ def test_loop_layer3_not_reached_for_supervisor_killed_node():
     nodes = {
         "0.0": _GateNode(
             "0.0",
-            _GateTracker(finished=True, proved=False, supervisor_killed=True),
+            _GateTracker(finished=True, completion_candidate=False, supervisor_killed=True),
         )
     }
     _run_finished_scan(nodes, on_respawn_attempt=seen.append)
@@ -1293,7 +1298,7 @@ def test_loop_layer3_not_reached_for_clean_give_up():
         "0.0": _GateNode(
             "0.0",
             _GateTracker(
-                finished=True, proved=False, supervisor_killed=False,
+                finished=True, completion_candidate=False, supervisor_killed=False,
                 final_result_emitted=True, returncode=0,
             ),
         )
@@ -1310,11 +1315,11 @@ def test_loop_finished_scan_iterates_all_nodes_not_active():
     nodes = {
         "0.0": _GateNode(  # finished self-exit -> eligible
             "0.0",
-            _GateTracker(finished=True, proved=False, supervisor_killed=False),
+            _GateTracker(finished=True, completion_candidate=False, supervisor_killed=False),
         ),
         "0.1": _GateNode(  # still running -> not finished -> skipped
             "0.1",
-            _GateTracker(finished=False, proved=False, supervisor_killed=False),
+            _GateTracker(finished=False, completion_candidate=False, supervisor_killed=False),
         ),
     }
     _run_finished_scan(nodes, on_respawn_attempt=seen.append)
@@ -1414,29 +1419,12 @@ class _PipeProc:
         pass
 
 
-# The 7 function-object attributes run_tree_prover exposes as its caller contract
-# (read via getattr by prover.py:3131/3163-3170 + two tests). The NodeSupervisor
-# refactor moves the computation into the supervisor but MUST keep writing these
-# back onto the run_tree_prover function object (blueprint §3.5 / risk #10).
-_RUN_TREE_PROVER_LAST_ATTRS = (
-    "last_session_id",
-    "last_session_ids",
-    "last_ec_session_dir",
-    "last_information_source_audit",
-    "last_payload_audit_path",
-    "last_destructive_abort",
-    "last_destructive_reason",
-)
-
-
 def _system_marker(n=1, node="0.0"):
     return json.dumps({"type": "system", "context_respawn": n, "node": node})
 
 
-def _win_event(text="Proof complete [ALL_GOALS_CLOSED]"):
-    """A `user`/tool_result block carrying the [ALL_GOALS_CLOSED] success marker
-    (`_is_proof_success`, progress.py:828) — drives tracker.proved=True via the
-    text-progress fallback, so the loop winner-detect (3486) fires."""
+def _raw_close_marker_event(text="Proof complete [ALL_GOALS_CLOSED]"):
+    """A raw close-looking tool result that is never proof authority."""
     return json.dumps({
         "type": "user",
         "message": {"content": [{"type": "tool_result", "content": text}]},
@@ -1444,7 +1432,7 @@ def _win_event(text="Proof complete [ALL_GOALS_CLOSED]"):
 
 
 def _result_event(text=""):
-    # A clean `result` event finishes the worker with proved=False and, crucially,
+    # A clean `result` event finishes the worker with completion_candidate=False and, crucially,
     # context_respawn_count unchanged (so a non-degraded child won't re-respawn).
     return json.dumps({"type": "result", "result": text, "session_id": "s"})
 
@@ -1496,6 +1484,7 @@ class _FakeLoaded:
     def __init__(self, replay_prefix):
         self.replay_prefix = list(replay_prefix)
         self.current_goal_hash = "freshhash"
+        self.goal_identity_required = True
         self.current_goal_preview = "open goal"
         self.resume_context = {}
 
@@ -1558,15 +1547,7 @@ def _drive_real_tree_prover(monkeypatch, tmp_path, *, scripts, seed,
         initial_branches=initial_branches,
         payload_audit_path=str(run_dir / "payload_audit.jsonl"),
     )
-    # Characterization: snapshot the caller-contract function attributes + return
-    # tuple. These are the observable surface the NodeSupervisor refactor must keep
-    # byte-identical (blueprint risk #10 + #11). Harmless for existing tests that
-    # ignore these capture keys.
-    capture["return_tuple"] = result
-    capture["last_attrs"] = {
-        k: getattr(prog.run_tree_prover, k, "__MISSING__")
-        for k in _RUN_TREE_PROVER_LAST_ATTRS
-    }
+    capture["tree_result"] = result
     return scr, result
 
 
@@ -1687,8 +1668,8 @@ def test_real_loop_layer3_skips_supervisor_killed(monkeypatch, tmp_path):
         # Mismatch vs replay_prefix=["proc.","wp."] -> drift_reason fires.
         history_tactics=["WRONG.", "DIFFERENT."],
         active_tool_mutates=False,
-        candidate_ready=False,
-        final_ready=False,
+        goals_discharged=False,
+        offline_verified=False,
     )
     real_snapshot = prog._session_snapshot
 
@@ -1710,6 +1691,7 @@ def test_real_loop_layer3_skips_supervisor_killed(monkeypatch, tmp_path):
     branches = [{
         "replay_prefix": ["proc.", "wp."],
         "expected_goal_hash": "expected_hash_that_wont_match",
+        "goal_identity_required": True,
         "resume_root_policy": "score",
     }]
     scr, _ = _drive_real_tree_prover(
@@ -1796,9 +1778,8 @@ def test_real_loop_survives_layer3_respawn_bootstrap_timeout(monkeypatch, tmp_pa
         capture=capture, spawner_cls=_BootstrapTimeoutSpawns,
     )
     # The run SURVIVED and terminated normally on the best available branch.
-    output_text, rc, winner_node, proved = result
-    assert winner_node == "0.0"
-    assert proved is False
+    assert result.selected_node_id == "0.0"
+    assert result.completion_candidate is None
     # The respawn was genuinely attempted (gate passed, capsule selected+loaded,
     # `_spawn_node` reached) and the bootstrap raised inside the cmd build.
     assert capture.get("select_calls") == ["prover_tree_0_0"]
@@ -1826,30 +1807,16 @@ def test_real_loop_survives_layer3_respawn_bootstrap_timeout(monkeypatch, tmp_pa
     )
     assert "ReplBackendTimeout" in failed.get("error", "")
     assert failed.get("node") == "Tree-0.0"
-    # CHARACTERIZATION: the bootstrap-fail degradation leaves a clean caller
-    # contract — no destructive abort, empty session_ids (the respawn child was
-    # never registered). Pins the observable surface across the refactor.
-    assert _norm_last_attrs(capture["last_attrs"]) == {
-        "last_session_id": "",
-        "last_session_ids": [],
-        "last_ec_session_dir": ".ec_session_prover_tree_0_0",
-        "last_information_source_audit": [],
-        "last_payload_audit_path": "payload_audit.jsonl",
-        "last_destructive_abort": False,
-        "last_destructive_reason": "",
-    }
+    assert result.selected_session_id == ""
+    assert Path(result.selected_session_dir).name == ".ec_session_prover_tree_0_0"
+    assert result.session_records == ()
+    assert Path(result.payload_audit_path).name == "payload_audit.jsonl"
+    assert result.destructive_abort is False
+    assert result.destructive_reason == ""
 
 
 # ---------------------------------------------------------------------------
-# CHARACTERIZATION baseline for the NodeSupervisor refactor
-#
-# The four real-drive tests above already lock the layer3 decision surface
-# (select/load/spawn) + (test 4) the return tuple + payload events. These add the
-# remaining observable the refactor must keep byte-identical: the 7 caller-contract
-# `run_tree_prover.last_*` function attributes (blueprint risk #10) + a clean
-# no-layer3 finish. Golden values were captured from the CURRENT (pre-refactor)
-# run_tree_prover; after the NodeSupervisor extraction every assertion below must
-# still pass unchanged.
+# Typed tree-result boundary characterization.
 # ---------------------------------------------------------------------------
 
 
@@ -1864,23 +1831,8 @@ def _payload_events(tmp_path):
     ]
 
 
-def _norm_last_attrs(attrs: dict) -> dict:
-    """Reduce the two absolute-path fields to basenames so golden comparisons are
-    position-independent (pytest tmp dirs differ run-to-run); the rest is stable."""
-    a = dict(attrs)
-    for k in ("last_ec_session_dir", "last_payload_audit_path"):
-        v = a.get(k)
-        a[k] = _os.path.basename(str(v)) if v else v
-    return a
-
-
-def test_characterization_degraded_self_exit_last_attrs(monkeypatch, tmp_path):
-    """GOLDEN: the layer3-respawn scenario's full caller-contract surface.
-
-    Same drive as test_real_loop_layer3_respawns_degraded_self_exit, but pins the
-    return tuple + all 7 `run_tree_prover.last_*` attrs. `last_session_ids` carries
-    exactly the respawn child (Tree-0.0.r1) it minted from the 2-tactic live capsule.
-    """
+def test_characterization_degraded_self_exit_typed_result(monkeypatch, tmp_path):
+    """The respawn scenario returns one explicit, immutable search result."""
     monkeypatch.delenv("SHANNON_DISABLE_CTX_RESPAWN", raising=False)
     monkeypatch.delenv("SHANNON_NODE_DEADLINE_EPOCH", raising=False)
     capture: dict = {}
@@ -1893,26 +1845,28 @@ def test_characterization_degraded_self_exit_last_attrs(monkeypatch, tmp_path):
         scripts=scripts, seed={"0.0": ["proc.", "wp.", "inline *."]},
         capture=capture,
     )
-    assert capture["return_tuple"] == ("", 0, "0.0", False)
-    assert _norm_last_attrs(capture["last_attrs"]) == {
-        "last_session_id": "",
-        "last_session_ids": [{
-            "node": "Tree-0.0.r1", "session_id": "s", "winner": False,
-            "proved": False, "committed_count": 2, "max_committed_count_seen": 2,
-        }],
-        "last_ec_session_dir": ".ec_session_prover_tree_0_0",
-        "last_information_source_audit": [],
-        "last_payload_audit_path": "payload_audit.jsonl",
-        "last_destructive_abort": False,
-        "last_destructive_reason": "",
-    }
+    result = capture["tree_result"]
+    assert result.output_text == ""
+    assert result.returncode == 0
+    assert result.selected_node_id == "0.0"
+    assert result.completion_candidate is None
+    assert list(result.session_records) == [{
+            "node": "Tree-0.0.r1", "session_id": "s",
+                "session_index": 0, "continuation": False, "winner": False,
+                "completion_candidate": False, "committed_count": 2, "max_committed_count_seen": 2,
+                "agent_backend": "codex",
+            }]
+    assert Path(result.selected_session_dir).name == ".ec_session_prover_tree_0_0"
+    assert result.information_source_audit == ()
+    assert Path(result.payload_audit_path).name == "payload_audit.jsonl"
+    assert result.destructive_abort is False
 
 
 def test_characterization_clean_finish_no_layer3(monkeypatch, tmp_path):
     """GOLDEN: a non-degraded clean finish takes no layer3 path.
 
-    Node 0.0 emits a single tool_result (the text-progress success fallback is
-    gated off by the live session dir, so proved stays False) and exits 0. No
+    Node 0.0 emits a single close-looking tool_result, which cannot set completion_candidate,
+    and exits 0. No
     context_respawn marker -> not degraded -> layer3 never selects a capsule;
     `last_session_ids` is empty (no `result`-event session_id captured). Pins the
     no-respawn branch of the observable surface.
@@ -1922,24 +1876,26 @@ def test_characterization_clean_finish_no_layer3(monkeypatch, tmp_path):
     capture: dict = {}
     scr, _ = _drive_real_tree_prover(
         monkeypatch, tmp_path,
-        scripts={"0.0": ([_win_event()], {"exit_code": 0})},
+        scripts={"0.0": ([_raw_close_marker_event()], {"exit_code": 0})},
         seed={"0.0": ["proc.", "wp.", "inline *."]},
         capture=capture,
     )
-    assert capture["return_tuple"] == ("", 0, "0.0", False)
+    result = capture["tree_result"]
+    assert result.output_text == ""
+    assert result.returncode == 0
+    assert result.selected_node_id == "0.0"
+    assert result.completion_candidate is None
     assert capture.get("select_calls", []) == []
     assert capture.get("load_calls", []) == []
     assert scr.spawned_node_ids == ["0.0"]
     assert _payload_events(tmp_path) == ["run_start", "tool_result", "run_end"]
-    assert _norm_last_attrs(capture["last_attrs"]) == {
-        "last_session_id": "",
-        "last_session_ids": [],
-        "last_ec_session_dir": ".ec_session_prover_tree_0_0",
-        "last_information_source_audit": [],
-        "last_payload_audit_path": "payload_audit.jsonl",
-        "last_destructive_abort": False,
-        "last_destructive_reason": "",
-    }
+    assert result.selected_session_id == ""
+    assert result.session_records == ()
+    assert Path(result.selected_session_dir).name == ".ec_session_prover_tree_0_0"
+    assert result.information_source_audit == ()
+    assert Path(result.payload_audit_path).name == "payload_audit.jsonl"
+    assert result.destructive_abort is False
+    assert result.destructive_reason == ""
 
 
 def test_node_supervisor_caps_max_concurrent_at_construction(tmp_path):

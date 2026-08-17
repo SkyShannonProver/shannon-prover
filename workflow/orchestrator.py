@@ -21,12 +21,20 @@ from datetime import datetime
 from pathlib import Path
 from typing import Optional
 
-from workflow.schemas.config import RunConfig
+from workflow.schemas.config import (
+    DEFAULT_CLAUDE_MODEL,
+    RunConfig,
+    default_model_for_backend,
+    normalize_agent_backend,
+)
 from workflow.progress import (
     phase_start, phase_done, status, error as perror,
-    pipeline_ui_init, pipeline_ui_phase, pipeline_ui_reset,
+    pipeline_ui_init, pipeline_ui_phase,
 )
-from workflow.surface_profiles import surface_profile_names
+from workflow.proof_state_compiler.runtime_profiles import (
+    current_surface_profile_names,
+    effective_runtime_surface_manifest,
+)
 
 # ---------------------------------------------------------------------------
 # Project paths
@@ -48,6 +56,7 @@ def run_prover(config: RunConfig, run_dir: Path):
         file_path=config.file,
         lemma_name=config.lemma,
         include_dir=config.include_dir,
+        agent_backend=config.prover.agent_backend,
         model=config.prover.model,
         effort=config.prover.effort,
         max_turns=config.prover.max_total_tactics,
@@ -58,7 +67,6 @@ def run_prover(config: RunConfig, run_dir: Path):
         kill_gap_idle_seconds=config.prover.kill_gap_idle_seconds,
         eval_mode=bool(getattr(config, "eval_mode", False)),
         surface_profile=getattr(config, "surface_profile", None),
-        record_proof_bank=getattr(config, "record_proof_bank", None),
         resume_capsules=list(getattr(config, "resume_capsules", []) or []),
         resume_root_policy=getattr(config.prover, "resume_root_policy", "score"),
         run_dir=run_dir,
@@ -184,6 +192,16 @@ def run(config: RunConfig) -> dict:
     run_dir = _PROJECT_ROOT / config.output_dir / run_name
     run_dir.mkdir(parents=True, exist_ok=True)
     config.save(run_dir / "config.json")
+    (run_dir / "surface_profile_manifest.json").write_text(
+        json.dumps(
+            effective_runtime_surface_manifest(
+                getattr(config, "surface_profile", None)
+            ),
+            indent=2,
+            sort_keys=True,
+        ) + "\n",
+        encoding="utf-8",
+    )
 
     # Pin macOS awake for this run. Without this a laptop going to idle
     # sleep mid-run will freeze both the orchestrator and the `claude -p`
@@ -241,62 +259,50 @@ def run(config: RunConfig) -> dict:
     iter_dir = run_dir / f"iteration_{iteration}"
     iter_dir.mkdir(parents=True, exist_ok=True)
 
-    # ── Pre-check: is the lemma already proved? ──────────────
-    from workflow.agents.prover import _precheck_lemma
-    ec_full_path = _PROJECT_ROOT / config.file
-    precheck = _precheck_lemma(ec_full_path, config.lemma,
-                               include_dir=config.include_dir)
-    if precheck == "proved_and_verified":
-        status("Orchestrator",
-               "Lemma already proved and verified. Skipping.",
-               "\033[32m")
-        iteration_summaries.append({
-            "iteration": iteration, "proved": True,
-            "has_improvements": False, "regression_ok": True,
-            "resume_capsules": [],
-        })
-    else:
-        # Search topology is explicit config, independent of the compiler
-        # surface profile.  Defaults still use tree mode with two initial
-        # provers; callers that want one node set tree_initial_provers=1.
-        prove_mode = config.prover.mode
-        prove_count = config.prover.tree_initial_provers
+    # Search topology is explicit config, independent of the compiler surface.
+    # Precheck, search, writeback, and offline verification all belong to the
+    # run-level prover owner; the orchestrator never constructs a second proof
+    # verdict.
+    prove_mode = config.prover.mode
+    prove_count = config.prover.tree_initial_provers
+    phase_start("PROVE")
+    pipeline_ui_phase(1, "active", f"{prove_mode} mode, {prove_count} provers")
+    prover_result = run_prover(config, iter_dir)
 
-        # ── PROVE ───────────────────────────────────────────────────
-        phase_start("PROVE")
-        pipeline_ui_phase(1, "active",
-                          f"{prove_mode} mode, {prove_count} provers")
-        prover_result = run_prover(config, iter_dir)
-
-        proved = prover_result.proved
-        verified = prover_result.ec_file_verified
-        elapsed_prove = prover_result.elapsed_seconds
-        skipped = prover_result.skipped
-        phase_done("PROVE",
-                   f"proved={proved}, verified={verified}, time={elapsed_prove:.0f}s")
-        result_str = "✅ proved" if proved and verified else ("⚠️ unverified" if proved else "❌ failed")
-        pipeline_ui_phase(1, "done", f"{result_str}, {elapsed_prove:.0f}s")
-
-        if skipped:
-            # Already proved — nothing to do
-            status("Orchestrator", "Lemma already proved and verified.", "\033[32m")
-            iteration_summaries.append({
-                "iteration": iteration, "proved": True,
-                "has_improvements": False, "regression_ok": True,
-                "resume_capsules": list(prover_result.resume_capsules or []),
-            })
-        else:
-            session_id = prover_result.session_id
-            (iter_dir / "session_id.txt").write_text(session_id, encoding="utf-8")
-            iteration_summaries.append({
-                "iteration": iteration, "proved": proved,
-                "has_improvements": False, "regression_ok": True,
-                "resume_capsules": list(prover_result.resume_capsules or []),
-            })
+    elapsed_prove = prover_result.elapsed_seconds
+    phase_done(
+        "PROVE",
+        f"outcome={prover_result.status}, time={elapsed_prove:.0f}s",
+    )
+    result_str = (
+        "✅ verified" if prover_result.is_verified
+        else "⚠️ infrastructure invalid"
+        if prover_result.status == "infrastructure_invalid"
+        else "❌ incomplete"
+    )
+    pipeline_ui_phase(1, "done", f"{result_str}, {elapsed_prove:.0f}s")
+    if prover_result.session_id:
+        (iter_dir / "session_id.txt").write_text(
+            prover_result.session_id,
+            encoding="utf-8",
+        )
+    iteration_summaries.append({
+        "iteration": iteration,
+        "prover_result_id": prover_result.result_id,
+        "prover_result_status": prover_result.status,
+        "prover_result_artifact": str(iter_dir / "prover_run_result.json"),
+        "verified": prover_result.is_verified,
+        "has_improvements": False,
+        "regression_ok": True,
+        "resume_capsules": list(prover_result.resume_capsules or []),
+    })
 
     # ── Final summary ──────────────────────────────────────────────
     total_elapsed = time.time() - run_start
-    final_proved = iteration_summaries[-1]["proved"] if iteration_summaries else False
+    final_proved = (
+        bool(iteration_summaries[-1]["verified"])
+        if iteration_summaries else False
+    )
     final_regression_ok = iteration_summaries[-1].get("regression_ok", True) if iteration_summaries else True
 
     generated_resume_capsules: list[str] = []
@@ -307,6 +313,14 @@ def run(config: RunConfig) -> dict:
         "target": {"file": config.file, "lemma": config.lemma},
         "iterations": len(iteration_summaries),
         "final_proved": final_proved,
+        "final_prover_result_id": (
+            iteration_summaries[-1]["prover_result_id"]
+            if iteration_summaries else ""
+        ),
+        "final_prover_result_status": (
+            iteration_summaries[-1]["prover_result_status"]
+            if iteration_summaries else "infrastructure_invalid"
+        ),
         "final_regression_ok": final_regression_ok,
         "total_elapsed_minutes": round(total_elapsed / 60, 1),
         "resume_capsules": list(getattr(config, "resume_capsules", []) or []),
@@ -347,7 +361,6 @@ def run(config: RunConfig) -> dict:
             status("Orchestrator",
                    f"Agent-view bundle skipped ({type(_exc).__name__}: {_exc})")
 
-    pipeline_ui_reset()  # restore normal terminal before final output
     phase_start("RUN COMPLETE")
     proved_str = "\033[32mYES\033[0m" if final_proved else "\033[31mNO\033[0m"
     reg_str = "" if final_regression_ok else " \033[31m(regression FAILED)\033[0m"
@@ -378,8 +391,17 @@ def main():
     parser.add_argument("--max-iterations", type=int, default=None,
                         help="Max prove failures before stopping (default: 2)")
     parser.add_argument("--prover-effort", type=str, default=None,
-                        help="Reasoning effort for the prover Claude session "
+                        help="Reasoning effort for the prover agent session "
                              "(low/medium/high; default from ProverConfig).")
+    parser.add_argument(
+        "--agent-backend",
+        choices=["claude", "codex"],
+        default=None,
+        help=(
+            "Agent process for each proof node. `codex` uses OpenAI Codex "
+            "CLI (default); `claude` is an explicit experiment backend."
+        ),
+    )
     parser.add_argument("--prover-model", type=str, default=None,
                         help="Override the prover model")
     parser.add_argument("--eval-mode", action="store_true",
@@ -388,7 +410,7 @@ def main():
                              "retrieval for the target lemma.")
     parser.add_argument("--surface-profile",
                         dest="surface_profile",
-                        choices=surface_profile_names(include_unsupported=False),
+                        choices=current_surface_profile_names(),
                         help="Paper-eval proof-state surface profile. "
                              "Profiles hide selected proof-state compiler "
                              "surfaces while keeping verifier behavior fixed.")
@@ -400,10 +422,6 @@ def main():
                         help="Number of root proof nodes to start in tree mode.")
     parser.add_argument("--tree-max-concurrent", type=int, default=None,
                         help="Maximum concurrently active proof nodes in tree mode.")
-    parser.add_argument("--record-proof-bank", action="store_true",
-                        help="Opt in to writing successful eval/live-smoke proofs "
-                             "to workflow/proof_bank.jsonl. By default those "
-                             "runs do not modify the proof bank.")
     parser.add_argument("--resume-capsule", action="append", default=[],
                         help="Resume from a proof-node resume capsule "
                              "manifest or capsule directory. May be passed "
@@ -463,6 +481,16 @@ def main():
 
     if args.max_iterations is not None:
         config.max_iterations = args.max_iterations
+    if args.agent_backend:
+        prior_model = config.prover.model
+        config.prover.agent_backend = normalize_agent_backend(args.agent_backend)
+        if not args.prover_model and prior_model in {
+            DEFAULT_CLAUDE_MODEL,
+            DEFAULT_CODEX_MODEL,
+        }:
+            config.prover.model = default_model_for_backend(
+                config.prover.agent_backend
+            )
     if args.prover_model:
         config.prover.model = args.prover_model
     if args.prover_effort:
@@ -477,8 +505,6 @@ def main():
         config.prover.tree_initial_provers = args.tree_initial_provers
     if args.tree_max_concurrent is not None:
         config.prover.tree_max_concurrent = args.tree_max_concurrent
-    if args.record_proof_bank:
-        config.record_proof_bank = True
     resume_capsule_args = list(args.resume_capsule or [])
     if resume_capsule_args:
         config.resume_capsules = resume_capsule_args

@@ -9,7 +9,7 @@ Handles three proof forms:
   3. ``by`` short form: ``lemma foo : P by tac.``
 
 Idempotent. Lives in ``core/easycrypt/`` (the lower layer) so that
-``narrative_safety`` can use it without ``core`` importing ``workflow`` — the
+eval-source preparation can use it without ``core`` importing ``workflow`` — the
 prior layering inversion (audit re-audit §4.1). ``workflow.tools.replace_proofs_with_admit``
 re-exports these for its CLI.
 """
@@ -17,6 +17,7 @@ re-exports these for its CLI.
 import re
 
 from core.easycrypt.lemma_decls import mask_comments
+from core.easycrypt.proof_syntax import inline_proof
 
 _DECL_RE = re.compile(
     r"^(?P<indent>\s*)"
@@ -76,6 +77,19 @@ def _redact_residual_proof_text(content: str) -> tuple[str, int]:
             suffix = ".\n" if mline.rstrip().endswith(".") else "\n"
             out.append(f"{prefix} by admit{suffix}")
             replaced += 1
+            i += 1
+            continue
+
+        if stripped.startswith("proof.") and inline_proof(
+            line,
+            masked_source=mline,
+        ) is not None:
+            indent = re.match(r"^\s*", line).group(0)
+            if re.search(r"proof\.\s*admit\.\s*qed\.", stripped):
+                out.append(line)
+            else:
+                out.extend(_make_admit_block(indent))
+                replaced += 1
             i += 1
             continue
 
@@ -211,8 +225,9 @@ def replace_proofs(content: str) -> tuple[str, int]:
             # (e.g. `axiom foo : P.` which has no proof body). Skip.
             continue
 
-        # Check for single-line `proof. body. qed.`
-        if stripped.endswith("qed.") and "qed." in stripped[6:]:
+        # Check for single-line `proof. body. qed.` using the shared lexical
+        # recognizer so extraction and stripping agree on this proof form.
+        if inline_proof(proof_line, masked_source=mlines[i]) is not None:
             # Already admit form? (masked text: comments are whitespace)
             if re.search(r"proof\.\s*admit\.\s*qed\.", stripped):
                 out.append(proof_line)

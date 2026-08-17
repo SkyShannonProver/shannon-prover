@@ -12,7 +12,6 @@ import time
 from pathlib import Path
 from typing import Any
 
-from workflow.proof_management.repair_notes import rewind_note_summary
 from workflow.proof_management.route_family import (
     RouteFamilyEvidence,
     infer_route_family,
@@ -79,6 +78,7 @@ class LemmaLineageStore:
         failed_at_branch: list[str] | None = None,
         layer_move_action: dict[str, Any] | None = None,
         expected_resume_goal_hash: str = "",
+        expected_resume_goal_identity_required: bool = True,
     ) -> None:
         tactics = [str(item) for item in list(replay_prefix or [])]
         family = _route_family_dict(route_family) or infer_route_family(
@@ -96,6 +96,9 @@ class LemmaLineageStore:
             "failed_at_branch": _string_list(failed_at_branch),
             "layer_move_action": _dict_or_empty(layer_move_action),
             "expected_resume_goal_hash": expected_resume_goal_hash,
+            "expected_resume_goal_identity_required": (
+                expected_resume_goal_identity_required
+            ),
         })
 
     def record_resume_root_chosen(
@@ -181,7 +184,7 @@ class LemmaLineageStore:
         self,
         *,
         node_id: str,
-        proved: bool,
+        completion_candidate: bool,
         returncode: int,
         committed_count: int = 0,
         max_committed_count_seen: int = 0,
@@ -192,7 +195,7 @@ class LemmaLineageStore:
         self.append({
             "kind": "winner_selected",
             "node": node_id,
-            "proved": bool(proved),
+            "completion_candidate": bool(completion_candidate),
             "returncode": int(returncode),
             "committed_count": int(committed_count),
             "max_committed_count_seen": int(max_committed_count_seen),
@@ -207,7 +210,7 @@ class LemmaLineageStore:
         winner_node_id: str,
         total_spawned: int,
         max_depth: int,
-        proved: bool,
+        completion_candidate: bool,
         returncode: int,
     ) -> None:
         self.append({
@@ -215,32 +218,10 @@ class LemmaLineageStore:
             "winner": winner_node_id,
             "total_spawned": int(total_spawned),
             "max_depth": int(max_depth),
-            "proved": bool(proved),
+            "completion_candidate": bool(completion_candidate),
             "returncode": int(returncode),
         })
         self.write_briefing()
-
-    def record_repair_episode(
-        self,
-        *,
-        node_id: str,
-        memory: dict[str, Any],
-    ) -> None:
-        if not memory:
-            return
-        event = {
-            "kind": "repair_episode_recorded",
-            "node": node_id,
-            "memory_id": memory.get("memory_id"),
-            "repair_episode_id": memory.get("repair_episode_id"),
-            "from_checkpoint_id": memory.get("from_checkpoint_id"),
-            "from_tactic_index": memory.get("from_tactic_index"),
-            **_repair_memory_summary(memory),
-        }
-        note_summary = rewind_note_summary(memory.get("rewind_note"))
-        if note_summary:
-            event["rewind_note"] = note_summary
-        self.append(event)
 
     def record_proof_turn(
         self,
@@ -323,7 +304,6 @@ def lineage_briefing_from_events(events: list[dict[str, Any]]) -> dict[str, Any]
     family_counts: dict[str, int] = {}
     latest_family_by_node: dict[str, dict[str, Any]] = {}
     kills: list[dict[str, Any]] = []
-    repairs: list[dict[str, Any]] = []
     spawned: list[dict[str, Any]] = []
     winner: dict[str, Any] = {}
 
@@ -343,8 +323,6 @@ def lineage_briefing_from_events(events: list[dict[str, Any]]) -> dict[str, Any]
                 latest_family_by_node[node] = family
         elif kind == "node_killed":
             kills.append(event)
-        elif kind == "repair_episode_recorded":
-            repairs.append(event)
         elif kind == "winner_selected":
             winner = event
 
@@ -357,10 +335,8 @@ def lineage_briefing_from_events(events: list[dict[str, Any]]) -> dict[str, Any]
         "node_count": len(node_ids),
         "spawned_count": len(spawned),
         "killed_count": len(kills),
-        "repair_episode_count": len(repairs),
         "route_family_counts": family_counts,
         "winner": _winner_brief(winner),
-        "recent_repairs": [_repair_event_brief(item) for item in repairs[-5:]],
         "recent_kills": [_kill_event_brief(item) for item in kills[-5:]],
         "nodes": [
             _drop_empty({
@@ -371,7 +347,7 @@ def lineage_briefing_from_events(events: list[dict[str, Any]]) -> dict[str, Any]
         ],
         "interpretation": (
             "Shadow-mode proof lineage. This records route diversity and "
-            "repair history without changing prover scheduling decisions."
+            "route history without changing prover scheduling decisions."
         ),
     })
 
@@ -381,7 +357,6 @@ def lineage_briefing_markdown(briefing: dict[str, Any]) -> str:
     lines.append(f"- nodes: {briefing.get('node_count', 0)}")
     lines.append(f"- spawned: {briefing.get('spawned_count', 0)}")
     lines.append(f"- killed: {briefing.get('killed_count', 0)}")
-    lines.append(f"- repairs: {briefing.get('repair_episode_count', 0)}")
     route_counts = _dict_or_empty(briefing.get("route_family_counts"))
     if route_counts:
         lines.append("- route families:")
@@ -392,7 +367,10 @@ def lineage_briefing_markdown(briefing: dict[str, Any]) -> str:
         lines.append("")
         lines.append("## Winner")
         lines.append(f"- node: {winner.get('node', '')}")
-        lines.append(f"- proved: {winner.get('proved', False)}")
+        lines.append(
+            "- completion candidate: "
+            f"{winner.get('completion_candidate', False)}"
+        )
         family = _dict_or_empty(winner.get("route_family"))
         if family:
             lines.append(f"- route_family: {family.get('family', 'unknown')}")
@@ -404,61 +382,10 @@ def lineage_briefing_markdown(briefing: dict[str, Any]) -> str:
                 + ", "
                 + str(shadow.get("current_policy") or "current policy")
             )
-    repairs = [
-        item for item in list(briefing.get("recent_repairs") or [])
-        if isinstance(item, dict)
-    ]
-    if repairs:
-        lines.append("")
-        lines.append("## Recent Repairs")
-        for item in repairs:
-            note = _dict_or_empty(item.get("rewind_note"))
-            lines.append(
-                "- "
-                + str(item.get("node") or "")
-                + (
-                    f": {note.get('hypothesis')}"
-                    if note.get("hypothesis") else ""
-                )
-            )
     lines.append("")
     lines.append(str(briefing.get("interpretation") or ""))
     lines.append("")
     return "\n".join(lines)
-
-
-def _repair_memory_summary(memory: dict[str, Any]) -> dict[str, Any]:
-    pieces = _dict_list(memory.get("discarded_pieces"))
-    replay_class_counts: dict[str, int] = {}
-    goal_tag_counts: dict[str, int] = {}
-    for piece in pieces:
-        replay_class = str(piece.get("replay_class") or "").strip()
-        if replay_class:
-            replay_class_counts[replay_class] = (
-                replay_class_counts.get(replay_class, 0) + 1
-            )
-        goal_tag = str(piece.get("goal_tag") or "").strip()
-        if goal_tag:
-            goal_tag_counts[goal_tag] = goal_tag_counts.get(goal_tag, 0) + 1
-
-    negative_ids = _string_list(memory.get("negative_memory_ids"))
-    note_summary = rewind_note_summary(memory.get("rewind_note"))
-    negative_count = max(
-        len(negative_ids),
-        int(note_summary.get("negative_memory_count") or 0),
-    )
-    return _drop_empty({
-        "kept_prefix_end": memory.get("kept_prefix_end"),
-        "discarded_tactic_count": len(_string_list(memory.get("discarded_suffix"))),
-        "discarded_piece_count": len(pieces),
-        "replay_class_counts": replay_class_counts,
-        "goal_tag_counts": goal_tag_counts,
-        "stale_piece_count": len(_string_list(memory.get("stale_piece_ids"))),
-        "negative_memory_count": negative_count,
-        "candidate_replay_chunk_count": len(
-            _dict_list(memory.get("structural_chunks"))
-        ),
-    })
 
 
 def _winner_brief(event: dict[str, Any]) -> dict[str, Any]:
@@ -466,25 +393,13 @@ def _winner_brief(event: dict[str, Any]) -> dict[str, Any]:
         return {}
     return _drop_empty({
         "node": event.get("node"),
-        "proved": event.get("proved"),
+        "completion_candidate": event.get("completion_candidate"),
         "returncode": event.get("returncode"),
         "committed_count": event.get("committed_count"),
         "max_committed_count_seen": event.get("max_committed_count_seen"),
         "route_family": _route_family_dict(event.get("route_family")),
         "selection_reason": event.get("selection_reason"),
         "shadow_selection": _dict_or_empty(event.get("shadow_selection")),
-    })
-
-
-def _repair_event_brief(event: dict[str, Any]) -> dict[str, Any]:
-    return _drop_empty({
-        "node": event.get("node"),
-        "memory_id": event.get("memory_id"),
-        "repair_episode_id": event.get("repair_episode_id"),
-        "from_checkpoint_id": event.get("from_checkpoint_id"),
-        "from_tactic_index": event.get("from_tactic_index"),
-        "discarded_piece_count": event.get("discarded_piece_count"),
-        "rewind_note": rewind_note_summary(event.get("rewind_note")),
     })
 
 
@@ -519,12 +434,3 @@ def _string_list(value: Any) -> list[str]:
     if not isinstance(value, list):
         return []
     return [str(item) for item in value if str(item).strip()]
-
-
-
-def _dict_list(value: Any) -> list[dict[str, Any]]:
-    if not isinstance(value, list):
-        return []
-    return [dict(item) for item in value if isinstance(item, dict)]
-
-

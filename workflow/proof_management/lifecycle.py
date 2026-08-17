@@ -6,10 +6,15 @@ projection bookkeeping.
 """
 from __future__ import annotations
 
-from collections.abc import Callable
+from collections.abc import Callable, Mapping
 from pathlib import Path
-from core.easycrypt.value_shapes import as_dict_copy as _dict
 from typing import Any
+
+from core.easycrypt.value_shapes import as_dict_copy as _dict
+from workflow.proof_state_compiler.surface_profiles import (
+    ensure_current_surface_profile,
+    require_current_workspace_view,
+)
 
 from .types import NodeProgressSummary, ProofStateSnapshot
 
@@ -21,6 +26,198 @@ from .types import NodeProgressSummary, ProofStateSnapshot
 # "restored X/Y" warning instead of burying the divergence in the bootstrap
 # JSON.
 REPLAY_SHORTFALL_WARN_RATIO = 0.10
+PROOF_NODE_MANAGER_BOOTSTRAP_SCHEMA_VERSION = 3
+PROOF_NODE_MANAGER_BOOTSTRAP_KIND = "proof_node_manager_bootstrap"
+
+_BOOTSTRAP_IDENTITY_FIELDS = (
+    "node_id",
+    "session_tag",
+    "session_dir",
+    "file",
+    "lemma",
+)
+_BOOTSTRAP_SNAPSHOT_IDENTITY_FIELDS = (
+    "node_id",
+    "session_tag",
+    "session_dir",
+)
+
+
+def require_proof_node_manager_bootstrap(
+    bootstrap: object,
+    *,
+    label: str = "proof-node manager bootstrap",
+    expected_identity: Mapping[str, str] | None = None,
+    surface_profile: str | None = None,
+) -> dict[str, Any]:
+    """Return a current bootstrap record or reject the protocol mismatch.
+
+    Bootstrap handoffs cross the orchestrator/worker process boundary.  A
+    permissive adopter can silently reinterpret an older record after either
+    side changes, so this boundary intentionally has no compatibility mode.
+    """
+    if not isinstance(bootstrap, dict):
+        raise TypeError(f"{label} must be a JSON object")
+    schema_version = bootstrap.get("schema_version")
+    kind = bootstrap.get("kind")
+    if (
+        isinstance(schema_version, bool)
+        or not isinstance(schema_version, int)
+        or schema_version != PROOF_NODE_MANAGER_BOOTSTRAP_SCHEMA_VERSION
+        or kind != PROOF_NODE_MANAGER_BOOTSTRAP_KIND
+    ):
+        raise ValueError(
+            f"{label} must have schema_version="
+            f"{PROOF_NODE_MANAGER_BOOTSTRAP_SCHEMA_VERSION} and kind="
+            f"{PROOF_NODE_MANAGER_BOOTSTRAP_KIND!r}; got "
+            f"schema_version={schema_version!r}, kind={kind!r}"
+        )
+    if "node" in bootstrap:
+        raise ValueError(
+            f"{label} contains retired identity field `node`; use `node_id`"
+        )
+    for field in _BOOTSTRAP_IDENTITY_FIELDS:
+        value = bootstrap.get(field)
+        if not isinstance(value, str) or not value.strip():
+            raise ValueError(
+                f"{label} field `{field}` must be a non-empty string"
+            )
+    if expected_identity is not None:
+        for field in _BOOTSTRAP_IDENTITY_FIELDS:
+            if field not in expected_identity:
+                raise ValueError(
+                    f"{label} expected identity is missing `{field}`"
+                )
+            expected = expected_identity[field]
+            actual = bootstrap[field]
+            if actual != expected:
+                raise ValueError(
+                    f"{label} identity mismatch for `{field}`: "
+                    f"expected {expected!r}, got {actual!r}"
+                )
+
+    include_dirs = bootstrap.get("include_dirs")
+    if (
+        not isinstance(include_dirs, list)
+        or not include_dirs
+        or any(not isinstance(item, str) or not item.strip() for item in include_dirs)
+    ):
+        raise ValueError(
+            f"{label} field `include_dirs` must be a non-empty list of strings"
+        )
+    replay_prefix = bootstrap.get("replay_prefix")
+    if not isinstance(replay_prefix, list) or any(
+        not isinstance(item, str) or not item.strip() for item in replay_prefix
+    ):
+        raise ValueError(
+            f"{label} field `replay_prefix` must be a list of non-empty strings"
+        )
+    replay_prefix_count = _require_nonnegative_int(
+        bootstrap.get("replay_prefix_count"),
+        label=f"{label}.replay_prefix_count",
+    )
+    if replay_prefix_count > len(replay_prefix):
+        raise ValueError(
+            f"{label}.replay_prefix_count cannot exceed the committed "
+            "`replay_prefix` length"
+        )
+    _require_nonnegative_int(
+        bootstrap.get("replay_prefix_requested_count"),
+        label=f"{label}.replay_prefix_requested_count",
+    )
+    manager_actions = bootstrap.get("manager_actions")
+    if not isinstance(manager_actions, list) or any(
+        not isinstance(item, dict) for item in manager_actions
+    ):
+        raise ValueError(
+            f"{label} field `manager_actions` must be a list of objects"
+        )
+
+    snapshot = bootstrap.get("snapshot")
+    if not isinstance(snapshot, dict):
+        raise ValueError(f"{label} field `snapshot` must be an object")
+    for field in _BOOTSTRAP_SNAPSHOT_IDENTITY_FIELDS:
+        value = snapshot.get(field)
+        if not isinstance(value, str) or not value.strip():
+            raise ValueError(
+                f"{label}.snapshot field `{field}` must be a non-empty string"
+            )
+        if value != bootstrap[field]:
+            raise ValueError(
+                f"{label}.snapshot identity mismatch for `{field}`: "
+                f"expected {bootstrap[field]!r}, got {value!r}"
+            )
+    _require_nonnegative_int(
+        snapshot.get("session_epoch"),
+        label=f"{label}.snapshot.session_epoch",
+    )
+    _require_nonnegative_int(
+        snapshot.get("state_version"),
+        label=f"{label}.snapshot.state_version",
+    )
+    for field in (
+        "goal_hash",
+        "workspace_view_artifact",
+    ):
+        if not isinstance(snapshot.get(field), str):
+            raise ValueError(
+                f"{label}.snapshot field `{field}` must be a string"
+            )
+    if type(snapshot.get("goal_identity_required")) is not bool:
+        raise ValueError(
+            f"{label}.snapshot field `goal_identity_required` must be a bool"
+        )
+    if snapshot["goal_identity_required"] != bool(snapshot["goal_hash"]):
+        raise ValueError(
+            f"{label}.snapshot goal identity class disagrees with goal_hash"
+        )
+    if not isinstance(snapshot.get("execution_refs"), dict):
+        raise ValueError(
+            f"{label}.snapshot field `execution_refs` must be an object"
+        )
+
+    workspace_view = bootstrap.get("workspace_view")
+    if not isinstance(workspace_view, dict):
+        raise ValueError(f"{label} field `workspace_view` must be an object")
+    profile = ensure_current_surface_profile(surface_profile)
+    require_current_workspace_view(
+        workspace_view,
+        profile_id=profile.name,
+        label=f"{label}.workspace_view",
+    )
+    proof_status = workspace_view.get("proof_status")
+    if not isinstance(proof_status, dict) or not proof_status:
+        raise ValueError(
+            f"{label}.workspace_view.proof_status must be a non-empty object"
+        )
+    status = proof_status.get("status")
+    if not isinstance(status, str) or not status.strip():
+        raise ValueError(
+            f"{label}.workspace_view.proof_status.status must be a non-empty string"
+        )
+    if not isinstance(proof_status.get("remaining_goals_known"), bool):
+        raise ValueError(
+            f"{label}.workspace_view.proof_status.remaining_goals_known must be a bool"
+        )
+    if (
+        proof_status.get("goal_identity_required")
+        != snapshot["goal_identity_required"]
+        or str(proof_status.get("goal_hash") or "") != snapshot["goal_hash"]
+    ):
+        raise ValueError(
+            f"{label} snapshot and workspace goal identity disagree"
+        )
+    if not isinstance(workspace_view.get("current_goal"), dict):
+        raise ValueError(
+            f"{label}.workspace_view.current_goal must be an object"
+        )
+    return bootstrap
+
+
+def _require_nonnegative_int(value: object, *, label: str) -> int:
+    if isinstance(value, bool) or not isinstance(value, int) or value < 0:
+        raise ValueError(f"{label} must be a non-negative integer")
+    return value
 
 
 def replay_prefix_shortfall(
@@ -70,7 +267,9 @@ class ProofNodeLifecycleManager:
         self.workspace = workspace
         self._run_dir = run_dir
         self._audit = audit
-        self.surface_profile = surface_profile
+        self.surface_profile = ensure_current_surface_profile(
+            surface_profile
+        ).name
         self.latest_snapshot: ProofStateSnapshot | None = None
         self.latest_view: dict[str, Any] = {}
         self.latest_full_view: dict[str, Any] = {}
@@ -89,32 +288,34 @@ class ProofNodeLifecycleManager:
 
     def adopt_bootstrap(self, bootstrap: dict[str, Any]) -> None:
         """Adopt a manager bootstrap record without restarting EasyCrypt."""
-        if not isinstance(bootstrap, dict):
-            return
+        require_proof_node_manager_bootstrap(
+            bootstrap,
+            surface_profile=self.surface_profile,
+            expected_identity={
+                "node_id": self.node_id,
+                "session_tag": self.session_tag,
+                "session_dir": self.repl.session_dir,
+                "file": self.repl.file_path,
+                "lemma": self.repl.lemma_name,
+            },
+        )
         self._adopt_replay_prefix_metadata(bootstrap)
-        view = bootstrap.get("workspace_view")
-        if isinstance(view, dict):
-            self.latest_view = dict(view)
-        snapshot_obj = bootstrap.get("snapshot")
-        if not isinstance(snapshot_obj, dict):
-            return
-        state_version = _int(snapshot_obj.get("state_version"))
-        session_epoch = _int(snapshot_obj.get("session_epoch"))
+        view = bootstrap["workspace_view"]
+        self.latest_view = dict(view)
+        snapshot_obj = bootstrap["snapshot"]
+        state_version = snapshot_obj["state_version"]
+        session_epoch = snapshot_obj["session_epoch"]
         self.repl.adopt_versions(state_version, session_epoch)
         self.latest_snapshot = ProofStateSnapshot(
-            node_id=str(snapshot_obj.get("node_id") or self.node_id),
-            session_tag=str(snapshot_obj.get("session_tag") or self.session_tag),
-            session_dir=str(snapshot_obj.get("session_dir") or self.repl.session_dir),
+            node_id=snapshot_obj["node_id"],
+            session_tag=snapshot_obj["session_tag"],
+            session_dir=snapshot_obj["session_dir"],
             session_epoch=session_epoch,
             state_version=state_version,
-            goal_hash=str(snapshot_obj.get("goal_hash") or ""),
-            proof_context_view_artifact=str(
-                snapshot_obj.get("proof_context_view_artifact") or ""
-            ),
-            workspace_view_artifact=str(
-                snapshot_obj.get("workspace_view_artifact") or ""
-            ),
-            execution_refs=dict(snapshot_obj.get("execution_refs") or {}),
+            goal_hash=snapshot_obj["goal_hash"],
+            goal_identity_required=snapshot_obj["goal_identity_required"],
+            workspace_view_artifact=snapshot_obj["workspace_view_artifact"],
+            execution_refs=dict(snapshot_obj["execution_refs"]),
             raw_workspace_view=dict(self.latest_view),
         )
 
@@ -140,9 +341,9 @@ class ProofNodeLifecycleManager:
             # Worker-death attach (SHANNON_EC_DAEMON=1): the Layer-3
             # respawn names the dead node's session dir; the repl tries to
             # adopt its still-live daemon EC session (zero replay) and
-            # falls back to the legacy restart+replay restore on any
+            # falls back to the canonical restart+replay restore on any
             # failure. With the flag off `_daemon_attach_request` returns
-            # None, so the legacy call below stays byte-identical.
+            # None and the same restart+replay call is used.
             snapshot, actions = self.repl.start(
                 replay_prefix=replay_prefix,
                 daemon_attach=daemon_attach,
@@ -156,7 +357,7 @@ class ProofNodeLifecycleManager:
         # live step in replay/audit reconstructions (step4_1 r2 respawn,
         # 2026-06-09: 73 requested vs 72 committed shifted all audits by +1).
         requested_prefix = list(replay_prefix)
-        committed_prefix = self._committed_start_history(requested_prefix)
+        committed_prefix = self._committed_start_history()
         self.replay_prefix = list(committed_prefix)
         self.replay_prefix_count = _semantic_resume_prefix_count(
             resume_context,
@@ -167,9 +368,9 @@ class ProofNodeLifecycleManager:
         self._seed_resume_context(snapshot, resume_context)
         view = self.project(snapshot)
         record = {
-            "schema_version": 2,
-            "kind": "proof_node_manager_bootstrap",
-            "node": self.node_id,
+            "schema_version": PROOF_NODE_MANAGER_BOOTSTRAP_SCHEMA_VERSION,
+            "kind": PROOF_NODE_MANAGER_BOOTSTRAP_KIND,
+            "node_id": self.node_id,
             "session_tag": self.session_tag,
             "session_dir": snapshot.session_dir,
             "file": self.repl.file_path,
@@ -216,8 +417,8 @@ class ProofNodeLifecycleManager:
                     **shortfall,
                 })
         if daemon_attach:
-            # Audit visibility (flag-on only — flag off never reaches here,
-            # keeping the legacy record shape unchanged): did the bootstrap
+            # Audit visibility (flag-on only — flag off never reaches here):
+            # did the bootstrap
             # adopt a live daemon session (zero replay) or fall back?
             attach_action = next(
                 (
@@ -232,6 +433,10 @@ class ProofNodeLifecycleManager:
                 dict(attach_action.get("daemon_attach") or {})
                 if isinstance(attach_action, dict) else {}
             )
+        require_proof_node_manager_bootstrap(
+            record,
+            surface_profile=self.surface_profile,
+        )
         self._audit(record)
         self.lineage.run_dir = self._run_dir()
         self.lineage.record_node_bootstrap(
@@ -250,32 +455,27 @@ class ProofNodeLifecycleManager:
         self.replay_prefix_count = 0
         self.replay_prefix = []
 
-    def _committed_start_history(self, fallback: list[str]) -> list[str]:
-        """The session's actual post-replay history, or ``fallback``.
+    def _committed_start_history(self) -> list[str]:
+        """Return the session's authoritative post-replay history.
 
-        Falls back to the requested prefix when the repl backend cannot
-        report its committed history (test fakes, backendless roots).
+        A requested replay prefix describes intent, not committed state.  The
+        lifecycle therefore requires the production REPL contract here and
+        never manufactures history from the request when the reader is
+        missing, fails, or reports an empty session.
         """
         reader = getattr(self.repl, "committed_history", None)
         if not callable(reader):
-            return list(fallback)
-        try:
-            committed = reader()
-        except Exception:
-            return list(fallback)
-        if not isinstance(committed, list):
-            return list(fallback)
-        cleaned = [
-            str(tactic).strip()
-            for tactic in committed
-            if str(tactic).strip()
-        ]
-        if not cleaned and fallback:
-            # An empty read with a non-empty request is indistinguishable
-            # from an unreadable history file; a truly all-dropped replay is
-            # caught separately by the no-open-proof bootstrap guard.
-            return list(fallback)
-        return cleaned
+            raise TypeError(
+                "proof-node REPL must provide committed_history()"
+            )
+        committed = reader()
+        if type(committed) is not list or any(
+            type(tactic) is not str for tactic in committed
+        ):
+            raise TypeError(
+                "proof-node REPL committed_history() must return list[str]"
+            )
+        return list(committed)
 
     def progress_summary(self) -> NodeProgressSummary:
         snapshot = self.latest_snapshot
@@ -284,11 +484,6 @@ class ProofNodeLifecycleManager:
             view.get("proof_status")
             if isinstance(view.get("proof_status"), dict) else {}
         )
-        if not proof_status:
-            proof_status = (
-                view.get("proof_position")
-                if isinstance(view.get("proof_position"), dict) else {}
-            )
         return NodeProgressSummary(
             node_id=self.node_id,
             session_tag=self.session_tag,
@@ -317,29 +512,20 @@ class ProofNodeLifecycleManager:
         view = result.view
         self.latest_snapshot = snapshot
         self.latest_view = view
-        self.latest_full_view = getattr(result, "full_view", None) or view
+        self.latest_full_view = result.full_view
         self._audit({
             "kind": "workspace_view.projected",
             "node": self.node_id,
             "snapshot": snapshot.to_dict(),
             "view_hash": view.get("view_hash"),
             "surface_profile": self.surface_profile,
-            "lint": self.workspace.lint_agent_view(view),
+            "lint": self.workspace.lint_workspace_view(view),
         })
         return view
 
     def _adopt_replay_prefix_metadata(self, bootstrap: dict[str, Any]) -> None:
-        replay_prefix = bootstrap.get("replay_prefix")
-        if isinstance(replay_prefix, list):
-            self.replay_prefix = [
-                str(tactic).strip()
-                for tactic in replay_prefix
-                if str(tactic).strip()
-            ]
-        replay_count = _int(bootstrap.get("replay_prefix_count"))
-        if replay_count <= 0 and self.replay_prefix:
-            replay_count = len(self.replay_prefix)
-        self.replay_prefix_count = max(0, replay_count)
+        self.replay_prefix = list(bootstrap["replay_prefix"])
+        self.replay_prefix_count = bootstrap["replay_prefix_count"]
         # The worker manager never calls bootstrap(); it adopts a handoff.
         # Stamp the durable resumed-lineage marker here so the amend guard
         # holds in the very process that serves the agent's turns.
@@ -353,30 +539,12 @@ class ProofNodeLifecycleManager:
     ) -> None:
         if not resume_context:
             return
-        latest_view = _dict(resume_context.get("latest_workspace_view"))
-        route_memory_payload = _dict(resume_context.get("route_memory_payload"))
         checkpoint_payload = _dict(resume_context.get("checkpoint_payload"))
         route_events = [
             dict(item)
             for item in list(resume_context.get("route_event_facts") or [])
             if isinstance(item, dict)
         ]
-        verified_route_options = [
-            dict(item)
-            for item in list(resume_context.get("verified_route_options") or [])
-            if isinstance(item, dict)
-        ]
-        proof_memory = getattr(self.projection, "proof_memory", None)
-        if proof_memory is not None and hasattr(proof_memory, "seed_resume_payload"):
-            proof_memory.seed_resume_payload(
-                route_memory_payload,
-                latest_workspace_view=latest_view,
-            )
-        if (
-            proof_memory is not None
-            and hasattr(proof_memory, "seed_verified_route_options")
-        ):
-            proof_memory.seed_verified_route_options(verified_route_options)
         checkpoints = getattr(self.projection, "checkpoints", None)
         if checkpoints is not None and hasattr(checkpoints, "seed_resume_payload"):
             checkpoints.seed_resume_payload(checkpoint_payload)
@@ -389,13 +557,18 @@ def _daemon_attach_request(resume_context: dict[str, Any]) -> dict[str, Any] | N
     """The validated ``daemon_attach`` request from a resume context, or None.
 
     Only honored when SHANNON_EC_DAEMON=1 — with the flag off this always
-    returns None so ``bootstrap`` issues the exact legacy ``repl.start``
-    call (test fakes and the measurement-campaign pipeline see no change)."""
+    returns None so ``bootstrap`` issues the ordinary ``repl.start`` call."""
     request = resume_context.get("daemon_attach")
     if not isinstance(request, dict):
         return None
     donor = str(request.get("donor_session_dir") or "").strip()
     if not donor:
+        return None
+    goal_identity_required = request.get("goal_identity_required")
+    if type(goal_identity_required) is not bool:
+        return None
+    expected_goal_hash = str(request.get("expected_goal_hash") or "").strip()
+    if goal_identity_required != bool(expected_goal_hash):
         return None
     try:
         from .daemon_attach import daemon_session_attach_enabled
@@ -405,7 +578,8 @@ def _daemon_attach_request(resume_context: dict[str, Any]) -> dict[str, Any] | N
         return None
     return {
         "donor_session_dir": donor,
-        "expected_goal_hash": str(request.get("expected_goal_hash") or ""),
+        "expected_goal_hash": expected_goal_hash,
+        "goal_identity_required": goal_identity_required,
     }
 
 
@@ -424,7 +598,10 @@ def _semantic_resume_prefix_count(
 ) -> int:
     if "resume_prefix_count" not in resume_context:
         return max(0, replayed_count)
-    count = _int(resume_context.get("resume_prefix_count"))
+    count = _require_nonnegative_int(
+        resume_context["resume_prefix_count"],
+        label="resume context resume_prefix_count",
+    )
     if count <= 0:
         return max(0, replayed_count)
     return min(count, max(0, replayed_count))

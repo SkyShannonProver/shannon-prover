@@ -113,3 +113,33 @@ def test_extract_keeps_equiv_judgments_inside_multiline_lemma_statement(tmp_path
     assert "Pr[M(P).main()" in out
     assert "proof." in out
     assert "admit." not in out
+
+
+def test_extract_opens_single_line_proof_block(tmp_path: Path) -> None:
+    ec_file = tmp_path / "SingleLine.ec"
+    ec_file.write_text(
+        "lemma target : true.\n"
+        "proof. trivial. qed.\n"
+        "lemma later : true.\n"
+        "proof. trivial. qed.\n",
+        encoding="utf-8",
+    )
+
+    out = extract_lemma(ec_file, "target", open_proof=True)
+
+    assert out.endswith("proof.")
+    assert "trivial." not in out
+    assert "qed." not in out
+    assert "lemma later" not in out
+
+
+def test_extract_opens_proof_on_declaration_line(tmp_path: Path) -> None:
+    ec_file = tmp_path / "InlineDeclaration.ec"
+    ec_file.write_text(
+        "lemma target : true. proof. trivial. qed.\n",
+        encoding="utf-8",
+    )
+
+    out = extract_lemma(ec_file, "target", open_proof=True)
+
+    assert out == "lemma target : true. proof."

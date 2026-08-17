@@ -57,6 +57,13 @@ def tier_of(source_file: str) -> str:
 
 PROFILE = {
     "l1_goal_projection": "L1",
+    "l4_proof_state_compiler_v2_operation_readiness_audit": "L4-audit",
+    "l4_proof_state_compiler_v2_contract_retention_audit": "L4-audit",
+    "l4_proof_state_compiler_v2_operation_binding_repair_audit": "L4-audit",
+    "l4_proof_state_compiler_v2_operation_binding_repair": "L4",
+    "l4_proof_state_compiler_v2_compound_tactic_prefix_recovery_audit": "L4-audit",
+    "l4_proof_state_compiler_v2_compound_tactic_prefix_recovery": "L4",
+    # Frozen historical bundle labels; not runnable current profiles.
     "l2_semantic_ir": "L2",
     "l3_flow_navigation": "L3",
     "l4_checked_action_surface": "L4",

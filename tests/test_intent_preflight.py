@@ -21,10 +21,15 @@ def test_preflight_does_not_intercept_admit() -> None:
 def test_preflight_finish_requires_qed_when_candidate_pending() -> None:
     decision = preflight_intent(
         intent=AgentIntent(intent="finish", payload={}),
-        latest_view={"proof_status": {"status": "candidate_closed_pending_qed"}},
+        latest_view={"proof_status": {"status": "goals_discharged_pending_qed"}},
         surface_profile=None,
     )
 
-    assert decision.kind == "action_repair"
-    assert decision.actions[0]["label"] == "finish_requires_qed"
-    assert "qed" in decision.repair_prompt
+    assert decision.kind == "menu"
+    assert decision.label == "finish_requires_qed"
+    menu = decision.observation["control_menu"]
+    assert menu["items"][0]["submit"] == {
+        "intent": "commit_tactic",
+        "payload": {"tactic": "qed."},
+    }
+    assert "qed" in menu["notice"]

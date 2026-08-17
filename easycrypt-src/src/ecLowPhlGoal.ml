@@ -235,13 +235,18 @@ let tc1_process_codepos1 tc (side, cpos) =
   EcTyping.trans_codepos1 env cpos
 
 (* -------------------------------------------------------------------- *)
-let hl_set_stmt (side : side option) (f : form) (s : stmt) =
+(* [mt] overrides the memtype of the active side (the one whose statement is
+   being replaced), e.g. when the new statement [s] mentions fresh locals.
+   The memory identifier is untouched, so the pre/post-conditions keep
+   referring to it. *)
+let hl_set_stmt ?(mt : memtype option) (side : side option) (f : form) (s : stmt) =
+  let mtof (dfl : memenv) = odfl (snd dfl) mt in
   match side, f.f_node with
-  | None       , FhoareS   hs -> f_hoareS (snd hs.hs_m) (hs_pr hs) s (hs_po hs)
-  | None       , FeHoareS  hs -> f_eHoareS (snd hs.ehs_m) (ehs_pr hs) s (ehs_po hs)
-  | None       , FbdHoareS hs -> f_bdHoareS (snd hs.bhs_m) (bhs_pr hs) s (bhs_po hs) hs.bhs_cmp (bhs_bd hs)
-  | Some `Left , FequivS   es -> f_equivS (snd es.es_ml) (snd es.es_mr) (es_pr es) s es.es_sr (es_po es)
-  | Some `Right, FequivS   es -> f_equivS (snd es.es_ml) (snd es.es_mr) (es_pr es) es.es_sl s (es_po es)
+  | None       , FhoareS   hs -> f_hoareS (mtof hs.hs_m) (hs_pr hs) s (hs_po hs)
+  | None       , FeHoareS  hs -> f_eHoareS (mtof hs.ehs_m) (ehs_pr hs) s (ehs_po hs)
+  | None       , FbdHoareS hs -> f_bdHoareS (mtof hs.bhs_m) (bhs_pr hs) s (bhs_po hs) hs.bhs_cmp (bhs_bd hs)
+  | Some `Left , FequivS   es -> f_equivS (mtof es.es_ml) (snd es.es_mr) (es_pr es) s es.es_sr (es_po es)
+  | Some `Right, FequivS   es -> f_equivS (snd es.es_ml) (mtof es.es_mr) (es_pr es) es.es_sl s (es_po es)
   | _          , _            -> assert false
 
 (* -------------------------------------------------------------------- *)
@@ -706,6 +711,21 @@ let generalize_mod_ts_inv env modil modir f =
   let res = generalize_mod_right env modir f in
   generalize_mod_left env modil res
 
+(* -------------------------------------------------------------------- *)
+(* Build (ident * form) bindings from generalize_mod_ output:            *)
+(* map quantifier-bound names back to concrete pvar/glob expressions.    *)
+
+let mk_bind_pvar (m : memory) (id : EcIdent.t) ((x, ty) : prog_var * ty) : EcIdent.t * ss_inv =
+  id, f_pvar x ty m
+
+let mk_bind_glob (env : env) (m : memory) (id : EcIdent.t) (x : EcPath.mpath) : EcIdent.t * ss_inv =
+  id, NormMp.norm_glob env m x
+
+let mk_bind_pvars (m : memory) ((bd, pvs) : (EcIdent.t * gty) list * (prog_var * ty) list) : (EcIdent.t * ss_inv) list =
+  List.map2 (fun (id, _) pv -> mk_bind_pvar m id pv) bd pvs
+
+let mk_bind_globs (env : env) (m : memory) ((bd, mps) : (EcIdent.t * gty) list * EcPath.mpath list) : (EcIdent.t * ss_inv) list =
+  List.map2 (fun (id, _) mp -> mk_bind_glob env m id mp) bd mps
 
 (* -------------------------------------------------------------------- *)
 let abstract_info env f1 =
@@ -774,7 +794,7 @@ let t_zip f (cenv : code_txenv) (cpos : codepos) (prpo : form * form) (state, s)
       ((me, Zpr.zip zpr, gs) : memenv * _ * form list)
   with InvalidCPos -> tc_error (fst cenv) "invalid code position"
 
-let t_code_transform (side : oside) ?(bdhoare = false) cpos tr tx tc =
+let t_code_transform (side : oside) cpos tr tx tc =
   let pf = FApi.tc1_penv tc in
 
   match side with
@@ -784,27 +804,32 @@ let t_code_transform (side : oside) ?(bdhoare = false) cpos tr tx tc =
       match concl.f_node with
       | FhoareS hs ->
           let pr, po = hs_pr hs, hs_po hs in
+          (* FIXME: This is very suspicious why only main is provided ? *)
           let po = po.hsi_inv.main in
           let (me, stmt, cs) =
             tx (pf, hyps) cpos (pr.inv, po) (hs.hs_m, hs.hs_s) in
           let concl =
-            f_hoareS (snd me) (hs_pr hs) stmt (hs_po hs)
+            f_hoareS (snd me) pr stmt (hs_po hs)
           in
           FApi.xmutate1 tc (tr None) (cs @ [concl])
 
-      | FbdHoareS bhs when bdhoare ->
+      | FbdHoareS bhs ->
           let pr, po = bhs_pr bhs, bhs_po bhs in
           let (me, stmt, cs) =
             tx (pf, hyps) cpos (pr.inv, po.inv) (bhs.bhs_m, bhs.bhs_s) in
-          let concl = f_bdHoareS (snd me) (bhs_pr bhs) stmt (bhs_po bhs)
-                      bhs.bhs_cmp (bhs_bd bhs) in
+          let concl = f_bdHoareS (snd me) pr stmt po bhs.bhs_cmp (bhs_bd bhs) in
+          FApi.xmutate1 tc (tr None) (cs @ [concl])
+
+      | FeHoareS ehs ->
+          let pr, po = ehs_pr ehs, ehs_po ehs in
+          let (me, stmt, cs) =
+            tx (pf, hyps) cpos (pr.inv, po.inv) (ehs.ehs_m, ehs.ehs_s) in
+          let concl = f_eHoareS (snd me) pr stmt po in
           FApi.xmutate1 tc (tr None) (cs @ [concl])
 
       | _ ->
         let kinds =
-            (if bdhoare then [`PHoare `Stmt] else [])
-          @ [`Hoare `Stmt] in
-
+            [`PHoare `Stmt; `Hoare `Stmt; `EHoare `Stmt ] in
         tc_error_noXhl ~kinds:kinds pf
   end
 

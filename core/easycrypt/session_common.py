@@ -6,20 +6,8 @@ modules import ``session_cli.py`` as a public library.
 """
 from __future__ import annotations
 
-import os
 import re
-import subprocess
 from pathlib import Path
-
-
-try:
-    from core.easycrypt.analysis.ec_error_classifier import classify as _classify_ec_error
-    from core.easycrypt.analysis.ec_error_classifier import (
-        format_classification as _format_ec_classification,
-    )
-except Exception:
-    _classify_ec_error = None
-    _format_ec_classification = None
 
 
 def classify_and_format(
@@ -27,27 +15,8 @@ def classify_and_format(
     tactic_text: str = "",
     file_path: str | None = None,
 ) -> str:
-    """Try to classify raw EC error text; return formatted block or ''."""
-    if not raw_error or _classify_ec_error is None:
-        return ""
-    try:
-        cls = _classify_ec_error(raw_error)
-        if cls and _format_ec_classification:
-            try:
-                return _format_ec_classification(
-                    cls,
-                    tactic_text=tactic_text,
-                    file_path=file_path,
-                    raw_error=raw_error,
-                )
-            except TypeError:
-                pass
-            try:
-                return _format_ec_classification(cls, tactic_text=tactic_text)
-            except TypeError:
-                return _format_ec_classification(cls)
-    except Exception:
-        return ""
+    """Retained display hook; current recovery consumes structured failures."""
+    del raw_error, tactic_text, file_path
     return ""
 
 
@@ -122,23 +91,3 @@ def is_structural_tactic(tactic_text: str) -> bool:
             return True
     return False
 
-
-def render_closer_hints(lem: dict) -> list[str]:
-    """Render narrative last-mile closer hints when present."""
-    ch = lem.get("closer_hints") or {}
-    if not ch:
-        return []
-    lines = []
-    smt_lems = ch.get("smt_lemmas") or []
-    unfold = ch.get("unfold_ops") or []
-    tail = (ch.get("typical_tail") or "").strip()
-    if smt_lems:
-        lines.append(f"     Closer smt hints: smt({' '.join(smt_lems)})")
-    if unfold:
-        lines.append(
-            f"     Unfold first: "
-            f"{' '.join('rewrite /' + op + '.' for op in unfold)}"
-        )
-    if tail:
-        lines.append(f"     Typical tail: `{tail}`")
-    return lines

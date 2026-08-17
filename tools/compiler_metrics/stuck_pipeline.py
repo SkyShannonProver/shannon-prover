@@ -5,7 +5,7 @@ Stuck-metric pipeline for the proof-state compiler (L4) vs bare goal (L1).
 Implements the design we converged on:
 
   * Progress is anchored to EasyCrypt ground truth: the committed-goal fingerprint
-    (current_goal.lines hash). Probes/inspects/lookups do NOT move it; only an
+    (current_goal.lines hash). Read-only context requests do NOT move it; only an
     accepted, *surviving* commit does.
   * DURABLE progress = a commit that is never popped by a later undo (survives to
     the final committed stack). "Advanced then undone" yields zero durable progress.
@@ -13,7 +13,7 @@ Implements the design we converged on:
     What the compiler is judged on = how often / how long the agent stays stuck
     AFTER the first error.
   * A stuck episode = a span between durable-progress points that contains >=1 error
-    (commit_REJ / probe_FAIL)  -> FRICTION (mechanical, type (1)).
+    committed rejection (`commit_REJ`) -> FRICTION (mechanical, type (1)).
   * A clean undo (depth drop with NO error in the undone span) is AMBIGUOUS:
     (2) wrong-path  vs  (3) strategic-restructure  -> flagged for the LLM layer.
 
@@ -92,8 +92,6 @@ def cls_of(mr):
     o = " ".join(a.get("outcome", "") for a in mr.get("manager_actions", []))
     if "accepted the committed" in o: return "commit_ok"
     if "rejected the committed" in o: return "commit_REJ"
-    if "accepted this read-only probe" in o: return "probe_ok"
-    if "probe tool failed" in o: return "probe_FAIL"
     return "other"
 
 def node_dir(node): return node.replace("Tree-", "Tree_").replace(".", "_")
@@ -180,7 +178,7 @@ def analyze_node(bundle, ndir, rows):
     results = []
     for ep in episodes:
         body = ep[:-1]  # turns before the closing durable-progress step
-        errs = [s for s in body if s["cls"] in ("commit_REJ", "probe_FAIL")]
+        errs = [s for s in body if s["cls"] == "commit_REJ"]
         undos = [s for s in body if s["intent"] in ("undo_last_step", "undo_to_checkpoint")]
         if errs:
             kind = "friction"           # type (1), mechanical
@@ -192,7 +190,7 @@ def analyze_node(bundle, ndir, rows):
             continue
         # recovery time = time AFTER the first error, THROUGH the durable fix (inclusive).
         # The first error's own think is the model's prior, so it is excluded.
-        first_err_i = next((k for k, s in enumerate(ep) if s["cls"] in ("commit_REJ", "probe_FAIL")), None)
+        first_err_i = next((k for k, s in enumerate(ep) if s["cls"] == "commit_REJ"), None)
         if first_err_i is not None:
             rec = ep[first_err_i+1:]
         else:
@@ -205,7 +203,6 @@ def analyze_node(bundle, ndir, rows):
             turns=[s["turn"] for s in body],
             n_err=len(errs),
             n_commit_rej=sum(1 for s in body if s["cls"] == "commit_REJ"),
-            n_probe_fail=sum(1 for s in body if s["cls"] == "probe_FAIL"),
             n_undo=len(undos),
             recover_time=recover_time,
             destr_time=destr_time,
@@ -214,16 +211,15 @@ def analyze_node(bundle, ndir, rows):
     # ---- terminal stuck (tail with errors/undos, never recovered) ----
     terminal = None
     if tail:
-        errs = [s for s in tail if s["cls"] in ("commit_REJ", "probe_FAIL")]
+        errs = [s for s in tail if s["cls"] == "commit_REJ"]
         undos = [s for s in tail if s["intent"] in ("undo_last_step", "undo_to_checkpoint")]
         if errs or undos:
-            first_err_i = next((k for k, s in enumerate(tail) if s["cls"] in ("commit_REJ", "probe_FAIL")), None)
+            first_err_i = next((k for k, s in enumerate(tail) if s["cls"] == "commit_REJ"), None)
             rec = tail[first_err_i+1:] if first_err_i is not None else tail
             terminal = dict(kind="terminal_stuck",
                             turns=[s["turn"] for s in tail],
                             n_err=len(errs), n_undo=len(undos),
                             n_commit_rej=sum(1 for s in tail if s["cls"] == "commit_REJ"),
-                            n_probe_fail=sum(1 for s in tail if s["cls"] == "probe_FAIL"),
                             recover_time=sum(s["think"]+s["mgr"] for s in rec),
                             destr_time=sum(s["think"]+s["mgr"] for s in rec
                                            if s["cls"] == "commit_REJ" or s["intent"] in DESTR_INTENTS),
@@ -238,14 +234,14 @@ def analyze_node(bundle, ndir, rows):
             _c += 1; max_consec_rej = max(max_consec_rej, _c)
         else:
             _c = 0
-    # CONTROL: first-contact error rate over UNIQUE tactics (dedup probe-then-commit-same).
+    # CONTROL: first-contact error rate over unique committed tactics.
     # Surface-agnostic proxy for "how often the model proposes a wrong tactic" = model capability.
     seen, uniq, first_fail = set(), 0, 0
     for s in seq:
-        if s["intent"] in ("probe_tactic", "commit_tactic") and s["tac"]:
+        if s["intent"] == "commit_tactic" and s["tac"]:
             if s["tac"] not in seen:
                 seen.add(s["tac"]); uniq += 1
-                if s["cls"] in ("commit_REJ", "probe_FAIL"): first_fail += 1
+                if s["cls"] == "commit_REJ": first_fail += 1
     # REAL per-turn tokens from the timeline `usage` field (written by the patched
     # report bundle). Use OUTPUT tokens: not cached, exact, = the model's generation
     # effort. Destructive share = output tokens on reject/restart turns / total output.
@@ -286,7 +282,7 @@ def compute():
         all_with_term = all_eps + terminals
         clean = [e for e in all_eps if e["kind"] == "clean_undo"]
         # destructive obstacle = a stall containing a real committed reject (arm-fair:
-        # probe-fails are cheap exploration, NOT counted as being stuck)
+        # read-only context requests are not counted as being stuck)
         destructive = [e for e in all_with_term if e.get("n_commit_rej", 0) > 0]
         prog = max(1, agg["durable_progress"])
         rec = dict(
@@ -297,14 +293,13 @@ def compute():
             durable_progress=agg["durable_progress"],
             # raw event counts
             n_commit_rej=sum(e.get("n_commit_rej", 0) for e in all_with_term),
-            n_probe_fail=sum(e.get("n_probe_fail", 0) for e in all_with_term),
             n_clean_undo=len(clean),
             # ---- arm-FAIR headline metrics ----
-            # stall time = time-not-making-durable-progress after first hitch (probe time included
+            # stall time = time-not-making-durable-progress after first hitch (read-only time included
             # but it is the SAME currency for both arms; long stalls = stuck regardless of how filled)
             stall_time_min=sum(e["recover_time"] for e in all_with_term)/60,
             stall_per_progress_min=sum(e["recover_time"] for e in all_with_term)/60/prog,
-            # destructive stall time = reject + restart only (read-only probe/inspect/undo excluded)
+            # destructive stall time = reject + restart only (read-only context/undo excluded)
             destr_stall_time_min=sum(e.get("destr_time", 0) for e in all_with_term)/60,
             destr_stall_per_progress_min=sum(e.get("destr_time", 0) for e in all_with_term)/60/prog,
             # dimensionless, cross-lemma fair: share of total effort bled on destructive dead-ends
@@ -344,11 +339,11 @@ def compute():
     json.dump(flagged, open(os.path.join(OUT, "flagged_clean_undos.json"), "w"), indent=1)
     json.dump(stuck_eps, open(os.path.join(OUT, "stuck_episodes.json"), "w"), indent=1)
     # print table
-    print(f"{'arm':3} {'lemma':20} {'outcome':10} {'prog':>4} {'cREJ':>4} {'pFAIL':>5} "
+    print(f"{'arm':3} {'lemma':20} {'outcome':10} {'prog':>4} {'cREJ':>4} "
           f"{'destr':>5} {'d/prog':>6} {'dThrash':>7} {'term':>4} {'stallT_m':>8} {'cleanU':>6}")
     for r in sorted(per_bundle.values(), key=lambda x: (str(x["lemma"]), x["arm"])):
         print(f"{r['arm']:3} {str(r['lemma'])[:20]:20} {str(r['outcome'])[:10]:10} "
-              f"{r['durable_progress']:>4} {r['n_commit_rej']:>4} {r['n_probe_fail']:>5} "
+              f"{r['durable_progress']:>4} {r['n_commit_rej']:>4} "
               f"{r['n_destructive']:>5} {r['destructive_per_progress']:>6.2f} {r['destructive_thrash']:>7} "
               f"{r['n_terminal']:>4} {r['stall_time_min']:>8.1f} {r['n_clean_undo']:>6}")
     print(f"\ncompute: {len(per_bundle)} bundles, {len(flagged)} clean-undo episodes flagged for LLM -> {OUT}")
@@ -565,11 +560,11 @@ def clean_chart():
     defs = (
         f"HOW TO READ  (all four on the same {len(lemmas)} lemmas; read ③ first).   "
         "L1 = bare goal, no compiler.   L4 = proof-state compiler.\n"
-        "③ Error-generation rate (CONTROL): of the model's distinct tactic ideas, the fraction WRONG on first try "
-        "(cheap probes counted). Measures the MODEL's ability, not the tool — ≈ equal ⇒ same-strength model in both arms.\n"
+        "③ Error-generation rate (CONTROL): of the model's distinct committed tactic ideas, the fraction WRONG on first try. "
+        "Measures the MODEL's ability, not the tool — ≈ equal ⇒ same-strength model in both arms.\n"
         "① Committed rejects / progress step: real tactics EasyCrypt rejected, per forward step — how often it wastes a REAL move.\n"
         "② Blind-retry depth: total tactics submitted that got rejected ('blind' = committed without checking first).\n"
-        "④ Destructive token share: % of the model's tokens spent on dead-ends (rejected commits + restarts); cheap probing/inspecting "
+        "④ Destructive token share: % of the model's tokens spent on dead-ends (rejected commits + restarts); read-only context requests "
         "excluded. Char-based proxy reported only as a ratio (robust to proxy error and to prompt caching).\n"
         "“progress step” = a committed tactic that moved the proof forward AND survived to the final proof (not later undone).\n"
         "TAKEAWAY: ③ shows the model errs equally often → ①②④ show the compiler makes each error far cheaper."

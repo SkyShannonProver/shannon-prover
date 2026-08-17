@@ -5,8 +5,8 @@ before the prover/agent can read them.  This module owns that contract:
 
     original project -> isolated proof-stripped project copy + manifest
 
-Callers should not hand-edit target proof blocks.  The suite runner, narrative
-tooling, and legacy prover paths all depend on the same proof-stripping core.
+Callers should not hand-edit target proof blocks. The suite runner, validation
+tooling, and explicit developer re-proving path share this proof-stripping core.
 """
 from __future__ import annotations
 
@@ -149,8 +149,8 @@ def strip_eval_source_tree(root: Path) -> list[dict[str, Any]]:
 def replace_target_proof_with_admit(path: Path, lemma_name: str) -> bool:
     """Replace one target proof with an admit shell.
 
-    This is for legacy repair/precheck paths.  Evaluation source preparation
-    should use ``prepare_eval_source(strip_proofs=True)`` instead.
+    This is for the explicit developer re-proving path. Evaluation source
+    preparation uses ``prepare_eval_source(strip_proofs=True)`` instead.
     """
     path = Path(path)
     content = path.read_text(encoding="utf-8")

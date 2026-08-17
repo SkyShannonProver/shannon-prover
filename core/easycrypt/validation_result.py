@@ -1,9 +1,7 @@
 """Canonical errors/warnings validation-result shape.
 
-Five view modules used to carry byte-identical copies of this frozen
-dataclass (`ToolViewValidation`, `CommandSummaryValidation`,
-`CommitResponseValidation`, `ProofContextViewValidation`,
-`TacticExecutionResultValidation`). Each keeps its public name as an empty
+The view modules used to carry byte-identical copies of this frozen dataclass.
+Each current contract keeps its public validation-result name as an empty
 subclass — dataclass `__repr__` reports the subclass qualname, so behavior
 and rendering are unchanged. The near-copies with extra fields/semantics
 (`SessionEpisodeTimelineValidation`, `ProverActionValidation`) are

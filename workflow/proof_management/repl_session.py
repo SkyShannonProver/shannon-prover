@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 import difflib
-import hashlib
+import json
 import shutil
 import subprocess
 import sys
@@ -12,28 +12,31 @@ import time
 from pathlib import Path
 from typing import Any
 
-from core.easycrypt.committed_history import (
-    read_committed_tactics as _read_committed_tactics,
-)
+from core.easycrypt import committed_history
 from core.easycrypt.ec_env import get_ec_env
-from workflow.context_intents import (
-    context_payload_for_intent,
-    is_context_topic_intent,
-    normalize_context_topic,
-)
+from core.easycrypt.session_state import read_target_lemma_metadata
+from core.easycrypt.session_events import event_payload
 
 from .backend_actions import (
-    command_summary,
-    timeout_command_summary,
-    workspace_payload_from_stdout,
-    workspace_view_from_payload,
+    AuthoritativeViewResolution,
+    backend_action_record,
+    capture_authoritative_view_invocation,
+    capture_tactic_execution_invocation,
+    capture_tactic_preflight_invocation,
+    resolve_authoritative_view_invocation,
+    timeout_backend_action_record,
+)
+from .backend_invocation import (
+    capture_backend_invocation,
+    resolve_backend_invocation,
 )
 # Single source of truth for the committed-history digest + checkpoint-id
 # coordinate system. Re-exported here so the long-standing
 # `from .repl_session import history_hash` consumers (checkpoint_store /
-# memory_store via DI, recovery_handlers, route_health) stay backed by one
+# checkpoint recovery and manager projection stay backed by one
 # implementation instead of a copy that can silently drift (audit §6.3/§8 #7).
 from .checkpoint_surface import history_hash
+from workflow.managed_turn_outcome import classify_manager_action_outcome
 from .protocol_repair import AgentIntent
 from .types import ProofStateSnapshot
 
@@ -46,7 +49,7 @@ PROJECT_ROOT = Path(__file__).resolve().parents[2]
 # has NO aggregate cap, so a deep rewind can hold the bridge lock for minutes
 # (the observed false-wedge: ~236-248s while remaining_goals=2). This bounds the
 # worst case and surfaces progress instead of replaying silently. 0/negative =>
-# unbounded (legacy behaviour).
+# unbounded.
 #
 # The budget SCALES with the prefix length: max(600s floor, 15s x kept tactics).
 # A flat 600s cap falsely aborted a legitimate deep replay (observed 2026-06-11:
@@ -166,12 +169,12 @@ class ReplSessionManager:
         """Start the node's EC session.
 
         ``daemon_attach`` (SHANNON_EC_DAEMON=1 only) requests worker-death
-        attach: ``{"donor_session_dir": ..., "expected_goal_hash": ...}``
+        attach: ``{"donor_session_dir": ..., "expected_goal_hash": ...,
+        "goal_identity_required": true|false}``
         names a dead node's session dir whose EC daemon session may still
         be live. On a verified attach the committed prefix is adopted
-        in-place (zero replay); on ANY attach failure this falls back to
-        the legacy restart+replay path transparently. With the flag off
-        (or ``daemon_attach=None``) behavior is exactly legacy."""
+        in-place (zero replay); on ANY attach failure this falls back to the
+        canonical restart+replay path transparently."""
         with self._lock:
             attach_actions: list[dict[str, Any]] = []
             if daemon_attach:
@@ -197,7 +200,7 @@ class ReplSessionManager:
         instead of echoing the request (step4_1 r2 respawn divergence,
         2026-06-09).
         """
-        return read_committed_tactics(
+        return committed_history.read_committed_tactics(
             session_dir_path(self.session_dir, self.project_root)
         )
 
@@ -213,7 +216,7 @@ class ReplSessionManager:
         tactic_index: int,
     ) -> tuple[ProofStateSnapshot, list[dict[str, Any]]]:
         with self._lock:
-            tactics = read_committed_tactics(
+            tactics = committed_history.read_committed_tactics(
                 session_dir_path(self.session_dir, self.project_root)
             )
             keep_count = max(0, min(len(tactics), int(tactic_index) - 1))
@@ -353,7 +356,7 @@ class ReplSessionManager:
 
         Returns the (snapshot, actions) pair on success, or ``None`` after
         recording a non-mutating fallback action so the caller proceeds
-        with the legacy restart+replay restore. Caller holds the lock."""
+        with the canonical restart+replay restore. Caller holds the lock."""
         from .daemon_attach import (
             attempt_daemon_attach,
             daemon_session_attach_enabled,
@@ -365,15 +368,25 @@ class ReplSessionManager:
         if not donor:
             return None
         start_time = time.perf_counter()
-        result = attempt_daemon_attach(
-            project_root=self.project_root,
-            donor_session_dir=donor,
-            target_session_dir=self.session_dir,
-            file_path=self.file_path,
-            lemma_name=self.lemma_name,
-            replay_prefix=list(replay_prefix or []),
-            expected_goal_hash=str(daemon_attach.get("expected_goal_hash") or ""),
-        )
+        goal_identity_required = daemon_attach.get("goal_identity_required")
+        if type(goal_identity_required) is not bool:
+            result = {
+                "ok": False,
+                "reason": "goal_identity_required_invalid",
+            }
+        else:
+            result = attempt_daemon_attach(
+                project_root=self.project_root,
+                donor_session_dir=donor,
+                target_session_dir=self.session_dir,
+                file_path=self.file_path,
+                lemma_name=self.lemma_name,
+                replay_prefix=list(replay_prefix or []),
+                expected_goal_hash=str(
+                    daemon_attach.get("expected_goal_hash") or ""
+                ),
+                goal_identity_required=goal_identity_required,
+            )
         duration_ms = int((time.perf_counter() - start_time) * 1000)
         if not result.get("ok"):
             actions.append({
@@ -387,7 +400,7 @@ class ReplSessionManager:
                     "label": "daemon_attach_fallback",
                     "result": (
                         "No live daemon EC session could be adopted "
-                        f"({result.get('reason')}); restoring via the legacy "
+                        f"({result.get('reason')}); restoring via the canonical "
                         "restart+replay path."
                     ),
                 },
@@ -412,7 +425,7 @@ class ReplSessionManager:
                 ),
             },
         })
-        snapshot = self._snapshot_from_agent_view(actions=actions)
+        snapshot = self._snapshot_from_managed_goal_view(actions=actions)
         return snapshot, actions
 
     def _start_locked(
@@ -474,7 +487,7 @@ class ReplSessionManager:
                     raise ReplBackendTimeout(aggregate_action)
             self._run_backend(
                 f"replay_prefix_step_{index}",
-                ["-next", "-c", tactic],
+                ["-tactic-exec", "commit", "-c", tactic],
                 actions=actions,
                 timeout=180,
             )
@@ -483,11 +496,12 @@ class ReplSessionManager:
                 # commits (the edited prefix changed the goal, so this step no longer
                 # applies). Leave the session at the last tactic that DID apply, so the
                 # agent resumes from the divergence point instead of replaying later
-                # tactics into a now-wrong state. handle_next always exits 0, so a
+                # tactics into a now-wrong state. The canonical commit action
+                # exits 0 for both kept and auto-reverted steps, so a
                 # dropped step is invisible to _run_backend — detect it by the
                 # committed history failing to grow to `index`. (Normal fork/respawn
                 # replay keeps the skip-and-continue safety net below; this is opt-in.)
-                kept_now = read_committed_tactics(
+                kept_now = committed_history.read_committed_tactics(
                     session_dir_path(self.session_dir, self.project_root)
                 )
                 if len(kept_now) < index:
@@ -521,7 +535,7 @@ class ReplSessionManager:
             # records that echo the request misnumber every later step
             # (step4_1 r2 respawn, 2026-06-09: one dropped hypothesis-rewrite
             # shifted all live step numbers by +1 in replay audits).
-            committed = read_committed_tactics(
+            committed = committed_history.read_committed_tactics(
                 session_dir_path(self.session_dir, self.project_root)
             )
             if committed != replay_prefix:
@@ -547,7 +561,7 @@ class ReplSessionManager:
                     },
                 })
 
-        snapshot = self._snapshot_from_agent_view(actions=actions)
+        snapshot = self._snapshot_from_managed_goal_view(actions=actions)
         return snapshot, actions
 
     def handle_intent(
@@ -557,46 +571,17 @@ class ReplSessionManager:
         with self._lock:
             actions: list[dict[str, Any]] = []
             if intent.intent == "commit_tactic":
-                tactic = str(intent.payload.get("tactic") or "").strip()
-                if tactic:
-                    self._run_backend(
-                        "commit_tactic",
-                        ["-next", "-c", tactic],
-                        actions=actions,
-                        timeout=180,
-                    )
-            elif intent.intent == "inspect_context" or is_context_topic_intent(intent.intent):
-                payload = (
-                    context_payload_for_intent(intent.intent, intent.payload)
-                    if is_context_topic_intent(intent.intent)
-                    else dict(intent.payload or {})
-                )
-                topic = normalize_context_topic(payload.get("topic") or "goal_info")
-                # call_site_options used to short-circuit here to a static lightweight
-                # action, which SHADOWED the real `-pivot-inspect call-site` backend
-                # (frontier-gated + daemon-verified named-callee options + called-proc
-                # body). Removed so the topic falls through to that backend like every
-                # other inspect topic (panel audit: call_site_options 70% useless was
-                # the shadow, not the producer).
+                tactic = intent.payload["tactic"].strip()
                 self._run_backend(
-                    f"inspect_{topic}",
-                    self._inspect_args(payload),
+                    "commit_tactic",
+                    ["-tactic-exec", "commit", "-c", tactic],
                     actions=actions,
-                    timeout=120,
+                    timeout=180,
                 )
-            elif intent.intent == "lookup_symbol":
-                symbol = str(intent.payload.get("symbol") or "").strip()
-                if symbol:
-                    self._run_backend(
-                        "lookup_symbol",
-                        ["-where", symbol],
-                        actions=actions,
-                        timeout=120,
-                    )
             elif intent.intent == "undo_last_step":
                 self._run_backend(
                     "undo_last_step",
-                    ["-prev"],
+                    ["-tactic-exec", "undo"],
                     actions=actions,
                     timeout=120,
                 )
@@ -606,37 +591,52 @@ class ReplSessionManager:
                     force_restart=True,
                 )
             elif intent.intent == "finish":
-                actions.append({"label": "finish", "exit_code": 0})
-            snapshot = self._snapshot_from_agent_view(actions=actions)
+                outcome = classify_manager_action_outcome(
+                    status="ok",
+                    ok=True,
+                    read_only=False,
+                    mutates_proof_state=False,
+                    state_changed=False,
+                ).to_dict()
+                actions.append({
+                    "label": "finish",
+                    "exit_code": 0,
+                    "duration_ms": 0,
+                    "mutates_proof_state": False,
+                    **outcome,
+                    "agent_observation": {
+                        "kind": "finish_accepted",
+                        "result": (
+                            "Finish accepted; this proof node will stop after "
+                            "this response."
+                        ),
+                        "effect": "The EasyCrypt proof state did not change.",
+                    },
+                })
+            snapshot = self._snapshot_from_managed_goal_view(actions=actions)
             return snapshot, actions
 
-    def read_only_context_action(
+    def read_only_tactic_preflight(
         self,
-        intent_name: str,
-        payload: dict[str, Any] | None = None,
+        tactic: str,
         *,
-        timeout: int = 120,
+        timeout: int = 30,
     ) -> dict[str, Any]:
-        """Run one read-only context backend action without refreshing the view.
+        """Check one exact compiler tactic through event-bound preflight.
 
-        This is used only for SurfaceModel action preflight: the manager may need
-        to know whether a button has displayable content before advertising it.
-        It never mutates EasyCrypt proof state and never increments state_version.
+        This is manager-internal WP8a plumbing.  It does not refresh or mutate
+        the committed session, and it returns only the backend action whose
+        preflight artifact was bound to this exact invocation.
         """
-        if not is_context_topic_intent(intent_name) and intent_name != "inspect_context":
+        candidate = str(tactic or "").strip()
+        if not candidate:
             return {}
         with self._lock:
-            payload = (
-                context_payload_for_intent(intent_name, payload or {})
-                if is_context_topic_intent(intent_name)
-                else dict(payload or {})
-            )
-            topic = normalize_context_topic(payload.get("topic") or "goal_info")
             actions: list[dict[str, Any]] = []
             try:
                 self._run_backend(
-                    f"inspect_{topic}",
-                    self._inspect_args(payload),
+                    "exact_tactic_preflight",
+                    ["-try", "-c", candidate],
                     actions=actions,
                     timeout=timeout,
                 )
@@ -644,25 +644,467 @@ class ReplSessionManager:
                 pass
             return dict(actions[-1]) if actions else {}
 
+    def certify_exact_tactic(
+        self,
+        tactic: str,
+        *,
+        timeout: int = 30,
+    ) -> dict[str, Any]:
+        """Return an authority-bound read-only check for one exact tactic.
 
-    def _snapshot_from_agent_view(self, *, actions: list[dict[str, Any]]) -> ProofStateSnapshot:
-        stdout = self._run_backend(
-            "agent_view",
-            ["-agent-view"],
+        This is the backend boundary used by the proof-state compiler service.
+        Unlike display-oriented action records, the result names the one
+        ``tactic.preflight.produced`` occurrence inside this exact call and proves
+        that committed history and the manager state version did not change.
+        """
+
+        candidate = str(tactic or "").strip()
+        if not candidate:
+            return {}
+        with self._lock:
+            session_path = session_dir_path(self.session_dir, self.project_root)
+            boundary = capture_backend_invocation(
+                session_path,
+                action_name="try",
+                mutates_proof_state=False,
+            )
+            history_before = tuple(self.committed_history())
+            state_version_before = self.state_version
+            actions: list[dict[str, Any]] = []
+            try:
+                self._run_backend(
+                    "exact_tactic_preflight",
+                    ["-try", "-c", candidate],
+                    actions=actions,
+                    timeout=timeout,
+                )
+            except (ReplBackendTimeout, ReplBackendError):
+                pass
+            action = dict(actions[-1]) if actions else {}
+            window = resolve_backend_invocation(
+                boundary,
+                exit_code=action.get("exit_code"),
+            )
+            produced, produced_error = window.exactly_one_produced_event(
+                "tactic.preflight.produced"
+            ) if window.ok else (None, window.error)
+            authority: dict[str, Any] = {}
+            if produced is not None and not produced_error:
+                payload = event_payload(produced)
+                authority = {
+                    "event_type": "tactic.preflight.produced",
+                    "event_id": str(produced.get("event_id") or ""),
+                    "artifact_ref": str(payload.get("artifact") or ""),
+                    "artifact_hash": str(payload.get("artifact_hash") or ""),
+                    "hash_algorithm": "sha1",
+                }
+            history_after = tuple(self.committed_history())
+            state_version_after = self.state_version
+            return {
+                "tactic": candidate,
+                "action": action,
+                "authority": authority,
+                "contract_error": produced_error,
+                "history_unchanged": history_before == history_after,
+                "state_version_before": state_version_before,
+                "state_version_after": state_version_after,
+            }
+
+    def read_compiler_input_v2(
+        self,
+        *,
+        timeout: int = 30,
+    ) -> dict[str, Any]:
+        """Return one current-call, event-bound compiler input occurrence.
+
+        This method does not read or translate ``raw_workspace_view``.  The
+        backend result is accepted only through ``compiler.input.produced``;
+        the returned authority envelope names that exact event and artifact.
+        """
+
+        with self._lock:
+            actions: list[dict[str, Any]] = []
+            authoritative_resolutions: list[AuthoritativeViewResolution] = []
+            backend_args = [
+                "-compiler-input-v2",
+                "--manager-state-version",
+                str(self.state_version),
+            ]
+            payload = self._run_backend(
+                "compiler_input_v2",
+                backend_args,
+                actions=actions,
+                timeout=timeout,
+                authoritative_resolutions=authoritative_resolutions,
+            )
+            if not isinstance(payload, dict) or payload.get("ok") is not True:
+                raise ReplBackendError(actions[-1] if actions else {
+                    "label": "compiler_input_v2",
+                    "exit_code": 1,
+                    "agent_observation": {
+                        "error_summary": "invalid compiler input payload",
+                    },
+                })
+            target = payload.get("target")
+            if not isinstance(target, dict):
+                raise ValueError("compiler input target is missing")
+            if target.get("lemma") != self.lemma_name:
+                raise ValueError("compiler input target lemma drifted")
+            if Path(str(target.get("source_file") or "")).resolve() != Path(
+                self.file_path
+            ).resolve():
+                raise ValueError("compiler input target source drifted")
+            state = payload.get("state")
+            if (
+                not isinstance(state, dict)
+                or state.get("state_version") != self.state_version
+            ):
+                raise ValueError("compiler input manager state version drifted")
+            snapshot_id = str(payload.get("snapshot_id") or "")
+            if len(authoritative_resolutions) != 1:
+                raise ValueError(
+                    "compiler input occurrence is not uniquely event-bound"
+                )
+            resolution = authoritative_resolutions[0]
+            produced = resolution.event_payload or {}
+            if (
+                resolution.error
+                or produced.get("snapshot_id") != snapshot_id
+                or not resolution.event_id
+                or resolution.event_sequence <= 0
+            ):
+                raise ValueError(
+                    "compiler input occurrence authority does not match its snapshot"
+                )
+            return {
+                "snapshot": payload,
+                "authority": {
+                    "event_type": "compiler.input.produced",
+                    "event_id": resolution.event_id,
+                    "event_sequence": resolution.event_sequence,
+                    "artifact_ref": str(produced.get("artifact") or ""),
+                    "artifact_sha256": str(
+                        produced.get("snapshot_sha256") or ""
+                    ),
+                },
+            }
+
+    def load_compiler_resources_v2(
+        self,
+        *,
+        request_id: str,
+        source_snapshot_id: str,
+        source_event_id: str,
+        expected_state: dict[str, Any],
+        load_requests: tuple[Any, ...],
+        timeout: int = 30,
+    ) -> dict[str, Any]:
+        """Load declarations for one exact prior compiler-input occurrence."""
+
+        if not request_id or not source_snapshot_id or not source_event_id:
+            raise ValueError("compiler resource load identity is incomplete")
+        if not load_requests:
+            raise ValueError("compiler resource load requires requests")
+        request = {
+            "request_id": request_id,
+            "source_snapshot_id": source_snapshot_id,
+            "source_event_id": source_event_id,
+            "expected_state": dict(expected_state),
+            "requests": [item.runtime_payload() for item in load_requests],
+        }
+        with self._lock:
+            history_before = tuple(self.committed_history())
+            state_version_before = self.state_version
+            actions: list[dict[str, Any]] = []
+            resolutions: list[AuthoritativeViewResolution] = []
+            payload = self._run_backend(
+                "compiler_resource_load_v2",
+                [
+                    "-compiler-resource-load-v2",
+                    "--manager-state-version",
+                    str(self.state_version),
+                    "--compiler-resource-load-request-json",
+                    json.dumps(request, sort_keys=True, separators=(",", ":")),
+                ],
+                actions=actions,
+                timeout=timeout,
+                authoritative_resolutions=resolutions,
+            )
+            if not isinstance(payload, dict) or payload.get("ok") is not True:
+                raise ReplBackendError(actions[-1] if actions else {
+                    "label": "compiler_resource_load_v2",
+                    "exit_code": 1,
+                    "agent_observation": {
+                        "error_summary": "invalid compiler resource payload",
+                    },
+                })
+            if len(resolutions) != 1:
+                raise ValueError("compiler resource occurrence is not uniquely bound")
+            resolution = resolutions[0]
+            produced = resolution.event_payload or {}
+            if (
+                resolution.error
+                or payload.get("request_id") != request_id
+                or payload.get("source_snapshot_id") != source_snapshot_id
+                or payload.get("source_event_id") != source_event_id
+                or produced.get("request_id") != request_id
+                or not resolution.event_id
+                or resolution.event_sequence <= 0
+            ):
+                raise ValueError("compiler resource occurrence identity drifted")
+            history_after = tuple(self.committed_history())
+            state_version_after = self.state_version
+            return {
+                "result": payload,
+                "authority": {
+                    "event_type": "compiler.resources.loaded",
+                    "event_id": resolution.event_id,
+                    "event_sequence": resolution.event_sequence,
+                    "artifact_ref": str(produced.get("artifact") or ""),
+                    "artifact_sha256": str(produced.get("result_sha256") or ""),
+                },
+                "history_unchanged": history_before == history_after,
+                "state_version_before": state_version_before,
+                "state_version_after": state_version_after,
+            }
+
+    def execute_native_semantic_batch(
+        self,
+        *,
+        batch_id: str,
+        requests: tuple[dict[str, object], ...],
+        timeout: int = 30,
+    ) -> dict[str, Any]:
+        """Return one event-bound tagged native EasyCrypt semantic batch."""
+
+        if not batch_id or batch_id != batch_id.strip():
+            raise ValueError("native semantic batch requires batch_id")
+        if not requests or len(requests) > 8:
+            raise ValueError("native semantic batch size is invalid")
+        request = {
+            "batch_id": batch_id,
+            "members": [dict(item) for item in requests],
+        }
+        with self._lock:
+            history_before = tuple(self.committed_history())
+            state_version_before = self.state_version
+            actions: list[dict[str, Any]] = []
+            authoritative_resolutions: list[AuthoritativeViewResolution] = []
+            payload = self._run_backend(
+                "native_semantic_batch",
+                [
+                    "-native-semantic-batch-json",
+                    "--manager-state-version",
+                    str(self.state_version),
+                    "--native-semantic-batch-request-json",
+                    json.dumps(
+                        request,
+                        sort_keys=True,
+                        separators=(",", ":"),
+                    ),
+                ],
+                actions=actions,
+                timeout=timeout,
+                authoritative_resolutions=authoritative_resolutions,
+            )
+            if not isinstance(payload, dict) or payload.get("ok") is not True:
+                raise ReplBackendError(actions[-1] if actions else {
+                    "label": "native_semantic_batch",
+                    "exit_code": 1,
+                    "agent_observation": {
+                        "error_summary": "invalid native semantic batch payload",
+                    },
+                })
+            raw_request = payload.get("request")
+            state = payload.get("state")
+            if raw_request != request:
+                raise ValueError("native semantic batch request identity drifted")
+            if (
+                not isinstance(state, dict)
+                or state.get("session_id") != str(
+                    session_dir_path(self.session_dir, self.project_root).resolve()
+                )
+                or state.get("state_version") != self.state_version
+            ):
+                raise ValueError("native semantic batch state identity drifted")
+            if len(authoritative_resolutions) != 1:
+                raise ValueError(
+                    "native semantic batch occurrence is not uniquely event-bound"
+                )
+            resolution = authoritative_resolutions[0]
+            produced = resolution.event_payload or {}
+            if (
+                resolution.error
+                or produced.get("query_id") != payload.get("query_id")
+                or produced.get("batch_id") != batch_id
+                or produced.get("request_count") != len(requests)
+                or not resolution.event_id
+                or resolution.event_sequence <= 0
+            ):
+                raise ValueError(
+                    "native semantic batch event authority does not match result"
+                )
+            history_after = tuple(self.committed_history())
+            state_version_after = self.state_version
+            if history_after != history_before:
+                raise RuntimeError(
+                    "native semantic batch changed committed proof history"
+                )
+            if state_version_after != state_version_before:
+                raise RuntimeError(
+                    "native semantic batch changed manager state version"
+                )
+            return {
+                "result": payload,
+                "authority": {
+                    "event_type": "native.semantic.batch.produced",
+                    "event_id": resolution.event_id,
+                    "event_sequence": resolution.event_sequence,
+                    "artifact_ref": str(produced.get("artifact") or ""),
+                    "artifact_sha256": str(produced.get("result_sha256") or ""),
+                },
+                "history_unchanged": True,
+                "state_version_before": state_version_before,
+                "state_version_after": state_version_after,
+            }
+
+    def project_native_state(
+        self,
+        *,
+        request_id: str,
+        max_nodes: int = 4096,
+        max_depth: int = 128,
+        timeout: int = 30,
+    ) -> dict[str, Any]:
+        """Return one event-bound typed EasyCrypt proof-state occurrence."""
+
+        if not request_id or request_id != request_id.strip():
+            raise ValueError("native state query requires request_id")
+        request = {
+            "request_id": request_id,
+            "max_nodes": max_nodes,
+            "max_depth": max_depth,
+        }
+        with self._lock:
+            history_before = tuple(self.committed_history())
+            state_version_before = self.state_version
+            actions: list[dict[str, Any]] = []
+            authoritative_resolutions: list[AuthoritativeViewResolution] = []
+            payload = self._run_backend(
+                "native_state_projection",
+                [
+                    "-native-state-projection-json",
+                    "--manager-state-version",
+                    str(self.state_version),
+                    "--native-state-projection-request-json",
+                    json.dumps(request, sort_keys=True, separators=(",", ":")),
+                ],
+                actions=actions,
+                timeout=timeout,
+                authoritative_resolutions=authoritative_resolutions,
+            )
+            if not isinstance(payload, dict) or payload.get("ok") is not True:
+                raise ReplBackendError(actions[-1] if actions else {
+                    "label": "native_state_projection",
+                    "exit_code": 1,
+                    "agent_observation": {
+                        "error_summary": "invalid native state payload",
+                    },
+                })
+            raw_request = payload.get("request")
+            state = payload.get("state")
+            if raw_request != request:
+                raise ValueError("native state request identity drifted")
+            if (
+                not isinstance(state, dict)
+                or state.get("session_id") != str(
+                    session_dir_path(self.session_dir, self.project_root).resolve()
+                )
+                or state.get("state_version") != self.state_version
+            ):
+                raise ValueError("native state identity drifted")
+            if len(authoritative_resolutions) != 1:
+                raise ValueError("native state occurrence is not uniquely event-bound")
+            resolution = authoritative_resolutions[0]
+            produced = resolution.event_payload or {}
+            if (
+                resolution.error
+                or produced.get("projection_id") != payload.get("projection_id")
+                or produced.get("request_id") != request_id
+                or not resolution.event_id
+                or resolution.event_sequence <= 0
+            ):
+                raise ValueError("native state event authority does not match result")
+            history_after = tuple(self.committed_history())
+            state_version_after = self.state_version
+            if history_after != history_before:
+                raise RuntimeError("native state query changed committed proof history")
+            if state_version_after != state_version_before:
+                raise RuntimeError("native state query changed manager state version")
+            return {
+                "result": payload,
+                "authority": {
+                    "event_type": "native.state.produced",
+                    "event_id": resolution.event_id,
+                    "event_sequence": resolution.event_sequence,
+                    "artifact_ref": str(produced.get("artifact") or ""),
+                    "artifact_sha256": str(produced.get("result_sha256") or ""),
+                },
+                "history_unchanged": True,
+                "state_version_before": state_version_before,
+                "state_version_after": state_version_after,
+            }
+
+
+    def _snapshot_from_managed_goal_view(
+        self,
+        *,
+        actions: list[dict[str, Any]],
+    ) -> ProofStateSnapshot:
+        label = "managed_goal_view"
+        args = ["-managed-goal-view"]
+        payload = self._run_backend(
+            label,
+            args,
             actions=actions,
             timeout=60,
         )
-        # Select the workspace view by shape, not "first decodable JSON": this
-        # snapshot becomes the agent's entire visible state, so a stray JSON
-        # fragment emitted before the view must never be mistaken for it.
-        payload = workspace_payload_from_stdout(stdout)
-        workspace = workspace_view_from_payload(
-            payload if isinstance(payload, dict) else {}
-        )
+        # The snapshot is decoded only from the current invocation's strictly
+        # event-bound workspace artifact. Stdout is human/debug display and can
+        # neither forge nor replace the manager's semantic state.
+        if not isinstance(payload, dict):
+            self._raise_snapshot_contract_error(
+                actions,
+                f"{label} backend did not return its event-bound workspace artifact",
+            )
+        if payload.get("ok") is not True:
+            self._raise_snapshot_contract_error(
+                actions,
+                f"{label} workspace artifact must report explicit ok=true",
+            )
+        metadata_error = self._managed_session_metadata_error()
+        if metadata_error:
+            self._raise_snapshot_contract_error(actions, metadata_error)
+        workspace = payload
         self._state_version += 1
-        goal_hash = _goal_hash(workspace)
-        context_artifact = _context_artifact(workspace)
-        workspace_artifact = _workspace_artifact(payload if isinstance(payload, dict) else {})
+        proof_status = (
+            workspace.get("proof_status")
+            if isinstance(workspace.get("proof_status"), dict)
+            else {}
+        )
+        goal_identity_required = proof_status.get("goal_identity_required")
+        if type(goal_identity_required) is not bool:
+            self._raise_snapshot_contract_error(
+                actions,
+                "workspace proof status lacks an explicit goal identity class",
+            )
+        goal_hash = _goal_hash(workspace) if goal_identity_required else ""
+        if goal_identity_required and not goal_hash:
+            self._raise_snapshot_contract_error(
+                actions,
+                "open workspace has no canonical goal identity",
+            )
+        workspace_artifact = _workspace_artifact(payload)
         return ProofStateSnapshot(
             node_id=self.node_id,
             session_tag=self.session_tag,
@@ -670,7 +1112,7 @@ class ReplSessionManager:
             session_epoch=self._session_epoch,
             state_version=self._state_version,
             goal_hash=goal_hash,
-            proof_context_view_artifact=context_artifact,
+            goal_identity_required=goal_identity_required,
             workspace_view_artifact=workspace_artifact,
             execution_refs={
                 "manager_action_count": len(actions),
@@ -679,6 +1121,67 @@ class ReplSessionManager:
             raw_workspace_view=workspace,
         )
 
+    def _managed_session_metadata_error(self) -> str:
+        """Return a fail-closed target identity error for manager snapshots."""
+
+        session_path = session_dir_path(self.session_dir, self.project_root)
+        target = read_target_lemma_metadata(session_path)
+        if target.status != "target_lemma" or target.lemma != self.lemma_name:
+            return (
+                "managed session metadata does not identify the manager's "
+                f"target lemma {self.lemma_name!r}"
+            )
+        actual_source = Path(target.source_file)
+        if not actual_source.is_absolute():
+            actual_source = self.project_root / actual_source
+        expected_source = Path(self.file_path)
+        if not expected_source.is_absolute():
+            expected_source = self.project_root / expected_source
+        if actual_source.resolve() != expected_source.resolve():
+            return "managed session metadata file does not match the manager target"
+        return ""
+
+    @staticmethod
+    def _raise_snapshot_contract_error(
+        actions: list[dict[str, Any]],
+        error: str,
+    ) -> None:
+        action_index = next(
+            (
+                index
+                for index in range(len(actions) - 1, -1, -1)
+                if actions[index].get("label") == "managed_goal_view"
+            ),
+            None,
+        )
+        action = dict(actions[action_index]) if action_index is not None else {
+            "label": "managed_goal_view",
+            "exit_code": 0,
+            "mutates_proof_state": False,
+        }
+        action.update(classify_manager_action_outcome(
+            status="backend_contract_error",
+            ok=False,
+            read_only=True,
+            mutates_proof_state=False,
+            state_changed=False,
+        ).to_dict())
+        action["contract_error"] = error
+        action["agent_observation"] = {
+            "manager_action": "managed_goal_view",
+            "result": (
+                "The backend did not produce a trustworthy managed workspace view."
+            ),
+            "effect": "The read-only request did not change the proof state.",
+            "proof_state": "unchanged",
+            "contract_error": error,
+        }
+        if action_index is not None:
+            actions[action_index] = action
+        else:
+            actions.append(action)
+        raise ReplBackendError(action)
+
     def _run_backend(
         self,
         label: str,
@@ -686,7 +1189,14 @@ class ReplSessionManager:
         *,
         actions: list[dict[str, Any]],
         timeout: int,
-    ) -> str:
+        authoritative_resolutions: list[AuthoritativeViewResolution] | None = None,
+    ) -> str | dict[str, Any]:
+        retired_tactic_flags = {"-next", "-prev", "-chain"}
+        if retired_tactic_flags.intersection(args):
+            raise ValueError(
+                "ReplSessionManager accepts tactic mutations only through "
+                "-tactic-exec commit|commit_chain|undo"
+            )
         cmd = [
             sys.executable,
             "core/easycrypt/session_cli.py",
@@ -694,6 +1204,19 @@ class ReplSessionManager:
             self.session_dir,
             *args,
         ]
+        resolved_session_dir = session_dir_path(self.session_dir, self.project_root)
+        tactic_preflight_boundary = capture_tactic_preflight_invocation(
+            resolved_session_dir,
+            cmd,
+        )
+        tactic_execution_boundary = capture_tactic_execution_invocation(
+            resolved_session_dir,
+            cmd,
+        )
+        authoritative_view_boundary = capture_authoritative_view_invocation(
+            resolved_session_dir,
+            cmd,
+        )
         start_time = time.perf_counter()
         try:
             result = subprocess.run(
@@ -706,25 +1229,43 @@ class ReplSessionManager:
             )
         except subprocess.TimeoutExpired as exc:
             duration_ms = int((time.perf_counter() - start_time) * 1000)
-            action = timeout_command_summary(
+            action = timeout_backend_action_record(
                 label, cmd, exc, timeout, duration_ms,
             )
             actions.append(action)
             raise ReplBackendTimeout(action) from exc
         duration_ms = int((time.perf_counter() - start_time) * 1000)
-        action = command_summary(
+        authoritative_view_resolution = resolve_authoritative_view_invocation(
+            authoritative_view_boundary,
+            exit_code=result.returncode,
+            required=authoritative_view_boundary is not None,
+        )
+        if (
+            authoritative_resolutions is not None
+            and authoritative_view_resolution.required
+        ):
+            authoritative_resolutions.append(authoritative_view_resolution)
+        action = backend_action_record(
             label, cmd, result, duration_ms,
-            session_dir=session_dir_path(self.session_dir, self.project_root),
+            tactic_preflight_boundary=tactic_preflight_boundary,
+            tactic_execution_boundary=tactic_execution_boundary,
+            authoritative_view_boundary=authoritative_view_boundary,
+            authoritative_view_resolution=authoritative_view_resolution,
         )
         actions.append(action)
-        if result.returncode != 0:
+        if (
+            result.returncode != 0
+            or action.get("outcome_kind") == "backend_error"
+            or bool(action.get("contract_error"))
+        ):
             raise ReplBackendError(action)
+        if authoritative_view_resolution.required:
+            return dict(authoritative_view_resolution.payload or {})
         return result.stdout or ""
 
     def _env(self) -> dict[str, str]:
         env = get_ec_env()
         env["EC_SESSION_DIR"] = self.session_dir
-        env["SHANNON_LEGACY_DISPLAY"] = "hidden"
         return env
 
     def include_dirs(self) -> list[str]:
@@ -737,76 +1278,10 @@ class ReplSessionManager:
             dirs.append(self.include_dir)
         return dirs
 
-    def _inspect_args(self, payload: dict[str, Any] | str) -> list[str]:
-        if isinstance(payload, dict):
-            topic = str(payload.get("topic") or "goal_info")
-        else:
-            topic = str(payload or "goal_info")
-            payload = {}
-        normalized = normalize_context_topic(topic)
-        simple = {
-            "goal_info": ["-goal-info"],
-            "diagnose": ["-diagnose"],
-            "episode_view": ["-episode-view"],
-            "proof_frontier": ["-agent-view"],
-            "workspace_view": ["-agent-view"],
-            "align": ["-align"],
-            "subgoal_gap": ["-subgoal-gap"],
-            "lemma_hints": ["-lemma-hints"],
-            "lemma_index": ["-lemma-index"],
-            "equiv_bridge_lemmas": ["-bridge-lemmas"],
-            "suggest_close": ["-suggest-close"],
-            "pivot_context": ["-pivot-inspect", "context"],
-            "verified_pivot_options": ["-pivot-inspect", "verified"],
-            "call_site_options": ["-pivot-inspect", "call-site"],
-            "pr_bridge_routes": ["-pivot-inspect", "bridge"],
-            "call_invariant_skeleton": ["-pivot-inspect", "call-invariant-skeleton"],
-            "rewrite_candidates": ["-pivot-inspect", "rewrite"],
-        }
-        if normalized in simple:
-            return simple[normalized]
-        if normalized == "call_subgoals":
-            command = str(
-                payload.get("command")
-                or payload.get("invariant")
-                or payload.get("invariant_body")
-                or payload.get("tactic")
-                or ""
-            ).strip()
-            return ["-call-subgoals", "-c", command] if command else ["-tactic-forms", "call"]
-        if normalized == "tactic_forms":
-            name = str(payload.get("name") or payload.get("tactic") or "").strip()
-            return ["-tactic-forms", name] if name else ["-goal-info"]
-        if normalized == "operator_lemmas":
-            # Live EC-native `search OP.` over the LOADED context — returns the
-            # applicable lemmas (project-local + cloned, not just stdlib) that mention
-            # the operator. A FACT: lemma statements; the agent still picks/applies.
-            # `op` may be a bare operator OR a tighter term skeleton like
-            # `(big _ _ (_ :: _))` — EC search accepts both; a skeleton narrows a long
-            # hit list (e.g. `big` 75 hits -> ~3 with the applicable lemma on top).
-            # --max is raised because the default 30 SILENTLY TRUNCATES the list (the
-            # needed lemma can sit past position 30 of the bare-operator search).
-            op = str(
-                payload.get("operator")
-                or payload.get("symbol")
-                or payload.get("name")
-                or payload.get("op")
-                or ""
-            ).strip()
-            return ["-search-skeleton", op, "--max", "200"] if op else ["-goal-info"]
-        if normalized == "inv_from_lemma":
-            lemma = str(payload.get("lemma") or payload.get("symbol") or "").strip()
-            return ["-inv-from-lemma", lemma] if lemma else ["-goal-info"]
-        return ["-goal-info"]
-
 
 def session_dir_path(session_dir: str | Path, project_root: Path) -> Path:
     path = Path(session_dir)
     return path if path.is_absolute() else Path(project_root) / path
-
-
-def read_committed_tactics(session_dir: Path) -> list[str]:
-    return _read_committed_tactics(session_dir)
 
 
 def replay_prefix_divergence(
@@ -838,40 +1313,13 @@ def replay_prefix_divergence(
 
 
 def _goal_hash(workspace: dict[str, Any]) -> str:
-    current_goal = (
-        workspace.get("current_goal")
-        if isinstance(workspace.get("current_goal"), dict)
-        else {}
-    )
-    proof_position = (
+    proof_status = (
         workspace.get("proof_status")
         if isinstance(workspace.get("proof_status"), dict)
-        else workspace.get("proof_position")
-        if isinstance(workspace.get("proof_position"), dict)
         else {}
     )
-    for value in (
-        current_goal.get("goal_hash"),
-        proof_position.get("goal_hash"),
-    ):
-        if isinstance(value, str) and value:
-            return value
-    lines = current_goal.get("lines") if isinstance(current_goal.get("lines"), list) else []
-    text = "\n".join(str(line) for line in lines)
-    if text:
-        return hashlib.sha1(text.encode("utf-8")).hexdigest()
-    return ""
-
-
-def _context_artifact(workspace: dict[str, Any]) -> str:
-    more = (
-        workspace.get("inspect_lookup_handles")
-        if isinstance(workspace.get("inspect_lookup_handles"), dict)
-        else workspace.get("want_more_context")
-        if isinstance(workspace.get("want_more_context"), dict)
-        else {}
-    )
-    return str(more.get("full_context_artifact") or "")
+    value = proof_status.get("goal_hash")
+    return value if isinstance(value, str) else ""
 
 
 def _workspace_artifact(payload: dict[str, Any]) -> str:
@@ -880,4 +1328,4 @@ def _workspace_artifact(payload: dict[str, Any]) -> str:
         if isinstance(payload.get("artifacts"), dict)
         else {}
     )
-    return str(artifacts.get("prover_workspace_view") or artifacts.get("workspace_view") or "")
+    return str(artifacts.get("prover_workspace_view") or "")

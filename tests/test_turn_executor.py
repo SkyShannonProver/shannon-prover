@@ -108,7 +108,8 @@ def test_turn_executor_renders_menu_turn_without_backend_mutation(
     )
 
     assert turn.ok
-    assert turn.manager_actions[0]["proof_state_effect"] == "selection_menu_only"
+    assert turn.manager_actions[0]["proof_state_effect"] == "unchanged"
+    assert turn.manager_actions[0]["outcome_kind"] == "control_menu"
     assert state["view"]["last_result"]["kind"] == "checkpoint_selection"
     assert events.audits[-1]["kind"] == "checkpoint_selection.requested"
 
@@ -139,16 +140,33 @@ def test_turn_executor_records_successful_repl_turn(
     assert events.audits[-1]["kind"] == "agent_intent.handled"
 
 
+def test_nonmutating_audit_separates_state_effect_from_operation(
+    tmp_path: Path,
+) -> None:
+    executor, _, events, _ = _executor(tmp_path)
+
+    turn = executor.nonmutating_backend_turn(
+        AgentIntent("commit_tactic", {"tactic": "wp."}),
+        {"result": "Scratch replay completed."},
+        actions=[],
+        audit_kind="tactic.preflight",
+    )
+
+    assert turn.ok
+    assert events.audits[-1]["proof_state_effect"] == "read_only"
+    assert events.audits[-1]["proof_state_operation"] == "scratch_replay_only"
+
+
 def test_turn_executor_surfaces_backend_failure_without_projection(
     tmp_path: Path,
 ) -> None:
     executor, state, events, _ = _executor(tmp_path)
 
     turn = executor.repl_call(
-        AgentIntent("goal_info", {}),
+        AgentIntent("commit_tactic", {"tactic": "wp."}),
         lambda: (_ for _ in ()).throw(
             ReplBackendError({
-                "label": "agent_view",
+                "label": "commit_tactic",
                 "exit_code": 1,
                 "agent_observation": {"error_summary": "view failed"},
             })
@@ -157,5 +175,5 @@ def test_turn_executor_surfaces_backend_failure_without_projection(
 
     assert not turn.ok
     assert turn.repair_prompt
-    assert state["view"]["last_result"]["intent"] == "goal_info"
+    assert state["view"]["last_result"]["intent"] == "commit_tactic"
     assert events.audits[-1]["kind"] == "manager_action.backend_failure"

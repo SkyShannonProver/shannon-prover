@@ -31,7 +31,7 @@ def _mock_repl(monkeypatch, drop_step: int):
     repl._lock = contextlib.nullcontext()           # type: ignore[assignment]
     repl._session_epoch = 0                          # type: ignore[attr-defined]
     repl._include_dirs = lambda: []                  # type: ignore[assignment]
-    repl._snapshot_from_agent_view = lambda **kw: None  # type: ignore[assignment]
+    repl._snapshot_from_managed_goal_view = lambda **kw: None  # type: ignore[assignment]
     monkeypatch.setattr(rs, "_replay_aggregate_budget_seconds", lambda total: 0)
     monkeypatch.setattr(rs, "session_dir_path", lambda sd, pr: sd)
 
@@ -47,7 +47,11 @@ def _mock_repl(monkeypatch, drop_step: int):
         return ""
 
     repl._run_backend = fake_backend                 # type: ignore[assignment]
-    monkeypatch.setattr(rs, "read_committed_tactics", lambda sd: list(state["committed"]))
+    monkeypatch.setattr(
+        rs.committed_history,
+        "read_committed_tactics",
+        lambda sd: list(state["committed"]),
+    )
     return repl, calls
 
 

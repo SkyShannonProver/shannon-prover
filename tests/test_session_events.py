@@ -7,11 +7,9 @@ schema can be refactored safely before broader proof replay tests exist.
 from __future__ import annotations
 
 import tempfile
-from contextlib import redirect_stdout
-from io import StringIO
 from pathlib import Path
-from types import SimpleNamespace
 from typing import Any
+from unittest.mock import patch
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -23,7 +21,6 @@ from core.easycrypt.session_events import (  # type: ignore  # noqa: E402
     append_event,
     event_payload,
     has_candidate_closed,
-    latest_tactic_error,
     make_event,
     read_events,
     summarize_events,
@@ -33,28 +30,19 @@ from core.easycrypt.session_events import (  # type: ignore  # noqa: E402
 from core.easycrypt.session_tactic_precheck import _strip_shell_filter_artifact  # type: ignore  # noqa: E402
 from core.easycrypt.session_projection import read_proof_state_projection  # type: ignore  # noqa: E402
 from workflow.progress import (  # noqa: E402
-    _event_log_has_candidate_closed,
     _session_goal_state_text,
-    _session_state_has_candidate_closed,
 )
 from workflow.proof_acceptance import (  # noqa: E402
     emit_workflow_verification_event,
     validate_acceptance_event_contract,
-    validate_candidate_event_contract,
+    validate_goal_discharge_contract,
 )
-from core.easycrypt.analysis.ec_goal_parser import goal_to_json, parse_goal  # type: ignore  # noqa: E402
-from core.easycrypt.ec_suggest import suggest_close, suggest_from_session  # type: ignore  # noqa: E402
 from core.easycrypt.session_state import (  # type: ignore  # noqa: E402
     REMAINING_UNKNOWN,
     infer_goal_count,
     read_session_state,
 )
-from core.easycrypt.commands.session_commands import handle_status  # type: ignore  # noqa: E402
-from core.easycrypt.commands.speculative_commands import handle_align, handle_swap_search  # type: ignore  # noqa: E402
-from core.easycrypt.ec_bridge_lemmas import analyze_bridge_lemmas_from_session  # type: ignore  # noqa: E402
-from core.easycrypt.analysis.ec_call_subgoals import preview_from_session  # type: ignore  # noqa: E402
-from core.easycrypt.ec_diagnose import diagnose_from_session  # type: ignore  # noqa: E402
-from core.easycrypt.subgoal_gap import analyze_session  # type: ignore  # noqa: E402
+from core.easycrypt.session_cli import main as session_cli_main  # type: ignore  # noqa: E402
 
 
 def _chain_session_summary(session_dir: str | Path) -> dict[str, Any]:
@@ -84,8 +72,8 @@ def _chain_session_summary(session_dir: str | Path) -> dict[str, Any]:
     try:
         projection = read_proof_state_projection(path)
         projection_status = projection.status
-        projection_candidate_ready = projection.candidate_ready
-        projection_final_ready = projection.final_ready
+        projection_candidate_ready = projection.goals_discharged
+        projection_final_ready = projection.offline_verified
         projection_consistency_errors = list(projection.consistency.errors)
         remaining_goals = projection.goal.num_remaining
     except Exception as exc:
@@ -105,7 +93,11 @@ def _chain_session_summary(session_dir: str | Path) -> dict[str, Any]:
 
     candidate_closed = bool(
         event_summary.candidate_closed_count
-        or projection_status in {"candidate_closed", "verified"}
+        or projection_status in {
+            "goals_discharged_pending_qed",
+            "session_closed_pending_verification",
+            "verified",
+        }
         or projection_candidate_ready
     )
     return {
@@ -143,6 +135,11 @@ def _classify_chain_outcome(
 
 
 def _append_minimal_closed_stream(d: Path, tactic: str = "qed.") -> None:
+    (d / "current.out").write_text(
+        "[1|check]>\nNo more goals\n[2|check]>\n",
+        encoding="utf-8",
+    )
+    (d / "history.ec").write_text(tactic + "\n", encoding="utf-8")
     append_event(d, "session.started", {
         "file": None,
         "lemma": "L",
@@ -151,7 +148,7 @@ def _append_minimal_closed_stream(d: Path, tactic: str = "qed.") -> None:
         "restart_count": 1,
     })
     append_event(d, "tool.called", {
-        "name": "next",
+        "name": "commit",
         "mutates_proof_state": True,
         "session_dir": str(d.resolve()),
     })
@@ -183,7 +180,7 @@ def _append_minimal_closed_stream(d: Path, tactic: str = "qed.") -> None:
         "async_check_close": False,
     })
     append_event(d, "tool.result", {
-        "name": "next",
+        "name": "commit",
         "mutates_proof_state": True,
         "session_dir": str(d.resolve()),
         "exit_code": 0,
@@ -207,20 +204,108 @@ def test_append_event_jsonl_contract() -> None:
         assert event["timestamp"].endswith("Z")
 
 
-def test_candidate_closed_reader() -> None:
+def test_retired_command_summary_event_is_a_contract_error() -> None:
     with tempfile.TemporaryDirectory() as td:
         d = Path(td)
-        path = d / "events.jsonl"
-        assert not _event_log_has_candidate_closed(path)
+        event = _event(d, "command.summary.produced", {})
+
+        issues = validate_event(event)
+
+        assert any(
+            issue.code == "event.retired_type" and issue.severity == "error"
+            for issue in issues
+        )
+
+
+def test_retired_agent_view_event_is_a_contract_error() -> None:
+    with tempfile.TemporaryDirectory() as td:
+        d = Path(td)
+        event = _event(d, "agent.view.produced", {})
+
+        issues = validate_event(event)
+
+        assert any(
+            issue.code == "event.retired_type" and issue.severity == "error"
+            for issue in issues
+        )
+
+
+def test_retired_proof_context_view_event_is_a_contract_error() -> None:
+    with tempfile.TemporaryDirectory() as td:
+        d = Path(td)
+        event = _event(d, "proof.context_view.produced", {})
+
+        issues = validate_event(event)
+
+        assert any(
+            issue.code == "event.retired_type" and issue.severity == "error"
+            for issue in issues
+        )
+
+
+def test_retired_commit_response_agent_view_link_is_a_contract_error() -> None:
+    with tempfile.TemporaryDirectory() as td:
+        d = Path(td)
+        event = _event(d, "commit.response.produced", {
+            "schema_version": 2,
+            "ok": True,
+            "command": "commit",
+            "status": "ok",
+            "artifact": str(d / "commit_response.json"),
+            "response_hash": "a" * 40,
+            "agent_view_artifact": str(d / "proof_context_view.json"),
+        })
+
+        issues = validate_event(event)
+
+        assert any(
+            issue.code == "event.payload.retired"
+            and "agent_view_artifact" in issue.message
+            for issue in issues
+        )
+
+
+def test_goal_discharge_reader_requires_current_projection_authority() -> None:
+    with tempfile.TemporaryDirectory() as td:
+        d = Path(td)
+        gate = validate_goal_discharge_contract(d)
+        assert not gate.ok
+        assert not gate.goals_discharged
+        assert not gate.session_completion_candidate
         append_event(d, "proof.candidate_closed", {"tactic": "qed."})
-        assert not _event_log_has_candidate_closed(path)
+        gate = validate_goal_discharge_contract(d)
+        assert not gate.ok
+        assert not gate.goals_discharged
+        assert not gate.session_completion_candidate
     with tempfile.TemporaryDirectory() as td:
         d = Path(td)
-        path = d / "events.jsonl"
         _append_minimal_closed_stream(d)
-        assert _event_log_has_candidate_closed(path)
+        gate = validate_goal_discharge_contract(d)
+        assert gate.ok
+        assert gate.goals_discharged
+        assert gate.session_completion_candidate
         events = read_events(d)
         assert has_candidate_closed(events)
+
+
+def test_candidate_close_event_must_be_adjacent_to_its_marked_result() -> None:
+    with tempfile.TemporaryDirectory() as td:
+        d = Path(td)
+        _append_minimal_closed_stream(d)
+        events = read_events(d)
+        close_index = next(
+            index
+            for index, event in enumerate(events)
+            if event["type"] == "proof.candidate_closed"
+        )
+        close = events.pop(close_index)
+        events.append(close)
+
+        validation = validate_event_stream(events)
+
+        codes = {issue.code for issue in validation.errors}
+        assert "stream.candidate_close.missing_adjacent_event" in codes
+        assert "stream.candidate_close.no_paired_tactic_result" in codes
 
 
 def test_event_summary_and_latest_error_helpers() -> None:
@@ -251,7 +336,7 @@ def test_event_summary_and_latest_error_helpers() -> None:
         assert summary.result_candidate_closed_count == 1
         assert summary.tactic_status_counts == {"error": 1, "ok": 1}
         assert summary.verification_status == "pass"
-        latest = latest_tactic_error(events)
+        latest = summary.recent_failed_attempts[0]
         assert latest.error == "[error] bad tactic"
         assert latest.tactic == "bad."
 
@@ -349,39 +434,32 @@ def test_validate_event_payload_schema() -> None:
             "errors": [],
             "debug": {},
         })
-        assert validate_event(diag_event) == []
+        assert [issue.code for issue in validate_event(diag_event)] == [
+            "event.retired_type"
+        ]
 
-        view_event = _event(d, "tool.view.produced", {
-            "tool": "goal-info",
+        preflight_event = _event(d, "tactic.preflight.produced", {
             "schema_version": 1,
+            "kind": "exact_tactic_preflight",
             "ok": True,
-            "artifact": str(d / "tool_views" / "goal-info_deadbeef.json"),
-            "view_hash": "a" * 40,
+            "artifact": str(d / "tactic_preflights" / "preflight.json"),
+            "artifact_hash": "a" * 40,
             "proof_status": "open",
-            "recommendation_count": 2,
+            "tactic_sha256": "b" * 64,
+            "accepted": True,
+            "verdict_known": True,
+            "outcome_known": True,
             "error_count": 0,
-            "warning_count": 0,
-            "note_count": 1,
         })
-        assert validate_event(view_event) == []
+        assert validate_event(preflight_event) == []
 
-        agent_view_event = _event(d, "agent.view.produced", {
-            "schema_version": 1,
-            "ok": True,
-            "artifact": str(d / "proof_context_views" / "proof_context_view_deadbeef.json"),
-            "view_hash": "b" * 40,
-            "proof_status": "open",
-            "goal_hash": "goal-hash",
-            "recommendation_count": 1,
-            "stale_recommendation_count": 0,
-            "error_count": 0,
-            "warning_count": 0,
-            "source_event_count": 3,
-        })
-        assert validate_event(agent_view_event) == []
+        retired_view_event = _event(d, "tool.view.produced", {})
+        assert [issue.code for issue in validate_event(retired_view_event)] == [
+            "event.retired_type"
+        ]
 
         workspace_event = _event(d, "prover.workspace_view.produced", {
-            "schema_version": 1,
+            "schema_version": 2,
             "view_kind": "prover_workspace_view",
             "ok": True,
             "artifact": str(d / "prover_workspace_views" / "view.json"),
@@ -395,11 +473,11 @@ def test_validate_event_payload_schema() -> None:
         assert validate_event(workspace_event) == []
 
         commit_response_event = _event(d, "commit.response.produced", {
-            "schema_version": 1,
+            "schema_version": 2,
             "ok": True,
-            "command": "chain",
+            "command": "commit_chain",
             "status": "ok",
-            "artifact": str(d / "commit_responses" / "chain_deadbeef.json"),
+            "artifact": str(d / "commit_responses" / "commit_chain_deadbeef.json"),
             "response_hash": "c" * 40,
             "proof_status": "open",
             "attempted_count": 2,
@@ -407,7 +485,6 @@ def test_validate_event_payload_schema() -> None:
             "failed_tactic": "",
             "error_count": 0,
             "warning_count": 0,
-            "agent_view_artifact": str(d / "proof_context_views" / "agent.json"),
         })
         assert validate_event(commit_response_event) == []
 
@@ -415,49 +492,25 @@ def test_validate_event_payload_schema() -> None:
             "schema_version": 1,
             "ok": True,
             "mode": "commit_chain",
-            "command": "chain",
+            "command": "commit_chain",
             "status": "ok",
-            "artifact": str(d / "tactic_execution_results" / "chain.json"),
+            "artifact": str(d / "tactic_execution_results" / "commit_chain.json"),
             "result_hash": "e" * 40,
             "accepted_count": 2,
             "rollback_count": 0,
             "failed_tactic": "",
             "state_changed": True,
             "history_committed": True,
-            "probe_accepted": False,
             "workspace_artifact": str(d / "prover_workspace_views" / "view.json"),
             "workspace_chars": 2048,
-            "proof_context_artifact": str(d / "proof_context_views" / "agent.json"),
+            "current_goal_text_fully_shown": True,
+            "current_goal_truncated": False,
             "commit_response_artifact": str(d / "commit_responses" / "chain.json"),
-            "raw_result_artifact": str(d / "tactic_raw_results" / "chain.txt"),
+            "raw_result_artifact": str(d / "tactic_raw_results" / "commit_chain.txt"),
             "error_count": 0,
             "warning_count": 0,
         })
         assert validate_event(tactic_execution_event) == []
-
-        command_summary_event = _event(d, "command.summary.produced", {
-            "schema_version": 1,
-            "ok": True,
-            "command": "chain",
-            "command_status": "ok",
-            "artifact": str(d / "command_summaries" / "chain_deadbeef.json"),
-            "summary_hash": "d" * 40,
-            "proof_status": "open",
-            "goal_hash": "goal-hash",
-            "goal_type": "pRHL",
-            "num_remaining": 1,
-            "history_tactic_count": 2,
-            "transition_kind": "progress",
-            "primary_action": "try_tactic",
-            "recommendation_count": 1,
-            "error_count": 0,
-            "warning_count": 0,
-            "commit_response_artifact": str(
-                d / "commit_responses" / "chain.json"
-            ),
-            "agent_view_artifact": str(d / "proof_context_views" / "agent.json"),
-        })
-        assert validate_event(command_summary_event) == []
 
         episode_timeline_event = _event(d, "episode.timeline.produced", {
             "schema_version": 1,
@@ -503,7 +556,7 @@ def test_validate_event_stream_accepts_realistic_replay_flow() -> None:
                 "status": "ok",
             }),
             _event(d, "tool.called", {
-                "name": "next",
+                "name": "commit",
                 "mutates_proof_state": True,
                 "session_dir": str(d),
             }),
@@ -535,7 +588,7 @@ def test_validate_event_stream_accepts_realistic_replay_flow() -> None:
                 "async_check_close": False,
             }),
             _event(d, "tool.result", {
-                "name": "next",
+                "name": "commit",
                 "mutates_proof_state": True,
                 "session_dir": str(d),
                 "exit_code": 0,
@@ -577,7 +630,7 @@ def test_validate_event_stream_detects_pairing_and_fake_close() -> None:
                 "restart_count": 1,
             }),
             _event(d, "tool.called", {
-                "name": "next",
+                "name": "commit",
                 "mutates_proof_state": True,
                 "session_dir": str(d),
             }),
@@ -605,6 +658,44 @@ def test_validate_event_stream_detects_pairing_and_fake_close() -> None:
         assert "stream.candidate_close.failed_tactic" in codes
         assert "stream.tool.missing_result" in codes
         assert "stream.verification.required_pass" in codes
+
+
+def test_validate_event_stream_rejects_empty_close_tactic_identity() -> None:
+    with tempfile.TemporaryDirectory() as td:
+        d = Path(td)
+        events = [
+            _event(d, "session.started", {
+                "file": None,
+                "lemma": "L",
+                "include_dirs": [],
+                "discarded_tactic_count": 0,
+                "restart_count": 1,
+            }),
+            _event(d, "tactic.submitted", {
+                "tactic": "done.",
+                "history_lines_before": 0,
+                "line_count": 1,
+            }),
+            _event(d, "tactic.result", {
+                "tactic": "done.",
+                "status": "ok",
+                "history_committed": True,
+                "candidate_closed": True,
+            }),
+            _event(d, "proof.candidate_closed", {
+                "tactic": "",
+                "goals_before": 1,
+                "goals_after": 0,
+                "no_more_goals": True,
+                "async_check_close": False,
+            }),
+        ]
+
+        result = validate_event_stream(events)
+
+        assert "stream.candidate_close.empty_tactic" in [
+            issue.code for issue in result.errors
+        ]
 
 
 def test_validate_event_stream_detects_tool_name_mismatch() -> None:
@@ -641,16 +732,17 @@ def test_proof_acceptance_gate_requires_valid_candidate_contract() -> None:
     with tempfile.TemporaryDirectory() as td:
         d = Path(td)
         append_event(d, "proof.candidate_closed", {"tactic": "qed."})
-        invalid = validate_candidate_event_contract(d)
+        invalid = validate_goal_discharge_contract(d)
         assert not invalid.ok
         assert any("session" in err for err in invalid.errors)
 
     with tempfile.TemporaryDirectory() as td:
         d = Path(td)
         _append_minimal_closed_stream(d)
-        valid = validate_candidate_event_contract(d)
+        valid = validate_goal_discharge_contract(d)
         assert valid.ok
-        assert valid.candidate_closed
+        assert valid.goals_discharged
+        assert valid.session_completion_candidate
 
 
 def test_proof_acceptance_gate_requires_verification_event() -> None:
@@ -669,7 +761,7 @@ def test_proof_acceptance_gate_requires_verification_event() -> None:
         assert after_verify.verification_status == "pass"
 
 
-def test_progress_session_state_closed_fallback() -> None:
+def test_progress_goal_state_text_is_diagnostic_only() -> None:
     with tempfile.TemporaryDirectory() as td:
         d = Path(td)
         session_dir = d / ".ec_session_prover"
@@ -682,7 +774,6 @@ def test_progress_session_state_closed_fallback() -> None:
             "[37|check]>\n",
             encoding="utf-8",
         )
-        assert _session_state_has_candidate_closed(str(d), ".ec_session_prover")
         goal = _session_goal_state_text(str(d), ".ec_session_prover")
         assert "No more goals" in goal
 
@@ -699,9 +790,8 @@ def test_progress_session_state_closed_fallback() -> None:
             encoding="utf-8",
         )
         _append_minimal_closed_stream(session_dir)
-        assert _session_state_has_candidate_closed(str(d), ".ec_session_prover")
         goal = _session_goal_state_text(str(d), ".ec_session_prover")
-        assert "Proof is already complete" in goal
+        assert "No current goal remains" in goal
 
 
 def test_replay_chain_uses_structured_session_summary() -> None:
@@ -765,34 +855,13 @@ def test_replay_chain_uses_structured_session_summary() -> None:
 
         summary = _chain_session_summary(d)
         assert summary["candidate_closed"] is True
-        assert summary["projection_status"] == "candidate_closed"
+        assert summary["projection_status"] == (
+            "session_closed_pending_verification"
+        )
         assert summary["projection_candidate_ready"] is True
         assert summary["remaining_goals"] == 0
         assert summary["projection_consistency_errors"] == []
 
-
-
-def test_diagnose_prefers_structured_latest_error_event() -> None:
-    with tempfile.TemporaryDirectory() as td:
-        d = Path(td)
-        (d / "current.out").write_text(
-            "[1|check]>\n"
-            "Current goal\n"
-            "----\n"
-            "x = y\n"
-            "[2|check]>\n",
-            encoding="utf-8",
-        )
-        append_event(d, "tactic.result", {
-            "tactic": "apply MissingLemma.",
-            "status": "error",
-            "latest_error": "[error] unknown lemma: MissingLemma",
-            "error_lines": ["[error] unknown lemma: MissingLemma"],
-        })
-
-        report = diagnose_from_session(d)
-        assert "unknown lemma: MissingLemma" in report
-        assert "Tactic:     apply MissingLemma." in report
 
 
 def test_meta_command_refusal_emits_events_without_ec() -> None:
@@ -816,7 +885,8 @@ def test_raw_proof_control_refusal_emits_events_without_ec() -> None:
         session = open_session(Path(td))
         out = session.append_block("undo 2.")
         assert "[PROOF_CONTROL_REFUSED]" in out
-        assert "-tactic-exec undo" in out
+        assert "`undo_last_step`" in out
+        assert "session_cli" not in out
         events = read_events(Path(td))
         result_events = [
             event for event in events if event["type"] == "tactic.result"
@@ -824,6 +894,24 @@ def test_raw_proof_control_refusal_emits_events_without_ec() -> None:
         assert result_events[-1]["payload"]["status"] == "refused"
         assert result_events[-1]["payload"]["reason"] == "proof_control_command"
         assert result_events[-1]["payload"]["history_committed"] is False
+
+
+def test_tactic_exec_is_counted_as_a_cli_action() -> None:
+    with tempfile.TemporaryDirectory() as td:
+        with patch(
+            "core.easycrypt.commands.commit_commands.handle_tactic_exec",
+            return_value=0,
+        ):
+            assert session_cli_main([
+                "-d", td, "-tactic-exec", "undo",
+            ]) == 0
+
+        events = read_events(Path(td))
+        assert [event["type"] for event in events] == [
+            "tool.called",
+            "tool.result",
+        ]
+        assert event_payload(events[0])["name"] == "undo"
 
 
 def test_shell_filter_artifact_stripper_handles_probe_tails() -> None:
@@ -901,153 +989,6 @@ def test_infer_goal_count_handles_post_qed_added_lemma_prompt() -> None:
     assert infer_goal_count(raw) == (0, True)
 
 
-def test_closed_goal_json_has_no_tactic_suggestions() -> None:
-    info = parse_goal("No more goals\n[1|check]>\n")
-    data = goal_to_json(info)
-    assert data["num_remaining"] == 0
-    assert data["proof_candidate_closed"] is True
-    assert "suggested_tactics" not in data
-    assert "parser_action_policy" not in data
-    assert "next_action" in data
-
-
-def test_probability_goal_behind_implication_is_not_ambient() -> None:
-    raw = (
-        "Current goal\n\n"
-        "&m: {}\n"
-        "i0: int\n"
-        "------------------------------------------------------------------------\n"
-        "0 <= i0 < Top.N => Pr[PIR.main(i0) @ &m : res = a i0] = 1%r\n"
-        "[2|check]>\n"
-    )
-    info = parse_goal(raw)
-    data = goal_to_json(info)
-
-    assert data["goal_type"] == "probability"
-    assert data["prob_form"] == "prob_eq_const"
-    assert data["intro_required"] is True
-    assert "suggested_tactics" not in data
-    assert "parser_action_policy" not in data
-    assert "legacy_shape_tactic_templates" not in data
-
-
-def test_equiv_goal_parser_reports_root_relation_not_tactic_bridge_hint() -> None:
-    raw = (
-        "Current goal\n\n"
-        "&m: {}\n"
-        "------------------------------------------------------------------------\n"
-        "pre = (glob A){2} = (glob A){m} /\\ (glob A){1} = (glob A){m}\n\n"
-        "    G1(GenChaChaPoly(OCC(IFinRO))).main ~ MainD(G2, FinRO).distinguish\n\n"
-        "post = res{1} <=> (fun (b : bool) => b) res{2}\n"
-        "[2|check]>\n"
-    )
-    info = parse_goal(raw)
-    data = goal_to_json(info)
-
-    assert data["goal_type"] == "equiv"
-    assert "bridge_hint" not in data
-    relation = data["root_module_relation"]
-    assert relation["lhs_root"] == "G1"
-    assert relation["rhs_root"] == "MainD"
-    assert relation["same_root_module"] is False
-    assert "not a proof action recommendation" in relation["meaning"]
-
-
-def test_suggest_close_closed_state_has_no_tactic_suggestions() -> None:
-    out = suggest_close("No more goals\n[1|check]>\n", [])
-    assert "Proof is already complete" in out
-    assert "Suggested tactics" not in out
-
-
-def test_suggest_from_session_handles_post_qed_added_lemma_prompt() -> None:
-    with tempfile.TemporaryDirectory() as td:
-        d = Path(td)
-        (d / "current.out").write_text(
-            "[35|check]>\n"
-            "No more goals\n"
-            "[36|check]>\n"
-            "+ added lemma: `PIR_secure2'\n"
-            "[37|check]>\n",
-            encoding="utf-8",
-        )
-        out = suggest_from_session(d, [])
-        assert "Proof is already complete" in out
-        assert "Suggested tactics" not in out
-
-
-def test_status_reports_closed_goal_as_complete_type() -> None:
-    with tempfile.TemporaryDirectory() as td:
-        session = open_session(Path(td))
-        session.history.write_text("qed.\n", encoding="utf-8")
-        session.curr.write_text(
-            "[35|check]>\n"
-            "No more goals\n"
-            "[36|check]>\n"
-            "+ added lemma: `L'\n"
-            "[37|check]>\n",
-            encoding="utf-8",
-        )
-        buf = StringIO()
-        with redirect_stdout(buf):
-            assert handle_status(session, SimpleNamespace()) == 0
-        out = buf.getvalue()
-        assert "[status] Goal type: complete" in out
-        assert "[status] Proof COMPLETE" in out
-
-
-
-def test_align_and_subgoal_gap_closed_goal_are_explicitly_closed() -> None:
-    with tempfile.TemporaryDirectory() as td:
-        session = open_session(Path(td))
-        session.curr.write_text(
-            "[35|check]>\n"
-            "No more goals\n"
-            "[36|check]>\n"
-            "+ added lemma: `L'\n"
-            "[37|check]>\n",
-            encoding="utf-8",
-        )
-        buf = StringIO()
-        with redirect_stdout(buf):
-            assert handle_align(session, SimpleNamespace()) == 0
-        out = buf.getvalue()
-        assert "Proof is already complete" in out
-        assert "NOT APPLICABLE" not in out
-
-        gap = analyze_session(Path(td))
-        assert "proof complete" in gap
-        assert "Suggested tools" not in gap
-
-
-def test_swap_bridge_and_call_subgoals_closed_goal_are_explicit() -> None:
-    with tempfile.TemporaryDirectory() as td:
-        session = open_session(Path(td))
-        session.curr.write_text(
-            "[35|check]>\n"
-            "No more goals\n"
-            "[36|check]>\n"
-            "+ added lemma: `L'\n"
-            "[37|check]>\n",
-            encoding="utf-8",
-        )
-
-        buf = StringIO()
-        with redirect_stdout(buf):
-            assert handle_swap_search(
-                session, SimpleNamespace(max_swap_attempts=20),
-            ) == 0
-        swap_out = buf.getvalue()
-        assert "Proof is already complete" in swap_out
-        assert "Current goal" not in swap_out
-
-        bridge_out = analyze_bridge_lemmas_from_session(Path(td))
-        assert "Proof is already complete" in bridge_out
-
-        call_out = preview_from_session(Path(td), "={glob A}")
-        assert "Proof is already complete" in call_out
-        assert "daemon" not in call_out.lower()
-
-
 def test_all_emitted_event_types_are_registered() -> None:
     """Guard against the ec_routing regression: every emit_event /
     emit_error_event / append_event with a STRING-LITERAL type must be in
@@ -1082,7 +1023,7 @@ def test_all_emitted_event_types_are_registered() -> None:
 
 if __name__ == "__main__":
     test_append_event_jsonl_contract()
-    test_candidate_closed_reader()
+    test_goal_discharge_reader_requires_current_projection_authority()
     test_event_summary_and_latest_error_helpers()
     test_validate_event_payload_schema()
     test_validate_event_stream_accepts_realistic_replay_flow()
@@ -1090,18 +1031,12 @@ if __name__ == "__main__":
     test_validate_event_stream_detects_tool_name_mismatch()
     test_proof_acceptance_gate_requires_valid_candidate_contract()
     test_proof_acceptance_gate_requires_verification_event()
-    test_progress_session_state_closed_fallback()
+    test_progress_goal_state_text_is_diagnostic_only()
     test_meta_command_refusal_emits_events_without_ec()
     test_raw_proof_control_refusal_emits_events_without_ec()
+    test_tactic_exec_is_counted_as_a_cli_action()
     test_closed_post_qed_prompt_is_goal_info_closed_state()
     test_session_state_extracts_latest_current_goal()
     test_session_state_default_previous_path_is_prev_out()
     test_infer_goal_count_handles_post_qed_added_lemma_prompt()
-    test_closed_goal_json_has_no_tactic_suggestions()
-    test_probability_goal_behind_implication_is_not_ambient()
-    test_suggest_close_closed_state_has_no_tactic_suggestions()
-    test_suggest_from_session_handles_post_qed_added_lemma_prompt()
-    test_status_reports_closed_goal_as_complete_type()
-    test_align_and_subgoal_gap_closed_goal_are_explicitly_closed()
-    test_swap_bridge_and_call_subgoals_closed_goal_are_explicit()
     print("PASS test_session_events")

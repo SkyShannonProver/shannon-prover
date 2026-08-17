@@ -3,6 +3,9 @@ from __future__ import annotations
 import hashlib
 import json
 import re
+from pathlib import Path
+
+import pytest
 
 from workflow.proof_management.checkpoint_store import ProofCheckpointManager
 
@@ -20,6 +23,20 @@ def _history_hash(tactics: list[str]) -> str:
 
 def _confirmation_id(*parts: object) -> str:
     return hashlib.sha1("|".join(str(part) for part in parts).encode("utf-8")).hexdigest()[:12]
+
+
+def _checkpoint_payload(*, node_id: str = "Tree-unit") -> dict:
+    return {
+        "schema_version": 1,
+        "kind": "proof_checkpoint_state",
+        "node_id": node_id,
+        "pre_rewind_restore_anchor": {
+            "restore_id": "restore_current",
+            "tactics": ["proc.", "wp."],
+            "from_checkpoint_id": "cp_current",
+            "from_tactic_index": 2,
+        },
+    }
 
 
 def test_checkpoint_manager_tracks_rewind_confirmation() -> None:
@@ -161,6 +178,135 @@ def test_checkpoint_manager_exposes_pre_rewind_restore_option() -> None:
     }
 
 
+def test_checkpoint_manager_persists_only_current_restore_anchor(
+    tmp_path: Path,
+) -> None:
+    manager = ProofCheckpointManager(
+        node_id="Tree-unit",
+        run_dir=tmp_path,
+        history_hash=_history_hash,
+        confirmation_id=_confirmation_id,
+    )
+    anchor = manager.save_pre_rewind_restore_anchor(
+        tactics=["proc.", "wp."],
+        checkpoint_id="cp_1",
+        tactic_index=1,
+        state_version=5,
+    )
+    sidecar = json.loads(
+        (
+            tmp_path
+            / "checkpoint_state"
+            / "Tree-unit_checkpoint_state.json"
+        ).read_text(encoding="utf-8")
+    )
+
+    assert sidecar == {
+        "schema_version": 1,
+        "kind": "proof_checkpoint_state",
+        "node_id": "Tree-unit",
+        "pre_rewind_restore_anchor": anchor,
+    }
+    reloaded = ProofCheckpointManager(
+        node_id="Tree-unit",
+        run_dir=tmp_path,
+        history_hash=_history_hash,
+        confirmation_id=_confirmation_id,
+    )
+    assert reloaded.restore_anchor(anchor["restore_id"]) == anchor
+
+
+def test_checkpoint_manager_ignores_retired_restore_option_payload() -> None:
+    manager = ProofCheckpointManager(
+        node_id="Tree-unit",
+        history_hash=_history_hash,
+        confirmation_id=_confirmation_id,
+    )
+    manager.seed_resume_payload({
+        "schema_version": 1,
+        "kind": "proof_checkpoint_state",
+        "legacy_pre_rewind_restore_option": {
+            "semantic_id": "restore_before_last_rewind",
+        },
+    })
+
+    assert manager.pre_rewind_restore_option() == {}
+
+
+def test_checkpoint_manager_seeds_only_exact_node_owned_payload() -> None:
+    manager = ProofCheckpointManager(
+        node_id="Tree-unit",
+        history_hash=_history_hash,
+        confirmation_id=_confirmation_id,
+    )
+
+    manager.seed_resume_payload(_checkpoint_payload())
+
+    assert manager.restore_anchor("restore_current")["tactics"] == [
+        "proc.",
+        "wp.",
+    ]
+
+
+@pytest.mark.parametrize("schema_version", [None, "1", True, 0, 2])
+def test_checkpoint_manager_requires_exact_schema_version(
+    schema_version: object,
+) -> None:
+    manager = ProofCheckpointManager(
+        node_id="Tree-unit",
+        history_hash=_history_hash,
+        confirmation_id=_confirmation_id,
+    )
+    payload = _checkpoint_payload()
+    if schema_version is None:
+        payload.pop("schema_version")
+    else:
+        payload["schema_version"] = schema_version
+
+    manager.seed_resume_payload(payload)
+
+    assert manager.pre_rewind_restore_anchor == {}
+
+
+def test_checkpoint_manager_rejects_wrong_node_and_unknown_outer_fields() -> None:
+    for payload in (
+        _checkpoint_payload(node_id="Tree-other"),
+        {**_checkpoint_payload(), "legacy_restore_option": {}},
+    ):
+        manager = ProofCheckpointManager(
+            node_id="Tree-unit",
+            history_hash=_history_hash,
+            confirmation_id=_confirmation_id,
+        )
+
+        manager.seed_resume_payload(payload)
+
+        assert manager.pre_rewind_restore_anchor == {}
+
+
+@pytest.mark.parametrize(
+    "mutate",
+    [
+        lambda anchor: anchor.pop("restore_id"),
+        lambda anchor: anchor.update({"tactics": [7]}),
+        lambda anchor: anchor.update({"from_tactic_index": True}),
+        lambda anchor: anchor.update({"retired_alias": "cp_old"}),
+    ],
+)
+def test_checkpoint_manager_rejects_malformed_restore_anchor(mutate) -> None:
+    manager = ProofCheckpointManager(
+        node_id="Tree-unit",
+        history_hash=_history_hash,
+        confirmation_id=_confirmation_id,
+    )
+    payload = _checkpoint_payload()
+    mutate(payload["pre_rewind_restore_anchor"])
+
+    manager.seed_resume_payload(payload)
+
+    assert manager.pre_rewind_restore_anchor == {}
+
+
 def test_checkpoint_manager_builds_checkpoint_index() -> None:
     manager = ProofCheckpointManager(
         node_id="Tree-unit",
@@ -217,25 +363,6 @@ def test_checkpoint_manager_builds_semantic_checkpoint_surfaces() -> None:
     assert manager.parse_checkpoint_id(menu[0]["checkpoint_id"]) is not None
 
 
-def test_checkpoint_manager_builds_route_health_repair_checkpoint() -> None:
-    manager = ProofCheckpointManager(
-        node_id="Tree-unit",
-        history_hash=_history_hash,
-        confirmation_id=_confirmation_id,
-    )
-    tactics = ["proc.", "seq 1 1 : (={x}).", "wp."]
-
-    checkpoint = manager.route_health_checkpoint(
-        tactics,
-        2,
-        why_here="repair the midpoint",
-    )
-
-    assert checkpoint["label"] == "Before seq cut #2"
-    assert checkpoint["why_here"] == "repair the midpoint"
-    assert checkpoint["submit"]["payload"]["checkpoint_id"].startswith("cp_2_")
-
-
 def test_checkpoint_manager_owns_recovery_boundary_predicates() -> None:
     manager = ProofCheckpointManager(
         node_id="Tree-unit",
@@ -283,15 +410,15 @@ def test_checkpoint_manager_renders_checkpoint_observations() -> None:
     )
 
     assert selection["kind"] == "checkpoint_selection"
-    assert selection["checkpoint_options"][0]["checkpoint_id"] == "cp_1"
-    assert selection["notice"] == "stale checkpoint"
+    assert selection["control_menu"]["items"][0]["checkpoint_id"] == "cp_1"
+    assert selection["control_menu"]["notice"] == "stale checkpoint"
     assert rewind["kind"] == "checkpoint_rewind"
     assert rewind["undone_tactic_count"] == 2
     assert restore["kind"] == "checkpoint_restore"
     assert restore["restored_from"] == "cp_2"
     assert confirmation["kind"] == "checkpoint_rewind_confirmation"
-    assert confirmation["checkpoint"]["checkpoint_id"] == "cp_2"
-    assert confirmation["options"][0]["submit"]["intent"] == "undo_to_checkpoint"
+    assert confirmation["control_menu"]["items"][0]["checkpoint_id"] == "cp_2"
+    assert confirmation["control_menu"]["items"][1]["submit"]["intent"] == "undo_to_checkpoint"
 
 
 def test_checkpoint_manager_renders_fresh_restart_observations() -> None:
@@ -320,24 +447,25 @@ def test_checkpoint_manager_renders_fresh_restart_observations() -> None:
     )
 
     assert structural["kind"] == "structural_recovery_menu"
-    assert structural["checkpoint_options"]
-    assert structural["options"][-1]["submit"]["intent"] == "fresh_restart"
-    assert structural["options"][-1]["submit"]["payload"]["confirm"] is True
+    assert structural["control_menu"]["items"]
+    restart = structural["control_menu"]["items"][-1]["submit"]
+    assert restart["intent"] == "fresh_restart"
+    assert restart["payload"]["confirm"] is True
     assert confirmation["kind"] == "fresh_restart_confirmation"
-    assert confirmation["notice"] == "resume restart disabled"
+    assert confirmation["control_menu"]["notice"] == "resume restart disabled"
     # Transparent resume: no agent-facing resume/prefix concept leaks into the
     # confirmation observation, and no "Return to resume start" option appears.
     assert "resume_prefix" not in confirmation
     assert all(
         option.get("label") != "Return to resume start"
-        for option in confirmation["options"]
+        for option in confirmation["control_menu"]["items"]
     )
     assert not _RESUME_LEAK_RE.search(json.dumps(confirmation)), confirmation
     # The functional gate is preserved: with a replayed prefix present, the
     # destructive in-node fresh_restart option is still withheld.
     assert all(
         option["submit"]["intent"] != "fresh_restart"
-        for option in confirmation["options"]
+        for option in confirmation["control_menu"]["items"]
     )
     assert confirmed["kind"] == "fresh_restart_confirmed"
 
@@ -393,7 +521,6 @@ def test_resumed_surface_offers_prefix_checkpoints_as_ordinary() -> None:
     # surfaced as ORDINARY checkpoints, not suppressed and not floor-labelled.
     surface = _manager().structural_surface(
         _RESUME_TACTICS,
-        route_health=None,
         replay_prefix_count=_RESUME_PREFIX_COUNT,
     )
 
@@ -411,21 +538,9 @@ def test_resumed_surface_offers_prefix_checkpoints_as_ordinary() -> None:
 
 
 def test_resumed_menu_options_carry_no_resume_framing() -> None:
-    # The full rewind menu (checkpoint options) is identical in shape to a
-    # from-scratch run: no resume concept leaks, even with a route-health repair
-    # signal pointing inside the replayed prefix.
-    route_health = [{
-        "signal": "lost_call_abstraction_boundary",
-        "confidence": "high",
-        "repair_checkpoint": {
-            "tactic_index": 3,
-            "label": "Before call invariant #3",
-            "why_here": "named call route may need up-to-bad conditioning",
-        },
-    }]
+    # The full rewind menu is identical in shape to a from-scratch run.
     options = _manager().menu_options(
         _RESUME_TACTICS,
-        route_health=route_health,
         replay_prefix_count=_RESUME_PREFIX_COUNT,
     )
 

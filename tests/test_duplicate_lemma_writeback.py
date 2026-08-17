@@ -126,6 +126,15 @@ def _fill_first_declaration(content: str, name: str) -> tuple[str, int]:
     return filled, decl_start
 
 
+def _candidate_for(path):
+    return types.SimpleNamespace(
+        target_file=str(path.resolve()),
+        target_lemma="xorK1",
+        session_dir=str(path.parent / ".ec_session"),
+        candidate_id="test-candidate",
+    )
+
+
 def test_admit_check_pinned_to_filled_declaration_passes():
     new_content, decl_start = _fill_first_declaration(_DUP_LEMMA_EC, "xorK1")
     # The pinned check inspects the declaration the write-back filled.
@@ -147,12 +156,17 @@ def test_write_and_verify_does_not_revert_proved_duplicate(tmp_path, monkeypatch
     monkeypatch.setattr(prover_writeback, "_prune_failing_tactics",
                         lambda ec_path, lemma_name, tactics, **k: tactics)
     gate = types.SimpleNamespace(ok=True)
-    monkeypatch.setattr(prover_writeback, "_candidate_gate_for_session", lambda d: gate)
     monkeypatch.setattr(prover_writeback, "_acceptance_gate_for_session", lambda d: gate)
     monkeypatch.setattr(prover_writeback, "_emit_verification_status",
                         lambda *a, **k: True)
+    import workflow.proof_acceptance as proof_acceptance
+    monkeypatch.setattr(
+        proof_acceptance, "validate_completion_candidate_contract", lambda c: gate,
+    )
 
-    assert _write_and_verify_proof(f, "xorK1", ["trivial."]) is True
+    assert _write_and_verify_proof(
+        f, "xorK1", ["trivial."], _candidate_for(f),
+    ).passed
 
     out = f.read_text()
     first, second = _decl_starts(out, "xorK1")
@@ -175,14 +189,19 @@ def test_write_and_verify_still_reverts_real_admit(tmp_path, monkeypatch):
     monkeypatch.setattr(prover_writeback, "_prune_failing_tactics",
                         lambda ec_path, lemma_name, tactics, **k: tactics)
     gate = types.SimpleNamespace(ok=True)
-    monkeypatch.setattr(prover_writeback, "_candidate_gate_for_session", lambda d: gate)
     monkeypatch.setattr(prover_writeback, "_acceptance_gate_for_session", lambda d: gate)
     monkeypatch.setattr(prover_writeback, "_emit_verification_status",
                         lambda *a, **k: True)
+    import workflow.proof_acceptance as proof_acceptance
+    monkeypatch.setattr(
+        proof_acceptance, "validate_completion_candidate_contract", lambda c: gate,
+    )
     # Bypass the tactic-level admit filter to exercise the post-verify net.
     monkeypatch.setattr(prover_writeback, "_tactics_contain_admit", lambda tactics: False)
 
-    assert _write_and_verify_proof(f, "xorK1", ["admit."]) is False
+    assert not _write_and_verify_proof(
+        f, "xorK1", ["admit."], _candidate_for(f),
+    ).passed
     assert f.read_text() == _DUP_LEMMA_EC  # reverted
 
 

@@ -25,8 +25,10 @@ from core.easycrypt.committed_history import (  # noqa: E402
 from core.easycrypt.session_events import append_event  # noqa: E402
 from workflow.agents import prover, prover_writeback  # noqa: E402
 from workflow.proof_acceptance import (  # noqa: E402
-    validate_candidate_event_contract,
+    validate_goal_discharge_contract,
 )
+from workflow.session_observer import observe_session  # noqa: E402
+from workflow.tree.result import SessionClosureCandidate  # noqa: E402
 
 # 42 accepted steps + the compound closer = the clean 43-step history that
 # finalize must verify. Generic tactics; the shape (compound final line) is
@@ -48,7 +50,7 @@ def _write_admitted_lemma(path: Path) -> None:
 def _tactic_step(d: Path, tactic: str, *, lines_before: int, closes: bool,
                  rejected: bool = False) -> None:
     append_event(d, "tool.called", {
-        "name": "next",
+        "name": "commit",
         "mutates_proof_state": True,
         "session_dir": str(d.resolve()),
     })
@@ -87,7 +89,7 @@ def _tactic_step(d: Path, tactic: str, *, lines_before: int, closes: bool,
             "async_check_close": False,
         })
     append_event(d, "tool.result", {
-        "name": "next",
+        "name": "commit",
         "mutates_proof_state": True,
         "session_dir": str(d.resolve()),
         "exit_code": 0,
@@ -137,6 +139,16 @@ def _build_session(d: Path) -> None:
     )
 
 
+def _candidate(session_dir: Path, ec_path: Path) -> SessionClosureCandidate:
+    snapshot = observe_session(session_dir)
+    return SessionClosureCandidate.from_snapshot(
+        node_id="Tree-0.0",
+        snapshot=snapshot,
+        target_file=str(ec_path),
+        target_lemma="L",
+    )
+
+
 def test_compound_closer_history_counts_as_closed() -> None:
     with tempfile.TemporaryDirectory() as td:
         session_dir = Path(td) / ".ec_session"
@@ -147,9 +159,10 @@ def test_compound_closer_history_counts_as_closed() -> None:
         # Compound closer is normalized into tactic + standalone qed.
         assert tactics == _CLEAN_STEPS[:-1] + ["by move=> &hr _.", "qed."]
 
-        gate = validate_candidate_event_contract(session_dir)
+        gate = validate_goal_discharge_contract(session_dir)
         assert gate.ok
-        assert gate.candidate_closed
+        assert gate.goals_discharged
+        assert gate.session_completion_candidate
 
 
 def test_finalize_reports_proved_after_rejected_extra_qed_and_undo() -> None:
@@ -161,13 +174,8 @@ def test_finalize_reports_proved_after_rejected_extra_qed_and_undo() -> None:
         _write_admitted_lemma(ec_path)
         _build_session(session_dir)
 
-        tactics = prover._extract_tactics_from_session(
-            "L",
-            1,
-            "",
-            preferred_session_dir=session_dir,
-            scan_project_sessions=False,
-        )
+        candidate = _candidate(session_dir, ec_path)
+        tactics = prover._extract_tactics_from_candidate(candidate)
         assert tactics, (
             "finalize must extract a closed proof from the clean history"
         )
@@ -184,14 +192,13 @@ def test_finalize_reports_proved_after_rejected_extra_qed_and_undo() -> None:
             prover_writeback._verify_ec_file = lambda *a, **kw: (True, "")
             ok = prover._write_and_verify_proof(
                 ec_path, "L", tactics,
-                session_proved=True,
-                ec_session_dir=session_dir,
+                candidate,
             )
         finally:
             prover_writeback._prune_failing_tactics = original_prune
             prover_writeback._verify_ec_file = original_verify
 
-        assert ok, "finalize must verify the clean 43-step history"
+        assert ok.passed, "finalize must verify the clean 43-step history"
         # Verification ran against the clean history (43 steps, qed split
         # out), not one that still carries the spurious step 44.
         assert pruned["tactics"] == _CLEAN_STEPS[:-1] + [
@@ -215,6 +222,7 @@ def test_write_and_verify_normalizes_embedded_qed_directly() -> None:
         session_dir.mkdir()
         _write_admitted_lemma(ec_path)
         _build_session(session_dir)
+        candidate = _candidate(session_dir, ec_path)
 
         original_prune = prover_writeback._prune_failing_tactics
         original_verify = prover_writeback._verify_ec_file
@@ -223,13 +231,13 @@ def test_write_and_verify_normalizes_embedded_qed_directly() -> None:
             prover_writeback._verify_ec_file = lambda *a, **kw: (True, "")
             ok = prover._write_and_verify_proof(
                 ec_path, "L", ["proc.", "by move=> &hr _. qed."],
-                ec_session_dir=session_dir,
+                candidate,
             )
         finally:
             prover_writeback._prune_failing_tactics = original_prune
             prover_writeback._verify_ec_file = original_verify
 
-        assert ok
+        assert ok.passed
         assert ec_path.read_text(encoding="utf-8").count("qed.") == 1
 
 

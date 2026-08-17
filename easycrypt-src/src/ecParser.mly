@@ -152,7 +152,6 @@
 
   type smt = [
     | `ALL
-    | `ITERATE
     | `QUORUM         of int
     | `MAXLEMMAS      of int option
     | `MAXPROVERS     of int
@@ -198,7 +197,6 @@
            "verbose"       ;
            "lazy"          ;
            "full"          ;
-           "iterate"       ;
            "dumpin"        ;
            "selected"      ;
            "debug"         ]
@@ -258,7 +256,6 @@
       | "lazy"           -> `VERSION        (get_as_none s o; `Lazy)
       | "full"           -> `VERSION        (get_as_none s o; `Full)
       | "all"            -> get_as_none s o; (`ALL)
-      | "iterate"        -> get_as_none s o; (`ITERATE)
       | "selected"       -> get_as_none s o; (`SELECTED)
       | "debug"          -> get_as_none s o; (`DEBUG)
       | _                ->  assert false
@@ -274,7 +271,6 @@
       let unwanted = ref None in
       let verbose  = ref None in
       let version  = ref None in
-      let iterate  = ref None in
       let dumpin   = ref None in
       let selected = ref None in
       let debug    = ref None in
@@ -318,7 +314,6 @@
         | `UNWANTEDLEMMAS d -> unwanted := Some d
         | `VERBOSE        v -> verbose  := Some v
         | `VERSION        v -> version  := Some v
-        | `ITERATE          -> iterate  := Some true
         | `PROVER         p -> List.iter add_prover p
         | `DUMPIN         f -> dumpin   := Some f
         | `SELECTED         -> selected := Some true
@@ -340,7 +335,6 @@
         pprov_version   = !version;
         plem_all        = !all;
         plem_max        = !mlemmas;
-        plem_iterate    = !iterate;
         plem_wanted     = !wanted;
         plem_unwanted   = !unwanted;
         plem_dumpin     = !dumpin;
@@ -605,6 +599,7 @@
 %token WP
 %token ZETA
 %token <string> NOP LOP1 ROP1 LOP2 ROP2 LOP3 ROP3 LOP4 ROP4 NUMOP
+%token <int> PLUSn MINUSn STARn
 %token LTCOLON DASHLT GT LT GE LE LTSTARGT LTLTSTARGT LTSTARGTGT
 %token <Lexing.position> FINAL
 %token <EcParsetree.dockind * string> DOCCOMMENT
@@ -629,10 +624,10 @@
 %left  LOP1
 %right ROP1
 %right QUESTION
-%left  LOP2 MINUS PLUS PLUSGT
+%left  LOP2 MINUS PLUS PLUSGT MINUSn PLUSn
 %right ROP2
 %right RARROW
-%left  LOP3 STAR SLASH
+%left  LOP3 STAR SLASH STARn
 %right ROP3
 %left  LOP4 AT AMP HAT BACKSLASH
 %right ROP4
@@ -835,10 +830,12 @@ inlinepat:
 | LE { "<=" }
 
 %inline uniop:
-| x=NOP { Printf.sprintf "[%s]" x }
-| NOT   { "[!]" }
-| PLUS  { "[+]" }
-| MINUS { "[-]" }
+| x=NOP    { Printf.sprintf "[%s]" x }
+| NOT      { "[!]" }
+| PLUS     { "[+]" }
+| MINUS    { "[-]" }
+| n=PLUSn  { Printf.sprintf "[%s]" (String.make n '+') }
+| n=MINUSn { Printf.sprintf "[%s]" (String.make n '-') }
 
 %inline sbinop:
 | EQ        { "="   }
@@ -848,6 +845,9 @@ inlinepat:
 | STAR      { "*"   }
 | SLASH     { "/"   }
 | AT        { "@"   }
+| n=PLUSn   { String.make n '+' }
+| n=MINUSn  { String.make n '-' }
+| n=STARn   { String.make n '*' }
 | OR        { "\\/" }
 | ORA       { "||"  }
 | AND       { "/\\" }
@@ -1867,22 +1867,25 @@ exception_:
 (* -------------------------------------------------------------------- *)
 (* Predicate definitions                                                *)
 predicate:
-| locality=locality PRED x=oident
+| locality=locality PRED tags=bracket(ident*)? x=oident
    { { pp_name     = x;
        pp_tyvars   = None;
        pp_def      = PPabstr [];
+       pp_tags     = odfl [] tags;
        pp_locality = locality; } }
 
-| locality=locality PRED x=oident tyvars=tyvars_decl? COLON sty=pred_tydom
+| locality=locality PRED tags=bracket(ident*)? x=oident tyvars=tyvars_decl? COLON sty=pred_tydom
    { { pp_name     = x;
        pp_tyvars   = tyvars;
        pp_def      = PPabstr sty;
+       pp_tags     = odfl [] tags;
        pp_locality = locality; } }
 
-| locality=locality PRED x=oident tyvars=tyvars_decl? p=ptybindings? EQ f=form
+| locality=locality PRED tags=bracket(ident*)? x=oident tyvars=tyvars_decl? p=ptybindings? EQ f=form
    { { pp_name     = x;
        pp_tyvars   = tyvars;
        pp_def      = PPconcr (odfl [] p, f);
+       pp_tags     = odfl [] tags;
        pp_locality = locality; } }
 
 | locality=locality INDUCTIVE x=oident tyvars=tyvars_decl? p=ptybindings?
@@ -1891,6 +1894,7 @@ predicate:
    { { pp_name     = x;
        pp_tyvars   = tyvars;
        pp_def      = PPind (odfl [] p, b);
+       pp_tags     = [];
        pp_locality = locality; } }
 
 indpred_def:
@@ -2416,11 +2420,11 @@ rwarg1:
 | SLASHTILDEQ
    { RWSimpl `Variant }
 
-| s=rwside r=rwrepeat? o=rwocc? p=bracket(form_h)? fp=rwpterms
-   { RWRw ((s, r, o, p), fp) }
+| side=rwside repeat=rwrepeat? occurrence=rwocc? match_=bracket(rwmatch)? fp=rwpterms
+   { RWRw ({ side; repeat; occurrence; match_ }, fp) }
 
-| s=rwside r=rwrepeat? o=rwocc? SLASH x=sform_h %prec prec_tactic
-   { RWDelta ((s, r, o, None), x); }
+| side=rwside repeat=rwrepeat? occurrence=rwocc? SLASH fp=sform_h %prec prec_tactic
+   { RWDelta ({ side; repeat; occurrence; match_ = None }, fp); }
 
 | PR s=bracket(rwpr_arg)
    { RWPr s }
@@ -2445,6 +2449,13 @@ rwarg1:
         let msg = "invalid rw-tactic: " ^ (unloc x) in
         parse_error (loc x) (Some msg)
   }
+
+rwmatch:
+| p=form_h
+    { RWM_Plain p }
+
+| x=ident IN p=form_h
+    { RWM_Context (x, p) }
 
 rwpterms:
 | f=pterm
@@ -2801,7 +2812,13 @@ logtactic:
    { Pclear (`Include l) }
 
 | CONGR
-   { Pcongr }
+   { Pcongr PCongrDefault }
+
+| CONGR STAR
+   { Pcongr PCongrStar }
+
+| CONGR p=sform_h
+   { Pcongr (PCongrPattern p) }
 
 | TRIVIAL
    { Ptrivial }
@@ -2816,7 +2833,13 @@ logtactic:
    { Psmt (SMT.mk_smt_option [`WANTEDLEMMAS dbmap]) }
 
 | SPLIT i=word?
-    { Psplit i }
+    { Psplit (`Default i) }
+
+| SPLIT STAR
+    { Psplit (`All `Maybe) }
+
+| SPLIT PLUS
+    { Psplit (`All `One) }
 
 | FIELD eqs=ident*
     { Pfield eqs }
@@ -2999,6 +3022,10 @@ interleave_info:
 | TILD f=loc(fident) { OKproc(f, true) }
 | f=loc(fident) { OKproc(f, false) }
 
+direction:
+| RRARROW { (`Forward  :> pdirection) }
+| LLARROW { (`Backward :> pdirection) }
+
 %public phltactic:
 | PROC
    { Pfun `Def }
@@ -3108,6 +3135,9 @@ interleave_info:
 | ALIAS s=side? x=lident CEQ p=sform_h AT o=codepos
     { Psetmatch (s, o, x, p) }
 
+| SIMPLIFY IF s=side? o=codepos?
+    { PsimplifyIf (s, o) }
+
 | WEAKMEM s=side? h=loc(ipcore_name) p=param_decl
     { Pweakmem(s, h, p) }
 
@@ -3184,8 +3214,8 @@ interleave_info:
 
     { Phrex_intro (l, b) }
 
-| ECALL s=side? x=paren(p=qident tvi=tvars_app? fs=sform* { (p, tvi, fs) })
-    { Phecall (s, x) }
+| ECALL d=direction? s=side? x=paren(p=qident tvi=tvars_app? fs=loc(gpterm_arg)* { (p, tvi, fs) })
+    { Phecall (odfl `Backward d, s, x) }
 
 | EXFALSO
     { Pexfalso }
@@ -3261,11 +3291,11 @@ interleave_info:
 | LOSSLESS
     { Plossless }
 
-| PROC CHANGE side=side? pos=codepos_or_range COLON s=brace(stmt)
-    { Pchangestmt (side, PosOrRange pos, s) }
+| PROC CHANGE side=side? pos=codepos_or_range COLON b=option(bracket(ptybindings)) s=brace(stmt)
+    { Pchangestmt (side, b, PosOrRange pos, s) }
 
-| PROC CHANGE side=side? pos=codegap COLON s=brace(stmt)
-    { Pchangestmt (side, Gap pos, s) }
+| PROC CHANGE side=side? pos=codegap COLON b=option(bracket(ptybindings)) s=brace(stmt)
+    { Pchangestmt (side, b, Gap pos, s) }
 
 | PROC REWRITE side=side? pos=codepos f=pterm
     { Pprocrewrite (side, pos, `Rw f) }
@@ -3345,9 +3375,9 @@ eqobs_in_eqpost:
 
 eqobs_in:
 | pos=eqobs_in_pos? i=eqobs_in_eqinv p=eqobs_in_eqpost? {
-    { sim_pos  = pos;
-      sim_hint = i;
-      sim_eqs  = p; }
+    { psim_pos  = pos;
+      psim_hint = i;
+      psim_eqs  = p; }
 }
 
 pgoptionkw:
@@ -3569,11 +3599,17 @@ tactics0:
 | ts=tactics   { Pseq ts }
 | x=loc(empty) { Pseq [mk_core_tactic (mk_loc x.pl_loc (Pidtac None))] }
 
+%inline bullet:
+| b=loc(MINUS)  { mk_loc b.pl_loc { b_kind = `Minus; b_count = 1          } }
+| b=loc(PLUS)   { mk_loc b.pl_loc { b_kind = `Plus ; b_count = 1          } }
+| b=loc(STAR)   { mk_loc b.pl_loc { b_kind = `Star ; b_count = 1          } }
+| b=loc(MINUSn) { mk_loc b.pl_loc { b_kind = `Minus; b_count = b.pl_desc  } }
+| b=loc(PLUSn)  { mk_loc b.pl_loc { b_kind = `Plus ; b_count = b.pl_desc  } }
+| b=loc(STARn)  { mk_loc b.pl_loc { b_kind = `Star ; b_count = b.pl_desc  } }
+
 toptactic:
-| PLUS  t=tactics { t }
-| STAR  t=tactics { t }
-| MINUS t=tactics { t }
-|       t=tactics { t }
+| b=bullet t=tactics { (Some b, t) }
+|          t=tactics { (None,   t) }
 
 tactics_or_prf:
 | t=toptactic  { `Actual t }
@@ -3936,6 +3972,8 @@ global_action:
 | hint             { Ghint        $1 }
 | x=loc(proofend)  { Gsave        x  }
 | PRINT p=print    { Gprint       p  }
+| EXPECT s=loc(STRING) BY PRINT p=print
+    { Gexpect (s, p) }
 | SEARCH x=search+ { Gsearch      x  }
 | LOCATE x=qident  { Glocate      x  }
 | WHY3 x=STRING    { GdumpWhy3    x  }

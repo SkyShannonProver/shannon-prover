@@ -11,7 +11,6 @@ from __future__ import annotations
 
 import sys
 import time
-import shutil as _shutil
 from workflow.run_ui import (  # noqa: F401  (facade re-exports)
     _BOLD,
     _CYAN,
@@ -30,30 +29,20 @@ from workflow.run_ui import (  # noqa: F401  (facade re-exports)
     status,
 )
 from workflow.tree.trackers import (  # noqa: F401  (facade re-exports)
-    ANALYSIS_TOOL_FLAGS,
     STRUCTURAL_COMMIT_OPENERS,
-    _ANALYSIS_TOOL_RE,
-    _APPLY_LEMMA_RE,
     _ProverTracker,
     _TreeProverTracker,
     _assistant_context_before_tool,
     _audit_drop_empty,
     _bash_invokes_easycrypt,
-    _event_log_has_candidate_closed,
-    _extract_apply_lemma_names,
     _first_word,
     _handle_stream_event,
     _is_background_tool_result,
     _is_permission_denied_tool_result,
-    _is_proof_success,
     _proof_intent_tool_description,
     _report_tool_call,
     _session_dir_path,
-    _session_event_path,
-    _session_history_path,
-    _session_projection_has_candidate_closed,
     _session_snapshot,
-    _session_state_has_candidate_closed,
     _summarize_tool,
     _thinking_markers,
     _truncate_audit_text,
@@ -64,7 +53,6 @@ from workflow.tree.supervisor import (  # noqa: F401  (facade re-exports)
     _allowed_node_memory_dir,
     _build_tree_status,
     _ctx_min_runway_seconds,
-    _fetch_lemma_signature,
     _find_branch_point,
     _find_layer3_live_capsule,
     _find_node_resume_capsule,
@@ -121,11 +109,8 @@ from workflow.tree.supervisor import (  # noqa: F401  (facade re-exports)
 
 
 # ---------------------------------------------------------------------------
-# Parallel prover racing (best-of-N with progress comparison)
+# Managed tree-run progress state
 # ---------------------------------------------------------------------------
-
-
-_CLAUDE_BIN = _shutil.which("claude") or "claude"
 
 
 _BLUE = "\033[34m"
@@ -146,7 +131,7 @@ _pipeline_state = {
     "phase_status": {},   # phase_num -> "done" | "active" | "pending" | "skipped"
     "phase_info": {},     # phase_num -> brief info string
     "elapsed": 0.0,
-    "prover_mode": "",    # "racing" | "tree"
+    "prover_mode": "tree",
 }
 
 
@@ -169,13 +154,8 @@ _PHASE_ICONS = {
 }
 
 
-def pipeline_ui_reset():
-    """No-op. Kept for API compatibility."""
-    pass
-
-
 def pipeline_ui_init(lemma: str, file: str, iteration: int,
-                     max_iterations: int, prover_mode: str = "racing"):
+                     max_iterations: int, prover_mode: str = "tree"):
     """Initialize pipeline UI state. Called by orchestrator at iteration start."""
     _pipeline_state["lemma"] = lemma
     _pipeline_state["file"] = file

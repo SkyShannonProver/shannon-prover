@@ -21,7 +21,7 @@ What it computes per run (when the bundle carries per-step ``usage`` tokens):
 Headline caveat surfaced by the report: with token data present there is
 currently *no* clean single-tree-vs-multi-tree controlled cell, so the actual
 tree metric (pass@budget, single vs multi) cannot be produced from existing
-bundles -- only the per-run primitives and the L1/L4 (probe) control can.
+bundles -- only the per-run primitives and the L1/L4 surface control can.
 
 Usage:
     python3 tools/compiler_metrics/tree_ablation_extract.py [--root agent_view_runs] [--json out.json]

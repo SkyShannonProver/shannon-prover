@@ -1,0 +1,4 @@
+# Preserve the official EasyCrypt release snapshot byte-for-byte.  Upstream
+# contains intentional/historical trailing whitespace; Shannon's source lock
+# hashes those exact bytes.
+easycrypt-src/** whitespace=-trailing-space,-blank-at-eof

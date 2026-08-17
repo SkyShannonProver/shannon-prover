@@ -16,14 +16,12 @@ import time
 from pathlib import Path
 from typing import Any, BinaryIO
 
-from workflow.context_intents import (
-    CONTEXT_TOPIC_INTENTS,
-    INTENT_CLASS_CONTEXT_TOPIC,
-    INTENT_CLASS_SYMBOL_LOOKUP,
-    intent_payload_fields,
+from core.context_intents import (
+    INTENT_CLASS_PROOF_CONTROL,
+    INTENT_CLASS_PROOF_MUTATION,
     intents_by_class,
 )
-from workflow.surface_profiles import schema_intents_for_surface_profile
+from workflow.proof_state_compiler.runtime_profiles import allowed_runtime_intents
 from workflow.proof_management import ALLOWED_AGENT_INTENTS
 from core.easycrypt.value_shapes import as_dict as _dict
 
@@ -158,10 +156,9 @@ class ProofNodeMcpServer:
 
     def _schema_allowed_intents(self) -> list[str]:
         profile = os.environ.get("SHANNON_SURFACE_PROFILE", "").strip() or None
-        # SUPERSET for the schema: an adaptive profile advertises all intents so the
-        # agent can reach for a richer one (that reach IS the escalation request);
-        # the manager still gates acceptance until escalated.
-        return sorted(schema_intents_for_surface_profile(profile) & ALLOWED_AGENT_INTENTS)
+        return sorted(
+            allowed_runtime_intents(profile) & ALLOWED_AGENT_INTENTS
+        )
 
     def _handle_tool_call(self, params: dict[str, Any]) -> dict[str, Any]:
         name = str(params.get("name") or "")
@@ -209,13 +206,7 @@ def _submit_tool_description(
     node_memory_dir: Path | None = None,
 ) -> str:
     allowed = set(allowed_intents)
-    if (CONTEXT_TOPIC_INTENTS | {"lookup_symbol"}) & allowed:
-        purpose = (
-            "proof mutation or profile-visible semantic proof context "
-            "(context_topic intents and symbol_lookup), plus proof control"
-        )
-    else:
-        purpose = "proof mutation, rewind/restart negotiation, or finish"
+    purpose = "proof mutation, rewind/restart negotiation, or finish"
     memory_note = ""
     if node_memory_dir is not None:
         latest_followup = Path(node_memory_dir) / "latest_followup.md"
@@ -243,12 +234,10 @@ def _payload_description(allowed_intents: list[str]) -> str:
     allowed = set(allowed_intents)
     if "commit_tactic" in allowed:
         examples.append("{'tactic': 'smt().'}")
-    if CONTEXT_TOPIC_INTENTS & allowed:
+    if "amend_and_replay" in allowed:
         examples.append(
-            "{} for no-argument context topics; topic-specific fields for context topics"
+            "{'index': 3, 'tactic': 'replacement tactic.'} for amend_and_replay"
         )
-    if "lookup_symbol" in allowed:
-        examples.append("{'symbol': 'LEMMA'}")
     if examples:
         return "Intent payload, e.g. " + ", ".join(examples) + "."
     return "Intent payload object; use {} for menu/request intents."
@@ -257,24 +246,10 @@ def _payload_description(allowed_intents: list[str]) -> str:
 def _intent_schema_description(allowed_intents: list[str]) -> str:
     allowed = set(allowed_intents)
     chunks: list[str] = []
-    context_topics = intents_by_class(allowed, INTENT_CLASS_CONTEXT_TOPIC)
-    if context_topics:
-        shown = ", ".join(context_topics[:12])
-        more = "" if len(context_topics) <= 12 else f", ... (+{len(context_topics) - 12})"
-        chunks.append(f"context_topic: {shown}{more}")
-    if "lookup_symbol" in allowed:
-        fields = ", ".join(intent_payload_fields("lookup_symbol"))
-        chunks.append(f"{INTENT_CLASS_SYMBOL_LOOKUP}: lookup_symbol ({fields})")
-    mutation = sorted(
-        i for i in allowed
-        if i in {"commit_tactic", "commit_replay_suffix_chunk"}
-    )
+    mutation = intents_by_class(allowed, INTENT_CLASS_PROOF_MUTATION)
     if mutation:
         chunks.append("proof_mutation: " + ", ".join(mutation))
-    control = sorted(
-        i for i in allowed
-        if i in {"undo_last_step", "undo_to_checkpoint", "fresh_restart", "finish", "amend_and_replay"}
-    )
+    control = intents_by_class(allowed, INTENT_CLASS_PROOF_CONTROL)
     if control:
         chunks.append("proof_control: " + ", ".join(control))
     if not chunks:

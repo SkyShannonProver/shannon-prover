@@ -11,6 +11,10 @@ from pathlib import Path
 from typing import Any
 
 from .health import backend_failure_health_event, timeout_health_event
+from workflow.managed_turn_outcome import (
+    PROOF_STATE_READ_ONLY,
+    observation_with_action_outcome,
+)
 from .intent_preflight import IntentPreflightDecision
 from .lineage import LemmaLineageStore
 from .protocol_repair import (
@@ -71,6 +75,7 @@ class ProofTurnExecutor:
                 decision.observation,
                 label=decision.label,
                 audit_kind=decision.audit_kind,
+                ok=decision.ok,
             )
         return self.action_repair_turn(intent, decision)
 
@@ -137,6 +142,8 @@ class ProofTurnExecutor:
         *,
         actions: list[Any],
         audit_kind: str,
+        proof_state_operation: str = "scratch_replay_only",
+        audit_extra: dict[str, Any] | None = None,
     ) -> ManagedTurn:
         clean_actions = clean_manager_actions(actions)
         view = self.view_for_observation(
@@ -148,8 +155,10 @@ class ProofTurnExecutor:
             "node": self.node_id,
             "intent": intent.to_dict(),
             "manager_actions": clean_actions,
-            "proof_state_effect": "scratch_replay_only",
+            "proof_state_effect": PROOF_STATE_READ_ONLY,
+            "proof_state_operation": proof_state_operation,
             "snapshot": snapshot_surface(self._latest_snapshot()),
+            **(audit_extra or {}),
         })
         return ManagedTurn(
             ok=True,
@@ -226,6 +235,7 @@ class ProofTurnExecutor:
             if latest_observation is not None
             else latest_observation_for_view(intent, actions)
         )
+        observation = observation_with_action_outcome(observation, actions)
         self._record_route_event(intent, actions, observation)
         view = self._project(snapshot, observation)
         self._audit({
@@ -251,8 +261,11 @@ class ProofTurnExecutor:
         *,
         label: str,
         audit_kind: str,
+        ok: bool = True,
+        audit_extra: dict[str, Any] | None = None,
     ) -> ManagedTurn:
-        action = selection_menu_action(label, observation)
+        action = selection_menu_action(label, observation, ok=ok)
+        observation = observation_with_action_outcome(observation, [action])
         view = self.view_for_observation(
             observation,
             overlay_after_project=True,
@@ -262,11 +275,12 @@ class ProofTurnExecutor:
             "node": self.node_id,
             "intent": intent.to_dict(),
             "manager_actions": [action],
-            "proof_state_effect": "selection_menu_only",
+            "proof_state_effect": action["proof_state_effect"],
             "snapshot": snapshot_surface(self._latest_snapshot()),
+            **(audit_extra or {}),
         })
         return ManagedTurn(
-            ok=True,
+            ok=ok,
             workspace_view=view,
             snapshot=self._latest_snapshot(),
             intent=intent,

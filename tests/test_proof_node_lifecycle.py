@@ -4,13 +4,78 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
+import pytest
+
 from workflow.proof_management.lifecycle import ProofNodeLifecycleManager
 from workflow.proof_management.types import ProofStateSnapshot
+
+
+def _workspace_view(**overrides: Any) -> dict[str, Any]:
+    view: dict[str, Any] = {
+        "schema_version": 3,
+        "kind": "prover_workspace_view",
+        "ok": True,
+        "last_result": {},
+        "proof_status": {
+            "status": "open",
+            "goal_identity_required": True,
+            "goal_hash": "goal",
+            "remaining_goals_known": True,
+        },
+        "current_goal": {"lines": []},
+        "view_hash": "fixture-view",
+    }
+    proof_status = dict(view["proof_status"])
+    proof_status.update(overrides.pop("proof_status", {}))
+    view.update(overrides)
+    view["proof_status"] = proof_status
+    return view
+
+
+def _bootstrap(**overrides: Any) -> dict[str, Any]:
+    replay_prefix = list(overrides.pop("replay_prefix", []))
+    replay_prefix_count = overrides.pop(
+        "replay_prefix_count", len(replay_prefix)
+    )
+    replay_prefix_requested_count = overrides.pop(
+        "replay_prefix_requested_count", len(replay_prefix)
+    )
+    snapshot = {
+        "node_id": "Tree-unit",
+        "session_tag": "unit",
+        "session_dir": ".ec_session_unit",
+        "session_epoch": 0,
+        "state_version": 0,
+        "goal_hash": "goal",
+        "goal_identity_required": True,
+        "workspace_view_artifact": "",
+        "execution_refs": {},
+    }
+    snapshot.update(overrides.pop("snapshot", {}))
+    record: dict[str, Any] = {
+        "schema_version": 3,
+        "kind": "proof_node_manager_bootstrap",
+        "node_id": "Tree-unit",
+        "session_tag": "unit",
+        "session_dir": ".ec_session_unit",
+        "file": "target.ec",
+        "lemma": "target_lemma",
+        "include_dirs": ["easycrypt-src/theories"],
+        "replay_prefix_count": replay_prefix_count,
+        "replay_prefix": replay_prefix,
+        "replay_prefix_requested_count": replay_prefix_requested_count,
+        "manager_actions": [],
+        "snapshot": snapshot,
+        "workspace_view": _workspace_view(),
+    }
+    record.update(overrides)
+    return record
 
 
 @dataclass(frozen=True)
 class _ProjectionResult:
     view: dict[str, Any]
+    full_view: dict[str, Any]
 
 
 class _FakeRepl:
@@ -45,10 +110,14 @@ class _FakeRepl:
                 session_epoch=self._session_epoch,
                 state_version=self._state_version,
                 goal_hash="goal",
+                goal_identity_required=True,
                 raw_workspace_view={"proof_status": {"status": "open"}},
             ),
             [{"label": "start", "exit_code": 0}],
         )
+
+    def committed_history(self) -> list[str]:
+        return list(self.started_with)
 
 
 class _FakeProjection:
@@ -57,16 +126,21 @@ class _FakeProjection:
 
     def project(self, **kwargs: Any) -> _ProjectionResult:
         self.calls.append(dict(kwargs))
+        view = _workspace_view(
+            proof_status={
+                "status": "open",
+                "remaining_goals_known": True,
+            },
+            view_hash="hash",
+        )
         return _ProjectionResult(
-            view={
-                "proof_status": {"status": "open"},
-                "view_hash": "hash",
-            }
+            view=view,
+            full_view={**view, "full_only": True},
         )
 
 
 class _FakeWorkspace:
-    def lint_agent_view(self, view: dict[str, Any]) -> list[str]:
+    def lint_workspace_view(self, view: dict[str, Any]) -> list[str]:
         return [] if view else ["empty"]
 
 
@@ -99,7 +173,7 @@ def _lifecycle(tmp_path: Path) -> tuple[
         workspace=_FakeWorkspace(),
         run_dir=lambda: tmp_path,
         audit=lambda record: audits.append(dict(record)),
-        surface_profile="unit-profile",
+        surface_profile="l1_goal_projection",
     )
     return lifecycle, repl, projection, lineage, audits
 
@@ -109,21 +183,24 @@ def test_lifecycle_adopts_bootstrap_state_without_restarting(
 ) -> None:
     lifecycle, repl, _, _, _ = _lifecycle(tmp_path)
 
-    lifecycle.adopt_bootstrap({
-        "replay_prefix": ["proc.", "wp."],
-        "workspace_view": {
-            "proof_status": {"status": "open"},
-            "current_goal": {"lines": ["goal"]},
-        },
-        "snapshot": {
+    lifecycle.adopt_bootstrap(_bootstrap(
+        replay_prefix=["proc.", "wp."],
+        workspace_view=_workspace_view(
+            proof_status={
+                "status": "open",
+                "remaining_goals_known": True,
+            },
+            current_goal={"lines": ["goal"]},
+        ),
+        snapshot={
             "node_id": "Tree-unit",
             "session_tag": "unit",
             "session_dir": ".ec_session_unit",
             "session_epoch": 4,
             "state_version": 7,
-            "goal_hash": "abc",
+            "goal_hash": "goal",
         },
-    })
+    ))
 
     assert lifecycle.replay_prefix == ["proc.", "wp."]
     assert lifecycle.replay_prefix_count == 2
@@ -143,7 +220,7 @@ def test_resumed_from_prefix_is_durable_across_a_floor_clear(
     # crosses it; the durable resumed-lineage marker must survive so the
     # amend_and_replay guard still fires on the resumed node afterward.
     lifecycle, _repl, _, _, _ = _lifecycle(tmp_path)
-    lifecycle.adopt_bootstrap({"replay_prefix": ["proc.", "wp."]})
+    lifecycle.adopt_bootstrap(_bootstrap(replay_prefix=["proc.", "wp."]))
     assert lifecycle.replay_prefix_count == 2
     assert lifecycle.resumed_from_prefix is True
 
@@ -152,6 +229,247 @@ def test_resumed_from_prefix_is_durable_across_a_floor_clear(
     assert lifecycle.replay_prefix_count == 0
     assert lifecycle.replay_prefix == []
     assert lifecycle.resumed_from_prefix is True
+
+
+@pytest.mark.parametrize(
+    "bootstrap",
+    [
+        {},
+        {"schema_version": 1, "kind": "proof_node_manager_bootstrap"},
+        {"schema_version": 3.0, "kind": "proof_node_manager_bootstrap"},
+        {"schema_version": True, "kind": "proof_node_manager_bootstrap"},
+        {"schema_version": 3, "kind": "manager_session_bootstrap"},
+    ],
+)
+def test_lifecycle_rejects_noncurrent_bootstrap_envelopes(
+    tmp_path: Path,
+    bootstrap: dict[str, Any],
+) -> None:
+    lifecycle, repl, _, _, _ = _lifecycle(tmp_path)
+
+    with pytest.raises(ValueError, match="schema_version=3"):
+        lifecycle.adopt_bootstrap(bootstrap)
+
+    assert lifecycle.latest_snapshot is None
+    assert repl._state_version == 0
+
+
+def test_lifecycle_rejects_incomplete_current_bootstrap_contract(
+    tmp_path: Path,
+) -> None:
+    missing_workspace = _bootstrap()
+    missing_workspace.pop("workspace_view")
+    invalid_workspace = _bootstrap(workspace_view={})
+    empty_status_view = _workspace_view()
+    empty_status_view["proof_status"] = {}
+    empty_status = _bootstrap(workspace_view=empty_status_view)
+    missing_status_view = _workspace_view()
+    missing_status_view["proof_status"] = {"remaining_goals_known": True}
+    missing_status = _bootstrap(workspace_view=missing_status_view)
+    missing_known_view = _workspace_view()
+    missing_known_view["proof_status"] = {"status": "open"}
+    missing_known = _bootstrap(workspace_view=missing_known_view)
+    lifecycle, repl, _, _, _ = _lifecycle(tmp_path)
+
+    for bootstrap in (
+        missing_workspace,
+        invalid_workspace,
+        empty_status,
+        missing_status,
+        missing_known,
+    ):
+        with pytest.raises(ValueError, match="workspace_view"):
+            lifecycle.adopt_bootstrap(bootstrap)
+
+    assert lifecycle.latest_snapshot is None
+    assert repl._state_version == 0
+
+
+@pytest.mark.parametrize(
+    "proof_status",
+    [
+        {
+            "status": "candidate_closed",
+            "remaining_goals_known": True,
+            "goal_identity_required": False,
+            "goal_hash": "",
+        },
+        {
+            "status": "open",
+            "remaining_goals_known": True,
+            "goal_identity_required": True,
+            "goal_hash": "another-goal",
+        },
+    ],
+)
+def test_lifecycle_rejects_snapshot_workspace_goal_identity_disagreement(
+    tmp_path: Path,
+    proof_status: dict[str, Any],
+) -> None:
+    lifecycle, _, _, _, _ = _lifecycle(tmp_path)
+    bootstrap = _bootstrap(
+        workspace_view=_workspace_view(proof_status=proof_status),
+    )
+
+    with pytest.raises(ValueError, match="goal identity disagree"):
+        lifecycle.adopt_bootstrap(bootstrap)
+
+
+@pytest.mark.parametrize(
+    "field",
+    ["node_id", "session_tag", "session_dir", "file", "lemma", "snapshot"],
+)
+def test_lifecycle_rejects_missing_bootstrap_identity_or_snapshot(
+    tmp_path: Path,
+    field: str,
+) -> None:
+    lifecycle, repl, _, _, _ = _lifecycle(tmp_path)
+    bootstrap = _bootstrap()
+    bootstrap.pop(field)
+
+    with pytest.raises(ValueError, match=field):
+        lifecycle.adopt_bootstrap(bootstrap)
+
+    assert lifecycle.latest_snapshot is None
+    assert repl._state_version == 0
+
+
+@pytest.mark.parametrize(
+    "field",
+    [
+        "include_dirs",
+        "replay_prefix_count",
+        "replay_prefix",
+        "replay_prefix_requested_count",
+        "manager_actions",
+    ],
+)
+def test_lifecycle_rejects_missing_bootstrap_metadata(
+    tmp_path: Path,
+    field: str,
+) -> None:
+    lifecycle, _, _, _, _ = _lifecycle(tmp_path)
+    bootstrap = _bootstrap()
+    bootstrap.pop(field)
+
+    with pytest.raises(ValueError, match=field):
+        lifecycle.adopt_bootstrap(bootstrap)
+
+
+@pytest.mark.parametrize(
+    "field",
+    [
+        "goal_hash",
+        "workspace_view_artifact",
+        "execution_refs",
+    ],
+)
+def test_lifecycle_rejects_incomplete_snapshot_contract(
+    tmp_path: Path,
+    field: str,
+) -> None:
+    lifecycle, _, _, _, _ = _lifecycle(tmp_path)
+    bootstrap = _bootstrap()
+    bootstrap["snapshot"].pop(field)
+
+    with pytest.raises(ValueError, match=field):
+        lifecycle.adopt_bootstrap(bootstrap)
+
+
+def test_lifecycle_rejects_retired_node_identity_alias(tmp_path: Path) -> None:
+    lifecycle, _, _, _, _ = _lifecycle(tmp_path)
+    bootstrap = _bootstrap()
+    bootstrap["node"] = bootstrap["node_id"]
+
+    with pytest.raises(ValueError, match="retired identity field `node`"):
+        lifecycle.adopt_bootstrap(bootstrap)
+
+
+def test_lifecycle_rejects_replay_count_beyond_committed_prefix(
+    tmp_path: Path,
+) -> None:
+    lifecycle, _, _, _, _ = _lifecycle(tmp_path)
+    bootstrap = _bootstrap(replay_prefix=["proc."], replay_prefix_count=2)
+
+    with pytest.raises(ValueError, match="cannot exceed"):
+        lifecycle.adopt_bootstrap(bootstrap)
+
+
+@pytest.mark.parametrize(
+    ("field", "value"),
+    [
+        ("state_version", None),
+        ("state_version", "7"),
+        ("state_version", True),
+        ("state_version", -1),
+        ("session_epoch", None),
+        ("session_epoch", "4"),
+        ("session_epoch", False),
+        ("session_epoch", -1),
+    ],
+)
+def test_lifecycle_rejects_missing_or_invalid_snapshot_versions(
+    tmp_path: Path,
+    field: str,
+    value: object,
+) -> None:
+    lifecycle, repl, _, _, _ = _lifecycle(tmp_path)
+    bootstrap = _bootstrap()
+    snapshot = bootstrap["snapshot"]
+    if value is None:
+        snapshot.pop(field)
+    else:
+        snapshot[field] = value
+
+    with pytest.raises(ValueError, match=field):
+        lifecycle.adopt_bootstrap(bootstrap)
+
+    assert lifecycle.latest_snapshot is None
+    assert repl._state_version == 0
+
+
+@pytest.mark.parametrize(
+    ("field", "value"),
+    [
+        ("node_id", "Tree-other"),
+        ("session_tag", "other"),
+        ("session_dir", ".ec_session_other"),
+        ("file", "other.ec"),
+        ("lemma", "other_lemma"),
+    ],
+)
+def test_lifecycle_rejects_bootstrap_identity_mismatch(
+    tmp_path: Path,
+    field: str,
+    value: str,
+) -> None:
+    lifecycle, repl, _, _, _ = _lifecycle(tmp_path)
+    bootstrap = _bootstrap()
+    bootstrap[field] = value
+    if field in {"node_id", "session_tag", "session_dir"}:
+        bootstrap["snapshot"][field] = value
+
+    with pytest.raises(ValueError, match=f"identity mismatch for `{field}`"):
+        lifecycle.adopt_bootstrap(bootstrap)
+
+    assert lifecycle.latest_snapshot is None
+    assert repl._state_version == 0
+
+
+@pytest.mark.parametrize("field", ["node_id", "session_tag", "session_dir"])
+def test_lifecycle_rejects_snapshot_identity_mismatch(
+    tmp_path: Path,
+    field: str,
+) -> None:
+    lifecycle, repl, _, _, _ = _lifecycle(tmp_path)
+    bootstrap = _bootstrap()
+    bootstrap["snapshot"][field] = "different"
+
+    with pytest.raises(ValueError, match=f"snapshot identity mismatch for `{field}`"):
+        lifecycle.adopt_bootstrap(bootstrap)
+
+    assert lifecycle.latest_snapshot is None
+    assert repl._state_version == 0
 
 
 def test_fresh_root_is_not_resumed_lineage(tmp_path: Path) -> None:
@@ -172,6 +490,9 @@ def test_lifecycle_bootstrap_projects_and_records_lineage(tmp_path: Path) -> Non
     assert lifecycle.replay_prefix_count == 2
     assert projection.calls[0]["replay_prefix"] == ["proc.", "wp."]
     assert record["workspace_view"]["proof_status"]["status"] == "open"
+    assert lifecycle.latest_full_view["full_only"] is True
+    assert record["node_id"] == "Tree-unit"
+    assert "node" not in record
     assert record["include_dirs"] == ["easycrypt-src/theories"]
     assert lineage.run_dir == tmp_path
     assert lineage.bootstraps[0]["replay_prefix_count"] == 2
@@ -210,7 +531,7 @@ def test_bootstrap_records_actual_history_when_replay_drops_a_step(
         workspace=_FakeWorkspace(),
         run_dir=lambda: tmp_path,
         audit=lambda record: audits.append(dict(record)),
-        surface_profile="unit-profile",
+        surface_profile="l1_goal_projection",
     )
 
     record = lifecycle.bootstrap(replay_prefix=requested)
@@ -244,7 +565,7 @@ def test_bootstrap_clean_replay_keeps_record_compact(tmp_path: Path) -> None:
         workspace=_FakeWorkspace(),
         run_dir=lambda: tmp_path,
         audit=lambda record: None,
-        surface_profile="unit-profile",
+        surface_profile="l1_goal_projection",
     )
 
     record = lifecycle.bootstrap(replay_prefix=requested)
@@ -273,7 +594,7 @@ def test_bootstrap_semantic_count_caps_at_committed_length(
         workspace=_FakeWorkspace(),
         run_dir=lambda: tmp_path,
         audit=lambda record: None,
-        surface_profile="unit-profile",
+        surface_profile="l1_goal_projection",
     )
 
     record = lifecycle.bootstrap(
@@ -305,7 +626,7 @@ def test_bootstrap_large_replay_shortfall_is_loud(tmp_path: Path) -> None:
         workspace=_FakeWorkspace(),
         run_dir=lambda: tmp_path,
         audit=lambda record: audits.append(dict(record)),
-        surface_profile="unit-profile",
+        surface_profile="l1_goal_projection",
     )
 
     record = lifecycle.bootstrap(replay_prefix=requested)
@@ -342,7 +663,7 @@ def test_bootstrap_small_divergence_is_not_a_shortfall(tmp_path: Path) -> None:
         workspace=_FakeWorkspace(),
         run_dir=lambda: tmp_path,
         audit=lambda record: audits.append(dict(record)),
-        surface_profile="unit-profile",
+        surface_profile="l1_goal_projection",
     )
 
     record = lifecycle.bootstrap(replay_prefix=requested)
@@ -354,18 +675,82 @@ def test_bootstrap_small_divergence_is_not_a_shortfall(tmp_path: Path) -> None:
     assert "replay_prefix_shortfall" not in [a.get("kind") for a in audits]
 
 
-def test_bootstrap_without_history_reader_echoes_request(
+def test_bootstrap_requires_authoritative_committed_history_reader(
     tmp_path: Path,
 ) -> None:
-    # Backendless roots / fakes without committed_history keep the old
-    # behaviour: the requested prefix is recorded as-is, no divergence keys.
-    lifecycle, _, _, _, _ = _lifecycle(tmp_path)
+    lifecycle, repl, _, _, _ = _lifecycle(tmp_path)
+    repl.committed_history = None  # type: ignore[assignment]
+
+    with pytest.raises(TypeError, match="must provide committed_history"):
+        lifecycle.bootstrap(replay_prefix=["proc.", "wp."])
+
+
+def test_bootstrap_does_not_replace_empty_committed_history_with_request(
+    tmp_path: Path,
+) -> None:
+    repl = _FakeReplWithHistory([])
+    lifecycle = ProofNodeLifecycleManager(
+        node_id="Tree-unit",
+        session_tag="unit",
+        repl=repl,
+        projection=_FakeProjection(),
+        lineage=_FakeLineage(),
+        workspace=_FakeWorkspace(),
+        run_dir=lambda: tmp_path,
+        audit=lambda record: None,
+        surface_profile="l1_goal_projection",
+    )
 
     record = lifecycle.bootstrap(replay_prefix=["proc.", "wp."])
 
-    assert record["replay_prefix"] == ["proc.", "wp."]
-    assert "replay_prefix_requested" not in record
-    assert "replay_prefix_divergence" not in record
+    assert record["replay_prefix"] == []
+    assert record["replay_prefix_divergence"]["dropped"] == [
+        {"index": 1, "tactic": "proc."},
+        {"index": 2, "tactic": "wp."},
+    ]
+
+
+@pytest.mark.parametrize(
+    "committed",
+    [None, ("proc.",), ["proc.", True], ["proc.", 7]],
+)
+def test_bootstrap_rejects_non_list_string_committed_history(
+    tmp_path: Path,
+    committed: object,
+) -> None:
+    lifecycle, repl, _, _, _ = _lifecycle(tmp_path)
+    repl.committed_history = lambda: committed  # type: ignore[method-assign,return-value]
+
+    with pytest.raises(TypeError, match=r"must return list\[str\]"):
+        lifecycle.bootstrap(replay_prefix=["proc."])
+
+
+def test_bootstrap_propagates_committed_history_read_failure(
+    tmp_path: Path,
+) -> None:
+    lifecycle, repl, _, _, _ = _lifecycle(tmp_path)
+
+    def fail() -> list[str]:
+        raise OSError("history unreadable")
+
+    repl.committed_history = fail  # type: ignore[method-assign]
+
+    with pytest.raises(OSError, match="history unreadable"):
+        lifecycle.bootstrap(replay_prefix=["proc."])
+
+
+@pytest.mark.parametrize("count", [True, False, "2", 2.0, -1, None])
+def test_bootstrap_rejects_coerced_resume_prefix_count(
+    tmp_path: Path,
+    count: object,
+) -> None:
+    lifecycle, _, _, _, _ = _lifecycle(tmp_path)
+
+    with pytest.raises(ValueError, match="resume_prefix_count"):
+        lifecycle.bootstrap(
+            replay_prefix=["proc.", "wp."],
+            resume_context={"resume_prefix_count": count},
+        )
 
 
 def test_lifecycle_progress_summary_reads_latest_view(tmp_path: Path) -> None:
@@ -378,6 +763,7 @@ def test_lifecycle_progress_summary_reads_latest_view(tmp_path: Path) -> None:
         session_epoch=1,
         state_version=9,
         goal_hash="goal-hash",
+        goal_identity_required=True,
     )
 
     summary = lifecycle.progress_summary()

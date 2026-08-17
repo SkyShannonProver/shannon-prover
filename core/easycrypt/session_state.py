@@ -38,6 +38,19 @@ class SessionState:
         return self.active_goal_block if self.active_goal_block else self.active_output
 
 
+@dataclass(frozen=True)
+class TargetLemmaMetadata:
+    """Distinguish a managed target, explicit full-file mode, and corruption."""
+
+    status: str
+    lemma: str = ""
+    source_file: str = ""
+
+    @property
+    def usable(self) -> bool:
+        return self.status in {"target_lemma", "full_file"}
+
+
 def read_session_state(
     session_dir: Path,
     current_path: Path | None = None,
@@ -51,16 +64,18 @@ def read_session_state(
     session is started with ``-lemma <NAME>``, the extracted file
     contains helper lemmas that close (each emitting their own
     ``No more goals`` and ``+ added lemma`` lines) BEFORE the target
-    lemma's open proof. The legacy heuristic — scan backwards from the
+    lemma's open proof. The full-file heuristic — scan backwards from the
     last prompt for ``No more goals`` vs ``Current goal`` — picks up a
     helper's close and falsely reports the target as closed. Discovered
     on ChaChaPoly step1 (2026-05-03) where Tree-0.1 saw
     ``candidate_closed`` despite having an open ``proof.`` for step1
     and burned 7 min in a debug rabbit hole.
 
-    When ``target_lemma`` is None, this reads the lemma name from
-    ``session_meta.json`` automatically (best-effort). Pass ``""``
-    explicitly to opt out of lemma-aware detection.
+    When ``target_lemma`` is None, this reads the target classification from
+    ``session_meta.json``. The metadata reader distinguishes corruption from a
+    valid full-file session. Managed callers reject corruption before accepting
+    a workspace; human full-file/debug readers retain the default heuristic.
+    Pass ``""`` explicitly to opt into full-file close detection.
     """
     session_dir = Path(session_dir)
     current_path = Path(current_path) if current_path else session_dir / "current.out"
@@ -83,7 +98,8 @@ def read_session_state(
     active_goal_block, num_remaining = extract_active_goal_block(raw_current)
 
     if target_lemma is None:
-        target_lemma = read_target_lemma_from_meta(session_dir)
+        target_metadata = read_target_lemma_metadata(session_dir)
+        target_lemma = target_metadata.lemma
 
     target_signal = (
         target_lemma_added(raw_current, target_lemma) if target_lemma else None
@@ -94,7 +110,7 @@ def read_session_state(
             num_remaining = 0
     elif target_signal is False:
         # Target lemma is known and EC has NOT emitted its close signal.
-        # Disregard any "No more goals" the legacy heuristic picked up
+        # Disregard any "No more goals" the full-file heuristic picked up
         # (those came from helper lemmas whose admit. qed. was processed
         # earlier in the same run). num_remaining was likely also misled
         # to 0; reset to UNKNOWN — we can't tell the real subgoal count
@@ -104,7 +120,7 @@ def read_session_state(
         if num_remaining == 0:
             num_remaining = REMAINING_UNKNOWN
     else:
-        # No target lemma context — fall back to legacy "No more goals"
+        # No target lemma context — use the full-file "No more goals"
         # heuristic. This path is correct for full-file proving (no
         # `-lemma` extraction) where the agent sequentially closes
         # whatever lemma is currently open.
@@ -149,23 +165,30 @@ def target_lemma_added(raw_text: str, target_name: str) -> bool:
     return bool(pattern.search(raw_text))
 
 
-def read_target_lemma_from_meta(session_dir: Path) -> str:
-    """Read the target lemma name from ``session_meta.json`` so callers
-    do not need to thread it through every read_session_state call.
+def read_target_lemma_metadata(session_dir: Path) -> TargetLemmaMetadata:
+    """Read an exact target/full-file classification from session metadata."""
 
-    Returns the empty string when the file is missing, unparseable, or
-    has no lemma field. The full-file (no ``-lemma``) path produces an
-    empty string here, which correctly disables lemma-aware detection
-    and reverts to the legacy heuristic.
-    """
     meta_path = Path(session_dir) / "session_meta.json"
     if not meta_path.exists():
-        return ""
+        return TargetLemmaMetadata(status="missing")
     try:
         data = _json.loads(meta_path.read_text(encoding="utf-8"))
     except Exception:
-        return ""
-    return str(data.get("lemma") or "")
+        return TargetLemmaMetadata(status="invalid")
+    if (
+        type(data) is not dict
+        or type(data.get("lemma")) is not str
+        or type(data.get("file")) is not str
+        or not data.get("file")
+        or data.get("lemma") != data.get("lemma", "").strip()
+    ):
+        return TargetLemmaMetadata(status="invalid")
+    lemma = data["lemma"]
+    return TargetLemmaMetadata(
+        status="target_lemma" if lemma else "full_file",
+        lemma=lemma,
+        source_file=data["file"],
+    )
 
 
 def extract_active_goal_output(raw_current: str, previous_path: Path | None) -> str:

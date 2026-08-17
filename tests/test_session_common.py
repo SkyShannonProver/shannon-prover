@@ -13,7 +13,6 @@ from core.easycrypt.session_common import (  # type: ignore  # noqa: E402
     classify_and_format,
     is_structural_tactic,
     list_lemmas_in_file,
-    render_closer_hints,
     trim_after_last_prompt,
 )
 from core.easycrypt import session_common as package_session_common  # noqa: E402
@@ -61,20 +60,6 @@ def test_list_lemmas_in_file_by_scope() -> None:
         info = list_lemmas_in_file(path)
         assert info["top_level"] == ["top_one", "top_hoare", "top_phoare"]
         assert info["in_sections"] == ["local_inner", "eq_inner", "ph_inner"]
-
-
-def test_render_closer_hints() -> None:
-    lines = render_closer_hints({
-        "closer_hints": {
-            "smt_lemmas": ["A", "B"],
-            "unfold_ops": ["foo"],
-            "typical_tail": "by smt().",
-        },
-    })
-    joined = "\n".join(lines)
-    assert "smt(A B)" in joined
-    assert "rewrite /foo." in joined
-    assert "by smt()." in joined
 
 
 def test_classify_and_format_empty_input_is_safe() -> None:

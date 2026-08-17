@@ -185,6 +185,12 @@ def run_one_lemma(
     # report). Default prover timeout is 20 min — if time_cap is larger,
     # the prover should actually get to use the extra budget.
     prover_timeout_min = max(5, (time_cap_sec // 60) - 2)
+    orchestrator_output = output_dir / f"{lemma}.orchestrator_runs"
+    before_runs = (
+        {path.resolve() for path in orchestrator_output.iterdir() if path.is_dir()}
+        if orchestrator_output.is_dir()
+        else set()
+    )
     cmd = [
         sys.executable, "-m", "workflow.orchestrator",
         "--file", str(file_path),
@@ -192,6 +198,7 @@ def run_one_lemma(
         "--include-dir", include_dir,
         "--max-iterations", "1",
         "--prover-timeout-minutes", str(prover_timeout_min),
+        "--output-dir", str(orchestrator_output),
     ]
     if skip_regression:
         cmd.append("--skip-regression")
@@ -256,24 +263,54 @@ def run_one_lemma(
 
     elapsed = time.monotonic() - t0
 
-    # Parse outcome from log (best-effort — the orchestrator writes clear markers)
-    log_text = log_path.read_text(encoding="utf-8", errors="replace") if log_path.exists() else ""
-    proved = "Proved: True" in log_text
-    verified = "Verification PASSED" in log_text or "Verified: True" in log_text
-    import re as _re
-    m = _re.search(r"(\d+) accepted, (\d+) errors", log_text)
-    tactic_count = int(m.group(1)) if m else 0
+    # The subprocess log is diagnostic text, never terminal-outcome authority.
+    # Consume the exact typed result written by the run-level prover owner.
+    terminal_result = None
+    result_error = ""
+    if not killed and not crash_msg:
+        after_runs = (
+            {path.resolve() for path in orchestrator_output.iterdir() if path.is_dir()}
+            if orchestrator_output.is_dir()
+            else set()
+        )
+        new_runs = sorted(after_runs - before_runs)
+        result_paths = [
+            run / "iteration_1" / "prover_run_result.json"
+            for run in new_runs
+            if (run / "iteration_1" / "prover_run_result.json").is_file()
+        ]
+        if len(result_paths) == 1:
+            try:
+                from workflow.schemas.prover_result import ProverResult
+
+                terminal_result = ProverResult.load(result_paths[0])
+            except Exception as exc:
+                result_error = f"invalid terminal prover result: {exc}"
+        else:
+            result_error = (
+                "expected exactly one terminal prover result from this attempt; "
+                f"found {len(result_paths)}"
+            )
+    proved = bool(terminal_result and terminal_result.is_verified)
+    verified = proved
+    tactic_count = int(
+        (terminal_result.completion_candidate or {}).get("tactic_count") or 0
+    ) if terminal_result is not None else 0
 
     # Decide outcome
     if crash_msg:
         outcome = "crashed"
     elif killed:
         outcome = "timeout"
-    elif proved and verified:
+    elif proved:
         outcome = "proved"
+    elif terminal_result is not None and terminal_result.status == "incomplete":
+        outcome = "failed"
     else:
-        # Prover returned nonzero or failed to produce expected markers
-        outcome = "failed" if rc == 0 else ("crashed" if rc is None else "failed")
+        outcome = "crashed"
+        crash_msg = result_error or (
+            terminal_result.error if terminal_result is not None else ""
+        ) or "terminal prover result unavailable"
 
     # File-state restore: if the run didn't succeed, revert any partial write.
     # Keep the new state on success (subsequent lemmas in the chain see this
@@ -302,7 +339,7 @@ def run_one_lemma(
         name=lemma,
         outcome=outcome,
         time_sec=elapsed,
-        proved=proved and verified,
+        proved=proved,
         verified=verified,
         tactic_count=tactic_count,
         error_msg=crash_msg or (f"hit {time_cap_sec}s cap" if killed else ""),

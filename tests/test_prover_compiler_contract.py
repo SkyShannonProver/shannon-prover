@@ -20,8 +20,20 @@ from workflow.agent_prompt_render import render_long_lived_agent_prompt  # noqa:
 
 
 def _handoff() -> str:
-    return _render_managed_session_handoff(
-        "", {"workspace_view": {"current_goal": {"lines": ["pr A = pr B"]}}})
+    return _render_managed_session_handoff("", {"workspace_view": {
+        "schema_version": 3,
+        "kind": "prover_workspace_view",
+        "ok": True,
+        "last_result": {},
+        "proof_status": {
+            "status": "open",
+            "remaining_goals_known": True,
+            "goal_identity_required": True,
+            "goal_hash": "goal",
+        },
+        "current_goal": {"lines": ["pr A = pr B"]},
+        "view_hash": "fixture-view",
+    }})
 
 
 def _full_prompt() -> str:
@@ -30,7 +42,7 @@ def _full_prompt() -> str:
     return render_long_lived_agent_prompt(
         _handoff(), host="h", port=1, token="t",
         node_memory_dir=Path("/tmp/nm"), max_turns=10,
-        surface_profile="l4_checked_action_surface")
+        surface_profile="l4_proof_state_compiler_v2_operation_binding_repair")
 
 
 def test_handoff_describes_what_the_compiler_provides() -> None:

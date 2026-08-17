@@ -45,7 +45,7 @@ def backend_failure_health_event(
 ) -> NodeHealthEvent | None:
     label = str(action.get("label") or intent.intent)
     mutating = bool(action.get("mutates_proof_state"))
-    if not mutating and label != "agent_view":
+    if not mutating and label != "managed_goal_view":
         return None
     return NodeHealthEvent(
         node_id=node_id,

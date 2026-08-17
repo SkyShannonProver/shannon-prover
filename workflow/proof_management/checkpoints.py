@@ -2,8 +2,8 @@
 
 CheckpointIndex is the shared coordinate system for menus, structural
 checkpoint panels, restore anchors, route-health repairs, and resume
-boundaries.  The first implementation wraps the existing dict surface so the
-renderer can stay backward compatible while ownership moves out of the facade.
+boundaries. CheckpointOption is the immutable boundary object used by the
+manager and renderer; dict conversion happens only at the rendered surface.
 """
 from __future__ import annotations
 
@@ -52,9 +52,3 @@ class CheckpointIndex:
                 if self.restore_option is not None else {}
             ),
         }
-
-
-def checkpoint_option(value: dict[str, Any] | None) -> CheckpointOption | None:
-    if not isinstance(value, dict) or not value:
-        return None
-    return CheckpointOption(dict(value))

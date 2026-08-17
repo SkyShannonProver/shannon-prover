@@ -38,6 +38,8 @@ import sys
 from pathlib import Path
 from typing import Any
 
+from core.easycrypt.committed_history import committed_tactics_have_qed
+
 _REPO_ROOT = Path(__file__).resolve().parents[2]
 # Rewrite the timeline report's absolute artifact links → local bundle copies so
 # every link resolves on GitHub (and no machine-specific /Users path leaks).
@@ -55,6 +57,9 @@ _LINK_THINKING = re.compile(
 _LINK_FOLLOWUP = re.compile(
     r"\]\((?:[^)]*?/)?node_memory/(?P<tree>Tree_[A-Za-z0-9_]+)/"
     r"followups/(?P<turn>turn_\d+\.md)\)")
+_LINK_INITIAL = re.compile(
+    r"\]\((?:[^)]*?/)?node_memory/(?P<tree>Tree_[A-Za-z0-9_]+)/"
+    r"(?P<name>initial_(?:workspace_view\.json|followup\.md|agent_prompt\.md))\)")
 
 
 # Machine-specific home-dir paths that may survive repo-relativization (e.g. a
@@ -96,6 +101,7 @@ def _rewrite_links(md: str) -> str:
     md = _LINK_RESULT.sub(r"](./views/\g<tree>/manager_results/\g<turn>)", md)
     md = _LINK_THINKING.sub(r"](./views/\g<tree>/thinking/\g<turn>)", md)
     md = _LINK_FOLLOWUP.sub(r"](./views/\g<tree>/followups/\g<turn>)", md)
+    md = _LINK_INITIAL.sub(r"](./views/\g<tree>/\g<name>)", md)
     md = _LINK_BOOTSTRAP.sub(r"](./views/_bootstrap/\g<boot>)", md)
     # Relativize any remaining absolute path (e.g. the report tool's
     # informational "Run dir:" line) so no machine-specific /Users path leaks.
@@ -122,6 +128,41 @@ def _env_info() -> dict[str, Any]:
     }
 
 
+def capture_repository_environment() -> dict[str, Any]:
+    """Freeze the git identity that a suite's prover runs actually used.
+
+    Suite bundling is deferred until every prover process exits so generated
+    reports cannot make later arms appear dirty.  Supplying this snapshot to
+    ``build_bundle`` keeps every bundle bound to the same pre-run code state.
+    """
+
+    return _env_info()
+
+
+def _bundle_environment(value: dict[str, Any] | None) -> dict[str, Any]:
+    env = dict(value) if value is not None else _env_info()
+    required = {"commit", "commit_full", "branch", "dirty"}
+    if set(env) != required or type(env["dirty"]) is not bool:
+        raise ValueError("bundle environment snapshot is incomplete")
+    if not all(str(env[key]) for key in required - {"dirty"}):
+        raise ValueError("bundle environment snapshot has an empty identity")
+    return env
+
+
+def _bundle_tag(
+    *,
+    timestamp: str,
+    bundle_key: str | None,
+    environment: dict[str, Any],
+) -> str:
+    safe_ts = re.sub(r"[^0-9A-Za-z_]", "-", str(timestamp))
+    safe_key = re.sub(r"[^0-9A-Za-z_]", "-", str(bundle_key or ""))
+    identity = safe_ts + (f"--{safe_key}" if safe_key else "")
+    return f"{identity}__{environment['commit']}" + (
+        "-dirty" if environment["dirty"] else ""
+    )
+
+
 def _node_dirs(run_iter_dir: Path) -> list[Path]:
     nm = run_iter_dir / "node_memory"
     if not nm.is_dir():
@@ -129,40 +170,35 @@ def _node_dirs(run_iter_dir: Path) -> list[Path]:
     return sorted(p for p in nm.iterdir() if p.is_dir() and p.name.startswith("Tree_"))
 
 
-def _final_proved_from_summary(run_iter_dir: Path) -> bool | None:
-    """The orchestrator's final verdict (``final_proved`` in the run's
-    ``summary.json``, one level above the iteration dir), or None when the
-    summary is absent/unreadable (e.g. bundling mid-run)."""
+def _terminal_result(run_iter_dir: Path):
+    """Read the sole run-level terminal outcome, if it exists and validates."""
     try:
-        data = json.loads(
-            (run_iter_dir.parent / "summary.json").read_text(encoding="utf-8"))
+        from workflow.schemas.prover_result import ProverResult
+
+        return ProverResult.load(run_iter_dir / "prover_run_result.json")
     except Exception:
         return None
-    value = data.get("final_proved")
-    return value if isinstance(value, bool) else None
 
 
 def _outcome(run_iter_dir: Path) -> str:
-    """Best-effort: proved / timeout-or-open, from the reconstructed proofs.
-
-    Proved only when a tree's reconstructed committed script ENDS in `qed.` —
-    a `qed.` that was EC-rejected (the timeline row still has ``ok: true``;
-    only ``manager_actions.error_summary`` says it failed) or later undone
-    must not count. A bare `finish` is NOT proof of closure (while goals
-    remain it is a give-up), so it must not be mislabeled as proved.
-
-    A session-level close is reconciled against the orchestrator's final
-    verdict: when ``summary.json`` says ``final_proved: false`` the proof was
-    rejected/reverted after the session (e.g. the post-verify admit check),
-    so the outcome must not read as a plain "proved".
-    """
-    session_proved = any(
-        proof["proved"] for proof in _committed_proofs(run_iter_dir))
-    if not session_proved:
-        return "incomplete (timeout/open)"
-    if _final_proved_from_summary(run_iter_dir) is False:
-        return "proved_in_session (final verification failed)"
-    return "proved"
+    """Project the canonical run result; never infer success from history."""
+    session_closed = any(
+        proof["session_closed"] for proof in _committed_proofs(run_iter_dir)
+    )
+    terminal = _terminal_result(run_iter_dir)
+    if terminal is None:
+        return (
+            "session_closed (terminal result unavailable)"
+            if session_closed
+            else "incomplete (timeout/open)"
+        )
+    if terminal.is_verified:
+        return "verified"
+    if terminal.status == "infrastructure_invalid":
+        return "infrastructure_invalid"
+    if session_closed:
+        return "session_closed (run incomplete)"
+    return "incomplete (timeout/open)"
 
 
 def _bootstrap_prefix_lines(run_iter: Path, tree: str) -> list[str]:
@@ -268,9 +304,6 @@ def _replay_timeline_commits(run_iter: Path, node_dir: Path) -> dict[str, Any] |
         elif name in {"fresh_restart", "request_restart"} and row.get("ok"):
             if _has_action(row, "fresh restart", ok_only=True):
                 stack = list(prefix)
-        elif name == "commit_replay_suffix_chunk" and row.get("ok"):
-            # the chunk's tactics are not in the row payload (only a chunk_id)
-            approximate = True
         gh = str(row.get("goal_hash") or "")
         if gh:
             depth_at_hash.append((gh, len(stack)))
@@ -295,9 +328,8 @@ def _committed_proofs(run_iter_dir: Path) -> list[dict[str, Any]]:
        ok-commit list is NOT the committed proof: ``ok: true`` includes
        EC-rejected and auto-reverted commits, and undone tactics stay in it.
 
-    Only a committed script that ENDS in `qed.` marks the tree proved (an
-    undone/rejected `qed.` does not; nor does `finish`, which while goals
-    remain is a give-up).
+    A terminal `qed.` marks only a reconstructed session-closed script. It is
+    diagnostic evidence, never a run-level proof verdict.
     """
     out: list[dict[str, Any]] = []
     for node in _node_dirs(run_iter_dir):
@@ -332,7 +364,7 @@ def _committed_proofs(run_iter_dir: Path) -> list[dict[str, Any]]:
             if replayed["approximate"]:
                 entry["approximate"] = True
         tactics = entry["tactics"]
-        entry["proved"] = bool(tactics) and tactics[-1].rstrip().endswith("qed.")
+        entry["session_closed"] = committed_tactics_have_qed(tactics)
         out.append(entry)
     return out
 
@@ -348,23 +380,25 @@ def _render_proof_section(proofs: list[dict[str, Any]],
     when ``run_iter`` is given."""
     blocks: list[str] = []
     for p in proofs:
-        tree, tactics, proved = p["tree"], p["tactics"], p["proved"]
+        tree = p["tree"]
+        tactics = p["tactics"]
+        session_closed = p["session_closed"]
         source = p.get("source")
         if source is None and run_iter is not None:
             hist = _session_history_exact(run_iter, tree)
             if hist:
                 tactics = hist
-                proved = hist[-1].rstrip().endswith("qed.")
+                session_closed = committed_tactics_have_qed(hist)
                 source = "session"
-        status = ("proved" if proved
+        status = ("session closed" if session_closed
                   else f"incomplete — {len(tactics)} tactic(s) committed, not closed")
         if source == "timeline_replay":
             status += " (timeline replay — no session history survived)"
         if p.get("approximate"):
             status += " (approximate: a rewind could not be fully resolved)"
-        ends_qed = bool(tactics) and tactics[-1].rstrip().endswith("qed.")
+        ends_qed = committed_tactics_have_qed(tactics)
         body = "\n".join(f"  {t}" for t in tactics) if tactics else "  (* no tactic committed *)"
-        # Never fabricate a closing `qed.`: a proved tree already ends in its
+        # Never fabricate a closing `qed.`: a closed session already ends in its
         # accepted `qed.`; an unclosed tree is annotated, not given a fake qed.
         tail = "" if ends_qed else "  (* proof not completed in this run *)\n"
         blocks.append(
@@ -492,6 +526,22 @@ def _copy_views(run_iter: Path, views_dir: Path) -> int:
             for f in sorted(fsrc.glob("turn_*.md")):
                 fout.joinpath(f.name).write_text(
                     _scrub_paths(f.read_text(encoding="utf-8")), encoding="utf-8")
+        for name in (
+            "initial_workspace_view.json",
+            "initial_followup.md",
+            "initial_agent_prompt.md",
+        ):
+            src = node / name
+            if not src.is_file():
+                continue
+            out.mkdir(parents=True, exist_ok=True)
+            if src.suffix == ".json":
+                _copy_json_scrubbed(src, out / name)
+            else:
+                (out / name).write_text(
+                    _scrub_paths(src.read_text(encoding="utf-8")),
+                    encoding="utf-8",
+                )
     boots = sorted(run_iter.glob("manager_bootstrap_*.json"))
     if boots:
         boot_out = views_dir / "_bootstrap"
@@ -513,12 +563,20 @@ def _rewrite_chunk_links(md: str, base: str, label: str) -> str:
                 rf"./views/{label}/\g<1>/thinking/\g<2>", md)
     md = re.sub(b + r"/node_memory/(Tree_[A-Za-z0-9_]+)/followups/(turn_\d+\.md)",
                 rf"./views/{label}/\g<1>/followups/\g<2>", md)
+    md = re.sub(
+        b + r"/node_memory/(Tree_[A-Za-z0-9_]+)/(initial_(?:workspace_view\.json|followup\.md|agent_prompt\.md))",
+        rf"./views/{label}/\g<1>/\g<2>",
+        md,
+    )
     md = re.sub(b + r"/(manager_bootstrap_[A-Za-z0-9_]+\.json)",
                 rf"./views/{label}/_bootstrap/\g<1>", md)
     return md
 
 
 def _read_history_file(path: Path) -> list[str]:
+    # Deliberate local reader (contract-test allowlisted): report bundles
+    # read history copies at arbitrary capsule paths and keep the original
+    # line bytes (no strip) for faithful display.
     try:
         return [ln for ln in path.read_text(encoding="utf-8").splitlines() if ln.strip()]
     except Exception:
@@ -527,37 +585,57 @@ def _read_history_file(path: Path) -> list[str]:
 
 def _session_history_exact(run_iter: Path, tree: str) -> list[str]:
     """``tree``'s own session ``history.ec`` (exact session-name match only —
-    never another tree's file). Fresh runs persist the session under
-    ``<run_iter>/ec_sessions/``; resume runs leave it at the worktree root."""
+    never another tree's file).
+
+    Only the run-confined archive is authoritative here.  Tree names are reused
+    across suite members, so looking in the worktree root can silently bind a
+    zero-turn run to a stale ``.ec_session_prover_tree_0_0`` from another
+    target.  When no confined history survives, callers reconstruct from this
+    run's timeline/bootstrap artifacts instead of guessing a session.
+    """
     sess = ".ec_session_prover_" + tree.lower()
-    for d in (run_iter / "ec_sessions", _worktree_root(run_iter)):
-        lines = _read_history_file(d / sess / "history.ec")
-        if lines:
-            return lines
-    return []
+    session_dir = run_iter / "ec_sessions" / sess
+    if not _session_identity_matches_run(run_iter, session_dir):
+        return []
+    return _read_history_file(session_dir / "history.ec")
+
+
+def _session_identity_matches_run(run_iter: Path, session_dir: Path) -> bool:
+    """Require the archived session's target identity to match this run."""
+
+    config = _load_run_config(run_iter)
+    expected_lemma = str(config.get("lemma") or "")
+    expected_file = str(config.get("file") or "")
+    if not expected_lemma or not expected_file:
+        return False
+    try:
+        meta = json.loads(
+            (session_dir / "session_meta.json").read_text(encoding="utf-8")
+        )
+    except Exception:
+        return False
+    if str(meta.get("lemma") or "") != expected_lemma:
+        return False
+    observed_file = Path(str(meta.get("file") or ""))
+    configured_file = Path(expected_file)
+    if not observed_file.is_absolute():
+        observed_file = _worktree_root(run_iter) / observed_file
+    if not configured_file.is_absolute():
+        configured_file = _worktree_root(run_iter) / configured_file
+    try:
+        return observed_file.resolve() == configured_file.resolve()
+    except OSError:
+        return False
 
 
 def _session_history_lines(run_iter: Path, tree: str | None) -> list[str]:
     """The EC-accepted committed script for ``tree`` — its session ``history.ec``,
     which is the GROUND TRUTH: undos and ``undo_to_checkpoint`` rewinds are already
     applied, unlike the timeline's raw ok-commit list (which keeps rewound
-    tactics). Fresh runs persist the session under ``<run_iter>/ec_sessions/``;
-    resume runs leave it at the worktree root. Falls back to the largest
-    ``history.ec`` found. [] if none (e.g. session already cleaned up)."""
-    search_dirs = [run_iter / "ec_sessions", _worktree_root(run_iter)]
-    if tree:  # exact session name first (Tree_0_0 -> .ec_session_prover_tree_0_0)
-        lines = _session_history_exact(run_iter, tree)
-        if lines:
-            return lines
-    best: list[str] = []
-    for d in search_dirs:
-        if not d.is_dir():
-            continue
-        for h in d.glob(".ec_session*/history.ec"):
-            lines = _read_history_file(h)
-            if len(lines) > len(best):
-                best = lines
-    return best
+    tactics).  The tree identity and run-confined archive are both required;
+    selecting the largest session is not an authority rule.
+    """
+    return _session_history_exact(run_iter, tree) if tree else []
 
 
 def _lineage_proof(chain: list[Path]) -> dict[str, Any]:
@@ -569,7 +647,7 @@ def _lineage_proof(chain: list[Path]) -> dict[str, Any]:
     concatenating per-chunk timeline commits only if no session history survives
     (less accurate — it can include rewound tactics)."""
     leaf_proofs = _committed_proofs(chain[-1])
-    winner = next((p for p in leaf_proofs if p["proved"]), None)
+    winner = next((p for p in leaf_proofs if p["session_closed"]), None)
     if winner is None and leaf_proofs:
         winner = max(leaf_proofs, key=lambda p: len(p["tactics"]))
     tree = winner["tree"] if winner else None
@@ -581,7 +659,7 @@ def _lineage_proof(chain: list[Path]) -> dict[str, Any]:
         bounds = sorted({b for b in bounds if 0 < b < len(hist)})
         return {"source": "session", "tree": tree, "lines": hist,
                 "boundaries": bounds,
-                "proved": bool(hist) and hist[-1].rstrip().endswith("qed.")}
+                "session_closed": committed_tactics_have_qed(hist)}
 
     # fallback 1: the leaf's faithful timeline replay. It already includes the
     # replayed prefix (= the whole lineage before the leaf), so it IS the
@@ -593,7 +671,8 @@ def _lineage_proof(chain: list[Path]) -> dict[str, Any]:
         bounds = [len(_capsule_prefix_lines(ci)) for ci in chain[1:]]
         bounds = sorted({b for b in bounds if 0 < b < len(lines)})
         return {"source": "timeline_replay", "tree": tree, "lines": lines,
-                "boundaries": bounds, "proved": bool(chosen["proved"])}
+                "boundaries": bounds,
+                "session_closed": bool(chosen["session_closed"])}
 
     # fallback 2: per-chunk timeline concatenation (approximate — the leaf had
     # no usable replay prefix, so stitch chunk scripts in lineage order)
@@ -605,7 +684,7 @@ def _lineage_proof(chain: list[Path]) -> dict[str, Any]:
             seg = max(ps, key=lambda p: len(p["tactics"]))
         segments.append(list((seg or {}).get("tactics", [])))
     return {"source": "timeline", "tree": tree, "segments": segments,
-            "proved": bool(winner and winner["proved"])}
+            "session_closed": bool(winner and winner["session_closed"])}
 
 
 def _render_lineage_proof(chain: list[Path], lp: dict[str, Any]) -> str:
@@ -620,7 +699,7 @@ def _render_lineage_proof(chain: list[Path], lp: dict[str, Any]) -> str:
                     f"  (* ─── resume {si}: replayed {cuts[si]} tactic(s) "
                     f"above, continued below ─── *)")
             out.extend(f"  {t}" for t in src[cuts[si]:cuts[si + 1]])
-        if not out[-1].rstrip().endswith("qed."):
+        if not lp["session_closed"]:
             out.append("  (* proof not completed in this lineage *)")
         total = len(src)
         if lp["source"] == "session":
@@ -642,14 +721,14 @@ def _render_lineage_proof(chain: list[Path], lp: dict[str, Any]) -> str:
                     f"above, continued below ─── *)")
             out.extend(f"  {t}" for t in seg)
             running += len(seg)
-        if not out[-1].rstrip().endswith("qed."):
+        if not lp["session_closed"]:
             out.append("  (* proof not completed in this lineage *)")
         total = running
         how = ("Reconstructed by concatenating each chunk's committed tactics "
                "(timeline fallback — no session history.ec survived, so rewound "
                "tactics may appear).")
     body = "\n".join(out)
-    status = ("proved" if lp["proved"]
+    status = ("session closed" if lp["session_closed"]
               else f"incomplete — {total} tactic(s) across {len(chain)} "
                    "chunk(s), not closed")
     return (
@@ -671,14 +750,19 @@ def _build_chain_bundle(
     trees: int | None,
     eval_mode: bool | None,
     extra_meta: dict[str, Any] | None,
+    bundle_key: str | None,
+    environment: dict[str, Any] | None,
 ) -> Path:
     """Build ONE end-to-end bundle spanning a resume lineage (root→leaf)."""
     leaf = chain[-1]
     labels = [f"c{i}" for i in range(len(chain))]
-    env = _env_info()
+    env = _bundle_environment(environment)
     lemma = lemma or "unknown_lemma"
-    safe_ts = re.sub(r"[^0-9A-Za-z_]", "-", str(timestamp))
-    tag = f"{safe_ts}__{env['commit']}" + ("-dirty" if env["dirty"] else "")
+    tag = _bundle_tag(
+        timestamp=timestamp,
+        bundle_key=bundle_key,
+        environment=env,
+    )
     dest = (_REPO_ROOT / dest_root / re.sub(r"[^0-9A-Za-z_]", "_", lemma) / tag)
     dest.mkdir(parents=True, exist_ok=True)
     views_dir = dest / "views"
@@ -725,15 +809,11 @@ def _build_chain_bundle(
                      else sum(len(s) for s in lp["segments"]))
     if trees is None:
         trees = len(_node_dirs(leaf)) or None
-    if not lp["proved"]:
-        outcome = _outcome(leaf)
-    elif _final_proved_from_summary(leaf) is False:
-        outcome = "proved_in_session (final verification failed)"
-    else:
-        outcome = "proved"
+    outcome = _outcome(leaf)
     meta = {
         "kind": "agent_view_run_report",
         "timestamp": timestamp,
+        "bundle_key": bundle_key,
         "lemma": lemma,
         "source_file": source_file,
         "model": model,
@@ -797,6 +877,8 @@ def build_bundle(
     eval_mode: bool | None = None,
     extra_meta: dict[str, Any] | None = None,
     follow_resume: bool = True,
+    bundle_key: str | None = None,
+    environment: dict[str, Any] | None = None,
 ) -> Path | None:
     """Build the committed bundle for ``run_iter_dir``. Returns the bundle dir.
 
@@ -819,16 +901,20 @@ def build_bundle(
             return _build_chain_bundle(
                 chain, dest_root=dest_root, timestamp=timestamp, lemma=lemma,
                 source_file=source_file, model=model, profile=profile,
-                trees=trees, eval_mode=eval_mode, extra_meta=extra_meta)
+                trees=trees, eval_mode=eval_mode, extra_meta=extra_meta,
+                bundle_key=bundle_key, environment=environment)
     # Default the tree count to the number of proof-tree node dirs that actually
     # ran — the suite/config `tree_initial_provers` is often unset, and the real
     # topology is what the report should show (keeps the header honest, not "?").
     if trees is None:
         trees = len(_node_dirs(run_iter_dir)) or None
-    env = _env_info()
+    env = _bundle_environment(environment)
     lemma = lemma or "unknown_lemma"
-    safe_ts = re.sub(r"[^0-9A-Za-z_]", "-", str(timestamp))
-    tag = f"{safe_ts}__{env['commit']}" + ("-dirty" if env["dirty"] else "")
+    tag = _bundle_tag(
+        timestamp=timestamp,
+        bundle_key=bundle_key,
+        environment=env,
+    )
     dest = (_REPO_ROOT / dest_root / re.sub(r"[^0-9A-Za-z_]", "_", lemma) / tag)
     dest.mkdir(parents=True, exist_ok=True)
     views_dir = dest / "views"
@@ -883,6 +969,7 @@ def build_bundle(
     meta = {
         "kind": "agent_view_run_report",
         "timestamp": timestamp,
+        "bundle_key": bundle_key,
         "lemma": lemma,
         "source_file": source_file,
         "model": model,
@@ -915,10 +1002,12 @@ def build_bundle(
         f"| outcome | {meta['outcome']} |\n"
         f"| turns | {turn_count} |\n\n"
         "Each row below: the view → the intent the agent submitted → the manager "
-        "result. The **Decision View** column has TWO links: `turn_NNN.json` is the "
-        "full projected `ProverWorkspaceView` the framework computed (all panels); "
+        "result. The **Decision View** column links the full projected "
+        "`ProverWorkspaceView` (`turn_NNN.json`) computed by the framework; "
         "`inline read` is the filtered preview the agent ACTUALLY read inline "
-        "(`./views/<tree>/followups/turn_NNN.md`). They diverge — the preview drops "
+        "(`./views/<tree>/followups/turn_NNN.md`); turn 1 also links the exact "
+        "manager-bound launch task. The full view and inline preview diverge — "
+        "the preview drops "
         "panels — so to see what the agent truly consumed, open `inline read`, not "
         "the full view.\n\n---\n\n"
     )

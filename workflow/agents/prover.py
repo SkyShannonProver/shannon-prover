@@ -1,11 +1,11 @@
-"""Prover agent: prove an EasyCrypt lemma using a Claude Code subagent.
+"""Prover agent: prove an EasyCrypt lemma using a managed agent process.
 
-Launches `claude -p` with a task-specific prompt. The subagent has access to
-Claude Code tools for source inspection, while EasyCrypt proof interaction
+Launches either Claude Code or OpenAI Codex with a task-specific prompt. The
+agent has read-only source-inspection tools, while EasyCrypt proof interaction
 goes through the managed ProofNodeManager intent protocol.
 
-Traces (including thinking tokens) are automatically stored by Claude Code
-in `~/.claude/projects/`. The Trace Analyst reads them from there.
+Claude Code traces are correlated through ``agent_sessions.jsonl``. Codex runs
+emit their thread id through the same provider-neutral session registry.
 """
 
 from __future__ import annotations
@@ -20,11 +20,7 @@ import time
 from pathlib import Path
 from typing import Any, Optional
 
-from core.easycrypt.committed_history import (
-    closed_history_tactics,
-    read_committed_tactics,
-)
-from workflow.schemas.config import PROVER_DEFAULTS
+from workflow.schemas.config import PROVER_DEFAULTS, normalize_agent_backend
 from workflow.agents.ec_services import (  # noqa: F401  (facade re-exports)
     _AF_UNIX_SOCKET_PATH_LIMIT,
     _EC_DAEMON_SOCKET_NAME_TEMPLATE,
@@ -54,15 +50,13 @@ from workflow.agents.ec_services import (  # noqa: F401  (facade re-exports)
 from workflow.agents.prover_writeback import (  # noqa: F401  (facade re-exports)
     _ADMIT_TOKEN_RE,
     _EC_SPINNER_RE,
-    _acceptance_gate_for_session,
     _build_proof_text,
-    _candidate_gate_for_session,
     _distill_ec_stderr,
     _emit_verification_status,
-    _extract_partial_tactics_from_session,
+    _extract_partial_tactics_from_sessions,
     _extract_prover_notes,
     _extract_prover_report,
-    _extract_tactics_from_session,
+    _extract_tactics_from_candidate,
     _find_proof_block,
     _first_err_msg,
     _has_why3_error,
@@ -78,17 +72,39 @@ from workflow.agents.prover_writeback import (  # noqa: F401  (facade re-exports
     _verify_lemma_extracted,
     _write_and_verify_proof,
 )
-from workflow.surface_profiles import ensure_supported_surface_profile
-from workflow.proof_management.lifecycle import replay_prefix_shortfall
+from workflow.proof_state_compiler.runtime_profiles import (
+    ensure_supported_runtime_surface_profile,
+)
+from workflow.proof_management.lifecycle import (
+    replay_prefix_shortfall,
+    require_proof_node_manager_bootstrap,
+)
 from workflow.proof_node_manager import ProofNodeManager
 from workflow.tree.policy import DEFAULT_TREE_INITIAL_PROVERS, cap_tree_max_concurrent
+from workflow.tree.result import TreeRunResult
 from workflow.agents.prover_prompt import (
     _build_child_prover_prompt,
     _build_prover_prompt,
-    _session_dir_for_tag,
 )
 
 logger = logging.getLogger("workflow.agents.prover")
+
+
+def _prepare_run_ec_daemon_socket(run_dir: Path) -> tuple[str, bool]:
+    """Select this run's socket and clean only an older instance of it.
+
+    Worktrees share the git-common ``tmp/ec_daemons`` directory.  Scanning and
+    stopping every socket there makes one evaluation arm terminate another
+    arm's live daemon.  The run directory already gives each arm a stable,
+    distinct socket name, so only that exact socket is stale for this run.
+    """
+    socket_path = _configure_run_ec_daemon_socket(run_dir)
+    stopped = _shutdown_ec_daemon(
+        reason="per-run pre-run cleanup",
+        socket_path=socket_path,
+    )
+    return socket_path, stopped
+
 
 # ---------------------------------------------------------------------------
 # Project paths
@@ -100,40 +116,6 @@ _PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
 # _configure_run_why3_socket). Held so the run can tear it down at the end
 # instead of leaking it for the next run's global pkill to find. None when no
 # server was started by us (e.g. a responsive one was already running).
-
-
-
-
-
-
-def _session_include_dirs(file_path: str, include_dir: str) -> list[str]:
-    from os.path import dirname as _dirname
-
-    file_dir = _dirname(file_path) or "."
-    dirs = [file_dir]
-    if include_dir and include_dir != file_dir:
-        dirs.append(include_dir)
-    return dirs
-
-
-def _workspace_view_from_payload(payload: dict[str, Any]) -> dict[str, Any]:
-    if not isinstance(payload, dict):
-        return {}
-    workspace = payload.get("workspace")
-    if isinstance(workspace, dict):
-        view = workspace.get("view")
-        if isinstance(view, dict):
-            return view
-    if isinstance(payload.get("current_goal"), dict) and (
-        "candidate_moves" in payload
-        or "proof_status" in payload
-        or "decision_context" in payload
-        or "suggested_next_steps" in payload
-        or "proof_position" in payload
-    ):
-        return payload
-    return payload
-
 
 def _append_manager_bootstrap_audit(
     run_dir: Path | None,
@@ -150,7 +132,11 @@ def _append_manager_bootstrap_audit(
         logger.warning("Failed to write manager bootstrap audit: %s", exc)
 
 
-def _bootstrap_opened_real_proof(bootstrap: dict[str, Any]) -> bool:
+def _bootstrap_opened_real_proof(
+    bootstrap: dict[str, Any],
+    *,
+    surface_profile: str | None = None,
+) -> bool:
     """True unless the managed session clearly failed to open the target proof.
 
     When a file fails to load (e.g. a `require`d theory is missing) EC stays at
@@ -159,22 +145,19 @@ def _bootstrap_opened_real_proof(bootstrap: dict[str, Any]) -> bool:
     "goal" is just the bare ``[N|check]>`` prompt. A healthy open *or* complete
     proof always carries an authoritative count (``remaining_goals_known``).
 
-    Fail-open: returns ``True`` on any unrecognized/missing schema so it can
-    never block a legitimate run — the eval-suite preflight is the primary guard
-    and this is only a backstop for the clear degraded signature.
+    The bootstrap envelope and required proof-status signal are strict. A
+    malformed handoff raises before this semantic hollow-state check runs.
     """
-    view = bootstrap.get("workspace_view")
-    if not isinstance(view, dict):
-        return True
-    ps = view.get("proof_status")
-    if not isinstance(ps, dict) or not ps:
-        return True  # no proof_status signal at all — fail open
+    require_proof_node_manager_bootstrap(
+        bootstrap,
+        surface_profile=surface_profile,
+    )
+    view = bootstrap["workspace_view"]
+    ps = view["proof_status"]
     if ps.get("remaining_goals_known") is True:
         return True  # EC gave a goal count (open or complete) — real proof
     status = str(ps.get("status") or "")
     if status not in ("unknown", "error"):
-        # Only an EXPLICIT degraded status is the hollow signature; an absent
-        # status is ambiguous, so fail open.
         return True
     cg = view.get("current_goal") or {}
     lines = cg.get("lines") or []
@@ -239,37 +222,11 @@ def _prepare_managed_session(
     """
     backend_path = _PROJECT_ROOT / "core" / "easycrypt" / "session_cli.py"
     if not backend_path.exists():
-        semantic_replay_count = len(replay_prefix or [])
-        if isinstance(resume_context, dict):
-            try:
-                semantic_replay_count = int(
-                    resume_context.get("resume_prefix_count")
-                    or semantic_replay_count
-                )
-            except (TypeError, ValueError):
-                semantic_replay_count = len(replay_prefix or [])
-        bootstrap = {
-            "schema_version": 2,
-            "kind": "manager_session_bootstrap",
-            "node": node_label,
-            "session_tag": session_tag,
-            "session_dir": _session_dir_for_tag(session_tag),
-            "file": file_path,
-            "lemma": lemma_name,
-            "include_dirs": _session_include_dirs(file_path, include_dir),
-            "replay_prefix_count": semantic_replay_count,
-            "replay_prefix": list(replay_prefix or []),
-            "surface_profile": surface_profile,
-            "manager_actions": [{
-                "label": "manager_bootstrap_skipped",
-                "exit_code": 0,
-                "note": "backend session driver is unavailable in this test root",
-            }],
-            "snapshot": {},
-            "workspace_view": {},
-        }
-        _append_manager_bootstrap_audit(run_dir, bootstrap)
-        return bootstrap
+        raise RuntimeError(
+            "Managed proof backend is unavailable: required session driver "
+            f"does not exist at {backend_path}. Refusing to manufacture a "
+            "bootstrap without an authoritative EasyCrypt session."
+        )
 
     manager = ProofNodeManager(
         file_path=file_path,
@@ -285,14 +242,25 @@ def _prepare_managed_session(
         replay_prefix=replay_prefix or [],
         resume_context=resume_context,
     )
+    require_proof_node_manager_bootstrap(
+        bootstrap,
+        surface_profile=manager.surface_profile,
+        expected_identity={
+            "node_id": node_label or session_tag,
+            "session_tag": session_tag,
+            "session_dir": f".ec_session_{session_tag}",
+            "file": file_path,
+            "lemma": lemma_name,
+        },
+    )
     _warn_replay_prefix_shortfall(bootstrap, node_label=node_label)
-    legacy_bootstrap = dict(bootstrap)
-    legacy_bootstrap["kind"] = "manager_session_bootstrap"
-    legacy_bootstrap["schema_version"] = 2
     _append_manager_bootstrap_audit(run_dir, bootstrap)
     if (
         os.environ.get("SHANNON_SKIP_BOOTSTRAP_GUARD") != "1"
-        and not _bootstrap_opened_real_proof(legacy_bootstrap)
+        and not _bootstrap_opened_real_proof(
+            bootstrap,
+            surface_profile=manager.surface_profile,
+        )
     ):
         raise RuntimeError(
             f"Managed session did not open a proof for lemma '{lemma_name}' in "
@@ -302,29 +270,28 @@ def _prepare_managed_session(
             f"would be a 'hollow run' where every tactic errors 'outside a "
             f"proof script'. Set SHANNON_SKIP_BOOTSTRAP_GUARD=1 to override."
         )
-    return legacy_bootstrap
+    return bootstrap
 
 
 def _archive_ec_session_dirs(
     run_dir: Path,
-    preferred_session_dir: str | Path | None = None,
+    *,
+    session_dirs: tuple[str, ...] | list[str],
 ) -> list[str]:
     """Copy this prover run's EasyCrypt session dirs into ``run_dir``.
 
     ``prover.run`` wipes project-root ``.ec_session_*`` directories at the
     start of the next run to prevent proof leakage. Without this archive, the
-    event log and generated ProofContextView / TacticExecutionResult artifacts vanish
+    event log and generated workspace / TacticExecutionResult artifacts vanish
     before postmortem analysis can inspect them.
     """
     import shutil as _shutil
 
-    candidates: set[Path] = {
-        p for p in _PROJECT_ROOT.glob(".ec_session_*") if p.is_dir()
+    candidates = {
+        Path(value).resolve()
+        for value in session_dirs
+        if str(value).strip() and Path(value).is_dir()
     }
-    if preferred_session_dir:
-        p = Path(preferred_session_dir)
-        if p.exists() and p.is_dir():
-            candidates.add(p)
 
     if not candidates:
         return []
@@ -360,137 +327,6 @@ def _archive_ec_session_dirs(
             encoding="utf-8",
         )
     return archived
-
-
-def _truthy_env(name: str) -> Optional[bool]:
-    value = os.environ.get(name)
-    if value is None:
-        return None
-    value = value.strip().lower()
-    if value in {"1", "true", "yes", "on"}:
-        return True
-    if value in {"0", "false", "no", "off"}:
-        return False
-    return None
-
-
-def _is_live_smoke_path(path: str | Path) -> bool:
-    parts = [p for p in Path(path).parts if p not in {"", "."}]
-    return "artifacts" in parts and "live_smoke" in parts
-
-
-def _should_record_proof_bank(
-    file_path: str,
-    lemma_name: str,
-    run_dir: Path,
-    eval_mode: bool,
-    explicit: Optional[bool],
-) -> bool:
-    """Context-aware proof-bank policy.
-
-    Ordinary workflow successes keep feeding regression. Eval and live-smoke
-    runs are disposable measurements, so they must not mutate proof_bank unless
-    the caller explicitly opts in.
-    """
-    if explicit is not None:
-        return bool(explicit)
-
-    env_choice = _truthy_env("SHANNON_RECORD_PROOF_BANK")
-    if env_choice is not None:
-        return env_choice
-
-    eval_target = os.environ.get("EVAL_TARGET_LEMMA", "").strip()
-    if eval_mode or eval_target == lemma_name:
-        return False
-    if _is_live_smoke_path(file_path) or _is_live_smoke_path(run_dir):
-        return False
-    return True
-
-
-# ---------------------------------------------------------------------------
-# Session ID extraction
-# ---------------------------------------------------------------------------
-
-
-# Claude Code stores sessions in ~/.claude/projects/<project-hash>/<session-id>.jsonl
-_CLAUDE_PROJECTS_DIR = Path.home() / ".claude" / "projects"
-_PROJECT_HASH = None  # computed lazily
-
-
-def _get_project_hash() -> str:
-    """Get the Claude Code project hash for trace file lookup.
-
-    Claude Code encodes the project path by replacing all / and _ with -.
-    E.g. <REPO> -> <PROJECT>
-    """
-    global _PROJECT_HASH
-    if _PROJECT_HASH is not None:
-        return _PROJECT_HASH
-
-    # Claude Code replaces both / and _ with -
-    project_path = str(_PROJECT_ROOT).replace("/", "-").replace("_", "-")
-
-    # Check which hash exists in ~/.claude/projects/
-    if _CLAUDE_PROJECTS_DIR.exists():
-        for d in _CLAUDE_PROJECTS_DIR.iterdir():
-            if d.is_dir() and d.name == project_path:
-                _PROJECT_HASH = d.name
-                return _PROJECT_HASH
-        # Fallback: partial match
-        for d in _CLAUDE_PROJECTS_DIR.iterdir():
-            if d.is_dir() and "Shannon" in d.name:
-                _PROJECT_HASH = d.name
-                return _PROJECT_HASH
-
-    # Fallback: construct it
-    _PROJECT_HASH = project_path
-    return _PROJECT_HASH
-
-
-def _is_subagent_session(jsonl_path: Path) -> bool:
-    """Check if a JSONL file is a subagent session (claude -p), not interactive.
-
-    Subagent sessions start with 'queue-operation'; interactive sessions
-    start with 'permission-mode'. We only want subagent sessions.
-    """
-    try:
-        with jsonl_path.open("r", encoding="utf-8") as f:
-            first_line = f.readline()
-            if not first_line:
-                return False
-            import json as _json
-            data = _json.loads(first_line)
-            return data.get("type") == "queue-operation"
-    except Exception:
-        return False
-
-
-def _find_latest_session_id(after_timestamp: float) -> str:
-    """Find the most recent Claude Code subagent session JSONL created after a timestamp.
-
-    Only considers subagent sessions (claude -p), not interactive sessions.
-    Returns the session ID (filename without .jsonl), or "" if not found.
-    """
-    project_hash = _get_project_hash()
-    sessions_dir = _CLAUDE_PROJECTS_DIR / project_hash
-
-    if not sessions_dir.exists():
-        logger.warning("Claude projects dir not found: %s", sessions_dir)
-        return ""
-
-    best_path = None
-    best_mtime = 0.0
-
-    for f in sessions_dir.glob("*.jsonl"):
-        mtime = f.stat().st_mtime
-        if mtime > after_timestamp and mtime > best_mtime:
-            if _is_subagent_session(f):
-                best_mtime = mtime
-                best_path = f
-
-    if best_path:
-        return best_path.stem
-    return ""
 
 
 # ---------------------------------------------------------------------------
@@ -618,6 +454,7 @@ def run(
     file_path: str,
     lemma_name: str,
     include_dir: str = "",
+    agent_backend: str = PROVER_DEFAULTS.agent_backend,
     model: str = PROVER_DEFAULTS.model,
     effort: str = PROVER_DEFAULTS.effort,
     max_turns: int = 1000,
@@ -629,7 +466,6 @@ def run(
     run_dir: Optional[Path] = None,
     eval_mode: Optional[bool] = None,
     surface_profile: str | None = None,
-    record_proof_bank: Optional[bool] = None,
     resume_capsules: Optional[list[str]] = None,
     resume_root_policy: str = "score",
     mode: str = "tree",
@@ -646,20 +482,24 @@ def run(
     tree_structural_undo_spawn_delay_seconds: int = 300,
     tree_undo_repair_protection_seconds: int = 900,
 ):
-    """Run the prover as a Claude Code subagent.
+    """Run the prover as a managed Claude Code or OpenAI Codex agent.
 
-    Launches `claude -p` with the proving prompt. The subagent uses the
+    The selected agent process receives the proving prompt and uses the
     manager intent protocol for EasyCrypt proof interaction, Read/Bash for
     legitimate source context, and never owns session lifecycle.
-    Traces are stored automatically by Claude Code.
 
     Long-lived managed prover mode:
     - "tree": Start one or more proof nodes, each with its own long-lived
-      agent runtime. Legacy "racing" requests are routed through tree roots so
-      no prover path launches Claude without ``ProofNodeRuntime``.
+      agent runtime.
     """
-    from workflow.schemas.prover_result import ProverResult
-    profile = ensure_supported_surface_profile(surface_profile)
+    agent_backend = normalize_agent_backend(agent_backend)
+    from workflow.schemas.prover_result import (
+        PROVER_RUN_INCOMPLETE,
+        PROVER_RUN_INFRASTRUCTURE_INVALID,
+        PROVER_RUN_VERIFIED,
+        ProverResult,
+    )
+    profile = ensure_supported_runtime_surface_profile(surface_profile)
     if profile is not None:
         surface_profile = profile.name
     run_dir = run_dir or (_PROJECT_ROOT / "workflow" / "runs" / "scratch")
@@ -667,18 +507,14 @@ def run(
 
     from workflow.progress import status as pstatus, error as perror
 
-    if _shutdown_ec_daemon(
-        reason="legacy global pre-run cleanup",
-        socket_path="/tmp/ec_daemon.sock",
-    ):
-        pstatus("Prover", "Stopped legacy global EasyCrypt daemon")
-    stopped_repo_daemons = _shutdown_repo_ec_daemons(reason="repo-local pre-run cleanup")
-    if stopped_repo_daemons:
+    run_ec_daemon_socket, stopped_previous_run_daemon = (
+        _prepare_run_ec_daemon_socket(run_dir)
+    )
+    if stopped_previous_run_daemon:
         pstatus(
             "Prover",
-            f"Stopped {stopped_repo_daemons} repo-local EasyCrypt daemon(s)",
+            "Stopped an older EasyCrypt daemon for this exact run",
         )
-    run_ec_daemon_socket = _configure_run_ec_daemon_socket(run_dir)
     logger.info("Using per-run EasyCrypt daemon socket: %s", run_ec_daemon_socket)
 
     # --- Pre-check: does the lemma already have a proof? ---
@@ -687,7 +523,18 @@ def run(
 
     if precheck == "proved_and_verified":
         pstatus("Prover", f"{lemma_name} already has a verified proof. Skipping.", "\033[32m")
-        return ProverResult(proved=True, ec_file_verified=True, skipped=True)
+        result = ProverResult(
+            status=PROVER_RUN_VERIFIED,
+            skipped=True,
+            verification={
+                "status": "pass",
+                "method": "preexisting_source_verification",
+                "target_file": str(ec_full_path.resolve()),
+                "target_lemma": lemma_name,
+            },
+        )
+        result.save(run_dir / "prover_run_result.json")
+        return result
 
     if precheck == "has_proof_but_fails":
         pstatus("Prover",
@@ -721,12 +568,6 @@ def run(
                     f"resume capsule lemma mismatch: "
                     f"{ckpt.path} has {ckpt.lemma}, run targets {lemma_name}"
                 )
-        if mode != "tree":
-            pstatus("Prover",
-                    "Resume capsule supplied; forcing tree mode so each "
-                    "capsule can be a replayed root.",
-                    "\033[33m")
-            mode = "tree"
         tree_initial_provers = max(
             tree_initial_provers,
             len(loaded_resume_capsules),
@@ -749,13 +590,6 @@ def run(
         os.environ["EVAL_TARGET_LEMMA"] = lemma_name
     elif os.environ.get("EVAL_TARGET_LEMMA", "").strip() == lemma_name:
         os.environ.pop("EVAL_TARGET_LEMMA", None)
-    record_proof_bank_enabled = _should_record_proof_bank(
-        file_path=file_path,
-        lemma_name=lemma_name,
-        run_dir=run_dir,
-        eval_mode=bool(eval_mode),
-        explicit=record_proof_bank,
-    )
 
     # --- Pre-flight: start from a clean persistent EC daemon. ---
     if _shutdown_ec_daemon(reason="pre-run cleanup"):
@@ -771,9 +605,6 @@ def run(
         pstatus("Prover", f"why3server ready on {why3_socket}")
     else:
         pstatus("Prover", "why3server not available — smt() will fail. Continuing anyway.", "\033[33m")
-
-    # Record timestamp before launch (to find the session trace after)
-    before_timestamp = time.time()
 
     # Clean up ALL stale session directories at the project root before
     # each prover launch. Any `.ec_session_*` dir left over from a previous
@@ -813,16 +644,7 @@ def run(
         )
 
     if mode != "tree":
-        requested_mode = mode
-        tree_initial_provers = max(1, int(parallelism or 1))
-        tree_max_concurrent = max(tree_max_concurrent, tree_initial_provers)
-        mode = "tree"
-        pstatus(
-            "Prover",
-            f"Routing legacy prover mode {requested_mode!r} through tree mode "
-            f"with {tree_initial_provers} long-lived root node(s).",
-            "\033[33m",
-        )
+        raise ValueError("unsupported prover mode; only 'tree' is current")
 
     tree_max_concurrent = cap_tree_max_concurrent(tree_max_concurrent)
     tree_initial_provers = max(1, min(int(tree_initial_provers), tree_max_concurrent))
@@ -927,6 +749,7 @@ def run(
                     "negative_signal": [],
                     "parent_goal_state": parent_goal_state,
                     "expected_goal_hash": ckpt.current_goal_hash,
+                    "goal_identity_required": ckpt.goal_identity_required,
                     "capsule_path": str(ckpt.path),
                     "capsule_score": ckpt.score,
                     "resume_root_policy": resume_root_policy,
@@ -937,10 +760,7 @@ def run(
                 })
 
         def _build_tree_cmd(session_tag, node_id, replay_prefix, negative_signal,
-                            strategy_index=0, parent_goal_state="",
-                            discoveries=None, blocked_openers=None,
-                            layer_move_action=None,
-                            resume_context=None):
+                            layer_move_action=None, resume_context=None):
             managed_session = _prepare_managed_session(
                 file_path=file_path,
                 lemma_name=lemma_name,
@@ -957,18 +777,17 @@ def run(
             if replay_prefix:
                 prompt = _build_child_prover_prompt(
                     file_path, lemma_name, include_dir,
-                    session_tag, replay_prefix, negative_signal,
-                    parent_goal_state=parent_goal_state,
-                    discoveries=discoveries,
-                    blocked_openers=blocked_openers,
+                    session_tag,
                     layer_move_action=layer_move_action,
                     managed_session=managed_session,
+                    surface_profile=surface_profile,
                 )
             else:
                 prompt = _build_prover_prompt(
                     file_path, lemma_name, include_dir,
                     session_tag=session_tag,
                     managed_session=managed_session,
+                    surface_profile=surface_profile,
                 )
             prompt_path = run_dir / "prover_prompt.md"
             node_slug = str(node_id).replace(".", "_")
@@ -1001,6 +820,8 @@ def run(
                 f"Tree-{node_id}",
                 "--run-dir",
                 str(run_dir),
+                "--agent-backend",
+                agent_backend,
                 "--model",
                 model,
                 "--effort",
@@ -1012,11 +833,12 @@ def run(
             ]
 
         pstatus("Prover", f"Tree mode for {lemma_name} "
-                f"(model={model}, timeout={timeout_minutes}min, "
+                f"(agent={agent_backend}, model={model}, "
+                f"timeout={timeout_minutes}min, "
                 f"initial_roots={tree_initial_provers}, "
                 f"max_concurrent={tree_max_concurrent})")
         try:
-            output_text, returncode, winner_node, session_proved = run_tree_prover(
+            tree_result = run_tree_prover(
                 build_cmd_fn=_build_tree_cmd,
                 cwd=str(_PROJECT_ROOT),
                 timeout=timeout_minutes * 60,
@@ -1040,33 +862,23 @@ def run(
                 initial_branches=resume_initial_branches or None,
                 payload_audit_path=run_dir / "payload_audit.jsonl",
             )
+        except Exception as exc:  # terminal owner records infrastructure failure
+            logger.exception("Tree search failed before producing a typed result")
+            tree_result = TreeRunResult(
+                returncode=1,
+                infrastructure_errors=(
+                    f"tree search failed: {type(exc).__name__}: {exc}",
+                ),
+                payload_audit_path=str(run_dir / "payload_audit.jsonl"),
+            )
         finally:
             if _shutdown_ec_daemon(reason="tree prover finished"):
                 pstatus("Prover", "Stopped EasyCrypt daemon after tree prover")
             _shutdown_run_why3server()
-        pstatus("Prover", f"Winner: Tree-{winner_node}")
-        if getattr(run_tree_prover, "last_destructive_abort", False):
-            reason = getattr(run_tree_prover, "last_destructive_reason", "") or (
-                "unknown session hygiene violation"
-            )
-            # A worker rm -rf'd its session dir, Edit'd the source file, or
-            # accessed a forbidden proof-cache/session-transcript source; the
-            # orchestrator killed all workers. We refuse to
-            # write_back, refuse to mark the run as a normal failure,
-            # and propagate a hard error up so the human knows to
-            # investigate before retrying. Returning the usual
-            # (proved=False, verified=False) tuple here would hide the
-            # failure mode under the same surface as a "ran out of
-            # tactics" miss.
-            raise RuntimeError(
-                "Prover subagent attempted a session-corrupting operation "
-                f"({reason}); run "
-                "aborted before write_back. Inspect the surviving "
-                ".ec_session_*/ events.jsonl + proof_context_views/ and the "
-                "claude trace before retrying — the agent's reasoning "
-                "was off-track when it tried this and a blind retry is "
-                "likely to repeat the failure.",
-            )
+        output_text = tree_result.output_text
+        returncode = tree_result.returncode
+        winner_node = tree_result.selected_node_id
+        pstatus("Prover", f"Selected tree result: Tree-{winner_node}")
 
     stdout = output_text
     stderr = ""
@@ -1076,19 +888,14 @@ def run(
     output_text = stdout or ""
     (run_dir / "prover_output.txt").write_text(output_text[:50000], encoding="utf-8")
 
-    # Get session ID captured from the stream-json output (robust — no file search)
-    from workflow.progress import run_tree_prover as _rtp
-    session_id = getattr(_rtp, "last_session_id", "")
-    session_records = list(getattr(_rtp, "last_session_ids", []) or [])
-    ec_session_dir = getattr(_rtp, "last_ec_session_dir", "")
-    information_source_audit = list(
-        getattr(_rtp, "last_information_source_audit", []) or []
-    )
-    payload_audit_path = getattr(_rtp, "last_payload_audit_path", "")
-    # Fallback to file search only if stream capture failed
-    if not session_id:
-        session_id = _find_latest_session_id(before_timestamp)
-        logger.warning("Stream session_id not captured, fell back to file search")
+    # TreeRunResult is the one typed tree/run boundary. Function attributes and
+    # filesystem searches are not semantic handoffs.
+    session_id = tree_result.selected_session_id
+    session_records = list(tree_result.session_records)
+    ec_session_dir = tree_result.selected_session_dir
+    completion_candidate = tree_result.completion_candidate
+    information_source_audit = list(tree_result.information_source_audit)
+    payload_audit_path = tree_result.payload_audit_path
     logger.info("Subagent session_id: %s", session_id or "(not found)")
     logger.info("EasyCrypt session dir: %s", ec_session_dir or "(not found)")
     if information_source_audit:
@@ -1103,7 +910,8 @@ def run(
     if payload_audit_path:
         logger.info("Payload audit: %s", payload_audit_path)
     archived_ec_sessions = _archive_ec_session_dirs(
-        run_dir, preferred_session_dir=ec_session_dir,
+        run_dir,
+        session_dirs=tree_result.managed_session_dirs,
     )
     if archived_ec_sessions:
         pstatus("Prover",
@@ -1131,13 +939,23 @@ def run(
         except Exception as e:
             logger.warning("Failed to create proof-node resume capsules: %s", e)
     # --- Extract tactics, notes, and structured report from output ---
-    proved = False
-    ec_file_verified = False
+    run_status = PROVER_RUN_INCOMPLETE
+    verification: dict[str, Any] = {}
+    infrastructure_errors = list(tree_result.infrastructure_errors)
+    if tree_result.destructive_abort:
+        reason = tree_result.destructive_reason or (
+            "unknown session hygiene violation"
+        )
+        infrastructure_errors.append(
+            "prover subagent attempted a session-corrupting operation: "
+            + reason
+        )
+        completion_candidate = None
     event_contract_gate = None
-    proof_bank_recorded = False
-    tactics = _extract_tactics_from_session(
-        lemma_name, parallelism, output_text,
-        preferred_session_dir=ec_session_dir,
+    tactics = (
+        []
+        if tree_result.destructive_abort
+        else _extract_tactics_from_candidate(completion_candidate)
     )
     notes = _extract_prover_notes(output_text)
     prover_report = _extract_prover_report(output_text)
@@ -1153,31 +971,51 @@ def run(
 
     if tactics:
         pstatus("Prover", f"Extracted {len(tactics)} tactics. Writing proof to file...")
-        proved = True
-        ec_file_verified = _write_and_verify_proof(ec_full_path, lemma_name, tactics,
-                                                     include_dir=include_dir,
-                                                     session_proved=session_proved,
-                                                     ec_session_dir=ec_session_dir)
-        event_contract_gate = _acceptance_gate_for_session(ec_session_dir)
-        if ec_file_verified:
-            if record_proof_bank_enabled:
-                # Record ordinary workflow proofs for regression testing.
-                from workflow.proof_bank import record_proof
-                record_proof(file_path, lemma_name, include_dir, tactics)
-                proof_bank_recorded = True
-            else:
-                pstatus("Prover",
-                        "Proof bank write skipped for eval/live-smoke run "
-                        "(set record_proof_bank=True or --record-proof-bank "
-                        "to opt in)")
+        assert completion_candidate is not None
+        verification_evidence = _write_and_verify_proof(
+            ec_full_path,
+            lemma_name,
+            tactics,
+            completion_candidate,
+            include_dir=include_dir,
+        )
+        event_contract_gate = verification_evidence.event_contract
+        if verification_evidence.passed:
+            run_status = PROVER_RUN_VERIFIED
+            verification = {
+                "status": "pass",
+                "method": verification_evidence.method,
+                "candidate_id": completion_candidate.candidate_id,
+                "event_verification_status": (
+                    event_contract_gate.verification_status
+                    if event_contract_gate is not None
+                    else None
+                ),
+                "event_contract_ok": bool(
+                    event_contract_gate and event_contract_gate.ok
+                ),
+            }
         else:
             pstatus("Prover", "Verification failed. Reverting.", "\033[31m")
-            proved = False
+            run_status = PROVER_RUN_INFRASTRUCTURE_INVALID
+            infrastructure_errors.append(
+                "session-closed completion candidate failed final verification"
+            )
+            verification = {
+                "status": "fail",
+                "candidate_id": completion_candidate.candidate_id,
+                "reason": verification_evidence.error,
+            }
     else:
-        partial_tactics = _extract_partial_tactics_from_session(
-            lemma_name,
-            parallelism,
-            preferred_session_dir=ec_session_dir,
+        if completion_candidate is not None:
+            run_status = PROVER_RUN_INFRASTRUCTURE_INVALID
+            infrastructure_errors.append(
+                "session-closed completion candidate could not be extracted"
+            )
+        elif infrastructure_errors:
+            run_status = PROVER_RUN_INFRASTRUCTURE_INVALID
+        partial_tactics = _extract_partial_tactics_from_sessions(
+            session_dirs=archived_ec_sessions,
             resume_capsules=resume_capsules,
         )
         if partial_tactics:
@@ -1211,8 +1049,8 @@ def run(
             pstatus("Prover", "Could not extract tactics from prover output.", "\033[33m")
 
     logger.info(
-        "Prover finished. Proved: %s, Verified: %s, Time: %.0fs, Session: %s",
-        proved, ec_file_verified, elapsed, session_id,
+        "Prover finished. Outcome: %s, Time: %.0fs, Session: %s",
+        run_status, elapsed, session_id,
     )
     if session_id and not any(
         str(record.get("session_id") or "") == session_id
@@ -1222,6 +1060,7 @@ def run(
         session_records.append({
             "worker": "Prover",
             "session_id": session_id,
+            "agent_backend": agent_backend,
             "winner": True,
         })
     if session_records:
@@ -1230,8 +1069,11 @@ def run(
                 continue
             if str(record.get("session_id") or "") == session_id:
                 record["winner"] = True
-                record["proved"] = bool(proved)
-                record["verified"] = bool(ec_file_verified)
+                record["completion_candidate_id"] = (
+                    completion_candidate.candidate_id
+                    if completion_candidate is not None
+                    else ""
+                )
         (run_dir / "agent_session_ids.json").write_text(
             json.dumps(
                 {
@@ -1246,12 +1088,20 @@ def run(
             encoding="utf-8",
         )
 
-    return ProverResult(
+    result = ProverResult(
+        status=run_status,
         session_id=session_id,
-        proved=proved,
-        ec_file_verified=ec_file_verified,
+        turns=tree_result.turns,
         elapsed_seconds=elapsed,
+        selected_node_id=tree_result.selected_node_id,
         ec_session_dir=ec_session_dir,
+        completion_candidate=(
+            completion_candidate.to_dict()
+            if completion_candidate is not None
+            else {}
+        ),
+        verification=verification,
+        infrastructure_errors=infrastructure_errors,
         event_contract_checked=bool(event_contract_gate),
         event_contract_ok=bool(event_contract_gate and event_contract_gate.ok),
         event_contract_errors=(
@@ -1260,10 +1110,11 @@ def run(
         archived_ec_session_dirs=archived_ec_sessions,
         resume_capsules=resume_capsules,
         information_source_audit=information_source_audit,
-        proof_bank_recorded=proof_bank_recorded,
         notes=notes,
         report=prover_report,
     )
+    result.save(run_dir / "prover_run_result.json")
+    return result
 
 
 
@@ -1273,41 +1124,6 @@ def run(
 # ---------------------------------------------------------------------------
 # EC file verification
 # ---------------------------------------------------------------------------
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 

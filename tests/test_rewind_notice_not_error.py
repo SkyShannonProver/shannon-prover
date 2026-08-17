@@ -62,20 +62,22 @@ def test_failed_action_still_surfaces_stderr_error():
     assert "Fatal error" in obs["error_summary"]
 
 
-def test_probe_rejection_detail_still_surfaces_from_raw_excerpt():
-    # A probe rejection is ok=False but its detail lives in raw_excerpt, read
-    # regardless of the stderr gate — so the agent still sees WHY it failed.
+def test_read_only_stdout_rejection_cannot_replace_tool_view_authority():
+    # A read-only action has an event-bound ToolView contract. Legacy stdout
+    # envelopes and raw excerpts are debug data, not a semantic fallback.
     import json
     delivery = {
         "execution": {"mode": "try", "submitted_tactics": ["smt()."]},
-        "result": {"ok": False, "status": "probe_rejected",
+        "result": {"ok": False, "status": "preflight_rejected",
                    "raw_excerpt": "[TRY] error: cannot prove goal (strict)"},
     }
     stdout = "[TACTIC-EXECUTION-RESULT]\n" + json.dumps(delivery) + "\n"
     obs = agent_observation_from_command(
-        "probe_tactic",
+        "call_subgoals",
         ["python3", "session_cli.py", "-d", "x", "-try", "-c", "smt()."],
         stdout=stdout, stderr="", exit_code=0,
     )
-    assert "error_summary" in obs
-    assert "cannot prove goal" in obs["error_summary"]
+    assert obs["proof_state"] == "unchanged"
+    assert "contract_error" in obs
+    assert "trustworthy structured context view" in obs["result"]
+    assert "error_summary" not in obs

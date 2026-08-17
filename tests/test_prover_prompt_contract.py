@@ -15,14 +15,19 @@ if str(_ROOT) not in sys.path:
 from workflow import orchestrator  # noqa: E402
 from workflow.agents import prover, prover_prompt  # noqa: E402
 from workflow.schemas.config import RunConfig  # noqa: E402
+from workflow.schemas.prover_result import PROVER_RUN_INCOMPLETE  # noqa: E402
+from workflow.tree.result import TreeRunResult  # noqa: E402
 
 
 def _stub_prover_runtime(monkeypatch, tmp_path):
     monkeypatch.setattr(prover, "_PROJECT_ROOT", tmp_path)
     monkeypatch.setattr(prover, "_precheck_lemma", lambda *a, **k: "has_admit")
     monkeypatch.setattr(prover, "_ensure_why3server", lambda: "")
-    monkeypatch.setattr(prover, "_extract_tactics_from_session", lambda *a, **k: [])
-    monkeypatch.setattr(prover, "_find_latest_session_id", lambda *a, **k: "")
+    monkeypatch.setattr(prover, "_extract_tactics_from_candidate", lambda *a, **k: [])
+    # Prompt-shape tests do not exercise the managed EasyCrypt bootstrap.  Stub
+    # that boundary explicitly instead of relying on the retired behavior that
+    # manufactured a hollow bootstrap when `_PROJECT_ROOT` had no backend.
+    monkeypatch.setattr(prover, "_prepare_managed_session", lambda **_kwargs: {})
 
     def fake_tree(
         *,
@@ -36,25 +41,16 @@ def _stub_prover_runtime(monkeypatch, tmp_path):
             "0.0",
             [],
             [],
-            strategy_index=0,
         )
-        fake_tree.last_destructive_abort = False
-        fake_tree.last_destructive_reason = ""
-        fake_tree.last_session_id = ""
-        fake_tree.last_ec_session_dir = ""
-        fake_tree.last_information_source_audit = []
-        fake_tree.last_payload_audit_path = (
-            str(payload_audit_path) if payload_audit_path else ""
+        return TreeRunResult(
+            selected_node_id="0.0",
+            turns=7,
+            payload_audit_path=(
+                str(payload_audit_path) if payload_audit_path else ""
+            ),
         )
-        return ("", 0, "0.0", False)
-
-    fake_tree.last_destructive_abort = False
-    fake_tree.last_destructive_reason = ""
-    fake_tree.last_session_id = ""
-    fake_tree.last_ec_session_dir = ""
-    fake_tree.last_information_source_audit = []
-    fake_tree.last_payload_audit_path = ""
-    monkeypatch.setattr("workflow.tree.supervisor.run_tree_prover", fake_tree)
+    # prover.run imports through the compatibility facade at call time.
+    monkeypatch.setattr("workflow.progress.run_tree_prover", fake_tree)
 
 
 def test_retired_workflow_planner_contract_is_physically_absent():
@@ -90,7 +86,9 @@ def test_root_prompt_is_target_pointer_without_strategy_seed(monkeypatch, tmp_pa
         run_dir=tmp_path,
     )
 
-    assert not result.proved
+    assert result.status == PROVER_RUN_INCOMPLETE
+    assert not result.is_verified
+    assert result.turns == 7
     prompt = (tmp_path / "prover_prompt.md").read_text(encoding="utf-8")
     assert "Strategy" + " Seed" not in prompt
     assert "**Opener**" not in prompt
@@ -99,58 +97,40 @@ def test_root_prompt_is_target_pointer_without_strategy_seed(monkeypatch, tmp_pa
     assert "planner" not in prompt.lower()
 
 
-def test_proof_bank_policy_skips_eval_and_live_smoke(monkeypatch, tmp_path):
-    monkeypatch.delenv("EVAL_TARGET_LEMMA", raising=False)
-    monkeypatch.delenv("SHANNON_RECORD_PROOF_BANK", raising=False)
-
-    assert prover._should_record_proof_bank(
-        "eval/examples/Pedersen.ec", "target", tmp_path, False, None,
-    )
-    assert not prover._should_record_proof_bank(
-        "eval/examples/Pedersen.ec", "target", tmp_path, True, None,
-    )
-    assert not prover._should_record_proof_bank(
-        "artifacts/live_smoke/Pedersen_smoke.ec", "target",
-        tmp_path, False, None,
-    )
-    assert prover._should_record_proof_bank(
-        "artifacts/live_smoke/Pedersen_smoke.ec", "target",
-        tmp_path, False, True,
-    )
-
-    monkeypatch.setenv("EVAL_TARGET_LEMMA", "target")
-    assert not prover._should_record_proof_bank(
-        "eval/examples/Pedersen.ec", "target", tmp_path, False, None,
-    )
-
-
-def test_archive_ec_sessions_preserves_events_and_views(monkeypatch, tmp_path):
+def test_archive_ec_sessions_preserves_events_and_current_artifacts(monkeypatch, tmp_path):
     monkeypatch.setattr(prover, "_PROJECT_ROOT", tmp_path)
     session = tmp_path / ".ec_session_prover_target_0"
-    (session / "proof_context_views").mkdir(parents=True)
-    (session / "command_summaries").mkdir()
+    (session / "prover_workspace_views").mkdir(parents=True)
+    (session / "tactic_execution_results").mkdir()
     (session / "events.jsonl").write_text(
         '{"event_type":"session.started"}\n',
         encoding="utf-8",
     )
-    (session / "proof_context_views" / "proof_context_view.json").write_text(
+    (session / "prover_workspace_views" / "workspace.json").write_text(
         "{}",
         encoding="utf-8",
     )
-    (session / "command_summaries" / "summary.json").write_text(
+    (session / "tactic_execution_results" / "result.json").write_text(
         "{}",
         encoding="utf-8",
     )
 
     run_dir = tmp_path / "run"
-    archived = prover._archive_ec_session_dirs(run_dir)
+    unrelated = tmp_path / ".ec_session_unrelated"
+    unrelated.mkdir()
+    (unrelated / "history.ec").write_text("admit.\n", encoding="utf-8")
+    archived = prover._archive_ec_session_dirs(
+        run_dir,
+        session_dirs=[str(session)],
+    )
 
     archived_session = run_dir / "ec_sessions" / session.name
     assert str(archived_session.resolve()) in archived
     assert (archived_session / "events.jsonl").exists()
-    assert (archived_session / "proof_context_views/proof_context_view.json").exists()
-    assert (archived_session / "command_summaries/summary.json").exists()
+    assert (archived_session / "prover_workspace_views/workspace.json").exists()
+    assert (archived_session / "tactic_execution_results/result.json").exists()
     assert (run_dir / "ec_sessions/manifest.json").exists()
+    assert not (run_dir / "ec_sessions" / unrelated.name).exists()
 
 
 if __name__ == "__main__":

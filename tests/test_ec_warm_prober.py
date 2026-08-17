@@ -1,8 +1,8 @@
 """Integration tests for the warm EC prober (run-then-`undo N.`).
 
-These spawn a real `easycrypt -emacs` (skipped if it is not on PATH), so they run
-under the EC env: `eval "$(opam env --switch=easycrypt)"` and, for the smt case, a
-why3server (the OS sandbox blocks `nice()`, so run unsandboxed).
+These spawn a real `easycrypt -emacs` from the repository-managed toolchain and,
+for the smt case, a why3server (the OS sandbox blocks `nice()`, so run
+unsandboxed).
 
 The point of these tests is the *safety* of warm probing across tactic kinds: a
 probe must never leave the warm process drifted (unable to return to the
@@ -20,10 +20,18 @@ import pytest
 
 ROOT = Path(__file__).resolve().parents[1]
 import _pathsetup  # noqa: F401,E402  (repo root on sys.path)
+from core.easycrypt.ec_env import get_ec_env  # noqa: E402
+
+try:
+    _MANAGED_EC_AVAILABLE = shutil.which(
+        "easycrypt", path=get_ec_env().get("PATH")
+    ) is not None
+except RuntimeError:
+    _MANAGED_EC_AVAILABLE = False
 
 pytestmark = pytest.mark.skipif(
-    shutil.which("easycrypt") is None,
-    reason="easycrypt not on PATH (run inside the opam switch)")
+    not _MANAGED_EC_AVAILABLE,
+    reason="repository-managed EasyCrypt is unavailable")
 
 from core.easycrypt.ec_warm_prober import WarmProber  # type: ignore  # noqa: E402
 

@@ -81,6 +81,35 @@ def test_configure_run_ec_daemon_socket_uses_git_common_root_for_long_worktree(
     assert os.environ["EC_DAEMON_SOCKET"] == socket_path
 
 
+def test_prepare_run_ec_daemon_socket_cleans_only_selected_run(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    selected = tmp_path / "ec_selected.sock"
+    other = tmp_path / "ec_other.sock"
+    calls: list[tuple[str, str]] = []
+
+    monkeypatch.setattr(
+        prover,
+        "_configure_run_ec_daemon_socket",
+        lambda run_dir: str(selected),
+    )
+
+    def fake_shutdown(*, reason: str, socket_path: str, wait_seconds: float = 3.0) -> bool:
+        del wait_seconds
+        calls.append((reason, socket_path))
+        return True
+
+    monkeypatch.setattr(prover, "_shutdown_ec_daemon", fake_shutdown)
+
+    socket_path, stopped = prover._prepare_run_ec_daemon_socket(tmp_path / "run")
+
+    assert socket_path == str(selected)
+    assert stopped is True
+    assert calls == [("per-run pre-run cleanup", str(selected))]
+    assert str(other) not in {path for _, path in calls}
+
+
 def test_shutdown_ec_daemon_removes_stale_socket(tmp_path: Path) -> None:
     sock = tmp_path / "ec_daemon.sock"
     lock = tmp_path / "ec_daemon.sock.spawn_lock"

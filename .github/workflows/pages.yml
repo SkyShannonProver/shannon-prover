@@ -1,8 +1,6 @@
-# Deploys the static site to GitHub Pages: the landing page, the benchmark
-# browser with a baked --public manifest, and the curated run bundles it reads.
-# The playground needs a live backend and is NOT deployed — the landing page
-# detects the missing backend at runtime and points visitors at the install
-# steps instead.
+# Deploys the standalone bundle browser with a baked --public manifest and the
+# curated run bundles it reads. The removed live playground is not part of the
+# current repository or deployment.
 name: pages
 
 on:
@@ -21,6 +19,7 @@ concurrency:
 
 jobs:
   build-deploy:
+    if: github.repository == 'SkyShannonProver/shannon-prover'
     runs-on: ubuntu-latest
     environment:
       name: github-pages
@@ -30,13 +29,10 @@ jobs:
 
       - name: Assemble static site
         run: |
-          mkdir -p site/results site/playground
-          cp playground/static/home.html site/index.html
-          cp bundle_browser/index.html site/results/index.html
-          cp playground/static/pages_playground.html site/playground/index.html
-          cp -r playground/static/img site/playground/img
-          python3 bundle_browser/build_manifest.py --public --out site/results/manifest.json
-          python3 bundle_browser/build_manifest.py --public --timeline-js --out site/results/manifest.js
+          mkdir -p site
+          cp bundle_browser/index.html site/index.html
+          python3 bundle_browser/build_manifest.py --public --out site/manifest.json
+          python3 bundle_browser/build_manifest.py --public --timeline-js --out site/manifest.js
           cp -r agent_view_runs site/agent_view_runs
           rm -f site/agent_view_runs/INDEX.md
           touch site/.nojekyll

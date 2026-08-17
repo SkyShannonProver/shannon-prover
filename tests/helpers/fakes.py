@@ -40,7 +40,6 @@ class FakeDaemonHandle:
 class FakeCtx:
     active_goal: str
     daemon_handle: FakeDaemonHandle | None
-    scratch: dict = field(default_factory=dict)
 
     def daemon(self):
         return self.daemon_handle

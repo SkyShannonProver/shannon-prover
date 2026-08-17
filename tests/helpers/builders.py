@@ -6,209 +6,22 @@ Import-safe from both runners:
 - standalone scripts (``python3 tests/test_foo.py``) insert the root
   themselves before importing ``tests.helpers.builders``.
 
-Test files keep their local helper names (``_summary``, ``_start_event``,
-...) as thin delegates/aliases so call sites stay untouched.
+Test files keep local helper names such as ``_start_event`` as thin
+delegates/aliases so call sites stay untouched.
 """
 from __future__ import annotations
 
+import hashlib
+import json
 from pathlib import Path
 
 from core.easycrypt.session_events import append_event
-
-_UNSET = object()
-
-
-# ─── C1: CommandSummary payload builder ────────────────────────────────────
-
-def command_summary(
-    *,
-    ok: bool = True,
-    proof_status: str = "open",
-    primary_action: str = "try_tactic",
-    tactic: str = "wp.",
-    transition_kind: str | None = None,
-    transition_status: str | None = None,
-    goal_hash: str = "goal-hash",
-    num_remaining=_UNSET,
-    final_ready: bool | None = None,
-    history_committed: bool | None = None,
-    candidate_closed: bool | None = None,
-    no_progress: bool = False,
-    state_kind: str | None = None,
-    current_goal_type: str | None = None,
-    runnable: list[dict] | None = None,
-    inspections: list[dict] | None = None,
-    probe: list[dict] | None = None,
-    strategy: list[dict] | None = None,
-    actions: list[dict] | None = None,
-    recommendations: list[dict] | None = None,
-    preview: str = "Current goal\n----\npost = x{1} = x{2}",
-    command_status: str = "ok",
-    failed_tactic: str = "",
-    failure_reason: str = "",
-    event_contract_ok: bool = True,
-    consistency_ok: bool = True,
-    agent_view: str = "/tmp/agent-view.json",
-    commit_response: str = "/tmp/commit-response.json",
-    active_recommendation_count: int | None = None,
-    derived_recommendation_count: int | None = None,
-    with_action_fields: bool = True,
-) -> dict:
-    """Build a ``command_summary`` payload (superset of the per-file copies).
-
-    Defaults reproduce ``tests/test_prover_ux_audit.py``'s ``_summary``; the
-    extra keyword arguments cover the episode-timeline and behavior-audit
-    variants so their local helpers can delegate without changing payloads.
-    ``with_action_fields=False`` omits the ``next.primary_action_id`` /
-    ``next.actions`` / ``next.probe_tactics`` keys for the variants that
-    never carried them.
-    """
-    is_open = proof_status == "open"
-    if num_remaining is _UNSET:
-        nr = 1 if is_open else 0
-        nr_determined = True
-    else:
-        nr = num_remaining
-        nr_determined = num_remaining is not None
-    hc = ok if history_committed is None else history_committed
-    fr = (proof_status == "verified") if final_ready is None else final_ready
-    cc = (proof_status == "candidate_closed") if candidate_closed is None else candidate_closed
-    t_kind = ("progress" if ok else "error") if transition_kind is None else transition_kind
-    t_status = command_status if transition_status is None else transition_status
-    sk = proof_status if state_kind is None else state_kind
-    cg_type = ("pRHL" if is_open else "complete") if current_goal_type is None else current_goal_type
-
-    runnable = runnable if runnable is not None else [{
-        "id": "r0",
-        "tactic": "sim.",
-        "producer": "goal-parser",
-        "confidence": "medium",
-        "why": "parser suggestion",
-        "source": "deterministic",
-        "goal_hash": "goal-hash",
-    }]
-    inspections = inspections if inspections is not None else []
-    probe = probe if probe is not None else []
-    strategy = strategy if strategy is not None else []
-    actions = actions if actions is not None else [{
-        "schema_version": 1,
-        "id": "r0.commit",
-        "category": "commit",
-        "title": "Commit runnable tactic",
-        "tool": "next",
-        "command": "python3 core/easycrypt/session_cli.py -d /tmp/session -next -c sim.",
-        "tactic": "sim.",
-        "state_changed": True,
-        "cost": "moderate",
-        "epistemic_status": "unverified_candidate",
-        "confidence": "medium",
-        "why": "parser suggestion",
-        "goal_hash": "goal-hash",
-        "requires_instantiation": False,
-        "evidence_refs": [],
-        "metadata": {},
-    }] if runnable else []
-    if recommendations is None:
-        recommendations = [{
-            "id": "r0",
-            "kind": "tactic_candidate",
-            "producer": "goal-parser",
-            "action": "sim.",
-            "why": "parser suggestion",
-            "confidence": "medium",
-            "source": "deterministic",
-            "goal_hash": "goal-hash",
-            "category": "runnable_tactic",
-        }] if runnable else []
-
-    next_block = {
-        "primary_action": primary_action,
-        "primary_action_id": actions[0]["id"] if actions else "",
-        "actions": actions,
-        "safe_next_actions": [],
-        "runnable_tactics": runnable,
-        "probe_tactics": probe,
-        "inspection_actions": inspections,
-        "strategy_hints": strategy,
-        "warnings": [],
-        "recommendations": recommendations,
-    }
-    if not with_action_fields:
-        for key in ("primary_action_id", "actions", "probe_tactics"):
-            next_block.pop(key)
-
-    return {
-        "schema_version": 1,
-        "kind": "command_summary",
-        "ok": ok and event_contract_ok and consistency_ok,
-        "command": "next",
-        "command_status": command_status,
-        "mutation": {
-            "attempted_count": 1,
-            "accepted_count": 1 if hc else 0,
-            "rollback_count": 0,
-            "history_committed": hc,
-            "failed_tactic": failed_tactic,
-            "failure_reason": failure_reason,
-        },
-        "proof": {
-            "status": proof_status,
-            "candidate_ready": proof_status == "candidate_closed",
-            "final_ready": fr,
-            "event_contract_ok": event_contract_ok,
-            "consistency_ok": consistency_ok,
-            "goal_type": "pRHL" if is_open else "complete",
-            "num_remaining": nr,
-            "num_remaining_determined": nr_determined,
-            "goal_hash": goal_hash,
-            "history_tactic_count": 1,
-            "latest_tactic": tactic,
-        },
-        "transition": {
-            "kind": t_kind,
-            "status": t_status,
-            "tactic": failed_tactic or tactic,
-            "goals_before": 1,
-            "goals_after": nr,
-            "candidate_closed": cc,
-            "no_progress": no_progress,
-            "no_progress_reason": "",
-            "latest_error": failure_reason,
-        },
-        "current_goal": {
-            "goal_type": cg_type,
-            "state_kind": sk,
-            "num_remaining": nr,
-            "preview": preview,
-        },
-        "next": next_block,
-        "latest_errors": [],
-        "warnings": [],
-        "errors": [] if ok else [{
-            "code": "command.failed",
-            "message": failure_reason,
-            "tactic": failed_tactic,
-        }],
-        "artifacts": {
-            "agent_view": agent_view,
-            "commit_response": commit_response,
-        },
-        "debug": {
-            "active_recommendation_count": (
-                0 if active_recommendation_count is None
-                else active_recommendation_count
-            ),
-            "derived_recommendation_count": (
-                len(recommendations) if derived_recommendation_count is None
-                else derived_recommendation_count
-            ),
-            "stale_recommendation_count": 0,
-            "session_dir": "/tmp/session",
-        },
-    }
+from core.easycrypt.session_prover_workspace_schema import (
+    prover_workspace_event_payload_fields,
+)
 
 
-# ─── C2: session-event seeders ─────────────────────────────────────────────
+# ─── Session-event seeders ────────────────────────────────────────
 
 def start_event(d: Path) -> None:
     append_event(d, "session.started", {
@@ -249,7 +62,141 @@ def write_open_goal(d: Path, body: str = "x = y") -> None:
     )
 
 
-# ─── C4: ProofNodeManager construction ─────────────────────────────────────
+def managed_workspace_view(
+    *,
+    goal: str = "x = y",
+    goal_hash: str = "goal-hash",
+) -> dict:
+    """One lean current workspace fixture with no retired carrier panels."""
+
+    lines = ["Current goal", "----", goal]
+    raw_goal = "\n".join(lines)
+    return {
+        "schema_version": 3,
+        "kind": "prover_workspace_view",
+        "ok": True,
+        "last_result": {},
+        "proof_status": {
+            "status": "open",
+            "goal_identity_required": True,
+            "goal_hash": goal_hash,
+            "remaining_goals": 1,
+            "remaining_goals_known": True,
+        },
+        "current_goal": {
+            "lines": lines,
+            "text_fully_shown": True,
+            "truncated": False,
+            "line_count": len(lines),
+            "shown_lines": len(lines),
+            "char_count": len(raw_goal),
+            "shown_chars": len(raw_goal),
+            "source": "test_fixture",
+        },
+    }
+
+
+def bind_tactic_execution_workspace(
+    d: Path,
+    result: dict,
+) -> dict:
+    """Persist and bind the embedded workspace in a TER test fixture."""
+    workspace = result.get("workspace")
+    if not isinstance(workspace, dict):
+        return result
+    view = workspace.get("view")
+    if not isinstance(view, dict):
+        return result
+    canonical = json.dumps(view, indent=2, sort_keys=True)
+    digest = hashlib.sha1(canonical.encode("utf-8")).hexdigest()
+    out_dir = d / "prover_workspace_views"
+    out_dir.mkdir(parents=True, exist_ok=True)
+    artifact = out_dir / f"prover_workspace_view_{digest[:16]}.json"
+    artifact.write_text(canonical + "\n", encoding="utf-8")
+    current_goal = view.get("current_goal")
+    current_goal = current_goal if isinstance(current_goal, dict) else {}
+    workspace.update({
+        "artifact": str(artifact),
+        "view_hash": digest,
+        "current_goal_text_fully_shown": bool(
+            current_goal.get("text_fully_shown")
+        ),
+        "current_goal_truncated": bool(current_goal.get("truncated")),
+        "goal_chars": int(current_goal.get("char_count") or 0),
+        "workspace_chars": len(json.dumps(view, sort_keys=True)),
+    })
+    audit = result.get("audit")
+    if not isinstance(audit, dict):
+        audit = {}
+        result["audit"] = audit
+    audit["prover_workspace_artifact"] = str(artifact)
+    return result
+
+
+def append_bound_workspace_event(d: Path, result: dict) -> dict:
+    """Emit the workspace occurrence already bound into a TER fixture."""
+
+    workspace = result.get("workspace")
+    workspace = workspace if isinstance(workspace, dict) else {}
+    view = workspace.get("view")
+    view = view if isinstance(view, dict) else {}
+    payload = prover_workspace_event_payload_fields(
+        view,
+        artifact=str(workspace.get("artifact") or ""),
+        view_hash=str(workspace.get("view_hash") or ""),
+    )
+    append_event(d, "prover.workspace_view.produced", payload)
+    return payload
+
+
+def write_unchecked_tactic_execution_artifact(d: Path, result: dict) -> dict:
+    """Forge a malformed TER artifact for reader-side negative tests only."""
+
+    text = json.dumps(result, indent=2, sort_keys=True)
+    digest = hashlib.sha1(text.encode("utf-8")).hexdigest()
+    out_dir = d / "tactic_execution_results"
+    out_dir.mkdir(parents=True, exist_ok=True)
+    artifact = out_dir / f"unchecked_{digest[:16]}.json"
+    artifact.write_text(text + "\n", encoding="utf-8")
+    execution = result.get("execution")
+    execution = execution if isinstance(execution, dict) else {}
+    outcome = result.get("result")
+    outcome = outcome if isinstance(outcome, dict) else {}
+    workspace = result.get("workspace")
+    workspace = workspace if isinstance(workspace, dict) else {}
+    audit = result.get("audit")
+    audit = audit if isinstance(audit, dict) else {}
+
+    def integer(value) -> int:
+        return value if type(value) is int else 0
+
+    return {
+        "schema_version": result.get("schema_version"),
+        "ok": bool(result.get("ok")),
+        "mode": str(execution.get("mode") or ""),
+        "command": str(execution.get("command") or ""),
+        "status": str(outcome.get("status") or ""),
+        "artifact": str(artifact),
+        "result_hash": digest,
+        "accepted_count": integer(execution.get("accepted_count")),
+        "rollback_count": integer(execution.get("rollback_count")),
+        "failed_tactic": str(execution.get("failed_tactic") or ""),
+        "state_changed": bool(execution.get("state_changed")),
+        "history_committed": bool(execution.get("history_committed")),
+        "workspace_artifact": str(workspace.get("artifact") or ""),
+        "workspace_chars": integer(workspace.get("workspace_chars")),
+        "current_goal_text_fully_shown": bool(
+            workspace.get("current_goal_text_fully_shown")
+        ),
+        "current_goal_truncated": bool(workspace.get("current_goal_truncated")),
+        "commit_response_artifact": str(audit.get("commit_response_artifact") or ""),
+        "raw_result_artifact": str(audit.get("raw_result_artifact") or ""),
+        "error_count": len(result.get("errors") or []),
+        "warning_count": 0,
+    }
+
+
+# ─── ProofNodeManager construction ────────────────────────────────
 
 def make_manager(**overrides):
     """Build the standard unit-test ProofNodeManager (kwargs overridable)."""
@@ -274,79 +221,3 @@ def intent(name: str, tactic: str = ""):
     return parse_agent_intent(
         '{"intent": "%s", "payload": %s}' % (name, payload)
     ).intent
-
-
-# ─── C5: patch-loop / LoopMonitor oscillation harness ───────────────────────
-# Shared between test_patch_loop_detector.py and test_help_mechanisms_wiring.py.
-
-# Monotonic REPL prompt index — advances every call even when the goal is
-# frozen. Views that carry the advancing ``[NNN|check]>`` line exercise Defect 1
-# of the patch-loop detector: a fingerprint that did NOT strip this line would
-# change every turn and the loop would never be detected.
-_LOOP_PROMPT_COUNTER = [500]
-
-
-def next_loop_prompt() -> int:
-    """Advance and return the monotonic REPL prompt index."""
-    _LOOP_PROMPT_COUNTER[0] += 3
-    return _LOOP_PROMPT_COUNTER[0]
-
-
-def loop_goal_view(
-    label: str,
-    remaining,
-    *,
-    layer: str = "call_site",
-    moves: list | None = None,
-    with_prompt_line: bool = True,
-) -> dict:
-    """A synthetic rendered view whose fingerprint is keyed by (label,
-    remaining, layer). Distinct labels model genuinely different goals.
-
-    ``with_prompt_line=True`` reproduces test_patch_loop_detector's shape (the
-    advancing ``[NNN|check]>`` prompt line + ``view_focus``); ``False``
-    reproduces test_help_mechanisms_wiring's prompt-free stub. ``moves``
-    optionally attaches ``candidate_moves`` (the up-to-bad call offers).
-    """
-    if with_prompt_line:
-        current_goal = {
-            "lines": [
-                f"Current goal (remaining: {remaining})",
-                "----",
-                f"equiv[ G1.O ~ G2.O : {label} ==> ={{res}} ]",
-                f"[{next_loop_prompt()}|check]>",
-            ],
-            "view_focus": layer,
-        }
-    else:
-        current_goal = {
-            "lines": [
-                "Current goal",
-                "----",
-                f"equiv[ G1.O ~ G2.O : true ==> ={{res}} ] ({label})",
-            ],
-        }
-    view = {
-        "current_goal": current_goal,
-        "proof_status": {"remaining_goals": remaining, "current_layer": layer},
-    }
-    if moves is not None:
-        view["candidate_moves"] = {"moves": moves}
-    return view
-
-
-def drive_osc_loop(commit, *, make_loop_view, make_away_view, arrivals: int = 3,
-                   loop_tactic: str = "smt().", away_tactic: str = "auto.") -> list:
-    """Drive the genuine arrive-leave-arrive loop shape the patch-loop detector
-    targets: accepted commits ARRIVE at the loop goal, genuinely LEAVE via an
-    accepted commit to a different goal, and arrive back — ``arrivals`` times,
-    ending ON an arrival. ``commit(view, tactic)`` submits one accepted commit
-    turn and returns that turn's observation; the observations are returned in
-    submission order.
-    """
-    out = []
-    for i in range(arrivals):
-        if i:
-            out.append(commit(make_away_view(), away_tactic))
-        out.append(commit(make_loop_view(), loop_tactic))
-    return out

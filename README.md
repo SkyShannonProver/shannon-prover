@@ -4,18 +4,14 @@
 
 Shannon Prover connects language-model agents to the
 [EasyCrypt](https://www.easycrypt.info) proof assistant through managed proof
-sessions. The agent never drives the prover directly: each turn it reads a
-structured proof-state panel, answers with a single tool call, and a session
-manager applies it, checks it against EasyCrypt, and re-renders the view. Every
-accepted proof is admit-free and re-verified offline — each run is a fully
-auditable record of what the agent saw, chose, and proved.
+sessions and a proof-state compiler. The agent submits one proof intent per
+turn; the manager applies it to EasyCrypt, returns the exact current goal and
+any bounded compiler output, and accepts a proof only after fresh offline
+verification.
 
-- **Paper:** [ShannonProver: Towards Automating Formal Cryptographic Proofs](https://arxiv.org/pdf/2607.02847) (arXiv:2607.02847)
-- **Website:** [skyshannonprover.github.io/shannon-prover](https://skyshannonprover.github.io/shannon-prover/) — hosted landing page + benchmark browser with replayable runs
+- **Paper:** [ShannonProver: Towards Automating Formal Cryptographic Proofs](https://arxiv.org/abs/2607.02847)
+- **Website:** [skyshannonprover.github.io/shannon-prover](https://skyshannonprover.github.io/shannon-prover/) — project overview and benchmark browser
 - **Contact:** shannonprover@gmail.com · [github.com/SkyShannonProver/shannon-prover](https://github.com/SkyShannonProver/shannon-prover)
-- **Local site:** run the [playground server](#the-playground-and-the-benchmark-browser)
-  and open `http://127.0.0.1:8000/` for the guided tour, live playground, and
-  benchmark browser.
 
 ## What this tool does — and what you bring
 
@@ -24,293 +20,346 @@ A formal security proof moves through three phases (paper, Fig. 1):
 | Phase | Who | What |
 |---|---|---|
 | **I — Security modeling** | expert | express the scheme and its security notions as EasyCrypt modules and definitions |
-| **II — Lemma decomposition** | expert *(assistance coming — stay tuned)* | decompose the main theorem into intermediate lemma statements — the game hops that structure the proof |
-| **III — Tactic-level lemma proving** | **Shannon Prover** | prove each lemma with a tactic script EasyCrypt accepts |
+| **II — Lemma decomposition** | expert | decompose the main theorem into intermediate lemma statements and game hops |
+| **III — Tactic-level lemma proving** | **Shannon Prover** | construct a tactic script that EasyCrypt accepts for each lemma |
 
-**Shannon Prover's scope is Phase III**: you bring the security model and the
-decomposition into lemma-level obligations, and it writes the tactic-level
-proof script for each lemma — the tedious, time-consuming part you can now
-delegate. The phases feed back: a proved lemma lets you proceed, while a
-stalled search often means the Phase II decomposition needs revising.
+**Shannon Prover's scope is Phase III**: you provide the security model and
+lemma-level obligations; Shannon Prover searches for the tactic-level proof.
+A stalled search can also indicate that the Phase II decomposition should be
+revisited.
 
 ## The MCP tool
 
-Shannon Prover talks to the agent through the
-[Model Context Protocol](https://modelcontextprotocol.io). The agent gets
-exactly **one tool**, `submit_proof_intent` — one proof-level action per turn.
-The always-available moves are deliberately few: commit a tactic, undo, rewind
-to a checkpoint, restart, finish. Every other intent (symbol lookups,
-diagnostics, specialized views) is offered by the panel itself, turn by turn,
-when the proof state makes it relevant.
-
-Everything else stays behind the manager: the live EasyCrypt session, files,
-session state, repair prompts. When you run a proof, each tree node
-automatically gets its own private MCP server wired to a headless Claude Code
-instance — there is nothing to configure, and the agent physically can't touch
-the prover except through this tool.
+Shannon Prover talks to each proof agent through the
+[Model Context Protocol](https://modelcontextprotocol.io). The agent gets one
+tool, `submit_proof_intent`, and submits one proof-level action per turn:
 
 ```json
 {"intent": "commit_tactic", "payload": {"tactic": "byequiv=> //."}}
 ```
 
-### Two interface modes
+The manager owns the live EasyCrypt session, state identity, checkpoints,
+restarts, proof mutation, and view refresh. It advertises only controls that
+are valid in the current state, such as committing a tactic, undoing, rewinding
+to a checkpoint, restarting, amending a failed step, or finishing. The agent
+never supplies session, node, view, or goal identities.
 
-The same engine, manager, and EasyCrypt backend run underneath; only the panel
-the agent reads changes. This is the experimental dial our interface ablations
-measure (the paper's L1/L4 surface levels):
+## The proof-state compiler
 
-| | **Goal-only** (`l1_goal_projection`) | **Workbench** (`l4_checked_action_surface`, default) |
-|---|---|---|
-| What the agent sees | Essentially just the **current goal** — the raw proof state, no analysis, no hints. | The full `ProverWorkspaceView`: the goal **plus** the factual compiler skeleton — program frontier & alignment, call-site structure, the typed `candidate_moves` menu, and signature/bridge-lemma lookup handles. |
-| Character | The clean baseline for what a model can do alone. | The default for actually trying to **close a hard proof** — most relational/probability proofs need the structural map. |
+The default interface presents the exact EasyCrypt goal, the valid manager
+controls, and—when applicable—a bounded `ActionSurface` produced by the
+proof-state compiler. Compiler actions are tied to the current goal, checked
+through EasyCrypt-native semantics, and certified before they are shown to the
+agent.
 
-What the Workbench surfaces is **facts and legal options**, not a recipe: it
-never ranks "the best move", never hands the agent a strategy, and nothing
-heuristic gates a commit. The agent picks the move; the view only tells it what
-is legal here, which facts a move must carry, and which lemmas to look up.
+The compiler helps with mechanical work after the agent has selected an
+operation or commitment: binding arguments, realizing exact syntax, locating a
+failure inside a compound tactic, or constructing a state-valid repair. It
+does not rank proof strategies, choose a game hop, or hand the agent a proof
+route.
+
+### One managed turn
+
+Every proof turn follows the same loop:
+
+```mermaid
+sequenceDiagram
+    autonumber
+    participant A as Proof agent
+    participant M as ProofNodeManager
+    participant S as ReplSessionManager
+    participant E as EasyCrypt
+    participant C as Proof-state compiler
+
+    A->>M: submit one proof intent, usually a tactic
+    M->>S: commit the manager-bound tactic
+    S->>E: execute in the live proof session
+    E-->>S: exact next goal or diagnostic
+    S-->>M: event-bound result and current state
+    M->>C: compile the current state (read-only)
+    C->>S: request bounded native semantics and preflight
+    S->>E: run read-only native queries
+    E-->>S: typed results or structured rejection
+    S-->>C: results bound to the unchanged state
+    C-->>M: bounded ActionSurface, or abstain
+    M-->>A: result + exact goal/status + valid controls + compiler output
+    Note over A,M: The agent chooses the next intent, and the loop repeats
+```
+
+The manager and session path owns all proof mutation. The compiler never
+drives the proof or reparses pretty-printed text as semantic truth: it projects
+the current state, consumes EasyCrypt-native results, certifies any candidate
+action in that unchanged state, and may show a bounded result for the agent's
+next decision.
 
 ## Install
 
-Prerequisites: macOS or Linux, [opam](https://opam.ocaml.org), Python ≥ 3.12
-with [uv](https://docs.astral.sh/uv/), and the Claude Code CLI (installed and
-logged in).
+Prerequisites: macOS or Linux, [opam](https://opam.ocaml.org), Python ≥ 3.12,
+[uv](https://docs.astral.sh/uv/), and the
+[OpenAI Codex CLI](https://developers.openai.com/codex/cli/) installed and
+logged in. Claude is available only when explicitly selected for an
+experiment.
 
-### 1. EasyCrypt via opam
+### 1. Python environment
 
-The pipeline expects the opam switch to be named `easycrypt` (configured in
-`core/easycrypt/ec_env.py`):
-
-```bash
-opam init
-opam switch --empty create easycrypt
-opam pin -yn add easycrypt https://github.com/EasyCrypt/easycrypt.git
-opam install --deps-only easycrypt
-opam install alt-ergo.2.6.0 easycrypt
-easycrypt why3config
-```
-
-Then, in **every** shell that runs the prover or the playground:
+Install `uv` outside this project's `.venv`, then synchronize the locked Python
+environment:
 
 ```bash
-eval "$(opam env --switch=easycrypt)"
+uv sync
 ```
 
-### 2. Python environment
+### 2. Repository-managed EasyCrypt
+
+Shannon Prover is locked to EasyCrypt `r2026.06`. The bootstrap command creates
+and verifies the repository-managed opam root and switch:
 
 ```bash
-uv sync            # installs from pyproject.toml (Python >= 3.12)
-claude --version   # the prover drives the Claude Code CLI — install & log in first
+uv run python tools/bootstrap_easycrypt.py
+uv run python tools/bootstrap_easycrypt.py --verify-only
 ```
 
-The default prover model is `claude-opus-4-8` at effort `high`; override with
-`"model"`/`"effort"` keys under a suite's `defaults`, or
-`--prover-model`/`--prover-effort` on direct `workflow.orchestrator` runs.
-Tip: on a Claude subscription without provider API keys, launch runs with
-provider key variables unset (`env -u ANTHROPIC_API_KEY …`) so the CLI uses
-your login.
-
-### 3. Prove your first lemma
-
-The repo ships a `/prove` command for Claude Code. Open Claude Code in the
-checkout and point it at any lemma under `eval/examples/`:
-
-```text
-/prove PIR_correct                        # Workbench mode (default)
-/prove PIR_correct l1_goal_projection     # Goal-only mode
-```
-
-Claude finds the lemma's source, generates a one-target eval suite, and
-launches the run in eval mode — the source is copied into an isolated container
-and the target's proof body is stripped, so the agent proves it blind.
-Equivalent direct command:
+Python entry points select this environment automatically. Only a developer
+command that invokes `easycrypt` directly needs shell exports:
 
 ```bash
-eval "$(opam env --switch=easycrypt)"
-uv run python -m eval_suite.run --suite eval_suite/suites/demo_pir.json \
-    --profiles l4_checked_action_surface
+eval "$(uv run python tools/bootstrap_easycrypt.py --print-env)"
 ```
 
-## Bring your own lemma
+### 3. Agent login
 
-Put new benchmark files under `eval/examples/` — either a single self-contained
-`eval/examples/<name>.ec`, or a project directory
-`eval/examples/<project>/` containing the target and every sibling `.ec`/`.eca`
-it imports.
+```bash
+codex --version
+codex
+```
 
-Create a suite JSON under `eval_suite/suites/` (copy `demo_pir.json` and edit
-`targets[0]`):
+Run `codex` from the repository. On first launch, choose **Sign in with
+ChatGPT** or another available sign-in method.
+
+## Choose the agent and model
+
+The default proof-node agent backend is **OpenAI Codex**. Its default model is
+`gpt-5.6-sol` with high reasoning effort. Agent backend and model are separate
+settings: a run may explicitly select `codex` or `claude`, choose a model
+available to that backend, and set its reasoning effort.
 
 ```json
 {
-  "suite": "local_<short_id>",
-  "profiles": ["l1_goal_projection", "l4_checked_action_surface"],
-  "defaults": {
-    "eval_mode": true,
-    "max_iterations": 1,
-    "timeout_minutes": 30,
-    "repeats": 1,
-    "output_dir": "artifacts/eval_suite",
-    "source_isolation": true,
-    "strip_proofs": true
-  },
-  "targets": [
-    {
-      "id": "<short_id>",
-      "file": "eval/examples/<project>/Target.ec",
-      "lemma": "<TargetLemmaName>",
-      "include_dir": "easycrypt-src/theories",
-      "copy_root": "eval/examples/<project>"
-    }
-  ]
+  "agent_backend": "codex",
+  "model": "gpt-5.6-sol",
+  "effort": "high"
 }
 ```
 
-(Omit `copy_root` for a single self-contained file.) Always dry-run first and
-check the expanded command points at an isolated source under
-`artifacts/eval_suite/.../source/...`:
+The same settings are available on a direct orchestrator run:
 
 ```bash
-uv run python -m eval_suite.run --suite eval_suite/suites/local_<short_id>.json \
-    --profiles l4_checked_action_surface --dry-run
-uv run python -m eval_suite.run --suite eval_suite/suites/local_<short_id>.json \
-    --profiles l4_checked_action_surface
+--agent-backend codex \
+--prover-model gpt-5.6-sol \
+--prover-effort high
 ```
 
-## Reading the results
+When changing the backend, select a model supported by that backend and make
+sure its CLI is installed and authenticated.
 
-Metrics land under `artifacts/eval_suite/<suite>/<profile>/<target>/r01/`
-(`eval_metrics.md`, `source_manifest.json`, `iteration_1/summary.json`). Every
-run also auto-builds the **bundle** — a committed, clickable timeline of every
-turn:
+## Prove your first lemma
+
+Create one subdirectory under [`projects/`](projects/) for your EasyCrypt
+project. Put the target file and that project's `.ec`/`.eca` dependencies
+directly in that directory. For example:
 
 ```text
-agent_view_runs/<lemma>/<TS>__<commit>/
-  timeline_report.md             # env header + per-step table + committed proof
-  timeline_report.json
-  run_meta.json
-  views/<Tree_x_y>/turn_NNN.json # the exact view the agent saw at each turn
+projects/
+  my-proof/
+    Target.ec
+    Dependency.ec       # if Target.ec requires it
 ```
 
-Each row is one turn — *the view the agent saw → the intent it submitted → the
-manager result*. The nicest way to browse bundles is the
-[benchmark browser](#the-playground-and-the-benchmark-browser). If a run was
-killed before the auto-hook fired, rebuild by hand with
-`python3 -m workflow.validation.run_report_bundle <run_iteration_dir> --timestamp <TS> …`.
+Leave the target lemma in `projects/my-proof/Target.ec` with an unfinished
+proof, for example:
+
+```easycrypt
+lemma my_lemma : true.
+proof.
+  admit.
+qed.
+```
+
+Run Codex from the repository, then invoke the repo-scoped Prove skill with the
+lemma name:
+
+```text
+$prove my_lemma
+```
+
+In the Codex desktop app, type `/` and choose **Prove** from the skills list.
+The skill locates the declaration, starts one managed proof node with the
+default proof-state compiler, and works directly on your source file. It does
+not enable evaluation mode, copy the project, or strip an existing proof.
+It searches `projects/` first. If no matching declaration is found there, it
+also searches the repository's checked-in examples under `eval/examples/`.
+
+The agent submits tactics only through `submit_proof_intent`. Shannon writes a
+new proof into the target file only after the winning candidate passes a fresh
+offline EasyCrypt verification. If the lemma already has a complete verified
+proof, the run reports that fact and leaves it unchanged.
+
+### Codex and Claude commands
+
+Codex and Claude Code expose the same one-argument launcher interface. Each
+entry point is permanently bound to its own proof-node backend. Codex uses the
+repository skill at
+[.agents/skills/prove/SKILL.md](.agents/skills/prove/SKILL.md):
+
+```text
+$prove PIR_correct
+```
+
+Claude Code provides the matching project command through
+[.claude/commands/prove.md](.claude/commands/prove.md):
+
+```text
+/prove PIR_correct
+```
+
+Both launchers follow the same canonical workflow, but `$prove` always launches
+a Codex proof node and `/prove` always launches a Claude proof node. Neither
+command accepts a backend argument.
+
+For an explicit file path, backend, or model, use the lower-level orchestrator
+directly. This is the same ordinary, non-evaluation workflow used by the
+commands above:
+
+```bash
+uv run python -m workflow.orchestrator \
+  --file projects/my-proof/Target.ec \
+  --lemma TargetLemmaName \
+  --include-dir easycrypt-src/theories \
+  --surface-profile proof_state_compiler \
+  --agent-backend codex \
+  --prover-model gpt-5.6-sol \
+  --prover-effort high
+```
+
+For a multi-file project, keep all project-owned `.ec`/`.eca` dependencies in
+the same `projects/my-proof/` directory. The runtime automatically adds the
+target file's directory to EasyCrypt's include path. EasyCrypt's standard
+library remains under `easycrypt-src/`; do not copy it into your project. The
+run directory is printed at startup. A completed run also writes a replayable
+bundle under `agent_view_runs/` containing the turn-by-turn agent view,
+submitted intent, manager result, and reconstructed committed proof.
+
+## Research evaluation is a different workflow
+
+You do **not** need `eval_suite`, source isolation, proof stripping, or
+bubblewrap to use Shannon Prover on your own lemmas. Those mechanisms exist for
+controlled research evaluation, where the question is whether an agent can
+reconstruct a proof without reading the target's existing answer or prior run
+artifacts.
+
+An evaluation suite therefore:
+
+- copies the target project into an isolated output directory;
+- strips the target proof while retaining the statement and allowed siblings;
+- confines the model process away from the original checkout and cached proofs;
+- freezes model, compiler exposure, budgets, and tree settings across arms; and
+- records metrics without writing the generated proof back to the original
+  benchmark source.
+
+The checked-in PIR suite is a research-evaluation example:
+
+```bash
+uv run python -m eval_suite.run \
+  --suite eval_suite/suites/demo_pir.json \
+  --dry-run
+
+uv run python -m eval_suite.run \
+  --suite eval_suite/suites/demo_pir.json
+```
+
+Strict live evaluation currently requires Linux and `bubblewrap` for the
+negative filesystem-visibility guarantee. On macOS, ordinary `$prove` and
+`/prove` runs work normally, but a strict eval suite fails closed before
+launching the model. See [`eval_suite/README.md`](eval_suite/README.md) and
+[`TESTING.md`](TESTING.md) for evaluation protocols and remote-run discipline.
 
 ### Did it actually prove it?
 
-- A run is a real success only if the final proof contains **no `admit.`** —
-  `admit.` sets a goal aside without proving it. The manager blocks `finish`
-  while a committed admit remains, the write-back path rejects final proofs
-  containing one, and every accepted proof is re-verified by a fresh offline
-  EasyCrypt run. Read the outcome in `eval_metrics.md` and the proof body under
-  the bundle's `## Agent's committed proof`.
-- **Eval-mode isolation is on purpose.** The runner proof-strips an isolated
-  copy; do **not** hand-edit the main checkout to "help" the proof — that
-  breaks the isolation and the numbers.
-- **`why3server` / sandbox (the #1 setup failure).** If an OS sandbox blocks
-  the `nice()` syscall, `why3server` never starts and `smt()` fails with
-  *"cannot start & connect to why3server"*. Run EasyCrypt/Why3 outside the
-  sandbox.
+- A run is successful only when the canonical `ProverResult` is `verified`.
+- The committed proof must contain no `admit.` and must pass a fresh offline
+  EasyCrypt verification.
+- Ordinary proof runs write back only after that verification succeeds.
+- Evaluation runs write only to their isolated copy and metrics directory.
+- If an OS sandbox blocks `why3server` from using `nice()`, run the bounded
+  EasyCrypt/SMT command outside that sandbox.
 
-## The playground and the benchmark browser
+## Benchmark browser
 
-One local server hosts the guided tour (`/`), a live playground (`/playground`
-— pick a lemma, press start, watch the panels and commits stream), and the
-benchmark browser (`/results/` — model capability board plus every recorded
-run, replayable turn by turn):
+The hosted benchmark browser is available on the
+[project website](https://skyshannonprover.github.io/shannon-prover/). To browse
+local bundles:
 
 ```bash
-eval "$(opam env --switch=easycrypt)"
-uv run --with fastapi --with "uvicorn[standard]" \
-    uvicorn playground.server:app --host 127.0.0.1 --port 8000
+python3 bundle_browser/build_manifest.py
+python3 -m http.server 8000
+# open http://127.0.0.1:8000/bundle_browser/
 ```
 
-Local only — there is no auth layer; keep it bound to `127.0.0.1`, and don't
-run the playground while an eval-suite run is using EasyCrypt in the same
-checkout.
+Use `python3 bundle_browser/build_manifest.py --public` to generate a manifest
+containing only the public source allowlist.
 
 ## Architecture
 
 ```mermaid
 flowchart TD
-    Orchestrator["workflow/orchestrator.py + tree policy<br/>proof-search strategy"] --> Runtime["workflow/proof_node_runtime.py<br/>long-lived proof node"]
-    Runtime --> Manager["workflow/proof_node_manager.py<br/>ProofNodeManager"]
-    Agent["Prover agent"] -->|"submit_proof_intent MCP tool<br/>JSON proof intent"| Runtime
-    Runtime -->|"private manager bridge"| Manager
-
-    Manager --> ReplMgr["ReplSessionManager<br/>session lifecycle"]
-    ReplMgr --> Backend["core/easycrypt backend<br/>session_cli/runtime/daemon"]
-    Backend --> EC["EasyCrypt REPL / daemon"]
-    Backend --> Events["events.jsonl + completed snapshot"]
-
-    Events --> Projection["session_projection.py"]
-    Projection --> ToolView["session_tool_view.py"]
-    Projection --> ContextView["session_agent_view.py<br/>ProofContextView"]
-    ToolView --> ContextView
-    Analysis["core/easycrypt/analysis<br/>ProofIR / candidate menu / actions"] --> ContextView
-
-    ContextView --> Workspace["session_prover_workspace_view.py<br/>ProverWorkspaceView"]
-    Analysis --> Navigator["workspace navigation adapters<br/>current-view map interpreter"]
-    Navigator --> Workspace
-    Workspace --> ViewMgr["session_workspace_view_manager.py<br/>sanitize/order/lint"]
-    ViewMgr -->|"IDE-style view"| Manager
-    Manager -->|"factual candidate_moves"| Runtime
-    Runtime -->|"bounded result + latest view ref"| Agent
-
-    ContextView --> Observer["workflow/session_observer.py"]
-    Workspace --> Observer
-    Observer --> Tree["workflow/progress.py"]
-    Events --> Acceptance["workflow/proof_acceptance.py"]
-    Acceptance --> Replay["workflow/validation/proof_replay.py"]
+    Agent["Proof agent"] -->|"submit_proof_intent"| Runtime["Proof-node runtime"]
+    Orchestrator["Orchestrator<br/>tree topology and capacity"] --> Runtime
+    Runtime --> Manager["ProofNodeManager<br/>one managed turn"]
+    Manager --> Session["ReplSessionManager<br/>session and mutation owner"]
+    Session --> EasyCrypt["EasyCrypt<br/>semantic authority"]
+    Manager --> Compiler["ProofStateCompilerService<br/>read-only compile facade"]
+    Compiler --> Passes["P1 projection → P2 frontend<br/>P3 middle end → P4 backend"]
+    Passes --> Actions["bounded ActionSurface"]
+    Actions --> Manager
 ```
 
-The rule of thumb:
+The orchestrator owns proof-search topology and winner selection. The manager
+owns one agent turn and binds intents to current state. `ReplSessionManager` is
+the sole EasyCrypt session and mutation owner. The compiler is read-only;
+EasyCrypt remains authoritative for parsing, typing, resolution, matching,
+proof state, and tactic acceptance.
 
-- agent-facing proof interaction goes through `ProofNodeManager`;
-- long-lived prover workers expose that interaction to Claude through the
-  per-node `submit_proof_intent` MCP tool and private runtime bridge;
-- EasyCrypt lifecycle and mutation are manager-owned through
-  `ReplSessionManager`;
-- candidates and evidence are produced by ProofContextView, ProofIR, ToolViews,
-  and diagnostics; `ProverWorkspaceView` only filters, orders,
-  words, and lints that material for the agent-facing surface;
-- workflow code accepts proofs only after event-contract validation and offline
-  EasyCrypt verification.
-
-See [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) for the contributor-level
-walkthrough and [`TESTING.md`](TESTING.md) for replay, regression, and A/B
-procedures.
+See [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) for the contributor overview,
+[`docs/design/proof_state_compiler_v2.md`](docs/design/proof_state_compiler_v2.md)
+for the compiler design, and [`TESTING.md`](TESTING.md) for validation and
+experiment discipline.
 
 ## Main directories
 
 ```text
-core/easycrypt/       EasyCrypt backend: session runtime, events, projection,
-                      workspace views, goal/ProofIR analysis, lemma search
-workflow/             orchestrator, tree supervisor, proof-node runtime +
-                      manager + MCP server, agents, validation (replay/audit)
-eval/examples/        EasyCrypt benchmark corpus (data only)
-eval_suite/           benchmark runner + checked-in suites
-agent_view_runs/      committed run bundles (browse at /results/)
-playground/           the local web server: tour, live playground, benchmark
-bundle_browser/       static benchmark-browser SPA + manifest builder
-tools/                offline audit & analysis toolboxes (panel fidelity,
-                      panel value, L1-vs-L4 metrics)
-tests/                test suite
+core/easycrypt/       EasyCrypt runtime, events, native adapters, compiler core
+workflow/             orchestrator, proof-node manager/runtime, compiler service
+projects/             user-owned EasyCrypt projects (one subdirectory each)
+eval/examples/        public EasyCrypt benchmark corpus
+eval_suite/           isolated benchmark runner and checked-in suites
+agent_view_runs/      curated, replayable run bundles
+bundle_browser/       static benchmark-browser application
+tools/                bootstrap, audit, and developer utilities
+tests/                deterministic test suite
 easycrypt-src/        vendored upstream EasyCrypt (its own MIT license)
 ```
 
-Generated run output belongs under `artifacts/` or `workflow/runs/`; both are
+Generated outputs belong under `artifacts/` or `workflow/runs/`; both are
 gitignored.
 
-## License & citation
+## License and citation
 
 Shannon Prover is released under the [MIT License](LICENSE). The
 `easycrypt-src/` directory vendors upstream EasyCrypt under its own MIT
 license.
 
 If you use Shannon Prover in your research, please cite
-([CITATION.cff](CITATION.cff)):
+[`CITATION.cff`](CITATION.cff):
 
 ```bibtex
 @article{ma2026shannonprover,
@@ -323,6 +372,6 @@ If you use Shannon Prover in your research, please cite
 }
 ```
 
-Shannon Prover is a research prototype: issues and discussion are welcome at
-[github.com/SkyShannonProver/shannon-prover](https://github.com/SkyShannonProver/shannon-prover) or
-shannonprover@gmail.com.
+Shannon Prover is a research prototype. Issues and discussion are welcome at
+[github.com/SkyShannonProver/shannon-prover](https://github.com/SkyShannonProver/shannon-prover)
+or shannonprover@gmail.com.

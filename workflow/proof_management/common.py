@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import json
+import re
 from typing import Any
 
 
@@ -99,6 +100,14 @@ def coerce_string_list(value: Any) -> list[str]:
         return [str(item) for item in value if str(item or "").strip()]
     text = str(value or "").strip()
     return [text] if text else []
+
+
+def goal_text_contains_call_site(text: str) -> bool:
+    """Whether verifier-visible goal text contains a procedure call site."""
+    value = str(text or "")
+    return "<@" in value or bool(
+        re.search(r"\bcall\s+[A-Za-z_][A-Za-z0-9_.'`]*", value)
+    )
 
 
 def read_jsonl(path: Path) -> list[dict[str, Any]]:

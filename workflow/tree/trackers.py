@@ -15,13 +15,15 @@ import subprocess
 import time
 from pathlib import Path
 from typing import Callable, Optional
+from core.easycrypt.proof_lifecycle import is_session_completion_candidate
+from core.easycrypt.committed_history import read_committed_tactics
 from core.easycrypt.value_shapes import drop_empty as _shallow_drop_empty
-from workflow.context_intents import is_context_topic_intent
 from workflow.session_observer import WorkflowSessionSnapshot, observe_session
 from workflow.prover_io_policy import (
     InformationSourceDecision,
     classify_bash_command,
     classify_read_path,
+    detect_target_proof_output_exposure,
 )
 from workflow.payload_audit import (
     PayloadAuditRecorder,
@@ -116,14 +118,6 @@ def _summarize_tool(name: str, inp: dict) -> str:
         cmd = inp.get("command", "")
         if "session_cli" in cmd:
             return "Low-level EC session CLI call (debug signal)"
-            if "-checkpoint" in cmd:
-                return "Save checkpoint"
-            if "-replay" in cmd:
-                return "Replay from checkpoint"
-            if "-status" in cmd:
-                return "Check proof status"
-            if "-swap-search" in cmd:
-                return "Auto swap search"
         if _bash_invokes_easycrypt(cmd):
             return "Verify .ec file"
         return f"bash: {cmd[:100]}"
@@ -176,24 +170,6 @@ def _proof_intent_tool_description(tool_input: object) -> str:
         if len(tactic) > 220:
             tactic = tactic[:217].rstrip() + "..."
         return f"submit_proof_intent {intent}: {tactic}"
-    if intent == "inspect_context":
-        return (
-            "submit_proof_intent inspect_context: "
-            f"{str(payload.get('topic') or 'goal_info')}"
-        )
-    if is_context_topic_intent(intent):
-        detail = ""
-        for key in ("operator", "symbol", "name", "lemma", "invariant", "command"):
-            value = str(payload.get(key) or "").strip()
-            if value:
-                detail = f": {value}"
-                break
-        return f"submit_proof_intent {intent}{detail}"
-    if intent == "lookup_symbol":
-        return (
-            "submit_proof_intent lookup_symbol: "
-            f"{str(payload.get('symbol') or '')}"
-        )
     return f"submit_proof_intent {intent}"
 
 
@@ -254,8 +230,6 @@ def _thinking_markers(text: str) -> list[str]:
         ("mentions_worktrees", "worktrees"),
         ("mentions_tmp_artifact", "/tmp"),
         ("mentions_claude_internal", ".claude"),
-        ("mentions_lookup_symbol", "lookup_symbol"),
-        ("mentions_inspect_context", "inspect_context"),
     )
     for marker, needle in checks:
         if needle in lowered:
@@ -273,22 +247,6 @@ def _audit_drop_empty(value: dict) -> dict:
     return _shallow_drop_empty(value)
 
 
-def _is_proof_success(result_text: str) -> bool:
-    """Fallback text check for candidate proof closure.
-
-    Newer session_cli runs also write ``events.jsonl`` with
-    ``proof.candidate_closed``. Trackers prefer that structured event
-    when they know the prover's session directory; this marker remains
-    a compatibility fallback for older sessions and raw tool output.
-    """
-    return "[ALL_GOALS_CLOSED]" in result_text
-
-
-def _session_event_path(cwd: str, session_dir: str | None) -> Path | None:
-    session_path = _session_dir_path(cwd, session_dir)
-    return session_path / "events.jsonl" if session_path else None
-
-
 def _session_dir_path(cwd: str, session_dir: str | None) -> Path | None:
     if not session_dir:
         return None
@@ -296,17 +254,6 @@ def _session_dir_path(cwd: str, session_dir: str | None) -> Path | None:
     if not p.is_absolute():
         p = Path(cwd) / p
     return p
-
-
-def _event_log_has_candidate_closed(path: Path | None) -> bool:
-    if path is None or not path.exists():
-        return False
-    try:
-        from workflow.proof_acceptance import validate_candidate_event_contract
-        gate = validate_candidate_event_contract(path.parent)
-        return gate.ok and gate.candidate_closed
-    except Exception:
-        return False
 
 
 def _session_snapshot(
@@ -321,62 +268,17 @@ def _session_snapshot(
         return None
 
 
-def _session_projection_has_candidate_closed(
-    cwd: str,
-    session_dir: str | None,
+def _snapshot_has_completion_candidate(
+    snapshot: WorkflowSessionSnapshot | None,
 ) -> bool:
-    snapshot = _session_snapshot(cwd, session_dir)
     return bool(
         snapshot
-        and (snapshot.candidate_ready or snapshot.final_ready)
+        and snapshot.ok
+        and (
+            snapshot.qed_committed
+            and is_session_completion_candidate(snapshot.status)
+        )
     )
-
-
-def _session_state_has_candidate_closed(cwd: str, session_dir: str | None) -> bool:
-    """Structured fallback for sessions whose event log is unavailable.
-
-    This keeps progress tracking aligned with session_cli's shared
-    prompt/close parsing instead of scanning result text for
-    `[ALL_GOALS_CLOSED]`.
-    """
-    session_path = _session_dir_path(cwd, session_dir)
-    if session_path is None:
-        return False
-    if _session_projection_has_candidate_closed(cwd, session_dir):
-        return True
-    try:
-        from core.easycrypt.session_state import read_session_state
-        return bool(read_session_state(session_path).proof_candidate_closed)
-    except Exception:
-        return False
-
-
-_APPLY_LEMMA_RE = re.compile(
-    r"\b(?:apply|have\s+:=|have\s+\w+\s+:=|rewrite(?:\s+-)?|byequiv)"
-    r"\s*\(?\s*(?P<name>[A-Za-z_][A-Za-z0-9_]*)",
-)
-
-
-def _extract_apply_lemma_names(tactic_text: str) -> list[str]:
-    """Return lemma names from `apply LEMMA`, `have := LEMMA`, `rewrite LEMMA`.
-
-    Used to track which lemmas the prover keeps trying to apply. Skips tactics
-    that operate on in-goal hypotheses (single lowercase letters, short names).
-    """
-    names: list[str] = []
-    for m in _APPLY_LEMMA_RE.finditer(tactic_text):
-        name = m.group("name")
-        # Ignore short names (likely hypothesis letters like h, h1, H)
-        # and common non-lemma keywords
-        if len(name) < 4:
-            continue
-        if name in ("auto", "wp", "sp", "rnd", "skip", "call", "proc",
-                    "inline", "smt", "done", "trivial", "simplify", "idtac",
-                    "fun", "move", "elim", "case", "split", "by",
-                    "true", "false", "witness"):
-            continue
-        names.append(name)
-    return names
 
 
 class _ProverTracker:
@@ -396,8 +298,17 @@ class _ProverTracker:
         # checks keep using progress/accept timestamps.
         self.last_activity_time = self.last_progress_time
         self.result_text = ""
+        self.manager_turns = 0
         self.session_id = ""
-        self.proved = False
+        self.agent_backend = "codex"
+        # All provider session/thread ids seen on this worker's stream, in
+        # first-seen order and deduped. A context respawn starts a new provider
+        # session, so a node can legitimately own several; `session_id` is the
+        # initial link and `session_ids` is the complete chain.
+        self.session_ids: list[str] = []
+        # Search-local fact only.  The run-level prover coordinator is the sole
+        # owner of final verification and never consumes this as a proof verdict.
+        self.completion_candidate_ready = False
         self.finished = False
         # True iff the worker emitted a clean final `result` event before exiting
         # (the managed worker's `_emit_final` always prints one on EVERY graceful
@@ -419,7 +330,6 @@ class _ProverTracker:
         self._lines: list[str] = []
         self._cwd = cwd
         self._session_dir = session_dir
-        self._event_path = _session_event_path(cwd, session_dir)
         self.session_snapshot: WorkflowSessionSnapshot | None = None
         self._seen_commit_artifacts: set[str] = set()
         self._last_transition_key = ""
@@ -452,51 +362,15 @@ class _ProverTracker:
     def _on_commit_response(self, snapshot: WorkflowSessionSnapshot) -> None:
         return None
 
-    def _has_structured_snapshot(self) -> bool:
-        snapshot = self.session_snapshot
-        return bool(
-            snapshot
-            and (
-                snapshot.event_log_exists
-                or snapshot.history_exists
-                or snapshot.commit_response_count
-                or snapshot.agent_view_count
-            )
-        )
-
-    def _allow_text_progress_fallback(self) -> bool:
-        """Permit command/stdout heuristics only before structured facts exist."""
-        if self._has_structured_snapshot():
-            return False
-        if self._event_path is not None and self._event_path.exists():
-            return False
-        return True
-
-    def _refresh_structured_success(self) -> None:
-        if self.proved:
+    def _refresh_completion_candidate(self) -> None:
+        if self.completion_candidate_ready:
             return
         snapshot = _session_snapshot(self._cwd, self._session_dir)
         if snapshot is not None:
             self.session_snapshot = snapshot
             self._apply_session_snapshot(snapshot)
-            if snapshot.candidate_ready or snapshot.final_ready:
-                self.proved = True
-                return
-            if snapshot.event_log_exists or snapshot.contract_errors:
-                return
-        if _session_projection_has_candidate_closed(
-            self._cwd, self._session_dir,
-        ):
-            self.proved = True
-            return
-        if self._event_path is not None and self._event_path.exists():
-            if _event_log_has_candidate_closed(self._event_path):
-                self.proved = True
-            return
-        if not self.proved and _session_state_has_candidate_closed(
-            self._cwd, self._session_dir,
-        ):
-            self.proved = True
+            if _snapshot_has_completion_candidate(snapshot):
+                self.completion_candidate_ready = True
 
     _STDERR_TAIL_MAX = 128 * 1024  # keep the last 128KB — a crash traceback's tail
 
@@ -603,7 +477,7 @@ class _ProverTracker:
                         return
                     self._process_line(line.strip())
                 else:
-                    self._refresh_structured_success()
+                    self._refresh_completion_candidate()
                     return  # no data available right now
             except (ValueError, OSError):
                 self._drain_stderr()
@@ -611,6 +485,25 @@ class _ProverTracker:
                                     returncode=getattr(self.proc, "returncode", None))
                 self.finished = True
                 return
+
+    def _capture_session_id(self, raw: object) -> None:
+        """Record one observed Claude session id (first-seen order, deduped)."""
+        sid = str(raw or "").strip()
+        if not sid:
+            return
+        if not self.session_id:
+            self.session_id = sid
+        if sid not in self.session_ids:
+            self.session_ids.append(sid)
+
+    def _project_manager_turn_event(self, event: dict[str, object]) -> None:
+        """Project the bridge-owned turn index; never infer turns from text."""
+
+        if event.get("kind") != "manager_turn.completed":
+            return
+        turn_index = event.get("turn_index")
+        if isinstance(turn_index, int) and not isinstance(turn_index, bool):
+            self.manager_turns = max(self.manager_turns, max(0, turn_index))
 
     def _process_line(self, line: str):
         if not line:
@@ -621,68 +514,32 @@ class _ProverTracker:
             return
 
         event_type = event.get("type", "")
+        if event.get("agent_backend"):
+            self.agent_backend = str(event["agent_backend"])
 
-        # Capture session_id from init or any event
-        if not self.session_id and event.get("session_id"):
-            self.session_id = event["session_id"]
+        # Capture session ids from init or any event. Keep every distinct id —
+        # a ctx-respawn continuation streams a NEW session id mid-run, and the
+        # run manifest must list the full chain, not just the first link.
+        self._capture_session_id(event.get("session_id"))
+        self._project_manager_turn_event(event)
 
         if event_type == "result":
             self.result_text = event.get("result", "")
+            turns = event.get("turns")
+            if isinstance(turns, int) and not isinstance(turns, bool):
+                self.manager_turns = max(self.manager_turns, max(0, turns))
             self.finished = True
             # Clean final-result signal (only `_emit_final` prints this).
             self.final_result_emitted = True
 
-        # Text markers are a compatibility fallback. Once a session event log
-        # exists, candidate closure must come from WorkflowSessionSnapshot.
         if event_type == "user":
             self.last_activity_time = time.time()
-            content = event.get("message", {}).get("content", [])
-            if isinstance(content, list):
-                for block in content:
-                    if isinstance(block, dict) and block.get("type") == "tool_result":
-                        result_text = block.get("content", "")
-                        self._refresh_structured_success()
-                        if (
-                            not self.proved
-                            and isinstance(result_text, str)
-                            and _is_proof_success(result_text)
-                            and self._allow_text_progress_fallback()
-                        ):
-                            self.proved = True
-
-        # Command parsing is now a pre-session fallback for display only.
-        # Once events/artifacts exist, WorkflowSessionSnapshot supplies the
-        # committed count and error state.
         if event_type == "assistant":
             self.last_activity_time = time.time()
-            if not self._allow_text_progress_fallback():
-                _handle_stream_event(event, self.name, None)
-                self._refresh_structured_success()
-                return
-            content = event.get("message", {}).get("content", [])
-            if isinstance(content, list):
-                for block in content:
-                    if isinstance(block, dict):
-                        if block.get("type") == "tool_use" and block.get("name") == "Bash":
-                            cmd = block.get("input", {}).get("command", "")
-                            if "session_cli" in cmd and "-next" in cmd and "-c" in cmd:
-                                self.accepted_tactics += 1
-                                self.last_progress_time = time.time()
-                            elif "session_cli" in cmd and "-chain" in cmd and "-c" in cmd:
-                                # Count tactics in the chain body. Use max() so
-                                # that a re-try with a shorter chain doesn't
-                                # regress the counter.
-                                chain_text = cmd.split("-c", 1)[-1].strip().strip("'\"").strip()
-                                n_tactics = len([t for t in chain_text.split(".") if t.strip()])
-                                self.accepted_tactics = max(self.accepted_tactics, n_tactics)
-                                self.last_progress_time = time.time()
-                            if "-prev" in cmd:
-                                self.accepted_tactics = max(0, self.accepted_tactics - 1)
-                                self.errors += 1
 
         # Display events using existing handler
         _handle_stream_event(event, self.name, None)
-        self._refresh_structured_success()
+        self._refresh_completion_candidate()
 
 
 STRUCTURAL_COMMIT_OPENERS = frozenset({
@@ -690,18 +547,6 @@ STRUCTURAL_COMMIT_OPENERS = frozenset({
     "transitivity", "seq", "while", "eager", "case", "sim",
     "rewrite", "have", "conseq",
 })
-
-
-ANALYSIS_TOOL_FLAGS = (
-    "-bridge-probe", "-search", "-sig", "-clones",
-    "-goal-info", "-align", "-diagnose", "-inv-from-lemma",
-    "-tactic-forms", "-try",
-)
-
-
-_ANALYSIS_TOOL_RE = re.compile(
-    r"(?<![\w-])(?:" + "|".join(re.escape(f) for f in ANALYSIS_TOOL_FLAGS) + r")(?![\w-])"
-)
 
 
 def _is_background_tool_result(text: str) -> bool:
@@ -728,8 +573,8 @@ def _is_permission_denied_tool_result(text: str) -> bool:
     return False
 
 
-def _session_history_path(cwd: str, session_tag: str) -> Path:
-    return Path(cwd) / f".ec_session_{session_tag}" / "history.ec"
+def _session_dir(cwd: str, session_tag: str) -> Path:
+    return Path(cwd) / f".ec_session_{session_tag}"
 
 
 def _first_word(tactic: str) -> str:
@@ -767,7 +612,7 @@ class _TreeProverTracker(_ProverTracker):
         self.max_committed_count_seen: int = 0
         # Sticky: latched once the committed count drops below its high-water
         # mark, i.e. the agent rewound. A forward-only proof's history only
-        # grows; ANY rewind — `undo_last_step` (-prev) OR `undo_to_checkpoint`
+        # grows; ANY rewind — `undo_last_step` OR `undo_to_checkpoint`
         # (force-restart + shorter replay) — truncates history.ec, so the count
         # dips below the max ever seen. This is the resume-drift-gate's
         # authoritative "agent owns the prefix now" signal, because it is a
@@ -776,8 +621,8 @@ class _TreeProverTracker(_ProverTracker):
         # never emits.
         self.history_ever_shrank: bool = False
         # Compose-first tracking
-        self.chain_attempts: int = 0          # total -chain calls
-        self.chain_tactic_estimate: int = 0   # estimated tactics in latest chain
+        self.chain_attempts: int = 0          # structured commit-chain results
+        self.chain_tactic_estimate: int = 0   # attempted tactics in latest chain
         # Layer-1 deterministic progress metric: read from history.ec so we
         # know what EC actually accepted, not what the prover submitted.
         # Cached with a short TTL to avoid stat()-ing on every kill check.
@@ -786,21 +631,12 @@ class _TreeProverTracker(_ProverTracker):
         self._hist_cache_until: float = 0.0
         self._hist_lines_cache: list[str] = []
         self.prefix_credit: int = 0
-        # Apply-lemma attempt counter — keyed by bare lemma name. Populated on
-        # every `apply LEMMA` or `have := LEMMA` seen in Bash tool_use commands,
-        # whether the attempt succeeds or fails. Used by the tree loop's
-        # auto-escalation: if the same lemma appears here 2+ times on a node
-        # with errors_since_last_accept > 0, the orchestrator fetches its
-        # signature and injects a [SIG] discovery for subsequent children.
-        self.attempted_applies: dict[str, int] = {}
-        # Timestamp of the last analysis / probe session_cli call (see
-        # ANALYSIS_TOOL_FLAGS above). 0.0 means never. The kill check
-        # uses this to grace laggards that are actively probing (e.g.
-        # cycling through `-bridge-probe` variants) even though their
-        # committed tactic count hasn't advanced yet.
-        self.last_analysis_call_time: float = 0.0
-        # Log throttle for analysis-mode stuck-spawn deferrals. Do not use this
-        # as a handled flag: once the analysis window expires, the branch should
+        # Timestamp of the last event-bound read-only backend observation. 0.0
+        # means never. The kill check grants a short grace period while a
+        # compiler/native query is active even though no tactic was committed.
+        self.last_readonly_backend_call_time: float = 0.0
+        # Log throttle for read-only-work deferrals. Do not use this as a
+        # handled flag: once the window expires, the branch should
         # still be eligible for a child.
         self.last_analysis_spawn_skip_log_time: float = 0.0
         # Most recent committed/chain tactic that failed after the current
@@ -834,7 +670,6 @@ class _TreeProverTracker(_ProverTracker):
         self._stderr_tail: str = ""
         self._stderr_persisted: bool = False
         self._payload_audit_seen_commit_artifacts: set[str] = set()
-        self._payload_audit_seen_agent_artifacts: set[str] = set()
         self._payload_audit_seen_workspace_artifacts: set[str] = set()
         self._payload_audit_seen_tactic_execution_artifacts: set[str] = set()
         self.pending_unsafe_tool_uses: dict[str, str] = {}
@@ -869,7 +704,7 @@ class _TreeProverTracker(_ProverTracker):
         #
         # Sampling robustness (why this latch is not racy): a checkpoint rewind
         # runs `-start --force-restart`, which rmtree's the session dir (history
-        # -> 0) and then replays the shorter prefix ONE `-next` subprocess per
+        # -> 0) and then replays the shorter prefix one canonical commit per
         # tactic (~0.6s each). So history.ec climbs 0 -> keep_count over tens of
         # seconds, sitting strictly below the high-water mark the whole time —
         # the ~1s monitor poll samples it dozens of times and latches on the
@@ -880,7 +715,7 @@ class _TreeProverTracker(_ProverTracker):
         # FALSE-POSITIVE surface (known, safe-direction): inferring a rewind from
         # an unsynchronized history.ec length sample can also latch WITHOUT a
         # real rewind — a read-only manager diagnostic that commits
-        # `have ...; admit.` then `-prev`s it can transiently inflate then lower
+        # `have ...; admit.` then undoes it can transiently inflate then lower
         # the count, so a later legit count below that transient peak
         # latches. This only ever DISABLES the drift kill (never causes one), and
         # a missed desync cannot yield an accepted wrong proof (a winner is
@@ -905,8 +740,8 @@ class _TreeProverTracker(_ProverTracker):
         if snapshot.last_progress_at > 0:
             self.last_accept_time = max(self.last_accept_time, snapshot.last_progress_at)
         if snapshot.last_readonly_tool_at > 0:
-            self.last_analysis_call_time = max(
-                self.last_analysis_call_time,
+            self.last_readonly_backend_call_time = max(
+                self.last_readonly_backend_call_time,
                 snapshot.last_readonly_tool_at,
             )
         self._refresh_background_session_cli(snapshot)
@@ -946,16 +781,9 @@ class _TreeProverTracker(_ProverTracker):
         ) else {}
         attempted = mutation.get("attempted_tactics")
         attempted = attempted if isinstance(attempted, list) else []
-        if response.get("command") == "chain":
+        if response.get("command") == "commit_chain":
             self.chain_attempts += 1
             self.chain_tactic_estimate = int(mutation.get("attempted_count") or 0)
-        for tactic in attempted:
-            if not isinstance(tactic, str):
-                continue
-            for name in _extract_apply_lemma_names(tactic):
-                self.attempted_applies[name] = (
-                    self.attempted_applies.get(name, 0) + 1
-                )
         accepted = mutation.get("accepted_count")
         accepted = accepted if isinstance(accepted, int) else 0
         status = str(response.get("status") or "")
@@ -1003,19 +831,6 @@ class _TreeProverTracker(_ProverTracker):
                 tree=self.name,
                 session_tag=self._session_tag,
                 kind="commit_response",
-                snapshot=snapshot,
-            )
-        agent_payload = snapshot.latest_agent_payload or {}
-        agent_artifact = str(agent_payload.get("artifact") or "")
-        if (
-            agent_artifact
-            and agent_artifact not in self._payload_audit_seen_agent_artifacts
-        ):
-            self._payload_audit_seen_agent_artifacts.add(agent_artifact)
-            self.payload_audit.record_session_artifact(
-                tree=self.name,
-                session_tag=self._session_tag,
-                kind="agent_view",
                 snapshot=snapshot,
             )
         workspace_payload = snapshot.latest_workspace_payload or {}
@@ -1096,12 +911,9 @@ class _TreeProverTracker(_ProverTracker):
             self._hist_lines_cache = []
             self._hist_cache_until = now + 2.0
             return self._hist_lines_cache
-        path = _session_history_path(self._cwd, self._session_tag)
-        try:
-            text = path.read_text(encoding="utf-8", errors="replace")
-            lines = [ln.strip() for ln in text.splitlines() if ln.strip()]
-        except (OSError, UnicodeDecodeError):
-            lines = []
+        lines = read_committed_tactics(
+            _session_dir(self._cwd, self._session_tag)
+        )
         self._hist_lines_cache = lines
         self._hist_cache_until = now + 2.0
         return lines
@@ -1161,13 +973,18 @@ class _TreeProverTracker(_ProverTracker):
             return
 
         event_type = event.get("type", "")
+        if event.get("agent_backend"):
+            self.agent_backend = str(event["agent_backend"])
 
-        # Capture session_id
-        if not self.session_id and event.get("session_id"):
-            self.session_id = event["session_id"]
+        # Capture session ids (full chain — see _ProverTracker._capture_session_id)
+        self._capture_session_id(event.get("session_id"))
+        self._project_manager_turn_event(event)
 
         if event_type == "result":
             self.result_text = event.get("result", "")
+            turns = event.get("turns")
+            if isinstance(turns, int) and not isinstance(turns, bool):
+                self.manager_turns = max(self.manager_turns, max(0, turns))
             self.finished = True
             # Clean final-result signal (only `_emit_final` prints this); used by
             # Layer-3 to distinguish a graceful give-up from a hard crash.
@@ -1177,8 +994,8 @@ class _TreeProverTracker(_ProverTracker):
         # in a fresh Claude context (Layer 1/2), it emits this `system` marker. The
         # idle / errors-since-accept timers are claude-PROCESS-scoped, so the brief
         # stream gap while the new child boots must NOT be read as a stall or
-        # idle-give-up. `proved`/`accepted_tactics` derive from the surviving EC
-        # snapshot and are deliberately left untouched. See
+        # idle-give-up. Completion-candidate state and accepted tactics derive
+        # from the surviving EC snapshot and are deliberately left untouched. See
         # docs/design/fresh_context_continuation.md.
         if event_type == "system" and event.get("context_respawn"):
             now = time.time()
@@ -1195,7 +1012,6 @@ class _TreeProverTracker(_ProverTracker):
             self.last_activity_time = time.time()
             self._track_session_hygiene_tool_uses(event)
 
-        # Text markers are fallback only; structured snapshots are authoritative.
         if event_type == "user":
             self.last_activity_time = time.time()
             content = event.get("message", {}).get("content", [])
@@ -1210,135 +1026,15 @@ class _TreeProverTracker(_ProverTracker):
                             tool_use_id,
                             result_text,
                         )
-                        self._refresh_structured_success()
-                        if (
-                            not self.proved
-                            and isinstance(result_text, str)
-                            and _is_proof_success(result_text)
-                            and self._allow_text_progress_fallback()
-                        ):
-                            self.proved = True
-
-        # Track tactics from tool_use Bash calls only as a fallback before the
-        # structured session stream appears.
-        if event_type == "assistant":
-            if not self._allow_text_progress_fallback():
-                _handle_stream_event(event, self.name, None)
-                self._refresh_structured_success()
-                return
-            content = event.get("message", {}).get("content", [])
-            if isinstance(content, list):
-                # Note: proof success is detected ONLY from tool_result
-                # "added lemma" (EC's confirmation), not from prover text.
-
-                for block in content:
-                    if not isinstance(block, dict):
-                        continue
-                    if block.get("type") != "tool_use":
-                        continue
-                    if block.get("name") != "Bash":
-                        continue
-                    cmd = block.get("input", {}).get("command", "")
-                    if "session_cli" not in cmd:
-                        continue
-
-                    # Analysis / probe calls — refresh the timestamp so the
-                    # kill check can distinguish "laggard is actively probing"
-                    # from "laggard is stuck thinking". Cheap to check; the
-                    # regex is compiled once at module scope.
-                    if _ANALYSIS_TOOL_RE.search(cmd):
-                        self.last_analysis_call_time = time.time()
-
-                    if "-next" in cmd and "-c" in cmd:
-                        # Extract tactic text
-                        tactic = cmd.split("-c")[-1].strip().strip("'\"").strip()
-                        self.accepted_tactics += 1
-                        self.last_progress_time = time.time()
-                        self.last_accept_time = time.time()
-                        self.errors_since_last_accept = 0
-                        self.max_committed_count_seen = max(
-                            self.max_committed_count_seen,
-                            self.accepted_tactics,
-                        )
-                        self.accepted_tactic_texts.append(tactic)
-                        # Reset stuck flag — prover is making progress again
-                        self.stuck_handled = False
-                        if self.last_structural_undo_time > 0:
-                            self.structural_undo_branch = None
-                            self.structural_undo_branch_time = 0.0
-                        # Do NOT detect qed from the command — it might fail.
-                        # Proof success is detected from tool_result "added lemma".
-                        # Track apply/have attempts for auto-escalation
-                        for name in _extract_apply_lemma_names(tactic):
-                            self.attempted_applies[name] = \
-                                self.attempted_applies.get(name, 0) + 1
-
-                    elif "-prev" in cmd:
-                        self.max_committed_count_seen = max(
-                            self.max_committed_count_seen,
-                            self.accepted_tactics,
-                            len(self.accepted_tactic_texts),
-                        )
-                        self.accepted_tactics = max(0, self.accepted_tactics - 1)
-                        self.errors += 1
-                        self.errors_since_last_accept += 1
-                        self.last_undo_time = time.time()
-                        self.last_progress_time = self.last_undo_time
-                        if self.accepted_tactic_texts:
-                            undone = self.accepted_tactic_texts.pop()
-                            self.recent_failed_tactic = undone
-                            self.recent_failed_time = time.time()
-                            # Detect structural undo — this is the cleanest
-                            # signal for a local child: replay the surviving
-                            # prefix and avoid the exact tactic that was
-                            # rolled back.
-                            first_word = undone.split()[0].rstrip(".;") if undone else ""
-                            if first_word in STRUCTURAL_COMMIT_OPENERS:
-                                self.last_structural_undo_time = self.last_undo_time
-                                # Save: prefix = remaining tactics, failed = undone + what follows
-                                self.structural_undo_branch = (
-                                    list(self.accepted_tactic_texts),  # copy of prefix
-                                    [undone],  # the undone structural tactic
-                                )
-                                self.structural_undo_branch_time = self.last_undo_time
-
-                    elif "-chain" in cmd and "-c" in cmd:
-                        # Chain applies multiple tactics at once.
-                        # Count tactics in the command for progress estimation.
-                        self.chain_attempts += 1
-                        chain_text = cmd.split("-c")[-1].strip().strip("'\"").strip()
-                        n_tactics = len([t for t in chain_text.split(".") if t.strip()])
-                        self.chain_tactic_estimate = n_tactics
-                        # Track apply/have attempts inside the chain
-                        for name in _extract_apply_lemma_names(chain_text):
-                            self.attempted_applies[name] = \
-                                self.attempted_applies.get(name, 0) + 1
-                        # Credit chain as progress: use the tactic count from the
-                        # chain so the prover doesn't look idle. If the chain fails
-                        # and the prover retries, max() keeps the best attempt.
-                        self.accepted_tactics = max(self.accepted_tactics, n_tactics)
-                        self.max_committed_count_seen = max(
-                            self.max_committed_count_seen,
-                            self.accepted_tactics,
-                        )
-                        self.last_progress_time = time.time()
-                        self.last_accept_time = time.time()
-                        self.errors_since_last_accept = 0
-                        self.stuck_handled = False
-                        # Do NOT detect qed from chain COMMAND text — the chain
-                        # might fail. Only detect qed from -next commands (which
-                        # means EC already accepted the tactic) or from the prover's
-                        # result text containing "added lemma" / "No more goals".
 
         # Display events using existing handler
         _handle_stream_event(event, self.name, None)
-        self._refresh_structured_success()
+        self._refresh_completion_candidate()
 
     def _track_session_hygiene_tool_uses(self, event: dict) -> None:
         content = event.get("message", {}).get("content", [])
         if not isinstance(content, list):
             return
-        current_session_dir = Path(self._cwd) / f".ec_session_{self._session_tag}"
         eval_mode = bool(os.environ.get("EVAL_TARGET_LEMMA", "").strip())
         for block_index, block in enumerate(content):
             if not isinstance(block, dict) or block.get("type") != "tool_use":
@@ -1353,7 +1049,6 @@ class _TreeProverTracker(_ProverTracker):
                 policy = classify_read_path(
                     file_path,
                     cwd=self._cwd,
-                    current_session_dir=current_session_dir,
                     allowed_source_files=self.allowed_source_files,
                     allowed_node_memory_dirs=self.allowed_node_memory_dirs,
                     target_lemma=self.target_lemma,
@@ -1402,7 +1097,6 @@ class _TreeProverTracker(_ProverTracker):
                 policy = classify_read_path(
                     file_path,
                     cwd=self._cwd,
-                    current_session_dir=current_session_dir,
                     allowed_source_files=self.allowed_source_files,
                     allowed_node_memory_dirs=self.allowed_node_memory_dirs,
                     target_lemma=self.target_lemma,
@@ -1442,7 +1136,6 @@ class _TreeProverTracker(_ProverTracker):
             policy = classify_bash_command(
                 cmd,
                 cwd=self._cwd,
-                current_session_dir=current_session_dir,
                 allowed_source_files=self.allowed_source_files,
                 allowed_node_memory_dirs=self.allowed_node_memory_dirs,
                 target_lemma=self.target_lemma,
@@ -1540,6 +1233,15 @@ class _TreeProverTracker(_ProverTracker):
             tool_use_id,
             None,
         )
+        exposure = detect_target_proof_output_exposure(
+            result_text,
+            # A few unit tests construct a deliberately minimal tracker with
+            # object.__new__.  Missing eval metadata means there is no target
+            # proof to audit; it must not break the pre-existing hygiene path.
+            target_lemma=getattr(self, "target_lemma", ""),
+            cwd=getattr(self, "_cwd", None),
+        )
+        exposure_dict = exposure.to_dict() if exposure is not None else {}
         pending_kind = ""
         pending_description = ""
         pending_reason = ""
@@ -1571,7 +1273,19 @@ class _TreeProverTracker(_ProverTracker):
                 pending_kind=pending_kind,
                 pending_description=pending_description,
                 pending_reason=pending_reason,
+                target_proof_exposure=exposure_dict,
             )
+        if exposure is not None:
+            self.information_source_audit.append({
+                "tool_use_id": tool_use_id,
+                "decision": "invalidate_run",
+                "source_type": "target_proof_output_exposure",
+                "authority": "answer_leak_guard",
+                "audit_code": exposure.audit_code,
+                "description": f"{exposure.path}:{exposure.line}",
+            })
+            if len(self.information_source_audit) > 200:
+                self.information_source_audit = self.information_source_audit[-200:]
         if _is_permission_denied_tool_result(result_text):
             return
         if pending_unsafe:

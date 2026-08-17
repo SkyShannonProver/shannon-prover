@@ -1,9 +1,9 @@
 """Checkpoint surface and menu construction.
 
-This module owns the checkpoint coordinate system used by rewind menus,
-structural checkpoint panels, and route-health repair references.  It is pure:
-callers pass committed tactics and route-health evidence, and receive
-ProverWorkspaceView-compatible dictionaries.
+This module owns the checkpoint coordinate system used by explicit rewind
+menus. It is pure: callers pass the committed tactic spine and receive proof
+control choices. Checkpoints are not compiler evidence and never inspect a
+panel or recommend a proof route.
 """
 from __future__ import annotations
 
@@ -12,12 +12,12 @@ import re
 from typing import Any
 
 from workflow.proof_management.common import coerce_string_list as _string_list
-from workflow.proof_management.common import _dict, _drop_empty
+from workflow.proof_management.common import _drop_empty
 from workflow.proof_management.tactic_utils import (
     is_product_budget_seq,
     tactic_head,
 )
-from workflow.proof_management.transitions import is_broad_inline_tactic
+from workflow.proof_management.tactic_utils import is_broad_inline_tactic
 
 
 def history_hash(tactics: list[str]) -> str:
@@ -38,7 +38,6 @@ def parse_checkpoint_id(value: str) -> tuple[int, str] | None:
 def structural_checkpoints_surface(
     tactics: list[str],
     *,
-    route_health: list[dict[str, Any]] | None = None,
     replay_prefix_count: int = 0,
 ) -> list[dict[str, Any]]:
     if not tactics:
@@ -46,7 +45,6 @@ def structural_checkpoints_surface(
     digest = history_hash(tactics)
     overrides = semantic_checkpoint_overrides(
         tactics,
-        route_health=route_health,
         replay_prefix_count=replay_prefix_count,
     )
     items: list[dict[str, Any]] = []
@@ -101,7 +99,6 @@ def checkpoint_surface_item(
 def checkpoint_options(
     tactics: list[str],
     *,
-    route_health: list[dict[str, Any]] | None = None,
     replay_prefix_count: int = 0,
 ) -> list[dict[str, Any]]:
     if not tactics:
@@ -110,7 +107,6 @@ def checkpoint_options(
     selected: list[int] = []
     overrides: dict[int, dict[str, Any]] = semantic_checkpoint_overrides(
         tactics,
-        route_health=route_health,
         replay_prefix_count=replay_prefix_count,
     )
     for idx in ordered_checkpoint_indices(tactics, overrides):
@@ -211,32 +207,9 @@ def checkpoint_option(
     })
 
 
-def route_health_checkpoint(
-    tactics: list[str],
-    tactic_index: int,
-    *,
-    why_here: str,
-) -> dict[str, Any]:
-    if tactic_index < 1 or tactic_index > len(tactics):
-        return {}
-    tactic = tactics[tactic_index - 1]
-    digest = history_hash(tactics)
-    return {
-        "label": checkpoint_label_for_tactic(tactic, tactic_index),
-        "committed_tactic": tactic,
-        "tactic_index": tactic_index,
-        "why_here": why_here,
-        "submit": {
-            "intent": "undo_to_checkpoint",
-            "payload": {"checkpoint_id": checkpoint_id(digest, tactic_index)},
-        },
-    }
-
-
 def semantic_checkpoint_overrides(
     tactics: list[str],
     *,
-    route_health: list[dict[str, Any]] | None = None,
     replay_prefix_count: int = 0,
 ) -> dict[int, dict[str, Any]]:
     overrides: dict[int, dict[str, Any]] = {}
@@ -256,22 +229,6 @@ def semantic_checkpoint_overrides(
             merged["semantic_ids"] = ids
             merged["semantic_id"] = ids[0]
         overrides[idx] = _drop_empty(merged)
-
-    for item in route_health or []:
-        checkpoint = _dict(item.get("repair_checkpoint"))
-        try:
-            idx = int(checkpoint.get("tactic_index") or 0)
-        except (TypeError, ValueError):
-            idx = 0
-        if idx:
-            merge(idx, {
-                "semantic_id": str(item.get("signal") or "route_health_repair"),
-                "label": str(checkpoint.get("label") or ""),
-                "why_checkpoint": str(checkpoint.get("why_here") or ""),
-                "undo_scope": str(checkpoint.get("undo_scope") or ""),
-                "restored_affordances": checkpoint.get("restored_affordances"),
-                "route_health_repair": True,
-            })
 
     latest_seq = latest_seq_tactic(tactics)
     seq_idx = int(latest_seq.get("tactic_index") or 0)
@@ -397,9 +354,7 @@ def ordered_checkpoint_indices(
         if not semantic_ids and override.get("semantic_id"):
             semantic_ids = {str(override.get("semantic_id") or "")}
         scope = str(override.get("undo_scope") or "")
-        if bool(override.get("route_health_repair")):
-            rank = -1
-        elif "before_branch_work" in semantic_ids and idx == len(tactics):
+        if "before_branch_work" in semantic_ids and idx == len(tactics):
             rank = 0
         elif "before_call_obligation_work" in semantic_ids:
             rank = 0
@@ -621,203 +576,63 @@ def checkpoint_label_for_tactic(tactic: str, tactic_index: int) -> str:
 
 
 def checkpoint_semantics(tactic: str) -> dict[str, str]:
+    """Describe only what an explicit rewind changes.
+
+    This text belongs to proof control, not to the proof-state compiler.  It
+    intentionally contains no inspect command, theorem suggestion, or next
+    tactic: after rewinding, the agent chooses the continuation.
+    """
     text = tactic.strip().lower()
     head = tactic_head(tactic)
     if "call (_:" in text:
         return {
-            "why_checkpoint": (
-                "call invariant introduction point; later oracle/branch "
-                "obligations often reveal missing preserved facts or an "
-                "over-strong equality from this tactic"
-            ),
-            "repair_use_when": (
-                "Use this when the current blocker is an invariant gap, a "
-                "bad-event fact that should have been preserved, or a local "
-                "surgery problem after a call. Prefer this over fresh restart "
-                "when the top-level route still looks right."
-            ),
-            "after_rewind_next": (
-                "Inspect `call_subgoals` or `subgoal_gap`, then commit a "
-                "revised `call (_: ...)` invariant or a smaller prefix."
-            ),
+            "why_checkpoint": "call invariant introduction point",
+            "repair_use_when": "Use this to reconsider this committed call invariant.",
+            "after_rewind_next": "Choose the continuation from the restored goal.",
         }
     if text.startswith("while") or re.search(r"\bwhile\b.*\(", text):
         return {
             "why_checkpoint": "loop invariant introduction point",
-            "repair_use_when": (
-                "Use this when later loop obligations show a missing variant, "
-                "bounds fact, frame fact, or too-strong loop invariant."
-            ),
-            "after_rewind_next": (
-                "Inspect `tactic_forms` for while syntax and `subgoal_gap`, "
-                "then commit a revised loop invariant."
-            ),
+            "repair_use_when": "Use this to reconsider this committed loop invariant.",
+            "after_rewind_next": "Choose the continuation from the restored goal.",
         }
     if text.startswith("seq") or re.search(r"\bseq\s+\d+", text):
-        if is_product_budget_seq(tactic):
-            return {
-                "why_checkpoint": (
-                    "product-budget sequence cut / midpoint assertion point; "
-                    "later probability residuals often reveal a missing live "
-                    "fact or an under-specified budget factor at this cut"
-                ),
-                "repair_use_when": (
-                    "Use this when a probability-budget branch is stuck "
-                    "because the cut assertion lacks side facts, generator "
-                    "facts, size facts, or the budget ledger was charged to "
-                    "the wrong residual."
-                ),
-                "after_rewind_next": (
-                    "Inspect `lemma_hints`, then commit a revised `seq` cut "
-                    "with a stronger midpoint assertion and explicit remaining "
-                    "budget."
-                ),
-            }
         return {
             "why_checkpoint": "sequence cut / midpoint assertion point",
-            "repair_use_when": (
-                "Use this when the current branch is stuck because the cut "
-                "assertion lacks live facts, exposes the wrong frontier, or "
-                "created residual obligations that should have been part of "
-                "the midpoint."
-            ),
-            "after_rewind_next": (
-                "Inspect `align`, then commit a revised `seq` cut with the "
-                "missing state facts."
-            ),
+            "repair_use_when": "Use this to reconsider this committed sequence cut.",
+            "after_rewind_next": "Choose the continuation from the restored goal.",
         }
     if text.startswith("call "):
         return {
             "why_checkpoint": "named call route point",
-            "repair_use_when": (
-                "Use this if the selected named call lemma or frontier route "
-                "was wrong, or the call should have been preceded by a wrapper "
-                "or alignment step."
-            ),
-            "after_rewind_next": (
-                "Use `lookup_symbol` or `call_site_options` before committing "
-                "the next call route."
-            ),
+            "repair_use_when": "Use this to reconsider this committed call.",
+            "after_rewind_next": "Choose the continuation from the restored goal.",
         }
     if text.startswith("inline") or re.search(r"\binline\b", text):
         return {
             "why_checkpoint": "inline expansion point",
-            "repair_use_when": (
-                "Use this when broad inlining exposed too much code, hid a "
-                "call handle, or a targeted inline would keep the proof "
-                "frontier cleaner."
-            ),
-            "after_rewind_next": (
-                "Commit a targeted `inline{1}`/`inline{2}` or inspect "
-                "`call_site_options` before expanding more code."
-            ),
+            "repair_use_when": "Use this to reconsider this committed inline expansion.",
+            "after_rewind_next": "Choose the continuation from the restored goal.",
         }
-    if text.startswith("rcondt") or text.startswith("rcondf"):
+    labels = {
+        "rcondt": "forced-condition point",
+        "rcondf": "forced-condition point",
+        "swap": "statement-order point",
+        "conseq": "consequence reshaping point",
+        "rnd": "sampling point",
+        "sp": "program-frontier movement point",
+        "wp": "weakest-precondition movement point",
+        "if": "branch split point",
+        "proc": "procedure entry point",
+    }
+    if head in labels:
         return {
-            "why_checkpoint": "forced-condition surgery point",
-            "repair_use_when": (
-                "Use this when the forced branch condition was proved with "
-                "the wrong facts or later branches show the condition should "
-                "be split differently."
-            ),
-            "after_rewind_next": (
-                "Inspect `diagnose`, then commit the opposite condition or a "
-                "smaller condition proof."
-            ),
-        }
-    if text.startswith("swap"):
-        return {
-            "why_checkpoint": "statement-order surgery point",
-            "repair_use_when": (
-                "Use this when the statement alignment after a swap is worse "
-                "or later indexed tactics need a different order."
-            ),
-            "after_rewind_next": (
-                "Inspect `align`, then commit a smaller or differently indexed "
-                "`swap`."
-            ),
-        }
-    if text.startswith("conseq"):
-        return {
-            "why_checkpoint": "postcondition/precondition reshaping point",
-            "repair_use_when": (
-                "Use this when a later goal shows the consequence statement "
-                "dropped a needed fact or kept an obligation too strong."
-            ),
-            "after_rewind_next": (
-                "Inspect `subgoal_gap`, then commit a weaker postcondition or "
-                "stronger precondition."
-            ),
-        }
-    if text.startswith("rnd"):
-        return {
-            "why_checkpoint": "sampling alignment point",
-            "repair_use_when": (
-                "Use this when one-sided or paired random samples were "
-                "coupled in the wrong order."
-            ),
-            "after_rewind_next": (
-                "Inspect `tactic_forms` for `rnd`, `rnd{1}`, or `rnd{2}`, "
-                "then commit the smallest sampling alignment step."
-            ),
-        }
-    if head == "sp":
-        return {
-            "why_checkpoint": "program frontier movement point",
-            "repair_use_when": (
-                "Use this when the proof consumed too many or too few "
-                "statements before a branch/call/sampling frontier."
-            ),
-            "after_rewind_next": (
-                "Inspect `align`, then commit indexed `sp i j` with smaller "
-                "counts."
-            ),
-        }
-    if head == "wp":
-        return {
-            "why_checkpoint": "weakest-precondition frontier movement point",
-            "repair_use_when": (
-                "Use this when `wp` pushed the proof past useful structure or "
-                "created a heavy ambient goal before needed branch/call facts "
-                "were preserved."
-            ),
-            "after_rewind_next": (
-                "Commit a smaller indexed `wp`, or inspect `align` / "
-                "`tactic_forms` before continuing."
-            ),
-        }
-    if head == "if":
-        return {
-            "why_checkpoint": "branch split point",
-            "repair_use_when": (
-                "Use this when the branch split happened before the sides "
-                "were aligned or before the branch condition facts were live."
-            ),
-            "after_rewind_next": (
-                "Inspect `align`, then commit a smaller prefix or a conditional "
-                "proof with explicit side goals."
-            ),
-        }
-    if head == "proc":
-        return {
-            "why_checkpoint": "procedure entry point",
-            "repair_use_when": (
-                "Use this only when the chosen procedure-level route was "
-                "wrong, not for a local invariant or branch-surgery problem."
-            ),
-            "after_rewind_next": (
-                "Re-enter the procedure with a different high-level route or "
-                "inspect `diagnose` first."
-            ),
+            "why_checkpoint": labels[head],
+            "repair_use_when": "Use this to reconsider this committed structural step.",
+            "after_rewind_next": "Choose the continuation from the restored goal.",
         }
     return {
         "why_checkpoint": "recent committed tactic",
-        "repair_use_when": (
-            "Use this when the recent local step appears to have introduced "
-            "the current blocker."
-        ),
-        "after_rewind_next": (
-            "Try a smaller replacement step or inspect the current goal "
-            "before recommitting."
-        ),
+        "repair_use_when": "Use this to reconsider this committed step.",
+        "after_rewind_next": "Choose the continuation from the restored goal.",
     }

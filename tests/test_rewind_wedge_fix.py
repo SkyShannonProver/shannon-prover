@@ -223,7 +223,7 @@ def test_replay_loop_deep_prefix_completes_under_scaled_budget(monkeypatch) -> N
 
     monkeypatch.setattr(repl, "_run_backend", fake_run_backend)
     monkeypatch.setattr(
-        repl, "_snapshot_from_agent_view", lambda *, actions: object()
+        repl, "_snapshot_from_managed_goal_view", lambda *, actions: object()
     )
 
     tactics = [f"t{i}." for i in range(123)]
@@ -318,7 +318,7 @@ def test_replay_loop_completes_within_budget(monkeypatch) -> None:
 
     monkeypatch.setattr(repl, "_run_backend", fake_run_backend)
     monkeypatch.setattr(
-        repl, "_snapshot_from_agent_view", lambda *, actions: object()
+        repl, "_snapshot_from_managed_goal_view", lambda *, actions: object()
     )
 
     tactics = [f"t{i}." for i in range(5)]
@@ -351,7 +351,7 @@ def test_replay_loop_unbounded_when_budget_disabled(monkeypatch) -> None:
 
     monkeypatch.setattr(repl, "_run_backend", fake_run_backend)
     monkeypatch.setattr(
-        repl, "_snapshot_from_agent_view", lambda *, actions: object()
+        repl, "_snapshot_from_managed_goal_view", lambda *, actions: object()
     )
 
     tactics = [f"t{i}." for i in range(4)]

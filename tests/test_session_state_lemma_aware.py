@@ -23,7 +23,7 @@ ROOT = Path(__file__).resolve().parents[1]
 from core.easycrypt.session_state import (  # type: ignore  # noqa: E402
     REMAINING_UNKNOWN,
     read_session_state,
-    read_target_lemma_from_meta,
+    read_target_lemma_metadata,
     target_lemma_added,
 )
 
@@ -94,29 +94,74 @@ def test_target_lemma_added_handles_regex_special_chars_in_name() -> None:
 
 # ─── read_target_lemma_from_meta unit tests ───────────────────────────────
 
-def test_read_target_lemma_from_meta_present() -> None:
+def test_read_target_lemma_metadata_present() -> None:
     with tempfile.TemporaryDirectory() as td:
         d = Path(td)
         (d / "session_meta.json").write_text(
             json.dumps({"lemma": "step1", "file": "x.ec"}),
             encoding="utf-8",
         )
-        assert read_target_lemma_from_meta(d) == "step1"
+        metadata = read_target_lemma_metadata(d)
+        assert metadata.status == "target_lemma"
+        assert metadata.lemma == "step1"
+        assert metadata.source_file == "x.ec"
 
 
-def test_read_target_lemma_from_meta_missing_file() -> None:
+def test_read_target_lemma_metadata_missing_file() -> None:
     with tempfile.TemporaryDirectory() as td:
-        assert read_target_lemma_from_meta(Path(td)) == ""
+        metadata = read_target_lemma_metadata(Path(td))
+        assert metadata.status == "missing"
+        assert metadata.usable is False
 
 
-def test_read_target_lemma_from_meta_missing_field() -> None:
+def test_read_target_lemma_metadata_missing_field_is_invalid() -> None:
     with tempfile.TemporaryDirectory() as td:
         d = Path(td)
         (d / "session_meta.json").write_text(
             json.dumps({"file": "x.ec"}),
             encoding="utf-8",
         )
-        assert read_target_lemma_from_meta(d) == ""
+        metadata = read_target_lemma_metadata(d)
+        assert metadata.status == "invalid"
+        assert metadata.usable is False
+
+
+def test_read_target_lemma_metadata_non_string_file_is_invalid() -> None:
+    with tempfile.TemporaryDirectory() as td:
+        d = Path(td)
+        (d / "session_meta.json").write_text(
+            json.dumps({"lemma": "step1", "file": 7}),
+            encoding="utf-8",
+        )
+        metadata = read_target_lemma_metadata(d)
+        assert metadata.status == "invalid"
+        assert metadata.usable is False
+
+
+def test_read_target_lemma_metadata_padded_lemma_is_invalid() -> None:
+    with tempfile.TemporaryDirectory() as td:
+        d = Path(td)
+        (d / "session_meta.json").write_text(
+            json.dumps({"lemma": " step1 ", "file": "x.ec"}),
+            encoding="utf-8",
+        )
+        metadata = read_target_lemma_metadata(d)
+        assert metadata.status == "invalid"
+        assert metadata.usable is False
+
+
+def test_read_target_lemma_metadata_explicit_full_file() -> None:
+    with tempfile.TemporaryDirectory() as td:
+        d = Path(td)
+        (d / "session_meta.json").write_text(
+            json.dumps({"lemma": "", "file": "x.ec"}),
+            encoding="utf-8",
+        )
+        metadata = read_target_lemma_metadata(d)
+        assert metadata.status == "full_file"
+        assert metadata.lemma == ""
+        assert metadata.source_file == "x.ec"
+        assert metadata.usable is True
 
 
 # ─── read_session_state integration tests ────────────────────────────────
@@ -153,11 +198,17 @@ def test_read_session_state_target_closed_when_added_signal_present() -> None:
     assert state.num_remaining == 0
 
 
-def test_read_session_state_no_target_falls_back_to_legacy() -> None:
-    """No session_meta.json (or no lemma field) → legacy heuristic
-    still applies. ``No more goals`` on the latest prompt → closed."""
+def test_read_session_state_debug_mode_retains_full_file_fallback() -> None:
     with tempfile.TemporaryDirectory() as td:
         _write_session(Path(td), _LEGACY_NO_TARGET)
+        state = read_session_state(Path(td))
+    assert state.proof_candidate_closed is True
+    assert state.num_remaining == 0
+
+
+def test_read_session_state_full_file_metadata_enables_close_detection() -> None:
+    with tempfile.TemporaryDirectory() as td:
+        _write_session(Path(td), _LEGACY_NO_TARGET, lemma="")
         state = read_session_state(Path(td))
     assert state.proof_candidate_closed is True
     assert state.num_remaining == 0
@@ -189,12 +240,16 @@ def main() -> int:
         test_target_lemma_added_distinguishes_targets,
         test_target_lemma_added_empty_target_returns_false,
         test_target_lemma_added_handles_regex_special_chars_in_name,
-        test_read_target_lemma_from_meta_present,
-        test_read_target_lemma_from_meta_missing_file,
-        test_read_target_lemma_from_meta_missing_field,
+        test_read_target_lemma_metadata_present,
+        test_read_target_lemma_metadata_missing_file,
+        test_read_target_lemma_metadata_missing_field_is_invalid,
+        test_read_target_lemma_metadata_non_string_file_is_invalid,
+        test_read_target_lemma_metadata_padded_lemma_is_invalid,
+        test_read_target_lemma_metadata_explicit_full_file,
         test_read_session_state_target_open_overrides_helper_no_more_goals,
         test_read_session_state_target_closed_when_added_signal_present,
-        test_read_session_state_no_target_falls_back_to_legacy,
+        test_read_session_state_debug_mode_retains_full_file_fallback,
+        test_read_session_state_full_file_metadata_enables_close_detection,
         test_read_session_state_explicit_target_overrides_meta,
         test_read_session_state_explicit_empty_target_disables_lemma_aware,
     ]

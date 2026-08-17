@@ -15,6 +15,8 @@ ROOT = Path(__file__).resolve().parents[1]
 import _pathsetup  # noqa: F401,E402  (repo root on sys.path)
 
 import workflow.proof_node_manager as pnm  # noqa: E402
+from workflow.proof_management import ManagedTurn  # noqa: E402
+from workflow.proof_management.turn_view import selection_menu_action  # noqa: E402
 
 ProofNodeManager = pnm.ProofNodeManager
 
@@ -26,6 +28,16 @@ def _mgr(view):
     # latest_view / latest_snapshot are properties backed by self.lifecycle
     m.lifecycle = SimpleNamespace(latest_view=dict(view), latest_snapshot=None)
     m._audit = lambda *a, **k: None
+    def menu_turn(intent, observation, *, label, audit_kind, ok, audit_extra):
+        action = selection_menu_action(label, observation, ok=ok)
+        return ManagedTurn(
+            ok=ok,
+            workspace_view={"last_result": observation, **dict(view)},
+            snapshot=None,
+            intent=intent,
+            manager_actions=[action],
+        )
+    m.turns = SimpleNamespace(menu_turn=menu_turn)
     return m
 
 
@@ -39,7 +51,7 @@ _DONE = {"proof_status": {"status": "complete", "remaining_goals": 0}}
 
 def test_non_finish_never_gated() -> None:
     m = _mgr(_OPEN)
-    assert m._give_up_gate(SimpleNamespace(intent="probe_tactic", payload={})) is None
+    assert m._give_up_gate(SimpleNamespace(intent="tactic_forms", payload={"name": "wp"})) is None
 
 
 def test_success_finish_never_gated() -> None:
@@ -54,7 +66,7 @@ def test_success_finish_never_gated() -> None:
 
 def test_candidate_closed_states_never_gated() -> None:
     # a closed candidate (needs qed/save, not a give-up nudge) must pass through
-    for st in ("candidate_closed", "candidate_closed_pending_qed", "complete", "empty"):
+    for st in ("candidate_closed", "goals_discharged_pending_qed", "complete", "empty"):
         m = _mgr({"proof_status": {"status": st}})
         assert m._give_up_gate(_finish()) is None, st
 
@@ -63,15 +75,19 @@ def test_open_finish_deflected_once_then_allowed() -> None:
     # Default: ONE gentle, non-coercive nudge, then honor the finish.
     assert pnm._GIVE_UP_ALLOW_AFTER == 2
     m = _mgr(_OPEN)
-    # 1st give-up -> deflected with a gentle "your call" message (ok False)
+    # 1st give-up -> a typed, non-coercive control menu (ok False)
     g1 = m._give_up_gate(_finish())
     assert g1 is not None and g1.ok is False
-    assert "That is your call" in g1.repair_prompt
-    assert "finishing is fine" in g1.repair_prompt
-    assert "submit `finish` again" in g1.repair_prompt
+    menu = g1.workspace_view["last_result"]["control_menu"]
+    notice = menu["notice"]
+    assert "That is your call" in notice
+    assert "finishing is fine" in notice
+    assert menu["items"][0]["submit"] == {"intent": "finish", "payload": {}}
+    assert g1.manager_actions[0]["outcome_kind"] == "control_menu"
+    assert g1.manager_actions[0]["needs_attention"] is True
     # No coercive counter / "give-up N of M" pressure language.
-    assert "give-up 1 of" not in g1.repair_prompt.lower()
-    assert "make a genuine attempt" not in g1.repair_prompt.lower()
+    assert "give-up 1 of" not in notice.lower()
+    assert "make a genuine attempt" not in notice.lower()
     # 2nd give-up within the window -> honored (None = proceed to finish)
     assert m._give_up_gate(_finish()) is None
 
@@ -84,7 +100,9 @@ def test_window_prunes_old_giveups() -> None:
     g = m._give_up_gate(_finish())
     # the stale one is pruned, so this is the first fresh give-up -> deflected
     assert g is not None and g.ok is False
-    assert "That is your call" in g.repair_prompt
+    assert "That is your call" in (
+        g.workspace_view["last_result"]["control_menu"]["notice"]
+    )
     assert m._give_up_times == [m._give_up_times[-1]]  # only the fresh one survives
 
 

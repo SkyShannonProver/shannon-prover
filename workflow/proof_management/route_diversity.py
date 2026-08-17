@@ -211,9 +211,7 @@ def resume_route_candidate_from_manifest(
 ) -> ResumeRouteCandidate:
     score = _dict(manifest.get("score"))
     replay = _dict(manifest.get("replay"))
-    route_family = _dict(score.get("route_family"))
-    if not route_family:
-        route_family = _dict(_dict(manifest.get("lineage")).get("route_family"))
+    route_family = _dict(_dict(manifest.get("lineage")).get("route_family"))
     return ResumeRouteCandidate(
         path=path,
         score=_safe_float(score.get("value"), fallback_score),

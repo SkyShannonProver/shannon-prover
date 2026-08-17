@@ -26,14 +26,12 @@ This module is the client half of the fix:
    actually responds.
 
 Every step is verified; ANY failure returns a structured non-ok result
-and the caller falls back to the legacy restart+replay path. The whole
+and the caller falls back to the canonical restart+replay path. The whole
 feature is gated behind ``SHANNON_EC_DAEMON=1`` — with the flag off no
-code path here is ever entered, preserving byte-identical legacy
-behavior (hard requirement: the pipeline is mid-measurement-campaign).
+adoption code runs.
 """
 from __future__ import annotations
 
-import hashlib
 import json
 import os
 import shutil
@@ -44,9 +42,14 @@ from typing import Any
 # Single source of truth for the daemon session id lives in core; re-export the
 # name this module's callers use so the formula is no longer hand-mirrored here
 # (audit §2.5 / backlog #15).
+from core.easycrypt.committed_history import read_committed_tactics
 from core.easycrypt.daemon_backend import (
     session_id_for_dir as daemon_session_id_for_dir,
 )
+from core.easycrypt.session_events import append_event
+from core.easycrypt.session_projection import active_goal_hash_from_raw
+
+from .session_goal_identity import read_session_goal_identity
 
 __all__ = [
     "daemon_session_attach_enabled",
@@ -76,13 +79,7 @@ def _read_json(path: Path) -> dict[str, Any]:
 
 
 def _read_history_tactics(session_dir: Path) -> list[str]:
-    try:
-        lines = (Path(session_dir) / "history.ec").read_text(
-            encoding="utf-8"
-        ).splitlines()
-    except OSError:
-        return []
-    return [line.strip() for line in lines if line.strip()]
+    return read_committed_tactics(session_dir)
 
 
 def _socket_listening(socket_path: str) -> bool:
@@ -113,32 +110,6 @@ def _daemon_client(socket_path: str):
     return ECDaemonClient(socket_path)
 
 
-def _goal_hash_from_session_dir(session_dir: Path) -> str:
-    """Projection-derived goal hash for a session dir.
-
-    Mirrors ``workflow.proof_node_resume._goal_hash_from_session`` (the
-    function that minted the capsule's ``current_goal_hash``) so the
-    attach-time comparison is apples-to-apples."""
-    try:
-        from core.easycrypt.session_projection import read_proof_state_projection
-
-        projection = read_proof_state_projection(Path(session_dir))
-        value = projection.goal.active_goal_hash
-        if value:
-            return str(value)
-    except Exception:
-        pass
-    try:
-        current_out = (Path(session_dir) / "current.out").read_text(
-            encoding="utf-8"
-        )
-    except OSError:
-        return ""
-    if not current_out:
-        return ""
-    return hashlib.sha256(current_out.encode("utf-8")).hexdigest()
-
-
 def _fail(reason: str, **extra: Any) -> dict[str, Any]:
     result = {"ok": False, "reason": reason}
     result.update(extra)
@@ -153,7 +124,8 @@ def attempt_daemon_attach(
     file_path: str,
     lemma_name: str,
     replay_prefix: list[str],
-    expected_goal_hash: str = "",
+    expected_goal_hash: str,
+    goal_identity_required: bool,
 ) -> dict[str, Any]:
     """Try to adopt the donor's live daemon EC session for the target dir.
 
@@ -162,12 +134,14 @@ def attempt_daemon_attach(
     donor (disk state copied, daemon session renamed, daemon_state.json
     rewritten) and NO prefix replay is needed. On any verification or
     I/O failure returns ``{"ok": False, "reason": ...}`` and guarantees
-    the daemon is left in a state the legacy fallback path can handle
+    the daemon is left in a state the canonical fallback path can handle
     (a half-adopted session is closed so the fallback's ``-start``
     invalidation has nothing stale to trip over).
 
     Never raises.
     """
+    if type(goal_identity_required) is not bool:
+        return _fail("goal_identity_required_invalid")
     try:
         return _attempt_daemon_attach_inner(
             project_root=Path(project_root),
@@ -177,6 +151,7 @@ def attempt_daemon_attach(
             lemma_name=lemma_name,
             replay_prefix=list(replay_prefix or []),
             expected_goal_hash=str(expected_goal_hash or ""),
+            goal_identity_required=goal_identity_required,
         )
     except Exception as exc:  # absolute backstop: attach is opportunistic
         return _fail("unexpected_error", error=f"{type(exc).__name__}: {exc}"[:600])
@@ -196,6 +171,7 @@ def _attempt_daemon_attach_inner(
     lemma_name: str,
     replay_prefix: list[str],
     expected_goal_hash: str,
+    goal_identity_required: bool,
 ) -> dict[str, Any]:
     if not daemon_session_attach_enabled():
         return _fail("disabled")
@@ -205,6 +181,10 @@ def _attempt_daemon_attach_inner(
         return _fail("donor_is_target", donor=str(donor))
     if not donor.is_dir():
         return _fail("donor_dir_missing", donor=str(donor))
+    if goal_identity_required and not expected_goal_hash:
+        return _fail("expected_goal_hash_missing")
+    if not goal_identity_required and expected_goal_hash:
+        return _fail("closed_goal_hash_must_be_empty")
 
     requested = [str(t).strip() for t in replay_prefix if str(t).strip()]
     if not requested:
@@ -252,6 +232,29 @@ def _attempt_daemon_attach_inner(
             daemon_state_count=state_count,
             requested_count=len(requested),
         )
+
+    donor_goal_identity = read_session_goal_identity(donor)
+    if goal_identity_required != donor_goal_identity.goal_identity_required:
+        return _fail(
+            "goal_identity_class_mismatch",
+            expected_required=goal_identity_required,
+            observed_required=donor_goal_identity.goal_identity_required,
+            proof_status=donor_goal_identity.proof_status,
+        )
+    if goal_identity_required:
+        donor_goal_hash = donor_goal_identity.goal_hash
+        if not donor_goal_hash:
+            return _fail(
+                "goal_hash_unavailable",
+                expected=expected_goal_hash[:16],
+            )
+        if donor_goal_hash != expected_goal_hash:
+            return _fail(
+                "goal_hash_mismatch",
+                expected=expected_goal_hash[:16],
+                observed=donor_goal_hash[:16],
+            )
+
     if not _socket_listening(socket_path):
         return _fail("daemon_socket_dead", socket_path=socket_path)
 
@@ -277,15 +280,6 @@ def _attempt_daemon_attach_inner(
                 "daemon_commit_count_mismatch",
                 daemon_committed_count=daemon_count,
                 requested_count=len(requested),
-            )
-
-    if expected_goal_hash:
-        donor_goal_hash = _goal_hash_from_session_dir(donor)
-        if donor_goal_hash and donor_goal_hash != expected_goal_hash:
-            return _fail(
-                "goal_hash_mismatch",
-                expected=expected_goal_hash[:16],
-                observed=donor_goal_hash[:16],
             )
 
     # --- Mutating phase -------------------------------------------------
@@ -330,6 +324,54 @@ def _attempt_daemon_attach_inner(
         _best_effort_close(client, target_sid)
         shutil.rmtree(target, ignore_errors=True)
         return _fail("liveness_probe_empty")
+
+    if isinstance(raw, bytes):
+        live_goal_text = raw.decode("utf-8", errors="replace")
+    else:
+        live_goal_text = str(raw)
+    live_goal_hash = active_goal_hash_from_raw(live_goal_text)
+    if goal_identity_required and live_goal_hash != expected_goal_hash:
+        _best_effort_close(client, target_sid)
+        shutil.rmtree(target, ignore_errors=True)
+        return _fail(
+            "live_goal_hash_mismatch",
+            expected=expected_goal_hash[:16],
+            observed=live_goal_hash[:16],
+        )
+    if not goal_identity_required and live_goal_hash:
+        _best_effort_close(client, target_sid)
+        shutil.rmtree(target, ignore_errors=True)
+        return _fail(
+            "live_goal_identity_class_mismatch",
+            expected_required=False,
+            observed_required=True,
+        )
+
+    # The copied event log still names the donor (and, after repeated
+    # adoptions, its ancestors).  Commit the verified lineage only after the
+    # daemon rename, state rewrite, liveness probe, and goal-identity check all
+    # succeeded.  Readers may trust historical envelope aliases solely through
+    # this registered event.  Without it the copied artifacts are deliberately
+    # unreadable, so an append failure must tear down the adopted session and
+    # force the normal replay fallback.
+    try:
+        adoption_event_written = append_event(
+            target,
+            "session.adopted",
+            {
+                "donor_session_dir": str(donor.resolve()),
+                "target_session_dir": str(target.resolve()),
+                "donor_session_id": donor_sid,
+                "target_session_id": target_sid,
+            },
+            source="workflow.daemon_attach",
+        )
+    except Exception:
+        adoption_event_written = False
+    if adoption_event_written is not True:
+        _best_effort_close(client, target_sid)
+        shutil.rmtree(target, ignore_errors=True)
+        return _fail("adoption_event_append_failed")
 
     return {
         "ok": True,
@@ -386,7 +428,7 @@ def release_daemon_session(
 ) -> bool:
     """Explicitly release a cleanly finished worker's daemon session.
 
-    Called on CLEAN node termination (proved / give-up): a clean exit is
+    Called on CLEAN node termination (completion candidate / give-up): a clean exit is
     final — Layer-3 only resurrects crashes — so the live EC session has
     no future attacher and should be released instead of waiting for the
     idle TTL reaper. Gated by the same SHANNON_EC_DAEMON flag as attach so

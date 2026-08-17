@@ -3,7 +3,6 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from typing import Any
-from core.easycrypt.value_shapes import as_dict_copy as _dict
 from core.easycrypt.value_shapes import drop_empty as _drop_empty
 
 
@@ -23,31 +22,11 @@ class RouteFamilyEvidence:
 
 def infer_route_family(
     tactics: list[str],
-    *,
-    view: dict[str, Any] | None = None,
 ) -> RouteFamilyEvidence:
-    """Classify the current route shape without claiming proof usefulness."""
+    """Classify a committed tactic spine without reading compiler surfaces."""
 
     clean = [str(tactic).strip() for tactic in tactics if str(tactic).strip()]
     lowered = [tactic.lower() for tactic in clean]
-    view = dict(view or {})
-    proof_status = _dict(view.get("proof_status"))
-    current_layer = str(proof_status.get("current_layer") or "").strip()
-    panels = {key for key, value in view.items() if isinstance(value, dict)}
-
-    if "pure_tail_surface" in panels or current_layer in {
-        "ambient_logic",
-        "verification_residue",
-    }:
-        return RouteFamilyEvidence(
-            family="pure_tail_repair",
-            confidence="medium",
-            evidence=[
-                "current view is in ambient/residual logic",
-                *(_tactic_evidence(clean, limit=2)),
-            ],
-        )
-
     early_seq_index = _first_index(lowered, "seq")
     if early_seq_index >= 0 and early_seq_index <= 5:
         return RouteFamilyEvidence(
@@ -60,16 +39,12 @@ def infer_route_family(
         )
 
     call_index = _first_index(lowered, "call")
-    if call_index >= 0 or "call_site_surface" in panels or current_layer == "call_site":
+    if call_index >= 0:
         return RouteFamilyEvidence(
             family="call_boundary_route",
-            confidence="medium" if call_index >= 0 else "low",
+            confidence="medium",
             evidence=[
-                (
-                    f"call tactic at index {call_index + 1}"
-                    if call_index >= 0 else
-                    "current view exposes call-site evidence"
-                ),
+                f"call tactic at index {call_index + 1}",
                 *(_tactic_evidence(clean, limit=3)),
             ],
         )
@@ -123,6 +98,5 @@ def _first_index(tactics: list[str], head: str) -> int:
 
 def _tactic_evidence(tactics: list[str], *, limit: int) -> list[str]:
     return [f"tactic[{idx + 1}]={tactic}" for idx, tactic in enumerate(tactics[:limit])]
-
 
 

@@ -16,6 +16,7 @@ import time
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Callable, Optional
+from core.easycrypt.proof_lifecycle import has_discharged_goals
 from workflow.schemas.config import PROVER_DEFAULTS
 from workflow.proof_management.common import (
     node_memory_slug as _shared_node_memory_slug,
@@ -35,13 +36,11 @@ from workflow.tree.policy import (
     cap_tree_max_concurrent as _cap_tree_max_concurrent,
     effective_progress_count as _effective_progress_count,
     infer_abstraction_layer as _infer_abstraction_layer,
-    infer_abstraction_layer_from_proof_ir as _infer_abstraction_layer_from_proof_ir,
-    proof_ir_frontier_key as _proof_ir_frontier_key,
-    proof_ir_slice_for_layer_move as _proof_ir_slice_for_layer_move,
     tree_spawn_branch_key as _tree_spawn_branch_key,
     tree_spawn_limit_for_branch_key as _tree_spawn_limit_for_branch_key,
     undo_repair_mode as _undo_repair_mode,
 )
+from workflow.tree.result import SessionClosureCandidate, TreeRunResult
 from workflow.run_ui import (
     _BOLD,
     _CYAN,
@@ -60,30 +59,21 @@ from workflow.run_ui import (
     status,
 )
 from workflow.tree.trackers import (
-    ANALYSIS_TOOL_FLAGS,
     STRUCTURAL_COMMIT_OPENERS,
-    _ANALYSIS_TOOL_RE,
-    _APPLY_LEMMA_RE,
     _ProverTracker,
     _TreeProverTracker,
     _assistant_context_before_tool,
     _audit_drop_empty,
     _bash_invokes_easycrypt,
-    _event_log_has_candidate_closed,
-    _extract_apply_lemma_names,
     _first_word,
     _handle_stream_event,
     _is_background_tool_result,
     _is_permission_denied_tool_result,
-    _is_proof_success,
     _proof_intent_tool_description,
     _report_tool_call,
     _session_dir_path,
-    _session_event_path,
-    _session_history_path,
-    _session_projection_has_candidate_closed,
     _session_snapshot,
-    _session_state_has_candidate_closed,
+    _snapshot_has_completion_candidate,
     _summarize_tool,
     _thinking_markers,
     _truncate_audit_text,
@@ -333,7 +323,7 @@ def _layer3_gates_pass(
     *,
     respawn_disabled: bool,
     already_respawned: bool,
-    proved: bool,
+    completion_candidate: bool,
     supervisor_killed: bool,
     worker_crashed: bool,
     context_respawn_count: int,
@@ -355,14 +345,15 @@ def _layer3_gates_pass(
         return False
     if already_respawned:  # one-shot per dead node
         return False
-    if proved:
+    if completion_candidate:
         return False
     if supervisor_killed:  # only a worker SELF-exit (crash / clean give-up)
         return False
     if not worker_crashed:
         # CRASH-ONLY (the tightening): a clean give-up exits gracefully
         # (returncode 0 + a final `result` event) and shows up here as
-        # `finished and not proved` — but that is a real, MEASURABLE agent
+        # `finished` without a completion candidate — but that is a real,
+        # MEASURABLE agent
         # decision and must END the run, never be respawned. Only an ABNORMAL
         # worker death (non-zero/killed exit OR no clean final-result emitted)
         # is an infra death the agent didn't decide; replay recovers the lost
@@ -449,12 +440,10 @@ def _session_goal_state_text(
     try:
         from core.easycrypt.session_projection import read_proof_state_projection
         projection = read_proof_state_projection(session_path)
-        if projection.status in ("candidate_closed", "verified"):
-            parsed = projection.goal.parsed_goal or {}
-            if parsed.get("post_qed_projection"):
-                return "Proof is already complete; no current goal remains."
-            if projection.goal.active_goal_preview:
-                return projection.goal.active_goal_preview
+        if has_discharged_goals(projection.status):
+            return "No current goal remains in this EasyCrypt session."
+        if projection.goal.active_goal_preview:
+            return projection.goal.active_goal_preview
     except Exception:
         pass
     try:
@@ -475,41 +464,54 @@ def _session_goal_state_text(
     return ""
 
 
-def _fetch_lemma_signature(name: str, cwd: str) -> str:
-    """Return the exact declaration for `name` by scanning EC theory dirs.
-
-    Uses `core.easycrypt.ec_search.lookup_lemma_signature` directly (no
-    subprocess) for speed. Returns empty string on failure.
-    """
-    try:
-        from pathlib import Path
-        from core.easycrypt.search import ec_search
-        search_dirs: list[Path] = []
-        for rel in ("easycrypt-src/theories", "eval/examples"):
-            p = Path(cwd) / rel
-            if p.is_dir():
-                search_dirs.append(p)
-        if not search_dirs:
-            return ""
-        result = ec_search.lookup_lemma_signature(name, search_dirs, None)
-        # Strip the header lines — keep just the signature body
-        lines = [ln for ln in result.splitlines()
-                 if ln and not ln.startswith("===")
-                 and not ln.startswith("Usage:")
-                 and not ln.startswith("Supply ")
-                 and not ln.startswith("-- ")]
-        body = "\n".join(lines).strip()
-        # Empty body means "no match" (lookup_lemma_signature returned the
-        # "No declaration named..." message which we've just filtered out)
-        if "No declaration named" in result:
-            return ""
-        return body
-    except Exception:
-        return ""
-
-
 def _node_memory_slug(value: str) -> str:
     return _shared_node_memory_slug(value)
+
+
+def _session_records_for_nodes(nodes: list, *, winner) -> list[dict]:
+    """One manifest record per (node, Claude session), deduped by session id.
+
+    A ctx-respawn continuation is a distinct Claude session of the SAME node,
+    so a node contributes one record per session in first-seen (chronological)
+    order. Token accounting and thinking-trace joins need every link of the
+    chain; listing only the first session orphans all post-respawn turns.
+    """
+    records: list[dict] = []
+    seen: set[str] = set()
+    for node in nodes:
+        tracker = node.tracker
+        session_ids = list(getattr(tracker, "session_ids", []) or [])
+        if not session_ids and tracker.session_id:
+            session_ids = [tracker.session_id]
+        for index, session_id in enumerate(session_ids):
+            if not session_id or session_id in seen:
+                continue
+            seen.add(session_id)
+            record = {
+                "node": f"Tree-{node.node_id}",
+                "session_id": session_id,
+                "session_index": index,
+                "continuation": index > 0,
+                "winner": node is winner,
+                "completion_candidate": bool(
+                    tracker.completion_candidate_ready
+                ),
+                "committed_count": int(tracker.committed_count),
+                "max_committed_count_seen": int(
+                    getattr(
+                        tracker,
+                        "max_committed_count_seen",
+                        tracker.committed_count,
+                    )
+                ),
+            }
+            agent_backend = str(
+                getattr(tracker, "agent_backend", "codex") or "codex"
+            )
+            if agent_backend != "claude":
+                record["agent_backend"] = agent_backend
+            records.append(record)
+    return records
 
 
 def _allowed_node_memory_dir(
@@ -539,6 +541,8 @@ class ProofTreeNode:
     grace_deadline: Optional[float] = None  # set when child is spawned
     children: list[str] = field(default_factory=list)
     expected_resume_goal_hash: str = ""
+    expected_resume_goal_identity_required: bool = True
+    resume_replay_gate_required: bool = False
     resume_replay_gate_checked: bool = False
     route_family: dict[str, object] = field(default_factory=dict)
     route_family_event_key: str = ""
@@ -546,6 +550,26 @@ class ProofTreeNode:
     # has been answered with a supervisor respawn (replay), so we never respawn
     # the same dead worker twice.
     layer3_respawned: bool = False
+
+
+def _select_tree_run_result(
+    nodes: list[ProofTreeNode],
+) -> tuple[ProofTreeNode | None, bool]:
+    """Select a session candidate or the best diagnostic partial node."""
+
+    if not nodes:
+        return None, False
+    structured_closers = [
+        node
+        for node in nodes
+        if _snapshot_has_completion_candidate(node.tracker.session_snapshot)
+    ]
+    if structured_closers:
+        return max(
+            structured_closers,
+            key=lambda node: node.tracker.committed_count,
+        ), True
+    return max(nodes, key=lambda node: node.tracker.committed_count), False
 
 
 def _find_branch_point(
@@ -607,6 +631,7 @@ def _resume_replay_gate(
     *,
     replay_prefix: list[str],
     expected_goal_hash: str,
+    expected_goal_identity_required: bool,
     agent_has_rewound: bool = False,
 ) -> tuple[bool, str]:
     """Return (checked, drift_reason) for a resumed branch replay gate.
@@ -615,18 +640,25 @@ def _resume_replay_gate(
     prefix replayed into the session matches the checkpoint we resumed from, to
     catch genuine backend replay desync.
 
-    It must NOT fire once the agent has intentionally rewound into the prefix.
-    Under transparent resume the agent owns its whole proof and may
+    With a bound expected hash it must NOT fire once the agent has intentionally
+    rewound into the prefix. Under transparent resume the agent owns its whole
+    proof and may
     `undo_to_checkpoint` / `undo_last_step` into the replayed prefix to discharge
     an admit or rebuild an upstream invariant — which legitimately rewrites the
     prefix. A history/prefix mismatch is then the feature working, not desync,
     and the gate can no longer tell the two apart. A genuine replay desync shows
     up immediately on resume, BEFORE any agent undo, so gating on
     ``agent_has_rewound`` keeps real desync detection while it stops the gate
-    from killing a valid branch that did exactly what Tasks #1/#2 enabled.
+    from killing a valid branch that did exactly what Tasks #1/#2 enabled. A
+    missing expected hash is different for an open proof: no prior frontier was
+    ever bound, so a rewind cannot retroactively make that resume promise
+    verifiable.  A capsule may, however, explicitly classify its checkpoint as
+    closed; in that case an empty hash is the canonical identity and a later
+    intentional rewind is valid.  ``expected_goal_identity_required`` carries
+    that distinction instead of trying to reconstruct it from an empty string.
     """
-    if not expected_goal_hash:
-        return True, ""
+    if expected_goal_identity_required and not expected_goal_hash:
+        return True, "resume replay goal identity missing for an open proof"
     if agent_has_rewound:
         return True, ""
     if snapshot is None or not snapshot.exists:
@@ -653,6 +685,16 @@ def _resume_replay_gate(
             latest_tactic = str(latest_transition.get("tactic") or "").strip()
             if latest_tactic != expected_prefix[-1]:
                 return False, ""
+        if not expected_goal_identity_required:
+            if (
+                snapshot.goals_discharged
+                or snapshot.qed_committed
+                or snapshot.offline_verified
+            ):
+                return True, ""
+            return True, (
+                "resume replay goal identity missing for an open proof"
+            )
         observed_hash = str(snapshot.goal_hash or "")
         if not observed_hash:
             return False, ""
@@ -662,6 +704,11 @@ def _resume_replay_gate(
                 f"{expected_goal_hash[:12]}, observed {observed_hash[:12]}"
             )
         return True, ""
+    if not expected_goal_identity_required:
+        # Missing the exact checkpoint cannot waive a missing identity: the
+        # later state says nothing about which frontier was resumed.  For an
+        # explicitly closed capsule this is closed-state drift.
+        return True, "resume replay moved beyond an explicitly closed checkpoint"
     # The child already moved beyond the checkpoint before the monitor saw the
     # exact replay state.  The prefix matched, so avoid killing a valid branch.
     return True, ""
@@ -742,17 +789,6 @@ class NodeSupervisor:
             self.cwd, f".ec_session_{session_tag}", max_chars=2000,
         )
 
-    def _branch_proof_ir(self, session_dir: Path) -> dict:
-        """Read the parent's current ProofIR for child prompt slicing."""
-        try:
-            from core.easycrypt.session_agent_view import build_proof_context_view
-
-            view = build_proof_context_view(session_dir, live_tool_name=None)
-            proof_ir = view.get("proof_ir") if isinstance(view, dict) else None
-            return proof_ir if isinstance(proof_ir, dict) else {}
-        except Exception:
-            return {}
-
     def _node_route_tactics(self, node: ProofTreeNode) -> list[str]:
         tactics = list(node.tracker.accepted_tactic_texts or [])
         if tactics:
@@ -821,41 +857,11 @@ class NodeSupervisor:
 
     def _infer_branch_layer(
         self,
-        session_dir: Path,
         parent_goal: str,
         failed_suffix: list[str],
-        *,
-        proof_ir: dict | None = None,
     ) -> str:
-        """Prefer ProofIR's typed layer; fall back to raw goal regex."""
-        fallback = _infer_abstraction_layer(parent_goal, failed_suffix)
-        try:
-            if proof_ir is None:
-                proof_ir = self._branch_proof_ir(session_dir)
-            layer = _infer_abstraction_layer_from_proof_ir(proof_ir, fallback=fallback)
-            return layer or fallback
-        except Exception:
-            return fallback
-
-    def _attach_proof_ir_slice(
-        self,
-        session_dir: Path,
-        layer_move_action: Optional[dict],
-        proof_ir: dict | None = None,
-    ) -> Optional[dict]:
-        if not isinstance(layer_move_action, dict):
-            return layer_move_action
-        if proof_ir is None:
-            proof_ir = self._branch_proof_ir(session_dir)
-        proof_slice = _proof_ir_slice_for_layer_move(
-            proof_ir,
-            move=str(layer_move_action.get("move") or "same"),
-        )
-        if not proof_slice:
-            return layer_move_action
-        enriched = dict(layer_move_action)
-        enriched["proof_ir_slice"] = proof_slice
-        return enriched
+        """Classify scheduler layer from the authoritative goal surface."""
+        return _infer_abstraction_layer(parent_goal, failed_suffix)
 
     def _winner_shadow_selection(
         self,
@@ -884,7 +890,9 @@ class NodeSupervisor:
                 "route_family": family,
                 "committed_count": committed,
                 "max_committed_count_seen": max_seen,
-                "proved": bool(node.tracker.proved),
+                "completion_candidate": bool(
+                    node.tracker.completion_candidate_ready
+                ),
                 "selected": node is selected,
             }
             rows.append(row)
@@ -900,7 +908,7 @@ class NodeSupervisor:
                 best_by_family[family] = row
         rows.sort(
             key=lambda item: (
-                bool(item.get("proved")),
+                bool(item.get("completion_candidate")),
                 int(item.get("committed_count") or 0),
                 int(item.get("max_committed_count_seen") or 0),
             ),
@@ -973,11 +981,11 @@ class NodeSupervisor:
             )
             self.logger.info("Killed %s: %s", node.node_id, reason)
 
-    def _in_analysis_mode(self, node, window: float = 90.0) -> bool:
+    def _in_readonly_backend_window(self, node, window: float = 90.0) -> bool:
         t = node.tracker
-        if t.last_analysis_call_time <= 0:
+        if t.last_readonly_backend_call_time <= 0:
             return False
-        return time.time() - t.last_analysis_call_time < window
+        return time.time() - t.last_readonly_backend_call_time < window
 
     def _kill_least_productive(self):
         active = self._active_nodes()
@@ -1038,18 +1046,13 @@ class NodeSupervisor:
         blocked_openers: Optional[list[str]] = None,
         layer_move_action: Optional[dict] = None,
         expected_resume_goal_hash: str = "",
+        expected_resume_goal_identity_required: bool = True,
         spawn_reason: str = "",
         route_family: Optional[dict] = None,
         resume_context: Optional[dict] = None,
     ) -> ProofTreeNode:
         session_tag = f"prover_tree_{node_id.replace('.', '_')}"
-        build_kwargs = {
-            "strategy_index": strategy_index,
-            "parent_goal_state": parent_goal_state,
-            "discoveries": list(self.shared_discoveries),
-            "blocked_openers": list(blocked_openers or []),
-            "layer_move_action": layer_move_action,
-        }
+        build_kwargs = {"layer_move_action": layer_move_action}
         if resume_context:
             build_kwargs["resume_context"] = resume_context
         cmd = self.build_cmd_fn(
@@ -1066,10 +1069,6 @@ class NodeSupervisor:
         # `.ec_session` or a sibling tree's dir).
         child_env = os.environ.copy()
         child_env["EC_SESSION_DIR"] = f".ec_session_{session_tag}"
-        child_env["SHANNON_LEGACY_DISPLAY"] = os.environ.get(
-            "SHANNON_LEGACY_DISPLAY",
-            "hidden",
-        )
         # Fresh-context continuation safety guard #5 (in-worker runway): hand the
         # worker the supervisor's hard wall-clock deadline (unix epoch seconds) so
         # ProofNodeRuntime._wall_deadline() can refrain from starting an in-worker
@@ -1144,6 +1143,13 @@ class NodeSupervisor:
             depth=depth,
             spawn_time=time.time(),
             expected_resume_goal_hash=str(expected_resume_goal_hash or ""),
+            expected_resume_goal_identity_required=(
+                expected_resume_goal_identity_required
+            ),
+            resume_replay_gate_required=(
+                bool(str(expected_resume_goal_hash or ""))
+                or spawn_reason in {"resume_root", "layer3_crash_respawn"}
+            ),
             route_family=inferred_family,
         )
         # Credit prefix tactics to the child so it doesn't look like
@@ -1163,6 +1169,9 @@ class NodeSupervisor:
             failed_at_branch=list(negative_signal or []),
             layer_move_action=layer_move_action,
             expected_resume_goal_hash=str(expected_resume_goal_hash or ""),
+            expected_resume_goal_identity_required=(
+                expected_resume_goal_identity_required
+            ),
         )
         self._refresh_node_route_family(node, reason="spawn")
         return node
@@ -1173,7 +1182,8 @@ class NodeSupervisor:
         Fires ONLY when the WORKER PROCESS DIED ABNORMALLY (a crash — non-zero/
         killed exit or no clean `_emit_final` result) after a degraded
         (context-respawned) run while the proof was still open. The trigger is
-        `finished and not proved and context_respawn_count>0 and not
+        `finished` without a completion candidate, with
+        `context_respawn_count>0` and not
         supervisor_killed and worker_crashed`. A crash is an infra death the
         agent never decided; the in-process EC session is gone, so unlike
         Layers 1-2 we pay the replay cost to rebuild proof state. A CLEAN
@@ -1226,14 +1236,14 @@ class NodeSupervisor:
             or not bool(getattr(t, "final_result_emitted", False))
         )
         # A real qed is honored upstream (winner block, before this loop); a
-        # give-up with proved=True never reaches here. Degraded-only: the node must
+        # A session completion candidate never reaches here. Degraded-only: the node must
         # have actually swapped context in-worker, else it is an ordinary give-up we
         # must honor. committed_count>0: replaying zero tactics is pointless. depth
         # cap + one-shot (layer3_respawned) round out the gate.
         if not _layer3_gates_pass(
             respawn_disabled=respawn_disabled(),
             already_respawned=bool(node.layer3_respawned),
-            proved=bool(t.proved),
+            completion_candidate=bool(t.completion_candidate_ready),
             supervisor_killed=bool(getattr(t, "supervisor_killed", False)),
             worker_crashed=worker_crashed,
             context_respawn_count=int(getattr(t, "context_respawn_count", 0) or 0),
@@ -1290,7 +1300,7 @@ class NodeSupervisor:
         # the per-tactic replay tax (~30 min at 167 tactics, observed
         # 2026-06-11 on equiv_step4). Verification + fallback-to-replay live in
         # workflow.proof_management.daemon_attach; with the flag off this block
-        # is skipped entirely and the legacy replay path is untouched.
+        # is skipped entirely and the canonical replay path is untouched.
         try:
             from workflow.proof_management.daemon_attach import (
                 daemon_session_attach_enabled,
@@ -1299,9 +1309,8 @@ class NodeSupervisor:
             if daemon_session_attach_enabled():
                 resume_context["daemon_attach"] = {
                     "donor_session_dir": f".ec_session_{session_tag}",
-                    "expected_goal_hash": str(
-                        getattr(loaded, "current_goal_hash", "") or ""
-                    ),
+                    "expected_goal_hash": str(loaded.current_goal_hash or ""),
+                    "goal_identity_required": loaded.goal_identity_required,
                 }
         except Exception:
             pass
@@ -1325,7 +1334,10 @@ class NodeSupervisor:
                 [],
                 depth=node.depth + 1,
                 parent_goal_state=str(getattr(loaded, "current_goal_preview", "") or ""),
-                expected_resume_goal_hash=str(getattr(loaded, "current_goal_hash", "") or ""),
+                expected_resume_goal_hash=str(loaded.current_goal_hash or ""),
+                expected_resume_goal_identity_required=(
+                    loaded.goal_identity_required
+                ),
                 spawn_reason="layer3_crash_respawn",
                 resume_context=resume_context if isinstance(resume_context, dict) else {},
             )
@@ -1368,46 +1380,24 @@ class NodeSupervisor:
         # the generic layer classifier treats the goal surface as the
         # branch context.
         parent_goal = self._read_parent_goal(node)
-        sess_dir = Path(self.cwd) / f".ec_session_{t.session_tag}"
-        proof_ir = self._branch_proof_ir(sess_dir)
         snapshot = t.session_snapshot
         goal_hash = str(snapshot.goal_hash or "") if snapshot else ""
-        frontier_key = _proof_ir_frontier_key(proof_ir)
-
-        # Fact detection is memory, not strategy ownership. Generic
-        # layer-move spawning below chooses the action; facts only help
-        # avoid rerunning the same failed experiment.
-        failed_experiment_memory = None
-        try:
-            from core.easycrypt.session_facts import (
-                failed_branch_experiment_cluster_facts,
-            )
-            exp_facts = failed_branch_experiment_cluster_facts(sess_dir)
-            if exp_facts:
-                failed_experiment_memory = dict(exp_facts[0].payload)
-        except Exception:
-            failed_experiment_memory = None
 
         current_layer = self._infer_branch_layer(
-            sess_dir,
             parent_goal,
             failed_suffix,
-            proof_ir=proof_ir,
         )
         selected_action = None
         selected_branch_key = None
         for layer_move_action in _candidate_layer_move_actions(
             current_layer,
             failed_suffix=failed_suffix,
-            failed_experiment_memory=failed_experiment_memory,
         ):
             branch_key = _tree_spawn_branch_key(
                 len(prefix),
                 failed_suffix[0] if failed_suffix else "",
-                failed_experiment_memory=failed_experiment_memory,
                 layer_move_action=layer_move_action,
                 goal_hash=goal_hash,
-                frontier_key=frontier_key,
             )
             branch_limit = _tree_spawn_limit_for_branch_key(branch_key)
             if self.exhausted_branches.get(branch_key, 0) < branch_limit:
@@ -1421,11 +1411,6 @@ class NodeSupervisor:
                 len(prefix), current_layer,
             )
             return False
-        selected_action = self._attach_proof_ir_slice(
-            sess_dir,
-            selected_action,
-            proof_ir=proof_ir,
-        )
         self.exhausted_branches[selected_branch_key] = (
             self.exhausted_branches.get(selected_branch_key, 0) + 1
         )
@@ -1474,10 +1459,6 @@ class NodeSupervisor:
                    f", action: {current_layer}->{selected_action['move']}"
                    if selected_action else ""
                )
-               + (
-                   f", memory: {failed_experiment_memory['failure_shape']}"
-                   if failed_experiment_memory else ""
-               )
                + ")",
                _YELLOW)
 
@@ -1506,7 +1487,7 @@ class NodeSupervisor:
         (a resume capsule is a replay promise; drift burns budget on stale state)."""
         for node in list(self._active_nodes()):
             if (
-                not node.expected_resume_goal_hash
+                not node.resume_replay_gate_required
                 or node.resume_replay_gate_checked
             ):
                 continue
@@ -1514,6 +1495,9 @@ class NodeSupervisor:
                 node.tracker.session_snapshot,
                 replay_prefix=node.replay_prefix,
                 expected_goal_hash=node.expected_resume_goal_hash,
+                expected_goal_identity_required=(
+                    node.expected_resume_goal_identity_required
+                ),
                 # An intentional rewind into the replayed prefix
                 # (undo_to_checkpoint / undo_last_step) is the transparent-
                 # resume feature, not backend desync. Once it has happened
@@ -1626,7 +1610,7 @@ class NodeSupervisor:
                 status("Orchestrator", f"  ✗ {msg}", _RED)
             status("Orchestrator",
                    "Inspect each surviving session dir's "
-                   "events.jsonl + proof_context_views/ + the claude trace "
+                   "events.jsonl + current artifacts + the agent trace "
                    "before retrying. Don't blindly rerun — the "
                    "agent's reasoning was off-track when it tried "
                    "this.", _RED)
@@ -1664,52 +1648,6 @@ class NodeSupervisor:
         # Status bar
         _update_status_bar(_build_tree_status(self.nodes, elapsed))
 
-    def _tick_capture_discoveries(self, active) -> None:
-        """Harvest [SEARCH]/lemma discoveries from prover streams into shared_discoveries."""
-        for node in active:
-            t = node.tracker
-            for tac in t.accepted_tactic_texts:
-                # Capture lemma names used in tactics (apply, rewrite, have)
-                for keyword in ["apply ", "rewrite ", "have :=", "byequiv "]:
-                    if keyword in tac and tac not in self.shared_discoveries:
-                        discovery = f"[Tree-{node.node_id}] {tac}"
-                        if discovery not in self.shared_discoveries:
-                            self.shared_discoveries.append(discovery)
-                            if len(self.shared_discoveries) > 20:
-                                self.shared_discoveries.pop(0)  # keep last 20
-
-    def _tick_sig_escalation(self, active) -> None:
-        """C2: inject a [SIG] discovery after repeated apply-failures on one lemma name."""
-        for node in active:
-            t = node.tracker
-            if t.errors_since_last_accept < 1:
-                continue
-            for lemma_nm, count in t.attempted_applies.items():
-                if count < 2:
-                    continue
-                sig_tag = f"[SIG] {lemma_nm}: "
-                # Skip if we already injected a sig for this lemma
-                if any(d.startswith(sig_tag) for d in self.shared_discoveries):
-                    continue
-                sig = _fetch_lemma_signature(lemma_nm, self.cwd)
-                if not sig:
-                    # Negative cache: don't retry every cycle
-                    self.shared_discoveries.append(
-                        f"{sig_tag}(lookup failed — name may not match any in-scope decl)"
-                    )
-                    if len(self.shared_discoveries) > 20:
-                        self.shared_discoveries.pop(0)
-                    continue
-                entry = f"{sig_tag}{sig.strip()[:400]}"
-                self.shared_discoveries.append(entry)
-                if len(self.shared_discoveries) > 20:
-                    self.shared_discoveries.pop(0)
-                status("Orchestrator",
-                       f"🔎 Auto-sig injected for Tree-{node.node_id}: "
-                       f"{lemma_nm} attempted {count}× — signature now in "
-                       f"shared discoveries for next spawn.",
-                       _YELLOW)
-
     def _tick_spawn_on_structural_undo(self, active) -> None:
         """Trigger 1: defer-then-spawn a sibling when a node structurally undoes."""
         for node in list(active):
@@ -1733,15 +1671,11 @@ class NodeSupervisor:
                         and len(prefix) >= 1):  # need at least 1 tactic as prefix
                     parent_goal = self._read_parent_goal(node)
                     sess_dir = Path(self.cwd) / f".ec_session_{t.session_tag}"
-                    proof_ir = self._branch_proof_ir(sess_dir)
                     snapshot = t.session_snapshot
                     goal_hash = str(snapshot.goal_hash or "") if snapshot else ""
-                    frontier_key = _proof_ir_frontier_key(proof_ir)
                     current_layer = self._infer_branch_layer(
-                        sess_dir,
                         parent_goal,
                         failed,
-                        proof_ir=proof_ir,
                     )
                     selected_action = None
                     selected_branch_key = None
@@ -1754,7 +1688,6 @@ class NodeSupervisor:
                             failed[0] if failed else "",
                             layer_move_action=layer_move_action,
                             goal_hash=goal_hash,
-                            frontier_key=frontier_key,
                         )
                         branch_limit = _tree_spawn_limit_for_branch_key(branch_key)
                         if self.exhausted_branches.get(branch_key, 0) < branch_limit:
@@ -1770,11 +1703,6 @@ class NodeSupervisor:
                         t.structural_undo_branch = None
                         t.structural_undo_branch_time = 0.0
                         continue
-                    selected_action = self._attach_proof_ir_slice(
-                        sess_dir,
-                        selected_action,
-                        proof_ir=proof_ir,
-                    )
                     self.exhausted_branches[selected_branch_key] = (
                         self.exhausted_branches.get(selected_branch_key, 0) + 1
                     )
@@ -1866,14 +1794,11 @@ class NodeSupervisor:
                     min_gap = 0
                 if self._protected_parent(node) and idle < min_idle:
                     continue
-                # Analysis-work grace: if the laggard ran an analysis
-                # tool (-bridge-probe, -search, -sig, -try, -goal-info,
-                # ...) within the gap window, it's actively doing the
-                # kind of probing Step 1b prescribes before a have-> /
-                # cross-file apply. Don't kill on tactic-count lag alone.
-                if t.last_analysis_call_time > 0:
-                    since_analysis = time.time() - t.last_analysis_call_time
-                    if since_analysis < max(self.progress_gap_idle, min_idle / 2):
+                # A current-call native/compiler read may temporarily consume
+                # time without advancing the tactic count.
+                if t.last_readonly_backend_call_time > 0:
+                    since_read = time.time() - t.last_readonly_backend_call_time
+                    if since_read < max(self.progress_gap_idle, min_idle / 2):
                         continue
                 if (leader_n >= laggard_n * self.progress_gap_ratio
                         and leader_n - laggard_n >= min_gap
@@ -1887,17 +1812,15 @@ class NodeSupervisor:
                         reason_parts.append("(structural grace expired)")
                     self._kill_node(node, " ".join(reason_parts))
                     # Spawn ONE child from leader (only first kill triggers spawn).
-                    # Skip if leader is in analysis mode — the spawn would
-                    # produce a child that duplicates the same lemma research.
+                    # Avoid duplicating a currently active native/compiler read.
                     if not rebalance_spawned:
-                        if self._in_analysis_mode(best):
+                        if self._in_readonly_backend_window(best):
                             self.logger.info(
                                 "Skip rebalance spawn from Tree-%s: leader is in "
-                                "analysis mode (last analysis tool call %.0fs ago). "
-                                "Spawn would duplicate research, not explore an "
-                                "alternative strategy.",
+                                "a read-only backend window (last call %.0fs ago).",
                                 best.node_id,
-                                time.time() - best.tracker.last_analysis_call_time,
+                                time.time()
+                                - best.tracker.last_readonly_backend_call_time,
                             )
                         else:
                             self._try_spawn_from(best, "Rebalancing from leader.")
@@ -1925,18 +1848,14 @@ class NodeSupervisor:
             idle_since_accept = time.time() - t.last_accept_time
             if (t.errors_since_last_accept >= self.stuck_errors
                     and idle_since_accept >= self.stuck_idle_seconds):
-                # Skip spawn if parent is in analysis mode — errors
-                # during -search/-sig research are typically about
-                # finding the right lemma name; child would do the
-                # same research from same prefix.
-                if self._in_analysis_mode(node):
+                if self._in_readonly_backend_window(node):
                     now = time.time()
                     if now - t.last_analysis_spawn_skip_log_time >= 30:
                         self.logger.info(
                             "Skip error-stuck spawn from Tree-%s: parent is in "
-                            "analysis mode (last analysis tool call %.0fs ago).",
+                            "a read-only backend window (last call %.0fs ago).",
                             node.node_id,
-                            now - node.tracker.last_analysis_call_time,
+                            now - node.tracker.last_readonly_backend_call_time,
                         )
                         t.last_analysis_spawn_skip_log_time = now
                     continue
@@ -1986,11 +1905,10 @@ class NodeSupervisor:
                 else:
                     node.grace_deadline = None
 
-    def run(self) -> tuple:
+    def run(self) -> TreeRunResult:
         # Rebind config onto locals so the monitor body below reads as it did in
         # the former run_tree_prover (the body uses bare `cwd`/`timeout`/... ; the
-        # methods read self.*). last_* writes target the module-global
-        # run_tree_prover wrapper, exactly as before.
+        # methods read self.*).
         build_cmd_fn = self.build_cmd_fn
         cwd = self.cwd
         timeout = self.timeout
@@ -2016,9 +1934,6 @@ class NodeSupervisor:
         # max_concurrent is already capped in __init__ (self.max_concurrent),
         # rebound capped into this local above; cap is no longer repeated here.
         initial_provers = max(1, min(int(initial_provers or 1), max_concurrent))
-        run_tree_prover.last_session_ids = []
-        run_tree_prover.last_information_source_audit = []
-        run_tree_prover.last_payload_audit_path = ""
         resume_root_policy = "score"
         if initial_branches:
             resume_root_policy = str(
@@ -2034,7 +1949,6 @@ class NodeSupervisor:
         )
         lineage = self.lineage
         if payload_audit_path:
-            run_tree_prover.last_payload_audit_path = str(Path(payload_audit_path))
             payload_audit.record(
                 "run_start",
                 cwd=str(cwd),
@@ -2057,9 +1971,6 @@ class NodeSupervisor:
 
         self.nodes: dict[str, ProofTreeNode] = {}
         nodes = self.nodes
-        self.shared_discoveries: list[str] = []  # accumulated across all provers
-        shared_discoveries = self.shared_discoveries
-
         # --- Start initial provers (children of the root node) ---
         resume_branches = list(initial_branches or [])
         n_initial = min(
@@ -2079,6 +1990,17 @@ class NodeSupervisor:
             status("Orchestrator",
                    f"Tree prover: resuming {n_initial} checkpoint root(s)")
             for i, branch in enumerate(resume_branches[:n_initial]):
+                expected_goal_hash = str(branch.get("expected_goal_hash") or "")
+                goal_identity_required = branch.get("goal_identity_required")
+                if type(goal_identity_required) is not bool:
+                    raise ValueError(
+                        "resume branch is missing boolean goal_identity_required"
+                    )
+                if goal_identity_required != bool(expected_goal_hash):
+                    raise ValueError(
+                        "resume branch goal identity must carry a hash iff "
+                        "goal_identity_required is true"
+                    )
                 node_id = f"0.{i}"
                 lineage.record_resume_root_chosen(
                     node_id=f"Tree-{node_id}",
@@ -2107,7 +2029,8 @@ class NodeSupervisor:
                     parent_goal_state=str(branch.get("parent_goal_state") or ""),
                     blocked_openers=list(branch.get("blocked_openers") or []),
                     layer_move_action=branch.get("layer_move_action"),
-                    expected_resume_goal_hash=str(branch.get("expected_goal_hash") or ""),
+                    expected_resume_goal_hash=expected_goal_hash,
+                    expected_resume_goal_identity_required=goal_identity_required,
                     spawn_reason="resume_root",
                     route_family=(
                         branch.get("route_family")
@@ -2196,10 +2119,11 @@ class NodeSupervisor:
 
                 # Check for winners
                 for node in self._active_nodes():
-                    if node.tracker.proved:
+                    if node.tracker.completion_candidate_ready:
                         self._winner = node
                         status("Orchestrator",
-                               f"Tree-{node.node_id} proved it! "
+                               f"Tree-{node.node_id} produced a session-closed "
+                               f"completion candidate. "
                                f"Killing {len(self._active_nodes()) - 1} other provers.",
                                _GREEN)
                         break
@@ -2219,7 +2143,10 @@ class NodeSupervisor:
 
                 # Check for finished provers (result event)
                 for node in list(nodes.values()):
-                    if node.tracker.finished and not node.tracker.proved:
+                    if (
+                        node.tracker.finished
+                        and not node.tracker.completion_candidate_ready
+                    ):
                         # The worker process finished without a proof. If it died
                         # degraded (had swapped context in-worker) with the proof
                         # still open, the in-process EC session is gone — pay the
@@ -2258,30 +2185,6 @@ class NodeSupervisor:
                 # inflates from chain '.' splits + replay (Run 9 children
                 # showed display 96-98 vs ground-truth 4-12).
                 self._tick_display(active, elapsed)
-
-                # --- Capture discoveries from provers ---
-                # When a prover uses -search and finds something, or accepts
-                # a tactic with a useful lemma name, capture it.
-                self._tick_capture_discoveries(active)
-
-                # --- C2: Auto-escalation on repeat apply failures ---
-                # When the same lemma name has been attempted 2+ times on a node
-                # that is currently in an error-streak, the prover is guessing
-                # argument patterns. Fetch its signature once and inject a [SIG]
-                # discovery so subsequent child spawns see the exact declaration.
-                self._tick_sig_escalation(active)
-
-                # Helper: is `node` actively doing analysis (search/sig/clones/
-                # bridge-probe/...)? If yes, the stuckness it shows is technical
-                # research, not a strategic dead end. Spawning a child from it
-                # would just have the child redo the same analysis — wasted
-                # budget. The kill check already has this immunity at L1879;
-                # this extends it to spawn. Observed in step3 Run 9: 3 children
-                # spawned from Tree-0.1 while it was researching SplitD.test
-                # subtype lemmas (val_insubd, toint_ofintd, C.tointK, ...). All
-                # children replayed the prefix and ran into the same lemma-
-                # naming wall. Total wasted spawn time: ~25 min, with each
-                # child only depositing 4-12 lines into history.ec.
 
                 # --- Trigger 1: Structural undo ---
                 # A structural undo is often the prover repairing its own route
@@ -2323,68 +2226,34 @@ class NodeSupervisor:
         if self._winner is None:
             all_nodes = list(nodes.values())
             if all_nodes:
-                # Priority 1: structured candidate closure from the observer.
-                structured_closers = [
-                    n for n in all_nodes
-                    if n.tracker.session_snapshot
-                    and (
-                        n.tracker.session_snapshot.candidate_ready
-                        or n.tracker.session_snapshot.final_ready
-                    )
-                ]
-                if structured_closers:
-                    self._winner = max(
-                        structured_closers,
-                        key=lambda n: n.tracker.committed_count,
-                    )
-                    self._winner.tracker.proved = True
+                self._winner, has_completion_candidate = _select_tree_run_result(
+                    all_nodes,
+                )
+                if has_completion_candidate:
+                    assert self._winner is not None
+                    self._winner.tracker.completion_candidate_ready = True
                     status("Orchestrator",
                            f"No in-loop winner; recovering from observer snapshot: "
-                           f"Tree-{self._winner.node_id} has candidate_ready "
+                           f"Tree-{self._winner.node_id} has a session-closed "
+                           f"completion candidate "
                            f"({self._winner.tracker.committed_count} tactics).",
                            _GREEN)
                 else:
-                    # Compatibility fallback: old sessions without structured
-                    # artifacts may only have history.ec ending in qed.
-                    # Without this preference, extract_tactics could later pick a
-                    # different qed-closing node than the one reported here.
-                    qed_closers = []
-                    for n in all_nodes:
-                        hist = Path(cwd) / f".ec_session_prover_tree_{n.node_id.replace('.', '_')}" / "history.ec"
-                        if hist.exists():
-                            try:
-                                lines = hist.read_text(encoding="utf-8").splitlines()
-                                if any(ln.strip().lower().rstrip(".").strip() == "qed"
-                                       for ln in lines):
-                                    qed_closers.append(n)
-                            except Exception:
-                                pass
-                    if qed_closers:
-                        # Pick the qed-closer with most history tactics (deepest proof)
-                        def _hist_len(n):
-                            hist = Path(cwd) / f".ec_session_prover_tree_{n.node_id.replace('.', '_')}" / "history.ec"
-                            try:
-                                return sum(1 for ln in hist.read_text(encoding="utf-8").splitlines() if ln.strip())
-                            except Exception:
-                                return 0
-                        self._winner = max(qed_closers, key=_hist_len)
-                        self._winner.tracker.proved = True  # extraction-time qed → compatibility success
-                        status("Orchestrator",
-                               f"No in-loop winner; recovering from history.ec scan: "
-                               f"Tree-{self._winner.node_id} closed with qed ({_hist_len(self._winner)} tactics).",
-                               _GREEN)
-                    else:
-                        # Fallback: most committed tactics (no candidate found anywhere)
-                        self._winner = max(all_nodes, key=lambda n: n.tracker.committed_count)
-                        status("Orchestrator",
-                               f"No prover succeeded. Best: Tree-{self._winner.node_id} "
-                               f"({self._winner.tracker.committed_count} tactics)",
-                               _YELLOW)
+                    assert self._winner is not None
+                    # No structured close fact exists. Pick the deepest node only
+                    # as the diagnostic/partial-proof result; never upgrade raw
+                    # history text into a successful proof verdict.
+                    status("Orchestrator",
+                           f"No prover succeeded. Best: Tree-{self._winner.node_id} "
+                           f"({self._winner.tracker.committed_count} tactics)",
+                           _YELLOW)
             else:
                 # Should not happen
-                run_tree_prover.last_session_id = ""
-                run_tree_prover.last_ec_session_dir = ""
-                return "", 1, "root"
+                return TreeRunResult(
+                    returncode=1,
+                    infrastructure_errors=("tree produced no result node",),
+                    payload_audit_path=str(payload_audit_path or ""),
+                )
 
         rc = (self._winner.tracker.proc.wait(timeout=5)
               if self._winner.tracker.proc.poll() is None
@@ -2394,29 +2263,20 @@ class NodeSupervisor:
         for node in nodes.values():
             self._refresh_node_route_family(node, reason="run_end")
 
-        run_tree_prover.last_session_id = self._winner.tracker.session_id
-        run_tree_prover.last_session_ids = [
-            {
-                "node": f"Tree-{node.node_id}",
-                "session_id": node.tracker.session_id,
-                "winner": node is self._winner,
-                "proved": bool(node.tracker.proved),
-                "committed_count": int(node.tracker.committed_count),
-                "max_committed_count_seen": int(
-                    getattr(
-                        node.tracker,
-                        "max_committed_count_seen",
-                        node.tracker.committed_count,
-                    )
-                ),
-            }
-            for node in sorted(nodes.values(), key=lambda n: n.node_id)
-            if node.tracker.session_id
-        ]
+        session_records = _session_records_for_nodes(
+            sorted(nodes.values(), key=lambda n: n.node_id),
+            winner=self._winner,
+        )
         winner_session_dir = _session_dir_path(cwd, self._winner.tracker._session_dir)
-        run_tree_prover.last_ec_session_dir = (
+        selected_session_dir = (
             str(winner_session_dir.resolve()) if winner_session_dir else ""
         )
+        managed_session_dirs = tuple(sorted({
+            str(path.resolve())
+            for node in nodes.values()
+            for path in [_session_dir_path(cwd, node.tracker._session_dir)]
+            if path is not None and path.is_dir()
+        }))
         information_source_audit: list[dict[str, str]] = []
         for node in sorted(nodes.values(), key=lambda n: n.node_id):
             for item in node.tracker.information_source_audit:
@@ -2424,7 +2284,6 @@ class NodeSupervisor:
                     "tree": node.node_id,
                     **item,
                 })
-        run_tree_prover.last_information_source_audit = information_source_audit
 
         # Log tree summary
         total_spawned = len(nodes)
@@ -2436,7 +2295,9 @@ class NodeSupervisor:
                _CYAN)
         lineage.record_winner_selected(
             node_id=f"Tree-{self._winner.node_id}",
-            proved=self._winner.tracker.proved,
+            completion_candidate=(
+                self._winner.tracker.completion_candidate_ready
+            ),
             returncode=rc,
             committed_count=self._winner.tracker.committed_count,
             max_committed_count_seen=getattr(
@@ -2446,7 +2307,9 @@ class NodeSupervisor:
             ),
             route_family=self._winner.route_family,
             selection_reason=(
-                "proved" if self._winner.tracker.proved else "best_available_branch"
+                "completion_candidate"
+                if self._winner.tracker.completion_candidate_ready
+                else "best_available_branch"
             ),
             shadow_selection=self._winner_shadow_selection(
                 list(nodes.values()),
@@ -2457,7 +2320,9 @@ class NodeSupervisor:
             winner_node_id=f"Tree-{self._winner.node_id}",
             total_spawned=total_spawned,
             max_depth=max_depth_reached,
-            proved=self._winner.tracker.proved,
+            completion_candidate=(
+                self._winner.tracker.completion_candidate_ready
+            ),
             returncode=rc,
         )
         payload_audit.record(
@@ -2465,17 +2330,52 @@ class NodeSupervisor:
             winner=f"Tree-{self._winner.node_id}",
             total_spawned=total_spawned,
             max_depth=max_depth_reached,
-            proved=self._winner.tracker.proved,
+            completion_candidate=(
+                self._winner.tracker.completion_candidate_ready
+            ),
             returncode=rc,
         )
 
         _set_status_bar_active(False)
-        # Surface the destructive-action abort flag so the caller (prover.run)
-        # can refuse to mark the run as a normal failure and instead halt
-        # the whole pipeline with a clear human-investigation message.
-        run_tree_prover.last_destructive_abort = bool(self._destructive_action_detected)
-        run_tree_prover.last_destructive_reason = self._destructive_action_reason
-        return self._winner.tracker.result_text, rc, self._winner.node_id, self._winner.tracker.proved
+        completion_candidate = None
+        infrastructure_errors: list[str] = []
+        if self._winner.tracker.completion_candidate_ready:
+            snapshot = _session_snapshot(cwd, self._winner.tracker._session_dir)
+            if snapshot is None:
+                infrastructure_errors.append(
+                    "selected completion candidate session is unreadable"
+                )
+            else:
+                self._winner.tracker.session_snapshot = snapshot
+                source_path = Path(str(source_file or ""))
+                if not source_path.is_absolute():
+                    source_path = Path(cwd) / source_path
+                try:
+                    completion_candidate = SessionClosureCandidate.from_snapshot(
+                        node_id=f"Tree-{self._winner.node_id}",
+                        snapshot=snapshot,
+                        target_file=str(source_path),
+                        target_lemma=str(target_lemma or ""),
+                    )
+                except (OSError, ValueError) as exc:
+                    infrastructure_errors.append(str(exc))
+
+        return TreeRunResult(
+            output_text=self._winner.tracker.result_text,
+            returncode=rc,
+            selected_node_id=self._winner.node_id,
+            selected_session_id=self._winner.tracker.session_id,
+            selected_session_dir=selected_session_dir,
+            turns=self._winner.tracker.manager_turns,
+            managed_session_dirs=managed_session_dirs,
+            completion_candidate=completion_candidate,
+            session_records=tuple(session_records),
+            information_source_audit=tuple(information_source_audit),
+            payload_audit_path=str(payload_audit_path or ""),
+            destructive_abort=bool(self._destructive_action_detected),
+            destructive_reason=self._destructive_action_reason,
+            infrastructure_errors=tuple(infrastructure_errors),
+        )
 
 
 def run_tree_prover(
@@ -2498,7 +2398,7 @@ def run_tree_prover(
     target_lemma: str | None = None,
     initial_branches: list[dict] | None = None,
     payload_audit_path: str | Path | None = None,
-) -> tuple[str, int, str]:
+) -> TreeRunResult:
     """Recursive tree prover: spawn children at branch points when provers get stuck.
 
     Starts with `initial_provers` independent root provers exploring different
@@ -2527,9 +2427,9 @@ def run_tree_prover(
         undo_repair_protection_seconds: Time window where tactic-count gap
             scheduling uses the node's high-water mark after undo repair.
 
-    Returns:
-        (result_text, returncode, winner_node_id, session_proved)
-        session_proved is True if EC confirmed the proof via "added lemma".
+    Returns a typed search result. A completion candidate is content-bound to
+    the selected manager session, but no field in this result is a final proof
+    verdict; run-level acceptance belongs to ``workflow.agents.prover.run``.
     """
     return NodeSupervisor(
         build_cmd_fn,

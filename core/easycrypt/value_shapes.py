@@ -13,8 +13,8 @@ Only the DOMINANT, exactly-identical variants were consolidated here. The
 behavioral variants that remain in their own modules are deliberate, not
 missed duplicates:
   - copy-on-return `_dict_list` (`[dict(item) for ...]` — different aliasing),
-  - recursive `_drop_empty` (compacts nested dicts/lists — canonical home is
-    `analysis/ec_utils.drop_empty_recursive`),
+  - recursive `_drop_empty` (compacts nested dicts/lists and remains local to
+    any caller that genuinely needs that different contract),
   - tuple-dropping `_drop_empty` (also drops `()`),
   - `_first_text(*values, default="")` (optional-default signature),
   - the `_string_list` family (each tuned to its caller's tolerance for

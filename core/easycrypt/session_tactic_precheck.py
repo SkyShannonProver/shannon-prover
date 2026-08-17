@@ -56,14 +56,12 @@ class PrecheckOutcome:
 
 def precheck_tactic(
     block_text: str,
-    dir_name: str,
     emit: Callable[[str, dict], None],
 ) -> PrecheckOutcome:
     """Sanitize + guard a tactic block before it is committed.
 
-    ``dir_name`` is the session dir's basename (for the redirect hints); ``emit``
-    is the session's event sink (called inline on a refusal, exactly as the
-    inlined guards used to)."""
+    ``emit`` is the session's event sink (called inline on a refusal, exactly
+    where the mutation would otherwise begin)."""
     # Fix zsh escaping: zsh converts ! to \! even in single quotes.
     # EasyCrypt uses ! for repeat (rewrite !H, do !split, [#] !->>).
     block_text = block_text.replace('\\!', '!')
@@ -81,11 +79,9 @@ def precheck_tactic(
             f"  Cleaned:   {cleaned!r}\n"
             f"  Cause: apostrophe in a primed EC name (Exp', G', H') broke\n"
             f"         -c '...' shell quoting, leaking shell syntax into the tactic.\n"
-            f"  Fix:   use stdin or heredoc to avoid shell quoting:\n"
-            f"           printf '%s' 'your tactic.' | python3 session_cli.py -next\n"
-            f"         or: python3 session_cli.py -next <<'TACTEOF'\n"
-            f"               your tactic.\n"
-            f"             TACTEOF\n"
+            f"  Fix:   pass the tactic as a direct argument:\n"
+            f"           python3 session_cli.py -tactic-exec commit "
+            f"-c 'your tactic.'\n"
         )
         block_text = cleaned
 
@@ -102,10 +98,8 @@ def precheck_tactic(
             f"by shell quoting.\n"
             f"  Cause: an apostrophe in a primed EC name (e.g. PIR.s', G', H') "
             f"inside -c '...' terminates the single-quote string early.\n"
-            f"  Fix:   use heredoc or stdin to pass the tactic:\n"
-            f"           python3 session_cli.py -next <<'TEOF'\n"
-            f"           <your full tactic>\n"
-            f"           TEOF\n"
+            f"  Fix:   use -tactic-exec commit with a correctly escaped -c "
+            f"argument.\n"
             f"  Tactic received: {block_text.rstrip()!r}\n"
         )
 
@@ -125,33 +119,15 @@ def precheck_tactic(
     _META = ("search", "print", "locate")
     _first = trimmed.lstrip().split(None, 1)
     if _first and _first[0].rstrip("([{.,;").lower() in _META:
-        # Parse the argument (lemma/pattern/path the prover tried to look up)
-        # so we can redirect them to the correct session_cli subcommand
-        # with the argument already filled in.
+        # Record the attempted lookup subject for future recovery consumers.
+        # The current runtime deliberately has no generic inspect/search
+        # protocol, so the refusal must not redirect the agent to a private
+        # session_cli command.
         meta_word = _first[0].rstrip("([{.,;").lower()
         rest = _first[1] if len(_first) > 1 else ""
         # Extract a bareword argument (first identifier-looking token)
         _m = re.search(r"([A-Za-z_][A-Za-z0-9_.]*)", rest)
         arg = _m.group(1) if _m else ""
-
-        # Redirect message depends on which meta-command the prover used
-        if meta_word == "print" and arg:
-            redirect = f"For the exact signature of `{arg}`:\n" \
-                       f"    python3 core/easycrypt/session_cli.py " \
-                       f"-d {dir_name} -sig {arg}\n"
-        elif meta_word == "search":
-            pat = arg if arg else "PATTERN"
-            redirect = f"For regex lemma search:\n" \
-                       f"    python3 core/easycrypt/session_cli.py " \
-                       f"-d {dir_name} -search {pat}\n"
-        elif meta_word == "locate":
-            nm = arg if arg else "NAME"
-            redirect = f"To find where `{nm}` is declared:\n" \
-                       f"    python3 core/easycrypt/session_cli.py " \
-                       f"-d {dir_name} -sig {nm}\n"
-        else:
-            redirect = f"    python3 core/easycrypt/session_cli.py " \
-                       f"-d {dir_name} -sig <LEMMA_NAME>\n"
 
         sys.stderr.write(
             f"[session_cli] Refusing tactic: `{_first[0]}` is an EasyCrypt "
@@ -159,7 +135,9 @@ def precheck_tactic(
             f"  Effect in REPL: silently accepted, no goal change, but\n"
             f"    committed into history.ec — will break full-file\n"
             f"    verification with 'unknown operator'.\n"
-            f"  Use the session_cli subcommand instead:\n{redirect}"
+            "  No lookup operation is exposed by the active manager profile.\n"
+            "  Submit a proof intent through the manager; do not call the "
+            "private session CLI.\n"
             f"  Tactic received: {trimmed!r}\n"
         )
         emit("error.raised", {
@@ -176,28 +154,23 @@ def precheck_tactic(
             "history_committed": False,
         })
         # Build a tight, actionable return message the prover can act on
-        hint = redirect.strip()
         return PrecheckOutcome(block_text=trimmed, trimmed=trimmed, refusal=(
             "[META_COMMAND_REFUSED] `"
             + _first[0]
             + "` is a library-query meta-command, not a proof tactic. "
-            + f"{hint} "
+            + "No lookup operation is exposed by the active manager profile. "
             + "Nothing was applied; session state unchanged."
         ))
 
     # Proof-control guard: raw EasyCrypt commands like `undo 2.` alter the
     # REPL/session cursor outside the manager's history model. They can
     # leave current.out at a bare prompt while history.ec still claims a
-    # different frontier. Route these through session_cli's managed undo or
-    # orchestrator restart instead.
+    # different frontier. Route these through manager-owned control intents.
     _PROOF_CONTROL = ("undo", "restart", "abort", "exit", "quit")
     if _first and _first[0].rstrip("([{.,;").lower() in _PROOF_CONTROL:
         control_word = _first[0].rstrip("([{.,;").lower()
         if control_word == "undo":
-            redirect = (
-                f"python3 core/easycrypt/session_cli.py "
-                f"-d {dir_name} -tactic-exec undo"
-            )
+            redirect = "submit the manager intent `undo_last_step`"
         else:
             redirect = (
                 "ask the manager/human to restart or stop this proof; "

@@ -1,94 +1,67 @@
-"""EasyCrypt environment configuration.
-
-Single source of truth for opam switch name and environment setup.
-All code that needs to run `easycrypt` or `session_cli` should use
-get_ec_env() from this module.
-
-To configure for a different machine, change OPAM_SWITCH below.
-"""
+"""Single environment authority for the repository-locked EasyCrypt runtime."""
 
 from __future__ import annotations
 
-import os
-import re
+from pathlib import Path
 import subprocess
 
-# ── Configure this for your machine ──────────────────────────────────────
-# Set to None to use the current/default opam switch.
-OPAM_SWITCH: str | None = "easycrypt"
-# ─────────────────────────────────────────────────────────────────────────
+from core.easycrypt.toolchain import managed_easycrypt_environment
 
 
+MANAGED_WHY3_CONFIG_ENV = "SHANNON_WHY3_CONFIG"
 
-def get_ec_env() -> dict:
-    """Return os.environ augmented with opam variables for EasyCrypt.
 
-    Use this as the `env` parameter for subprocess calls:
-        subprocess.run(["easycrypt", ...], env=get_ec_env())
+def managed_why3_config_path(env: dict[str, str]) -> Path:
+    """Resolve the same EasyCrypt XDG Why3 configuration as the CLI.
+
+    Native companions link ``ecLib`` directly rather than entering through the
+    EasyCrypt CLI, so they must receive this exact path explicitly.  Falling
+    back to Why3's ambient default silently changes the available prover set.
     """
-    env = os.environ.copy()
-    cmds = []
-    if OPAM_SWITCH:
-        cmds.append(["opam", "env", f"--switch={OPAM_SWITCH}"])
-    cmds.append(["opam", "env"])
 
-    for cmd in cmds:
-        try:
-            result = subprocess.run(
-                cmd, capture_output=True, text=True, timeout=10,
-            )
-            if result.returncode == 0:
-                for line in result.stdout.strip().splitlines():
-                    m = re.match(r"(\w+)='([^']*)'", line)
-                    if m:
-                        env[m.group(1)] = m.group(2)
-                return env
-        except Exception:
-            continue
+    config_root = env.get("XDG_CONFIG_HOME", "").strip()
+    if config_root:
+        path = Path(config_root) / "easycrypt" / "why3.conf"
+    else:
+        home = env.get("HOME", "").strip()
+        if not home:
+            raise RuntimeError("managed EasyCrypt environment has no HOME")
+        path = Path(home) / ".config" / "easycrypt" / "why3.conf"
+    if not path.is_file():
+        raise RuntimeError(
+            "repository-managed EasyCrypt Why3 configuration is missing; "
+            "run tools/bootstrap_easycrypt.py"
+        )
+    return path.resolve()
+
+
+def get_ec_env() -> dict[str, str]:
+    """Return a fresh environment for the verified managed toolchain.
+
+    There is no fallback to an ambient/global opam switch.  Bootstrap with
+    ``uv run python tools/bootstrap_easycrypt.py`` when the receipt is missing.
+    """
+
+    env = managed_easycrypt_environment()
+    env[MANAGED_WHY3_CONFIG_ENV] = str(managed_why3_config_path(env))
     return env
 
 
 def check_ec_available() -> tuple[bool, str]:
-    """Precheck: verify that easycrypt is runnable.
-
-    Returns (ok, message). Call this before launching provers.
-    """
-    # Check opam exists
     try:
-        subprocess.run(
-            ["opam", "--version"],
-            capture_output=True, text=True, timeout=5,
-        )
-    except FileNotFoundError:
-        return False, "opam not found. Install opam and EasyCrypt first."
-
-    # Check switch exists (if configured)
-    if OPAM_SWITCH:
-        result = subprocess.run(
-            ["opam", "switch", "list", "--short"],
-            capture_output=True, text=True, timeout=10,
-        )
-        switches = result.stdout.strip().splitlines()
-        if OPAM_SWITCH not in switches:
-            return False, (
-                f"opam switch '{OPAM_SWITCH}' not found. "
-                f"Available switches: {', '.join(switches)}. "
-                f"Edit OPAM_SWITCH in core/easycrypt/ec_env.py."
-            )
-
-    # Check easycrypt binary
-    env = get_ec_env()
+        env = get_ec_env()
+    except RuntimeError as exc:
+        return False, str(exc)
     try:
         result = subprocess.run(
             ["easycrypt", "why3config"],
-            capture_output=True, text=True, timeout=30, env=env,
+            capture_output=True,
+            text=True,
+            timeout=30,
+            env=env,
         )
-        if result.returncode != 0:
-            return False, f"easycrypt why3config failed: {result.stderr[:200]}"
-    except FileNotFoundError:
-        return False, (
-            "easycrypt not found in PATH after opam env. "
-            "Check that easycrypt is installed in the configured switch."
-        )
-
-    return True, "easycrypt is available"
+    except (OSError, subprocess.SubprocessError) as exc:
+        return False, f"managed EasyCrypt is not runnable: {exc}"
+    if result.returncode != 0:
+        return False, f"easycrypt why3config failed: {result.stderr[:200]}"
+    return True, "repository-locked EasyCrypt is available"

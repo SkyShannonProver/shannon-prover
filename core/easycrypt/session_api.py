@@ -22,9 +22,3 @@ def open_session(
 ) -> Any:
     """Open an EasyCrypt proof session."""
     return session_class()(Path(session_dir), include_dirs=include_dirs)
-
-
-def explain_no_progress(tactic: str, goal_raw: str) -> str:
-    """Return context-specific no-progress advice for a tactic."""
-    from core.easycrypt.session_diagnostics import explain_no_progress as _explain  # type: ignore
-    return _explain(tactic, goal_raw)

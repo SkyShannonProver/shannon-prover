@@ -1,11 +1,14 @@
 from __future__ import annotations
 
+import hashlib
 import json
 import socketserver
 import sys
 import threading
 from io import BytesIO
 from pathlib import Path
+
+import pytest
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -28,12 +31,115 @@ from workflow.proof_node_runtime import (  # noqa: E402
     ManagerBridgeServer,
     NodeMemory,
     ProofNodeRuntime,
-    _render_manager_followup,
+    render_manager_followup,
 )
 from workflow.agent_prompt_render import (  # noqa: E402
-    _turn_interpretation,
     render_long_lived_agent_prompt,
 )
+from workflow.agents.prover_prompt import (  # noqa: E402
+    MANAGED_HANDOFF_END,
+    MANAGED_HANDOFF_START,
+    _build_prover_prompt,
+    bind_authoritative_managed_handoff,
+)
+from workflow.proof_state_compiler.managed_goal_view_manager import (  # noqa: E402
+    ManagedGoalViewManager,
+)
+from workflow.proof_state_compiler.surface_profiles import (  # noqa: E402
+    project_current_workspace_view,
+)
+from core.easycrypt.proof_state_compiler.backend.presentation import (  # noqa: E402
+    render_action_surface_payload,
+)
+
+
+def _current_workspace_view(**overrides: object) -> dict[str, object]:
+    view: dict[str, object] = {
+        "schema_version": 3,
+        "kind": "prover_workspace_view",
+        "ok": True,
+        "last_result": {},
+        "proof_status": {
+            "status": "open",
+            "remaining_goals_known": True,
+            "goal_identity_required": True,
+            "goal_hash": "goal",
+        },
+        "current_goal": {"lines": []},
+        "view_hash": "v" * 40,
+    }
+    proof_status = dict(view["proof_status"])
+    proof_status_overrides = overrides.pop("proof_status", {})
+    proof_status.update(proof_status_overrides)
+    if (
+        isinstance(proof_status_overrides, dict)
+        and "status" in proof_status_overrides
+        and "goal_identity_required" not in proof_status_overrides
+    ):
+        goal_identity_required = str(proof_status["status"]) not in {
+            "candidate_closed",
+            "goals_discharged_pending_qed",
+            "closed",
+            "complete",
+            "completed",
+            "proved",
+            "qed",
+            "verified",
+        }
+        proof_status["goal_identity_required"] = goal_identity_required
+        proof_status["goal_hash"] = "goal" if goal_identity_required else ""
+    view.update(overrides)
+    view["proof_status"] = proof_status
+    return view
+
+
+def _profiled_workspace_view(
+    profile_name: str,
+    **overrides: object,
+) -> dict[str, object]:
+    manager = ManagedGoalViewManager()
+    view = project_current_workspace_view(
+        _current_workspace_view(**overrides),
+        profile_name,
+    )
+    view.pop("view_hash", None)
+    view["view_hash"] = manager.view_hash(view)
+    return manager.order_workspace_view(view)
+
+
+def _current_bootstrap(**overrides: object) -> dict[str, object]:
+    snapshot: dict[str, object] = {
+        "node_id": "Tree-unit",
+        "session_tag": "unit",
+        "session_dir": ".ec_session_unit",
+        "session_epoch": 0,
+        "state_version": 0,
+        "goal_hash": "goal",
+        "goal_identity_required": True,
+        "workspace_view_artifact": "",
+        "execution_refs": {},
+    }
+    snapshot_overrides = overrides.pop("snapshot", {})
+    if isinstance(snapshot_overrides, dict):
+        snapshot.update(snapshot_overrides)
+    record: dict[str, object] = {
+        "schema_version": 3,
+        "kind": "proof_node_manager_bootstrap",
+        "node_id": "Tree-unit",
+        "session_tag": "unit",
+        "session_dir": ".ec_session_unit",
+        "file": "eval/examples/SchnorrPK.ec",
+        "lemma": "dummy",
+        "include_dirs": ["eval/examples", "easycrypt-src/theories"],
+        "replay_prefix_count": 0,
+        "replay_prefix": [],
+        "replay_prefix_requested_count": 0,
+        "manager_actions": [],
+        "snapshot": snapshot,
+        "workspace_view": _current_workspace_view(),
+    }
+    record.update(overrides)
+    return record
 
 
 def test_no_history_intent_added_to_manager_protocol() -> None:
@@ -67,7 +173,7 @@ def test_long_lived_prompt_explains_runtime_and_memory(tmp_path: Path) -> None:
     # §2 Your MCP tools — one line per granted intent
     assert "## Your MCP tools" in prompt
     for intent in (
-        "`commit_tactic`", "`lookup_symbol`", "`undo_last_step`",
+        "`commit_tactic`", "`undo_last_step`",
         "`undo_to_checkpoint`", "`fresh_restart`", "`finish`",
     ):
         assert intent in prompt
@@ -76,12 +182,9 @@ def test_long_lived_prompt_explains_runtime_and_memory(tmp_path: Path) -> None:
     assert "`tactic_forms`" not in prompt
     assert "`goal_info`" not in prompt
     assert "`inspect_context`" not in prompt
-    assert "`probe_tactic`" not in prompt
     assert "`request_restart`" not in prompt
-    # §3 how to read what the manager returns
-    assert "## How to read the manager surface" in prompt
-    assert "current-state mechanical evidence" in prompt
-    assert "not a proof strategy" in prompt
+    # No retired panel-interpretation playbook is embedded in the runtime.
+    assert "## How to read the manager surface" not in prompt
     assert "candidate_moves" not in prompt
     assert "route_health" not in prompt
     # Strategy coaching and verifier policy belong to the manager/runtime, not
@@ -95,6 +198,8 @@ def test_long_lived_prompt_explains_runtime_and_memory(tmp_path: Path) -> None:
     assert "LEGAL_NODE_MEMORY_DIR" in prompt
     assert "latest_followup.md" in prompt
     assert "proof_so_far.md" in prompt
+    assert "Amend & replay (`amend_and_replay`)" in prompt
+    assert "Required payload fields: `index`, `tactic`." in prompt
     assert "LEGAL_LATEST_WORKSPACE_VIEW" not in prompt
     assert "latest_workspace_view.json" not in prompt
     assert "If Claude context is compacted" in prompt
@@ -119,7 +224,7 @@ def test_long_lived_prompt_explains_runtime_and_memory(tmp_path: Path) -> None:
     assert "--port 12345" not in prompt
     assert "--token tok" not in prompt
     assert "long-lived runtime's manager bridge" not in prompt
-    assert "ORIGINAL PROMPT" in prompt
+    assert "ORIGINAL PROMPT" not in prompt
 
 
 def test_l1_goal_projection_prompt_lists_only_l1_goal_projection_surface(tmp_path: Path) -> None:
@@ -138,11 +243,12 @@ def test_l1_goal_projection_prompt_lists_only_l1_goal_projection_surface(tmp_pat
     # L1 keeps the control surface while omitting derived context channels.
     assert "`undo_to_checkpoint`" in prompt
     # ...but it must NOT advertise the content-retrieval channels (the panel's value).
-    assert "`probe_tactic`" not in prompt
     assert "`inspect_context`" not in prompt
     assert "`lookup_symbol`" not in prompt
     assert "semantic proof inspection" not in prompt
     assert "rendered `SurfaceTurnModel`" in prompt
+    assert "runtime appends `PROOF TACTICS:`" in prompt
+    assert "do not read `proof_so_far.md` only to reproduce" in prompt
     for hidden_panel in (
         "`program_frontier`",
         "`application_context`",
@@ -152,6 +258,81 @@ def test_l1_goal_projection_prompt_lists_only_l1_goal_projection_surface(tmp_pat
         "candidate_moves.",
     ):
         assert hidden_panel not in prompt
+
+
+@pytest.mark.parametrize(
+    ("profile", "surface", "expected", "forbidden"),
+    [
+        (
+            "l4_proof_state_compiler_v2_operation_binding_repair",
+            """Initial manager handoff completed.
+
+### Current Goal
+
+authoritative L4 goal
+
+### Ready proof action
+
+```json
+{"intent":"commit_tactic","payload":{"tactic":"move=> x."}}
+```
+
+### Legal Node Memory Anchor
+
+duplicate runtime anchor
+""",
+            '"tactic":"move=> x."',
+            "duplicate runtime anchor",
+        ),
+        (
+            "l1_goal_projection",
+            """Initial manager handoff completed.
+
+### Current Goal
+
+authoritative L1 goal
+""",
+            "authoritative L1 goal",
+            "provisional goal",
+        ),
+    ],
+)
+def test_worker_binds_manager_authoritative_turn_zero_after_profile_render(
+    tmp_path: Path,
+    profile: str,
+    surface: str,
+    expected: str,
+    forbidden: str,
+) -> None:
+    static_prompt = _build_prover_prompt(
+        "eval/examples/SchnorrPK.ec",
+        "dummy",
+        "easycrypt-src/theories",
+        managed_session={
+            "workspace_view": _profiled_workspace_view(
+                profile,
+                current_goal={"lines": ["provisional goal"]},
+            ),
+        },
+        surface_profile=profile,
+    )
+    worker_prompt = render_long_lived_agent_prompt(
+        static_prompt,
+        host="127.0.0.1",
+        port=12345,
+        token="tok",
+        node_memory_dir=tmp_path / "node_memory" / "Tree_0_0",
+        max_turns=7,
+        surface_profile=profile,
+    )
+
+    bound = bind_authoritative_managed_handoff(worker_prompt, surface)
+
+    assert bound.count(MANAGED_HANDOFF_START) == 1
+    assert bound.count(MANAGED_HANDOFF_END) == 1
+    assert expected in bound
+    assert forbidden not in bound
+    assert "### Legal Node Memory Anchor" not in bound
 
 
 def test_mcp_schema_respects_l1_goal_projection_profile(monkeypatch, tmp_path: Path) -> None:
@@ -187,177 +368,17 @@ def test_mcp_schema_respects_l1_goal_projection_profile(monkeypatch, tmp_path: P
     assert "lookup_symbol" not in intent_schema["enum"]
     assert "semantic proof inspection" not in tool["description"]
     assert "{'topic': 'goal_info'}" not in payload_schema["description"]
-    assert "{'symbol': 'LEMMA'}" not in payload_schema["description"]
+    assert "{'symbol': '<symbol>'}" not in payload_schema["description"]
 
-
-
-def test_surface_turn_markdown_tiers_and_orders_by_goal_size() -> None:
-    from workflow.surface_turn_model import compose_surface_turn, render_surface_turn_markdown
-    base = {
-        "proof_status": {"remaining_goals": 1, "view_focus": "seq_cut",
-                         "current_layer": "procedure_body"},
-        "seq_cut_surface": {
-            "seq_scope": "left 0..2 / right 0..2",
-            "obligation_shape": "aligned branch residual",
-        },
-        # the reference is an ACTIONABLE retrieval menu, not a dump of panel JSON
-        "inspect_lookup_handles": {"ask_manager_for": [
-            {"intent": "tactic_forms", "payload": {"name": "rewrite"},
-             "use_when": "need the valid form for rewrite"}]},
-    }
-    # small goal -> the goal leads (the normal contract), focus follows
-    small = {**base, "current_goal": {"lines_preview": "x = y", "line_count": 3}}
-    md = render_surface_turn_markdown(
-        compose_surface_turn(small, "l4_checked_action_surface")
-    )
-    assert "## 🎯 Current Goal" in md and "## Surgery" in md
-    assert md.index("Current Goal") < md.index("Surgery")
-    assert "**Seq scope:**" in md and "aligned branch residual" in md
-    # A broad rewrite reference is not repeated on the persistent surface.
-    assert '"intent": "tactic_forms"' not in md
-    # large goal -> the goal still leads; the panel is explanatory, not the proof-state anchor.
-    large = {**base, "current_goal": {"lines_preview": "x = y", "truncated": True}}
-    md2 = render_surface_turn_markdown(
-        compose_surface_turn(large, "l4_checked_action_surface")
-    )
-    assert md2.index("Current Goal") < md2.index("Surgery")
-    # recover focus is error-handling: the outcome leads, then the goal, then panel.
-    recover = {
-        "proof_status": {"remaining_goals": 1, "view_focus": "procedure_body",
-                         "current_layer": "recovery"},
-        "current_goal": {"lines_preview": "x = y", "line_count": 3},
-        "last_result": {
-            "tactic": "rewrite.",
-            "result": "EasyCrypt rejected the committed tactic.",
-            "error_summary": "[error] no rewrite rule applies",
-        },
-    }
-    md3 = render_surface_turn_markdown(
-        compose_surface_turn(
-            recover,
-            "l4_checked_action_surface",
-            handled_intent={"intent": "commit_tactic", "payload": {"tactic": "rewrite."}},
-            ok=False,
-        )
-    )
-    assert md3.index("EasyCrypt rejected") < md3.index("Current Goal")
-    assert md3.index("Current Goal") < md3.index("Recover")
-
-
-def test_l1_surface_turn_surfaces_raw_ec_error_on_rejection() -> None:
-    # L1 has no diagnostics panel and cannot inspect:diagnose — its one-line
-    # last-action feedback must carry the raw EC error so a rejection says *why*
-    # (the `result` text already tells the agent to "use the error summary").
-    from workflow.surface_turn_model import compose_surface_turn, render_surface_turn_markdown
-    rejected = {
-        "current_goal": {"lines": ["Current goal", "x = y"]},
-        "last_result": {
-            "intent": "commit_tactic",
-            "tactic": "call (equ_cc _ _ _).",
-            "result": ("EasyCrypt rejected the committed tactic. Use the error "
-                       "summary and current goal to revise the proof step."),
-            "error_summary": "[error] cannot infer all placeholders",
-            "proof_state": "The committed EasyCrypt proof state was not changed.",
-        },
-    }
-    md = render_surface_turn_markdown(
-        compose_surface_turn(
-            rejected,
-            "l1_goal_projection",
-            handled_intent={
-                "intent": "commit_tactic",
-                "payload": {"tactic": "call (equ_cc _ _ _)."},
-            },
-            ok=False,
-            goal_only=True,
-        ),
-        goal_only=True,
-    )
-    assert "cannot infer all placeholders" in md   # the raw EC reason is shown
-    assert "EasyCrypt error" in md
-    assert md.index("EasyCrypt error") < md.index("Current Goal")
-    # an accepted action carries no spurious error line
-    accepted = {
-        "current_goal": {"lines": ["Current goal", "x = y"]},
-        "last_result": {
-            "intent": "commit_tactic",
-            "tactic": "proc.",
-            "result": "EasyCrypt accepted the committed tactic.",
-        },
-    }
-    md_ok = render_surface_turn_markdown(
-        compose_surface_turn(
-            accepted,
-            "l1_goal_projection",
-            handled_intent={"intent": "commit_tactic", "payload": {"tactic": "proc."}},
-            goal_only=True,
-        ),
-        goal_only=True,
-    )
-    assert "EasyCrypt error" not in md_ok
-
-
-
-
-
-def test_surface_panel_markdown_blank_line_between_bullets_and_next_label() -> None:
-    # regression (live audit, turn_009): a `**Label:**` immediately under a `- bullet`
-    # with no blank line is swallowed as a markdown lazy-continuation of the bullet,
-    # rendering "…bullet **Label:**" jammed. Every label must be its own block.
-    from workflow.surface_turn_model import render_surface_turn_markdown
-    md = render_surface_turn_markdown({
-        "presentation_kind": "proof_state",
-        "proof_surface": {
-            "goal": {"text": "Current goal"},
-            "primary_panel": {
-                "title": "Call Frontier",
-                "facts": [
-                    {"label": "Situation", "value": "named call not callable yet"},
-                    {"label": "Candidate", "value": ["`UFCMA_genCC`"]},
-                    {
-                        "label": "Frontier",
-                        "value": ["setup before the frontier", "frontier: both sides at `b <@ ...`"],
-                    },
-                    {"label": "Options", "value": ["`call (_: <Inv>)`", "`inline*` / `proc`"]},
-                    {"label": "Yours", "value": "the invariant predicate"},
-                ],
-            },
-        },
-    })
-    lines = md.splitlines()
-    # no `**Label:**` line may directly follow a `- bullet` (must have a blank line)
-    for i in range(1, len(lines)):
-        if lines[i].startswith("**") and lines[i].rstrip().endswith(":**") or (
-            lines[i].startswith("**") and ":**" in lines[i]):
-            assert not lines[i - 1].startswith("- "), (
-                f"label {lines[i]!r} jammed onto bullet {lines[i-1]!r}")
-    # specifically: Frontier / Options / Yours each separated from the prior bullets
-    assert "\n\n**Frontier:**" in md and "\n\n**Options:**" in md and "\n\n**Yours:**" in md
-
-
-def test_surface_turn_status_does_not_cram_truncated_last_tactic() -> None:
-    # regression: the status line used to append `last \`tac…\` — result…` (double
-    # truncation), redundant with the focus + manager-result section. Now: just
-    # remaining + phase.
-    from workflow.surface_turn_model import compose_surface_turn, render_surface_turn_markdown
-    md = render_surface_turn_markdown(compose_surface_turn({
-        "current_goal": {"lines": ["Current goal", "x = y"]},
-        "proof_status": {"remaining_goals": 7, "view_focus": "failure_diagnostic",
-                         "current_layer": "procedure_body"},
-        "last_result": {"tactic": "while (={p2, c2, i, n, a, p1, n0, p, p0, nap, c, UFCMA...}).",
-                        "result": "EasyCrypt rejected the committed tactic. Use the error..."},
-    }, "l4_checked_action_surface"))
-    status = md.split("## Status", 1)[1].split("**Last action:**", 1)[0]
-    assert "remaining **7**" in status and "failure_recovery" in status
-    assert "failure_diagnostic" not in status
-    assert "last `" not in status and "while" not in status
 
 
 def test_node_memory_writes_curated_files(tmp_path: Path) -> None:
     memory = NodeMemory(tmp_path, "Tree-0.0")
     turn = ManagedTurn(
         ok=False,
-        workspace_view={"current_goal": {"lines": ["x = y"]}},
+        workspace_view=_current_workspace_view(
+            current_goal={"lines": ["x = y"]},
+        ),
         repair_prompt="repair please",
         manager_actions=[{
             "label": "commit_tactic",
@@ -389,17 +410,18 @@ def test_node_memory_writes_curated_files(tmp_path: Path) -> None:
 def test_node_memory_persists_bootstrap_current_view(tmp_path: Path) -> None:
     memory = NodeMemory(tmp_path, "Tree-0.0.0")
 
-    memory.record_bootstrap({
-        "session_tag": "unit",
-        "session_dir": ".ec_session_unit",
-        "replay_prefix_count": 3,
-        "snapshot": {"state_version": 3},
-        "workspace_view": {
-            "kind": "prover_workspace_view",
-            "proof_status": {"status": "open"},
-            "current_goal": {"lines": ["goal at handoff"]},
-        },
-    })
+    memory.record_bootstrap(_current_bootstrap(
+        session_tag="unit",
+        session_dir=".ec_session_unit",
+        replay_prefix_count=3,
+        replay_prefix=["proc.", "wp.", "skip."],
+        replay_prefix_requested_count=3,
+        snapshot={"state_version": 3},
+        workspace_view=_current_workspace_view(
+            proof_status={"status": "open"},
+            current_goal={"lines": ["goal at handoff"]},
+        ),
+    ))
 
     latest_view = json.loads(memory.latest_view.read_text(encoding="utf-8"))
     latest_result = json.loads(memory.latest_result.read_text(encoding="utf-8"))
@@ -409,74 +431,161 @@ def test_node_memory_persists_bootstrap_current_view(tmp_path: Path) -> None:
 
     assert latest_view["current_goal"]["lines"] == ["goal at handoff"]
     assert turn_zero_view == latest_view
+    assert json.loads(memory.initial_view.read_text(encoding="utf-8")) == latest_view
     assert latest_result["kind"] == "bootstrap"
     assert latest_result["replay_prefix_count"] == 3
     latest_followup = memory.latest_followup.read_text(encoding="utf-8")
+    assert memory.initial_followup.read_text(encoding="utf-8") == latest_followup
     assert "LEGAL_LATEST_FOLLOWUP" in latest_followup
     assert "latest_workspace_view.json" not in latest_followup
     assert "LEGAL_LATEST_WORKSPACE_VIEW" not in latest_followup
+    proof = memory.latest_proof.read_text(encoding="utf-8")
+    assert "Proof so far (3 committed" in proof
+    assert "1. proc." in proof
+    assert "3. skip." in proof
 
 
-def test_l1_audit_latest_view_leads_with_off_surface_notice(
+def test_node_memory_rejects_legacy_bootstrap_envelope(tmp_path: Path) -> None:
+    memory = NodeMemory(tmp_path, "Tree-0.0.0")
+
+    with pytest.raises(ValueError, match="proof_node_manager_bootstrap"):
+        memory.record_bootstrap({
+            "schema_version": 3,
+            "kind": "manager_session_bootstrap",
+            "workspace_view": _current_workspace_view(),
+        })
+
+    assert not memory.timeline.exists()
+
+
+@pytest.mark.parametrize(
+    ("field", "value"),
+    [
+        ("node_id", "Tree-other"),
+        ("session_tag", "other"),
+        ("session_dir", ".ec_session_other"),
+        ("file", "eval/examples/Other.ec"),
+        ("lemma", "other"),
+    ],
+)
+def test_runtime_rejects_bootstrap_identity_mismatch_before_startup(
+    tmp_path: Path,
+    field: str,
+    value: str,
+) -> None:
+    bootstrap = _current_bootstrap()
+    bootstrap[field] = value
+    if field in {"node_id", "session_tag", "session_dir"}:
+        snapshot = dict(bootstrap["snapshot"])
+        snapshot[field] = value
+        bootstrap["snapshot"] = snapshot
+
+    with pytest.raises(ValueError, match=f"identity mismatch for `{field}`"):
+        ProofNodeRuntime(
+            prompt="Base prompt",
+            bootstrap=bootstrap,
+            file_path="eval/examples/SchnorrPK.ec",
+            lemma_name="dummy",
+            include_dir="easycrypt-src/theories",
+            session_tag="unit",
+            node_id="Tree-unit",
+            run_dir=tmp_path,
+            model="claude-test",
+            project_root=ROOT,
+            emit=lambda _event: None,
+        )
+
+    assert not (tmp_path / "node_memory").exists()
+
+
+def test_adopted_worker_does_not_treat_profiled_bootstrap_as_full_view(
     tmp_path: Path,
 ) -> None:
-    """The L1 latest workspace audit JSON leads with a gentle off-surface
-    reminder, while the per-turn audit archive stays full and un-annotated.
-    """
+    runtime = ProofNodeRuntime(
+        prompt="Base prompt",
+        bootstrap=_current_bootstrap(
+            workspace_view=_profiled_workspace_view(
+                "l4_proof_state_compiler_v2_operation_binding_repair",
+                current_goal={"lines": ["Current goal", "x = y"]},
+            ),
+        ),
+        file_path="eval/examples/SchnorrPK.ec",
+        lemma_name="dummy",
+        include_dir="easycrypt-src/theories",
+        session_tag="unit",
+        node_id="Tree-unit",
+        run_dir=tmp_path,
+        model="claude-test",
+        surface_profile="l4_proof_state_compiler_v2_operation_binding_repair",
+        project_root=ROOT,
+        emit=lambda _event: None,
+    )
+
+    assert runtime.manager.latest_full_view == {}
+    turn = runtime.manager.handle_agent_message("not json")
+    followup = render_manager_followup(
+        turn,
+        1,
+        None,
+        runtime.memory,
+        full_view=runtime.manager.latest_full_view,
+        surface_profile=runtime.manager.surface_profile,
+    )
+
+    assert "Current Goal" in followup
+    assert "x = y" in followup
+    assert "---\n\n---" not in followup
+    stored = json.loads(
+        (runtime.memory.workspace_views_dir / "turn_001.json").read_text(
+            encoding="utf-8"
+        )
+    )
+    assert stored["ok"] is True
+    assert stored["current_goal"]["lines"][-1] == "x = y"
+
+    # Turn 2 reads the curated NodeMemory copy (surface_turn present, durable
+    # identity hidden); it must not reinterpret that display as a manager view.
+    second = runtime.manager.handle_agent_message("still not json")
+    second_followup = render_manager_followup(
+        second,
+        2,
+        None,
+        runtime.memory,
+        full_view=runtime.manager.latest_full_view,
+        surface_profile=runtime.manager.surface_profile,
+    )
+    assert "x = y" in second_followup
+
+
+def test_l1_latest_view_and_turn_archive_use_the_same_current_envelope(
+    tmp_path: Path,
+) -> None:
+    """Node memory does not invent a second L1 audit-only carrier."""
     memory = NodeMemory(tmp_path, "Tree-0.0", surface_profile="l1_goal_projection")
-    full_view = {
-        "kind": "prover_workspace_view",
-        "proof_status": {"status": "open"},
-        "current_goal": {"lines": ["goal at handoff"]},
-        "candidate_moves": [{"tactic": "auto."}, {"tactic": "smt."}],
-        "inspect_lookup_handles": [{"topic": "tactic_forms", "name": "wp"}],
-        "program_frontier": {"position": "head"},
-    }
-    memory.record_bootstrap({
-        "session_tag": "unit",
-        "session_dir": ".ec_session_unit",
-        "snapshot": {"state_version": 0},
-        "workspace_view": full_view,
-    })
+    profiled_view = _profiled_workspace_view(
+        "l1_goal_projection",
+        proof_status={"status": "open"},
+        current_goal={"lines": ["goal at handoff"]},
+    )
+    memory.record_bootstrap(_current_bootstrap(
+        session_tag="unit",
+        session_dir=".ec_session_unit",
+        snapshot={"state_version": 0},
+        workspace_view=profiled_view,
+    ))
 
     latest_view = json.loads(memory.latest_view.read_text(encoding="utf-8"))
     archive = json.loads(
         (memory.workspace_views_dir / "turn_000.json").read_text(encoding="utf-8")
     )
 
-    # The durable latest-view audit file leads with the reminder, but content is
-    # NOT redacted (resume/replay read this same file) — it is a gentle nudge,
-    # not a projection.
-    assert "_l1_surface_notice" in latest_view
-    assert list(latest_view)[0] == "_l1_surface_notice"
-    assert "NOT part of your surface" in latest_view["_l1_surface_notice"]
+    assert "_l1_surface_notice" not in latest_view
     assert latest_view["current_goal"]["lines"] == ["goal at handoff"]
-
-    # The audit archive stays full and un-annotated.
-    assert "_l1_surface_notice" not in archive
-    assert archive["candidate_moves"]
+    assert latest_view == archive
 
     # The L1 followup no longer advertises the full view as a place to read panels.
     followup = memory.latest_followup.read_text(encoding="utf-8")
     assert "every collapsed panel" not in followup
-
-
-def test_non_l1_agent_facing_latest_view_is_unannotated(tmp_path: Path) -> None:
-    """For non-L1 profiles the agent-facing file is the full view, no notice added."""
-    memory = NodeMemory(tmp_path, "Tree-0.0", surface_profile="l4_preview_diagnostic")
-    memory.record_bootstrap({
-        "session_tag": "unit",
-        "session_dir": ".ec_session_unit",
-        "snapshot": {"state_version": 0},
-        "workspace_view": {
-            "kind": "prover_workspace_view",
-            "current_goal": {"lines": ["g"]},
-            "candidate_moves": [{"tactic": "auto."}],
-        },
-    })
-    latest_view = json.loads(memory.latest_view.read_text(encoding="utf-8"))
-    assert "_l1_surface_notice" not in latest_view
-    assert latest_view["candidate_moves"]
 
 
 def test_legal_node_memory_anchor_lives_in_system_prompt_not_per_turn(tmp_path: Path) -> None:
@@ -488,14 +597,14 @@ def test_legal_node_memory_anchor_lives_in_system_prompt_not_per_turn(tmp_path: 
     memory = NodeMemory(tmp_path, "Tree_0_0")
     turn = ManagedTurn(
         ok=True,
-        workspace_view={
-            "kind": "prover_workspace_view",
-            "proof_status": {"status": "open"},
-            "current_goal": {"lines": ["x = y"]},
-        },
+        workspace_view=_current_workspace_view(
+            proof_status={"status": "open"},
+            current_goal={"lines": ["x = y"]},
+        ),
         manager_actions=[],
+        committed_tactics=("proc.", "wp."),
     )
-    followup = _render_manager_followup(
+    followup = render_manager_followup(
         turn, 1, {"intent": "commit_tactic", "payload": {"tactic": "auto."}}, memory,
     )
     # the per-turn followup no longer carries the heavy LEGAL_* path block
@@ -508,54 +617,64 @@ def test_legal_node_memory_anchor_lives_in_system_prompt_not_per_turn(tmp_path: 
     assert f"LEGAL_PROOF_SO_FAR: `{memory.latest_proof}`" in sys_anchor
     assert "Compaction recovery" in sys_anchor
     assert "submit_proof_intent" in sys_anchor and "one intent" in sys_anchor.lower()
+    proof = memory.latest_proof.read_text(encoding="utf-8")
+    assert "Proof so far (2 committed" in proof
+    assert "1. proc." in proof
+    assert "2. wp." in proof
 
 
-def test_playground_memory_none_retrieval_followup_renders_surface_model_answer() -> None:
+@pytest.mark.parametrize(
+    ("status", "expected_instruction"),
+    (
+        (
+            "goals_discharged_pending_qed",
+            "Next valid action:** commit `qed.` with `commit_tactic`",
+        ),
+        (
+            "session_closed_pending_verification",
+            "Next valid action:** submit `finish`",
+        ),
+    ),
+)
+def test_terminal_lifecycle_status_is_visible_in_agent_followup(
+    status: str,
+    expected_instruction: str,
+) -> None:
     turn = ManagedTurn(
         ok=True,
-        workspace_view={
-            "kind": "prover_workspace_view",
-            "proof_status": {"status": "open", "current_layer": "procedure_body"},
-            "current_goal": {"lines": ["Current goal", "x = y"]},
-            "last_result": {
-                "intent": "tactic_forms",
-                "payload": {"name": "rewrite"},
-                "result": "Read-only context returned.",
-                "proof_state": "unchanged",
-                "content": {
-                    "title": "Tactic Form Reference",
-                    "preview": (
-                        "=== `rewrite` tactic -- argument forms ===\n"
-                        "Form 1: rewrite LEMMA."
-                    ),
-                },
+        workspace_view=_current_workspace_view(
+            proof_status={
+                "status": status,
+                "remaining_goals": 0,
+                "remaining_goals_known": True,
             },
-        },
+            current_goal={},
+        ),
         manager_actions=[],
     )
-    followup = _render_manager_followup(
+
+    followup = render_manager_followup(
         turn,
-        2,
-        {"intent": "tactic_forms", "payload": {"name": "rewrite"}},
-        memory=None,
-        surface_profile="l4_checked_action_surface",
+        1,
+        {"intent": "commit_tactic", "payload": {"tactic": "done."}},
     )
 
-    assert "Requested: `tactic_forms`" in followup
-    assert "rewrite LEMMA" in followup
-    assert followup.index("Current Goal") < followup.index("Requested: `tactic_forms`")
-    assert "Manager result (previous turn)" not in followup
+    assert f"**Status:** `{status}`" in followup
+    assert expected_instruction in followup
+    assert "Submit exactly one proof intent for the next turn" in followup
 
 
 def test_runtime_uses_one_agent_session_for_multiple_manager_turns(tmp_path: Path) -> None:
     runtime = ProofNodeRuntime(
         prompt="Base prompt",
-        bootstrap={
-            "session_tag": "unit",
-            "session_dir": ".ec_session_unit",
-            "snapshot": {"state_version": 0, "session_epoch": 0},
-            "workspace_view": {"current_goal": {"lines": ["initial"]}},
-        },
+        bootstrap=_current_bootstrap(
+            session_tag="unit",
+            session_dir=".ec_session_unit",
+            snapshot={"state_version": 0, "session_epoch": 0},
+            workspace_view=_current_workspace_view(
+                current_goal={"lines": ["initial"]},
+            ),
+        ),
         file_path="eval/examples/SchnorrPK.ec",
         lemma_name="dummy",
         include_dir="easycrypt-src/theories",
@@ -574,20 +693,36 @@ def test_runtime_uses_one_agent_session_for_multiple_manager_turns(tmp_path: Pat
         handled.append(parsed.intent.intent if parsed.intent else "malformed")
         return ManagedTurn(
             ok=True,
-            workspace_view={
-                "kind": "prover_workspace_view",
-                "last_result": {"intent": handled[-1], "result": "ok"},
-                "current_goal": {"lines": [f"turn {len(handled)}"]},
-                "proof_status": {"status": "open"},
-            },
+            workspace_view=_current_workspace_view(
+                last_result={"intent": handled[-1], "result": "ok"},
+                current_goal={"lines": [f"turn {len(handled)}"]},
+                proof_status={"status": "open"},
+            ),
             manager_actions=[{
                 "label": handled[-1],
                 "exit_code": 0,
-                "agent_observation": {"result": "ok"},
+                "agent_observation": {
+                    **(
+                        {"kind": "finish_accepted"}
+                        if handled[-1] == "finish" else {}
+                    ),
+                    "result": "ok",
+                },
             }],
         )
 
     runtime.manager.handle_agent_message = fake_handle  # type: ignore[method-assign]
+    runtime.prompt = (
+        f"{MANAGED_HANDOFF_START}\nprovisional handoff\n{MANAGED_HANDOFF_END}"
+    )
+    runtime.memory.initial_followup.write_text(
+        """Initial manager handoff.
+
+### Ready proof action
+- submit: `{"intent":"commit_tactic","payload":{"tactic":"move=> x."}}`
+""",
+        encoding="utf-8",
+    )
 
     class FakeAgent:
         def __init__(self) -> None:
@@ -595,23 +730,27 @@ def test_runtime_uses_one_agent_session_for_multiple_manager_turns(tmp_path: Pat
             self.close_count = 0
             self.session_id = "fake-session"
             self.responses: list[str] = []
+            self.initial_prompt = ""
 
         def run(self, prompt: str, *, system_prompt: str = "",
                 mcp_config_path: Path | None = None,
                 mcp_debug_log: Path | None = None):
             self.run_count += 1
+            self.initial_prompt = prompt
             assert "submit_proof_intent" in prompt
             assert "submit_intent.sh" not in prompt
+            assert '"tactic":"move=> x."' in prompt
+            assert "provisional handoff" not in prompt
             assert mcp_config_path is not None
             config = json.loads(mcp_config_path.read_text(encoding="utf-8"))
             assert "proof_node_manager" in config["mcpServers"]
             assert config["mcpServers"]["proof_node_manager"]["type"] == "stdio"
             env = config["mcpServers"]["proof_node_manager"]["env"]
             assert env["SHANNON_MCP_DEBUG_LOG"].endswith("mcp_debug.jsonl")
-            assert env["SHANNON_SURFACE_PROFILE"] == ""
+            assert env["SHANNON_SURFACE_PROFILE"] == "proof_state_compiler"
             for intent in (
-                {"intent": "tactic_forms", "payload": {"name": "wp"}},
-                {"intent": "operator_lemmas", "payload": {"operator": "size"}},
+                {"intent": "undo_last_step", "payload": {}},
+                {"intent": "finish", "payload": {}},
             ):
                 response = submit_intent_to_bridge(
                     host=runtime.bridge.host,
@@ -621,6 +760,18 @@ def test_runtime_uses_one_agent_session_for_multiple_manager_turns(tmp_path: Pat
                 )
                 assert response["exit_code"] == 0
                 self.responses.append(response["text"])
+            repeated_finish = submit_intent_to_bridge(
+                host=runtime.bridge.host,
+                port=runtime.bridge.port,
+                token=runtime.bridge.token,
+                intent_text=intent_text_from_tool_arguments({
+                    "intent": "finish",
+                    "payload": {},
+                }),
+            )
+            assert repeated_finish["exit_code"] == 0
+            assert "finish was already accepted" in repeated_finish["text"]
+            self.responses.append(repeated_finish["text"])
             from workflow.proof_node_runtime import ClaudeRunResult
 
             return ClaudeRunResult(text="done", session_id=self.session_id, returncode=0)
@@ -633,9 +784,13 @@ def test_runtime_uses_one_agent_session_for_multiple_manager_turns(tmp_path: Pat
     result = runtime.run()
 
     assert result.text == "done"
+    assert result.turns == 2
     assert fake_agent.run_count == 1
     assert fake_agent.close_count == 1
-    assert handled == ["tactic_forms", "operator_lemmas"]
+    assert handled == ["undo_last_step", "finish"]
+    assert runtime.memory.initial_agent_prompt.read_text(
+        encoding="utf-8",
+    ) == fake_agent.initial_prompt
     # Read-only context turns are not proof attempts and must not create the
     # historical tactic-attempt stream.
     assert not (runtime.memory.dir / "attempts.jsonl").exists()
@@ -652,15 +807,22 @@ def test_runtime_uses_one_agent_session_for_multiple_manager_turns(tmp_path: Pat
             encoding="utf-8",
         ),
     )
-    assert "last_result" not in turn_2_view
-    assert turn_2_view["surface_turn"]["turn_outcome"]["intent"] == "operator_lemmas"
+    # With no full view projected by this fake manager, NodeMemory stores the
+    # authoritative lean turn instead of falling back to the bootstrap view.
+    assert turn_2_view["last_result"] == {
+        "intent": "finish",
+        "result": "ok",
+    }
+    assert turn_2_view["surface_turn"]["turn_outcome"]["intent"] == "finish"
+    assert turn_2_view["surface_turn"]["turn_outcome"]["finish_accepted"] is True
     assert turn_2_view["surface_turn"]["base_surface_updates"] is False
     assert fake_agent.responses
-    # Per-turn followup points back to the compact agent-readable surface, not
-    # the raw workspace audit JSON.
-    assert "LEGAL_LATEST_FOLLOWUP" in fake_agent.responses[-1]
+    # The per-turn response is itself the complete compact agent-readable
+    # surface; it does not point the agent at the raw workspace audit JSON.
     assert "LEGAL_LATEST_WORKSPACE_VIEW" not in fake_agent.responses[-1]
-    assert "submit_proof_intent" in fake_agent.responses[-1]
+    assert "finish was already accepted" in fake_agent.responses[-1]
+    assert "Stop submitting proof intents" in fake_agent.responses[-1]
+    assert "Submit exactly ONE proof intent" not in fake_agent.responses[-1]
     for internal_text in (
         "session_cli",
         ".claude",
@@ -676,12 +838,15 @@ def test_runtime_uses_one_agent_session_for_multiple_manager_turns(tmp_path: Pat
 def test_runtime_passes_surface_profile_to_mcp_config(tmp_path: Path) -> None:
     runtime = ProofNodeRuntime(
         prompt="Base prompt",
-        bootstrap={
-            "session_tag": "unit",
-            "session_dir": ".ec_session_unit",
-            "snapshot": {"state_version": 0, "session_epoch": 0},
-            "workspace_view": {"current_goal": {"lines": ["initial"]}},
-        },
+        bootstrap=_current_bootstrap(
+            session_tag="unit",
+            session_dir=".ec_session_unit",
+            snapshot={"state_version": 0, "session_epoch": 0},
+            workspace_view=_profiled_workspace_view(
+                "l1_goal_projection",
+                current_goal={"lines": ["initial"]},
+            ),
+        ),
         file_path="eval/examples/SchnorrPK.ec",
         lemma_name="dummy",
         include_dir="easycrypt-src/theories",
@@ -701,105 +866,17 @@ def test_runtime_passes_surface_profile_to_mcp_config(tmp_path: Path) -> None:
     assert env["SHANNON_SURFACE_PROFILE"] == "l1_goal_projection"
 
 
-def test_manager_followup_marks_inspect_results_as_readonly_speculative(tmp_path: Path) -> None:
-    memory = NodeMemory(tmp_path, "Tree-0.0")
-    turn = ManagedTurn(
-        ok=True,
-        workspace_view={
-            "kind": "prover_workspace_view",
-            "proof_status": {"status": "open"},
-            "current_goal": {"lines": ["Current goal", "x = y"]},
-            "last_result": {
-                "intent": "call_subgoals",
-                "payload": {},
-                "result": "Read-only context returned.",
-                "proof_state": "unchanged",
-                "content": {
-                    "title": "Call Obligation Preview",
-                    "result": (
-                        "The previewed call did not typecheck against the "
-                        "daemon; no tactic was committed."
-                    ),
-                    "preview": "=== Call subgoal preview === ...",
-                },
-            },
-        },
-        manager_actions=[{
-            "label": "inspect_call_subgoals",
-            "exit_code": 0,
-            "duration_ms": 12,
-            "mutates_proof_state": False,
-            "agent_observation": {
-                "content": {
-                    "title": "Call Obligation Preview",
-                    "result": (
-                        "The previewed call did not typecheck against the "
-                        "daemon; no tactic was committed."
-                    ),
-                    "preview": "=== Call subgoal preview === ...",
-                },
-            },
-        }],
-    )
-
-    followup = _render_manager_followup(
-        turn,
-        3,
-        {"intent": "call_subgoals", "payload": {}},
-        memory,
-    )
-    result = json.loads(memory.latest_result.read_text(encoding="utf-8"))
-
-    assert "Read-only context" in result["manager_note"]
-    assert "route-selection information" in result["manager_note"]
-    assert result["manager_actions"][0]["action"] == "call-obligation preview"
-    assert result["manager_actions"][0]["outcome"].startswith("The previewed call")
-    assert result["manager_actions"][0]["content"] == {
-        "title": "Call Obligation Preview",
-        "preview": "=== Call subgoal preview === ...",
-    }
-    assert "mutates_proof_state" not in result["manager_actions"][0]
-    assert "proof_state_changed" not in result["manager_actions"][0]
-    assert "proof_state" not in result["manager_actions"][0]
-    assert "observation" not in result["manager_actions"][0]
-    assert "preview_scope" not in followup
-    assert "preview_status" not in followup
-    # (composition fix 2026-06-05) the requested inspect answer LEADS, surfaced as
-    # readable SurfaceModel markdown — NOT buried in a raw result_payload JSON dump.
-    assert "## Requested" in followup
-    assert "Call subgoal preview" in followup            # the content.preview itself
-    # (ergonomics fix) the 4-line "Manager result" section is replaced by a
-    # SurfaceModel context-result panel, and the per-turn Legal Node Memory
-    # Anchor is dropped from retrieval turns (recovery is owned by the system prompt).
-    assert "Legal Node Memory Anchor" not in followup    # dropped on retrieval turns
-    assert "```json" not in followup                     # no raw result_payload dump
-    # the requested answer sits after the unchanged proof surface/actions.
-    assert followup.index("Current Goal") < followup.index("Call subgoal preview")
-    assert (memory.dir / "followups" / "turn_003.md").read_text(
-        encoding="utf-8",
-    ) == followup
-    assert json.loads(
-        (memory.dir / "manager_results" / "turn_003.json").read_text(
-            encoding="utf-8",
-        ),
-    ) == result
-    turn_view = json.loads(
-        (memory.dir / "workspace_views" / "turn_003.json").read_text(
-            encoding="utf-8",
-        ),
-    )
-    assert turn_view["current_goal"]["lines"] == ["Current goal", "x = y"]
-
-
 def test_runtime_marks_node_unhealthy_without_resume_fallback(tmp_path: Path) -> None:
     runtime = ProofNodeRuntime(
         prompt="Base prompt",
-        bootstrap={
-            "session_tag": "unit",
-            "session_dir": ".ec_session_unit",
-            "snapshot": {"state_version": 0, "session_epoch": 0},
-            "workspace_view": {"current_goal": {"lines": ["initial"]}},
-        },
+        bootstrap=_current_bootstrap(
+            session_tag="unit",
+            session_dir=".ec_session_unit",
+            snapshot={"state_version": 0, "session_epoch": 0},
+            workspace_view=_current_workspace_view(
+                current_goal={"lines": ["initial"]},
+            ),
+        ),
         file_path="eval/examples/SchnorrPK.ec",
         lemma_name="dummy",
         include_dir="easycrypt-src/theories",
@@ -814,11 +891,10 @@ def test_runtime_marks_node_unhealthy_without_resume_fallback(tmp_path: Path) ->
     def unhealthy(_text: str) -> ManagedTurn:
         return ManagedTurn(
             ok=False,
-            workspace_view={
-                "kind": "prover_workspace_view",
-                "current_goal": {"lines": ["still open"]},
-                "proof_status": {"status": "open"},
-            },
+            workspace_view=_current_workspace_view(
+                current_goal={"lines": ["still open"]},
+                proof_status={"status": "open"},
+            ),
             health_event=NodeHealthEvent(
                 node_id="Tree-unit",
                 status="agent_protocol_stuck",
@@ -840,8 +916,8 @@ def test_runtime_marks_node_unhealthy_without_resume_fallback(tmp_path: Path) ->
                 port=runtime.bridge.port,
                 token=runtime.bridge.token,
                 intent_text=intent_text_from_tool_arguments({
-                    "intent": "tactic_forms",
-                    "payload": {"name": "wp"},
+                    "intent": "undo_last_step",
+                    "payload": {},
                 }),
             )
             assert response["exit_code"] == 2
@@ -894,6 +970,92 @@ def test_bridge_internal_exception_returns_json_and_marks_unhealthy(tmp_path: Pa
     assert "boom" in audit
 
 
+def test_bridge_publishes_its_authoritative_completed_turn_index(
+    tmp_path: Path,
+) -> None:
+    manager = make_manager(run_dir=tmp_path)
+    memory = NodeMemory(tmp_path, "Tree-unit")
+    emitted: list[dict] = []
+    bridge = ManagerBridgeServer(
+        manager=manager,
+        memory=memory,
+        response_renderer=(
+            lambda _turn, _idx, _handled, _memory, **_kwargs: "ok"
+        ),
+        max_turns=2,
+        emit=emitted.append,
+    )
+    manager.handle_agent_message = lambda _text: ManagedTurn(  # type: ignore[method-assign]
+        ok=True,
+        workspace_view=_current_workspace_view(),
+    )
+
+    response = bridge._handle_request(json.dumps({
+        "token": bridge.token,
+        "text": '{"intent":"commit_tactic","payload":{"tactic":"trivial."}}',
+    }).encode("utf-8"))
+
+    assert response["exit_code"] == 0
+    assert emitted == [{
+        "type": "system",
+        "kind": "manager_turn.completed",
+        "node": manager.node_id,
+        "turn_index": 1,
+    }]
+
+
+def test_bridge_finish_latch_consumes_only_authoritative_observation(
+    tmp_path: Path,
+) -> None:
+    manager = make_manager(run_dir=tmp_path)
+    memory = NodeMemory(tmp_path, "Tree-unit")
+    bridge = ManagerBridgeServer(
+        manager=manager,
+        memory=memory,
+        response_renderer=(
+            lambda _turn, _idx, _handled, _memory, **_kwargs: "ok"
+        ),
+        max_turns=2,
+    )
+    turns = iter([
+        ManagedTurn(
+            ok=True,
+            workspace_view=_current_workspace_view(),
+            manager_actions=[{
+                "label": "finish",
+                "exit_code": 0,
+                "agent_observation": {"result": "finished"},
+            }],
+        ),
+        ManagedTurn(
+            ok=True,
+            workspace_view=_current_workspace_view(),
+            manager_actions=[{
+                "label": "finish",
+                "exit_code": 1,
+                "needs_attention": True,
+                "agent_observation": {
+                    "kind": "finish_accepted",
+                    "result": "Finish accepted.",
+                },
+            }],
+        ),
+    ])
+    manager.handle_agent_message = lambda _text: next(turns)  # type: ignore[method-assign]
+    request = json.dumps({
+        "token": bridge.token,
+        "text": '{"intent":"finish","payload":{}}',
+    }).encode("utf-8")
+
+    first = bridge._handle_request(request)
+    assert first["exit_code"] == 0
+    assert bridge.finish_accepted is False
+
+    second = bridge._handle_request(request)
+    assert second["exit_code"] == 0
+    assert bridge.finish_accepted is True
+
+
 def test_mcp_tool_arguments_preserve_long_tactic_without_shell_escaping() -> None:
     tactic = (
         "seq 1 1 : (c2{1} = c1{2} /\\ "
@@ -923,6 +1085,73 @@ def test_mcp_tool_arguments_forward_malformed_intent_to_manager_repair() -> None
     assert parsed.error == "unknown_or_missing_intent"
 
 
+def test_compiler_markdown_reaches_mcp_content_byte_for_byte(
+    tmp_path: Path,
+) -> None:
+    admission_presentation = render_action_surface_payload({
+        "schema_version": 1,
+        "resources": [],
+        "bindings": [],
+        "actions": [{
+            "intent": "commit_tactic",
+            "payload": {"tactic": "trivial. (* mcp-byte-probe-μ *)"},
+            "presentation_kind": "failure_linked_repair",
+            "checked_local_effect": {"closed": True},
+        }],
+        "diagnostics": [],
+    })
+    manager = make_manager(run_dir=tmp_path)
+    memory = NodeMemory(tmp_path, "Tree-mcp-byte-probe")
+    bridge = ManagerBridgeServer(
+        manager=manager,
+        memory=memory,
+        response_renderer=render_manager_followup,
+        max_turns=1,
+    )
+
+    def fixed_turn(_text: str) -> ManagedTurn:
+        return ManagedTurn(
+            ok=True,
+            workspace_view=_current_workspace_view(
+                current_goal={"lines": ["Current goal", "x = x"]},
+            ),
+            compiler_markdown=admission_presentation.text,
+        )
+
+    manager.handle_agent_message = fixed_turn  # type: ignore[method-assign]
+    bridge.start()
+    try:
+        mcp = ProofNodeMcpServer(
+            host=bridge.host,
+            port=bridge.port,
+            token=bridge.token,
+            node_memory_dir=memory.dir,
+        )
+        result = mcp._handle_tool_call({
+            "name": "submit_proof_intent",
+            "arguments": {
+                "intent": "commit_tactic",
+                "payload": {"tactic": "trivial."},
+            },
+        })
+    finally:
+        bridge.close()
+
+    assert result["isError"] is False
+    content_text = result["content"][0]["text"]
+    assert content_text.count(admission_presentation.text) == 1
+    start = content_text.index(admission_presentation.text)
+    compiler_substring = content_text[
+        start:start + len(admission_presentation.text)
+    ]
+    assert compiler_substring.encode("utf-8") == (
+        admission_presentation.text.encode("utf-8")
+    )
+    assert hashlib.sha256(compiler_substring.encode("utf-8")).hexdigest() == (
+        admission_presentation.sha256
+    )
+
+
 def test_mcp_server_advertises_structured_submit_tool(monkeypatch, tmp_path: Path) -> None:
     monkeypatch.delenv("SHANNON_ENABLE_PROBE", raising=False)
     monkeypatch.delenv("SHANNON_DISABLE_PROBE", raising=False)
@@ -943,10 +1172,7 @@ def test_mcp_server_advertises_structured_submit_tool(monkeypatch, tmp_path: Pat
     assert response is not None
     tools = response["result"]["tools"]
     assert tools[0]["name"] == "submit_proof_intent"
-    assert (
-        "proof mutation or profile-visible semantic proof context"
-        in tools[0]["description"]
-    )
+    assert "proof-level JSON intent" in tools[0]["description"]
     assert "Bash" not in tools[0]["description"]
     assert "latest_workspace_view.json" not in tools[0]["description"]
     assert "latest_followup.md" in tools[0]["description"]
@@ -956,8 +1182,7 @@ def test_mcp_server_advertises_structured_submit_tool(monkeypatch, tmp_path: Pat
     assert "intent" in tools[0]["inputSchema"]["required"]
     intent_enum = tools[0]["inputSchema"]["properties"]["intent"]["enum"]
     assert "request_restart" not in intent_enum
-    assert "probe_tactic" not in intent_enum
-    assert "probe_replay_suffix_chunk" not in intent_enum
+    assert "retired_preview_intent" not in intent_enum
 
 
 def test_mcp_server_cannot_opt_into_retired_probe_schema(monkeypatch, tmp_path: Path) -> None:
@@ -978,8 +1203,7 @@ def test_mcp_server_cannot_opt_into_retired_probe_schema(monkeypatch, tmp_path: 
     })
 
     intent_enum = response["result"]["tools"][0]["inputSchema"]["properties"]["intent"]["enum"]
-    assert "probe_tactic" not in intent_enum
-    assert "probe_replay_suffix_chunk" not in intent_enum
+    assert "retired_preview_intent" not in intent_enum
 
 
 def test_mcp_bridge_empty_response_becomes_tool_error(tmp_path: Path) -> None:
@@ -1058,37 +1282,42 @@ def test_commit_followup_is_one_line_last_action_not_manager_result_section(tmp_
     mem = NodeMemory(tmp_path, "Tree-0.0")
     accepted = ManagedTurn(
         ok=True,
-        workspace_view={
-            "kind": "prover_workspace_view",
-            "proof_status": {"status": "open"},
-            "current_goal": {"lines": ["Current goal", "AFTER proc"]},
-            "last_result": {"tactic": "proc.",
+        workspace_view=_current_workspace_view(
+            proof_status={"status": "open"},
+            current_goal={"lines": ["Current goal", "AFTER proc"]},
+            last_result={"tactic": "proc.",
                             "result": "EasyCrypt accepted the committed tactic.",
-                            "proof_state": "The committed EasyCrypt proof state changed."},
-        },
+                            "outcome_kind": "accepted",
+                            "proof_state_effect": "changed",
+                            "proof_state_changed": True,
+                            "needs_attention": False},
+        ),
         snapshot=SimpleNamespace(goal_hash="Hc", state_version=2),
     )
-    fa = _render_manager_followup(
+    fa = render_manager_followup(
         accepted, 3, {"intent": "commit_tactic", "payload": {"tactic": "proc."}}, mem)
     assert "**Last action:** `proc.`" in fa and "accepted" in fa
-    assert fa.index("## 🎯 Current Goal") < fa.index("**Last action:** `proc.`")
+    assert fa.index("**Last action:** `proc.`") < fa.index("## 🎯 Current Goal")
     assert "### Manager result (previous turn)" not in fa   # the section is gone
     assert "you submitted:" not in fa                       # the redundant echo is gone
     assert "Legal Node Memory Anchor" not in fa             # anchor moved to the system prompt
 
     rejected = ManagedTurn(
         ok=True,
-        workspace_view={
-            "kind": "prover_workspace_view",
-            "proof_status": {"status": "open"},
-            "current_goal": {"lines": ["Current goal", "x = y"]},
-            "last_result": {"tactic": "apply foo.",
+        workspace_view=_current_workspace_view(
+            proof_status={"status": "open"},
+            current_goal={"lines": ["Current goal", "x = y"]},
+            last_result={"tactic": "apply foo.",
                             "result": "EasyCrypt rejected the committed tactic.",
-                            "error_summary": "[error] cannot infer all placeholders"},
-        },
+                            "error_summary": "[error] cannot infer all placeholders",
+                            "outcome_kind": "rejected",
+                            "proof_state_effect": "unchanged",
+                            "proof_state_changed": False,
+                            "needs_attention": True},
+        ),
         snapshot=SimpleNamespace(goal_hash="Hd", state_version=2),
     )
-    fr = _render_manager_followup(
+    fr = render_manager_followup(
         rejected, 4, {"intent": "commit_tactic", "payload": {"tactic": "apply foo."}}, mem)
     assert "**Last action:** `apply foo.`" in fr and "rejected" in fr.lower()
     assert "EasyCrypt error:" in fr and "cannot infer all placeholders" in fr   # reject = why, inline

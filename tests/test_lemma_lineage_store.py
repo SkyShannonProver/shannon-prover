@@ -38,45 +38,10 @@ def test_lemma_lineage_store_records_typed_node_events(tmp_path: Path) -> None:
         session_dir=".ec_session_unit",
         replay_prefix_count=3,
     )
-    store.record_repair_episode(
-        node_id="Tree_0",
-        memory={
-            "memory_id": "route_abc",
-            "repair_episode_id": "repair_abc",
-            "from_checkpoint_id": "cp_3",
-            "from_tactic_index": 3,
-            "kept_prefix_end": 2,
-            "discarded_suffix": ["seq 1 1 : P.", "wp."],
-            "discarded_pieces": [
-                {
-                    "piece_id": "piece_abc_2",
-                    "tactic": "seq 1 1 : P.",
-                    "replay_class": "boundary_sensitive",
-                    "goal_tag": "seq_cut",
-                },
-                {
-                    "piece_id": "piece_abc_3",
-                    "tactic": "wp.",
-                    "replay_class": "structural_replayable",
-                    "goal_tag": "wp_frontier",
-                },
-            ],
-            "structural_chunks": [{"chunk_id": "rch_abc_1"}],
-            "stale_piece_ids": ["piece_abc_2"],
-            "negative_memory_ids": ["neg_abc_0"],
-            "rewind_note": {
-                "hypothesis": "boundary_too_weak",
-                "broken_boundary_kind": "seq_midpoint",
-                "missing_facts": ["frame equality"],
-                "intended_repair": "strengthen midpoint",
-                "reuse_expectation": "old suffix mostly structural",
-            },
-        },
-    )
     store.record_proof_turn(
         node_id="Tree_0",
         route_event={
-            "intent": "probe_tactic",
+            "intent": "commit_tactic",
             "turn_index": 4,
             "accepted": True,
             "changed": False,
@@ -93,22 +58,10 @@ def test_lemma_lineage_store_records_typed_node_events(tmp_path: Path) -> None:
 
     assert [row["kind"] for row in rows] == [
         "node_bootstrapped",
-        "repair_episode_recorded",
         "proof_turn_recorded",
     ]
     assert rows[0]["replay_prefix_count"] == 3
-    assert rows[1]["memory_id"] == "route_abc"
-    assert rows[1]["kept_prefix_end"] == 2
-    assert rows[1]["discarded_tactic_count"] == 2
-    assert rows[1]["discarded_piece_count"] == 2
-    assert rows[1]["replay_class_counts"]["boundary_sensitive"] == 1
-    assert rows[1]["goal_tag_counts"]["wp_frontier"] == 1
-    assert rows[1]["stale_piece_count"] == 1
-    assert rows[1]["negative_memory_count"] == 1
-    assert rows[1]["candidate_replay_chunk_count"] == 1
-    assert rows[1]["rewind_note"]["hypothesis"] == "boundary_too_weak"
-    assert rows[1]["rewind_note"]["missing_facts"] == ["frame equality"]
-    assert rows[2]["tactic"] == "wp."
+    assert rows[1]["tactic"] == "wp."
 
 
 def test_lemma_lineage_store_records_tree_shadow_events(tmp_path: Path) -> None:
@@ -181,7 +134,7 @@ def test_lemma_lineage_store_records_tree_shadow_events(tmp_path: Path) -> None:
     )
     store.record_winner_selected(
         node_id="Tree-0.0",
-        proved=False,
+        completion_candidate=False,
         returncode=0,
         committed_count=5,
         max_committed_count_seen=5,
@@ -201,7 +154,7 @@ def test_lemma_lineage_store_records_tree_shadow_events(tmp_path: Path) -> None:
         winner_node_id="Tree-0.0",
         total_spawned=2,
         max_depth=1,
-        proved=False,
+        completion_candidate=False,
         returncode=0,
     )
 
@@ -234,28 +187,3 @@ def test_lemma_lineage_store_records_tree_shadow_events(tmp_path: Path) -> None:
     assert briefing["winner"]["node"] == "Tree-0.0"
     assert briefing["winner"]["shadow_selection"]["mode"] == "shadow"
     assert (tmp_path / "lemma_lineage_briefing.md").exists()
-
-
-def test_lineage_briefing_from_events_summarizes_repairs() -> None:
-    briefing = lineage_briefing_from_events([
-        {
-            "kind": "node_spawned",
-            "node": "Tree-0.0",
-            "route_family": {"family": "call_boundary_route"},
-        },
-        {
-            "kind": "repair_episode_recorded",
-            "node": "Tree-0.0",
-            "memory_id": "route_1",
-            "repair_episode_id": "repair_1",
-            "rewind_note": {
-                "hypothesis": "call invariant missing frame",
-                "missing_facts": ["={glob RO}"],
-            },
-        },
-    ])
-
-    assert briefing["route_family_counts"]["call_boundary_route"] == 1
-    assert briefing["recent_repairs"][0]["rewind_note"]["hypothesis"] == (
-        "call invariant missing frame"
-    )

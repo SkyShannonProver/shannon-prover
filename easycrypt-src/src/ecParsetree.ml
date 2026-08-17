@@ -37,6 +37,13 @@ type osymbol_r   = psymbol option
 type osymbol     = osymbol_r located
 
 (* -------------------------------------------------------------------- *)
+(* A bullet at the start of a `.`-terminated tactic phrase. The kind
+   identifies the bullet character (`-`, `+`, `*`); the count is the
+   number of repetitions (`>= 1`). *)
+type bullet_kind = [ `Minus | `Plus | `Star ]
+type bullet = { b_kind : bullet_kind; b_count : int; }
+
+(* -------------------------------------------------------------------- *)
 type pcp_match = [
   | `If
   | `While
@@ -501,6 +508,7 @@ type ppredicate = {
   pp_name   : psymbol;
   pp_tyvars : psymbol list option;
   pp_def    : ppred_def;
+  pp_tags   : psymbol list;
   pp_locality  : locality;
 }
 
@@ -739,10 +747,10 @@ type conseq_contra =
 type conseq_ppterm = (conseq_contra * (conseq_info) option) gppterm
 
 (* -------------------------------------------------------------------- *)
-type sim_info = {
-  sim_pos  : pcodegap1 pair option;
-  sim_hint : (pgamepath option pair * pformula) list * pformula option;
-  sim_eqs  : pformula option
+type psim_info = {
+  psim_pos  : pcodegap1 pair option;
+  psim_hint : (pgamepath option pair * pformula) list * pformula option;
+  psim_eqs  : pformula option
 }
 
 (* -------------------------------------------------------------------- *)
@@ -771,6 +779,12 @@ type matchmode = [
 type prrewrite = [`Rw of ppterm | `Simpl]
 
 (* -------------------------------------------------------------------- *)
+type pecall = pqsymbol * ptyannot option * ppt_arg located list
+
+(* -------------------------------------------------------------------- *)
+type pdirection = [`Forward | `Backward]
+
+(* -------------------------------------------------------------------- *)
 type phltactic =
   | Pskip
   | Prepl_stmt     of trans_info
@@ -796,6 +810,7 @@ type phltactic =
   | Poutline       of outline_info
   | Pinterleave    of interleave_info located
   | Pkill          of (oside * pcodepos * int option)
+  | PsimplifyIf    of (oside * pcodepos option)
   | Pasgncase      of (oside * pcodepos)
   | Prnd           of oside * psemrndpos option * rnd_tac_info_f
   | Prndsem        of bool * oside * pcodegap1
@@ -808,7 +823,7 @@ type phltactic =
   | Pconcave       of (pformula option tuple2 gppterm * pformula)
   | Phrex_elim
   | Phrex_intro    of (pformula list * bool)
-  | Phecall        of (oside * (pqsymbol * ptyannot option * pformula list))
+  | Phecall        of (pdirection * oside * pecall)
   | Pexfalso
   | Pbydeno        of ([`PHoare | `Equiv | `EHoare ] * (deno_ppterm * bool * pformula option))
   | PPr            of (pformula * pformula) option
@@ -816,7 +831,7 @@ type phltactic =
   | Pfel           of (pcodegap1 * fel_info)
   | Phoare
   | Pprbounded
-  | Psim           of crushmode option* sim_info
+  | Psim           of crushmode option* psim_info
   | Ptrans_stmt    of trans_info
   | Prw_equiv      of rw_eqv_info
   | Psymmetry
@@ -824,7 +839,7 @@ type phltactic =
   | Prwprgm of rwprgm
   | Pprocrewrite   of side option * pcodepos * prrewrite
   | Pprocrewriteat of psymbol * ppterm
-  | Pchangestmt    of side option * prange1_or_insert * pstmt
+  | Pchangestmt    of side option * ptybindings option * prange1_or_insert * pstmt
   | Phoaresplit
 
     (* Eager *)
@@ -883,7 +898,6 @@ type pprover_infos = {
   pprov_version   : [`Lazy | `Full] option;
   plem_all        : bool option;
   plem_max        : int option option;
-  plem_iterate    : bool option;
   plem_wanted     : pdbhint option;
   plem_unwanted   : pdbhint option;
   plem_dumpin     : string located option;
@@ -901,7 +915,6 @@ let empty_pprover = {
   pprov_version   = None;
   plem_all        = None;
   plem_max        = None;
-  plem_iterate    = None;
   plem_wanted     = None;
   plem_unwanted   = None;
   plem_dumpin     = None;
@@ -926,11 +939,20 @@ and rwarg1 =
   | RWApp    of ppterm
   | RWTactic of rwtactic
 
-and rwoptions = rwside * trepeat option * rwocc * pformula option
+and rwmatch =
+  | RWM_Plain   of pformula
+  | RWM_Context of psymbol * pformula
+
 and rwside    = [`LtoR | `RtoL]
 and rwocc     = rwocci option
 and rwocci    = [`Inclusive of Sint.t | `Exclusive of Sint.t | `All]
 and rwtactic  = [`Ring | `Field]
+
+and rwoptions =
+  { side       : rwside
+  ; repeat     : trepeat option
+  ; occurrence : rwocc
+  ; match_     : rwmatch option }
 
 (* -------------------------------------------------------------------- *)
 let norm_rwocci (x : rwocci) =
@@ -1013,7 +1035,6 @@ type apply_info = [
   | `Apply   of ppterm list * [`Apply|`Exact|`Alpha]
   | `Top     of [`Apply|`Exact|`Alpha]
   | `Alpha   of ppterm
-  | `ExactType of pqsymbol
 ]
 
 (* -------------------------------------------------------------------- *)
@@ -1026,11 +1047,17 @@ type clear_info = [
 type pgenhave = psymbol * intropattern option * psymbol list * pformula
 
 (* -------------------------------------------------------------------- *)
+type pcongr_mode =
+  | PCongrDefault
+  | PCongrStar
+  | PCongrPattern of pformula
+
+(* -------------------------------------------------------------------- *)
 type logtactic =
   | Preflexivity
   | Passumption
   | Psmt        of pprover_infos
-  | Psplit      of int option
+  | Psplit      of [ `Default of int option | `All of [ `Maybe | `One ] ]
   | Pfield      of psymbol list
   | Pring       of psymbol list
   | Palg_norm
@@ -1038,7 +1065,7 @@ type logtactic =
   | Pleft
   | Pright
   | Ptrivial
-  | Pcongr
+  | Pcongr      of pcongr_mode
   | Pelim       of (prevert * pqsymbol option)
   | Papply      of (apply_info * prevert option)
   | Pcut        of pcut
@@ -1335,6 +1362,7 @@ type global_action =
   | Greduction   of puserred
   | Ghint        of phint
   | Gprint       of pprint
+  | Gexpect      of (string located * pprint)
   | Gsearch      of pformula list
   | Glocate      of pqsymbol
   | GthOpen      of (is_local * bool * psymbol)
@@ -1349,8 +1377,8 @@ type global_action =
   | GsctOpen     of osymbol_r
   | GsctClose    of osymbol_r
   | Grealize     of prealize located
-  | Gtactics     of [`Proof | `Actual of ptactic list]
-  | Gtcdump      of (tcdump * ptactic list)
+  | Gtactics     of [`Proof | `Actual of bullet located option * ptactic list]
+  | Gtcdump      of (tcdump * (bullet located option * ptactic list))
   | Gprover_info of pprover_infos
   | Gsave        of save located
   | Gpragma      of psymbol

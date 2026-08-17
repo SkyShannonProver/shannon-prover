@@ -171,25 +171,6 @@ class CtxWatermarkDetector:
 
 # --- Layer 2 classifier: proof-open / premature give-up ----------------------
 
-def proof_is_open(latest_view: dict[str, Any] | None) -> bool:
-    """True iff the manager view says the proof is genuinely open.
-
-    Mirrors the manager's own give-up gate
-    (``ProofNodeManager._give_up_gate``): a proof is OPEN only when
-    ``proof_status.status == "open"`` AND ``remaining_goals != 0``. Closed /
-    candidate_* / complete / unknown / missing all read as NOT open, so we never
-    misclassify a real or closing finish as premature.
-    """
-    if not isinstance(latest_view, dict):
-        return False
-    ps = latest_view.get("proof_status")
-    if not isinstance(ps, dict):
-        return False
-    status = str(ps.get("status") or "")
-    remaining = ps.get("remaining_goals")
-    return status == "open" and remaining != 0
-
-
 # --- Handoff: frontier brief + accepted spine -------------------------------
 
 

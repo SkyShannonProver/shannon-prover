@@ -21,6 +21,8 @@ import re
 import sys
 from pathlib import Path
 
+from core.easycrypt.proof_syntax import inline_proof
+
 
 DECL_KINDS_RE = r"lemma|equiv|hoare|phoare"
 
@@ -53,6 +55,15 @@ def _find_target_proof(lines: list[str], lemma_line: int) -> dict[str, int | str
 
         if i > lemma_line and _is_decl_start(stripped):
             break
+
+        inline = inline_proof(lines[i])
+        if inline is not None:
+            return {
+                "kind": "proof",
+                "proof_line": i,
+                "qed_line": i,
+                "statement_end": max(lemma_line, i - 1),
+            }
 
         if (
             stripped == 'proof.'
@@ -163,13 +174,23 @@ def _replace_proofs_with_admit(lines: list[str], keep_open_line: int | None = No
                 i += 1
                 continue
 
-            # Check for single-line proof (proof. ... qed. on same line)
-            if ('proof.' in stripped and 'qed.' in stripped and
-                    i != keep_open_line and i != keep_intact_line):
+            # Check for single-line proof (proof. ... qed. on the same line).
+            # Opening the target keeps only the declaration/proof prefix; the
+            # body and qed are removed just like a multi-line target proof.
+            inline = inline_proof(lines[i])
+            if inline is not None:
                 in_lemma_stmt = False
+                if i == keep_open_line:
+                    result.append(inline.open_line(lines[i]))
+                    i += 1
+                    continue
+                if i == keep_intact_line:
+                    result.append(lines[i])
+                    i += 1
+                    continue
                 # Single-line proof — keep if no smt, replace if smt
                 if 'smt' in stripped:
-                    result.append(lines[i].split('proof.')[0] + 'proof.')
+                    result.append(inline.open_line(lines[i]))
                     result.append("    admit.")
                     result.append("  qed.")
                 else:
@@ -302,7 +323,6 @@ def extract_lemma(ec_file: Path, lemma_name: str, open_proof: bool = False,
 
     # Find the section containing this lemma (if any)
     section_start = None
-    section_end = None
 
     sections: list[tuple[int, int]] = []
     stack: list[int] = []
@@ -319,7 +339,6 @@ def extract_lemma(ec_file: Path, lemma_name: str, open_proof: bool = False,
         if start < lemma_line < end:
             if section_start is None or start > section_start:
                 section_start = start
-                section_end = end
 
     if section_start is not None:
         # Lemma is inside a section.

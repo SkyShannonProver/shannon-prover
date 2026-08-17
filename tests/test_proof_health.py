@@ -24,23 +24,23 @@ def test_timeout_health_event_marks_mutating_uncertainty() -> None:
     assert "proof state may be uncertain" in health.message
 
 
-def test_backend_failure_health_event_ignores_readonly_non_view_failure() -> None:
-    intent = AgentIntent(intent="inspect_context", payload={"topic": "goal_info"})
+def test_backend_failure_health_event_ignores_internal_preflight_failure() -> None:
+    intent = AgentIntent(intent="finish", payload={})
 
     assert backend_failure_health_event(
         node_id="Tree_0",
         intent=intent,
-        action={"label": "inspect_goal_info", "exit_code": 1},
+        action={"label": "exact_tactic_preflight", "exit_code": 1},
         state_version=3,
     ) is None
 
     health = backend_failure_health_event(
         node_id="Tree_0",
         intent=intent,
-        action={"label": "agent_view", "exit_code": 1},
+        action={"label": "managed_goal_view", "exit_code": 1},
         state_version=3,
     )
 
     assert health is not None
     assert health.status == "manager_backend_failure"
-    assert "agent_view" in health.message
+    assert "managed_goal_view" in health.message

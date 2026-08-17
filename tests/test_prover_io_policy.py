@@ -9,21 +9,88 @@ from workflow.prover_io_policy import (  # noqa: E402
     classify_bash_command,
     classify_read_path,
     classify_shell_source_access,
+    detect_target_proof_output_exposure,
     destructive_tool_denylist,
     has_unquoted_shell_pipe,
     is_session_cli_mutating_command,
 )
 
 
+def test_search_output_inside_substantive_target_proof_is_detected(
+    tmp_path: Path,
+) -> None:
+    source = tmp_path / "eval" / "target.ec"
+    source.parent.mkdir(parents=True)
+    source.write_text(
+        "lemma target &m : true.\n"
+        "proof.\n"
+        "  move=> H.\n"
+        "  exact H.\n"
+        "qed.\n"
+        "lemma sibling : true. proof. trivial. qed.\n",
+        encoding="utf-8",
+    )
+
+    exposure = detect_target_proof_output_exposure(
+        "eval/target.ec:3:  move=> H.\n",
+        target_lemma="target",
+        cwd=tmp_path,
+    )
+
+    assert exposure is not None
+    assert exposure.audit_code == "eval.target_proof_output_exposure"
+    assert exposure.line == 3
+
+
+def test_search_output_outside_or_admit_only_target_proof_is_not_exposure(
+    tmp_path: Path,
+) -> None:
+    source = tmp_path / "target.ec"
+    source.write_text(
+        "lemma target : true.\nproof.\n  admit.\nqed.\n"
+        "lemma sibling : true. proof. trivial. qed.\n",
+        encoding="utf-8",
+    )
+
+    assert detect_target_proof_output_exposure(
+        f"{source}:3:  admit.\n",
+        target_lemma="target",
+        cwd=tmp_path,
+    ) is None
+
+
+def test_heading_and_colored_search_output_is_detected(tmp_path: Path) -> None:
+    source = tmp_path / "target.ec"
+    source.write_text(
+        "lemma target : true.\nproof.\n  trivial.\nqed.\n",
+        encoding="utf-8",
+    )
+
+    exposure = detect_target_proof_output_exposure(
+        "\x1b[35mtarget.ec\x1b[0m\n\x1b[32m3\x1b[0m:  trivial.\n",
+        target_lemma="target",
+        cwd=tmp_path,
+    )
+
+    assert exposure is not None
+    assert exposure.path == str(source)
+    assert exposure.line == 3
+    assert detect_target_proof_output_exposure(
+        f"{source}:5:lemma sibling : true. proof. trivial. qed.\n",
+        target_lemma="target",
+        cwd=tmp_path,
+    ) is None
+
+
 def test_policy_treats_any_agent_session_cli_as_debug_signal() -> None:
     mutating = classify_bash_command(
-        "python3 core/easycrypt/session_cli.py -d s -next -c 'wp.' | head -20"
+        "python3 core/easycrypt/session_cli.py -d s -tactic-exec commit -c 'wp.' | head -20"
     )
     probe = classify_bash_command(
         "python3 core/easycrypt/session_cli.py -d s -try -c 'wp.' | grep accepted"
     )
     readonly = classify_bash_command(
-        "python3 core/easycrypt/session_cli.py -d s -agent-view"
+        "python3 core/easycrypt/session_cli.py -d s -managed-goal-view"
     )
 
     assert mutating.decision == "node_fatal"
@@ -60,38 +127,55 @@ def test_policy_allows_source_grep_and_preserves_tactic_pipes() -> None:
         == "shell_source_inspection"
     )
     assert not has_unquoted_shell_pipe(
-        "python3 core/easycrypt/session_cli.py -d s -next -c 'case: xs => [|x xs].'"
+        "python3 core/easycrypt/session_cli.py -d s -tactic-exec commit -c 'case: xs => [|x xs].'"
     )
     assert is_session_cli_mutating_command(
-        "python3 core/easycrypt/session_cli.py -d s -chain -c 'wp.'"
+        "python3 core/easycrypt/session_cli.py -d s -tactic-exec commit_chain -c 'wp.'"
     )
+
+
+def test_codex_transport_shell_preserves_source_classification(tmp_path: Path) -> None:
+    source = tmp_path / "source" / "target.ec"
+    source.parent.mkdir()
+    source.write_text(
+        "lemma target : true.\nproof.\n  admit.\nqed.\n",
+        encoding="utf-8",
+    )
+    command = f'/bin/bash -lc "sed -n \'1,40p\' {source}"'
+
+    decision = classify_bash_command(
+        command,
+        cwd=tmp_path,
+        allowed_source_files=[source],
+        target_lemma="target",
+        eval_mode=True,
+    )
+
+    assert decision.decision == "allow"
+    assert decision.source_type == "shell_source_inspection"
+    assert decision.audit_code == "shell_source.inspect"
 
 
 def test_shell_source_policy_is_path_based(tmp_path: Path) -> None:
-    session = tmp_path / ".ec_session_prover_tree_0_0"
-
     current = classify_shell_source_access(
         "cat .ec_session_prover_tree_0_0/current.out | head -40",
         cwd=tmp_path,
-        current_session_dir=session,
     )
     other = classify_shell_source_access(
         "rg 'while' .ec_session_other/history.ec",
         cwd=tmp_path,
-        current_session_dir=session,
     )
     source = classify_shell_source_access(
         "rg CTXT_security eval/examples/MEE-CBC",
         cwd=tmp_path,
-        current_session_dir=session,
     )
 
     assert current is not None
-    assert current.decision == "allow"
-    assert current.audit_code == "shell_source.inspect"
+    assert current.decision == "deny"
+    assert current.audit_code == "read.raw_session_artifact"
     assert other is not None
     assert other.decision == "deny"
-    assert other.source_type == "shell_other_session_transcript"
+    assert other.source_type == "shell_raw_session_artifact"
     assert source is not None
     assert source.decision == "allow"
 
@@ -119,18 +203,16 @@ def test_policy_classifies_read_paths(tmp_path: Path) -> None:
     assert classify_read_path(
         str(current),
         cwd=tmp_path,
-        current_session_dir=session,
-    ).decision == "allow"
+    ).decision == "deny"
     assert classify_read_path(
         str(other_history),
         cwd=tmp_path,
-        current_session_dir=session,
     ).decision == "deny"
     assert classify_read_path(
         str(tmp_path / ".ec_session_unknown" / "current.out"),
-    ).decision == "warn"
+    ).decision == "deny"
     assert classify_read_path(
-        "knowledge/session_trace/processed/by_problem/x/step3.json",
+        "session_trace/processed/by_problem/x/step3.json",
         eval_mode=True,
     ).decision == "deny"
     tmp_artifact = tmp_path / "tmp" / "step3_8min_agent_views" / "tree_0_0"
@@ -243,7 +325,7 @@ def test_eval_mode_blocks_historical_eval_reports_and_artifacts(tmp_path: Path) 
         / "artifacts"
         / "eval_suite"
         / "compiler_ladder_matrix"
-        / "l4_checked_action_surface"
+        / "historical_profile"
         / "hard_chacha_step1"
         / "r01"
         / "eval_metrics.json"
@@ -280,7 +362,7 @@ def test_eval_mode_blocks_historical_eval_reports_and_artifacts(tmp_path: Path) 
         / "artifacts"
         / "eval_suite"
         / "compiler_ladder_matrix"
-        / "l4_checked_action_surface"
+        / "historical_profile"
         / "hard_chacha_step1"
         / "r01"
         / "2026-05-15_0900_step1"
@@ -396,7 +478,7 @@ def test_policy_marks_bridge_and_run_artifact_escapes_node_fatal(tmp_path: Path)
     )
     submit_exec = classify_bash_command(
         f"{submit_script} <<'JSON'\n"
-        '{"intent":"inspect_context","payload":{"topic":"goal_info"}}\n'
+        '{"intent":"goal_info","payload":{}}\n'
         "JSON",
         cwd=tmp_path,
     )

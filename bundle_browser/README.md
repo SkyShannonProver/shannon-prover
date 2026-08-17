@@ -7,8 +7,8 @@ through its turns, and click a turn to open closable panels:
 - **What the agent saw** — the rendered followup (the surface the agent read).
 - **Thinking** — the agent's per-turn reasoning.
 - **Manager result** — the manager's response that turn.
-- **Audit view** — the `workspace_view` snapshot, *identical across L1–L4* and
-  **not** what the agent saw (clearly labelled).
+- **Audit view** — the manager-owned `workspace_view` snapshot, shared across
+  matched experiment profiles and **not** what the agent saw (clearly labelled).
 
 It is a static SPA — no build backend. `build_manifest.py` scans each bundle's
 `run_meta.json` into a manifest; the page then reads each bundle's own
@@ -16,23 +16,14 @@ It is a static SPA — no build backend. `build_manifest.py` scans each bundle's
 
 ## Run it
 
-Via the playground server (one process serves the live playground **and** the
-static results browser):
-
-```bash
-eval "$(opam env --switch=easycrypt)"   # only needed for the /play playground
-uv run --with fastapi --with "uvicorn[standard]" \
-    uvicorn playground.server:app --host 127.0.0.1 --port 8000
-# open http://127.0.0.1:8000/results/
-```
-
-The server builds the manifest live at `/results/manifest.json`, so new runs
-appear without a rebuild. Standalone (any static server from the repo root) also
-works once you generate the manifest:
+Generate the manifest, serve the repository with any static HTTP server, and
+open `/bundle_browser/`:
 
 ```bash
 python3 bundle_browser/build_manifest.py          # local: all bundles
 python3 bundle_browser/build_manifest.py --public  # hosted: public tier-A only
+python3 -m http.server 8000
+# open http://127.0.0.1:8000/bundle_browser/
 ```
 
 ## Tiers / redaction

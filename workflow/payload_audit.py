@@ -21,9 +21,7 @@ from workflow.prover_io_policy import InformationSourceDecision
 
 _FULL_OUTPUT_RE = re.compile(r"Full output saved to:\s*(\S+)")
 _WORKSPACE_KIND_RE = re.compile(r'"kind"\s*:\s*"prover_workspace_view"')
-_PREFLIGHT_CANDIDATE_RE = re.compile(r'"kind"\s*:\s*"preflight_candidate_after"')
 _WORKSPACE_FIELD_RE = re.compile(r'"workspace"\s*:\s*\{\s*"view"\s*:\s*\{')
-_PREFLIGHT_CANDIDATE_FIELD_RE = re.compile(r'"candidate_after"\s*:\s*\{')
 
 
 def summarize_text_payload(text: str) -> dict[str, Any]:
@@ -37,21 +35,12 @@ def summarize_text_payload(text: str) -> dict[str, Any]:
         "lines": 0 if not text else text.count("\n") + 1,
         "sha1": hashlib.sha1(data).hexdigest(),
         "contains_tactic_execution_result": "[TACTIC-EXECUTION-RESULT]" in text,
-        "contains_command_summary": "[COMMAND-SUMMARY]" in text,
         "contains_commit_response": "[COMMIT-RESPONSE]" in text,
         "contains_prover_workspace_view": bool(
             _WORKSPACE_KIND_RE.search(text) or _WORKSPACE_FIELD_RE.search(text)
         ),
-        "contains_preflight_candidate_after": bool(
-            _PREFLIGHT_CANDIDATE_RE.search(text)
-            or _PREFLIGHT_CANDIDATE_FIELD_RE.search(text)
-        ),
         "contains_proof_context_ref": contains_proof_context,
         "contains_proof_state_json": contains_proof_state,
-        # Deprecated compatibility alias.  This never meant that the legacy
-        # -agent-view command was printed; it only meant proof-state/context
-        # strings were present in the payload.
-        "contains_agent_view": contains_proof_context or contains_proof_state,
         "contains_output_too_large": "Output too large" in text,
         "contains_background_notice": "Command running in background" in text,
         "full_output_saved_to": _FULL_OUTPUT_RE.findall(text)[:5],
@@ -217,6 +206,7 @@ class PayloadAuditRecorder:
         pending_kind: str = "",
         pending_description: str = "",
         pending_reason: str = "",
+        target_proof_exposure: dict[str, Any] | None = None,
     ) -> None:
         self.record(
             "tool_result",
@@ -227,6 +217,7 @@ class PayloadAuditRecorder:
             pending_description=pending_description[:500],
             pending_reason=pending_reason[:500],
             result=summarize_text_payload(result_text),
+            target_proof_exposure=target_proof_exposure or {},
         )
 
     def record_session_artifact(
@@ -283,9 +274,6 @@ class PayloadAuditRecorder:
             workspace = data.get("workspace") if isinstance(data, dict) else {}
             if not isinstance(workspace, dict):
                 workspace = {}
-            candidate_after = data.get("candidate_after") if isinstance(data, dict) else {}
-            if not isinstance(candidate_after, dict):
-                candidate_after = {}
             workspace_view = (
                 workspace.get("view")
                 if isinstance(workspace.get("view"), dict) else {}
@@ -301,15 +289,6 @@ class PayloadAuditRecorder:
                 raw_goal = "\n".join(str(line) for line in raw_goal_lines)
             else:
                 raw_goal = str(raw_goal_lines or "")
-            candidate_goal = (
-                candidate_after.get("current_goal")
-                if isinstance(candidate_after.get("current_goal"), dict) else {}
-            )
-            candidate_lines = candidate_goal.get("lines")
-            if isinstance(candidate_lines, list):
-                candidate_goal_text = "\n".join(str(line) for line in candidate_lines)
-            else:
-                candidate_goal_text = str(candidate_lines or "")
             self.record(
                 "session_artifact",
                 tree=tree,
@@ -321,12 +300,6 @@ class PayloadAuditRecorder:
                     "status": payload.get("status"),
                     "accepted_count": payload.get("accepted_count"),
                     "workspace_chars": payload.get("workspace_chars"),
-                    "candidate_after_available": payload.get(
-                        "candidate_after_available"
-                    ),
-                    "candidate_after_goal_chars": payload.get(
-                        "candidate_after_goal_chars"
-                    ),
                 },
                 data={
                     "json_chars": _json_size(data),
@@ -337,44 +310,10 @@ class PayloadAuditRecorder:
                     ),
                     "raw_goal_chars": len(raw_goal),
                     "raw_goal_json_chars": _json_size(raw_goal),
-                    "candidate_after_goal_chars": len(candidate_goal_text),
-                    "candidate_after_goal_json_chars": _json_size(
-                        candidate_goal_text
-                    ),
                     "top_level_keys": sorted(data.keys()) if isinstance(data, dict) else [],
                 },
                 proof_state={
                     "status": getattr(snapshot, "status", "unknown"),
-                    "goal_type": getattr(snapshot, "goal_type", "unknown"),
-                    "goal_hash": getattr(snapshot, "goal_hash", ""),
-                    "num_remaining": getattr(snapshot, "num_remaining", None),
-                    "tactic_count": getattr(snapshot, "tactic_count", 0),
-                },
-            )
-            return
-
-        if kind == "agent_view":
-            payload = getattr(snapshot, "latest_agent_payload", None) or {}
-            data = getattr(snapshot, "latest_agent_view", None) or {}
-            proof_state = data.get("proof_state") if isinstance(data, dict) else {}
-            if not isinstance(proof_state, dict):
-                proof_state = {}
-            self.record(
-                "session_artifact",
-                tree=tree,
-                session_tag=session_tag,
-                kind=kind,
-                artifact=_artifact_stats(str(payload.get("artifact") or "")),
-                payload={
-                    "proof_status": payload.get("proof_status"),
-                    "goal_hash": payload.get("goal_hash"),
-                },
-                data={
-                    "json_chars": _json_size(data),
-                    "top_level_keys": sorted(data.keys()) if isinstance(data, dict) else [],
-                },
-                proof_state={
-                    "status": proof_state.get("status"),
                     "goal_type": getattr(snapshot, "goal_type", "unknown"),
                     "goal_hash": getattr(snapshot, "goal_hash", ""),
                     "num_remaining": getattr(snapshot, "num_remaining", None),
@@ -405,7 +344,6 @@ class PayloadAuditRecorder:
                     "goal_hash": payload.get("goal_hash"),
                     "current_goal_text_fully_shown": payload.get(
                         "current_goal_text_fully_shown",
-                        payload.get("goal_complete"),
                     ),
                     "current_goal_truncated": payload.get(
                         "current_goal_truncated"

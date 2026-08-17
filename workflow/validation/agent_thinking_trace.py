@@ -2,9 +2,10 @@
 
 The run's own artifacts deliberately never store the agent's thinking — see
 ``workflow/progress.py:_assistant_context_before_tool`` (only size/hash/markers).
-The actual reasoning lives in the prover's Claude Code session transcript at
-``~/.claude/projects/<slug>/<session_id>.jsonl``. This module joins that
-transcript back to the per-turn timeline and writes, for each
+Claude reasoning lives in its session transcript under ``~/.claude/projects``;
+Codex emits a run-confined ``runtime_private/<node>/codex_events.jsonl`` stream.
+This module joins the applicable provider stream back to the per-turn timeline
+and writes, for each
 ``submit_proof_intent`` turn, the thinking block(s) that immediately preceded it
 to ``node_memory/<tree>/thinking/turn_NNN.md`` — so the agent-view timeline can
 link a per-step, clickable thinking view next to each row, the same way it links
@@ -15,12 +16,11 @@ Transcript discovery (per node):
 1. Preferred — ``node_memory/<tree>/agent_sessions.jsonl`` written at run time
    (``NodeMemory.record_agent_session``): the recorded ``session_id`` resolves
    directly to ``~/.claude/projects/*/<session_id>.jsonl``.
-2. Fallback for historical runs (no recorded session id) — scan transcripts whose
-   mtime overlaps the node's timeline window and pick the one whose ordered
-   ``submit_proof_intent`` sequence best matches the node's recorded intents.
+2. A bounded transcript scan for current runs missing a registry record, joined
+   by the ordered current ``submit_proof_intent`` sequence.
 
-Offline and deterministic. Reading a transcript here is a backend audit action on
-sessions this run produced; it is not the agent-facing protocol.
+Offline and deterministic. Reading a transcript here is a backend audit action
+on sessions this run produced; it is not the agent-facing protocol.
 
 Usage:
     python3 -m workflow.validation.agent_thinking_trace <run_iteration_dir>
@@ -46,9 +46,11 @@ class TurnThinking:
     thinking: str
     text: str
     session_id: str
-    # real per-turn token usage (deduped) summed from the transcript usage events
-    # between the previous submit and this one. Exact — matches eval_metrics totals.
+    # Provider usage (deduped). Claude is attributable between manager submits;
+    # Codex usage is an exact CLI-turn aggregate attached to that CLI turn's last
+    # manager submit. ``token_usage_scope`` distinguishes those semantics.
     tokens: dict[str, int] = field(default_factory=dict)
+    token_usage_scope: str = ""
 
 
 @dataclass
@@ -84,15 +86,11 @@ def _iter_jsonl(path: Path) -> list[dict[str, Any]]:
     return out
 
 
-def _intent_key(intent_name: str, payload: dict[str, Any]) -> str:
+def intent_payload_key(intent_name: str, payload: dict[str, Any]) -> str:
     """Normalized fingerprint of an intent payload, stable across the transcript
     and the timeline so the two can be matched position-by-position."""
     if intent_name == "commit_tactic":
         return " ".join(str(payload.get("tactic") or "").split())
-    if intent_name == "inspect_context":
-        return str(payload.get("topic") or "")
-    if intent_name == "lookup_symbol":
-        return str(payload.get("symbol") or "")
     return json.dumps(payload, sort_keys=True) if payload else ""
 
 
@@ -111,6 +109,140 @@ def usage_dedup_key(event: dict, message: dict) -> str:
     return ""
 
 
+def normalize_codex_usage(usage: dict[str, Any]) -> dict[str, int]:
+    """Normalize OpenAI counters into the four disjoint report categories.
+
+    Codex reports total input plus cached/cache-write subsets, while the
+    existing report schema stores mutually exclusive uncached input, cache
+    creation, cache reads, and output.  Clamp malformed overlaps so the three
+    input categories always sum to the provider's total input counter.
+    Reasoning output is retained as an exact diagnostic subset of output.
+    """
+
+    def token_int(value: Any) -> int:
+        if isinstance(value, bool) or value is None:
+            return 0
+        try:
+            return max(0, int(value))
+        except (TypeError, ValueError):
+            return 0
+
+    total_input = token_int(usage.get("input_tokens"))
+    cache_read = min(total_input, token_int(usage.get("cached_input_tokens")))
+    remaining = total_input - cache_read
+    cache_creation = min(
+        remaining,
+        token_int(
+            usage.get("cache_write_input_tokens")
+            if usage.get("cache_write_input_tokens") is not None
+            else usage.get("cache_creation_input_tokens")
+        ),
+    )
+    return {
+        "input_tokens": remaining - cache_creation,
+        "cache_creation_input_tokens": cache_creation,
+        "cache_read_input_tokens": cache_read,
+        "output_tokens": token_int(usage.get("output_tokens")),
+        "reasoning_output_tokens": token_int(
+            usage.get("reasoning_output_tokens")
+        ),
+    }
+
+
+def _codex_item_text(item: dict[str, Any]) -> str:
+    for key in ("text", "summary", "aggregated_output", "output", "result"):
+        value = item.get(key)
+        if isinstance(value, str) and value.strip():
+            return value
+        if isinstance(value, list):
+            text = "\n".join(str(part) for part in value if str(part).strip())
+            if text.strip():
+                return text
+    return ""
+
+
+def _extract_codex_turns(
+    events: list[dict[str, Any]],
+    transcript: Path,
+) -> list[TurnThinking]:
+    """Extract manager submits from Codex JSONL.
+
+    Codex reports usage once at the end of a CLI turn, and one CLI turn may
+    contain several manager calls.  Preserve exact whole-run accounting by
+    attaching that aggregate to the last manager call in the CLI turn and
+    label its scope explicitly; do not invent a per-manager-call split.
+    """
+
+    turns: list[TurnThinking] = []
+    pending_think: list[str] = []
+    pending_text: list[str] = []
+    current_session = transcript.stem
+    current_cli_turn: list[int] = []
+    seen_tool_calls: set[str] = set()
+
+    for event in events:
+        event_type = str(event.get("type") or "")
+        if event_type == "thread.started":
+            current_session = str(event.get("thread_id") or current_session)
+            continue
+        if event_type == "turn.started":
+            current_cli_turn = []
+            # Codex item ids are scoped to one ``exec``/resume turn and may be
+            # reused (for example every turn can start again at ``item_1``).
+            seen_tool_calls = set()
+            continue
+        item = event.get("item")
+        item = item if isinstance(item, dict) else {}
+        item_type = str(item.get("type") or "")
+        if item_type == "reasoning" and event_type == "item.completed":
+            text = _codex_item_text(item)
+            if text:
+                pending_think.append(text)
+            continue
+        if item_type == "agent_message" and event_type == "item.completed":
+            text = _codex_item_text(item)
+            if text:
+                pending_text.append(text)
+            continue
+        if item_type == "mcp_tool_call" and event_type in {
+            "item.started",
+            "item.completed",
+        }:
+            tool = str(item.get("tool") or item.get("name") or "")
+            if tool != "submit_proof_intent":
+                continue
+            item_id = str(item.get("id") or "")
+            if item_id and item_id in seen_tool_calls:
+                continue
+            if item_id:
+                seen_tool_calls.add(item_id)
+            arguments = item.get("arguments") or item.get("input") or {}
+            arguments = arguments if isinstance(arguments, dict) else {}
+            payload = arguments.get("payload")
+            payload = payload if isinstance(payload, dict) else {}
+            turns.append(TurnThinking(
+                ts=str(event.get("timestamp") or ""),
+                intent=str(arguments.get("intent") or ""),
+                key=intent_payload_key(str(arguments.get("intent") or ""), payload),
+                thinking="\n\n".join(pending_think).strip(),
+                text="\n\n".join(pending_text).strip(),
+                session_id=current_session,
+            ))
+            current_cli_turn.append(len(turns) - 1)
+            pending_think = []
+            pending_text = []
+            continue
+        if event_type == "turn.completed":
+            usage = event.get("usage")
+            if current_cli_turn and isinstance(usage, dict):
+                target = turns[current_cli_turn[-1]]
+                target.tokens = normalize_codex_usage(usage)
+                target.token_usage_scope = "codex_cli_turn_aggregate"
+            current_cli_turn = []
+
+    return turns
+
+
 def extract_turns(transcript: Path) -> list[TurnThinking]:
     """Ordered submit_proof_intent turns in one transcript, each carrying the
     thinking/text blocks that immediately preceded it.
@@ -119,6 +251,19 @@ def extract_turns(transcript: Path) -> list[TurnThinking]:
     streamed events, so we accumulate blocks in document order and flush them onto
     the next ``submit_proof_intent``.
     """
+    events = _iter_jsonl(transcript)
+    if any(
+        str(event.get("type") or "") in {
+            "thread.started",
+            "turn.started",
+            "turn.completed",
+            "item.started",
+            "item.completed",
+        }
+        for event in events
+    ):
+        return _extract_codex_turns(events, transcript)
+
     session_id = transcript.stem
     turns: list[TurnThinking] = []
     pending_think: list[str] = []
@@ -127,7 +272,7 @@ def extract_turns(transcript: Path) -> list[TurnThinking]:
     seen_usage: set[str] = set()
     _UF = ("output_tokens", "input_tokens",
            "cache_read_input_tokens", "cache_creation_input_tokens")
-    for ev in _iter_jsonl(transcript):
+    for ev in events:
         if ev.get("type") != "assistant":
             continue
         sid = str(ev.get("sessionId") or ev.get("session_id") or session_id)
@@ -167,7 +312,9 @@ def extract_turns(transcript: Path) -> list[TurnThinking]:
                 turns.append(TurnThinking(
                     ts=ts,
                     intent=name,
-                    key=_intent_key(name, payload if isinstance(payload, dict) else {}),
+                    key=intent_payload_key(
+                        name, payload if isinstance(payload, dict) else {},
+                    ),
                     thinking="\n\n".join(pending_think).strip(),
                     text="\n\n".join(pending_text).strip(),
                     session_id=sid,
@@ -191,7 +338,10 @@ def _node_intents(node_dir: Path) -> list[tuple[str, str]]:
         intent = entry.get("intent") or {}
         name = str(intent.get("intent") or "")
         payload = intent.get("payload") or {}
-        out.append((name, _intent_key(name, payload if isinstance(payload, dict) else {})))
+        out.append((
+            name,
+            intent_payload_key(name, payload if isinstance(payload, dict) else {}),
+        ))
     return out
 
 
@@ -216,23 +366,46 @@ def _claude_projects_root() -> Path:
 
 
 def _resolve_recorded_transcripts(node_dir: Path) -> list[Path]:
-    """Transcripts named by ``agent_sessions.jsonl`` (the run-time pointer)."""
+    """Provider event streams named by the run-time session registry."""
     paths: list[Path] = []
     seen: set[str] = set()
+    seen_paths: set[Path] = set()
     for rec in _iter_jsonl(node_dir / "agent_sessions.jsonl"):
+        backend = str(rec.get("agent_backend") or "claude")
         sid = str(rec.get("session_id") or "").strip()
         if not sid or sid in seen:
             continue
         seen.add(sid)
+        if backend == "codex":
+            iteration_dir = node_dir.parent.parent
+            candidate = (
+                iteration_dir
+                / "runtime_private"
+                / node_dir.name
+                / "codex_events.jsonl"
+            )
+            resolved = candidate.resolve()
+            if candidate.is_file() and resolved not in seen_paths:
+                seen_paths.add(resolved)
+                paths.append(candidate)
+            continue
+        if backend != "claude":
+            continue
         candidate = Path(str(rec.get("transcript_path") or ""))
         if candidate.is_file():
-            paths.append(candidate)
+            resolved = candidate.resolve()
+            if resolved not in seen_paths:
+                seen_paths.add(resolved)
+                paths.append(candidate)
             continue
         # Authoritative key is the filename; recover by glob if the stored path is
         # stale (e.g. bundle moved to another machine).
         hits = glob.glob(str(_claude_projects_root() / "*" / f"{sid}.jsonl"))
         if hits:
-            paths.append(Path(hits[0]))
+            resolved = Path(hits[0]).resolve()
+            if resolved not in seen_paths:
+                seen_paths.add(resolved)
+                paths.append(Path(hits[0]))
     return paths
 
 
@@ -267,6 +440,14 @@ def _candidate_pool(node_dir: Path, *, window_pad_s: float = 1800.0) -> list[Pat
     context swap mid-run starts a new Claude session, and historically only the
     final session of the chain was registered."""
     pool = list(_resolve_recorded_transcripts(node_dir))
+    registered = list(_iter_jsonl(node_dir / "agent_sessions.jsonl"))
+    if registered and not any(
+        str(record.get("agent_backend") or "claude") == "claude"
+        for record in registered
+    ):
+        # A Codex thread id is not a Claude transcript key. Do not let the
+        # historical mtime-window fallback attach an unrelated Claude run.
+        return pool
     seen = {p.resolve() for p in pool}
     start, end = _node_time_window(node_dir)
     lo = _ts_to_epoch(start) - window_pad_s
@@ -285,6 +466,53 @@ def _candidate_pool(node_dir: Path, *, window_pad_s: float = 1800.0) -> list[Pat
     return pool
 
 
+# A ctx-respawn can terminate a generation with a submit in flight; the fresh
+# session then re-submits it, so the continuation transcript may START with a
+# few submits that duplicate the previous link's tail without a matching
+# timeline row. Chain assembly may skip up to this many leading submits of a
+# NON-FIRST link to realign.
+_RESPAWN_BOUNDARY_SKIP = 2
+
+
+def _assemble_chain(
+    candidates: list[Path],
+    node_intents: list[tuple[str, str]],
+    cache: dict[Path, list[TurnThinking]],
+) -> list[tuple[Path, list[TurnThinking]]]:
+    """Greedy chain assembly over ``candidates`` against the intent timeline."""
+    chain: list[tuple[Path, list[TurnThinking]]] = []
+    used: set[Path] = set()
+    offset = 0
+    while offset < len(node_intents):
+        best: tuple[int, int, Path] | None = None  # (score, skip, path)
+        for path in candidates:
+            if path in used:
+                continue
+            if path not in cache:
+                cache[path] = extract_turns(path)
+            turns = cache[path]
+            if not turns:
+                continue
+            max_skip = _RESPAWN_BOUNDARY_SKIP if chain else 0
+            for skip in range(0, min(max_skip, len(turns) - 1) + 1):
+                score = _match_at(node_intents, offset, turns[skip:])
+                # Require a real run of matching intents, not a chance single
+                # hit (a short tail may legitimately be shorter than 3).
+                if score >= min(3, len(node_intents) - offset):
+                    if best is None or score > best[0]:
+                        best = (score, skip, path)
+        if best is None:
+            break
+        score, skip, path = best
+        # Slice to the matched run so stray leading resubmits and trailing
+        # submits (e.g. a session that outlived the node) cannot shift the
+        # global numbering.
+        chain.append((path, cache[path][skip:skip + score]))
+        used.add(path)
+        offset += score
+    return chain
+
+
 def assemble_session_chain(
     node_dir: Path,
 ) -> tuple[list[tuple[Path, list[TurnThinking]]], str]:
@@ -296,6 +524,12 @@ def assemble_session_chain(
     context-swap chains (session N covers turns 1..k, session N+1 covers
     k+1..m, ...) so the merged turn numbering is global and aligns with the
     timeline rows.
+
+    Discovery order: the canonical per-node registry
+    (``agent_sessions.jsonl``) first — a run whose runtime registered every
+    session resolves entirely from it. The mtime-window sweep over
+    ``~/.claude/projects`` is only a fallback for historical bundles whose
+    registry predates registration-at-creation and is incomplete.
     """
     node_intents = _node_intents(node_dir)
     recorded = _resolve_recorded_transcripts(node_dir)
@@ -305,37 +539,18 @@ def assemble_session_chain(
             [(p, extract_turns(p)) for p in recorded],
             "recorded_session_id" if recorded else "not_found",
         )
-    pool = _candidate_pool(node_dir)
     cache: dict[Path, list[TurnThinking]] = {}
-    chain: list[tuple[Path, list[TurnThinking]]] = []
-    used: set[Path] = set()
-    offset = 0
-    while offset < len(node_intents):
-        best: tuple[int, Path] | None = None
-        for path in pool:
-            if path in used:
-                continue
-            if path not in cache:
-                cache[path] = extract_turns(path)
-            turns = cache[path]
-            if not turns:
-                continue
-            score = _match_at(node_intents, offset, turns)
-            # Require a real run of matching intents, not a chance single hit
-            # (a short tail may legitimately be shorter than 3).
-            if score >= min(3, len(node_intents) - offset):
-                if best is None or score > best[0]:
-                    best = (score, path)
-        if best is None:
-            break
-        score, path = best
-        # Slice to the matched run so stray trailing submits (e.g. a session
-        # that outlived the node) cannot shift the global numbering.
-        chain.append((path, cache[path][:score]))
-        used.add(path)
-        offset += score
+    # Primary: the canonical registry alone.
+    chain = _assemble_chain(recorded, node_intents, cache)
+    covered = sum(len(t) for _, t in chain)
+    if covered < len(node_intents):
+        # Historical fallback: registry + transcripts whose mtime overlaps the
+        # node's window (older runs registered only the first session).
+        pool = _assemble_chain(_candidate_pool(node_dir), node_intents, cache)
+        if sum(len(t) for _, t in pool) > covered:
+            chain = pool
+            covered = sum(len(t) for _, t in chain)
     if chain:
-        covered = sum(len(t) for _, t in chain)
         if len(chain) > 1:
             label = f"session_chain[{len(chain)}]"
         elif chain[0][0] in recorded:
@@ -402,6 +617,7 @@ def write_node_thinking(node_dir: Path, *, dry_run: bool = False) -> NodeResult:
             "thinking_chars": len(t.thinking),
             "text_chars": len(t.text),
             "tokens": t.tokens,
+            "token_usage_scope": t.token_usage_scope,
             "session_id": t.session_id,
             "timestamp": t.ts,
             "file": f"thinking/turn_{i:03d}.md" if has_reasoning else "",
@@ -508,6 +724,7 @@ def _write_from_turns(
             "turn": i, "intent": t.intent, "payload_key": t.key,
             "thinking_chars": len(t.thinking), "text_chars": len(t.text),
             "session_id": t.session_id, "timestamp": t.ts,
+            "tokens": t.tokens, "token_usage_scope": t.token_usage_scope,
             "file": f"thinking/turn_{i:03d}.md" if has_reasoning else "",
         })
         if not has_reasoning:

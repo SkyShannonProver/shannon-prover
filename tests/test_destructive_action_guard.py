@@ -6,9 +6,8 @@ session dir on ChaChaPoly step1):
 1. Sandbox-layer deny patterns rendered into ``--disallowedTools`` on
    the ``claude -p`` launch — covered by ``_destructive_tool_denylist``.
 2. Watchdog at the orchestrator's tick loop that aborts the run when a
-   session dir vanishes or the source ``.ec`` file's mtime advances —
-   covered by inspecting ``run_tree_prover.last_destructive_abort``
-   after a synthetic worker that simulates the failure.
+   session dir vanishes or the source ``.ec`` file's mtime advances. Its
+   decision is carried by the typed tree result.
 
 These tests verify the deny patterns construct correctly. The watchdog
 itself is exercised by integration tests during a live run; we assert
@@ -42,8 +41,7 @@ def test_denylist_blocks_rm_in_all_forms() -> None:
 def test_denylist_leaves_manager_boundary_to_policy_and_blocks_task_outputs() -> None:
     patterns = _destructive_tool_denylist("/tmp/x.ec")
     assert "Bash(*session_cli.py*|*)" not in patterns
-    assert "Bash(*session_cli.py*-next* |*)" not in patterns
-    assert "Bash(*session_cli.py*-chain* |*)" not in patterns
+    assert "Bash(*session_cli.py*-tactic-exec* |*)" not in patterns
     assert "Bash(*session_cli.py*-try* |*)" not in patterns
     assert "Read(//private/tmp/*/tasks/*.output)" in patterns
     assert "Bash(*.ec_session_*/history.ec*)" not in patterns
@@ -122,18 +120,15 @@ def test_denylist_uses_resolved_absolute_path() -> None:
     assert inner.startswith("/"), f"expected absolute path in deny pattern: {edit}"
 
 
-def test_run_tree_prover_advertises_destructive_abort_attribute() -> None:
-    """The orchestrator's caller (``prover.run``) reads
-    ``run_tree_prover.last_destructive_abort`` to decide whether to
-    raise instead of returning a normal failure tuple. The attribute
-    must exist as a function-level attr (set by the function on each
-    invocation)."""
-    from workflow.progress import run_tree_prover
-    # The attribute may not be set until the function has been invoked
-    # at least once; the contract is that ``getattr(...,..., False)``
-    # is the documented access path. Verify that path is safe.
-    val = getattr(run_tree_prover, "last_destructive_abort", False)
-    assert isinstance(val, bool)
+def test_tree_result_owns_destructive_abort_fields() -> None:
+    from workflow.tree.result import TreeRunResult
+
+    result = TreeRunResult(
+        destructive_abort=True,
+        destructive_reason="source mutation detected",
+    )
+    assert result.destructive_abort is True
+    assert result.destructive_reason == "source mutation detected"
 
 
 def test_session_cli_shell_detector_blocks_any_agent_session_cli() -> None:
@@ -149,13 +144,13 @@ def test_session_cli_shell_detector_blocks_any_agent_session_cli() -> None:
         return classify_bash_command(cmd).decision == "warn"
 
     assert _is_unsafe_session_cli_shell_command(
-        "python3 core/easycrypt/session_cli.py -d s -next -c 'idtac.' | head -20"
+        "python3 core/easycrypt/session_cli.py -d s -tactic-exec commit -c 'idtac.' | head -20"
     )
     assert not _is_lossy_session_cli_shell_command(
-        "python3 core/easycrypt/session_cli.py -d s -next -c 'idtac.' | head -20"
+        "python3 core/easycrypt/session_cli.py -d s -tactic-exec commit -c 'idtac.' | head -20"
     )
     assert _is_unsafe_session_cli_shell_command(
-        "python3 core/easycrypt/session_cli.py -d s -status 2>/dev/null | python3 -c 'print(1)'"
+        "python3 core/easycrypt/session_cli.py -d s -managed-goal-view 2>/dev/null | python3 -c 'print(1)'"
     )
     assert _is_unsafe_session_cli_shell_command(
         "python3 core/easycrypt/session_cli.py -d s -try -c 'byequiv => //.' 2>&1 | grep accepted"
@@ -167,19 +162,19 @@ def test_session_cli_shell_detector_blocks_any_agent_session_cli() -> None:
         "cat .ec_session_prover_tree_0_0/current.out | grep 'Current goal'"
     )
     assert _is_unsafe_session_cli_shell_command(
-        "python3 core/easycrypt/session_cli.py -d s -next -c 'case: xs => [|x xs].'"
+        "python3 core/easycrypt/session_cli.py -d s -tactic-exec commit -c 'case: xs => [|x xs].'"
     )
     assert not _is_unsafe_session_cli_shell_command(
         "rg session_cli.py core | head"
     )
     assert _is_session_cli_mutating_command(
-        "python3 core/easycrypt/session_cli.py -d s -next -c 'rnd{2}.' 2>&1"
+        "python3 core/easycrypt/session_cli.py -d s -tactic-exec commit -c 'rnd{2}.' 2>&1"
     )
     assert _is_session_cli_mutating_command(
-        "python3 core/easycrypt/session_cli.py -d s -chain --keep-on-fail -c 'wp.'"
+        "python3 core/easycrypt/session_cli.py -d s -tactic-exec commit_chain --keep-on-fail -c 'wp.'"
     )
     assert not _is_session_cli_mutating_command(
-        "python3 core/easycrypt/session_cli.py -d s -goal-info"
+        "python3 core/easycrypt/session_cli.py -d s -managed-goal-view"
     )
 
 def test_denied_unsafe_session_command_does_not_mark_tree_polluted(
@@ -294,7 +289,7 @@ def test_readonly_filtered_session_cli_marks_tree_polluted(
     assert tracker.lossy_session_cli_count == 0
 
 
-def test_shell_raw_session_artifact_does_not_mark_tree_polluted(tmp_path: Path) -> None:
+def test_shell_raw_session_artifact_is_rejected_at_manager_boundary(tmp_path: Path) -> None:
     from workflow.progress import _TreeProverTracker
 
     tracker = _TreeProverTracker(object(), "Tree-0.0", str(tmp_path), "prover_tree_0_0")
@@ -312,6 +307,7 @@ def test_shell_raw_session_artifact_does_not_mark_tree_polluted(tmp_path: Path) 
         },
     }))
     assert tracker.unsafe_session_shell_command == ""
+    assert tracker.forbidden_information_source_count == 0
     tracker._process_line(json.dumps({
         "type": "user",
         "message": {
@@ -323,6 +319,7 @@ def test_shell_raw_session_artifact_does_not_mark_tree_polluted(tmp_path: Path) 
         },
     }))
     assert tracker.unsafe_session_shell_command == ""
+    assert tracker.forbidden_information_source_count == 1
 
 
 def test_legal_source_grep_is_audited_not_polluted(tmp_path: Path) -> None:
@@ -598,7 +595,7 @@ def test_legal_source_read_resets_forbidden_source_streak(
     assert tracker.unsafe_session_shell_command == ""
 
 
-def test_raw_session_artifact_read_does_not_mark_tree_polluted(
+def test_raw_session_artifact_read_is_rejected_at_manager_boundary(
     tmp_path: Path,
 ) -> None:
     from workflow.progress import _TreeProverTracker
@@ -616,8 +613,18 @@ def test_raw_session_artifact_read_does_not_mark_tree_polluted(
             }],
         },
     }))
-
+    tracker._process_line(json.dumps({
+        "type": "user",
+        "message": {
+            "content": [{
+                "type": "tool_result",
+                "tool_use_id": "toolu_raw_read",
+                "content": "raw goal text",
+            }],
+        },
+    }))
     assert tracker.unsafe_session_shell_command == ""
+    assert tracker.forbidden_information_source_count == 1
 
 
 def test_backgrounded_mutating_session_command_waits_instead_of_polluting(
@@ -741,6 +748,8 @@ def test_summarize_text_payload_marks_transport_features() -> None:
     assert summary["full_output_saved_to"] == ["/tmp/tool-results/x.txt"]
     assert summary["lines"] == 2
     assert summary["contains_prover_workspace_view"] is False
+    assert "contains_command_summary" not in summary
+    assert "contains_agent_view" not in summary
 
 
 def test_summarize_text_payload_detects_agent_workspace_fields() -> None:
@@ -763,7 +772,6 @@ def test_payload_audit_records_tool_use_and_result(tmp_path: Path) -> None:
     policy = classify_bash_command(
         cmd,
         cwd=tmp_path,
-        current_session_dir=tmp_path / ".ec_session_x",
     )
 
     recorder.record_tool_use(
@@ -858,15 +866,15 @@ def test_payload_audit_summarizes_structured_mcp_intent(tmp_path: Path) -> None:
         tool_use_id="toolu_mcp",
         tool_name="mcp__proof_node_manager__submit_proof_intent",
         tool_input={
-            "intent": "probe_tactic",
+            "intent": "commit_tactic",
             "payload": {"tactic": "seq 1 1 : (x{1} = x{2})."},
         },
-        description="submit_proof_intent probe_tactic",
+        description="submit_proof_intent commit_tactic",
     )
 
     rows = _jsonl(path)
     assert rows[0]["event"] == "tool_use"
-    assert rows[0]["input"]["intent"] == "probe_tactic"
+    assert rows[0]["input"]["intent"] == "commit_tactic"
     assert rows[0]["input"]["tactic_chars"] > 0
     assert "seq 1 1" in rows[0]["input"]["tactic_head"]
 
@@ -938,8 +946,8 @@ def test_tree_tracker_records_mcp_submit_intent_semantics(tmp_path: Path) -> Non
                 "id": tool_id,
                 "name": "mcp__proof_node_manager__submit_proof_intent",
                 "input": {
-                    "intent": "inspect_context",
-                    "payload": {"topic": "goal_info"},
+                    "intent": "goal_info",
+                    "payload": {},
                 },
             }],
         },
@@ -958,9 +966,9 @@ def test_tree_tracker_records_mcp_submit_intent_semantics(tmp_path: Path) -> Non
     rows = _jsonl(audit_path)
     assert rows[0]["event"] == "tool_use"
     assert rows[0]["tool_name"].endswith("submit_proof_intent")
-    assert rows[0]["input"]["intent"] == "inspect_context"
-    assert rows[0]["input"]["topic"] == "goal_info"
-    assert rows[0]["description"] == "submit_proof_intent inspect_context: goal_info"
+    assert rows[0]["input"]["intent"] == "goal_info"
+    assert rows[0]["input"]["topic"] is None
+    assert rows[0]["description"] == "submit_proof_intent goal_info"
     assert rows[1]["event"] == "tool_result"
 
 

@@ -18,6 +18,33 @@ ROOT = Path(__file__).resolve().parents[1]
 import _pathsetup  # noqa: F401,E402  (repo root on sys.path)
 
 from workflow.validation import run_report_bundle as rb  # noqa: E402
+from workflow.schemas.prover_result import (  # noqa: E402
+    PROVER_RUN_INCOMPLETE,
+    PROVER_RUN_INFRASTRUCTURE_INVALID,
+    PROVER_RUN_VERIFIED,
+    ProverResult,
+)
+
+
+def _write_terminal_result(
+    iteration: Path,
+    status: str,
+) -> ProverResult:
+    result = ProverResult(
+        status=status,
+        verification=(
+            {"status": "pass", "method": "test_fixture"}
+            if status == PROVER_RUN_VERIFIED
+            else {}
+        ),
+        infrastructure_errors=(
+            ["test infrastructure failure"]
+            if status == PROVER_RUN_INFRASTRUCTURE_INVALID
+            else []
+        ),
+    )
+    result.save(iteration / "prover_run_result.json")
+    return result
 
 
 def _make_run(tmp: Path, tree: str, intents: list[tuple[str, str, bool]]) -> Path:
@@ -37,7 +64,7 @@ def _make_run(tmp: Path, tree: str, intents: list[tuple[str, str, bool]]) -> Pat
 def test_committed_proofs_incomplete():
     with tempfile.TemporaryDirectory() as d:
         run = _make_run(Path(d), "Tree_0_0", [
-            ("probe_tactic", "congr.", True),
+            ("tactic_forms", "congr", True),
             ("commit_tactic", "congr.", True),
             ("commit_tactic", "byequiv=> //.", True),
             ("commit_tactic", "oops.", False),       # rejected → excluded
@@ -46,7 +73,7 @@ def test_committed_proofs_incomplete():
         assert len(proofs) == 1
         assert proofs[0]["tree"] == "Tree_0_0"
         assert proofs[0]["tactics"] == ["congr.", "byequiv=> //."]
-        assert proofs[0]["proved"] is False
+        assert proofs[0]["session_closed"] is False
 
 
 def test_committed_proofs_proved_via_qed_and_finish():
@@ -58,26 +85,26 @@ def test_committed_proofs_proved_via_qed_and_finish():
         ])
         p = rb._committed_proofs(run)[0]
         assert p["tactics"] == ["sim.", "qed."]
-        assert p["proved"] is True
+        assert p["session_closed"] is True
 
 
 def test_render_proof_section_incomplete_vs_proved():
     incomplete = rb._render_proof_section(
-        [{"tree": "Tree_0_0", "tactics": ["congr.", "proc."], "proved": False}])
+        [{"tree": "Tree_0_0", "tactics": ["congr.", "proc."], "session_closed": False}])
     assert "```easycrypt" in incomplete
     assert "proof." in incomplete and "congr." in incomplete and "proc." in incomplete
     assert "not completed" in incomplete
     assert "incomplete" in incomplete
 
     proved = rb._render_proof_section(
-        [{"tree": "Tree_0_0", "tactics": ["sim.", "qed."], "proved": True}])
+        [{"tree": "Tree_0_0", "tactics": ["sim.", "qed."], "session_closed": True}])
     assert proved.count("qed.") == 1   # already ends in qed; not double-added
-    assert "proved" in proved
+    assert "session closed" in proved
 
     # The renderer NEVER fabricates a closing `qed.`: an unclosed body is
     # annotated, not given a fake qed (see `_render_proof_section`).
     proved_no_qed = rb._render_proof_section(
-        [{"tree": "Tree_0_0", "tactics": ["trivial."], "proved": True}])
+        [{"tree": "Tree_0_0", "tactics": ["trivial."], "session_closed": True}])
     assert proved_no_qed.count("qed.") == 0
     assert "not completed" in proved_no_qed
 
@@ -89,12 +116,19 @@ def test_rewrite_links_relativizes_and_no_user_leak():
         "workspace_views/turn_001.json)\n"
         f"[turn_001.json]({repo}/a/node_memory/Tree_0_1/manager_results/turn_001.json)\n"
         f"[manager_bootstrap_0_0.json]({repo}/a/iteration_1/manager_bootstrap_0_0.json)\n"
+        f"[initial_workspace_view.json]({repo}/a/node_memory/Tree_0_0/"
+        "initial_workspace_view.json)\n"
+        f"[inline read]({repo}/a/node_memory/Tree_0_0/initial_followup.md)\n"
+        f"[launch task]({repo}/a/node_memory/Tree_0_0/initial_agent_prompt.md)\n"
         f"Run dir: `{repo}/artifacts/x/iteration_1`\n"
     )
     out = rb._rewrite_links(md)
     assert "](./views/Tree_0_0/turn_001.json)" in out
     assert "](./views/Tree_0_1/manager_results/turn_001.json)" in out
     assert "](./views/_bootstrap/manager_bootstrap_0_0.json)" in out
+    assert "](./views/Tree_0_0/initial_workspace_view.json)" in out
+    assert "](./views/Tree_0_0/initial_followup.md)" in out
+    assert "](./views/Tree_0_0/initial_agent_prompt.md)" in out
     assert repo not in out               # no machine-specific absolute path leaks
 
 
@@ -143,6 +177,36 @@ def test_copy_json_scrubbed_strips_machine_paths_and_stays_valid_json(tmp_path):
     assert obj["include"] == "~/easycrypt-src/theories"
 
 
+def test_copy_views_includes_authoritative_initial_launch_artifacts(tmp_path):
+    run_iter = tmp_path / "run" / "iteration_1"
+    node = run_iter / "node_memory" / "Tree_0_0"
+    node.mkdir(parents=True)
+    (node / "initial_workspace_view.json").write_text(
+        json.dumps({"current_goal": {"lines": ["goal"]}}),
+        encoding="utf-8",
+    )
+    (node / "initial_followup.md").write_text(
+        "submit move=> x.", encoding="utf-8",
+    )
+    (node / "initial_agent_prompt.md").write_text(
+        "authoritative launch task: submit move=> x.", encoding="utf-8",
+    )
+
+    views = tmp_path / "views"
+    assert rb._copy_views(run_iter, views) == 0
+
+    copied = views / "Tree_0_0"
+    assert json.loads(
+        (copied / "initial_workspace_view.json").read_text(encoding="utf-8")
+    )["current_goal"]["lines"] == ["goal"]
+    assert (copied / "initial_followup.md").read_text(encoding="utf-8") == (
+        "submit move=> x."
+    )
+    assert "authoritative launch task" in (
+        copied / "initial_agent_prompt.md"
+    ).read_text(encoding="utf-8")
+
+
 def _make_chunk(base: Path, intents, *, resume_from=None, session_lines=None,
                 capsule_prefix=None, tree="Tree_0_0"):
     """A run chunk: <base>/config.json + <base>/iter/node_memory/... (+ optional
@@ -153,11 +217,21 @@ def _make_chunk(base: Path, intents, *, resume_from=None, session_lines=None,
     vdir = iter_dir / "node_memory" / tree / "workspace_views"
     vdir.mkdir(parents=True, exist_ok=True)
     (vdir / "turn_000.json").write_text(json.dumps({"current_goal": {"lines": []}}))
-    cfg = {"resume_capsules": [str(resume_from)]} if resume_from else {}
+    source = base / "target.ec"
+    source.write_text("lemma lem : true.\n", encoding="utf-8")
+    cfg = {
+        "file": str(source.resolve()),
+        "lemma": "lem",
+        "resume_capsules": [str(resume_from)] if resume_from else [],
+    }
     (base / "config.json").write_text(json.dumps(cfg))
     if session_lines is not None:
         sess = iter_dir / "ec_sessions" / (".ec_session_prover_" + tree.lower())
         sess.mkdir(parents=True, exist_ok=True)
+        (sess / "session_meta.json").write_text(json.dumps({
+            "file": str(source.resolve()),
+            "lemma": "lem",
+        }))
         (sess / "history.ec").write_text("\n".join(session_lines) + "\n")
     if capsule_prefix is not None:
         cap = iter_dir / "resume_capsules" / (tree + "_sess")
@@ -202,7 +276,7 @@ def test_build_bundle_stitches_resume_lineage_end_to_end(tmp_path):
     assert meta["resume_chunks"] == 2
     assert meta["committed_proof_source"] == "session"   # EC ground truth
     assert meta["committed_proof_tree"] == "Tree_0_0"
-    assert meta["outcome"] == "proved"
+    assert meta["outcome"] == "session_closed (terminal result unavailable)"
 
     md = (dest / "timeline_report.md").read_text()
     assert "end-to-end across 2 resume chunks" in md
@@ -258,6 +332,47 @@ def test_append_index_is_idempotent_per_bundle(tmp_path):
     assert "| time | lemma | commit | outcome | turns | report |" in index  # header intact
 
 
+def test_suite_bundle_keys_prevent_same_minute_arm_collisions(tmp_path):
+    run_a = tmp_path / "a" / "iteration_1"
+    run_b = tmp_path / "b" / "iteration_1"
+    _make_run(run_a, "Tree_0_0", [("commit_tactic", "proc.", True)])
+    _make_run(run_b, "Tree_0_0", [("commit_tactic", "wp.", True)])
+    environment = {
+        "commit": "abc12345",
+        "commit_full": "abc12345" + "0" * 32,
+        "branch": "codex/test",
+        "dirty": False,
+    }
+
+    a = rb.build_bundle(
+        run_a,
+        dest_root=str(tmp_path / "out"),
+        timestamp="2026-08-05_0743_step2_1",
+        lemma="step2_1",
+        profile="audit",
+        bundle_key="row-a__audit__r01",
+        environment=environment,
+    )
+    b = rb.build_bundle(
+        run_b,
+        dest_root=str(tmp_path / "out"),
+        timestamp="2026-08-05_0743_step2_1",
+        lemma="step2_1",
+        profile="treatment",
+        bundle_key="row-a__treatment__r01",
+        environment=environment,
+    )
+
+    assert a is not None and b is not None and a != b
+    assert "dirty" not in a.name and "dirty" not in b.name
+    assert json.loads((a / "run_meta.json").read_text())["surface_profile"] == (
+        "audit"
+    )
+    assert json.loads((b / "run_meta.json").read_text())["surface_profile"] == (
+        "treatment"
+    )
+
+
 # ---------------------------------------------------------------------------
 # Faithful committed-proof reconstruction (regression for the step4_1 L4
 # respawn bundle 2026-06-08_2246: run_meta committed_proofs kept undone admits
@@ -311,6 +426,23 @@ def _write_timeline(run: Path, tree: str, rows: list[dict]) -> Path:
     return run
 
 
+def _write_bound_session(run: Path, tree: str, lines: list[str]) -> Path:
+    source = run.parent / "target.ec"
+    source.write_text("lemma lem : true.\n", encoding="utf-8")
+    (run.parent / "config.json").write_text(json.dumps({
+        "file": str(source.resolve()),
+        "lemma": "lem",
+    }))
+    session = run / "ec_sessions" / (".ec_session_prover_" + tree.lower())
+    session.mkdir(parents=True, exist_ok=True)
+    (session / "session_meta.json").write_text(json.dumps({
+        "file": str(source.resolve()),
+        "lemma": "lem",
+    }))
+    (session / "history.ec").write_text("\n".join(lines) + "\n")
+    return session
+
+
 def _boot_row(prefix_count: int = 0) -> dict:
     return {"kind": "bootstrap", "replay_prefix_count": prefix_count}
 
@@ -347,7 +479,7 @@ def test_committed_proofs_applies_undo_last_step(tmp_path):
     assert p["tactics"] == [
         "apply (ler_trans X).", "byequiv (_: ={glob A} ==> P).", "proc."]
     assert "admit." not in p["tactics"]
-    assert p["proved"] is False
+    assert p["session_closed"] is False
     assert "approximate" not in p
 
 
@@ -434,12 +566,56 @@ def test_committed_proofs_prefers_exact_session_history(tmp_path):
         _boot_row(),
         _turn("commit_tactic", "proc.", actions=_ma_commit_ok()),
     ])
-    sess = run / "ec_sessions" / ".ec_session_prover_tree_0_0"
-    sess.mkdir(parents=True)
-    (sess / "history.ec").write_text("proc.\nwp.\n")
+    _write_bound_session(run, "Tree_0_0", ["proc.", "wp."])
     p = rb._committed_proofs(run)[0]
     assert p["source"] == "session"
     assert p["tactics"] == ["proc.", "wp."]
+
+
+def test_committed_proofs_never_reads_stale_worktree_root_session(tmp_path):
+    # Suite members reuse Tree_0_0.  A zero-turn/current run without an archived
+    # session must not inherit a same-named session left by an earlier target in
+    # the worktree root (the 2026-08-05 step2_1/CMAC bundle contamination).
+    run = _write_timeline(
+        tmp_path / "artifacts" / "suite" / "run" / "iteration_1",
+        "Tree_0_0",
+        [
+            _boot_row(),
+            _turn("commit_tactic", "proc.", actions=_ma_commit_ok()),
+        ],
+    )
+    stale = tmp_path / ".ec_session_prover_tree_0_0"
+    stale.mkdir()
+    (stale / "history.ec").write_text(
+        "inline RP_RF1.ARP.init F.init.\nforeign_target_tactic.\n",
+        encoding="utf-8",
+    )
+
+    proof = rb._committed_proofs(run)[0]
+
+    assert proof["source"] == "timeline_replay"
+    assert proof["tactics"] == ["proc."]
+    assert "RP_RF1" not in "\n".join(proof["tactics"])
+
+
+def test_committed_proofs_rejects_mismatched_confined_session_meta(tmp_path):
+    run = _write_timeline(
+        tmp_path / "run" / "iteration_1",
+        "Tree_0_0",
+        [
+            _boot_row(),
+            _turn("commit_tactic", "proc.", actions=_ma_commit_ok()),
+        ],
+    )
+    session = _write_bound_session(run, "Tree_0_0", ["foreign_tactic."])
+    meta = json.loads((session / "session_meta.json").read_text())
+    meta["lemma"] = "different_target"
+    (session / "session_meta.json").write_text(json.dumps(meta))
+
+    proof = rb._committed_proofs(run)[0]
+
+    assert proof["source"] == "timeline_replay"
+    assert proof["tactics"] == ["proc."]
 
 
 def test_committed_proofs_torn_history_falls_back_to_timeline(tmp_path):
@@ -455,9 +631,7 @@ def test_committed_proofs_torn_history_falls_back_to_timeline(tmp_path):
         _turn("commit_tactic", "proc.", actions=_ma_commit_ok()),
         _turn("undo_to_checkpoint", actions=_ma_checkpoint_menu()),
     ])
-    sess = run / "ec_sessions" / ".ec_session_prover_tree_0_1_r2"
-    sess.mkdir(parents=True)
-    (sess / "history.ec").write_text("move=> hn.\n")        # torn: strict prefix
+    sess = _write_bound_session(run, "Tree_0_1_r2", ["move=> hn."])
     p = rb._committed_proofs(run)[0]
     assert p["source"] == "timeline_replay"
     assert p["tactics"] == ["move=> hn.", "byequiv (_: P ==> Q).", "proc."]
@@ -492,14 +666,12 @@ def test_outcome_not_fooled_by_rejected_or_undone_qed(tmp_path):
         _turn("commit_tactic", "trivial.", actions=_ma_commit_ok()),
         _turn("commit_tactic", "qed.", actions=_ma_commit_ok()),
     ])
-    assert rb._outcome(proved) == "proved"
+    assert rb._outcome(proved) == "session_closed (terminal result unavailable)"
 
 
-def test_outcome_reconciled_with_orchestrator_summary(tmp_path):
-    # A session-level qed. that the orchestrator later rejected (post-verify
-    # admit check reverted the write-back — duplicate-lemma xorK1 run,
-    # 2026-06-11) must not surface as a plain "proved": summary.json one level
-    # above the iteration dir carries the final verdict.
+def test_outcome_consumes_only_canonical_terminal_result(tmp_path):
+    # Session history is diagnostic only. The terminal ProverResult decides
+    # whether the run is verified, incomplete, or infrastructure-invalid.
     def _proved_run(base: Path) -> Path:
         return _write_timeline(base / "iteration_1", "Tree_0_1", [
             _boot_row(),
@@ -508,25 +680,24 @@ def test_outcome_reconciled_with_orchestrator_summary(tmp_path):
         ])
 
     reverted = _proved_run(tmp_path / "a")
-    (tmp_path / "a" / "summary.json").write_text(
-        json.dumps({"final_proved": False}))
-    assert rb._outcome(reverted) == "proved_in_session (final verification failed)"
+    _write_terminal_result(reverted, PROVER_RUN_INFRASTRUCTURE_INVALID)
+    assert rb._outcome(reverted) == "infrastructure_invalid"
 
     confirmed = _proved_run(tmp_path / "b")
-    (tmp_path / "b" / "summary.json").write_text(
-        json.dumps({"final_proved": True}))
-    assert rb._outcome(confirmed) == "proved"
+    _write_terminal_result(confirmed, PROVER_RUN_VERIFIED)
+    assert rb._outcome(confirmed) == "verified"
 
-    # No summary (e.g. bundling mid-run) → keep the session verdict.
-    assert rb._outcome(_proved_run(tmp_path / "c")) == "proved"
+    # No terminal artifact never upgrades a session close to verified.
+    assert rb._outcome(_proved_run(tmp_path / "c")) == (
+        "session_closed (terminal result unavailable)"
+    )
 
     # An unproved session stays "incomplete" regardless of the summary.
     incomplete = _write_timeline(tmp_path / "d" / "iteration_1", "Tree_0_0", [
         _boot_row(),
         _turn("commit_tactic", "trivial.", actions=_ma_commit_ok()),
     ])
-    (tmp_path / "d" / "summary.json").write_text(
-        json.dumps({"final_proved": False}))
+    _write_terminal_result(incomplete, PROVER_RUN_INCOMPLETE)
     assert rb._outcome(incomplete) == "incomplete (timeout/open)"
 
 

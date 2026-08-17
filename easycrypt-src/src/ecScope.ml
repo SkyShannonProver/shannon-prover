@@ -238,13 +238,11 @@ module KnownFlags = struct
   let implicits = "implicits"
   let oldip     = "oldip"
   let redlogic  = "redlogic"
-  let und_delta = "und_delta"
 
   let flags = [
     (implicits, false);
     (oldip    , false);
     (redlogic , true );
-    (und_delta, false);
   ]
 end
 
@@ -296,6 +294,10 @@ and proof_auc = {
   puc_jdg     : proof_state;
   puc_flags   : pucflags;
   puc_crt     : EcDecl.axiom;
+  puc_bullets : EcBullets.stack option;
+    (* [None] when bullets are decoration only (legacy mode).
+       [Some stack] when [+strict_bullets] was active at proof
+       open; see [EcBullets] for the stack semantics. *)
 }
 
 and proof_ctxt =
@@ -542,12 +544,6 @@ module Options = struct
 
   let set_redlogic scope value =
     set scope KnownFlags.redlogic value
-
-  let get_und_delta scope =
-    get scope KnownFlags.und_delta
-
-  let set_und_delta scope value =
-    set scope KnownFlags.und_delta value
 end
 
 (* -------------------------------------------------------------------- *)
@@ -641,7 +637,6 @@ module Prover = struct
     po_verbose    : int option;
     pl_all        : bool option;
     pl_max        : int option;
-    pl_iterate    : bool option;
     pl_wanted     : EcProvers.hints option;
     pl_unwanted   : EcProvers.hints option;
     pl_dumpin     : string located option;
@@ -659,7 +654,6 @@ module Prover = struct
     po_verbose   = None;
     pl_all       = None;
     pl_max       = None;
-    pl_iterate   = None;
     pl_wanted    = None;
     pl_unwanted  = None;
     pl_dumpin    = None;
@@ -700,7 +694,6 @@ module Prover = struct
         | None  , None   -> None
         | None  , Some _ -> Some 0
         end;
-      pl_iterate   = ppr.plem_iterate;
       pl_wanted    = omap (process_dbhint env) ppr.plem_wanted;
       pl_unwanted  = omap (process_dbhint env) ppr.plem_unwanted;
       pl_dumpin    = ppr.plem_dumpin;
@@ -720,7 +713,6 @@ module Prover = struct
     let pr_verbose   = max 0 (odfl dft.pr_verbose options.po_verbose) in
     let pr_all       = odfl dft.pr_all options.pl_all in
     let pr_max       = odfl dft.pr_max options.pl_max in
-    let pr_iterate   = odfl dft.pr_iterate options.pl_iterate in
     let pr_wanted    = odfl dft.pr_wanted options.pl_wanted in
     let pr_unwanted  = odfl dft.pr_unwanted options.pl_unwanted in
     let pr_selected  = odfl dft.pr_selected options.pl_selected in
@@ -735,7 +727,7 @@ module Prover = struct
       in List.fold_left do_ar l (snd options.po_provers) in
 
     { pr_maxprocs; pr_provers ; pr_timelimit; pr_cpufactor;
-      pr_verbose ; pr_all     ; pr_max      ; pr_iterate  ;
+      pr_verbose ; pr_all     ; pr_max      ;
       pr_wanted  ; pr_unwanted; pr_selected ; pr_quorum   ;
       pr_dumpin  ;
       gn_debug   ; }
@@ -815,7 +807,8 @@ module Tactics = struct
             | Some src -> DocState.push_srcbl scope.sc_locdoc src
             | None -> scope.sc_locdoc; }
 
-  let process_r ?(src : string option) ?reloc mark (mode : proofmode) (scope : scope) (tac : ptactic list) =
+  let process_r ?(src : string option) ?(bullet : bullet located option)
+      ?reloc mark (mode : proofmode) (scope : scope) (tac : ptactic list) =
     check_state `InProof "proof script" scope;
 
     let scope =
@@ -856,8 +849,13 @@ module Tactics = struct
           EcHiGoal.tt_smtmode    = htmode;
           EcHiGoal.tt_implicits  = Options.get_implicits scope;
           EcHiGoal.tt_oldip      = Options.get_oldip scope;
-          EcHiGoal.tt_redlogic   = Options.get_redlogic scope;
-          EcHiGoal.tt_und_delta  = Options.get_und_delta scope; } in
+          EcHiGoal.tt_redlogic   = Options.get_redlogic scope; } in
+
+        let bullets =
+          try omap (EcBullets.open_phrase ~bullet juc) pac.puc_bullets
+          with EcBullets.BulletError (loc, err) ->
+            hierror ?loc "%a" EcBullets.pp_error err
+        in
 
         let (hds, juc) =
           try  TTC.process ttenv tac juc
@@ -872,7 +870,9 @@ module Tactics = struct
 
         let penv = EcCoreGoal.proofenv_of_proof juc in
 
-        let pac = { pac with puc_jdg = PSCheck juc } in
+        let bullets = omap (EcBullets.close_phrase juc) bullets in
+
+        let pac = { pac with puc_jdg = PSCheck juc; puc_bullets = bullets } in
         let puc = { puc with puc_active = Some (pac, pct); } in
         let scope = { scope with sc_pr_uc = Some puc; } in
         Some (penv, hds), scope
@@ -884,8 +884,9 @@ module Tactics = struct
     let ts = List.map (fun t -> { pt_core = t; pt_intros = []; }) ts in
     snd (process_r mark mode scope ts)
 
-  let process ?(src : string option) scope mode tac =
-    process_r ?src true mode scope tac
+  let process ?(src : string option) ?(bullet : bullet located option)
+      scope mode tac =
+    process_r ?src ?bullet true mode scope tac
 end
 
 (* -------------------------------------------------------------------- *)
@@ -944,7 +945,7 @@ module Ax = struct
         sc_locdoc = DocState.add_item scope.sc_locdoc; }
 
   (* ------------------------------------------------------------------ *)
-  let start_lemma scope (cont, axflags) check ?name (axd, ctxt) =
+  let start_lemma ?(strict = false) scope (cont, axflags) check ?name (axd, ctxt) =
     let puc =
       match check with
       | false -> PSNoCheck
@@ -959,7 +960,8 @@ module Ax = struct
         ; puc_started = false
         ; puc_jdg     = puc
         ; puc_flags   = axflags
-        ; puc_crt     = axd }
+        ; puc_crt     = axd
+        ; puc_bullets = if strict then Some [] else None }
       in
         { puc_active    = Some (active, ctxt);
           puc_cont      = cont;
@@ -968,7 +970,7 @@ module Ax = struct
       { scope with sc_pr_uc = Some puc }
 
   (* ------------------------------------------------------------------ *)
-  let rec add_r (scope : scope) (mode : proofmode) (ax : paxiom located) =
+  let rec add_r ?(strict = false) (scope : scope) (mode : proofmode) (ax : paxiom located) =
     assert (scope.sc_pr_uc = None);
 
     let env = env scope in
@@ -1028,13 +1030,13 @@ module Ax = struct
         match tc with
         | None ->
             let scope =
-              start_lemma scope ~name:(unloc ax.pa_name)
+              start_lemma ~strict scope ~name:(unloc ax.pa_name)
                 pucflags check (axd, None) in
             let scope = snd (Tactics.process1_r false `Check scope tintro) in
             None, scope
 
         | Some tc ->
-            start_lemma_with_proof scope
+            start_lemma_with_proof ~strict scope
               (Some tintro) pucflags (mode, mk_loc loc tc) check
               ~name:(unloc ax.pa_name) axd
       end
@@ -1108,10 +1110,10 @@ module Ax = struct
          (None, { scope with sc_env = puc.puc_init })
 
   (* ------------------------------------------------------------------ *)
-  and start_lemma_with_proof scope tintro pucflags (mode, tc) check ?name axd =
+  and start_lemma_with_proof ?(strict = false) scope tintro pucflags (mode, tc) check ?name axd =
     let { pl_loc = loc; pl_desc = tc } = tc in
 
-    let scope = start_lemma scope pucflags check ?name (axd, None) in
+    let scope = start_lemma ~strict scope pucflags check ?name (axd, None) in
     let scope =
       tintro |> ofold
         (fun t sc -> snd (Tactics.process1_r false `Check sc t))
@@ -1174,7 +1176,7 @@ module Ax = struct
     snd (save_r ~mode:`Abort scope)
 
   (* ------------------------------------------------------------------ *)
-  let add ?(src : string option) (scope : scope) (mode : proofmode) (ax : paxiom located) =
+  let add ?(src : string option) ?(strict = false) (scope : scope) (mode : proofmode) (ax : paxiom located) =
     let uax = unloc ax in
     let kind =
       match uax.pa_kind with
@@ -1196,10 +1198,10 @@ module Ax = struct
           | Some src -> DocState.push_srcbl scope.sc_locdoc src
           | None -> scope.sc_locdoc; }
     in
-    add_r scope mode ax
+    add_r ~strict scope mode ax
 
   (* ------------------------------------------------------------------ *)
-  let realize (scope : scope) (mode : proofmode) (rl : prealize located) =
+  let realize ?(strict = false) (scope : scope) (mode : proofmode) (rl : prealize located) =
     check_state `InProof "activate" scope;
 
     let loc = rl.pl_loc and rl = rl.pl_desc in
@@ -1231,10 +1233,10 @@ module Ax = struct
 
     match rl.pr_proof with
     | None ->
-        None, start_lemma scope pucflags check ?name:axname (ax, Some st)
+        None, start_lemma ~strict scope pucflags check ?name:axname (ax, Some st)
 
     | Some tc ->
-        start_lemma_with_proof scope
+        start_lemma_with_proof ~strict scope
           None pucflags (mode, mk_loc loc tc) check
           ?name:axname ax
 end
@@ -1338,7 +1340,8 @@ module Op = struct
     let tags   = Sstr.of_list (List.map unloc op.po_tags) in
     let opaque = {
       smt       = Sstr.mem "smt_opaque" tags;
-      reduction = Sstr.mem "opaque" tags
+      reduction = Sstr.mem "opaque" tags;
+      inline    = Sstr.mem "smt_inline" tags;
     } in
     let unfold =
       match op.po_args with
@@ -1372,7 +1375,7 @@ module Op = struct
               let axop  =
                 let nargs = List.sum (List.map (List.length -| fst) args) in
                   EcDecl.axiomatized_op ~nargs path (tyop.op_tparams, bd) lc in
-              let tyop  = { tyop with op_opaque = { reduction = true; smt = false; }} in
+              let tyop  = { tyop with op_opaque = { reduction = true; smt = false; inline = false; }} in
               let scope = bind scope (unloc op.po_name, tyop) in
               Ax.bind scope (unloc ax, axop)
 
@@ -1435,8 +1438,8 @@ module Op = struct
     let add_distr_tag
         (pred : path) (bases : string list) (tag : string) (suffix : string) scope
     =
-      if not (EcAlgTactic.is_module_loaded (env scope)) then
-        hierror "for tag %s, load Distr first" tag;
+      if EcEnv.Op.by_path_opt pred (env scope) = None then
+         hierror "for tag %s, load Distr first" tag;
 
       let oppath   = EcPath.pqname (path scope) (unloc op.po_name) in
       let nparams  = List.map EcIdent.fresh tyop.op_tparams in
@@ -2300,23 +2303,17 @@ module Ty = struct
         record.ELI.rc_tparams, Record (scheme, record.ELI.rc_fields)
     in
 
-    bind scope (unloc name, { tyd_params; tyd_type; tyd_loca; })
+    bind scope (unloc name,
+      { tyd_params; tyd_type; tyd_loca; tyd_clinline = false; tyd_subtype = None; })
 
   (* ------------------------------------------------------------------ *)
   let add_subtype (scope : scope) ({ pl_desc = subtype } : psubtype located) =
     let loced x = mk_loc _dummy x in
     let env = env scope in
 
-    let scope =
-      let decl = EcDecl.{
-        tyd_params  = [];
-        tyd_type    = Abstract;
-        tyd_loca    = `Global; (* FIXME:SUBTYPE *)
-      } in bind scope (unloc subtype.pst_name, decl) in
-
     let carrier =
       let ue = EcUnify.UniEnv.create None in
-      transty tp_tydecl env ue subtype.pst_carrier in
+      transty tp_nothing env ue subtype.pst_carrier in
 
     let pred =
       let x = EcIdent.create (fst subtype.pst_pred).pl_desc in
@@ -2326,9 +2323,22 @@ module Ty = struct
       if not (EcUnify.UniEnv.closed ue) then
         hierror ~loc:(snd subtype.pst_pred).pl_loc
           "the predicate contains free type variables";
+      if EcUnify.UniEnv.tparams ue <> [] then
+        hierror ~loc:(snd subtype.pst_pred).pl_loc
+          "Polymorphic predicates are not allowed. \
+           Use clones if you want to make a polymorphic subtype.";
       let uidmap = EcUnify.UniEnv.close ue in
       let fs = Tuni.subst uidmap in
       f_lambda [(x, GTty carrier)] (Fsubst.f_subst fs pred) in
+
+    let scope =
+      let decl = EcDecl.{
+        tyd_params   = [];
+        tyd_type     = Abstract;
+        tyd_loca     = `Global;
+        tyd_clinline = false;
+        tyd_subtype  = Some (carrier, pred);
+      } in bind scope (unloc subtype.pst_name, decl) in
 
     let evclone =
       { EcThCloning.evc_empty with
@@ -2684,11 +2694,11 @@ end
                     let es = e_subst tip in
                     let xs  = List.map (snd_map (ty_subst tip)) nt.ont_args in
                     let bd  = EcFol.form_of_expr (es nt.ont_body) in
-                    let fp  = EcFol.f_lambda (List.map (snd_map EcFol.gtty) xs) bd in
+                    List.iter (fun (id, ty) -> ps := Mid.add id ty !ps) xs;
 
-                    match fp.f_node with
+                    match bd.f_node with
                     | Fop (pf, _) -> (pf :: paths, pts)
-                    | _ -> (paths, (ps, ue, fp) ::pts)
+                    | _ -> (paths, (ps, ue, bd) ::pts)
                   end
 
                   | _ -> (p :: paths, pts) in

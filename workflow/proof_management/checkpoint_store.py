@@ -2,7 +2,7 @@
 
 This service owns checkpoint domain state for one proof node: structural
 checkpoint indexing, pending rewind confirmations, and the pre-rewind restore
-anchor.  It renders ProverWorkspaceView-compatible checkpoint options, but it
+anchor. It renders manager-control checkpoint options, but it
 does not execute EasyCrypt commands.
 """
 from __future__ import annotations
@@ -14,13 +14,12 @@ from collections.abc import Callable
 from pathlib import Path
 from typing import Any
 
-from .checkpoints import CheckpointIndex, CheckpointOption, checkpoint_option
+from .checkpoints import CheckpointIndex, CheckpointOption
 from .checkpoint_surface import (
     checkpoint_option as build_checkpoint_option,
     checkpoint_options,
     parse_checkpoint_id,
     rewind_leaves_current_call_scope,
-    route_health_checkpoint,
     structural_recovery_available,
     structural_checkpoints_surface,
 )
@@ -32,6 +31,93 @@ logger = logging.getLogger(__name__)
 
 HistoryHashFn = Callable[[list[str]], str]
 ConfirmationIdFn = Callable[..., str]
+
+CHECKPOINT_STATE_KIND = "proof_checkpoint_state"
+CHECKPOINT_STATE_SCHEMA_VERSION = 1
+_CHECKPOINT_STATE_FIELDS = {
+    "schema_version",
+    "kind",
+    "node_id",
+    "pre_rewind_restore_anchor",
+}
+_RESTORE_ANCHOR_FIELDS = {
+    "restore_id",
+    "tactics",
+    "from_checkpoint_id",
+    "from_tactic_index",
+}
+
+
+def normalize_checkpoint_state_payload(
+    value: Any,
+    *,
+    expected_node_id: str | None = None,
+    require_anchor: bool = False,
+) -> dict[str, Any]:
+    """Return one exact current checkpoint sidecar, or ``{}``.
+
+    The sidecar is node-owned state.  Readers that requested one node must
+    supply ``expected_node_id`` so a valid file under the wrong path cannot be
+    adopted.  An empty anchor is the canonical persisted state after a restore
+    anchor is cleared; resume handoffs set ``require_anchor`` because there is
+    nothing useful to transfer without the full anchor.
+    """
+    if type(value) is not dict or set(value) != _CHECKPOINT_STATE_FIELDS:
+        return {}
+    if (
+        type(value.get("schema_version")) is not int
+        or value.get("schema_version") != CHECKPOINT_STATE_SCHEMA_VERSION
+        or value.get("kind") != CHECKPOINT_STATE_KIND
+    ):
+        return {}
+    node_id = value.get("node_id")
+    if (
+        type(node_id) is not str
+        or not node_id.strip()
+        or (expected_node_id is not None and node_id != expected_node_id)
+    ):
+        return {}
+    anchor = value.get("pre_rewind_restore_anchor")
+    if type(anchor) is not dict:
+        return {}
+    if not anchor:
+        if require_anchor:
+            return {}
+        return {
+            "schema_version": CHECKPOINT_STATE_SCHEMA_VERSION,
+            "kind": CHECKPOINT_STATE_KIND,
+            "node_id": node_id,
+            "pre_rewind_restore_anchor": {},
+        }
+    if set(anchor) != _RESTORE_ANCHOR_FIELDS:
+        return {}
+    restore_id = anchor.get("restore_id")
+    tactics = anchor.get("tactics")
+    checkpoint_id = anchor.get("from_checkpoint_id")
+    tactic_index = anchor.get("from_tactic_index")
+    if (
+        type(restore_id) is not str
+        or not restore_id.strip()
+        or type(tactics) is not list
+        or not tactics
+        or any(type(tactic) is not str or not tactic.strip() for tactic in tactics)
+        or type(checkpoint_id) is not str
+        or not checkpoint_id.strip()
+        or type(tactic_index) is not int
+        or tactic_index < 1
+    ):
+        return {}
+    return {
+        "schema_version": CHECKPOINT_STATE_SCHEMA_VERSION,
+        "kind": CHECKPOINT_STATE_KIND,
+        "node_id": node_id,
+        "pre_rewind_restore_anchor": {
+            "restore_id": restore_id,
+            "tactics": list(tactics),
+            "from_checkpoint_id": checkpoint_id,
+            "from_tactic_index": tactic_index,
+        },
+    }
 
 
 class ProofCheckpointManager:
@@ -53,19 +139,21 @@ class ProofCheckpointManager:
         self.rewind_confirmation_checkpoint_id = ""
         self.fresh_restart_confirmation_id = ""
         self.pre_rewind_restore_anchor: dict[str, Any] = {}
-        self.legacy_pre_rewind_restore_option: dict[str, Any] = {}
         self._load_checkpoint_state_file()
 
     def seed_resume_payload(self, payload: dict[str, Any] | None) -> None:
         """Restore durable checkpoint state from a resume capsule."""
-        data = _dict_or_empty(payload)
-        anchor = _dict_or_empty(data.get("pre_rewind_restore_anchor"))
-        if anchor and _string_list(anchor.get("tactics")):
-            self.pre_rewind_restore_anchor = anchor
-            self.write_checkpoint_state_file()
-        legacy_restore = _dict_or_empty(data.get("legacy_pre_rewind_restore_option"))
-        if legacy_restore and not self.pre_rewind_restore_anchor:
-            self.legacy_pre_rewind_restore_option = legacy_restore
+        data = normalize_checkpoint_state_payload(
+            payload,
+            expected_node_id=self.node_id,
+            require_anchor=True,
+        )
+        if not data:
+            return
+        self.pre_rewind_restore_anchor = dict(
+            data["pre_rewind_restore_anchor"]
+        )
+        self.write_checkpoint_state_file()
 
     def fresh_restart_confirmation_token(
         self,
@@ -83,8 +171,8 @@ class ProofCheckpointManager:
 
     def is_fresh_restart_confirmed(self, payload: dict[str, Any]) -> bool:
         return (
-            bool(payload.get("confirm"))
-            and str(payload.get("confirmation_id") or "")
+            payload.get("confirm") is True
+            and payload.get("confirmation_id")
             == self.fresh_restart_confirmation_id
         )
 
@@ -107,7 +195,6 @@ class ProofCheckpointManager:
         intent: str,
         tactics: list[str],
         state_version: int,
-        route_health: list[dict[str, Any]] | None = None,
         replay_prefix_count: int = 0,
     ) -> dict[str, Any]:
         confirmation_id = self.fresh_restart_confirmation_token(
@@ -118,7 +205,6 @@ class ProofCheckpointManager:
             option
             for option in self.menu_options(
                 tactics,
-                route_health=route_health,
                 replay_prefix_count=replay_prefix_count,
             )
             if str(option.get("undo_scope") or "") in {
@@ -156,12 +242,14 @@ class ProofCheckpointManager:
         return _drop_empty({
             "intent": intent,
             "kind": "structural_recovery_menu",
-            "message": (
-                "A structural recovery boundary is available for the current "
-                "committed branch."
-            ),
-            "checkpoint_options": checkpoint_options,
-            "options": options,
+            "control_menu": {
+                "title": "Recovery options",
+                "notice": (
+                    "A structural recovery boundary is available for the current "
+                    "committed branch."
+                ),
+                "items": [*checkpoint_options, *options],
+            },
         })
 
     def fresh_restart_confirmation_observation(
@@ -219,20 +307,15 @@ class ProofCheckpointManager:
         return {
             "intent": intent,
             "kind": "fresh_restart_confirmation",
-            "message": (
-                # Panel-defect #2: do NOT blanket-steer toward checkpoint rewind.
-                # A rewind to a SHALLOW target inside the current call/seq scope is
-                # reliable; a rewind that leaves the current call-obligation scope
-                # requires a confirm step and is the costly path. Recommend by
-                # reachability, not unconditionally.
-                "Fresh restart is destructive (it erases this whole node). For a "
-                "LOCAL route repair, a checkpoint rewind to a target inside the "
-                "current call/seq scope is the lighter option; a rewind that "
-                "leaves the current call-obligation scope needs an explicit "
-                "confirm and undoes more."
-            ),
-            "notice": notice,
-            "options": options,
+            "control_menu": {
+                "title": "Restart options",
+                "notice": notice or (
+                    "Fresh restart erases this node's committed branch. Choose "
+                    "a narrower undo/rewind control when that is the intended "
+                    "proof-state operation."
+                ),
+                "items": options,
+            },
         }
 
     def rewind_confirmation_token(
@@ -259,11 +342,9 @@ class ProofCheckpointManager:
     ) -> bool:
         """A confirmed rewind for the checkpoint we asked the agent to confirm.
 
-        Panel-defect #2 (P0; docs/reports/insights/l4_panel_defects_equiv_step4.md):
-        the `confirmation_id` was bound to `repl.state_version`, so once ANY turn
-        bumped the version the token the agent was shown went stale and the
-        re-submitted `confirm:true` silently degraded to the menu re-prompt — a
-        perceived no-op. We DO NOT compare the version-bound token here anymore.
+        The `confirmation_id` was bound to `repl.state_version`, so a later
+        manager turn could make the token stale. We do not compare the
+        version-bound token here.
         The genuine guard that the target is still valid is the `checkpoint_id`
         itself (it embeds the committed-history hash and is re-validated against
         the CURRENT history by the caller). So a confirm is honored when:
@@ -275,18 +356,11 @@ class ProofCheckpointManager:
         the version forward. The caller still rejects a checkpoint_id that no
         longer matches the current committed history before calling us.
         """
-        if not bool(payload.get("confirm")):
+        if payload.get("confirm") is not True:
             return False
         if checkpoint_id and checkpoint_id == self.rewind_confirmation_checkpoint_id:
             return True
-        # Back-compat: an exact (still-fresh) token also confirms, even if the
-        # stored checkpoint binding was cleared by an unrelated path.
-        return (
-            bool(self.rewind_confirmation_id)
-            and str(payload.get("confirmation_id") or "")
-            == self.rewind_confirmation_id
-            and checkpoint_id == self.rewind_confirmation_checkpoint_id
-        )
+        return False
 
     def clear_rewind_confirmation(self) -> None:
         self.rewind_confirmation_id = ""
@@ -333,13 +407,10 @@ class ProofCheckpointManager:
             path.write_text(
                 json.dumps(
                     {
-                        "schema_version": 1,
-                        "kind": "proof_checkpoint_state",
+                        "schema_version": CHECKPOINT_STATE_SCHEMA_VERSION,
+                        "kind": CHECKPOINT_STATE_KIND,
                         "node_id": self.node_id,
                         "pre_rewind_restore_anchor": self.pre_rewind_restore_anchor,
-                        "legacy_pre_rewind_restore_option": (
-                            self.legacy_pre_rewind_restore_option
-                        ),
                     },
                     indent=2,
                     sort_keys=True,
@@ -374,7 +445,11 @@ class ProofCheckpointManager:
         structural_items: list[dict[str, Any]] | None = None,
         restore_option: dict[str, Any] | None = None,
     ) -> CheckpointIndex:
-        restore = checkpoint_option(restore_option)
+        restore = (
+            CheckpointOption(dict(restore_option))
+            if isinstance(restore_option, dict) and restore_option
+            else None
+        )
         menu = [
             CheckpointOption(dict(item))
             for item in (menu_options or [])
@@ -396,10 +471,7 @@ class ProofCheckpointManager:
         )
 
     def pre_rewind_restore_option(self) -> dict[str, Any]:
-        option = pre_rewind_restore_option(self.pre_rewind_restore_anchor)
-        if option:
-            return option
-        return dict(self.legacy_pre_rewind_restore_option)
+        return pre_rewind_restore_option(self.pre_rewind_restore_anchor)
 
     def parse_checkpoint_id(self, checkpoint_id: str) -> tuple[int, str] | None:
         return parse_checkpoint_id(checkpoint_id)
@@ -408,12 +480,10 @@ class ProofCheckpointManager:
         self,
         tactics: list[str],
         *,
-        route_health: list[dict[str, Any]] | None = None,
         replay_prefix_count: int = 0,
     ) -> list[dict[str, Any]]:
         return checkpoint_options(
             tactics,
-            route_health=route_health,
             replay_prefix_count=replay_prefix_count,
         )
 
@@ -421,12 +491,10 @@ class ProofCheckpointManager:
         self,
         tactics: list[str],
         *,
-        route_health: list[dict[str, Any]] | None = None,
         replay_prefix_count: int = 0,
     ) -> list[dict[str, Any]]:
         return structural_checkpoints_surface(
             tactics,
-            route_health=route_health,
             replay_prefix_count=replay_prefix_count,
         )
 
@@ -442,19 +510,6 @@ class ProofCheckpointManager:
             self._history_hash(tactics),
             tactic_index,
             override=override,
-        )
-
-    def route_health_checkpoint(
-        self,
-        tactics: list[str],
-        tactic_index: int,
-        *,
-        why_here: str,
-    ) -> dict[str, Any]:
-        return route_health_checkpoint(
-            tactics,
-            tactic_index,
-            why_here=why_here,
         )
 
     def rewind_leaves_current_call_scope(
@@ -483,12 +538,14 @@ class ProofCheckpointManager:
         return _drop_empty({
             "intent": intent,
             "kind": "checkpoint_selection",
-            "message": (
-                "Choose the committed tactic you want to rewind before."
-                if options else "No rewind targets are available."
-            ),
-            "notice": notice,
-            "checkpoint_options": options,
+            "control_menu": {
+                "title": "Rewind targets",
+                "notice": notice or (
+                    "Choose the committed tactic you want to rewind before."
+                    if options else "No rewind targets are available."
+                ),
+                "items": options,
+            },
         })
 
     def checkpoint_rewind_observation(
@@ -539,22 +596,25 @@ class ProofCheckpointManager:
         return _drop_empty({
             "intent": intent,
             "kind": "checkpoint_rewind_confirmation",
-            "message": (
-                "This rewind leaves the current call obligation scope. "
-                "Confirm it only if that broader recovery boundary is the "
-                "state you want to restore."
-            ),
-            "checkpoint": checkpoint,
-            "options": [
-                {
-                    "label": "Show current rewind choices",
-                    "effect_if_selected": (
-                        "This returns to the checkpoint menu without changing "
-                        "the proof state."
-                    ),
-                    "submit": {"intent": "undo_to_checkpoint", "payload": {}},
-                },
-            ],
+            "control_menu": {
+                "title": "Confirm rewind",
+                "notice": (
+                    "This rewind leaves the current call obligation scope. "
+                    "Confirm it only if that broader recovery boundary is the "
+                    "state you want to restore."
+                ),
+                "items": [
+                    checkpoint,
+                    {
+                        "label": "Show current rewind choices",
+                        "effect_if_selected": (
+                            "This returns to the checkpoint menu without changing "
+                            "the proof state."
+                        ),
+                        "submit": {"intent": "undo_to_checkpoint", "payload": {}},
+                    },
+                ],
+            },
         })
 
 
@@ -588,5 +648,3 @@ def pre_rewind_restore_option(anchor: dict[str, Any]) -> dict[str, Any]:
             "payload": {"restore_id": restore_id},
         },
     }
-
-

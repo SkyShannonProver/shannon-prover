@@ -1,58 +1,78 @@
-# eval_suite — the benchmark runner
+# eval_suite — research benchmark runner
 
-Runs a suite of lemma-proving targets through `workflow.orchestrator`, one
-subprocess per target × surface profile × repeat, with per-run source
-isolation (the target `.ec` is copied and its proofs stripped so the prover
-cannot read the answers), metrics, and an auto-generated run bundle under
-`agent_view_runs/`.
+This is not the primary interface for proving a user's lemma. Use `$prove
+<LemmaName>`, `/prove <LemmaName>`, or `workflow.orchestrator` directly for an
+ordinary in-place proof run.
+
+`eval_suite.run` exists for controlled research evaluation. It expands a
+checked-in target/profile matrix into managed `workflow.orchestrator` runs.
+Each arm receives proof-stripped source isolation, the same manager controls,
+metrics, and a reproducible bundle under `agent_view_runs/`.
+
+## Current boundary
+
+Only profiles registered by
+`workflow/proof_state_compiler/surface_profiles.py` are accepted. Normal use
+selects `proof_state_compiler`; control and audit profiles exist only for
+matched compiler experiments.
+
+Current suite inputs live in [`suites/`](suites/). Archived protocols are
+evidence, not runnable suite templates, and the runner rejects archive paths.
 
 ## Commands
 
 ```bash
-eval "$(opam env --switch=easycrypt)"          # EasyCrypt on PATH first
+uv run python tools/bootstrap_easycrypt.py --verify-only
 
-# sanity-check a suite without running anything
-uv run python -m eval_suite.run --suite eval_suite/suites/demo_pir.json --dry-run
+# inspect the public demo without launching an agent
+uv run python -m eval_suite.run \
+  --suite eval_suite/suites/demo_pir.json \
+  --dry-run
 
-# run it (l4_checked_action_surface = full compiler surface; l1_goal_projection = bare goal)
-uv run python -m eval_suite.run --suite eval_suite/suites/demo_pir.json \
-    --profiles l4_checked_action_surface
+# run the default proof-state compiler
+uv run python -m eval_suite.run \
+  --suite eval_suite/suites/demo_pir.json
 
-# refresh metrics for a run output dir
+# refresh metrics for an existing run output directory
 uv run python -m eval_suite.metrics artifacts/eval_suite/<run_dir>
 ```
 
-The verdict file is `eval_metrics.md` in the run's output dir; the committable
-replay artifact is the bundle under `agent_view_runs/<lemma>/<ts>__<commit>/`.
-Run in a normal terminal (an OS sandbox blocks the `nice()` syscall that
-`why3server` needs, so `smt()` would fail).
+Strict live evaluation currently requires Linux and `bubblewrap` so the model
+process can be proven unable to read the original checkout or cached proofs.
+The runner fails closed before launching a model when that selective namespace
+cannot be established. This requirement does not apply to ordinary `$prove`
+or `/prove` use on macOS.
+
+Run live EasyCrypt experiments outside an additional OS sandbox because
+`why3server` needs the `nice()` syscall. Long eval-mode runs should follow the
+isolated worktree procedure in [`../TESTING.md`](../TESTING.md).
 
 ## Suite JSON
 
 ```json
 {
-  "suite": "demo_pir",
+  "suite": "compiler_v2_example",
   "defaults": {
     "include_dir": "easycrypt-src/theories",
     "timeout_minutes": 30,
     "eval_mode": true,
+    "source_isolation": true,
     "strip_proofs": true,
     "output_root": "artifacts/eval_suite"
   },
   "targets": [
     {"file": "eval/examples/PIR.ec", "lemma": "PIR_correct"}
   ],
-  "profiles": ["l4_checked_action_surface"]
+  "profiles": ["proof_state_compiler"]
 }
 ```
 
-Useful keys: per-target `timeout_minutes`; `defaults.model` (defaults to the
-orchestrator's model); `copy_root` when the target needs sibling files (clone
-chains) copied alongside; `tree_initial_provers` / `tree_max_concurrent` for
-the tree scheduler. `--targets name1,name2` and `--profiles ...` filter a
-suite from the CLI; `--repeats N` runs each target N times.
+Useful keys include per-target `timeout_minutes`, `defaults.model`,
+`copy_root`, `tree_initial_provers`, and `tree_max_concurrent`. CLI
+`--targets` and `--repeats` select a checked-in subset. Compiler experiment
+suites may additionally select registered profiles and counterbalance their
+order.
 
-Checked-in suites live in [`suites/`](suites/): `demo_pir.json` (the
-5-minute smoke target) and `chacha_step4_1_l1_l4.json` (a two-profile
-L1-vs-L4 template to copy for new lemmas). The corpus itself lives in
-`eval/examples/` — `eval/` is data, this package is the runner.
+The runner freezes repository/environment identity before live arms, rejects
+mid-slate code drift, performs target-load preflight, and writes the verdict to
+`eval_metrics.md` in the output directory.

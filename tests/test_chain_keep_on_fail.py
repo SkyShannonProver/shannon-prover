@@ -1,5 +1,5 @@
-"""Verify that `-chain` (with and without --keep-on-fail) leaves
-history.ec in a state matching its reported `accepted` count.
+"""Verify that ``-tactic-exec commit_chain`` leaves ``history.ec`` in a
+state matching the current structured result's ``accepted_count``.
 
 Two failure modes the fix addresses:
   (A) Daemon-side rejection rolls back history without emitting the
@@ -15,12 +15,12 @@ The fix: chain uses `history.ec` line count as ground truth for
 asserts that the line count of history.ec matches the chain's reported
 `accepted` count after the chain returns.
 
-Run: `eval "$(opam env --switch=easycrypt)" && python3 tests/test_chain_keep_on_fail.py`
+Run: `python3 tools/bootstrap_easycrypt.py --verify-only` followed by this file.
 """
 from __future__ import annotations
 
+import json
 import os
-import re
 import shutil
 import subprocess
 import sys
@@ -28,9 +28,14 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 import _pathsetup  # noqa: F401,E402  (repo root on sys.path)
+from core.easycrypt.ec_env import get_ec_env  # noqa: E402
 SCLI = ROOT / "core" / "easycrypt" / "session_cli.py"
 SAMPLE_EC = ROOT / "eval" / "examples" / "WhileSample.ec"
 DICE_EC = ROOT / "eval" / "examples" / "Dice4_6.ec"
+TRIVIAL_EC = (
+    ROOT / "tests" / "fixtures" / "native_semantics"
+    / "proof_term_implicit_goal.ec"
+)
 SESS = ROOT / ".ec_session_chain_test"
 
 
@@ -70,46 +75,39 @@ def fresh_session(file_path: Path = SAMPLE_EC, lemma: str | None = None):
 
 
 def parse_accepted_count(stdout: str) -> int:
-    """Parse the chain's reported accepted count from stdout. Returns
-    -1 if no recognizable count found.
+    """Read one current structured CLI delivery and return its count.
 
-    The event-driven rewrite replaced the legacy text markers with
-    structured TacticExecutionResult JSON. The stdout result now keeps
-    agent-facing semantic fields only, so parse the execution block
-    directly and fall back to legacy text markers for older code paths.
+    This direct-CLI consistency test deliberately has no text-marker or
+    historical-output fallback.  The manager's semantic authority remains the
+    event-bound durable artifact; here we test only the current developer CLI
+    display contract emitted from that artifact.
     """
-    m = re.search(
-        r'\[TACTIC-EXECUTION-RESULT\][\s\S]*?"execution"\s*:\s*\{[\s\S]*?"accepted_count"\s*:\s*(\d+)',
-        stdout,
-    )
-    if m:
-        return int(m.group(1))
-    # Legacy text markers preserved for backwards compatibility.
-    m = re.search(r"state after\s+(\d+)\s+accepted tactic", stdout)
-    if m:
-        return int(m.group(1))
-    m = re.search(r"All\s+(\d+)\s+tactics accepted", stdout)
-    if m:
-        return int(m.group(1))
-    m = re.search(r"\[chain\] Stopped after\s+(\d+)/", stdout)
-    if m:
-        return int(m.group(1))
-    return -1
 
-
-def parse_rollback_count(stdout: str) -> int:
-    """Parse the rollback count from stdout. The event-driven rewrite
-    no longer emits an explicit ``All N tactic(s) rolled back``
-    marker; instead the chain's ``command_status`` indicates failure
-    and ``accepted_count`` reflects the post-rollback state (0 on full
-    rollback). Callers that previously depended on this should check
-    ``parse_accepted_count`` and ``history_line_count`` instead.
-    """
-    # Legacy marker (preserved for any older code path that still emits it).
-    m = re.search(r"All\s+(\d+)\s+tactic\(s\) rolled back", stdout)
-    if m:
-        return int(m.group(1))
-    return -1
+    marker = "[TACTIC-EXECUTION-RESULT]\n"
+    if stdout.count(marker) != 1:
+        raise AssertionError("expected exactly one structured execution result")
+    encoded = stdout.split(marker, 1)[1].lstrip()
+    try:
+        result, end = json.JSONDecoder().raw_decode(encoded)
+    except json.JSONDecodeError as exc:
+        raise AssertionError("structured execution result is invalid JSON") from exc
+    if encoded[end:].strip():
+        raise AssertionError("unexpected output after structured execution result")
+    if not isinstance(result, dict) or set(result) != {
+        "execution", "result", "workspace",
+    }:
+        raise AssertionError("unexpected structured execution result shape")
+    if not isinstance(result["result"], dict) or not isinstance(
+        result["workspace"], dict
+    ):
+        raise AssertionError("structured result blocks must be objects")
+    execution = result.get("execution")
+    if not isinstance(execution, dict) or execution.get("mode") != "commit_chain":
+        raise AssertionError("execution result is not for commit_chain")
+    accepted = execution.get("accepted_count")
+    if type(accepted) is not int or accepted < 0:
+        raise AssertionError("execution.accepted_count must be a non-negative int")
+    return accepted
 
 
 # ─────────────────────────────────────────────────────────────────────
@@ -124,7 +122,7 @@ def case_full_success():
         return f"skipped ({err})"
     baseline = history_line_count()
     rc, out = run([
-        "-d", str(SESS), "-chain", "-c",
+        "-d", str(SESS), "-tactic-exec", "commit_chain", "-c",
         "proc. seq 1 2 : (={ret}). auto.",
     ])
     accepted = parse_accepted_count(out)
@@ -146,7 +144,7 @@ def case_first_tactic_fails_keep():
         return f"skipped ({err})"
     baseline = history_line_count()
     rc, out = run([
-        "-d", str(SESS), "-chain", "--keep-on-fail", "-c",
+        "-d", str(SESS), "-tactic-exec", "commit_chain", "--keep-on-fail", "-c",
         "intentionally_malformed_xyz. proc. auto.",
     ])
     accepted = parse_accepted_count(out)
@@ -166,7 +164,7 @@ def case_last_tactic_fails_keep():
         return f"skipped ({err})"
     baseline = history_line_count()
     rc, out = run([
-        "-d", str(SESS), "-chain", "--keep-on-fail", "-c",
+        "-d", str(SESS), "-tactic-exec", "commit_chain", "--keep-on-fail", "-c",
         "proc. seq 1 2 : (={ret}). intentionally_malformed_xyz.",
     ])
     accepted = parse_accepted_count(out)
@@ -186,7 +184,7 @@ def case_middle_fails_no_keep():
         return f"skipped ({err})"
     baseline = history_line_count()
     rc, out = run([
-        "-d", str(SESS), "-chain", "-c",
+        "-d", str(SESS), "-tactic-exec", "commit_chain", "-c",
         "proc. seq 1 2 : (={ret}). intentionally_malformed_xyz.",
     ])
     accepted = parse_accepted_count(out)
@@ -205,7 +203,7 @@ def case_middle_no_progress_keep():
         return f"skipped ({err})"
     baseline = history_line_count()
     rc, out = run([
-        "-d", str(SESS), "-chain", "--keep-on-fail", "-c",
+        "-d", str(SESS), "-tactic-exec", "commit_chain", "--keep-on-fail", "-c",
         # `proc.` again is a no-op once we're already inside proc
         "proc. seq 1 2 : (={ret}). proc.",
     ])
@@ -225,14 +223,14 @@ def case_first_no_progress():
         return f"skipped ({err})"
     # Force the goal into pRHL state already-past-proc
     rc, out = run([
-        "-d", str(SESS), "-next", "-c", "proc.",
+        "-d", str(SESS), "-tactic-exec", "commit", "-c", "proc.",
     ])
     if rc != 0:
         return f"skipped (proc setup failed: {out[-200:]})"
     baseline = history_line_count()
     # `proc.` again is a no-op; the chain should fail on iter 1.
     rc, out = run([
-        "-d", str(SESS), "-chain", "--keep-on-fail", "-c",
+        "-d", str(SESS), "-tactic-exec", "commit_chain", "--keep-on-fail", "-c",
         "proc. seq 1 2 : (={ret}).",
     ])
     accepted = parse_accepted_count(out)
@@ -256,7 +254,7 @@ def case_ambient_goal_chain():
     # `move=> k &m.` introduces both binders. `trivial.` won't close
     # the Pr equality; force a parse error after a real step.
     rc, out = run([
-        "-d", str(SESS), "-chain", "--keep-on-fail", "-c",
+        "-d", str(SESS), "-tactic-exec", "commit_chain", "--keep-on-fail", "-c",
         "move=> k &m. intentionally_malformed_xyz.",
     ])
     accepted = parse_accepted_count(out)
@@ -277,13 +275,13 @@ def case_chain_two_sequential_no_progress():
     if err:
         return f"skipped ({err})"
     rc, out = run([
-        "-d", str(SESS), "-next", "-c", "proc.",
+        "-d", str(SESS), "-tactic-exec", "commit", "-c", "proc.",
     ])
     if rc != 0:
         return f"skipped (proc setup failed: {out[-200:]})"
     baseline = history_line_count()
     rc, out = run([
-        "-d", str(SESS), "-chain", "--keep-on-fail", "-c",
+        "-d", str(SESS), "-tactic-exec", "commit_chain", "--keep-on-fail", "-c",
         "proc. proc.",   # both no-ops
     ])
     accepted = parse_accepted_count(out)
@@ -297,22 +295,13 @@ def case_chain_two_sequential_no_progress():
 def case_qed_at_end():
     """Chain that closes the goal with qed. accepted should equal
     chain length and history should grow accordingly."""
-    err = fresh_session(SAMPLE_EC)
+    err = fresh_session(TRIVIAL_EC, lemma="native_implicit_goal")
     if err:
         return f"skipped ({err})"
-    # Open a trivial lemma we can close cleanly
-    rc, out = run([
-        "-d", str(SESS), "-next", "-c",
-        "lemma triv: forall (x: int), x = x.",
-    ])
-    if rc != 0:
-        return f"skipped (lemma open failed: {out[-200:]})"
-    # `lemma X.` already opens proof script in EC; bare `proof.` is a
-    # no-op there. Skip it; just run the proof body + qed.
     baseline = history_line_count()
     rc, out = run([
-        "-d", str(SESS), "-chain", "-c",
-        "move=> x. done. qed.",
+        "-d", str(SESS), "-tactic-exec", "commit_chain", "-c",
+        "move=> _. trivial. qed.",
     ])
     accepted = parse_accepted_count(out)
     h = history_line_count() - baseline
@@ -335,7 +324,7 @@ def case_long_chain_mixed():
         return f"skipped ({err})"
     baseline = history_line_count()
     rc, out = run([
-        "-d", str(SESS), "-chain", "--keep-on-fail", "-c",
+        "-d", str(SESS), "-tactic-exec", "commit_chain", "--keep-on-fail", "-c",
         "proc. seq 1 2 : (={ret}). auto. split. intentionally_malformed_xyz.",
     ])
     accepted = parse_accepted_count(out)
@@ -363,7 +352,7 @@ def case_daemon_rejection_arity():
     # accepted=False + a [critical]/[error] reason and roll back the
     # speculative history append.
     rc, out = run([
-        "-d", str(SESS), "-chain", "--keep-on-fail", "-c",
+        "-d", str(SESS), "-tactic-exec", "commit_chain", "--keep-on-fail", "-c",
         "proc. seq 1 2 : (={ret}). apply (sample_ll _ _ _ _).",
     ])
     accepted = parse_accepted_count(out)
@@ -384,7 +373,7 @@ def case_back_to_back_chains():
         return f"skipped ({err})"
     baseline_0 = history_line_count()
     rc, out = run([
-        "-d", str(SESS), "-chain", "-c",
+        "-d", str(SESS), "-tactic-exec", "commit_chain", "-c",
         "proc. seq 1 2 : (={ret}).",
     ])
     accepted_1 = parse_accepted_count(out)
@@ -394,7 +383,7 @@ def case_back_to_back_chains():
 
     baseline_1 = history_line_count()
     rc, out = run([
-        "-d", str(SESS), "-chain", "--keep-on-fail", "-c",
+        "-d", str(SESS), "-tactic-exec", "commit_chain", "--keep-on-fail", "-c",
         "auto. intentionally_malformed_xyz.",
     ])
     accepted_2 = parse_accepted_count(out)
@@ -414,7 +403,7 @@ def case_different_lemma():
         return f"skipped ({err})"
     baseline = history_line_count()
     rc, out = run([
-        "-d", str(SESS), "-chain", "--keep-on-fail", "-c",
+        "-d", str(SESS), "-tactic-exec", "commit_chain", "--keep-on-fail", "-c",
         "move=> k &m. byphoare=> //. intentionally_malformed_xyz.",
     ])
     accepted = parse_accepted_count(out)
@@ -436,7 +425,7 @@ def case_daemon_disabled():
         return f"skipped ({err})"
     baseline = history_line_count()
     rc, out = run([
-        "-d", str(SESS), "-chain", "--keep-on-fail", "-c",
+        "-d", str(SESS), "-tactic-exec", "commit_chain", "--keep-on-fail", "-c",
         "proc. seq 1 2 : (={ret}). intentionally_malformed_xyz.",
     ], env_extra={"EC_DAEMON_DISABLE": "1"})
     accepted = parse_accepted_count(out)
@@ -505,12 +494,38 @@ if __name__ == "__main__":
     sys.exit(main())
 
 
-import shutil as _shutil
 import pytest as _pytest
 
 
-@_pytest.mark.skipif(_shutil.which("easycrypt") is None,
-                     reason="EasyCrypt binary not on PATH")
+def test_accepted_count_parser_accepts_only_current_structured_delivery() -> None:
+    current = {
+        "execution": {"mode": "commit_chain", "accepted_count": 2},
+        "result": {"status": "partial_success"},
+        "workspace": {"view": {"current_goal": {"lines": ["goal"]}}},
+    }
+    rendered = "[TACTIC-EXECUTION-RESULT]\n" + json.dumps(current) + "\n"
+    assert parse_accepted_count(rendered) == 2
+
+    historical_markers = (
+        "state after 2 accepted tactics",
+        "All 2 tactics accepted",
+        "[chain] Stopped after 2/3 tactics",
+    )
+    for marker in historical_markers:
+        with _pytest.raises(AssertionError):
+            parse_accepted_count(marker)
+
+
+try:
+    _MANAGED_EC_AVAILABLE = shutil.which(
+        "easycrypt", path=get_ec_env().get("PATH")
+    ) is not None
+except RuntimeError:
+    _MANAGED_EC_AVAILABLE = False
+
+
+@_pytest.mark.skipif(not _MANAGED_EC_AVAILABLE,
+                     reason="repository-managed EasyCrypt is unavailable")
 def test_all_cases() -> None:
     """pytest entry: the case() harness's failure count must be zero.
 

@@ -13,8 +13,11 @@ from pathlib import Path
 from typing import Any, Iterable
 
 from core.easycrypt.session_events import (
-    event_payload,
     read_event_file,
+)
+from core.easycrypt.session_tactic_execution_artifacts import (
+    TacticExecutionArtifact,
+    load_tactic_execution_artifacts as load_session_tactic_execution_artifacts,
 )
 
 
@@ -31,7 +34,6 @@ class ReplaySummary:
     artifact_dir: str = ""
     session_dir: str = ""
     runner: str = ""
-    full_hooks: bool = False
 
     @classmethod
     def from_dict(cls, data: dict[str, Any] | None) -> "ReplaySummary":
@@ -48,7 +50,6 @@ class ReplaySummary:
             artifact_dir=str(data.get("artifact_dir") or ""),
             session_dir=str(data.get("session_dir") or ""),
             runner=str(data.get("runner") or ""),
-            full_hooks=bool(data.get("full_hooks")),
         )
 
     def to_dict(self) -> dict[str, Any]:
@@ -64,7 +65,6 @@ class ReplaySummary:
             "artifact_dir": self.artifact_dir,
             "session_dir": self.session_dir,
             "runner": self.runner,
-            "full_hooks": self.full_hooks,
         }
 
     @property
@@ -77,24 +77,18 @@ class AuditReport:
     warnings: list[str] = field(default_factory=list)
     event_contract_errors: int = 0
     event_contract_warnings: int = 0
-    tool_view_checked: int = 0
-    tool_view_errors: int = 0
-    tool_view_warnings: int = 0
-    agent_view_checked: int = 0
-    agent_view_errors: int = 0
-    agent_view_warnings: int = 0
+    proof_view_checked: int = 0
+    proof_view_errors: int = 0
+    proof_view_warnings: int = 0
     commit_response_checked: int = 0
     commit_response_errors: int = 0
     commit_response_warnings: int = 0
-    command_summary_checked: int = 0
-    command_summary_errors: int = 0
-    command_summary_warnings: int = 0
+    tactic_execution_checked: int = 0
+    tactic_execution_errors: int = 0
+    tactic_execution_warnings: int = 0
     episode_timeline_checked: int = 0
     episode_timeline_errors: int = 0
     episode_timeline_warnings: int = 0
-    structured_diagnostic_checked: int = 0
-    structured_diagnostic_errors: int = 0
-    structured_diagnostic_warnings: int = 0
     event_contract: dict[str, Any] = field(default_factory=dict)
     proof_state: dict[str, Any] = field(default_factory=dict)
     event_counts: dict[str, int] = field(default_factory=dict)
@@ -112,31 +106,19 @@ class AuditReport:
             warnings=[str(x) for x in data.get("warnings") or []],
             event_contract_errors=_as_int(data.get("event_contract_errors")),
             event_contract_warnings=_as_int(data.get("event_contract_warnings")),
-            tool_view_checked=_as_int(data.get("tool_view_checked")),
-            tool_view_errors=_as_int(data.get("tool_view_errors")),
-            tool_view_warnings=_as_int(data.get("tool_view_warnings")),
-            agent_view_checked=_as_int(data.get("agent_view_checked")),
-            agent_view_errors=_as_int(data.get("agent_view_errors")),
-            agent_view_warnings=_as_int(data.get("agent_view_warnings")),
+            proof_view_checked=_as_int(data.get("proof_view_checked")),
+            proof_view_errors=_as_int(data.get("proof_view_errors")),
+            proof_view_warnings=_as_int(data.get("proof_view_warnings")),
             commit_response_checked=_as_int(data.get("commit_response_checked")),
             commit_response_errors=_as_int(data.get("commit_response_errors")),
             commit_response_warnings=_as_int(data.get("commit_response_warnings")),
-            command_summary_checked=_as_int(data.get("command_summary_checked")),
-            command_summary_errors=_as_int(data.get("command_summary_errors")),
-            command_summary_warnings=_as_int(data.get("command_summary_warnings")),
+            tactic_execution_checked=_as_int(data.get("tactic_execution_checked")),
+            tactic_execution_errors=_as_int(data.get("tactic_execution_errors")),
+            tactic_execution_warnings=_as_int(data.get("tactic_execution_warnings")),
             episode_timeline_checked=_as_int(data.get("episode_timeline_checked")),
             episode_timeline_errors=_as_int(data.get("episode_timeline_errors")),
             episode_timeline_warnings=_as_int(
                 data.get("episode_timeline_warnings")
-            ),
-            structured_diagnostic_checked=_as_int(
-                data.get("structured_diagnostic_checked")
-            ),
-            structured_diagnostic_errors=_as_int(
-                data.get("structured_diagnostic_errors")
-            ),
-            structured_diagnostic_warnings=_as_int(
-                data.get("structured_diagnostic_warnings")
             ),
             event_contract=(
                 dict(data.get("event_contract"))
@@ -168,24 +150,18 @@ class AuditReport:
             "warnings": list(self.warnings),
             "event_contract_errors": self.event_contract_errors,
             "event_contract_warnings": self.event_contract_warnings,
-            "tool_view_checked": self.tool_view_checked,
-            "tool_view_errors": self.tool_view_errors,
-            "tool_view_warnings": self.tool_view_warnings,
-            "agent_view_checked": self.agent_view_checked,
-            "agent_view_errors": self.agent_view_errors,
-            "agent_view_warnings": self.agent_view_warnings,
+            "proof_view_checked": self.proof_view_checked,
+            "proof_view_errors": self.proof_view_errors,
+            "proof_view_warnings": self.proof_view_warnings,
             "commit_response_checked": self.commit_response_checked,
             "commit_response_errors": self.commit_response_errors,
             "commit_response_warnings": self.commit_response_warnings,
-            "command_summary_checked": self.command_summary_checked,
-            "command_summary_errors": self.command_summary_errors,
-            "command_summary_warnings": self.command_summary_warnings,
+            "tactic_execution_checked": self.tactic_execution_checked,
+            "tactic_execution_errors": self.tactic_execution_errors,
+            "tactic_execution_warnings": self.tactic_execution_warnings,
             "episode_timeline_checked": self.episode_timeline_checked,
             "episode_timeline_errors": self.episode_timeline_errors,
             "episode_timeline_warnings": self.episode_timeline_warnings,
-            "structured_diagnostic_checked": self.structured_diagnostic_checked,
-            "structured_diagnostic_errors": self.structured_diagnostic_errors,
-            "structured_diagnostic_warnings": self.structured_diagnostic_warnings,
             "event_contract": dict(self.event_contract),
             "proof_state": dict(self.proof_state),
             "event_counts": dict(self.event_counts),
@@ -213,14 +189,6 @@ class ReplayArtifact:
     @property
     def ok(self) -> bool:
         return self.summary.passed and not self.audit_report.warnings
-
-
-@dataclass(frozen=True)
-class CommandSummaryArtifact:
-    path: Path
-    summary: dict[str, Any]
-    event: dict[str, Any] | None = None
-    event_index: int = 0
 
 
 def load_replay_summary(path: Path) -> ReplaySummary:
@@ -280,48 +248,19 @@ def iter_replay_artifacts(root: Path) -> Iterable[ReplayArtifact]:
             yield load_replay_artifact(child)
 
 
-def load_command_summary_artifacts(
+def load_tactic_execution_artifacts(
     artifact: ReplayArtifact,
-) -> list[CommandSummaryArtifact]:
-    """Load CommandSummary artifacts in event order.
+) -> list[TacticExecutionArtifact]:
+    """Load TacticExecutionResult artifacts in event order.
 
-    Summary filenames include hashes and are not a chronological ordering.
-    Prefer ``command.summary.produced`` event order, then append any orphaned
-    files as a compatibility fallback.
+    Result filenames include hashes and are not a chronological ordering.
+    Return only artifacts bound to ``tactic.execution.produced`` occurrences;
+    the lower-level load result retains orphan diagnostics separately.
     """
-    out: list[CommandSummaryArtifact] = []
-    seen: set[Path] = set()
-    for idx, event in enumerate(artifact.events, start=1):
-        if event.get("type") != "command.summary.produced":
-            continue
-        payload = event_payload(event)
-        path = _resolve_artifact_path(
-            artifact.proof_dir,
-            str(payload.get("artifact") or ""),
-            copied_subdir="command_summaries",
-        )
-        if path is None or path in seen:
-            continue
-        data = _read_json_object(path)
-        if data:
-            out.append(CommandSummaryArtifact(
-                path=path,
-                summary=data,
-                event=event,
-                event_index=idx,
-            ))
-            seen.add(path)
-
-    summary_dir = artifact.proof_dir / "command_summaries"
-    if summary_dir.exists():
-        for path in sorted(summary_dir.glob("*.json")):
-            if path in seen:
-                continue
-            data = _read_json_object(path)
-            if data:
-                out.append(CommandSummaryArtifact(path=path, summary=data))
-                seen.add(path)
-    return out
+    return load_session_tactic_execution_artifacts(
+        artifact.proof_dir,
+        events=artifact.events,
+    ).artifacts
 
 
 
@@ -350,17 +289,20 @@ def _resolve_artifact_path(
     *,
     copied_subdir: str,
 ) -> Path | None:
-    if value:
-        direct = Path(value)
-        if direct.exists():
-            return direct
-        copied = proof_dir / copied_subdir / direct.name
-        if copied.exists():
-            return copied
-        if not direct.is_absolute():
-            relative = proof_dir / direct
-            if relative.exists():
-                return relative
+    """Resolve a replay-linked artifact, preferring the frozen replay copy."""
+
+    if not value:
+        return None
+    direct = Path(value)
+    copied = proof_dir / copied_subdir / direct.name
+    if copied.exists():
+        return copied
+    if direct.exists():
+        return direct
+    if not direct.is_absolute():
+        relative = proof_dir / direct
+        if relative.exists():
+            return relative
     return None
 
 

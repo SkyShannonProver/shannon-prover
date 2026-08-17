@@ -51,6 +51,7 @@ def test_rewound_branch_is_not_drift_killed_despite_prefix_mismatch():
         _snap(rewritten, goal_hash="deadbeef"),
         replay_prefix=PREFIX,
         expected_goal_hash="cafef00d",
+        expected_goal_identity_required=True,
         agent_has_rewound=True,
     )
     assert checked is True
@@ -64,6 +65,7 @@ def test_genuine_desync_still_detected_before_any_rewind():
         _snap(desynced, goal_hash="deadbeef"),
         replay_prefix=PREFIX,
         expected_goal_hash="cafef00d",
+        expected_goal_identity_required=True,
         agent_has_rewound=False,
     )
     assert checked is True
@@ -76,6 +78,7 @@ def test_clean_replay_verifies_without_drift():
         _snap(PREFIX, goal_hash="cafef00d", latest_tactic="skip."),
         replay_prefix=PREFIX,
         expected_goal_hash="cafef00d",
+        expected_goal_identity_required=True,
         agent_has_rewound=False,
     )
     assert checked is True
@@ -88,10 +91,40 @@ def test_rewound_flag_short_circuits_even_with_empty_snapshot():
         None,
         replay_prefix=PREFIX,
         expected_goal_hash="cafef00d",
+        expected_goal_identity_required=True,
         agent_has_rewound=True,
     )
     assert checked is True
     assert drift == ""
+
+
+def test_rewound_closed_capsule_needs_no_goal_hash():
+    """A closed capsule explicitly declares that no active identity exists.
+
+    Rewinding from that checkpoint re-opens proof work intentionally; the
+    empty hash must not be reinterpreted as a corrupt open capsule.
+    """
+    checked, drift = _resume_replay_gate(
+        None,
+        replay_prefix=PREFIX,
+        expected_goal_hash="",
+        expected_goal_identity_required=False,
+        agent_has_rewound=True,
+    )
+    assert checked is True
+    assert drift == ""
+
+
+def test_open_capsule_contract_rejects_missing_goal_hash_even_after_rewind():
+    checked, drift = _resume_replay_gate(
+        None,
+        replay_prefix=PREFIX,
+        expected_goal_hash="",
+        expected_goal_identity_required=True,
+        agent_has_rewound=True,
+    )
+    assert checked is True
+    assert "identity missing" in drift
 
 
 # --- signal DERIVATION (the gap the audit flagged: above tests pass the flag as
@@ -166,6 +199,7 @@ def test_derived_signal_skips_drift_gate_for_undo_to_checkpoint_case():
         _snap_view(rewritten),
         replay_prefix=PREFIX,
         expected_goal_hash="cafef00d",
+        expected_goal_identity_required=True,
         agent_has_rewound=derived,
     )
     assert checked is True

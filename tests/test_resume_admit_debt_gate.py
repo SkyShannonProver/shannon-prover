@@ -50,7 +50,7 @@ def test_non_finish_qed_intents_are_never_gated():
     m = _manager()
     m._current_committed_tactics = lambda: ["admit.", "admit."]
     assert m._committed_admit_gate(_intent("commit_tactic", "sp.")) is None
-    assert m._committed_admit_gate(_intent("inspect_context")) is None
+    assert m._committed_admit_gate(_intent("fresh_restart")) is None
     assert m._committed_admit_gate(_intent("undo_last_step")) is None
 
 

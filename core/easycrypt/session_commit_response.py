@@ -1,11 +1,10 @@
 """Structured response artifact for session tactic commands.
 
 The event stream already records low-level tactic events. CommitResponse is the
-per-command envelope: one `-next`, `-prev`, or `-chain` invocation gets one
-machine-readable summary with the post-command proof state, mutation counts,
-and failure details.  The live Proof Interaction Manager records the
-ProofContextView, ProverWorkspaceView, and TacticExecutionResult immediately
-after this normalized response.
+per-command envelope: one managed tactic execution gets one machine-readable
+summary with the post-command proof state, mutation counts, and failure
+details. The manager records the current ProverWorkspaceView and
+TacticExecutionResult immediately after this normalized response.
 """
 from __future__ import annotations
 
@@ -15,15 +14,17 @@ import re
 from pathlib import Path
 from typing import Any
 
+from core.easycrypt.session_artifact_io import write_confined_text_artifact
+from core.easycrypt.session_events import record_authoritative_artifact_event
 from core.easycrypt.validation_result import ValidationResult
 
 from core.easycrypt.session_projection import (
-    projection_to_goal_info,
+    projection_to_proof_status,
     read_proof_state_projection,
 )
 
 
-COMMIT_RESPONSE_SCHEMA_VERSION = 1
+COMMIT_RESPONSE_SCHEMA_VERSION = 2
 COMMIT_RESPONSE_KIND = "commit_response"
 
 
@@ -42,7 +43,6 @@ def build_commit_response(
     failure_reason: str = "",
     keep_on_fail: bool = False,
     rollback_count: int = 0,
-    agent_view_payload: dict[str, Any] | None = None,
     live_tool_name: str | None = None,
     ok: bool | None = None,
 ) -> dict[str, Any]:
@@ -51,7 +51,7 @@ def build_commit_response(
         path,
         live_tool_name=live_tool_name or command,
     )
-    proof_state = projection_to_goal_info(projection)
+    proof_state = projection_to_proof_status(projection)
     tactics = [str(t).strip() for t in (attempted_tactics or []) if str(t).strip()]
     command_ok = ok if ok is not None else status in {"ok", "undone"}
     errors = []
@@ -84,7 +84,6 @@ def build_commit_response(
             "keep_on_fail": bool(keep_on_fail),
             "rollback_count": int(rollback_count),
         },
-        "agent_view": _compact_agent_view_payload(agent_view_payload or {}),
         "notes": [],
         "errors": errors,
         "debug": {},
@@ -115,18 +114,17 @@ def write_commit_response_artifact(
     digest = hashlib.sha1(text.encode("utf-8")).hexdigest()
     command = str(data.get("command") or "commit")
     safe_command = re.sub(r"[^A-Za-z0-9_.-]+", "_", command).strip("_") or "commit"
-    out_dir = path / "commit_responses"
-    out_dir.mkdir(parents=True, exist_ok=True)
-    artifact = out_dir / f"{safe_command}_{digest[:16]}.json"
-    artifact.write_text(text + "\n", encoding="utf-8")
+    artifact = write_confined_text_artifact(
+        path,
+        subdir="commit_responses",
+        filename=f"{safe_command}_{digest[:16]}.json",
+        text=text + "\n",
+    )
 
     proof_state = data.get("proof_state") if isinstance(
         data.get("proof_state"), dict,
     ) else {}
     mutation = data.get("mutation") if isinstance(data.get("mutation"), dict) else {}
-    agent_view = data.get("agent_view") if isinstance(
-        data.get("agent_view"), dict,
-    ) else {}
     return {
         "schema_version": int(data.get("schema_version") or 0),
         "ok": bool(data.get("ok")) and validation.ok,
@@ -140,7 +138,6 @@ def write_commit_response_artifact(
         "failed_tactic": str(mutation.get("failed_tactic") or ""),
         "error_count": len(data.get("errors") or []) + len(validation.errors),
         "warning_count": len(validation.warnings),
-        "agent_view_artifact": str(agent_view.get("artifact") or ""),
     }
 
 
@@ -150,17 +147,27 @@ def record_commit_response(
     *,
     source: str = "session_cli",
 ) -> dict[str, Any]:
+    validation = validate_commit_response(response)
+    if validation.errors:
+        raise ValueError(
+            "CommitResponse contract: " + "; ".join(validation.errors)
+        )
     session_dir = getattr(session_or_dir, "dir", session_or_dir)
-    payload = write_commit_response_artifact(session_dir, response)
-    emit = getattr(session_or_dir, "emit_event", None)
-    if callable(emit):
-        emit("commit.response.produced", payload, source=source)
-    return payload
+    return record_authoritative_artifact_event(
+        session_or_dir,
+        "commit.response.produced",
+        lambda: write_commit_response_artifact(session_dir, response),
+        source=source,
+    )
 
 
 def validate_commit_response(data: dict[str, Any]) -> CommitResponseValidation:
     errors: list[str] = []
     warnings: list[str] = []
+    if "agent_view" in data:
+        errors.append(
+            "retired field `agent_view` is unsupported"
+        )
     required = {
         "schema_version": int,
         "kind": str,
@@ -170,7 +177,6 @@ def validate_commit_response(data: dict[str, Any]) -> CommitResponseValidation:
         "proof_state": dict,
         "latest_transition": dict,
         "mutation": dict,
-        "agent_view": dict,
         "notes": list,
         "errors": list,
         "debug": dict,
@@ -226,11 +232,6 @@ def validate_commit_response(data: dict[str, Any]) -> CommitResponseValidation:
     if not isinstance(mutation.get("keep_on_fail"), bool):
         errors.append("mutation.keep_on_fail must be a bool")
 
-    agent_view = data.get("agent_view")
-    if isinstance(agent_view, dict):
-        for field_name in ("artifact", "view_hash", "proof_status"):
-            if field_name in agent_view and not isinstance(agent_view[field_name], str):
-                errors.append(f"agent_view.{field_name} must be a string")
     for field_name in ("notes", "errors"):
         items = data.get(field_name)
         if isinstance(items, list):
@@ -240,20 +241,42 @@ def validate_commit_response(data: dict[str, Any]) -> CommitResponseValidation:
     return CommitResponseValidation(errors=errors, warnings=warnings)
 
 
-def _compact_agent_view_payload(payload: dict[str, Any]) -> dict[str, Any]:
-    if not isinstance(payload, dict):
-        return {}
-    out = {}
-    for key in (
-        "artifact",
-        "view_hash",
-        "proof_status",
-        "goal_hash",
-        "recommendation_count",
-        "stale_recommendation_count",
-        "error_count",
-        "warning_count",
-    ):
-        if key in payload:
-            out[key] = payload[key]
-    return out
+def validate_commit_response_event_binding(
+    data: dict[str, Any],
+    payload: dict[str, Any],
+    *,
+    artifact_hash: str,
+    include_contract: bool = True,
+) -> CommitResponseValidation:
+    """Validate one produced-event payload against its current artifact."""
+
+    validation = validate_commit_response(data)
+    errors = list(validation.errors) if include_contract else []
+    warnings = list(validation.warnings) if include_contract else []
+    proof_state = (
+        data.get("proof_state") if isinstance(data.get("proof_state"), dict) else {}
+    )
+    mutation = data.get("mutation") if isinstance(data.get("mutation"), dict) else {}
+    expected = {
+        "schema_version": data.get("schema_version"),
+        "ok": bool(data.get("ok")) and validation.ok,
+        "command": str(data.get("command") or ""),
+        "status": str(data.get("status") or ""),
+        "response_hash": artifact_hash,
+        "proof_status": str(proof_state.get("status") or ""),
+        "attempted_count": int(mutation.get("attempted_count") or 0),
+        "accepted_count": int(mutation.get("accepted_count") or 0),
+        "failed_tactic": str(mutation.get("failed_tactic") or ""),
+        "error_count": len(data.get("errors") or []) + len(validation.errors),
+        "warning_count": len(validation.warnings),
+    }
+    required = set(expected)
+    for key, expected_value in expected.items():
+        if key not in payload and key not in required:
+            continue
+        if payload.get(key) != expected_value:
+            errors.append(
+                f"event payload `{key}` mismatch: "
+                f"expected {expected_value!r}, got {payload.get(key)!r}"
+            )
+    return CommitResponseValidation(errors=errors, warnings=warnings)

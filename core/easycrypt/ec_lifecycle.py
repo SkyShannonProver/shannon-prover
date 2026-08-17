@@ -50,7 +50,6 @@ def split_ec_commands(text: str) -> list[str]:
     """
     out: list[str] = []
     cur: list[str] = []
-    in_line_comment = False
     in_block_comment = 0  # depth of (* ... *)
     in_string = False
     i = 0
@@ -148,9 +147,13 @@ class ECSessionLifecycle:
         self._buffer = b""
         self._last_prompt_text = ""
 
-    # -- spawn environment (subclasses that auto-load opam override this) -------
+    # -- spawn environment -----------------------------------------------------
     def _resolve_env(self):
-        return self._env
+        if self._env is not None:
+            return self._env
+        from core.easycrypt.ec_env import get_ec_env
+
+        return get_ec_env()
 
     # -- spawn + banner drain ---------------------------------------------------
     def spawn(self) -> None:

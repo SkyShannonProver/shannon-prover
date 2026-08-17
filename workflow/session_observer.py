@@ -1,30 +1,39 @@
 """Workflow-facing observer for EasyCrypt session artifacts.
 
 The core EasyCrypt layer emits the facts: events, proof-state projection,
-ProofContextView artifacts, and CommitResponse artifacts. This module is the
+current workspace artifacts, and CommitResponse artifacts. This module is the
 workflow boundary over those facts. Progress tracking should consume this
 snapshot instead of separately grepping stdout, counting submitted command
 text, or opening session files ad hoc.
 """
 from __future__ import annotations
 
-import hashlib
-import json
 from dataclasses import dataclass, field
 from datetime import datetime
 from pathlib import Path
 from typing import Any
 
-from core.easycrypt.committed_history import read_committed_tactics
-from core.easycrypt.session_agent_view import validate_proof_context_view
-from core.easycrypt.session_commit_response import validate_commit_response
+from core.easycrypt.session_artifact_io import (
+    read_confined_hashed_json_object,
+)
+from core.easycrypt.session_commit_response import (
+    COMMIT_RESPONSE_SCHEMA_VERSION,
+    validate_commit_response_event_binding,
+)
+from core.easycrypt.session_prover_workspace_schema import (
+    PROVER_WORKSPACE_VIEW_SCHEMA_VERSION,
+    validate_prover_workspace_event_binding,
+)
+from core.easycrypt.session_tactic_execution_artifacts import (
+    validate_linked_workspace_artifact,
+    validate_linked_workspace_event,
+)
 from core.easycrypt.session_tactic_execution_result import (
-    validate_tactic_execution_result,
+    TACTIC_EXECUTION_RESULT_SCHEMA_VERSION,
+    validate_tactic_execution_event_binding,
 )
 from core.easycrypt.session_events import (
-    EVENTS_FILENAME,
     event_payload,
-    read_event_file,
 )
 from core.easycrypt.session_projection import read_proof_state_projection
 
@@ -35,8 +44,10 @@ class WorkflowSessionSnapshot:
     exists: bool
     ok: bool
     status: str = "unknown"
-    candidate_ready: bool = False
-    final_ready: bool = False
+    goals_discharged: bool = False
+    qed_committed: bool = False
+    offline_verified: bool = False
+    candidate_close_authority: dict[str, Any] = field(default_factory=dict)
     event_log_exists: bool = False
     event_count: int = 0
     tactic_count: int = 0
@@ -48,14 +59,11 @@ class WorkflowSessionSnapshot:
     latest_transition: dict[str, Any] = field(default_factory=dict)
     latest_commit_response: dict[str, Any] | None = None
     latest_commit_payload: dict[str, Any] | None = None
-    latest_agent_view: dict[str, Any] | None = None
-    latest_agent_payload: dict[str, Any] | None = None
     latest_workspace_view: dict[str, Any] | None = None
     latest_workspace_payload: dict[str, Any] | None = None
     latest_tactic_execution_result: dict[str, Any] | None = None
     latest_tactic_execution_payload: dict[str, Any] | None = None
     commit_response_count: int = 0
-    agent_view_count: int = 0
     workspace_view_count: int = 0
     tactic_execution_count: int = 0
     errors_since_progress: int = 0
@@ -74,8 +82,10 @@ class WorkflowSessionSnapshot:
             "exists": self.exists,
             "ok": self.ok,
             "status": self.status,
-            "candidate_ready": self.candidate_ready,
-            "final_ready": self.final_ready,
+            "goals_discharged": self.goals_discharged,
+            "qed_committed": self.qed_committed,
+            "offline_verified": self.offline_verified,
+            "candidate_close_authority": dict(self.candidate_close_authority),
             "event_log_exists": self.event_log_exists,
             "event_count": self.event_count,
             "tactic_count": self.tactic_count,
@@ -87,14 +97,11 @@ class WorkflowSessionSnapshot:
             "latest_transition": dict(self.latest_transition),
             "latest_commit_response": self.latest_commit_response,
             "latest_commit_payload": self.latest_commit_payload,
-            "latest_agent_view": self.latest_agent_view,
-            "latest_agent_payload": self.latest_agent_payload,
             "latest_workspace_view": self.latest_workspace_view,
             "latest_workspace_payload": self.latest_workspace_payload,
             "latest_tactic_execution_result": self.latest_tactic_execution_result,
             "latest_tactic_execution_payload": self.latest_tactic_execution_payload,
             "commit_response_count": self.commit_response_count,
-            "agent_view_count": self.agent_view_count,
             "workspace_view_count": self.workspace_view_count,
             "tactic_execution_count": self.tactic_execution_count,
             "errors_since_progress": self.errors_since_progress,
@@ -126,22 +133,20 @@ def observe_session(
 
     errors: list[str] = []
     warnings: list[str] = []
-    events = read_event_file(path / EVENTS_FILENAME)
-    active_tool, active_mutates = _pending_tool(events)
+    events: list[dict[str, Any]] = []
     projection = None
     try:
         projection = read_proof_state_projection(
             path,
-            live_tool_name=active_tool,
+            infer_live_tool_name=True,
         )
+        events = list(projection.source_events)
     except Exception as exc:
         errors.append(f"projection unreadable: {exc}")
+    active_tool, active_mutates = _pending_tool(events)
 
     latest_commit, latest_commit_payload, commit_errors, commit_warnings = (
         _latest_commit_response(path, events)
-    )
-    latest_agent, latest_agent_payload, agent_errors, agent_warnings = (
-        _latest_agent_view(path, events)
     )
     latest_workspace, latest_workspace_payload, workspace_errors, workspace_warnings = (
         _latest_workspace_view(path, events)
@@ -153,11 +158,9 @@ def observe_session(
         execution_warnings,
     ) = _latest_tactic_execution_result(path, events)
     errors.extend(commit_errors)
-    errors.extend(agent_errors)
     errors.extend(workspace_errors)
     errors.extend(execution_errors)
     warnings.extend(commit_warnings)
-    warnings.extend(agent_warnings)
     warnings.extend(workspace_warnings)
     warnings.extend(execution_warnings)
 
@@ -167,10 +170,15 @@ def observe_session(
         warnings.extend(projection.events.warnings)
         warnings.extend(projection.consistency.warnings)
         status = projection.status
-        candidate_ready = projection.candidate_ready
-        final_ready = projection.final_ready
+        goals_discharged = projection.goals_discharged
+        qed_committed = projection.qed_committed
+        offline_verified = projection.offline_verified
+        candidate_close_authority = (
+            projection.candidate_close_authority.to_dict()
+        )
         tactic_count = projection.history.tactic_count
         history_exists = projection.history.exists
+        history_tactics = list(projection.history.tactics)
         goal_type = projection.goal.goal_type
         goal_hash = projection.goal.active_goal_hash
         num_remaining = projection.goal.num_remaining
@@ -179,21 +187,19 @@ def observe_session(
         event_count = projection.events.event_count
     else:
         status = "unknown"
-        candidate_ready = False
-        final_ready = False
+        goals_discharged = False
+        qed_committed = False
+        offline_verified = False
+        candidate_close_authority = {}
         tactic_count = 0
-        history_exists = (path / "history.ec").exists()
+        history_exists = False
+        history_tactics = []
         goal_type = "unknown"
         goal_hash = ""
         num_remaining = None
         latest_transition = {}
-        event_log_exists = (path / EVENTS_FILENAME).exists()
+        event_log_exists = False
         event_count = len(events)
-
-    history_tactics = _read_history_tactics(path)
-    if history_tactics:
-        tactic_count = len(history_tactics)
-        history_exists = True
 
     progress = _progress_summary(events)
     latest_tool_name, last_readonly_at, last_mutating_at = _tool_summary(events)
@@ -203,8 +209,10 @@ def observe_session(
         exists=path.exists(),
         ok=not errors,
         status=status,
-        candidate_ready=candidate_ready,
-        final_ready=final_ready,
+        goals_discharged=goals_discharged,
+        qed_committed=qed_committed,
+        offline_verified=offline_verified,
+        candidate_close_authority=candidate_close_authority,
         event_log_exists=event_log_exists,
         event_count=event_count,
         tactic_count=tactic_count,
@@ -216,14 +224,11 @@ def observe_session(
         latest_transition=latest_transition,
         latest_commit_response=latest_commit,
         latest_commit_payload=latest_commit_payload,
-        latest_agent_view=latest_agent,
-        latest_agent_payload=latest_agent_payload,
         latest_workspace_view=latest_workspace,
         latest_workspace_payload=latest_workspace_payload,
         latest_tactic_execution_result=latest_execution,
         latest_tactic_execution_payload=latest_execution_payload,
         commit_response_count=len(_events_of_type(events, "commit.response.produced")),
-        agent_view_count=len(_events_of_type(events, "agent.view.produced")),
         workspace_view_count=len(_events_of_type(events, "prover.workspace_view.produced")),
         tactic_execution_count=len(_events_of_type(events, "tactic.execution.produced")),
         errors_since_progress=progress["errors_since_progress"],
@@ -290,10 +295,6 @@ def _tool_summary(events: list[dict[str, Any]]) -> tuple[str, float, float]:
     return latest_name, last_readonly, last_mutating
 
 
-def _read_history_tactics(path: Path) -> list[str]:
-    return read_committed_tactics(path)
-
-
 def _latest_commit_response(
     session_dir: Path,
     events: list[dict[str, Any]],
@@ -303,62 +304,35 @@ def _latest_commit_response(
         return None, None, [], []
     event = produced[-1]
     payload = event_payload(event)
-    data, errors, warnings = _read_hashed_artifact(
+    session_errors = _event_session_binding_errors(
+        session_dir,
+        event,
+        label="commit-response",
+    )
+    if session_errors:
+        return None, payload, session_errors, []
+    payload_errors = _event_schema_version_errors(
         payload,
+        expected=COMMIT_RESPONSE_SCHEMA_VERSION,
+        label="commit-response",
+    )
+    data, artifact_hash, errors, warnings = _read_hashed_artifact(
+        session_dir,
+        payload,
+        artifact_subdir="commit_responses",
         hash_field="response_hash",
         label="commit-response",
     )
+    errors[:0] = payload_errors
     if data is None:
         return None, payload, errors, warnings
-    validation = validate_commit_response(data)
-    errors.extend(f"commit-response: {err}" for err in validation.errors)
-    warnings.extend(f"commit-response: {warn}" for warn in validation.warnings)
-    mutation = data.get("mutation") if isinstance(data.get("mutation"), dict) else {}
-    proof_state = data.get("proof_state") if isinstance(
-        data.get("proof_state"), dict,
-    ) else {}
-    if data.get("command") != payload.get("command"):
-        errors.append("commit-response: command mismatch")
-    if data.get("status") != payload.get("status"):
-        errors.append("commit-response: status mismatch")
-    if payload.get("proof_status") != proof_state.get("status"):
-        errors.append("commit-response: proof_status mismatch")
-    if payload.get("attempted_count") != mutation.get("attempted_count"):
-        errors.append("commit-response: attempted_count mismatch")
-    if payload.get("accepted_count") != mutation.get("accepted_count"):
-        errors.append("commit-response: accepted_count mismatch")
-    return data, payload, errors, warnings
-
-
-def _latest_agent_view(
-    session_dir: Path,
-    events: list[dict[str, Any]],
-) -> tuple[dict[str, Any] | None, dict[str, Any] | None, list[str], list[str]]:
-    produced = _events_of_type(events, "agent.view.produced")
-    if not produced:
-        return None, None, [], []
-    event = produced[-1]
-    payload = event_payload(event)
-    data, errors, warnings = _read_hashed_artifact(
+    binding = validate_commit_response_event_binding(
+        data,
         payload,
-        hash_field="view_hash",
-        label="agent-view",
+        artifact_hash=artifact_hash,
     )
-    if data is None:
-        return None, payload, errors, warnings
-    validation = validate_proof_context_view(data)
-    errors.extend(f"agent-view: {err}" for err in validation.errors)
-    warnings.extend(f"agent-view: {warn}" for warn in validation.warnings)
-    proof_state = data.get("proof_state") if isinstance(
-        data.get("proof_state"), dict,
-    ) else {}
-    goal = proof_state.get("goal") if isinstance(
-        proof_state.get("goal"), dict,
-    ) else {}
-    if payload.get("proof_status") != proof_state.get("status"):
-        errors.append("agent-view: proof_status mismatch")
-    if payload.get("goal_hash") != goal.get("active_goal_hash"):
-        errors.append("agent-view: goal_hash mismatch")
+    errors.extend(f"commit-response: {err}" for err in binding.errors)
+    warnings.extend(f"commit-response: {warn}" for warn in binding.warnings)
     return data, payload, errors, warnings
 
 
@@ -371,17 +345,41 @@ def _latest_workspace_view(
         return None, None, [], []
     event = produced[-1]
     payload = event_payload(event)
-    data, errors, warnings = _read_hashed_artifact(
+    session_errors = _event_session_binding_errors(
+        session_dir,
+        event,
+        label="prover-workspace-view",
+    )
+    if session_errors:
+        return None, payload, session_errors, []
+    payload_errors = _event_schema_version_errors(
         payload,
+        expected=PROVER_WORKSPACE_VIEW_SCHEMA_VERSION,
+        label="prover-workspace-view",
+    )
+    data, artifact_hash, errors, warnings = _read_hashed_artifact(
+        session_dir,
+        payload,
+        artifact_subdir="prover_workspace_views",
         hash_field="view_hash",
         label="prover-workspace-view",
     )
+    errors[:0] = payload_errors
     if data is None:
         return None, payload, errors, warnings
-    if data.get("kind") != payload.get("view_kind"):
-        errors.append("prover-workspace-view: view_kind mismatch")
-    if bool(payload.get("ok")) != bool(data.get("ok")):
-        errors.append("prover-workspace-view: ok flag mismatch")
+    binding = validate_prover_workspace_event_binding(
+        data,
+        payload,
+        artifact_hash=artifact_hash,
+    )
+    errors.extend(
+        f"prover-workspace-view: {err}"
+        for err in binding.errors
+    )
+    warnings.extend(
+        f"prover-workspace-view: {warn}"
+        for warn in binding.warnings
+    )
     return data, payload, errors, warnings
 
 
@@ -394,56 +392,124 @@ def _latest_tactic_execution_result(
         return None, None, [], []
     event = produced[-1]
     payload = event_payload(event)
-    data, errors, warnings = _read_hashed_artifact(
+    session_errors = _event_session_binding_errors(
+        session_dir,
+        event,
+        label="tactic-execution-result",
+    )
+    if session_errors:
+        return None, payload, session_errors, []
+    payload_errors = _event_schema_version_errors(
         payload,
+        expected=TACTIC_EXECUTION_RESULT_SCHEMA_VERSION,
+        label="tactic-execution-result",
+    )
+    data, artifact_hash, errors, warnings = _read_hashed_artifact(
+        session_dir,
+        payload,
+        artifact_subdir="tactic_execution_results",
         hash_field="result_hash",
         label="tactic-execution-result",
     )
+    errors[:0] = payload_errors
     if data is None:
         return None, payload, errors, warnings
-    validation = validate_tactic_execution_result(data)
-    errors.extend(f"tactic-execution-result: {err}" for err in validation.errors)
-    warnings.extend(
-        f"tactic-execution-result: {warn}" for warn in validation.warnings
+    binding = validate_tactic_execution_event_binding(
+        data,
+        payload,
+        artifact_hash=artifact_hash,
     )
-    execution = data.get("execution") if isinstance(
-        data.get("execution"), dict,
-    ) else {}
-    if payload.get("mode") != execution.get("mode"):
-        errors.append("tactic-execution-result: mode mismatch")
-    if payload.get("command") != execution.get("command"):
-        errors.append("tactic-execution-result: command mismatch")
-    if bool(payload.get("ok")) != bool(data.get("ok")):
-        errors.append("tactic-execution-result: ok flag mismatch")
+    errors.extend(f"tactic-execution-result: {err}" for err in binding.errors)
+    warnings.extend(
+        f"tactic-execution-result: {warn}" for warn in binding.warnings
+    )
+    linked = validate_linked_workspace_artifact(data, session_dir=session_dir)
+    errors.extend(
+        "tactic-execution-result.workspace: " + err
+        for err in linked.errors
+    )
+    warnings.extend(
+        "tactic-execution-result.workspace: " + warn
+        for warn in linked.warnings
+    )
+    event_link = validate_linked_workspace_event(
+        data,
+        events=events,
+        tactic_event=event,
+    )
+    errors.extend(
+        "tactic-execution-result.workspace: " + err
+        for err in event_link.errors
+    )
     return data, payload, errors, warnings
 
 
-def _read_hashed_artifact(
+def _event_schema_version_errors(
     payload: dict[str, Any],
     *,
+    expected: int,
+    label: str,
+) -> list[str]:
+    """Reject event metadata from any artifact generation but the current one."""
+
+    actual = payload.get("schema_version")
+    if actual == expected:
+        return []
+    return [
+        f"{label}: event schema_version {actual!r} is unsupported; "
+        f"expected {expected}"
+    ]
+
+
+def _event_session_binding_errors(
+    session_dir: Path,
+    event: dict[str, Any],
+    *,
+    label: str,
+) -> list[str]:
+    """Require an authoritative event to belong to the observed session."""
+
+    expected = str(session_dir.resolve())
+    return [
+        f"{label}: event {field_name} does not match the current session: "
+        f"expected {expected!r}, got {event.get(field_name)!r}"
+        for field_name in ("session_dir", "session_id")
+        if event.get(field_name) != expected
+    ]
+
+
+def _read_hashed_artifact(
+    session_dir: Path,
+    payload: dict[str, Any],
+    *,
+    artifact_subdir: str,
     hash_field: str,
     label: str,
-) -> tuple[dict[str, Any] | None, list[str], list[str]]:
+) -> tuple[dict[str, Any] | None, str, list[str], list[str]]:
     errors: list[str] = []
     warnings: list[str] = []
-    artifact = Path(str(payload.get("artifact") or ""))
-    if not artifact.exists():
-        return None, [f"{label}: artifact missing: {artifact}"], warnings
-    try:
-        data = json.loads(artifact.read_text(encoding="utf-8"))
-    except Exception as exc:
-        return None, [f"{label}: artifact JSON unreadable: {exc}"], warnings
-    if not isinstance(data, dict):
-        return None, [f"{label}: artifact root is not an object"], warnings
-    canonical = json.dumps(data, indent=2, sort_keys=True)
-    digest = hashlib.sha1(canonical.encode("utf-8")).hexdigest()
+    artifact_value = str(payload.get("artifact") or "")
+    artifact_read = read_confined_hashed_json_object(
+        session_dir,
+        artifact_value,
+        subdir=artifact_subdir,
+    )
+    if artifact_read is None:
+        return None, "", [
+            f"{label}: artifact missing or outside the current session's "
+            f"{artifact_subdir} directory: {artifact_value}"
+        ], warnings
+    if not artifact_read.ok or artifact_read.data is None:
+        return None, "", [f"{label}: artifact JSON unreadable"], warnings
+    data = artifact_read.data
+    digest = artifact_read.artifact_hash
     if payload.get(hash_field) != digest:
         errors.append(f"{label}: {hash_field} does not match artifact")
     if data.get("schema_version") != payload.get("schema_version"):
         errors.append(f"{label}: schema_version mismatch")
     if bool(payload.get("ok")) != bool(data.get("ok")):
         errors.append(f"{label}: ok flag mismatch")
-    return data, errors, warnings
+    return data, digest, errors, warnings
 
 
 def _progress_summary(events: list[dict[str, Any]]) -> dict[str, Any]:

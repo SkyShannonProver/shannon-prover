@@ -1,17 +1,21 @@
 {
   "suite": "demo_pir",
-  "profiles": [
-    "l4_checked_action_surface"
-  ],
+  "_note": "Public single-target demo using the default proof-state compiler.",
+  "profiles": ["proof_state_compiler"],
   "defaults": {
     "eval_mode": true,
-    "skip_regression": true,
+    "agent_backend": "codex",
+    "model": "gpt-5.6-sol",
+    "effort": "high",
     "max_iterations": 1,
     "timeout_minutes": 30,
     "repeats": 1,
+    "tree_initial_provers": 1,
+    "tree_max_concurrent": 1,
     "output_dir": "artifacts/eval_suite",
     "source_isolation": true,
-    "strip_proofs": true
+    "strip_proofs": true,
+    "include_dir": "easycrypt-src/theories"
   },
   "targets": [
     {

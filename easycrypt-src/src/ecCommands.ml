@@ -15,6 +15,7 @@ type pragma = {
   pm_g_prall : bool; (* true  => display all open goals *)
   pm_g_prpo  : EcPrinting.prpo_display;
   pm_check   : [`Check | `WeakCheck | `Report];
+  pm_strict_bullets : bool; (* true => bullets focus subgoals *)
 }
 
 let dpragma = {
@@ -22,6 +23,7 @@ let dpragma = {
   pm_g_prall = false ;
   pm_g_prpo  = EcPrinting.{ prpo_pr = false; prpo_po = false; };
   pm_check   = `Check;
+  pm_strict_bullets = false;
 }
 
 module Pragma : sig
@@ -61,9 +63,14 @@ let pragma_g_po_display (b : bool) =
 let pragma_check mode =
   Pragma.upd (fun pragma -> { pragma with pm_check = mode; })
 
+let pragma_strict_bullets (b : bool) =
+  Pragma.upd (fun pragma -> { pragma with pm_strict_bullets = b; })
+
 module Pragmas = struct
   let silent     = "silent"
   let verbose    = "verbose"
+
+  let strict_bullets = "strict_bullets"
 
   module Proofs = struct
     let check  = "Proofs:check"
@@ -398,6 +405,22 @@ let process_print scope p =
   process_pr Format.std_formatter scope p
 
 (* -------------------------------------------------------------------- *)
+let process_expect scope (expected, p) =
+  let buf = Buffer.create 256 in
+  let fmt = Format.formatter_of_buffer buf in
+  process_pr fmt scope p;
+  Format.pp_print_flush fmt ();
+  let actual = Buffer.contents buf in
+  if String.trim actual <> String.trim (unloc expected) then
+    EcScope.hierror ~loc:(loc expected)
+      "expect: output mismatch@\n\
+       --- expected ---@\n\
+       %s@\n\
+       --- actual ---@\n\
+       %s"
+      (unloc expected) actual
+
+(* -------------------------------------------------------------------- *)
 exception Pragma of [`Reset | `Restart]
 
 (* -------------------------------------------------------------------- *)
@@ -489,7 +512,9 @@ and process_abbrev (scope : EcScope.scope) (a : pabbrev located) =
 (* -------------------------------------------------------------------- *)
 and process_axiom ?(src : string option) (scope : EcScope.scope) (ax : paxiom located) =
   EcScope.check_state `InTop "axiom" scope;
-  let (name, scope) = EcScope.Ax.add ?src scope (Pragma.get ()).pm_check ax in
+  let pragma = Pragma.get () in
+  let strict = pragma.pm_strict_bullets in
+  let (name, scope) = EcScope.Ax.add ?src ~strict scope pragma.pm_check ax in
     name |> EcUtils.oiter
       (fun x ->
          match (unloc ax).pa_kind with
@@ -619,8 +644,9 @@ and process_sct_close (scope : EcScope.scope) name =
 and process_tactics ?(src : string option) (scope : EcScope.scope) t =
   let mode = (Pragma.get ()).pm_check in
   match t with
-  | `Actual t -> snd (EcScope.Tactics.process ?src scope mode t)
-  | `Proof    -> EcScope.Tactics.proof ?src scope
+  | `Actual (b, t) ->
+      snd (EcScope.Tactics.process ?src ?bullet:b scope mode t)
+  | `Proof -> EcScope.Tactics.proof ?src scope
 
 (* -------------------------------------------------------------------- *)
 (* Add and store src for proofs *)
@@ -637,8 +663,9 @@ and process_save ?(src : string option) (scope : EcScope.scope) ed =
 
 (* -------------------------------------------------------------------- *)
 and process_realize (scope : EcScope.scope) pr =
-  let mode = (Pragma.get ()).pm_check in
-  let (name, scope) = EcScope.Ax.realize scope mode pr in
+  let pragma = Pragma.get () in
+  let strict = pragma.pm_strict_bullets in
+  let (name, scope) = EcScope.Ax.realize ~strict scope pragma.pm_check pr in
     name |> EcUtils.oiter
       (fun x -> EcScope.notify scope `Info "added lemma: `%s'" x);
     scope
@@ -668,9 +695,13 @@ and process_pragma (scope : EcScope.scope) opt =
 (* -------------------------------------------------------------------- *)
 and process_option (scope : EcScope.scope) (name, value) =
   match value with
-  | `Bool value when EcLocation.unloc name = EcGState.old_mem_restr ->
+  | `Bool value when EcLocation.unloc name = EcGState.old_mem_restr
+                  || EcLocation.unloc name = EcGState.pp_showtvi ->
     let gs = EcEnv.gstate (EcScope.env scope) in
     EcGState.setflag (unloc name) value gs; scope
+
+  | `Bool value when EcLocation.unloc name = Pragmas.strict_bullets ->
+      pragma_strict_bullets value; scope
 
   | (`Int _) as value ->
       let gs = EcEnv.gstate (EcScope.env scope) in
@@ -699,14 +730,14 @@ and process_dump_why3 scope filename =
   EcScope.dump_why3 scope filename; scope
 
 (* -------------------------------------------------------------------- *)
-and process_dump scope (source, tc) =
+and process_dump scope (source, (bullet, tc)) =
   let open EcCoreGoal in
 
   let input, (p1, p2) = source.tcd_source in
 
   let goals, scope  =
     let mode = (Pragma.get ()).pm_check in
-     EcScope.Tactics.process scope mode tc
+    EcScope.Tactics.process ?bullet scope mode tc
   in
 
   let wrerror fname =
@@ -781,6 +812,7 @@ and process ?(src : string option) (ld : Loader.loader) (scope : EcScope.scope) 
       | GsctOpen     name -> `Fct   (fun scope -> process_sct_open   scope  name)
       | GsctClose    name -> `Fct   (fun scope -> process_sct_close  scope  name)
       | Gprint       p    -> `Fct   (fun scope -> process_print      scope  p; scope)
+      | Gexpect      x    -> `Fct   (fun scope -> process_expect     scope  x; scope)
       | Gsearch      qs   -> `Fct   (fun scope -> process_search     scope  qs; scope)
       | Glocate      x    -> `Fct   (fun scope -> process_locate     scope  x; scope)
       | Gtactics     t    -> `Fct   (fun scope -> process_tactics    ?src scope  t)
@@ -826,8 +858,8 @@ type checkmode = {
   cm_cpufactor : int;
   cm_nprovers  : int;
   cm_provers   : string list option;
+  cm_quorum    : int option;
   cm_profile   : bool;
-  cm_iterate   : bool;
 }
 
 let initial ~checkmode ~boot ~checkproof =
@@ -838,7 +870,7 @@ let initial ~checkmode ~boot ~checkproof =
     EcScope.Prover.po_cpufactor = Some checkmode.cm_cpufactor;
     EcScope.Prover.po_nprovers  = Some checkmode.cm_nprovers;
     EcScope.Prover.po_provers   = (checkmode.cm_provers, []);
-    EcScope.Prover.pl_iterate   = Some (checkmode.cm_iterate);
+    EcScope.Prover.po_quorum    = checkmode.cm_quorum;
   } in
 
   let perv    = (None, (mk_loc _dummy EcCoreLib.i_Pervasive, None), Some `Export) in
@@ -1022,6 +1054,13 @@ let pp_current_goal ?(all = false) stream =
                   stream (get_hc g, `One n)
       end
   end
+
+(* -------------------------------------------------------------------- *)
+let pp_current_goal_or_noproof ?(all = false) stream =
+  if Option.is_some (S.xgoal (current ())) then
+    pp_current_goal ~all stream
+  else
+    Format.fprintf stream "No active proof.@\n%!"
 
 (* -------------------------------------------------------------------- *)
 let pp_maybe_current_goal stream =

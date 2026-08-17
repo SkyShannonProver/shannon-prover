@@ -13,17 +13,26 @@ import uuid
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Union
+from typing import Any, Callable, Union
 
 
 SCHEMA_VERSION = 1
 EVENTS_FILENAME = "events.jsonl"
 
+# These event generations were intentionally removed from the current runtime.
+# Unlike an unknown future event, seeing one in a current session is a contract
+# violation: no live reader may silently treat a retired artifact line as valid.
+RETIRED_EVENT_TYPES = frozenset({
+    "agent.view.produced",
+    "command.summary.produced",
+    "diagnostic.emitted",
+    "proof.context_view.produced",
+    "tool.view.produced",
+})
 
-@dataclass(frozen=True)
-class LatestTacticError:
-    error: str = ""
-    tactic: str = ""
+RETIRED_EVENT_PAYLOAD_FIELDS: dict[str, frozenset[str]] = {
+    "commit.response.produced": frozenset({"agent_view_artifact"}),
+}
 
 
 @dataclass(frozen=True)
@@ -77,7 +86,6 @@ class EventSummary:
     result_candidate_closed_count: int
     tactic_status_counts: dict[str, int]
     verification_status: str | None
-    latest_error: LatestTacticError
     latest_attempt: TacticAttempt | None
     recent_failed_attempts: list[TacticAttempt]
 
@@ -141,6 +149,53 @@ class EventStreamValidation:
         }
 
 
+class ArtifactEventEmissionError(RuntimeError):
+    """An authoritative artifact could not be bound to its produced event."""
+
+
+class SessionAdoptionLineageError(ValueError):
+    """A copied session event stream has no valid adoption lineage."""
+
+
+def record_authoritative_artifact_event(
+    session: Any,
+    event_type: str,
+    write_artifact: Callable[[], dict[str, Any]],
+    *,
+    source: str = "session_cli",
+) -> dict[str, Any]:
+    """Write an artifact and require its event-stream commit point.
+
+    Content-addressed artifact files are storage objects, not authoritative
+    occurrences.  The matching produced event is the commit point consumed by
+    live readers, so a missing event sink, an exception from that sink, or any
+    return value other than ``True`` aborts the record operation.  A file may
+    already have been written when the event append itself fails; strict
+    readers quarantine such unbound files instead of treating them as current.
+    """
+
+    emit = getattr(session, "emit_event", None)
+    if not callable(emit):
+        raise ArtifactEventEmissionError(
+            f"{event_type}: authoritative record requires emit_event()"
+        )
+
+    payload = write_artifact()
+    try:
+        emitted = emit(event_type, payload, source=source)
+    except Exception as exc:
+        raise ArtifactEventEmissionError(
+            f"{event_type}: authoritative event emission raised "
+            f"{type(exc).__name__}: {exc}"
+        ) from exc
+    if emitted is not True:
+        raise ArtifactEventEmissionError(
+            f"{event_type}: authoritative event emission returned "
+            f"{emitted!r}, expected True"
+        )
+    return payload
+
+
 _NONE_TYPE = type(None)
 _FIELD_TYPE = Union[type, tuple[type, ...]]
 
@@ -156,6 +211,8 @@ EVENT_PAYLOAD_SCHEMAS: dict[str, dict[str, dict[str, _FIELD_TYPE]]] = {
         },
         "optional": {
             "pre_restart_checkpoint_path": (str, _NONE_TYPE),
+            "easycrypt_build_id": str,
+            "easycrypt_runtime_identity_sha256": str,
         },
     },
     "session.loaded_context": {
@@ -201,6 +258,15 @@ EVENT_PAYLOAD_SCHEMAS: dict[str, dict[str, dict[str, _FIELD_TYPE]]] = {
         },
         "optional": {},
     },
+    "session.adopted": {
+        "required": {
+            "donor_session_dir": str,
+            "target_session_dir": str,
+            "donor_session_id": str,
+            "target_session_id": str,
+        },
+        "optional": {},
+    },
     "tool.called": {
         "required": {
             "name": str,
@@ -234,38 +300,21 @@ EVENT_PAYLOAD_SCHEMAS: dict[str, dict[str, dict[str, _FIELD_TYPE]]] = {
             "verify_lemma": str,
         },
     },
-    "tool.view.produced": {
-        "required": {
-            "tool": str,
-            "schema_version": int,
-            "ok": bool,
-            "artifact": str,
-            "view_hash": str,
-        },
-        "optional": {
-            "proof_status": str,
-            "recommendation_count": int,
-            "error_count": int,
-            "warning_count": int,
-            "note_count": int,
-        },
-    },
-    "agent.view.produced": {
+    "tactic.preflight.produced": {
         "required": {
             "schema_version": int,
+            "kind": str,
             "ok": bool,
             "artifact": str,
-            "view_hash": str,
-        },
-        "optional": {
+            "artifact_hash": str,
             "proof_status": str,
-            "goal_hash": str,
-            "recommendation_count": int,
-            "stale_recommendation_count": int,
+            "tactic_sha256": str,
+            "accepted": bool,
+            "verdict_known": bool,
+            "outcome_known": bool,
             "error_count": int,
-            "warning_count": int,
-            "source_event_count": int,
         },
+        "optional": {},
     },
     "prover.workspace_view.produced": {
         "required": {
@@ -274,15 +323,98 @@ EVENT_PAYLOAD_SCHEMAS: dict[str, dict[str, dict[str, _FIELD_TYPE]]] = {
             "ok": bool,
             "artifact": str,
             "view_hash": str,
-        },
-        "optional": {
             "proof_status": str,
             "current_goal_text_fully_shown": bool,
             "current_goal_truncated": bool,
-            "goal_complete": bool,
             "goal_chars": int,
             "workspace_chars": int,
         },
+        "optional": {},
+    },
+    "compiler.input.produced": {
+        "required": {
+            "schema_version": int,
+            "ok": bool,
+            "snapshot_id": str,
+            "artifact": str,
+            "artifact_hash": str,
+            "snapshot_sha256": str,
+            "session_id": str,
+            "goal_identity": str,
+            "goal_identity_required": bool,
+            "committed_prefix_identity": str,
+            "source_sha256": str,
+            "lemma": str,
+            "easycrypt_runtime_identity_sha256": str,
+            "error_count": int,
+        },
+        "optional": {},
+    },
+    "compiler.resources.loaded": {
+        "required": {
+            "schema_version": int,
+            "ok": bool,
+            "request_id": str,
+            "source_snapshot_id": str,
+            "source_event_id": str,
+            "artifact": str,
+            "artifact_hash": str,
+            "result_sha256": str,
+            "session_id": str,
+            "goal_identity": str,
+            "goal_identity_required": bool,
+            "committed_prefix_identity": str,
+            "error_count": int,
+            "loaded_declaration_count": int,
+            "resource_load_request_count": int,
+        },
+        "optional": {},
+    },
+    "native.semantic.batch.produced": {
+        "required": {
+            "schema_version": int,
+            "ok": bool,
+            "query_id": str,
+            "batch_id": str,
+            "request_count": int,
+            "accepted_count": int,
+            "rejected_count": int,
+            "artifact": str,
+            "artifact_hash": str,
+            "result_sha256": str,
+            "session_id": str,
+            "state_version": int,
+            "goal_identity": str,
+            "committed_prefix_identity": str,
+            "easycrypt_runtime_identity_sha256": str,
+            "companion_binary_sha256": str,
+            "why3_config_sha256": str,
+            "error_count": int,
+        },
+        "optional": {},
+    },
+    "native.state.produced": {
+        "required": {
+            "schema_version": int,
+            "ok": bool,
+            "projection_id": str,
+            "request_id": str,
+            "artifact": str,
+            "artifact_hash": str,
+            "result_sha256": str,
+            "session_id": str,
+            "state_version": int,
+            "goal_identity": str,
+            "committed_prefix_identity": str,
+            "easycrypt_runtime_identity_sha256": str,
+            "companion_binary_sha256": str,
+            "why3_config_sha256": str,
+            "complete": bool,
+            "node_count": int,
+            "judgment_kind": str,
+            "error_count": int,
+        },
+        "optional": {},
     },
     "commit.response.produced": {
         "required": {
@@ -292,16 +424,14 @@ EVENT_PAYLOAD_SCHEMAS: dict[str, dict[str, dict[str, _FIELD_TYPE]]] = {
             "status": str,
             "artifact": str,
             "response_hash": str,
-        },
-        "optional": {
             "proof_status": str,
             "attempted_count": int,
             "accepted_count": int,
             "failed_tactic": str,
             "error_count": int,
             "warning_count": int,
-            "agent_view_artifact": str,
         },
+        "optional": {},
     },
     "tactic.execution.produced": {
         "required": {
@@ -312,51 +442,21 @@ EVENT_PAYLOAD_SCHEMAS: dict[str, dict[str, dict[str, _FIELD_TYPE]]] = {
             "status": str,
             "artifact": str,
             "result_hash": str,
-        },
-        "optional": {
             "accepted_count": int,
             "rollback_count": int,
             "failed_tactic": str,
             "state_changed": bool,
             "history_committed": bool,
-            "preflight_accepted": bool,
             "workspace_artifact": str,
             "workspace_chars": int,
             "current_goal_text_fully_shown": bool,
             "current_goal_truncated": bool,
-            "candidate_after_available": bool,
-            "candidate_after_goal_chars": int,
-            "candidate_after_text_fully_shown": bool,
-            "proof_context_artifact": str,
             "commit_response_artifact": str,
             "raw_result_artifact": str,
             "error_count": int,
             "warning_count": int,
         },
-    },
-    "command.summary.produced": {
-        "required": {
-            "schema_version": int,
-            "ok": bool,
-            "command": str,
-            "command_status": str,
-            "artifact": str,
-            "summary_hash": str,
-        },
-        "optional": {
-            "proof_status": str,
-            "goal_hash": str,
-            "goal_type": str,
-            "num_remaining": (int, _NONE_TYPE),
-            "history_tactic_count": int,
-            "transition_kind": str,
-            "primary_action": str,
-            "recommendation_count": int,
-            "error_count": int,
-            "warning_count": int,
-            "commit_response_artifact": str,
-            "agent_view_artifact": str,
-        },
+        "optional": {},
     },
     "episode.timeline.produced": {
         "required": {
@@ -368,7 +468,6 @@ EVENT_PAYLOAD_SCHEMAS: dict[str, dict[str, dict[str, _FIELD_TYPE]]] = {
         },
         "optional": {
             "final_proof_status": str,
-            "final_primary_action": str,
             "note_count": int,
             "error_count": int,
         },
@@ -381,24 +480,6 @@ EVENT_PAYLOAD_SCHEMAS: dict[str, dict[str, dict[str, _FIELD_TYPE]]] = {
         },
         "optional": {
             "deltas_only": bool,
-        },
-    },
-    "diagnostic.emitted": {
-        "required": {
-            "source": str,
-            "layer": int,
-            "suppress_error": bool,
-            "request_rollback": bool,
-            "text": str,
-        },
-        "optional": {
-            "schema_version": int,
-            "kind": str,
-            "recommendations": list,
-            "evidence": dict,
-            "notes": list,
-            "errors": list,
-            "debug": dict,
         },
     },
     "goal.changed": {
@@ -623,6 +704,167 @@ def events_of_type(
     return [event for event in events if event.get("type") == event_type]
 
 
+_SESSION_ADOPTED_PAYLOAD_FIELDS = frozenset({
+    "donor_session_dir",
+    "target_session_dir",
+    "donor_session_id",
+    "target_session_id",
+})
+
+
+def _canonical_absolute_session_dir(value: Any, *, label: str) -> str:
+    """Return the canonical absolute spelling used by event envelopes."""
+
+    if not isinstance(value, str) or not value:
+        raise SessionAdoptionLineageError(f"{label} must be a non-empty string")
+    path = Path(value)
+    if not path.is_absolute():
+        raise SessionAdoptionLineageError(f"{label} must be absolute")
+    canonical = str(path.resolve())
+    if value != canonical:
+        raise SessionAdoptionLineageError(
+            f"{label} must use its canonical resolved spelling"
+        )
+    return canonical
+
+
+def validated_session_lineage_aliases(
+    events: list[dict[str, Any]],
+    current_session_dir: str | Path,
+) -> frozenset[str]:
+    """Derive trusted historical event-envelope aliases for one session.
+
+    Daemon attach copies a donor directory, including its append-only event
+    stream, before appending ``session.adopted`` in the target.  Consequently,
+    a target may legitimately contain events whose envelope names an ancestor
+    session directory.  This helper accepts those aliases only when every
+    adoption record forms one validated, reverse-linked chain ending at the
+    current directory (``C -> B -> A``).  Duplicate, cyclic, out-of-order,
+    disconnected, or malformed links reject the entire lineage.
+
+    With no adoption records, only the current session directory is trusted.
+    Callers must still reject ordinary events whose envelope is outside the
+    returned set.
+    """
+
+    current = _canonical_absolute_session_dir(
+        str(Path(current_session_dir).resolve()),
+        label="current_session_dir",
+    )
+    links_by_target: dict[str, tuple[int, str]] = {}
+
+    for event_index, event in enumerate(events):
+        if not isinstance(event, dict):
+            continue
+        if event.get("type") != "session.adopted":
+            continue
+        errors = [
+            issue
+            for issue in validate_event(event, event_index + 1)
+            if issue.severity == "error"
+        ]
+        if errors:
+            detail = "; ".join(issue.format() for issue in errors)
+            raise SessionAdoptionLineageError(
+                f"invalid session.adopted event at index {event_index}: {detail}"
+            )
+        if event.get("source") != "workflow.daemon_attach":
+            raise SessionAdoptionLineageError(
+                "session.adopted source must be workflow.daemon_attach"
+            )
+
+        payload = event_payload(event)
+        payload_fields = frozenset(payload)
+        if payload_fields != _SESSION_ADOPTED_PAYLOAD_FIELDS:
+            missing = sorted(_SESSION_ADOPTED_PAYLOAD_FIELDS - payload_fields)
+            unknown = sorted(payload_fields - _SESSION_ADOPTED_PAYLOAD_FIELDS)
+            raise SessionAdoptionLineageError(
+                "session.adopted payload fields do not match the contract: "
+                f"missing={missing}, unknown={unknown}"
+            )
+
+        donor = _canonical_absolute_session_dir(
+            payload.get("donor_session_dir"),
+            label="session.adopted.donor_session_dir",
+        )
+        target = _canonical_absolute_session_dir(
+            payload.get("target_session_dir"),
+            label="session.adopted.target_session_dir",
+        )
+        envelope_session_dir = _canonical_absolute_session_dir(
+            event.get("session_dir"),
+            label="session.adopted envelope session_dir",
+        )
+        envelope_session_id = _canonical_absolute_session_dir(
+            event.get("session_id"),
+            label="session.adopted envelope session_id",
+        )
+        if envelope_session_dir != target or envelope_session_id != target:
+            raise SessionAdoptionLineageError(
+                "session.adopted envelope must be bound to its target directory"
+            )
+        if donor == target:
+            raise SessionAdoptionLineageError(
+                "session.adopted donor and target directories must differ"
+            )
+
+        donor_daemon_id = payload.get("donor_session_id")
+        target_daemon_id = payload.get("target_session_id")
+        if not donor_daemon_id or not target_daemon_id:
+            raise SessionAdoptionLineageError(
+                "session.adopted daemon session ids must be non-empty"
+            )
+        if donor_daemon_id == target_daemon_id:
+            raise SessionAdoptionLineageError(
+                "session.adopted donor and target daemon session ids must differ"
+            )
+        # Use the daemon backend's single source of truth; accepting arbitrary
+        # ids here would let a syntactically valid event assert a lineage that
+        # was never the daemon rename represented by these directories.
+        from core.easycrypt.daemon_backend import session_id_for_dir
+
+        if donor_daemon_id != session_id_for_dir(donor):
+            raise SessionAdoptionLineageError(
+                "session.adopted donor daemon session id does not match its directory"
+            )
+        if target_daemon_id != session_id_for_dir(target):
+            raise SessionAdoptionLineageError(
+                "session.adopted target daemon session id does not match its directory"
+            )
+        if target in links_by_target:
+            raise SessionAdoptionLineageError(
+                f"duplicate session.adopted link for target {target}"
+            )
+        links_by_target[target] = (event_index, donor)
+
+    if not links_by_target:
+        return frozenset({current})
+
+    aliases = {current}
+    consumed_targets: set[str] = set()
+    cursor = current
+    child_event_index = len(events)
+    while cursor in links_by_target:
+        if cursor in consumed_targets:
+            raise SessionAdoptionLineageError("cyclic session adoption lineage")
+        event_index, donor = links_by_target[cursor]
+        if event_index >= child_event_index:
+            raise SessionAdoptionLineageError(
+                "session adoption links are not ordered oldest-to-newest"
+            )
+        consumed_targets.add(cursor)
+        aliases.add(donor)
+        cursor = donor
+        child_event_index = event_index
+
+    if consumed_targets != set(links_by_target):
+        disconnected = sorted(set(links_by_target) - consumed_targets)
+        raise SessionAdoptionLineageError(
+            "disconnected session adoption lineage: " + ", ".join(disconnected)
+        )
+    return frozenset(aliases)
+
+
 def validate_event(
     event: dict[str, Any],
     event_index: int | None = None,
@@ -686,6 +928,12 @@ def validate_event(
 
     schema = EVENT_PAYLOAD_SCHEMAS.get(event_type)
     if schema is None:
+        if event_type in RETIRED_EVENT_TYPES:
+            add(
+                "event.retired_type",
+                f"retired event type `{event_type}` is unsupported",
+            )
+            return issues
         # Defense-in-depth: an unregistered type is a forward-compat gap, not a
         # proof-correctness problem (candidate-closed + verification PASS are gated
         # separately). Grade it a WARNING so a future unregistered emit degrades to
@@ -696,6 +944,12 @@ def validate_event(
         return issues
 
     payload = event_payload(event)
+    for field in sorted(RETIRED_EVENT_PAYLOAD_FIELDS.get(event_type, frozenset())):
+        if field in payload:
+            add(
+                "event.payload.retired",
+                f"retired payload field `{field}` is unsupported",
+            )
     for field, expected in schema.get("required", {}).items():
         if field not in payload:
             add("event.payload.missing", f"missing payload field `{field}`")
@@ -726,7 +980,7 @@ def validate_event_stream(
     session_started = False
     pending_tool: dict[str, Any] | None = None
     pending_tactic: dict[str, Any] | None = None
-    latest_tactic_result: dict[str, Any] | None = None
+    pending_candidate_close: tuple[dict[str, Any], int] | None = None
     candidate_close_count = 0
     result_candidate_close_count = 0
     latest_verification_status: str | None = None
@@ -755,6 +1009,20 @@ def validate_event_stream(
         event_type = str(event.get("type") or "")
         payload = event_payload(event)
         issues.extend(validate_event(event, idx))
+
+        if (
+            pending_candidate_close is not None
+            and event_type != "proof.candidate_closed"
+        ):
+            _, result_idx = pending_candidate_close
+            add(
+                "stream.candidate_close.missing_adjacent_event",
+                "candidate-closing tactic.result is not immediately followed "
+                "by proof.candidate_closed",
+                idx=result_idx,
+                event_type="tactic.result",
+            )
+            pending_candidate_close = None
 
         if event_type != "session.started" and not session_started:
             add(
@@ -858,34 +1126,40 @@ def validate_event_stream(
                         idx=idx,
                         event_type=event_type,
                     )
-            latest_tactic_result = payload
+                else:
+                    pending_candidate_close = (payload, idx)
             continue
 
         if event_type == "proof.candidate_closed":
             candidate_close_count += 1
-            if latest_tactic_result is None:
+            if pending_candidate_close is None:
                 add(
-                    "stream.candidate_close.no_tactic_result",
-                    "proof.candidate_closed has no preceding tactic.result",
+                    "stream.candidate_close.no_paired_tactic_result",
+                    "proof.candidate_closed has no adjacent candidate-closing "
+                    "tactic.result",
                     idx=idx,
                     event_type=event_type,
                 )
             else:
-                if latest_tactic_result.get("status") != "ok":
+                result_payload, _ = pending_candidate_close
+                result_tactic = _normalize_tactic_text(result_payload.get("tactic"))
+                close_tactic = _normalize_tactic_text(payload.get("tactic"))
+                if not result_tactic or not close_tactic:
                     add(
-                        "stream.candidate_close.failed_tactic",
-                        "proof.candidate_closed follows a non-ok tactic.result",
+                        "stream.candidate_close.empty_tactic",
+                        "candidate-close pair requires non-empty tactic identity",
                         idx=idx,
                         event_type=event_type,
                     )
-                if not latest_tactic_result.get("candidate_closed"):
+                elif result_tactic != close_tactic:
                     add(
-                        "stream.candidate_close.result_not_marked",
-                        "proof.candidate_closed follows a tactic.result whose "
-                        "candidate_closed flag is false/missing",
+                        "stream.candidate_close.tactic_mismatch",
+                        "proof.candidate_closed tactic does not match its "
+                        "candidate-closing tactic.result",
                         idx=idx,
                         event_type=event_type,
                     )
+                pending_candidate_close = None
             continue
 
         if event_type == "verification.completed":
@@ -910,6 +1184,15 @@ def validate_event_stream(
         add(
             "stream.tactic.missing_result",
             "tactic.submitted has no tactic.result",
+        )
+    if pending_candidate_close is not None:
+        _, result_idx = pending_candidate_close
+        add(
+            "stream.candidate_close.missing_adjacent_event",
+            "candidate-closing tactic.result has no adjacent "
+            "proof.candidate_closed event",
+            idx=result_idx,
+            event_type="tactic.result",
         )
     if not session_started:
         add("stream.session.missing_start", "no `session.started` event found")
@@ -954,22 +1237,6 @@ def candidate_closed_events(
 
 def has_candidate_closed(events: list[dict[str, Any]]) -> bool:
     return bool(candidate_closed_events(events))
-
-
-def latest_tactic_error(
-    events: list[dict[str, Any]],
-) -> LatestTacticError:
-    for event in reversed(events):
-        if event.get("type") != "tactic.result":
-            continue
-        payload = event_payload(event)
-        latest_error = str(payload.get("latest_error") or "").strip()
-        if latest_error:
-            return LatestTacticError(
-                error=latest_error,
-                tactic=str(payload.get("tactic") or ""),
-            )
-    return LatestTacticError()
 
 
 def _report_error_excerpt(report: str) -> str:
@@ -1128,7 +1395,6 @@ def summarize_events(events: list[dict[str, Any]]) -> EventSummary:
         result_candidate_closed_count=result_candidate_closed_count,
         tactic_status_counts=tactic_status_counts,
         verification_status=verification_status,
-        latest_error=latest_tactic_error(events),
         latest_attempt=latest_tactic_attempt(events),
         recent_failed_attempts=recent_failed_tactic_attempts(events),
     )

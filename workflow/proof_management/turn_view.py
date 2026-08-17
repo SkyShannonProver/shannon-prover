@@ -4,18 +4,39 @@ from __future__ import annotations
 from collections.abc import Callable
 from typing import Any
 
-from workflow.context_intents import is_context_topic_intent
+from core.context_intents import (
+    intent_is_read_only,
+    intent_may_mutate_proof_state,
+)
+from workflow.managed_turn_outcome import (
+    classify_manager_action_outcome,
+    observation_with_action_outcome,
+)
 
 from .protocol_repair import AgentIntent
 from core.easycrypt.value_shapes import drop_empty as _drop_empty
 
 
-def selection_menu_action(label: str, observation: dict[str, Any]) -> dict[str, Any]:
+def selection_menu_action(
+    label: str,
+    observation: dict[str, Any],
+    *,
+    ok: bool = True,
+) -> dict[str, Any]:
+    outcome = classify_manager_action_outcome(
+        status="control_menu",
+        ok=ok,
+        read_only=False,
+        mutates_proof_state=False,
+        state_changed=False,
+        control_menu=True,
+    ).to_dict()
     return {
         "label": label,
         "exit_code": 0,
         "duration_ms": 0,
-        "proof_state_effect": "selection_menu_only",
+        "mutates_proof_state": False,
+        **outcome,
         "agent_observation": observation,
         "stdout_has_workspace_view": False,
     }
@@ -28,17 +49,17 @@ def latest_observation_for_view(
     for action in actions:
         if not isinstance(action, dict):
             continue
-        if action.get("label") == "agent_view":
-            continue
         observation = action.get("agent_observation")
         if isinstance(observation, dict) and observation:
             surfaced = dict(observation)
-            return _drop_empty({
+            surfaced = observation_with_action_outcome(surfaced, [action])
+            result = _drop_empty({
                 "intent": intent.intent,
                 "payload": intent_payload_surface(intent),
                 **surfaced,
             })
-    return _drop_empty({
+            return result
+    result = _drop_empty({
         "intent": intent.intent,
         "payload": intent_payload_surface(intent),
         "result": (
@@ -47,6 +68,7 @@ def latest_observation_for_view(
         ),
         "effect": intent_effect(intent.intent),
     })
+    return result
 
 
 def view_with_latest_observation(
@@ -92,21 +114,11 @@ def intent_payload_surface(intent: AgentIntent) -> dict[str, Any]:
     payload = dict(intent.payload)
     allowed = {
         "tactic",
-        "topic",
-        "symbol",
-        "name",
-        "lemma",
-        "claim",
-        "formula",
-        "command",
-        "invariant",
-        "invariant_body",
         "checkpoint_id",
         "restore_id",
-        "chunk_id",
-        "memory_id",
         "confirm",
         "confirmation_id",
+        "index",
     }
     return {
         key: value
@@ -116,24 +128,14 @@ def intent_payload_surface(intent: AgentIntent) -> dict[str, Any]:
 
 
 def intent_effect(intent_name: str) -> str:
-    if is_context_topic_intent(intent_name) or intent_name in {
-        "inspect_context",
-        "lookup_symbol",
-    }:
+    if intent_is_read_only(intent_name):
         return (
             "This manager intent is read-only; it does not change the "
             "EasyCrypt proof state."
         )
-    if intent_name in {
-        "commit_tactic",
-        "commit_replay_suffix_chunk",
-        "undo_last_step",
-        "undo_to_checkpoint",
-        "fresh_restart",
-    }:
+    if intent_may_mutate_proof_state(intent_name):
         return (
             "This manager intent may change the EasyCrypt proof state, and "
             "the manager will return a refreshed workspace view afterward."
         )
     return "This manager intent does not change the EasyCrypt proof state."
-

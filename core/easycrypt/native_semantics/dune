@@ -1,0 +1,18 @@
+(library
+ (name native_adapter_support)
+ (wrapped false)
+ (modules native_adapter_common)
+ (libraries easycrypt.ecLib yojson)
+ (flags (:standard -rectypes)))
+
+(executable
+ (name native_semantic_adapter)
+ (modules native_semantic_adapter)
+ (libraries native_adapter_support easycrypt.ecLib yojson)
+ (flags (:standard -rectypes)))
+
+(executable
+ (name native_state_projection_adapter)
+ (modules native_state_projection_adapter)
+ (libraries native_adapter_support easycrypt.ecLib yojson)
+ (flags (:standard -rectypes)))

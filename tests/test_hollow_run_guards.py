@@ -25,22 +25,68 @@ from core.easycrypt.eval_source_prep import (
 from core.easycrypt.lemma_decls import lemma_decl_lines
 from eval_suite import run as suite_run
 from workflow.agents.prover import _bootstrap_opened_real_proof
+from workflow.agents import prover as prover_module
 
 
 # ── bootstrap guard (pure logic, no EC) ──────────────────────────────────────
 
-_HOLLOW_VIEW = {
-    "workspace_view": {
-        "proof_status": {"status": "unknown", "remaining_goals_known": False},
-        "current_goal": {"lines": ["[12|check]>"]},
+
+def _workspace_view(*, proof_status, current_goal=None):
+    proof_status = dict(proof_status)
+    proof_status.setdefault("goal_identity_required", True)
+    proof_status.setdefault("goal_hash", "goal")
+    return {
+        "schema_version": 3,
+        "kind": "prover_workspace_view",
+        "ok": True,
+        "last_result": {},
+        "proof_status": proof_status,
+        "current_goal": current_goal or {},
+        "view_hash": "fixture-view",
     }
-}
-_HEALTHY_VIEW = {
-    "workspace_view": {
-        "proof_status": {"status": "open", "remaining_goals_known": True},
-        "current_goal": {"lines": ["pre =", "  ={glob H}", "post ="]},
+
+
+def _bootstrap(workspace_view):
+    return {
+        "schema_version": 3,
+        "kind": "proof_node_manager_bootstrap",
+        "node_id": "Tree-unit",
+        "session_tag": "unit",
+        "session_dir": ".ec_session_unit",
+        "file": "target.ec",
+        "lemma": "target",
+        "include_dirs": ["easycrypt-src/theories"],
+        "replay_prefix_count": 0,
+        "replay_prefix": [],
+        "replay_prefix_requested_count": 0,
+        "manager_actions": [],
+        "snapshot": {
+            "node_id": "Tree-unit",
+            "session_tag": "unit",
+            "session_dir": ".ec_session_unit",
+            "session_epoch": 1,
+            "state_version": 1,
+            "goal_hash": "goal",
+            "goal_identity_required": True,
+            "workspace_view_artifact": "",
+            "execution_refs": {},
+        },
+        "workspace_view": workspace_view,
     }
-}
+
+
+_HOLLOW_VIEW = _bootstrap(
+    _workspace_view(
+        proof_status={"status": "unknown", "remaining_goals_known": False},
+        current_goal={"lines": ["[12|check]>"]},
+    )
+)
+_HEALTHY_VIEW = _bootstrap(
+    _workspace_view(
+        proof_status={"status": "open", "remaining_goals_known": True},
+        current_goal={"lines": ["pre =", "  ={glob H}", "post ="]},
+    )
+)
 
 
 def test_bootstrap_guard_blocks_hollow():
@@ -53,16 +99,59 @@ def test_bootstrap_guard_passes_healthy_open_proof():
 
 def test_bootstrap_guard_passes_complete_proof_with_count():
     # remaining_goals_known=True even at 0 goals => real (complete) proof.
-    bs = {"workspace_view": {"proof_status": {
-        "status": "unknown", "remaining_goals_known": True}}}
+    bs = _bootstrap(
+        _workspace_view(proof_status={
+            "status": "unknown",
+            "remaining_goals_known": True,
+        }, current_goal={"lines": []})
+    )
     assert _bootstrap_opened_real_proof(bs) is True
 
 
-@pytest.mark.parametrize("bs", [{}, {"workspace_view": {}},
-                                {"workspace_view": {"proof_status": {}}}])
-def test_bootstrap_guard_fails_open_on_unknown_schema(bs):
-    # Must never block when it cannot read the signal (preflight is primary).
-    assert _bootstrap_opened_real_proof(bs) is True
+@pytest.mark.parametrize(
+    "workspace_view",
+    [
+        {},
+        _workspace_view(proof_status={}),
+        _workspace_view(proof_status={"remaining_goals_known": True}),
+        _workspace_view(proof_status={"status": "open"}),
+    ],
+)
+def test_bootstrap_guard_rejects_missing_workspace_status_contract(workspace_view):
+    bs = _bootstrap(workspace_view)
+    with pytest.raises(ValueError, match="workspace_view"):
+        _bootstrap_opened_real_proof(bs)
+
+
+@pytest.mark.parametrize(
+    "bs",
+    [
+        {},
+        {"schema_version": 1, "kind": "proof_node_manager_bootstrap"},
+        {"schema_version": 3, "kind": "manager_session_bootstrap"},
+    ],
+)
+def test_bootstrap_guard_rejects_noncurrent_envelope(bs):
+    with pytest.raises(ValueError, match="schema_version=3"):
+        _bootstrap_opened_real_proof(bs)
+
+
+def test_backendless_prepare_fails_closed_without_bootstrap(
+    monkeypatch,
+    tmp_path,
+):
+    monkeypatch.setattr(prover_module, "_PROJECT_ROOT", tmp_path)
+
+    with pytest.raises(RuntimeError, match="session driver"):
+        prover_module._prepare_managed_session(
+            file_path="target.ec",
+            lemma_name="target",
+            include_dir="easycrypt-src/theories",
+            session_tag="unit",
+            run_dir=tmp_path / "run",
+        )
+
+    assert not (tmp_path / "run" / "manager_session_bootstrap.jsonl").exists()
 
 
 # ── preflight (monkeypatched EC invocation) ──────────────────────────────────
@@ -297,3 +386,20 @@ def test_suite_skips_duplicate_lemma_target_and_records_status(tmp_path):
     assert metrics["status"] == "prepare_failed"
     assert "declared 2 times" in metrics["reason"]
     assert metrics["lemma"] == "xorK1"
+
+
+def test_target_profile_order_counterbalances_only_selected_arms() -> None:
+    selected = ["l1", "audit", "treatment"]
+    target = {"profile_order": ["treatment", "audit", "l1"]}
+
+    assert suite_run._target_profile_order(target, selected) == [
+        "treatment", "audit", "l1",
+    ]
+    assert suite_run._target_profile_order(
+        target, ["l1", "treatment"]
+    ) == ["treatment", "l1"]
+
+    with pytest.raises(ValueError, match="omits selected profiles"):
+        suite_run._target_profile_order(
+            {"profile_order": ["audit", "l1"]}, selected
+        )

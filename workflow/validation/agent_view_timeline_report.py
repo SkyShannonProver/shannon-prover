@@ -5,7 +5,8 @@ The report is intentionally offline and deterministic: it reads per-node
 ``workspace_views/turn_NNN.json`` artifacts that a long-lived prover run has
 already written. Human view-quality review is kept as a separate column so the
 table can be regenerated after every run without baking subjective judgments
-into the script.
+into the script. Retired intent spellings are decoded only as historical input;
+this reader never submits them to the live manager transport.
 """
 from __future__ import annotations
 
@@ -18,11 +19,12 @@ from dataclasses import dataclass
 from datetime import datetime, timedelta
 from pathlib import Path
 from workflow.validation.replay_artifacts import node_id_from_dir as _node_id_from_dir
+from workflow.validation.agent_thinking_trace import intent_payload_key
 from workflow.proof_management.common import read_jsonl as _read_jsonl
 from typing import Any
 
 
-REPORT_SCHEMA_VERSION = 1
+REPORT_SCHEMA_VERSION = 2
 
 
 @dataclass(frozen=True)
@@ -92,12 +94,13 @@ def build_run_report(
         "node_count": len(rows_by_node),
         "turn_count": len(all_rows),
         "chronological": chronological,
+        "compiler_action_usage": _compiler_action_usage_summary(all_rows),
         "rows": all_rows,
     }
 
 
 _TABLE_HEADER = (
-    "| View | Action time | Agent think | Manager time | Decision View (full · inline read) | "
+    "| View | Action time | Agent think | Manager time | Decision View (full · inline read · launch task) | "
     "Intent | State Seen | Result | 质量判断 |\n"
     "|---|---:|---:|---:|---|---|---|---|---|"
 )
@@ -153,9 +156,10 @@ def render_markdown(
         "每行表示：agent 看到 Decision View -> 提交 Intent -> manager 返回 Result。",
         "",
         (
-            "**Decision View 列有两个链接**：`turn_NNN.json` 是框架算出的**完整 view**"
+            "**Decision View 列通常有两个链接**：`turn_NNN.json` 是框架算出的**完整 view**"
             "（存档用，含所有面板）；`inline read` 是 agent **当轮真正读到的 inline 文本**"
-            "（followups/turn_NNN.md，是该 view 的过滤 preview）。两者会**不一致**——preview "
+            "（followups/turn_NNN.md，是该 view 的过滤 preview）。第 1 轮还会链接实际传给 "
+            "provider session 的 `launch task`。完整 view 和 preview 会**不一致**——preview "
             "会丢面板，所以判断「agent 实际看到了什么」要点 `inline read`，不是完整 view。"
         ),
         "",
@@ -305,6 +309,19 @@ def _build_node_rows(
                 turn=turn,
             )
         )
+        ok = _bool(manager_result.get("ok"), default=_bool(entry.get("ok")))
+        commit_accepted = bool(
+            ok
+            and intent.get("intent") == "commit_tactic"
+            and not _manager_failure_hint(
+                [*manager_actions, *audit_manager_actions]
+            )
+        )
+        compiler_action_usage = classify_compiler_action_usage(
+            decision_workspace_view,
+            intent,
+            accepted=commit_accepted,
+        )
 
         row = {
             "node": node_id,
@@ -322,15 +339,18 @@ def _build_node_rows(
                 node_dir, thinking_index, turn=turn, intent=intent,
             ),
             "usage": _usage_for_turn(usage_index, turn=turn, intent=intent),
+            "usage_scope": _usage_scope_for_turn(
+                usage_index, turn=turn, intent=intent,
+            ),
             "manager_seconds": timing_seconds,
             "manager_time": _format_seconds(timing_seconds),
             "intent": intent,
             "intent_summary": _intent_summary(intent),
-            "ok": _bool(manager_result.get("ok"), default=_bool(entry.get("ok"))),
+            "ok": ok,
             "manager_action_summary": _manager_action_summary(manager_actions),
             "result_summary": _result_summary(
                 intent=intent,
-                ok=_bool(manager_result.get("ok"), default=_bool(entry.get("ok"))),
+                ok=ok,
                 manager_actions=manager_actions,
                 audit_manager_actions=audit_manager_actions,
             ),
@@ -346,6 +366,11 @@ def _build_node_rows(
             "decision_followup_path": (
                 str(decision_followup_path.resolve())
                 if decision_followup_path.exists()
+                else ""
+            ),
+            "decision_prompt_path": (
+                str((node_dir / "initial_agent_prompt.md").resolve())
+                if turn == 1 and (node_dir / "initial_agent_prompt.md").exists()
                 else ""
             ),
             "result_view_path": (
@@ -364,7 +389,7 @@ def _build_node_rows(
                 _json_chars(decision_workspace_view) if decision_workspace_view else 0
             ),
             "goal_chars": _goal_chars(decision_workspace_view),
-            "inspect_topics": _inspect_topics(decision_workspace_view),
+            "compiler_action_usage": compiler_action_usage,
             "deterministic_signals": _deterministic_signals(
                 intent=intent,
                 manager_actions=manager_actions,
@@ -377,6 +402,147 @@ def _build_node_rows(
             previous_result_at = result_at
 
     return rows
+
+
+def classify_compiler_action_usage(
+    decision_workspace_view: dict[str, Any],
+    submitted_intent: dict[str, Any],
+    *,
+    accepted: bool,
+) -> dict[str, Any]:
+    """Classify whether the next submission consumed a visible compiler action.
+
+    A ``refined`` match may only replace standalone ``_`` tokens in a checked
+    tactic with concrete syntax.  It is not a fuzzy tactic similarity metric.
+    """
+
+    actions = _compiler_actions(decision_workspace_view)
+    base = {"offered_action_count": len(actions), "matched_action_index": None}
+    if not actions:
+        return {**base, "status": "not_offered"}
+
+    submitted_name = str(submitted_intent.get("intent") or "")
+    submitted_payload = _dict(submitted_intent.get("payload"))
+    for index, action in enumerate(actions):
+        if (
+            str(action.get("intent") or "") == submitted_name
+            and _dict(action.get("payload")) == submitted_payload
+        ):
+            suffix = "accepted" if accepted else "rejected"
+            return {
+                **base,
+                "status": f"exact_{suffix}",
+                "matched_action_index": index,
+            }
+
+    for index, action in enumerate(actions):
+        if _is_checked_placeholder_refinement(action, submitted_intent):
+            suffix = "accepted" if accepted else "rejected"
+            return {
+                **base,
+                "status": f"refined_{suffix}",
+                "matched_action_index": index,
+            }
+    return {**base, "status": "ignored"}
+
+
+def _compiler_actions(view: dict[str, Any]) -> list[dict[str, Any]]:
+    turn = _dict(view.get("surface_turn"))
+    markdown = turn.get("compiler_markdown")
+    if not isinstance(markdown, str):
+        markdown = view.get("compiler_markdown")
+    if not isinstance(markdown, str):
+        return []
+    actions: list[dict[str, Any]] = []
+    for encoded in re.findall(r"```json\n(.*?)\n```", markdown, re.DOTALL):
+        try:
+            value = json.loads(encoded)
+        except (TypeError, ValueError):
+            continue
+        item = _dict(value)
+        if item.get("intent") and isinstance(item.get("payload"), dict):
+            actions.append(item)
+    return actions
+
+
+def _is_checked_placeholder_refinement(
+    action: dict[str, Any],
+    submitted_intent: dict[str, Any],
+) -> bool:
+    if (
+        action.get("intent") != "commit_tactic"
+        or submitted_intent.get("intent") != "commit_tactic"
+    ):
+        return False
+    template_payload = _dict(action.get("payload"))
+    submitted_payload = _dict(submitted_intent.get("payload"))
+    if set(template_payload) != {"tactic"} or set(submitted_payload) != {"tactic"}:
+        return False
+    template = str(template_payload.get("tactic") or "")
+    submitted = str(submitted_payload.get("tactic") or "")
+    template_tokens = _easycrypt_tokens(template)
+    submitted_tokens = _easycrypt_tokens(submitted)
+    if "_" not in template_tokens:
+        return False
+    return _placeholder_tokens_match(template_tokens, submitted_tokens)
+
+
+def _easycrypt_tokens(value: str) -> tuple[str, ...]:
+    return tuple(re.findall(
+        r"[A-Za-z_][A-Za-z0-9_']*|[0-9]+(?:%[A-Za-z]+)?|"
+        r"<=>|==>|=>|<:|<=|>=|<>|:=|::|/\\|\\/|[^\s]",
+        value,
+    ))
+
+
+def _placeholder_tokens_match(
+    template: tuple[str, ...],
+    submitted: tuple[str, ...],
+) -> bool:
+    memo: dict[tuple[int, int], bool] = {}
+
+    def matches(template_index: int, submitted_index: int) -> bool:
+        key = (template_index, submitted_index)
+        if key in memo:
+            return memo[key]
+        if template_index == len(template):
+            result = submitted_index == len(submitted)
+        elif template[template_index] != "_":
+            result = bool(
+                submitted_index < len(submitted)
+                and template[template_index] == submitted[submitted_index]
+                and matches(template_index + 1, submitted_index + 1)
+            )
+        else:
+            result = any(
+                matches(template_index + 1, next_index)
+                for next_index in range(submitted_index + 1, len(submitted) + 1)
+            )
+        memo[key] = result
+        return result
+
+    return matches(0, 0)
+
+
+def _compiler_action_usage_summary(
+    rows: list[dict[str, Any]],
+) -> dict[str, Any]:
+    counts: dict[str, int] = {}
+    for row in rows:
+        status = str(_dict(row.get("compiler_action_usage")).get("status") or "")
+        if status:
+            counts[status] = counts.get(status, 0) + 1
+    return {
+        "status_counts": dict(sorted(counts.items())),
+        "accepted_consumptions": (
+            counts.get("exact_accepted", 0)
+            + counts.get("refined_accepted", 0)
+        ),
+        "rejected_consumptions": (
+            counts.get("exact_rejected", 0)
+            + counts.get("refined_rejected", 0)
+        ),
+    }
 
 
 def _node_memory_dirs(run_dir: Path) -> list[Path]:
@@ -502,6 +668,19 @@ def _usage_for_turn(
     return {str(k): _int(v) for k, v in tokens.items()}
 
 
+def _usage_scope_for_turn(
+    usage_index: dict[int, dict[str, Any]], *, turn: int, intent: dict[str, Any],
+) -> str:
+    """Provider attribution scope, guarded by the same intent signature."""
+    record = usage_index.get(turn)
+    if not record:
+        return ""
+    recorded = (str(record.get("intent") or ""), str(record.get("payload_key") or ""))
+    if recorded != _intent_signature(intent):
+        return ""
+    return str(record.get("token_usage_scope") or "")
+
+
 def _bootstrap_workspace_view(run_dir: Path, node_id: str) -> tuple[dict[str, Any], Path]:
     bootstrap_path = _bootstrap_file_for_node(run_dir, node_id)
     if bootstrap_path.exists():
@@ -511,7 +690,7 @@ def _bootstrap_workspace_view(run_dir: Path, node_id: str) -> tuple[dict[str, An
             return view, bootstrap_path
     jsonl_path = run_dir / "manager_session_bootstrap.jsonl"
     for record in _read_jsonl(jsonl_path):
-        if str(record.get("node") or "") == node_id:
+        if str(record.get("node_id") or "") == node_id:
             view = _dict(record.get("workspace_view"))
             if view:
                 return view, jsonl_path
@@ -529,13 +708,8 @@ def _bootstrap_file_for_node(run_dir: Path, node_id: str) -> Path:
 def _intent_summary(intent: dict[str, Any]) -> str:
     name = str(intent.get("intent") or "")
     payload = _dict(intent.get("payload"))
-    if name in {"probe_tactic", "commit_tactic"}:
-        prefix = "probe" if name == "probe_tactic" else "commit"
-        return f"{prefix} {_short_tactic(str(payload.get('tactic') or ''))}"
-    if name == "inspect_context":
-        return f"inspect {payload.get('topic') or ''}".strip()
-    if name == "lookup_symbol":
-        return f"lookup {payload.get('symbol') or ''}".strip()
+    if name == "commit_tactic":
+        return f"commit {_short_tactic(str(payload.get('tactic') or ''))}"
     if name:
         return name
     return "unknown"
@@ -584,14 +758,8 @@ def _result_summary(
         [*manager_actions, *_list(audit_manager_actions)]
     )
     name = str(intent.get("intent") or "")
-    if name == "probe_tactic":
-        return f"rejected probe: {error}" if error else "accepted probe"
     if name == "commit_tactic":
         return f"rejected commit: {error}" if error else "accepted commit"
-    if name == "inspect_context":
-        return "read-only inspect"
-    if name == "lookup_symbol":
-        return "lookup result"
     if name == "undo_last_step":
         return "undo result"
     if name == "undo_to_checkpoint":
@@ -604,9 +772,11 @@ def _result_summary(
         if payload.get("confirm"):
             return "fresh restart confirmed"
         return "fresh restart confirmation requested"
-    if name == "request_restart":
-        return "legacy restart menu requested"
     if name == "finish":
+        for action in [*manager_actions, *_list(audit_manager_actions)]:
+            observation = _dict(_dict(action).get("agent_observation"))
+            if observation.get("kind") == "finish_accepted":
+                return "finish accepted"
         return "finish requested"
     return "manager result"
 
@@ -615,7 +785,7 @@ def _manager_failure_hint(manager_actions: list[Any]) -> str:
     """Return a compact failure hint from manager action text.
 
     Manager turn envelopes use ``ok=True`` for handled requests, including
-    rejected probes.  The timeline must therefore inspect the action payload
+    rejected proof operations. The timeline must therefore inspect the action payload
     rather than treating the wrapper as proof success.
     """
     for action in manager_actions:
@@ -660,6 +830,7 @@ def _state_summary(view: dict[str, Any]) -> str:
     goal_type = str(
         proof_status.get("goal_type")
         or current_goal.get("goal_type")
+        or proof_status.get("status")
         or "unknown"
     )
     layer = str(proof_status.get("current_layer") or "").strip()
@@ -690,17 +861,6 @@ def _goal_chars(view: dict[str, Any]) -> int:
     return 0
 
 
-def _inspect_topics(view: dict[str, Any]) -> list[str]:
-    handles = _dict(view.get("inspect_lookup_handles"))
-    out: list[str] = []
-    for item in _list(handles.get("ask_manager_for")):
-        payload = _dict(_dict(item).get("payload"))
-        topic = payload.get("topic")
-        if topic:
-            out.append(str(topic))
-    return out
-
-
 def _deterministic_signals(
     *,
     intent: dict[str, Any],
@@ -709,9 +869,6 @@ def _deterministic_signals(
     workspace_view: dict[str, Any],
 ) -> list[str]:
     signals: list[str] = []
-    name = str(intent.get("intent") or "")
-    if name == "commit_tactic":
-        signals.append("commit_without_probe_check_not_inferred")
     for action in [*manager_actions, *_list(audit_manager_actions)]:
         item = _dict(action)
         if item.get("error_summary"):
@@ -724,10 +881,6 @@ def _deterministic_signals(
             and "not changed" in str(observation.get("proof_state") or "").lower()
         ):
             signals.append("commit_no_state_change")
-    topics = set(_inspect_topics(workspace_view))
-    legacy = sorted(topics & {"pivot_context", "bridge_options"})
-    if legacy:
-        signals.append(f"legacy_topics:{','.join(legacy)}")
     if _goal_chars(workspace_view) >= 3000:
         signals.append("large_goal")
     # Dedupe, preserving first-seen order. The SAME handled error reaches this
@@ -775,13 +928,7 @@ def _next_matching_audit_record(
 def _intent_signature(intent: dict[str, Any]) -> tuple[str, str]:
     name = str(intent.get("intent") or "")
     payload = _dict(intent.get("payload"))
-    if name in {"probe_tactic", "commit_tactic"}:
-        return name, " ".join(str(payload.get("tactic") or "").split())
-    if name == "inspect_context":
-        return name, str(payload.get("topic") or "")
-    if name == "lookup_symbol":
-        return name, str(payload.get("symbol") or "")
-    return name, json.dumps(payload, sort_keys=True)
+    return name, intent_payload_key(name, payload)
 
 
 def _manager_action_summary(actions: list[Any]) -> list[str]:
@@ -870,9 +1017,12 @@ def _decision_view_link(row: dict[str, Any]) -> str:
     # not just what was OFFERED.
     path = str(row.get("decision_view_path") or "")
     follow = str(row.get("decision_followup_path") or "")
+    prompt = str(row.get("decision_prompt_path") or "")
     view = "initial handoff" if not path else f"[{Path(path).name}]({path})"
     if follow:
         view += f" · [inline read]({follow})"
+    if prompt:
+        view += f" · [launch task]({prompt})"
     return view
 
 

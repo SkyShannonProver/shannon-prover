@@ -17,10 +17,18 @@ import pytest
 
 ROOT = Path(__file__).resolve().parents[1]
 import _pathsetup  # noqa: F401,E402  (repo root on sys.path)
+from core.easycrypt.ec_env import get_ec_env  # noqa: E402
+
+try:
+    _MANAGED_EC_AVAILABLE = shutil.which(
+        "easycrypt", path=get_ec_env().get("PATH")
+    ) is not None
+except RuntimeError:
+    _MANAGED_EC_AVAILABLE = False
 
 pytestmark = pytest.mark.skipif(
-    shutil.which("easycrypt") is None,
-    reason="easycrypt not on PATH (run inside the opam switch)")
+    not _MANAGED_EC_AVAILABLE,
+    reason="repository-managed EasyCrypt is unavailable")
 
 from core.easycrypt.ec_daemon import ECSubprocess  # type: ignore  # noqa: E402
 

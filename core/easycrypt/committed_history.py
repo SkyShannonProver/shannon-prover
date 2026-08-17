@@ -2,15 +2,18 @@
 
 Seven call sites across workflow/ used to hand-roll this pair (audit
 backlog #19): path minting (``session_dir / "history.ec"``), tactic-line
-parsing, and qed-detection each re-derived per site. This module is the
-one owner; the historical entry points (``proof_node_runtime.
-closed_history_tactics``, ``repl_session.read_committed_tactics``) delegate
-here under their old names.
+parsing, and qed-detection each re-derived per site. This module is now the
+only owner of committed-history reading and closure detection — both the
+physical-line reading (``read_committed_tactics``) and the sentence-split
+command reading (``read_committed_commands``).
 
-Leaf module: stdlib only.
+Leaf module: stdlib-only at import time (the command splitter is
+late-bound from ``ec_daemon``).
 """
 from __future__ import annotations
 
+import hashlib
+import json
 import re
 from pathlib import Path
 
@@ -21,6 +24,17 @@ from pathlib import Path
 # line. The lookbehind rejects identifier tails such as ``my_qed.`` (EC
 # identifiers may contain ``_`` and ``'``).
 _TRAILING_QED = re.compile(r"(?i)(?<![a-z0-9_'])qed\s*\.\s*$")
+
+
+def committed_prefix_identity(tactics: list[str] | tuple[str, ...]) -> str:
+    """Canonical SHA-256 identity used by manager and compiler input."""
+
+    encoded = json.dumps(
+        list(tactics),
+        ensure_ascii=False,
+        separators=(",", ":"),
+    ).encode("utf-8")
+    return hashlib.sha256(encoded).hexdigest()
 
 
 def history_path(session_dir: str | Path) -> Path:
@@ -65,6 +79,46 @@ def read_committed_tactics(session_dir: str | Path) -> list[str]:
     return [line.strip() for line in lines if line.strip()]
 
 
+def read_committed_commands(session_dir: str | Path) -> list[str]:
+    """Committed history as ``.``-terminated EasyCrypt commands, not lines.
+
+    A committed physical line can pack several sentences (``wp; skip. qed.``
+    is two commands); consumers that reason about command counts or per-
+    command shape need the sentence split, not the line split. Falls back to
+    the line reading when the splitter is unavailable; [] if unreadable.
+    """
+    path = history_path(session_dir)
+    try:
+        if not path.exists():
+            return []
+        text = path.read_text(encoding="utf-8", errors="replace")
+    except Exception:
+        return []
+    try:
+        from core.easycrypt.ec_daemon import _split_ec_commands
+        return [c.strip() for c in _split_ec_commands(text) if c.strip()]
+    except Exception:
+        return [line.strip() for line in text.splitlines() if line.strip()]
+
+
+def committed_history_has_qed(session_dir: str | Path) -> bool:
+    """Whether committed history contains a terminal ``qed`` command.
+
+    This module is the sole owner of history closure syntax, including compound
+    final lines such as ``TAC. qed.``. Projection and workflow layers must not
+    rederive the fact from physical lines.
+    """
+    return committed_tactics_have_qed(read_committed_tactics(session_dir))
+
+
+def committed_tactics_have_qed(tactics: list[str]) -> bool:
+    """Canonical closure-syntax predicate for an already-read tactic list."""
+    return any(
+        _is_standalone_qed(tactic)
+        for tactic in split_trailing_qed(list(tactics))
+    )
+
+
 def closed_history_tactics(session_dir: str | Path) -> list[str]:
     """The committed tactics IFF the proof is closed (a ``qed`` sentence
     exists — standalone line or embedded at the end of a compound final
@@ -73,6 +127,6 @@ def closed_history_tactics(session_dir: str | Path) -> list[str]:
     via ``split_trailing_qed`` so downstream qed handling sees a standalone
     ``qed.`` entry."""
     tactics = split_trailing_qed(read_committed_tactics(session_dir))
-    if any(_is_standalone_qed(ln) for ln in tactics):
+    if committed_tactics_have_qed(tactics):
         return tactics
     return []

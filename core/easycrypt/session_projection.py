@@ -1,11 +1,13 @@
 """Canonical proof-state projection for EasyCrypt sessions.
 
-This module is the read-only boundary that joins the three factual sources
-available for an interactive proof session:
+This module is the read-only boundary that joins the factual sources available
+for an interactive proof session:
 
 * ``current.out`` / ``prev.out`` via :mod:`session_state`
 * append-only JSONL session events via :mod:`session_events`
-* active-goal structure via :mod:`ec_goal_parser`
+The current managed L1/compiler-V2 path requests only exact goal text,
+canonical goal identity, status, history, and event consistency. It has no
+dependency on the removed Python proof-analysis or goal-parser pipeline.
 
 Consumers should prefer this projection when they need a consistent view of
 "where the proof is" instead of independently grepping EC text and event logs.
@@ -19,25 +21,21 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
-from core.easycrypt.analysis.ec_goal_parser import (
-    REMAINING_UNKNOWN as PARSER_REMAINING_UNKNOWN,
-    goal_to_json,
-    parse_goal,
+from core.easycrypt.committed_history import (
+    committed_tactics_have_qed,
+    history_path,
+    read_committed_tactics,
 )
-from core.easycrypt.analysis.ec_native_state import (
-    annotate_goal_fallback,
-    annotate_program_fallback,
-    goal_authority,
-    has_program_fields,
-    load_native_goal_fact,
-    load_native_program_fact,
-    merge_native_goal_fact,
-    merge_native_program_fact,
-    native_remaining,
-)
-from core.easycrypt.session_goal_context import (
-    extract_module_keywords,
-    scan_pr_bridge_lemmas,
+from core.easycrypt.proof_lifecycle import (
+    CLOSED_UNTRUSTED,
+    ERROR,
+    GOALS_DISCHARGED_PENDING_QED,
+    NO_CURRENT,
+    OPEN,
+    SESSION_CLOSED_PENDING_VERIFICATION,
+    UNKNOWN,
+    VERIFIED,
+    is_session_completion_candidate,
 )
 from core.easycrypt.session_events import (
     EVENTS_FILENAME,
@@ -48,11 +46,11 @@ from core.easycrypt.session_events import (
 from core.easycrypt.session_state import (
     REMAINING_UNKNOWN,
     SessionState,
+    extract_active_goal_block,
     read_session_state,
 )
 
 
-UNKNOWN = "unknown"
 _EC_PROMPT_LINE_RE = re.compile(r"(?m)^\[\d+\|[^\]\n]*\]>\s*$")
 
 
@@ -63,6 +61,10 @@ class HistoryProjection:
     tactic_count: int
     has_qed: bool
     latest_tactic: str = ""
+    # Exact content from the same read that produced tactic_count/has_qed.
+    # Kept internal to typed consumers; generic status serialization remains
+    # bounded and does not expose the proof spine.
+    tactics: tuple[str, ...] = field(default=(), repr=False)
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -86,8 +88,6 @@ class EventContractProjection:
     tactic_status_counts: dict[str, int] = field(default_factory=dict)
     candidate_closed: bool = False
     verification_status: str | None = None
-    latest_error: str = ""
-    latest_error_tactic: str = ""
     latest_attempt: dict[str, Any] = field(default_factory=dict)
     recent_failed_attempts: list[dict[str, Any]] = field(default_factory=list)
 
@@ -103,10 +103,88 @@ class EventContractProjection:
             "tactic_status_counts": dict(self.tactic_status_counts),
             "candidate_closed": self.candidate_closed,
             "verification_status": self.verification_status,
-            "latest_error": self.latest_error,
-            "latest_error_tactic": self.latest_error_tactic,
             "latest_attempt": dict(self.latest_attempt),
             "recent_failed_attempts": list(self.recent_failed_attempts),
+        }
+
+
+@dataclass(frozen=True)
+class CandidateCloseAuthorityProjection:
+    """Exact event occurrence authorizing the current closed candidate.
+
+    Aggregate event history is useful telemetry, but it cannot say whether an
+    old close still describes the current state.  This record binds either the
+    latest tactic result directly to its adjacent ``proof.candidate_closed``
+    event, or a saved ``qed.`` result to the immediately preceding certified
+    close occurrence.
+    """
+
+    kind: str = "none"
+    close_result_event_id: str = ""
+    close_event_id: str = ""
+    terminal_event_id: str = ""
+    close_result_sequence: int = 0
+    close_event_sequence: int = 0
+    terminal_event_sequence: int = 0
+
+    def __post_init__(self) -> None:
+        if self.kind not in {
+            "none",
+            "direct_close",
+            "post_qed_preserved_close",
+            "undo_restored_close",
+        }:
+            raise ValueError("unsupported candidate-close authority kind")
+        identities = (
+            self.close_result_event_id,
+            self.close_event_id,
+            self.terminal_event_id,
+        )
+        sequences = (
+            self.close_result_sequence,
+            self.close_event_sequence,
+            self.terminal_event_sequence,
+        )
+        if self.kind == "none":
+            if any(identities) or any(sequences):
+                raise ValueError(
+                    "absent candidate-close authority carries an occurrence"
+                )
+            return
+        if any(type(value) is not str or not value for value in identities):
+            raise ValueError("candidate-close authority requires event identities")
+        if any(type(value) is not int or value <= 0 for value in sequences):
+            raise ValueError("candidate-close authority requires event sequences")
+        if self.close_event_sequence != self.close_result_sequence + 1:
+            raise ValueError("candidate-close result and close event must be adjacent")
+        if self.kind == "direct_close" and (
+            self.terminal_event_id != self.close_result_event_id
+            or self.terminal_event_sequence != self.close_result_sequence
+        ):
+            raise ValueError("direct close authority has the wrong terminal event")
+        if self.kind in {"post_qed_preserved_close", "undo_restored_close"} and (
+            self.terminal_event_sequence <= self.close_event_sequence
+        ):
+            raise ValueError("preserved close authority has the wrong event order")
+
+    @property
+    def authoritative(self) -> bool:
+        return self.kind in {
+            "direct_close",
+            "post_qed_preserved_close",
+            "undo_restored_close",
+        }
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "kind": self.kind,
+            "authoritative": self.authoritative,
+            "close_result_event_id": self.close_result_event_id,
+            "close_event_id": self.close_event_id,
+            "terminal_event_id": self.terminal_event_id,
+            "close_result_sequence": self.close_result_sequence,
+            "close_event_sequence": self.close_event_sequence,
+            "terminal_event_sequence": self.terminal_event_sequence,
         }
 
 
@@ -121,12 +199,12 @@ class GoalProjection:
     active_goal_hash: str
     active_goal_preview: str
     fact_source: str = "pretty_goal_text"
-    authority: str = "pretty_text_fallback"
+    authority: str = "display_only_text_projection"
     authority_rank: int = 10
-    ec_ground_truth: bool = False
-    native_artifact: str = ""
-    parser_error: str = ""
-    parsed_goal: dict[str, Any] = field(default_factory=dict)
+
+    def __post_init__(self) -> None:
+        if self.proof_candidate_closed and self.active_goal_hash:
+            raise ValueError("closed GoalProjection cannot carry active_goal_hash")
 
     def to_dict(self, *, include_raw: bool = False, raw_text: str = "") -> dict[str, Any]:
         data = {
@@ -141,18 +219,34 @@ class GoalProjection:
             "fact_source": self.fact_source,
             "authority": self.authority,
             "authority_rank": self.authority_rank,
-            "ec_ground_truth": self.ec_ground_truth,
-            "native_artifact": self.native_artifact,
-            "parser_error": self.parser_error,
-            "parsed_goal": dict(self.parsed_goal),
         }
         if include_raw:
             data["active_goal_text"] = raw_text
         return data
 
+    def to_display_dict(
+        self,
+        *,
+        include_raw: bool = False,
+        raw_text: str = "",
+    ) -> dict[str, Any]:
+        """Return goal presentation fields without duplicating identity.
+
+        ``ProofStateProjection.goal.active_goal_hash`` is the identity owner.
+        Display projections deliberately omit that field so a downstream
+        consumer cannot accidentally promote a presentation alias into a
+        second authority path.
+        """
+
+        data = self.to_dict(include_raw=include_raw, raw_text=raw_text)
+        data.pop("active_goal_hash", None)
+        return data
+
 
 @dataclass(frozen=True)
 class TransitionProjection:
+    """Latest transition effect classification, not candidate-close authority."""
+
     kind: str
     tactic: str = ""
     status: str = ""
@@ -199,30 +293,67 @@ class ConsistencyProjection:
 class ProofStateProjection:
     session_dir: str
     status: str
-    candidate_ready: bool
-    final_ready: bool
+    goals_discharged: bool
+    offline_verified: bool
     history: HistoryProjection
     events: EventContractProjection
+    candidate_close_authority: CandidateCloseAuthorityProjection
     goal: GoalProjection
     latest_transition: TransitionProjection
     consistency: ConsistencyProjection
+    active_goal_text: str
+    # The exact parsed records used for `events`, retained for workflow
+    # telemetry/artifact adapters so they do not reread a moving JSONL file.
+    # Deliberately omitted from `to_dict()`.
+    source_events: tuple[dict[str, Any], ...] = field(
+        default=(),
+        repr=False,
+        compare=False,
+    )
+
+    @property
+    def goal_identity_required(self) -> bool:
+        """Whether this exact EC snapshot has an active goal to identify.
+
+        Candidate readiness additionally requires a valid event occurrence.
+        Goal identity does not: ``No more goals`` in this exact state means
+        there is no active goal hash, even when the event contract is missing
+        and the candidate therefore cannot cross a managed commit boundary.
+        """
+
+        return not self.goal.proof_candidate_closed
+
+    @property
+    def qed_committed(self) -> bool:
+        """Whether this exact discharged state has committed close syntax."""
+
+        return bool(self.goals_discharged and self.history.has_qed)
+
+    @property
+    def session_completion_candidate(self) -> bool:
+        """Whether this session may cross the tree/finalization boundary."""
+
+        return bool(
+            self.qed_committed
+            and is_session_completion_candidate(self.status)
+        )
 
     def to_dict(
         self,
         *,
         include_raw: bool = False,
-        active_goal_text: str = "",
     ) -> dict[str, Any]:
         return {
             "session_dir": self.session_dir,
             "status": self.status,
-            "candidate_ready": self.candidate_ready,
-            "final_ready": self.final_ready,
+            "goals_discharged": self.goals_discharged,
+            "offline_verified": self.offline_verified,
             "history": self.history.to_dict(),
             "events": self.events.to_dict(),
+            "candidate_close_authority": self.candidate_close_authority.to_dict(),
             "goal": self.goal.to_dict(
                 include_raw=include_raw,
-                raw_text=active_goal_text,
+                raw_text=self.active_goal_text,
             ),
             "latest_transition": self.latest_transition.to_dict(),
             "consistency": self.consistency.to_dict(),
@@ -235,6 +366,7 @@ def read_proof_state_projection(
     current_path: str | Path | None = None,
     previous_path: str | Path | None = None,
     live_tool_name: str | None = None,
+    infer_live_tool_name: bool = False,
 ) -> ProofStateProjection:
     """Read a session directory into one canonical proof-state projection."""
     path = Path(session_dir)
@@ -244,36 +376,48 @@ def read_proof_state_projection(
         Path(previous_path) if previous_path is not None else None,
     )
     events, event_json_errors = _read_events_strict(path / EVENTS_FILENAME)
-    contract_events = _without_live_tool_called(events, live_tool_name)
-    history = _read_history(path / "history.ec")
+    effective_live_tool_name = live_tool_name
+    if effective_live_tool_name is None and infer_live_tool_name:
+        effective_live_tool_name = _pending_tool_name(events)
+    contract_events = _without_live_tool_called(
+        events,
+        effective_live_tool_name,
+    )
+    history = _read_history(path)
     event_projection = _build_event_projection(
         path / EVENTS_FILENAME,
         contract_events,
         event_json_errors,
     )
     transition = _build_latest_transition(contract_events)
+    close_authority = _build_candidate_close_authority(
+        contract_events,
+        transition=transition,
+        history=history,
+    )
     goal_projection = _build_goal_projection(state)
     goal_projection = _normalize_post_qed_goal_projection(
         goal_projection,
         history=history,
-        events=event_projection,
+        close_authority=close_authority,
         transition=transition,
+        event_contract_ok=event_projection.ok,
     )
     consistency = _build_consistency(
         state=state,
         history=history,
         events=event_projection,
+        close_authority=close_authority,
         goal=goal_projection,
         transition=transition,
     )
-    candidate_ready = bool(
+    goals_discharged = bool(
         event_projection.ok
-        and event_projection.candidate_closed
-        and (goal_projection.proof_candidate_closed or history.has_qed)
+        and close_authority.authoritative
         and consistency.ok
     )
-    final_ready = bool(
-        candidate_ready
+    offline_verified = bool(
+        goals_discharged
         and event_projection.verification_status == "pass"
     )
     status = _project_status(
@@ -281,65 +425,33 @@ def read_proof_state_projection(
         events=event_projection,
         transition=transition,
         history=history,
-        final_ready=final_ready,
+        goals_discharged=goals_discharged,
+        offline_verified=offline_verified,
     )
     return ProofStateProjection(
         session_dir=str(path.resolve()),
         status=status,
-        candidate_ready=candidate_ready,
-        final_ready=final_ready,
+        goals_discharged=goals_discharged,
+        offline_verified=offline_verified,
         history=history,
         events=event_projection,
+        candidate_close_authority=close_authority,
         goal=goal_projection,
         latest_transition=transition,
         consistency=consistency,
+        active_goal_text=state.raw_for_goal_tools,
+        source_events=tuple(events),
     )
 
 
-def projection_to_dict(
-    session_dir: str | Path,
-    *,
-    include_raw: bool = False,
-    live_tool_name: str | None = None,
-) -> dict[str, Any]:
-    """Convenience JSON-ready wrapper around :func:`read_proof_state_projection`."""
-    projection = read_proof_state_projection(
-        session_dir,
-        live_tool_name=live_tool_name,
-    )
-    active_goal_text = ""
-    if include_raw:
-        state = read_session_state(Path(session_dir))
-        active_goal_text = state.raw_for_goal_tools
-    return projection.to_dict(
-        include_raw=include_raw,
-        active_goal_text=active_goal_text,
-    )
-
-
-def projection_to_goal_info(projection: ProofStateProjection) -> dict[str, Any]:
-    """Compact projection payload safe to embed in ``-goal-info`` JSON."""
-    # bd-hoare/phoare: surface the post + probability BOUND explicitly so a phoare
-    # goal is never reported as a bound-less hoare `post = true` (PBound audit).
-    _pg = projection.goal.parsed_goal if isinstance(projection.goal.parsed_goal, dict) else {}
-    _phoare_extra: dict[str, Any] = {}
-    if _pg.get("goal_type") == "phoare":
-        if _pg.get("phoare_bound"):
-            _phoare_extra["phoare_bound"] = _pg["phoare_bound"]
-        if _pg.get("post"):
-            _phoare_extra["post"] = _pg["post"]
-    elif _pg.get("goal_type") == "hoare":
-        # a literally-`true` postcondition is a REAL trivial obligation, distinct
-        # from a parse failure that left the post empty — surface it so the agent
-        # trusts it (and reaches for `auto`/`trivial`, not `smt`/`bypr`).
-        if _pg.get("post"):
-            _phoare_extra["post"] = _pg["post"]
-        if _pg.get("trivial_postcondition"):
-            _phoare_extra["trivial_postcondition"] = True
+def projection_to_proof_status(projection: ProofStateProjection) -> dict[str, Any]:
+    """Compact current proof/session status for typed artifacts."""
     return {
         "status": projection.status,
-        "candidate_ready": projection.candidate_ready,
-        "final_ready": projection.final_ready,
+        "goals_discharged": projection.goals_discharged,
+        "qed_committed": projection.qed_committed,
+        "offline_verified": projection.offline_verified,
+        "goal_identity_required": projection.goal_identity_required,
         "goal": {
             "state_kind": projection.goal.state_kind,
             "goal_type": projection.goal.goal_type,
@@ -354,15 +466,15 @@ def projection_to_goal_info(projection: ProofStateProjection) -> dict[str, Any]:
             "fact_source": projection.goal.fact_source,
             "authority": projection.goal.authority,
             "authority_rank": projection.goal.authority_rank,
-            "ec_ground_truth": projection.goal.ec_ground_truth,
-            "native_artifact": projection.goal.native_artifact,
-            **_phoare_extra,
         },
         "history": {
             "tactic_count": projection.history.tactic_count,
             "has_qed": projection.history.has_qed,
             "latest_tactic": projection.history.latest_tactic,
         },
+        "candidate_close_authority": (
+            projection.candidate_close_authority.to_dict()
+        ),
         "latest_transition": projection.latest_transition.to_dict(),
         "event_contract": {
             "ok": projection.events.ok,
@@ -372,8 +484,6 @@ def projection_to_goal_info(projection: ProofStateProjection) -> dict[str, Any]:
             "verification_status": projection.events.verification_status,
             "error_count": len(projection.events.errors),
             "warning_count": len(projection.events.warnings),
-            "latest_error": projection.events.latest_error,
-            "latest_error_tactic": projection.events.latest_error_tactic,
             "latest_attempt": dict(projection.events.latest_attempt),
             "recent_failed_attempts": list(
                 projection.events.recent_failed_attempts[:5]
@@ -393,7 +503,8 @@ def projection_to_goal_info(projection: ProofStateProjection) -> dict[str, Any]:
     }
 
 
-def _read_history(path: Path) -> HistoryProjection:
+def _read_history(session_dir: Path) -> HistoryProjection:
+    path = history_path(session_dir)
     if not path.exists():
         return HistoryProjection(
             path=str(path),
@@ -401,19 +512,27 @@ def _read_history(path: Path) -> HistoryProjection:
             tactic_count=0,
             has_qed=False,
         )
-    lines = [
-        line.strip()
-        for line in path.read_text(encoding="utf-8", errors="replace").splitlines()
-        if line.strip()
-    ]
-    has_qed = any(line.lower().rstrip(".").strip() == "qed" for line in lines)
+    lines = read_committed_tactics(session_dir)
     return HistoryProjection(
         path=str(path),
         exists=True,
         tactic_count=len(lines),
-        has_qed=has_qed,
+        has_qed=committed_tactics_have_qed(lines),
         latest_tactic=lines[-1] if lines else "",
+        tactics=tuple(lines),
     )
+
+
+def _pending_tool_name(events: list[dict[str, Any]]) -> str | None:
+    pending: dict[str, Any] | None = None
+    for event in events:
+        if event.get("type") == "tool.called":
+            pending = event_payload(event)
+        elif event.get("type") == "tool.result":
+            pending = None
+    if pending is None:
+        return None
+    return str(pending.get("name") or "") or None
 
 
 def _read_events_strict(path: Path) -> tuple[list[dict[str, Any]], list[str]]:
@@ -453,14 +572,15 @@ def _without_live_tool_called(
     1. the CURRENT live tool's own in-flight call (a projection built inside the
        handler, before its ``tool.result`` is emitted — mutating handlers can also
        build a post-commit view before their final ``tool.result``);
-    2. a READ-ONLY action (e.g. a ``try`` probe, ``goal-info``, ``tactic-forms``)
+    2. a READ-ONLY action (for example an exact tactic preflight or native
+       compiler projection)
        whose handler raised or was killed between the two emits (the exception path
        re-raises without emitting ``tool.result``), leaving a stale dangling call
        that poisons the NEXT commit's contract — the observed "probe accepted,
        commit rejected (event contract is not valid)" MISLABEL of a successful
        commit.
 
-    A dangling MUTATING call (``next``/``chain``/``prev``) is genuine and still
+    A dangling MUTATING call is genuine and still
     fails closed (here and at the authoritative qed gate). We key on the
     ``mutates_proof_state`` flag the event already carries (not a name list), so new
     read-only actions heal automatically; a missing flag defaults to mutating
@@ -520,8 +640,6 @@ def _build_event_projection(
         tactic_status_counts=summary.tactic_status_counts,
         candidate_closed=summary.candidate_closed_count > 0,
         verification_status=summary.verification_status,
-        latest_error=summary.latest_error.error,
-        latest_error_tactic=summary.latest_error.tactic,
         latest_attempt=(
             summary.latest_attempt.to_dict()
             if summary.latest_attempt is not None else {}
@@ -533,7 +651,9 @@ def _build_event_projection(
     )
 
 
-def _build_goal_projection(state: SessionState) -> GoalProjection:
+def _build_goal_projection(
+    state: SessionState,
+) -> GoalProjection:
     if not state.has_current:
         return GoalProjection(
             has_current=False,
@@ -547,71 +667,29 @@ def _build_goal_projection(state: SessionState) -> GoalProjection:
         )
 
     raw = state.raw_for_goal_tools
-    hash_text = _canonical_goal_hash_text(raw)
-    active_hash = hashlib.sha1(hash_text.encode("utf-8", errors="replace")).hexdigest()
-    parsed: dict[str, Any] = {}
-    parser_error = ""
-    parser_remaining = PARSER_REMAINING_UNKNOWN
-    parser_goal_type = UNKNOWN
-    try:
-        info = parse_goal(raw)
-        parsed = goal_to_json(
-            info,
-            pr_rewrite_candidates=(
-                _projection_pr_rewrite_candidates(state, info, raw) or None
-            ),
-        )
-        parser_remaining = info.num_remaining
-        parser_goal_type = parsed.get("goal_type") or info.goal_type or UNKNOWN
-    except Exception as exc:
-        parser_error = f"{type(exc).__name__}: {exc}"
+    active_hash = active_goal_hash_from_raw(raw)
+    _, raw_remaining = extract_active_goal_block(raw)
 
-    parsed = annotate_goal_fallback(parsed)
-    native_goal = load_native_goal_fact(state.session_dir, active_hash)
-    if native_goal:
-        parsed = merge_native_goal_fact(parsed, native_goal)
-    native_program = load_native_program_fact(state.session_dir, active_hash)
-    if not native_program and native_goal and has_program_fields(native_goal):
-        native_program = native_goal
-    if native_program:
-        parsed = merge_native_program_fact(parsed, native_program)
-    else:
-        parsed = annotate_program_fallback(parsed)
-
-    native_count, native_count_determined = native_remaining(parsed)
-    if native_count_determined:
-        num_remaining = native_count
-        determined = True
-    elif state.num_remaining == REMAINING_UNKNOWN:
+    if state.num_remaining == REMAINING_UNKNOWN:
         num_remaining = None
         determined = False
     else:
         num_remaining = state.num_remaining
         determined = True
 
-    proof_closed = bool(state.proof_candidate_closed)
-    if parsed.get("ec_ground_truth") and "proof_candidate_closed" in parsed:
-        proof_closed = bool(parsed.get("proof_candidate_closed"))
+    proof_closed = bool(state.proof_candidate_closed or raw_remaining == 0)
+    if proof_closed:
+        num_remaining = 0
+        determined = True
     if proof_closed:
         state_kind = "candidate_closed"
         goal_type = "complete"
     elif not determined:
-        state_kind = str(parsed.get("state_kind") or UNKNOWN)
-        goal_type = str(parsed.get("goal_type") or parser_goal_type or UNKNOWN)
+        state_kind = UNKNOWN
+        goal_type = UNKNOWN
     else:
-        state_kind = str(parsed.get("state_kind") or "open")
-        goal_type = str(parsed.get("goal_type") or parser_goal_type or UNKNOWN)
-
-    if parser_remaining != PARSER_REMAINING_UNKNOWN:
-        parsed.setdefault("parser_num_remaining", parser_remaining)
-    parsed.setdefault("state_num_remaining", num_remaining)
-    if native_count_determined:
-        parsed.setdefault("native_num_remaining", native_count)
-        parsed["num_remaining"] = native_count
-        parsed["num_remaining_determined"] = True
-
-    authority = goal_authority(parsed)
-
+        state_kind = "open"
+        goal_type = UNKNOWN
     return GoalProjection(
         has_current=True,
         state_kind=state_kind,
@@ -621,13 +699,9 @@ def _build_goal_projection(state: SessionState) -> GoalProjection:
         proof_candidate_closed=proof_closed,
         active_goal_hash=active_hash,
         active_goal_preview=_preview(raw),
-        fact_source=authority["fact_source"],
-        authority=authority["authority"],
-        authority_rank=authority["authority_rank"],
-        ec_ground_truth=authority["ec_ground_truth"],
-        native_artifact=authority["native_artifact"],
-        parser_error=parser_error,
-        parsed_goal=parsed,
+        fact_source="pretty_goal_text",
+        authority="display_only_text_projection",
+        authority_rank=10,
     )
 
 
@@ -642,68 +716,33 @@ def _canonical_goal_hash_text(raw: str) -> str:
     return _EC_PROMPT_LINE_RE.sub("", str(raw or "")).rstrip()
 
 
-def _projection_pr_rewrite_candidates(
-    state: SessionState,
-    info: Any,
-    raw_goal: str,
-) -> list[dict[str, Any]]:
-    if getattr(info, "goal_type", "") != "probability":
-        return []
-    if getattr(info, "prob_form", "") not in {
-        "eq", "ineq", "diff_eq", "compound",
-        "adv_eq", "adv_diff_ineq", "adv_ineq",
-    }:
-        return []
-    keywords = extract_module_keywords(info)
-    if not keywords:
-        return []
+def active_goal_hash_from_raw(raw: str) -> str:
+    """Return the canonical active-goal identity used by projections.
 
-    session_dir = Path(state.session_dir)
-    search_dirs: list[Path] = []
-    include_file = session_dir / "include_dirs.txt"
-    try:
-        for line in include_file.read_text(encoding="utf-8").splitlines():
-            path = Path(line.strip())
-            if path.is_dir() and path not in search_dirs:
-                search_dirs.append(path)
-    except Exception:
-        pass
-
-    active_lemma = ""
-    source_file: Path | None = None
-    meta_path = session_dir / "session_meta.json"
-    try:
-        meta = json.loads(meta_path.read_text(encoding="utf-8")) if meta_path.exists() else {}
-        active_lemma = str(meta.get("lemma") or "")
-        raw_source = meta.get("file") or meta.get("source_file")
-        if raw_source:
-            source_file = Path(str(raw_source)).expanduser().resolve()
-            if source_file.parent.is_dir() and source_file.parent not in search_dirs:
-                search_dirs.append(source_file.parent)
-    except Exception:
-        source_file = None
-
-    if not search_dirs:
-        return []
-    context_file = session_dir / "context.ec"
-    search_files = [context_file] if context_file.exists() else []
-    return scan_pr_bridge_lemmas(
-        search_dirs,
-        keywords,
-        goal_text=raw_goal,
-        search_files=search_files,
-        allow_local_files=search_files,
-        excluded_names={active_lemma} if active_lemma else set(),
-        excluded_files={source_file} if source_file else set(),
-    )
+    Resume and daemon-continuity code occasionally has only the raw EasyCrypt
+    goal response available.  Keeping that fallback on this public helper
+    prevents those paths from silently inventing a second hash algorithm or
+    hashing volatile prompt text.
+    """
+    raw_text = str(raw or "")
+    active_goal, remaining = extract_active_goal_block(raw_text)
+    if remaining == 0:
+        return ""
+    canonical = _canonical_goal_hash_text(active_goal or raw_text)
+    if not canonical.strip():
+        return ""
+    return hashlib.sha1(
+        canonical.encode("utf-8", errors="replace")
+    ).hexdigest()
 
 
 def _normalize_post_qed_goal_projection(
     goal: GoalProjection,
     *,
     history: HistoryProjection,
-    events: EventContractProjection,
+    close_authority: CandidateCloseAuthorityProjection,
     transition: TransitionProjection,
+    event_contract_ok: bool,
 ) -> GoalProjection:
     """Treat a saved ``qed.`` prompt as a closed proof candidate.
 
@@ -714,28 +753,15 @@ def _normalize_post_qed_goal_projection(
     not see a misleading ambient/unknown goal after finishing a proof.
     """
     if not (
-        history.has_qed
-        and events.candidate_closed
-        and transition.kind in {"qed_saved", "closed"}
+        event_contract_ok
+        and history.has_qed
+        and close_authority.authoritative
+        and transition.kind in {"qed_saved", "closed", "undo"}
         and not goal.proof_candidate_closed
         and not goal.num_remaining_determined
     ):
         return goal
 
-    parsed = {
-        "goal_type": "complete",
-        "num_remaining": 0,
-        "num_remaining_determined": True,
-        "parser_num_remaining": 0,
-        "state_num_remaining": 0,
-        "post_qed_projection": True,
-        "fact_source": "session_event_projection",
-        "authority": "event_contract_projection",
-        "authority_rank": 80,
-        "ec_ground_truth": False,
-        "native_artifact": "",
-        "warnings": [],
-    }
     return GoalProjection(
         has_current=goal.has_current,
         state_kind="candidate_closed",
@@ -743,17 +769,167 @@ def _normalize_post_qed_goal_projection(
         num_remaining=0,
         num_remaining_determined=True,
         proof_candidate_closed=True,
-        active_goal_hash=goal.active_goal_hash,
+        active_goal_hash="",
         active_goal_preview=(
             "No active goal: proof candidate was closed and `qed.` was saved."
         ),
         fact_source="session_event_projection",
         authority="event_contract_projection",
         authority_rank=80,
-        ec_ground_truth=False,
-        native_artifact="",
-        parser_error=goal.parser_error,
-        parsed_goal=parsed,
+    )
+
+
+def _build_candidate_close_authority(
+    events: list[dict[str, Any]],
+    *,
+    transition: TransitionProjection,
+    history: HistoryProjection,
+) -> CandidateCloseAuthorityProjection:
+    """Bind candidate closure to the exact current terminal occurrence."""
+
+    semantic_indices = [
+        index
+        for index, event in enumerate(events)
+        if event.get("type") in {"tactic.result", "tactic.undone"}
+    ]
+    if not semantic_indices:
+        return CandidateCloseAuthorityProjection()
+    latest_index = semantic_indices[-1]
+    latest_event = events[latest_index]
+    if latest_event.get("type") == "tactic.undone":
+        return _undo_restored_close_authority(
+            events,
+            semantic_indices=semantic_indices,
+            undo_index=latest_index,
+            history=history,
+        )
+    if latest_event.get("type") != "tactic.result":
+        return CandidateCloseAuthorityProjection()
+
+    direct_close = _paired_candidate_close(events, latest_index)
+    if direct_close is not None and transition.kind == "closed":
+        return _candidate_close_authority(
+            events,
+            result_index=latest_index,
+            close_index=direct_close,
+            terminal_index=latest_index,
+            kind="direct_close",
+        )
+
+    if transition.kind != "qed_saved" or not history.has_qed:
+        return CandidateCloseAuthorityProjection()
+    prior_indices = [index for index in semantic_indices if index < latest_index]
+    if not prior_indices:
+        return CandidateCloseAuthorityProjection()
+    prior_index = prior_indices[-1]
+    if events[prior_index].get("type") != "tactic.result":
+        return CandidateCloseAuthorityProjection()
+    prior_close = _paired_candidate_close(events, prior_index)
+    if prior_close is None:
+        return CandidateCloseAuthorityProjection()
+    return _candidate_close_authority(
+        events,
+        result_index=prior_index,
+        close_index=prior_close,
+        terminal_index=latest_index,
+        kind="post_qed_preserved_close",
+    )
+
+
+def _undo_restored_close_authority(
+    events: list[dict[str, Any]],
+    *,
+    semantic_indices: list[int],
+    undo_index: int,
+    history: HistoryProjection,
+) -> CandidateCloseAuthorityProjection:
+    """Recognize one failed extra closer that was exactly undone.
+
+    A closed compound command can be followed by a rejected standalone
+    ``qed.`` which is nevertheless appended to history, then by one manager
+    undo restoring the prior history. The undo is authoritative only when it
+    names that exact intervening failed command and the resulting history is
+    again closed; broader rewind histories fail closed.
+    """
+    if not history.has_qed:
+        return CandidateCloseAuthorityProjection()
+    undo_payload = event_payload(events[undo_index])
+    if str(undo_payload.get("status") or "") != "ok":
+        return CandidateCloseAuthorityProjection()
+    undone_tactic = str(undo_payload.get("undone_tactic") or "").strip()
+    remaining_steps = _as_optional_int(undo_payload.get("remaining_steps"))
+    if not undone_tactic or remaining_steps != history.tactic_count:
+        return CandidateCloseAuthorityProjection()
+    prior_semantics = [index for index in semantic_indices if index < undo_index]
+    if len(prior_semantics) < 2:
+        return CandidateCloseAuthorityProjection()
+    rejected_index = prior_semantics[-1]
+    rejected = event_payload(events[rejected_index])
+    if (
+        events[rejected_index].get("type") != "tactic.result"
+        or str(rejected.get("status") or "") != "error"
+        or str(rejected.get("tactic") or "").strip() != undone_tactic
+    ):
+        return CandidateCloseAuthorityProjection()
+    close_result_index = prior_semantics[-2]
+    close_index = _paired_candidate_close(events, close_result_index)
+    if close_index is None:
+        return CandidateCloseAuthorityProjection()
+    return _candidate_close_authority(
+        events,
+        result_index=close_result_index,
+        close_index=close_index,
+        terminal_index=undo_index,
+        kind="undo_restored_close",
+    )
+
+
+def _paired_candidate_close(
+    events: list[dict[str, Any]],
+    result_index: int,
+) -> int | None:
+    result_payload = event_payload(events[result_index])
+    if (
+        events[result_index].get("type") != "tactic.result"
+        or result_payload.get("status") != "ok"
+        or result_payload.get("candidate_closed") is not True
+    ):
+        return None
+    close_index = result_index + 1
+    if close_index >= len(events):
+        return None
+    close = events[close_index]
+    if close.get("type") != "proof.candidate_closed":
+        return None
+    close_payload = event_payload(close)
+    result_tactic = str(result_payload.get("tactic") or "").strip()
+    close_tactic = str(close_payload.get("tactic") or "").strip()
+    if not result_tactic or not close_tactic or result_tactic != close_tactic:
+        return None
+    return close_index
+
+
+def _candidate_close_authority(
+    events: list[dict[str, Any]],
+    *,
+    result_index: int,
+    close_index: int,
+    terminal_index: int,
+    kind: str,
+) -> CandidateCloseAuthorityProjection:
+    result_id = str(events[result_index].get("event_id") or "")
+    close_id = str(events[close_index].get("event_id") or "")
+    terminal_id = str(events[terminal_index].get("event_id") or "")
+    if not result_id or not close_id or not terminal_id:
+        return CandidateCloseAuthorityProjection()
+    return CandidateCloseAuthorityProjection(
+        kind=kind,
+        close_result_event_id=result_id,
+        close_event_id=close_id,
+        terminal_event_id=terminal_id,
+        close_result_sequence=result_index + 1,
+        close_event_sequence=close_index + 1,
+        terminal_event_sequence=terminal_index + 1,
     )
 
 
@@ -851,6 +1027,7 @@ def _build_consistency(
     state: SessionState,
     history: HistoryProjection,
     events: EventContractProjection,
+    close_authority: CandidateCloseAuthorityProjection,
     goal: GoalProjection,
     transition: TransitionProjection,
 ) -> ConsistencyProjection:
@@ -858,8 +1035,6 @@ def _build_consistency(
     warnings: list[str] = []
     notes: list[str] = []
 
-    if goal.parser_error:
-        warnings.append(f"goal parser failed: {goal.parser_error}")
     state_is_determined_open = (
         state.has_current
         and goal.num_remaining_determined
@@ -876,28 +1051,17 @@ def _build_consistency(
         notes.append(
             "history contains qed and current EC state is indeterminate",
         )
-    if events.candidate_closed and state_is_determined_open:
+    current_event_closed = close_authority.authoritative
+    if current_event_closed and state_is_determined_open:
         errors.append("event log says candidate_closed but current EC state is open")
-    elif events.candidate_closed and state_is_indeterminate:
+    elif current_event_closed and state_is_indeterminate:
         notes.append(
             "event log says candidate_closed and current EC state is indeterminate",
         )
-    if state.proof_candidate_closed and events.exists and not events.candidate_closed:
+    if goal.proof_candidate_closed and events.exists and not current_event_closed:
         warnings.append("current EC state is closed but event log has no candidate close")
-    if state.proof_candidate_closed and not events.exists:
+    if goal.proof_candidate_closed and not events.exists:
         warnings.append("current EC state is closed but event log is missing")
-
-    parser_remaining = goal.parsed_goal.get("parser_num_remaining")
-    if (
-        isinstance(parser_remaining, int)
-        and goal.num_remaining_determined
-        and goal.num_remaining is not None
-        and parser_remaining != goal.num_remaining
-    ):
-        errors.append(
-            "session_state remaining count differs from goal parser "
-            f"({goal.num_remaining} != {parser_remaining})",
-        )
 
     if (
         transition.goals_after is not None
@@ -925,25 +1089,26 @@ def _project_status(
     events: EventContractProjection,
     transition: TransitionProjection,
     history: HistoryProjection,
-    final_ready: bool,
+    goals_discharged: bool,
+    offline_verified: bool,
 ) -> str:
-    if final_ready:
-        return "verified"
-    if events.candidate_closed and history.has_qed:
-        return "candidate_closed"
+    if offline_verified:
+        return VERIFIED
+    if goals_discharged:
+        return (
+            SESSION_CLOSED_PENDING_VERIFICATION
+            if history.has_qed
+            else GOALS_DISCHARGED_PENDING_QED
+        )
     if goal.proof_candidate_closed:
-        return "candidate_closed"
+        return CLOSED_UNTRUSTED
     if not goal.has_current:
-        return "no_current"
-    # ``events.latest_error`` is a historical audit field: it records the most
-    # recent failed tactic anywhere in the stream.  A later accepted tactic must
-    # return the proof to ``open`` while the old failure remains available via
-    # ``latest_errors`` with temporal_scope=prior_attempt.
-    if events.latest_error and transition.kind == "error":
-        return "error"
+        return NO_CURRENT
+    if transition.latest_error and transition.kind == "error":
+        return ERROR
     if goal.state_kind == UNKNOWN:
         return UNKNOWN
-    return "open"
+    return OPEN
 
 
 def _preview(raw: str, limit: int = 1200) -> str:

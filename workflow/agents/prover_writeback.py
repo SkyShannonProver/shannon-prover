@@ -14,8 +14,9 @@ import json
 import os
 import re
 import subprocess
+from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Optional
+from typing import TYPE_CHECKING, Any, Optional
 from core.easycrypt.committed_history import (
     closed_history_tactics,
     read_committed_tactics,
@@ -30,117 +31,73 @@ from workflow.agents.ec_services import (
 
 logger = logging.getLogger("workflow.agents.prover")
 
+if TYPE_CHECKING:
+    from workflow.proof_acceptance import EventContractGate
+    from workflow.tree.result import SessionClosureCandidate
+
 _PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
 
 _EC_SPINNER_RE = re.compile(r'^\[[-\\|/]\]\s+\[\d+\]\s+\d+\.\d+%')
 _ADMIT_TOKEN_RE = re.compile(r"(?<!\w)admit\.", re.IGNORECASE)
 
 
-def _extract_tactics_from_session(
-    lemma_name: str,
-    parallelism: int,
-    output_text: str,
-    preferred_session_dir: str | Path | None = None,
-    *,
-    scan_project_sessions: bool = True,
+@dataclass(frozen=True)
+class ProofVerificationEvidence:
+    """Mechanical finalization evidence consumed by the run-level owner."""
+
+    status: str
+    method: str = ""
+    event_contract: "EventContractGate | None" = None
+    error: str = ""
+
+    def __post_init__(self) -> None:
+        if self.status not in {"pass", "fail"}:
+            raise ValueError("unsupported proof verification status")
+
+    @property
+    def passed(self) -> bool:
+        return self.status == "pass"
+
+
+def _extract_tactics_from_candidate(
+    candidate: "SessionClosureCandidate | None",
 ) -> list[str]:
-    """Extract the accepted tactic list from the prover session.
+    """Return only the exact tree candidate's validated committed history.
 
-    Prefers manager-owned session history files (exact per-tactic lines from
-    the EC session — ground truth). Falls back to parsing the "PROOF TACTICS:"
-    marker in the prover's output text (which may compress multiple tactics
-    onto one line, causing poor formatting when written to the .ec file).
-
-    ``scan_project_sessions`` gates the fallback that globs sibling
-    ``.ec_session_prover_*`` dirs under ``_PROJECT_ROOT``; tests disable it so
-    they stay hermetic against leftover session dirs in the working tree (see
-    the matching flag on ``_extract_partial_tactics_from_session``).
+    The immutable candidate is the only semantic handoff from tree search.
+    Missing, drifted, or non-qed history fails closed. Sibling sessions, mutable
+    function attributes, and agent prose are intentionally not recovery sources.
     """
-    # Primary: session history files (one tactic per line, ground truth)
-    if preferred_session_dir:
-        session_dir = Path(preferred_session_dir)
-        tactics = closed_history_tactics(session_dir)
-        if tactics:
-            return tactics
-
-    # Check both racing-mode names (prover_LEMMA_N) and tree-mode names (prover_tree_N_M)
-    if scan_project_sessions:
-        safe_name = lemma_name.replace("'", "_prime")
-        session_patterns = [
-            f".ec_session_prover_{safe_name}_{i}" for i in range(max(1, parallelism))
-        ]
-        # Also glob for tree-mode sessions
-        for p in sorted(_PROJECT_ROOT.glob(".ec_session_prover_tree_*")):
-            if p.name not in session_patterns:
-                session_patterns.append(p.name)
-
-        for dirname in session_patterns:
-            session_dir = _PROJECT_ROOT / dirname if "/" not in dirname else Path(dirname)
-            tactics = closed_history_tactics(session_dir)
-            if tactics:
-                return tactics
-
-    # Fallback: parse output text for "PROOF TACTICS:" marker
-    # The prover may output tactics in markdown format; parsing is best-effort.
-    if output_text:
-        m = re.search(
-            r"\*{0,2}PROOF TACTICS:?\*{0,2}\s*(.+?)(?:\n\n|$)",
-            output_text,
-            re.DOTALL,
+    if candidate is None:
+        return []
+    try:
+        from workflow.proof_acceptance import (
+            validate_completion_candidate_contract,
         )
-        if m:
-            raw = m.group(1).strip()
-            # Strip markdown bold markers and backticks wrapping the whole block
-            raw = re.sub(r"^\*{1,2}\s*", "", raw)
-            raw = raw.strip("`").strip()
-            tactics = []
-            for line in raw.splitlines():
-                line = re.sub(r"^\d+\.\s*", "", line.strip())  # remove "1. " prefix
-                line = line.strip("`").strip()
-                # Strip residual markdown bold
-                line = re.sub(r"^\*{1,2}\s*", "", line)
-                line = re.sub(r"\s*\*{1,2}$", "", line)
-                # Keep indented tactic lines (+ prefix for subgoal bullets)
-                if line.startswith("+"):
-                    line = line[1:].strip()
-                if line and line.endswith("."):
-                    tactics.append(line)
-            # Split off trailing "qed." embedded in the last tactic
-            # e.g. "proc; islossless. qed." → ["proc; islossless.", "qed."]
-            if tactics:
-                return split_trailing_qed(tactics)
 
-    return []
+        candidate_gate = validate_completion_candidate_contract(candidate)
+    except Exception:
+        return []
+    if not candidate_gate.ok or not candidate_gate.completion_candidate_bound:
+        return []
+    return closed_history_tactics(Path(candidate.session_dir))
 
 
-def _extract_partial_tactics_from_session(
-    lemma_name: str,
-    parallelism: int,
+def _extract_partial_tactics_from_sessions(
     *,
-    preferred_session_dir: str | Path | None = None,
+    session_dirs: list[str] | tuple[str, ...],
     resume_capsules: list[str] | None = None,
-    scan_project_sessions: bool = True,
 ) -> list[str]:
     """Return the best replayable prefix even when no ``qed.`` exists.
 
     This is reporting-only: callers must not mark the proof as proved from this
     result.  It lets eval reports show how far an interrupted or failed run got.
     """
-    candidates: list[list[str]] = []
-    if preferred_session_dir:
-        candidates.append(read_committed_tactics(Path(preferred_session_dir)))
-
-    if scan_project_sessions:
-        safe_name = lemma_name.replace("'", "_prime")
-        session_patterns = [
-            f".ec_session_prover_{safe_name}_{i}" for i in range(max(1, parallelism))
-        ]
-        for p in sorted(_PROJECT_ROOT.glob(".ec_session_prover_tree_*")):
-            if p.name not in session_patterns:
-                session_patterns.append(p.name)
-        for dirname in session_patterns:
-            session_dir = _PROJECT_ROOT / dirname if "/" not in dirname else Path(dirname)
-            candidates.append(read_committed_tactics(session_dir))
+    candidates = [
+        read_committed_tactics(Path(session_dir))
+        for session_dir in session_dirs
+        if str(session_dir).strip()
+    ]
 
     for capsule in resume_capsules or []:
         path = Path(capsule)
@@ -321,16 +278,6 @@ def _verify_lemma_extracted(
     except Exception as e:
         logger.error("Extracted-lemma verification error: %s", e)
         return False
-
-
-def _candidate_gate_for_session(ec_session_dir: str | Path | None):
-    """Validate that the EC session produced a real closed candidate."""
-    try:
-        from workflow.proof_acceptance import validate_candidate_event_contract
-        return validate_candidate_event_contract(ec_session_dir)
-    except Exception as e:
-        logger.error("Candidate event-contract check crashed: %s", e)
-        return None
 
 
 def _acceptance_gate_for_session(ec_session_dir: str | Path | None):
@@ -738,19 +685,26 @@ def _write_and_verify_proof(
     ec_path: Path,
     lemma_name: str,
     tactics: list[str],
+    completion_candidate: "SessionClosureCandidate",
     include_dir: str = "",
-    session_proved: bool = False,
-    ec_session_dir: str | Path | None = None,
-) -> bool:
+) -> ProofVerificationEvidence:
     """Write proof tactics into the .ec file (replacing admit) and verify.
 
     Args:
-        session_proved: True if the EC session reported that the proof
-            candidate closed. This is useful progress signal, but final
-            acceptance still requires offline verification.
+        completion_candidate: exact content-bound tree/session handoff.
 
-    Returns True if easycrypt verification passes. Reverts on failure.
+    Returns typed verification evidence. Reverts on failure.
     """
+    if ec_path.resolve() != Path(completion_candidate.target_file).resolve():
+        logger.error("Completion candidate target file identity does not match writeback")
+        return ProofVerificationEvidence(
+            status="fail", error="candidate target file mismatch",
+        )
+    if lemma_name != completion_candidate.target_lemma:
+        logger.error("Completion candidate target lemma identity does not match writeback")
+        return ProofVerificationEvidence(
+            status="fail", error="candidate target lemma mismatch",
+        )
     content = ec_path.read_text(encoding="utf-8")
 
     # Normalize a compound closer ("TAC. qed." committed as one step) into
@@ -789,10 +743,14 @@ def _write_and_verify_proof(
             "must supply real tactics for every subgoal.",
             lemma_name,
         )
-        return False
+        return ProofVerificationEvidence(
+            status="fail", error="proof contains admit",
+        )
 
-    candidate_gate = _candidate_gate_for_session(ec_session_dir)
-    if candidate_gate is None or not candidate_gate.ok:
+    from workflow.proof_acceptance import validate_completion_candidate_contract
+
+    candidate_gate = validate_completion_candidate_contract(completion_candidate)
+    if not candidate_gate.ok:
         detail = (
             candidate_gate.error_summary() if candidate_gate is not None
             else "event-contract checker unavailable"
@@ -802,7 +760,10 @@ def _write_and_verify_proof(
             "produce a valid closed-candidate event contract (%s).",
             lemma_name, detail,
         )
-        return False
+        return ProofVerificationEvidence(
+            status="fail", event_contract=candidate_gate,
+            error="completion candidate contract failed",
+        )
 
     # Build the proof block (exclude qed from tactics, we add it ourselves)
     proof_tactics = [t for t in tactics if t.strip().lower().rstrip(".").strip() != "qed"]
@@ -810,7 +771,10 @@ def _write_and_verify_proof(
     block = _find_proof_block(content, lemma_name, decl_start=decl_start)
     if block is None:
         logger.error("Cannot find proof block for %s in %s", lemma_name, ec_path)
-        return False
+        return ProofVerificationEvidence(
+            status="fail", event_contract=candidate_gate,
+            error="target proof block not found",
+        )
 
     start, end = block
 
@@ -842,7 +806,10 @@ def _write_and_verify_proof(
                 "admit. Reverting.", lemma_name,
             )
             ec_path.write_text(content, encoding="utf-8")
-            return False
+            return ProofVerificationEvidence(
+                status="fail", event_contract=candidate_gate,
+                error="verified proof body contains admit",
+            )
     else:
         # Full-file failed (common: other lemmas' smt timeouts).
         # Try extracted verification — isolates our lemma.
@@ -855,7 +822,7 @@ def _write_and_verify_proof(
 
     if ok:
         _emit_verification_status(
-            ec_session_dir,
+            completion_candidate.session_dir,
             lemma_name=lemma_name,
             status="pass",
             ec_path=ec_path,
@@ -869,7 +836,9 @@ def _write_and_verify_proof(
                 if verified_reason == "extracted_lemma" else {}
             ),
         )
-        acceptance_gate = _acceptance_gate_for_session(ec_session_dir)
+        acceptance_gate = _acceptance_gate_for_session(
+            completion_candidate.session_dir
+        )
         if acceptance_gate is None or not acceptance_gate.ok:
             detail = (
                 acceptance_gate.error_summary() if acceptance_gate is not None
@@ -881,26 +850,36 @@ def _write_and_verify_proof(
                 lemma_name, detail,
             )
             ec_path.write_text(content, encoding="utf-8")
-            return False
-        return True
+            return ProofVerificationEvidence(
+                status="fail", event_contract=acceptance_gate,
+                error="final verification event contract failed",
+            )
+        return ProofVerificationEvidence(
+            status="pass",
+            method=verified_reason,
+            event_contract=acceptance_gate,
+        )
 
     _emit_verification_status(
-        ec_session_dir,
+        completion_candidate.session_dir,
         lemma_name=lemma_name,
         status="fail",
         ec_path=ec_path,
         reason="full_file_and_extracted_failed",
     )
 
-    if session_proved:
-        logger.error(
-            "Session reported a closed proof candidate for %s, but both "
-            "full-file and extracted verification failed. Rejecting the "
-            "candidate; session closure is not final proof truth.",
-            lemma_name,
-        )
+    logger.error(
+        "Session completion candidate %s for %s failed offline verification; "
+        "session closure is not final proof truth.",
+        completion_candidate.candidate_id,
+        lemma_name,
+    )
 
     # Nothing confirms the proof — revert.
     ec_path.write_text(content, encoding="utf-8")
     logger.info("Reverted %s to original", ec_path)
-    return False
+    return ProofVerificationEvidence(
+        status="fail",
+        method="full_file_and_extracted_failed",
+        error="offline EasyCrypt verification failed",
+    )

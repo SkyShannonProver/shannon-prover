@@ -131,7 +131,8 @@ represent final results. We'll keep updating as new experiments land.</div>
 <script>
 (function(){
   var MANIFEST_URL='./manifest.json';
-  var RUNS_URL='../agent_view_runs/';
+  var MOUNTED_IN_SUBDIR=/\/(?:results|bundle_browser)(?:\/|$)/.test(location.pathname);
+  var RUNS_URL=MOUNTED_IN_SUBDIR?'../agent_view_runs/':'./agent_view_runs/';
   var esc=function(s){return (s==null?'':String(s)).replace(/[&<>]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;'}[c];});};
   var BUNDLES=[], byLemma={}, MODELS=[], view='bench',
       filt={outcome:'',profile:'',model:'',pubonly:false,q:''},
@@ -207,9 +208,7 @@ represent final results. We'll keep updating as new experiments land.</div>
     render();
   }
   window.addEventListener('hashchange',route);
-  // "← home" leads to the site landing page (one level up) — only meaningful
-  // when this browser is mounted at a .../results/ path (playground server or
-  // the static Pages deploy), not as a standalone file.
+  // "← home" is useful only when the browser is mounted below another site.
   if(location.pathname.indexOf('/results')>=0)document.getElementById('sitehome').style.display='';
   document.getElementById('home').onclick=function(){location.hash='#bench';};
   document.getElementById('nav-bench').onclick=function(){location.hash='#bench';};
@@ -413,15 +412,12 @@ represent final results. We'll keep updating as new experiments land.</div>
     var rs=row.result_summary||'';
     var rejected=/^rejected/.test(rs)||row.ok===false;
     var p=payloadOf(row), sum=row.intent_summary||'';
-    var why=rejected?rs.replace(/^rejected\s+(commit|probe)?:?\s*/,''):'';
+    var why=rejected?rs.replace(/^rejected\s+commit:?\s*/,''):'';
     switch(it){
       case 'commit_tactic':
         return {icon:rejected?'✗':'✓',cls:rejected?'ic-bad':'ic-ok',group:'commit',rejected:rejected,
                 label:stripPrefix(sum,'commit '),mono:true,why:why,tip:rejected?'commit rejected by EasyCrypt':'commit accepted'};
-      case 'probe_tactic':
-        return {icon:'▷',cls:rejected?'ic-bad':'ic-info',group:'probe',rejected:rejected,
-                label:stripPrefix(sum,'probe '),mono:true,why:why,tip:rejected?'probe rejected (nothing committed)':'probe — try without committing'};
-      case 'commit_replay_suffix_chunk': case 'probe_replay_suffix_chunk':
+      case 'commit_replay_suffix_chunk':
         return {icon:'⏩',cls:rejected?'ic-bad':'ic-info',group:'commit',rejected:rejected,
                 label:'replay chunk',mono:false,why:why,tip:'replay a recorded tactic chunk'};
       case 'inspect_context':
@@ -457,7 +453,6 @@ represent final results. We'll keep updating as new experiments land.</div>
     var el=document.getElementById('legend');if(!el)return;
     el.innerHTML='<span><span class="ic ic-ok">✓</span>commit accepted</span>'+
       '<span><span class="ic ic-bad">✗</span>commit rejected</span>'+
-      '<span><span class="ic ic-info">▷</span>probe (no commit)</span>'+
       '<span><span class="ic ic-purp">🔍</span>inspect / lookup</span>'+
       '<span><span class="ic ic-warn">↶</span>undo</span>'+
       '<span><span class="ic ic-ok">🏁</span>finish</span>'+
@@ -554,7 +549,7 @@ represent final results. We'll keep updating as new experiments land.</div>
     var urls=artURLs(selStep,selKind);
     if(!urls.length){body.innerHTML='<span class="note">not captured for this run.</span>';return;}
     var hint=selKind==='audit'?'// AUDIT TWIN — the manager\'s full snapshot, identical across L1–L4.\n// This is NOT what the agent saw (it renders identically at L1 and L4).\n\n'
-      :selKind==='result'?'// WHAT THIS TURN PRODUCED — the rendered panel the agent saw AFTER this\n// action (lookup result / new goal / probe outcome). "context (before)" = what prompted it.\n\n'
+      :selKind==='result'?'// WHAT THIS TURN PRODUCED — the rendered panel the agent saw AFTER this\n// action (context result / new goal). "context (before)" = what prompted it.\n\n'
       :selKind==='saw'?'// WHAT PROMPTED THIS TURN — the panel the agent read BEFORE acting\n// (= the previous turn\'s result). "result (after)" = what this turn produced.\n\n':'';
     var i=0;
     (function next(){

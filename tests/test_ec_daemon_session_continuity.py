@@ -12,13 +12,13 @@ Covers the three layers of the feature:
    cleanup on partial failure, and ``release_daemon_session``.
 4. Flag gating in ``ReplSessionManager.start`` and
    ``ProofNodeLifecycleManager.bootstrap``: with ``SHANNON_EC_DAEMON`` unset
-   the legacy restart+replay path is byte-identical (the legacy ``_FakeRepl``
+   the canonical restart+replay path is unchanged (the ``_FakeRepl``
    whose ``start`` has NO ``daemon_attach`` kwarg must keep working).
 
 The real-EasyCrypt worker-death integration test (kill nothing, adopt the
 live EC process, verify the goal survives with zero replay) is
-``test_worker_death_attach_real_ec`` at the bottom — skip-marked unless
-``easycrypt`` is on PATH. Note macOS sandboxes that block unix sockets will
+``test_worker_death_attach_real_ec`` at the bottom — skip-marked unless the
+repository-managed EasyCrypt is available. Note macOS sandboxes that block unix sockets will
 fail the socket-backed tests here; run them unsandboxed (same constraint as
 ``tests/test_rewind_wedge_fix.py``).
 """
@@ -43,8 +43,27 @@ if str(REPO_ROOT) not in sys.path:
 
 from core.easycrypt.ec_daemon import DaemonServer, SessionManager  # noqa: E402
 from core.easycrypt.ec_daemon_client import ECDaemonClient, ECDaemonError  # noqa: E402
+from core.easycrypt.ec_env import get_ec_env  # noqa: E402
+from core.easycrypt.ec_runtime_identity import (  # noqa: E402
+    discover_easycrypt_runtime_identity,
+)
+from core.easycrypt.session_events import (  # noqa: E402
+    append_event,
+    read_events,
+    validated_session_lineage_aliases,
+)
 
 from workflow.proof_management import daemon_attach as da  # noqa: E402
+from workflow.proof_management.session_goal_identity import (  # noqa: E402
+    read_session_goal_identity,
+)
+
+try:
+    _MANAGED_EC_AVAILABLE = shutil.which(
+        "easycrypt", path=get_ec_env().get("PATH")
+    ) is not None
+except RuntimeError:
+    _MANAGED_EC_AVAILABLE = False
 from workflow.proof_management.repl_session import ReplSessionManager  # noqa: E402
 from workflow.proof_management.lifecycle import (  # noqa: E402
     _daemon_attach_request,
@@ -75,7 +94,7 @@ class _FakeEC:
         file_path: str = "/tmp/fake.ec",
         lemma_name: str = "foo",
         committed_count: int = 0,
-        goal_raw: bytes = b"Current goal\n\nx + 0 = x\n[1|check]>",
+        goal_raw: bytes = b"Current goal\n\n  x + 0 = x\n[1|check]>",
     ) -> None:
         self.proc = _FakeProc()
         self.file_path = Path(file_path)
@@ -229,9 +248,14 @@ class _ServerHarness:
     def __enter__(self) -> "_ServerHarness":
         self._thread.start()
         deadline = time.time() + 5.0
-        while not os.path.exists(self.sock):
+        # bind() creates the socket path before listen() makes it connectable.
+        # Waiting only for filesystem existence leaves a small startup race in
+        # loaded full-suite runs, where the first client can see ECONNREFUSED.
+        while self.srv._listen_sock is None:
+            if not self._thread.is_alive():
+                raise RuntimeError("daemon server exited before listening")
             if time.time() > deadline:
-                raise RuntimeError("daemon socket did not appear")
+                raise RuntimeError("daemon server did not start listening")
             time.sleep(0.02)
         return self
 
@@ -293,7 +317,7 @@ def _donor_dir(
     prefix: list[str] | None = None,
     state_count: int | None = None,
     session_id: str | None = None,
-    current_out: str = "Current goal:\n\n  x + 0 = x\n",
+    current_out: str = "Current goal\n\n  x + 0 = x\n",
 ) -> Path:
     """A donor session dir shaped like a dead worker left it."""
     prefix = _PREFIX if prefix is None else prefix
@@ -314,7 +338,56 @@ def _donor_dir(
         encoding="utf-8",
     )
     (donor / "current.out").write_text(current_out, encoding="utf-8")
+    append_event(donor, "session.started", {
+        "file": str(ec_file),
+        "lemma": lemma,
+        "include_dirs": [],
+        "discarded_tactic_count": 0,
+        "restart_count": 1,
+    })
     return donor
+
+
+def _append_closed_goal_events(donor: Path) -> None:
+    append_event(donor, "tool.called", {
+        "name": "commit",
+        "mutates_proof_state": True,
+        "session_dir": str(donor.resolve()),
+    })
+    append_event(donor, "tactic.submitted", {
+        "tactic": _PREFIX[-1],
+        "history_lines_before": 1,
+        "line_count": 1,
+    })
+    append_event(donor, "goal.changed", {
+        "tactic": _PREFIX[-1],
+        "goals_before": 1,
+        "goals_after": 0,
+        "no_more_goals": True,
+        "async_check_close": False,
+        "no_progress": False,
+        "candidate_closed": True,
+    })
+    append_event(donor, "tactic.result", {
+        "tactic": _PREFIX[-1],
+        "status": "ok",
+        "history_committed": True,
+        "candidate_closed": True,
+    })
+    append_event(donor, "proof.candidate_closed", {
+        "tactic": _PREFIX[-1],
+        "goals_before": 1,
+        "goals_after": 0,
+        "no_more_goals": True,
+        "async_check_close": False,
+    })
+    append_event(donor, "tool.result", {
+        "name": "commit",
+        "mutates_proof_state": True,
+        "session_dir": str(donor.resolve()),
+        "exit_code": 0,
+        "status": "ok",
+    })
 
 
 @pytest.fixture()
@@ -325,6 +398,7 @@ def ec_file(tmp_path: Path) -> Path:
 
 
 def _attempt(tmp_path: Path, donor: Path, ec_file: Path, **kw: object) -> dict:
+    identity = read_session_goal_identity(donor)
     args: dict = dict(
         project_root=tmp_path,
         donor_session_dir=donor,
@@ -332,7 +406,12 @@ def _attempt(tmp_path: Path, donor: Path, ec_file: Path, **kw: object) -> dict:
         file_path=str(ec_file),
         lemma_name="foo",
         replay_prefix=list(_PREFIX),
+        goal_identity_required=identity.goal_identity_required,
     )
+    if "expected_goal_hash" not in kw:
+        args["expected_goal_hash"] = (
+            identity.goal_hash if identity.goal_identity_required else ""
+        )
     args.update(kw)
     return da.attempt_daemon_attach(**args)
 
@@ -414,6 +493,181 @@ def test_attach_daemon_state_out_of_sync(
     assert result["daemon_state_count"] == 1
 
 
+def test_attach_open_proof_rejects_empty_expected_goal_hash_before_socket(
+    tmp_path: Path, ec_file: Path, flag_on: None
+) -> None:
+    donor = _donor_dir(tmp_path, ec_file=ec_file)
+
+    result = _attempt(
+        tmp_path,
+        donor,
+        ec_file,
+        expected_goal_hash="",
+    )
+
+    assert result == {
+        "ok": False,
+        "reason": "expected_goal_hash_missing",
+    }
+    assert not (tmp_path / "target_session").exists()
+
+
+def test_attach_closed_identity_rejects_nonempty_goal_hash_before_socket(
+    tmp_path: Path, ec_file: Path, flag_on: None
+) -> None:
+    donor = _donor_dir(tmp_path, ec_file=ec_file)
+
+    result = _attempt(
+        tmp_path,
+        donor,
+        ec_file,
+        expected_goal_hash="unexpected",
+        goal_identity_required=False,
+    )
+
+    assert result == {
+        "ok": False,
+        "reason": "closed_goal_hash_must_be_empty",
+    }
+    assert not (tmp_path / "target_session").exists()
+
+
+def test_attach_rejects_non_boolean_goal_identity_classification(
+    tmp_path: Path, ec_file: Path, flag_on: None
+) -> None:
+    donor = _donor_dir(tmp_path, ec_file=ec_file)
+
+    result = _attempt(
+        tmp_path,
+        donor,
+        ec_file,
+        goal_identity_required=None,
+    )
+
+    assert result == {
+        "ok": False,
+        "reason": "goal_identity_required_invalid",
+    }
+
+
+def test_attach_closed_proof_may_omit_expected_goal_hash(
+    tmp_path: Path, ec_file: Path, flag_on: None
+) -> None:
+    donor = _donor_dir(
+        tmp_path,
+        ec_file=ec_file,
+        current_out=(
+            "[1|check]>\nNo more goals\n"
+            "+ added lemma: `foo'\n[2|check]>\n"
+        ),
+    )
+    _append_closed_goal_events(donor)
+
+    result = _attempt(
+        tmp_path,
+        donor,
+        ec_file,
+        expected_goal_hash="",
+    )
+
+    # Canonical closed status passes the identity gate; the deliberately dead
+    # socket remains the next independent precondition.
+    assert result["ok"] is False
+    assert result["reason"] == "daemon_socket_dead"
+
+
+def test_attach_closed_identity_accepts_live_no_more_goals(
+    tmp_path: Path, ec_file: Path, flag_on: None
+) -> None:
+    with _ServerHarness() as h:
+        donor = _donor_dir(
+            tmp_path,
+            ec_file=ec_file,
+            socket_path=h.sock,
+            current_out=(
+                "[1|check]>\nNo more goals\n"
+                "+ added lemma: `foo'\n[2|check]>\n"
+            ),
+        )
+        _append_closed_goal_events(donor)
+        donor_sid = da.daemon_session_id_for_dir(donor)
+        ec = _FakeEC(
+            file_path=str(ec_file),
+            committed_count=2,
+            goal_raw=b"No more goals\n[7|check]>",
+        )
+        _register(h.mgr, donor_sid, ec)
+
+        result = _attempt(tmp_path, donor, ec_file)
+
+        assert result["ok"] is True, result
+        assert not ec.closed
+
+
+def test_attach_closed_identity_accepts_live_bare_check_prompt(
+    tmp_path: Path, ec_file: Path, flag_on: None
+) -> None:
+    with _ServerHarness() as h:
+        donor = _donor_dir(
+            tmp_path,
+            ec_file=ec_file,
+            socket_path=h.sock,
+            current_out=(
+                "[1|check]>\nNo more goals\n"
+                "+ added lemma: `foo'\n[2|check]>\n"
+            ),
+        )
+        _append_closed_goal_events(donor)
+        donor_sid = da.daemon_session_id_for_dir(donor)
+        ec = _FakeEC(
+            file_path=str(ec_file),
+            committed_count=2,
+            goal_raw=b"[7|check]>",
+        )
+        _register(h.mgr, donor_sid, ec)
+
+        result = _attempt(tmp_path, donor, ec_file)
+
+        assert result["ok"] is True, result
+        assert not ec.closed
+
+
+def test_attach_closed_identity_rejects_live_open_frontier(
+    tmp_path: Path, ec_file: Path, flag_on: None
+) -> None:
+    with _ServerHarness() as h:
+        donor = _donor_dir(
+            tmp_path,
+            ec_file=ec_file,
+            socket_path=h.sock,
+            current_out=(
+                "[1|check]>\nNo more goals\n"
+                "+ added lemma: `foo'\n[2|check]>\n"
+            ),
+        )
+        _append_closed_goal_events(donor)
+        donor_sid = da.daemon_session_id_for_dir(donor)
+        ec = _FakeEC(
+            file_path=str(ec_file),
+            committed_count=2,
+            goal_raw=b"Current goal\n\n  live = open\n[7|check]>",
+        )
+        _register(h.mgr, donor_sid, ec)
+        target = tmp_path / "target_session"
+
+        result = _attempt(tmp_path, donor, ec_file)
+
+        assert result == {
+            "ok": False,
+            "reason": "live_goal_identity_class_mismatch",
+            "expected_required": False,
+            "observed_required": True,
+        }
+        assert h.mgr.list() == []
+        assert ec.closed
+        assert not target.exists()
+
+
 def test_attach_daemon_socket_dead(
     tmp_path: Path, ec_file: Path, flag_on: None
 ) -> None:
@@ -462,7 +716,7 @@ def test_attach_goal_hash_mismatch(
         donor = _donor_dir(tmp_path, ec_file=ec_file, socket_path=h.sock)
         # Sanity: the helper derives a non-empty hash from current.out, so a
         # wrong expectation must be DETECTED, not silently skipped.
-        assert da._goal_hash_from_session_dir(donor)
+        assert read_session_goal_identity(donor).goal_hash
         ec = _FakeEC(file_path=str(ec_file), committed_count=2)
         _register(h.mgr, da.daemon_session_id_for_dir(donor), ec)
         result = _attempt(
@@ -474,6 +728,34 @@ def test_attach_goal_hash_mismatch(
     assert not (tmp_path / "target_session").exists()
 
 
+def test_attach_goal_hash_unavailable_fails_before_mutation(
+    tmp_path: Path, ec_file: Path, flag_on: None
+) -> None:
+    with _ServerHarness() as h:
+        donor = _donor_dir(tmp_path, ec_file=ec_file, socket_path=h.sock)
+        (donor / "current.out").unlink()
+        donor_sid = da.daemon_session_id_for_dir(donor)
+        ec = _FakeEC(file_path=str(ec_file), committed_count=2)
+        _register(h.mgr, donor_sid, ec)
+
+        result = _attempt(
+            tmp_path,
+            donor,
+            ec_file,
+            expected_goal_hash="expected-goal-hash",
+        )
+
+        assert donor_sid in h.mgr.list()
+        assert not ec.closed
+
+    assert result == {
+        "ok": False,
+        "reason": "goal_hash_unavailable",
+        "expected": "expected-goal-ha",
+    }
+    assert not (tmp_path / "target_session").exists()
+
+
 def test_attach_success_adopts_without_replay(
     tmp_path: Path, ec_file: Path, flag_on: None
 ) -> None:
@@ -482,7 +764,7 @@ def test_attach_success_adopts_without_replay(
         donor_sid = da.daemon_session_id_for_dir(donor)
         ec = _FakeEC(file_path=str(ec_file), committed_count=2)
         _register(h.mgr, donor_sid, ec)
-        expected_hash = da._goal_hash_from_session_dir(donor)
+        expected_hash = read_session_goal_identity(donor).goal_hash
         assert expected_hash
 
         target = tmp_path / "target_session"
@@ -508,13 +790,119 @@ def test_attach_success_adopts_without_replay(
         assert new_state["socket_path"] == h.sock
         # Liveness probe really ran against the adopted session.
         assert ec.sent, "get_goal probe never reached the EC process"
+        adoption = read_events(target)[-1]
+        assert adoption["type"] == "session.adopted"
+        assert adoption["source"] == "workflow.daemon_attach"
+        assert adoption["payload"] == {
+            "donor_session_dir": str(donor.resolve()),
+            "target_session_dir": str(target.resolve()),
+            "donor_session_id": donor_sid,
+            "target_session_id": target_sid,
+        }
+        assert validated_session_lineage_aliases(
+            read_events(target), target
+        ) == frozenset({str(donor.resolve()), str(target.resolve())})
+
+
+def test_attach_event_append_failure_closes_adopted_session_and_removes_target(
+    tmp_path: Path,
+    ec_file: Path,
+    flag_on: None,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    with _ServerHarness() as h:
+        donor = _donor_dir(tmp_path, ec_file=ec_file, socket_path=h.sock)
+        donor_sid = da.daemon_session_id_for_dir(donor)
+        ec = _FakeEC(file_path=str(ec_file), committed_count=2)
+        _register(h.mgr, donor_sid, ec)
+        target = tmp_path / "target_session"
+        monkeypatch.setattr(da, "append_event", lambda *args, **kwargs: False)
+
+        result = _attempt(tmp_path, donor, ec_file)
+
+        assert result == {
+            "ok": False,
+            "reason": "adoption_event_append_failed",
+        }
+        assert h.mgr.list() == []
+        assert ec.closed
+        assert not target.exists()
+
+
+def test_attach_does_not_emit_adoption_event_before_goal_verification(
+    tmp_path: Path,
+    ec_file: Path,
+    flag_on: None,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    with _ServerHarness() as h:
+        donor = _donor_dir(tmp_path, ec_file=ec_file, socket_path=h.sock)
+        donor_sid = da.daemon_session_id_for_dir(donor)
+        ec = _FakeEC(
+            file_path=str(ec_file),
+            committed_count=2,
+            goal_raw=b"Current goal\n\n  different = frontier\n[9|check]>",
+        )
+        _register(h.mgr, donor_sid, ec)
+        emitted: list[str] = []
+
+        def record_event(*args, **kwargs):
+            emitted.append(str(args[1]))
+            return True
+
+        monkeypatch.setattr(da, "append_event", record_event)
+
+        result = _attempt(tmp_path, donor, ec_file)
+
+        assert result["reason"] == "live_goal_hash_mismatch"
+        assert emitted == []
+
+
+def test_attach_rejects_live_goal_that_differs_from_copied_disk_state(
+    tmp_path: Path, ec_file: Path, flag_on: None
+) -> None:
+    with _ServerHarness() as h:
+        donor = _donor_dir(tmp_path, ec_file=ec_file, socket_path=h.sock)
+        donor_sid = da.daemon_session_id_for_dir(donor)
+        ec = _FakeEC(
+            file_path=str(ec_file),
+            committed_count=2,
+            goal_raw=b"Current goal\n\n  stale = frontier\n[9|check]>",
+        )
+        _register(h.mgr, donor_sid, ec)
+        target = tmp_path / "target_session"
+
+        result = _attempt(tmp_path, donor, ec_file)
+
+        assert result["ok"] is False
+        assert result["reason"] == "live_goal_hash_mismatch"
+        assert h.mgr.list() == []
+        assert ec.closed
+        assert not target.exists()
+
+
+def test_attach_rejects_capsule_and_donor_identity_class_disagreement(
+    tmp_path: Path, ec_file: Path, flag_on: None
+) -> None:
+    donor = _donor_dir(tmp_path, ec_file=ec_file)
+
+    result = _attempt(
+        tmp_path,
+        donor,
+        ec_file,
+        expected_goal_hash="",
+        goal_identity_required=False,
+    )
+
+    assert result["ok"] is False
+    assert result["reason"] == "goal_identity_class_mismatch"
 
 
 def test_attach_adopt_conflict_cleans_up_target_dir(
     tmp_path: Path, ec_file: Path, flag_on: None
 ) -> None:
     """Target sid already taken in the daemon -> adopt RPC fails -> the
-    half-copied target dir must be removed so the legacy fallback starts
+    half-copied target dir must be removed so the canonical fallback starts
     clean."""
     with _ServerHarness() as h:
         donor = _donor_dir(tmp_path, ec_file=ec_file, socket_path=h.sock)
@@ -653,7 +1041,11 @@ def test_repl_start_flag_on_attach_failure_records_fallback_action(
 
     snapshot, actions = repl.start(
         replay_prefix=["proof."],
-        daemon_attach={"donor_session_dir": str(tmp_path / "no_such_donor")},
+        daemon_attach={
+            "donor_session_dir": str(tmp_path / "no_such_donor"),
+            "expected_goal_hash": "expected",
+            "goal_identity_required": True,
+        },
     )
     assert snapshot == "SNAPSHOT"
     assert len(seen["preamble_actions"]) == 1
@@ -661,6 +1053,44 @@ def test_repl_start_flag_on_attach_failure_records_fallback_action(
     assert action["label"] == "daemon_attach_fallback"
     assert action["mutates_proof_state"] is False
     assert action["daemon_attach"]["reason"] == "donor_dir_missing"
+
+
+def test_repl_attach_missing_identity_class_falls_back_without_inference(
+    tmp_path: Path,
+    flag_on: None,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    repl = _repl(tmp_path)
+    seen: dict = {}
+    monkeypatch.setattr(
+        da,
+        "attempt_daemon_attach",
+        lambda **kw: (_ for _ in ()).throw(
+            AssertionError("invalid attach request reached daemon client")
+        ),
+    )
+
+    def fake_start_locked(replay_prefix=None, *, preamble_actions=None, **kw):
+        seen["preamble_actions"] = list(preamble_actions or [])
+        return "SNAPSHOT", list(preamble_actions or [])
+
+    repl._start_locked = fake_start_locked  # type: ignore[method-assign]
+
+    snapshot, actions = repl.start(
+        replay_prefix=["proof."],
+        daemon_attach={
+            "donor_session_dir": ".ec_session_dead",
+            "expected_goal_hash": "cannot-authorize-without-class",
+        },
+    )
+
+    assert snapshot == "SNAPSHOT"
+    assert actions == seen["preamble_actions"]
+    assert actions[0]["label"] == "daemon_attach_fallback"
+    assert actions[0]["daemon_attach"] == {
+        "ok": False,
+        "reason": "goal_identity_required_invalid",
+    }
 
 
 def test_repl_start_flag_on_attach_success_skips_start_locked(
@@ -673,7 +1103,7 @@ def test_repl_start_flag_on_attach_success_skips_start_locked(
                       "donor": ".ec_session_dead", "target": repl.session_dir,
                       "session_id": "scli_t", "socket_path": "/tmp/x.sock"},
     )
-    repl._snapshot_from_agent_view = (  # type: ignore[method-assign]
+    repl._snapshot_from_managed_goal_view = (  # type: ignore[method-assign]
         lambda *, actions: "ATTACHED_SNAPSHOT"
     )
     repl._start_locked = (  # type: ignore[method-assign]
@@ -686,7 +1116,8 @@ def test_repl_start_flag_on_attach_success_skips_start_locked(
     snapshot, actions = repl.start(
         replay_prefix=["t%d." % i for i in range(167)],
         daemon_attach={"donor_session_dir": ".ec_session_dead",
-                       "expected_goal_hash": "abc"},
+                       "expected_goal_hash": "abc",
+                       "goal_identity_required": True},
     )
 
     assert snapshot == "ATTACHED_SNAPSHOT"
@@ -699,7 +1130,8 @@ def test_repl_start_flag_on_attach_success_skips_start_locked(
 
 def test_daemon_attach_request_gating(monkeypatch: pytest.MonkeyPatch) -> None:
     ctx = {"daemon_attach": {"donor_session_dir": ".ec_session_dead",
-                             "expected_goal_hash": "h"}}
+                             "expected_goal_hash": "h",
+                             "goal_identity_required": True}}
     monkeypatch.delenv("SHANNON_EC_DAEMON", raising=False)
     assert _daemon_attach_request(ctx) is None  # flag off -> legacy
 
@@ -707,9 +1139,41 @@ def test_daemon_attach_request_gating(monkeypatch: pytest.MonkeyPatch) -> None:
     assert _daemon_attach_request(ctx) == {
         "donor_session_dir": ".ec_session_dead",
         "expected_goal_hash": "h",
+        "goal_identity_required": True,
+    }
+    assert _daemon_attach_request({
+        "daemon_attach": {
+            "donor_session_dir": ".ec_session_dead",
+            "expected_goal_hash": "",
+            "goal_identity_required": False,
+        },
+    }) == {
+        "donor_session_dir": ".ec_session_dead",
+        "expected_goal_hash": "",
+        "goal_identity_required": False,
     }
     assert _daemon_attach_request({}) is None
     assert _daemon_attach_request({"daemon_attach": "junk"}) is None
+    assert _daemon_attach_request({
+        "daemon_attach": {
+            "donor_session_dir": ".ec_session_dead",
+            "expected_goal_hash": "h",
+        },
+    }) is None
+    assert _daemon_attach_request({
+        "daemon_attach": {
+            "donor_session_dir": ".ec_session_dead",
+            "expected_goal_hash": "",
+            "goal_identity_required": True,
+        },
+    }) is None
+    assert _daemon_attach_request({
+        "daemon_attach": {
+            "donor_session_dir": ".ec_session_dead",
+            "expected_goal_hash": "unexpected",
+            "goal_identity_required": False,
+        },
+    }) is None
     assert _daemon_attach_request(
         {"daemon_attach": {"donor_session_dir": "  "}}
     ) is None
@@ -768,6 +1232,7 @@ def test_lifecycle_flag_on_records_attach_audit(
             "daemon_attach": {
                 "donor_session_dir": ".ec_session_dead",
                 "expected_goal_hash": "h",
+                "goal_identity_required": True,
             },
         },
     )
@@ -775,6 +1240,7 @@ def test_lifecycle_flag_on_records_attach_audit(
     assert repl.attach_seen == {
         "donor_session_dir": ".ec_session_dead",
         "expected_goal_hash": "h",
+        "goal_identity_required": True,
     }
     assert record["daemon_attach_requested"]["donor_session_dir"] == \
         ".ec_session_dead"
@@ -803,7 +1269,11 @@ def test_lifecycle_flag_on_records_fallback_audit(
     record = lifecycle.bootstrap(
         ["proof."],
         resume_context={
-            "daemon_attach": {"donor_session_dir": ".ec_session_dead"},
+            "daemon_attach": {
+                "donor_session_dir": ".ec_session_dead",
+                "expected_goal_hash": "h",
+                "goal_identity_required": True,
+            },
         },
     )
     assert record["daemon_attach_result"] == {
@@ -838,9 +1308,8 @@ qed.
 
 
 @pytest.mark.skipif(
-    shutil.which("easycrypt") is None,
-    reason="easycrypt not on PATH (eval \"$(opam env --switch=easycrypt)\"); "
-           "the worker-death attach integration test needs a real EC process",
+    not _MANAGED_EC_AVAILABLE,
+    reason="the worker-death attach test needs repository-managed EasyCrypt",
 )
 def test_worker_death_attach_real_ec(
     tmp_path: Path, flag_on: None
@@ -871,9 +1340,14 @@ def test_worker_death_attach_real_ec(
         assert goal_before.strip()
 
         # Disk state as the dead worker left it.
+        runtime_identity = discover_easycrypt_runtime_identity()
         (donor / "history.ec").write_text(prefix[0] + "\n", encoding="utf-8")
         (donor / "session_meta.json").write_text(
-            json.dumps({"file": str(ec_file), "lemma": "continuity_foo"}),
+            json.dumps({
+                "file": str(ec_file),
+                "lemma": "continuity_foo",
+                "easycrypt_runtime_identity": runtime_identity.to_payload(),
+            }),
             encoding="utf-8",
         )
         (donor / "daemon_state.json").write_text(
@@ -887,7 +1361,17 @@ def test_worker_death_attach_real_ec(
             encoding="utf-8",
         )
         (donor / "current.out").write_text(goal_before, encoding="utf-8")
-        expected_hash = da._goal_hash_from_session_dir(donor)
+        append_event(donor, "session.started", {
+            "file": str(ec_file),
+            "lemma": "continuity_foo",
+            "include_dirs": include_dirs,
+            "discarded_tactic_count": 0,
+            "restart_count": 1,
+            "easycrypt_runtime_identity_sha256": (
+                runtime_identity.semantic_identity_sha256
+            ),
+        })
+        expected_hash = read_session_goal_identity(donor).goal_hash
 
         # --- worker dies here: no close_session, no cleanup ---
 
@@ -900,6 +1384,7 @@ def test_worker_death_attach_real_ec(
             lemma_name="continuity_foo",
             replay_prefix=prefix,
             expected_goal_hash=expected_hash,
+            goal_identity_required=True,
         )
         assert result["ok"] is True, result
         assert result["replay_avoided"] == 1

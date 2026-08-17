@@ -28,7 +28,7 @@ Methods:
     batch_try([tactic1, ...]): each tactic tried independently, all
         undone. Returns list of per-tactic results.
     get_goal(): current goal state.
-    undo(): revert last committed tactic (for -prev equivalent).
+    undo(): revert the last committed tactic.
     list_sessions(): active session ids.
     close_session(): terminate EC subprocess.
     shutdown(): stop daemon.
@@ -81,11 +81,13 @@ from core.easycrypt.ec_lifecycle import (  # noqa: E402
     ECSessionLifecycle,
     split_ec_commands as _split_ec_commands,
 )
+from core.easycrypt.ec_env import get_ec_env  # noqa: E402
 
 
 logger = logging.getLogger("ec_daemon")
 
 SOCKET_PATH_DEFAULT = "/tmp/ec_daemon.sock"
+PROMPT_TEXT_RE = re.compile(r"\[\d+\|[a-zA-Z]+\]>")
 # EC error line shape: ``[error-<a>-<b>]<reason>``. The a/b are
 # character-offset hints; the reason text varies.
 ERROR_LINE_RE = re.compile(r"\[(error|critical|fatal)(-[0-9\-]+)?\](.*)")
@@ -201,39 +203,9 @@ class ECSubprocess(ECSessionLifecycle):
 
     @staticmethod
     def _get_ec_env() -> dict[str, str]:
-        """Load EC env from opam. Mirrors session_cli._get_ec_env.
+        """Return the single repository-managed EasyCrypt environment."""
 
-        The daemon is often auto-spawned by a Python process whose
-        ambient PATH does not include the EasyCrypt opam switch. If we
-        return the ambient env unchanged, daemon open_session fails with
-        ``FileNotFoundError: easycrypt`` and session_cli silently falls
-        back to the slow subprocess replay path for every tactic.
-        """
-        try:
-            from core.easycrypt.ec_env import get_ec_env  # type: ignore
-            return get_ec_env()
-        except ImportError:
-            pass
-        try:
-            from core.easycrypt.ec_env import get_ec_env  # type: ignore
-            return get_ec_env()
-        except ImportError:
-            pass
-        env = dict(os.environ)
-        for cmd in (["opam", "env", "--switch=easycrypt"], ["opam", "env"]):
-            try:
-                result = subprocess.run(
-                    cmd, capture_output=True, text=True, timeout=10,
-                )
-                if result.returncode == 0:
-                    for line in result.stdout.strip().splitlines():
-                        m = re.match(r"(\w+)='([^']*)'", line)
-                        if m:
-                            env[m.group(1)] = m.group(2)
-                    return env
-            except Exception:
-                continue
-        return env
+        return get_ec_env()
 
     def close(self) -> None:
         """Terminate the EC subprocess (and invalidate any warm prober)."""
@@ -716,7 +688,15 @@ class ECSubprocess(ECSessionLifecycle):
         m_err = ERROR_LINE_RE.search(raw)
         if not m_err:
             return None
-        reason = m_err.group(3).strip()
+        # EasyCrypt often puts the discriminating evidence on continuation
+        # lines, notably ``the given proof-term proves:`` errors. Keep the full
+        # block up to the next REPL prompt instead of collapsing it to the
+        # severity line.
+        continuation = raw[m_err.end():]
+        prompt = PROMPT_TEXT_RE.search(continuation)
+        if prompt:
+            continuation = continuation[:prompt.start()]
+        reason = (m_err.group(3) + continuation).strip()
         low = reason.lower()
         if "cannot unify" in low or "not convertible" in low:
             kind = "unification_fail"
@@ -730,7 +710,7 @@ class ECSubprocess(ECSessionLifecycle):
             kind = "type_error"
         else:
             kind = "other"
-        return {"kind": kind, "raw": reason[:500],
+        return {"kind": kind, "raw": reason[:2000],
                 "severity": m_err.group(1)}
 
 

@@ -13,6 +13,12 @@ ROOT = Path(__file__).resolve().parents[1]
 import _pathsetup  # noqa: F401,E402  (repo root on sys.path)
 
 from workflow.agents.prover_prompt import _build_prover_prompt  # noqa: E402
+from workflow.proof_state_compiler.managed_goal_view_manager import (  # noqa: E402
+    ManagedGoalViewManager,
+)
+from workflow.proof_state_compiler.surface_profiles import (  # noqa: E402
+    project_current_workspace_view,
+)
 from workflow.progress import (  # noqa: E402
     _TreeProverTracker,
     _find_branch_point,
@@ -45,7 +51,6 @@ def test_prover_prompt_omits_session_cli_as_agent_interface() -> None:
     assert "[TACTIC-EXECUTION-RESULT]" not in prompt
     assert "TacticExecutionResult" not in prompt
     assert "inspect_handles" not in prompt
-    assert "[COMMAND-SUMMARY]" not in prompt
     assert "## Start the EasyCrypt session" not in prompt
     assert " -start -f " not in prompt
     assert "Run `-start` exactly once" not in prompt
@@ -102,12 +107,21 @@ def test_prover_prompt_embeds_manager_handoff_view() -> None:
         session_tag="test_visibility",
         managed_session={
             "workspace_view": {
+                "schema_version": 3,
                 "kind": "prover_workspace_view",
+                "ok": True,
+                "last_result": {},
                 "current_goal": {
                     "lines": ["Current goal", "----", "x = y"],
                     "text_fully_shown": True,
                 },
-                "suggested_next_steps": {"primary": {"category": "reason"}},
+                "proof_status": {
+                    "status": "open",
+                    "remaining_goals_known": True,
+                    "goal_identity_required": True,
+                    "goal_hash": "goal",
+                },
+                "view_hash": "fixture-view",
             },
         },
     )
@@ -122,6 +136,42 @@ def test_prover_prompt_embeds_manager_handoff_view() -> None:
     assert "x = y" in initial_view
     assert '"schema_version"' not in initial_view
     assert "The expected manager handoff view is missing" not in prompt
+
+
+def test_prover_prompt_accepts_already_profiled_handoff_view() -> None:
+    full = {
+        "schema_version": 3,
+        "kind": "prover_workspace_view",
+        "ok": True,
+        "last_result": {},
+        "current_goal": {
+            "lines": ["Current goal", "----", "x = y"],
+            "text_fully_shown": True,
+        },
+        "proof_status": {
+            "status": "open",
+            "remaining_goals_known": True,
+            "goal_identity_required": True,
+            "goal_hash": "goal",
+        },
+    }
+    lean = project_current_workspace_view(
+        full,
+        "l4_proof_state_compiler_v2_operation_binding_repair",
+    )
+    manager = ManagedGoalViewManager()
+    lean["view_hash"] = manager.view_hash(lean)
+    lean = manager.order_workspace_view(lean)
+
+    prompt = _build_prover_prompt(
+        "eval/examples/SchnorrPK.ec",
+        "schnorr_proof_of_knowledge_completeness_ll",
+        "easycrypt-src/theories",
+        managed_session={"workspace_view": lean},
+        surface_profile="l4_proof_state_compiler_v2_operation_binding_repair",
+    )
+
+    assert "x = y" in prompt
 
 
 def test_progress_summary_uses_shell_tokenized_tactic_arg() -> None:
@@ -188,8 +238,8 @@ def test_tree_tracker_activity_updates_on_mcp_tool_use_without_commit() -> None:
                     "type": "tool_use",
                     "name": "submit_proof_intent",
                     "input": {
-                        "intent": "inspect_context",
-                        "payload": {"topic": "call_subgoals"},
+                        "intent": "call_subgoals",
+                        "payload": {},
                     },
                 }],
             },

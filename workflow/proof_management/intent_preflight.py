@@ -9,13 +9,14 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Any, Literal
 
-from workflow.surface_profiles import surface_profile_allows_intent
+from workflow.proof_state_compiler.surface_profiles import (
+    current_surface_profile_allows_intent,
+)
 
 from .protocol_repair import (
     FINISH_REQUIRES_QED_PROMPT,
     QED_CLARIFICATION_PROMPT,
     AgentIntent,
-    finish_requires_qed_action,
     intent_is_standalone_qed,
     qed_clarification_action,
     view_allows_qed,
@@ -26,7 +27,6 @@ from .turn_view import (
     latest_observation_for_view,
     selection_menu_action,
 )
-from core.easycrypt.value_shapes import drop_empty as _drop_empty
 
 
 PreflightKind = Literal["none", "action_repair", "menu"]
@@ -71,10 +71,9 @@ def preflight_intent(
             audit_kind="agent_intent.qed_clarification",
         )
 
-    allowed, reason = surface_profile_allows_intent(
+    allowed, reason = current_surface_profile_allows_intent(
         surface_profile,
         intent.intent,
-        intent.payload,
     )
     if not allowed:
         actions = [
@@ -98,13 +97,28 @@ def preflight_intent(
         )
 
     if intent.intent == "finish" and view_requires_qed_before_finish(latest_view):
-        actions = [finish_requires_qed_action()]
         return IntentPreflightDecision(
-            kind="action_repair",
+            kind="menu",
             ok=False,
-            actions=actions,
-            observation=latest_observation_for_view(intent, actions),
-            repair_prompt=FINISH_REQUIRES_QED_PROMPT,
+            label="finish_requires_qed",
+            observation={
+                "intent": "finish",
+                "kind": "finish_requires_qed",
+                "control_menu": {
+                    "title": "Finish unavailable",
+                    "notice": FINISH_REQUIRES_QED_PROMPT,
+                    "items": [
+                        {
+                            "label": "Commit qed.",
+                            "description": "Save the closed proof candidate.",
+                            "submit": {
+                                "intent": "commit_tactic",
+                                "payload": {"tactic": "qed."},
+                            },
+                        },
+                    ],
+                },
+            },
             audit_kind="agent_intent.finish_requires_qed",
         )
 
