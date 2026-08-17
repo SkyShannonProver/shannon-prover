@@ -1,6 +1,5 @@
-# Deploys the standalone bundle browser with a baked --public manifest and the
-# curated run bundles it reads. The removed live playground is not part of the
-# current repository or deployment.
+# Deploys the project homepage at / and the benchmark browser at /results/,
+# together with the curated public run bundles read by the browser.
 name: pages
 
 on:
@@ -29,10 +28,11 @@ jobs:
 
       - name: Assemble static site
         run: |
-          mkdir -p site
-          cp bundle_browser/index.html site/index.html
-          python3 bundle_browser/build_manifest.py --public --out site/manifest.json
-          python3 bundle_browser/build_manifest.py --public --timeline-js --out site/manifest.js
+          mkdir -p site/results
+          cp website/index.html site/index.html
+          cp bundle_browser/index.html site/results/index.html
+          python3 bundle_browser/build_manifest.py --public --out site/results/manifest.json
+          python3 bundle_browser/build_manifest.py --public --timeline-js --out site/results/manifest.js
           cp -r agent_view_runs site/agent_view_runs
           rm -f site/agent_view_runs/INDEX.md
           touch site/.nojekyll
