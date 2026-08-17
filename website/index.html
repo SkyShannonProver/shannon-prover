@@ -154,7 +154,7 @@
 <div class="top">
   <a class="brand" href=".">Shannon Prover</a>
   <nav>
-    <a href="https://arxiv.org/abs/2607.02847" rel="noopener">paper</a>
+    <a class="cta" href="https://arxiv.org/abs/2607.02847" rel="noopener">paper</a>
     <a class="cta" href="./results/">benchmark</a>
     <a class="cta" href="https://github.com/SkyShannonProver/shannon-prover" rel="noopener">source</a>
   </nav>
@@ -167,15 +167,15 @@
   and verify security arguments earlier and faster, without compromising the rigor of machine checking.</div>
   <div class="sub">
     Shannon Prover helps turn lemma-level cryptographic arguments into checked EasyCrypt proof
-    scripts. You define the model and proof structure; the agent works through each resulting
+    scripts. You define the security model and proof structure; the agent works through each resulting
     obligation, one checked proof action at a time.
   </div>
 
   <section id="phases">
     <h2>Where Shannon Prover fits</h2>
-    <p class="seclead"><strong>Shannon Prover works at Phase&nbsp;III today.</strong> You retain
-    control of the security model and the proof's intermediate claims; the system takes on the
-    tactic-level work of proving those claims in EasyCrypt.</p>
+    <p class="seclead"><strong>Shannon Prover works at Phase&nbsp;III today.</strong> You currently
+    retain control of the security model and the proof's intermediate claims; support for Phase II
+    lemma decomposition is under active development.</p>
     <div class="phases">
       <div class="phase">
         <div class="who expert">Phase I · expert</div>
@@ -185,16 +185,16 @@
         <div class="eg">module CBC(P : PseudoRP) = {<br>&nbsp;&nbsp;proc enc(key, iv, p) = { … } }</div>
       </div>
       <div class="phase">
-        <div class="who expert">Phase II · expert</div>
+        <div class="who us">Phase II · Shannon Prover <span class="pill p-warn">under active development</span></div>
         <div class="t">Lemma decomposition</div>
-        <div class="b">Choose the intermediate lemma statements and game hops that make the
-        argument tractable.</div>
+        <div class="b">Formulate the intermediate lemmas and game hops needed to decompose the
+        security argument into tractable proof obligations.</div>
         <div class="eg">lemma CBC_PRP_RF · lemma Bound_by_Birthday · lemma CBC_upto</div>
       </div>
       <div class="phase hot">
         <div class="who us">Phase III · Shannon Prover <span class="pill p-info">available now</span></div>
-        <div class="t">Checked proof construction</div>
-        <div class="b">Work through each lemma as an EasyCrypt tactic script. The agent proposes
+        <div class="t">Write per-lemma proofs</div>
+        <div class="b">Construct an EasyCrypt tactic script for each lemma. The agent proposes
         actions; EasyCrypt accepts or rejects every committed step.</div>
         <div class="eg">proof. byequiv=> //=. proc.<br>call (_: ={bad,qs} …). qed.</div>
       </div>
@@ -277,22 +277,17 @@ post = DoubleQuery.bad{1} = Compute.bad{2}</code></div>
     the unchanged current state. The agent uses that response to choose its next action.</p>
     <div class="intentguide">
       <div class="intentrow">
-        <div class="kind">Direct controls</div>
-        <div>On the left, submit a tactic
-        (<code>commit_tactic</code>), Undo last (<code>undo_last_step</code>), Rewind
-        (<code>undo_to_checkpoint</code>), Restart (<code>fresh_restart</code>), or Finish
-        (<code>finish</code>).</div>
+        <div class="kind">Proof controls</div>
+        <div>Through <code>submit_proof_intent</code>, the agent can submit a tactic
+        (<code>commit_tactic</code>) or use an available session control: Undo last
+        (<code>undo_last_step</code>), Rewind (<code>undo_to_checkpoint</code>), Restart
+        (<code>fresh_restart</code>), or Finish (<code>finish</code>). After a failed step, the
+        manager may also offer guided amendment and replay (<code>amend_and_replay</code>).</div>
       </div>
       <div class="intentrow">
         <div class="kind">Current panel</div>
-        <div>The agent receives only the exact current EasyCrypt goal and status, controls that are
-        valid now, and bounded compiler output admitted for this state. Missing evidence causes the
-        compiler to abstain.</div>
-      </div>
-      <div class="intentrow">
-        <div class="kind">Recovery only</div>
-        <div><code>amend_and_replay</code>, checkpoint rewind, restart, and related controls appear
-        only when the manager has the exact state and confirmation data required to execute them.</div>
+        <div>The current panel shows the exact EasyCrypt goal, the actions available now, and concise
+        compiler guidance to help the agent decide what to do next.</div>
       </div>
     </div>
   </section>
