@@ -29,7 +29,7 @@ from workflow.proc_lifecycle import (
     install_terminal_signal_handlers,
     terminate_subprocess_tree,
 )
-from workflow.validation.run_report_bundle import capture_repository_environment
+from workflow.reporting.run_report_bundle import capture_repository_environment
 
 
 @dataclass(frozen=True)

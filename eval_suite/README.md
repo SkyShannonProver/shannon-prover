@@ -11,10 +11,13 @@ metrics, and a reproducible bundle under `agent_view_runs/`.
 
 ## Current boundary
 
-Only profiles registered by
-`workflow/proof_state_compiler/surface_profiles.py` are accepted. Normal use
-selects `proof_state_compiler`; control and audit profiles exist only for
-matched compiler experiments.
+Normal use discovers only the production profiles registered by
+`workflow/proof_state_compiler/profile_registry.py`. The suite runner may also
+resolve exact private identities from
+`workflow/validation/proof_state_compiler_research_profile_registry.py` and
+passes them through an eval-only hidden transport. Ordinary config files and
+the public `--surface-profile` option cannot select those audit or ablation
+profiles.
 
 Current suite inputs live in [`suites/`](suites/). Archived protocols are
 evidence, not runnable suite templates, and the runner rejects archive paths.

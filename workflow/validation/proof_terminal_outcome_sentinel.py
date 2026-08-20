@@ -13,12 +13,12 @@ from workflow.agents.prover_writeback import (
     _extract_tactics_from_candidate,
     _write_and_verify_proof,
 )
-from workflow.proof_node_manager import ProofNodeManager
-from workflow.proof_node_runtime import render_manager_followup
+from workflow.node.proof_node_manager import ProofNodeManager
+from workflow.node.manager_followup_render import render_manager_followup
 from workflow.schemas.prover_result import PROVER_RUN_VERIFIED, ProverResult
-from workflow.session_observer import observe_session
+from workflow.tree.session_observer import observe_session
 from workflow.tree.result import SessionClosureCandidate
-from workflow.validation.run_report_bundle import _outcome
+from workflow.reporting.run_report_bundle import _outcome
 
 
 _REPO_ROOT = Path(__file__).resolve().parents[2]
@@ -57,7 +57,7 @@ def main(argv: list[str] | None = None) -> int:
         project_root=_REPO_ROOT,
         surface_profile="l1_goal_projection",
     )
-    session_dir = (_REPO_ROOT / manager.repl.session_dir).resolve()
+    session_dir = manager.session_path
     report: dict[str, object]
     try:
         manager.bootstrap(replay_prefix=[])
@@ -207,7 +207,7 @@ def main(argv: list[str] | None = None) -> int:
             "error": f"{type(exc).__name__}: {exc}",
         }
     finally:
-        manager.repl.close()
+        manager.close_session()
         if _is_relative_to(session_dir, _REPO_ROOT) and session_dir.name.startswith(
             ".ec_session_proof_terminal_outcome_"
         ):

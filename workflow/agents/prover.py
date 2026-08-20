@@ -14,73 +14,39 @@ import json
 import logging
 import os
 import re
+import secrets
 import subprocess
 import sys
 import time
 from pathlib import Path
 from typing import Any, Optional
 
-from workflow.schemas.config import PROVER_DEFAULTS, normalize_agent_backend
-from workflow.agents.ec_services import (  # noqa: F401  (facade re-exports)
-    _AF_UNIX_SOCKET_PATH_LIMIT,
-    _EC_DAEMON_SOCKET_NAME_TEMPLATE,
-    _RUN_WHY3_PROC,
-    _RUN_WHY3_SOCKET,
-    _claude_scratch_path,
-    _cleanup_stale_why3server,
+from workflow.schemas.config import ProverConfig, normalize_agent_backend
+from workflow.agents.ec_services import (
     _configure_run_ec_daemon_socket,
     _configure_run_why3_socket,
-    _ec_daemon_socket_path,
-    _ec_daemon_socket_responsive,
     _ensure_why3server,
-    _fallback_ec_daemon_socket_root,
-    _get_opam_env,
-    _git_common_project_root,
-    _hard_kill_ec_daemon,
-    _is_why3server_responsive,
-    _path_fits_af_unix_socket,
-    _remove_stale_ec_daemon_socket,
-    _resolve_why3server_binary,
-    _run_ec_daemon_socket_root,
     _shutdown_ec_daemon,
-    _shutdown_repo_ec_daemons,
     _shutdown_run_why3server,
-    _workspace_tmp_dir,
 )
-from workflow.agents.prover_writeback import (  # noqa: F401  (facade re-exports)
-    _ADMIT_TOKEN_RE,
-    _EC_SPINNER_RE,
-    _build_proof_text,
-    _distill_ec_stderr,
-    _emit_verification_status,
+from workflow.agents.prover_writeback import (
     _extract_partial_tactics_from_sessions,
     _extract_prover_notes,
     _extract_prover_report,
     _extract_tactics_from_candidate,
-    _find_proof_block,
-    _first_err_msg,
-    _has_why3_error,
-    _parse_ec_error_line,
-    _proof_body_has_admit,
-    _prune_failing_tactics,
-    _resolve_lemma_decl_start,
-    _scratch_line_to_tactic_idx,
-    _strip_comments_for_admit_check,
-    _tactics_contain_admit,
     _verify_ec_file,
-    _verify_extracted_file,
     _verify_lemma_extracted,
     _write_and_verify_proof,
 )
 from workflow.proof_state_compiler.runtime_profiles import (
     ensure_supported_runtime_surface_profile,
 )
-from workflow.proof_management.lifecycle import (
+from workflow.proof_management.node_bootstrap import (
     replay_prefix_shortfall,
     require_proof_node_manager_bootstrap,
 )
-from workflow.proof_node_manager import ProofNodeManager
-from workflow.tree.policy import DEFAULT_TREE_INITIAL_PROVERS, cap_tree_max_concurrent
+from workflow.node.proof_node_manager import ProofNodeManager
+from workflow.tree.policy import cap_tree_max_concurrent
 from workflow.tree.result import TreeRunResult
 from workflow.agents.prover_prompt import (
     _build_child_prover_prompt,
@@ -104,6 +70,33 @@ def _prepare_run_ec_daemon_socket(run_dir: Path) -> tuple[str, bool]:
         socket_path=socket_path,
     )
     return socket_path, stopped
+
+
+def _create_run_session_namespace(run_dir: Path) -> str:
+    """Create and record the owner identity for this invocation's sessions.
+
+    Tree node ids are only unique within a run. A random run namespace makes
+    their project-root session paths disjoint even when several evaluation
+    arms intentionally share one frozen checkout. This record is provenance,
+    not a discovery mechanism; consumers receive exact session paths from the
+    typed tree result.
+    """
+    namespace = secrets.token_hex(6)
+    identity_path = run_dir / "run_session_identity.json"
+    identity_path.write_text(
+        json.dumps(
+            {
+                "schema_version": 1,
+                "kind": "run_owned_easycrypt_session_namespace",
+                "namespace": namespace,
+            },
+            indent=2,
+            sort_keys=True,
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+    return namespace
 
 
 # ---------------------------------------------------------------------------
@@ -179,7 +172,7 @@ def _warn_replay_prefix_shortfall(
     shortfall = bootstrap.get("replay_prefix_shortfall")
     if not isinstance(shortfall, dict) or not shortfall:
         return
-    from workflow.progress import status as pstatus
+    from workflow.run_ui import status as pstatus
 
     requested = shortfall.get("requested")
     committed = shortfall.get("committed")
@@ -280,10 +273,9 @@ def _archive_ec_session_dirs(
 ) -> list[str]:
     """Copy this prover run's EasyCrypt session dirs into ``run_dir``.
 
-    ``prover.run`` wipes project-root ``.ec_session_*`` directories at the
-    start of the next run to prevent proof leakage. Without this archive, the
-    event log and generated workspace / TacticExecutionResult artifacts vanish
-    before postmortem analysis can inspect them.
+    Live runs own disjoint, namespaced session paths. This archive preserves
+    their event log and generated workspace / TacticExecutionResult artifacts
+    for postmortem analysis without scanning or interpreting sibling sessions.
     """
     import shutil as _shutil
 
@@ -454,33 +446,12 @@ def run(
     file_path: str,
     lemma_name: str,
     include_dir: str = "",
-    agent_backend: str = PROVER_DEFAULTS.agent_backend,
-    model: str = PROVER_DEFAULTS.model,
-    effort: str = PROVER_DEFAULTS.effort,
-    max_turns: int = 1000,
-    timeout_minutes: int = 20,
-    parallelism: int = 1,
-    warmup_seconds: int = 180,
-    kill_gap_tactics: int = 2,
-    kill_gap_idle_seconds: int = 60,
+    *,
+    prover: Optional[ProverConfig] = None,
     run_dir: Optional[Path] = None,
     eval_mode: Optional[bool] = None,
     surface_profile: str | None = None,
     resume_capsules: Optional[list[str]] = None,
-    resume_root_policy: str = "score",
-    mode: str = "tree",
-    # Tree mode params (only used when mode == "tree")
-    tree_initial_provers: int = DEFAULT_TREE_INITIAL_PROVERS,
-    tree_max_concurrent: int = 4,
-    tree_stuck_errors: int = PROVER_DEFAULTS.tree_stuck_errors,
-    tree_stuck_idle_seconds: int = 120,
-    tree_grace_seconds: int = 120,
-    tree_max_depth: int = PROVER_DEFAULTS.tree_max_depth,
-    tree_min_alive_seconds: int = 60,
-    tree_progress_gap_ratio: float = 1.5,
-    tree_progress_gap_idle: int = 60,
-    tree_structural_undo_spawn_delay_seconds: int = 300,
-    tree_undo_repair_protection_seconds: int = 900,
 ):
     """Run the prover as a managed Claude Code or OpenAI Codex agent.
 
@@ -488,11 +459,37 @@ def run(
     manager intent protocol for EasyCrypt proof interaction, Read/Bash for
     legitimate source context, and never owns session lifecycle.
 
+    All model/budget/tree knobs travel in one ``ProverConfig`` — the previous
+    29-keyword signature kept a second copy of every default, and six of them
+    had silently drifted from the schema (e.g. tree_grace_seconds 120 vs 300).
+
     Long-lived managed prover mode:
     - "tree": Start one or more proof nodes, each with its own long-lived
       agent runtime.
     """
-    agent_backend = normalize_agent_backend(agent_backend)
+    prover = prover if prover is not None else ProverConfig()
+    agent_backend = normalize_agent_backend(prover.agent_backend)
+    model = prover.model
+    effort = prover.effort
+    max_turns = prover.max_total_tactics
+    timeout_minutes = prover.timeout_minutes
+    resume_root_policy = prover.resume_root_policy
+    mode = prover.mode
+    tree_initial_provers = prover.tree_initial_provers
+    tree_max_concurrent = prover.tree_max_concurrent
+    tree_stuck_errors = prover.tree_stuck_errors
+    tree_stuck_idle_seconds = prover.tree_stuck_idle_seconds
+    tree_grace_seconds = prover.tree_grace_seconds
+    tree_max_depth = prover.tree_max_depth
+    tree_min_alive_seconds = prover.tree_min_alive_seconds
+    tree_progress_gap_ratio = prover.tree_progress_gap_ratio
+    tree_progress_gap_idle = prover.tree_progress_gap_idle
+    tree_structural_undo_spawn_delay_seconds = (
+        prover.tree_structural_undo_spawn_delay_seconds
+    )
+    tree_undo_repair_protection_seconds = (
+        prover.tree_undo_repair_protection_seconds
+    )
     from workflow.schemas.prover_result import (
         PROVER_RUN_INCOMPLETE,
         PROVER_RUN_INFRASTRUCTURE_INVALID,
@@ -504,8 +501,35 @@ def run(
         surface_profile = profile.name
     run_dir = run_dir or (_PROJECT_ROOT / "workflow" / "runs" / "scratch")
     run_dir.mkdir(parents=True, exist_ok=True)
+    run_session_namespace = _create_run_session_namespace(run_dir)
 
-    from workflow.progress import status as pstatus, error as perror
+    # Record the agent-CLI half of the measured system, mirroring the pinned
+    # EasyCrypt identity recorded per session: CLI version drift is a real
+    # confound for cross-time win-rate comparisons and produced live failures.
+    from workflow.provider.provider_sessions import provider_cli_identity
+
+    provider_identity = provider_cli_identity(agent_backend)
+    (run_dir / "provider_identity.json").write_text(
+        json.dumps(
+            {
+                "schema_version": 1,
+                "kind": "provider_cli_identity",
+                "model": model,
+                **provider_identity,
+            },
+            indent=2,
+            sort_keys=True,
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+    logger.info(
+        "Agent CLI: %s (%s)",
+        provider_identity["version"],
+        provider_identity["resolved_path"],
+    )
+
+    from workflow.run_ui import status as pstatus
 
     run_ec_daemon_socket, stopped_previous_run_daemon = (
         _prepare_run_ec_daemon_socket(run_dir)
@@ -551,7 +575,7 @@ def run(
     resume_capsules = list(resume_capsules or [])
     loaded_resume_capsules = []
     if resume_capsules:
-        from workflow.proof_node_resume import load_resume_capsules
+        from workflow.node.proof_node_resume import load_resume_capsules
 
         loaded_resume_capsules = load_resume_capsules(
             resume_capsules,
@@ -606,56 +630,19 @@ def run(
     else:
         pstatus("Prover", "why3server not available — smt() will fail. Continuing anyway.", "\033[33m")
 
-    # Clean up ALL stale session directories at the project root before
-    # each prover launch. Any `.ec_session_*` dir left over from a previous
-    # run contains a `history.ec` file with tactics that the prover can
-    # read (via Glob/Read) and transcribe — effectively a cross-run proof
-    # leak. Observed in ChaChaPoly Run 8 step1: prover found .ec_session_
-    # step1b/history.ec (64 lines of a prior partial proof) and started
-    # copying its tactics verbatim after getting stuck.
-    #
-    # Prior cleanup only handled dirs matching `prover_<lemma>_<i>` — the
-    # current run's own naming. Dirs from manual testing or runs with
-    # different naming schemes (step1b, step1_v2, step4_1_final, ...) were
-    # NOT cleaned. The fix: wipe every `.ec_session_*` at project root.
-    # This is safe because each lemma's session dirs are spawned fresh
-    # by the prover we're about to launch.
-    import shutil as _shutil
-    session_root = _PROJECT_ROOT
-    wiped = 0
-    try:
-        for p in session_root.glob(".ec_session_*"):
-            if p.is_dir():
-                _shutil.rmtree(p, ignore_errors=True)
-                wiped += 1
-            elif p.is_file() and p.name.endswith(".cli.lock"):
-                # session_cli's flock files (`.ec_session_*.cli.lock`) are never
-                # unlinked by their creator and match this glob; sweep them too
-                # or they pile up in the repo root (237 observed) and bloat this
-                # glob every run (audit §8 #14).
-                p.unlink(missing_ok=True)
-                wiped += 1
-    except Exception as e:
-        logger.warning("Session cleanup error (non-fatal): %s", e)
-    if wiped:
-        logger.info(
-            "Wiped %d stale .ec_session_* directories at %s (cross-run leak "
-            "prevention).", wiped, session_root,
-        )
-
     if mode != "tree":
         raise ValueError("unsupported prover mode; only 'tree' is current")
 
     tree_max_concurrent = cap_tree_max_concurrent(tree_max_concurrent)
     tree_initial_provers = max(1, min(int(tree_initial_provers), tree_max_concurrent))
 
-    from workflow.progress import status as pstatus
+    from workflow.run_ui import status as pstatus
 
     start_time = time.time()
 
     if mode == "tree":
         # --- Tree mode: recursive branch-and-explore ---
-        from workflow.progress import run_tree_prover
+        from workflow.tree.supervisor import run_tree_prover
         resume_initial_branches = []
         if loaded_resume_capsules:
             try:
@@ -803,7 +790,7 @@ def run(
             return [
                 sys.executable,
                 "-m",
-                "workflow.managed_prover_worker",
+                "workflow.node.managed_prover_worker",
                 "--prompt-file",
                 str(node_prompt_path),
                 "--bootstrap-file",
@@ -861,6 +848,7 @@ def run(
                 target_lemma=lemma_name,
                 initial_branches=resume_initial_branches or None,
                 payload_audit_path=run_dir / "payload_audit.jsonl",
+                session_namespace=run_session_namespace,
             )
         except Exception as exc:  # terminal owner records infrastructure failure
             logger.exception("Tree search failed before producing a typed result")
@@ -920,7 +908,7 @@ def run(
     resume_capsules: list[str] = []
     if mode == "tree" and archived_ec_sessions:
         try:
-            from workflow.proof_node_resume import create_resume_capsules
+            from workflow.node.proof_node_resume import create_resume_capsules
 
             resume_capsules = create_resume_capsules(
                 project_root=_PROJECT_ROOT,
@@ -1124,7 +1112,6 @@ def run(
 # ---------------------------------------------------------------------------
 # EC file verification
 # ---------------------------------------------------------------------------
-
 
 
 

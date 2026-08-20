@@ -6,7 +6,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
-from core.easycrypt.session_events import validate_event
+from core.easycrypt.session.session_events import validate_event
 
 
 @dataclass(frozen=True)

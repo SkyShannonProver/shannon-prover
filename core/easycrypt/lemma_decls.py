@@ -11,7 +11,7 @@ still-admitted one and reverted a genuinely proved lemma).
 
 Callers that must agree on "where is lemma X declared" should use these
 helpers: `eval_suite.run` (single-target scrub guard), the orchestrator
-(startup duplicate guard), and `workflow.agents.prover` (declaration
+(startup duplicate guard), and `workflow.agents.prover_writeback` (declaration
 matching for write-back).
 """
 

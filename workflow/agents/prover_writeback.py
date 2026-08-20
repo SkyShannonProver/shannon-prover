@@ -9,14 +9,13 @@ prover.py re-exports every name so external callers and tests are unchanged.
 from __future__ import annotations
 
 import logging
-import time
 import json
 import os
 import re
 import subprocess
 from dataclasses import dataclass
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Optional
+from typing import TYPE_CHECKING, Optional
 from core.easycrypt.committed_history import (
     closed_history_tactics,
     read_committed_tactics,
@@ -199,7 +198,9 @@ def _verify_ec_file(
         return False, result.stderr
 
     try:
-        ok, stderr = _run(os.environ.get("WHY3EC_SOCKET", "/tmp/why3ec.sock"))
+        from core.easycrypt.ec_proc import why3_socket_from_env
+
+        ok, stderr = _run(why3_socket_from_env())
         if ok:
             logger.info("Verification PASSED")
             return True, stderr

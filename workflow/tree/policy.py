@@ -2,7 +2,7 @@
 
 This module owns scheduler keys and generic proof-layer actions.
 It deliberately does not inspect live processes, mutate sessions, or decide
-when to spawn. The supervisor in ``workflow.progress`` uses these helpers as
+when to spawn. The supervisor in ``workflow.tree.supervisor`` uses these helpers as
 its policy vocabulary.
 
 Boundary:

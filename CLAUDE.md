@@ -61,7 +61,7 @@ When `[EVAL MODE ACTIVE]` is present or `EVAL_TARGET_LEMMA` is set:
 - `docs/ARCHITECTURE.md` — compact architecture map
 - `docs/design/proof_state_compiler_v2.md` — compiler design authority
 - `docs/architecture/proof_terminal_outcome.md` — final-proof outcome contract
-- `TESTING.md` — current deterministic and live experiment procedure
+- `TESTING.md` — deterministic and live experiment procedure (private trunk only)
 
 Historical reports and offline bundle readers retain old names as provenance.
 They do not define a runnable profile, context topic, or compatibility path.

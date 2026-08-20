@@ -9,16 +9,12 @@ so external callers and tests are unchanged.
 """
 from __future__ import annotations
 
-import atexit
 import logging
-import shutil
-import signal
-import socket
 import os
 import subprocess
 import time
 from pathlib import Path
-from typing import Any, Optional
+from typing import Optional
 
 logger = logging.getLogger("workflow.agents.prover")
 
@@ -170,7 +166,9 @@ def _ensure_why3server(*, force_restart: bool = False) -> Optional[str]:
     Returns the socket path if a responsive server is running, None
     otherwise.
     """
-    socket_path = os.environ.get("WHY3EC_SOCKET", "/tmp/why3ec.sock")
+    from core.easycrypt.ec_proc import why3_socket_from_env
+
+    socket_path = why3_socket_from_env()
 
     if not force_restart and os.path.exists(socket_path):
         if _is_why3server_responsive(socket_path):
@@ -238,7 +236,9 @@ def _ensure_why3server(*, force_restart: bool = False) -> Optional[str]:
 
 
 def _ec_daemon_socket_path() -> str:
-    return os.environ.get("EC_DAEMON_SOCKET", "/tmp/ec_daemon.sock")
+    from core.easycrypt.ec_daemon_client import default_socket_path
+
+    return default_socket_path()
 
 
 def _configure_run_ec_daemon_socket(run_dir: Path) -> str:

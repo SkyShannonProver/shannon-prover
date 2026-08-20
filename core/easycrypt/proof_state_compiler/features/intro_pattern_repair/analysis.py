@@ -25,7 +25,9 @@ def analyze_intro_pattern_repair(
 ) -> AnalysisContribution:
     attempted = proof_ir.attempted_operation
     descriptor = (
-        None if attempted is None else attempted.intro_pattern_repair_descriptor
+        None
+        if attempted is None
+        else attempted.intro_pattern_realization_descriptor
     )
     if (
         attempted is None

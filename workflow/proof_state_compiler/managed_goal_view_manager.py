@@ -6,7 +6,7 @@ import hashlib
 import json
 from typing import Any
 
-from core.easycrypt.session_prover_workspace_schema import (
+from core.easycrypt.session.session_prover_workspace_schema import (
     require_prover_workspace_view,
 )
 

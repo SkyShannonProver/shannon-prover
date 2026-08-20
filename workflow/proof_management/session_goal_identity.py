@@ -4,7 +4,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from pathlib import Path
 
-from core.easycrypt.session_projection import read_proof_state_projection
+from core.easycrypt.session.session_projection import read_proof_state_projection
 
 
 @dataclass(frozen=True)

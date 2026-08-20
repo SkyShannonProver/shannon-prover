@@ -15,8 +15,7 @@ from pathlib import Path
 from typing import Any
 
 from core.easycrypt.committed_history import history_path
-from core.easycrypt.proof_lifecycle import is_session_completion_candidate
-from workflow.session_observer import WorkflowSessionSnapshot
+from workflow.tree.session_observer import WorkflowSessionSnapshot
 
 
 def _sha256_file(path: Path) -> str:
@@ -55,9 +54,7 @@ class SessionClosureCandidate:
     ) -> "SessionClosureCandidate":
         if not snapshot.ok:
             raise ValueError("completion candidate snapshot is not authoritative")
-        if not snapshot.qed_committed or not is_session_completion_candidate(
-            snapshot.status
-        ):
+        if not snapshot.session_completion_candidate:
             raise ValueError("completion candidate requires committed qed authority")
         authority = dict(snapshot.candidate_close_authority or {})
         if authority.get("authoritative") is not True:

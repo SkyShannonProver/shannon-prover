@@ -1533,6 +1533,16 @@ NativeSemanticDescriptor = (
 )
 
 
+def _semantic_unit_sha256(payload: dict[str, object]) -> str:
+    encoded = json.dumps(
+        payload,
+        ensure_ascii=False,
+        separators=(",", ":"),
+        sort_keys=True,
+    ).encode("utf-8")
+    return hashlib.sha256(encoded).hexdigest()
+
+
 @dataclass(frozen=True)
 class NativeSemanticRequest:
     """One bounded semantic fact requested by an active P3 feature slice."""
@@ -1587,13 +1597,7 @@ class NativeSemanticRequest:
 
     @property
     def semantic_unit_sha256(self) -> str:
-        encoded = json.dumps(
-            self.semantic_payload(),
-            ensure_ascii=False,
-            separators=(",", ":"),
-            sort_keys=True,
-        ).encode("utf-8")
-        return hashlib.sha256(encoded).hexdigest()
+        return _semantic_unit_sha256(self.semantic_payload())
 
     def runtime_payload(self, *, request_id: str | None = None) -> dict[str, object]:
         return {
@@ -1930,7 +1934,6 @@ class NativeSemanticExecutionUnit:
     def query_kind(self) -> str:
         return self.query.query_kind
 
-
 @dataclass(frozen=True)
 class NativeSemanticObservation:
     """One event-bound native result returned by the manager runtime."""
@@ -2042,6 +2045,22 @@ class NativeSemanticObservation:
     @property
     def query_kind(self) -> str:
         return self.query.query_kind
+
+    @property
+    def semantic_unit_sha256(self) -> str:
+        """Identity of the coalesced native member that produced this fact.
+
+        ``request_id`` identifies this feature consumer. Multiple consumer
+        requests may fan out from one native execution unit, so artifact joins
+        must use this unit identity rather than equating the two IDs.
+        """
+
+        return _semantic_unit_sha256({
+            "state": self.state_ref.identity_payload(),
+            "evaluation_prefix": list(self.evaluation_prefix),
+            "query_kind": self.query_kind,
+            "payload": self.query.to_payload(),
+        })
 
     @classmethod
     def accepted(

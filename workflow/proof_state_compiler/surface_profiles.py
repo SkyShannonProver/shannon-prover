@@ -10,22 +10,18 @@ from typing import Any
 
 from core.context_intents import intent_spec
 from workflow.proof_state_compiler.profile_registry import (
-    CURRENT_TURN_PROFILES as CURRENT_SURFACE_PROFILES,
-    normalize_current_surface_profile_id,
+    PRODUCTION_TURN_PROFILES as CURRENT_SURFACE_PROFILES,  # noqa: F401  (public name)
+    runtime_profile_registration,
 )
 from workflow.proof_state_compiler.surface_contract import SurfaceProfile
 
 
 def current_surface_profile(profile_id: str | None) -> SurfaceProfile:
-    return CURRENT_SURFACE_PROFILES[
-        normalize_current_surface_profile_id(profile_id)
-    ]
+    return runtime_profile_registration(profile_id).turn_profile
 
 
 def ensure_current_surface_profile(profile_id: str | None) -> SurfaceProfile:
-    return CURRENT_SURFACE_PROFILES[
-        normalize_current_surface_profile_id(profile_id)
-    ]
+    return runtime_profile_registration(profile_id).turn_profile
 
 
 def project_current_workspace_view(

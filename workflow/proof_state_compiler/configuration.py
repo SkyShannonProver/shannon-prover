@@ -5,7 +5,7 @@ from __future__ import annotations
 from typing import Any
 
 from core.easycrypt.proof_state_compiler.features.catalog import (
-    default_feature_catalog,
+    production_feature_catalog,
 )
 from workflow.proof_state_compiler.assembly import (
     CompilerAssembly,
@@ -16,20 +16,32 @@ from workflow.proof_state_compiler.delivery_policies import (
     default_delivery_policy_catalog,
 )
 from workflow.proof_state_compiler.profile_registry import (
-    CURRENT_COMPILER_PROFILES as COMPILER_PROFILES,
+    PRODUCTION_COMPILER_PROFILES as COMPILER_PROFILES,  # noqa: F401  (public name)
+    PRODUCTION_PROFILE_IDS,
+    runtime_profile_registration,
 )
 
 
 def compiler_assembly_for_profile(profile: str | None) -> CompilerAssembly | None:
     """Resolve one known compiler profile without feature-specific branches."""
 
-    specification = COMPILER_PROFILES.get(str(profile or ""))
-    if specification is None:
-        # Most surface profiles do not opt into the proof-state compiler.
+    normalized = str(profile or "")
+    try:
+        registration = runtime_profile_registration(normalized)
+    except ValueError:
         return None
+    specification = registration.compiler_profile
+    if registration.profile_id in PRODUCTION_PROFILE_IDS:
+        feature_catalog = production_feature_catalog()
+    else:
+        from workflow.proof_state_compiler.research.proof_state_compiler_research_feature_catalog import (
+            research_feature_catalog,
+        )
+
+        feature_catalog = research_feature_catalog()
     assembly = assemble_compiler_profile(
         specification,
-        default_feature_catalog(),
+        feature_catalog,
         default_delivery_policy_catalog(),
     )
     return assembly if assembly.activation_plan.compiler_enabled else None

@@ -20,7 +20,7 @@ dev = ["pytest>=9.0"]
 # Declare the in-tree packages so `pip install -e .` resolves package-absolute
 # imports (`from core.easycrypt...`) without sys.path shims. Running from source
 # still works without an install via the minimal project-root bootstrap.
-include = ["core*", "workflow*", "eval*"]
+include = ["core*", "workflow*", "eval*", "experiments*"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

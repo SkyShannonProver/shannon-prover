@@ -816,18 +816,29 @@ core/easycrypt/proof_state_compiler/
 workflow/proof_state_compiler/
   activation.py                    off/audit/treatment profile + derived plan
   delivery_policy.py               independent policy-plan resolver
-  delivery_policies.py             production policy catalog
+  delivery_policies.py             production treatment policy catalog
   assembly.py                      atomic activation+delivery composition
   input_gateway.py                 event-bound live input conversion
   cache.py                         observation, certification, resource reuse
   lifetime.py                      bounded presentation IDs only
   certification_gateway.py         manager-owned read-only EasyCrypt checks
   manifests.py                     generic evidence-gated manifest construction
-  configuration.py                 declarative profile table only
+  profile_ids.py                   public profile identities only
+  profile_registry.py              production composition root + shared contract
+  release_manifest.py              public profile/feature/policy allowlist
+  configuration.py                 lazy production/research assembly projection
   presentation.py                  generic delivery copy shared by runtime/micro
   service.py                       compile_current_state() facade
   native_semantic_gateway.py       target feature-agnostic request dispatch
   telemetry.py
+
+workflow/validation/
+  proof_state_compiler_research_profile_ids.py
+                                   private audit/ablation identities
+  proof_state_compiler_research_profile_registry.py
+                                   private research composition root
+  proof_state_compiler_research_feature_catalog.py
+                                   private superset for reproducible experiments
 
 core/easycrypt/native_semantics/   shared runtime boundary, not a compiler pass
   native_proof_term_adapter.ml     implemented bounded batch proof-term endpoint
@@ -1574,9 +1585,39 @@ workflow runtime-profile registry
   one experiment arm's activation/policy projection + matched turn envelope
 ```
 
-The runtime-profile registry is the only place that structurally constructs a
-current compiler/turn profile pair. `configuration.py` and
-`surface_profiles.py` consume its projections; they do not redeclare an arm.
+Publication adds an audience boundary without adding a fourth compiler root:
+
+```text
+production profile registry
+  l1_goal_projection
+  proof_state_compiler
+  treatment activations only
+
+private research registry
+  hidden audit controls
+  single-feature treatment ablations
+  loaded lazily only by an exact eval-mode identity
+```
+
+Ordinary configuration and CLI discovery consume only the production
+projection. They cannot name an audit arm, and the production aggregate never
+runs an `AUDIT` activation. The eval harness uses a separate hidden transport
+argument to select a private research registration; a normal config file
+cannot persist that identity. The research registry and superset feature
+catalog live under `workflow.validation` so a future public source package can
+omit them physically without modifying manager, compiler, renderer, or feature
+contracts.
+
+The machine-readable `production_release_manifest()` must equal the feature
+set activated as `TREATMENT` by `proof_state_compiler`. Packages absent from
+that manifest—including held audit substrates—are not part of a public code
+release even though their research implementation and evidence remain in the
+private repository.
+
+Each audience has one runtime-profile composition root. The production root
+owns the public pair; the research root imports its shared contracts and owns
+only experiments. `configuration.py` and `surface_profiles.py` consume those
+registrations; they do not redeclare an arm.
 Feature identity constants and profile identity constants may remain separate
 vocabularies, but neither is a second structural registry.
 
@@ -2156,6 +2197,26 @@ per-request/batch elapsed time and status to be retained; skipped feature and
 backend-call counts to be explicit; and cold/warm resource, native, and
 certification state to be distinguishable. A total duration without this
 attribution is insufficient for a managed economics claim.
+
+Native observation telemetry keeps two identities distinct:
+
+- `request_id` is the feature consumer request;
+- `execution_unit_id` is the coalesced native member that EasyCrypt executed.
+
+One execution unit may fan out to several consumers. Offline evaluators join
+the retained artifact by exact `execution_unit_id` plus `batch_index`, then
+cross-check query kind and status. They never require consumer/member ID
+equality. A failure-linked compiler occurrence is compared with its exact
+manager attempt occurrence and unchanged before/after authority, not with an
+adjacent earlier compiler invocation.
+
+Managed Codex evaluation also separates proof-semantic tools from host
+metadata. `proof_node_manager.submit_proof_intent` is the sole proof tool.
+Bounded empty resource/template discovery performed by the Codex MCP host is
+recorded as provider overhead only after the shared runtime policy verifies
+the exact private server scope and empty result. It never advances a proof
+turn or becomes compiler input; non-empty or cross-server discovery fails
+closed.
 
 Eval metrics also record provider-normalized source-inspection calls, returned
 result characters/lines, source-tree searches, and scratch-checker calls. New

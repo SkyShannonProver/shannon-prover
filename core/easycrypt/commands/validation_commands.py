@@ -11,7 +11,7 @@ def handle_verify_lemma(session, args) -> int:
     """Verify one extracted lemma with the pinned EasyCrypt runtime."""
 
     from core.easycrypt.lemma_extract import extract_lemma
-    from core.easycrypt.session_common import get_ec_env
+    from core.easycrypt.session.session_common import get_ec_env
 
     def emit(status: str, **payload) -> None:
         session.emit_event(

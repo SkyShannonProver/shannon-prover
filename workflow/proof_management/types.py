@@ -8,6 +8,7 @@ manager implementation.
 from __future__ import annotations
 
 from dataclasses import dataclass, field
+from enum import Enum
 from typing import Any
 
 from .protocol_repair import AgentIntent
@@ -110,6 +111,19 @@ class NodeProgressSummary:
         }
 
 
+class TurnDirective(str, Enum):
+    """Serving control emitted by one manager turn.
+
+    This is deliberately not a proof-lifecycle or success vocabulary.  In
+    particular, ``STOP_REQUESTED`` also covers an accepted give-up while the
+    proof is still open.
+    """
+
+    CONTINUE = "continue"
+    STOP_REQUESTED = "stop_requested"
+    NODE_UNHEALTHY = "node_unhealthy"
+
+
 @dataclass(frozen=True)
 class ManagedTurn:
     ok: bool
@@ -126,3 +140,6 @@ class ManagedTurn:
     # Exact P4-admitted compiler Markdown. Workflow may only embed this block;
     # it must not parse, trim, reorder, or render it again.
     compiler_markdown: str = ""
+    # Worker-serving control only.  Never interpret this as proof closedness or
+    # whole-run success; those facts retain their separate canonical owners.
+    directive: TurnDirective = TurnDirective.CONTINUE

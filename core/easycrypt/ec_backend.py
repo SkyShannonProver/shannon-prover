@@ -24,10 +24,10 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Callable
 
 from core.easycrypt.ec_proc import emacs_command, why3_socket_from_env
-from core.easycrypt.session_common import get_ec_env
+from core.easycrypt.session.session_common import get_ec_env
 
 if TYPE_CHECKING:
-    from core.easycrypt.session_rollback import RollbackJournal
+    from core.easycrypt.session.session_rollback import RollbackJournal
 
 
 @dataclass(frozen=True)
@@ -44,10 +44,14 @@ class ECResult:
     * ``rejection_error`` — the daemon's EC error text on a daemon REJECT (the
       ``[error]…`` line ``append_block`` ORs into ``has_new_error``); empty on
       accept / fallback. Travels inline here instead of via a side-channel attr.
+    * ``detail`` — the underlying exception (``TypeName: message``) behind a
+      fallback ``reason``, so "why did this commit not take the daemon" is
+      answerable from the ``ec.routing`` event instead of only an enum.
     """
     took_daemon: bool
     reason: str
     rejection_error: str = ""
+    detail: str = ""
 
 
 @dataclass(frozen=True)

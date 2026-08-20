@@ -16,12 +16,33 @@ opens+closes a socket (simple, cheap locally).
 
 from __future__ import annotations
 
+import hashlib
 import json
+import os
 import socket
 from pathlib import Path
 from typing import Any, Optional
 
-SOCKET_PATH_DEFAULT = "/tmp/ec_daemon.sock"
+
+def default_socket_path() -> str:
+    """THE one home of the EC-daemon socket default.
+
+    Order: explicit ``EC_DAEMON_SOCKET`` env (the managed prover sets a
+    per-run path), else a per-checkout ``/tmp`` path keyed on the current
+    working directory. A per-checkout key keeps a reused daemon's cwd equal to
+    the live checkout — the old single global ``/tmp/ec_daemon.sock`` let a
+    daemon spawned in a later-deleted worktree serve another checkout and
+    crash every EC child with ``Unix_error(ENOENT, "getcwd")``.
+
+    Every layer (daemon argparse, this client, DaemonBackend, run-level
+    shutdown) must resolve the default through here; five divergent defaults
+    were how two processes ended up talking past each other.
+    """
+    override = os.environ.get("EC_DAEMON_SOCKET", "").strip()
+    if override:
+        return override
+    key = hashlib.sha1(os.path.realpath(os.getcwd()).encode()).hexdigest()[:12]
+    return f"/tmp/ec_daemon_{key}.sock"
 
 
 class ECDaemonError(RuntimeError):
@@ -41,8 +62,8 @@ class ECDaemonConnectionLost(ECDaemonError):
 
 
 class ECDaemonClient:
-    def __init__(self, socket_path: str = SOCKET_PATH_DEFAULT):
-        self.socket_path = socket_path
+    def __init__(self, socket_path: str = ""):
+        self.socket_path = socket_path or default_socket_path()
 
     def __enter__(self):
         return self

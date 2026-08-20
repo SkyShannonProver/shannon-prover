@@ -1,6 +1,6 @@
 """Per-node stream trackers for tree-mode prover runs.
 
-Extracted verbatim from workflow/progress.py (backlog #18): _ProverTracker
+Extracted verbatim from the retired progress facade (backlog #18): _ProverTracker
 (single-run stream parsing + hygiene watchdog) and _TreeProverTracker
 (per-node variant), with their stream/tool-audit helpers.
 """
@@ -14,36 +14,26 @@ import shlex
 import subprocess
 import time
 from pathlib import Path
-from typing import Callable, Optional
-from core.easycrypt.proof_lifecycle import is_session_completion_candidate
+from typing import Optional
 from core.easycrypt.committed_history import read_committed_tactics
 from core.easycrypt.value_shapes import drop_empty as _shallow_drop_empty
-from workflow.session_observer import WorkflowSessionSnapshot, observe_session
-from workflow.prover_io_policy import (
+from workflow.tree.session_observer import WorkflowSessionSnapshot, observe_session
+from workflow.provider.prover_io_policy import (
     InformationSourceDecision,
     classify_bash_command,
     classify_read_path,
     detect_target_proof_output_exposure,
 )
-from workflow.payload_audit import (
+from workflow.tree.payload_audit import (
     PayloadAuditRecorder,
     coerce_tool_result_text,
 )
+from workflow.proof_tool.proof_tool_contract import PROOF_TOOL_IDENTITY
 from workflow.run_ui import (
-    _BOLD,
     _CYAN,
     _DIM,
     _GREEN,
-    _RED,
-    _RESET,
     _YELLOW,
-    _clear_status_bar,
-    _draw_status_bar,
-    _set_status_bar_active,
-    _status_bar_active,
-    _status_bar_text,
-    _timestamp,
-    _update_status_bar,
     status,
 )
 
@@ -134,7 +124,7 @@ def _summarize_tool(name: str, inp: dict) -> str:
         return f"Search: {inp.get('pattern', '')[:60]}"
     if name == "Glob":
         return f"Glob: {inp.get('pattern', '')}"
-    if name.endswith("submit_proof_intent"):
+    if name.endswith(PROOF_TOOL_IDENTITY.tool):
         return _proof_intent_tool_description(inp)
     return f"{name}({json.dumps(inp, default=str)[:80]})"
 
@@ -158,19 +148,19 @@ def _bash_invokes_easycrypt(cmd: str) -> bool:
 
 def _proof_intent_tool_description(tool_input: object) -> str:
     if not isinstance(tool_input, dict):
-        return "submit_proof_intent malformed: arguments are not an object"
+        return f"{PROOF_TOOL_IDENTITY.tool} malformed: arguments are not an object"
     raw_intent = tool_input.get("intent")
     intent = str(raw_intent or "").strip()
     if not intent:
-        return "submit_proof_intent malformed: missing intent"
+        return f"{PROOF_TOOL_IDENTITY.tool} malformed: missing intent"
     payload = tool_input.get("payload")
     payload = payload if isinstance(payload, dict) else {}
     if intent == "commit_tactic":
         tactic = str(payload.get("tactic") or "").strip()
         if len(tactic) > 220:
             tactic = tactic[:217].rstrip() + "..."
-        return f"submit_proof_intent {intent}: {tactic}"
-    return f"submit_proof_intent {intent}"
+        return f"{PROOF_TOOL_IDENTITY.tool} {intent}: {tactic}"
+    return f"{PROOF_TOOL_IDENTITY.tool} {intent}"
 
 
 def _assistant_context_before_tool(
@@ -274,10 +264,7 @@ def _snapshot_has_completion_candidate(
     return bool(
         snapshot
         and snapshot.ok
-        and (
-            snapshot.qed_committed
-            and is_session_completion_candidate(snapshot.status)
-        )
+        and snapshot.session_completion_candidate
     )
 
 
@@ -1071,7 +1058,7 @@ class _TreeProverTracker(_ProverTracker):
                     policy,
                 )
                 continue
-            if name.endswith("submit_proof_intent"):
+            if name.endswith(PROOF_TOOL_IDENTITY.tool):
                 self._record_payload_tool_use(
                     tool_use_id,
                     name,

@@ -13,11 +13,11 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
 from core.easycrypt.committed_history import history_path
-from core.easycrypt.session_events import (
+from core.easycrypt.session.session_events import (
     EVENTS_FILENAME,
     append_event,
 )
-from core.easycrypt.session_projection import (
+from core.easycrypt.session.session_projection import (
     ProofStateProjection,
     read_proof_state_projection,
 )

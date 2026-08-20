@@ -9,7 +9,7 @@ from collections.abc import Callable
 from dataclasses import dataclass, field
 from typing import Any, Literal
 
-from core.easycrypt.session_placeholders import requires_placeholder_instantiation
+from core.easycrypt.session.session_placeholders import requires_placeholder_instantiation
 from core.easycrypt.value_shapes import as_list as _list
 
 from .checkpoint_surface import (
@@ -18,7 +18,7 @@ from .checkpoint_surface import (
 )
 from .checkpoint_store import ProofCheckpointManager
 from .protocol_repair import AgentIntent
-from .repl_session import history_hash
+from .checkpoint_surface import history_hash
 from .turn_view import intent_payload_surface
 
 

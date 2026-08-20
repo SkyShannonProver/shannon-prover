@@ -43,7 +43,7 @@ committed `qed.` is a `session_completion_candidate`.
 | `core.easycrypt.committed_history` | Canonical committed-history reading, compound/standalone `qed` recognition, closed-history extraction | Current goal, event validity, run outcome |
 | `core.easycrypt.session_runtime` and `session_events` | EasyCrypt mutation lifecycle and append-only factual occurrences | Tree winner or final verification verdict |
 | `core.easycrypt.session_projection` | The single joined projection of goal, history, event contract, exact close occurrence and session lifecycle status | Search scheduling or whole-run success |
-| `workflow.session_observer` | Provider-neutral transport of one `ProofStateProjection`; workflow telemetry is derived from the same parsed event records | Rereading history/events to decide lifecycle, close, verification, `qed`, or tactic count |
+| `workflow.tree.session_observer` | Provider-neutral transport of one `ProofStateProjection`; workflow telemetry is derived from the same parsed event records | Rereading history/events to decide lifecycle, close, verification, `qed`, or tactic count |
 | `ProofNodeManager` and protocol repair | One agent turn, including when `qed.` is legal and which current view is returned | Finalization, writeback or run outcome |
 | `workflow.tree.trackers` | Observe whether a node has an authoritative session completion candidate | Offline verification |
 | `workflow.tree.supervisor` | Search topology, capacity, termination, selection of one immutable `SessionClosureCandidate`, and the explicit managed-session set inside `TreeRunResult` | `proved`, source writeback or final report |

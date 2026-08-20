@@ -12,7 +12,7 @@ from workflow.proof_state_compiler.profile_ids import (
     DEFAULT_CURRENT_SURFACE_PROFILE,
 )
 from workflow.proof_state_compiler.profile_registry import (
-    normalize_current_surface_profile_id,
+    normalize_public_surface_profile_id,
 )
 
 
@@ -51,10 +51,6 @@ class ProverConfig:
     model: str = ""
     effort: str = "high"
     mode: str = "tree"
-    parallelism: int = 4
-    warmup_seconds: int = 180  # no killing during warmup (context reading + session start)
-    kill_gap_tactics: int = 2  # kill worst prover if this many tactics behind leader
-    kill_gap_idle_seconds: int = 60  # ...and idle for this long
     # Tree mode parameters (only used when mode == "tree")
     # root provers to start simultaneously
     tree_initial_provers: int = DEFAULT_TREE_INITIAL_PROVERS
@@ -125,7 +121,7 @@ class RunConfig:
     resume_capsules: list[str] = field(default_factory=list)
 
     def __post_init__(self) -> None:
-        self.surface_profile = normalize_current_surface_profile_id(
+        self.surface_profile = normalize_public_surface_profile_id(
             self.surface_profile
         )
 
@@ -145,6 +141,8 @@ class RunConfig:
         # instead of raising TypeError on an unexpected keyword argument.
         known = {f.name for f in fields(cls)}
         data = {k: v for k, v in data.items() if k in known}
+        prover_known = {f.name for f in fields(ProverConfig)}
+        prover_data = {k: v for k, v in prover_data.items() if k in prover_known}
         return cls(
             **data,
             prover=ProverConfig(**prover_data),

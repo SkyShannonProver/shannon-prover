@@ -8,7 +8,7 @@ from core.context_intents import (
     intent_is_read_only,
     intent_may_mutate_proof_state,
 )
-from workflow.managed_turn_outcome import (
+from workflow.proof_management.managed_turn_outcome import (
     classify_manager_action_outcome,
     observation_with_action_outcome,
 )

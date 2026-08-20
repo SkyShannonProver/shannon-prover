@@ -93,7 +93,7 @@ def handle_managed_goal_view(session, args) -> int:
     """Emit the narrow event-bound workspace used by L1 and compiler V2."""
 
     del args
-    from core.easycrypt.session_managed_goal_view import (
+    from core.easycrypt.session.session_managed_goal_view import (
         build_managed_goal_view,
         record_managed_goal_view,
     )
@@ -110,7 +110,7 @@ def handle_episode_view(session, args) -> int:
     """Emit the event-ordered session timeline used for audit."""
 
     del args
-    from core.easycrypt.session_episode_timeline import (
+    from core.easycrypt.session.session_episode_timeline import (
         build_session_episode_timeline,
         record_session_episode_timeline,
     )

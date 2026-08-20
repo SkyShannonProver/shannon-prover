@@ -105,10 +105,35 @@ qed.
   local lemma ddh1_gb &m:
       Pr[DDH1(DDHAdv(A)).main() @ &m : res] =
       Pr[Gb.main() @ &m : res].
-  proof.
-  (* COMPLETE THIS, REMOVE ADMIT ONCE YOU COMPLETE. DO NOT REMOVE THIS COMMENT *)
-    admit.
-  qed.
+proof.
+(* COMPLETE THIS, REMOVE ADMIT ONCE YOU COMPLETE. DO NOT REMOVE THIS COMMENT *)
+  byequiv.
+  proc.
+  inline DDHAdv(A).guess.
+  swap {1} 8 -5; swap {1} 5 -1; swap {1} 8 -3; swap {2} 6 -3; seq 3 3 : (={x, y, glob A} /\ b0{1} = b{2}).
+  auto.
+  seq 2 1 : (={m0, m1, glob A, x, y} /\ b0{1} = b{2}).
+  auto; call (_: true); auto.
+  wp.
+  call (_: true).
+  wp.
+  rnd (fun z => z + choiceb (fun (e : ZModE.exp) => g ^ e = (if b0{1} then m1{1} else m0{1})) witness) (fun z => z - choiceb (fun (e : ZModE.exp) => g ^ e = (if b0{1} then m1{1} else m0{1})) witness); auto.
+  move=> &1 &2 Hpre.
+  split; first by move=> zR _; ring.
+  move=> _ zL _; split; first by ring.
+  move=> _; auto.
+  have H := log_spec.
+  rewrite /log_spec in H.
+  have HE := expE.
+  have HA := asintK.
+  have HZ := inzmodK.
+  have [k [Hkr Hkg]] := H (if b0{1} then m1{1} else m0{1}). have Hex : exists (e : ZModE.exp), g ^ e = (if b0{1} then m1{1} else m0{1}) by exists (inzmod k); rewrite expE inzmodK; have -> : IntDiv.(%%) k order = k by smt(); exact Hkg.
+  have Hchoice := choicebP (fun (e : ZModE.exp) => g ^ e = (if b0{1} then m1{1} else m0{1})) witness Hex.
+  have HD := expD.
+  rewrite expD Hchoice; smt().
+  auto.
+  auto.
+qed.
 
   local lemma Gb_half &m:
      Pr[Gb.main()@ &m : res] = 1%r/2%r.

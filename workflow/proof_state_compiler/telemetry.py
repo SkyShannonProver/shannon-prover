@@ -464,8 +464,10 @@ def compilation_telemetry(
             "batches": native_batches,
             "observations": [{
                 "request_id": item.request_id,
+                "execution_unit_id": item.semantic_unit_sha256,
                 "feature_id": item.feature_id,
                 "producer_id": item.producer_id,
+                "query_kind": item.query_kind,
                 "request_identity_sha256": item.request_identity_sha256,
                 "evaluation_prefix": list(item.evaluation_prefix),
                 "batch_id": item.batch_id,

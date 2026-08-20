@@ -14,11 +14,12 @@ from .lineage import (
     lineage_briefing_from_events,
     lineage_briefing_markdown,
 )
-from .lifecycle import ProofNodeLifecycleManager
+from .node_bootstrap import ProofNodeLifecycleManager
 from .health import backend_failure_health_event, timeout_health_event
-from .intent_preflight import (
+from .intent_admission import (
+    IntentAdmission,
+    IntentAdmissionController,
     IntentPreflightDecision,
-    preflight_intent,
 )
 from .protocol_repair import (
     ALLOWED_AGENT_INTENTS,
@@ -65,7 +66,14 @@ from .turn_view import (
     snapshot_surface,
     view_with_latest_observation,
 )
-from .types import ManagedTurn, NodeHealthEvent, NodeProgressSummary, ProofStateSnapshot
+from .turn_spine import CommittedTurnSpine
+from .types import (
+    ManagedTurn,
+    NodeHealthEvent,
+    NodeProgressSummary,
+    ProofStateSnapshot,
+    TurnDirective,
+)
 
 __all__ = [
     "ALLOWED_AGENT_INTENTS",
@@ -73,6 +81,9 @@ __all__ = [
     "AgentIntentName",
     "CheckpointIndex",
     "CheckpointOption",
+    "CommittedTurnSpine",
+    "IntentAdmission",
+    "IntentAdmissionController",
     "IntentPreflightDecision",
     "LemmaLineageStore",
     "ManagedTurn",
@@ -94,6 +105,7 @@ __all__ = [
     "ReplSessionManager",
     "ResumeRouteCandidate",
     "RouteFamilyEvidence",
+    "TurnDirective",
     "agent_observation_from_command",
     "backend_action_record",
     "backend_failure_health_event",
@@ -108,7 +120,6 @@ __all__ = [
     "lineage_briefing_from_events",
     "lineage_briefing_markdown",
     "parse_agent_intent",
-    "preflight_intent",
     "render_observation_view",
     "resume_diversity_candidate_summary",
     "resume_diversity_handoff_note",

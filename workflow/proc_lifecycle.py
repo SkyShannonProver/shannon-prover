@@ -95,9 +95,9 @@ def terminate_subprocess_tree(
     on an already-exited process (no-op).
 
     This is the entry-to-orchestrator analogue of
-    ``workflow.progress._terminate_process_tree`` (which the orchestrator uses
-    internally to reap its tree workers); kept here so the operator-facing
-    drivers do not have to import the heavy ``progress`` module.
+    ``workflow.tree.supervisor._terminate_process_tree`` (which the orchestrator
+    uses internally to reap its tree workers); kept here so the operator-facing
+    drivers do not have to import the heavy supervisor module.
     """
     if proc.poll() is not None:
         return

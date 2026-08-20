@@ -4,7 +4,7 @@ from __future__ import annotations
 from typing import Any
 
 from core.context_intents import control_menu_intents
-from workflow.managed_turn_outcome import (
+from workflow.proof_management.managed_turn_outcome import (
     action_outcome_from_action,
     normalize_proof_state_effect,
     proof_state_changed_for_turn,

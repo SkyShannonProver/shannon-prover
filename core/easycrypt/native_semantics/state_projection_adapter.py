@@ -26,7 +26,7 @@ from core.easycrypt.native_semantics.companion import (
     build_and_identify_companion,
     parse_companion_result_frame,
 )
-from core.easycrypt.session_projection import active_goal_hash_from_raw
+from core.easycrypt.session.session_projection import active_goal_hash_from_raw
 
 
 NATIVE_STATE_PROJECTION_PROTOCOL_VERSION = 2

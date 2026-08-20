@@ -1,0 +1,42 @@
+{
+  "suite": "compiler_v2_compound_complex_route_replacement_step1_interaction",
+  "_note": "Separately labelled step1 interaction attribution block. It is not pooled with the primary compound-only estimate.",
+  "parallel_execution": {
+    "mode": "target_block_waves",
+    "within_block": "profile_order_sequential",
+    "wave_barrier": true,
+    "max_concurrent_blocks": 2,
+    "waves": [
+      ["step1_interaction_r1"],
+      ["step1_interaction_r2"],
+      ["step1_interaction_r3"]
+    ]
+  },
+  "profiles": [
+    "l1_goal_projection",
+    "l4_proof_state_compiler_v2_compound_operation_binding_audit",
+    "l4_proof_state_compiler_v2_compound_tactic_prefix_recovery",
+    "l4_proof_state_compiler_v2_compound_operation_binding"
+  ],
+  "defaults": {
+    "eval_mode": true,
+    "filesystem_confinement": true,
+    "agent_backend": "codex",
+    "model": "gpt-5.6-sol",
+    "effort": "high",
+    "max_iterations": 1,
+    "repeats": 1,
+    "tree_initial_provers": 1,
+    "tree_max_concurrent": 1,
+    "output_dir": "tmp/compound_complex_route_replacement_v2_20260818/interaction",
+    "source_isolation": true,
+    "strip_proofs": true,
+    "include_dir": "easycrypt-src/theories",
+    "timeout_minutes": 60
+  },
+  "targets": [
+    {"id":"step1_interaction_r1","file":"eval/examples/ChaChaPoly/chacha_poly.ec","lemma":"step1","copy_root":"eval/examples/ChaChaPoly","timeout_minutes":60,"expected_exposure":true,"repeat_label":1,"profile_order":["l1_goal_projection","l4_proof_state_compiler_v2_compound_operation_binding_audit","l4_proof_state_compiler_v2_compound_tactic_prefix_recovery","l4_proof_state_compiler_v2_compound_operation_binding"]},
+    {"id":"step1_interaction_r2","file":"eval/examples/ChaChaPoly/chacha_poly.ec","lemma":"step1","copy_root":"eval/examples/ChaChaPoly","timeout_minutes":60,"expected_exposure":true,"repeat_label":2,"profile_order":["l4_proof_state_compiler_v2_compound_operation_binding_audit","l4_proof_state_compiler_v2_compound_tactic_prefix_recovery","l4_proof_state_compiler_v2_compound_operation_binding","l1_goal_projection"]},
+    {"id":"step1_interaction_r3","file":"eval/examples/ChaChaPoly/chacha_poly.ec","lemma":"step1","copy_root":"eval/examples/ChaChaPoly","timeout_minutes":60,"expected_exposure":true,"repeat_label":3,"profile_order":["l4_proof_state_compiler_v2_compound_tactic_prefix_recovery","l4_proof_state_compiler_v2_compound_operation_binding","l1_goal_projection","l4_proof_state_compiler_v2_compound_operation_binding_audit"]}
+  ]
+}

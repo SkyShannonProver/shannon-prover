@@ -4,7 +4,7 @@ from __future__ import annotations
 import re
 import sys
 
-from core.easycrypt.session_no_progress import detect_no_progress
+from core.easycrypt.session.session_no_progress import detect_no_progress
 def handle_tactic_exec(session, args) -> int:
     """Canonical Proof Interaction Manager wrapper.
 
@@ -191,11 +191,11 @@ def _record_try_preflight_artifact(
     result: dict,
     report: str,
 ) -> dict:
-    from core.easycrypt.session_projection import (  # type: ignore
+    from core.easycrypt.session.session_projection import (  # type: ignore
         projection_to_proof_status,
         read_proof_state_projection,
     )
-    from core.easycrypt.session_tactic_preflight import (  # type: ignore
+    from core.easycrypt.session.session_tactic_preflight import (  # type: ignore
         build_tactic_preflight_artifact,
         record_tactic_preflight_artifact,
     )
@@ -441,7 +441,7 @@ def _finalize_tactic_execution(
     CommitResponse -> managed goal envelope -> TacticExecutionResult.
     """
     active_tool_name = live_tool_name or command
-    from core.easycrypt.session_commit_response import (  # type: ignore
+    from core.easycrypt.session.session_commit_response import (  # type: ignore
         build_commit_response,
         record_commit_response,
     )
@@ -489,7 +489,7 @@ def _record_prover_workspace_view(
     *,
     live_tool_name: str,
 ) -> tuple[dict, dict]:
-    from core.easycrypt.session_managed_goal_view import (  # type: ignore
+    from core.easycrypt.session.session_managed_goal_view import (  # type: ignore
         build_managed_goal_view,
         record_managed_goal_view,
     )
@@ -515,7 +515,7 @@ def _record_tactic_execution_result(
     chain_steps: list[dict] | None = None,
     emit_stdout: bool = True,
 ) -> dict:
-    from core.easycrypt.session_tactic_execution_result import (  # type: ignore
+    from core.easycrypt.session.session_tactic_execution_result import (  # type: ignore
         build_tactic_execution_result,
         format_tactic_execution_result,
         record_tactic_execution_result,
@@ -547,7 +547,7 @@ def _record_tactic_execution_result(
 
 
 def _latest_transition_info(session, action_name: str) -> dict:
-    from core.easycrypt.session_projection import read_proof_state_projection  # type: ignore
+    from core.easycrypt.session.session_projection import read_proof_state_projection  # type: ignore
     try:
         projection = read_proof_state_projection(
             session.dir,

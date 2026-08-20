@@ -2,20 +2,19 @@
 from __future__ import annotations
 
 import difflib
-import json
-import shutil
+import math
 import subprocess
 import sys
-import tempfile
 import threading
 import time
+from collections.abc import Iterator
+from contextlib import contextmanager
 from pathlib import Path
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from core.easycrypt import committed_history
 from core.easycrypt.ec_env import get_ec_env
-from core.easycrypt.session_state import read_target_lemma_metadata
-from core.easycrypt.session_events import event_payload
+from core.easycrypt.session.session_state import read_target_lemma_metadata
 
 from .backend_actions import (
     AuthoritativeViewResolution,
@@ -26,19 +25,12 @@ from .backend_actions import (
     resolve_authoritative_view_invocation,
     timeout_backend_action_record,
 )
-from .backend_invocation import (
-    capture_backend_invocation,
-    resolve_backend_invocation,
-)
-# Single source of truth for the committed-history digest + checkpoint-id
-# coordinate system. Re-exported here so the long-standing
-# `from .repl_session import history_hash` consumers (checkpoint_store /
-# checkpoint recovery and manager projection stay backed by one
-# implementation instead of a copy that can silently drift (audit §6.3/§8 #7).
-from .checkpoint_surface import history_hash
-from workflow.managed_turn_outcome import classify_manager_action_outcome
+from workflow.proof_management.managed_turn_outcome import classify_manager_action_outcome
 from .protocol_repair import AgentIntent
 from .types import ProofStateSnapshot
+
+if TYPE_CHECKING:
+    from .compiler_surface import CompilerSurface
 
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
@@ -59,7 +51,13 @@ PROJECT_ROOT = Path(__file__).resolve().parents[2]
 # wedge far below per-tactic-cap x count. An explicit SHANNON_REPLAY_AGG_BUDGET
 # wins verbatim (no scaling); SHANNON_REPLAY_AGG_BUDGET_PER_TACTIC overrides the
 # per-tactic rate.
-def _replay_aggregate_budget_seconds(prefix_len: int = 0) -> float:
+def replay_aggregate_budget_seconds(prefix_len: int = 0) -> float:
+    """Return the one aggregate restart/replay timing policy.
+
+    Proof-tool timing derives its outer budgets from this public owner; callers
+    must not repeat the environment/default interpretation.
+    """
+
     import os
 
     raw = os.environ.get("SHANNON_REPLAY_AGG_BUDGET", "").strip()
@@ -126,8 +124,47 @@ class ReplSessionManager:
         self.project_root = Path(project_root)
         self.session_dir = f".ec_session_{session_tag}"
         self._lock = threading.Lock()
+        self._turn_deadline = threading.local()
         self._state_version = 0
         self._session_epoch = 0
+        self._compiler_surface: CompilerSurface | None = None
+
+    @contextmanager
+    def turn_deadline(self, deadline: float | None) -> Iterator[None]:
+        """Bind one absolute proof-tool deadline to every backend call.
+
+        The manager wraps the complete admission/execution/compile turn in this
+        scope.  Compiler runtime calls therefore inherit the same budget even
+        though their public APIs retain bounded per-operation timeouts.  The
+        binding is thread-local so unrelated read-only callers cannot borrow or
+        overwrite another invocation's budget.
+        """
+
+        normalized: float | None
+        if deadline is None:
+            normalized = None
+        else:
+            normalized = float(deadline)
+            if not math.isfinite(normalized) or normalized <= 0:
+                raise ValueError(
+                    "proof-tool turn deadline must be finite and positive"
+                )
+        missing = object()
+        previous = getattr(self._turn_deadline, "value", missing)
+        if previous is not missing and previous is not None:
+            normalized = (
+                float(previous)
+                if normalized is None
+                else min(float(previous), normalized)
+            )
+        self._turn_deadline.value = normalized
+        try:
+            yield
+        finally:
+            if previous is missing:
+                del self._turn_deadline.value
+            else:
+                self._turn_deadline.value = previous
 
     @property
     def state_version(self) -> int:
@@ -263,87 +300,6 @@ class ReplSessionManager:
                 stop_at_first_drop=True,
             )
 
-    def verify_tactic_chunk_from_prefix(
-        self,
-        prefix_tactics: list[str],
-        chunk_tactics: list[str],
-    ) -> dict[str, Any]:
-        scratch_base = Path(self.project_root) / "tmp" / "replay_chunks"
-        scratch_base.mkdir(parents=True, exist_ok=True)
-        scratch_dir = Path(
-            tempfile.mkdtemp(
-                prefix="shannon_replay_chunk_",
-                dir=str(scratch_base),
-            )
-        )
-        scratch = ReplSessionManager(
-            file_path=self.file_path,
-            lemma_name=self.lemma_name,
-            include_dir=self.include_dir,
-            session_tag=f"{self.session_tag}_replay_{time.time_ns()}",
-            node_id=f"{self.node_id}.replay",
-            project_root=self.project_root,
-        )
-        scratch.session_dir = str(scratch_dir)
-        actions: list[dict[str, Any]] = []
-        accepted: list[str] = []
-        try:
-            snapshot, start_actions = scratch.start(replay_prefix=prefix_tactics)
-            actions.extend(start_actions)
-            for tactic in chunk_tactics:
-                try:
-                    snapshot, step_actions = scratch.handle_intent(
-                        AgentIntent(
-                            intent="commit_tactic",
-                            payload={"tactic": tactic},
-                        )
-                    )
-                    actions.extend(step_actions)
-                    accepted.append(tactic)
-                except ReplBackendTimeout as exc:
-                    actions.append(exc.action)
-                    return {
-                        "ok": False,
-                        "accepted_count": len(accepted),
-                        "accepted_tactics": list(accepted),
-                        "failed_tactic": tactic,
-                        "failure_kind": "timeout",
-                        "failure_action": exc.action,
-                        "actions": actions,
-                    }
-                except ReplBackendError as exc:
-                    actions.append(exc.action)
-                    return {
-                        "ok": False,
-                        "accepted_count": len(accepted),
-                        "accepted_tactics": list(accepted),
-                        "failed_tactic": tactic,
-                        "failure_kind": "backend_error",
-                        "failure_action": exc.action,
-                        "actions": actions,
-                    }
-            return {
-                "ok": True,
-                "accepted_count": len(accepted),
-                "accepted_tactics": list(accepted),
-                "actions": actions,
-                "post_snapshot": snapshot.to_dict(),
-            }
-        except Exception as exc:  # scratch replay failures are evidence, not fatal.
-            return {
-                "ok": False,
-                "accepted_count": len(accepted),
-                "accepted_tactics": list(accepted),
-                "failure_kind": "setup_error",
-                "error": str(exc)[-1200:],
-                "actions": actions,
-            }
-        finally:
-            try:
-                scratch.close()
-            finally:
-                shutil.rmtree(scratch_dir, ignore_errors=True)
-
     def _attach_locked(
         self,
         daemon_attach: dict[str, Any],
@@ -450,7 +406,7 @@ class ReplSessionManager:
 
         replay_prefix = [str(t).strip() for t in (replay_prefix or []) if str(t).strip()]
         total = len(replay_prefix)
-        agg_budget = _replay_aggregate_budget_seconds(total)
+        agg_budget = replay_aggregate_budget_seconds(total)
         replay_started = time.perf_counter()
         for index, tactic in enumerate(replay_prefix, start=1):
             # Aggregate budget check BEFORE issuing the next backend call: a long
@@ -590,31 +546,27 @@ class ReplSessionManager:
                     label="fresh_restart",
                     force_restart=True,
                 )
-            elif intent.intent == "finish":
-                outcome = classify_manager_action_outcome(
-                    status="ok",
-                    ok=True,
-                    read_only=False,
-                    mutates_proof_state=False,
-                    state_changed=False,
-                ).to_dict()
-                actions.append({
-                    "label": "finish",
-                    "exit_code": 0,
-                    "duration_ms": 0,
-                    "mutates_proof_state": False,
-                    **outcome,
-                    "agent_observation": {
-                        "kind": "finish_accepted",
-                        "result": (
-                            "Finish accepted; this proof node will stop after "
-                            "this response."
-                        ),
-                        "effect": "The EasyCrypt proof state did not change.",
-                    },
-                })
+            else:
+                raise ValueError(
+                    f"intent {intent.intent!r} is not a REPL session operation"
+                )
             snapshot = self._snapshot_from_managed_goal_view(actions=actions)
             return snapshot, actions
+
+    # ------------------------------------------------------------------
+    # Proof-state-compiler RPC surface.  The implementations live in
+    # compiler_surface.CompilerSurface; these one-line delegates keep the
+    # manager satisfying the CompilerRuntime protocol and leave every
+    # existing call site unchanged.
+    # ------------------------------------------------------------------
+    @property
+    def compiler(self) -> "CompilerSurface":
+        """The read-only proof-state-compiler RPC surface for this session."""
+        if self._compiler_surface is None:
+            from .compiler_surface import CompilerSurface
+
+            self._compiler_surface = CompilerSurface(self)
+        return self._compiler_surface
 
     def read_only_tactic_preflight(
         self,
@@ -622,27 +574,7 @@ class ReplSessionManager:
         *,
         timeout: int = 30,
     ) -> dict[str, Any]:
-        """Check one exact compiler tactic through event-bound preflight.
-
-        This is manager-internal WP8a plumbing.  It does not refresh or mutate
-        the committed session, and it returns only the backend action whose
-        preflight artifact was bound to this exact invocation.
-        """
-        candidate = str(tactic or "").strip()
-        if not candidate:
-            return {}
-        with self._lock:
-            actions: list[dict[str, Any]] = []
-            try:
-                self._run_backend(
-                    "exact_tactic_preflight",
-                    ["-try", "-c", candidate],
-                    actions=actions,
-                    timeout=timeout,
-                )
-            except (ReplBackendTimeout, ReplBackendError):
-                pass
-            return dict(actions[-1]) if actions else {}
+        return self.compiler.read_only_tactic_preflight(tactic, timeout=timeout)
 
     def certify_exact_tactic(
         self,
@@ -650,144 +582,10 @@ class ReplSessionManager:
         *,
         timeout: int = 30,
     ) -> dict[str, Any]:
-        """Return an authority-bound read-only check for one exact tactic.
+        return self.compiler.certify_exact_tactic(tactic, timeout=timeout)
 
-        This is the backend boundary used by the proof-state compiler service.
-        Unlike display-oriented action records, the result names the one
-        ``tactic.preflight.produced`` occurrence inside this exact call and proves
-        that committed history and the manager state version did not change.
-        """
-
-        candidate = str(tactic or "").strip()
-        if not candidate:
-            return {}
-        with self._lock:
-            session_path = session_dir_path(self.session_dir, self.project_root)
-            boundary = capture_backend_invocation(
-                session_path,
-                action_name="try",
-                mutates_proof_state=False,
-            )
-            history_before = tuple(self.committed_history())
-            state_version_before = self.state_version
-            actions: list[dict[str, Any]] = []
-            try:
-                self._run_backend(
-                    "exact_tactic_preflight",
-                    ["-try", "-c", candidate],
-                    actions=actions,
-                    timeout=timeout,
-                )
-            except (ReplBackendTimeout, ReplBackendError):
-                pass
-            action = dict(actions[-1]) if actions else {}
-            window = resolve_backend_invocation(
-                boundary,
-                exit_code=action.get("exit_code"),
-            )
-            produced, produced_error = window.exactly_one_produced_event(
-                "tactic.preflight.produced"
-            ) if window.ok else (None, window.error)
-            authority: dict[str, Any] = {}
-            if produced is not None and not produced_error:
-                payload = event_payload(produced)
-                authority = {
-                    "event_type": "tactic.preflight.produced",
-                    "event_id": str(produced.get("event_id") or ""),
-                    "artifact_ref": str(payload.get("artifact") or ""),
-                    "artifact_hash": str(payload.get("artifact_hash") or ""),
-                    "hash_algorithm": "sha1",
-                }
-            history_after = tuple(self.committed_history())
-            state_version_after = self.state_version
-            return {
-                "tactic": candidate,
-                "action": action,
-                "authority": authority,
-                "contract_error": produced_error,
-                "history_unchanged": history_before == history_after,
-                "state_version_before": state_version_before,
-                "state_version_after": state_version_after,
-            }
-
-    def read_compiler_input_v2(
-        self,
-        *,
-        timeout: int = 30,
-    ) -> dict[str, Any]:
-        """Return one current-call, event-bound compiler input occurrence.
-
-        This method does not read or translate ``raw_workspace_view``.  The
-        backend result is accepted only through ``compiler.input.produced``;
-        the returned authority envelope names that exact event and artifact.
-        """
-
-        with self._lock:
-            actions: list[dict[str, Any]] = []
-            authoritative_resolutions: list[AuthoritativeViewResolution] = []
-            backend_args = [
-                "-compiler-input-v2",
-                "--manager-state-version",
-                str(self.state_version),
-            ]
-            payload = self._run_backend(
-                "compiler_input_v2",
-                backend_args,
-                actions=actions,
-                timeout=timeout,
-                authoritative_resolutions=authoritative_resolutions,
-            )
-            if not isinstance(payload, dict) or payload.get("ok") is not True:
-                raise ReplBackendError(actions[-1] if actions else {
-                    "label": "compiler_input_v2",
-                    "exit_code": 1,
-                    "agent_observation": {
-                        "error_summary": "invalid compiler input payload",
-                    },
-                })
-            target = payload.get("target")
-            if not isinstance(target, dict):
-                raise ValueError("compiler input target is missing")
-            if target.get("lemma") != self.lemma_name:
-                raise ValueError("compiler input target lemma drifted")
-            if Path(str(target.get("source_file") or "")).resolve() != Path(
-                self.file_path
-            ).resolve():
-                raise ValueError("compiler input target source drifted")
-            state = payload.get("state")
-            if (
-                not isinstance(state, dict)
-                or state.get("state_version") != self.state_version
-            ):
-                raise ValueError("compiler input manager state version drifted")
-            snapshot_id = str(payload.get("snapshot_id") or "")
-            if len(authoritative_resolutions) != 1:
-                raise ValueError(
-                    "compiler input occurrence is not uniquely event-bound"
-                )
-            resolution = authoritative_resolutions[0]
-            produced = resolution.event_payload or {}
-            if (
-                resolution.error
-                or produced.get("snapshot_id") != snapshot_id
-                or not resolution.event_id
-                or resolution.event_sequence <= 0
-            ):
-                raise ValueError(
-                    "compiler input occurrence authority does not match its snapshot"
-                )
-            return {
-                "snapshot": payload,
-                "authority": {
-                    "event_type": "compiler.input.produced",
-                    "event_id": resolution.event_id,
-                    "event_sequence": resolution.event_sequence,
-                    "artifact_ref": str(produced.get("artifact") or ""),
-                    "artifact_sha256": str(
-                        produced.get("snapshot_sha256") or ""
-                    ),
-                },
-            }
+    def read_compiler_input_v2(self, *, timeout: int = 30) -> dict[str, Any]:
+        return self.compiler.read_compiler_input_v2(timeout=timeout)
 
     def load_compiler_resources_v2(
         self,
@@ -799,74 +597,14 @@ class ReplSessionManager:
         load_requests: tuple[Any, ...],
         timeout: int = 30,
     ) -> dict[str, Any]:
-        """Load declarations for one exact prior compiler-input occurrence."""
-
-        if not request_id or not source_snapshot_id or not source_event_id:
-            raise ValueError("compiler resource load identity is incomplete")
-        if not load_requests:
-            raise ValueError("compiler resource load requires requests")
-        request = {
-            "request_id": request_id,
-            "source_snapshot_id": source_snapshot_id,
-            "source_event_id": source_event_id,
-            "expected_state": dict(expected_state),
-            "requests": [item.runtime_payload() for item in load_requests],
-        }
-        with self._lock:
-            history_before = tuple(self.committed_history())
-            state_version_before = self.state_version
-            actions: list[dict[str, Any]] = []
-            resolutions: list[AuthoritativeViewResolution] = []
-            payload = self._run_backend(
-                "compiler_resource_load_v2",
-                [
-                    "-compiler-resource-load-v2",
-                    "--manager-state-version",
-                    str(self.state_version),
-                    "--compiler-resource-load-request-json",
-                    json.dumps(request, sort_keys=True, separators=(",", ":")),
-                ],
-                actions=actions,
-                timeout=timeout,
-                authoritative_resolutions=resolutions,
-            )
-            if not isinstance(payload, dict) or payload.get("ok") is not True:
-                raise ReplBackendError(actions[-1] if actions else {
-                    "label": "compiler_resource_load_v2",
-                    "exit_code": 1,
-                    "agent_observation": {
-                        "error_summary": "invalid compiler resource payload",
-                    },
-                })
-            if len(resolutions) != 1:
-                raise ValueError("compiler resource occurrence is not uniquely bound")
-            resolution = resolutions[0]
-            produced = resolution.event_payload or {}
-            if (
-                resolution.error
-                or payload.get("request_id") != request_id
-                or payload.get("source_snapshot_id") != source_snapshot_id
-                or payload.get("source_event_id") != source_event_id
-                or produced.get("request_id") != request_id
-                or not resolution.event_id
-                or resolution.event_sequence <= 0
-            ):
-                raise ValueError("compiler resource occurrence identity drifted")
-            history_after = tuple(self.committed_history())
-            state_version_after = self.state_version
-            return {
-                "result": payload,
-                "authority": {
-                    "event_type": "compiler.resources.loaded",
-                    "event_id": resolution.event_id,
-                    "event_sequence": resolution.event_sequence,
-                    "artifact_ref": str(produced.get("artifact") or ""),
-                    "artifact_sha256": str(produced.get("result_sha256") or ""),
-                },
-                "history_unchanged": history_before == history_after,
-                "state_version_before": state_version_before,
-                "state_version_after": state_version_after,
-            }
+        return self.compiler.load_compiler_resources_v2(
+            request_id=request_id,
+            source_snapshot_id=source_snapshot_id,
+            source_event_id=source_event_id,
+            expected_state=expected_state,
+            load_requests=load_requests,
+            timeout=timeout,
+        )
 
     def execute_native_semantic_batch(
         self,
@@ -875,98 +613,11 @@ class ReplSessionManager:
         requests: tuple[dict[str, object], ...],
         timeout: int = 30,
     ) -> dict[str, Any]:
-        """Return one event-bound tagged native EasyCrypt semantic batch."""
-
-        if not batch_id or batch_id != batch_id.strip():
-            raise ValueError("native semantic batch requires batch_id")
-        if not requests or len(requests) > 8:
-            raise ValueError("native semantic batch size is invalid")
-        request = {
-            "batch_id": batch_id,
-            "members": [dict(item) for item in requests],
-        }
-        with self._lock:
-            history_before = tuple(self.committed_history())
-            state_version_before = self.state_version
-            actions: list[dict[str, Any]] = []
-            authoritative_resolutions: list[AuthoritativeViewResolution] = []
-            payload = self._run_backend(
-                "native_semantic_batch",
-                [
-                    "-native-semantic-batch-json",
-                    "--manager-state-version",
-                    str(self.state_version),
-                    "--native-semantic-batch-request-json",
-                    json.dumps(
-                        request,
-                        sort_keys=True,
-                        separators=(",", ":"),
-                    ),
-                ],
-                actions=actions,
-                timeout=timeout,
-                authoritative_resolutions=authoritative_resolutions,
-            )
-            if not isinstance(payload, dict) or payload.get("ok") is not True:
-                raise ReplBackendError(actions[-1] if actions else {
-                    "label": "native_semantic_batch",
-                    "exit_code": 1,
-                    "agent_observation": {
-                        "error_summary": "invalid native semantic batch payload",
-                    },
-                })
-            raw_request = payload.get("request")
-            state = payload.get("state")
-            if raw_request != request:
-                raise ValueError("native semantic batch request identity drifted")
-            if (
-                not isinstance(state, dict)
-                or state.get("session_id") != str(
-                    session_dir_path(self.session_dir, self.project_root).resolve()
-                )
-                or state.get("state_version") != self.state_version
-            ):
-                raise ValueError("native semantic batch state identity drifted")
-            if len(authoritative_resolutions) != 1:
-                raise ValueError(
-                    "native semantic batch occurrence is not uniquely event-bound"
-                )
-            resolution = authoritative_resolutions[0]
-            produced = resolution.event_payload or {}
-            if (
-                resolution.error
-                or produced.get("query_id") != payload.get("query_id")
-                or produced.get("batch_id") != batch_id
-                or produced.get("request_count") != len(requests)
-                or not resolution.event_id
-                or resolution.event_sequence <= 0
-            ):
-                raise ValueError(
-                    "native semantic batch event authority does not match result"
-                )
-            history_after = tuple(self.committed_history())
-            state_version_after = self.state_version
-            if history_after != history_before:
-                raise RuntimeError(
-                    "native semantic batch changed committed proof history"
-                )
-            if state_version_after != state_version_before:
-                raise RuntimeError(
-                    "native semantic batch changed manager state version"
-                )
-            return {
-                "result": payload,
-                "authority": {
-                    "event_type": "native.semantic.batch.produced",
-                    "event_id": resolution.event_id,
-                    "event_sequence": resolution.event_sequence,
-                    "artifact_ref": str(produced.get("artifact") or ""),
-                    "artifact_sha256": str(produced.get("result_sha256") or ""),
-                },
-                "history_unchanged": True,
-                "state_version_before": state_version_before,
-                "state_version_after": state_version_after,
-            }
+        return self.compiler.execute_native_semantic_batch(
+            batch_id=batch_id,
+            requests=requests,
+            timeout=timeout,
+        )
 
     def project_native_state(
         self,
@@ -976,84 +627,12 @@ class ReplSessionManager:
         max_depth: int = 128,
         timeout: int = 30,
     ) -> dict[str, Any]:
-        """Return one event-bound typed EasyCrypt proof-state occurrence."""
-
-        if not request_id or request_id != request_id.strip():
-            raise ValueError("native state query requires request_id")
-        request = {
-            "request_id": request_id,
-            "max_nodes": max_nodes,
-            "max_depth": max_depth,
-        }
-        with self._lock:
-            history_before = tuple(self.committed_history())
-            state_version_before = self.state_version
-            actions: list[dict[str, Any]] = []
-            authoritative_resolutions: list[AuthoritativeViewResolution] = []
-            payload = self._run_backend(
-                "native_state_projection",
-                [
-                    "-native-state-projection-json",
-                    "--manager-state-version",
-                    str(self.state_version),
-                    "--native-state-projection-request-json",
-                    json.dumps(request, sort_keys=True, separators=(",", ":")),
-                ],
-                actions=actions,
-                timeout=timeout,
-                authoritative_resolutions=authoritative_resolutions,
-            )
-            if not isinstance(payload, dict) or payload.get("ok") is not True:
-                raise ReplBackendError(actions[-1] if actions else {
-                    "label": "native_state_projection",
-                    "exit_code": 1,
-                    "agent_observation": {
-                        "error_summary": "invalid native state payload",
-                    },
-                })
-            raw_request = payload.get("request")
-            state = payload.get("state")
-            if raw_request != request:
-                raise ValueError("native state request identity drifted")
-            if (
-                not isinstance(state, dict)
-                or state.get("session_id") != str(
-                    session_dir_path(self.session_dir, self.project_root).resolve()
-                )
-                or state.get("state_version") != self.state_version
-            ):
-                raise ValueError("native state identity drifted")
-            if len(authoritative_resolutions) != 1:
-                raise ValueError("native state occurrence is not uniquely event-bound")
-            resolution = authoritative_resolutions[0]
-            produced = resolution.event_payload or {}
-            if (
-                resolution.error
-                or produced.get("projection_id") != payload.get("projection_id")
-                or produced.get("request_id") != request_id
-                or not resolution.event_id
-                or resolution.event_sequence <= 0
-            ):
-                raise ValueError("native state event authority does not match result")
-            history_after = tuple(self.committed_history())
-            state_version_after = self.state_version
-            if history_after != history_before:
-                raise RuntimeError("native state query changed committed proof history")
-            if state_version_after != state_version_before:
-                raise RuntimeError("native state query changed manager state version")
-            return {
-                "result": payload,
-                "authority": {
-                    "event_type": "native.state.produced",
-                    "event_id": resolution.event_id,
-                    "event_sequence": resolution.event_sequence,
-                    "artifact_ref": str(produced.get("artifact") or ""),
-                    "artifact_sha256": str(produced.get("result_sha256") or ""),
-                },
-                "history_unchanged": True,
-                "state_version_before": state_version_before,
-                "state_version_after": state_version_after,
-            }
+        return self.compiler.project_native_state(
+            request_id=request_id,
+            max_nodes=max_nodes,
+            max_depth=max_depth,
+            timeout=timeout,
+        )
 
 
     def _snapshot_from_managed_goal_view(
@@ -1188,7 +767,7 @@ class ReplSessionManager:
         args: list[str],
         *,
         actions: list[dict[str, Any]],
-        timeout: int,
+        timeout: float,
         authoritative_resolutions: list[AuthoritativeViewResolution] | None = None,
     ) -> str | dict[str, Any]:
         retired_tactic_flags = {"-next", "-prev", "-chain"}
@@ -1204,6 +783,23 @@ class ReplSessionManager:
             self.session_dir,
             *args,
         ]
+        deadline = getattr(self._turn_deadline, "value", None)
+        if deadline is not None:
+            remaining = float(deadline) - time.time()
+            if remaining <= 0:
+                exc = subprocess.TimeoutExpired(cmd=cmd, timeout=0.0)
+                action = timeout_backend_action_record(
+                    label,
+                    cmd,
+                    exc,
+                    0.0,
+                    0,
+                )
+                action["absolute_deadline"] = float(deadline)
+                action["deadline_expired_before_start"] = True
+                actions.append(action)
+                raise ReplBackendTimeout(action)
+            timeout = min(float(timeout), remaining)
         resolved_session_dir = session_dir_path(self.session_dir, self.project_root)
         tactic_preflight_boundary = capture_tactic_preflight_invocation(
             resolved_session_dir,

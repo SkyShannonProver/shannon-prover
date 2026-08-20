@@ -46,8 +46,8 @@ from core.easycrypt.committed_history import read_committed_tactics
 from core.easycrypt.daemon_backend import (
     session_id_for_dir as daemon_session_id_for_dir,
 )
-from core.easycrypt.session_events import append_event
-from core.easycrypt.session_projection import active_goal_hash_from_raw
+from core.easycrypt.session.session_events import append_event
+from core.easycrypt.session.session_projection import active_goal_hash_from_raw
 
 from .session_goal_identity import read_session_goal_identity
 
@@ -269,18 +269,25 @@ def _attempt_daemon_attach_inner(
         return _fail("daemon_session_gone", donor_session_id=donor_sid)
     try:
         info = client.session_info(donor_sid)
-    except Exception:
-        info = {}
-    if isinstance(info, dict) and info.get("exists"):
-        if not info.get("ec_alive", True):
-            return _fail("daemon_ec_dead", donor_session_id=donor_sid)
-        daemon_count = info.get("committed_count")
-        if isinstance(daemon_count, int) and daemon_count != len(requested):
-            return _fail(
-                "daemon_commit_count_mismatch",
-                daemon_committed_count=daemon_count,
-                requested_count=len(requested),
-            )
+    except Exception as exc:
+        # Fail closed: an unanswerable liveness/commit-count check must not
+        # fall through into the mutating phase (which rmtree's the target).
+        return _fail(
+            "daemon_session_info_unavailable",
+            donor_session_id=donor_sid,
+            error=f"{type(exc).__name__}: {str(exc)[:400]}",
+        )
+    if not (isinstance(info, dict) and info.get("exists")):
+        return _fail("daemon_session_gone", donor_session_id=donor_sid)
+    if not info.get("ec_alive", True):
+        return _fail("daemon_ec_dead", donor_session_id=donor_sid)
+    daemon_count = info.get("committed_count")
+    if isinstance(daemon_count, int) and daemon_count != len(requested):
+        return _fail(
+            "daemon_commit_count_mismatch",
+            daemon_committed_count=daemon_count,
+            requested_count=len(requested),
+        )
 
     # --- Mutating phase -------------------------------------------------
     # Copy donor dir -> target dir (disk truth travels with the proof).

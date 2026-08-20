@@ -59,7 +59,6 @@ import os
 import re
 import signal
 import socket
-import subprocess
 import sys
 import threading
 import time
@@ -82,11 +81,10 @@ from core.easycrypt.ec_lifecycle import (  # noqa: E402
     split_ec_commands as _split_ec_commands,
 )
 from core.easycrypt.ec_env import get_ec_env  # noqa: E402
+from core.easycrypt.ec_daemon_client import default_socket_path  # noqa: E402
 
 
 logger = logging.getLogger("ec_daemon")
-
-SOCKET_PATH_DEFAULT = "/tmp/ec_daemon.sock"
 PROMPT_TEXT_RE = re.compile(r"\[\d+\|[a-zA-Z]+\]>")
 # EC error line shape: ``[error-<a>-<b>]<reason>``. The a/b are
 # character-offset hints; the reason text varies.
@@ -1143,8 +1141,9 @@ _METHOD_TABLE = {
 
 def main() -> int:
     ap = argparse.ArgumentParser(description="Persistent EasyCrypt daemon")
-    ap.add_argument("--socket", default=SOCKET_PATH_DEFAULT,
-                    help="Unix socket path")
+    ap.add_argument("--socket", default=default_socket_path(),
+                    help="Unix socket path (default: EC_DAEMON_SOCKET env or "
+                         "the per-checkout /tmp path)")
     ap.add_argument("--log-level", default="INFO")
     args = ap.parse_args()
     logging.basicConfig(
@@ -1156,7 +1155,7 @@ def main() -> int:
 
     # PID file so a supervisor can force-kill an unresponsive daemon (and its
     # easycrypt -emacs children, since we are a session leader) instead of
-    # leaking it to PID 1 — see prover._hard_kill_ec_daemon. The daemon is a
+    # leaking it to PID 1 — see ec_services._hard_kill_ec_daemon. The daemon is a
     # session leader (spawned start_new_session=True), so killing this pid's
     # process group reaps the whole EC child set.
     pid_path = args.socket + ".pid"

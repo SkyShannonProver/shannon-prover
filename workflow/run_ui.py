@@ -1,7 +1,8 @@
 """Terminal status/colors for orchestrator runs.
 
-Extracted verbatim from workflow/progress.py (backlog #18): the color
-vocabulary, timestamped status() line, and the single-line status bar.
+Extracted verbatim from the retired progress facade (backlog #18): the color
+vocabulary, timestamped status() line, the single-line status bar, and the
+phase print helpers (phase_start/phase_done/error).
 """
 from __future__ import annotations
 
@@ -80,3 +81,24 @@ def status(agent: str, message: str, color: str = _CYAN) -> None:
     print(f"{_DIM}{_timestamp()}{_RESET} {color}{_BOLD}[{agent}]{_RESET} {message}")
     sys.stdout.flush()
     _draw_status_bar()
+
+
+def phase_start(phase: str) -> None:
+    """Print a phase header."""
+    print(f"\n{_BOLD}{'─' * 50}{_RESET}")
+    print(f"{_DIM}{_timestamp()}{_RESET} {_YELLOW}{_BOLD}▶ {phase}{_RESET}")
+    print(f"{_BOLD}{'─' * 50}{_RESET}")
+    sys.stdout.flush()
+
+
+def phase_done(phase: str, result: str = "") -> None:
+    """Print phase completion."""
+    suffix = f" → {result}" if result else ""
+    print(f"{_DIM}{_timestamp()}{_RESET} {_GREEN}{_BOLD}✓ {phase}{suffix}{_RESET}\n")
+    sys.stdout.flush()
+
+
+def error(agent: str, message: str) -> None:
+    """Print an error."""
+    print(f"{_DIM}{_timestamp()}{_RESET} {_RED}{_BOLD}✗ [{agent}]{_RESET} {_RED}{message}{_RESET}")
+    sys.stdout.flush()

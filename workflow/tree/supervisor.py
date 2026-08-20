@@ -1,6 +1,6 @@
 """Tree-mode node supervision: spawn/poll/respawn of prover workers.
 
-Extracted verbatim from workflow/progress.py (backlog #18): ProofTreeNode,
+Extracted verbatim from the retired progress facade (backlog #18): ProofTreeNode,
 NodeSupervisor (the poll loop), run_tree_prover, and the respawn/capsule
 helpers. The remaining known debt is decomposing NodeSupervisor.run into a
 tick() method — deferred (hot supervision path).
@@ -21,10 +21,9 @@ from workflow.schemas.config import PROVER_DEFAULTS
 from workflow.proof_management.common import (
     node_memory_slug as _shared_node_memory_slug,
 )
-from workflow.session_observer import WorkflowSessionSnapshot, observe_session
-from workflow.payload_audit import (
+from workflow.tree.session_observer import WorkflowSessionSnapshot
+from workflow.tree.payload_audit import (
     PayloadAuditRecorder,
-    coerce_tool_result_text,
 )
 from workflow.proof_management.lineage import LemmaLineageStore
 from workflow.proof_management.route_family import infer_route_family
@@ -42,41 +41,20 @@ from workflow.tree.policy import (
 )
 from workflow.tree.result import SessionClosureCandidate, TreeRunResult
 from workflow.run_ui import (
-    _BOLD,
     _CYAN,
     _DIM,
     _GREEN,
     _RED,
-    _RESET,
     _YELLOW,
-    _clear_status_bar,
-    _draw_status_bar,
     _set_status_bar_active,
-    _status_bar_active,
-    _status_bar_text,
-    _timestamp,
     _update_status_bar,
     status,
 )
 from workflow.tree.trackers import (
-    STRUCTURAL_COMMIT_OPENERS,
-    _ProverTracker,
     _TreeProverTracker,
-    _assistant_context_before_tool,
-    _audit_drop_empty,
-    _bash_invokes_easycrypt,
-    _first_word,
-    _handle_stream_event,
-    _is_background_tool_result,
-    _is_permission_denied_tool_result,
-    _proof_intent_tool_description,
-    _report_tool_call,
     _session_dir_path,
     _session_snapshot,
     _snapshot_has_completion_candidate,
-    _summarize_tool,
-    _thinking_markers,
-    _truncate_audit_text,
 )
 
 
@@ -203,21 +181,21 @@ def _terminate_process_tree(
 
 def _ctx_min_runway_seconds() -> float:
     """Min wall-clock runway to start a cold Layer-3 replay (env-tunable)."""
-    from workflow.ctx_respawn import min_runway_seconds
+    from workflow.provider.ctx_respawn import min_runway_seconds
 
     return min_runway_seconds()
 
 
 def respawn_disabled() -> bool:
-    """Kill switch passthrough (defined in workflow.ctx_respawn)."""
-    from workflow.ctx_respawn import respawn_disabled as _disabled
+    """Kill switch passthrough (defined in workflow.provider.ctx_respawn)."""
+    from workflow.provider.ctx_respawn import respawn_disabled as _disabled
 
     return _disabled()
 
 
 def _load_resume_capsule(path: Path):
     """Load a resume capsule manifest (lazy import to avoid an import cycle)."""
-    from workflow.proof_node_resume import load_resume_capsule
+    from workflow.node.proof_node_resume import load_resume_capsule
 
     return load_resume_capsule(path)
 
@@ -297,7 +275,7 @@ def _mint_fresh_resume_capsule_from_live(
     except OSError:
         return None
     try:
-        from workflow.proof_node_resume import create_resume_capsules
+        from workflow.node.proof_node_resume import create_resume_capsules
 
         output_dir = Path(run_dir) / "resume_capsules_layer3_live" / session_tag
         created = create_resume_capsules(
@@ -438,7 +416,7 @@ def _session_goal_state_text(
     if session_path is None:
         return ""
     try:
-        from core.easycrypt.session_projection import read_proof_state_projection
+        from core.easycrypt.session.session_projection import read_proof_state_projection
         projection = read_proof_state_projection(session_path)
         if has_discharged_goals(projection.status):
             return "No current goal remains in this EasyCrypt session."
@@ -447,7 +425,7 @@ def _session_goal_state_text(
     except Exception:
         pass
     try:
-        from core.easycrypt.session_state import read_session_state
+        from core.easycrypt.session.session_state import read_session_state
         state = read_session_state(session_path)
         text = state.raw_for_goal_tools or state.active_output
         if text:
@@ -745,6 +723,7 @@ class NodeSupervisor:
         target_lemma: str | None = None,
         initial_branches: list[dict] | None = None,
         payload_audit_path: str | Path | None = None,
+        session_namespace: str = "",
     ):
         self.build_cmd_fn = build_cmd_fn
         self.cwd = cwd
@@ -769,6 +748,13 @@ class NodeSupervisor:
         self.target_lemma = target_lemma
         self.initial_branches = initial_branches
         self.payload_audit_path = payload_audit_path
+        namespace = str(session_namespace or "").strip().lower()
+        if namespace and re.fullmatch(r"[a-z0-9]{6,32}", namespace) is None:
+            raise ValueError(
+                "session_namespace must contain 6-32 lowercase ASCII "
+                "letters or digits"
+            )
+        self.session_namespace = namespace
 
         # Cross-iteration loop state (owned by run(); the _tick_* phase
         # methods read/write these through self).
@@ -779,12 +765,26 @@ class NodeSupervisor:
         self._source_file_path = None
         self._source_mtime_at_start = None
 
+    def _session_tag(self, node_id: str) -> str:
+        """Return the run-owned EasyCrypt identity for one tree node.
+
+        Node ids repeat in every prover run (for example ``0.0``). Production
+        callers therefore supply a run namespace so concurrent runs in one
+        checkout cannot address or delete each other's sessions. The empty
+        namespace retains the compact name for direct developer/test calls;
+        it is not used by ``workflow.agents.prover.run``.
+        """
+        node_component = str(node_id).replace(".", "_")
+        if self.session_namespace:
+            return f"prover_{self.session_namespace}_tree_{node_component}"
+        return f"prover_tree_{node_component}"
+
     def _active_nodes(self) -> list[ProofTreeNode]:
         return [n for n in self.nodes.values() if not n.tracker.finished]
 
     def _read_parent_goal(self, node: ProofTreeNode) -> str:
         """Read the parent prover's current goal state from its session dir."""
-        session_tag = f"prover_tree_{node.node_id.replace('.', '_')}"
+        session_tag = self._session_tag(node.node_id)
         return _session_goal_state_text(
             self.cwd, f".ec_session_{session_tag}", max_chars=2000,
         )
@@ -1051,7 +1051,7 @@ class NodeSupervisor:
         route_family: Optional[dict] = None,
         resume_context: Optional[dict] = None,
     ) -> ProofTreeNode:
-        session_tag = f"prover_tree_{node_id.replace('.', '_')}"
+        session_tag = self._session_tag(node_id)
         build_kwargs = {"layer_move_action": layer_move_action}
         if resume_context:
             build_kwargs["resume_context"] = resume_context
@@ -1255,7 +1255,7 @@ class NodeSupervisor:
             has_replay_prefix=bool(node.replay_prefix),
         ):
             return False
-        session_tag = f"prover_tree_{node.node_id.replace('.', '_')}"
+        session_tag = self._session_tag(node.node_id)
         selected = _layer3_select_capsule(
             cwd=self.cwd,
             run_dir=run_dir,
@@ -1530,9 +1530,7 @@ class NodeSupervisor:
         destructive_msgs: list[str] = []
         node_hygiene_kills: list[tuple[ProofTreeNode, str]] = []
         for node in list(active):
-            session_tag = (
-                f"prover_tree_{node.node_id.replace('.', '_')}"
-            )
+            session_tag = self._session_tag(node.node_id)
             session_dir = Path(self.cwd) / f".ec_session_{session_tag}"
             if node.tracker.unsafe_session_shell_command:
                 bad = node.tracker.unsafe_session_shell_command
@@ -1929,7 +1927,7 @@ class NodeSupervisor:
         initial_branches = self.initial_branches
         payload_audit_path = self.payload_audit_path
         import logging
-        self.logger = logging.getLogger("workflow.progress.tree_prover")
+        self.logger = logging.getLogger("workflow.tree.supervisor.tree_prover")
         logger = self.logger
         # max_concurrent is already capped in __init__ (self.max_concurrent),
         # rebound capped into this local above; cap is no longer repeated here.
@@ -1955,6 +1953,7 @@ class NodeSupervisor:
                 timeout=timeout,
                 max_concurrent=max_concurrent,
                 initial_provers=initial_provers,
+                session_namespace=self.session_namespace,
                 resume_roots=len(initial_branches or []),
                 resume_root_policy=resume_root_policy,
                 structural_undo_spawn_delay_seconds=structural_undo_spawn_delay_seconds,
@@ -2075,11 +2074,10 @@ class NodeSupervisor:
                 self._source_mtime_at_start = None
 
         # Track which session dirs have been observed at least once. The
-        # destructive-action watchdog only fires on "dir was here, then
-        # disappeared" — not on the cold-start window where the worker is
-        # alive but hasn't run ``-start`` yet (orchestrator pre-wiped all
-        # ``.ec_session_*`` dirs before launch, so initially-absent dirs
-        # are normal). Without this gate the watchdog spuriously aborted
+        # destructive-action watchdog only fires on "this run-owned dir was
+        # here, then disappeared" — not on the cold-start window where the
+        # worker is alive but hasn't run ``-start`` yet. Without this gate the
+        # watchdog spuriously aborted
         # 16 s into ChaChaPoly step1 run #2 (2026-05-03) before any worker
         # had a chance to create its session dir.
         self._seen_session_dirs: set[str] = set()
@@ -2398,6 +2396,7 @@ def run_tree_prover(
     target_lemma: str | None = None,
     initial_branches: list[dict] | None = None,
     payload_audit_path: str | Path | None = None,
+    session_namespace: str = "",
 ) -> TreeRunResult:
     """Recursive tree prover: spawn children at branch points when provers get stuck.
 
@@ -2415,6 +2414,9 @@ def run_tree_prover(
             Each branch may contain replay_prefix, parent_goal_state,
             negative_signal, blocked_openers, layer_move_action, and
             expected_goal_hash.
+        session_namespace: Run-owned identity prefix. Production callers must
+            provide one so concurrently executing runs cannot share session
+            paths; direct tests may omit it.
         stuck_errors: Errors since last accept to trigger spawn
         stuck_idle_seconds: Idle since last accept to trigger spawn
         grace_seconds: Grace period for stuck prover after child spawns
@@ -2451,4 +2453,5 @@ def run_tree_prover(
         target_lemma=target_lemma,
         initial_branches=initial_branches,
         payload_audit_path=payload_audit_path,
+        session_namespace=session_namespace,
     ).run()

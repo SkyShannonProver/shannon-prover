@@ -50,6 +50,13 @@ compiler. The retired compiler was the former `core/easycrypt/analysis/`, rich
 workspace/panel stack, `workflow/surface_*`, analyzer pipeline, inspect/search
 menu, and compatibility profiles. Those source trees have been removed.
 
+The agent-to-manager path is separately layered: one resolved
+`ProofToolContractManifest` feeds provider launch rendering and the stdio MCP
+adapter; an authenticated invocation-bound endpoint feeds a serialized
+`ProofToolSession`; only then does `ProofNodeManager` execute one complete
+semantic turn. See
+[`docs/architecture/proof_tool_infrastructure.md`](docs/architecture/proof_tool_infrastructure.md).
+
 Terminal proof outcome has a separate single-owner contract. Session runtime
 may report goals discharged or `qed` committed; tree supervision may select a
 content-bound `SessionClosureCandidate`; neither may report final proof
@@ -222,4 +229,5 @@ After any terminal/session/tree/finalization change, also run the no-model
 `workflow.validation.proof_terminal_outcome_sentinel` before a live agent
 experiment.
 
-See [`TESTING.md`](TESTING.md) for commands and remote-run discipline.
+Commands and remote-run discipline live in the private-side testing
+procedure (`TESTING.md` on the private trunk; not part of the public tree).

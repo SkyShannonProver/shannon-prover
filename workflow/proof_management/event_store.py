@@ -11,7 +11,7 @@ from pathlib import Path
 from typing import Any
 
 from core.easycrypt.value_shapes import drop_empty as _drop_empty
-from workflow.managed_turn_outcome import action_outcome_from_action
+from workflow.proof_management.managed_turn_outcome import action_outcome_from_action
 from workflow.proof_management.tactic_utils import tactic_head as _tactic_head
 
 from .events import (

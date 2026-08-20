@@ -12,7 +12,7 @@ from pathlib import Path
 
 
 def handle_compiler_input_v2(session, args) -> int:
-    from core.easycrypt.session_compiler_input import (
+    from core.easycrypt.session.session_compiler_input import (
         build_compiler_input,
         record_compiler_input,
     )
@@ -35,8 +35,8 @@ def handle_compiler_resource_load_v2(session, args) -> int:
         load_requested_declarations,
         parse_runtime_declaration_requests,
     )
-    from core.easycrypt.session_compiler_input import build_compiler_input
-    from core.easycrypt.session_compiler_resources import (
+    from core.easycrypt.session.session_compiler_input import build_compiler_input
+    from core.easycrypt.session.session_compiler_resources import (
         build_compiler_resource_load,
         record_compiler_resource_load,
     )
@@ -105,7 +105,7 @@ def handle_compiler_resource_load_v2(session, args) -> int:
 
 
 def handle_native_semantic_batch_json(session, args) -> int:
-    from core.easycrypt.session_native_semantics import (
+    from core.easycrypt.session.session_native_semantics import (
         build_native_semantic_batch_result,
         record_native_semantic_batch_result,
     )
@@ -135,7 +135,7 @@ def handle_native_semantic_batch_json(session, args) -> int:
 
 
 def handle_native_state_projection_json(session, args) -> int:
-    from core.easycrypt.session_native_state import (
+    from core.easycrypt.session.session_native_state import (
         build_native_state_projection,
         record_native_state_projection,
     )

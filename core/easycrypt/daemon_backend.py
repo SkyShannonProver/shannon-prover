@@ -56,24 +56,11 @@ from core.easycrypt.ec_daemon_client import ECDaemonClient
 
 
 def _default_socket() -> str:
-    """Per-checkout daemon socket path.
+    """Resolve through the one shared default (env override, else
+    per-checkout path) — see ``ec_daemon_client.default_socket_path``."""
+    from core.easycrypt.ec_daemon_client import default_socket_path
 
-    A daemon's working directory is the checkout it was spawned in. The old
-    single global ``/tmp/ec_daemon.sock`` let a daemon spawned in one
-    checkout/worktree serve another; when the first checkout was later deleted,
-    the daemon's cwd vanished and EC crashed with
-    ``Unix_error(ENOENT, "getcwd")`` — surfacing to callers as
-    ``daemon unavailable`` / ``could not sync daemon to committed history`` and
-    disabling native/preflight reads at deep proof states. Keying the
-    socket on the current checkout keeps a reused daemon's cwd equal to the
-    live checkout, so ``getcwd`` always succeeds. The managed prover overrides
-    this with a per-run ``EC_DAEMON_SOCKET``.
-    """
-    override = os.environ.get("EC_DAEMON_SOCKET", "").strip()
-    if override:
-        return override
-    key = hashlib.sha1(os.path.realpath(os.getcwd()).encode()).hexdigest()[:12]
-    return f"/tmp/ec_daemon_{key}.sock"
+    return default_socket_path()
 
 
 def session_id_for_dir(session_dir: "Path | str") -> str:
@@ -106,7 +93,9 @@ def _resolve_why3_socket() -> Optional[str]:
     EC then refuses is no worse than the prior bug of always omitting
     the flag.
     """
-    socket_path = os.environ.get("WHY3EC_SOCKET", "/tmp/why3ec.sock")
+    from core.easycrypt.ec_proc import why3_socket_from_env
+
+    socket_path = why3_socket_from_env()
     if os.path.exists(socket_path):
         return socket_path
     return None
@@ -200,15 +189,24 @@ class DaemonBackend:
         if self._state_path.exists():
             try:
                 return json.loads(self._state_path.read_text())
-            except Exception:
+            except Exception as exc:
+                # A corrupt state file silently degrades every commit into a
+                # full-history replay ("slow, not wrong") — leave a breadcrumb.
+                self.last_error = (
+                    f"daemon state unreadable ({self._state_path}): "
+                    f"{type(exc).__name__}: {exc}; replaying full history"
+                )
                 return {}
         return {}
 
     def _save_state(self, state: dict) -> None:
         try:
             self._state_path.write_text(json.dumps(state, indent=2))
-        except Exception:
-            pass
+        except Exception as exc:
+            self.last_error = (
+                f"daemon state unwritable ({self._state_path}): "
+                f"{type(exc).__name__}: {exc}"
+            )
 
     def invalidate(self) -> None:
         """Close the daemon session (best effort) and drop state file.
@@ -290,11 +288,16 @@ class DaemonBackend:
                 return None
         if not os.path.exists(self.socket_path):
             if not self._spawn_daemon():
+                self.last_error = f"daemon spawn failed: {self.socket_path}"
                 return None
         cli = ECDaemonClient(self.socket_path)
         try:
             cli.list_sessions()
-        except Exception:
+        except Exception as exc:
+            self.last_error = (
+                f"daemon handshake failed at {self.socket_path}: "
+                f"{type(exc).__name__}: {exc}"
+            )
             return None
         self._client = cli
         return cli
@@ -350,6 +353,15 @@ class DaemonBackend:
             return False
         finally:
             if lock_fd is not None:
+                # Unlink while still holding the exclusive lock: waiters on
+                # this inode re-check the socket under their lock, and later
+                # spawners create a fresh lock file. Without the unlink every
+                # successful spawn left a permanent .spawn_lock behind (three
+                # of them were sitting in the repo root from July).
+                try:
+                    os.unlink(lock_path)
+                except OSError:
+                    pass
                 try:
                     fcntl.flock(lock_fd, fcntl.LOCK_UN)
                     os.close(lock_fd)
@@ -511,7 +523,8 @@ class DaemonBackend:
 
         try:
             r = cli.commit(self._session_id, all_tactics[-1])
-        except Exception:
+        except Exception as exc:
+            self.last_error = f"daemon commit RPC failed: {type(exc).__name__}: {exc}"
             self._client = None
             return None
 

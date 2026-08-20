@@ -1,7 +1,9 @@
-"""Current-only runtime surface-profile composition.
+"""Runtime profile projection for ordinary user-facing configuration.
 
-There is no unprofiled or historical fallback. An omitted profile is the L1
-control, and every other value must name a profile in the compiler-V2 registry.
+There is no unprofiled or historical fallback. An omitted public profile uses
+the curated compiler treatment. Private research identities are resolved only
+through the eval harness and are never returned by
+``current_surface_profile_names``.
 """
 from __future__ import annotations
 

@@ -35,6 +35,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import Optional
 
+from workflow.schemas.config import RunConfig
 from workflow.proc_lifecycle import (
     WORKER_PGID_MANIFEST_ENV,
     install_terminal_signal_handlers,
@@ -149,7 +150,6 @@ def run_one_lemma(
     include_dir: str,
     time_cap_sec: int,
     output_dir: Path,
-    skip_regression: bool = True,
     eval_mode: bool = False,
 ) -> LemmaResult:
     """Run the orchestrator on a single lemma as a subprocess with time cap.
@@ -181,9 +181,8 @@ def run_one_lemma(
         )
 
     # Auto-derive the prover's internal timeout from time_cap, leaving a
-    # small buffer (~2 min) for downstream phases (analyze + improve +
-    # report). Default prover timeout is 20 min — if time_cap is larger,
-    # the prover should actually get to use the extra budget.
+    # small buffer (~2 min) so the orchestrator can still write summary.json
+    # and the run bundle before the driver's hard time cap kills it.
     prover_timeout_min = max(5, (time_cap_sec // 60) - 2)
     orchestrator_output = output_dir / f"{lemma}.orchestrator_runs"
     before_runs = (
@@ -191,19 +190,25 @@ def run_one_lemma(
         if orchestrator_output.is_dir()
         else set()
     )
+    # Hand the orchestrator one typed RunConfig instead of a hand-assembled
+    # flag list: flag drift between driver and orchestrator argparse (the
+    # removed --skip-regression made every lemma "crash" at argparse) cannot
+    # recur when the contract is the RunConfig schema itself.
+    run_config = RunConfig(
+        file=str(file_path),
+        lemma=lemma,
+        include_dir=include_dir,
+        max_iterations=1,
+        output_dir=str(orchestrator_output),
+        eval_mode=eval_mode,
+    )
+    run_config.prover.timeout_minutes = prover_timeout_min
+    config_path = output_dir / f"{lemma}.config.json"
+    run_config.save(config_path)
     cmd = [
         sys.executable, "-m", "workflow.orchestrator",
-        "--file", str(file_path),
-        "--lemma", lemma,
-        "--include-dir", include_dir,
-        "--max-iterations", "1",
-        "--prover-timeout-minutes", str(prover_timeout_min),
-        "--output-dir", str(orchestrator_output),
+        "--config", str(config_path),
     ]
-    if skip_regression:
-        cmd.append("--skip-regression")
-    if eval_mode:
-        cmd.append("--eval-mode")
 
     import os as _os
     env = dict(_os.environ)
@@ -355,7 +360,6 @@ def run_project(
     file_path: Path,
     include_dir: str,
     time_cap_sec: int = 900,
-    skip_regression: bool = True,
     eval_mode: bool = False,
     output_dir: Optional[Path] = None,
     only_lemmas: Optional[list[str]] = None,
@@ -458,11 +462,8 @@ def run_project(
                 with progress_path.open("a", encoding="utf-8") as f:
                     f.write(f"[monitor-error] {e}\n")
 
-    if not dry_run:
-        monitor_thread = threading.Thread(target=_monitor, daemon=True)
-        monitor_thread.start()
-    else:
-        monitor_thread = None
+    # dry_run already returned above; the monitor always accompanies a live run.
+    threading.Thread(target=_monitor, daemon=True).start()
 
     def _write_summary(status: str) -> dict:
         """Compute + write summary.json. Called after each lemma AND at
@@ -497,7 +498,6 @@ def run_project(
                 include_dir=include_dir,
                 time_cap_sec=time_cap_sec,
                 output_dir=output_dir,
-                skip_regression=skip_regression,
                 eval_mode=eval_mode,
             )
             results.append(r)
@@ -514,9 +514,12 @@ def run_project(
         # Unexpected failure — still persist what we have before propagating
         _write_summary("interrupted")
         raise
+    finally:
+        # Stop the monitor on every exit path; otherwise it keeps appending
+        # to progress_log.txt after an interrupt, making a dead run look live.
+        stop_monitor.set()
 
     summary = _write_summary("done")
-    stop_monitor.set()
 
     print(f"\n{'='*60}")
     print(f"[project_driver] DONE: {summary['proved']}/{len(order)} proved")
@@ -534,8 +537,6 @@ def main(argv=None):
                         help="Include dir for easycrypt -I")
     parser.add_argument("--time-cap", type=int, default=900,
                         help="Per-lemma time cap in seconds (default: 900 = 15 min)")
-    parser.add_argument("--skip-regression", action="store_true", default=True,
-                        help="Don't run regression suite per lemma (default: true for project driver)")
     parser.add_argument("--eval-mode", action="store_true", default=False,
                         help="Blind prover to target lemma's cached proof")
     parser.add_argument("--output-dir", default=None,
@@ -566,7 +567,6 @@ def main(argv=None):
         file_path=file_path,
         include_dir=args.include_dir,
         time_cap_sec=args.time_cap,
-        skip_regression=args.skip_regression,
         eval_mode=args.eval_mode,
         output_dir=output_dir,
         only_lemmas=args.only,

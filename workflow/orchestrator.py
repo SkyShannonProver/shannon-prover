@@ -8,12 +8,10 @@ Usage:
 from __future__ import annotations
 
 import argparse
-import concurrent.futures
 import functools
 import json
 import logging
 import os
-import shutil
 import subprocess
 import sys
 import time
@@ -23,17 +21,18 @@ from typing import Optional
 
 from workflow.schemas.config import (
     DEFAULT_CLAUDE_MODEL,
+    DEFAULT_CODEX_MODEL,
     RunConfig,
     default_model_for_backend,
     normalize_agent_backend,
 )
-from workflow.progress import (
-    phase_start, phase_done, status, error as perror,
-    pipeline_ui_init, pipeline_ui_phase,
-)
+from workflow.run_ui import phase_start, phase_done, status, error as perror
 from workflow.proof_state_compiler.runtime_profiles import (
     current_surface_profile_names,
     effective_runtime_surface_manifest,
+)
+from workflow.proof_state_compiler.profile_registry import (
+    normalize_research_surface_profile_id,
 )
 
 # ---------------------------------------------------------------------------
@@ -56,36 +55,11 @@ def run_prover(config: RunConfig, run_dir: Path):
         file_path=config.file,
         lemma_name=config.lemma,
         include_dir=config.include_dir,
-        agent_backend=config.prover.agent_backend,
-        model=config.prover.model,
-        effort=config.prover.effort,
-        max_turns=config.prover.max_total_tactics,
-        timeout_minutes=config.prover.timeout_minutes,
-        parallelism=config.prover.parallelism,
-        warmup_seconds=config.prover.warmup_seconds,
-        kill_gap_tactics=config.prover.kill_gap_tactics,
-        kill_gap_idle_seconds=config.prover.kill_gap_idle_seconds,
-        eval_mode=bool(getattr(config, "eval_mode", False)),
-        surface_profile=getattr(config, "surface_profile", None),
-        resume_capsules=list(getattr(config, "resume_capsules", []) or []),
-        resume_root_policy=getattr(config.prover, "resume_root_policy", "score"),
+        prover=config.prover,
+        eval_mode=bool(config.eval_mode),
+        surface_profile=config.surface_profile,
+        resume_capsules=list(config.resume_capsules or []),
         run_dir=run_dir,
-        mode=config.prover.mode,
-        tree_initial_provers=config.prover.tree_initial_provers,
-        tree_max_concurrent=config.prover.tree_max_concurrent,
-        tree_stuck_errors=config.prover.tree_stuck_errors,
-        tree_stuck_idle_seconds=config.prover.tree_stuck_idle_seconds,
-        tree_grace_seconds=config.prover.tree_grace_seconds,
-        tree_max_depth=config.prover.tree_max_depth,
-        tree_min_alive_seconds=config.prover.tree_min_alive_seconds,
-        tree_progress_gap_ratio=config.prover.tree_progress_gap_ratio,
-        tree_progress_gap_idle=config.prover.tree_progress_gap_idle,
-        tree_structural_undo_spawn_delay_seconds=(
-            config.prover.tree_structural_undo_spawn_delay_seconds
-        ),
-        tree_undo_repair_protection_seconds=(
-            config.prover.tree_undo_repair_protection_seconds
-        ),
     )
 
 
@@ -253,9 +227,6 @@ def run(config: RunConfig) -> dict:
     # iteration_1/ run dir, the UI, and the summary records, but no longer
     # indexes a retry loop (the analyst/improver/regression retry was removed).
     iteration = 1
-    pipeline_ui_init(config.lemma, config.file, iteration, iteration,
-                     config.prover.mode)
-
     iter_dir = run_dir / f"iteration_{iteration}"
     iter_dir.mkdir(parents=True, exist_ok=True)
 
@@ -266,7 +237,7 @@ def run(config: RunConfig) -> dict:
     prove_mode = config.prover.mode
     prove_count = config.prover.tree_initial_provers
     phase_start("PROVE")
-    pipeline_ui_phase(1, "active", f"{prove_mode} mode, {prove_count} provers")
+    status("orchestrator", f"{prove_mode} mode, {prove_count} provers")
     prover_result = run_prover(config, iter_dir)
 
     elapsed_prove = prover_result.elapsed_seconds
@@ -280,7 +251,7 @@ def run(config: RunConfig) -> dict:
         if prover_result.status == "infrastructure_invalid"
         else "❌ incomplete"
     )
-    pipeline_ui_phase(1, "done", f"{result_str}, {elapsed_prove:.0f}s")
+    status("orchestrator", f"PROVE {result_str}, {elapsed_prove:.0f}s")
     if prover_result.session_id:
         (iter_dir / "session_id.txt").write_text(
             prover_result.session_id,
@@ -341,7 +312,7 @@ def run(config: RunConfig) -> dict:
     # best-effort either way — never fail the run.
     if not os.environ.get("SHANNON_SUITE_WILL_BUNDLE"):
         try:
-            from workflow.validation.run_report_bundle import build_bundle
+            from workflow.reporting.run_report_bundle import build_bundle
             _iter_dir = run_dir / f"iteration_{len(iteration_summaries) or 1}"
             if (_iter_dir / "node_memory").is_dir():
                 _prover = getattr(config, "prover", None)
@@ -411,9 +382,13 @@ def main():
     parser.add_argument("--surface-profile",
                         dest="surface_profile",
                         choices=current_surface_profile_names(),
-                        help="Paper-eval proof-state surface profile. "
-                             "Profiles hide selected proof-state compiler "
-                             "surfaces while keeping verifier behavior fixed.")
+                        help="Public proof-state compiler mode.")
+    parser.add_argument(
+        "--research-surface-profile",
+        dest="research_surface_profile",
+        default="",
+        help=argparse.SUPPRESS,
+    )
     parser.add_argument("--prover-mode",
                         choices=["tree"],
                         default=None,
@@ -497,8 +472,16 @@ def main():
         config.prover.effort = args.prover_effort
     if args.eval_mode:
         config.eval_mode = True
+    if args.surface_profile and args.research_surface_profile:
+        parser.error("public and research surface profiles are mutually exclusive")
     if args.surface_profile:
         config.surface_profile = args.surface_profile
+    if args.research_surface_profile:
+        if not config.eval_mode:
+            parser.error("research surface profiles require --eval-mode")
+        config.surface_profile = normalize_research_surface_profile_id(
+            args.research_surface_profile
+        )
     if args.prover_mode:
         config.prover.mode = args.prover_mode
     if args.tree_initial_provers is not None:

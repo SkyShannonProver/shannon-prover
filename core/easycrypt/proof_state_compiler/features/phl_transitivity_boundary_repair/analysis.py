@@ -45,25 +45,30 @@ def analyze_phl_transitivity_boundary(
     goal_context = checked_goal_reference(attempted.recovery_handoff)
     if descriptor.attempted_form == "function":
         primary = (
-            "`transitivity F ...` is function-level and requires `equiv[F]`; "
-            f"{goal_context} is statement-level `equiv[...]`."
+            "EasyCrypt rejected the selected function-level transitivity "
+            f"because {goal_context} is statement-level `equiv[...]`."
         )
         help_text = (
-            "Function-level transitivity belongs at an `equiv[F]` goal. At a "
-            "statement goal, the corresponding forms are `transitivity{1} "
-            "{ <statement> } ...` and `{2}`. Side and statement remain proof-"
-            "strategy choices, so the compiler selected no correction."
+            "You may remain at this statement boundary and continue the "
+            "statement proof, using `transitivity{1}` or `{2}` if that fits "
+            "your intended route.\n\n"
+            "Alternatively, if you intended function-level transitivity, you "
+            "may return to an `equiv[F]` boundary before applying it.\n\n"
+            "Both are proof-strategy choices. The compiler selected neither."
         )
     else:
         primary = (
-            "`transitivity{1/2} { ... }` is statement-level and requires "
-            f"`equiv[statement]`; {goal_context} is `equiv[F]`."
+            "EasyCrypt rejected the selected statement-level transitivity "
+            f"because {goal_context} is function-level `equiv[F]`."
         )
         help_text = (
-            "Statement-level transitivity belongs after entering a procedure "
-            "body. At an `equiv[F]` goal, the corresponding form is "
-            "`transitivity F ...`. The intermediate function remains a proof-"
-            "strategy choice, so the compiler selected no correction."
+            "You may remain at this function boundary and continue the "
+            "function proof, using `transitivity F ...` if that fits your "
+            "intended route.\n\n"
+            "Alternatively, if you intended statement-level transitivity, you "
+            "may enter a statement-level `equiv[...]` boundary before using "
+            "`transitivity{1}` or `{2}`.\n\n"
+            "Both are proof-strategy choices. The compiler selected neither."
         )
     diagnostic = StructuredDiagnostic(
         producer_id=PHL_TRANSITIVITY_BOUNDARY_ANALYSIS_PRODUCER_ID,

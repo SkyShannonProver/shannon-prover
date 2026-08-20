@@ -145,9 +145,8 @@ lemma restrS s j : 0 <= j =>
   restr  s (j + 1) =
   (if (j \in s) then fset1 j else fset0) `|` restr s j.
 proof.
-  (* COMPLETE THIS, REMOVE ADMIT ONCE YOU COMPLETE. DO NOT REMOVE THIS COMMENT *)
-  (* fsetP extensionality with iota rewriting *)
-  admit.
+(* COMPLETE THIS, REMOVE ADMIT ONCE YOU COMPLETE. DO NOT REMOVE THIS COMMENT *)
+  move=> hj; apply/fsetP => x; rewrite /restr in_fsetU !in_fsetI !mem_oflist !mem_iota; case: (j \in s) => hjs; rewrite ?in_fset1 ?in_fset0 /#.
 qed.
 
 lemma nin_is_restr n s : is_restr s n => !n \in s.

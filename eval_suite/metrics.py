@@ -13,7 +13,7 @@ from workflow.schemas.prover_result import (
     ProverResult,
 )
 from workflow.proof_management.common import node_memory_slug
-from workflow.validation.agent_thinking_trace import (
+from workflow.reporting.agent_thinking_trace import (
     normalize_codex_usage,
     usage_dedup_key,
 )

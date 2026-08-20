@@ -20,10 +20,9 @@ import shutil
 import subprocess
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any
 
 from core.easycrypt.ec_env import get_ec_env
-from core.easycrypt.session_events import read_events
+from core.easycrypt.session.session_events import read_events
 from core.easycrypt.toolchain import load_easycrypt_lock
 
 

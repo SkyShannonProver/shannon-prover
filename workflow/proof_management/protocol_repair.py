@@ -15,7 +15,7 @@ from core.context_intents import (
     canonicalize_intent_payload,
     intent_payload_contract_error,
 )
-from workflow.managed_turn_outcome import classify_manager_action_outcome
+from workflow.proof_management.managed_turn_outcome import classify_manager_action_outcome
 from workflow.proof_management.tactic_utils import strip_easycrypt_comments
 from core.easycrypt.value_shapes import as_dict_copy as _dict
 from core.easycrypt.value_shapes import drop_empty as _drop_empty
@@ -135,6 +135,19 @@ def parse_agent_intent(text: str) -> AgentIntentParse:
     if intent not in ALLOWED_AGENT_INTENTS:
         return AgentIntentParse(ok=False, error="unknown_or_missing_intent")
     payload = obj.get("payload")
+    if type(payload) is str:
+        # Transport repair: some provider CLIs serialize a nested object
+        # argument into a JSON string (the Claude CLI does when the tool
+        # schema leaves the field untyped — observed live 2026-08-19, every
+        # intent of a run rejected). Decoding it here keeps the manager the
+        # sole payload authority; a string that does not decode to an object
+        # still fails below.
+        try:
+            decoded = json.loads(payload)
+        except json.JSONDecodeError:
+            decoded = None
+        if type(decoded) is dict:
+            payload = decoded
     if not isinstance(payload, dict):
         return AgentIntentParse(ok=False, error="payload_must_be_object")
     payload_error = _intent_payload_error(intent, payload)

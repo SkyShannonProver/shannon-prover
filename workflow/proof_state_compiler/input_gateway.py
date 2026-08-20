@@ -19,15 +19,15 @@ from core.easycrypt.proof_state_compiler import (
 from core.easycrypt.proof_state_compiler.frontend import RuntimeSnapshotInput
 from core.easycrypt.ec_runtime_identity import EasyCryptRuntimeIdentity
 from core.easycrypt.native_semantics import NativeCompanionIdentity
-from core.easycrypt.session_native_semantics import (
+from core.easycrypt.session.session_native_semantics import (
     validate_native_semantic_batch_result,
 )
-from core.easycrypt.session_native_state import validate_native_state_artifact
-from core.easycrypt.session_compiler_input import validate_compiler_input
-from core.easycrypt.session_compiler_resources import (
+from core.easycrypt.session.session_native_state import validate_native_state_artifact
+from core.easycrypt.session.session_compiler_input import validate_compiler_input
+from core.easycrypt.session.session_compiler_resources import (
     validate_compiler_resource_load,
 )
-from core.easycrypt.session_projection import active_goal_hash_from_raw
+from core.easycrypt.session.session_projection import active_goal_hash_from_raw
 from core.easycrypt.proof_state_compiler.contracts import (
     NativeProofStateSnapshot,
     NativeFormulaBoundaryDescriptor,

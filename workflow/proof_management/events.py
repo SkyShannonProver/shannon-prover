@@ -11,7 +11,7 @@ from typing import Any
 
 from core.easycrypt.value_shapes import as_dict_copy as _dict
 from core.easycrypt.value_shapes import drop_empty as _drop_empty, as_list as _list
-from workflow.managed_turn_outcome import PROOF_STATE_EFFECTS
+from workflow.proof_management.managed_turn_outcome import PROOF_STATE_EFFECTS
 
 
 PROOF_EVENT_SCHEMA_VERSION = 1

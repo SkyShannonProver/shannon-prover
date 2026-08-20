@@ -184,7 +184,7 @@ def parse_attempted_operation(
         ),
         eager_while_dialect_descriptor=descriptor.eager_while_dialect,
         pure_tail_rewrite_descriptor=descriptor.pure_tail_rewrite,
-        intro_pattern_repair_descriptor=descriptor.intro_pattern_realization,
+        intro_pattern_realization_descriptor=descriptor.intro_pattern_realization,
         application_syntax_repair_descriptor=(
             descriptor.application_syntax_repair
         ),

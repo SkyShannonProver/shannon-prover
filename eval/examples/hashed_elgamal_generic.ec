@@ -283,11 +283,27 @@ section.
   qed.
 
   local lemma Pr_G1' &m: Pr[G1'.main() @ &m: res] = 1%r/2%r.
-  proof.
-    (* COMPLETE THIS, REMOVE ADMIT ONCE YOU COMPLETE. DO NOT REMOVE THIS COMMENT *)
-    (* guessing game: b independent of b'; byphoare + rnd (pred1 b') *)
-    admit.
-  qed.
+proof.
+(* COMPLETE THIS, REMOVE ADMIT ONCE YOU COMPLETE. DO NOT REMOVE THIS COMMENT *)
+  byphoare=> //.
+  proc.
+  swap 7 3.
+  rnd (pred1 b').
+  conseq (: _ ==> true).
+  move=> &hr _ w /=; rewrite /pred1.
+  split; last by smt().
+  have h := DBool.dbool1E w; move: h; rewrite /mu1 /pred1 => ->; smt().
+  call (guess_ll (Bound(LRO)) _).
+  apply (Bound_o_ll LRO); apply LRO_o_ll; move=> x; exact dbits_ll.
+  wp; rnd predT.
+  conseq (: _ ==> true) => [/> | ]; first by rewrite dbits_ll.
+  call (choose_ll (Bound(LRO)) _).
+  apply (Bound_o_ll LRO); apply LRO_o_ll; move=> x; exact dbits_ll.
+  wp; rnd predT; rnd predT.
+  conseq (: _ ==> true) => [/> | ]; first by smt(dt_ll).
+  inline H.init; wp; call LRO_init_ll.
+  skip=> />.
+qed.
 
   local module G2' = {
     var gxy : group

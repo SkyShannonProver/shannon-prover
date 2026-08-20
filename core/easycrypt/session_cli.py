@@ -19,7 +19,7 @@ _ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__
 if _ROOT not in sys.path:
     sys.path.insert(0, _ROOT)
 
-from core.easycrypt.session_runtime import Session
+from core.easycrypt.session.session_runtime import Session
 
 
 @contextmanager

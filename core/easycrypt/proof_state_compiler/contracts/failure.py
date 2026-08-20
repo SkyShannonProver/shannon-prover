@@ -395,7 +395,9 @@ class AttemptedOperationIR:
     proof_term_descriptor: FrozenJsonObject
     evidence_refs: tuple[EvidenceRef, ...]
     pure_tail_rewrite_descriptor: NativePureTailRewriteDescriptor | None = None
-    intro_pattern_repair_descriptor: NativeIntroPatternRepairDescriptor | None = None
+    intro_pattern_realization_descriptor: (
+        NativeIntroPatternRepairDescriptor | None
+    ) = None
     application_syntax_repair_descriptor: (
         NativeApplicationSyntaxRepairDescriptor | None
     ) = None
@@ -525,9 +527,9 @@ class AttemptedOperationIR:
             or self.positions
         ):
             raise ValueError("attempted pure-tail rewrite changed its identity")
-        if self.intro_pattern_repair_descriptor is not None and (
+        if self.intro_pattern_realization_descriptor is not None and (
             self.operation_family
-            != self.intro_pattern_repair_descriptor.source_operation
+            != self.intro_pattern_realization_descriptor.source_operation
             or self.operation_family != "intro_pattern"
             or self.exact_resource
             or self.relation_bridge_descriptor is not None
@@ -554,7 +556,7 @@ class AttemptedOperationIR:
             or self.phl_transitivity_boundary_descriptor is not None
             or self.eager_while_dialect_descriptor is not None
             or self.pure_tail_rewrite_descriptor is not None
-            or self.intro_pattern_repair_descriptor is not None
+            or self.intro_pattern_realization_descriptor is not None
             or self.parsed_arguments
             or self.side
             or self.positions
@@ -627,10 +629,10 @@ class AttemptedOperationIR:
                 if self.pure_tail_rewrite_descriptor is None
                 else self.pure_tail_rewrite_descriptor.to_payload()
             ),
-            "intro_pattern_repair_descriptor": (
+            "intro_pattern_realization_descriptor": (
                 None
-                if self.intro_pattern_repair_descriptor is None
-                else self.intro_pattern_repair_descriptor.to_payload()
+                if self.intro_pattern_realization_descriptor is None
+                else self.intro_pattern_realization_descriptor.to_payload()
             ),
             "application_syntax_repair_descriptor": (
                 None

@@ -5,7 +5,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Any, Protocol
 
-from core.easycrypt.session_goal_authority import has_authoritative_open_goal
+from core.easycrypt.session.session_goal_authority import has_authoritative_open_goal
 from core.easycrypt.proof_state_compiler.contracts import (
     CandidateSurface,
     CertificationRequest,

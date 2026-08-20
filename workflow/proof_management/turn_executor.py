@@ -11,11 +11,12 @@ from pathlib import Path
 from typing import Any
 
 from .health import backend_failure_health_event, timeout_health_event
-from workflow.managed_turn_outcome import (
+from workflow.proof_management.managed_turn_outcome import (
     PROOF_STATE_READ_ONLY,
+    classify_manager_action_outcome,
     observation_with_action_outcome,
 )
-from .intent_preflight import IntentPreflightDecision
+from .intent_admission import IntentPreflightDecision
 from .lineage import LemmaLineageStore
 from .protocol_repair import (
     AgentIntent,
@@ -31,7 +32,7 @@ from .turn_view import (
     snapshot_surface,
     view_with_latest_observation,
 )
-from .types import ManagedTurn, ProofStateSnapshot
+from .types import ManagedTurn, ProofStateSnapshot, TurnDirective
 
 
 class ProofTurnExecutor:
@@ -201,6 +202,7 @@ class ProofTurnExecutor:
                 health_event=health,
                 intent=intent,
                 manager_actions=[exc.action],
+                directive=TurnDirective.NODE_UNHEALTHY,
             )
         except ReplBackendError as exc:
             health = backend_failure_health_event(
@@ -229,6 +231,11 @@ class ProofTurnExecutor:
                 health_event=health,
                 intent=intent,
                 manager_actions=[exc.action],
+                directive=(
+                    TurnDirective.NODE_UNHEALTHY
+                    if health is not None
+                    else TurnDirective.CONTINUE
+                ),
             )
         observation = (
             latest_observation
@@ -252,6 +259,57 @@ class ProofTurnExecutor:
             snapshot=snapshot,
             intent=intent,
             manager_actions=actions,
+        )
+
+    def finish_turn(self, intent: AgentIntent) -> ManagedTurn:
+        """Accept a worker stop request without routing it through the REPL.
+
+        ``finish`` controls serving only.  It does not mutate EasyCrypt and its
+        directive must never be interpreted as proof closedness or success.
+        """
+
+        outcome = classify_manager_action_outcome(
+            status="ok",
+            ok=True,
+            read_only=False,
+            mutates_proof_state=False,
+            state_changed=False,
+        ).to_dict()
+        action = {
+            "label": "finish",
+            "exit_code": 0,
+            "duration_ms": 0,
+            "mutates_proof_state": False,
+            **outcome,
+            "agent_observation": {
+                "kind": "finish_accepted",
+                "result": (
+                    "Finish accepted; this proof node will stop after this "
+                    "response."
+                ),
+                "effect": "The EasyCrypt proof state did not change.",
+            },
+        }
+        observation = latest_observation_for_view(intent, [action])
+        view = self.view_for_observation(
+            observation,
+            overlay_after_project=True,
+        )
+        self._audit({
+            "kind": "agent_intent.finish_accepted",
+            "node": self.node_id,
+            "intent": intent.to_dict(),
+            "manager_actions": [action],
+            "proof_state_effect": "unchanged",
+            "snapshot": snapshot_surface(self._latest_snapshot()),
+        })
+        return ManagedTurn(
+            ok=True,
+            workspace_view=view,
+            snapshot=self._latest_snapshot(),
+            intent=intent,
+            manager_actions=[action],
+            directive=TurnDirective.STOP_REQUESTED,
         )
 
     def menu_turn(

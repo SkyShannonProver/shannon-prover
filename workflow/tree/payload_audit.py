@@ -1,0 +1,351 @@
+"""Payload audit for live prover runs.
+
+The information-source policy tells us whether a read is allowed, lossy, or
+forbidden.  This recorder answers a slightly different audit question: what did
+the agent actually receive after each tool call, and which structured artifacts
+were available at that frontier?
+"""
+from __future__ import annotations
+
+import hashlib
+import json
+import re
+import threading
+import time
+from dataclasses import dataclass, field
+from datetime import datetime
+from pathlib import Path
+from typing import Any
+
+from workflow.provider.prover_io_policy import InformationSourceDecision
+from workflow.proof_tool.proof_tool_contract import PROOF_TOOL_IDENTITY
+
+
+_FULL_OUTPUT_RE = re.compile(r"Full output saved to:\s*(\S+)")
+_WORKSPACE_KIND_RE = re.compile(r'"kind"\s*:\s*"prover_workspace_view"')
+_WORKSPACE_FIELD_RE = re.compile(r'"workspace"\s*:\s*\{\s*"view"\s*:\s*\{')
+
+
+def _as_dict(value: Any) -> dict[str, Any]:
+    return value if isinstance(value, dict) else {}
+
+
+def _goal_size_summary(view: dict[str, Any]) -> dict[str, Any]:
+    """Size stats shared by every artifact that embeds a workspace view."""
+    current_goal = _as_dict(view.get("current_goal"))
+    raw_goal_lines = current_goal.get("lines")
+    if isinstance(raw_goal_lines, list):
+        raw_goal = "\n".join(str(line) for line in raw_goal_lines)
+    else:
+        raw_goal = str(raw_goal_lines or "")
+    return {
+        "compiler_extras_json_chars": max(
+            0, _json_size(view) - _json_size(current_goal)
+        ),
+        "raw_goal_chars": len(raw_goal),
+        "raw_goal_json_chars": _json_size(raw_goal),
+    }
+
+
+def _commit_response_data(data: dict[str, Any]) -> dict[str, Any]:
+    mutation = _as_dict(data.get("mutation"))
+    return {
+        "command": data.get("command"),
+        "status": data.get("status"),
+        "json_chars": _json_size(data),
+        "accepted_count": mutation.get("accepted_count"),
+        "attempted_count": mutation.get("attempted_count"),
+        "failed_tactic": mutation.get("failed_tactic"),
+    }
+
+
+def _tactic_execution_data(data: dict[str, Any]) -> dict[str, Any]:
+    view = _as_dict(_as_dict(data.get("workspace")).get("view"))
+    return {
+        "json_chars": _json_size(data),
+        "workspace_json_chars": _json_size(view),
+        **_goal_size_summary(view),
+        "top_level_keys": sorted(data.keys()),
+    }
+
+
+def _workspace_view_data(data: dict[str, Any]) -> dict[str, Any]:
+    return {
+        "json_chars": _json_size(data),
+        **_goal_size_summary(data),
+        "top_level_keys": sorted(data.keys()),
+    }
+
+
+@dataclass(frozen=True)
+class _SessionArtifactSpec:
+    payload_attr: str
+    data_attr: str
+    payload_fields: tuple[str, ...]
+    data_summary: Any  # Callable[[dict], dict]
+
+
+_SESSION_ARTIFACT_SPECS: dict[str, _SessionArtifactSpec] = {
+    "commit_response": _SessionArtifactSpec(
+        payload_attr="latest_commit_payload",
+        data_attr="latest_commit_response",
+        payload_fields=(
+            "status", "proof_status", "accepted_count", "attempted_count",
+        ),
+        data_summary=_commit_response_data,
+    ),
+    "tactic_execution_result": _SessionArtifactSpec(
+        payload_attr="latest_tactic_execution_payload",
+        data_attr="latest_tactic_execution_result",
+        payload_fields=("mode", "status", "accepted_count", "workspace_chars"),
+        data_summary=_tactic_execution_data,
+    ),
+    "prover_workspace_view": _SessionArtifactSpec(
+        payload_attr="latest_workspace_payload",
+        data_attr="latest_workspace_view",
+        payload_fields=(
+            "proof_status", "goal_hash", "current_goal_text_fully_shown",
+            "current_goal_truncated", "goal_chars", "workspace_chars",
+        ),
+        data_summary=_workspace_view_data,
+    ),
+}
+
+
+def summarize_text_payload(text: str) -> dict[str, Any]:
+    """Return transport-size markers without copying the full payload."""
+    data = text.encode("utf-8", errors="replace")
+    contains_proof_context = "proof_context_view" in text
+    contains_proof_state = '"proof_state"' in text or "proof_state" in text
+    return {
+        "chars": len(text),
+        "bytes": len(data),
+        "lines": 0 if not text else text.count("\n") + 1,
+        "sha1": hashlib.sha1(data).hexdigest(),
+        "contains_tactic_execution_result": "[TACTIC-EXECUTION-RESULT]" in text,
+        "contains_commit_response": "[COMMIT-RESPONSE]" in text,
+        "contains_prover_workspace_view": bool(
+            _WORKSPACE_KIND_RE.search(text) or _WORKSPACE_FIELD_RE.search(text)
+        ),
+        "contains_proof_context_ref": contains_proof_context,
+        "contains_proof_state_json": contains_proof_state,
+        "contains_output_too_large": "Output too large" in text,
+        "contains_background_notice": "Command running in background" in text,
+        "full_output_saved_to": _FULL_OUTPUT_RE.findall(text)[:5],
+    }
+
+
+def coerce_tool_result_text(content: Any) -> str:
+    """Normalize Claude stream-json tool_result content into text."""
+    if isinstance(content, str):
+        return content
+    if isinstance(content, list):
+        chunks: list[str] = []
+        for item in content:
+            if isinstance(item, str):
+                chunks.append(item)
+            elif isinstance(item, dict):
+                text = item.get("text") or item.get("content") or ""
+                if text:
+                    chunks.append(str(text))
+        return "\n".join(chunks)
+    if content is None:
+        return ""
+    return str(content)
+
+
+def _policy_to_dict(policy: InformationSourceDecision | None) -> dict[str, Any]:
+    if policy is None:
+        return {}
+    return {
+        "decision": policy.decision,
+        "source_type": policy.source_type,
+        "authority": policy.authority,
+        "reason": policy.reason,
+        "lossy": policy.lossy,
+        "mutates_proof_state": policy.mutates_proof_state,
+        "audit_code": policy.audit_code,
+    }
+
+
+def _summarize_tool_input(tool_name: str, tool_input: Any) -> dict[str, Any]:
+    if not isinstance(tool_input, dict):
+        return {"input_type": type(tool_input).__name__}
+    if tool_name == "Bash":
+        command = str(tool_input.get("command") or "")
+        return {
+            "command_head": command[:500],
+            "command_chars": len(command),
+            "command_sha1": hashlib.sha1(command.encode("utf-8")).hexdigest(),
+        }
+    if tool_name == "Read":
+        file_path = str(tool_input.get("file_path") or "")
+        return {
+            "file_path": file_path,
+            "offset": tool_input.get("offset"),
+            "limit": tool_input.get("limit"),
+        }
+    if _is_submit_proof_intent_tool(tool_name):
+        payload = tool_input.get("payload")
+        payload = payload if isinstance(payload, dict) else {}
+        tactic = str(payload.get("tactic") or "")
+        return {
+            "intent": str(tool_input.get("intent") or ""),
+            "tactic_head": tactic[:300],
+            "tactic_chars": len(tactic),
+            "topic": payload.get("topic"),
+            "symbol": payload.get("symbol"),
+        }
+    keys = sorted(str(key) for key in tool_input.keys())
+    return {"keys": keys}
+
+
+def _is_submit_proof_intent_tool(tool_name: str) -> bool:
+    value = str(tool_name or "")
+    return value in {
+        PROOF_TOOL_IDENTITY.tool,
+        (
+            f"mcp__{PROOF_TOOL_IDENTITY.server}__"
+            f"{PROOF_TOOL_IDENTITY.tool}"
+        ),
+    }
+
+
+def _artifact_stats(path_text: str) -> dict[str, Any]:
+    if not path_text:
+        return {}
+    path = Path(path_text)
+    try:
+        stat = path.stat()
+    except OSError:
+        return {"artifact": path_text, "exists": False}
+    return {
+        "artifact": path_text,
+        "exists": True,
+        "bytes": stat.st_size,
+        "mtime": stat.st_mtime,
+    }
+
+
+def _json_size(value: Any) -> int:
+    try:
+        return len(json.dumps(value, sort_keys=True))
+    except TypeError:
+        return 0
+
+
+@dataclass
+class PayloadAuditRecorder:
+    """Append-only JSONL recorder for prover-facing payload evidence."""
+
+    path: Path | str | None
+    enabled: bool = True
+    _lock: threading.Lock = field(default_factory=threading.Lock)
+
+    def __post_init__(self) -> None:
+        if self.path is not None and not isinstance(self.path, Path):
+            self.path = Path(self.path)
+
+    def record(self, event: str, **fields: Any) -> None:
+        if not self.enabled or self.path is None:
+            return
+        payload = {
+            "schema_version": 1,
+            "time": datetime.now().isoformat(timespec="milliseconds"),
+            # Epoch seconds so one call can be matched across this JSONL and
+            # the endpoint/session logs, which all use time.time().
+            "epoch": round(time.time(), 3),
+            "event": event,
+            **fields,
+        }
+        path = self.path
+        assert isinstance(path, Path)
+        try:
+            line = json.dumps(payload, sort_keys=True, ensure_ascii=False)
+        except TypeError:
+            safe_payload = json.loads(json.dumps(payload, default=str))
+            line = json.dumps(safe_payload, sort_keys=True, ensure_ascii=False)
+        with self._lock:
+            path.parent.mkdir(parents=True, exist_ok=True)
+            with path.open("a", encoding="utf-8") as fh:
+                fh.write(line + "\n")
+
+    def record_tool_use(
+        self,
+        *,
+        tree: str,
+        session_tag: str,
+        tool_use_id: str,
+        tool_name: str,
+        tool_input: Any,
+        policy: InformationSourceDecision | None = None,
+        description: str = "",
+        assistant_context: dict[str, Any] | None = None,
+    ) -> None:
+        self.record(
+            "tool_use",
+            tree=tree,
+            session_tag=session_tag,
+            tool_use_id=tool_use_id,
+            tool_name=tool_name,
+            input=_summarize_tool_input(tool_name, tool_input),
+            policy=_policy_to_dict(policy),
+            description=description[:500],
+            assistant_context=assistant_context or {},
+        )
+
+    def record_tool_result(
+        self,
+        *,
+        tree: str,
+        session_tag: str,
+        tool_use_id: str,
+        result_text: str,
+        pending_kind: str = "",
+        pending_description: str = "",
+        pending_reason: str = "",
+        target_proof_exposure: dict[str, Any] | None = None,
+    ) -> None:
+        self.record(
+            "tool_result",
+            tree=tree,
+            session_tag=session_tag,
+            tool_use_id=tool_use_id,
+            pending_kind=pending_kind,
+            pending_description=pending_description[:500],
+            pending_reason=pending_reason[:500],
+            result=summarize_text_payload(result_text),
+            target_proof_exposure=target_proof_exposure or {},
+        )
+
+    def record_session_artifact(
+        self,
+        *,
+        tree: str,
+        session_tag: str,
+        kind: str,
+        snapshot: Any,
+    ) -> None:
+        spec = _SESSION_ARTIFACT_SPECS.get(kind)
+        if spec is None:
+            return
+        payload = getattr(snapshot, spec.payload_attr, None) or {}
+        data = getattr(snapshot, spec.data_attr, None) or {}
+        if not isinstance(data, dict):
+            data = {}
+        self.record(
+            "session_artifact",
+            tree=tree,
+            session_tag=session_tag,
+            kind=kind,
+            artifact=_artifact_stats(str(payload.get("artifact") or "")),
+            payload={field: payload.get(field) for field in spec.payload_fields},
+            data=spec.data_summary(data),
+            proof_state={
+                "status": getattr(snapshot, "status", "unknown"),
+                "goal_type": getattr(snapshot, "goal_type", "unknown"),
+                "goal_hash": getattr(snapshot, "goal_hash", ""),
+                "num_remaining": getattr(snapshot, "num_remaining", None),
+                "tactic_count": getattr(snapshot, "tactic_count", 0),
+            },
+        )

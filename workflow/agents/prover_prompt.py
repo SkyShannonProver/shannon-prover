@@ -8,7 +8,6 @@ import: ``prover.py`` -> ``prover_prompt.py`` (no cycle).
 """
 from __future__ import annotations
 
-import os
 import re
 from typing import Any, Optional
 
@@ -18,7 +17,7 @@ from workflow.proof_state_compiler.current_turn_presentation import (
     require_current_workspace_view,
 )
 from workflow.proof_state_compiler.profile_registry import (
-    normalize_current_surface_profile_id,
+    normalize_runtime_surface_profile_id,
 )
 
 
@@ -89,7 +88,7 @@ def _agent_visible_workspace_view(
 
     return require_current_workspace_view(
         view,
-        profile_id=normalize_current_surface_profile_id(surface_profile),
+        profile_id=normalize_runtime_surface_profile_id(surface_profile),
         label="prover prompt current handoff workspace view",
     )
 
@@ -109,7 +108,7 @@ def _render_managed_session_handoff(
     if isinstance(view, dict) and view:
         turn = compose_current_surface_turn(
             view,
-            normalize_current_surface_profile_id(surface_profile),
+            normalize_runtime_surface_profile_id(surface_profile),
             handled_intent={},
         )
         view_md = render_current_surface_turn_markdown(turn)

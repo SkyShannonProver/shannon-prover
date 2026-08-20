@@ -1,28 +1,30 @@
 {
-  "suite": "demo_pir",
-  "_note": "Public single-target demo using the default proof-state compiler.",
-  "profiles": ["proof_state_compiler"],
-  "defaults": {
-    "eval_mode": true,
-    "agent_backend": "codex",
-    "model": "gpt-5.6-sol",
-    "effort": "high",
-    "max_iterations": 1,
-    "timeout_minutes": 30,
-    "repeats": 1,
-    "tree_initial_provers": 1,
-    "tree_max_concurrent": 1,
-    "output_dir": "artifacts/eval_suite",
-    "source_isolation": true,
-    "strip_proofs": true,
-    "include_dir": "easycrypt-src/theories"
-  },
-  "targets": [
-    {
-      "id": "pir_correct",
-      "file": "eval/examples/PIR.ec",
-      "lemma": "PIR_correct",
-      "include_dir": "easycrypt-src/theories"
-    }
-  ]
+ "suite": "demo_pir",
+ "_note": "Public single-target demo using the default proof-state compiler. This is a demo, not a scientific eval: eval_mode is off, so the Linux-only eval filesystem confinement and eval validity rules do not apply. Source isolation and strip_proofs stay on \u2014 the agent still has to prove the lemma from a proof-stripped isolated copy.",
+ "profiles": [
+  "proof_state_compiler"
+ ],
+ "defaults": {
+  "eval_mode": false,
+  "agent_backend": "codex",
+  "model": "gpt-5.6-sol",
+  "effort": "high",
+  "max_iterations": 1,
+  "timeout_minutes": 30,
+  "repeats": 1,
+  "tree_initial_provers": 1,
+  "tree_max_concurrent": 1,
+  "output_dir": "artifacts/eval_suite",
+  "source_isolation": true,
+  "strip_proofs": true,
+  "include_dir": "easycrypt-src/theories"
+ },
+ "targets": [
+  {
+   "id": "pir_correct",
+   "file": "eval/examples/PIR.ec",
+   "lemma": "PIR_correct",
+   "include_dir": "easycrypt-src/theories"
+  }
+ ]
 }

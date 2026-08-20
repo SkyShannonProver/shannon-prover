@@ -10,8 +10,7 @@ Handles three proof forms:
 
 Idempotent. Lives in ``core/easycrypt/`` (the lower layer) so that
 eval-source preparation can use it without ``core`` importing ``workflow`` — the
-prior layering inversion (audit re-audit §4.1). ``workflow.tools.replace_proofs_with_admit``
-re-exports these for its CLI.
+prior layering inversion (audit re-audit §4.1).
 """
 
 import re

@@ -29,7 +29,7 @@ from workflow.proc_lifecycle import (
     reap_worker_pgid_manifest,
     terminate_subprocess_tree,
 )
-from workflow.eval_agent_confinement import (
+from workflow.provider.eval_agent_confinement import (
     EvalAgentConfinement,
     EvalAgentConfinementError,
     clear_confinement_environment,
@@ -39,6 +39,7 @@ from workflow.schemas.config import PROVER_DEFAULTS
 from workflow.proof_state_compiler.surface_profiles import (
     ensure_current_surface_profile,
 )
+from workflow.proof_state_compiler.profile_registry import PRODUCTION_PROFILE_IDS
 
 
 def _cmd_flag(cmd: list[str], name: str) -> str | None:
@@ -296,7 +297,7 @@ def main(argv: list[str] | None = None) -> int:
     execution_manifest: dict[str, Any] | None = None
     execution_manifest_path: Path | None = None
     if not args.dry_run:
-        from workflow.validation.run_report_bundle import (
+        from workflow.reporting.run_report_bundle import (
             capture_repository_environment,
         )
         bundle_environment = capture_repository_environment()
@@ -783,7 +784,7 @@ def _write_agent_view_bundle(
     """Auto-generate the committed agent-view timeline+view bundle for this run
     (fixed location ``agent_view_runs/``). Best-effort: never fails the run."""
     try:
-        from workflow.validation.run_report_bundle import build_bundle
+        from workflow.reporting.run_report_bundle import build_bundle
         iter_dir = run_dir / "iteration_1"
         if not (iter_dir / "node_memory").is_dir():
             return
@@ -995,7 +996,11 @@ def _orchestrator_cmd(
             or defaults.get("timeout_minutes")
             or 30
         ),
-        "--surface-profile",
+        (
+            "--surface-profile"
+            if profile in PRODUCTION_PROFILE_IDS
+            else "--research-surface-profile"
+        ),
         profile,
     ]
     if defaults.get("eval_mode", True):

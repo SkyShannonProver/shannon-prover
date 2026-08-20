@@ -26,7 +26,6 @@ from core.easycrypt.proof_state_compiler.contracts.proof_ir import (
     ProofJudgment,
     TypedTermIR,
 )
-from core.easycrypt.proof_state_compiler.syntax.formulas import normalize_formula
 
 
 _GOAL_KINDS = {

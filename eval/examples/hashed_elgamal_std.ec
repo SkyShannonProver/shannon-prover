@@ -165,14 +165,43 @@ section Security.
   local lemma es0_Gb &m:
       Pr[ES0(ESAdv(A)).main() @ &m : res]
     = Pr[Gb.main()@ &m : res].
-  proof.
-  (* COMPLETE THIS, REMOVE ADMIT ONCE YOU COMPLETE. DO NOT REMOVE THIS COMMENT *)
-  byequiv=> //; proc; inline *.
-  swap{1} [5..6] -3. swap{2} 7 -2.
-  swap{1} 8 -4. swap{2} 5 -1. swap{2} 6 -1.
-  (* OTP argument: h +^ m with h uniform = v uniform; need complex swap alignment *)
-  admit.
-  qed.
+proof.
+(* COMPLETE THIS, REMOVE ADMIT ONCE YOU COMPLETE. DO NOT REMOVE THIS COMMENT *)
+  byequiv.
+  proc.
+  inline ESAdv(A).guess.
+  wp.
+  swap{2} 7 -1.
+  swap{1} 3 -1.
+  swap{1} 5 -2.
+  swap{1} 6 -2.
+  swap{1} 7 -2.
+  swap{1} 8 -2.
+  swap{2} 6 -1.
+  call (_: true).
+  wp.
+  rnd (fun (x : bits) => x +^ (if b0{1} then m1{1} else m0{1})) (fun (x : bits) => x +^ (if b0{1} then m1{1} else m0{1})).
+  rnd.
+  call (_: true).
+  rnd.
+  rnd.
+  wp.
+  rnd.
+  auto.
+  move=> *.
+  split; 1: assumption.
+  move=> *.
+  split; 1: smt.
+  move=> *.
+  split.
+  move=> *; ring.
+  move=> *.
+  split; 1: ring.
+  move=> *; split; 1: smt.
+  smt.
+  trivial.
+  smt.
+qed.
 
   local lemma Gb_half &m:
      Pr[Gb.main()@ &m : res] = 1%r/2%r.
