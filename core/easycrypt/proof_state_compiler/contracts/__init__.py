@@ -153,7 +153,6 @@ from core.easycrypt.proof_state_compiler.contracts.delivery import (
     commitment_result_rule,
     failure_linked_repair_rule,
     intrinsic_changed_fact_rule,
-    optional_advisory_rule,
     state_refresh_trigger,
 )
 from core.easycrypt.proof_state_compiler.contracts.frozen_json import (
@@ -339,7 +338,6 @@ __all__ = [
     "freeze_json_array",
     "freeze_json_object",
     "frozen_json_sha256",
-    "optional_advisory_rule",
     "state_refresh_trigger",
     "thaw_json",
 ]

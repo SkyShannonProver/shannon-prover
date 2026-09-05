@@ -19,12 +19,19 @@ from workflow.proof_state_compiler.runtime_profiles import (
     resolve_runtime_surface_profile,
 )
 from workflow.proof_tool.proof_tool_contract import (
+    DECLARATION_RESOLVE_TOOL_IDENTITY,
+    SOURCE_READ_TOOL_IDENTITY,
+    SOURCE_SEARCH_TOOL_IDENTITY,
     ProofToolContractManifest,
     validate_proof_tool_contract,
 )
 
 
-def _mcp_tools_section(current_intents: list[str]) -> str:
+def _mcp_tools_section(
+    current_intents: list[str],
+    *,
+    source_navigation_enabled: bool,
+) -> str:
     current = set(current_intents)
     controls: list[str] = []
     for spec in persistent_control_specs():
@@ -41,6 +48,22 @@ def _mcp_tools_section(current_intents: list[str]) -> str:
     sections: list[str] = []
     if controls:
         sections.append("### Proof controls\n\n" + "\n".join(controls))
+    if source_navigation_enabled:
+        sections.append(
+            "### Source context\n\n"
+            f"- `{SOURCE_SEARCH_TOOL_IDENTITY.tool}` — literal search over the "
+            "prepared proof-stripped task and configured theories; returns "
+            "copy-ready paths, line numbers, and optional context. A match is "
+            "lexical, not a resolved declaration.\n"
+            f"- `{SOURCE_READ_TOOL_IDENTITY.tool}` — read up to 400 numbered "
+            "lines from one returned `.ec`/`.eca` path.\n"
+            f"- `{DECLARATION_RESOLVE_TOOL_IDENTITY.tool}` — ask EasyCrypt to "
+            "resolve and print one exact candidate symbol. Use this when "
+            "namespace identity matters; it is not fuzzy search.\n\n"
+            "These tools do not inspect or mutate proof state. A normal route is "
+            "search → resolve if needed → read nearby source. Then still submit "
+            "exactly one proof intent before ending the turn."
+        )
     return "\n\n".join(sections)
 
 
@@ -75,7 +98,10 @@ def render_long_lived_agent_prompt(
     intent_example = _intent_example(current_intents)
     keep_going_actions = _KEEP_GOING_ACTIONS
     refresh_hint = _REFRESH_HINT
-    mcp_tools = _mcp_tools_section(current_intents)
+    mcp_tools = _mcp_tools_section(
+        current_intents,
+        source_navigation_enabled=manifest.source_navigation_enabled,
+    )
     if compact:
         # Fresh-context reopening: drop the turn-0 bootstrap. The EC session
         # already holds the proof state and the handoff (prepended by the caller)
@@ -86,8 +112,7 @@ def render_long_lived_agent_prompt(
             "context already established it and the EasyCrypt session is intact). "
             "Read `LEGAL_LATEST_FOLLOWUP` first to recover the current proof "
             "surface, and `LEGAL_PROOF_SO_FAR` if you need the accepted tactic "
-            "spine. Re-read the target file or sibling lemmas on demand only if a "
-            "step needs them."
+            "spine."
         )
         if compact_pointer.strip():
             tail += f"\n\n{compact_pointer.strip()}"
@@ -139,6 +164,7 @@ LEGAL_NODE_MEMORY_DIR: `{node_memory_dir}`
 LEGAL_LATEST_MANAGER_RESULT: `{node_memory_dir / "latest_manager_result.json"}`
 LEGAL_LATEST_FOLLOWUP: `{node_memory_dir / "latest_followup.md"}`
 LEGAL_PROOF_SO_FAR: `{node_memory_dir / "proof_so_far.md"}`
+LEGAL_CONTINUATION_BRIEF: `{node_memory_dir / "continuation_brief.json"}`
 
 If Claude context is compacted (or Codex agent context is compacted), a tool
 result is truncated, or you are unsure what
@@ -249,11 +275,17 @@ current proof surface.
 
 When the refreshed surface says `goals_discharged_pending_qed`, submit:
 `{{"intent":"commit_tactic","payload":{{"tactic":"qed."}}}}`.
-Only after `qed.` is accepted and the next view shows the lemma is saved should
-you output a concise `PROVER REPORT:` JSON block with useful observations,
-missing guidance, and blockers if any. The runtime appends `PROOF TACTICS:`
-from verified session history; do not read `proof_so_far.md` only to reproduce
-that final tactic list."""
+When the proof is closed, commit `qed.` and wait for the next view to confirm
+that the lemma is saved. Only after the manager accepts `finish`—either with a
+saved proof or an honored give-up—output exactly one concise report of the form:
+`PROVER REPORT: {{"blockers": ["..."], "discoveries": ["..."]}}`.
+Use `blockers` only for concrete unresolved obstacles tied to the observed
+proof state, a rejected tactic, or a missing declaration. Use `discoveries`
+only for evidence-grounded facts you observed. Do not recommend the caller's next
+strategy; that decision is outside your responsibility. Use empty arrays when
+the proof closes. The runtime appends `PROOF TACTICS:` from verified session
+history; do not read `proof_so_far.md` only to reproduce that final tactic
+list."""
 
 
 def render_committed_proof_markdown(tactics: tuple[str, ...] | list[str]) -> str:

@@ -59,6 +59,7 @@ def run_prover(config: RunConfig, run_dir: Path):
         eval_mode=bool(config.eval_mode),
         surface_profile=config.surface_profile,
         resume_capsules=list(config.resume_capsules or []),
+        outer_proof_handoff=str(config.outer_proof_handoff or ""),
         run_dir=run_dir,
     )
 
@@ -410,6 +411,15 @@ def main():
                              "`score` preserves current behavior; `diversity` "
                              "interleaves route families using capsule route "
                              "diversity evidence.")
+    parser.add_argument(
+        "--outer-proof-handoff",
+        default="",
+        help=(
+            "Invocation-bound same-experiment outer proof handoff. The "
+            "manager replays its certified prefix and verifies the recorded "
+            "goal identity before launching the proof node."
+        ),
+    )
     parser.add_argument("--prover-timeout-minutes", type=int, default=None,
                         help="Override the prover's internal timeout (default: "
                              "config.prover.timeout_minutes = 20). Increase when "
@@ -491,6 +501,10 @@ def main():
     resume_capsule_args = list(args.resume_capsule or [])
     if resume_capsule_args:
         config.resume_capsules = resume_capsule_args
+    if args.outer_proof_handoff:
+        if resume_capsule_args or config.resume_capsules:
+            parser.error("--outer-proof-handoff and --resume-capsule are mutually exclusive")
+        config.outer_proof_handoff = args.outer_proof_handoff
     if args.resume_root_policy:
         config.prover.resume_root_policy = args.resume_root_policy
     if args.prover_timeout_minutes is not None:

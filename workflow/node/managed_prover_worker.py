@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import signal
 import sys
 import traceback
 from pathlib import Path
@@ -59,7 +60,35 @@ def main(argv: list[str] | None = None) -> int:
             project_root=PROJECT_ROOT,
             emit=_emit,
         )
-        result = runtime.run()
+        previous_handlers: dict[int, object] = {}
+
+        def request_safe_stop(signum: int, _frame: object) -> None:
+            signal_name = signal.Signals(signum).name
+            try:
+                runtime.request_safe_stop(
+                    f"worker received {signal_name}"
+                )
+            except BaseException as exc:
+                # The run coordinator owns lossless accepted-prefix handback.
+                # Preserve a bounded event here instead of letting an optional
+                # live-checkpoint exception abort the worker before archival.
+                _emit({
+                    "type": "system",
+                    "kind": "proof_node.safe_stop_live_checkpoint_failed",
+                    "node": args.node_id,
+                    "reason": f"{type(exc).__name__}: {exc}",
+                })
+
+        for stop_signal in (signal.SIGTERM, signal.SIGINT):
+            previous_handlers[stop_signal] = signal.signal(
+                stop_signal,
+                request_safe_stop,
+            )
+        try:
+            result = runtime.run()
+        finally:
+            for stop_signal, previous in previous_handlers.items():
+                signal.signal(stop_signal, previous)
     except Exception as exc:
         # The traceback is the only way to tell a corrupt bootstrap file from
         # a runtime wiring error — never reduce it to one line.

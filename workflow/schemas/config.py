@@ -120,6 +120,11 @@ class RunConfig:
     # from-scratch eval scoring.
     resume_capsules: list[str] = field(default_factory=list)
 
+    # Same-experiment outer-agent proof handoff. The artifact contains a
+    # manager-certified replay prefix plus an untrusted construction briefing.
+    # Unlike resume_capsules, this is not prior proof-node state.
+    outer_proof_handoff: str = ""
+
     def __post_init__(self) -> None:
         self.surface_profile = normalize_public_surface_profile_id(
             self.surface_profile

@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "target_file": "experiments/interleaved_shannon/task/chacha_poly.ec",
+  "final_lemma": "conclusion",
+  "include_dirs": [
+    "easycrypt-src/theories"
+  ],
+  "artifact_root": "artifacts/interleaved_shannon",
+  "max_parallel": 2,
+  "max_inner_minutes": 120,
+  "outer_timeout_seconds": 43200,
+  "verifier": "experiments/interleaved_shannon/verify_task.py",
+  "prompt_file": "experiments/interleaved_shannon/prompt.md",
+  "source_probe_symbol": "map2_zip",
+  "expected_task_files": [
+    "chacha_poly.ec",
+    "indistinguishability.eca",
+    "ske.ec"
+  ],
+  "delegation_region_begin": "(* SCRATCHPAD BEGIN — your own declarations may go below this line *)",
+  "delegation_region_end": "(* SCRATCHPAD END *)",
+  "warm_handoff_sentinel_lemma": "nth_extend",
+  "warm_handoff_sentinel_command": "move=> [hi0 hib];\nrewrite /extend."
+}

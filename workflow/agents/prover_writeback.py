@@ -18,7 +18,8 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Optional
 from core.easycrypt.committed_history import (
     closed_history_tactics,
-    read_committed_tactics,
+    read_committed_commands,
+    read_committed_transactions,
     split_trailing_qed,
 )
 from workflow.agents.ec_services import (
@@ -93,7 +94,7 @@ def _extract_partial_tactics_from_sessions(
     result.  It lets eval reports show how far an interrupted or failed run got.
     """
     candidates = [
-        read_committed_tactics(Path(session_dir))
+        read_committed_commands(Path(session_dir))
         for session_dir in session_dirs
         if str(session_dir).strip()
     ]
@@ -101,12 +102,44 @@ def _extract_partial_tactics_from_sessions(
     for capsule in resume_capsules or []:
         path = Path(capsule)
         root = path if path.is_dir() else path.parent
-        candidates.append(read_committed_tactics(root))
+        candidates.append(read_committed_commands(root))
 
     candidates = [item for item in candidates if item]
     if not candidates:
         return []
     return max(candidates, key=len)
+
+
+def _extract_partial_transactions_from_sessions(
+    *,
+    session_dirs: list[str] | tuple[str, ...],
+    committed_prefix: list[str] | tuple[str, ...],
+    resume_capsules: list[str] | None = None,
+) -> list[str]:
+    """Return transaction boundaries for the selected partial prefix.
+
+    The public/reporting prefix is command-oriented, but replay must retain
+    the manager commit boundaries recorded by ``steps.log`` so EasyCrypt
+    bullet blocks remain atomic.
+    """
+
+    expected = list(committed_prefix)
+    for session_dir in session_dirs:
+        path = Path(session_dir)
+        if read_committed_commands(path) == expected:
+            transactions = read_committed_transactions(path)
+            if transactions:
+                return transactions
+    for raw_capsule in resume_capsules or []:
+        try:
+            from workflow.node.proof_node_resume import load_resume_capsule
+
+            capsule = load_resume_capsule(raw_capsule)
+        except Exception:
+            continue
+        if capsule.replay_prefix == expected:
+            return list(capsule.replay_transactions)
+    return []
 
 
 def _has_why3_error(stderr: str) -> bool:
@@ -434,8 +467,10 @@ def _extract_prover_notes(output_text: str) -> str:
 def _extract_prover_report(output_text: str) -> dict:
     """Extract the structured PROVER REPORT JSON from the prover's output.
 
-    Returns the parsed dict, or empty dict if not found or invalid.
-    Expected keys: suggestions, open_questions, discoveries.
+    Returns only the current bounded handback fields, or an empty dict if the
+    report is absent or invalid. Shannon reports concrete blockers and
+    evidence-grounded discoveries; deciding what to do next remains the
+    caller's job.
     """
     if not output_text:
         return {}
@@ -452,21 +487,34 @@ def _extract_prover_report(output_text: str) -> dict:
     # Find the start of the JSON object
     json_start = output_text.index("{", m.start())
 
-    # Find matching closing brace (handle nested braces)
-    depth = 0
-    for i in range(json_start, len(output_text)):
-        if output_text[i] == "{":
-            depth += 1
-        elif output_text[i] == "}":
-            depth -= 1
-            if depth == 0:
-                json_text = output_text[json_start:i + 1]
-                try:
-                    return json.loads(json_text)
-                except json.JSONDecodeError:
-                    logger.warning("PROVER REPORT JSON parse failed")
-                    return {}
-    return {}
+    try:
+        parsed, _end = json.JSONDecoder().raw_decode(output_text[json_start:])
+    except json.JSONDecodeError:
+        logger.warning("PROVER REPORT JSON parse failed")
+        return {}
+    if not isinstance(parsed, dict):
+        return {}
+    report: dict[str, list[str]] = {}
+    for key in ("blockers", "discoveries"):
+        raw_items = parsed.get(key)
+        if raw_items is None:
+            continue
+        if not isinstance(raw_items, list):
+            logger.warning("PROVER REPORT field %s must be a list", key)
+            continue
+        items = [
+            str(item).strip()[:3000]
+            for item in raw_items[:12]
+            if isinstance(item, str) and str(item).strip()
+        ]
+        report[key] = items
+    unknown = sorted(set(parsed) - {"blockers", "discoveries"})
+    if unknown:
+        logger.warning(
+            "Ignoring unsupported PROVER REPORT field(s): %s",
+            ", ".join(unknown),
+        )
+    return report
 
 
 def _strip_comments_for_admit_check(text: str) -> str:

@@ -533,17 +533,6 @@ def compiler_invocation_context(
     )
 
 
-def optional_advisory_rule() -> DeliveryRule:
-    """The only proactive SC2 policy: labelled and delta-suppressed."""
-
-    return DeliveryRule(
-        strategy_class=ROUTE_SELECTING,
-        trigger_kind=STATE_REFRESH,
-        presentation_kind=OPTIONAL_ADVISORY,
-        lifetime=ONCE_PER_CONTENT,
-    )
-
-
 def intrinsic_changed_fact_rule() -> DeliveryRule:
     """Delta-only exposure for an intrinsic current-state fact."""
 

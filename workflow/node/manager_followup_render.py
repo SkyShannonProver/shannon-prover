@@ -47,6 +47,7 @@ def render_manager_followup(
     memory: NodeMemory | None = None,
     full_view: dict[str, Any] | None = None,
     surface_profile: str | None = None,
+    runtime_guidance: str = "",
 ) -> str:
     surface_profile = normalize_runtime_surface_profile_id(surface_profile)
     canonical_view = (
@@ -100,6 +101,8 @@ def render_manager_followup(
         compiler_markdown=turn.compiler_markdown,
     )
     result_payload["surface_turn_hash"] = surface_turn.get("surface_turn_hash")
+    if runtime_guidance.strip():
+        result_payload["runtime_guidance"] = runtime_guidance.strip()
     target_view = (
         dict(audit_view)
         if isinstance(audit_view, dict)
@@ -132,6 +135,11 @@ def render_manager_followup(
         submit_line=submit_line,
         anchor_block=anchor_block,
     )
+    persistent_resources = memory.resource_anchor_markdown()
+    if persistent_resources:
+        followup += "\n\n" + persistent_resources
+    if runtime_guidance.strip():
+        followup += "\n\n" + runtime_guidance.strip()
     memory.write_latest_followup(
         turn_index=turn_index,
         result_payload=result_payload,

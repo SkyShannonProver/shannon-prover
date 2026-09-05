@@ -24,6 +24,7 @@ from typing import Any
 from core.easycrypt.committed_history import (
     committed_tactics_have_qed,
     history_path,
+    read_committed_transactions,
     read_committed_tactics,
 )
 from core.easycrypt.proof_lifecycle import (
@@ -858,7 +859,14 @@ def _undo_restored_close_authority(
         return CandidateCloseAuthorityProjection()
     undone_tactic = str(undo_payload.get("undone_tactic") or "").strip()
     remaining_steps = _as_optional_int(undo_payload.get("remaining_steps"))
-    if not undone_tactic or remaining_steps != history.tactic_count:
+    current_transactions = read_committed_transactions(
+        Path(history.path).parent
+    )
+    if (
+        not undone_tactic
+        or remaining_steps is None
+        or remaining_steps != len(current_transactions)
+    ):
         return CandidateCloseAuthorityProjection()
     prior_semantics = [index for index in semantic_indices if index < undo_index]
     if len(prior_semantics) < 2:

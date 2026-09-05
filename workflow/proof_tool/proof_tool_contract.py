@@ -1,9 +1,10 @@
-"""Provider-neutral contract for the single managed proof tool.
+"""Provider-neutral contract for invocation-bound manager tools.
 
 This module owns the stable MCP server/tool identity and the transport envelope
-advertised to an agent provider.  It deliberately does not decide whether an
-intent is valid in the current proof state; that decision belongs to the
-manager-owned admission path.
+advertised to an agent provider. It deliberately does not decide whether a
+proof intent is valid in the current proof state; that decision belongs to the
+manager-owned admission path. Optional source-navigation tools are read-only
+and never enter proof-state admission.
 """
 from __future__ import annotations
 
@@ -14,7 +15,7 @@ from workflow.proof_management.protocol_repair import ALLOWED_AGENT_INTENTS
 from workflow.proof_state_compiler.runtime_profiles import allowed_runtime_intents
 
 
-PROOF_TOOL_ENVELOPE_VERSION = "proof_tool_envelope.v1"
+PROOF_TOOL_ENVELOPE_VERSION = "proof_tool_envelope.v3"
 
 
 @dataclass(frozen=True, order=True)
@@ -40,6 +41,18 @@ PROOF_TOOL_IDENTITY = ToolIdentity(
     server="proof_node_manager",
     tool="submit_proof_intent",
 )
+SOURCE_READ_TOOL_IDENTITY = ToolIdentity(
+    server="proof_node_manager",
+    tool="read_easycrypt_source",
+)
+SOURCE_SEARCH_TOOL_IDENTITY = ToolIdentity(
+    server="proof_node_manager",
+    tool="search_easycrypt_source",
+)
+DECLARATION_RESOLVE_TOOL_IDENTITY = ToolIdentity(
+    server="proof_node_manager",
+    tool="resolve_easycrypt_declaration",
+)
 
 
 @dataclass(frozen=True)
@@ -54,6 +67,7 @@ class ProofToolContractManifest:
     identity: ToolIdentity
     envelope_version: str
     effective_profile_intents: tuple[str, ...]
+    source_navigation_enabled: bool = False
 
     def __post_init__(self) -> None:
         if self.identity != PROOF_TOOL_IDENTITY:
@@ -64,12 +78,28 @@ class ProofToolContractManifest:
             sorted(set(self.effective_profile_intents))
         ):
             raise ValueError("effective profile intents must be sorted and unique")
+        if not isinstance(self.source_navigation_enabled, bool):
+            raise ValueError("source-navigation capability must be boolean")
+
+    @property
+    def tool_identities(self) -> tuple[ToolIdentity, ...]:
+        return (
+            (
+                PROOF_TOOL_IDENTITY,
+                SOURCE_READ_TOOL_IDENTITY,
+                SOURCE_SEARCH_TOOL_IDENTITY,
+                DECLARATION_RESOLVE_TOOL_IDENTITY,
+            )
+            if self.source_navigation_enabled
+            else (PROOF_TOOL_IDENTITY,)
+        )
 
     def to_dict(self) -> dict[str, Any]:
         return {
             "identity": self.identity.to_dict(),
             "envelope_version": self.envelope_version,
             "effective_profile_intents": list(self.effective_profile_intents),
+            "source_navigation_enabled": self.source_navigation_enabled,
         }
 
     @classmethod
@@ -91,6 +121,11 @@ class ProofToolContractManifest:
             isinstance(item, str) and item for item in raw_intents
         ):
             raise ValueError("proof-tool manifest intents must be a string list")
+        source_navigation_enabled = value.get("source_navigation_enabled")
+        if not isinstance(source_navigation_enabled, bool):
+            raise ValueError(
+                "proof-tool manifest source-navigation capability must be boolean"
+            )
         return cls(
             identity=ToolIdentity(
                 server=raw_identity.get("server"),
@@ -98,6 +133,7 @@ class ProofToolContractManifest:
             ),
             envelope_version=value.get("envelope_version"),
             effective_profile_intents=tuple(raw_intents),
+            source_navigation_enabled=source_navigation_enabled,
         )
 
 
@@ -127,6 +163,8 @@ def proof_tool_input_schema() -> dict[str, Any]:
 
 def resolve_proof_tool_contract(
     surface_profile: str | None,
+    *,
+    source_navigation_enabled: bool = False,
 ) -> ProofToolContractManifest:
     """Resolve one immutable contract manifest at node startup."""
 
@@ -137,6 +175,7 @@ def resolve_proof_tool_contract(
         identity=PROOF_TOOL_IDENTITY,
         envelope_version=PROOF_TOOL_ENVELOPE_VERSION,
         effective_profile_intents=effective,
+        source_navigation_enabled=bool(source_navigation_enabled),
     )
 
 
@@ -153,6 +192,126 @@ def proof_tool_definition(
         "description": str(description),
         "inputSchema": proof_tool_input_schema(),
     }
+
+
+def source_read_tool_definition() -> dict[str, Any]:
+    """Render the bounded manager-owned EasyCrypt source-read tool."""
+
+    return {
+        "name": SOURCE_READ_TOOL_IDENTITY.tool,
+        "description": (
+            "Read a bounded line range from the proof-stripped EasyCrypt task "
+            "or configured EasyCrypt theories through the manager-owned "
+            "source boundary. Returns native-Read-style line-numbered text. "
+            "This tool does not inspect or mutate proof state."
+        ),
+        "inputSchema": {
+            "type": "object",
+            "properties": {
+                "path": {
+                    "type": "string",
+                    "description": "Repository-relative .ec or .eca path.",
+                },
+                "start_line": {"type": "integer", "minimum": 1},
+                "end_line": {"type": "integer", "minimum": 1},
+            },
+            "required": ["path"],
+            "additionalProperties": False,
+        },
+    }
+
+
+def source_search_tool_definition() -> dict[str, Any]:
+    """Render the bounded manager-owned EasyCrypt literal-search tool."""
+
+    return {
+        "name": SOURCE_SEARCH_TOOL_IDENTITY.tool,
+        "description": (
+            "Search literal text in the proof-stripped EasyCrypt task and "
+            "configured EasyCrypt theories. Returns copy-ready file paths, "
+            "line numbers, and optional bounded context. Matches are lexical "
+            "candidates, not resolved EasyCrypt declarations. This tool does "
+            "not inspect or mutate proof state."
+        ),
+        "inputSchema": {
+            "type": "object",
+            "properties": {
+                "query": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 256,
+                    "description": "One literal search string, not a regex.",
+                },
+                "scope": {
+                    "type": "string",
+                    "enum": ["all", "task", "libraries"],
+                    "default": "all",
+                },
+                "path": {
+                    "type": "string",
+                    "description": (
+                        "Optional exact repository-relative .ec/.eca file to search."
+                    ),
+                },
+                "case_sensitive": {"type": "boolean", "default": True},
+                "max_results": {
+                    "type": "integer", "minimum": 1, "maximum": 50,
+                    "default": 20,
+                },
+                "context_lines": {
+                    "type": "integer", "minimum": 0, "maximum": 3,
+                    "default": 0,
+                },
+            },
+            "required": ["query"],
+            "additionalProperties": False,
+        },
+    }
+
+
+def declaration_resolve_tool_definition() -> dict[str, Any]:
+    """Render exact EasyCrypt-native declaration resolution."""
+
+    return {
+        "name": DECLARATION_RESOLVE_TOOL_IDENTITY.tool,
+        "description": (
+            "Ask EasyCrypt to resolve and print one exact candidate declaration "
+            "in the prepared target environment. Use this after lexical source "
+            "search when namespace identity matters. This is not fuzzy search "
+            "and does not inspect or mutate the current proof state."
+        ),
+        "inputSchema": {
+            "type": "object",
+            "properties": {
+                "symbol": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 256,
+                    "description": (
+                        "Exact EasyCrypt identifier, optionally theory-qualified."
+                    ),
+                },
+            },
+            "required": ["symbol"],
+            "additionalProperties": False,
+        },
+    }
+
+
+def proof_tool_definitions(
+    manifest: ProofToolContractManifest,
+) -> list[dict[str, Any]]:
+    """Render exactly the tools enabled by one node manifest."""
+
+    validate_proof_tool_contract(manifest)
+    definitions = [proof_tool_definition(manifest)]
+    if manifest.source_navigation_enabled:
+        definitions.extend((
+            source_read_tool_definition(),
+            source_search_tool_definition(),
+            declaration_resolve_tool_definition(),
+        ))
+    return definitions
 
 
 def validate_proof_tool_contract(

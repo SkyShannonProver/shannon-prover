@@ -14,8 +14,13 @@ import signal
 import subprocess
 import time
 from dataclasses import dataclass, field
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Callable, Optional
+from core.easycrypt.committed_history import (
+    flatten_committed_transactions,
+    read_committed_transactions,
+)
 from core.easycrypt.proof_lifecycle import has_discharged_goals
 from workflow.schemas.config import PROVER_DEFAULTS
 from workflow.proof_management.common import (
@@ -39,7 +44,11 @@ from workflow.tree.policy import (
     tree_spawn_limit_for_branch_key as _tree_spawn_limit_for_branch_key,
     undo_repair_mode as _undo_repair_mode,
 )
-from workflow.tree.result import SessionClosureCandidate, TreeRunResult
+from workflow.tree.result import (
+    SessionClosureCandidate,
+    TREE_RUN_TERMINATION_WALL_CLOCK_TIMEOUT,
+    TreeRunResult,
+)
 from workflow.run_ui import (
     _CYAN,
     _DIM,
@@ -56,6 +65,65 @@ from workflow.tree.trackers import (
     _session_snapshot,
     _snapshot_has_completion_candidate,
 )
+
+_RUN_FINALIZATION_DRAIN_SECONDS = 30.0
+MANAGED_LIVE_PROGRESS_FILENAME = "managed_live_progress.json"
+MANAGED_LIVE_PROGRESS_KIND = "managed_prover_live_progress"
+MANAGED_LIVE_PROGRESS_SCHEMA_VERSION = 1
+
+
+def _progress_timestamp(epoch: float | None = None) -> str:
+    value = time.time() if epoch is None else max(0.0, float(epoch))
+    return datetime.fromtimestamp(value, tz=timezone.utc).isoformat(
+        timespec="seconds"
+    )
+
+
+def _live_progress_projection(
+    nodes: list["ProofTreeNode"],
+    *,
+    target_lemma: str,
+    phase: str,
+    checkpoint_tactic_count: int = 0,
+) -> dict[str, object]:
+    """Project bounded live facts without exposing a proof state or tactic."""
+
+    accepted = max(
+        (max(0, int(node.tracker.committed_count)) for node in nodes),
+        default=0,
+    )
+    turns = sum(max(0, int(node.tracker.manager_turns)) for node in nodes)
+    active = sum(not node.tracker.finished for node in nodes)
+    last_progress_epoch = max(
+        (
+            float(node.tracker.last_accept_time)
+            for node in nodes
+            if int(node.tracker.committed_count) > 0
+            and float(node.tracker.last_accept_time) > 0
+        ),
+        default=0.0,
+    )
+    return {
+        "schema_version": MANAGED_LIVE_PROGRESS_SCHEMA_VERSION,
+        "kind": MANAGED_LIVE_PROGRESS_KIND,
+        "authority": "tree_supervisor_manager_observer_projection",
+        "lemma": str(target_lemma or ""),
+        "phase": phase,
+        "accepted_tactic_count": accepted,
+        "checkpoint_tactic_count": (
+            max(0, int(checkpoint_tactic_count))
+            if 0 <= int(checkpoint_tactic_count) <= accepted
+            else 0
+        ),
+        "inner_turns": turns,
+        "active_nodes": active,
+        "last_progress_at": (
+            _progress_timestamp(last_progress_epoch)
+            if last_progress_epoch > 0
+            else ""
+        ),
+        "observed_at": _progress_timestamp(),
+    }
 
 
 def _build_tree_status(nodes: dict, elapsed: float) -> str:
@@ -724,6 +792,7 @@ class NodeSupervisor:
         initial_branches: list[dict] | None = None,
         payload_audit_path: str | Path | None = None,
         session_namespace: str = "",
+        live_progress_path: str | Path | None = None,
     ):
         self.build_cmd_fn = build_cmd_fn
         self.cwd = cwd
@@ -748,6 +817,15 @@ class NodeSupervisor:
         self.target_lemma = target_lemma
         self.initial_branches = initial_branches
         self.payload_audit_path = payload_audit_path
+        self.live_progress_path = (
+            Path(live_progress_path).resolve() if live_progress_path else None
+        )
+        if self.live_progress_path is not None:
+            if payload_audit_path is None:
+                raise ValueError("live progress requires a run-owned audit path")
+            audit_root = Path(payload_audit_path).resolve().parent
+            if self.live_progress_path.parent != audit_root:
+                raise ValueError("live progress must stay in the prover run directory")
         namespace = str(session_namespace or "").strip().lower()
         if namespace and re.fullmatch(r"[a-z0-9]{6,32}", namespace) is None:
             raise ValueError(
@@ -764,6 +842,54 @@ class NodeSupervisor:
         self._seen_session_dirs: set = set()
         self._source_file_path = None
         self._source_mtime_at_start = None
+        self._last_live_progress_projection: dict[str, object] | None = None
+
+    def _checkpoint_tactic_count(self) -> int:
+        if not self.payload_audit_path or not self.nodes:
+            return 0
+        run_dir = Path(self.payload_audit_path).resolve().parent
+        leader = max(
+            self.nodes.values(),
+            key=lambda node: int(node.tracker.committed_count),
+        )
+        path = _find_node_resume_capsule(run_dir, leader.tracker.session_tag)
+        if path is None:
+            return 0
+        try:
+            return max(0, int(_load_resume_capsule(path).tactic_count))
+        except (OSError, ValueError):
+            return 0
+
+    def _publish_live_progress(self, *, phase: str) -> None:
+        """Best-effort atomic projection; telemetry never controls the proof."""
+
+        if self.live_progress_path is None:
+            return
+        try:
+            payload = _live_progress_projection(
+                list(self.nodes.values()),
+                target_lemma=str(self.target_lemma or ""),
+                phase=phase,
+                checkpoint_tactic_count=self._checkpoint_tactic_count(),
+            )
+            comparable = {
+                key: value
+                for key, value in payload.items()
+                if key != "observed_at"
+            }
+            if comparable == self._last_live_progress_projection:
+                return
+            temporary = self.live_progress_path.with_suffix(".json.tmp")
+            temporary.write_text(
+                json.dumps(payload, indent=2, sort_keys=True) + "\n",
+                encoding="utf-8",
+            )
+            temporary.replace(self.live_progress_path)
+            self._last_live_progress_projection = comparable
+        except (OSError, TypeError, ValueError) as exc:
+            # Observability is not proof authority. A failed status write must
+            # never turn a useful proof run into infrastructure_invalid.
+            self.logger.warning("managed live-progress projection failed: %s", exc)
 
     def _session_tag(self, node_id: str) -> str:
         """Return the run-owned EasyCrypt identity for one tree node.
@@ -797,6 +923,22 @@ class NodeSupervisor:
             return list(node.tracker._history_lines())
         except Exception:
             return list(node.replay_prefix or [])
+
+    def _replay_transaction_context(
+        self,
+        node: ProofTreeNode,
+        replay_prefix: list[str],
+    ) -> dict[str, object]:
+        """Bind a child replay to the parent's surviving commit blocks."""
+
+        session_dir = Path(self.cwd) / f".ec_session_{node.tracker.session_tag}"
+        transactions = read_committed_transactions(session_dir)
+        if (
+            transactions
+            and flatten_committed_transactions(transactions) == replay_prefix
+        ):
+            return {"replay_transactions": transactions}
+        return {}
 
     def _route_family_key(self, route_family: dict) -> str:
         return json.dumps(route_family or {}, sort_keys=True)
@@ -1469,6 +1611,7 @@ class NodeSupervisor:
             blocked_openers=blocked,
             layer_move_action=selected_action,
             spawn_reason=reason_msg,
+            resume_context=self._replay_transaction_context(node, prefix),
         )
         self.lineage.record_repair_branch_created(
             parent_id=f"Tree-{node.node_id}",
@@ -1722,6 +1865,10 @@ class NodeSupervisor:
                         parent_goal_state=parent_goal,
                         layer_move_action=selected_action,
                         spawn_reason="structural_undo_repair_branch",
+                        resume_context=self._replay_transaction_context(
+                            node,
+                            prefix,
+                        ),
                     )
                     self.lineage.record_repair_branch_created(
                         parent_id=f"Tree-{node.node_id}",
@@ -2091,11 +2238,16 @@ class NodeSupervisor:
         self.branch_blocked_openers: dict[int, list[str]] = {}
         branch_blocked_openers = self.branch_blocked_openers
 
+        interrupted_reason = ""
+        termination_reason = ""
         try:
             while True:
                 elapsed = time.time() - start_time
 
                 if elapsed > timeout:
+                    termination_reason = (
+                        TREE_RUN_TERMINATION_WALL_CLOCK_TIMEOUT
+                    )
                     status("Orchestrator",
                            f"Tree prover timeout ({timeout}s). Stopping all.",
                            _YELLOW)
@@ -2109,6 +2261,7 @@ class NodeSupervisor:
                 for node in active:
                     node.tracker.poll_lines()
                     self._refresh_node_route_family(node, reason="poll")
+                self._publish_live_progress(phase="proof_search")
 
                 # Resume checkpoints are replay promises. If a replayed root
                 # reconstructs a different frontier, kill it before it burns
@@ -2213,12 +2366,32 @@ class NodeSupervisor:
 
                 time.sleep(1)
 
+        except KeyboardInterrupt as exc:
+            # Preserve the best manager-owned prefix before cooperative
+            # shutdown.  The run-level owner will classify this as an
+            # interrupted/infrastructure terminal, never as proof success.
+            interrupted_reason = str(exc or "tree search interrupted")
+            status(
+                "Orchestrator",
+                "Tree prover interruption requested; preserving the best "
+                "managed checkpoint.",
+                _YELLOW,
+            )
+
         finally:
-            # Clean up all remaining processes
+            # Timeout and outer interruption share the same worker signal
+            # boundary.  Give the worker enough time to drain its one current
+            # manager turn and mint a live checkpoint; the run coordinator
+            # replays the archived prefix if this bounded drain still fails.
             for node in nodes.values():
                 if not node.tracker.finished and node.tracker.proc.poll() is None:
-                    _terminate_process_tree(node.tracker.proc)
+                    _terminate_process_tree(
+                        node.tracker.proc,
+                        grace_seconds=_RUN_FINALIZATION_DRAIN_SECONDS,
+                    )
                     node.tracker.finished = True
+
+        self._publish_live_progress(phase="finalizing")
 
         # Determine winner
         if self._winner is None:
@@ -2332,11 +2505,16 @@ class NodeSupervisor:
                 self._winner.tracker.completion_candidate_ready
             ),
             returncode=rc,
+            termination_reason=termination_reason,
         )
 
         _set_status_bar_active(False)
         completion_candidate = None
         infrastructure_errors: list[str] = []
+        if interrupted_reason:
+            infrastructure_errors.append(
+                "tree search interrupted: " + interrupted_reason
+            )
         if self._winner.tracker.completion_candidate_ready:
             snapshot = _session_snapshot(cwd, self._winner.tracker._session_dir)
             if snapshot is None:
@@ -2373,6 +2551,7 @@ class NodeSupervisor:
             destructive_abort=bool(self._destructive_action_detected),
             destructive_reason=self._destructive_action_reason,
             infrastructure_errors=tuple(infrastructure_errors),
+            termination_reason=termination_reason,
         )
 
 
@@ -2397,6 +2576,7 @@ def run_tree_prover(
     initial_branches: list[dict] | None = None,
     payload_audit_path: str | Path | None = None,
     session_namespace: str = "",
+    live_progress_path: str | Path | None = None,
 ) -> TreeRunResult:
     """Recursive tree prover: spawn children at branch points when provers get stuck.
 
@@ -2454,4 +2634,5 @@ def run_tree_prover(
         initial_branches=initial_branches,
         payload_audit_path=payload_audit_path,
         session_namespace=session_namespace,
+        live_progress_path=live_progress_path,
     ).run()

@@ -6,7 +6,10 @@ from enum import Enum
 from typing import Any, Iterable, Mapping, Protocol
 
 from workflow.proof_tool.proof_tool_contract import (
+    DECLARATION_RESOLVE_TOOL_IDENTITY,
     PROOF_TOOL_IDENTITY,
+    SOURCE_READ_TOOL_IDENTITY,
+    SOURCE_SEARCH_TOOL_IDENTITY,
     ProofToolContractManifest,
     ToolIdentity,
 )
@@ -74,7 +77,7 @@ class AgentCapabilityPolicy:
         allow_empty_host_metadata: bool = True,
     ) -> "AgentCapabilityPolicy":
         return cls(
-            allowed_tools=frozenset({manifest.identity}),
+            allowed_tools=frozenset(manifest.tool_identities),
             allow_empty_host_metadata=allow_empty_host_metadata,
         )
 
@@ -112,6 +115,9 @@ class InvocationEventAudit:
     provider: str
     proof_tool_started: int
     proof_tool_completed: int
+    source_reads: int
+    source_searches: int
+    declaration_resolutions: int
     host_metadata_calls: int
     provider_errors: int
     terminal_kind: str
@@ -157,6 +163,9 @@ class AgentEventLifecycleGuard:
         self._terminals: list[AgentEventKind] = []
         self._proof_tool_started = 0
         self._proof_tool_completed = 0
+        self._source_reads = 0
+        self._source_searches = 0
+        self._declaration_resolutions = 0
         self._host_metadata_calls = 0
         self._provider_errors = 0
         self._events_observed = 0
@@ -166,6 +175,12 @@ class AgentEventLifecycleGuard:
         value = str(reason).strip()
         if value:
             self._violations.append(value)
+
+    @property
+    def has_pending_tool_calls(self) -> bool:
+        """Whether a provider tool request has not produced its result yet."""
+
+        return bool(self._pending)
 
     def observe(self, event: CanonicalAgentEvent) -> LifecycleDecision:
         before = len(self._violations)
@@ -271,6 +286,9 @@ class AgentEventLifecycleGuard:
             provider=self.provider,
             proof_tool_started=self._proof_tool_started,
             proof_tool_completed=self._proof_tool_completed,
+            source_reads=self._source_reads,
+            source_searches=self._source_searches,
+            declaration_resolutions=self._declaration_resolutions,
             host_metadata_calls=self._host_metadata_calls,
             provider_errors=self._provider_errors,
             terminal_kind=terminal.value if terminal is not None else "",
@@ -305,10 +323,12 @@ class AgentEventLifecycleGuard:
         if self.requirements.require_turn_started and self._turn_started != 1:
             self.record_violation("provider event arrived before turn start")
 
-        if kind == AgentEventKind.MESSAGE_COMPLETED and self._pending:
-            self.record_violation(
-                "provider agent message completed before tool calls completed"
-            )
+        # A completed provider *message item* is not a terminal turn event.
+        # Codex may finish an intermediate commentary item while an MCP item is
+        # still in flight.  The authoritative ordering boundary is the later
+        # turn.completed/turn.failed event, where pending tools remain a hard
+        # violation.  Treating every agent_message as terminal killed valid
+        # long-running proof turns after substantial manager progress.
 
         if kind in {
             AgentEventKind.TERMINAL_COMPLETED,
@@ -383,6 +403,12 @@ class AgentEventLifecycleGuard:
         if self.capability_policy.allow_all_known_tools:
             if pending.tool == PROOF_TOOL_IDENTITY:
                 self._proof_tool_completed += 1
+            elif pending.tool == SOURCE_READ_TOOL_IDENTITY:
+                self._source_reads += 1
+            elif pending.tool == SOURCE_SEARCH_TOOL_IDENTITY:
+                self._source_searches += 1
+            elif pending.tool == DECLARATION_RESOLVE_TOOL_IDENTITY:
+                self._declaration_resolutions += 1
             return
         if pending.capability == HOST_METADATA_CAPABILITY:
             if event.host_metadata_result_empty is not True:
@@ -393,6 +419,12 @@ class AgentEventLifecycleGuard:
                 self._host_metadata_calls += 1
         elif pending.tool == PROOF_TOOL_IDENTITY:
             self._proof_tool_completed += 1
+        elif pending.tool == SOURCE_READ_TOOL_IDENTITY:
+            self._source_reads += 1
+        elif pending.tool == SOURCE_SEARCH_TOOL_IDENTITY:
+            self._source_searches += 1
+        elif pending.tool == DECLARATION_RESOLVE_TOOL_IDENTITY:
+            self._declaration_resolutions += 1
 
 
 def audit_normalized_invocation(

@@ -6,6 +6,7 @@ context-watermark detection.
 """
 from __future__ import annotations
 
+import hashlib
 import json
 import os
 import shutil
@@ -61,13 +62,24 @@ def provider_cli_identity(agent_backend: str) -> dict[str, str]:
     drift has produced real failures (Claude system-subtype events, Codex
     alpha event shapes — both observed live 2026-08-19). Recorded per run so
     win-rate comparisons across time can rule the harness version in or out.
-    Best-effort: a probe failure records the error text, never blocks a run.
+    The provider layer records probe failures; eval wrappers may require the
+    complete identity and fail closed when any required field is unavailable.
     """
     backend = str(agent_backend or "codex")
     cached = _PROVIDER_CLI_IDENTITY_CACHE.get(backend)
     if cached is not None:
         return cached
     binary = CODEX_BIN if backend == "codex" else CLAUDE_BIN
+    launch_path = shutil.which(binary) or binary
+    resolved_path = launch_path
+    binary_sha256 = ""
+    try:
+        resolved_file = Path(launch_path).resolve(strict=True)
+        if resolved_file.is_file():
+            binary_sha256 = hashlib.sha256(resolved_file.read_bytes()).hexdigest()
+            resolved_path = str(resolved_file)
+    except OSError:
+        pass
     try:
         proc = subprocess.run(
             [binary, "--version"],
@@ -84,7 +96,8 @@ def provider_cli_identity(agent_backend: str) -> dict[str, str]:
     identity = {
         "agent_backend": backend,
         "binary": binary,
-        "resolved_path": shutil.which(binary) or binary,
+        "resolved_path": resolved_path,
+        "binary_sha256": binary_sha256,
         "version": version,
     }
     _PROVIDER_CLI_IDENTITY_CACHE[backend] = identity
@@ -125,6 +138,7 @@ class _ProviderAgentSessionBase:
         project_root: Path = _PROJECT_ROOT,
         emit: Callable[[dict[str, Any]], None] | None = None,
         on_session_id: Callable[[str], None] | None = None,
+        eval_mode: bool = False,
         eval_confinement: EvalAgentConfinement | None = None,
         proof_tool_manifest: ProofToolContractManifest | None = None,
         readiness_issuer: Callable[[str], None] | None = None,
@@ -135,6 +149,7 @@ class _ProviderAgentSessionBase:
         self.source_file = source_file
         self.session_tag = session_tag
         self.project_root = Path(project_root)
+        self.eval_mode = bool(eval_mode or eval_confinement is not None)
         self.eval_confinement = eval_confinement
         self.proof_tool_manifest = proof_tool_manifest
         self.readiness_issuer = readiness_issuer
@@ -419,6 +434,18 @@ class _ProviderAgentSessionBase:
         return returncode, result_text
 
 
+def _watermark_stop_ready(
+    *,
+    ctx_pressure: bool,
+    event_guard: "AgentEventLifecycleGuard | None",
+) -> bool:
+    """Terminate a saturated provider only at a completed tool boundary."""
+
+    return bool(ctx_pressure) and (
+        event_guard is None or not event_guard.has_pending_tool_calls
+    )
+
+
 class ClaudeAgentSession(_ProviderAgentSessionBase):
     """One long-lived Claude Code subprocess for a proof node."""
 
@@ -467,6 +494,23 @@ class ClaudeAgentSession(_ProviderAgentSessionBase):
             *(["--append-system-prompt", system_prompt] if system_prompt.strip() else []),
             "--dangerously-skip-permissions",
             "--disallowedTools",
+            *(
+                (
+                    "Bash(*)",
+                    "Read(*)",
+                    "Write(*)",
+                    "Edit(*)",
+                    "Glob(*)",
+                    "Grep(*)",
+                    "NotebookEdit(*)",
+                    "WebSearch(*)",
+                    "WebFetch(*)",
+                    "Agent(*)",
+                    "Task(*)",
+                )
+                if self.eval_mode
+                else ()
+            ),
             *destructive_tool_denylist(
                 self.source_file,
                 project_root=self.project_root,
@@ -522,7 +566,7 @@ class ClaudeAgentSession(_ProviderAgentSessionBase):
                         mcp_launch_spec.manifest,
                         allow_empty_host_metadata=False,
                     )
-                    if self.eval_confinement is not None
+                    if self.eval_mode
                     else AgentCapabilityPolicy(allow_all_known_tools=True)
                 ),
             )
@@ -574,15 +618,11 @@ class ClaudeAgentSession(_ProviderAgentSessionBase):
                 self._capture_reasoning(event)
             except Exception:
                 pass
-            # Layer 1: token-watermark detection. The trip is a rising edge; on
-            # it we emit an audit marker and terminate the child so the runtime's
-            # respawn loop can swap in a fresh context. Terminating here CAN land
-            # mid tool-call (a tool request may already be in flight when we kill
-            # the process), but that is safe because every commit goes through a
-            # synchronous, transactional session mutation: a tactic is either
-            # fully applied to the live EC session before the call returns or not
-            # at all, so a killed mid-flight tool-call cannot leave a half-applied
-            # commit. The drained stdout iterator ends cleanly after terminate().
+            # Layer 1: token-watermark detection. Latch pressure immediately,
+            # but never terminate between a tool request and its result. Besides
+            # preserving the useful result, this lets the invocation lifecycle
+            # close cleanly instead of reclassifying an ordinary context refresh
+            # as an infrastructure-invalid pending-tool failure.
             if self._ctx_detector.observe(event):
                 self.ctx_pressure = True
                 self.emit({
@@ -593,6 +633,10 @@ class ClaudeAgentSession(_ProviderAgentSessionBase):
                     "watermark_tokens": self._ctx_detector.tokens,
                     "session_tag": self.session_tag,
                 })
+            if _watermark_stop_ready(
+                ctx_pressure=self.ctx_pressure,
+                event_guard=event_guard,
+            ):
                 try:
                     self.proc.terminate()
                 except Exception:
@@ -661,12 +705,12 @@ class CodexAgentSession(_ProviderAgentSessionBase):
         launch_id: str = "",
         resume_session_id: str = "",
     ) -> list[str]:
-        # Eval mode already launches Codex inside the selective bubblewrap
-        # namespace owned by EvalAgentConfinement.  Starting Codex's own bwrap
-        # sandbox inside it is both redundant and non-functional on Linux:
-        # Bash tool calls fail before they can read even the allowed isolated
-        # source tree.  ``danger-full-access`` here means full access *inside*
-        # that outer namespace; non-eval runs retain Codex's read-only sandbox.
+        # When the optional filesystem confinement layer is active, Codex's
+        # own sandbox would be a redundant nested bwrap and cannot start on
+        # Linux. ``danger-full-access`` therefore means full access only inside
+        # that already-confined namespace. Platform-neutral eval runs and plain
+        # /prove runs retain Codex's read-only sandbox; eval tool access is
+        # independently restricted to the manager-owned MCP contract.
         sandbox_mode = (
             "danger-full-access"
             if self.eval_confinement is not None
@@ -714,6 +758,7 @@ class CodexAgentSession(_ProviderAgentSessionBase):
             self.codex_capabilities = capabilities
         if not isinstance(capabilities, CodexCapabilities):
             raise TypeError("Codex session capabilities have invalid type")
+        capabilities.require_managed_proof_node()
         if mcp_launch_spec is not None:
             capability_path = (
                 mcp_launch_spec.private_dir / "codex_capabilities.json"
@@ -792,12 +837,12 @@ class CodexAgentSession(_ProviderAgentSessionBase):
                 invocation_id=launch_id,
                 provider="codex",
                 # Same eval/run split as the Claude session: strict tool
-                # whitelist under eval confinement, provider-tool tolerance on
+                # whitelist in eval mode, provider-tool tolerance on
                 # a plain /prove run (Codex CLI flags disable its own tools,
                 # so provider tools should not appear here anyway).
                 capability_policy=(
                     AgentCapabilityPolicy.proof_eval(mcp_launch_spec.manifest)
-                    if self.eval_confinement is not None
+                    if self.eval_mode
                     else AgentCapabilityPolicy(allow_all_known_tools=True)
                 ),
                 requirements=LifecycleRequirements(require_turn_started=True),

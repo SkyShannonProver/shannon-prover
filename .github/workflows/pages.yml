@@ -27,16 +27,7 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Assemble static site
-        run: |
-          mkdir -p site/results
-          cp website/index.html site/index.html
-          cp bundle_browser/index.html site/results/index.html
-          python3 bundle_browser/build_manifest.py --public --out site/results/manifest.json
-          python3 bundle_browser/build_manifest.py --public --timeline-js --out site/results/manifest.js
-          cp -r agent_view_runs site/agent_view_runs
-          rm -f site/agent_view_runs/INDEX.md
-          touch site/.nojekyll
-          echo "site size: $(du -sh site | cut -f1)"
+        run: python3 bundle_browser/build_site.py --out site
 
       - uses: actions/configure-pages@v5
 

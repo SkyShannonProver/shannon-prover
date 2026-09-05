@@ -1,10 +1,10 @@
-"""Stdio MCP child for the single managed proof tool.
+"""Stdio MCP child for invocation-bound manager tools.
 
 This provider-spawned process is the whole child side in one file: newline
 JSON framing, fail-closed JSON-RPC/MCP message order (protocol negotiation,
 the advertised tool contract, and the readiness ACK gate), and forwarding raw
-tool arguments to the authenticated proof-tool endpoint. It never parses proof
-intents or owns readiness, proof state, or turn presentation.
+tool arguments to the authenticated endpoint. It never parses proof intents,
+reads files itself, or owns readiness, proof state, or turn presentation.
 """
 from __future__ import annotations
 
@@ -19,8 +19,13 @@ from dataclasses import dataclass
 from enum import Enum
 
 from workflow.proof_tool.proof_tool_contract import (
+    DECLARATION_RESOLVE_TOOL_IDENTITY,
+    PROOF_TOOL_IDENTITY,
+    SOURCE_READ_TOOL_IDENTITY,
+    SOURCE_SEARCH_TOOL_IDENTITY,
     ProofToolContractManifest,
-    proof_tool_definition,
+    ToolIdentity,
+    proof_tool_definitions,
 )
 from workflow.proof_tool.proof_tool_endpoint import (
     ProofToolEndpointClient,
@@ -180,11 +185,27 @@ class ProofToolMcpAdapter:
         if self.node_deadline_epoch is not None:
             absolute_deadline = min(absolute_deadline, self.node_deadline_epoch)
         try:
-            response = self._endpoint.call(
-                call_id=call_id,
-                raw_arguments=raw_arguments,
-                absolute_deadline=absolute_deadline,
-            )
+            if decision.tool_identity == PROOF_TOOL_IDENTITY:
+                response = self._endpoint.call(
+                    call_id=call_id,
+                    raw_arguments=raw_arguments,
+                    absolute_deadline=absolute_deadline,
+                )
+            elif decision.tool_identity in {
+                SOURCE_READ_TOOL_IDENTITY,
+                SOURCE_SEARCH_TOOL_IDENTITY,
+                DECLARATION_RESOLVE_TOOL_IDENTITY,
+            }:
+                response = self._endpoint.source_resource(
+                    tool_identity=decision.tool_identity,
+                    call_id=call_id,
+                    raw_arguments=raw_arguments,
+                    absolute_deadline=absolute_deadline,
+                )
+            else:
+                raise ProofToolEndpointError(
+                    "MCP protocol dispatched an unknown manager tool identity"
+                )
         except (OSError, ProofToolEndpointError) as exc:
             return _result(msg_id, _tool_text(
                 "MANAGER ENDPOINT ERROR: "
@@ -319,6 +340,7 @@ class McpProtocolDecision:
     response: dict[str, Any] | None = None
     readiness_claim: McpReadinessClaim | None = None
     dispatch_tool_call: bool = False
+    tool_identity: ToolIdentity | None = None
     tool_call_id: Any = None
     raw_arguments: Any = None
     fatal: bool = False
@@ -338,7 +360,7 @@ class McpProtocolSession:
             raise ValueError("MCP launch identity must be a non-empty string")
         # Authenticate even directly-constructed manifests at the protocol
         # boundary; launch JSON normally arrives through ``from_dict``.
-        proof_tool_definition(manifest)
+        proof_tool_definitions(manifest)
         self.manifest = manifest
         self.launch_id = launch_id.strip()
         self.state = McpProtocolState.NEW
@@ -471,7 +493,7 @@ class McpProtocolSession:
             return self._fatal(None, -32600, "MCP tools/list must be a request")
         if self.state == McpProtocolState.CALLS_ALLOWED:
             return McpProtocolDecision(response=_result(msg_id, {
-                "tools": [proof_tool_definition(self.manifest)],
+                "tools": proof_tool_definitions(self.manifest),
             }))
         if self.state != McpProtocolState.INITIALIZED:
             return self._fatal(msg_id, -32002, "MCP tools/list was out of order")
@@ -482,7 +504,7 @@ class McpProtocolSession:
         )
         return McpProtocolDecision(
             response=_result(msg_id, {
-                "tools": [proof_tool_definition(self.manifest)],
+                "tools": proof_tool_definitions(self.manifest),
             }),
             readiness_claim=claim,
         )
@@ -504,7 +526,11 @@ class McpProtocolSession:
         if not isinstance(raw_params, Mapping):
             return self._fatal(msg_id, -32602, "MCP tools/call params are invalid")
         name = raw_params.get("name")
-        if name != self.manifest.identity.tool:
+        identity_by_name = {
+            identity.tool: identity for identity in self.manifest.tool_identities
+        }
+        tool_identity = identity_by_name.get(name)
+        if tool_identity is None:
             return McpProtocolDecision(response=_error(
                 msg_id,
                 -32602,
@@ -514,6 +540,7 @@ class McpProtocolSession:
         # the sole semantic decoder and must observe malformed envelopes intact.
         return McpProtocolDecision(
             dispatch_tool_call=True,
+            tool_identity=tool_identity,
             tool_call_id=msg_id,
             raw_arguments=raw_params.get("arguments"),
         )

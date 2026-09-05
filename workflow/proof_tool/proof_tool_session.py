@@ -73,6 +73,20 @@ class ProofToolSessionResponse:
         }
 
 
+@dataclass(frozen=True)
+class ProofToolStopBoundary:
+    """Snapshot taken after the current manager turn has drained.
+
+    ``request_stop`` closes admission before waiting on the serving lock.  The
+    returned spine is therefore the exact last manager-returned state: no later
+    proof intent can slip between the stop request and checkpoint creation.
+    """
+
+    turn_index: int
+    committed_tactics: tuple[str, ...]
+    reason: str
+
+
 class ProofToolSession:
     """One serialized, idempotent proof-tool serving session.
 
@@ -106,9 +120,16 @@ class ProofToolSession:
         self._emit = emit or (lambda _event: None)
         self._clock = clock
         self._lock = threading.Lock()
+        # This event is intentionally separate from the serving lock.  A stop
+        # requester sets it immediately, then waits for the current manager
+        # turn to leave the lock.  Any queued submitter observes the closed
+        # admission gate after acquiring the lock and cannot start another
+        # semantic call ahead of checkpoint finalization.
+        self._stop_admission = threading.Event()
         self._turn_index = 0
         self._last_committed_tactics = tuple(initial_committed_tactics)
         self._stop_requested = False
+        self._stop_reason = ""
         self._unhealthy_reason = ""
         self._entries: dict[str, ProofToolSessionResponse] = {}
 
@@ -119,8 +140,7 @@ class ProofToolSession:
 
     @property
     def stop_requested(self) -> bool:
-        with self._lock:
-            return self._stop_requested
+        return self._stop_admission.is_set()
 
     @property
     def last_committed_count(self) -> int:
@@ -140,6 +160,27 @@ class ProofToolSession:
     def unhealthy_reason(self) -> str:
         with self._lock:
             return self._unhealthy_reason
+
+    def request_stop(self, reason: str) -> ProofToolStopBoundary:
+        """Close admission, drain one in-flight turn, and freeze its spine.
+
+        This is the manager-owned safe-stop boundary used by timeout, outer
+        cancellation, and worker process signals.  It may block only while the
+        one already-admitted manager call completes; it never admits another
+        proof intent after the request becomes visible.
+        """
+
+        stop_reason = str(reason or "external stop requested").strip()
+        self._stop_admission.set()
+        with self._lock:
+            self._stop_requested = True
+            if not self._stop_reason:
+                self._stop_reason = stop_reason
+            return ProofToolStopBoundary(
+                turn_index=self._turn_index,
+                committed_tactics=self._last_committed_tactics,
+                reason=self._stop_reason,
+            )
 
     def submit(
         self,
@@ -179,12 +220,18 @@ class ProofToolSession:
                 response = self._current_unhealthy_response()
                 self._cache(call_key, response)
                 return response
-            if self._stop_requested:
+            if self._stop_admission.is_set() or self._stop_requested:
                 response = ProofToolSessionResponse(
                     exit_code=0,
                     text=(
-                        "MANAGER WORKER STOP: finish was already accepted. Stop "
-                        "submitting proof intents and return your concise PROVER REPORT."
+                        "MANAGER WORKER STOP: "
+                        + (
+                            "finish was already accepted"
+                            if not self._stop_reason
+                            else self._stop_reason
+                        )
+                        + ". Stop submitting proof intents and return your "
+                        "concise PROVER REPORT."
                     ),
                     turn_index=self._turn_index,
                     directive=TurnDirective.STOP_REQUESTED,
@@ -204,6 +251,8 @@ class ProofToolSession:
                     manager_turn_completed=False,
                 )
                 self._stop_requested = True
+                self._stop_admission.set()
+                self._stop_reason = "turn limit reached"
                 self._cache(call_key, response)
                 return response
             if self._clock() >= deadline:
@@ -286,6 +335,7 @@ class ProofToolSession:
     def _apply_directive(self, directive: TurnDirective, turn: ManagedTurn) -> None:
         if directive is TurnDirective.STOP_REQUESTED:
             self._stop_requested = True
+            self._stop_admission.set()
         elif directive is TurnDirective.NODE_UNHEALTHY:
             health = turn.health_event
             detail = (

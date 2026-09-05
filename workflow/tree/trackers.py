@@ -885,9 +885,10 @@ class _TreeProverTracker(_ProverTracker):
     def _history_lines(self) -> list[str]:
         """Read history.ec with a 2-second cache.
 
-        Returns the list of committed tactic lines (each line = one tactic
-        as EC accepted it). Empty list if the file doesn't exist yet or
-        the session_tag is unknown.
+        Returns the list of committed EasyCrypt commands. Manager transaction
+        boundaries for multi-command bullet blocks live in ``steps.log`` and
+        are consumed separately by replay/checkpoint code. Empty list if the
+        file doesn't exist yet or the session_tag is unknown.
         """
         if self.session_snapshot and self.session_snapshot.history_exists:
             return list(self.session_snapshot.history_tactics)

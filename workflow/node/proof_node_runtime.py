@@ -3,9 +3,11 @@
 A worker process hosts exactly one ``ProofNodeRuntime``. The runtime starts a
 manager-owned EasyCrypt node plus one long-lived agent session. Claude Code or
 OpenAI Codex does not receive backend commands or own proof state; it calls the structured
-``submit_proof_intent`` MCP tool. A provider-neutral contract, stdio protocol
-adapter, authenticated endpoint, and serialized tool session carry each call to
-the manager without owning proof semantics.
+``submit_proof_intent`` MCP tool. Eval nodes may also expose manager-owned
+EasyCrypt search, read, and exact declaration-resolution tools. A
+provider-neutral contract, stdio protocol
+adapter, authenticated endpoint, and serialized proof session carry each call
+without transferring proof semantics to the provider.
 """
 from __future__ import annotations
 
@@ -17,6 +19,7 @@ import time
 from pathlib import Path
 from typing import Any, Callable
 
+from workflow.proof_management import ManagedTurn
 from workflow.proof_management.node_bootstrap import (
     require_proof_node_manager_bootstrap,
 )
@@ -32,8 +35,13 @@ from workflow.node.node_memory import (
 from workflow.node.proof_node_manager import (
     ProofNodeManager,
 )
+from workflow.node.no_progress_guidance import NoProgressGuidance
 from workflow.schemas.config import normalize_agent_backend
+from workflow.proof_tool.easycrypt_source_resource import EasyCryptSourceResource
 from workflow.proof_tool.proof_tool_contract import (
+    DECLARATION_RESOLVE_TOOL_IDENTITY,
+    SOURCE_READ_TOOL_IDENTITY,
+    SOURCE_SEARCH_TOOL_IDENTITY,
     ProofToolContractManifest,
     resolve_proof_tool_contract,
 )
@@ -70,22 +78,53 @@ _MCP_SPAWN_RETRIES = max(0, int(
 def _prover_system_anchor(
     memory: NodeMemory,
     manifest: ProofToolContractManifest,
+    source_resource: EasyCryptSourceResource | None = None,
 ) -> str:
     """Durable per-node anchor for the agent's standing prompt.
 
     Holds the two things that must survive a compaction: the one-intent-per-turn
     invariant and the LEGAL_* durable file paths. Claude receives it through
     ``--append-system-prompt``; Codex receives it before the task prompt."""
+    anchor_renderer = getattr(memory, "resource_anchor_markdown", None)
+    resource_anchors = (
+        str(anchor_renderer() or "") if callable(anchor_renderer) else ""
+    )
+    brief_renderer = getattr(memory, "continuation_brief_markdown", None)
+    continuation_brief = (
+        str(brief_renderer() or "") if callable(brief_renderer) else ""
+    )
+    source_anchor = (
+        " Source navigation is available only through the manager-owned MCP "
+        f"tools `{SOURCE_SEARCH_TOOL_IDENTITY.tool}`, "
+        f"`{SOURCE_READ_TOOL_IDENTITY.tool}`, and "
+        f"`{DECLARATION_RESOLVE_TOOL_IDENTITY.tool}`; never use provider-native "
+        "filesystem, shell, or source-reading tools."
+        if manifest.source_navigation_enabled
+        else ""
+    )
+    source_map = (
+        source_resource.render_source_map()
+        if source_resource is not None
+        else ""
+    )
     return (
         "## Prover runtime anchor (durable — persists across context compaction)\n\n"
         "You drive the proof ONLY through the MCP tool "
         f"`{manifest.identity.tool}`: exactly "
         "one intent object per turn, and NEVER end a turn without that call (a turn "
-        "with only text abandons the proof). The current goal and any bounded "
+        "with only text abandons the proof)."
+        f"{source_anchor} The current goal and any bounded "
         "compiler output arrive in each manager turn; these durable node-memory "
         "files are always available to "
         "read on demand:\n\n"
         f"{_legal_node_memory_anchor(memory)}"
+        + ("\n\n" + source_map if source_map else "")
+        + (
+            "\n\n" + resource_anchors
+            if resource_anchors and not continuation_brief
+            else ""
+        )
+        + ("\n\n" + continuation_brief if continuation_brief else "")
     )
 
 
@@ -139,18 +178,37 @@ class ProofNodeRuntime:
             surface_profile
         )
         self.project_root = Path(project_root)
+        self.eval_mode = (
+            os.environ.get("EVAL_TARGET_LEMMA", "").strip() == lemma_name
+        )
         raw_emit = emit or _emit_json
         emit_lock = threading.Lock()
 
         def _emit_serialized(event: dict[str, Any]) -> None:
             with emit_lock:
+                memory = getattr(self, "memory", None)
+                if (
+                    memory is not None
+                    and str(event.get("event") or "").startswith(
+                        "easycrypt.source_resource."
+                    )
+                ):
+                    memory.record_source_navigation(event)
                 raw_emit(event)
 
         # Provider, readiness, endpoint, and tool-session events originate on different
         # threads. One serialized stream is the sole worker-event boundary.
         self.emit = _emit_serialized
+        self.source_resource = EasyCryptSourceResource.from_environment(
+            project_root=self.project_root,
+            source_file=file_path,
+            target_lemma=lemma_name,
+            include_dir=include_dir,
+            emit=self.emit,
+        )
         self.proof_tool_manifest = resolve_proof_tool_contract(
-            self.surface_profile
+            self.surface_profile,
+            source_navigation_enabled=self.source_resource is not None,
         )
         self.manager = ProofNodeManager(
             file_path=file_path,
@@ -186,6 +244,22 @@ class ProofNodeRuntime:
             include_dir=include_dir,
         )
         self.memory.record_bootstrap(bootstrap)
+        self.no_progress_guidance = NoProgressGuidance()
+        bootstrap_status = bootstrap.get("workspace_view", {}).get(
+            "proof_status", {}
+        )
+        self.no_progress_guidance.seed(
+            goal_hash=str(bootstrap_status.get("goal_hash") or ""),
+            committed_count=replay_prefix_length,
+        )
+        # A checkpoint is minted only after a completed manager turn advances
+        # the committed spine.  This keeps terminal handback O(prefix bytes)
+        # instead of replaying the whole proof after a timeout.
+        self._last_checkpointed_tactics = tuple(
+            tactic
+            for tactic in (replay_prefix or [])
+            if isinstance(tactic, str) and tactic.strip()
+        )
         self.tool_session = ProofToolSession(
             node_id=self.node_id,
             manifest=self.proof_tool_manifest,
@@ -196,16 +270,7 @@ class ProofNodeRuntime:
                 )
             ),
             memory=self.memory,
-            response_renderer=lambda turn, turn_index, handled, memory: (
-                render_manager_followup(
-                    turn,
-                    turn_index,
-                    handled,
-                    memory,
-                    full_view=self.manager.latest_full_view,
-                    surface_profile=self.manager.surface_profile,
-                )
-            ),
+            response_renderer=self._render_and_checkpoint_manager_turn,
             max_turns=max_turns,
             initial_committed_tactics=tuple(
                 tactic
@@ -217,6 +282,7 @@ class ProofNodeRuntime:
         self.endpoint = ProofToolEndpointServer(
             session=self.tool_session,
             manifest=self.proof_tool_manifest,
+            source_resource=self.source_resource,
         )
         self.mcp_launch_spec: ProofMcpLaunchSpec | None = None
         self.agent = agent_session_class(self.agent_backend)(
@@ -225,6 +291,7 @@ class ProofNodeRuntime:
             source_file=file_path,
             session_tag=session_tag,
             project_root=self.project_root,
+            eval_mode=self.eval_mode,
             eval_confinement=self.eval_confinement,
             emit=self.emit,
             proof_tool_manifest=self.proof_tool_manifest,
@@ -243,6 +310,53 @@ class ProofNodeRuntime:
                 ),
             ),
         )
+        self._safe_stop_requested = threading.Event()
+        self._safe_stop_finalized = threading.Event()
+        self._safe_stop_reason = ""
+        self._safe_stop_checkpoint_count = 0
+
+    def _render_and_checkpoint_manager_turn(
+        self,
+        turn: ManagedTurn,
+        turn_index: int,
+        handled: dict[str, Any] | None,
+        memory: NodeMemory,
+    ) -> str:
+        """Render one completed turn and durably checkpoint new progress.
+
+        The render first writes the turn-coherent manager view into NodeMemory.
+        Only then may the checkpoint reader bind the session history and current
+        goal.  Checkpoint IO is best-effort continuation infrastructure: losing
+        it must not invalidate an otherwise accepted manager turn.
+        """
+
+        rendered = render_manager_followup(
+            turn,
+            turn_index,
+            handled,
+            memory,
+            full_view=self.manager.latest_full_view,
+            surface_profile=self.manager.surface_profile,
+            runtime_guidance=self.no_progress_guidance.observe(turn, handled),
+        )
+        spine = tuple(
+            tactic
+            for tactic in tuple(turn.committed_tactics or ())
+            if isinstance(tactic, str) and tactic.strip()
+        )
+        if spine and spine != self._last_checkpointed_tactics:
+            capsules = self._checkpoint_resume_capsules()
+            if capsules:
+                self._last_checkpointed_tactics = spine
+                self.emit({
+                    "type": "system",
+                    "kind": "proof_node.progress_checkpointed",
+                    "node": self.node_id,
+                    "manager_turn": turn_index,
+                    "committed_count": len(spine),
+                    "checkpoint_count": len(capsules),
+                })
+        return rendered
 
     def _committed_count(self) -> int:
         """Last manager-returned accepted-spine size (the progress metric)."""
@@ -273,7 +387,7 @@ class ProofNodeRuntime:
         except (TypeError, ValueError):
             return None
 
-    def _checkpoint_resume_capsules(self) -> None:
+    def _checkpoint_resume_capsules(self) -> tuple[str, ...]:
         """Write resume capsules from the live session (crash-safety + Layer-3 root).
 
         Mirrors ``prover.py``'s post-run ``create_resume_capsules`` call but points
@@ -286,7 +400,7 @@ class ProofNodeRuntime:
             from workflow.node.proof_node_resume import create_resume_capsules
 
             session_dir = self.project_root / f".ec_session_{self.session_tag}"
-            create_resume_capsules(
+            created = create_resume_capsules(
                 project_root=self.project_root,
                 run_dir=self.run_dir,
                 session_dirs=[session_dir],
@@ -294,12 +408,54 @@ class ProofNodeRuntime:
                 lemma=self.lemma_name,
                 include_dir=self.include_dir,
             )
+            return tuple(created)
         except Exception as exc:  # pragma: no cover - best-effort checkpoint
             self.emit({
                 "type": "system",
                 "context_respawn_checkpoint_failed": str(exc),
                 "node": self.node_id,
             })
+            return ()
+
+    def request_safe_stop(self, reason: str) -> None:
+        """Drain the current manager call and checkpoint before provider exit.
+
+        Timeout, outer cancellation, and direct worker termination all arrive
+        here through the worker signal boundary.  The tool session closes new
+        admission immediately, waits for the one in-flight semantic turn, and
+        exposes its exact committed spine before this method mints a capsule.
+        Run-level finalization falls back to the newest earlier compatible
+        checkpoint, or publishes the accepted prefix without a checkpoint.  It
+        never replays the archived spine merely to make the job terminal.
+        """
+
+        requested = getattr(self, "_safe_stop_requested", None)
+        if requested is None:
+            requested = self._safe_stop_requested = threading.Event()
+        if requested.is_set():
+            return
+        requested.set()
+        self._safe_stop_reason = str(reason or "external stop requested").strip()
+        boundary = self.tool_session.request_stop(self._safe_stop_reason)
+        capsules = self._checkpoint_resume_capsules()
+        self._safe_stop_checkpoint_count = len(capsules or ())
+        self.emit({
+            "type": "system",
+            "kind": "proof_node.safe_stop_finalized",
+            "node": self.node_id,
+            "reason": self._safe_stop_reason,
+            "manager_turn": boundary.turn_index,
+            "committed_count": len(boundary.committed_tactics),
+            "checkpoint_count": self._safe_stop_checkpoint_count,
+        })
+        finalized = getattr(self, "_safe_stop_finalized", None)
+        if finalized is None:
+            finalized = self._safe_stop_finalized = threading.Event()
+        finalized.set()
+        # Releasing the provider makes agent.run return through the ordinary
+        # runtime finally path; manager/session state has already crossed the
+        # safe checkpoint boundary above.
+        self.agent.close("proof node safe stop finalized")
 
     def _build_fresh_prompt(
         self, *, recent_reasoning: list[str] | None = None
@@ -417,39 +573,44 @@ class ProofNodeRuntime:
 
     def run(self) -> ClaudeRunResult:
         eval_confinement = getattr(self, "eval_confinement", None)
+        source_resource = getattr(self, "source_resource", None)
         if eval_confinement is not None:
             confinement_probe = eval_confinement.probe(
                 agent_backend=self.agent_backend
             )
             eval_confinement.write_audit_record(confinement_probe)
         self.endpoint.start()
-        deadline = self._wall_deadline()
-        self._private_dir.mkdir(parents=True, exist_ok=True)
-        self.mcp_launch_spec = ProofMcpLaunchSpec(
-            manifest=self.proof_tool_manifest,
-            endpoint_host=self.endpoint.host,
-            endpoint_port=self.endpoint.port,
-            endpoint_token=self.endpoint.token,
-            private_dir=self._private_dir,
-            timing=self.proof_tool_timing,
-            node_deadline_epoch=deadline,
-            python_executable=sys.executable,
-        )
-        (self._private_dir / "proof_tool_launch.json").write_text(
-            json.dumps(
-                {
-                    "schema": "proof_tool_launch/v1",
-                    "agent_backend": self.agent_backend,
-                    "contract": self.proof_tool_manifest.to_dict(),
-                    "timing": self.proof_tool_timing.to_dict(),
-                    "adapter_module": self.mcp_launch_spec.adapter_module,
-                },
-                indent=2,
-                sort_keys=True,
+        try:
+            deadline = self._wall_deadline()
+            self._private_dir.mkdir(parents=True, exist_ok=True)
+            self.mcp_launch_spec = ProofMcpLaunchSpec(
+                manifest=self.proof_tool_manifest,
+                endpoint_host=self.endpoint.host,
+                endpoint_port=self.endpoint.port,
+                endpoint_token=self.endpoint.token,
+                private_dir=self._private_dir,
+                timing=self.proof_tool_timing,
+                node_deadline_epoch=deadline,
+                python_executable=sys.executable,
             )
-            + "\n",
-            encoding="utf-8",
-        )
+            (self._private_dir / "proof_tool_launch.json").write_text(
+                json.dumps(
+                    {
+                        "schema": "proof_tool_launch/v1",
+                        "agent_backend": self.agent_backend,
+                        "contract": self.proof_tool_manifest.to_dict(),
+                        "timing": self.proof_tool_timing.to_dict(),
+                        "adapter_module": self.mcp_launch_spec.adapter_module,
+                    },
+                    indent=2,
+                    sort_keys=True,
+                )
+                + "\n",
+                encoding="utf-8",
+            )
+        except Exception:
+            self.endpoint.close()
+            raise
         try:
             prompt = render_long_lived_agent_prompt(
                 self.prompt,
@@ -478,6 +639,7 @@ class ProofNodeRuntime:
                     system_prompt=_prover_system_anchor(
                         self.memory,
                         self.proof_tool_manifest,
+                        source_resource,
                     ),
                     mcp_launch_spec=self.mcp_launch_spec,
                 )
@@ -500,6 +662,7 @@ class ProofNodeRuntime:
                         system_prompt=_prover_system_anchor(
                             self.memory,
                             self.proof_tool_manifest,
+                            source_resource,
                         ),
                         mcp_launch_spec=self.mcp_launch_spec,
                     )
@@ -610,7 +773,21 @@ class ProofNodeRuntime:
                 else None
             ),
         )
-        if self.tool_session.unhealthy_reason and result.returncode == 0:
+        safe_stop_requested = bool(
+            getattr(self, "_safe_stop_requested", None)
+            and self._safe_stop_requested.is_set()
+        )
+        if safe_stop_requested:
+            result = ClaudeRunResult(
+                text=(
+                    result.text.strip()
+                    + "\n\nMANAGER WORKER STOP: safe-stop drain completed; "
+                    "run-level accepted-prefix handback is pending."
+                ).strip(),
+                session_id=result.session_id,
+                returncode=0,
+            )
+        elif self.tool_session.unhealthy_reason and result.returncode == 0:
             health = self.tool_session.unhealthy_reason
             suffix = (
                 "\n\nMANAGER WORKER ERROR: proof node became unhealthy: "

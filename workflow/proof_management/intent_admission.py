@@ -505,8 +505,8 @@ class IntentAdmissionController:
         prompt = (
             f"You submitted `finish` with {goals}. That is your call — if you "
             "have already considered the alternatives and are genuinely "
-            "blocked, finishing is fine; just record the blocker in PROVER "
-            "REPORT.open_questions so it is captured. If you have not tried "
+            "blocked, finishing is fine; just record the concrete obstacle in "
+            "PROVER REPORT.blockers so it is captured. If you have not tried "
             "a different angle yet, one more turn is often worth it: a "
             "different tactic, undo a wrong step, or reconsider the current "
             "goal. To stop now, just submit `finish` again."

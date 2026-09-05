@@ -1,14 +1,14 @@
 """Single reader for a session's committed proof history (``history.ec``).
 
 Seven call sites across workflow/ used to hand-roll this pair (audit
-backlog #19): path minting (``session_dir / "history.ec"``), tactic-line
+backlog #19): path minting (``session_dir / "history.ec"``), tactic
 parsing, and qed-detection each re-derived per site. This module is now the
-only owner of committed-history reading and closure detection — both the
-physical-line reading (``read_committed_tactics``) and the sentence-split
-command reading (``read_committed_commands``).
+only owner of committed-history reading and closure detection. Both public
+readers return complete EasyCrypt commands: a manager commit may span several
+physical lines, so line-oriented parsing is not a valid proof-prefix model.
 
 Leaf module: stdlib-only at import time (the command splitter is
-late-bound from ``ec_daemon``).
+late-bound from ``ec_lifecycle``).
 """
 from __future__ import annotations
 
@@ -68,24 +68,15 @@ def split_trailing_qed(tactics: list[str]) -> list[str]:
     return out
 
 
-def read_committed_tactics(session_dir: str | Path) -> list[str]:
-    """All committed tactic lines (stripped, blanks dropped); [] if unreadable."""
-    try:
-        lines = history_path(session_dir).read_text(encoding="utf-8").splitlines()
-    except Exception:
-        # Superset of the retired per-site readers (OSError / bare Exception):
-        # unreadable or undecodable history means "no committed tactics".
-        return []
-    return [line.strip() for line in lines if line.strip()]
-
-
 def read_committed_commands(session_dir: str | Path) -> list[str]:
-    """Committed history as ``.``-terminated EasyCrypt commands, not lines.
+    """Committed history as complete ``.``-terminated EasyCrypt commands.
 
-    A committed physical line can pack several sentences (``wp; skip. qed.``
-    is two commands); consumers that reason about command counts or per-
-    command shape need the sentence split, not the line split. Falls back to
-    the line reading when the splitter is unavailable; [] if unreadable.
+    A command may span physical lines, and one physical line can pack several
+    commands (``wp; skip. qed.`` is two commands). Prefix counts, replay,
+    projection, and closure detection must therefore use the EasyCrypt command
+    splitter rather than ``splitlines()``. Returns [] if the history cannot be
+    read or parsed; silently degrading to physical lines would manufacture a
+    different proof prefix.
     """
     path = history_path(session_dir)
     try:
@@ -95,10 +86,97 @@ def read_committed_commands(session_dir: str | Path) -> list[str]:
     except Exception:
         return []
     try:
-        from core.easycrypt.ec_daemon import _split_ec_commands
-        return [c.strip() for c in _split_ec_commands(text) if c.strip()]
+        from core.easycrypt.ec_lifecycle import split_ec_commands
+
+        return [c.strip() for c in split_ec_commands(text) if c.strip()]
     except Exception:
-        return [line.strip() for line in text.splitlines() if line.strip()]
+        return []
+
+
+def read_committed_tactics(session_dir: str | Path) -> list[str]:
+    """All committed tactics as complete EasyCrypt commands; [] if unreadable.
+
+    This compatibility name remains the canonical reader used across the
+    manager and projection layers. It deliberately has command, not physical-
+    line, semantics. Replay code that must retain a multi-command manager
+    submission uses :func:`read_committed_transactions` as the stronger view.
+    """
+
+    return read_committed_commands(session_dir)
+
+
+def flatten_committed_transactions(
+    transactions: list[str] | tuple[str, ...],
+) -> list[str]:
+    """Expand manager commit transactions into canonical EC commands.
+
+    ``history.ec`` is command-oriented while ``steps.log`` records the
+    manager-owned commit boundary.  A transaction can contain several
+    commands whose bullet scope is meaningful only when submitted together.
+    """
+
+    try:
+        from core.easycrypt.ec_lifecycle import split_ec_commands
+
+        return [
+            command.strip()
+            for transaction in transactions
+            for command in split_ec_commands(str(transaction))
+            if command.strip()
+        ]
+    except Exception:
+        return []
+
+
+def read_committed_transactions(session_dir: str | Path) -> list[str]:
+    """Return the surviving manager commit blocks from ``history.ec``.
+
+    ``Session.append_block`` appends one physical-line count to ``steps.log``
+    per accepted manager transaction, and undo removes that count together
+    with the corresponding history suffix.  The pair therefore preserves a
+    stronger replay contract than command splitting alone: formatted ``+`` /
+    ``-`` bullet blocks must be replayed atomically.
+
+    Old/debug sessions without ``steps.log`` fall back to individual commands
+    for compatibility.  A present but malformed/mismatched step ledger fails
+    closed instead of manufacturing transaction boundaries.
+    """
+
+    session = Path(session_dir)
+    path = history_path(session)
+    try:
+        if not path.is_file():
+            return []
+        text = path.read_text(encoding="utf-8", errors="replace")
+    except Exception:
+        return []
+    commands = read_committed_commands(session)
+    if not commands:
+        return []
+    steps_path = session / "steps.log"
+    if not steps_path.is_file():
+        return commands
+    try:
+        raw_entries = steps_path.read_text(encoding="utf-8").splitlines()
+        entries = [int(item.strip()) for item in raw_entries if item.strip()]
+    except Exception:
+        return []
+    if not entries or any(count <= 0 for count in entries):
+        return []
+    lines = text.splitlines()
+    if sum(entries) != len(lines):
+        return []
+    transactions: list[str] = []
+    cursor = 0
+    for count in entries:
+        block = "\n".join(lines[cursor : cursor + count]).strip()
+        if not block:
+            return []
+        transactions.append(block)
+        cursor += count
+    if flatten_committed_transactions(transactions) != commands:
+        return []
+    return transactions
 
 
 def committed_history_has_qed(session_dir: str | Path) -> bool:

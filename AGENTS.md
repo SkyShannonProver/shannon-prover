@@ -5,6 +5,8 @@ proof-state compiler is a clean rewrite. Do not restore the retired rich panel,
 text-derived semantic analysis pipeline, inspect menu, or compatibility
 profiles.
 
+Private repository lifecycle and release work follows RELEASING.md when present.
+
 ## Non-negotiable boundaries
 
 - Work only inside this repository.
@@ -138,8 +140,9 @@ certification, and admission work:
 - `treatment`: audit work plus policy-permitted delivery.
 
 Feature removal must not require changes to manager, service, shared pass
-driver, renderer, or another feature. Strategy-selecting outputs are held
-unless separately admitted by evidence; M05 is the frozen exception.
+driver, renderer, or another feature. Strategy-selecting outputs are not
+present on `main`. The frozen proactive M05 slice is maintained only on the
+private `compiler-proactive` branch.
 
 ## EasyCrypt-native semantic boundary
 

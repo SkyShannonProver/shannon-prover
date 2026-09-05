@@ -24,7 +24,11 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Iterable
 
-from core.easycrypt.committed_history import read_committed_tactics
+from core.easycrypt.committed_history import (
+    flatten_committed_transactions,
+    read_committed_commands,
+    read_committed_transactions,
+)
 from core.easycrypt.proof_lifecycle import has_discharged_goals
 from workflow.proof_management.common import node_memory_slug
 from workflow.proof_management.checkpoint_store import (
@@ -50,6 +54,10 @@ from workflow.proof_management.route_family import (
 )
 from workflow.proof_management.session_goal_identity import (
     read_session_goal_identity,
+)
+from workflow.node.continuation_brief import (
+    merge_agent_report,
+    normalize_continuation_brief,
 )
 from core.easycrypt.value_shapes import as_dict as _dict
 
@@ -78,6 +86,7 @@ class ProofNodeResumeCapsule:
     commit: str
     session_name: str
     replay_prefix: list[str]
+    replay_transactions: list[str]
     current_goal_hash: str
     proof_status: str
     goal_identity_required: bool
@@ -150,16 +159,31 @@ def _write_json(path: Path, payload: dict[str, Any]) -> None:
     )
 
 
-def _history_tactics(history_file: Path) -> list[str]:
-    # Deliberate local reader (contract-test allowlisted): the capsule
-    # manifest may name a non-default history file, so this cannot assume
-    # committed_history's session_dir/"history.ec" minting.
-    tactics: list[str] = []
-    for raw in _read_text(history_file).splitlines():
-        line = raw.strip()
-        if line:
-            tactics.append(line)
-    return tactics
+def _history_commands(history_file: Path) -> list[str]:
+    """Read a capsule-named history as complete EasyCrypt commands.
+
+    ``history.ec`` normally has one physical line per manager commit, but a
+    committed tactic may itself contain newlines (notably a formatted
+    ``while{2} (...)`` invariant). Treating physical lines as replay units
+    truncates that tactic at ``while{2} (`` and makes an otherwise valid
+    checkpoint unreplayable.
+
+    The manifest may name a non-default history file, so use the canonical
+    command reader on its parent only when the basename is ``history.ec``;
+    otherwise preserve the same splitter semantics on the named file text.
+    """
+
+    if history_file.name == "history.ec":
+        return read_committed_commands(history_file.parent)
+    text = _read_text(history_file)
+    if not text:
+        return []
+    try:
+        from core.easycrypt.ec_daemon import _split_ec_commands
+
+        return [item.strip() for item in _split_ec_commands(text) if item.strip()]
+    except Exception:
+        return [line.strip() for line in text.splitlines() if line.strip()]
 
 
 def _git_commit(cwd: Path) -> str:
@@ -519,6 +543,8 @@ def create_resume_capsules(
     include_dir: str = "",
     session_dirs: Iterable[Path],
     output_dir: Path | None = None,
+    agent_report: dict[str, Any] | None = None,
+    agent_report_session_name: str = "",
 ) -> list[str]:
     """Create resume capsules from live managed session dirs and node memory."""
 
@@ -534,8 +560,11 @@ def create_resume_capsules(
         session_dir = session_dir.resolve()
         if not session_dir.is_dir():
             continue
-        history = read_committed_tactics(session_dir)
+        history = read_committed_commands(session_dir)
         if not history:
+            continue
+        transactions = read_committed_transactions(session_dir)
+        if not transactions or flatten_committed_transactions(transactions) != history:
             continue
         memory_dir = _node_memory_for_session(run_dir, session_dir)
         view = _latest_workspace_view(memory_dir) if memory_dir else {}
@@ -573,6 +602,21 @@ def create_resume_capsules(
             route_family=route_family,
         )
         recent_tactics = _recent_tactics(manager_route_events, limit=16)
+        prior_brief = (
+            _read_json(memory_dir / "continuation_brief.json")
+            if memory_dir
+            else {}
+        )
+        session_report = (
+            agent_report
+            if agent_report_session_name
+            and session_dir.name == agent_report_session_name
+            else None
+        )
+        continuation_brief = merge_agent_report(
+            prior_brief,
+            session_report or {},
+        )
         score, reasons = _score_capsule(
             history=history,
             view=view,
@@ -583,6 +627,14 @@ def create_resume_capsules(
         capsule_dir = output_dir / rank_name
         capsule_dir.mkdir(parents=True, exist_ok=True)
         _copy_if_exists(session_dir / "history.ec", capsule_dir / "history.ec")
+        transaction_payload = {
+            "schema_version": 1,
+            "kind": "proof_replay_transactions",
+            "command_count": len(history),
+            "transaction_count": len(transactions),
+            "transactions": transactions,
+        }
+        _write_json(capsule_dir / "transactions.json", transaction_payload)
         goal_file = _copy_if_exists(session_dir / "current.out", capsule_dir / "current_goal.out")
         _copy_if_exists(session_dir / "session_meta.json", capsule_dir / "session_meta.json")
         if memory_dir:
@@ -621,7 +673,6 @@ def create_resume_capsules(
                 )
         if checkpoint_payload:
             handoff_artifacts["checkpoint_state"] = "checkpoint_state.json"
-
         manifest = {
             "kind": CAPSULE_KIND,
             "capsule_version": CAPSULE_VERSION,
@@ -641,6 +692,8 @@ def create_resume_capsules(
             },
             "replay": {
                 "history_file": "history.ec",
+                "transaction_file": "transactions.json",
+                "transaction_count": len(transactions),
                 "tactic_count": len(history),
                 "resume_prefix_count": resume_prefix_count,
                 "current_goal_hash": goal_hash,
@@ -667,6 +720,11 @@ def create_resume_capsules(
                 "note": (
                     "This capsule resumes an interrupted managed proof node. "
                     "Do not mix resumed success with from-scratch eval metrics."
+                ),
+                **(
+                    {"continuation_brief": continuation_brief}
+                    if continuation_brief
+                    else {}
                 ),
             },
         }
@@ -764,7 +822,36 @@ def load_resume_capsule(path: str | Path) -> ProofNodeResumeCapsule:
     if not _is_canonical_node_id(source_node_id):
         source_node_id = None
     history_file = root / str(replay.get("history_file") or "history.ec")
-    replay_prefix = _history_tactics(history_file)
+    replay_prefix = _history_commands(history_file)
+    transaction_file_name = str(replay.get("transaction_file") or "").strip()
+    if transaction_file_name:
+        transaction_payload = _read_json(root / transaction_file_name)
+        raw_transactions = transaction_payload.get("transactions")
+        if (
+            transaction_payload.get("kind") != "proof_replay_transactions"
+            or transaction_payload.get("schema_version") != 1
+            or not isinstance(raw_transactions, list)
+            or any(type(item) is not str or not item.strip() for item in raw_transactions)
+        ):
+            raise ValueError(
+                f"current resume capsule {manifest_path} has invalid "
+                "replay transaction artifact"
+            )
+        replay_transactions = [str(item).strip() for item in raw_transactions]
+        if (
+            transaction_payload.get("command_count") != len(replay_prefix)
+            or transaction_payload.get("transaction_count") != len(replay_transactions)
+            or replay.get("transaction_count") != len(replay_transactions)
+            or flatten_committed_transactions(replay_transactions) != replay_prefix
+        ):
+            raise ValueError(
+                f"current resume capsule {manifest_path} has replay "
+                "transaction/history mismatch"
+            )
+    else:
+        # Version-2 capsules minted before transaction-boundary preservation
+        # remain loadable; each already-split command is its own transaction.
+        replay_transactions = list(replay_prefix)
     checkpoint_path = root / "checkpoint_state.json"
     raw_checkpoint_payload = _read_json(checkpoint_path)
     if checkpoint_path.is_file() and not raw_checkpoint_payload:
@@ -809,9 +896,15 @@ def load_resume_capsule(path: str | Path) -> ProofNodeResumeCapsule:
     resume_prefix_count = replay["resume_prefix_count"]
     resume_context = {
         "resume_prefix_count": resume_prefix_count,
+        "replay_transactions": replay_transactions,
         "checkpoint_payload": checkpoint_payload,
         "route_event_facts": route_event_facts,
     }
+    raw_continuation_brief = handoff.get("continuation_brief")
+    if raw_continuation_brief is not None:
+        resume_context["continuation_brief"] = normalize_continuation_brief(
+            raw_continuation_brief
+        )
 
     goal_hash = str(replay.get("current_goal_hash") or "")
     proof_status = str(replay.get("proof_status") or "unknown")
@@ -846,6 +939,7 @@ def load_resume_capsule(path: str | Path) -> ProofNodeResumeCapsule:
         commit=str(source.get("commit") or ""),
         session_name=str(source.get("session_name") or source.get("node_id") or root.name),
         replay_prefix=replay_prefix,
+        replay_transactions=replay_transactions,
         current_goal_hash=goal_hash,
         proof_status=proof_status,
         goal_identity_required=goal_identity_required,

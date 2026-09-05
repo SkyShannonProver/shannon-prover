@@ -17,6 +17,7 @@ from workflow.proof_state_compiler.surface_profiles import (
     ensure_current_surface_profile,
     require_current_workspace_view,
 )
+from workflow.node.continuation_brief import normalize_continuation_brief
 
 from .types import NodeProgressSummary, ProofStateSnapshot
 
@@ -213,6 +214,9 @@ def require_proof_node_manager_bootstrap(
         raise ValueError(
             f"{label}.workspace_view.current_goal must be an object"
         )
+    continuation_brief = bootstrap.get("continuation_brief")
+    if continuation_brief is not None:
+        normalize_continuation_brief(continuation_brief)
     return bootstrap
 
 
@@ -339,7 +343,10 @@ class ProofNodeLifecycleManager:
             replayed_count=len(replay_prefix),
         )
         daemon_attach = _daemon_attach_request(resume_context)
-        if daemon_attach:
+        replay_transactions = resume_context.get("replay_transactions")
+        if replay_transactions is not None and not isinstance(replay_transactions, list):
+            raise ValueError("resume_context.replay_transactions must be a list")
+        if daemon_attach and replay_transactions is not None:
             # Worker-death attach (SHANNON_EC_DAEMON=1): the Layer-3
             # respawn names the dead node's session dir; the repl tries to
             # adopt its still-live daemon EC session (zero replay) and
@@ -348,9 +355,24 @@ class ProofNodeLifecycleManager:
             # None and the same restart+replay call is used.
             snapshot, actions = self.repl.start(
                 replay_prefix=replay_prefix,
+                replay_transactions=replay_transactions,
                 daemon_attach=daemon_attach,
             )
+        elif daemon_attach:
+            snapshot, actions = self.repl.start(
+                replay_prefix=replay_prefix,
+                daemon_attach=daemon_attach,
+            )
+        elif replay_transactions is not None:
+            snapshot, actions = self.repl.start(
+                replay_prefix=replay_prefix,
+                replay_transactions=replay_transactions,
+            )
         else:
+            # Preserve the baseline ReplSessionManager.start call shape when
+            # no transaction-aware resume was requested. Besides keeping the
+            # ordinary path minimal, this is the compatibility contract used
+            # by lifecycle adapters that implement only replay_prefix.
             snapshot, actions = self.repl.start(replay_prefix=replay_prefix)
         # The recorded prefix must be the session's ACTUAL starting history,
         # not an echo of the request: a replayed step that EasyCrypt accepts
@@ -385,6 +407,11 @@ class ProofNodeLifecycleManager:
             "snapshot": snapshot.to_dict(),
             "workspace_view": view,
         }
+        continuation_brief = resume_context.get("continuation_brief")
+        if continuation_brief is not None:
+            record["continuation_brief"] = normalize_continuation_brief(
+                continuation_brief
+            )
         if committed_prefix != requested_prefix:
             from .repl_session import replay_prefix_divergence
 

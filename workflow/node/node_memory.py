@@ -37,6 +37,15 @@ from workflow.node.agent_prompt_render import (
     _drop_empty,
     render_committed_proof_markdown,
 )
+from workflow.node.resource_anchor_render import (
+    normalize_resource_anchors,
+    render_resource_anchors_markdown,
+)
+from workflow.node.continuation_brief import (
+    append_source_breadcrumb,
+    normalize_continuation_brief,
+    render_continuation_brief_markdown,
+)
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 
@@ -69,12 +78,15 @@ class NodeMemory:
         # the standing prompt points the agent here to read it on demand (amend /
         # undo by index, or to re-orient after a context refresh / respawn).
         self.latest_proof = self.dir / "proof_so_far.md"
+        self.continuation_brief = self.dir / "continuation_brief.json"
         self.followups_dir = self.dir / "followups"
         self.manager_results_dir = self.dir / "manager_results"
         self.workspace_views_dir = self.dir / "workspace_views"
         self.notes = self.dir / "notes.md"
         self.agent_sessions = self.dir / "agent_sessions.jsonl"
         self._lock = threading.Lock()
+        self.resource_anchors: tuple[dict[str, str], ...] = ()
+        self._continuation_brief: dict[str, Any] = {}
         for path in (
             self.followups_dir,
             self.manager_results_dir,
@@ -98,6 +110,28 @@ class NodeMemory:
             bootstrap,
             surface_profile=self.surface_profile,
         )
+        self.resource_anchors = normalize_resource_anchors(
+            bootstrap.get("resource_anchors")
+        )
+        raw_brief = bootstrap.get("continuation_brief")
+        self._continuation_brief = (
+            normalize_continuation_brief(raw_brief)
+            if raw_brief is not None
+            else {}
+        )
+        if self._continuation_brief:
+            self.continuation_brief.write_text(
+                json.dumps(
+                    self._continuation_brief,
+                    indent=2,
+                    ensure_ascii=False,
+                    sort_keys=True,
+                )
+                + "\n",
+                encoding="utf-8",
+            )
+        elif self.continuation_brief.exists():
+            self.continuation_brief.unlink()
         self._append_jsonl(
             self.timeline,
             {
@@ -206,6 +240,16 @@ class NodeMemory:
             + rendered_turn
             + "\n\n"
             + f"{_legal_node_memory_anchor(self)}\n"
+            + (
+                "\n\n" + self.resource_anchor_markdown() + "\n"
+                if self.resource_anchors and not self._continuation_brief
+                else ""
+            )
+            + (
+                "\n\n" + self.continuation_brief_markdown() + "\n"
+                if self._continuation_brief
+                else ""
+            )
         )
         self.write_latest_followup(
             turn_index=0,
@@ -214,6 +258,35 @@ class NodeMemory:
             followup_text=followup,
             committed_tactics=tuple(bootstrap["replay_prefix"]),
         )
+
+    def resource_anchor_markdown(self) -> str:
+        return render_resource_anchors_markdown(self.resource_anchors)
+
+    def continuation_brief_markdown(self) -> str:
+        if not self._continuation_brief:
+            return ""
+        return render_continuation_brief_markdown(self._continuation_brief)
+
+    def record_source_navigation(self, event: dict[str, Any]) -> None:
+        """Keep only bounded, explicit source locations for later resume."""
+
+        if event.get("status") not in {"served", "resolved", "miss"}:
+            return
+        with self._lock:
+            updated = append_source_breadcrumb(self._continuation_brief, event)
+            if updated == self._continuation_brief:
+                return
+            self._continuation_brief = updated
+            self.continuation_brief.write_text(
+                json.dumps(
+                    updated,
+                    indent=2,
+                    ensure_ascii=False,
+                    sort_keys=True,
+                )
+                + "\n",
+                encoding="utf-8",
+            )
 
     def record_turn(
         self,
@@ -359,6 +432,11 @@ class NodeMemory:
 
 def _legal_node_memory_anchor(memory: NodeMemory) -> str:
     """Compact, repeated anchor for legal durable files after compaction."""
+    continuation_brief = getattr(
+        memory,
+        "continuation_brief",
+        Path(memory.dir) / "continuation_brief.json",
+    )
     return (
         "### Legal Node Memory Anchor\n\n"
         f"LEGAL_NODE_MEMORY_DIR: `{memory.dir}`\n"
@@ -366,7 +444,10 @@ def _legal_node_memory_anchor(memory: NodeMemory) -> str:
         f"LEGAL_LATEST_FOLLOWUP: `{memory.latest_followup}`\n"
         f"LEGAL_PROOF_SO_FAR: `{memory.latest_proof}` "
         "(your full step-numbered committed proof — read it to pick a step for "
-        "`amend_and_replay`/`undo_to_checkpoint`, or to re-orient)\n\n"
+        "`amend_and_replay`/`undo_to_checkpoint`, or to re-orient)\n"
+        f"LEGAL_CONTINUATION_BRIEF: `{continuation_brief}` "
+        "(bounded outer guidance plus prior concrete blockers/discoveries, when "
+        "present)\n\n"
         "Compaction recovery: if these exact paths are missing from your "
         "context, re-read `LEGAL_LATEST_FOLLOWUP` first and "
         "`LEGAL_PROOF_SO_FAR` only when you need accepted-history context. "

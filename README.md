@@ -1,182 +1,163 @@
 # Shannon Prover
 
-**LLM agents that write machine-checked cryptographic proofs.**
+**From a security theorem to an EasyCrypt proof.**
 
-Shannon Prover connects language-model agents to the
-[EasyCrypt](https://www.easycrypt.info) proof assistant through managed proof
-sessions and a proof-state compiler. The agent submits one proof intent per
-turn; the manager applies it to EasyCrypt, returns the exact current goal and
-any bounded compiler output, and accepts a proof only after fresh offline
-verification.
+Shannon Prover uses language-model agents to construct machine-checked
+cryptographic proofs in [EasyCrypt](https://www.easycrypt.info).
+You supply the formal description of the scheme, its security assumptions,
+and the theorem you want to prove. **Shannon Prover automates the search
+for both the proof decomposition and the proofs of its individual lemmas.**
+It can introduce intermediate games and auxiliary lemmas, try to prove them,
+and revise the argument as EasyCrypt exposes what remains to be shown.
 
 - **Paper:** [ShannonProver: Towards Automating Formal Cryptographic Proofs](https://arxiv.org/abs/2607.02847)
-- **Website:** [skyshannonprover.github.io/shannon-prover](https://skyshannonprover.github.io/shannon-prover/) — project overview and benchmark browser
-- **Contact:** shannonprover@gmail.com · [github.com/SkyShannonProver/shannon-prover](https://github.com/SkyShannonProver/shannon-prover)
+- **Website:** [project overview and proof browser](https://skyshannonprover.github.io/shannon-prover/)
+- **Contact:** shannonprover@gmail.com · [GitHub](https://github.com/SkyShannonProver/shannon-prover)
 
-## What this tool does — and what you bring
+## What does Shannon automate?
 
-A formal security proof moves through three phases (paper, Fig. 1):
+Think of formalizing a cryptographic security proof in three phases:
 
-| Phase | Who | What |
+| Phase | Work to do | With Shannon Prover |
 |---|---|---|
-| **I — Security modeling** | expert | express the scheme and its security notions as EasyCrypt modules and definitions |
-| **II — Lemma decomposition** | expert | decompose the main theorem into intermediate lemma statements and game hops |
-| **III — Tactic-level lemma proving** | **Shannon Prover** | construct a tactic script that EasyCrypt accepts for each lemma |
+| **I — State the security problem** | Define the scheme, adversary, security games, assumptions, and final theorem in EasyCrypt. | You provide these. |
+| **II — Build the security argument** | Choose intermediate games, formulate auxiliary lemmas, and connect them to the final theorem. | Shannon proposes and revises this decomposition. |
+| **III — Prove each step** | Write the detailed EasyCrypt proofs of the lemmas and the final theorem. | Shannon searches for proof scripts and checks them with EasyCrypt. |
 
-**Shannon Prover's scope is Phase III**: you provide the security model and
-lemma-level obligations; Shannon Prover searches for the tactic-level proof.
-A stalled search can also indicate that the Phase II decomposition should be
-revisited.
+Phases II and III need not happen in a single forward pass. For example, while
+trying to justify a game hop, Shannon may discover that a proposed invariant
+is insufficient. It can refine the auxiliary lemma, try its proof again, and
+then return to the main argument. This feedback between **designing the
+argument** and **proving its steps** is what we mean by *interleaved*.
 
-## The MCP tool
-
-Shannon Prover talks to each proof agent through the
-[Model Context Protocol](https://modelcontextprotocol.io). The agent gets one
-tool, `submit_proof_intent`, and submits one proof-level action per turn:
-
-```json
-{"intent": "commit_tactic", "payload": {"tactic": "byequiv=> //."}}
-```
-
-The manager owns the live EasyCrypt session, state identity, checkpoints,
-restarts, proof mutation, and view refresh. It advertises only controls that
-are valid in the current state, such as committing a tactic, undoing, rewinding
-to a checkpoint, restarting, amending a failed step, or finishing. The agent
-never supplies session, node, view, or goal identities.
-
-## The proof-state compiler
-
-The default interface presents the exact EasyCrypt goal, the valid manager
-controls, and—when applicable—a bounded `ActionSurface` produced by the
-proof-state compiler. Compiler actions are tied to the current goal, checked
-through EasyCrypt-native semantics, and certified before they are shown to the
-agent.
-
-The compiler helps with mechanical work after the agent has selected an
-operation or commitment: binding arguments, realizing exact syntax, locating a
-failure inside a compound tactic, or constructing a state-valid repair. It
-does not rank proof strategies, choose a game hop, or hand the agent a proof
-route.
-
-### One managed turn
-
-Every proof turn follows the same loop:
+One agent works on the overall argument. It can write proofs directly and ask
+other agents to work on selected auxiliary lemmas. Their results feed back
+into the overall proof, which is checked again as a complete EasyCrypt file.
 
 ```mermaid
-sequenceDiagram
-    autonumber
-    participant A as Proof agent
-    participant M as ProofNodeManager
-    participant S as ReplSessionManager
-    participant E as EasyCrypt
-    participant C as Proof-state compiler
-
-    A->>M: submit one proof intent, usually a tactic
-    M->>S: commit the manager-bound tactic
-    S->>E: execute in the live proof session
-    E-->>S: exact next goal or diagnostic
-    S-->>M: event-bound result and current state
-    M->>C: compile the current state (read-only)
-    C->>S: request bounded native semantics and preflight
-    S->>E: run read-only native queries
-    E-->>S: typed results or structured rejection
-    S-->>C: results bound to the unchanged state
-    C-->>M: bounded ActionSurface, or abstain
-    M-->>A: result + exact goal/status + valid controls + compiler output
-    Note over A,M: The agent chooses the next intent, and the loop repeats
+flowchart LR
+    Input["You: scheme, assumptions,<br/>security games and theorem"] --> Plan["Shannon: propose games<br/>and auxiliary lemmas"]
+    Plan --> Proof["Shannon: write and check<br/>EasyCrypt proofs"]
+    Proof -->|"results and remaining goals"| Plan
+    Proof --> Final["Check the complete<br/>EasyCrypt development"]
 ```
-
-The manager and session path owns all proof mutation. The compiler never
-drives the proof or reparses pretty-printed text as semantic truth: it projects
-the current state, consumes EasyCrypt-native results, certifies any candidate
-action in that unchanged state, and may show a bounded result for the agent's
-next decision.
 
 ## Install
 
-Prerequisites: macOS or Linux, [opam](https://opam.ocaml.org), Python ≥ 3.12,
-[uv](https://docs.astral.sh/uv/), and the
-[OpenAI Codex CLI](https://developers.openai.com/codex/cli/) installed and
-logged in. Claude is available only when explicitly selected for an
-experiment.
-
-### 1. Python environment
-
-Install `uv` outside this project's `.venv`, then synchronize the locked Python
-environment:
+Use macOS or Linux with Git, [opam](https://opam.ocaml.org), Python ≥ 3.12,
+and [uv](https://docs.astral.sh/uv/). Install `uv` outside the project's
+`.venv` directory.
 
 ```bash
+git clone https://github.com/SkyShannonProver/shannon-prover.git
+cd shannon-prover
 uv sync
-```
-
-### 2. Repository-managed EasyCrypt
-
-Shannon Prover is locked to EasyCrypt `r2026.06`. The bootstrap command creates
-and verifies the repository-managed opam root and switch:
-
-```bash
 uv run python tools/bootstrap_easycrypt.py
 uv run python tools/bootstrap_easycrypt.py --verify-only
 ```
 
-Python entry points select this environment automatically. Only a developer
-command that invokes `easycrypt` directly needs shell exports:
+The bootstrap command installs the repository's pinned EasyCrypt
+`r2026.06` environment. Shannon's Python commands use it automatically.
 
-```bash
-eval "$(uv run python tools/bootstrap_easycrypt.py --print-env)"
+You also need the agent CLIs you select, installed and authenticated.
+The current project-level configuration uses **Claude Code for the overall
+argument and OpenAI Codex for auxiliary lemmas**. It requires their stored
+Claude and ChatGPT OAuth logins. To use only Codex, pass
+`--outer-provider codex --inner-provider codex` to the commands below.
+See the [project-level proving guide](workflow/interleaved/README.md#choose-the-agents-and-limits)
+for model settings, login requirements, and time limits.
+
+<a id="prove-a-security-theorem"></a>
+
+## Project-level proving
+
+This workflow covers Phases II and III: Shannon constructs the proof
+decomposition and the proofs needed to reach your project's final theorem.
+
+Put your EasyCrypt target and its local dependencies in one directory under
+`projects/`. The file should contain the security model and final theorem,
+with an unfinished proof. You do not need to supply a decomposition into
+auxiliary lemmas.
+
+```text
+projects/my-proof/
+  Target.ec
+  Dependency.ec
+  interleaved_project.json
 ```
 
-### 3. Agent login
-
-```bash
-codex --version
-codex
-```
-
-Run `codex` from the repository. On first launch, choose **Sign in with
-ChatGPT** or another available sign-in method.
-
-## Choose the agent and model
-
-The default proof-node agent backend is **OpenAI Codex**. Its default model is
-`gpt-5.6-sol` with high reasoning effort. Agent backend and model are separate
-settings: a run may explicitly select `codex` or `claude`, choose a model
-available to that backend, and set its reasoning effort.
+Create `interleaved_project.json` with the following contents, replacing the
+file and theorem names with yours:
 
 ```json
 {
-  "agent_backend": "codex",
-  "model": "gpt-5.6-sol",
-  "effort": "high"
+  "schema_version": 1,
+  "target_file": "projects/my-proof/Target.ec",
+  "final_lemma": "TargetSecurity",
+  "include_dirs": ["easycrypt-src/theories", "projects/my-proof"],
+  "artifact_root": "artifacts/my-proof-interleaved",
+  "max_parallel": 2,
+  "max_inner_minutes": 120,
+  "outer_timeout_seconds": 43200
 }
 ```
 
-The same settings are available on a direct orchestrator run:
+This allows at most two auxiliary-lemma attempts at once, up to two hours
+per attempt, and a twelve-hour overall task. These are time limits, not a
+total spending cap. Adjust them before running.
+
+Commit your project files and configuration: the runner requires a clean
+Git working tree, including for the preliminary check. Then, from the
+repository root, check the setup without starting a proof-generating model:
 
 ```bash
---agent-backend codex \
---prover-model gpt-5.6-sol \
---prover-effort high
+uv run python -m workflow.interleaved \
+  --project projects/my-proof/interleaved_project.json \
+  --preflight-only
 ```
 
-When changing the backend, select a model supported by that backend and make
-sure its CLI is installed and authenticated.
+If the check passes, run the same command without `--preflight-only`:
 
-## Prove your first lemma
-
-Create one subdirectory under [`projects/`](projects/) for your EasyCrypt
-project. Put the target file and that project's `.ec`/`.eca` dependencies
-directly in that directory. For example:
-
-```text
-projects/
-  my-proof/
-    Target.ec
-    Dependency.ec       # if Target.ec requires it
+```bash
+uv run python -m workflow.interleaved \
+  --project projects/my-proof/interleaved_project.json
 ```
 
-Leave the target lemma in `projects/my-proof/Target.ec` with an unfinished
-proof, for example:
+Shannon works on the target file in your checkout and prints the directory
+containing the run's results. The [project-level proving guide](workflow/interleaved/README.md)
+explains how to read the outcome, continue partial work, and add checks that
+protect your original theorem and assumptions.
+
+For a supplied cryptographic task, follow the
+[ChaChaPoly example](experiments/interleaved_shannon/README.md). It includes
+a security model and target theorem, without a human-supplied decomposition,
+and uses stricter checks that preserve the supplied problem.
+
+## What counts as a proof?
+
+For an interleaved run, success requires a fresh EasyCrypt check of the
+complete target file and no remaining `admit.` in that file. The run's
+`manifest.json` records `status: "proved"` and
+`final_verification_passed: true`; `final_verification.json` contains the
+final checking result. A completed auxiliary lemma alone does not establish
+the final theorem. A partial proof is reported as incomplete.
+
+EasyCrypt checks the statements in the submitted development under its
+assumptions. You should also review that these are the security statement and
+assumptions you intended. The generic checker does not freeze the original
+definitions or prohibit new assumptions; projects needing those restrictions
+must supply additional checks. The ChaChaPoly example supplies them for its
+fixed task.
+
+<a id="prove-your-first-lemma"></a>
+
+## Single-lemma proving
+
+This workflow covers Phase III for a lemma you have already stated.
+
+If you already know the decomposition, you can ask Shannon to prove
+one lemma. Put its EasyCrypt file and local dependencies under `projects/`,
+leaving the selected lemma with an unfinished proof, for example:
 
 ```easycrypt
 lemma my_lemma : true.
@@ -185,181 +166,55 @@ proof.
 qed.
 ```
 
-Run Codex from the repository, then invoke the repo-scoped Prove skill with the
-lemma name:
-
-```text
-$prove my_lemma
-```
-
-In the Codex desktop app, type `/` and choose **Prove** from the skills list.
-The skill locates the declaration, starts one managed proof node with the
-default proof-state compiler, and works directly on your source file. It does
-not enable evaluation mode, copy the project, or strip an existing proof.
-It searches `projects/` first. If no matching declaration is found there, it
-also searches the repository's checked-in examples under `eval/examples/`.
-
-The agent submits tactics only through `submit_proof_intent`. Shannon writes a
-new proof into the target file only after the winning candidate passes a fresh
-offline EasyCrypt verification. If the lemma already has a complete verified
-proof, the run reports that fact and leaves it unchanged.
-
-### Codex and Claude commands
-
-Codex and Claude Code expose the same one-argument launcher interface. Each
-entry point is permanently bound to its own proof-node backend. Codex uses the
-repository skill at
-[.agents/skills/prove/SKILL.md](.agents/skills/prove/SKILL.md):
+Run Codex from the repository and enter `$prove my_lemma`. In the Codex
+desktop app, type `/` and choose **Prove** from the skills list.
+It searches `projects/` first, then the bundled `eval/examples/`.
+For example, the supplied PIR lemma can be launched with:
 
 ```text
 $prove PIR_correct
 ```
 
-Claude Code provides the matching project command through
-[.claude/commands/prove.md](.claude/commands/prove.md):
+Claude Code has the corresponding command:
 
 ```text
 /prove PIR_correct
 ```
 
-Both launchers follow the same canonical workflow, but `$prove` always launches
-a Codex proof node and `/prove` always launches a Claude proof node. Neither
-command accepts a backend argument.
+These commands prove a selected lemma; they do not start the interleaved
+project-level workflow. The Codex command uses Codex, and the Claude command
+uses Claude. A generated proof is written back only after a fresh EasyCrypt
+verification succeeds. See the [Prove instructions](.agents/skills/prove/SKILL.md)
+for the explicit-file command and other details.
 
-For an explicit file path, backend, or model, use the lower-level orchestrator
-directly. This is the same ordinary, non-evaluation workflow used by the
-commands above:
+## Examples and research evaluation
 
-```bash
-uv run python -m workflow.orchestrator \
-  --file projects/my-proof/Target.ec \
-  --lemma TargetLemmaName \
-  --include-dir easycrypt-src/theories \
-  --surface-profile proof_state_compiler \
-  --agent-backend codex \
-  --prover-model gpt-5.6-sol \
-  --prover-effort high
-```
+The [proof browser](https://skyshannonprover.github.io/shannon-prover/)
+shows recorded **single-lemma** attempts and their checked steps. It does
+not yet show the complete sequence of game choices, auxiliary-lemma attempts,
+and revisions in an interleaved run.
 
-For a multi-file project, keep all project-owned `.ec`/`.eca` dependencies in
-the same `projects/my-proof/` directory. The runtime automatically adds the
-target file's directory to EasyCrypt's include path. EasyCrypt's standard
-library remains under `easycrypt-src/`; do not copy it into your project. The
-run directory is printed at startup. A completed run also writes a replayable
-bundle under `agent_view_runs/` containing the turn-by-turn agent view,
-submitted intent, manager result, and reconstructed committed proof.
+### Research evaluation is a different workflow
 
-## Research evaluation is a different workflow
+You do **not** need `eval_suite` to run an ordinary proof on your own project.
+Controlled evaluations additionally hide existing answers and fix the task,
+models, and budgets so results can be compared.
+Strict live evaluation currently requires Linux and `bubblewrap` when using
+the isolated benchmark suite; the ChaChaPoly reference has its own documented
+source-access policy. See the [benchmark guide](eval_suite/README.md) and
+[ChaChaPoly reference guide](experiments/interleaved_shannon/README.md).
 
-You do **not** need `eval_suite`, source isolation, proof stripping, or
-bubblewrap to use Shannon Prover on your own lemmas. Those mechanisms exist for
-controlled research evaluation, where the question is whether an agent can
-reconstruct a proof without reading the target's existing answer or prior run
-artifacts.
+## Further reading
 
-An evaluation suite therefore:
-
-- copies the target project into an isolated output directory;
-- strips the target proof while retaining the statement and allowed siblings;
-- confines the model process away from the original checkout and cached proofs;
-- freezes model, compiler exposure, budgets, and tree settings across arms; and
-- records metrics without writing the generated proof back to the original
-  benchmark source.
-
-The checked-in PIR suite is a research-evaluation example:
-
-```bash
-uv run python -m eval_suite.run \
-  --suite eval_suite/suites/demo_pir.json \
-  --dry-run
-
-uv run python -m eval_suite.run \
-  --suite eval_suite/suites/demo_pir.json
-```
-
-Strict live evaluation currently requires Linux and `bubblewrap` for the
-negative filesystem-visibility guarantee. On macOS, ordinary `$prove` and
-`/prove` runs work normally, but a strict eval suite fails closed before
-launching the model. See [`eval_suite/README.md`](eval_suite/README.md) and
-[`TESTING.md`](TESTING.md) for evaluation protocols and remote-run discipline.
-
-### Did it actually prove it?
-
-- A run is successful only when the canonical `ProverResult` is `verified`.
-- The committed proof must contain no `admit.` and must pass a fresh offline
-  EasyCrypt verification.
-- Ordinary proof runs write back only after that verification succeeds.
-- Evaluation runs write only to their isolated copy and metrics directory.
-- If an OS sandbox blocks `why3server` from using `nice()`, run the bounded
-  EasyCrypt/SMT command outside that sandbox.
-
-## Benchmark browser
-
-The hosted benchmark browser is available on the
-[project website](https://skyshannonprover.github.io/shannon-prover/). To browse
-local bundles:
-
-```bash
-python3 bundle_browser/build_manifest.py
-python3 -m http.server 8000
-# open http://127.0.0.1:8000/bundle_browser/
-```
-
-Use `python3 bundle_browser/build_manifest.py --public` to generate a manifest
-containing only the public source allowlist.
-
-## Architecture
-
-```mermaid
-flowchart TD
-    Agent["Proof agent"] -->|"submit_proof_intent"| Runtime["Proof-node runtime"]
-    Orchestrator["Orchestrator<br/>tree topology and capacity"] --> Runtime
-    Runtime --> Manager["ProofNodeManager<br/>one managed turn"]
-    Manager --> Session["ReplSessionManager<br/>session and mutation owner"]
-    Session --> EasyCrypt["EasyCrypt<br/>semantic authority"]
-    Manager --> Compiler["ProofStateCompilerService<br/>read-only compile facade"]
-    Compiler --> Passes["P1 projection → P2 frontend<br/>P3 middle end → P4 backend"]
-    Passes --> Actions["bounded ActionSurface"]
-    Actions --> Manager
-```
-
-The orchestrator owns proof-search topology and winner selection. The manager
-owns one agent turn and binds intents to current state. `ReplSessionManager` is
-the sole EasyCrypt session and mutation owner. The compiler is read-only;
-EasyCrypt remains authoritative for parsing, typing, resolution, matching,
-proof state, and tactic acceptance.
-
-See [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) for the contributor overview,
-[`docs/design/proof_state_compiler_v2.md`](docs/design/proof_state_compiler_v2.md)
-for the compiler design, and [`TESTING.md`](TESTING.md) for validation and
-experiment discipline.
-
-## Main directories
-
-```text
-core/easycrypt/       EasyCrypt runtime, events, native adapters, compiler core
-workflow/             orchestrator, proof-node manager/runtime, compiler service
-projects/             user-owned EasyCrypt projects (one subdirectory each)
-eval/examples/        public EasyCrypt benchmark corpus
-eval_suite/           isolated benchmark runner and checked-in suites
-agent_view_runs/      curated, replayable run bundles
-bundle_browser/       static benchmark-browser application
-tools/                bootstrap, audit, and developer utilities
-tests/                deterministic test suite
-easycrypt-src/        vendored upstream EasyCrypt (its own MIT license)
-```
-
-Generated outputs belong under `artifacts/` or `workflow/runs/`; both are
-gitignored.
+- [Project-level proving guide](workflow/interleaved/README.md): project setup, agents, limits, and results.
+- [ChaChaPoly example](experiments/interleaved_shannon/README.md): reproduce the supplied security-proof task.
+- [Architecture](docs/ARCHITECTURE.md): optional implementation details for contributors.
 
 ## License and citation
 
-Shannon Prover is released under the [MIT License](LICENSE). The
-`easycrypt-src/` directory vendors upstream EasyCrypt under its own MIT
-license.
-
-If you use Shannon Prover in your research, please cite
-[`CITATION.cff`](CITATION.cff):
+Shannon Prover is released under the [MIT License](LICENSE).
+The vendored EasyCrypt source has its own MIT license.
+If you use Shannon Prover in research, please cite [CITATION.cff](CITATION.cff):
 
 ```bibtex
 @article{ma2026shannonprover,
@@ -371,7 +226,3 @@ If you use Shannon Prover in your research, please cite
   year    = {2026}
 }
 ```
-
-Shannon Prover is a research prototype. Issues and discussion are welcome at
-[github.com/SkyShannonProver/shannon-prover](https://github.com/SkyShannonProver/shannon-prover)
-or shannonprover@gmail.com.

@@ -201,6 +201,7 @@ class ReplSessionManager:
         self,
         replay_prefix: list[str] | None = None,
         *,
+        replay_transactions: list[str] | None = None,
         daemon_attach: dict[str, Any] | None = None,
     ) -> tuple[ProofStateSnapshot, list[dict[str, Any]]]:
         """Start the node's EC session.
@@ -224,11 +225,12 @@ class ReplSessionManager:
                     return attached
             return self._start_locked(
                 replay_prefix=replay_prefix,
+                replay_transactions=replay_transactions,
                 preamble_actions=attach_actions,
             )
 
     def committed_history(self) -> list[str]:
-        """The session's ACTUAL committed history (history.ec lines, stripped).
+        """The session's ACTUAL committed history as complete EC commands.
 
         This is the authority for what the session contains — a requested
         replay prefix is only a request: a replayed step that EasyCrypt
@@ -388,6 +390,7 @@ class ReplSessionManager:
         self,
         replay_prefix: list[str] | None = None,
         *,
+        replay_transactions: list[str] | None = None,
         label: str = "start",
         force_restart: bool = False,
         preamble_actions: list[dict[str, Any]] | None = None,
@@ -405,10 +408,25 @@ class ReplSessionManager:
         self._run_backend(label, start_args, actions=actions, timeout=180)
 
         replay_prefix = [str(t).strip() for t in (replay_prefix or []) if str(t).strip()]
-        total = len(replay_prefix)
-        agg_budget = replay_aggregate_budget_seconds(total)
+        execution_prefix = list(replay_prefix)
+        if replay_transactions is not None:
+            execution_prefix = [
+                str(t).strip() for t in replay_transactions if str(t).strip()
+            ]
+            flattened = committed_history.flatten_committed_transactions(
+                execution_prefix
+            )
+            if flattened != replay_prefix:
+                raise ValueError(
+                    "replay transactions do not flatten to the requested "
+                    "committed prefix"
+                )
+        total = len(execution_prefix)
+        # The public prefix count remains the semantic command count even when
+        # fewer atomic manager transactions are issued to preserve bullets.
+        agg_budget = replay_aggregate_budget_seconds(len(replay_prefix))
         replay_started = time.perf_counter()
-        for index, tactic in enumerate(replay_prefix, start=1):
+        for index, tactic in enumerate(execution_prefix, start=1):
             # Aggregate budget check BEFORE issuing the next backend call: a long
             # kept prefix must not hold the bridge lock indefinitely. Each step
             # records its own action, so `actions` already carries replay

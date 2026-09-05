@@ -109,6 +109,30 @@ def _repository_mount_root(project_root: Path) -> Path:
     for parent in (project_root, *project_root.parents):
         if parent.name == ".worktrees":
             return parent.parent.resolve()
+    # Detached scheduler lanes may live under /tmp rather than beneath the
+    # repository's .worktrees directory.  Resolve their shared Git common dir
+    # so the negative probe still names the main checkout and sibling lanes.
+    try:
+        completed = subprocess.run(
+            [
+                "git",
+                "-C",
+                str(project_root),
+                "rev-parse",
+                "--path-format=absolute",
+                "--git-common-dir",
+            ],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.DEVNULL,
+            text=True,
+            timeout=5,
+            check=False,
+        )
+        common_dir = Path(completed.stdout.strip()).resolve()
+        if completed.returncode == 0 and common_dir.name == ".git":
+            return common_dir.parent
+    except (OSError, subprocess.TimeoutExpired):
+        pass
     return project_root.resolve()
 
 
@@ -653,6 +677,13 @@ class EvalAgentConfinement:
         git_config = self.repository_mount_root / ".git" / "config"
         if git_config.exists():
             original_paths.append(git_config)
+        original_paths.extend(
+            _sample_files(
+                self.repository_mount_root / "easycrypt-src" / "examples",
+                suffix=".ec",
+                limit=4,
+            )
+        )
 
         sibling_paths: list[Path] = []
         worktrees = self.repository_mount_root / ".worktrees"

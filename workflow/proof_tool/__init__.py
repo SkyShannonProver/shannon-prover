@@ -1,3 +1,6 @@
-"""The one MCP proof tool each node serves: provider-neutral contract,
-launch spec + timing budget, the stdio child process, the authenticated
-loopback endpoint, and the serialized serving session."""
+"""Invocation-bound manager tools served to one proof node.
+
+The package owns the provider-neutral contract, launch and timing budget,
+stdio MCP child, authenticated parent endpoint, optional manager-owned source
+navigation, and serialized proof-turn session.
+"""

@@ -1,8 +1,7 @@
 # eval_suite — research benchmark runner
 
-This is not the primary interface for proving a user's lemma. Use `$prove
-<LemmaName>`, `/prove <LemmaName>`, or `workflow.orchestrator` directly for an
-ordinary in-place proof run.
+This guide covers controlled benchmarks of individual EasyCrypt lemmas.
+For ordinary proof construction, start with the [project overview](../README.md).
 
 `eval_suite.run` exists for controlled research evaluation. It expands a
 checked-in target/profile matrix into managed `workflow.orchestrator` runs.
@@ -46,9 +45,13 @@ The runner fails closed before launching a model when that selective namespace
 cannot be established. This requirement does not apply to ordinary `$prove`
 or `/prove` use on macOS.
 
-Run live EasyCrypt experiments outside an additional OS sandbox because
-`why3server` needs the `nice()` syscall. Long eval-mode runs should follow the
-isolated worktree procedure in [`../TESTING.md`](../TESTING.md).
+For a reproducible evaluation, start from a clean committed checkout, keep
+generated outputs under `artifacts/`, and record the commit, suite, model,
+and time limits. Run the dry run first to inspect the selected tasks. Start
+long attempts in a persistent terminal session on the evaluation machine.
+The EasyCrypt process needs permission to run `why3server`, including its
+`nice()` call; the model's answer-source confinement is a separate requirement
+and remains enabled.
 
 ## Suite JSON
 

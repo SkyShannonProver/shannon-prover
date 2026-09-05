@@ -49,7 +49,7 @@ def list_theory_members(
     context_file: Path,
     include_dirs: Iterable[Path],
     *,
-    timeout: int = 60,
+    timeout: float = 60,
 ) -> dict:
     """Return declaration names from EasyCrypt's exact ``print theory``."""
 
@@ -103,7 +103,7 @@ def load_exact_declarations(
     context_file: Path,
     include_dirs: Iterable[Path],
     *,
-    timeout: int = 60,
+    timeout: float = 60,
 ) -> dict[str, dict]:
     """Ask EasyCrypt to print exactly the supplied qualified symbols.
 
@@ -191,7 +191,6 @@ def _write_probe(context_file: Path, commands: list[str]) -> Path:
         stream.write(source)
         if not source.endswith("\n"):
             stream.write("\n")
-        stream.write("abort.\n")
         stream.write("\n".join(commands))
         stream.write("\n")
     return path
@@ -201,7 +200,7 @@ def _run_easycrypt(
     probe: Path,
     include_dirs: Iterable[Path],
     *,
-    timeout: int,
+    timeout: float,
     emacs: bool,
 ) -> str:
     command = ["easycrypt", "cli", "-emacs"] if emacs else ["easycrypt"]
@@ -224,6 +223,12 @@ def _run_easycrypt(
             text=True,
             timeout=timeout,
             env=get_ec_env(),
+        )
+    if completed.returncode != 0:
+        detail = (completed.stderr or completed.stdout or "").strip()
+        raise OSError(
+            "EasyCrypt namespace query exited nonzero"
+            + (f": {detail[-2000:]}" if detail else "")
         )
     return completed.stdout
 
@@ -278,7 +283,10 @@ def _parse_declaration_block(block: str, symbol: str) -> dict | None:
         "module types": "module_type",
         "types": "type",
     }.get(section, "declaration")
-    body = block[header.start():].strip() if header else block.strip()
+    # The ``* In [...]`` line is EasyCrypt display metadata, not declaration
+    # syntax. Keep it for kind classification above, but never hand it to a
+    # compiler feature or agent as copyable source.
+    body = block[header.end():].strip() if header else block.strip()
     return {
         "requested": symbol,
         "status": "resolved",

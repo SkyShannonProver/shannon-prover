@@ -239,6 +239,25 @@ def extract_active_goal_block(raw_text: str) -> tuple[str, int]:
                 goal_start = i
                 break
 
+    # EasyCrypt r2026.06 can emit the state marker after the check prompt:
+    #
+    #   [3|check]>
+    #   No more goals
+    #
+    # The open-goal case in this ordering is handled by the forward scan
+    # above.  Preserve the symmetric closed-state case as well, bounded to
+    # the section before any subsequent prompt so an older close marker
+    # cannot be promoted to the current state.
+    if goal_start == highest_idx:
+        forward_end = len(lines)
+        for i in range(highest_idx + 1, len(lines)):
+            if _ANY_PROMPT_RE.search(lines[i]):
+                forward_end = i
+                break
+        for i in range(highest_idx + 1, forward_end):
+            if _NO_MORE_GOALS_MARKER_RE.match(lines[i]):
+                return "\n".join(lines[i:forward_end]), 0
+
     if goal_start > highest_idx:
         block = "\n".join(lines[goal_start:])
     else:

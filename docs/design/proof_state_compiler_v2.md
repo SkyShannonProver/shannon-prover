@@ -42,7 +42,7 @@ The rewrite has three independent proof obligations:
 |---|---|---|
 | Value/evidence | L1 bundles identify real mechanical cost; one isolated Shannon delta repays its hidden and visible cost in matched micro and diverse full-route experiments. | Evidence inventory is substantial; efficacy remains feature-specific and continuously gated. |
 | Clean rewrite/removal | V2 is a fixed P1-P4 skeleton with isolated removable features, and the legacy compiler can be physically deleted without deleting the neutral managed-prover foundation. | **Complete at the source/runtime boundary.** The old parser/ProofIR/analyzer/panel/presentation, inspect/search, compatibility profile, and mixed runtime branches have been removed. Historical reports retain names only as provenance. |
-| Native reuse/contribution | EasyCrypt supplies every semantic result it already owns; Shannon adds only bounded search/commitment logic and harness delivery/economics, stated and measured separately. | Architecture-level ownership, M01-M25 decomposition, N1a/N1b, N1c typed-state endpoint, N1d native P1/P2 lowering, N1e proof-term descriptors, N2a M05, and N2b.1-N2b.3a SC1 application migrations are complete locally; the frozen remote N2b.3a trigger-parity gate remains. |
+| Native reuse/contribution | EasyCrypt supplies every semantic result it already owns; Shannon adds only bounded search/commitment logic and harness delivery/economics, stated and measured separately. | Architecture-level ownership, M01-M25 decomposition, N1a/N1b, N1c typed-state endpoint, N1d native P1/P2 lowering, N1e proof-term descriptors, and N2b.1-N2b.3a SC1 application migrations are complete locally; the frozen remote N2b.3a trigger-parity gate remains. Historical N2a M05 validation is maintained only on `compiler-proactive`. |
 
 Success in one pillar never substitutes for another. A locally helpful feature
 does not justify architectural coupling; a clean feature does not establish
@@ -237,8 +237,8 @@ fact. It may narrow a native query, but it may not establish type
 compatibility, module compatibility, proof-premise matching, placeholder
 solvability, or application validity.
 
-Current implementation status must not be overstated. M05, B1 namespace
-repair, B2 losslessness/module repair (including bounded one-module calls with
+Current implementation status must not be overstated. B1 namespace repair,
+B2 losslessness/module repair (including bounded one-module calls with
 one or two deferred proof premises), and the frozen probability/multi-slot
 B2/B4 recovery consume
 event-bound native proof-term descriptors before forming actions. Python
@@ -519,11 +519,10 @@ does not run merely because another feature in a combined profile is eligible.
 `StateRefresh` is byte-silent by default, except for an economical intrinsic
 delta whose production treatment has been separately authorized. It is not a
 general route-advisory trigger. The fact that only one registered candidate
-exists, or that EasyCrypt accepts it, does not prove route neutrality. The
-only frozen research exception is M05's exact losslessness-certificate
-application, retained because it has repeated feature-specific evidence. That
-exception is not a reusable permission to add another SC2 producer, delivery
-rule, or profile.
+exists, or that EasyCrypt accepts it, does not prove route neutrality. This
+branch contains no proactive exception, SC2 producer, delivery rule, or
+profile. The frozen M05 research exception is maintained only on the private
+`compiler-proactive` branch.
 
 ### Strategy ownership boundary
 
@@ -553,15 +552,16 @@ agent may be SC1.
 
 Consequences for the current codebase:
 
-- keep M05's exact proactive treatment frozen behind its own evidence manifest;
+- keep M05 physically absent from `main`; its frozen implementation and
+  evidence harness belong only to `compiler-proactive`;
 - remove or disable M07's state-only proactive producer/profile, while keeping
   its generic declaration parser, application signature, proof-slot binder,
   lowerer, and certifier only where an SC1 selected-operation or same-resource
   recovery consumer uses them;
 - do not create producers/profiles for the route-selecting portions of M03,
   M06, M08, M14, M23, or M24; and
-- if a generic `optional_advisory` code value remains to support M05, test that
-  no other feature can select it and that removing M05 makes it dead/removable.
+- retain `optional_advisory` only as a schema-level rejection vocabulary; no
+  helper, feature, policy, or profile on `main` may construct it.
 
 ### Runtime authority prerequisites
 
@@ -857,10 +857,10 @@ The package names are architectural roles. Feature code is not allowed in
 `manager`, `renderer`, or shared contracts merely because one experiment needs
 it.
 
-The first retained feature now uses the stable semantic identity
-`losslessness_certificate_application`. The old `features/m05/` package was
-deleted; there is no alias or compatibility package. M05 remains only its
-evidence-ledger identity and in frozen historical experiment-profile names.
+The proactive `losslessness_certificate_application` package is absent from
+`main`; there is no alias or compatibility package. M05 remains here only as
+historical evidence-ledger provenance. Its executable slice is maintained on
+`compiler-proactive`.
 The proactive `probability_theorem_application` package and profiles are
 removed. Its declaration/signature parsing, proof-slot binding, generic
 application lowering, and certification path remain shared infrastructure and
@@ -1432,8 +1432,8 @@ certification policy. Every candidate kind also carries a mandatory
 `commitment_relative`. `route_selecting` is retained as a boundary/audit
 classification so that an accidental route proposal can fail closed; it is
 not a production feature contract or a reason to implement a hidden producer.
-The frozen M05 implementation is held outside production profiles. No
-candidate is agent-visible before admission.
+There is no proactive M05 implementation on `main`. No candidate is
+agent-visible before admission.
 
 The generic application lowerer is the only owner of tactic spelling for
 structured application operations:
@@ -1499,10 +1499,10 @@ Admission modes are shared policy values:
 | elaborated | `AgentSelectedOperation` | the current proof intent only |
 | failure-linked | `CurrentStateFailure` | one same-state manager result |
 
-The implementation may retain `optional_advisory` only inside isolated
-validation code that reproduces the frozen M05 research treatment. No current
-production policy or profile uses it. New route-selecting proposals remain
-ledger entries, not compiler registrations.
+`optional_advisory` remains only a schema-level rejection vocabulary. No
+helper, feature, validation runner, production policy, or profile on `main`
+constructs it. New route-selecting proposals remain ledger entries, not
+compiler registrations.
 
 `CompilerProfile` contains feature activations and registered delivery-policy
 IDs only. It has no inline rules or budgets. The assembler resolves the feature
@@ -1758,9 +1758,9 @@ it. The M07 producer itself is deleted.
 The experiment boundary follows the same rule. Shared
 `proof_state_compiler_one_step_trial.py` and
 `proof_state_compiler_one_step_model.py` own the packet, provider invocation,
-tool prohibition, JSONL decoding, and metrics. The retained M05 validation
-module selects only the frozen feature and authoritative replay boundary; it
-has no feature-specific manager or renderer.
+tool prohibition, JSONL decoding, and metrics. Proactive validation modules
+exist only on `compiler-proactive`; `main` has no feature-specific manager or
+renderer.
 
 ## 7. Evidence feature lifecycle
 
@@ -2095,67 +2095,28 @@ The subsystem must not become a global search panel, candidate ranker, tactic
 planner, or cumulative context dump. It runs only the resolvers requested by
 registered feature capabilities; admission still defaults to silence.
 
-## 10. Held losslessness application slice
+## 10. Branch-confined proactive slice
 
-`losslessness_certificate_application` implements the M05 evidence slice.
-Its implementation remains available for isolated validation, but its evidence
-gate is `hold` and no current profile or production policy exposes it.
+The proactive M05 `losslessness_certificate_application` slice is physically
+absent from `main`. The shared native proof-term descriptor, application
+lowering, and exact preflight infrastructure remain because the
+commitment-relative `operation_binding_repair` feature consumes them.
 
-```text
-P1
-  exact post-proc state and loaded source authority
+The frozen M05 implementation, experiment manifest, sentinel, fixture-specific
+tests, and optional-advisory delivery helper are maintained only on the private
+`compiler-proactive` branch. That branch is a compiler-only delta from
+`main`; it is not part of the default runtime or the interleaved product.
 
-P2 shared frontend
-  GoalIR: true-to-true one-sided phoare with bound = 1%r
-  ProgramIR: ordered calls; active procedure is the final call
+Historical M05 reports remain in this branch as evidence provenance. They do
+not make M05 runnable and do not authorize another proactive feature.
 
-P2 losslessness resource discoverer
-  ProofResource: Alossless_F declaration
-  lexical ApplicationSignature sketch: required module O and deferred proof
-  islossless O.f
-
-P3 shared coordinate/procedure binding
-  structural candidate substitution O := D2(O).O
-
-P3 losslessness analysis contribution
-  ApplicationCandidate:
-    operation: call
-    term: Alossless_F (<: D2(O).O) _
-    unresolved proof premise: islossless D2(O).O.f
-
-P4 generic application lowerer
-  call(term) -> call (term).
-
-P4 feature registration
-  ActionCandidate(commit_tactic, exact tactic)
-  certification policy: exact_tactic_preflight
-
-CertificationGateway
-  native EasyCrypt elaborates and accepts the exact payload on the exact state
-  committed history remains unchanged
-
-losslessness treatment manifest
-  admits at most one item within 700 bytes
-
-ActionSurface
-  one generic verified action entry
-```
-
-EasyCrypt native proof-term elaboration supplies the argument kinds, module
-identity, residual proof premise, concretization result, and result procedure
-before lowering. The P2 declaration/procedure substitution above only spells
-the bounded native query. Exact tactic preflight remains afterward to validate
-tactic-family parsing and local proof-state effect.
-
-No shared contract, manager method, turn-model field, or renderer branch is
-named after M05 or the semantic feature.
 
 ## 11. Second-consumer and recovery-removal proof
 
 Three independent checks protect extensibility:
 
-1. A test-only diagnostic feature is registered beside M05 and uses generic
-   admission/rendering without a boundary branch.
+1. A test-only diagnostic feature uses generic admission/rendering without a
+   boundary branch or any real feature dependency.
 2. `operation_binding_repair` consumes native proof-term semantics for B1,
    B2 losslessness apply/bounded one-module-call families, and the frozen
    probability/multi-slot B2/B4 family.
@@ -2249,9 +2210,9 @@ never substitutes for full-route economics.
 
 The current implementation has completed the strategy-boundary migration:
 
-1. M05 `losslessness_certificate_application` is the only retained SC2 slice,
-   but its evidence gate is `hold`; no current profile or production delivery
-   policy exposes it.
+1. M05 `losslessness_certificate_application` is absent from `main`; its
+   frozen SC2 implementation and validation material live only on
+   `compiler-proactive`.
 2. The proactive M07 package, audit/treatment profiles, and active validation
    launchers are removed. Generic declaration parsing, application signatures,
    proof-slot binding, lowering, and certification remain shared.
@@ -2297,8 +2258,9 @@ The current implementation has completed the strategy-boundary migration:
     removed rather than preserved through compatibility paths.
 
 The read-only typed-state and proof-term foundations are complete through N1e;
-N2a migrated M05 and N2b.1-N2b.3 migrated every implemented SC1 application
-family. The old shared Python losslessness and probability semantic binders
+historical N2a validated the branch-confined M05 consumer, while
+N2b.1-N2b.3 migrated every implemented SC1 application family. The old shared
+Python losslessness and probability semantic binders
 are deleted. The next checkpoint is the frozen remote N2b.3
 trigger/parity/no-mutation sentinel. Only after it passes should a newly
 preregistered L1/hidden-audit/treatment experiment run. This does not authorize
@@ -2340,8 +2302,8 @@ The foundation is ready for managed experiments only when:
 - CandidateSurface cannot reach presentation without certification/admission;
 - ActionSurface rendering is generic by entry kind;
 - empty and non-eligible treatments render byte-identically to L1;
-- an ordinary `StateRefresh` renders zero compiler bytes unless a manifest
-  explicitly admits a tested proactive exception;
+- an ordinary `StateRefresh` renders zero proactive compiler bytes and no
+  `main` manifest can admit an SC2 exception;
 - agent-selected elaboration resolves only the selected operation's mechanical
   slots, abstains on unresolved semantic choices, and leaves mutation to the
   manager-owned runtime;
@@ -2352,7 +2314,8 @@ The foundation is ready for managed experiments only when:
 - M07 proactive treatment cannot be assembled and its historical artifacts do
   not reactivate deleted production code;
 - recovery ownership conflict tests pass independently of feature order;
-- the historical M05 micro and managed evidence remain reproducible; and
+- the historical M05 micro and managed evidence remain reproducible on the
+  private `compiler-proactive` branch; and
 - L1 has no compiler service, while audit/treatment use the same feature
   compiler and certification set and differ in exposure only through the
   independently resolved delivery plan.

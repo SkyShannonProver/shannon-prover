@@ -9,11 +9,13 @@ inside the repository-managed opam root.
 from __future__ import annotations
 
 import hashlib
+import io
 import json
 import os
 import re
 import shutil
 import subprocess
+import tarfile
 from dataclasses import dataclass
 from functools import lru_cache
 from pathlib import Path
@@ -28,6 +30,14 @@ _OPAM_ENV_RE = re.compile(
 )
 _PROJECT_ROOT = Path(__file__).resolve().parents[2]
 EASYCRYPT_LOCK_PATH = Path(__file__).with_name("easycrypt.lock.json")
+
+# These values route live EasyCrypt work and are deliberately configured after
+# the orchestrator's toolchain preflight.  They must not be frozen inside the
+# cached opam environment assembled by ``_managed_environment_items``.
+_RUNTIME_ROUTE_ENV_NAMES = (
+    "EC_DAEMON_SOCKET",
+    "WHY3EC_SOCKET",
+)
 
 
 @dataclass(frozen=True)
@@ -156,9 +166,93 @@ def easycrypt_source_manifest_sha256(source_root: Path | None = None) -> str:
 
 def verify_locked_easycrypt_source() -> EasyCryptLock:
     lock = load_easycrypt_lock()
-    if easycrypt_source_manifest_sha256() != lock.source_manifest_sha256:
+    actual = easycrypt_source_manifest_sha256()
+    if actual != lock.source_manifest_sha256 and _sparse_checkout_enabled():
+        actual = _git_head_easycrypt_source_manifest_sha256()
+    if actual != lock.source_manifest_sha256:
         raise RuntimeError("vendored EasyCrypt source differs from revision lock")
     return lock
+
+
+def _sparse_checkout_enabled() -> bool:
+    result = subprocess.run(
+        ["git", "config", "--bool", "core.sparseCheckout"],
+        cwd=_PROJECT_ROOT,
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        check=False,
+    )
+    return result.returncode == 0 and result.stdout.strip() == "true"
+
+
+def _git_head_easycrypt_source_manifest_sha256() -> str:
+    """Hash the committed vendored snapshot without hydrating sparse files.
+
+    Sparse experiment worktrees intentionally omit answer-bearing examples.
+    The visible portion must still be clean, and no untracked source may be
+    present; the missing bytes are streamed from the pinned HEAD archive only
+    inside this trusted lock verifier and are never written into the worktree.
+    """
+
+    changed = subprocess.run(
+        ["git", "diff", "--quiet", "HEAD", "--", "easycrypt-src"],
+        cwd=_PROJECT_ROOT,
+        check=False,
+    )
+    if changed.returncode != 0:
+        raise RuntimeError("vendored EasyCrypt source has tracked changes")
+    untracked = subprocess.run(
+        [
+            "git",
+            "ls-files",
+            "--others",
+            "--exclude-standard",
+            "--",
+            "easycrypt-src",
+        ],
+        cwd=_PROJECT_ROOT,
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        check=False,
+    )
+    if untracked.returncode != 0 or untracked.stdout.strip():
+        raise RuntimeError("vendored EasyCrypt source has untracked files")
+    archive = subprocess.run(
+        ["git", "archive", "--format=tar", "HEAD", "easycrypt-src"],
+        cwd=_PROJECT_ROOT,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        check=False,
+    )
+    if archive.returncode != 0:
+        raise RuntimeError("cannot read vendored EasyCrypt snapshot from Git HEAD")
+
+    digest = hashlib.sha256(b"shannon-easycrypt-source-manifest-v1\0")
+    with tarfile.open(fileobj=io.BytesIO(archive.stdout), mode="r:") as stream:
+        members = sorted(
+            (member for member in stream.getmembers() if member.isfile()),
+            # Match ``sorted(Path.rglob(...))`` above exactly.  Path ordering is
+            # component-wise, not the raw slash-containing string order.
+            key=lambda member: Path(member.name[len("easycrypt-src/"):]),
+        )
+        if not members:
+            raise RuntimeError("Git HEAD vendored EasyCrypt snapshot is empty")
+        for member in members:
+            prefix = "easycrypt-src/"
+            if not member.name.startswith(prefix):
+                raise RuntimeError("Git archive escaped vendored EasyCrypt root")
+            relative = member.name[len(prefix):].encode("utf-8")
+            source = stream.extractfile(member)
+            if source is None:
+                raise RuntimeError("cannot read a vendored EasyCrypt Git blob")
+            data = source.read()
+            digest.update(len(relative).to_bytes(8, "big"))
+            digest.update(relative)
+            digest.update(len(data).to_bytes(8, "big"))
+            digest.update(data)
+    return digest.hexdigest()
 
 
 def repository_storage_root() -> Path:
@@ -288,7 +382,19 @@ def _managed_environment_items() -> tuple[tuple[str, str], ...]:
 
 
 def managed_easycrypt_environment() -> dict[str, str]:
-    return dict(_managed_environment_items())
+    env = dict(_managed_environment_items())
+    # The expensive, verified opam environment is stable and cached.  Socket
+    # routes are run-scoped: prover.run selects them only after orchestrator
+    # calls check_ec_available(), which primes that cache.  Refresh just those
+    # routes from the current process so bootstrap/replay cannot silently fall
+    # back to a checkout-scoped daemon or why3server.
+    for name in _RUNTIME_ROUTE_ENV_NAMES:
+        value = os.environ.get(name)
+        if value is None:
+            env.pop(name, None)
+        else:
+            env[name] = value
+    return env
 
 
 def sha256_file(path: Path) -> str:

@@ -40,11 +40,27 @@ def discover_attempted_operation_resources(
     values: list[ProofResource] = []
     semantic_indices: dict[tuple, int] = {}
     seen_declarations: set[tuple[str, str]] = set()
-    for item in declaration_inputs(environment):
+    inputs = declaration_inputs(environment)
+    native_symbols = {
+        item.symbol
+        for item in inputs
+        if item.evidence.source_kind == "loaded_declaration"
+    }
+    for item in inputs:
         if failure_class == "B1":
             if item.symbol.rsplit(".", 1)[-1] != attempted.resource_basename:
                 continue
         elif item.symbol != attempted.resource:
+            continue
+        # The verifier-resolved declaration owns an exact symbol.  A source
+        # sketch of that symbol may differ only because EasyCrypt normalized
+        # module restrictions or other printed syntax.  Keeping both would
+        # create false ambiguity; if the native declaration cannot be parsed,
+        # fail closed instead of falling back to source text.
+        if (
+            item.symbol in native_symbols
+            and item.evidence.source_kind != "loaded_declaration"
+        ):
             continue
         declaration_key = (item.symbol, " ".join(item.declaration.split()))
         if declaration_key in seen_declarations:

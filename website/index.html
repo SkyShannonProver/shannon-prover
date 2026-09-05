@@ -57,39 +57,44 @@
   .phase.hot{border-color:var(--info);box-shadow:0 0 0 1px var(--info) inset}
   @media(max-width:820px){.phases{grid-template-columns:1fr}
     .phase+.phase::before{content:"↓";left:50%;top:-23px;transform:translateX(-50%)}}
+  /* interleaved runner */
+  .interleave{display:grid;grid-template-columns:repeat(4,1fr);gap:24px;margin-top:18px}
+  .ilayer{position:relative;border:.5px solid var(--line);background:var(--surface);border-radius:12px;padding:14px;min-width:0}
+  .ilayer+.ilayer::before{content:"→";position:absolute;left:-19px;top:50%;transform:translateY(-50%);color:var(--hint);font-size:15px}
+  .ilayer .n{color:var(--hint);font:10px var(--mono);letter-spacing:.05em;text-transform:uppercase;margin-bottom:5px}
+  .ilayer .t{font-size:13px;font-weight:600;margin-bottom:5px}
+  .ilayer .b{font-size:12px;color:var(--muted);line-height:1.55}
+  .ilayer.inner{border-color:var(--info);box-shadow:0 0 0 1px var(--info) inset}
+  .runnernote{margin:14px 0 0;color:var(--muted);font-size:12.5px}
+  @media(max-width:820px){.interleave{grid-template-columns:1fr}
+    .ilayer+.ilayer::before{content:"↓";left:50%;top:-23px;transform:translateX(-50%)}}
   /* proof session */
   .ecsample{border:.5px solid var(--line2);border-radius:12px;background:var(--surface);overflow:hidden}
-  .echead{display:flex;justify-content:space-between;gap:12px;padding:9px 13px;border-bottom:.5px solid var(--line);font:11.5px var(--mono);color:var(--muted)}
+  .echead{display:flex;flex-wrap:wrap;justify-content:space-between;gap:4px 12px;padding:9px 13px;border-bottom:.5px solid var(--line);font:12px var(--mono);color:var(--muted);overflow-wrap:anywhere}
   .echead .dim{font-family:var(--sans);color:var(--hint)}
-  .eclemma,.ecproof{display:grid;grid-template-columns:82px 1fr}
+  .eclemma,.ecproof{display:grid;grid-template-columns:66px minmax(0,1fr)}
   .eclemma{border-bottom:.5px solid var(--line);background:var(--infobg)}
   .ecmark{padding:14px 0 0 14px;font:10.5px var(--mono);font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:var(--hint)}
   .eclemma .ecmark{color:var(--info)}
-  .eclemma pre{margin:0;border:0;border-radius:0;padding:12px 16px;background:transparent;font-size:11.5px;line-height:1.65}
-  .proofcanvas{position:relative;min-height:212px;border-left:.5px solid var(--line)}
-  .proofcode{width:36%;margin:0;border:0;border-radius:0;padding:10px 16px;background:transparent;font-size:11.5px;line-height:2.6}
-  .proofcode span{display:block;white-space:pre}
-  .proofcode .focus-one,.proofcode .focus-two{margin:0 -7px;padding:0 7px;border-radius:4px;background:#fff9f5;color:#705d54}
-  .goalcallout{position:absolute;left:44%;right:14px;border:.5px solid #efdfd7;border-radius:8px;background:#fffbf8;color:#705d54;font-size:11px;line-height:1.4}
-  .goalcallout::before{content:"";position:absolute;left:-66px;top:50%;width:58px;border-top:1px solid #ccb7ad}
-  .goalcallout::after{content:"";position:absolute;left:-9px;top:calc(50% - 3px);border-left:6px solid #ccb7ad;border-top:3px solid transparent;border-bottom:3px solid transparent}
-  .goalhead{padding:5px 10px;border-radius:7px 7px 0 0;background:#fcf4ef;font-size:10px;font-weight:600;white-space:nowrap}
-  .goalhead code{display:inline;padding:0;background:transparent;color:inherit;font:600 10px var(--mono);letter-spacing:0;white-space:inherit}
+  .eclemma pre{min-width:0;margin:0;border:0;border-radius:0;padding:12px 16px;background:transparent;font-size:12px;line-height:1.7;white-space:pre-wrap;overflow-wrap:anywhere;overflow:visible}
+  .eclemma pre code,.proofcode code{font:inherit}
+  .proofcanvas{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);align-items:start;gap:16px;min-width:0;padding:16px;border-left:.5px solid var(--line)}
+  .proofcode{min-width:0;margin:0;padding:0;border:0;border-radius:0;background:transparent;font-size:12px;line-height:1.85;white-space:normal;overflow:visible}
+  .proofline{display:block;position:relative;padding:1px 6px 1px 22px;white-space:pre-wrap;overflow-wrap:anywhere;border-radius:4px}
+  .proofline[data-step]{background:#fff9f5;color:#705d54}
+  .proofline[data-step]::before{content:attr(data-step);position:absolute;left:3px;top:5px;display:grid;place-items:center;width:14px;height:14px;border-radius:50%;background:#ead9ce;color:#705d54;font:600 10px var(--sans)}
+  .proofcode code{color:inherit}
+  .proofgoals{display:grid;gap:12px;min-width:0}
+  .goalcallout{min-width:0;border:.5px solid #efdfd7;border-radius:8px;background:#fffbf8;color:#705d54;font-size:12px;line-height:1.6}
+  .goalhead{display:flex;align-items:baseline;gap:7px;padding:7px 10px;border-radius:7px 7px 0 0;background:#fcf4ef;font-size:12px;font-weight:600;overflow-wrap:anywhere}
+  .stepbadge{display:inline-grid;place-items:center;flex:none;align-self:center;width:16px;height:16px;border-radius:50%;background:#ead9ce;color:#705d54;font:600 10px var(--sans)}
+  .goalhead code{display:inline;padding:0;background:transparent;color:inherit;font:600 12px var(--mono);letter-spacing:0;white-space:normal}
   .goalbody{padding:5px 10px;border-top:.5px solid #efdfd7;border-radius:0 0 7px 7px;background:#fffaf7}
-  .goalbody>code{display:block;padding:0;background:transparent;color:inherit;font-size:10px;line-height:1.4;white-space:nowrap}
-  .goalbody strong{font:400 12px var(--mono)}
-  .goalcallout.first{top:18px}
-  .goalcallout.first::before{top:41px}
-  .goalcallout.first::after{top:38px}
-  .goalcallout.closed{top:120px}
-  .goalcallout.closed::before{top:23px}
-  .goalcallout.closed::after{top:20px}
+  .goalbody>code{display:block;padding:0;background:transparent;color:inherit;font-size:12px;line-height:1.65;white-space:pre-wrap;overflow-wrap:anywhere}
   .ecnote{margin:9px 0 0;color:var(--muted);font-size:12px}
   @media(max-width:680px){
     .eclemma,.ecproof{grid-template-columns:1fr}.ecmark{padding:10px 14px 0}
-    .proofcanvas{border-left:0}.proofcode{width:100%;padding-bottom:6px}
-    .goalcallout{position:relative;left:auto;right:auto;top:auto!important;margin:8px 14px}
-    .goalcallout::before,.goalcallout::after{display:none}
+    .proofcanvas{grid-template-columns:minmax(0,1fr);border-left:0;padding:12px 14px}
   }
 
   /* mcp */
@@ -121,6 +126,16 @@
   }
 
   /* steps */
+  .runoptions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;margin:16px 0 22px}
+  .runoption{border:.5px solid var(--line);border-radius:10px;padding:14px 16px;background:var(--surface);min-width:0}
+  .runoption.primary{border-color:var(--info)}
+  .runoption .phase-label{font-size:11px;font-weight:600;color:var(--info)}
+  .runoption h3,.lemmausage h3{font-size:15px;margin:4px 0 8px}
+  .runoption p,.lemmausage p{font-size:13px;color:var(--muted);margin:0 0 8px}
+  .runoption a{font-size:13px;font-weight:600}
+  .lemmausage{margin-top:24px;padding-top:18px;border-top:.5px solid var(--line);scroll-margin-top:110px}
+  #install,#security-proof-setup{scroll-margin-top:110px}
+  @media(max-width:680px){.runoptions{grid-template-columns:1fr}}
   .steps{counter-reset:s;margin:18px 0 0}
   .stepblk{position:relative;padding:0 0 6px 40px;margin-bottom:10px}
   .stepblk::before{counter-increment:s;content:counter(s);position:absolute;left:0;top:1px;width:26px;height:26px;border-radius:50%;background:var(--infobg);color:var(--info);font-weight:600;font-size:13px;display:flex;align-items:center;justify-content:center}
@@ -132,8 +147,8 @@
   .callout li{font-size:13px;color:var(--muted);margin:4px 0}
 
   /* explore */
-  .cards{display:grid;grid-template-columns:1fr 1fr;gap:16px}
-  @media(max-width:640px){.cards{grid-template-columns:1fr}}
+  .cards{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+  @media(max-width:820px){.cards{grid-template-columns:1fr}}
   .card{display:block;border:.5px solid var(--line);background:var(--surface);border-radius:14px;padding:20px 22px;color:var(--ink)}
   .card:hover{border-color:var(--info)}
   .card .ic{width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;margin-bottom:10px}
@@ -155,7 +170,6 @@
   <a class="brand" href=".">Shannon Prover</a>
   <nav>
     <a class="cta" href="https://arxiv.org/abs/2607.02847" rel="noopener">paper</a>
-    <a class="cta" href="./results/">benchmark</a>
     <a class="cta" href="https://github.com/SkyShannonProver/shannon-prover" rel="noopener">source</a>
   </nav>
 </div>
@@ -166,16 +180,17 @@
   with cryptographic innovation. We are working toward a future where cryptographers can explore
   and verify security arguments earlier and faster, without compromising the rigor of machine checking.</div>
   <div class="sub">
-    Shannon Prover helps turn lemma-level cryptographic arguments into checked EasyCrypt proof
-    scripts. You define the security model and proof structure; the agent works through each resulting
-    obligation, one checked proof action at a time.
+    You supply the scheme, security assumptions, and final theorem in EasyCrypt.
+    Shannon Prover searches for the intermediate games and auxiliary lemmas, writes their
+    proofs, and checks the complete development with EasyCrypt.
   </div>
 
   <section id="phases">
     <h2>Where Shannon Prover fits</h2>
-    <p class="seclead"><strong>Shannon Prover works at Phase&nbsp;III today.</strong> You currently
-    retain control of the security model and the proof's intermediate claims; support for Phase II
-    lemma decomposition is under active development.</p>
+    <p class="seclead"><strong>Shannon Prover automates proof construction across
+    Phases&nbsp;II and III.</strong> Earlier Shannon workflows proved individual lemmas supplied
+    by a human. Shannon can now also propose and revise the decomposition of the security
+    argument. You still provide the formal security model and theorem in Phase&nbsp;I.</p>
     <div class="phases">
       <div class="phase">
         <div class="who expert">Phase I · expert</div>
@@ -184,8 +199,8 @@
         argument you want to establish.</div>
         <div class="eg">module CBC(P : PseudoRP) = {<br>&nbsp;&nbsp;proc enc(key, iv, p) = { … } }</div>
       </div>
-      <div class="phase">
-        <div class="who us">Phase II · Shannon Prover <span class="pill p-warn">under active development</span></div>
+      <div class="phase hot">
+        <div class="who us">Phase II · Shannon Prover <span class="pill p-info">available now</span></div>
         <div class="t">Lemma decomposition</div>
         <div class="b">Formulate the intermediate lemmas and game hops needed to decompose the
         security argument into tractable proof obligations.</div>
@@ -199,6 +214,43 @@
         <div class="eg">proof. byequiv=> //=. proc.<br>call (_: ={bad,qs} …). qed.</div>
       </div>
     </div>
+  </section>
+
+  <section id="interleaved">
+    <h2>How Shannon Prover builds a security proof</h2>
+    <p class="seclead">A proof rarely develops in a straight line. Shannon may propose a game hop,
+    try to prove the required equivalence, and discover that an auxiliary lemma needs a stronger
+    invariant. It can revise that lemma and return to the overall argument. This feedback between
+    designing the argument and proving its steps is what we mean by <em>interleaved</em>.</p>
+    <div class="interleave">
+      <div class="ilayer">
+        <div class="n">Build the argument</div>
+        <div class="t">Choose games and lemmas</div>
+        <div class="b">One agent develops the overall proof and identifies the intermediate claims it needs.</div>
+      </div>
+      <div class="ilayer">
+        <div class="n">Prove the steps</div>
+        <div class="t">Write EasyCrypt proofs</div>
+        <div class="b">It works directly and can ask other agents to prove selected auxiliary lemmas.</div>
+      </div>
+      <div class="ilayer inner">
+        <div class="n">Learn from the attempt</div>
+        <div class="t">Revise the argument</div>
+        <div class="b">Checked steps and remaining goals inform the next proof attempt or a revised decomposition.</div>
+      </div>
+      <div class="ilayer">
+        <div class="n">Check the result</div>
+        <div class="t">Verify the complete file</div>
+        <div class="b">EasyCrypt checks the assembled development; unfinished proofs do not count as success.</div>
+      </div>
+    </div>
+    <p class="runnernote">Shannon is a research prototype: an attempt may finish with a checked proof,
+    partial work, or no proof within the time limit. Review that the generated statements and
+    assumptions match your intended security claim. The generic checker does not freeze those
+    inputs; the supplied ChaChaPoly example adds checks that preserve its fixed problem.</p>
+    <p>Follow the <a href="https://github.com/SkyShannonProver/shannon-prover/blob/main/workflow/interleaved/README.md"
+    rel="noopener">project-level proving guide</a> to prepare a project and interpret the results.
+    The proof browser below shows individual lemma attempts, not a complete interleaved run.</p>
   </section>
 
   <section id="session">
@@ -218,47 +270,49 @@
       <div class="ecproof">
         <div class="ecmark">proof</div>
         <div class="proofcanvas">
-<pre class="proofcode"><code><span>proof.</span><span class="focus-one">  byequiv=&gt; //=.</span><span>  proc; call (_: ={bad,qs}(DoubleQuery,Compute)).</span><span>  by conseq DQ_Sample_Compute_eq.</span><span class="focus-two">  by inline *; auto.</span><span>qed.</span></code></pre>
+<pre class="proofcode"><code><span class="proofline">proof.</span><span class="proofline" data-step="1">  byequiv=&gt; //=.</span><span class="proofline">  proc; call (_: ={bad,qs}(DoubleQuery,Compute)).</span><span class="proofline">  by conseq DQ_Sample_Compute_eq.</span><span class="proofline" data-step="2">  by inline *; auto.</span><span class="proofline">qed.</span></code></pre>
+          <div class="proofgoals">
           <div class="goalcallout first">
-            <div class="goalhead">Goal after <code>byequiv=&gt; //=.</code></div>
-            <div class="goalbody"><code>pre = (glob A){2} = (glob A){m} /\ (glob A){1} = (glob A){m}<br>
-INDR_CPA_direct(CBC_Oracle(DoubleQuery(Sample)), A).main<br>
-~ INDR_CPA_direct(Compute, A).main<br>
+            <div class="goalhead"><span class="stepbadge" aria-label="Step 1">1</span><span>After <code>byequiv=&gt; //=.</code></span></div>
+            <div class="goalbody"><code>pre = (glob A){2} = (glob A){m} /\ (glob A){1} = (glob A){m}
+INDR_CPA_direct(<wbr>CBC_Oracle(<wbr>DoubleQuery(Sample)),<wbr> A).main
+~ INDR_CPA_direct(Compute, A).main
 post = DoubleQuery.bad{1} = Compute.bad{2}</code></div>
           </div>
           <div class="goalcallout closed">
-            <div class="goalhead">Goal after <code>by inline *; auto.</code></div>
+            <div class="goalhead"><span class="stepbadge" aria-label="Step 2">2</span><span>After <code>by inline *; auto.</code></span></div>
             <div class="goalbody"><code>No more goals</code></div>
+          </div>
           </div>
         </div>
       </div>
     </div>
     <p class="ecnote">The proof is shown exactly from <code>proof.</code> to <code>qed.</code>.
-    Highlighted tactic lines point to the EasyCrypt goal immediately after that line runs.</p>
+    The numbered highlights match the EasyCrypt goals shown after those steps. Long lines wrap to fit.</p>
   </section>
 
   <section id="mcp">
     <h2>How the LLM interacts with EasyCrypt</h2>
-    <p class="mcpintro">Through MCP, each proof turn is a loop among three roles: the LLM reasons
-    about what to do, the manager and proof-state compiler mediate the current proof state, and
-    EasyCrypt executes and checks every committed tactic.</p>
+    <p class="mcpintro">For each lemma, the agent sees what EasyCrypt still needs to prove,
+    tries a proof step, and reads the resulting goals or error. It can continue, undo a step,
+    or try another approach.</p>
     <div class="mcpmap">
       <article class="mcprole llm">
         <div class="roleicon">✦</div>
         <div class="rolekind">Proof reasoning</div>
         <h3>LLM</h3>
-        <p>Reads the compiled proof state, chooses the next move, and submits one proof-level intent.</p>
+        <p>Reads the current goals and proposes the next proof step.</p>
       </article>
       <div class="mcpbridge" aria-hidden="true">
-        <div class="flow forward"><span>proof intent</span></div>
-        <div class="flow back"><span>compiled view</span></div>
+        <div class="flow forward"><span>proof step</span></div>
+        <div class="flow back"><span>current goals</span></div>
       </div>
       <article class="mcprole manager">
         <div class="roleicon">≡</div>
         <div class="rolekind">State-aware interface</div>
-        <h3>Manager + compiler</h3>
-        <p>Owns the live proof session and presents the exact current goal, valid proof controls,
-        and any bounded EasyCrypt-certified compiler output. It never chooses the proof strategy.</p>
+        <h3>Shannon</h3>
+        <p>Keeps track of the proof attempt, passes steps to EasyCrypt, and helps the agent
+        use the available declarations and tactic syntax.</p>
       </article>
       <div class="mcpbridge" aria-hidden="true">
         <div class="flow forward"><span>tactic</span></div>
@@ -272,32 +326,41 @@ post = DoubleQuery.bad{1} = Compute.bad{2}</code></div>
         the proof.</p>
       </article>
     </div>
-    <p class="intentlead">Every turn carries exactly one proof intent. The manager applies it to
-    EasyCrypt, returns the exact resulting goal or error, then compiles a bounded action surface for
-    the unchanged current state. The agent uses that response to choose its next action.</p>
-    <div class="intentguide">
-      <div class="intentrow">
-        <div class="kind">Proof controls</div>
-        <div>Through <code>submit_proof_intent</code>, the agent can submit a tactic
-        (<code>commit_tactic</code>) or use an available session control: Undo last
-        (<code>undo_last_step</code>), Rewind (<code>undo_to_checkpoint</code>), Restart
-        (<code>fresh_restart</code>), or Finish (<code>finish</code>). After a failed step, the
-        manager may also offer guided amendment and replay (<code>amend_and_replay</code>).</div>
-      </div>
-      <div class="intentrow">
-        <div class="kind">Current panel</div>
-        <div>The current panel shows the exact EasyCrypt goal, the actions available now, and concise
-        compiler guidance to help the agent decide what to do next.</div>
-      </div>
-    </div>
+    <p class="intentlead">The agent can consult the allowed EasyCrypt source declarations as it
+    works. EasyCrypt remains responsible for interpreting and checking the mathematics.
+    Before a result is accepted, the proof is checked again independently of the interactive
+    attempt.</p>
   </section>
 
   <section id="install">
     <h2>Run Shannon Prover yourself</h2>
-    <p class="seclead">Ready to move from the paper to a live proof session? You need macOS or Linux,
+    <p class="seclead">Choose how much of the argument you want Shannon Prover to construct.
+    Both workflows use EasyCrypt, but they have different inputs and launch commands.</p>
+    <div class="runoptions">
+      <div class="runoption primary">
+        <div class="phase-label">Phases II + III</div>
+        <h3>Project-level proving</h3>
+        <p>You provide the security model and final theorem. Shannon proposes the necessary
+        games and auxiliary lemmas, proves them, and assembles the final argument.</p>
+        <p>Start from a terminal with a project configuration that names your target theorem.</p>
+        <a href="#security-proof-setup">Start a project proof →</a>
+      </div>
+      <div class="runoption">
+        <div class="phase-label">Phase III</div>
+        <h3>Single-lemma proving</h3>
+        <p>You have already chosen the lemma and stated it in EasyCrypt. Shannon searches for
+        its proof.</p>
+        <p>Use <code>$prove</code> in Codex or <code>/prove</code> in Claude Code, followed
+        by the lemma name.</p>
+        <a href="#single-lemma-setup">Prove one lemma →</a>
+      </div>
+    </div>
+    <p class="seclead">You need macOS or Linux, Git,
     <a href="https://opam.ocaml.org" rel="noopener">opam</a>, Python ≥ 3.12,
-    <a href="https://docs.astral.sh/uv/" rel="noopener">uv</a>, and an authenticated proof-agent
-    CLI. OpenAI Codex is the default; Claude is available when you explicitly choose it.</p>
+    <a href="https://docs.astral.sh/uv/" rel="noopener">uv</a>, and the agent CLIs you select.
+    For project-level proving, the defaults use Claude Code for the overall argument and Codex for auxiliary
+    lemmas, with their stored Claude and ChatGPT OAuth logins.
+    Steps 1–2 install the shared tools; steps 3–4 launch a Phase II + III proof.</p>
 
     <div class="steps">
       <div class="stepblk">
@@ -315,55 +378,90 @@ uv run python tools/bootstrap_easycrypt.py --verify-only</code></pre>
         <p>Python entry points select this environment automatically; no ambient opam switch is
         required.</p>
       </div>
-      <div class="stepblk">
-        <h3>Add your EasyCrypt project</h3>
-        <p>Create one directory under <code>projects/</code>, put the target file and its
-        project-owned <code>.ec</code>/<code>.eca</code> dependencies there, and leave the target
-        lemma with an unfinished proof.</p>
+      <div class="stepblk" id="security-proof-setup">
+        <h3>Choose the project's final security theorem</h3>
+        <p>Create one directory under <code>projects/</code> with your security model,
+        final theorem, and local dependencies. Leave the target theorem's proof unfinished.
+        Add <code>interleaved_project.json</code> using the
+        <a href="https://github.com/SkyShannonProver/shannon-prover/blob/main/workflow/interleaved/README.md"
+        rel="noopener">project setup guide</a>, then commit these files so the checkout is clean.</p>
 <pre><code>projects/
   my-proof/
     Target.ec
-    Dependency.ec</code></pre>
+    Dependency.ec
+    interleaved_project.json</code></pre>
       </div>
       <div class="stepblk">
-        <h3>Start the proof agent</h3>
-        <p>Run Codex from the repository and invoke the repo-scoped Prove skill. Claude Code
-        provides the same one-argument interface through its project command:</p>
-<pre><code><span class="c"># Codex — default backend and model</span>
-$prove my_lemma
-
-<span class="c"># Claude Code — explicitly selects Claude</span>
-/prove my_lemma</code></pre>
-        <p>The agent submits one intent per turn through <code>submit_proof_intent</code>. A proof
-        is written back only after a fresh offline EasyCrypt verification succeeds.</p>
+        <h3>Start a project proof — Phases II + III</h3>
+        <p>From a terminal at the repository root, first check the setup without starting
+        a proof-generating model:</p>
+<pre><code>uv run python -m workflow.interleaved \
+  --project projects/my-proof/interleaved_project.json \
+  --preflight-only</code></pre>
+        <p>Once these pass, start the proof attempt:</p>
+<pre><code>uv run python -m workflow.interleaved \
+  --project projects/my-proof/interleaved_project.json</code></pre>
+        <p>This run works toward the final theorem named in your configuration and constructs
+        the auxiliary lemmas it needs. To use Codex in both roles, add
+        <code>--outer-provider codex --inner-provider codex</code> to both commands.</p>
       </div>
     </div>
 
     <div class="callout">
       <div class="t">Good to know</div>
       <ul>
-        <li><strong>Codex is the default.</strong> The default model is
-          <code>gpt-5.6-sol</code> with high reasoning effort; direct runs may select another
-          backend, compatible model, and effort.</li>
-        <li><strong>Ordinary use is not an evaluation run.</strong> <code>$prove</code> and
-          <code>/prove</code> work directly on your project. Proof stripping and filesystem
-          isolation belong only to controlled research evaluation.</li>
-        <li><strong>EasyCrypt remains the authority.</strong> Compiler suggestions are bounded and
-          state-bound; final success is reported only after independent offline verification.</li>
+        <li><strong>Set the time limits before running.</strong> The example allows two auxiliary
+          lemmas at once, up to two hours per attempt, and twelve hours overall. These limits
+          are not a total spending cap.</li>
+        <li><strong>Read the final result.</strong> A successful project-level run records
+          <code>status: "proved"</code> and <code>final_verification_passed: true</code> in
+          <code>manifest.json</code>. A verified auxiliary lemma alone is not the final theorem.</li>
+        <li><strong>Review the generated changes.</strong> Shannon Prover edits your target
+          during its attempt. Check that the final statements and assumptions express the
+          security claim you intended.</li>
       </ul>
+    </div>
+
+    <div class="lemmausage" id="single-lemma-setup">
+      <h3>Single-lemma proving — Phase III</h3>
+      <p>After the shared installation in steps 1–2, put your EasyCrypt file and local
+      dependencies under <code>projects/</code>, leaving the selected lemma's proof unfinished.
+      Open Codex or Claude Code from the repository root and enter one of these commands
+      inside that agent:</p>
+<pre><code><span class="c"># In Codex</span>
+$prove my_lemma
+
+<span class="c"># In Claude Code</span>
+/prove my_lemma</code></pre>
+      <p>Replace <code>my_lemma</code> with the declaration's name. These commands target that
+      one lemma; they do not launch the Phase II + III project workflow or require
+      <code>interleaved_project.json</code>. The generated proof is written back only after
+      EasyCrypt verification succeeds.</p>
+      <p>See the <a href="https://github.com/SkyShannonProver/shannon-prover#prove-your-first-lemma"
+      rel="noopener">single-lemma proving guide</a> for an example.</p>
     </div>
   </section>
   <section id="explore">
     <h2>See it in use</h2>
     <div class="cards">
-      <a class="card" href="https://github.com/SkyShannonProver/shannon-prover" rel="noopener">
+      <a class="card" href="#single-lemma-setup">
         <div class="ic ic-run"><svg width="17" height="17" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5.2v13.6a.8.8 0 0 0 1.22.68l10.9-6.8a.8.8 0 0 0 0-1.36L9.22 4.52A.8.8 0 0 0 8 5.2z"/></svg></div>
-        <h3>Run the prover <span class="go">›</span></h3>
-        <p>Install Shannon Prover and start a managed EasyCrypt proof from Codex or Claude.</p>
+        <h3>Prove one lemma <span class="go">›</span></h3>
+        <p>Phase III: write the EasyCrypt proof of a lemma you have already stated.</p>
         <ul>
           <li>bring your EasyCrypt project and unfinished lemma</li>
-          <li>submit one proof intent per checked turn</li>
+          <li>try proof steps and inspect the remaining goals</li>
           <li>write back only after offline verification</li>
+        </ul>
+      </a>
+      <a class="card" href="https://github.com/SkyShannonProver/shannon-prover/tree/main/workflow/interleaved" rel="noopener">
+        <div class="ic ic-run"><svg width="17" height="17" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M4 5h6v6H4zM14 13h6v6h-6zM14 5h6v4h-2V7h-4zM4 15h6v4H8v-2H4zM11 7h3v2h-3zM9 11h2v4H9zM11 15h3v2h-3z"/></svg></div>
+        <h3>Start a project proof <span class="go">›</span></h3>
+        <p>Phases II + III: construct the security argument and its EasyCrypt proofs together.</p>
+        <ul>
+          <li>start from your security model and final theorem</li>
+          <li>let Shannon propose games and auxiliary lemmas</li>
+          <li>check the complete development with EasyCrypt</li>
         </ul>
       </a>
       <a class="card" href="./results/">

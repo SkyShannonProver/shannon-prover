@@ -11,6 +11,10 @@ from __future__ import annotations
 import re
 from typing import Any, Optional
 
+from workflow.proof_tool.easycrypt_source_resource import (
+    SOURCE_RESOURCE_MANIFEST_ENV,
+)
+
 from workflow.proof_state_compiler.current_turn_presentation import (
     compose_current_surface_turn,
     render_current_surface_turn_markdown,
@@ -160,6 +164,29 @@ def _scrub_session_cli_from_agent_prompt(prompt: str) -> str:
     return prompt
 
 
+def _source_access_prompt(*, eval_mode: bool) -> str:
+    if not eval_mode:
+        return (
+            "Read the target file on demand for definitions, modules, axioms, "
+            "and sibling lemmas."
+        )
+    import os as _os
+
+    if _os.environ.get(SOURCE_RESOURCE_MANIFEST_ENV, "").strip():
+        return (
+            "Use only the manager-owned source-navigation tools described in "
+            "the runtime contract; provider-native filesystem, shell, and "
+            "generic resource access are disabled. Proof-state interaction "
+            "remains exclusively through `submit_proof_intent`."
+        )
+    return (
+        "The proof-stripped source is backend input, not an agent-facing "
+        "filesystem resource. Do not call shell, filesystem, MCP resource, or "
+        "source-reading tools. Use only the manager-owned proof tool and the "
+        "exact declarations/resource anchors it advertises."
+    )
+
+
 def _build_prover_prompt(
     file_path: str,
     lemma_name: str,
@@ -175,20 +202,21 @@ def _build_prover_prompt(
     session_tag = session_tag or f"prover_{safe_lemma}"
     session_dir = _session_dir_for_tag(session_tag)
 
+    import os as _os
+    eval_mode = _os.environ.get("EVAL_TARGET_LEMMA", "").strip() == lemma_name
+    source_access = _source_access_prompt(eval_mode=eval_mode)
     context_section = f"""
 ## Target Source
 Target file: `{file_path}`
 
-Read the target file on demand for definitions, modules, axioms, and sibling
-lemmas. The initial prompt does not embed source text, lemma-name indexes,
+{source_access} The initial prompt does not embed source text, lemma-name indexes,
 cross-file summaries, research context, or structural diffs.
 """
 
     # Eval mode banner: surfaces the no-retrieval rule inside the prompt itself.
     # The repository policy has the full directive; this is the prompt reminder.
     eval_banner = ""
-    import os as _os
-    if _os.environ.get("EVAL_TARGET_LEMMA", "").strip() == lemma_name:
+    if eval_mode:
         eval_banner = (
             f"[EVAL MODE] Measuring real proof construction, not retrieval: do "
             f"not read cached or prior proof material for `{lemma_name}`. "
@@ -198,7 +226,13 @@ cross-file summaries, research context, or structural diffs.
 
     context_preamble = (
         "The target file path is below. Use the current manager view for proof "
-        "state, and read source text only when a step needs exact declarations."
+        "state."
+        if eval_mode
+        else (
+            "The target file path is below. Use the current manager view for "
+            "proof state, and read source text only when a step needs exact "
+            "declarations."
+        )
     )
 
     managed_session_section = _render_managed_session_handoff(
@@ -225,6 +259,7 @@ def _build_child_prover_prompt(
     layer_move_action: dict | None = None,
     managed_session: dict[str, Any] | None = None,
     surface_profile: str | None = None,
+    outer_proof_handoff: dict[str, Any] | None = None,
 ) -> str:
     """Build a child prompt without a second proof-state presentation path.
 
@@ -234,12 +269,14 @@ def _build_child_prover_prompt(
     """
     session_dir = _session_dir_for_tag(session_tag)
 
+    import os as _os
+    eval_mode = _os.environ.get("EVAL_TARGET_LEMMA", "").strip() == lemma_name
+    source_access = _source_access_prompt(eval_mode=eval_mode)
     context_section = f"""
 ## Target Source
 Target file: `{file_path}`
 
-Read the target file on demand for definitions, modules, axioms, and sibling
-lemmas. The child prompt does not embed source text, lemma-name indexes,
+{source_access} The child prompt does not embed source text, lemma-name indexes,
 cross-file summaries, research context, or structural diffs.
 """
 
@@ -264,13 +301,14 @@ proof state rather than forcing the branch label.
         managed_session,
         surface_profile=surface_profile,
     )
+    outer_handoff_section = _render_outer_proof_handoff(outer_proof_handoff)
 
     prompt = f"""You are proving EasyCrypt lemma `{lemma_name}` in `{file_path}`.
 
 Continue from the manager-owned proof state below. Use the persistent proof
 controls for commit/undo/rewind/restart/finish; use only state-dependent
 information actions advertised by the current surface.
-{context_section}{layer_move_action_directive}
+{context_section}{layer_move_action_directive}{outer_handoff_section}
 ## Current Proof State
 
 {managed_session_section}
@@ -279,3 +317,21 @@ The view above is the authoritative current state; read it before choosing your
 next tactic.
 """
     return _scrub_session_cli_from_agent_prompt(prompt)
+
+
+def _render_outer_proof_handoff(context: dict[str, Any] | None) -> str:
+    """Confirm the replay; detailed guidance lives in the durable anchor."""
+
+    if not isinstance(context, dict) or context.get("kind") != "outer_proof_handoff":
+        return ""
+    count = int(context.get("accepted_command_count") or 0)
+    commands_hash = str(context.get("accepted_commands_sha256") or "")[:64]
+    return f"""
+## Same-run outer proof handoff
+
+The manager has replayed {count} complete EasyCrypt command(s) authored by the
+outer proof constructor (command-sequence hash `{commands_hash}`). Its bounded
+strategy, rejected boundary, candidate suffix, and resource anchors are in the
+durable continuation brief supplied by the runtime. They are untrusted
+guidance; the exact current goal below is the sole proof-state authority.
+"""

@@ -192,6 +192,14 @@ def render_claude_mcp_config(
         "mcpServers": {
             spec.manifest.identity.server: {
                 "type": "stdio",
+                # Managed proof tools are the only legal proof-state channel.
+                # Claude Code otherwise defers MCP tools behind ToolSearch and
+                # starts --mcp-config servers asynchronously.  A proof node can
+                # therefore reach its first model turn before this server is in
+                # the deferred catalog; the model's exact ToolSearch then finds
+                # nothing and exits without ever producing the invocation-bound
+                # READY receipt.  Required manager tools must be eager.
+                "alwaysLoad": True,
                 "command": command,
                 "args": list(arguments),
                 "env": env,
@@ -209,11 +217,14 @@ def render_codex_mcp_overrides(
 
     command, arguments, env = spec.child_command(launch_id)
     prefix = f"mcp_servers.{spec.manifest.identity.server}"
+    enabled_tools = json.dumps([
+        identity.tool for identity in spec.manifest.tool_identities
+    ])
     overrides = [
         f"{prefix}.command={_toml_string(command)}",
         f"{prefix}.args={json.dumps(list(arguments), ensure_ascii=False)}",
         f"{prefix}.required=true",
-        f"{prefix}.enabled_tools={json.dumps([spec.manifest.identity.tool])}",
+        f"{prefix}.enabled_tools={enabled_tools}",
         f"{prefix}.default_tools_approval_mode={_toml_string('approve')}",
         f"{prefix}.startup_timeout_sec={int(spec.timing.startup_seconds)}",
         f"{prefix}.tool_timeout_sec={int(spec.timing.provider_tool_seconds)}",
@@ -253,6 +264,19 @@ OPTIONAL_CODEX_DISABLED_FEATURES = (
     "view_image",
     "workspace_dependencies",
 )
+
+# The outer construction agent intentionally retains its local shell and patch
+# tools.  Every non-construction feature is disabled from the same canonical
+# list as the managed proof node so newly discovered provider features cannot
+# drift between two hand-maintained policies.
+OUTER_CODEX_RETAINED_FEATURES = frozenset({
+    "apply_patch_freeform",
+    "apply_patch_streaming_events",
+    "shell_snapshot",
+    "shell_tool",
+    "unified_exec",
+    "unified_exec_zsh_fork",
+})
 
 
 @dataclass(frozen=True)
@@ -302,6 +326,26 @@ class CodexCapabilities:
                 + "; ".join(pieces)
             )
 
+    def require_outer_construction_agent(self) -> None:
+        required_exec = {
+            "--cd",
+            "--color",
+            "--config",
+            "--disable",
+            "--ephemeral",
+            "--ignore-rules",
+            "--ignore-user-config",
+            "--json",
+            "--sandbox",
+            "--strict-config",
+        }
+        missing_exec = sorted(required_exec - self.exec_options)
+        if missing_exec:
+            raise ProviderCapabilityError(
+                "installed Codex lacks required outer-agent capabilities: "
+                + ", ".join(missing_exec)
+            )
+
     def to_dict(self) -> dict[str, Any]:
         return {
             "binary": self.binary,
@@ -317,12 +361,17 @@ def discover_codex_capabilities(
     binary: str,
     *,
     timeout_seconds: float = 10.0,
+    probe_resume: bool = True,
 ) -> CodexCapabilities:
-    """Probe capabilities instead of binding to an exact Codex version."""
+    """Probe only the Codex surfaces required by the selected runtime roles."""
 
     version = _probe(binary, ("--version",), timeout_seconds).strip()
     exec_help = _probe(binary, ("exec", "--help"), timeout_seconds)
-    resume_help = _probe(binary, ("exec", "resume", "--help"), timeout_seconds)
+    resume_help = (
+        _probe(binary, ("exec", "resume", "--help"), timeout_seconds)
+        if probe_resume
+        else ""
+    )
     features_text = _probe(binary, ("features", "list"), timeout_seconds)
     capabilities = CodexCapabilities(
         binary=binary,
@@ -331,7 +380,6 @@ def discover_codex_capabilities(
         exec_options=frozenset(_option_names(exec_help)),
         resume_options=frozenset(_option_names(resume_help)),
     )
-    capabilities.require_managed_proof_node()
     return capabilities
 
 
@@ -339,6 +387,25 @@ def codex_feature_disable_args(capabilities: CodexCapabilities) -> list[str]:
     args: list[str] = []
     for feature in capabilities.optional_disabled_features:
         args.extend(["--disable", feature])
+    return args
+
+
+def outer_codex_feature_disable_args(
+    capabilities: CodexCapabilities | frozenset[str] | set[str],
+) -> list[str]:
+    args: list[str] = []
+    available = (
+        capabilities.optional_disabled_features
+        if isinstance(capabilities, CodexCapabilities)
+        else tuple(
+            feature
+            for feature in OPTIONAL_CODEX_DISABLED_FEATURES
+            if feature in capabilities
+        )
+    )
+    for feature in available:
+        if feature not in OUTER_CODEX_RETAINED_FEATURES:
+            args.extend(["--disable", feature])
     return args
 
 

@@ -1,8 +1,8 @@
 """Prover agent: prove an EasyCrypt lemma using a managed agent process.
 
 Launches either Claude Code or OpenAI Codex with a task-specific prompt. The
-agent has read-only source-inspection tools, while EasyCrypt proof interaction
-goes through the managed ProofNodeManager intent protocol.
+agent has manager-owned source-navigation tools, while EasyCrypt proof
+interaction goes through the managed ProofNodeManager intent protocol.
 
 Claude Code traces are correlated through ``agent_sessions.jsonl``. Codex runs
 emit their thread id through the same provider-neutral session registry.
@@ -10,6 +10,7 @@ emit their thread id through the same provider-neutral session registry.
 
 from __future__ import annotations
 
+import hashlib
 import json
 import logging
 import os
@@ -31,6 +32,7 @@ from workflow.agents.ec_services import (
 )
 from workflow.agents.prover_writeback import (
     _extract_partial_tactics_from_sessions,
+    _extract_partial_transactions_from_sessions,
     _extract_prover_notes,
     _extract_prover_report,
     _extract_tactics_from_candidate,
@@ -47,13 +49,41 @@ from workflow.proof_management.node_bootstrap import (
 )
 from workflow.node.proof_node_manager import ProofNodeManager
 from workflow.tree.policy import cap_tree_max_concurrent
-from workflow.tree.result import TreeRunResult
+from workflow.tree.result import (
+    TREE_RUN_TERMINATION_WALL_CLOCK_TIMEOUT,
+    TreeRunResult,
+)
 from workflow.agents.prover_prompt import (
     _build_child_prover_prompt,
     _build_prover_prompt,
 )
 
 logger = logging.getLogger("workflow.agents.prover")
+
+
+def _tree_result_infrastructure_errors(tree_result: TreeRunResult) -> list[str]:
+    """Project process-level tree failure into the canonical run boundary."""
+
+    errors = [
+        str(item).strip()
+        for item in tree_result.infrastructure_errors
+        if str(item).strip()
+    ]
+    # The supervisor enforces its wall-clock budget by terminating active
+    # workers.  Their signal return code is expected search control, not a
+    # worker crash; the typed termination reason distinguishes the two.
+    if (
+        tree_result.returncode != 0
+        and tree_result.termination_reason
+        != TREE_RUN_TERMINATION_WALL_CLOCK_TIMEOUT
+    ):
+        message = (
+            "selected proof worker exited nonzero "
+            f"(code {tree_result.returncode})"
+        )
+        if message not in errors:
+            errors.append(message)
+    return errors
 
 
 def _prepare_run_ec_daemon_socket(run_dir: Path) -> tuple[str, bool]:
@@ -452,6 +482,7 @@ def run(
     eval_mode: Optional[bool] = None,
     surface_profile: str | None = None,
     resume_capsules: Optional[list[str]] = None,
+    outer_proof_handoff: str = "",
 ):
     """Run the prover as a managed Claude Code or OpenAI Codex agent.
 
@@ -573,6 +604,55 @@ def run(
 
     # If precheck == "has_admit", normal flow — go prove it.
     resume_capsules = list(resume_capsules or [])
+    loaded_outer_handoff = None
+    if outer_proof_handoff:
+        if resume_capsules:
+            raise ValueError(
+                "outer proof handoff and resume capsules are mutually exclusive"
+            )
+        from workflow.node.outer_proof_handoff import load_outer_proof_handoff
+
+        loaded_outer_handoff = load_outer_proof_handoff(outer_proof_handoff)
+        handoff_outer_root = (
+            _PROJECT_ROOT / loaded_outer_handoff.outer_run_dir
+        ).resolve()
+        handoff_manifest = loaded_outer_handoff.path.resolve()
+        resolved_run_dir = Path(run_dir).resolve()
+        if (
+            not handoff_manifest.is_relative_to(handoff_outer_root)
+            or not resolved_run_dir.is_relative_to(handoff_outer_root)
+        ):
+            raise ValueError(
+                "outer proof handoff is not invocation-bound to this experiment run"
+            )
+        if loaded_outer_handoff.target_file != file_path:
+            raise ValueError(
+                "outer proof handoff target file mismatch: "
+                f"{loaded_outer_handoff.target_file} != {file_path}"
+            )
+        if loaded_outer_handoff.lemma != lemma_name:
+            raise ValueError(
+                "outer proof handoff lemma mismatch: "
+                f"{loaded_outer_handoff.lemma} != {lemma_name}"
+            )
+        try:
+            current_commit = subprocess.check_output(
+                ["git", "rev-parse", "HEAD"],
+                cwd=str(_PROJECT_ROOT),
+                text=True,
+                stderr=subprocess.DEVNULL,
+            ).strip()
+        except Exception:
+            current_commit = ""
+        if (
+            loaded_outer_handoff.source_commit
+            and current_commit
+            and loaded_outer_handoff.source_commit != current_commit
+        ):
+            raise ValueError(
+                "outer proof handoff commit mismatch: "
+                f"{loaded_outer_handoff.source_commit} != {current_commit}"
+            )
     loaded_resume_capsules = []
     if resume_capsules:
         from workflow.node.proof_node_resume import load_resume_capsules
@@ -605,6 +685,17 @@ def run(
             f"Proof-node resume mode: {len(loaded_resume_capsules)} "
             f"resume capsule(s), root policy={resume_root_policy}. "
             "Results are not from-scratch eval.",
+            "\033[35m",
+        )
+    elif loaded_outer_handoff is not None:
+        tree_initial_provers = 1
+        tree_max_concurrent = max(1, tree_max_concurrent)
+        pstatus(
+            "Prover",
+            "Same-experiment outer proof handoff: manager will replay "
+            f"{len(loaded_outer_handoff.replay_commands)} certified command(s) "
+            "and verify the recorded boundary before launching the selected "
+            "proof-node agent.",
             "\033[35m",
         )
 
@@ -642,7 +733,10 @@ def run(
 
     if mode == "tree":
         # --- Tree mode: recursive branch-and-explore ---
-        from workflow.tree.supervisor import run_tree_prover
+        from workflow.tree.supervisor import (
+            MANAGED_LIVE_PROGRESS_FILENAME,
+            run_tree_prover,
+        )
         resume_initial_branches = []
         if loaded_resume_capsules:
             try:
@@ -745,9 +839,38 @@ def run(
                         "family": ckpt.route_family,
                     } if ckpt.route_family else {},
                 })
+        elif loaded_outer_handoff is not None:
+            resume_initial_branches.append({
+                "replay_prefix": list(loaded_outer_handoff.replay_commands),
+                "resume_context": {
+                    "resume_prefix_count": len(loaded_outer_handoff.replay_commands),
+                    "outer_proof_handoff": loaded_outer_handoff.manager_context(),
+                },
+                "negative_signal": [],
+                "parent_goal_state": loaded_outer_handoff.current_goal_preview,
+                "expected_goal_hash": loaded_outer_handoff.boundary_goal_hash,
+                "goal_identity_required": loaded_outer_handoff.goal_identity_required,
+                "capsule_path": str(loaded_outer_handoff.path),
+                "capsule_score": 0.0,
+                "resume_root_policy": "same_run_outer_handoff",
+                "resume_diversity": {},
+                "route_family": {},
+            })
 
         def _build_tree_cmd(session_tag, node_id, replay_prefix, negative_signal,
                             layer_move_action=None, resume_context=None):
+            resolved_resume_context = (
+                dict(resume_context) if isinstance(resume_context, dict) else {}
+            )
+            outer_context = resolved_resume_context.get("outer_proof_handoff")
+            if isinstance(outer_context, dict):
+                from workflow.node.continuation_brief import (
+                    continuation_brief_from_outer_handoff,
+                )
+
+                resolved_resume_context["continuation_brief"] = (
+                    continuation_brief_from_outer_handoff(outer_context)
+                )
             managed_session = _prepare_managed_session(
                 file_path=file_path,
                 lemma_name=lemma_name,
@@ -757,17 +880,49 @@ def run(
                 run_dir=run_dir,
                 node_label=f"Tree-{node_id}",
                 surface_profile=surface_profile,
-                resume_context=(
-                    resume_context if isinstance(resume_context, dict) else None
-                ),
+                resume_context=resolved_resume_context or None,
             )
-            if replay_prefix:
+            if isinstance(outer_context, dict):
+                from workflow.node.outer_proof_handoff import (
+                    proof_command_sequence_sha256,
+                )
+
+                status = managed_session.get("workspace_view", {}).get(
+                    "proof_status", {}
+                )
+                actual_hash = str(status.get("goal_hash") or "")
+                expected_hash = str(outer_context.get("boundary_goal_hash") or "")
+                actual_prefix = list(managed_session.get("replay_prefix") or [])
+                actual_spine_hash = proof_command_sequence_sha256(actual_prefix)
+                expected_spine_hash = str(
+                    outer_context.get("committed_spine_sha256") or ""
+                )
+                if actual_spine_hash != expected_spine_hash:
+                    raise RuntimeError(
+                        "outer proof handoff replay changed the committed proof spine"
+                    )
+                if actual_hash != expected_hash:
+                    raise RuntimeError(
+                        "outer proof handoff goal identity drifted after replay: "
+                        f"{actual_hash or '<missing>'} != {expected_hash or '<missing>'}"
+                    )
+                # This is manager-owned durable construction context, not a
+                # proof-state claim. The runtime validates and repeats it in
+                # every followup/system anchor so context compaction cannot
+                # silently erase an explicitly handed-over declaration.
+            continuation_brief = managed_session.get("continuation_brief")
+            if isinstance(continuation_brief, dict):
+                managed_session["resource_anchors"] = list(
+                    continuation_brief.get("resource_anchors") or []
+                )
+            if replay_prefix or isinstance(outer_context, dict):
                 prompt = _build_child_prover_prompt(
                     file_path, lemma_name, include_dir,
                     session_tag,
                     layer_move_action=layer_move_action,
                     managed_session=managed_session,
                     surface_profile=surface_profile,
+                    outer_proof_handoff=outer_context,
                 )
             else:
                 prompt = _build_prover_prompt(
@@ -849,6 +1004,7 @@ def run(
                 initial_branches=resume_initial_branches or None,
                 payload_audit_path=run_dir / "payload_audit.jsonl",
                 session_namespace=run_session_namespace,
+                live_progress_path=run_dir / MANAGED_LIVE_PROGRESS_FILENAME,
             )
         except Exception as exc:  # terminal owner records infrastructure failure
             logger.exception("Tree search failed before producing a typed result")
@@ -905,6 +1061,10 @@ def run(
         pstatus("Prover",
                 f"Archived {len(archived_ec_sessions)} EC session dir(s) "
                 f"to {run_dir / 'ec_sessions'}")
+    # Parse the agent's bounded public handback before minting continuation
+    # capsules so a resumed job keeps concrete blockers/discoveries alongside
+    # the manager-owned accepted prefix.
+    prover_report = _extract_prover_report(output_text)
     resume_capsules: list[str] = []
     if mode == "tree" and archived_ec_sessions:
         try:
@@ -917,6 +1077,10 @@ def run(
                 target_file=file_path,
                 lemma=lemma_name,
                 include_dir=include_dir,
+                agent_report=prover_report,
+                agent_report_session_name=(
+                    Path(ec_session_dir).name if ec_session_dir else ""
+                ),
             )
             if resume_capsules:
                 pstatus(
@@ -929,7 +1093,7 @@ def run(
     # --- Extract tactics, notes, and structured report from output ---
     run_status = PROVER_RUN_INCOMPLETE
     verification: dict[str, Any] = {}
-    infrastructure_errors = list(tree_result.infrastructure_errors)
+    infrastructure_errors = _tree_result_infrastructure_errors(tree_result)
     if tree_result.destructive_abort:
         reason = tree_result.destructive_reason or (
             "unknown session hygiene violation"
@@ -942,20 +1106,21 @@ def run(
     event_contract_gate = None
     tactics = (
         []
-        if tree_result.destructive_abort
+        if tree_result.destructive_abort or infrastructure_errors
         else _extract_tactics_from_candidate(completion_candidate)
     )
     notes = _extract_prover_notes(output_text)
-    prover_report = _extract_prover_report(output_text)
     if notes:
         (run_dir / "prover_notes.txt").write_text(notes, encoding="utf-8")
         logger.info("Prover notes: %d chars", len(notes))
     if prover_report:
         (run_dir / "prover_report.json").write_text(
             json.dumps(prover_report, indent=2), encoding="utf-8")
-        n_sugg = len(prover_report.get("suggestions", []))
-        logger.info("Prover report: %d suggestions, %d discoveries",
-                     n_sugg, len(prover_report.get("discoveries", [])))
+        logger.info(
+            "Prover report: %d blocker(s), %d discovery item(s)",
+            len(prover_report.get("blockers", [])),
+            len(prover_report.get("discoveries", [])),
+        )
 
     if tactics:
         pstatus("Prover", f"Extracted {len(tactics)} tactics. Writing proof to file...")
@@ -1006,19 +1171,87 @@ def run(
             session_dirs=archived_ec_sessions,
             resume_capsules=resume_capsules,
         )
-        if partial_tactics:
-            (run_dir / "partial_proof_prefix.ec").write_text(
-                "\n".join(partial_tactics) + "\n",
-                encoding="utf-8",
+        partial_transactions = _extract_partial_transactions_from_sessions(
+            session_dirs=archived_ec_sessions,
+            committed_prefix=partial_tactics,
+            resume_capsules=resume_capsules,
+        )
+        # One synchronous terminal boundary owns timeout, outer interruption,
+        # and ordinary worker exit.  It preserves the exact accepted reporting
+        # prefix and reuses the newest compatible checkpoint minted at a prior
+        # completed manager turn.  Cold replay belongs only to a later explicit
+        # resume; terminal handback never re-executes the proof spine.
+        try:
+            from workflow.node.safe_stop_finalizer import (
+                finalize_safe_stop_checkpoint,
             )
+
+            stop_finalization = finalize_safe_stop_checkpoint(
+                project_root=_PROJECT_ROOT,
+                run_dir=run_dir,
+                target_file=file_path,
+                lemma=lemma_name,
+                include_dir=include_dir,
+                committed_prefix=partial_tactics,
+                committed_transactions=partial_transactions or None,
+                existing_capsules=resume_capsules,
+                surface_profile=surface_profile,
+                agent_report=prover_report,
+                trigger=(
+                    tree_result.termination_reason
+                    or (
+                        "outer_interrupt"
+                        if any(
+                            "tree search interrupted" in item
+                            for item in infrastructure_errors
+                        )
+                        else "worker_process_exit"
+                    )
+                ),
+            )
+        except Exception as exc:
+            from workflow.node.safe_stop_finalizer import SafeStopFinalization
+
+            stop_finalization = SafeStopFinalization(
+                completed=False,
+                method="finalizer_failed",
+                tactic_count=len(partial_tactics),
+                error=f"{type(exc).__name__}: {exc}",
+            )
+        if stop_finalization.completed:
+            for capsule_path in stop_finalization.capsule_paths:
+                if capsule_path not in resume_capsules:
+                    resume_capsules.append(capsule_path)
+            pstatus(
+                "Prover",
+                "Safe-stop checkpoint finalized via "
+                f"{stop_finalization.method} "
+                f"({stop_finalization.tactic_count} tactic(s)).",
+            )
+        else:
+            message = (
+                "safe-stop checkpoint finalization failed: "
+                + (stop_finalization.error or stop_finalization.method)
+            )
+            if message not in infrastructure_errors:
+                infrastructure_errors.append(message)
+            run_status = PROVER_RUN_INFRASTRUCTURE_INVALID
+        if partial_tactics:
+            partial_text = "\n".join(partial_tactics) + "\n"
+            partial_bytes = partial_text.encode("utf-8")
+            (run_dir / "partial_proof_prefix.ec").write_bytes(partial_bytes)
             (run_dir / "partial_proof_prefix.json").write_text(
                 json.dumps(
                     {
                         "kind": "partial_proof_prefix",
+                        "schema_version": 2,
                         "lemma": lemma_name,
                         "closed_by_qed": False,
                         "tactic_count": len(partial_tactics),
+                        "byte_count": len(partial_bytes),
+                        "sha256": hashlib.sha256(partial_bytes).hexdigest(),
                         "source": "manager_session_history_or_resume_capsule",
+                        "replay_required_before_use": True,
                     },
                     indent=2,
                     sort_keys=True,
@@ -1112,14 +1345,3 @@ def run(
 # ---------------------------------------------------------------------------
 # EC file verification
 # ---------------------------------------------------------------------------
-
-
-
-
-
-
-
-
-
-
-

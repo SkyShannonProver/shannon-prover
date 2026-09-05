@@ -12,10 +12,14 @@ import hashlib
 import json
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any
+from typing import Any, Literal
 
 from core.easycrypt.committed_history import history_path
 from workflow.tree.session_observer import WorkflowSessionSnapshot
+
+
+TREE_RUN_TERMINATION_WALL_CLOCK_TIMEOUT = "wall_clock_timeout"
+TreeRunTerminationReason = Literal["", "wall_clock_timeout"]
 
 
 def _sha256_file(path: Path) -> str:
@@ -136,6 +140,12 @@ class TreeRunResult:
     destructive_abort: bool = False
     destructive_reason: str = ""
     infrastructure_errors: tuple[str, ...] = field(default_factory=tuple)
+    termination_reason: TreeRunTerminationReason = ""
 
 
-__all__ = ["SessionClosureCandidate", "TreeRunResult"]
+__all__ = [
+    "SessionClosureCandidate",
+    "TREE_RUN_TERMINATION_WALL_CLOCK_TIMEOUT",
+    "TreeRunResult",
+    "TreeRunTerminationReason",
+]
