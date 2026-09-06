@@ -12,6 +12,8 @@
     --purp:#3c3489; --purpbg:#eeedfe;
     --mono:ui-monospace,SFMono-Regular,Menlo,monospace;
     --sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    --arrow-stroke:1.5px;
+    --arrow-icon:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 18 18'%3E%3Cpath d='M3 9h12M10 4l5 5-5 5' fill='none' stroke='black' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
   }
   @media(prefers-color-scheme:dark){:root{
     --bg:#1a1916;--surface:#242320;--ink:#ece9e2;--muted:#a8a399;--hint:#6f6b62;
@@ -22,6 +24,11 @@
   html{scroll-behavior:smooth}
   body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);font-size:14px;line-height:1.6}
   a{color:var(--info);text-decoration:none}
+  .arrow,.phase+.phase::before,.flowgate::before{
+    display:inline-block;width:18px;height:18px;flex:none;background:currentColor;
+    -webkit-mask:var(--arrow-icon) center/contain no-repeat;mask:var(--arrow-icon) center/contain no-repeat;
+  }
+  .arrow{vertical-align:-4px;margin-left:4px}
   .top{display:flex;align-items:center;gap:14px;padding:12px 22px;border-bottom:.5px solid var(--line);position:sticky;top:0;background:var(--bg);z-index:5;flex-wrap:wrap}
   .top .brand{font-size:16px;font-weight:600;color:var(--ink)}
   .top nav{margin-left:auto;display:flex;gap:4px;flex-wrap:wrap;align-items:center}
@@ -48,34 +55,57 @@
   /* phases */
   .phases{display:grid;grid-template-columns:repeat(3,1fr);gap:26px}
   .phase{border:.5px solid var(--line);background:var(--surface);border-radius:12px;padding:14px 16px;position:relative;min-width:0}
-  .phase+.phase::before{content:"→";position:absolute;left:-22px;top:50%;transform:translateY(-50%);color:var(--hint);font-size:16px}
-  .phase .who{font-size:10.5px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px;display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+  .phase+.phase::before{content:"";position:absolute;left:-23px;top:50%;transform:translateY(-50%);color:var(--hint)}
+  .phase .who{font-size:10.5px;font-weight:600;letter-spacing:.02em;margin-bottom:8px;display:flex;gap:6px;align-items:center;flex-wrap:wrap}
   .phase .who.expert{color:var(--hint)} .phase .who.us{color:var(--info)}
   .phase .t{font-weight:600;font-size:13.5px;margin-bottom:4px}
   .phase .b{font-size:12.5px;color:var(--muted)}
   .phase .eg{margin-top:8px;font-family:var(--mono);font-size:10.5px;color:var(--hint);line-height:1.6;overflow-wrap:anywhere}
-  .phase.hot{border-color:var(--info);box-shadow:0 0 0 1px var(--info) inset}
+  .phase.hot{border-color:var(--line2)}
+  .phase:nth-child(2) .who.us{color:var(--purp)}
+  .phase .pill{background:var(--okbg);color:var(--ok);font-weight:400;letter-spacing:0}
   @media(max-width:820px){.phases{grid-template-columns:1fr}
-    .phase+.phase::before{content:"↓";left:50%;top:-23px;transform:translateX(-50%)}}
+    .phase+.phase::before{left:50%;top:-23px;transform:translateX(-50%) rotate(90deg)}}
   /* interleaved runner */
-  .interleave{display:grid;grid-template-columns:repeat(4,1fr);gap:24px;margin-top:18px}
-  .ilayer{position:relative;border:.5px solid var(--line);background:var(--surface);border-radius:12px;padding:14px;min-width:0}
-  .ilayer+.ilayer::before{content:"→";position:absolute;left:-19px;top:50%;transform:translateY(-50%);color:var(--hint);font-size:15px}
-  .ilayer .n{color:var(--hint);font:10px var(--mono);letter-spacing:.05em;text-transform:uppercase;margin-bottom:5px}
-  .ilayer .t{font-size:13px;font-weight:600;margin-bottom:5px}
-  .ilayer .b{font-size:12px;color:var(--muted);line-height:1.55}
-  .ilayer.inner{border-color:var(--info);box-shadow:0 0 0 1px var(--info) inset}
-  .runnernote{margin:14px 0 0;color:var(--muted);font-size:12.5px}
-  @media(max-width:820px){.interleave{grid-template-columns:1fr}
-    .ilayer+.ilayer::before{content:"↓";left:50%;top:-23px;transform:translateX(-50%)}}
+  #interleaved{scroll-margin-top:85px}
+  .interleave{margin:18px 0 0}
+  .ilayer{border:.5px solid var(--line);background:var(--surface);border-radius:12px;padding:16px 18px;min-width:0}
+  .ilayer .n{display:inline-block;color:var(--info);background:var(--infobg);font-size:11px;font-weight:500;line-height:1.5;padding:2px 7px;border-radius:6px;margin-bottom:9px}
+  .ilayer .t{font-size:15px;font-weight:600;margin:0 0 6px;line-height:1.4}
+  .ilayer .b{font-size:13px;color:var(--muted);line-height:1.6;margin:0}
+  .ilayer.coordinator .n{color:var(--purp);background:var(--purpbg)}
+  .proofcycle{border:.5px solid var(--line);border-radius:14px;padding:16px;background:var(--surface)}
+  .cyclelabel{font-size:12px;font-weight:500;color:var(--muted);margin:0 0 12px}
+  .cyclebody{display:grid;grid-template-columns:minmax(0,1fr) 140px minmax(0,1fr);align-items:stretch}
+  .cyclebridge{display:flex;flex-direction:column;justify-content:center;gap:28px;padding:0 10px}
+  .cyclearrow{position:relative;padding-bottom:12px;text-align:center;font-size:11px;line-height:1.4;color:var(--muted)}
+  .cyclearrow::before{content:"";position:absolute;left:0;right:0;bottom:4px;border-top:var(--arrow-stroke) solid currentColor}
+  .cyclearrow::after{content:"";position:absolute;bottom:1px;width:7px;height:7px;border-top:var(--arrow-stroke) solid currentColor;border-right:var(--arrow-stroke) solid currentColor}
+  .cyclearrow.result::after{right:1px;transform:rotate(45deg)}
+  .cyclearrow.task{color:var(--muted)}
+  .cyclearrow.task::after{left:1px;transform:rotate(-135deg)}
+  .flowgate{display:flex;align-items:center;justify-content:center;gap:9px;padding:10px 0;font-size:12px;color:var(--muted)}
+  .flowgate::before{content:"";transform:rotate(90deg);color:var(--hint)}
+  .ilayer.finalcheck{border-color:var(--line2);display:grid;grid-template-columns:160px minmax(0,1fr);gap:18px;align-items:center}
+  .ilayer.finalcheck .n{color:var(--ok);background:var(--okbg)}
+  .ilayer.finalcheck .t{margin-bottom:0}
+  .cyclecaption{font-size:12px;color:var(--muted);margin:10px 0 0}
+  @media(max-width:680px){
+    .proofcycle{padding:12px}.cyclebody{grid-template-columns:minmax(0,1fr)}
+    .cyclebridge{flex-direction:row;gap:20px;padding:10px 0;justify-content:center}
+    .cyclearrow{display:flex;align-items:center;gap:6px;padding:0;max-width:46%}
+    .cyclearrow::before{position:static;border:0;content:"";width:18px;height:18px;flex:none;background:currentColor;-webkit-mask:var(--arrow-icon) center/contain no-repeat;mask:var(--arrow-icon) center/contain no-repeat;transform:rotate(90deg)}
+    .cyclearrow.task::before{transform:rotate(-90deg)}.cyclearrow::after{display:none}
+    .ilayer.finalcheck{grid-template-columns:minmax(0,1fr);gap:8px}
+  }
   /* proof session */
   .ecsample{border:.5px solid var(--line2);border-radius:12px;background:var(--surface);overflow:hidden}
   .echead{display:flex;flex-wrap:wrap;justify-content:space-between;gap:4px 12px;padding:9px 13px;border-bottom:.5px solid var(--line);font:12px var(--mono);color:var(--muted);overflow-wrap:anywhere}
   .echead .dim{font-family:var(--sans);color:var(--hint)}
   .eclemma,.ecproof{display:grid;grid-template-columns:66px minmax(0,1fr)}
-  .eclemma{border-bottom:.5px solid var(--line);background:var(--infobg)}
+  .eclemma{border-bottom:.5px solid var(--line);background:var(--surface)}
   .ecmark{padding:14px 0 0 14px;font:10.5px var(--mono);font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:var(--hint)}
-  .eclemma .ecmark{color:var(--info)}
+  .eclemma .ecmark{color:var(--info);background:var(--infobg)}
   .eclemma pre{min-width:0;margin:0;border:0;border-radius:0;padding:12px 16px;background:transparent;font-size:12px;line-height:1.7;white-space:pre-wrap;overflow-wrap:anywhere;overflow:visible}
   .eclemma pre code,.proofcode code{font:inherit}
   .proofcanvas{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);align-items:start;gap:16px;min-width:0;padding:16px;border-left:.5px solid var(--line)}
@@ -106,33 +136,35 @@
   .intentrow .kind{color:var(--ink);font-weight:600}
   .intentrow code{font-size:10.5px}
   .mcprole{min-height:190px;border:.5px solid var(--line2);border-radius:13px;background:var(--surface);padding:16px 15px}
-  .mcprole.manager{border-color:#ddd0c8;background:#fffaf7}
+  .mcprole.manager{border-color:var(--line2);background:var(--surface)}
   .roleicon{width:34px;height:34px;margin-bottom:14px;border-radius:10px;display:flex;align-items:center;justify-content:center;background:var(--infobg);color:var(--info);font:600 16px var(--mono)}
-  .manager .roleicon{background:#fcf4ef;color:#9a6b58}
+  .manager .roleicon{background:var(--purpbg);color:var(--purp)}
   .easycrypt .roleicon{background:var(--okbg);color:var(--ok)}
-  .rolekind{margin-bottom:4px;color:var(--hint);font:10px var(--mono);letter-spacing:.05em;text-transform:uppercase}
+  .rolekind{margin-bottom:4px;color:var(--hint);font-size:11px;font-weight:500}
   .mcprole h3{margin:0 0 8px;font-size:15px;font-weight:600}
   .mcprole p{margin:0;color:var(--muted);font-size:12px;line-height:1.55}
   .mcpbridge{display:flex;flex-direction:column;align-self:center;gap:26px}
-  .flow{position:relative;height:25px;text-align:center;color:var(--hint);font:9px var(--mono);white-space:nowrap}
+  .flow{position:relative;height:25px;text-align:center;color:var(--muted);font:11px/1.4 var(--sans);white-space:nowrap}
   .flow span{position:relative;z-index:1;padding:0 4px;background:var(--bg)}
-  .flow::before{content:"";position:absolute;left:0;right:0;bottom:5px;border-top:.5px solid var(--line2)}
-  .flow::after{content:"";position:absolute;bottom:2px;border-top:3.5px solid transparent;border-bottom:3.5px solid transparent}
-  .flow.forward::after{right:-1px;border-left:6px solid var(--hint)}
-  .flow.back::after{left:-1px;border-right:6px solid var(--hint)}
+  .flow::before{content:"";position:absolute;left:0;right:0;bottom:5px;border-top:var(--arrow-stroke) solid currentColor}
+  .flow::after{content:"";position:absolute;bottom:2px;width:7px;height:7px;border-top:var(--arrow-stroke) solid currentColor;border-right:var(--arrow-stroke) solid currentColor}
+  .flow.forward::after{right:1px;transform:rotate(45deg)}
+  .flow.back::after{left:1px;transform:rotate(-135deg)}
   @media(max-width:760px){
-    .mcpmap{grid-template-columns:1fr}.mcprole{min-height:auto}.mcpbridge{gap:4px;padding:8px 0}.flow{width:auto;height:auto}.flow::before,.flow::after{display:none}.flow.forward span::before{content:"↓ "}.flow.back span::before{content:"↑ "}
+    .mcpmap{grid-template-columns:1fr}.mcprole{min-height:auto}.mcpbridge{gap:4px;padding:8px 0}.flow{width:auto;height:auto}.flow::before,.flow::after{display:none}
+    .flow span::before{content:"";display:inline-block;width:18px;height:18px;margin-right:4px;vertical-align:middle;background:currentColor;-webkit-mask:var(--arrow-icon) center/contain no-repeat;mask:var(--arrow-icon) center/contain no-repeat}
+    .flow.forward span::before{transform:rotate(90deg)}.flow.back span::before{transform:rotate(-90deg)}
     .intentrow{grid-template-columns:1fr;gap:3px}
   }
 
   /* steps */
   .runoptions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;margin:16px 0 22px}
-  .runoption{border:.5px solid var(--line);border-radius:10px;padding:14px 16px;background:var(--surface);min-width:0}
-  .runoption.primary{border-color:var(--info)}
+  .runoption{display:flex;flex-direction:column;border:.5px solid var(--line);border-radius:10px;padding:14px 16px;background:var(--surface);min-width:0}
+  .runoption.primary{border-color:var(--line2)}
   .runoption .phase-label{font-size:11px;font-weight:600;color:var(--info)}
   .runoption h3,.lemmausage h3{font-size:15px;margin:4px 0 8px}
   .runoption p,.lemmausage p{font-size:13px;color:var(--muted);margin:0 0 8px}
-  .runoption a{font-size:13px;font-weight:600}
+  .runoption a{font-size:13px;font-weight:600;margin-top:auto;align-self:flex-start}
   .lemmausage{margin-top:24px;padding-top:18px;border-top:.5px solid var(--line);scroll-margin-top:110px}
   #install,#security-proof-setup{scroll-margin-top:110px}
   @media(max-width:680px){.runoptions{grid-template-columns:1fr}}
@@ -141,8 +173,8 @@
   .stepblk::before{counter-increment:s;content:counter(s);position:absolute;left:0;top:1px;width:26px;height:26px;border-radius:50%;background:var(--infobg);color:var(--info);font-weight:600;font-size:13px;display:flex;align-items:center;justify-content:center}
   .stepblk h3{font-size:14px;font-weight:600;margin:2px 0 6px}
   .stepblk p{color:var(--muted);font-size:13px;margin:0 0 8px}
-  .callout{border:.5px solid var(--line);border-left:3px solid var(--warn);background:var(--surface);border-radius:10px;padding:12px 16px;margin:18px 0 0}
-  .callout .t{font-weight:600;font-size:13px;margin-bottom:6px;color:var(--warn)}
+  .callout{border:.5px solid var(--line);background:var(--surface);border-radius:10px;padding:12px 16px;margin:18px 0 0}
+  .callout .t{display:inline-block;background:var(--warnbg);color:var(--warn);font-weight:500;font-size:12px;padding:2px 7px;border-radius:6px;margin-bottom:6px}
   .callout ul{margin:0;padding-left:18px}
   .callout li{font-size:13px;color:var(--muted);margin:4px 0}
 
@@ -164,6 +196,8 @@
   .foot{margin-top:64px;padding-top:18px;border-top:.5px solid var(--line);display:flex;gap:18px;flex-wrap:wrap;font-size:12px;color:var(--hint)}
   .foot a{color:var(--hint);text-decoration:underline;text-decoration-color:var(--line2)}
   .foot a:hover{color:var(--info)}
+  a:focus-visible{outline:2px solid var(--info);outline-offset:4px}
+  @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
 </style>
 
 <div class="top">
@@ -218,36 +252,51 @@
 
   <section id="interleaved">
     <h2>How Shannon Prover builds a security proof</h2>
-    <p class="seclead">A proof rarely develops in a straight line. Shannon may propose a game hop,
-    try to prove the required equivalence, and discover that an auxiliary lemma needs a stronger
-    invariant. It can revise that lemma and return to the overall argument. This feedback between
-    designing the argument and proving its steps is what we mean by <em>interleaved</em>.</p>
-    <div class="interleave">
-      <div class="ilayer">
-        <div class="n">Build the argument</div>
-        <div class="t">Choose games and lemmas</div>
-        <div class="b">One agent develops the overall proof and identifies the intermediate claims it needs.</div>
+    <p class="seclead">A coordinator agent develops the security argument and delegates proof tasks
+    to other agents within Shannon Prover, called <em>inner agents</em>. An inner agent returns
+    either a checked proof or feedback about what remains unresolved. The coordinator uses those
+    results to refine the argument and assign further tasks.</p>
+    <figure class="interleave" aria-label="Coordinator and inner agents alternate between proving tasks and learning from feedback, followed by a complete EasyCrypt check.">
+      <div class="ilayer coordinator">
+        <div class="n">Coordinator agent</div>
+        <h3 class="t">Build the argument and delegate tasks</h3>
+        <p class="b">Choose intermediate games and lemmas, and delegate proof tasks at different
+        levels of detail to the inner agents.</p>
       </div>
-      <div class="ilayer">
-        <div class="n">Prove the steps</div>
-        <div class="t">Write EasyCrypt proofs</div>
-        <div class="b">It works directly and can ask other agents to prove selected auxiliary lemmas.</div>
+      <div class="flowgate">Assign the initial tasks</div>
+      <div class="proofcycle">
+        <p class="cyclelabel">Proving and feedback — repeat as needed</p>
+        <div class="cyclebody">
+          <div class="ilayer">
+            <div class="n">Inner agents · Prove the task</div>
+            <h3 class="t">Attempt the assigned proof</h3>
+            <p class="b">Work on the assigned task in EasyCrypt. Return a checked proof, or
+            feedback explaining the remaining obstacles, to the coordinator.</p>
+          </div>
+          <div class="cyclebridge" aria-label="Proof or feedback goes to the coordinator; a revised task returns to the inner agents.">
+            <div class="cyclearrow result">Proof or feedback</div>
+            <div class="cyclearrow task">Revised task</div>
+          </div>
+          <div class="ilayer coordinator">
+            <div class="n">Coordinator · Learn from the attempt</div>
+            <h3 class="t">Refine the argument</h3>
+            <p class="b">Incorporate proved results, use feedback to revise games or auxiliary
+            lemmas, and delegate the next tasks.</p>
+          </div>
+        </div>
+        <p class="cyclecaption">For example, feedback from a game-hop proof may prompt a stronger
+        auxiliary lemma and a new proof attempt. This exchange is what we mean by <em>interleaved</em>.</p>
       </div>
-      <div class="ilayer inner">
-        <div class="n">Learn from the attempt</div>
-        <div class="t">Revise the argument</div>
-        <div class="b">Checked steps and remaining goals inform the next proof attempt or a revised decomposition.</div>
+      <div class="flowgate">Once the complete argument is assembled</div>
+      <div class="ilayer finalcheck">
+        <div>
+          <div class="n">Final verification</div>
+          <h3 class="t">Check the whole proof</h3>
+        </div>
+        <p class="b">EasyCrypt checks the complete development from start to finish, including
+        the final theorem.</p>
       </div>
-      <div class="ilayer">
-        <div class="n">Check the result</div>
-        <div class="t">Verify the complete file</div>
-        <div class="b">EasyCrypt checks the assembled development; unfinished proofs do not count as success.</div>
-      </div>
-    </div>
-    <p class="runnernote">Shannon is a research prototype: an attempt may finish with a checked proof,
-    partial work, or no proof within the time limit. Review that the generated statements and
-    assumptions match your intended security claim. The generic checker does not freeze those
-    inputs; the supplied ChaChaPoly example adds checks that preserve its fixed problem.</p>
+    </figure>
     <p>Follow the <a href="https://github.com/SkyShannonProver/shannon-prover/blob/main/workflow/interleaved/README.md"
     rel="noopener">project-level proving guide</a> to prepare a project and interpret the results.
     The proof browser below shows individual lemma attempts, not a complete interleaved run.</p>
@@ -274,8 +323,8 @@
           <div class="proofgoals">
           <div class="goalcallout first">
             <div class="goalhead"><span class="stepbadge" aria-label="Step 1">1</span><span>After <code>byequiv=&gt; //=.</code></span></div>
-            <div class="goalbody"><code>pre = (glob A){2} = (glob A){m} /\ (glob A){1} = (glob A){m}
-INDR_CPA_direct(<wbr>CBC_Oracle(<wbr>DoubleQuery(Sample)),<wbr> A).main
+            <div class="goalbody"><code>pre = …
+INDR_CPA_direct(…, A).main
 ~ INDR_CPA_direct(Compute, A).main
 post = DoubleQuery.bad{1} = Compute.bad{2}</code></div>
           </div>
@@ -288,19 +337,21 @@ post = DoubleQuery.bad{1} = Compute.bad{2}</code></div>
       </div>
     </div>
     <p class="ecnote">The proof is shown exactly from <code>proof.</code> to <code>qed.</code>.
-    The numbered highlights match the EasyCrypt goals shown after those steps. Long lines wrap to fit.</p>
+    The numbered highlights match the EasyCrypt goals shown after those steps.
+    In the first goal, … abbreviates the precondition and a module argument for readability.</p>
   </section>
 
   <section id="mcp">
-    <h2>How the LLM interacts with EasyCrypt</h2>
-    <p class="mcpintro">For each lemma, the agent sees what EasyCrypt still needs to prove,
+    <h2>How an inner agent interacts with EasyCrypt</h2>
+    <p class="mcpintro">Each inner agent works on a proof task assigned by the coordinator,
+    using the interface below to interact with EasyCrypt. For each lemma, it sees what EasyCrypt still needs to prove,
     tries a proof step, and reads the resulting goals or error. It can continue, undo a step,
     or try another approach.</p>
     <div class="mcpmap">
       <article class="mcprole llm">
         <div class="roleicon">✦</div>
         <div class="rolekind">Proof reasoning</div>
-        <h3>LLM</h3>
+        <h3>Inner agent</h3>
         <p>Reads the current goals and proposes the next proof step.</p>
       </article>
       <div class="mcpbridge" aria-hidden="true">
@@ -343,7 +394,7 @@ post = DoubleQuery.bad{1} = Compute.bad{2}</code></div>
         <p>You provide the security model and final theorem. Shannon proposes the necessary
         games and auxiliary lemmas, proves them, and assembles the final argument.</p>
         <p>Start from a terminal with a project configuration that names your target theorem.</p>
-        <a href="#security-proof-setup">Start a project proof →</a>
+        <a href="#security-proof-setup">Start a project proof <span class="arrow" aria-hidden="true"></span></a>
       </div>
       <div class="runoption">
         <div class="phase-label">Phase III</div>
@@ -352,7 +403,7 @@ post = DoubleQuery.bad{1} = Compute.bad{2}</code></div>
         its proof.</p>
         <p>Use <code>$prove</code> in Codex or <code>/prove</code> in Claude Code, followed
         by the lemma name.</p>
-        <a href="#single-lemma-setup">Prove one lemma →</a>
+        <a href="#single-lemma-setup">Prove one lemma <span class="arrow" aria-hidden="true"></span></a>
       </div>
     </div>
     <p class="seclead">You need macOS or Linux, Git,
@@ -446,7 +497,7 @@ $prove my_lemma
     <div class="cards">
       <a class="card" href="#single-lemma-setup">
         <div class="ic ic-run"><svg width="17" height="17" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5.2v13.6a.8.8 0 0 0 1.22.68l10.9-6.8a.8.8 0 0 0 0-1.36L9.22 4.52A.8.8 0 0 0 8 5.2z"/></svg></div>
-        <h3>Prove one lemma <span class="go">›</span></h3>
+        <h3>Prove one lemma <span class="go" aria-hidden="true">›</span></h3>
         <p>Phase III: write the EasyCrypt proof of a lemma you have already stated.</p>
         <ul>
           <li>bring your EasyCrypt project and unfinished lemma</li>
@@ -456,7 +507,7 @@ $prove my_lemma
       </a>
       <a class="card" href="https://github.com/SkyShannonProver/shannon-prover/tree/main/workflow/interleaved" rel="noopener">
         <div class="ic ic-run"><svg width="17" height="17" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M4 5h6v6H4zM14 13h6v6h-6zM14 5h6v4h-2V7h-4zM4 15h6v4H8v-2H4zM11 7h3v2h-3zM9 11h2v4H9zM11 15h3v2h-3z"/></svg></div>
-        <h3>Start a project proof <span class="go">›</span></h3>
+        <h3>Start a project proof <span class="go" aria-hidden="true">›</span></h3>
         <p>Phases II + III: construct the security argument and its EasyCrypt proofs together.</p>
         <ul>
           <li>start from your security model and final theorem</li>
@@ -466,7 +517,7 @@ $prove my_lemma
       </a>
       <a class="card" href="./results/">
         <div class="ic ic-bars"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M5 19v-5M12 19V5M19 19v-9"/></svg></div>
-        <h3>Benchmark <span class="pill p-warn">work in progress</span><span class="go">›</span></h3>
+        <h3>Benchmark <span class="pill p-warn">work in progress</span><span class="go" aria-hidden="true">›</span></h3>
         <p>Development dashboard for our ongoing controlled evaluation across models.</p>
         <ul>
           <li>the current examples and results are provisional</li>
