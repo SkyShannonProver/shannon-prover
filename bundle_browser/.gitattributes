@@ -1,0 +1,4 @@
+# Archived proof downloads are hash-checked evidence, preserved byte-for-byte.
+# Do not normalize their historical whitespace during website releases.
+case_studies/**/*.ec -whitespace
+case_studies/**/*.eca -whitespace

@@ -1055,11 +1055,9 @@ class CodexAgentSession(_ProviderAgentSessionBase):
                     event_message = codex_event_text(event)
                     if event_type in {"turn.failed", "error"} and event_message:
                         error_texts.append(event_message)
-                    # Layer-1 fresh-context detection (parity with the Claude
-                    # path): turn.completed carries the full context size this
-                    # turn. On the rising edge surface ctx_pressure so the
-                    # runtime's generation loop swaps in a fresh thread instead
-                    # of `exec resume`-ing the saturated one.
+                    # Only request-local context telemetry can trip pressure.
+                    # The current exec terminal-usage adapter abstains: its
+                    # aggregate spend cannot measure live context size.
                     if event_type == "turn.completed" and (
                         self._ctx_detector.observe_tokens(
                             context_tokens_from_codex_event(event)

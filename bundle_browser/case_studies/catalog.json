@@ -1,0 +1,285 @@
+{
+  "schema_version": 1,
+  "cases": [
+    {
+      "title": "ML-KEM",
+      "files": [
+        {
+          "id": "mlkem",
+          "path": "MLWE_PKE_Hash.ec",
+          "role": "Completed target file",
+          "sha256": "3d18361553c6b26f786b012cf2ef0abe266ec0aa087addeba8585e8952b65bee",
+          "source": "mlkem/MLWE_PKE_Hash.ec"
+        },
+        {
+          "id": "mlkem-flprg",
+          "path": "FLPRG.eca",
+          "role": "Provided dependency",
+          "sha256": "9d9d429160662e953eaab2fa99b94d81dbbfa22aba5fbec5ce4f535124265ff8",
+          "source": "mlkem/FLPRG.eca"
+        },
+        {
+          "id": "mlkem-fo",
+          "path": "FO_MLKEM.ec",
+          "role": "Provided dependency",
+          "sha256": "1db5bcd28cf4585d1b5fac146506473cfd96a3600090702c25bb556df522dfdf",
+          "source": "mlkem/FO_MLKEM.ec"
+        },
+        {
+          "id": "mlkem-tt",
+          "path": "FO_TT.ec",
+          "role": "Provided dependency",
+          "sha256": "b0be497a247a1b815ca8a00ebd836e4f6d979afbf4caf74b1fe2d54f2899289c",
+          "source": "mlkem/FO_TT.ec"
+        },
+        {
+          "id": "mlkem-uu",
+          "path": "FO_UU.ec",
+          "role": "Provided dependency",
+          "sha256": "0e103bb3c67e4942e2065da1e7ace400df6a6873b6e72bed269c683aa6c5c726",
+          "source": "mlkem/FO_UU.ec"
+        },
+        {
+          "id": "mlkem-kem",
+          "path": "KEM_ROM.ec",
+          "role": "Provided dependency",
+          "sha256": "5c703e3813ccc99a24d91d60f25ed037b4f8c874fc2ea9cde6b4e01f5e765b5b",
+          "source": "mlkem/KEM_ROM.ec"
+        },
+        {
+          "id": "mlkem-mlwe",
+          "path": "MLWE.ec",
+          "role": "Provided dependency",
+          "sha256": "e516b6ff1444c856f7a5fe87a3ca7cb07798afbcbe88db739f622a9340d135a2",
+          "source": "mlkem/MLWE.ec"
+        },
+        {
+          "id": "mlkem-pke",
+          "path": "PKE_ROM.ec",
+          "role": "Provided dependency",
+          "sha256": "aca6f4fe1d455377a5d72c624787ec6627a2108d54e46b82b60a7fa36a28292d",
+          "source": "mlkem/PKE_ROM.ec"
+        }
+      ],
+      "meta": "Interleaved · 6 Sep 2026 · GPT‑6 Astra / GPT‑6 Astra",
+      "note": "Final target plus all seven pinned sibling dependencies. Imported standard EasyCrypt libraries are not vendored in this browser.",
+      "process_source": "mlkem/process.json",
+      "evidence": [
+        [
+          "Target",
+          "conclusion in MLWE_PKE_Hash.ec"
+        ],
+        [
+          "Verification",
+          "Recorded harness and independent strict verification passed; zero final admits."
+        ],
+        [
+          "Time",
+          "9h 50m 57s through final certification."
+        ],
+        [
+          "Preservation",
+          "Target declaration, protected declarations and seven sibling files match the baseline."
+        ],
+        [
+          "Final SHA-256",
+          "3d18361553c6b26f786b012cf2ef0abe266ec0aa087addeba8585e8952b65bee"
+        ]
+      ],
+      "id": "mlkem",
+      "scope": "CCA security reduction for the supplied ML-KEM formalization.",
+      "protocol": "Interleaved",
+      "time": "9h 50m 57s",
+      "timeLabel": "through final certification",
+      "outer": "GPT-6 Astra / high",
+      "inner": "GPT-6 Astra / high",
+      "defaultFile": "mlkem",
+      "defaultLemma": "conclusion"
+    },
+    {
+      "title": "ChaChaPoly",
+      "files": [
+        {
+          "id": "chacha",
+          "path": "chacha_poly.ec",
+          "role": "Completed target file",
+          "sha256": "4d0d9c98dcfa2506e8e887ac33d6a9dd9e283f08dec298cc878532564f0899ca",
+          "source": "chacha/chacha_poly.ec"
+        },
+        {
+          "id": "ske",
+          "path": "ske.ec",
+          "role": "Provided specification",
+          "sha256": "266334017fb2eebd24faed2d4ec747aae0ec1ec53f6d4c5beff7b375e673471b",
+          "source": "chacha/ske.ec"
+        },
+        {
+          "id": "indist",
+          "path": "indistinguishability.eca",
+          "role": "Provided specification",
+          "sha256": "f6e431ebd76d10f9336326ce4ac0d19d5bb756a3b4c7523909d4fe63ae6337c5",
+          "source": "chacha/indistinguishability.eca"
+        }
+      ],
+      "meta": "Interleaved · 26 Aug 2026 · Opus 5 / GPT‑5.6 Sol",
+      "note": "Target file plus the two preserved sibling specifications. Standard EasyCrypt libraries are external.",
+      "process": [
+        [
+          "Build the reduction",
+          "The outer agent constructs the security-game sequence, intermediate declarations and probability bounds."
+        ],
+        [
+          "Delegate helper proofs",
+          "The inner prover completes dmap_dblock_mk_rs and supplies partial progress on encEq and encRepro."
+        ],
+        [
+          "Compose the final theorem",
+          "The outer agent completes the remaining helpers. conclusion applies step1 and step2, followed by SMT."
+        ],
+        [
+          "Check the whole development",
+          "Independent verification accepts the final file; the two sibling specifications are unchanged."
+        ]
+      ],
+      "evidence": [
+        [
+          "Target",
+          "conclusion in chacha_poly.ec"
+        ],
+        [
+          "Verification",
+          "Recorded independent whole-file acceptance; both pinned siblings unchanged."
+        ],
+        [
+          "Time",
+          "5h 07m 05s for the archived 26 August run."
+        ],
+        [
+          "Provenance",
+          "Agent helper declarations are in the marked scratchpad. Other parts of the file include the supplied model and pre-existing declarations."
+        ],
+        [
+          "Final SHA-256",
+          "4d0d9c98dcfa2506e8e887ac33d6a9dd9e283f08dec298cc878532564f0899ca"
+        ]
+      ],
+      "id": "chacha",
+      "scope": "The supplied authenticated-encryption security bound.",
+      "protocol": "Interleaved",
+      "time": "5h 07m 05s",
+      "timeLabel": "recorded end-to-end wall time",
+      "outer": "Claude Opus 5 / high",
+      "inner": "GPT-5.6 Sol / high",
+      "defaultFile": "chacha",
+      "defaultLemma": "conclusion"
+    },
+    {
+      "title": "MEE-CBC",
+      "files": [
+        {
+          "id": "mee-top",
+          "path": "MAC_then_Pad_then_CBC.eca",
+          "role": "Stitched agent + existing development",
+          "sha256": "dac7dfd40ea49b77004c2d674e412f37d65a47dc89a7e81a5cd6d57de8f75925",
+          "source": "mee/MAC_then_Pad_then_CBC.eca"
+        },
+        {
+          "id": "mee-functional",
+          "path": "FunctionalSpec.ec",
+          "role": "Stitched agent + existing development",
+          "sha256": "ab2d9f49512c43e1c255855b0cec853a69be2ac30af9b70cd7a08516842fbd43",
+          "source": "mee/FunctionalSpec.ec"
+        },
+        {
+          "id": "mee-rcpa",
+          "path": "RCPA_CMA.ec",
+          "role": "Stitched agent + existing development",
+          "sha256": "4b2384bed20f8138a890d3222e2c2c252e6532fabcf0e66c788379a86ba1b852",
+          "source": "mee/RCPA_CMA.ec"
+        },
+        {
+          "id": "mee-pad",
+          "path": "RCPA_pad.eca",
+          "role": "Stitched agent + existing development",
+          "sha256": "80d9b4c196e4a51894adf44fe044d2553875855d07dec42923e334713e804dd6",
+          "source": "mee/RCPA_pad.eca"
+        },
+        {
+          "id": "mee-cbc",
+          "path": "CBC.eca",
+          "role": "Reused library",
+          "sha256": "720d812d3721759a4a3f297cc07c744fc6c6e28c74cd7e3ed3db760b9477ac0a",
+          "source": "mee/CBC.eca"
+        },
+        {
+          "id": "mee-mac",
+          "path": "MACs.eca",
+          "role": "Reused library",
+          "sha256": "a85a03d209c4ece748831089fabb150d1b3202a62779e0596b576a8c7bf11e08",
+          "source": "mee/MACs.eca"
+        },
+        {
+          "id": "mee-ske",
+          "path": "SKE_INDR.eca",
+          "role": "Reused library",
+          "sha256": "5e3467b4e14bc8a3d7601b58f96ab35d590a8335c228251a676a4df817ddc0df",
+          "source": "mee/SKE_INDR.eca"
+        }
+      ],
+      "meta": "Historical staged campaign · 20–21 Aug 2026 · Opus 5 / Opus 5",
+      "note": "The archived stitched source tree: generated and existing proofs coexist. CBC.eca is a reused verified dependency.",
+      "process": [
+        [
+          "Propose a decomposition",
+          "The decomposer receives the model and target, with intermediate human lemmas removed for the selected tasks."
+        ],
+        [
+          "Prove the obligations",
+          "Separate campaigns prove the confidentiality, integrity and correctness targets and their helpers."
+        ],
+        [
+          "Compose and check",
+          "Generated proofs are stitched into the development and checked together, reusing the existing CBC library."
+        ]
+      ],
+      "evidence": [
+        [
+          "Targets",
+          "RCPA_security, PTXT_security, mee_correct"
+        ],
+        [
+          "Verification",
+          "The campaign report records zero admits in final targets and a passing stitched batch."
+        ],
+        [
+          "Protocol",
+          "Historical staged decomposition, not the current interleaved protocol."
+        ],
+        [
+          "Dependency",
+          "The deep CBC switching and birthday-bound argument is supplied by the pre-existing verified CBC library."
+        ],
+        [
+          "Files shown",
+          "The seven archived files of the stitched MEE-CBC tree. Four rewritten files were batch-checked according to the campaign report; supporting libraries are included for browsing."
+        ],
+        [
+          "Source preservation audit",
+          "The report describes a full audit for the generic PTXT task and sampled audits for the other tasks; it does not claim a complete audit of every generated declaration."
+        ]
+      ],
+      "id": "mee",
+      "scope": "Confidentiality, plaintext integrity and functional correctness.",
+      "protocol": "Historical staged",
+      "time": "3 target theorems",
+      "timeLabel": "composition and correctness",
+      "outer": "Claude Opus 5",
+      "inner": "Claude Opus 5",
+      "defaultFile": "mee-top",
+      "defaultLemma": "PTXT_security",
+      "caveat": "Reuses the previously verified CBC library"
+    }
+  ],
+  "publication_status": "reviewed",
+  "publication_date": "2026-09-09"
+}

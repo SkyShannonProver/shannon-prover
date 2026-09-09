@@ -59,11 +59,11 @@ uv run python tools/bootstrap_easycrypt.py --verify-only
 The bootstrap command installs the repository's pinned EasyCrypt
 `r2026.06` environment. Shannon's Python commands use it automatically.
 
-You also need the agent CLIs you select, installed and authenticated.
-The current project-level configuration uses **Claude Code for the overall
-argument and OpenAI Codex for auxiliary lemmas**. It requires their stored
-Claude and ChatGPT OAuth logins. To use only Codex, pass
-`--outer-provider codex --inner-provider codex` to the commands below.
+Project-level proving defaults to **OpenAI Codex with `gpt-6-astra` (high
+reasoning effort) for both the overall argument (outer) and auxiliary lemmas
+(inner)**. Install Codex and authenticate with a stored ChatGPT OAuth login.
+The commands below use this pair without additional provider flags. Claude
+Code remains available when explicitly selected for either role.
 See the [project-level proving guide](workflow/interleaved/README.md#choose-the-agents-and-limits)
 for model settings, login requirements, and time limits.
 

@@ -141,6 +141,23 @@ success ownership in [`proof_terminal_outcome.md`](proof_terminal_outcome.md).
    whole-file final verifier.
 
 The configured Shannon lanes are bounded capacity, not extra outer agents.
+
+Collection validates the exact imported lemma under its preceding declarations
+in a temporary file with the original filename, independently of unfinished
+downstream source. Section/theory framing is closed for this native check; the
+target proof must contain neither `admit` nor `abort`. This is explicitly
+`target_lemma_under_declared_dependencies`, not whole-project verification.
+Source/statement binding and the proof-body lease still apply. A source edit
+during checking causes a retry without overwriting the outer's work. Final
+task success still requires the project-owned whole-file verifier.
+
+The scheduler owns candidate snapshots, source leases and atomic writeback;
+`workflow.interleaved.verify` owns the configured verifier invocation and the
+shared native import check. Collection calls the project's `--check-import`
+entry point, so reference-specific source restrictions remain in the reference
+verifier, not in the scheduler or the generic product. Only the current child
+response is consumed; missing support or malformed evidence fails closed.
+
 Delegation is nonblocking, but an active boundary lease prevents the outer
 agent from silently editing the same proof body while a job is working on its
 snapshot. The ChaChaPoly reference contract fixes capacity at two.

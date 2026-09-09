@@ -2,7 +2,7 @@
   "schema_version": 2,
   "defaults": {
     "inner_provider": "codex",
-    "outer_provider": "claude"
+    "outer_provider": "codex"
   },
   "profiles": {
     "claude": {
@@ -13,7 +13,7 @@
     },
     "codex": {
       "effort": "high",
-      "model": "gpt-5.6-sol"
+      "model": "gpt-6-astra"
     }
   }
 }

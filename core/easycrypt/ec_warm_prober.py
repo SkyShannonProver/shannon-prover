@@ -35,11 +35,10 @@ from typing import Optional
 
 from core.easycrypt.ec_lifecycle import split_ec_commands as _split_ec_commands
 from core.easycrypt.ec_lifecycle import ECSessionLifecycle
+from core.easycrypt.ec_diagnostics import error_text, parse_error
 
 # The `-emacs` prompt is `[<step>|<mode>]>`; the step number is the rollback key.
 _STEP_RE = re.compile(r"\[(\d+)\|")
-# Error/critical markers EC emits in `-emacs` mode (e.g. `[error-4-6]parse error`).
-_ERROR_RE = re.compile(r"\[(?:error|critical)\b")
 
 
 def _last_step(raw: str) -> Optional[int]:
@@ -56,9 +55,9 @@ def _goal_text(raw: str) -> str:
 
 
 def _error_text(raw: str) -> str:
-    m = re.search(r"\[(?:error|critical)[^\n]*", raw or "")
-    if m:
-        return m.group(0)[:200]
+    diagnostic = error_text(raw)
+    if diagnostic:
+        return diagnostic
     for line in reversed((raw or "").splitlines()):
         s = line.strip()
         if s and not s.startswith("["):
@@ -134,7 +133,7 @@ class WarmProber(ECSessionLifecycle):
             last = ""
             for cmd_line in [*setup, *committed_tactics]:
                 last = self._send_recv(cmd_line, timeout)
-                if _ERROR_RE.search(last):
+                if parse_error(last):
                     self.close()
                     return False
             step = _last_step(last) if last else _last_step(self._send_recv("pragma noop.", timeout))
@@ -172,11 +171,9 @@ class WarmProber(ECSessionLifecycle):
     # ── probing ──────────────────────────────────────────────────────────────
 
     def _send_recv(self, line: str, timeout: float) -> str:
-        """Send one command and read its full response. Warm probes are
+        """Send one transaction and drain its native responses. Warm probes are
         send-then-read; the base ``_send`` is the bare write."""
-        super()._send(line)
-        return self._read_until_prompt(timeout=timeout).decode(
-            "utf-8", errors="replace")
+        return self.send_and_drain(line, timeout=timeout, is_error=parse_error)
 
     def probe(self, tactic: str, timeout: float = 120.0) -> ProbeResult:
         """Run ``tactic`` read-only and roll back to the base step. Marks the
@@ -193,7 +190,7 @@ class WarmProber(ECSessionLifecycle):
         # which drops the `[N|check]` prompt). A rejected or no-progress tactic
         # leaves the step where it was. advanced decides whether to roll back.
         advanced = step is None or step != self._base_step
-        accepted = advanced and not _ERROR_RE.search(raw)
+        accepted = advanced and not parse_error(raw)
         goal_after = _goal_text(raw) if accepted else ""
         if advanced:
             try:

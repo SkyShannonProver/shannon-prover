@@ -22,9 +22,35 @@ import sys
 from pathlib import Path
 
 from core.easycrypt.proof_syntax import inline_proof
+from core.easycrypt.lemma_decls import mask_comments
 
 
 DECL_KINDS_RE = r"lemma|equiv|hoare|phoare"
+
+
+def _enclosing_block_closers(lines: list[str]) -> list[str]:
+    """Balance lexical source framing after truncation; EC verifies the result.
+
+    Keep sections and theories in one stack: closing only the innermost
+    section before its surrounding theory can leave outer sections pending.
+    Clone substitutions (``theory T <- ...``) do not open a block.
+    """
+    stack: list[tuple[str, str]] = []
+    for line in mask_comments("\n".join(lines)).splitlines():
+        stripped = line.strip()
+        if match := re.fullmatch(r"section(?:\s+(\w+))?\s*\.", stripped):
+            stack.append(("section", match.group(1) or ""))
+        elif match := re.fullmatch(r"(?:abstract\s+)?theory\s+(\w+)\s*\.", stripped):
+            stack.append(("theory", match.group(1)))
+        elif re.fullmatch(r"end\s+section(?:\s+\w+)?\s*\.", stripped):
+            if stack and stack[-1][0] == "section":
+                stack.pop()
+        elif match := re.fullmatch(r"end\s+(\w+)\s*\.", stripped):
+            if stack and stack[-1] == ("theory", match.group(1)):
+                stack.pop()
+    return [(f"end section {name}." if name else "end section.")
+            if kind == "section" else f"end {name}."
+            for kind, name in reversed(stack)]
 
 
 def _is_decl_start(stripped: str) -> bool:
@@ -371,38 +397,8 @@ def extract_lemma(ec_file: Path, lemma_name: str, open_proof: bool = False,
             indent = re.match(r'^(\s*)', lines[lemma_line]).group(1)
             taken.append(f"{indent}proof.")
         taken.append("")
-        taken.append("end section.")
-
-        # Close any open theory/module blocks that were opened before the section.
-        # Scan the pre-section content for unmatched abstract theory / theory / module type.
-        # A real theory opening ends with `.` after the name:
-        #     theory Byte.
-        #     abstract theory GenBlock.
-        # A clone-with theory parameter substitution looks similar but uses `<-`:
-        #     clone FinProdType as NonceCount with
-        #       theory FT1 <- Nonce.MFinite.Support, theory FT2 <- C.FinType.
-        #     clone import FinEager as FiniteRO with
-        #       theory FinFrom <- NonceCount
-        # The substitution form does NOT open a theory and must not be emitted
-        # as `end FT1.` / `end FinFrom.` at file close time. Without this
-        # distinction the extracted file fails with "active theory has name
-        # `Top', not `FinFrom'" — observed in step1 Run 8 prune-verify
-        # (2026-04-27) where extract added spurious `end FinFrom.` and
-        # `end FT1.` after the legitimate `end Step1_2.`.
-        _theory_open_re = re.compile(r'^(abstract\s+theory|theory)\s+(\w+)\s*\.\s*$')
-        open_blocks: list[str] = []
-        for line in lines[:section_start]:
-            stripped = line.strip()
-            m = _theory_open_re.match(stripped)
-            if m:
-                open_blocks.append(m.group(2))
-            elif re.match(r'^end\s+(\w+)\s*\.', stripped):
-                end_name = re.match(r'^end\s+(\w+)', stripped).group(1)
-                if open_blocks and open_blocks[-1] == end_name:
-                    open_blocks.pop()
-        # Close in reverse order
-        for block_name in reversed(open_blocks):
-            taken.append(f"end {block_name}.")
+        if not open_proof:
+            taken.extend(_enclosing_block_closers(taken))
 
         # Replace all proof bodies with admit, keeping target open or intact
         if verify_proof:
@@ -441,6 +437,9 @@ def extract_lemma(ec_file: Path, lemma_name: str, open_proof: bool = False,
             generated_keep_open_line = len(taken)
             indent = re.match(r'^(\s*)', lines[lemma_line]).group(1)
             taken.append(f"{indent}proof.")
+
+        if not open_proof:
+            taken.extend(_enclosing_block_closers(taken))
 
         if verify_proof:
             result_lines = _replace_proofs_with_admit(

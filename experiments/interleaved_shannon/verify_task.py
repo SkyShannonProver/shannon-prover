@@ -121,7 +121,7 @@ def immutable_projection(source: str) -> str:
 def _source_policy_mode(mode: str) -> str:
     """Map a diagnostic replay mode to its source-confinement policy."""
 
-    if mode == "upto":
+    if mode in {"upto", "import"}:
         return "check"
     if mode in {"preflight", "check", "final"}:
         return mode
@@ -154,7 +154,7 @@ def allowed_tracked_change_sets(mode: str) -> list[list[str]]:
     target = TARGET_REL.as_posix()
     if mode == "preflight":
         return [[]]
-    if mode in {"check", "upto"}:
+    if mode in {"check", "upto", "import"}:
         return [[], [target]]
     if mode == "final":
         return [[target]]
@@ -387,7 +387,16 @@ def verify(
     output: Path | None,
     *,
     upto: str | None = None,
+    candidate: Path | None = None,
+    lemma: str | None = None,
 ) -> tuple[dict[str, Any], bool]:
+    if mode == "import":
+        if candidate is None or not lemma:
+            raise ValueError("import verification requires candidate and lemma")
+        from workflow.interleaved.verify import candidate_path
+        candidate = candidate_path(ROOT, candidate)
+    elif candidate is not None or lemma is not None:
+        raise ValueError("candidate and lemma are only valid for import verification")
     policy_mode = _source_policy_mode(mode)
     if mode == "upto":
         if upto is None:
@@ -438,7 +447,7 @@ def verify(
         errors.append("target must be a regular non-symlink file")
         current_bytes = b""
     else:
-        current_bytes = target.read_bytes()
+        current_bytes = (candidate if mode == "import" else target).read_bytes()
 
     try:
         pinned_bytes = git_bytes(TARGET_REL)
@@ -492,29 +501,22 @@ def verify(
             executable, receipt, environment = locked_easycrypt()
             report["easycrypt_receipt"] = receipt
             report["why3_config"] = environment.get("SHANNON_WHY3_CONFIG")
-            command = easycrypt_command(executable, mode=mode, upto=upto)
-            report["easycrypt_interaction"] = (
-                "stateless_last_goals"
-                if mode == "check"
-                else "stateless_goal_at_location"
-                if mode == "upto"
-                else "full_file_acceptance"
-            )
-            check = run(command, environment=environment)
-            ec_stdout, ec_stderr = check.stdout, check.stderr
-            report["easycrypt_exit_code"] = check.returncode
-            report["easycrypt_replay_outcome"] = easycrypt_replay_outcome(
-                mode=mode,
-                returncode=check.returncode,
-                stdout=ec_stdout,
-            )
-            if mode in {"check", "upto"}:
-                report["easycrypt_goal_output"] = ec_stdout
-                report["easycrypt_error_output"] = ec_stderr
-            report["easycrypt_stdout_tail"] = ec_stdout[-4000:]
-            report["easycrypt_stderr_tail"] = ec_stderr[-4000:]
-            if check.returncode != 0:
-                errors.append(f"EasyCrypt replay failed with exit code {check.returncode}")
+            if mode == "import":
+                from workflow.interleaved.verify import verify_lemma_import
+                checked_import = verify_lemma_import(
+                    root=ROOT, candidate=candidate, lemma=lemma, target=target,
+                    include_dirs=("easycrypt-src/theories",),
+                    check_dir=candidate.parent / "collect_check",
+                )
+                report.update(checked_import)
+                ec_stdout = str(checked_import.get("easycrypt_stdout") or "")
+                ec_stderr = str(checked_import.get("easycrypt_stderr") or "")
+                if not checked_import["passed"]:
+                    errors.append(str(checked_import.get("error") or ec_stderr or "lemma import rejected"))
+            else:
+                ec_stdout, ec_stderr = _replay_check(
+                    report, errors, executable, environment, mode, upto,
+                )
         except VerificationError as exc:
             errors.append(str(exc))
 
@@ -534,6 +536,32 @@ def verify(
         output.with_suffix(".easycrypt.stderr.log").write_text(ec_stderr, encoding="utf-8")
 
     return report, not errors
+
+
+def _replay_check(
+    report: dict[str, Any], errors: list[str], executable: Path,
+    environment: dict[str, str], mode: str, upto: str | None,
+) -> tuple[str, str]:
+    command = easycrypt_command(executable, mode=mode, upto=upto)
+    report["easycrypt_interaction"] = (
+        "stateless_last_goals" if mode == "check"
+        else "stateless_goal_at_location" if mode == "upto"
+        else "full_file_acceptance"
+    )
+    check = run(command, environment=environment)
+    ec_stdout, ec_stderr = check.stdout, check.stderr
+    report["easycrypt_exit_code"] = check.returncode
+    report["easycrypt_replay_outcome"] = easycrypt_replay_outcome(
+        mode=mode, returncode=check.returncode, stdout=ec_stdout,
+    )
+    if mode in {"check", "upto"}:
+        report["easycrypt_goal_output"] = ec_stdout
+        report["easycrypt_error_output"] = ec_stderr
+    report["easycrypt_stdout_tail"] = ec_stdout[-4000:]
+    report["easycrypt_stderr_tail"] = ec_stderr[-4000:]
+    if check.returncode != 0:
+        errors.append(f"EasyCrypt replay failed with exit code {check.returncode}")
+    return ec_stdout, ec_stderr
 
 
 def main() -> int:
@@ -560,10 +588,15 @@ def main() -> int:
         ),
     )
     modes.add_argument("--final", action="store_true")
+    modes.add_argument("--check-import", action="store_true")
+    parser.add_argument("--candidate", type=Path)
+    parser.add_argument("--lemma")
     parser.add_argument("--output", type=Path)
     args = parser.parse_args()
     mode = (
-        "preflight"
+        "import"
+        if args.check_import
+        else "preflight"
         if args.preflight
         else "check"
         if args.check
@@ -572,7 +605,8 @@ def main() -> int:
         else "final"
     )
     try:
-        report, passed = verify(mode, args.output, upto=args.upto)
+        report, passed = verify(mode, args.output, upto=args.upto,
+                                candidate=args.candidate, lemma=args.lemma)
     except ValueError as exc:
         parser.error(str(exc))
     print(json.dumps(report, indent=2, sort_keys=True))

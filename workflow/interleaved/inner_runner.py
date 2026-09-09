@@ -379,6 +379,14 @@ def _terminal_progress(
         "turns": max(0, int(result.turns)),
         "elapsed_seconds": max(0.0, float(result.elapsed_seconds)),
     }
+    if result.verification:
+        # Preserve the canonical finalizer's stage/candidate/native reason.
+        # This is failure evidence, never a new success inference.
+        progress["verification"] = {
+            key: str(result.verification[key])[:6500 if key == "reason" else 256]
+            for key in ("status", "method", "candidate_id", "reason")
+            if key in result.verification
+        }
     checkpoint_artifact = ""
 
     prefix_metadata_path = result_path.parent / "partial_proof_prefix.json"
@@ -577,7 +585,7 @@ def _wrapper_handback(
     try:
         result, result_path = _canonical_prover_result(output_root)
         if result.status == PROVER_RUN_INFRASTRUCTURE_INVALID:
-            for item in [result.error, *result.infrastructure_errors]:
+            for item in [result.verification.get("reason", ""), result.error, *result.infrastructure_errors]:
                 message = str(item or "").strip()
                 if message and message not in errors:
                     errors.append(message[:2000])

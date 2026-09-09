@@ -92,7 +92,7 @@ class ECBackend:
 
     def run_batch(
         self, input_path: Path, output_path: Path, include_dirs: list,
-    ) -> None:
+    ) -> int:
         # Connect to the external why3server if available (avoids the sandbox
         # nice() issue); emacs_command adds -server only when the socket exists.
         cmd = emacs_command(include_dirs, why3_socket_from_env())
@@ -109,7 +109,8 @@ class ECBackend:
             ec_env = get_ec_env()
             with open(tmp_path, "rb") as inp, output_path.open("wb") as out:
                 try:
-                    subprocess.run(cmd, stdin=inp, stdout=out, stderr=subprocess.STDOUT, check=False, env=ec_env)
+                    result = subprocess.run(cmd, stdin=inp, stdout=out, stderr=subprocess.STDOUT, check=False, env=ec_env)
+                    return result.returncode
                 except FileNotFoundError:
                     raise RuntimeError("easycrypt not found on PATH; please install or adjust PATH.")
         finally:

@@ -51,15 +51,17 @@ Then start the attempt:
 experiments/interleaved_shannon/run.sh
 ```
 
-The default is Claude Code for the overall argument and Codex for auxiliary
-lemmas. Both CLIs need the stored OAuth logins described in the
+Both the overall argument (outer) and auxiliary lemmas (inner) default to
+OpenAI Codex `gpt-6-astra` with high reasoning effort. No provider flags are
+needed for this pair. Codex needs the stored ChatGPT OAuth login described in the
 [agent setup guide](../../workflow/interleaved/README.md#choose-the-agents-and-limits).
 To use a different pair, add explicit flags to both the preflight and live
-commands. For example:
+commands. For example, to select Claude Code for the overall argument
+(also requiring its stored Claude OAuth login):
 
 ```bash
 experiments/interleaved_shannon/run.sh \
-  --outer-provider codex --inner-provider codex \
+  --outer-provider claude --inner-provider codex \
   --preflight-only
 ```
 

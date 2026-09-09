@@ -110,6 +110,20 @@ The repair changes the contract, not merely the failing status string:
 
 ## Permanent regression gates
 
+One manager submission is an atomic transaction, including multi-sentence
+blocks. Native transport drains each sentence and stops at its first error;
+the session commits all or rolls back the whole block. Batch acceptance checks
+the complete current-call output before display compression. Warm/fresh probes
+use the same sentence-draining boundary; replay rejects native failures rather
+than trusting a history label. Daemon synchronization and adoption count
+transactions, while public tactic counts continue to count commands.
+
+Finalization verifies the selected candidate without deleting or repairing
+tactics. Full-file and extracted-lemma failures retain bounded native errors
+and candidate identity in the canonical result and public handback. A closed
+candidate snapshot cannot overwrite the last completed open recovery capsule.
+That capsule is continuation evidence requiring replay, not a proof certificate.
+
 - no tree result or tracker field named `proved`;
 - no `run_tree_prover.last_*` semantic handoff;
 - manager `qed` admission and lifecycle status tests;

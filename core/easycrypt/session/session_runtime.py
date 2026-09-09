@@ -178,7 +178,8 @@ class Session:
         must fall back to the batch subprocess; a daemon reject's EC error rides
         back inline in ``rejection_error``."""
         try:
-            from core.easycrypt.daemon_backend import DaemonBackend, is_disabled, _split_tactics
+            from core.easycrypt.daemon_backend import DaemonBackend, is_disabled
+            from core.easycrypt.committed_history import read_committed_transactions
         except Exception as exc:
             return self._route(
                 "import_fail", False, detail=f"{type(exc).__name__}: {exc}"
@@ -204,12 +205,14 @@ class Session:
                     "construct_fail", False, detail=f"{type(exc).__name__}: {exc}"
                 )
         try:
-            hist_text = self.history.read_text(encoding="utf-8")
+            tactics = read_committed_transactions(self.dir)
         except Exception as exc:
             return self._route(
                 "history_read_fail", False, detail=f"{type(exc).__name__}: {exc}"
             )
-        tactics = _split_tactics(hist_text)
+        # steps.log, not command splitting, owns the atomic submission. Splitting
+        # the new block makes its first commands look like already accepted
+        # history and can turn a native rejection into a batch fallback.
         if not tactics:
             return self._route("empty_tactics", False)
         # Pre-commit goal state for no-progress diffing. In subprocess
@@ -323,6 +326,7 @@ class Session:
         tactics in it)."""
         try:
             from core.easycrypt.daemon_backend import DaemonBackend, _split_tactics, is_disabled
+            from core.easycrypt.committed_history import read_committed_transactions
         except Exception as e:
             return (f"[TRY] error: daemon_backend import failed: {e}\n"
                     "       -try requires the EC daemon.\n")
@@ -340,11 +344,7 @@ class Session:
 
         if self._daemon_backend is None:
             self._daemon_backend = DaemonBackend(self.dir, self._include_dirs)
-        try:
-            hist_text = self.history.read_text(encoding="utf-8")
-        except Exception:
-            hist_text = ""
-        tactics = _split_tactics(hist_text)
+        tactics = read_committed_transactions(self.dir)
 
         if not self._daemon_backend._sync_to(fp, lname, tactics):
             detail = getattr(self._daemon_backend, "last_error", "") or "unknown"
@@ -359,7 +359,7 @@ class Session:
             return "[TRY] error: daemon connection lost.\n"
 
         # Split into 1+ tactics. _split_tactics handles ``.``-boundary
-        # parsing (same function used for history.ec). If the caller
+        # parsing for the requested probe only, not committed history. If the caller
         # passes one tactic without a trailing dot, add one.
         raw_in = tactic.strip()
         if not raw_in:
@@ -588,7 +588,7 @@ class Session:
         kept as a ``Session`` method because external callers (session_commands,
         proof replay and the undo path) and tests patch/call
         ``Session._run_ec`` directly."""
-        self._ec_backend.run_batch(
+        return self._ec_backend.run_batch(
             input_path, output_path, include_dirs or self._include_dirs,
         )
 
@@ -658,9 +658,24 @@ class Session:
         if _ec.detail:
             routing_event["detail"] = _ec.detail[:400]
         self.emit_event("ec.routing", routing_event)
+        batch_rejection_error = ""
         if not took_daemon:
+            self._last_commit_via_daemon = False
             self._run_ec(self.prev_hist, self.prev)
-            self._run_ec(self.history, self.curr)
+            returncode = self._run_ec(self.history, self.curr)
+            # Emacs-mode EC can continue after an error and print a later goal
+            # or closure. Decide acceptance from the *whole current call*
+            # before presentation drops earlier responses.
+            raw_batch = self.curr.read_text(encoding="utf-8", errors="replace")
+            from core.easycrypt.ec_diagnostics import error_text
+            diagnostic = error_text(raw_batch)
+            errors = [diagnostic] if diagnostic else []
+            if returncode not in (None, 0):
+                errors.append(f"[error] EasyCrypt batch exited with status {returncode}")
+            if errors:
+                batch_rejection_error = "\n".join(errors)
+                self._rollback.restore_pre_commit()
+                self._invalidate_daemon()
             # Strip context-processing transcript from current.out so
             # agents reading the file see the current goal state, not a
             # noisy replay log. See `_compress_current_state` docstring.
@@ -682,24 +697,22 @@ class Session:
         # matched [error, which missed "[critical] nothing to rewrite" from conditional
         # rewrites with unmatched preconditions — those fell through to NO_PROGRESS and
         # got auto-committed as ghost tactics.
-        _error_prefix_re = re.compile(r"^\s*\[(error|critical|fatal)")
+        from core.easycrypt.ec_diagnostics import ERROR_LINE_RE
         _prev_lines_set = set(prev_raw.splitlines())
         _curr_lines = curr_raw.splitlines()
         _new_error_lines = [
             ln.strip()
             for ln in _curr_lines
             if ln not in _prev_lines_set
-            if _error_prefix_re.match(ln)
+            if ERROR_LINE_RE.match(ln.lstrip())
         ]
-        has_new_error = any(
-            _error_prefix_re.match(ln) for ln in _new_error_lines
-        )
+        has_new_error = bool(_new_error_lines)
         # Daemon-side rejection delivers the error via instance state
         # rather than curr.out (writing it to curr would pollute next
         # commit's prev_raw and break downstream goal-substring checks).
         # Append the rejection error to curr_raw in memory for the typed
         # execution result, while leaving on-disk current.out untouched.
-        rejection_err = _ec.rejection_error
+        rejection_err = _ec.rejection_error or batch_rejection_error
         if rejection_err:
             has_new_error = True
             if rejection_err.strip():

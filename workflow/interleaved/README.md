@@ -59,19 +59,24 @@ The command-line terms **outer** and **inner** name two roles:
 
 | Role | Responsibility | Current default |
 |---|---|---|
-| `outer` | Construct the overall argument, choose auxiliary lemmas, and assemble the final proof. | Claude Code, `claude-opus-5`, high effort |
-| `inner` | Work on an auxiliary lemma selected by the overall proof agent. | OpenAI Codex, `gpt-5.6-sol`, high effort |
+| `outer` | Construct the overall argument, choose auxiliary lemmas, and assemble the final proof. | OpenAI Codex, `gpt-6-astra`, high effort |
+| `inner` | Work on an auxiliary lemma selected by the overall proof agent. | OpenAI Codex, `gpt-6-astra`, high effort |
 
-Both roles support `claude` or `codex`. For example,
-`--outer-provider codex --inner-provider codex` uses Codex for both.
+New runs use this Codex pair without provider flags. Both roles support
+`claude` or `codex`; for example, `--outer-provider claude` selects Claude
+Code (`claude-opus-5`, high effort) for the overall argument while keeping
+Codex for auxiliary lemmas.
 The exact models and provider limits are set in
 [`agent_profiles.json`](agent_profiles.json); commit any changes before a run.
-You need access to the selected models through the installed CLIs.
+The launcher passes these model names explicitly; it does not inherit the
+model selected in your Codex app or user configuration. You need access to
+the selected models through the installed CLIs.
 
-The runner requires stored OAuth authentication: a Claude login for Claude
-Code and a ChatGPT login for Codex. It removes injected API credentials when
-launching the selected agents. Preflight checks the installed CLIs, login
-method, and required capabilities before proof generation begins.
+The default pair requires Codex with a stored ChatGPT OAuth login. If you
+select Claude for either role, also install Claude Code with a stored Claude
+OAuth login. The runner removes injected API credentials when launching the
+selected agents. Preflight checks the installed CLIs, login method, and
+required capabilities before proof generation begins.
 
 The example configuration permits two simultaneous auxiliary-lemma attempts,
 with at most 120 minutes per attempt and a 43,200-second (12-hour) overall
@@ -107,12 +112,14 @@ uv run python -m workflow.interleaved \
   --project projects/my-proof/interleaved_project.json
 ```
 
-For Codex in both roles, add both provider flags to **both** commands:
+Both commands above default to Codex `gpt-6-astra/high` for both roles.
+To select Claude for the overall argument, use the same provider override
+for the preflight and live commands (remove `--preflight-only` to run):
 
 ```bash
 uv run python -m workflow.interleaved \
   --project projects/my-proof/interleaved_project.json \
-  --outer-provider codex --inner-provider codex \
+  --outer-provider claude --inner-provider codex \
   --preflight-only
 ```
 
@@ -156,6 +163,18 @@ Both are repository-relative paths. The runner invokes the checker with
 return a nonzero exit code on failure. A replacement verifier must retain
 the EasyCrypt and unfinished-proof checks as well as your additional
 restrictions. A prompt instruction alone is not a verification gate.
+
+Collection also invokes that same checker with
+`--check-import --candidate PATH --lemma NAME --output PATH`. It checks the
+candidate's source restrictions and the imported lemma, not unfinished
+downstream proofs. The built-in checker and ChaChaPoly adapter implement this
+mode using `workflow.interleaved.verify.verify_lemma_import`. Custom checkers
+must retain their own source policy and return that helper's JSON evidence
+(including its lemma, candidate hash and scoped-verification fields), setting
+`passed` to false and exiting nonzero on any policy failure. Unsupported import
+mode fails collection without modifying the target; there is no fallback that
+bypasses the custom checker. Final acceptance still uses `--final` on the whole
+project.
 
 The [ChaChaPoly example](../../experiments/interleaved_shannon/README.md)
 demonstrates a stricter checker that preserves a fixed problem and its

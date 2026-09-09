@@ -16,9 +16,9 @@ The wiring that *acts* on these decisions lives in
 logic here makes it unit-testable without spinning up EasyCrypt or a real
 provider child.
 
-Layer 1 is provider-neutral: Claude feeds the detector per assistant event
-(``context_tokens_from_assistant_event``), Codex per ``turn.completed``
-(``context_tokens_from_codex_event``). A Codex respawn also clears the thread
+Layer 1 requires request-local context telemetry. Claude supplies it per
+assistant event; Codex exec terminal usage is aggregate spend, so its adapter
+abstains. A Codex respawn for a separately established cause clears the thread
 id so the fresh generation really starts cold instead of ``exec resume``-ing
 the saturated thread.
 """
@@ -128,24 +128,13 @@ def context_tokens_from_assistant_event(event: dict[str, Any]) -> int | None:
 
 
 def context_tokens_from_codex_event(event: dict[str, Any]) -> int | None:
-    """Total context size for one Codex ``turn.completed`` event, or None.
+    """Abstain: exec terminal usage aggregates requests, not live context.
 
-    Codex ``exec --json`` emits ``{"type": "turn.completed", "usage":
-    {"input_tokens": N, "cached_input_tokens": M, ...}}`` at the end of each
-    turn; ``input_tokens`` is the full context the model saw (cached tokens are
-    a subset of it, not additive — verified against a live
-    codex_events.jsonl: input=51069, cached=32256).
+    Do not turn a token-spend counter into context pressure. A future adapter
+    may use documented request-local telemetry; absent that, native compaction
+    and the independent crash/recovery contracts retain ownership.
     """
-    if not isinstance(event, dict) or event.get("type") != "turn.completed":
-        return None
-    usage = event.get("usage")
-    if not isinstance(usage, dict):
-        return None
-    try:
-        total = int(usage.get("input_tokens") or 0)
-    except (TypeError, ValueError):
-        return None
-    return total if total > 0 else None
+    return None
 
 
 class CtxWatermarkDetector:

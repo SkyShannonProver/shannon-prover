@@ -42,7 +42,7 @@ from typing import Any
 # Single source of truth for the daemon session id lives in core; re-export the
 # name this module's callers use so the formula is no longer hand-mirrored here
 # (audit §2.5 / backlog #15).
-from core.easycrypt.committed_history import read_committed_tactics
+from core.easycrypt.committed_history import read_committed_tactics, read_committed_transactions
 from core.easycrypt.daemon_backend import (
     session_id_for_dir as daemon_session_id_for_dir,
 )
@@ -219,9 +219,13 @@ def _attempt_daemon_attach_inner(
 
     state = _read_json(donor / "daemon_state.json")
     state_count = int(state.get("committed_count") or 0)
+    transactions = read_committed_transactions(donor)
+    if not transactions:
+        return _fail("transaction_history_unavailable", donor=str(donor))
+    transaction_count = len(transactions)
     socket_path = str(state.get("socket_path") or "")
     state_lemma = str(state.get("lemma_name") or "")
-    if state_count != len(requested) or state_lemma != str(lemma_name):
+    if state_count != transaction_count or state_lemma != str(lemma_name):
         # The daemon was not in sync with history.ec when the worker died
         # (e.g. the last commits fell back to the subprocess path, or an
         # undo invalidated the daemon session). The live EC state would
@@ -231,6 +235,7 @@ def _attempt_daemon_attach_inner(
             donor=str(donor),
             daemon_state_count=state_count,
             requested_count=len(requested),
+            requested_transaction_count=transaction_count,
         )
 
     donor_goal_identity = read_session_goal_identity(donor)
@@ -282,7 +287,7 @@ def _attempt_daemon_attach_inner(
     if not info.get("ec_alive", True):
         return _fail("daemon_ec_dead", donor_session_id=donor_sid)
     daemon_count = info.get("committed_count")
-    if isinstance(daemon_count, int) and daemon_count != len(requested):
+    if isinstance(daemon_count, int) and daemon_count != transaction_count:
         return _fail(
             "daemon_commit_count_mismatch",
             daemon_committed_count=daemon_count,
@@ -307,7 +312,7 @@ def _attempt_daemon_attach_inner(
         return _fail("adopt_failed", error=str(exc)[:400])
 
     # Rewrite daemon_state.json so the first post-attach commit's
-    # _sync_to() is a no-op (cached_count == history length, same id).
+    # _sync_to() is a no-op (cached_count == transaction count, same id).
     try:
         new_state = dict(state)
         new_state["session_id"] = target_sid

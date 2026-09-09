@@ -461,7 +461,8 @@ def _precheck_lemma(ec_path: Path, lemma_name: str, include_dir: str = "") -> st
 
     # Full-file failed — always try extracted verification as fallback
     logger.info("Full-file verification failed; trying extracted lemma verification")
-    if _verify_lemma_extracted(ec_path, lemma_name, include_dir=include_dir):
+    extracted_ok, _ = _verify_lemma_extracted(ec_path, lemma_name, include_dir=include_dir)
+    if extracted_ok:
         return "proved_and_verified"
 
     return "has_proof_but_fails"
@@ -1156,6 +1157,7 @@ def run(
             )
             verification = {
                 "status": "fail",
+                "method": verification_evidence.method,
                 "candidate_id": completion_candidate.candidate_id,
                 "reason": verification_evidence.error,
             }

@@ -9,10 +9,9 @@ after the first costs ~50-100 ms instead of 1-2 s.
 Design invariants
 -----------------
 
-- **Disk is truth.** ``history.ec`` is the only source of committed
-  tactic state. Daemon is a volatile accelerator that can be dropped
-  and rebuilt from ``history.ec`` at any time without losing
-  correctness.
+- **Journal-bound acceleration.** ``history.ec`` plus ``steps.log`` preserve
+  committed manager transactions. Daemon state is volatile and can be rebuilt
+  from that journal; current semantic outcomes still require native execution.
 
 - **Zero-impact fallback.** Any daemon error returns ``None`` and the
   caller stays on the subprocess path. No exceptions escape to break
@@ -28,7 +27,7 @@ Design invariants
 Usage from ``session_cli.Session.append_block``::
 
     dbe = DaemonBackend(session_dir, include_dirs)
-    result = dbe.try_commit_latest(file_path, lemma_name, all_tactics)
+    result = dbe.try_commit_latest(file_path, lemma_name, all_transactions)
     if result is not None:
         curr_file.write_text(result["post_raw"])
         prev_file.write_text(result["pre_raw"])

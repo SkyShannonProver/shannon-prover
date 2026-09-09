@@ -63,6 +63,7 @@ from workflow.interleaved.warm_handoff import (
     _lemma_prefix_projection,
 )
 from workflow.interleaved.runtime import load_runtime_settings
+from workflow.interleaved.verify import check_import_with_project_verifier
 from workflow.node.proof_node_resume import load_resume_capsule
 from workflow.tree.supervisor import (
     MANAGED_LIVE_PROGRESS_FILENAME,
@@ -78,7 +79,6 @@ ANSWER_SOURCE = _SETTINGS.answer_source or ROOT / ".interleaved-no-answer-source
 CONFINED_PATTERNS = _SETTINGS.confined_patterns
 MAX_PARALLEL = _SETTINGS.project.max_parallel
 MAX_INNER_MINUTES = _SETTINGS.project.max_inner_minutes
-VERIFIER = _SETTINGS.project.verifier or "workflow/interleaved/verify.py"
 WORKER_HEARTBEAT_INTERVAL_SECONDS = 1.0
 WORKER_HEARTBEAT_STALE_SECONDS = 15.0
 WORKER_HEARTBEAT_KIND = "interleaved_shannon_worker_heartbeat"
@@ -763,6 +763,7 @@ def _public_record(record: dict[str, Any]) -> dict[str, Any]:
             "failure_class",
             "failure_message",
             "collect_status",
+            "collect_verification_scope",
             "resume_from_job_id",
             "resume_from_run_directory",
             "resume_checkpoint_id",
@@ -1908,15 +1909,6 @@ def _worker_result(
     return result
 
 
-def _collect_verification_environment() -> dict[str, str]:
-    environment = os.environ.copy()
-    # collect owns the registry lock while it patches and replays the source.
-    # Suppress verifier-side status injection so the child does not attempt to
-    # acquire that same lock. User-invoked checks retain the normal job summary.
-    environment.pop("INTERLEAVED_RUN_DIR", None)
-    return environment
-
-
 def _refresh_live_job_progress(
     *,
     run_dir: Path,
@@ -2266,37 +2258,34 @@ def collect_job(job_id: str) -> dict[str, Any]:
         proof_body, _ = _proof_body_span(proved, lemma)
         _, (body_start, body_end) = _proof_body_span(current, lemma)
         merged = current[:body_start] + proof_body + current[body_end:]
-        _atomic_bytes(target, merged.encode("utf-8"))
-
-        verification_path = _job_dir(run_dir, job_id) / "collect_verification.json"
-        verification = subprocess.run(
-            [
-                sys.executable,
-                str(ROOT / VERIFIER),
-                "--check",
-                "--output",
-                str(verification_path.relative_to(ROOT)),
-            ],
-            cwd=ROOT,
-            env=_collect_verification_environment(),
-            text=True,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            check=False,
+        job_dir = _job_dir(run_dir, job_id)
+        candidate = job_dir / "collect_candidate.ec"
+        _atomic_bytes(candidate, merged.encode("utf-8"))
+        verification = check_import_with_project_verifier(
+            root=ROOT, project=_SETTINGS.project, candidate=candidate, lemma=lemma,
+            output=job_dir / "collect_verification.json",
         )
-        if verification.returncode != 0:
-            _atomic_bytes(target, current_bytes)
+        if not verification["passed"]:
             record["collect_status"] = "verification_failed"
             record["error"] = (
-                "verified lemma patch did not pass the current whole-file "
-                "development check; canonical source was restored"
+                "lemma import verification failed; canonical source was not modified: "
+                + str(verification.get("error") or verification.get("easycrypt_stderr") or "native rejection")[:1500]
             )
             _save_job(run_dir, record)
             return _public_record(record)
 
+        # The outer can edit independent source while native checking runs.
+        # Do not overwrite any such concurrent edit, even beyond the lemma.
+        if target.read_bytes() != current_bytes:
+            record["collect_status"] = "source_changed_during_check"
+            record["error"] = "source changed during collect verification; retry collect"
+            _save_job(run_dir, record)
+            return _public_record(record)
+        _atomic_bytes(target, merged.encode("utf-8"))
         record["status"] = "merged"
         record["merged_at"] = _now()
         record["collect_status"] = "merged_and_checked"
+        record["collect_verification_scope"] = "target_lemma_under_declared_dependencies"
         record["merged_target_sha256"] = _sha256_text(merged)
         record["error"] = ""
         _save_job(run_dir, record)

@@ -1,0 +1,899 @@
+{
+  "schema_version": 1,
+  "title": "How the agent built the ML-KEM proof",
+  "deck": "From a fixed conclusion to a connected EasyCrypt development: the reduction choices, invariants, failed handoffs and repairs visible in the archived run. Each step links to the actual final lemmas, with original trace excerpts underneath.",
+  "stats": [
+    {
+      "value": "9h 50m 57s",
+      "label": "run through final certification"
+    },
+    {
+      "value": "9 / 25",
+      "label": "inner jobs verified and merged"
+    },
+    {
+      "value": "211",
+      "label": "public outer-agent messages in the archive"
+    },
+    {
+      "value": "0 admits",
+      "label": "in the strictly verified final tree"
+    }
+  ],
+  "provenance": {
+    "commit": "caa26203954f177b691cac613a85b67e4fa9ccdb",
+    "tracePath": "evidence/artifacts/gpt6-mlkem/official_20260906T004441Z/outer_agent_events.jsonl",
+    "blob": "556d7f5b6cfe548b215bec6a72110bb1de9b7bc5",
+    "note": "This is an editorial reconstruction from public outer-agent messages, selected command results, final source, job records and verifier artifacts in one frozen Git archive. The archive contains 211 public agent_message entries, 826 completed shell commands and 25 job records. The JSONL has no separate reasoning-text items; this is not a transcript of private model reasoning or an audit of private inner-session traces. Expand a step to read verbatim public messages, identified by their original JSONL line and item ID. Source links refer to final lemmas, whose line numbers differ from intermediate drafts."
+  },
+  "orderNote": "The steps follow the main development threads, grouped for readability. They overlap: the outer switches between T, U, adaptive correctness and checking while up to two inner jobs run. Message order is preserved within each thread; no timestamps are invented for untimed messages.",
+  "stages": [
+    {
+      "title": "Start below the KEM: noise, decoding and two MLWE hybrids",
+      "paragraphs": [
+        "The supplied file already defined the games and reduction adversaries, but did not provide the intermediate lemmas needed by conclusion. The outer agent first expanded the decryption noise, proved that the good-noise event implies successful decoding, and coupled the ideal key-generation/encryption samples. That left a local correctness obligation suitable for an inner proof job.",
+        "For CPA security, it related the B1 and B2 adversaries to successive MLWE games. B2 exposed a sampling-order mismatch: encryption randomness had to move before the adversary’s message choice. After repairing that coupling, the outer proved that a uniform ciphertext masks the encoded message and that the last game succeeds with probability 1/2."
+      ],
+      "work": "The inner completed mlkem_ideal_correctness. The outer completed the MLWE hybrids and uniform-half argument; an inner attempt on uniform_half was cancelled after 15 seconds once the outer had solved it locally.",
+      "references": [
+        {
+          "file": "mlkem",
+          "lemma": "mlkem_noise_split"
+        },
+        {
+          "file": "mlkem",
+          "lemma": "mlkem_decode_good"
+        },
+        {
+          "file": "mlkem",
+          "lemma": "mlkem_ideal_correctness"
+        },
+        {
+          "file": "mlkem",
+          "lemma": "mlkem_cpa_mlwe_second"
+        },
+        {
+          "file": "mlkem",
+          "lemma": "mlkem_uniform_half"
+        }
+      ],
+      "evidence": [
+        {
+          "kind": "agent_message",
+          "line": 93,
+          "item": "item_47",
+          "text": "The correctness coupling has reached a pure logical residual: the random choices are coupled and the adversary call is discharged using losslessness. I’ll hand that residual to Shannon while constructing the CPA hybrids."
+        },
+        {
+          "kind": "agent_message",
+          "line": 129,
+          "item": "item_66",
+          "text": "The correctness helper has been collected successfully. In the second MLWE hybrid, the main proof step is to move encryption randomness before the adversary’s message choice, then match it to the MLWE challenge randomness. EasyCrypt has exposed an ordering mismatch in that coupling, which I’m correcting."
+        },
+        {
+          "kind": "agent_message",
+          "line": 205,
+          "item": "item_106",
+          "text": "The one-half calculation closed locally, so that submission is cancelled and needs no continuation. I’ll now work on PRG replacement and prepare a separate oracle-splitting helper to test the map invariant needed to connect the single-oracle KEM to the two-oracle U transform."
+        }
+      ]
+    },
+    {
+      "title": "Bridge the real PRGs to explicit sampling, then package reusable bounds",
+      "paragraphs": [
+        "The real scheme does not sample all the ideal coins directly: it obtains key-generation and encryption material through two PRGs. The outer constructed real/middle/ideal game equalities for both CPA and correctness, exposing nested distribution bindings as explicit sampler procedures.",
+        "The sampler bridges align the same tuples after commuting independent draws and eliminating an unused seed. The resulting mlkem_cpa_bound combines the two MLWE distinguishing gaps with the key-generation and encryption PRG gaps. Separately, mlkem_correctness_bound combines the noise-failure bound with those two PRG gaps; later reductions instantiate these helpers with the particular adversaries already named in the fixed theorem."
+      ],
+      "work": "Outer-led game equalities and probability bounds, while the split-oracle inner jobs were being prepared or checked.",
+      "references": [
+        {
+          "file": "mlkem",
+          "lemma": "mlkem_kg_sample"
+        },
+        {
+          "file": "mlkem",
+          "lemma": "mlkem_enc_sample"
+        },
+        {
+          "file": "mlkem",
+          "lemma": "mlkem_cpa_bound"
+        },
+        {
+          "file": "mlkem",
+          "lemma": "mlkem_correctness_bound"
+        }
+      ],
+      "evidence": [
+        {
+          "kind": "agent_message",
+          "line": 258,
+          "item": "item_134",
+          "text": "Both standalone sampler equivalences check. In the full ideal-PRG bridge, I’ve moved encryption randomness ahead of message choice and removed the unused PRG seed. The remaining steps are to couple the encryption and key-generation tuples."
+        },
+        {
+          "kind": "agent_message",
+          "line": 292,
+          "item": "item_152",
+          "text": "The reusable PKE advantage bound checks against the named `B1` and `B2` reductions and the two PRG assumptions. I’m now checking the corresponding correctness PRG bridges and assembling them with the noise bound."
+        },
+        {
+          "kind": "agent_message",
+          "line": 300,
+          "item": "item_157",
+          "text": "The CPA and correctness bounds are checked. Shannon has also verified the oracle-query splitting lemma under the proposed map invariant. I’ll collect that result and use it when building the full game equivalence."
+        }
+      ]
+    },
+    {
+      "title": "Split the hash oracle without changing the CCA game",
+      "paragraphs": [
+        "To connect FO_K to the supplied T/U-transform games, the outer needed a relational invariant between one hash map and the two split-oracle maps. The proof first handles a single get call, then decapsulation, then lifts those local contracts through the entire CCA game.",
+        "The whole-game invariant must preserve more than map contents: the stored secret key and challenge ciphertext must also agree. One failed draft referred to the wrong module’s globals; the outer corrected the ownership to KEMROM.CCA before finishing the initialization and challenge coupling. The final chain then changes eager/lazy oracle implementations through separate equalities."
+      ],
+      "work": "Three inner jobs were verified and collected: split_get, split_decap and split_cca. The outer supplied the surrounding invariants, module bindings and game adapters.",
+      "references": [
+        {
+          "file": "mlkem",
+          "lemma": "mlkem_split_get"
+        },
+        {
+          "file": "mlkem",
+          "lemma": "mlkem_split_decap"
+        },
+        {
+          "file": "mlkem",
+          "lemma": "mlkem_split_cca"
+        },
+        {
+          "file": "mlkem",
+          "lemma": "mlkem_lazy_cca"
+        }
+      ],
+      "evidence": [
+        {
+          "kind": "agent_message",
+          "line": 384,
+          "item": "item_201",
+          "text": "The query and decapsulation proofs are collected. I’m connecting them to the adversary call in the full CCA game, using the map relation together with equality of the stored secret key and challenge ciphertext as the invariant."
+        },
+        {
+          "kind": "agent_message",
+          "line": 405,
+          "item": "item_212",
+          "text": "The native goal revealed a namespace detail: `CCAL` uses `KEMROM.CCA` for its stored key and challenge. I corrected the invariant to match those globals and am checking the two oracle obligations against the collected helpers."
+        },
+        {
+          "kind": "agent_message",
+          "line": 461,
+          "item": "item_243",
+          "text": "The full single-oracle-to-`CCAL` equality is collected. The supplied `Bowl` adversary also checks against the canonical list game. I’m now connecting that game to the standard left/right experiment to obtain the list one-way bound."
+        }
+      ]
+    },
+    {
+      "title": "Turn one-way recovery into a list event, then an IND advantage",
+      "paragraphs": [
+        "The one-way route separates decryption failure from exact recovery of the sampled plaintext. The outer embeds exact recovery in a singleton-list adversary, then constructs a canonical list game: the useful gap is membership of the real plaintext minus membership of an independently sampled plaintext.",
+        "This is not just an invocation of a generic reduction. The canonical-game coupling samples the challenge bit in a different order, swaps the two candidate messages in one branch, and couples the tie-breaking coin. The remaining random-membership term is bounded by list size times plaintext point mass, yielding mlkem_list_to_ind. These lemmas later connect the T-transform query and recovery events to the CPA bounds from step 02."
+      ],
+      "work": "The outer built the one-way/list/IND bridge while inner agents worked on the split-oracle CCA proof.",
+      "references": [
+        {
+          "file": "mlkem",
+          "lemma": "mlkem_ow_to_list"
+        },
+        {
+          "file": "mlkem",
+          "lemma": "mlkem_list_canonical"
+        },
+        {
+          "file": "mlkem",
+          "lemma": "mlkem_list_other_bound"
+        },
+        {
+          "file": "mlkem",
+          "lemma": "mlkem_list_to_ind"
+        }
+      ],
+      "evidence": [
+        {
+          "kind": "agent_message",
+          "line": 338,
+          "item": "item_177",
+          "text": "The `BasePKE` adapter checks. I’m now proving the one-way bridge: separate correctness failures from exact message recovery, then represent the recovered message as a singleton list. This will connect to the list-guessing adversary used by the theorem."
+        },
+        {
+          "kind": "agent_message",
+          "line": 432,
+          "item": "item_227",
+          "text": "The canonical list game makes the intended reduction explicit: it gets credit for the true plaintext appearing in the output list and loses credit when an independent plaintext also appears. I’m checking its equivalence to the supplied `Bowl` adversary, after which the standard-library left/right probability lemma can supply the numerical relation."
+        },
+        {
+          "kind": "agent_message",
+          "line": 441,
+          "item": "item_232",
+          "text": "The list-game proof now follows the message-relabeling route: move the challenge bit before the message samples, swap the samples in one branch, and couple the tie-breaking coin. The current check is working through the resulting branch goals."
+        },
+        {
+          "kind": "agent_message",
+          "line": 496,
+          "item": "item_262",
+          "text": "The list-to-IND reduction is checked. I’m finishing the list-size bound, then moving to the remaining random-oracle and KEM game transitions. Those are the main obligations still between the checked PKE bounds and the final theorem."
+        }
+      ]
+    },
+    {
+      "title": "Design the U-transform cache invariant and isolate PRF replacement",
+      "paragraphs": [
+        "The U-transform simulator uses a ciphertext/key list, while the real side uses a plaintext-key oracle map and a random-function rejection-key map. The outer introduced mlkem_u_inv to relate them: a good ciphertext’s list lookup equals the hash key of its recovered plaintext; an invalid ciphertext’s lookup equals its rejection key; cached plaintexts decrypt correctly; and the simulator’s populated plaintext entries agree with the real map.",
+        "It then split the work into PRF-game embedding, decapsulation/cache preservation, and the good hash-query case. This separated the pseudorandom rejection-key replacement from the harder simulation argument instead of trying to prove the entire U reduction in one obligation."
+      ],
+      "work": "Inner jobs eventually delivered mlkem_u_prf_real and mlkem_u_sim_get2_good. Collection of the first was initially blocked by an unrelated unfinished suffix, so ‘verified in its job’ did not yet mean ‘merged into the current file’.",
+      "references": [
+        {
+          "file": "mlkem",
+          "lemma": "mlkem_u_prf_real"
+        },
+        {
+          "file": "mlkem",
+          "lemma": "mlkem_u_inv_empty"
+        },
+        {
+          "file": "mlkem",
+          "lemma": "mlkem_u_sim_get2_good"
+        },
+        {
+          "file": "mlkem",
+          "lemma": "mlkem_u_eager"
+        }
+      ],
+      "evidence": [
+        {
+          "kind": "agent_message",
+          "line": 561,
+          "item": "item_296",
+          "text": "For the U-transform simulation, I’ve written an invariant relating the real oracle caches to the simulator’s ciphertext/key list. It covers both valid ciphertexts and random rejection keys, and records correctness of cached plaintexts. I’ll check decapsulation under this invariant before applying it to the whole adversary call."
+        },
+        {
+          "kind": "agent_message",
+          "line": 685,
+          "item": "item_362",
+          "text": "I’m organizing the remaining U-transform proof into oracle steps: preserve the cache invariant during decapsulation, preserve it on a correct hash query, and match the failure flag on an incorrect query. Each step has a concrete statement; the game-level proof will combine them."
+        },
+        {
+          "kind": "agent_message",
+          "line": 694,
+          "item": "item_367",
+          "text": "Shannon verified the PRF lemma, but collection failed because a later proof in the current file did not pass. The collector restored the source, so the lemma is not yet usable. I’ll repair the later development check and collect the verified result again."
+        },
+        {
+          "kind": "agent_message",
+          "line": 750,
+          "item": "item_397",
+          "text": "The PRF embedding has been collected successfully, and the whole development check passes with the remaining temporary shells. I’m starting the decapsulation scout and the independent correct-query completion in the two Shannon lanes, while continuing the T-transform oracle argument."
+        }
+      ]
+    },
+    {
+      "title": "Recover the failed decapsulation handoff by splitting valid/fresh cache cases",
+      "paragraphs": [
+        "The first decapsulation job made partial progress and returned a 31-command checkpoint. A resumed job and a fresh job did not produce accepted final proofs. Replaying the checkpoint also exposed a parse failure involving an invalid lemma reference; the outer repaired the prefix before using it as a starting point.",
+        "The remaining valid-ciphertext branch needed explicit facts: successful re-encryption identifies the plaintext; an existing good-key lookup agrees with the list; extending the fresh plaintext-key map preserves the invariant. The outer proved those as small reusable lemmas, then completed all four valid/invalid × cached/fresh cases locally. A separate fair-key handoff also failed, and the outer closed that comparison itself."
+      ],
+      "work": "No decapsulation-simulation or fair-key job was counted as a verified merge. Their final proofs were completed by the outer after the failed handoffs; the independently successful split_decap job from step 03 is a different lemma.",
+      "references": [
+        {
+          "file": "mlkem",
+          "lemma": "mlkem_u_cipher_eq"
+        },
+        {
+          "file": "mlkem",
+          "lemma": "mlkem_u_inv_good_lookup"
+        },
+        {
+          "file": "mlkem",
+          "lemma": "mlkem_u_inv_good_extend"
+        },
+        {
+          "file": "mlkem",
+          "lemma": "mlkem_u_sim_decap"
+        },
+        {
+          "file": "mlkem",
+          "lemma": "mlkem_u_fair_keys"
+        }
+      ],
+      "evidence": [
+        {
+          "kind": "agent_message",
+          "line": 814,
+          "item": "item_431",
+          "text": "The decapsulation scout closed the invalid-ciphertext cases and reached the valid branch before timing out. I resumed its 31-tactic checkpoint for 25 minutes, with guidance on the exact logical residual. The T proof is continuing locally."
+        },
+        {
+          "kind": "agent_message",
+          "line": 901,
+          "item": "item_478",
+          "text": "The replay also exposed an invalid lemma reference in the public prefix. I removed that redundant tactic; the following proof steps already work from the earlier state. The prefix still needs a successful source check before I can rely on it."
+        },
+        {
+          "kind": "agent_message",
+          "line": 1066,
+          "item": "item_566",
+          "text": "The lazy-query invariant is now collected, and the whole development check passes with the remaining proof shells. The checked additions include the fresh-message consequence, key preservation, and the `qHC + 1` guessing identity. I’m moving on to the smaller decapsulation obligations and the fair-game key comparison."
+        },
+        {
+          "kind": "agent_message",
+          "line": 1107,
+          "item": "item_588",
+          "text": "The full decapsulation coupling now checks, including all valid, invalid, cached, and fresh cases. The fresh-encryption goal is also narrowed to a cache rewrite: at an absent input, the oracle returns the value just sampled. I’m closing that and building the adaptive-to-base correctness bridge."
+        },
+        {
+          "kind": "agent_message",
+          "line": 1126,
+          "item": "item_598",
+          "text": "The fair-key equivalence now checks directly. I’ve handed the remaining fresh-encryption formula to Shannon as a small logical completion task. Below that frozen source boundary, I’m assembling the full U simulation from the checked oracle couplings."
+        }
+      ]
+    },
+    {
+      "title": "Lift local U-oracle contracts without losing the failure-flag precondition",
+      "paragraphs": [
+        "After decapsulation and good-query preservation were available, the outer assembled the full real/simulated U-game coupling. An inner whole-game attempt retained 78 commands but failed final verification; a resumed attempt also failed. The outer continued from the exposed goals rather than treating the closed session as a proof.",
+        "The key repair was to distinguish termination from preservation of the failure flag. A generic losslessness application had discarded a needed precondition. The outer introduced a separate flag-preservation contract, supplied oracle obligations in the native call order, and finished initialization and the whole-game coupling locally."
+      ],
+      "work": "The inner did supply the separate fresh-encryption lemma. The larger mlkem_u_sim obligation and its probability-level assembly were completed by the outer.",
+      "references": [
+        {
+          "file": "mlkem",
+          "lemma": "mlkem_u_real_bad"
+        },
+        {
+          "file": "mlkem",
+          "lemma": "mlkem_u_sim"
+        },
+        {
+          "file": "mlkem",
+          "lemma": "mlkem_u_smooth_gap"
+        },
+        {
+          "file": "mlkem",
+          "lemma": "mlkem_t_fresh_enc"
+        }
+      ],
+      "evidence": [
+        {
+          "kind": "agent_message",
+          "line": 1152,
+          "item": "item_613",
+          "text": "The fresh-encryption helper is now collected. Its proof splits the generated conjunction and introduces the sampled value before rewriting the cache lookup. I’ve restored the larger candidates and am checking the reordered U simulation before handing off any residual."
+        },
+        {
+          "kind": "agent_message",
+          "line": 1212,
+          "item": "item_645",
+          "text": "The local correctness and fresh-encryption bridges now check. The U-simulation job made substantial checkpoint progress, but the scheduler reported “session-closed completion candidate failed final verification.” I’ll recover through its public checkpoint interface while checking the query-count invariant independently."
+        },
+        {
+          "kind": "agent_message",
+          "line": 1359,
+          "item": "item_725",
+          "text": "The native goal confirmed why the shortcut failed: the generic losslessness tactic had discarded the useful failure-flag precondition. I’ve split the proof into termination and flag preservation, using a standard-library proof pattern. This keeps the exact state information needed by the simulation."
+        },
+        {
+          "kind": "agent_message",
+          "line": 1379,
+          "item": "item_736",
+          "text": "The complete U simulation now checks locally: real rejection behavior is coupled to the cached simulator up to correctness failure. The counter proof also passed its frame obligation; I’ve added the missing step that moves its trailing counter increment into the postcondition."
+        }
+      ]
+    },
+    {
+      "title": "Program the challenge hash for T, charging only a challenge-plaintext query",
+      "paragraphs": [
+        "For the T-transform route, the outer compared a game whose hash map is programmed at the challenge plaintext with an unprogrammed game. The maps are not globally equal: they agree away from that one plaintext. The outer replaced an unsuccessful generic map-equivalence attempt with an explicit pointwise ‘equal except at the challenge’ relation.",
+        "A bad-event flag records whether the adversary queries that plaintext. This gives the programming bound and connects the event to the base one-way/list games. The concrete adversary BUUOWMod does not use the validation oracle, which lets the outer specialize the T route; it still had to prove the validation and game-interface adapters rather than change the target theorem."
+      ],
+      "work": "The outer developed the programming and T-game bounds alongside inner cache work. A T-validation handoff failed and was completed locally.",
+      "references": [
+        {
+          "file": "mlkem",
+          "lemma": "mlkem_t_get_coupling"
+        },
+        {
+          "file": "mlkem",
+          "lemma": "mlkem_t_program_bound"
+        },
+        {
+          "file": "mlkem",
+          "lemma": "mlkem_t_validation"
+        },
+        {
+          "file": "mlkem",
+          "lemma": "mlkem_t_hash_bound"
+        }
+      ],
+      "evidence": [
+        {
+          "kind": "agent_message",
+          "line": 476,
+          "item": "item_251",
+          "text": "The lower PKE and correctness bounds are complete, along with the single-oracle CCA splitting equality. The major remaining pieces are the list one-way bound, adaptive random-oracle correctness, and the U-transform game sequence. I’m checking the list bound now and will then specialize the T-transform step to `BUUOWMod`, which does not use its validation-oracle parameter."
+        },
+        {
+          "kind": "agent_message",
+          "line": 768,
+          "item": "item_407",
+          "text": "The T-transform candidate now bounds the effect of programming the challenge’s hash entry by the event that the adversary queries the challenge plaintext. I’m checking that argument; the two U-simulation jobs are still running independently."
+        },
+        {
+          "kind": "agent_message",
+          "line": 788,
+          "item": "item_417",
+          "text": "Shannon verified the correct-query helper, and decapsulation has continued to gain accepted steps. In the T proof, the library map-equivalence rewrite did not apply; I’m replacing it with an explicit pointwise predicate: the maps agree at every plaintext except the challenge."
+        },
+        {
+          "kind": "agent_message",
+          "line": 1194,
+          "item": "item_636",
+          "text": "The U simulation checkpoint is growing. The T-validation job ended with “session-closed completion candidate failed final verification” and no reusable result, so I’ll finish its two documented residuals directly. The current source check also covers the new query-accounting helpers."
+        }
+      ]
+    },
+    {
+      "title": "Avoid charging correctness failure twice in the challenge-game hop",
+      "paragraphs": [
+        "The first U simulation already pays for correctness failure. A naive second ‘identical until bad’ bound would pay for it again when changing the challenge key, risking a coefficient larger than the fixed conclusion allows.",
+        "The outer instead coupled the games up to correctness failure OR challenge-plaintext recovery. If correctness has failed, both games can use the same final fair bit; only recovery needs to appear in the challenge-gap bound. It preserved the cache relation away from the target, tracked sticky failure/recovery flags, and separated initialization into key equality, cache-away-from-target, and a final Boolean case split. The final lemma states equality of the results whenever H2.invert is false."
+      ],
+      "work": "An inner job proved the local challenge hash-query obligation. The whole challenge-game handoff failed; the outer finished its initialization and final consequence locally.",
+      "references": [
+        {
+          "file": "mlkem",
+          "lemma": "mlkem_u_challenge_get"
+        },
+        {
+          "file": "mlkem",
+          "lemma": "mlkem_u_sticky_flags"
+        },
+        {
+          "file": "mlkem",
+          "lemma": "mlkem_u_challenge_game"
+        },
+        {
+          "file": "mlkem",
+          "lemma": "mlkem_u_challenge_gap"
+        }
+      ],
+      "evidence": [
+        {
+          "kind": "agent_message",
+          "line": 1308,
+          "item": "item_697",
+          "text": "The U-game bound needs a careful distinction: after a correctness failure, both hash oracles already return the same fixed value. The challenge-cache comparison can therefore stop only on challenge-message recovery. That avoids charging correctness twice at this step and preserves the coefficient required by the final theorem."
+        },
+        {
+          "kind": "agent_message",
+          "line": 1394,
+          "item": "item_744",
+          "text": "The challenge comparison has a useful invariant: after the games diverge, either both have recorded a correctness failure, or both have recorded challenge-message recovery. In the first case their final outputs are coupled fair bits. This lets the probability bound charge only recovery at that step."
+        },
+        {
+          "kind": "agent_message",
+          "line": 1748,
+          "item": "item_933",
+          "text": "I’m separating the remaining calculation into small goals: challenge-key equality, cache equality away from the challenge, and the final Boolean consequence. The latest native goal confirms that this proof step now consists of those local checks."
+        },
+        {
+          "kind": "agent_message",
+          "line": 1770,
+          "item": "item_945",
+          "text": "The whole challenge-game equivalence now passes the local checker, including initialization and the final consequence. I’m moving on to the selected-query coupling. I’ll hand that local obligation to Shannon with a temporary construction shell so native checks can continue into the independent correctness bridges while it runs."
+        }
+      ]
+    },
+    {
+      "title": "Build the adaptive-correctness reduction around a selected query witness",
+      "paragraphs": [
+        "A generic per-message correctness bound was not enough: conclusion names the randomized TT.B reduction. The outer constructed a trace of distinct queries, a guessed query index, and a selected message/randomness pair. Before the selected query the two executions agree; afterwards their oracle answers may diverge, but they must retain the same selected witness.",
+        "The oracle proof handles three cases explicitly: the selected fresh query, an earlier fresh query, and a repeated query. In one failed approach, auto consumed a left-hand random draw before exposing the right-hand conditional draw, destroying the intended pairing. Branch-first coupling preserves the draws. The resulting local oracle lemma was lifted to a whole-game selected-query lemma, enabling the factor TT.qHC + 1 in the adaptive correctness bound."
+      ],
+      "work": "The inner delivered the lazy-oracle missing-query invariant. Two selected-query oracle attempts and a later whole-game attempt failed verification; the outer completed the local and lifted couplings.",
+      "references": [
+        {
+          "file": "mlkem",
+          "lemma": "mlkem_co_lazy_get"
+        },
+        {
+          "file": "mlkem",
+          "lemma": "mlkem_corr_guess_factor"
+        },
+        {
+          "file": "mlkem",
+          "lemma": "mlkem_co_selection_get"
+        },
+        {
+          "file": "mlkem",
+          "lemma": "mlkem_co_selected_game"
+        },
+        {
+          "file": "mlkem",
+          "lemma": "mlkem_corr_adaptive_bound"
+        }
+      ],
+      "evidence": [
+        {
+          "kind": "agent_message",
+          "line": 581,
+          "item": "item_307",
+          "text": "The current check is replaying the development. I’m also planning the adaptive correctness step: it must bound failures on hash queries using the exact randomized reduction named in the theorem. A generic per-message correctness bound would not justify that step."
+        },
+        {
+          "kind": "agent_message",
+          "line": 1685,
+          "item": "item_900",
+          "text": "The adaptive-correctness candidate chain is now written through the expected factor `(qHC + 1)`: record a failing query, guess its index, preserve its message and randomness, then connect to `TT.B`. Its later steps remain unchecked. The current native run is still working through the earlier challenge-game boundary."
+        },
+        {
+          "kind": "agent_message",
+          "line": 1850,
+          "item": "item_989",
+          "text": "The native goals exposed two issues with the current approach. In the selected-query helper, `auto` consumed the left random draw before the right conditional draw was exposed, losing the intended coupling; I’ll split the branches first. For counter accounting, EasyCrypt rejects the abstract oracle contract’s overlap with `TT.CO1.counter`. I’ll count through the concrete `CO1` wrapper instead."
+        },
+        {
+          "kind": "agent_message",
+          "line": 1928,
+          "item": "item_1032",
+          "text": "The complete selected-query coupling now checks, including repeated queries. The inversion oracle’s residual goal uses a simplified Boolean expression for the update; I’m matching the helper statement to that native form so it can be applied directly."
+        },
+        {
+          "kind": "agent_message",
+          "line": 2215,
+          "item": "item_1192",
+          "text": "The selected-query whole-game equivalence now checks completely. All three major couplings are checked. The current failure is a pure initialization consequence in the actual-correctness trace lemma; I’ve added the missing discharge step."
+        }
+      ]
+    },
+    {
+      "title": "Make query budgets and inversion witnesses survive the concrete wrappers",
+      "paragraphs": [
+        "The proposed abstract counter contract failed because the abstract oracle itself could write TT.CO1.counter. The outer moved the increment into the concrete CO1 wrapper and barred the underlying random oracle from changing that state. The checked bounds are BUUC ≤ 2*qHK + 2 and BUUCI ≤ 2*qHK + 1; both fit the target’s TT.qHC = 2*qHK + 2.",
+        "In parallel, the inversion coupling tracked whether the target entered the cache, whether it had been recorded exactly once, and which plaintext was recorded. Correctness witnesses required explicit concrete adversary bindings after abstract-module write restrictions rejected a generic soundness lemma. These obligations connect failure flags and cache recovery to the exact BUUC, BUUCI and BUUOWMod games used in the final reduction."
+      ],
+      "work": "The counter-invariant job failed at startup; the inversion-query job failed final verification. The outer completed the counter bounds, witness soundness and inversion whole-game coupling.",
+      "references": [
+        {
+          "file": "mlkem",
+          "lemma": "mlkem_uc_counter"
+        },
+        {
+          "file": "mlkem",
+          "lemma": "mlkem_uci_counter"
+        },
+        {
+          "file": "mlkem",
+          "lemma": "mlkem_uc_bad_bound"
+        },
+        {
+          "file": "mlkem",
+          "lemma": "mlkem_uci_bad_bound"
+        },
+        {
+          "file": "mlkem",
+          "lemma": "mlkem_u_wide_game"
+        }
+      ],
+      "evidence": [
+        {
+          "kind": "agent_message",
+          "line": 1904,
+          "item": "item_1019",
+          "text": "I also found a problem with the planned counter lemmas: an abstract oracle can modify the counter, so the proposed invariant lacks the necessary protection. The replacement keeps the counter increment in concrete code and restricts only the underlying random oracle; that replacement is written and awaiting its check."
+        },
+        {
+          "kind": "agent_message",
+          "line": 1949,
+          "item": "item_1044",
+          "text": "The inversion oracle coupling and both correctness-witness invariants now check. The next failure is another abstract-module write restriction; I’ve specialized the soundness step to the two concrete reduction adversaries, using their checked witness lemmas."
+        },
+        {
+          "kind": "agent_message",
+          "line": 2134,
+          "item": "item_1146",
+          "text": "The entire inversion-game coupling and its probability bound now check locally. Verification has advanced to the adaptive-correctness trace lemmas, so a second handoff is unnecessary for that game."
+        },
+        {
+          "kind": "agent_message",
+          "line": 2325,
+          "item": "item_1255",
+          "text": "Both concrete counter bounds now check: `BUUC` uses at most `2*qHK + 2` calls and `BUUCI` at most `2*qHK + 1`. Verification has reached losslessness of the wrapped adversary, where counter-update assignments need to be handled before applying the underlying call’s losslessness lemma."
+        }
+      ]
+    },
+    {
+      "title": "Close the trace-to-game bridge, not just the local oracle lemmas",
+      "paragraphs": [
+        "The remaining adaptive-correctness work connects the instrumented query trace to the actual encryption/decryption experiment. A handoff first hit a declaration-scanner problem: bare byequiv mlkem_corr_real_trace was mistaken for a declaration; parenthesizing the application allowed submission, but that job still failed verification.",
+        "The outer then separated random-oracle losslessness from a cached-query fact, froze the cached randomness as a logical value across the other side’s call, and proved the actual correctness-trace equality. With trace-size and counter bounds in place, it connected actual queries to marked queries and TT.B’s selected-query experiment. Separate eager/finite-function/random-oracle conversions and one-way adapters were needed to make all the probability bounds apply to the same games."
+      ],
+      "work": "The outer completed the trace coupling, capped-trace bound and final adaptive bridge. These connections remained substantial work after the last successful inner merge at 06:02:29 UTC.",
+      "references": [
+        {
+          "file": "mlkem",
+          "lemma": "mlkem_ro_cached_draw"
+        },
+        {
+          "file": "mlkem",
+          "lemma": "mlkem_corr_real_trace"
+        },
+        {
+          "file": "mlkem",
+          "lemma": "mlkem_corr_trace_capped"
+        },
+        {
+          "file": "mlkem",
+          "lemma": "mlkem_corr_adaptive_base"
+        },
+        {
+          "file": "mlkem",
+          "lemma": "mlkem_u_wide_ow"
+        }
+      ],
+      "evidence": [
+        {
+          "kind": "agent_message",
+          "line": 2261,
+          "item": "item_1217",
+          "text": "The scheduler was mistaking a later bare `byequiv mlkem_corr_real_trace` reference for another declaration. Parenthesizing that reference allowed submission. Shannon is now working only on the final decryption residual, and I’m checking the concrete query counters and later game alignments."
+        },
+        {
+          "kind": "agent_message",
+          "line": 2286,
+          "item": "item_1231",
+          "text": "The H2 counter lemma now checks with those restrictions. I’m repairing the surrounding counter invariant’s decapsulation case and replacing the stalled trace step with two smaller facts: oracle losslessness and a cached-query result."
+        },
+        {
+          "kind": "agent_message",
+          "line": 2306,
+          "item": "item_1244",
+          "text": "The actual-correctness trace equivalence now checks completely. The counter proof is stopping inside decapsulation’s conditional cache logic, so I’m splitting those branches before asking automation to prove that the counters are unchanged."
+        },
+        {
+          "kind": "agent_message",
+          "line": 2369,
+          "item": "item_1280",
+          "text": "The adaptive correctness trace and concrete query-count bounds are now checked. I’m working through the remaining reduction adapters and final assembly; the complete candidate still needs validation by the final verifier."
+        },
+        {
+          "kind": "agent_message",
+          "line": 2516,
+          "item": "item_1356",
+          "text": "The coupling to the fixed one-way adversary now checks, along with the T-transform adapters and hash-query domain bound. I’m finishing the probability calculations and checking that the final theorem’s assumptions satisfy each helper’s requirements."
+        }
+      ]
+    },
+    {
+      "title": "Repair the final module assumptions, restore every helper, and certify conclusion",
+      "paragraphs": [
+        "Final assembly exposed a genuine interface mismatch: the original adversary assumptions did not exclude new globals introduced by the T-transform helpers. The outer rewrote those helpers to use state already covered by the fixed specification’s restrictions, rather than strengthen the theorem’s assumptions.",
+        "The final 77-line proof body explicitly instantiates and combines the adaptive-correctness bounds, ordinary correctness, one-way/list-to-IND and CPA bounds, the U security core, T hash bound, split-oracle equality, lazy/eager conversions and PRF hop. It also proves nonnegativity needed for the final inequality. This is the assembly of the preceding lemmas, not a several-thousand-line proof of a single lemma.",
+        "During late suffix development, 179 previously checked helper proofs were temporarily shelved as admits to shorten checks. Those intermediate checks were conditional. All proofs were restored before the complete local replay and strict final verifier. The archived final and independent verifiers both report success, zero admits, unchanged protected specification, and the EOF tripwire reached."
+      ],
+      "work": "Outer final assembly and repairs, followed by harness and independent strict verification. The 9h 50m 57s clock ends at harness certification; the independent check happened afterwards.",
+      "references": [
+        {
+          "file": "mlkem",
+          "lemma": "mlkem_u_security_core"
+        },
+        {
+          "file": "mlkem",
+          "lemma": "mlkem_t_hash_bound"
+        },
+        {
+          "file": "mlkem",
+          "lemma": "mlkem_corr_adaptive_base"
+        },
+        {
+          "file": "mlkem",
+          "lemma": "conclusion"
+        }
+      ],
+      "evidence": [
+        {
+          "kind": "agent_message",
+          "line": 2409,
+          "item": "item_1301",
+          "text": "The capped trace bound now checks. The next failure is a tactic-order issue in the selected-query bridge. To shorten the remaining development checks, I’m saving the checked helper proofs and temporarily using admitted shells for that prefix. I’ll restore every proof before the full final verification."
+        },
+        {
+          "kind": "agent_message",
+          "line": 2564,
+          "item": "item_1381",
+          "text": "The final assembly exposed a real restriction mismatch: the original adversary assumptions do not exclude the new global variables I used in the T-transform helpers. I’m revising those helpers to use existing state covered by the specification’s restrictions, then rechecking the affected proofs."
+        },
+        {
+          "kind": "agent_message",
+          "line": 2592,
+          "item": "item_1396",
+          "text": "I’ve restored all saved proofs; the source contains no admits. The T-transform helpers now use existing specification state, and a full replay is checking the revised development through `conclusion`."
+        },
+        {
+          "kind": "agent_message",
+          "line": 2630,
+          "item": "item_1417",
+          "text": "The complete development, including `conclusion`, now passes the local EasyCrypt check with no admits. I’m running `verify.py --final` to certify it against the unchanged specification and EOF tripwire."
+        },
+        {
+          "kind": "agent_message",
+          "line": 2638,
+          "item": "item_1422",
+          "text": "Final verification passed: `conclusion` is proved, the EOF tripwire was reached, and the checked tree contains zero admits. I’m recording the result in the run notes."
+        },
+        {
+          "kind": "check",
+          "line": 2637,
+          "item": "item_1418",
+          "text": "{\n  \"mode\": \"final\",\n  \"passed\": true,\n  \"errors\": [],\n  \"upstream_grader\": {\n    \"proved\": true,\n    \"ec_reached_eof\": true,\n    \"possibly_vacuous\": false,\n    \"tree_admit_count\": 0,\n    \"context_admit_count\": 0\n  }\n}"
+        }
+      ]
+    }
+  ],
+  "jobs": {
+    "note": "Nine local completions were merged and checked. The other 16 jobs did not yield accepted merges: 13 candidates failed final verification, one failed at startup, one was incomplete and one was cancelled. The final artifact still succeeds because the outer repairs or completes the remaining obligations. A failed inner job is not an accepted proof, nor evidence that the theorem is unprovable.",
+    "merged": [
+      {
+        "id": "d3f4e35ab7a14373",
+        "lemma": "mlkem_ideal_correctness",
+        "duration": "1m 21s",
+        "result": "Merged and checked · 00:52:13 UTC"
+      },
+      {
+        "id": "5181ad16f9c8417c",
+        "lemma": "mlkem_split_get",
+        "duration": "6m 32s",
+        "result": "Merged and checked · 01:13:02 UTC"
+      },
+      {
+        "id": "b7249b98324d41b6",
+        "lemma": "mlkem_split_decap",
+        "duration": "3m 08s",
+        "result": "Merged and checked · 01:23:31 UTC"
+      },
+      {
+        "id": "4166c6f274fc4567",
+        "lemma": "mlkem_split_cca",
+        "duration": "3m 36s",
+        "result": "Merged and checked · 01:37:54 UTC"
+      },
+      {
+        "id": "1b1646c9cbb6427d",
+        "lemma": "mlkem_u_prf_real",
+        "duration": "3m 16s",
+        "result": "Merged and checked · 02:34:31 UTC"
+      },
+      {
+        "id": "af068fe71ce94d90",
+        "lemma": "mlkem_u_sim_get2_good",
+        "duration": "1m 47s",
+        "result": "Merged and checked · 02:56:09 UTC"
+      },
+      {
+        "id": "3ee914832ece4f67",
+        "lemma": "mlkem_co_lazy_get",
+        "duration": "3m 13s",
+        "result": "Merged and checked · 03:58:30 UTC"
+      },
+      {
+        "id": "783cdc449b154bcd",
+        "lemma": "mlkem_t_fresh_enc",
+        "duration": "1m 00s",
+        "result": "Merged and checked · 04:33:03 UTC"
+      },
+      {
+        "id": "164e76dada274e79",
+        "lemma": "mlkem_u_challenge_get",
+        "duration": "4m 02s",
+        "result": "Merged and checked · 06:02:29 UTC"
+      }
+    ],
+    "other": [
+      {
+        "id": "06fd2c148ccc4350",
+        "lemma": "mlkem_uniform_half",
+        "duration": "15s",
+        "result": "Cancelled · outer completed it locally"
+      },
+      {
+        "id": "1112966166a14b54",
+        "lemma": "mlkem_u_sim_decap",
+        "duration": "12m 10s",
+        "result": "Incomplete · 31-command checkpoint; not a verified proof"
+      },
+      {
+        "id": "fad77ed963d248f6",
+        "lemma": "mlkem_u_sim_decap",
+        "duration": "9m 50s",
+        "result": "Not accepted · final verification failed"
+      },
+      {
+        "id": "2d463ed98cf6488f",
+        "lemma": "mlkem_u_sim_decap",
+        "duration": "19m 09s",
+        "result": "Not accepted · final verification failed"
+      },
+      {
+        "id": "815a08e4319249ce",
+        "lemma": "mlkem_u_fair_keys",
+        "duration": "2m 00s",
+        "result": "Not accepted · final verification failed"
+      },
+      {
+        "id": "11a01eea5f9e4928",
+        "lemma": "mlkem_u_sim",
+        "duration": "17m 18s",
+        "result": "Not accepted · final verification failed"
+      },
+      {
+        "id": "a413322ab2a8456d",
+        "lemma": "mlkem_t_validation",
+        "duration": "1m 37s",
+        "result": "Not accepted · final verification failed"
+      },
+      {
+        "id": "a8ca85950aa54765",
+        "lemma": "mlkem_u_sim",
+        "duration": "6m 44s",
+        "result": "Not accepted · final verification failed"
+      },
+      {
+        "id": "ce3d970e26124d10",
+        "lemma": "mlkem_b1x2_count_inv",
+        "duration": "2s",
+        "result": "Not accepted · startup failure"
+      },
+      {
+        "id": "73c2186cba6c400a",
+        "lemma": "mlkem_co_size_real",
+        "duration": "2m 38s",
+        "result": "Not accepted · final verification failed"
+      },
+      {
+        "id": "5eca46ba00a8473f",
+        "lemma": "mlkem_u_challenge_game",
+        "duration": "10m 22s",
+        "result": "Not accepted · final verification failed"
+      },
+      {
+        "id": "5e7c76ea2e374de3",
+        "lemma": "mlkem_co_selection_get",
+        "duration": "7m 23s",
+        "result": "Not accepted · final verification failed"
+      },
+      {
+        "id": "f14c059e50394709",
+        "lemma": "mlkem_co_selection_get",
+        "duration": "7m 30s",
+        "result": "Not accepted · final verification failed"
+      },
+      {
+        "id": "ee22e8a42bac48ac",
+        "lemma": "mlkem_u_wide_get",
+        "duration": "5m 07s",
+        "result": "Not accepted · final verification failed"
+      },
+      {
+        "id": "cdc14dcb21044a45",
+        "lemma": "mlkem_co_selected_game",
+        "duration": "5m 30s",
+        "result": "Not accepted · final verification failed"
+      },
+      {
+        "id": "7d6e051e66fa45ee",
+        "lemma": "mlkem_corr_real_trace",
+        "duration": "3m 35s",
+        "result": "Not accepted · final verification failed"
+      }
+    ],
+    "sourceNote": "Source: metrics/jobs.csv and each merged job’s collect_verification.json in the archive above. Duration is job started-to-finished wall time, not merge latency, token usage or speedup. Merge times are UTC on 6 September 2026. Links open the final development, not historical job snapshots. This single run does not establish a controlled speed comparison with a pure-model baseline; failed-job times cannot simply be subtracted from its runtime."
+  }
+}

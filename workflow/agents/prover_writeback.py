@@ -2,8 +2,8 @@
 
 Extracted verbatim from workflow/agents/prover.py: everything that turns a
 finished (or interrupted) prover session into a verified proof in the target
-.ec file — session-history extraction, lemma-scoped verification, admit
-scanning, failing-tactic pruning, and the final write-and-verify pass.
+.ec file — exact candidate extraction, lemma-scoped verification, admit
+scanning, and the final write-and-verify pass. Finalization never repairs proofs.
 prover.py re-exports every name so external callers and tests are unchanged.
 """
 from __future__ import annotations
@@ -22,6 +22,11 @@ from core.easycrypt.committed_history import (
     read_committed_transactions,
     split_trailing_qed,
 )
+from core.easycrypt.proof_text import (
+    ADMIT_TOKEN_RE as _ADMIT_TOKEN_RE,
+    strip_comments as _strip_comments_for_admit_check,
+    tactics_contain_admit as _tactics_contain_admit,
+)
 from workflow.agents.ec_services import (
     _claude_scratch_path,
     _ensure_why3server,
@@ -38,7 +43,6 @@ if TYPE_CHECKING:
 _PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
 
 _EC_SPINNER_RE = re.compile(r'^\[[-\\|/]\]\s+\[\d+\]\s+\d+\.\d+%')
-_ADMIT_TOKEN_RE = re.compile(r"(?<!\w)admit\.", re.IGNORECASE)
 
 
 @dataclass(frozen=True)
@@ -286,7 +290,7 @@ def _verify_extracted_file(
 def _verify_lemma_extracted(
     ec_path: Path, lemma_name: str, include_dir: str = "",
     decl_line: int | None = None,
-) -> bool:
+) -> tuple[bool, str]:
     """Verify a single lemma by extracting it into a standalone file.
 
     Uses lemma_extract with verify_proof=True: keeps the target lemma's
@@ -307,11 +311,10 @@ def _verify_lemma_extracted(
         tmp_path = _claude_scratch_path(f"verify_{lemma_name}_extracted.ec")
         tmp_path.write_text(extracted, encoding="utf-8")
 
-        ok, _ = _verify_extracted_file(tmp_path, ec_path, include_dir=include_dir)
-        return ok
+        return _verify_extracted_file(tmp_path, ec_path, include_dir=include_dir)
     except Exception as e:
         logger.error("Extracted-lemma verification error: %s", e)
-        return False
+        return False, str(e)
 
 
 def _acceptance_gate_for_session(ec_session_dir: str | Path | None):
@@ -358,7 +361,7 @@ def _resolve_lemma_decl_start(content: str, lemma_name: str) -> int | None:
 
     The offset is a STABLE declaration identity: resolve it ONCE per
     write-back cycle and pass it to `_find_proof_block`,
-    `_prune_failing_tactics`, and `_proof_body_has_admit` so they all
+    extraction, and `_proof_body_has_admit` so they all
     target the same declaration. Without this, the prefer-needs-proving
     heuristic re-runs after the write-back fills one declaration and
     resolves to the OTHER still-admitted duplicate, whose `admit` then
@@ -517,47 +520,6 @@ def _extract_prover_report(output_text: str) -> dict:
     return report
 
 
-def _strip_comments_for_admit_check(text: str) -> str:
-    """Remove `(* ... *)` comments (nested) so admit checks can't be fooled.
-
-    We do not care about string literals — EasyCrypt doesn't allow `admit.`
-    inside strings in practice, and keyword-checks are case-sensitive.
-    """
-    out: list[str] = []
-    depth = 0
-    i = 0
-    n = len(text)
-    while i < n:
-        if i + 1 < n and text[i] == "(" and text[i + 1] == "*":
-            depth += 1
-            i += 2
-            continue
-        if depth > 0 and i + 1 < n and text[i] == "*" and text[i + 1] == ")":
-            depth -= 1
-            i += 2
-            continue
-        if depth == 0:
-            out.append(text[i])
-        i += 1
-    return "".join(out)
-
-
-def _tactics_contain_admit(tactics: list[str]) -> bool:
-    """Return True if any tactic in `tactics` is (or contains) a bare admit.
-
-    Also catches `admit` without a trailing period (some provers write it
-    that way when followed by another tactic).
-    """
-    for tac in tactics:
-        scrubbed = _strip_comments_for_admit_check(tac)
-        stripped = scrubbed.strip().lower().rstrip(".").strip()
-        if stripped == "admit":
-            return True
-        if _ADMIT_TOKEN_RE.search(scrubbed):
-            return True
-    return False
-
-
 def _proof_body_has_admit(
     content: str, lemma_name: str, decl_start: int | None = None,
 ) -> bool:
@@ -581,88 +543,6 @@ def _proof_body_has_admit(
     return bool(_ADMIT_TOKEN_RE.search(scrubbed))
 
 
-def _prune_failing_tactics(
-    ec_path: Path,
-    lemma_name: str,
-    tactics: list[str],
-    include_dir: str = "",
-    max_prunes: int = 5,
-    decl_start: int | None = None,
-) -> list[str]:
-    """Defense-in-depth: before writing the final proof, replay the extracted
-    tactic list through EC in an isolated scratch file. If it fails, parse the
-    error line, drop the offending tactic, and retry up to `max_prunes` times.
-
-    Rationale: the session tracks which tactics EC accepted, but it can still
-    emit tactics that fail under strict end-to-end replay (e.g. a `rewrite`
-    whose precondition isn't matched produces "[critical] nothing to rewrite"
-    on replay even though the session treated it as a NO_PROGRESS no-op).
-    Auto-rollback in session_cli catches most of these up-front, but this
-    pruning pass is the safety net if anything slips through.
-
-    Returns the pruned tactic list (possibly unchanged). Does NOT modify
-    `ec_path` — writing happens in `_write_and_verify_proof`.
-    """
-    if not tactics:
-        return tactics
-
-    original_content = ec_path.read_text(encoding="utf-8")
-    block = _find_proof_block(original_content, lemma_name, decl_start=decl_start)
-    if block is None:
-        return tactics
-    # Pin extraction to the same declaration (its line is stable: the
-    # candidate proof text is spliced in strictly after the declaration).
-    decl_line = (
-        original_content.count("\n", 0, decl_start)
-        if decl_start is not None else None
-    )
-
-    current_tactics = list(tactics)
-    pruned_count = 0
-
-    for attempt in range(max_prunes):
-        # Write scratch file with current tactic list
-        proof_text = _build_proof_text(original_content[block[0]:block[1]], current_tactics)
-        scratch_content = original_content[:block[0]] + proof_text + original_content[block[1]:]
-        scratch_path = _claude_scratch_path(f"prune_{lemma_name}.ec")
-        scratch_path.write_text(scratch_content, encoding="utf-8")
-
-        # Extract just the target lemma to isolate from other lemmas' timeouts
-        try:
-            from core.easycrypt.lemma_extract import extract_lemma
-            extracted = extract_lemma(scratch_path, lemma_name, verify_proof=True,
-                                      decl_line=decl_line)
-            verify_path = _claude_scratch_path(f"prune_verify_{lemma_name}.ec")
-            verify_path.write_text(extracted, encoding="utf-8")
-        except Exception as e:
-            logger.warning("prune: lemma_extract failed (%s); skipping pruning", e)
-            return tactics
-
-        ok, stderr = _verify_extracted_file(verify_path, ec_path, include_dir=include_dir)
-        if ok:
-            if pruned_count > 0:
-                logger.info("prune: pruned %d ghost tactic(s); scratch verifies clean", pruned_count)
-            return current_tactics
-
-        # Parse first error line number from stderr
-        fail_line = _parse_ec_error_line(stderr, str(verify_path))
-        if fail_line is None:
-            logger.info("prune: could not parse error line; stopping pruning")
-            return current_tactics
-
-        # Map file line → tactic index (proof block's tactics are "  tac" per line)
-        tactic_idx = _scratch_line_to_tactic_idx(verify_path.read_text(), fail_line, current_tactics)
-        if tactic_idx is None or tactic_idx >= len(current_tactics):
-            logger.info("prune: failing line %d doesn't map to a tactic; stopping", fail_line)
-            return current_tactics
-
-        dropped = current_tactics.pop(tactic_idx)
-        pruned_count += 1
-        logger.info("prune: dropped tactic[%d] %r (line %d: %s)",
-                    tactic_idx, dropped[:60], fail_line, _first_err_msg(stderr))
-
-    logger.info("prune: hit max_prunes=%d; returning current list", max_prunes)
-    return current_tactics
 
 
 def _build_proof_text(old_block: str, tactics: list[str]) -> str:
@@ -673,61 +553,6 @@ def _build_proof_text(old_block: str, tactics: list[str]) -> str:
     return "proof.\n" + comment_line + "\n".join(f"  {t}" for t in proof_tactics) + "\nqed."
 
 
-def _parse_ec_error_line(stderr: str, file_path: str) -> int | None:
-    """Parse EC error output for the failing line number.
-
-    Matches patterns like:
-      [critical] [/path/to/file.ec: line 74 (9-26)] nothing to rewrite
-      [error-3-0] [/path/to/file.ec: line 12 (5-18)] ...
-    """
-    path_escaped = re.escape(file_path)
-    m = re.search(rf"\[(?:error|critical|fatal)[^\]]*\]\s*\[{path_escaped}:\s*line\s+(\d+)", stderr)
-    if m:
-        return int(m.group(1))
-    # Fallback: any [severity] [*: line N] — takes the first match
-    m = re.search(r"\[(?:error|critical|fatal)[^\]]*\]\s*\[[^:]+:\s*line\s+(\d+)", stderr)
-    if m:
-        return int(m.group(1))
-    return None
-
-
-def _first_err_msg(stderr: str) -> str:
-    """Extract a short snippet of the first error message for logging."""
-    m = re.search(r"\[(?:error|critical|fatal)[^\]]*\][^\n]{0,100}", stderr)
-    return (m.group(0).strip() if m else stderr.strip())[:120]
-
-
-def _scratch_line_to_tactic_idx(
-    scratch_content: str, fail_line: int, tactics: list[str]
-) -> int | None:
-    """Map a scratch-file line number back to a tactic index.
-
-    Proof block is formatted as:
-        proof.
-        (* COMPLETE THIS ... *)   ← optional
-          tactic_0
-          tactic_1
-          ...
-        qed.
-    """
-    lines = scratch_content.splitlines()
-    if fail_line < 1 or fail_line > len(lines):
-        return None
-    # Walk up: find the nearest preceding "proof." and count tactic lines until fail_line
-    proof_idx = None
-    for i in range(fail_line - 1, -1, -1):
-        if lines[i].strip() == "proof.":
-            proof_idx = i
-            break
-    if proof_idx is None:
-        return None
-    tac_idx = 0
-    for i in range(proof_idx + 1, fail_line):
-        stripped = lines[i].strip()
-        if not stripped or stripped.startswith("(*"):
-            continue
-        tac_idx += 1
-    return tac_idx
 
 
 def _write_and_verify_proof(
@@ -764,7 +589,7 @@ def _write_and_verify_proof(
     tactics = split_trailing_qed(tactics)
 
     # Resolve the target declaration ONCE. Every later lookup in this cycle
-    # (prune, block write, post-verify admit check, extracted verification)
+    # (block write, post-verify admit check, extracted verification)
     # is pinned to this offset — re-running the name-based heuristic after
     # the write-back would resolve to a still-admitted same-name duplicate
     # and revert a genuinely proved lemma (xorK1, 2026-06-11). The offset
@@ -775,10 +600,8 @@ def _write_and_verify_proof(
         content.count("\n", 0, decl_start) if decl_start is not None else None
     )
 
-    # Defense-in-depth: prune any ghost tactics that would fail standalone replay
-    tactics = _prune_failing_tactics(ec_path, lemma_name, tactics,
-                                     include_dir=include_dir,
-                                     decl_start=decl_start)
+    # Verify the selected history unchanged. Removing rejected commands here
+    # would change both the proof strategy and the content-bound candidate.
 
     # Hard rule: proofs containing `admit.` are NOT proofs. EasyCrypt accepts
     # admit as an axiom-introduction closer, so the file verifies — but the
@@ -814,9 +637,6 @@ def _write_and_verify_proof(
             error="completion candidate contract failed",
         )
 
-    # Build the proof block (exclude qed from tactics, we add it ourselves)
-    proof_tactics = [t for t in tactics if t.strip().lower().rstrip(".").strip() != "qed"]
-
     block = _find_proof_block(content, lemma_name, decl_start=decl_start)
     if block is None:
         logger.error("Cannot find proof block for %s in %s", lemma_name, ec_path)
@@ -827,14 +647,7 @@ def _write_and_verify_proof(
 
     start, end = block
 
-    # Preserve any (* COMPLETE THIS ... *) comment from the old proof block
-    old_block = content[start:end]
-    comment_match = re.search(r'(\(\*.*?COMPLETE\s+THIS.*?\*\))', old_block, re.DOTALL)
-    comment_line = ""
-    if comment_match:
-        comment_line = comment_match.group(1) + "\n"
-
-    proof_text = "proof.\n" + comment_line + "\n".join(f"  {t}" for t in proof_tactics) + "\nqed."
+    proof_text = _build_proof_text(content[start:end], tactics)
 
     new_content = content[:start] + proof_text + content[end:]
 
@@ -844,6 +657,8 @@ def _write_and_verify_proof(
     # Verify: try full-file first, then extracted. A session close is only
     # a candidate signal; offline verification remains the acceptance gate.
     ok, stderr = _verify_ec_file(ec_path, include_dir=include_dir)
+    full_file_error_excerpt = _distill_ec_stderr(stderr, max_lines=8)[:3000] if not ok else ""
+    extracted_error_excerpt = ""
     verified_reason = "full_file"
     if ok:
         # Safety net: even if EC accepts the file, reject proofs whose body
@@ -863,9 +678,10 @@ def _write_and_verify_proof(
         # Full-file failed (common: other lemmas' smt timeouts).
         # Try extracted verification — isolates our lemma.
         logger.info("Full-file verification failed; trying extracted lemma verification")
-        full_file_error_excerpt = _distill_ec_stderr(stderr, max_lines=8)
-        if _verify_lemma_extracted(ec_path, lemma_name, include_dir=include_dir,
-                                   decl_line=decl_line):
+        extracted_ok, extracted_stderr = _verify_lemma_extracted(
+            ec_path, lemma_name, include_dir=include_dir, decl_line=decl_line)
+        extracted_error_excerpt = _distill_ec_stderr(extracted_stderr, max_lines=8)[:3000] if not extracted_ok else ""
+        if extracted_ok:
             ok = True
             verified_reason = "extracted_lemma"
 
@@ -915,6 +731,9 @@ def _write_and_verify_proof(
         status="fail",
         ec_path=ec_path,
         reason="full_file_and_extracted_failed",
+        candidate_id=completion_candidate.candidate_id,
+        full_file_error_excerpt=full_file_error_excerpt,
+        extracted_error_excerpt=extracted_error_excerpt,
     )
 
     logger.error(
@@ -930,5 +749,7 @@ def _write_and_verify_proof(
     return ProofVerificationEvidence(
         status="fail",
         method="full_file_and_extracted_failed",
-        error="offline EasyCrypt verification failed",
+        error=("offline EasyCrypt verification failed; "
+               f"full_file: {full_file_error_excerpt or 'no diagnostic'}; "
+               f"extracted_lemma: {extracted_error_excerpt or 'no diagnostic'}"),
     )

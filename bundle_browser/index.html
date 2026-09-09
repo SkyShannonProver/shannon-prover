@@ -1,12 +1,13 @@
 <!-- Shannon Prover benchmark browser — static SPA over agent_view_runs/.
-     Two views, hash-routed: #bench (model capability board computed live from
-     ./manifest.json; placeholder rows for models not yet evaluated) and #runs
+     Hash-routed views: #bench (case studies plus the model capability board),
+     #case/... (curated proof files, lemma source and process summaries), and #runs
      (per-lemma bundle browser with icon-coded turn timelines). Reads each
      bundle's own timeline_report.json on demand; fetches per-step artifacts
      lazily. No build backend. -->
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
 <title>Shannon Prover — benchmark</title>
+<link rel="stylesheet" href="./proof_browser.css"/>
 <style>
   :root{
     --bg:#faf9f7; --surface:#ffffff; --ink:#23211c; --muted:#6b6862; --hint:#9a968d;
@@ -122,12 +123,14 @@
   <span class="sub" id="count"></span>
   <div class="chips" id="topctl"></div>
 </div>
-<div class="banner">⚠ <strong>Placeholder — work in progress.</strong> Everything on this page
-comes from unstandardized development runs; it is not a controlled comparison and does not
-represent final results. We'll keep updating as new experiments land.</div>
+<div class="banner" id="run-caveat" hidden>⚠ <strong>Development runs.</strong> These single-lemma records
+come from unstandardized development runs, not a controlled model comparison.
+We'll keep updating as new experiments land.</div>
 <div id="view"><div class="empty">loading…</div></div>
 
 <script src="./manifest.js"></script>
+<script src="./case_studies/catalog.js"></script>
+<script src="./proof_browser.js"></script>
 <script>
 (function(){
   var MANIFEST_URL='./manifest.json';
@@ -204,7 +207,8 @@ represent final results. We'll keep updating as new experiments land.</div>
     if(h.indexOf('#runs')===0){
       view='runs';
       var m=h.match(/#runs\/(.+)$/); if(m)filt.model=decodeURIComponent(m[1]);
-    } else view='bench';
+    } else if(h.indexOf('#case/')===0) view='case';
+    else view='bench';
     render();
   }
   window.addEventListener('hashchange',route);
@@ -215,10 +219,15 @@ represent final results. We'll keep updating as new experiments land.</div>
   document.getElementById('nav-runs').onclick=function(){filt.model='';location.hash='#runs';if(view==='runs')render();};
 
   function render(){
-    document.getElementById('nav-bench').className='navtab'+(view==='bench'?' on':'');
+    document.getElementById('nav-bench').className='navtab'+(view!=='runs'?' on':'');
     document.getElementById('nav-runs').className='navtab'+(view==='runs'?' on':'');
-    if(view==='bench'){renderTopCtl();renderBench();}
-    else{renderTopCtl();renderRuns();}
+    document.getElementById('run-caveat').hidden=view!=='runs';
+    if(view==='case'){
+      document.getElementById('topctl').innerHTML='';
+      window.ShannonCases.mount(document.getElementById('view'),location.hash);
+    }
+    else if(view==='bench'){window.ShannonCases.cancel();renderTopCtl();renderBench();}
+    else{window.ShannonCases.cancel();renderTopCtl();renderRuns();}
   }
 
   /* ---------------- benchmark home ---------------- */
@@ -254,8 +263,11 @@ represent final results. We'll keep updating as new experiments land.</div>
 
     V.innerHTML='<div class="bench">'+
       '<div class="hero">'+
-        '<h2>Can LLM agents write machine-checked cryptographic proofs?</h2>'+
+        '<h2>Machine-checked cryptographic proofs</h2>'+
       '</div>'+
+      '<section class="per-lemma-benchmark" aria-labelledby="per-lemma-heading">'+
+      '<div class="benchmark-section-heading"><h3 id="per-lemma-heading">Per-lemma benchmark</h3><span class="meta">'+BUNDLES.length+' recorded runs</span><a href="#runs">Browse all runs →</a></div>'+
+      '<p class="benchmark-section-note">Development results from overlapping but different lemma sets; not a controlled model comparison.</p>'+
       '<div class="board">'+
         '<div class="bh"><h3>Model capability</h3><span class="pill p-warn">preview — observed runs, not a controlled benchmark</span></div>'+
         '<div class="note" style="font-size:11px;color:var(--hint);margin-bottom:8px">Fraction of attempted lemmas closed with a machine-checked proof. Models were run on overlapping but not identical lemma sets — the standardized head-to-head suite will replace this board. L1 = Goal-only interface (bare goal) · L4 = Workbench (full compiler surface).</div>'+
@@ -271,7 +283,8 @@ represent final results. We'll keep updating as new experiments land.</div>
             '<div class="fr">'+outcomePill(b.outcome)+pill(b.profile,'p-info')+pill(shortModel(b.model),'p-mut')+pill(b.turns+' turns','p-mut')+
             (b.tier==='private'?'<span title="private">🔒</span>':'')+'</div></div>';
         }).join('')+
-      '</div></div>'+
+      '</div></div></section>'+
+      window.ShannonCases.cards()+
     '</div>';
 
     V.querySelectorAll('.mrow[data-model]').forEach(function(el){

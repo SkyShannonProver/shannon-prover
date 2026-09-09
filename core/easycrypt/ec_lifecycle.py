@@ -26,6 +26,7 @@ from dataclasses import dataclass
 from typing import Callable, Optional
 
 from core.easycrypt.ec_proc import spawn_emacs_pipe
+from core.easycrypt.lemma_decls import mask_comments
 
 logger = logging.getLogger("ec_lifecycle")
 
@@ -117,7 +118,7 @@ def split_ec_commands(text: str) -> list[str]:
 
 @dataclass
 class ReplayFail:
-    """First setup command that errored while replaying into a fresh EC."""
+    """First setup or committed block rejected while replaying into fresh EC."""
 
     setup_cmd: str
     err: dict
@@ -216,6 +217,26 @@ class ECSessionLifecycle:
         except BrokenPipeError as e:
             raise RuntimeError(f"{self._label} subprocess stdin broken: {e}") from e
 
+    def send_and_drain(self, text: str, *, timeout: float,
+                       is_error: Callable[[str], object]) -> str:
+        """Drain every native sentence in one logical transaction.
+
+        Stop at the first native rejection and return that response; otherwise
+        return the final sentence's response (the current goal, not an earlier
+        intermediate goal). The caller owns rollback of a partially run block.
+        """
+        raw = ""
+        for command in split_ec_commands(text):
+            if not mask_comments(command).strip():
+                continue  # A comment-only tail produces no native response.
+            self._send(command)
+            raw = self._read_until_prompt(timeout=timeout).decode("utf-8", errors="replace")
+            if is_error(raw):
+                break
+        if not raw:
+            raise ValueError("empty EasyCrypt transaction")
+        return raw
+
     # -- replay prefix ----------------------------------------------------------
     def replay_prefix(
         self,
@@ -228,16 +249,15 @@ class ECSessionLifecycle:
     ) -> Optional[ReplayFail]:
         """Replay the setup prefix (error-gated by ``is_setup_error``) then the
         committed tactics into this freshly-spawned process. Returns ``None`` on
-        success or a ``ReplayFail`` for the first setup command that errored."""
-        for setup_cmd in setup_commands:
-            self._send(setup_cmd)
-            raw = self._read_until_prompt(timeout=setup_timeout)
-            err = is_setup_error(raw.decode("utf-8", errors="replace"))
-            if err is not None:
-                return ReplayFail(setup_cmd, err, raw.decode("utf-8", errors="replace"))
-        for t in committed_tactics:
-            self._send(t)
-            self._read_until_prompt(timeout=committed_timeout)
+        success or a ``ReplayFail`` for the first rejected setup/commit block.
+        Historical acceptance does not authorize ignoring a replay rejection.
+        """
+        for blocks, timeout in ((setup_commands, setup_timeout), (committed_tactics, committed_timeout)):
+            for block in blocks:
+                raw = self.send_and_drain(block, timeout=timeout, is_error=is_setup_error)
+                err = is_setup_error(raw)
+                if err is not None:
+                    return ReplayFail(block, err, raw)
         return None
 
     # -- teardown ---------------------------------------------------------------

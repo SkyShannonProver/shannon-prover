@@ -624,6 +624,19 @@ def create_resume_capsules(
         )
 
         rank_name = f"{node_memory_slug(node_id)}_{session_dir.name}"
+        # A closed candidate is not a verified proof and is not an open resume
+        # boundary. Keep its snapshot separate from the last completed open
+        # turn; failed finalization must not erase recoverable progress.
+        if not goal_identity.goal_identity_required:
+            open_path = output_dir / rank_name / "resume.json"
+            if open_path.is_file():
+                prior = _read_json(open_path)
+                target = prior.get("target", {})
+                replay = prior.get("replay", {})
+                if (target.get("file") == target_file and target.get("lemma") == lemma
+                        and replay.get("goal_identity_required") is True):
+                    created.append((float(prior.get("score", {}).get("value", 0)), open_path))
+            rank_name += "_closed"
         capsule_dir = output_dir / rank_name
         capsule_dir.mkdir(parents=True, exist_ok=True)
         _copy_if_exists(session_dir / "history.ec", capsule_dir / "history.ec")

@@ -23,7 +23,7 @@ import re
 def lemma_decl_re(lemma_name: str) -> re.Pattern[str]:
     """Pattern matching a declaration of ``lemma_name`` (any decl keyword)."""
     return re.compile(
-        r"(?:local\s+)?(?:lemma|theorem|equiv|hoare|phoare)\s+"
+        r"(?<![\w'])\b(?:local\s+)?(?:lemma|theorem|equiv|hoare|phoare)\s+"
         + re.escape(lemma_name)
         + r"(?=[\s:(\[]|$)",
     )

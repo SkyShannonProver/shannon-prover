@@ -82,13 +82,10 @@ from core.easycrypt.ec_lifecycle import (  # noqa: E402
 )
 from core.easycrypt.ec_env import get_ec_env  # noqa: E402
 from core.easycrypt.ec_daemon_client import default_socket_path  # noqa: E402
+from core.easycrypt.ec_diagnostics import parse_error  # noqa: E402
 
 
 logger = logging.getLogger("ec_daemon")
-PROMPT_TEXT_RE = re.compile(r"\[\d+\|[a-zA-Z]+\]>")
-# EC error line shape: ``[error-<a>-<b>]<reason>``. The a/b are
-# character-offset hints; the reason text varies.
-ERROR_LINE_RE = re.compile(r"\[(error|critical|fatal)(-[0-9\-]+)?\](.*)")
 
 
 class _EphemeralEC(ECSessionLifecycle):
@@ -271,12 +268,18 @@ class ECSubprocess(ECSessionLifecycle):
         """Send one tactic, return the outcome. Tactic is appended to
         history if accepted. Callers should hold the session lock.
         """
-        if not tactic.endswith("."):
+        from core.easycrypt.lemma_decls import mask_comments
+        if not mask_comments(tactic).rstrip().endswith("."):
             tactic = tactic.rstrip() + "."
         before_prompt = self._last_prompt_text
         before_remaining = self._last_remaining
-        self._send(tactic)
-        raw = self._read_until_prompt().decode("utf-8", errors="replace")
+        # A manager transaction may contain several EC sentences. Drain one
+        # response per sentence, exactly as bootstrap does; otherwise a later
+        # call can consume an earlier sentence's buffered prompt. Commit to the
+        # journal only if the entire transaction succeeds. On rejection the
+        # owning session rolls back the transaction and invalidates this daemon.
+        raw = self.send_and_drain(tactic, timeout=self._RESPONSE_TIMEOUT_DEFAULT,
+                                  is_error=self._parse_error)
         goal = self._parse_goal_state(raw)
         err = self._parse_error(raw)
         if err is None:
@@ -499,11 +502,10 @@ class ECSubprocess(ECSessionLifecycle):
                 )
             # Try the tactic
             tac = tactic
-            if not tac.endswith("."):
+            from core.easycrypt.lemma_decls import mask_comments
+            if not mask_comments(tac).rstrip().endswith("."):
                 tac = tac.rstrip() + "."
-            eph._send(tac)
-            raw_bytes = eph._read_until_prompt(timeout=timeout)
-            raw = raw_bytes.decode("utf-8", errors="replace")
+            raw = eph.send_and_drain(tac, timeout=timeout, is_error=self._parse_error)
             goal = self._parse_goal_state(raw)
             err = self._parse_error(raw)
             if err is None:
@@ -604,11 +606,10 @@ class ECSubprocess(ECSessionLifecycle):
             final_raw = ""
             for idx, tac in enumerate(tactics):
                 t_norm = tac.strip()
-                if not t_norm.endswith("."):
+                from core.easycrypt.lemma_decls import mask_comments
+                if not mask_comments(t_norm).rstrip().endswith("."):
                     t_norm = t_norm + "."
-                eph._send(t_norm)
-                raw_bytes = eph._read_until_prompt(timeout=timeout)
-                raw = raw_bytes.decode("utf-8", errors="replace")
+                raw = eph.send_and_drain(t_norm, timeout=timeout, is_error=self._parse_error)
                 final_raw = raw
                 goal = self._parse_goal_state(raw)
                 err = self._parse_error(raw)
@@ -668,48 +669,7 @@ class ECSubprocess(ECSessionLifecycle):
             is_closed=is_closed, last_prompt=last_prompt,
         )
 
-    @staticmethod
-    def _parse_error(raw: str) -> Optional[dict]:
-        """If ``raw`` contains a tactic failure, return structured
-        metadata. Returns None when EC accepted the tactic cleanly.
-
-        Classification:
-          unification_fail : matches "cannot unify" / "not convertible"
-          no_progress       : ``no progress`` substring (a few EC tactics
-                              emit this as an error instead of just
-                              leaving state unchanged)
-          unknown_lemma     : ``unknown lemma``, ``cannot find lemma``,
-                              ``unknown procedure``
-          type_error        : ``type error``, ``unbound``, ``mismatch``
-          other             : anything else under [error/critical/fatal]
-        """
-        m_err = ERROR_LINE_RE.search(raw)
-        if not m_err:
-            return None
-        # EasyCrypt often puts the discriminating evidence on continuation
-        # lines, notably ``the given proof-term proves:`` errors. Keep the full
-        # block up to the next REPL prompt instead of collapsing it to the
-        # severity line.
-        continuation = raw[m_err.end():]
-        prompt = PROMPT_TEXT_RE.search(continuation)
-        if prompt:
-            continuation = continuation[:prompt.start()]
-        reason = (m_err.group(3) + continuation).strip()
-        low = reason.lower()
-        if "cannot unify" in low or "not convertible" in low:
-            kind = "unification_fail"
-        elif "no progress" in low:
-            kind = "no_progress"
-        elif ("unknown lemma" in low or "cannot find lemma" in low
-              or "unknown procedure" in low or "unknown module" in low):
-            kind = "unknown_lemma"
-        elif ("type error" in low or "unbound" in low
-              or "mismatch" in low):
-            kind = "type_error"
-        else:
-            kind = "other"
-        return {"kind": kind, "raw": reason[:2000],
-                "severity": m_err.group(1)}
+    _parse_error = staticmethod(parse_error)
 
 
 # ---------------------------------------------------------------------------
