@@ -54,13 +54,24 @@
   .board .bh .note{font-size:11px;color:var(--hint)}
   .mrow{display:flex;align-items:center;gap:12px;padding:10px 8px;border-radius:10px;cursor:pointer}
   .mrow:hover{background:var(--infobg)}
-  .mrow.ph{cursor:default;opacity:.55}
-  .mrow.ph:hover{background:transparent}
   .mrow .mname{width:150px;flex:none;font-weight:500;font-size:13px}
   .mrow .mname .msub{display:block;font-weight:400;font-size:11px;color:var(--hint)}
   .mrow .barwrap{flex:1;min-width:120px;height:22px;border-radius:6px;background:rgba(127,127,127,.10);overflow:hidden;position:relative}
-  .mrow .bar{height:100%;border-radius:6px;background:linear-gradient(90deg,var(--barA),var(--barB));min-width:2px}
-  .mrow.ph .barwrap{background:transparent;border:1.5px dashed var(--line2)}
+  .mrow .barwrap{display:flex}
+  .mrow .bar{height:100%;min-width:2px}
+  .mrow .bar.done{border-radius:6px 0 0 6px;background:linear-gradient(90deg,var(--barA),var(--barB))}
+  .mrow .bar.done:last-of-type{border-radius:6px}
+  .mrow .bar.open{border-radius:0 6px 6px 0;background:rgba(127,127,127,.22)}
+  .board .summary{display:flex;gap:22px;flex-wrap:wrap;margin:10px 0 6px;padding:10px 4px;border-bottom:.5px dashed var(--line)}
+  .board .stat b{display:block;font-size:20px;font-weight:600;letter-spacing:-.01em}
+  .board .stat span{font-size:11px;color:var(--hint)}
+  .board .legend{margin:2px 4px 6px}
+  .board .legend .sw{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:5px;vertical-align:-1px}
+  .board .legend .sw.done{background:linear-gradient(90deg,var(--barA),var(--barB))}
+  .board .legend .sw.open{background:rgba(127,127,127,.22)}
+  .h2h{margin-top:14px;font-size:12px;line-height:1.6;color:var(--muted);padding:10px 14px;border:.5px dashed var(--line2);border-radius:10px}
+  .h2h strong{color:var(--ink);font-weight:600}
+  .h2h a{color:var(--info);text-decoration:none;white-space:nowrap}
   .mrow .barlabel{position:absolute;left:8px;top:0;line-height:22px;font-size:11px;color:var(--ink);mix-blend-mode:normal;white-space:nowrap}
   .mrow .mstats{width:210px;flex:none;text-align:right;font-size:11px;color:var(--muted);white-space:nowrap}
   .mrow .go{flex:none;color:var(--hint)}
@@ -230,31 +241,43 @@ We'll keep updating as new experiments land.</div>
     else{window.ShannonCases.cancel();renderTopCtl();renderRuns();}
   }
 
-  /* ---------------- benchmark home ---------------- */
-  var PLACEHOLDERS=[
-    {name:'GPT (latest)',sub:'not yet evaluated'},
-    {name:'Gemini (latest)',sub:'not yet evaluated'},
-    {name:'open-weights baseline',sub:'not yet evaluated'},
-  ];
+  /* ---------------- archive home ---------------- */
+  var HEAD_TO_HEAD_URL='https://github.com/SkyShannonProver/shannon-prover/blob/main/eval_suite/README.md';
+
+  // Largest lemma-set overlap between any two models with enough runs to list.
+  function maxSharedLemmas(models){
+    var best=0;
+    for(var i=0;i<models.length;i++)for(var j=i+1;j<models.length;j++){
+      var n=0; Object.keys(models[i].lemmas).forEach(function(l){if(models[j].lemmas[l])n++;});
+      if(n>best)best=n;
+    }
+    return best;
+  }
 
   function renderBench(){
     var V=document.getElementById('view');
-    var main=MODELS.filter(function(a){return a.runs>=3;});
-    var small=MODELS.filter(function(a){return a.runs<3;});
-    var maxRate=Math.max.apply(null,main.map(function(a){return a.rate;}).concat([0.01]));
+    var byVolume=MODELS.slice().sort(function(x,y){return y.runs-x.runs || y.nLemmas-x.nLemmas;});
+    var main=byVolume.filter(function(a){return a.runs>=3;});
+    var small=byVolume.filter(function(a){return a.runs<3;});
+    var maxAttempted=Math.max.apply(null,byVolume.map(function(a){return a.nLemmas;}).concat([1]));
+    var allLemmas={}, provedLemmas={};
+    BUNDLES.forEach(function(b){allLemmas[b.lemma]=1; if(b.proved)provedLemmas[b.lemma]=1;});
+    var nAll=Object.keys(allLemmas).length, nProved=Object.keys(provedLemmas).length;
+    var shared=maxSharedLemmas(main);
+    var sharedTxt=main.length<2?'':(shared===0?'no two models were tried on the same lemma':
+      'any two models share at most '+shared+' lemma'+(shared===1?'':'s'));
 
     function mrow(a){
-      var w=Math.round(100*a.rate/maxRate);
+      var open=a.nLemmas-a.nProvedLemmas;
+      var wDone=Math.round(100*a.nProvedLemmas/maxAttempted), wOpen=Math.round(100*open/maxAttempted);
       return '<div class="mrow" data-model="'+esc(a.model)+'" title="browse '+esc(a.model)+' runs">'+
-        '<div class="mname">'+esc(shortModel(a.model))+'<span class="msub">'+a.runs+' runs</span></div>'+
-        '<div class="barwrap"><div class="bar" style="width:'+w+'%"></div>'+
-          '<span class="barlabel">'+a.nProvedLemmas+'/'+a.nLemmas+' lemmas proved · '+Math.round(100*a.rate)+'%</span></div>'+
-        '<div class="mstats">'+a.proved+'/'+a.runs+' runs proved · L1 '+a.l1+' · L4 '+a.l4+'</div>'+
+        '<div class="mname">'+esc(shortModel(a.model))+'<span class="msub">'+a.nLemmas+' lemma'+(a.nLemmas===1?'':'s')+' attempted</span></div>'+
+        '<div class="barwrap">'+
+          '<div class="bar done" style="width:'+wDone+'%"></div>'+
+          (open?'<div class="bar open" style="width:'+wOpen+'%"></div>':'')+
+          '<span class="barlabel">'+a.nProvedLemmas+' machine-checked'+(open?' · '+open+' open':'')+'</span></div>'+
+        '<div class="mstats">'+a.runs+' run'+(a.runs===1?'':'s')+' · L1 '+a.l1+' · L4 '+a.l4+'</div>'+
         '<div class="go">›</div></div>';
-    }
-    function phrow(p){
-      return '<div class="mrow ph"><div class="mname">'+esc(p.name)+'<span class="msub">'+esc(p.sub)+'</span></div>'+
-        '<div class="barwrap"></div><div class="mstats">—</div><div class="go"></div></div>';
     }
 
     // featured: proved runs with the longest committed proofs (hardest closures)
@@ -266,17 +289,22 @@ We'll keep updating as new experiments land.</div>
         '<h2>Machine-checked cryptographic proofs</h2>'+
       '</div>'+
       '<section class="per-lemma-benchmark" aria-labelledby="per-lemma-heading">'+
-      '<div class="benchmark-section-heading"><h3 id="per-lemma-heading">Per-lemma benchmark</h3><span class="meta">'+BUNDLES.length+' recorded runs</span><a href="#runs">Browse all runs →</a></div>'+
-      '<p class="benchmark-section-note">Development results from overlapping but different lemma sets; not a controlled model comparison.</p>'+
+      '<div class="benchmark-section-heading"><h3 id="per-lemma-heading">Single-lemma proof archive</h3><span class="meta">'+BUNDLES.length+' recorded runs</span><a href="#runs">Browse all runs →</a></div>'+
+      '<p class="benchmark-section-note">These are development runs, not a benchmark. Each model was tried on its own set of lemmas'+(sharedTxt?' ('+sharedTxt+')':'')+', so the figures below describe what has been proved and by which model. They do not compare the models.</p>'+
       '<div class="board">'+
-        '<div class="bh"><h3>Model capability</h3><span class="pill p-warn">preview — observed runs, not a controlled benchmark</span></div>'+
-        '<div class="note" style="font-size:11px;color:var(--hint);margin-bottom:8px">Fraction of attempted lemmas closed with a machine-checked proof. Models were run on overlapping but not identical lemma sets — the standardized head-to-head suite will replace this board. L1 = Goal-only interface (bare goal) · L4 = Workbench (full compiler surface).</div>'+
+        '<div class="bh"><h3>What has been machine-checked</h3><span class="pill p-mut">development archive</span></div>'+
+        '<div class="summary">'+
+          '<div class="stat"><b>'+nProved+'</b><span>lemmas machine-checked</span></div>'+
+          '<div class="stat"><b>'+nAll+'</b><span>distinct lemmas attempted</span></div>'+
+          '<div class="stat"><b>'+BUNDLES.length+'</b><span>recorded runs</span></div>'+
+          '<div class="stat"><b>'+MODELS.length+'</b><span>models</span></div>'+
+        '</div>'+
+        '<div class="legend"><span><i class="sw done"></i>machine-checked</span><span><i class="sw open"></i>open (no complete proof yet)</span><span>bar length = lemmas attempted</span></div>'+
         main.map(mrow).join('')+
         (small.length?'<div class="divider"></div>'+small.map(mrow).join(''):'')+
-        '<div class="divider"></div>'+
-        PLACEHOLDERS.map(phrow).join('')+
-        '<div class="foot">A lemma counts as proved only when EasyCrypt accepts the complete proof (no <code>admit</code>) and the replay validator re-checks it. Click a model to browse its runs.</div>'+
+        '<div class="foot">A lemma counts as machine-checked only when EasyCrypt accepts the complete proof (no <code>admit</code>) and the replay validator re-checks it. Open lemmas include runs stopped by infrastructure or budget limits, not only proof failures. L1 = goal-only interface · L4 = full compiler surface. Click a model to browse its runs.</div>'+
       '</div>'+
+      '<div class="h2h"><strong>Controlled comparison: in preparation.</strong> A head-to-head suite will run every model on the same lemma set with the same budget and interface, including GPT, Gemini and open-weights baselines. Until it is published, nothing on this page should be read as a model ranking. <a href="'+HEAD_TO_HEAD_URL+'">Benchmark guide →</a></div>'+
       '<div class="feat"><h3>Longest proved runs</h3><div class="featgrid">'+
         feat.map(function(b){
           return '<div class="fcard" data-bid="'+esc(b.id)+'"><div class="fn">'+esc(b.lemma)+'</div>'+

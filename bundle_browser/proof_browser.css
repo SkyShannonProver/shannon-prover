@@ -71,7 +71,7 @@
 .proof-library .sb-files button[aria-current=true]{border-color:var(--info);background:var(--infobg)}
 .proof-library .sb-files button[aria-current=true] .sb-filename{color:var(--info)}
 .proof-library .sb-filename{display:block;font:500 12px/1.5 var(--mono)}
-.proof-library .sb-filerole{display:inline-block;font-size:10.5px;padding:1px 7px;border-radius:6px;margin-top:6px}
+.proof-library .sb-filerole{display:inline-block;max-width:100%;box-sizing:border-box;white-space:normal;overflow-wrap:anywhere;font-size:10.5px;padding:1px 7px;border-radius:6px;margin-top:6px}
 .proof-library .sb-filerole.p-mut{border:.5px solid var(--line2);color:var(--hint)}
 .proof-library .sb-filemeta{font-size:11px;color:var(--hint);display:block;margin-top:4px}
 .proof-library .sb-files .sb-file-note{font-size:11px;color:var(--hint);padding:12px 6px 0;border-top:.5px dashed var(--line);margin-top:14px;line-height:1.55}
