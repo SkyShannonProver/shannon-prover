@@ -443,9 +443,10 @@ def _require_outer_decomposition_boundary(content: str, lemma: str) -> None:
         delegation_region = content[begin + len(SCRATCHPAD_BEGIN) : end]
     else:
         delegation_region = content
-    matches = re.findall(
-        rf"(?m)^\s*lemma\s+{re.escape(lemma)}\b", delegation_region
-    )
+    # Share declaration recognition with claim projection and proof writeback:
+    # local/multiline declarations and named judgment forms are valid helpers;
+    # commented-out declarations are not delegation evidence.
+    matches = lemma_decl_matches(delegation_region, lemma)
     if len(matches) != 1:
         raise ValueError(
             "Shannon target must be exactly one outer-defined helper lemma in "

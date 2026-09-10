@@ -1,0 +1,696 @@
+{
+  "schema_version": 1,
+  "title": "How the agent built the Dilithium proof",
+  "deck": "Scheme conversions, rejection-sampling costs, hidden-log game transitions and the final lattice reduction, linked to the completed proof and original public trace excerpts.",
+  "stats": [
+    {
+      "value": "7h 17m 08s",
+      "label": "start through terminal harness certification"
+    },
+    {
+      "value": "28 / 29",
+      "label": "Shannon jobs verified and imported"
+    },
+    {
+      "value": "129",
+      "label": "public outer-agent messages in the archive"
+    },
+    {
+      "value": "0 admits",
+      "label": "in the independently verified final tree"
+    }
+  ],
+  "provenance": {
+    "commit": "b68d7f2c5bc09b93ccda6b483b6b1be0ad83b9d5",
+    "tracePath": "evidence/artifacts/gpt6-dilithium/official_20260910T042320Z/outer_agent_events.jsonl",
+    "blob": "e4df74769270639bcae05795c0dfd5e964b7e824",
+    "note": "Editorial reconstruction from one frozen public outer trace, final proof source, job records and archived verifier outputs. Excerpts are original public messages, identified by one-based JSONL line and item ID; they are not private model reasoning. Final source links use final rather than intermediate draft locations. The artifact-only archive records the exact launch-code commit separately."
+  },
+  "orderNote": "Stages group overlapping proof threads for readability. The outer continued construction while local Shannon jobs ran. Untimed message order does not establish exact task durations; no timestamps or causal speedup are inferred from it. Outer execution plus cleanup took 6h59m14s; 7h17m08s additionally includes the harness post-outer verification/bookkeeping interval.",
+  "stages": [
+    {
+      "title": "Expose the scheme conversions and the lattice witness",
+      "paragraphs": [
+        "The supplied specification includes the rejection bound, simulator correctness and commitment-entropy facts, but not the intermediate chain needed by Dilithium_secure. The outer first relates the concrete, simplified and operation-based schemes. Separately, it proves vector norm and hint-error facts, so the lattice witness can be checked independently of the probabilistic reduction.",
+        "The witness obligation must establish the norm bound, challenge coordinate and matrix-product identity. The operation-based scheme comparison instead needs the signing-oracle invariant and bundled key-generation distribution to line up. Those separate local boundaries allowed two inner jobs to overlap."
+      ],
+      "work": "Shannon completed simplify_scheme, lattice_witness_valid and operation_scheme. The outer supplied the algebraic helpers, invariants and surrounding KOA-to-real-MLWE equality.",
+      "references": [
+        {
+          "file": "dilithium",
+          "lemma": "simplify_scheme"
+        },
+        {
+          "file": "dilithium",
+          "lemma": "norm_sub_bound"
+        },
+        {
+          "file": "dilithium",
+          "lemma": "hint_error_bound"
+        },
+        {
+          "file": "dilithium",
+          "lemma": "lattice_witness_valid"
+        },
+        {
+          "file": "dilithium",
+          "lemma": "operation_scheme"
+        },
+        {
+          "file": "dilithium",
+          "lemma": "koa_mlwe_left"
+        }
+      ],
+      "evidence": [
+        {
+          "kind": "agent_message",
+          "line": 22,
+          "item": "item_10",
+          "text": "The sources provide the rejection bound, simulator correctness, and commitment-entropy facts. The missing chain still needs the scheme equivalences, ROM reprogramming bound, and MLWE-to-self-target-MSIS step. I’ll start with the scheme equivalence and algebraic reduction, which can be checked independently."
+        },
+        {
+          "kind": "agent_message",
+          "line": 71,
+          "item": "item_36",
+          "text": "Shannon has advanced the equivalence proof to a larger checked checkpoint. In parallel, I’m building the vector norm and hint-error lemmas for the self-target-MSIS witness. These will separate the algebraic witness check from the probability argument."
+        },
+        {
+          "kind": "agent_message",
+          "line": 209,
+          "item": "item_106",
+          "text": "The KOA-to-real-MLWE equality is now checked. I’ll use the second Shannon lane for the operation-based scheme equivalence: its adversary-call invariant has been accepted, leaving signing-oracle alignment and the bundled key-generation distribution to prove."
+        },
+        {
+          "kind": "agent_message",
+          "line": 263,
+          "item": "item_134",
+          "text": "Both helpers are proved. The operation-based equivalence has been collected, and the lattice-witness proof is being collected now. The witness proof establishes its norm, challenge coordinate, and matrix-product identity. The quantitative ROM reduction remains the main unfinished part."
+        }
+      ]
+    },
+    {
+      "title": "Connect random keys to MSIS and establish the rejection expectation",
+      "paragraphs": [
+        "The outer constructed a random-matrix coupling and hash-table relation, then handed off the random-key-to-self-target-MSIS comparison with the witness and distribution lemmas already checked. In parallel it developed commitment recovery and the expected number of rejection trials.",
+        "A small expected-value identity had reached nonnegative-real arithmetic after direct rewrites failed. Shannon proved it, but the nested-theory form failed scoped collection. The outer flattened that helper and submitted a replacement; the replacement imported successfully. This is a recovered interface issue, not a failure of the mathematical identity."
+      ],
+      "work": "Shannon completed random_key_msis, koa_recovery, expected_choice and trials_mean. The expectation identity has two job records but only one final imported helper; the original verified/import-failed job remains visible below.",
+      "references": [
+        {
+          "file": "dilithium",
+          "lemma": "uniform_matrix_extension"
+        },
+        {
+          "file": "dilithium",
+          "lemma": "random_key_msis"
+        },
+        {
+          "file": "dilithium",
+          "lemma": "koa_recovery"
+        },
+        {
+          "file": "dilithium",
+          "lemma": "expected_choice"
+        },
+        {
+          "file": "dilithium",
+          "lemma": "trials_mean"
+        }
+      ],
+      "evidence": [
+        {
+          "kind": "agent_message",
+          "line": 286,
+          "item": "item_146",
+          "text": "The ROM analysis needs an expected-value bound for rejection sampling. Its first auxiliary identity has reduced to arithmetic on nonnegative reals, but my direct rewrite attempts failed at that exact boundary. I’ve handed that small obligation to Shannon and will continue checking the loop potential and random-matrix coupling."
+        },
+        {
+          "kind": "agent_message",
+          "line": 305,
+          "item": "item_156",
+          "text": "Shannon proved the expectation identity, but collection failed with `ValueError: scoped import is outside the task scratchpad`. The helper is inside a nested local theory. I’ll move it to the enclosing scratchpad scope and resubmit through the scheduler, keeping the harness unchanged."
+        },
+        {
+          "kind": "agent_message",
+          "line": 431,
+          "item": "item_220",
+          "text": "The random-key-to-MSIS handoff is running with a checked adversary-call invariant and the proved witness and matrix-distribution lemmas. I’ll now work on the commitment-recovery conversion and the collision-cost bound. Those are independent of the live helper bodies."
+        },
+        {
+          "kind": "agent_message",
+          "line": 550,
+          "item": "item_282",
+          "text": "The random-key game’s reduction to self-target MSIS is now verified too. I’m collecting it and the expected-trial lemma. The main remaining work is the CMA-to-KOA ROM argument, followed by assembly of the bound."
+        }
+      ]
+    },
+    {
+      "title": "Charge for every rejected attempt, not only returned signatures",
+      "paragraphs": [
+        "The first ROM transition must account for collisions accumulated during repeated signing attempts. The outer designed a potential depending on the number of signatures, hash queries and rejected trials, and proved table-size preservation before delegating the remaining expectation drift.",
+        "The game comparison distinguishes using a cached challenge, using an independent challenge and stopping on collision. The native up-to-bad proof required the bad-flag initialization to be visible at the outer game level. Exposing that initialization allowed the local oracle comparisons and the whole-game collision bound to compose."
+      ],
+      "work": "Shannon completed respond_recovers, cma_commitment_conversion, programmed_sign_cost, stop_sign_same, programmed_game_bad and programmed_sign_lossless. The outer built the policy games, potential and adversary-level connections.",
+      "references": [
+        {
+          "file": "dilithium",
+          "lemma": "respond_recovers"
+        },
+        {
+          "file": "dilithium",
+          "lemma": "cma_commitment_conversion"
+        },
+        {
+          "file": "dilithium",
+          "lemma": "trial_cost_drift"
+        },
+        {
+          "file": "dilithium",
+          "lemma": "programmed_sign_cost"
+        },
+        {
+          "file": "dilithium",
+          "lemma": "stop_sign_same"
+        },
+        {
+          "file": "dilithium",
+          "lemma": "programmed_game_bad"
+        },
+        {
+          "file": "dilithium",
+          "lemma": "fixed_koa_lattice"
+        }
+      ],
+      "evidence": [
+        {
+          "kind": "agent_message",
+          "line": 911,
+          "item": "item_468",
+          "text": "The signing-loop exit condition is checked. The body has reduced to a single expectation, with the updated table-size invariant proved. I’m preparing that residual for Shannon, with the drift inequality and rejection bound it needs."
+        },
+        {
+          "kind": "agent_message",
+          "line": 1001,
+          "item": "item_514",
+          "text": "The signing-cost invariant is verified and collected. It now accounts for all repeated trials using the requested collision-cost expression. I’m connecting that invariant to the game probabilities and checking that the stopping policy implements the same monitored game."
+        },
+        {
+          "kind": "agent_message",
+          "line": 1171,
+          "item": "item_602",
+          "text": "The up-to-bad equalities now check. The tactic needed to see `bad <- false` directly in the game body, so I made that initialization explicit. Shannon has also verified the whole-game collision bound; I’m collecting it now."
+        },
+        {
+          "kind": "agent_message",
+          "line": 1199,
+          "item": "item_617",
+          "text": "The lattice-reduction assembly now checks, combining the KOA bound with the fixed MLWE and self-target-MSIS reductions. The next local task is to separate the rejected-trial log from the accepted signature sample, so the log can be analysed after the adversary runs."
+        }
+      ]
+    },
+    {
+      "title": "Separate the failed-trial log from the accepted sample",
+      "paragraphs": [
+        "The second ROM transition removes hash entries introduced by rejected trials. Its main structural step is to factor the rejection sampler into an ordered failed-trial log followed by an accepted draw. This permits analysis of hidden failed samples without conditioning that analysis on the returned signature.",
+        "After checking a one-trial conditional-sampling identity, the outer asked Shannon to explore a concrete loop/code-motion obligation. The resulting factorization preserved both the entire ordered rejection log and the accepted sample. It then became a reusable identity for the later game transitions."
+      ],
+      "work": "Shannon completed logged_trials_factorization. The outer constructed the one-trial identity and worked on entropy and key averaging while that job ran. This scout had a defined transformation and checked starting point, rather than asking the inner prover to invent the full security reduction.",
+      "references": [
+        {
+          "file": "dilithium",
+          "lemma": "split_trial_equiv"
+        },
+        {
+          "file": "dilithium",
+          "lemma": "logged_trials_factorization"
+        },
+        {
+          "file": "dilithium",
+          "lemma": "good_key_entropy"
+        },
+        {
+          "file": "dilithium",
+          "lemma": "average_security_bound"
+        }
+      ],
+      "evidence": [
+        {
+          "kind": "agent_message",
+          "line": 1247,
+          "item": "item_642",
+          "text": "The one-trial conditional-sampling identity now checks, as does its use throughout the logged sampler. The remaining factorization step is to turn that loop into a rejected-log loop followed by one accepted draw. I’m preparing a Shannon scout for this concrete code-motion obligation."
+        },
+        {
+          "kind": "agent_message",
+          "line": 1353,
+          "item": "item_696",
+          "text": "The conditional-to-unconditional entropy bound now checks. I’m finishing the averaging lemma that adds the `delta_` term for invalid keys, while the sampler scout continues testing the loop transformation."
+        },
+        {
+          "kind": "agent_message",
+          "line": 1366,
+          "item": "item_703",
+          "text": "Shannon has verified the full sampler factorization: it preserves both the ordered rejected-trial log and the accepted sample. I’m collecting that proof, then applying the local-module privacy changes. This gives the next game hop a checked sampler identity to build on."
+        }
+      ]
+    },
+    {
+      "title": "Bound batches of hidden logs and reuse the supplied simulator",
+      "paragraphs": [
+        "Commitment collision and rejection need not be independent. The one-step hit bound keeps their dependence, then extends through a rejection loop and a batch of logs. Including all qS logs, even unused ones, gives a bound suitable for a later adversarial query sequence.",
+        "In parallel the outer related direct trials, honest transcripts and accepted samples to the supplied simulator. The resulting transcript equivalences connect the cryptographic specification to the sampling model used by the hidden-log analysis."
+      ],
+      "work": "Shannon completed rejected_hit_drift, logged_trials_hit_cost, batch_logs_hit_cost, direct_honest_trial and accepted_direct_loop. The outer built termination arguments, simulator connections and batch-level game structure.",
+      "references": [
+        {
+          "file": "dilithium",
+          "lemma": "rejected_hit_drift"
+        },
+        {
+          "file": "dilithium",
+          "lemma": "logged_trials_hit_cost"
+        },
+        {
+          "file": "dilithium",
+          "lemma": "batch_logs_hit_cost"
+        },
+        {
+          "file": "dilithium",
+          "lemma": "direct_honest_trial"
+        },
+        {
+          "file": "dilithium",
+          "lemma": "accepted_direct_loop"
+        },
+        {
+          "file": "dilithium",
+          "lemma": "accepted_simulated_loop"
+        }
+      ],
+      "evidence": [
+        {
+          "kind": "agent_message",
+          "line": 1510,
+          "item": "item_777",
+          "text": "The one-step rejected-hit bound is collected. It handles the dependence between commitment collisions and rejection; no independence assumption is needed. I’m now applying it to the full rejection loop and checking the batch sampler’s termination."
+        },
+        {
+          "kind": "agent_message",
+          "line": 1605,
+          "item": "item_827",
+          "text": "I’ve handed Shannon the bounded batch expectation lemma. While that runs, I’m building the transcript equivalences needed to reuse the supplied simulator-correctness theorem."
+        },
+        {
+          "kind": "agent_message",
+          "line": 1659,
+          "item": "item_855",
+          "text": "Both Shannon jobs are making checked progress. Locally, the simulator loop now checks; I’m assembling it with the accepted-transcript sampler and preparing the eager/lazy log-sampling argument for the second oracle transition."
+        },
+        {
+          "kind": "agent_message",
+          "line": 1706,
+          "item": "item_879",
+          "text": "The batch expected-hit bound is now collected. I’m using it as the quantitative part of the second transition; the queue argument will justify sampling those hidden logs before the adversary runs."
+        }
+      ]
+    },
+    {
+      "title": "Make eager sampling a proved queue identity",
+      "paragraphs": [
+        "Moving logs before the adversary requires more than asserting independence. The outer reduced that move to a queue identity: fill before consuming versus consume lazily and fill the remainder. Table-fold and response/transcript correspondences then connect the queued samples to the actual oracle updates.",
+        "The surrounding cap and query-budget arguments must also respect potentially nonterminating raw signing. The outer used the supplied adversary budget and explicit shared counter ownership, rather than simply assuming every raw signing call is lossless."
+      ],
+      "work": "Shannon completed program_transcript_log, queue_fill_consume, key_probability_sum and response_program_transcript. The outer lifted these identities into complete games and proved the cap/budget connections.",
+      "references": [
+        {
+          "file": "dilithium",
+          "lemma": "program_transcript_log"
+        },
+        {
+          "file": "dilithium",
+          "lemma": "queue_fill_consume"
+        },
+        {
+          "file": "dilithium",
+          "lemma": "key_probability_sum"
+        },
+        {
+          "file": "dilithium",
+          "lemma": "response_program_transcript"
+        },
+        {
+          "file": "dilithium",
+          "lemma": "generic_budget_same"
+        },
+        {
+          "file": "dilithium",
+          "lemma": "eager_lazy_logged"
+        }
+      ],
+      "evidence": [
+        {
+          "kind": "agent_message",
+          "line": 1826,
+          "item": "item_941",
+          "text": "The table-fold invariant has reached a precise, checked residual, and Shannon is completing that helper. I’m working on the queue commutation proof and the surrounding game-level equivalences."
+        },
+        {
+          "kind": "agent_message",
+          "line": 1900,
+          "item": "item_979",
+          "text": "The queue commutation proof has verified and is being collected. I also have a concrete route for connecting the capped games to the original game using `A_bound`, without assuming that real-oracle signing always terminates."
+        },
+        {
+          "kind": "agent_message",
+          "line": 2022,
+          "item": "item_1042",
+          "text": "The shared-state counter wrapper now checks, as do the hidden-log termination lemmas. The response-option/transcript-option equivalence has also verified. I’m collecting it and checking the game-level code that uses these pieces."
+        },
+        {
+          "kind": "agent_message",
+          "line": 2260,
+          "item": "item_1166",
+          "text": "The whole-game eager/lazy log equivalence now checks. That establishes that rejected logs can be sampled before the adversary, which is needed for the hidden-collision bound. I’m connecting the original signing procedure to the sequential sampler and the independent game to the factored sampler."
+        }
+      ]
+    },
+    {
+      "title": "Compare full and visible tables, then defer the collision test",
+      "paragraphs": [
+        "One oracle table retains all rejected trials; the other retains only accepted signatures. Their invariant preserves agreement at commitments outside the hidden logs. The outer then postpones testing whether any recorded query hits a hidden commitment, so the batch expectation can bound the resulting probability.",
+        "Specific residuals remained: table-fold preservation, expected-cost-to-probability conversion, sequential-to-joint sampling, queue membership and the scalar query budget. After those helpers returned, the outer still had substantive whole-game hash/signing comparisons and the final collision-bound assembly to finish."
+      ],
+      "work": "Shannon completed hidden_program_preserves, batch_collision_bound, sequential_joint_raw, queue_consume_valid and failed_batch_budget. The outer assembled real-to-preloaded, full-to-visible and eager-to-accepted game transitions. Brief two-lane overlap is not itself a measured speedup.",
+      "references": [
+        {
+          "file": "dilithium",
+          "lemma": "hidden_program_preserves"
+        },
+        {
+          "file": "dilithium",
+          "lemma": "batch_collision_bound"
+        },
+        {
+          "file": "dilithium",
+          "lemma": "sequential_joint_raw"
+        },
+        {
+          "file": "dilithium",
+          "lemma": "queue_consume_valid"
+        },
+        {
+          "file": "dilithium",
+          "lemma": "failed_batch_budget"
+        },
+        {
+          "file": "dilithium",
+          "lemma": "hidden_full_visible_hop"
+        },
+        {
+          "file": "dilithium",
+          "lemma": "eager_to_accepted"
+        }
+      ],
+      "evidence": [
+        {
+          "kind": "agent_message",
+          "line": 2193,
+          "item": "item_1131",
+          "text": "Both Shannon lanes now have specific residual obligations: converting the batch hit expectation to a probability bound, and coupling sequential commitment/challenge draws to a joint draw. I’m handling the surrounding game connections locally. Neither handoff asks Shannon to invent the reduction."
+        },
+        {
+          "kind": "agent_message",
+          "line": 2292,
+          "item": "item_1182",
+          "text": "The original signing procedure now checks against the sequential sampler, and the sequential sampler checks against the raw oracle. The queue membership proof is also collected. I’m finishing the wrapper connections that place these facts into the complete games."
+        },
+        {
+          "kind": "agent_message",
+          "line": 2444,
+          "item": "item_1263",
+          "text": "The real-game-to-preloaded-logs bound and the full-table game comparison now check. Shannon has verified the scalar collision-budget bound, which I’m collecting. I’m working on the visible game’s deferred collision test and its bounded query-list invariant."
+        },
+        {
+          "kind": "agent_message",
+          "line": 2490,
+          "item": "item_1287",
+          "text": "The full-table and visible-table oracle comparisons are checked. I’m checking the probability bound for the final collision test. In parallel, I’m developing the remaining endpoint: connecting the simulated signing game to the fixed KOA reduction."
+        }
+      ]
+    },
+    {
+      "title": "Close the KOA endpoint and certify the original claim",
+      "paragraphs": [
+        "The last endpoint relates the simulator’s single table to the reduction’s signature overlay plus base random oracle. The invariant records both table lookup agreement and that overlay entries belong to signed messages. Freshness then permits checking a forgery against the base oracle alone.",
+        "The outer finished the hash/sign callbacks, adversary lift, fresh-forgery implication and key averaging. It combined the two ROM collision costs with the MLWE and self-target-MSIS terms in the unchanged final claim. A source with no admit markers was explicitly treated as unfinished until native final verification passed."
+      ],
+      "work": "Outer-led final assembly after the last Shannon import. Harness final verification and a separate independent post-run verification accepted the complete theorem, with zero admissions and the claim/dependency preservation checks passing.",
+      "references": [
+        {
+          "file": "dilithium",
+          "lemma": "overlay_tables_program"
+        },
+        {
+          "file": "dilithium",
+          "lemma": "overlay_signed_program"
+        },
+        {
+          "file": "dilithium",
+          "lemma": "sim_overlay_hash"
+        },
+        {
+          "file": "dilithium",
+          "lemma": "sim_overlay_sign"
+        },
+        {
+          "file": "dilithium",
+          "lemma": "uncapped_to_koa"
+        },
+        {
+          "file": "dilithium",
+          "lemma": "fixed_koa_average"
+        },
+        {
+          "file": "dilithium",
+          "lemma": "generic_rom_security"
+        },
+        {
+          "file": "dilithium",
+          "lemma": "security_assembly"
+        },
+        {
+          "file": "dilithium",
+          "lemma": "Dilithium_secure"
+        }
+      ],
+      "evidence": [
+        {
+          "kind": "agent_message",
+          "line": 2547,
+          "item": "item_1317",
+          "text": "The remaining endpoint needs an invariant for two tables: the reduction’s signature overlay and its base random oracle. I’m defining how their lookups match the simulator’s single table, including why the overlay cannot affect verification of a fresh forgery."
+        },
+        {
+          "kind": "agent_message",
+          "line": 2719,
+          "item": "item_1414",
+          "text": "The signing callback now passes, so both oracle callbacks preserve the overlay relation. I’m finishing the adversary lift and the fresh-forgery implication before checking key averaging and the final theorem."
+        },
+        {
+          "kind": "agent_message",
+          "line": 2739,
+          "item": "item_1426",
+          "text": "The source now has no `admit` commands. The current check covers the new forgery boundary, key averaging, and final assembly. Completion is still pending the development check and the required `--final` verification."
+        },
+        {
+          "kind": "agent_message",
+          "line": 2792,
+          "item": "item_1458",
+          "text": "`--final` passed: `proof_complete: true`, zero admits, and the EOF tripwire was reached. The verifier also accepted the claim and dependency audits. I’m recording the result and final proof notes."
+        }
+      ]
+    }
+  ],
+  "jobs": {
+    "note": "28 imported jobs and one verified but uncollected original expectation job. The replacement is counted separately; the final development contains 28 distinct Shannon-proved helpers.",
+    "sourceNote": "Durations use public job started_at/finished_at and include worker orchestration, not just model computation. Two rejected submits created no job. A concurrent-source collect rejection recovered by retrying the same verified job. Raw evidence retains these failures; this table does not imply a failure-free interface or a measured net speedup.",
+    "merged": [
+      {
+        "id": "39f5a65d1f164521",
+        "lemma": "simplify_scheme",
+        "duration": "1m 32s",
+        "result": "Verified and imported"
+      },
+      {
+        "id": "a30de92cd0294c18",
+        "lemma": "lattice_witness_valid",
+        "duration": "5m 58s",
+        "result": "Verified and imported"
+      },
+      {
+        "id": "d033d644227d4e49",
+        "lemma": "operation_scheme",
+        "duration": "4m 17s",
+        "result": "Verified and imported"
+      },
+      {
+        "id": "a92eb34a87a04711",
+        "lemma": "expected_choice",
+        "duration": "1m 00s",
+        "result": "Verified and imported"
+      },
+      {
+        "id": "35f1ecfb899c4181",
+        "lemma": "trials_mean",
+        "duration": "5m 22s",
+        "result": "Verified and imported"
+      },
+      {
+        "id": "e03558703d254a09",
+        "lemma": "random_key_msis",
+        "duration": "13m 16s",
+        "result": "Verified and imported"
+      },
+      {
+        "id": "2a8e0f33938243b0",
+        "lemma": "koa_recovery",
+        "duration": "1m 13s",
+        "result": "Verified and imported"
+      },
+      {
+        "id": "387caf19e73e4f0a",
+        "lemma": "respond_recovers",
+        "duration": "9m 01s",
+        "result": "Verified and imported"
+      },
+      {
+        "id": "d89256bd32024008",
+        "lemma": "cma_commitment_conversion",
+        "duration": "2m 42s",
+        "result": "Verified and imported"
+      },
+      {
+        "id": "eebc40198c0c4ad3",
+        "lemma": "programmed_sign_cost",
+        "duration": "9m 59s",
+        "result": "Verified and imported"
+      },
+      {
+        "id": "ba9f0277671841c3",
+        "lemma": "stop_sign_same",
+        "duration": "1m 24s",
+        "result": "Verified and imported"
+      },
+      {
+        "id": "f2205d0c19ab438a",
+        "lemma": "programmed_game_bad",
+        "duration": "2m 49s",
+        "result": "Verified and imported"
+      },
+      {
+        "id": "1f43c9c56e624245",
+        "lemma": "programmed_sign_lossless",
+        "duration": "2m 42s",
+        "result": "Verified and imported"
+      },
+      {
+        "id": "c3e1b266ec1045a4",
+        "lemma": "logged_trials_factorization",
+        "duration": "14m 23s",
+        "result": "Verified and imported"
+      },
+      {
+        "id": "445006fbe9fb453c",
+        "lemma": "rejected_hit_drift",
+        "duration": "5m 42s",
+        "result": "Verified and imported"
+      },
+      {
+        "id": "f481f397c0d64ca3",
+        "lemma": "logged_trials_hit_cost",
+        "duration": "3m 44s",
+        "result": "Verified and imported"
+      },
+      {
+        "id": "89c6f2e6eb944b31",
+        "lemma": "batch_logs_hit_cost",
+        "duration": "10m 06s",
+        "result": "Verified and imported"
+      },
+      {
+        "id": "629c791dd3d4464a",
+        "lemma": "direct_honest_trial",
+        "duration": "2m 40s",
+        "result": "Verified and imported"
+      },
+      {
+        "id": "68ee7b6aa97447a6",
+        "lemma": "accepted_direct_loop",
+        "duration": "1m 25s",
+        "result": "Verified and imported"
+      },
+      {
+        "id": "36f2d73dd2f24cf1",
+        "lemma": "program_transcript_log",
+        "duration": "2m 53s",
+        "result": "Verified and imported"
+      },
+      {
+        "id": "e78dcefc1a624d30",
+        "lemma": "queue_fill_consume",
+        "duration": "2m 18s",
+        "result": "Verified and imported"
+      },
+      {
+        "id": "51f558c58cf042ce",
+        "lemma": "key_probability_sum",
+        "duration": "2m 38s",
+        "result": "Verified and imported"
+      },
+      {
+        "id": "e2728b37241a4805",
+        "lemma": "response_program_transcript",
+        "duration": "2m 03s",
+        "result": "Verified and imported"
+      },
+      {
+        "id": "8f63a62f5bcb42ce",
+        "lemma": "hidden_program_preserves",
+        "duration": "2m 21s",
+        "result": "Verified and imported"
+      },
+      {
+        "id": "b42932aed20545ad",
+        "lemma": "batch_collision_bound",
+        "duration": "1m 57s",
+        "result": "Verified and imported"
+      },
+      {
+        "id": "220fbe9693cd4e84",
+        "lemma": "sequential_joint_raw",
+        "duration": "1m 36s",
+        "result": "Verified and imported"
+      },
+      {
+        "id": "2bc86f1c89334b30",
+        "lemma": "queue_consume_valid",
+        "duration": "0m 53s",
+        "result": "Verified and imported"
+      },
+      {
+        "id": "a7a6ad8fa5834c8a",
+        "lemma": "failed_batch_budget",
+        "duration": "1m 46s",
+        "result": "Verified and imported"
+      }
+    ],
+    "other": [
+      {
+        "id": "1a4bfd3c6460462c",
+        "lemma": "expected_choice",
+        "duration": "1m 15s",
+        "result": "Verified; scoped import failed. Flat replacement imported."
+      }
+    ]
+  }
+}

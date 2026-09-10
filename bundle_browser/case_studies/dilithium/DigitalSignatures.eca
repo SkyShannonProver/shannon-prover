@@ -1,0 +1,3259 @@
+require import AllCore List Distr.
+
+type msg_t.
+
+type sig_t.
+
+type pk_t.
+
+type sk_t.
+
+theory Stateless.
+
+module type Scheme = {
+    proc keygen() : pk_t * sk_t
+    proc sign(sk : sk_t, m : msg_t) : sig_t
+    proc verify(pk : pk_t, m : msg_t, s : sig_t) : bool
+  }.
+
+module Correctness(S : Scheme) = {
+    proc main(m : msg_t) : bool = {
+      var pk : pk_t;
+      var sk : sk_t;
+      var sig : sig_t;
+      var is_valid : bool;
+
+      (pk, sk) <@ S.keygen();
+      sig <@ S.sign(sk, m);
+      is_valid <@ S.verify(pk, m, sig);
+
+      return is_valid;
+    }
+  }.
+
+module type Adv_TBKOA = {
+    proc break(pk : pk_t) : sk_t
+  }.
+
+module TB_KOA(S : Scheme, A : Adv_TBKOA) = {
+    proc main() : bool = {
+      var pk : pk_t;
+      var sk, sk' : sk_t;
+      var sig : sig_t;
+
+
+      (pk, sk) <@ S.keygen();
+
+
+      sk' <@ A.break(pk);
+
+
+      return sk' = sk;
+    }
+  }.
+
+abstract theory UFKOA.
+
+op [lossless] dmsg : msg_t distr.
+
+module type Adv_UFKOA = {
+    proc forge(pk : pk_t, m : msg_t) : sig_t
+  }.
+
+module UF_KOA(S : Scheme, A : Adv_UFKOA) = {
+    proc main() : bool = {
+      var pk : pk_t;
+      var sk : sk_t;
+      var m : msg_t;
+      var sig : sig_t;
+      var is_valid : bool;
+
+
+      m <$ dmsg;
+
+
+      (pk, sk) <@ S.keygen();
+
+
+      sig <@ A.forge(pk, m);
+
+
+
+
+
+      is_valid <@ S.verify(pk, m, sig);
+
+
+      return is_valid;
+    }
+  }.
+
+end UFKOA.
+
+module type Adv_SFKOA = {
+    proc pick() : msg_t
+    proc forge(pk : pk_t) : sig_t
+  }.
+
+module SF_KOA(S : Scheme, A : Adv_SFKOA) = {
+    proc main() : bool = {
+      var pk : pk_t;
+      var sk : sk_t;
+      var m : msg_t;
+      var sig : sig_t;
+      var is_valid : bool;
+
+
+      m <@ A.pick();
+
+
+      (pk, sk) <@ S.keygen();
+
+
+
+
+
+      sig <@ A.forge(pk);
+
+
+
+
+
+      is_valid <@ S.verify(pk, m, sig);
+
+
+      return is_valid;
+    }
+  }.
+
+module type Adv_EFKOA = {
+    proc forge(pk : pk_t) : msg_t * sig_t
+  }.
+
+module EF_KOA(S : Scheme, A : Adv_EFKOA) = {
+    proc main() : bool = {
+      var pk : pk_t;
+      var sk : sk_t;
+      var m : msg_t;
+      var sig : sig_t;
+      var is_valid: bool;
+
+
+      (pk, sk) <@ S.keygen();
+
+
+
+
+
+      (m, sig) <@ A.forge(pk);
+
+
+
+
+
+      is_valid <@ S.verify(pk, m, sig);
+
+
+      return is_valid;
+    }
+  }.
+
+abstract theory TBRMA.
+
+const n_tbrma : { int | 0 <= n_tbrma } as ge0_ntbrma.
+
+op [lossless] dmsg : msg_t distr.
+
+module type Adv_TBRMA = {
+    proc break(pk : pk_t, msigl : (msg_t * sig_t) list) : sk_t
+  }.
+
+module TB_RMA(S : Scheme, A : Adv_TBRMA) = {
+    proc main() : bool = {
+      var pk : pk_t;
+      var sk, sk' : sk_t;
+      var m : msg_t;
+      var sig : sig_t;
+      var msig : msg_t * sig_t;
+      var msigl : (msg_t * sig_t) list;
+
+
+      (pk, sk) <@ S.keygen();
+
+
+
+
+
+
+
+      msigl <- [];
+      while (size msigl < n_tbrma) {
+        m <$ dmsg;
+
+        sig <@ S.sign(sk, m);
+
+        msig <- (m, sig);
+        msigl <- rcons msigl msig;
+      }
+
+
+
+
+
+      sk' <@ A.break(pk, msigl);
+
+
+      return sk' = sk;
+    }
+  }.
+
+end TBRMA.
+
+abstract theory UFRMA.
+
+const n_ufrma : { int | 0 <= n_ufrma } as ge0_nufrma.
+
+op [lossless] dmsg : msg_t distr.
+
+module type Adv_UFRMA = {
+    proc forge(pk : pk_t, msigl : (msg_t * sig_t) list, m : msg_t) : sig_t
+  }.
+
+module UF_RMA(S : Scheme, A : Adv_UFRMA) = {
+    proc main() : bool = {
+      var pk : pk_t;
+      var sk, sk' : sk_t;
+      var m, m' : msg_t;
+      var sig, sig' : sig_t;
+      var msig : msg_t * sig_t;
+      var msigl : (msg_t * sig_t) list;
+      var is_valid, is_fresh : bool;
+
+
+      m' <$ dmsg;
+
+
+      (pk, sk) <@ S.keygen();
+
+
+
+
+
+
+
+      msigl <- [];
+      while (size msigl < n_ufrma) {
+        m <$ dmsg;
+
+        sig <@ S.sign(sk, m);
+
+        msig <- (m, sig);
+        msigl <- rcons msigl msig;
+      }
+
+
+
+
+
+      sig' <@ A.forge(pk, msigl, m');
+
+
+
+
+
+      is_valid <@ S.verify(pk, m', sig');
+
+
+
+
+
+
+      is_fresh <- ! m' \in (map fst msigl);
+
+
+
+
+
+
+      return is_valid /\ is_fresh;
+    }
+  }.
+
+end UFRMA.
+
+abstract theory SFRMA.
+
+const n_sfrma : { int | 0 <= n_sfrma } as ge0_nsfrma.
+
+op [lossless] dmsg : msg_t distr.
+
+module type Adv_SFRMA = {
+    proc pick() : msg_t
+    proc forge(pk : pk_t, msigl : (msg_t * sig_t) list) : sig_t
+  }.
+
+module SF_RMA(S : Scheme, A : Adv_SFRMA) = {
+    proc main() : bool = {
+      var pk : pk_t;
+      var sk, sk' : sk_t;
+      var m, m' : msg_t;
+      var sig, sig' : sig_t;
+      var msig : msg_t * sig_t;
+      var msigl : (msg_t * sig_t) list;
+      var is_valid, is_fresh : bool;
+
+
+      m' <@ A.pick();
+
+
+      (pk, sk) <@ S.keygen();
+
+
+
+
+
+
+
+      msigl <- [];
+      while (size msigl < n_sfrma) {
+        m <$ dmsg;
+
+        sig <@ S.sign(sk, m);
+
+        msig <- (m, sig);
+        msigl <- rcons msigl msig;
+      }
+
+
+
+
+
+      sig' <@ A.forge(pk, msigl);
+
+
+
+
+
+      is_valid <@ S.verify(pk, m', sig');
+
+
+
+
+
+
+      is_fresh <- ! m' \in (map fst msigl);
+
+
+
+
+
+
+      return is_valid /\ is_fresh;
+    }
+  }.
+
+end SFRMA.
+
+abstract theory EFRMA.
+
+const n_efrma : { int | 0 <= n_efrma } as ge0_nefrma.
+
+op [lossless] dmsg : msg_t distr.
+
+module type Adv_EFRMA = {
+    proc forge(pk : pk_t, msigl : (msg_t * sig_t) list) : msg_t * sig_t
+  }.
+
+module EF_RMA(S : Scheme, A : Adv_EFRMA) = {
+    proc main() : bool = {
+      var pk : pk_t;
+      var sk : sk_t;
+      var m, m' : msg_t;
+      var sig, sig' : sig_t;
+      var msig : msg_t * sig_t;
+      var msigl : (msg_t * sig_t) list;
+      var is_valid, is_fresh : bool;
+
+
+      (pk, sk) <@ S.keygen();
+
+
+
+
+
+
+
+      msigl <- [];
+      while (size msigl < n_efrma) {
+        m <$ dmsg;
+
+        sig <@ S.sign(sk, m);
+
+        msig <- (m, sig);
+        msigl <- rcons msigl msig;
+      }
+
+
+
+
+
+
+      (m', sig') <@ A.forge(pk, msigl);
+
+
+
+
+
+      is_valid <@ S.verify(pk, m', sig');
+
+
+
+
+
+
+      is_fresh <- ! m' \in (map fst msigl);
+
+
+
+
+
+
+      return is_valid /\ is_fresh;
+    }
+  }.
+
+end EFRMA.
+
+abstract theory TBGCMA.
+
+const n_tbgcma : { int | 0 <= n_tbgcma } as ge0_ntbgcma.
+
+module type Adv_TBGCMA = {
+    proc choose() : msg_t list
+    proc break(pk : pk_t, sigl : sig_t list) : sk_t
+  }.
+
+module TB_GCMA(S : Scheme, A : Adv_TBGCMA) = {
+    proc main() : bool = {
+      var pk : pk_t;
+      var sk, sk' : sk_t;
+      var m : msg_t;
+      var sig : sig_t;
+      var ml : msg_t list;
+      var sigl : sig_t list;
+
+
+      ml <@ A.choose();
+
+
+      (pk, sk) <@ S.keygen();
+
+
+
+
+
+
+
+
+
+      sigl <- [];
+      while (size sigl < min (size ml) n_tbgcma) {
+        m <- nth witness ml (size sigl);
+
+        sig <@ S.sign(sk, m);
+
+        sigl <- rcons sigl sig;
+      }
+
+
+
+
+
+
+      sk' <@ A.break(pk, sigl);
+
+
+      return sk' = sk;
+    }
+  }.
+
+end TBGCMA.
+
+abstract theory UFGCMA.
+
+const n_ufgcma : { int | 0 <= n_ufgcma } as ge0_nufgcma.
+
+op [lossless] dmsg : msg_t distr.
+
+module type Adv_UFGCMA = {
+    proc choose() : msg_t list
+    proc forge(pk : pk_t, sigl : sig_t list, m : msg_t) : sig_t
+  }.
+
+module UF_GCMA(S : Scheme, A : Adv_UFGCMA) = {
+    proc main() : bool = {
+      var pk : pk_t;
+      var sk : sk_t;
+      var m, m' : msg_t;
+      var sig, sig' : sig_t;
+      var ml : msg_t list;
+      var sigl : sig_t list;
+      var is_valid, is_fresh : bool;
+
+
+      m' <$ dmsg;
+
+
+      ml <@ A.choose();
+
+
+      (pk, sk) <@ S.keygen();
+
+
+
+
+
+
+
+
+
+      sigl <- [];
+      while (size sigl < min (size ml) n_ufgcma) {
+        m <- nth witness ml (size sigl);
+
+        sig <@ S.sign(sk, m);
+
+        sigl <- rcons sigl sig;
+      }
+
+
+
+
+
+
+      sig' <@ A.forge(pk, sigl, m');
+
+
+
+
+
+      is_valid <@ S.verify(pk, m', sig');
+
+
+
+
+
+
+      is_fresh <- ! m' \in (take (size sigl) ml);
+
+
+
+
+
+
+      return is_valid /\ is_fresh;
+    }
+  }.
+
+end UFGCMA.
+
+abstract theory SFGCMA.
+
+const n_sfgcma : { int | 0 <= n_sfgcma } as ge0_nsfgcma.
+
+module type Adv_SFGCMA = {
+    proc pick() : msg_t
+    proc choose() : msg_t list
+    proc forge(pk : pk_t, sigl : sig_t list) : sig_t
+  }.
+
+module SF_GCMA(S : Scheme, A : Adv_SFGCMA) = {
+    proc main() : bool = {
+      var pk : pk_t;
+      var sk : sk_t;
+      var m, m' : msg_t;
+      var ml : msg_t list;
+      var sigl : sig_t list;
+      var sig, sig': sig_t;
+      var is_valid, is_fresh : bool;
+
+
+      m' <@ A.pick();
+
+
+      ml <@ A.choose();
+
+
+      (pk, sk) <@ S.keygen();
+
+
+
+
+
+
+
+
+
+      sigl <- [];
+      while (size sigl < min (size ml) n_sfgcma) {
+        m <- nth witness ml (size sigl);
+
+        sig <@ S.sign(sk, m);
+
+        sigl <- rcons sigl sig;
+      }
+
+
+
+
+
+
+      sig' <@ A.forge(pk, sigl);
+
+
+
+
+
+      is_valid <@ S.verify(pk, m', sig');
+
+
+
+
+
+
+      is_fresh <- ! m' \in (take (size sigl) ml);
+
+
+
+
+
+
+      return is_valid /\ is_fresh;
+    }
+  }.
+
+end SFGCMA.
+
+abstract theory EFGCMA.
+
+const n_efgcma : { int | 0 <= n_efgcma } as ge0_nefgcma.
+
+module type Adv_EFGCMA = {
+    proc choose() : msg_t list
+    proc forge(pk : pk_t, sigl : sig_t list) : msg_t * sig_t
+  }.
+
+module EF_GCMA(S : Scheme, A : Adv_EFGCMA) = {
+    proc main() : bool = {
+      var pk : pk_t;
+      var sk : sk_t;
+      var m, m' : msg_t;
+      var ml : msg_t list;
+      var sigl : sig_t list;
+      var sig, sig': sig_t;
+      var is_valid, is_fresh : bool;
+
+
+      ml <@ A.choose();
+
+
+      (pk, sk) <@ S.keygen();
+
+
+
+
+
+
+
+
+
+      sigl <- [];
+      while (size sigl < min (size ml) n_efgcma) {
+        m <- nth witness ml (size sigl);
+
+        sig <@ S.sign(sk, m);
+
+        sigl <- rcons sigl sig;
+      }
+
+
+
+
+
+
+
+      (m', sig') <@ A.forge(pk, sigl);
+
+
+
+
+
+      is_valid <@ S.verify(pk, m', sig');
+
+
+
+
+
+
+      is_fresh <- ! m' \in (take (size sigl) ml);
+
+
+
+
+
+
+      return is_valid /\ is_fresh;
+    }
+  }.
+
+end EFGCMA.
+
+abstract theory TBNACMA.
+
+const n_tbnacma : { int | 0 <= n_tbnacma } as ge0_ntbnacma.
+
+module type Adv_TBNACMA = {
+    proc choose(pk : pk_t) : msg_t list
+    proc break(sigl : sig_t list) : sk_t
+  }.
+
+module TB_NACMA(S : Scheme, A : Adv_TBNACMA) = {
+    proc main() : bool = {
+      var pk : pk_t;
+      var sk, sk' : sk_t;
+      var m : msg_t;
+      var sig : sig_t;
+      var ml : msg_t list;
+      var sigl : sig_t list;
+
+
+      (pk, sk) <@ S.keygen();
+
+
+
+
+
+      ml <@ A.choose(pk);
+
+
+
+
+
+
+
+
+
+      sigl <- [];
+      while (size sigl < min (size ml) n_tbnacma) {
+        m <- nth witness ml (size sigl);
+
+        sig <@ S.sign(sk, m);
+
+        sigl <- rcons sigl sig;
+      }
+
+
+
+
+
+
+      sk' <@ A.break(sigl);
+
+
+      return sk' = sk;
+    }
+  }.
+
+end TBNACMA.
+
+abstract theory UFNACMA.
+
+const n_ufnacma : { int | 0 <= n_ufnacma } as ge0_nufnacma.
+
+op [lossless] dmsg : msg_t distr.
+
+module type Adv_UFNACMA = {
+    proc choose(pk : pk_t) : msg_t list
+    proc forge(sigl : sig_t list, m : msg_t) : sig_t
+  }.
+
+module UF_NACMA(S : Scheme, A : Adv_UFNACMA) = {
+    proc main() : bool = {
+      var pk : pk_t;
+      var sk : sk_t;
+      var m, m' : msg_t;
+      var sig, sig' : sig_t;
+      var ml : msg_t list;
+      var sigl : sig_t list;
+      var is_valid, is_fresh : bool;
+
+
+      m' <$ dmsg;
+
+
+      (pk, sk) <@ S.keygen();
+
+
+
+
+
+      ml <@ A.choose(pk);
+
+
+
+
+
+
+
+
+
+      sigl <- [];
+      while (size sigl < min (size ml) n_ufnacma) {
+        m <- nth witness ml (size sigl);
+
+        sig <@ S.sign(sk, m);
+
+        sigl <- rcons sigl sig;
+      }
+
+
+
+
+
+
+      sig' <@ A.forge(sigl, m');
+
+
+
+
+
+      is_valid <@ S.verify(pk, m', sig');
+
+
+
+
+
+
+      is_fresh <- ! m' \in (take (size sigl) ml);
+
+
+
+
+
+
+      return is_valid /\ is_fresh;
+    }
+  }.
+
+end UFNACMA.
+
+abstract theory SFNACMA.
+
+const n_sfnacma : { int | 0 <= n_sfnacma } as ge0_nsfnacma.
+
+module type Adv_SFNACMA = {
+    proc pick() : msg_t
+    proc choose(pk : pk_t) : msg_t list
+    proc forge(sigl : sig_t list) : sig_t
+  }.
+
+module SF_NACMA(S : Scheme, A : Adv_SFNACMA) = {
+    proc main() : bool = {
+      var pk : pk_t;
+      var sk : sk_t;
+      var m, m' : msg_t;
+      var ml : msg_t list;
+      var sigl : sig_t list;
+      var sig, sig': sig_t;
+      var is_valid, is_fresh : bool;
+
+
+      m' <@ A.pick();
+
+
+      (pk, sk) <@ S.keygen();
+
+
+
+
+
+      ml <@ A.choose(pk);
+
+
+
+
+
+
+
+
+
+      sigl <- [];
+      while (size sigl < min (size ml) n_sfnacma) {
+        m <- nth witness ml (size sigl);
+
+        sig <@ S.sign(sk, m);
+
+        sigl <- rcons sigl sig;
+      }
+
+
+
+
+
+
+      sig' <@ A.forge(sigl);
+
+
+
+
+
+      is_valid <@ S.verify(pk, m', sig');
+
+
+
+
+
+
+      is_fresh <- ! m' \in (take (size sigl) ml);
+
+
+
+
+
+
+      return is_valid /\ is_fresh;
+    }
+  }.
+
+end SFNACMA.
+
+abstract theory EFNACMA.
+
+const n_efnacma : { int | 0 <= n_efnacma } as ge0_nefnacma.
+
+module type Adv_EFNACMA = {
+    proc choose(pk : pk_t) : msg_t list
+    proc forge(sigl : sig_t list) : msg_t * sig_t
+  }.
+
+module EF_NACMA(S : Scheme, A : Adv_EFNACMA) = {
+    proc main() : bool = {
+      var pk : pk_t;
+      var sk : sk_t;
+      var m, m' : msg_t;
+      var ml : msg_t list;
+      var sigl : sig_t list;
+      var sig, sig': sig_t;
+      var is_valid, is_fresh : bool;
+
+
+      (pk, sk) <@ S.keygen();
+
+
+
+
+
+      ml <@ A.choose(pk);
+
+
+
+
+
+
+
+
+
+      sigl <- [];
+      while (size sigl < min (size ml) n_efnacma) {
+        m <- nth witness ml (size sigl);
+
+        sig <@ S.sign(sk, m);
+
+        sigl <- rcons sigl sig;
+      }
+
+
+
+
+
+
+
+      (m', sig') <@ A.forge(sigl);
+
+
+
+
+
+      is_valid <@ S.verify(pk, m', sig');
+
+
+
+
+
+
+      is_fresh <- ! m' \in (take (size sigl) ml);
+
+
+
+
+
+
+      return is_valid /\ is_fresh;
+    }
+  }.
+
+end EFNACMA.
+
+module type Oracle_CMA(S : Scheme) = {
+    proc init(sk_init : sk_t) : unit {}
+    proc sign(m : msg_t) : sig_t {S.sign}
+    proc fresh(m : msg_t) : bool {}
+    proc nr_queries() : int {}
+  }.
+
+module type SOracle_CMA = {
+    proc sign(m : msg_t) : sig_t
+  }.
+
+module (O_CMA_Default : Oracle_CMA) (S : Scheme) = {
+    var sk : sk_t
+    var qs : msg_t list
+
+
+    proc init(sk_init : sk_t) : unit = {
+      sk <- sk_init;
+      qs <- [];
+    }
+
+
+
+
+
+    proc sign(m : msg_t) : sig_t = {
+      var sig : sig_t;
+
+      sig <@ S.sign(sk, m);
+
+      qs <- rcons qs m;
+
+      return sig;
+    }
+
+
+
+
+
+    proc fresh(m : msg_t) : bool = {
+      return ! m \in qs;
+    }
+
+
+    proc nr_queries() : int = {
+      return size qs;
+    }
+  }.
+
+abstract theory TBCMA.
+
+const q_tbcma : { int | 0 <= q_tbcma } as ge0_qtbcma.
+
+module type Adv_TBCMA(O : SOracle_CMA) = {
+    proc break(pk : pk_t) : sk_t
+  }.
+
+module TB_CMA(S : Scheme, A : Adv_TBCMA, O : Oracle_CMA) = {
+
+    module O = O(S)
+
+
+    module A = A(O)
+
+    proc main() : bool = {
+      var pk : pk_t;
+      var sk, sk' : sk_t;
+      var nrqs : int;
+
+
+      (pk, sk) <@ S.keygen();
+
+
+      O.init(sk);
+
+
+
+
+
+      sk' <@ A.break(pk);
+
+
+      nrqs <@ O.nr_queries();
+
+
+
+
+
+
+      return nrqs <= q_tbcma /\ sk' = sk;
+    }
+  }.
+
+module TB_CMA_U(S : Scheme, A : Adv_TBCMA, O : Oracle_CMA) = {
+
+    module O = O(S)
+
+
+    module A = A(O)
+
+    proc main() : bool = {
+      var pk : pk_t;
+      var sk, sk' : sk_t;
+
+
+      (pk, sk) <@ S.keygen();
+
+
+      O.init(sk);
+
+
+
+
+
+      sk' <@ A.break(pk);
+
+
+      return sk' = sk;
+    }
+  }.
+
+end TBCMA.
+
+abstract theory UFCMA.
+
+const q_ufcma : { int | 0 <= q_ufcma } as ge0_qufcma.
+
+op [lossless] dmsg : msg_t distr.
+
+module type Adv_UFCMA(O : SOracle_CMA) = {
+    proc forge(pk : pk_t, m : msg_t) : sig_t
+  }.
+
+module UF_CMA(S : Scheme, A : Adv_UFCMA, O : Oracle_CMA) = {
+
+    module O = O(S)
+
+
+    module A = A(O)
+
+    proc main() : bool = {
+      var pk : pk_t;
+      var sk : sk_t;
+      var m : msg_t;
+      var sig : sig_t;
+      var nrqs : int;
+      var is_valid, is_fresh : bool;
+
+
+      m <$ dmsg;
+
+
+      (pk, sk) <@ S.keygen();
+
+
+      O.init(sk);
+
+
+
+
+
+      sig <@ A.forge(pk, m);
+
+
+
+
+
+      is_valid <@ S.verify(pk, m, sig);
+
+
+
+
+
+
+      is_fresh <@ O.fresh(m);
+
+
+      nrqs <@ O.nr_queries();
+
+
+
+
+
+
+
+      return nrqs <= q_ufcma /\ is_valid /\ is_fresh;
+    }
+  }.
+
+module UF_CMA_U(S : Scheme, A : Adv_UFCMA, O : Oracle_CMA) = {
+
+    module O = O(S)
+
+
+    module A = A(O)
+
+    proc main() : bool = {
+      var pk : pk_t;
+      var sk : sk_t;
+      var m : msg_t;
+      var sig : sig_t;
+      var is_valid, is_fresh : bool;
+
+
+      m <$ dmsg;
+
+
+      (pk, sk) <@ S.keygen();
+
+
+      O.init(sk);
+
+
+
+
+
+      sig <@ A.forge(pk, m);
+
+
+
+
+
+      is_valid <@ S.verify(pk, m, sig);
+
+
+
+
+
+
+      is_fresh <@ O.fresh(m);
+
+
+
+
+
+
+      return is_valid /\ is_fresh;
+    }
+  }.
+
+end UFCMA.
+
+abstract theory SFCMA.
+
+const q_sfcma : { int | 0 <= q_sfcma } as ge0_qsfcma.
+
+module type Adv_SFCMA(O : SOracle_CMA) = {
+    proc pick() : msg_t
+    proc forge(pk : pk_t) : sig_t
+  }.
+
+module SF_CMA(S : Scheme, A : Adv_SFCMA, O : Oracle_CMA) = {
+
+    module O = O(S)
+
+
+    module A = A(O)
+
+    proc main() : bool = {
+      var pk : pk_t;
+      var sk : sk_t;
+      var m : msg_t;
+      var sig : sig_t;
+      var nrqs : int;
+      var is_valid, is_fresh : bool;
+
+
+      m <@ A.pick();
+
+
+      (pk, sk) <@ S.keygen();
+
+
+      O.init(sk);
+
+
+
+
+
+      sig <@ A.forge(pk);
+
+
+
+
+
+      is_valid <@ S.verify(pk, m, sig);
+
+
+
+
+
+
+      is_fresh <@ O.fresh(m);
+
+
+      nrqs <@ O.nr_queries();
+
+
+
+
+
+
+
+      return nrqs <= q_sfcma /\ is_valid /\ is_fresh;
+    }
+  }.
+
+module SF_CMA_U(S : Scheme, A : Adv_SFCMA, O : Oracle_CMA) = {
+
+    module O = O(S)
+
+
+    module A = A(O)
+
+    proc main() : bool = {
+      var pk : pk_t;
+      var sk : sk_t;
+      var m : msg_t;
+      var sig : sig_t;
+      var is_valid, is_fresh : bool;
+
+
+      m <@ A.pick();
+
+
+      (pk, sk) <@ S.keygen();
+
+
+      O.init(sk);
+
+
+
+
+
+      sig <@ A.forge(pk);
+
+
+
+
+
+      is_valid <@ S.verify(pk, m, sig);
+
+
+
+
+
+
+      is_fresh <@ O.fresh(m);
+
+
+
+
+
+
+      return is_valid /\ is_fresh;
+    }
+  }.
+
+end SFCMA.
+
+abstract theory EFCMA.
+
+const q_efcma : { int | 0 <= q_efcma } as ge0_qefcma.
+
+module type Adv_EFCMA(O : SOracle_CMA) = {
+    proc forge(pk : pk_t) : msg_t * sig_t
+  }.
+
+module EF_CMA(S : Scheme, A : Adv_EFCMA, O : Oracle_CMA) = {
+
+    proc main() : bool = {
+      var pk : pk_t;
+      var sk : sk_t;
+      var m : msg_t;
+      var sig : sig_t;
+      var nrqs : int;
+      var is_valid, is_fresh : bool;
+
+
+      (pk, sk) <@ S.keygen();
+
+
+      O(S).init(sk);
+
+
+
+
+
+
+      (m, sig) <@  A(O(S)).forge(pk);
+
+
+
+
+
+      is_valid <@ S.verify(pk, m, sig);
+
+
+
+
+
+
+      is_fresh <@ O(S).fresh(m);
+
+
+      nrqs <@ O(S).nr_queries();
+
+
+
+
+
+
+
+      return nrqs <= q_efcma /\ is_valid /\ is_fresh;
+    }
+  }.
+
+module EF_CMA_U(S : Scheme, A : Adv_EFCMA, O : Oracle_CMA) = {
+
+    module O = O(S)
+
+
+    module A = A(O)
+
+    proc main() : bool = {
+      var pk : pk_t;
+      var sk : sk_t;
+      var m : msg_t;
+      var sig : sig_t;
+      var is_valid, is_fresh : bool;
+
+
+      (pk, sk) <@ S.keygen();
+
+
+      O.init(sk);
+
+
+
+
+
+
+      (m, sig) <@ A.forge(pk);
+
+
+
+
+
+      is_valid <@ S.verify(pk, m, sig);
+
+
+
+
+
+
+      is_fresh <@ O.fresh(m);
+
+
+
+
+
+
+      return is_valid /\ is_fresh;
+    }
+  }.
+
+end EFCMA.
+
+abstract theory SEFCMA.
+
+const q_sefcma : { int | 0 <= q_sefcma } as ge0_qsefcma.
+
+module type Oracle_SEFCMA(S : Scheme) = {
+    proc init(sk_init : sk_t) : unit {}
+    proc sign(m : msg_t) : sig_t {S.sign}
+    proc fresh(msig : msg_t * sig_t) : bool {}
+    proc nr_queries() : int {}
+  }.
+
+module type SOracle_SEFCMA = {
+    proc sign(m : msg_t) : sig_t
+  }.
+
+module (O_SEFCMA_Default : Oracle_SEFCMA) (S : Scheme) = {
+    var sk : sk_t
+    var qs : (msg_t * sig_t) list
+
+
+    proc init(sk_init : sk_t) : unit = {
+      sk <- sk_init;
+      qs <- [];
+    }
+
+
+
+
+
+    proc sign(m : msg_t) : sig_t = {
+      var sig : sig_t;
+      var msig : msg_t * sig_t;
+
+      sig <@ S.sign(sk, m);
+
+      msig <- (m, sig);
+      qs <- rcons qs msig;
+
+      return sig;
+    }
+
+
+
+
+
+    proc fresh(msig : msg_t * sig_t) : bool = {
+      return ! msig \in qs;
+    }
+
+
+    proc nr_queries() : int = {
+      return size qs;
+    }
+  }.
+
+module type Adv_SEFCMA(O : SOracle_SEFCMA) = {
+    proc forge(pk : pk_t) : msg_t * sig_t
+  }.
+
+module SEF_CMA(S : Scheme, A : Adv_SEFCMA, O : Oracle_SEFCMA) = {
+
+    module O = O(S)
+
+
+    module A = A(O)
+
+    proc main() : bool = {
+      var pk : pk_t;
+      var sk : sk_t;
+      var m : msg_t;
+      var sig : sig_t;
+      var nrqs : int;
+      var is_valid, is_fresh : bool;
+
+
+      (pk, sk) <@ S.keygen();
+
+
+      O.init(sk);
+
+
+
+
+
+
+      (m, sig) <@ A.forge(pk);
+
+
+
+
+
+      is_valid <@ S.verify(pk, m, sig);
+
+
+
+
+
+
+      is_fresh <@ O.fresh((m, sig));
+
+
+      nrqs <@ O.nr_queries();
+
+
+
+
+
+
+
+      return nrqs <= q_sefcma /\ is_valid /\ is_fresh;
+    }
+  }.
+
+module SEF_CMA_U(S : Scheme, A : Adv_SEFCMA, O : Oracle_SEFCMA) = {
+
+    module O = O(S)
+
+
+    module A = A(O)
+
+    proc main() : bool = {
+      var pk : pk_t;
+      var sk : sk_t;
+      var m : msg_t;
+      var sig : sig_t;
+      var is_valid, is_fresh : bool;
+
+
+      (pk, sk) <@ S.keygen();
+
+
+      O.init(sk);
+
+
+
+
+
+
+      (m, sig) <@ A.forge(pk);
+
+
+
+
+
+      is_valid <@ S.verify(pk, m, sig);
+
+
+
+
+
+
+      is_fresh <@ O.fresh((m, sig));
+
+
+
+
+
+
+      return is_valid /\ is_fresh;
+    }
+  }.
+
+end SEFCMA.
+
+end Stateless.
+
+theory KeyUpdating.
+
+module type Scheme = {
+    proc keygen() : pk_t * sk_t
+    proc sign(sk : sk_t, m : msg_t) : sig_t * sk_t
+    proc verify(pk : pk_t, m : msg_t, sig : sig_t) : bool
+  }.
+
+module type Adv_TBKOA = {
+    proc break(pk : pk_t) : sk_t
+  }.
+
+module TB_KOA(S : Scheme, A : Adv_TBKOA) = {
+    proc main() : bool = {
+      var pk : pk_t;
+      var sk, sk' : sk_t;
+      var sig : sig_t;
+
+
+      (pk, sk) <@ S.keygen();
+
+
+      sk' <@ A.break(pk);
+
+
+      return sk' = sk;
+    }
+  }.
+
+abstract theory UFKOA.
+
+op [lossless] dmsg : msg_t distr.
+
+module type Adv_UFKOA = {
+    proc forge(pk : pk_t, m : msg_t) : sig_t
+  }.
+
+module UF_KOA(S : Scheme, A : Adv_UFKOA) = {
+    proc main() : bool = {
+      var pk : pk_t;
+      var sk : sk_t;
+      var m : msg_t;
+      var sig : sig_t;
+      var is_valid : bool;
+
+
+      m <$ dmsg;
+
+
+      (pk, sk) <@ S.keygen();
+
+
+      sig <@ A.forge(pk, m);
+
+
+
+
+
+      is_valid <@ S.verify(pk, m, sig);
+
+
+      return is_valid;
+    }
+  }.
+
+end UFKOA.
+
+module type Adv_SFKOA = {
+    proc pick() : msg_t
+    proc forge(pk : pk_t) : sig_t
+  }.
+
+module SF_KOA(S : Scheme, A : Adv_SFKOA) = {
+    proc main() : bool = {
+      var pk : pk_t;
+      var sk : sk_t;
+      var m : msg_t;
+      var sig : sig_t;
+      var is_valid : bool;
+
+
+      m <@ A.pick();
+
+
+      (pk, sk) <@ S.keygen();
+
+
+
+
+
+      sig <@ A.forge(pk);
+
+
+
+
+
+      is_valid <@ S.verify(pk, m, sig);
+
+
+      return is_valid;
+    }
+  }.
+
+module type Adv_EFKOA = {
+    proc forge(pk : pk_t) : msg_t * sig_t
+  }.
+
+module EF_KOA(S : Scheme, A : Adv_EFKOA) = {
+    proc main() : bool = {
+      var pk : pk_t;
+      var sk : sk_t;
+      var m : msg_t;
+      var sig : sig_t;
+      var is_valid: bool;
+
+
+      (pk, sk) <@ S.keygen();
+
+
+
+
+
+      (m, sig) <@ A.forge(pk);
+
+
+
+
+
+      is_valid <@ S.verify(pk, m, sig);
+
+
+      return is_valid;
+    }
+  }.
+
+abstract theory TBRMA.
+
+const n_tbrma : { int | 0 <= n_tbrma } as ge0_ntbrma.
+
+op [lossless] dmsg : msg_t distr.
+
+module type Adv_TBRMA = {
+    proc break(pk : pk_t, msigl : (msg_t * sig_t) list) : sk_t
+  }.
+
+module TB_RMA(S : Scheme, A : Adv_TBRMA) = {
+    proc main() : bool = {
+      var pk : pk_t;
+      var sk, sk' : sk_t;
+      var m : msg_t;
+      var sig : sig_t;
+      var msig : msg_t * sig_t;
+      var msigl : (msg_t * sig_t) list;
+
+
+      (pk, sk) <@ S.keygen();
+
+
+
+
+
+
+
+      msigl <- [];
+      while (size msigl < n_tbrma) {
+        m <$ dmsg;
+
+        (sig, sk) <@ S.sign(sk, m);
+
+        msig <- (m, sig);
+        msigl <- rcons msigl msig;
+      }
+
+
+
+
+
+      sk' <@ A.break(pk, msigl);
+
+
+      return sk' = sk;
+    }
+  }.
+
+end TBRMA.
+
+abstract theory UFRMA.
+
+const n_ufrma : { int | 0 <= n_ufrma } as ge0_nufrma.
+
+op [lossless] dmsg : msg_t distr.
+
+module type Adv_UFRMA = {
+    proc forge(pk : pk_t, msigl : (msg_t * sig_t) list, m : msg_t) : sig_t
+  }.
+
+module UF_RMA(S : Scheme, A : Adv_UFRMA) = {
+    proc main() : bool = {
+      var pk : pk_t;
+      var sk, sk' : sk_t;
+      var m, m' : msg_t;
+      var sig, sig' : sig_t;
+      var msig : msg_t * sig_t;
+      var msigl : (msg_t * sig_t) list;
+      var is_valid, is_fresh : bool;
+
+
+      m' <$ dmsg;
+
+
+      (pk, sk) <@ S.keygen();
+
+
+
+
+
+
+
+      msigl <- [];
+      while (size msigl < n_ufrma) {
+        m <$ dmsg;
+
+        (sig, sk) <@ S.sign(sk, m);
+
+        msig <- (m, sig);
+        msigl <- rcons msigl msig;
+      }
+
+
+
+
+
+      sig' <@ A.forge(pk, msigl, m');
+
+
+
+
+
+      is_valid <@ S.verify(pk, m', sig');
+
+
+
+
+
+
+      is_fresh <- ! m' \in (map fst msigl);
+
+
+
+
+
+
+      return is_valid /\ is_fresh;
+    }
+  }.
+
+end UFRMA.
+
+abstract theory SFRMA.
+
+const n_sfrma : { int | 0 <= n_sfrma } as ge0_nsfrma.
+
+op [lossless] dmsg : msg_t distr.
+
+module type Adv_SFRMA = {
+    proc pick() : msg_t
+    proc forge(pk : pk_t, msigl : (msg_t * sig_t) list) : sig_t
+  }.
+
+module SF_RMA(S : Scheme, A : Adv_SFRMA) = {
+    proc main() : bool = {
+      var pk : pk_t;
+      var sk, sk' : sk_t;
+      var m, m' : msg_t;
+      var sig, sig' : sig_t;
+      var msig : msg_t * sig_t;
+      var msigl : (msg_t * sig_t) list;
+      var is_valid, is_fresh : bool;
+
+
+      m' <@ A.pick();
+
+
+      (pk, sk) <@ S.keygen();
+
+
+
+
+
+
+
+      msigl <- [];
+      while (size msigl < n_sfrma) {
+        m <$ dmsg;
+
+        (sig, sk) <@ S.sign(sk, m);
+
+        msig <- (m, sig);
+        msigl <- rcons msigl msig;
+      }
+
+
+
+
+
+      sig' <@ A.forge(pk, msigl);
+
+
+
+
+
+      is_valid <@ S.verify(pk, m', sig');
+
+
+
+
+
+
+      is_fresh <- ! m' \in (map fst msigl);
+
+
+
+
+
+
+      return is_valid /\ is_fresh;
+    }
+  }.
+
+end SFRMA.
+
+abstract theory EFRMA.
+
+const n_efrma : { int | 0 <= n_efrma } as ge0_nefrma.
+
+op [lossless] dmsg : msg_t distr.
+
+module type Adv_EFRMA = {
+    proc forge(pk : pk_t, msigl : (msg_t * sig_t) list) : msg_t * sig_t
+  }.
+
+module EF_RMA(S : Scheme, A : Adv_EFRMA) = {
+    proc main() : bool = {
+      var pk : pk_t;
+      var sk : sk_t;
+      var m, m' : msg_t;
+      var sig, sig' : sig_t;
+      var msig : msg_t * sig_t;
+      var msigl : (msg_t * sig_t) list;
+      var is_valid, is_fresh : bool;
+
+
+      (pk, sk) <@ S.keygen();
+
+
+
+
+
+
+
+      msigl <- [];
+      while (size msigl < n_efrma) {
+        m <$ dmsg;
+
+        (sig, sk) <@ S.sign(sk, m);
+
+        msig <- (m, sig);
+        msigl <- rcons msigl msig;
+      }
+
+
+
+
+
+
+      (m', sig') <@ A.forge(pk, msigl);
+
+
+
+
+
+      is_valid <@ S.verify(pk, m', sig');
+
+
+
+
+
+
+      is_fresh <- ! m' \in (map fst msigl);
+
+
+
+
+
+
+      return is_valid /\ is_fresh;
+    }
+  }.
+
+end EFRMA.
+
+abstract theory TBGCMA.
+
+const n_tbgcma : { int | 0 <= n_tbgcma } as ge0_ntbgcma.
+
+module type Adv_TBGCMA = {
+    proc choose() : msg_t list
+    proc break(pk : pk_t, sigl : sig_t list) : sk_t
+  }.
+
+module TB_GCMA(S : Scheme, A : Adv_TBGCMA) = {
+    proc main() : bool = {
+      var pk : pk_t;
+      var sk, sk' : sk_t;
+      var m : msg_t;
+      var sig : sig_t;
+      var ml : msg_t list;
+      var sigl : sig_t list;
+
+
+      ml <@ A.choose();
+
+
+      (pk, sk) <@ S.keygen();
+
+
+
+
+
+
+
+
+
+      sigl <- [];
+      while (size sigl < min (size ml) n_tbgcma) {
+        m <- nth witness ml (size sigl);
+
+        (sig, sk) <@ S.sign(sk, m);
+
+        sigl <- rcons sigl sig;
+      }
+
+
+
+
+
+
+      sk' <@ A.break(pk, sigl);
+
+
+      return sk' = sk;
+    }
+  }.
+
+end TBGCMA.
+
+abstract theory UFGCMA.
+
+const n_ufgcma : { int | 0 <= n_ufgcma } as ge0_nufgcma.
+
+op [lossless] dmsg : msg_t distr.
+
+module type Adv_UFGCMA = {
+    proc choose() : msg_t list
+    proc forge(pk : pk_t, sigl : sig_t list, m : msg_t) : sig_t
+  }.
+
+module UF_GCMA(S : Scheme, A : Adv_UFGCMA) = {
+    proc main() : bool = {
+      var pk : pk_t;
+      var sk : sk_t;
+      var m, m' : msg_t;
+      var sig, sig' : sig_t;
+      var ml : msg_t list;
+      var sigl : sig_t list;
+      var is_valid, is_fresh : bool;
+
+
+      m' <$ dmsg;
+
+
+      ml <@ A.choose();
+
+
+      (pk, sk) <@ S.keygen();
+
+
+
+
+
+
+
+
+
+      sigl <- [];
+      while (size sigl < min (size ml) n_ufgcma) {
+        m <- nth witness ml (size sigl);
+
+        (sig, sk) <@ S.sign(sk, m);
+
+        sigl <- rcons sigl sig;
+      }
+
+
+
+
+
+
+      sig' <@ A.forge(pk, sigl, m');
+
+
+
+
+
+      is_valid <@ S.verify(pk, m', sig');
+
+
+
+
+
+
+      is_fresh <- ! m' \in (take (size sigl) ml);
+
+
+
+
+
+
+      return is_valid /\ is_fresh;
+    }
+  }.
+
+end UFGCMA.
+
+abstract theory SFGCMA.
+
+const n_sfgcma : { int | 0 <= n_sfgcma } as ge0_nsfgcma.
+
+module type Adv_SFGCMA = {
+    proc pick() : msg_t
+    proc choose() : msg_t list
+    proc forge(pk : pk_t, sigl : sig_t list) : sig_t
+  }.
+
+module SF_GCMA(S : Scheme, A : Adv_SFGCMA) = {
+    proc main() : bool = {
+      var pk : pk_t;
+      var sk : sk_t;
+      var m, m' : msg_t;
+      var ml : msg_t list;
+      var sigl : sig_t list;
+      var sig, sig': sig_t;
+      var is_valid, is_fresh : bool;
+
+
+      m' <@ A.pick();
+
+
+      ml <@ A.choose();
+
+
+      (pk, sk) <@ S.keygen();
+
+
+
+
+
+
+
+
+
+      sigl <- [];
+      while (size sigl < min (size ml) n_sfgcma) {
+        m <- nth witness ml (size sigl);
+
+        (sig, sk) <@ S.sign(sk, m);
+
+        sigl <- rcons sigl sig;
+      }
+
+
+
+
+
+
+      sig' <@ A.forge(pk, sigl);
+
+
+
+
+
+      is_valid <@ S.verify(pk, m', sig');
+
+
+
+
+
+
+      is_fresh <- ! m' \in (take (size sigl) ml);
+
+
+
+
+
+
+      return is_valid /\ is_fresh;
+    }
+  }.
+
+end SFGCMA.
+
+abstract theory EFGCMA.
+
+const n_efgcma : { int | 0 <= n_efgcma } as ge0_nefgcma.
+
+module type Adv_EFGCMA = {
+    proc choose() : msg_t list
+    proc forge(pk : pk_t, sigl : sig_t list) : msg_t * sig_t
+  }.
+
+module EF_GCMA(S : Scheme, A : Adv_EFGCMA) = {
+    proc main() : bool = {
+      var pk : pk_t;
+      var sk : sk_t;
+      var m, m' : msg_t;
+      var ml : msg_t list;
+      var sigl : sig_t list;
+      var sig, sig': sig_t;
+      var is_valid, is_fresh : bool;
+
+
+      ml <@ A.choose();
+
+
+      (pk, sk) <@ S.keygen();
+
+
+
+
+
+
+
+
+
+      sigl <- [];
+      while (size sigl < min (size ml) n_efgcma) {
+        m <- nth witness ml (size sigl);
+
+        (sig, sk) <@ S.sign(sk, m);
+
+        sigl <- rcons sigl sig;
+      }
+
+
+
+
+
+
+
+      (m', sig') <@ A.forge(pk, sigl);
+
+
+
+
+
+      is_valid <@ S.verify(pk, m', sig');
+
+
+
+
+
+
+      is_fresh <- ! m' \in (take (size sigl) ml);
+
+
+
+
+
+
+      return is_valid /\ is_fresh;
+    }
+  }.
+
+end EFGCMA.
+
+abstract theory TBNACMA.
+
+const n_tbnacma : { int | 0 <= n_tbnacma } as ge0_ntbnacma.
+
+module type Adv_TBNACMA = {
+    proc choose(pk : pk_t) : msg_t list
+    proc break(sigl : sig_t list) : sk_t
+  }.
+
+module TB_NACMA(S : Scheme, A : Adv_TBNACMA) = {
+    proc main() : bool = {
+      var pk : pk_t;
+      var sk, sk' : sk_t;
+      var m : msg_t;
+      var sig : sig_t;
+      var ml : msg_t list;
+      var sigl : sig_t list;
+
+
+      (pk, sk) <@ S.keygen();
+
+
+
+
+
+      ml <@ A.choose(pk);
+
+
+
+
+
+
+
+
+
+      sigl <- [];
+      while (size sigl < min (size ml) n_tbnacma) {
+        m <- nth witness ml (size sigl);
+
+        (sig, sk) <@ S.sign(sk, m);
+
+        sigl <- rcons sigl sig;
+      }
+
+
+
+
+
+
+      sk' <@ A.break(sigl);
+
+
+      return sk' = sk;
+    }
+  }.
+
+end TBNACMA.
+
+abstract theory UFNACMA.
+
+const n_ufnacma : { int | 0 <= n_ufnacma } as ge0_nufnacma.
+
+op [lossless] dmsg : msg_t distr.
+
+module type Adv_UFNACMA = {
+    proc choose(pk : pk_t) : msg_t list
+    proc forge(sigl : sig_t list, m : msg_t) : sig_t
+  }.
+
+module UF_NACMA(S : Scheme, A : Adv_UFNACMA) = {
+    proc main() : bool = {
+      var pk : pk_t;
+      var sk : sk_t;
+      var m, m' : msg_t;
+      var sig, sig' : sig_t;
+      var ml : msg_t list;
+      var sigl : sig_t list;
+      var is_valid, is_fresh : bool;
+
+
+      m' <$ dmsg;
+
+
+      (pk, sk) <@ S.keygen();
+
+
+
+
+
+      ml <@ A.choose(pk);
+
+
+
+
+
+
+
+
+
+      sigl <- [];
+      while (size sigl < min (size ml) n_ufnacma) {
+        m <- nth witness ml (size sigl);
+
+        (sig, sk) <@ S.sign(sk, m);
+
+        sigl <- rcons sigl sig;
+      }
+
+
+
+
+
+
+      sig' <@ A.forge(sigl, m');
+
+
+
+
+
+      is_valid <@ S.verify(pk, m', sig');
+
+
+
+
+
+
+      is_fresh <- ! m' \in (take (size sigl) ml);
+
+
+
+
+
+
+      return is_valid /\ is_fresh;
+    }
+  }.
+
+end UFNACMA.
+
+abstract theory SFNACMA.
+
+const n_sfnacma : { int | 0 <= n_sfnacma } as ge0_nsfnacma.
+
+module type Adv_SFNACMA = {
+    proc pick() : msg_t
+    proc choose(pk : pk_t) : msg_t list
+    proc forge(sigl : sig_t list) : sig_t
+  }.
+
+module SF_NACMA(S : Scheme, A : Adv_SFNACMA) = {
+    proc main() : bool = {
+      var pk : pk_t;
+      var sk : sk_t;
+      var m, m' : msg_t;
+      var ml : msg_t list;
+      var sigl : sig_t list;
+      var sig, sig': sig_t;
+      var is_valid, is_fresh : bool;
+
+
+      m' <@ A.pick();
+
+
+      (pk, sk) <@ S.keygen();
+
+
+
+
+
+      ml <@ A.choose(pk);
+
+
+
+
+
+
+
+
+
+      sigl <- [];
+      while (size sigl < min (size ml) n_sfnacma) {
+        m <- nth witness ml (size sigl);
+
+        (sig, sk) <@ S.sign(sk, m);
+
+        sigl <- rcons sigl sig;
+      }
+
+
+
+
+
+
+      sig' <@ A.forge(sigl);
+
+
+
+
+
+      is_valid <@ S.verify(pk, m', sig');
+
+
+
+
+
+
+      is_fresh <- ! m' \in (take (size sigl) ml);
+
+
+
+
+
+
+      return is_valid /\ is_fresh;
+    }
+  }.
+
+end SFNACMA.
+
+abstract theory EFNACMA.
+
+const n_efnacma : { int | 0 <= n_efnacma } as ge0_nefnacma.
+
+module type Adv_EFNACMA = {
+    proc choose(pk : pk_t) : msg_t list
+    proc forge(sigl : sig_t list) : msg_t * sig_t
+  }.
+
+module EF_NACMA(S : Scheme, A : Adv_EFNACMA) = {
+    proc main() : bool = {
+      var pk : pk_t;
+      var sk : sk_t;
+      var m, m' : msg_t;
+      var ml : msg_t list;
+      var sigl : sig_t list;
+      var sig, sig': sig_t;
+      var is_valid, is_fresh : bool;
+
+
+      (pk, sk) <@ S.keygen();
+
+
+
+
+
+      ml <@ A.choose(pk);
+
+
+
+
+
+
+
+
+
+      sigl <- [];
+      while (size sigl < min (size ml) n_efnacma) {
+        m <- nth witness ml (size sigl);
+
+        (sig, sk) <@ S.sign(sk, m);
+
+        sigl <- rcons sigl sig;
+      }
+
+
+
+
+
+
+
+      (m', sig') <@ A.forge(sigl);
+
+
+
+
+
+      is_valid <@ S.verify(pk, m', sig');
+
+
+
+
+
+
+      is_fresh <- ! m' \in (take (size sigl) ml);
+
+
+
+
+
+
+      return is_valid /\ is_fresh;
+    }
+  }.
+
+end EFNACMA.
+
+module type Oracle_CMA(S : Scheme) = {
+    proc init(sk_init : sk_t) : unit {}
+    proc sign(m : msg_t) : sig_t {S.sign}
+    proc fresh(m : msg_t) : bool {}
+    proc nr_queries() : int {}
+  }.
+
+module type SOracle_CMA = {
+    proc sign(m : msg_t) : sig_t
+  }.
+
+module (O_CMA_Default : Oracle_CMA) (S : Scheme) = {
+    var sk : sk_t
+    var qs : msg_t list
+
+
+    proc init(sk_init : sk_t) : unit = {
+      sk <- sk_init;
+      qs <- [];
+    }
+
+
+
+
+
+    proc sign(m : msg_t) : sig_t = {
+      var sig : sig_t;
+
+      (sig, sk) <@ S.sign(sk, m);
+
+      qs <- rcons qs m;
+
+      return sig;
+    }
+
+
+
+
+
+    proc fresh(m : msg_t) : bool = {
+      return ! m \in qs;
+    }
+
+
+    proc nr_queries() : int = {
+      return size qs;
+    }
+  }.
+
+abstract theory TBCMA.
+
+const q_tbcma : { int | 0 <= q_tbcma } as ge0_qtbcma.
+
+module type Adv_TBCMA(O : SOracle_CMA) = {
+    proc break(pk : pk_t) : sk_t
+  }.
+
+module TB_CMA(S : Scheme, A : Adv_TBCMA, O : Oracle_CMA) = {
+
+    module O = O(S)
+
+
+    module A = A(O)
+
+    proc main() : bool = {
+      var pk : pk_t;
+      var sk, sk' : sk_t;
+      var nrqs : int;
+
+
+      (pk, sk) <@ S.keygen();
+
+
+      O.init(sk);
+
+
+
+
+
+      sk' <@ A.break(pk);
+
+
+      nrqs <@ O.nr_queries();
+
+
+
+
+
+
+      return nrqs <= q_tbcma /\ sk' = sk;
+    }
+  }.
+
+module TB_CMA_U(S : Scheme, A : Adv_TBCMA, O : Oracle_CMA) = {
+
+    module O = O(S)
+
+
+    module A = A(O)
+
+    proc main() : bool = {
+      var pk : pk_t;
+      var sk, sk' : sk_t;
+
+
+      (pk, sk) <@ S.keygen();
+
+
+      O.init(sk);
+
+
+
+
+
+      sk' <@ A.break(pk);
+
+
+      return sk' = sk;
+    }
+  }.
+
+end TBCMA.
+
+abstract theory UFCMA.
+
+const q_ufcma : { int | 0 <= q_ufcma } as ge0_qufcma.
+
+op [lossless] dmsg : msg_t distr.
+
+module type Adv_UFCMA(O : SOracle_CMA) = {
+    proc forge(pk : pk_t, m : msg_t) : sig_t
+  }.
+
+module UF_CMA(S : Scheme, A : Adv_UFCMA, O : Oracle_CMA) = {
+
+    module O = O(S)
+
+
+    module A = A(O)
+
+    proc main() : bool = {
+      var pk : pk_t;
+      var sk : sk_t;
+      var m : msg_t;
+      var sig : sig_t;
+      var nrqs : int;
+      var is_valid, is_fresh : bool;
+
+
+      m <$ dmsg;
+
+
+      (pk, sk) <@ S.keygen();
+
+
+      O.init(sk);
+
+
+
+
+
+      sig <@ A.forge(pk, m);
+
+
+
+
+
+      is_valid <@ S.verify(pk, m, sig);
+
+
+
+
+
+
+      is_fresh <@ O.fresh(m);
+
+
+      nrqs <@ O.nr_queries();
+
+
+
+
+
+
+
+      return nrqs <= q_ufcma /\ is_valid /\ is_fresh;
+    }
+  }.
+
+module UF_CMA_U(S : Scheme, A : Adv_UFCMA, O : Oracle_CMA) = {
+
+    module O = O(S)
+
+
+    module A = A(O)
+
+    proc main() : bool = {
+      var pk : pk_t;
+      var sk : sk_t;
+      var m : msg_t;
+      var sig : sig_t;
+      var is_valid, is_fresh : bool;
+
+
+      m <$ dmsg;
+
+
+      (pk, sk) <@ S.keygen();
+
+
+      O.init(sk);
+
+
+
+
+
+      sig <@ A.forge(pk, m);
+
+
+
+
+
+      is_valid <@ S.verify(pk, m, sig);
+
+
+
+
+
+
+      is_fresh <@ O.fresh(m);
+
+
+
+
+
+
+      return is_valid /\ is_fresh;
+    }
+  }.
+
+end UFCMA.
+
+abstract theory SFCMA.
+
+const q_sfcma : { int | 0 <= q_sfcma } as ge0_qsfcma.
+
+module type Adv_SFCMA(O : SOracle_CMA) = {
+    proc pick() : msg_t
+    proc forge(pk : pk_t) : sig_t
+  }.
+
+module SF_CMA(S : Scheme, A : Adv_SFCMA, O : Oracle_CMA) = {
+
+    module O = O(S)
+
+
+    module A = A(O)
+
+    proc main() : bool = {
+      var pk : pk_t;
+      var sk : sk_t;
+      var m : msg_t;
+      var sig : sig_t;
+      var nrqs : int;
+      var is_valid, is_fresh : bool;
+
+
+      m <@ A.pick();
+
+
+      (pk, sk) <@ S.keygen();
+
+
+      O.init(sk);
+
+
+
+
+
+      sig <@ A.forge(pk);
+
+
+
+
+
+      is_valid <@ S.verify(pk, m, sig);
+
+
+
+
+
+
+      is_fresh <@ O.fresh(m);
+
+
+      nrqs <@ O.nr_queries();
+
+
+
+
+
+
+
+      return nrqs <= q_sfcma /\ is_valid /\ is_fresh;
+    }
+  }.
+
+module SF_CMA_U(S : Scheme, A : Adv_SFCMA, O : Oracle_CMA) = {
+
+    module O = O(S)
+
+
+    module A = A(O)
+
+    proc main() : bool = {
+      var pk : pk_t;
+      var sk : sk_t;
+      var m : msg_t;
+      var sig : sig_t;
+      var is_valid, is_fresh : bool;
+
+
+      m <@ A.pick();
+
+
+      (pk, sk) <@ S.keygen();
+
+
+      O.init(sk);
+
+
+
+
+
+      sig <@ A.forge(pk);
+
+
+
+
+
+      is_valid <@ S.verify(pk, m, sig);
+
+
+
+
+
+
+      is_fresh <@ O.fresh(m);
+
+
+
+
+
+
+      return is_valid /\ is_fresh;
+    }
+  }.
+
+end SFCMA.
+
+abstract theory EFCMA.
+
+const q_efcma : { int | 0 <= q_efcma } as ge0_qefcma.
+
+module type Adv_EFCMA(O : SOracle_CMA) = {
+    proc forge(pk : pk_t) : msg_t * sig_t
+  }.
+
+module EF_CMA(S : Scheme, A : Adv_EFCMA, O : Oracle_CMA) = {
+
+    module O = O(S)
+
+
+    module A = A(O)
+
+    proc main() : bool = {
+      var pk : pk_t;
+      var sk : sk_t;
+      var m : msg_t;
+      var sig : sig_t;
+      var nrqs : int;
+      var is_valid, is_fresh : bool;
+
+
+      (pk, sk) <@ S.keygen();
+
+
+      O.init(sk);
+
+
+
+
+
+
+      (m, sig) <@ A.forge(pk);
+
+
+
+
+
+      is_valid <@ S.verify(pk, m, sig);
+
+
+
+
+
+
+      is_fresh <@ O.fresh(m);
+
+
+      nrqs <@ O.nr_queries();
+
+
+
+
+
+
+
+      return nrqs <= q_efcma /\ is_valid /\ is_fresh;
+    }
+  }.
+
+module EF_CMA_U(S : Scheme, A : Adv_EFCMA, O : Oracle_CMA) = {
+
+    module O = O(S)
+
+
+    module A = A(O)
+
+    proc main() : bool = {
+      var pk : pk_t;
+      var sk : sk_t;
+      var m : msg_t;
+      var sig : sig_t;
+      var is_valid, is_fresh : bool;
+
+
+      (pk, sk) <@ S.keygen();
+
+
+      O.init(sk);
+
+
+
+
+
+
+      (m, sig) <@ A.forge(pk);
+
+
+
+
+
+      is_valid <@ S.verify(pk, m, sig);
+
+
+
+
+
+
+      is_fresh <@ O.fresh(m);
+
+
+
+
+
+
+      return is_valid /\ is_fresh;
+    }
+  }.
+
+end EFCMA.
+
+abstract theory SEFCMA.
+
+const q_sefcma : { int | 0 <= q_sefcma } as ge0_qsefcma.
+
+module type Oracle_SEFCMA(S : Scheme) = {
+    proc init(sk_init : sk_t) : unit {}
+    proc sign(m : msg_t) : sig_t {S.sign}
+    proc fresh(msig : msg_t * sig_t) : bool {}
+    proc nr_queries() : int {}
+  }.
+
+module type SOracle_SEFCMA = {
+    proc sign(m : msg_t) : sig_t
+  }.
+
+module (O_SEFCMA_Default : Oracle_SEFCMA) (S : Scheme) = {
+    var sk : sk_t
+    var qs : (msg_t * sig_t) list
+
+
+    proc init(sk_init : sk_t) : unit = {
+      sk <- sk_init;
+      qs <- [];
+    }
+
+
+
+
+
+    proc sign(m : msg_t) : sig_t = {
+      var sig : sig_t;
+      var msig : msg_t * sig_t;
+
+      (sig, sk) <@ S.sign(sk, m);
+
+      msig <- (m, sig);
+      qs <- rcons qs msig;
+
+      return sig;
+    }
+
+
+
+
+
+    proc fresh(msig : msg_t * sig_t) : bool = {
+      return ! msig \in qs;
+    }
+
+
+    proc nr_queries() : int = {
+      return size qs;
+    }
+  }.
+
+module type Adv_SEFCMA(O : SOracle_SEFCMA) = {
+    proc forge(pk : pk_t) : msg_t * sig_t
+  }.
+
+module SEF_CMA(S : Scheme, A : Adv_SEFCMA, O : Oracle_SEFCMA) = {
+
+    module O = O(S)
+
+
+    module A = A(O)
+
+    proc main() : bool = {
+      var pk : pk_t;
+      var sk : sk_t;
+      var m : msg_t;
+      var sig : sig_t;
+      var nrqs : int;
+      var is_valid, is_fresh : bool;
+
+
+      (pk, sk) <@ S.keygen();
+
+
+      O.init(sk);
+
+
+
+
+
+
+      (m, sig) <@ A.forge(pk);
+
+
+
+
+
+      is_valid <@ S.verify(pk, m, sig);
+
+
+
+
+
+
+      is_fresh <@ O.fresh((m, sig));
+
+
+      nrqs <@ O.nr_queries();
+
+
+
+
+
+
+
+      return nrqs <= q_sefcma /\ is_valid /\ is_fresh;
+    }
+  }.
+
+module SEF_CMA_U(S : Scheme, A : Adv_SEFCMA, O : Oracle_SEFCMA) = {
+
+    module O = O(S)
+
+
+    module A = A(O)
+
+    proc main() : bool = {
+      var pk : pk_t;
+      var sk : sk_t;
+      var m : msg_t;
+      var sig : sig_t;
+      var is_valid, is_fresh : bool;
+
+
+      (pk, sk) <@ S.keygen();
+
+
+      O.init(sk);
+
+
+
+
+
+
+      (m, sig) <@ A.forge(pk);
+
+
+
+
+
+      is_valid <@ S.verify(pk, m, sig);
+
+
+
+
+
+
+      is_fresh <@ O.fresh((m, sig));
+
+
+
+
+
+
+      return is_valid /\ is_fresh;
+    }
+  }.
+
+end SEFCMA.
+
+end KeyUpdating.

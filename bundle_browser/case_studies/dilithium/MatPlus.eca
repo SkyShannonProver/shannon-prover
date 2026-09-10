@@ -1,0 +1,25 @@
+require import AllCore List Distr DBool DList Finite.
+
+import StdBigop.Bigreal StdOrder.IntOrder.
+
+require DynMatrix.
+
+clone include DynMatrix.
+
+import ZR.
+
+lemma is_finite_vector (P : t -> bool) (k : int) :
+  is_finite P =>
+  is_finite (fun (v : vector) => size v = k /\ forall i, 0 <= i < k => P v.[i]).
+
+proof.
+
+move => fin_P; have := finite_list k P fin_P.
+
+apply (is_finite_surj oflist) => /= v [size_v P_v]; exists (tolist v).
+
+rewrite ler_maxr -?size_v ?size_ge0 size_tolist tolistK /=.
+
+by apply/allP => x /mem_tolist [i] /#.
+
+qed.

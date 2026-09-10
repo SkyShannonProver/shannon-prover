@@ -1,0 +1,411 @@
+require import AllCore IntDiv Distr List Nat Finite.
+
+require MatPlus DRing.
+
+clone import DRing as DR.
+
+import RqRing.
+
+clone import DR.HighLow as HL.
+
+clone import MatPlus as MatRq
+  with theory ZR <= DR.RqRing.
+
+op shiftV (w1 : high list) = oflist (map (fun x => shift x) w1).
+
+op lowBitsV v = mapv lowBits v.
+
+op highBitsV v = map highBits (tolist v).
+
+op uncurry (f : 'a -> 'b -> 'c) (ab : 'a * 'b) : 'c = let (a, b) = ab in f a b.
+
+op makeHintV rv zv = map (uncurry makeHint) (zip (tolist rv) (tolist zv)).
+
+op useHintV (hv : hint_t list) (rv : vector) : high list = map (uncurry useHint) (zip hv (tolist rv)).
+
+op checkHintV (hv : hint_t list) : bool.
+
+op base2lowbitsV = mapv base2lowbits.
+
+op base2highbitsV v = map base2highbits (tolist v).
+
+op base2shiftV lst = oflist (map base2shift lst).
+
+op base2roundV = base2shiftV \o base2highbitsV.
+
+lemma size_lowBitsV (v : vector) : size (lowBitsV v) = size v by [].
+
+lemma size_highBitsV (v : vector) : size (highBitsV v) = size v.
+
+proof.
+
+by rewrite /highBitsV size_map size_tolist.
+
+qed.
+
+import BigMax.
+
+op inf_norm = big predT (Nat.ofint \o cnorm).
+
+op inf_normv = Nat.ofnat \o inf_norm \o tolist.
+
+lemma inf_normvN (v : vector) : inf_normv (-v) = inf_normv v.
+
+proof.
+
+rewrite /inf_normv /normv /pnormv /tolist /(\o); congr.
+
+by rewrite /inf_norm !big_map /(\o) /= &(eq_bigr) => i _ /=; rewrite cnormN.
+
+qed.
+
+lemma inf_normv_ltr v a :
+  0 < a =>
+  inf_normv v < a <=>
+  (forall i, 0 <= i < size v => cnorm v.[i] < a).
+
+proof.
+
+move => gt0_a.
+
+rewrite /inf_normv /inf_norm /(\o).
+
+rewrite ltr_ofnat; have -> /=: (0 <= a) = true by smt().
+
+rewrite -ltr_bigmax; first smt(ofintK).
+
+split => ?.
+
+- move => i rg_i.
+
+have ?: v.[i] \in tolist v by smt(mem_tolist).
+
+smt(ofintK).
+
+- move => x supp_x _ /=.
+
+rewrite mem_tolist in supp_x.
+
+rewrite ltr_ofint.
+
+by split => [|/#]; first exact cnorm_ge0.
+
+qed.
+
+lemma inf_normv_ler v a :
+  0 <= a =>
+  inf_normv v <= a <=>
+  (forall i, 0 <= i < size v => cnorm v.[i] <= a).
+
+proof.
+
+move => ge0_a.
+
+rewrite /inf_normv /inf_norm /(\o).
+
+rewrite ler_ofnat; have -> /=: (0 <= a) = true by smt().
+
+rewrite -ler_bigmax.
+
+split => ?.
+
+- move => i rg_i.
+
+have ?: v.[i] \in tolist v by smt(mem_tolist).
+
+smt(ofintK).
+
+- move => x supp_x _ /=.
+
+rewrite mem_tolist in supp_x.
+
+rewrite ler_ofint.
+
+by split => [|/#]; first exact cnorm_ge0.
+
+qed.
+
+lemma hide_lowV (rv sv : vector) (b : int) :
+  size rv = size sv =>
+  0 <= b =>
+  0 < alpha %/ 2 - b =>
+  inf_normv sv <= b =>
+  inf_normv (lowBitsV rv) < alpha %/ 2 - b =>
+  highBitsV (rv + sv) = highBitsV rv.
+
+proof.
+
+move => eq_size ge0_b lt_b_halfalpha small_sv small_low_rv.
+
+rewrite inf_normv_ler // in small_sv.
+
+rewrite inf_normv_ltr // in small_low_rv.
+
+rewrite /highBitsV.
+
+apply (eq_from_nth witness).
+
+- rewrite !size_map !size_range /=.
+
+smt(size_addv).
+
+move => j rg_j.
+
+rewrite !size_map size_range in rg_j.
+
+rewrite size_addv eq_size /= in rg_j.
+
+rewrite (nth_map witness).
+
+- by rewrite size_tolist; smt(size_addv).
+
+rewrite (nth_map witness witness highBits).
+
+- by rewrite size_tolist; smt(size_addv).
+
+rewrite nth_tolist; first smt(size_addv).
+
+rewrite nth_tolist; first smt(size_addv).
+
+rewrite get_addv //.
+
+rewrite (hide_low _ _ b) //; first smt().
+
+smt(get_mapv size_lowBitsV).
+
+qed.
+
+lemma l1_inf_norm_product_ub (x : Rq) (yv : vector) (b1 b2 : int) :
+  0 < b1 =>
+  0 < b2 =>
+  l1_norm x <= b1 =>
+  inf_normv yv <= b2 =>
+  inf_normv (x ** yv) <= b1 * b2.
+
+proof.
+
+move => gt0_b1 gt0_b2 norm_x_ub norm_yv_ub.
+
+rewrite inf_normv_ler in norm_yv_ub; first smt().
+
+rewrite inf_normv_ler; first smt().
+
+move => i rg_i.
+
+rewrite size_scalarv in rg_i.
+
+rewrite get_scalarv.
+
+by apply l1_cnorm_product_ub => // /#.
+
+qed.
+
+lemma ge0_inf_normv v :
+  0 <= inf_normv v.
+
+proof.
+
+rewrite /inf_normv /(\o) /inf_norm.
+
+apply ler_ofint_ofnat => //.
+
+exact le0n.
+
+qed.
+
+lemma inf_normv_zero dim :
+  inf_normv (zerov dim) = 0.
+
+proof.
+
+suff: inf_normv (zerov dim) <= 0 by smt(ge0_inf_normv).
+
+apply inf_normv_ler => //.
+
+move => i rg_i.
+
+rewrite get_zerov.
+
+by rewrite cnorm0 //.
+
+qed.
+
+import StdOrder.IntOrder.
+
+lemma size_base2shiftV t1 :
+    size (base2shiftV t1) = size t1.
+
+proof.
+
+by rewrite size_oflist size_map.
+
+qed.
+
+lemma size_base2highbitsV t :
+    size (base2highbitsV t) = size t.
+
+proof.
+
+by rewrite size_map size_tolist.
+
+qed.
+
+lemma size_base2lowbitsV t :
+    size (base2lowbitsV t) = size t.
+
+proof.
+
+by rewrite size_mapv.
+
+qed.
+
+lemma size_useHintV h r :
+  size (useHintV h r) = min (size h) (size r).
+
+proof.
+
+by rewrite size_map size_zip size_tolist.
+
+qed.
+
+lemma size_makeHintV z r :
+  size (makeHintV z r) = min (size z) (size r).
+
+proof.
+
+by rewrite size_map size_zip !size_tolist.
+
+qed.
+
+lemma usehint_correctV (z r : vector) :
+  size z = size r =>
+  inf_normv z <= alpha %/ 2 =>
+  let h = makeHintV z r in
+    useHintV h r = highBitsV (r + z).
+
+proof.
+
+move => ?? /=.
+
+apply (eq_from_nth witness) => [|i [ge0_i ub_i]].
+
+- rewrite size_useHintV size_highBitsV size_makeHintV size_addv /#.
+
+have {ub_i} ub_i : i < size z by smt(size_useHintV).
+
+rewrite (nth_map (witness, witness)).
+
+- by rewrite size_zip size_makeHintV size_tolist /#.
+
+rewrite (nth_map witness).
+
+- by rewrite size_tolist size_addv /#.
+
+rewrite nth_zip.
+
+- by rewrite size_makeHintV size_tolist /#.
+
+rewrite (nth_map (witness, witness)).
+
+- by rewrite size_zip !size_tolist /#.
+
+rewrite nth_zip; first smt(size_tolist).
+
+rewrite /uncurry /=.
+
+rewrite nth_tolist //.
+
+rewrite nth_tolist => [/#|].
+
+rewrite nth_tolist; first smt(size_addv).
+
+rewrite get_addv.
+
+rewrite usehint_correct //.
+
+apply inf_normv_ler => //.
+
+smt(ge2_alpha).
+
+qed.
+
+lemma b2high_lowPv (t : vector) :
+  base2shiftV (base2highbitsV t) + base2lowbitsV t = t.
+
+proof.
+
+apply/eq_vectorP.
+
+rewrite size_addv size_base2shiftV size_base2highbitsV size_base2lowbitsV.
+
+split => // i Hi; rewrite get_addv get_mapv 1:/#.
+
+rewrite (get_oflist witness); 1: smt(size_map size_base2highbitsV).
+
+rewrite (nth_map witness); 1: smt(size_base2highbitsV).
+
+rewrite (nth_map witness); 1: smt(size_tolist).
+
+by rewrite nth_tolist 1:/# base2high_low.
+
+qed.
+
+lemma b2low_bound t : inf_normv (base2lowbitsV t) <= 2 ^ (d - 1).
+
+proof.
+
+rewrite inf_normv_ler ?expr_ge0 // => i; rewrite size_base2lowbitsV => Hi.
+
+by rewrite !get_mapv // base2low_bound.
+
+qed.
+
+lemma supp_dRq_vect v o k : 0 <= k => 0 <= o =>
+  v \in dvector (dRq_ o) k <=> size v = k /\ inf_normv v <= o.
+
+proof.
+
+move => k_ge0 o_ge0; rewrite supp_dvector // inf_normv_ler //.
+
+by split => />; smt(supp_dRq).
+
+qed.
+
+lemma dRq_zerov o k : 0 <= k => 0 <= o =>
+  zerov k \in dvector (dRq_ o) k.
+
+proof.
+
+by move => k_ge0 o_ge0; rewrite supp_dRq_vect // size_zerov inf_normv_zero /#.
+
+qed.
+
+lemma finite_dRq_vect o k : 0 <= k => 0 <= o =>
+  is_finite (support (dvector (dRq_ o) k)).
+
+proof.
+
+move => k_ge0 o_ge0.
+
+have := is_finite_vector (support (dRq_ o)) k _.
+
+- apply (finite_leq predT) => //; exact: is_finite_Rq.
+
+by apply finite_leq => v; rewrite supp_dvector.
+
+qed.
+
+lemma gt0_dRq_vect o k : 0 <= k => 0 <= o =>
+  0 < size (to_seq (support (dvector (dRq_ o) k))).
+
+proof.
+
+move => k_ge0 o_ge0.
+
+suff: zerov k \in (to_seq (support (dvector (dRq_ o) k))).
+
+smt(size_eq0 List.size_ge0).
+
+rewrite mem_to_seq; [exact finite_dRq_vect|exact: dRq_zerov].
+
+qed.

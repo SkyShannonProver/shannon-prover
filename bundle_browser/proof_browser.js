@@ -40,7 +40,8 @@
     function evidence(items) {
       return '<details class="sb-trace"><summary>Read ' + items.length + ' trace excerpts</summary>' + items.map(e =>
         '<figure><figcaption><span class="pill ' + (e.kind === 'agent_message' ? 'p-purp' : 'p-info') + '">' +
-        esc(e.kind === 'agent_message' ? 'Outer agent · public message' : 'Recorded check · selected result fields') +
+        esc(e.kind === 'agent_message' ? 'Outer agent · public message' :
+          e.kind === 'agent_action' ? 'Outer agent · command / handoff excerpt' : 'Recorded check · selected result fields') +
         '</span><span>JSONL L' + esc(e.line) + ' · ' + esc(e.item) + '</span></figcaption>' +
         (e.kind === 'agent_message' ? '<blockquote>' + esc(e.text) + '</blockquote>' : '<pre>' + esc(e.text) + '</pre>') +
         '</figure>').join('') + '</details>';

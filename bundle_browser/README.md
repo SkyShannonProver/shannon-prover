@@ -22,7 +22,9 @@ benchmark** first (model results and run links), followed by **end-to-end case
 studies**. Case studies have a separate **proof library** for
 curated whole-development case studies. It lists files and their lemmas, shows
 each declaration and complete proof separately, links unambiguous earlier
-lemma names within a file, and provides original source downloads. Hash routes
+lemma names within a file, and provides original source downloads. The index
+also covers named `equiv` declarations, which carry several game-hop proofs;
+existing lemmas retain their file-and-line identifiers. Hash routes
 retain the case, file, lemma and section, so refresh and browser back work.
 The lexical outline and source-name links are navigation aids, **not** an
 EasyCrypt parser, a semantic dependency graph or a proof-success verifier.
@@ -46,7 +48,7 @@ packs are therefore not silently treated as ordinary lemma bundles.
 An interleaved trace may contain inner node artifacts, but those nodes alone do
 not show who invented the decomposition, what work overlapped, how a partial
 prefix returned to the outer agent, or what established final success. See
-[`../docs/ARCHITECTURE.md`](../docs/ARCHITECTURE.md) for the layer boundary.
+[the runtime architecture](https://github.com/SkyShannonProver/shannon-prover/blob/main/docs/ARCHITECTURE.md) for the layer boundary.
 
 ## Preview the complete public website
 
@@ -87,7 +89,7 @@ explicit opt-in; it continues to include only public-tier single-node bundles.
 Default builds use only the reviewed catalog in `bundle_browser/case_studies/`.
 Its publication marker, source hashes and explicit input list are checked.
 The `--case-studies` override requires `--local-preview`; it never changes the
-catalog used by Pages. The reviewed release contains ML-KEM, ChaChaPoly and
+catalog used by Pages. The reviewed release contains ML-KEM, Dilithium, ChaChaPoly and
 the separately labeled historical MEE-CBC case.
 Never deploy a local-review output. Keep unreviewed catalogs and their sources
 under ignored `artifacts/`, not in the publicly labeled `bundle_browser/` tree.
@@ -106,6 +108,9 @@ Its `schema_version: 1` story contains `title`, `deck`, `stats`, `provenance`,
 `orderNote`, `stages` and `jobs`. Each stage includes `paragraphs`, `work`,
 explicit `{file, lemma}` references and evidence excerpts (`kind`, original
 JSONL `line`, `item`, `text`). Job tables separate `merged` from `other` records.
+Excerpts distinguish public messages (`agent_message`), verbatim slices of
+outer commands or handoff drafts (`agent_action`), and recorded tool results
+(`check`). Draft statements and intermediate checks are not final certification.
 The packager validates the references against the final source index and
 inlines the story as `processStory`; it does not copy the input path or raw
 traces. Simple cases may retain the existing `[title, description]` process
@@ -121,7 +126,11 @@ The builder validates structure and navigation, not the truth of the narrative.
 The reviewed case directory contains only the selected final sources and
 curated process text; raw run directories and reviewer packs are not shipped.
 
-Run the browser-specific checks from the private checkout:
+The private website-only branch has no compiler dependency. Never merge or
+rebase compiler/main into it. Its release is selected by exact website snapshot;
+see RELEASING.md in the private checkout.
+
+Run the browser-specific checks from the private website checkout:
 
 ```bash
 python3 -m pytest -q bundle_browser/tests/test_proof_library.py

@@ -1,0 +1,268 @@
+require import AllCore IntDiv Distr.
+
+require Subtype_EC2023.
+
+require import Supplementary.
+
+import Finite.
+
+op q : {int | prime q} as prime_q.
+
+op n : {int | 0 < n} as gt0_n.
+
+type Rq.
+
+clone import Ring.ComRing as RqRing with type t <= Rq.
+
+op cnorm : Rq -> int.
+
+op l1_norm : Rq -> int.
+
+axiom cnorm0 : cnorm zeror = 0.
+
+axiom cnorm_triangle (x y : Rq) : cnorm (x + y) <= cnorm x + cnorm y.
+
+axiom l1_cnorm_product_ub (x y : Rq) (b1 b2 : int) :
+  0 < b1 =>
+  0 < b2 =>
+  l1_norm x <= b1 =>
+  cnorm y <= b2 =>
+  cnorm (x * y) <= b1 * b2.
+
+op [lossless full uniform] dRq : Rq distr.
+
+lemma is_finite_Rq : is_finite predT<:Rq>.
+
+proof.
+
+have ->: predT = support dRq by smt(dRq_fu).
+
+exact/uniform_finite/dRq_uni.
+
+qed.
+
+op [lossless uniform] dRq_ : int -> Rq distr.
+
+axiom supp_dRq x a : 0 <= a => x \in dRq_ a <=> cnorm x <= a.
+
+op dRq_open i = dRq_ (i - 1).
+
+op [uniform] dC : int -> Rq distr.
+
+axiom dC_ll a : 0 <= a <= n => is_lossless (dC a).
+
+axiom supp_dC c a : c \in dC a <=> cnorm c <= 1 /\ l1_norm c = a.
+
+axiom cnorm_ge0 (r : Rq) : 0 <= cnorm r.
+
+axiom cnormN (r : Rq) : cnorm (-r) = cnorm r.
+
+type hint_t.
+
+theory Flex.
+
+type high, high2.
+
+op lowBits : int -> Rq -> Rq.
+
+op highBits : int -> Rq -> high.
+
+op shift    : int -> high ->  Rq.
+
+op makeHint : int -> Rq -> Rq -> hint_t.
+
+op useHint : int -> hint_t -> Rq -> high.
+
+op power2round : int -> Rq -> high2.
+
+op shift2 : int -> high2 -> Rq.
+
+axiom high_lowP alpha x :
+  2 <= alpha && alpha <= q %/ 2 =>
+  2 %| alpha =>
+  alpha %| (q - 1) =>
+  shift alpha (highBits alpha x) + lowBits alpha x = x.
+
+axiom hide_low alpha r s b :
+  2 <= alpha && alpha <= q %/ 2 =>
+  2 %| alpha =>
+  alpha %| (q - 1) =>
+  cnorm s <= b => cnorm (lowBits alpha r) < alpha %/ 2 - b =>
+  highBits alpha (r + s) = highBits alpha r.
+
+axiom lowbit_small alpha r :
+  2 <= alpha && alpha <= q %/ 2 =>
+  cnorm (lowBits alpha r) <= alpha %/ 2.
+
+axiom shift_inj alpha :
+  2 <= alpha && alpha <= q %/ 2 =>
+  2 %| alpha =>
+  alpha %| (q - 1) =>
+  injective_in (image (highBits alpha)) (shift alpha).
+
+axiom usehint_correct alpha (z r : Rq) :
+  2 <= alpha <= q %/ 2 =>
+  2 %| alpha =>
+  alpha %| (q - 1) =>
+  cnorm z <= alpha %/ 2 =>
+  let h = makeHint alpha z r in
+    useHint alpha h r = highBits alpha (r + z).
+
+axiom usehint_insub alpha h r :
+  2 <= alpha <= q %/ 2 =>
+  2 %| alpha =>
+  alpha %| (q - 1) =>
+  image (highBits alpha) (Flex.useHint alpha h r).
+
+axiom hide_low2 alpha (r : Rq) (h : hint_t) :
+  2 <= alpha <= q %/ 2 =>
+  2 %| alpha =>
+  alpha %| (q - 1) =>
+  cnorm (r - shift alpha (useHint alpha h r)) <= alpha + 1.
+
+axiom power2round_bound d (r : Rq) :
+  1 <= d =>
+  2 ^ d < q =>
+  cnorm (r - shift2 d (power2round d r)) <= 2^(d-1).
+
+end Flex.
+
+abstract theory HighLow.
+
+op alpha : int.
+
+op d : int.
+
+axiom d_bound : 1 <= d /\ 2^d < q.
+
+axiom ge2_alpha : 2 <= alpha.
+
+axiom alpha_halfq_le : alpha <= q %/ 2.
+
+axiom even_alpha : 2 %| alpha.
+
+axiom alpha_almost_divides_q : alpha %| (q - 1).
+
+lemma rg_alpha : 2 <= alpha <= q %/ 2 by smt(ge2_alpha alpha_halfq_le).
+
+clone import Subtype_EC2023 as S with
+  type T <- Flex.high,
+  pred P <- image (Flex.highBits alpha).
+
+type high = sT.
+
+op highBits (r : Rq) = insubd (Flex.highBits alpha r).
+
+op lowBits (r : Rq) = Flex.lowBits alpha r.
+
+op shift (h : high) = Flex.shift alpha (val h).
+
+op makeHint (r z : Rq) = Flex.makeHint alpha r z.
+
+op useHint (h : hint_t) (r : Rq) : high = insubd (Flex.useHint alpha h r).
+
+lemma high_lowP x : shift (highBits x) + lowBits x = x.
+
+proof.
+
+rewrite /shift /highBits /lowBits insubdK 1:/# Flex.high_lowP //.
+
+- exact rg_alpha.
+
+- exact even_alpha.
+
+- exact alpha_almost_divides_q.
+
+qed.
+
+lemma hide_low r s b :
+  cnorm s <= b => cnorm (lowBits r) < alpha %/ 2 - b =>
+  highBits (r + s) = highBits r.
+
+proof.
+
+move => *; rewrite /highBits (Flex.hide_low alpha r s b) //.
+
+- exact rg_alpha.
+
+- exact even_alpha.
+
+- exact alpha_almost_divides_q.
+
+qed.
+
+lemma lowbit_small r :
+  cnorm (lowBits r) <= alpha %/ 2.
+
+proof.
+
+by rewrite /lowsBits (Flex.lowbit_small) rg_alpha.
+
+qed.
+
+lemma shift_inj : injective shift.
+
+proof.
+
+move => x y ?.
+
+suff : injective_in (image ((Flex.highBits alpha))) ((Flex.shift alpha)).
+
+- smt(val_inj valP).
+
+apply Flex.shift_inj.
+
+- exact rg_alpha.
+
+- exact even_alpha.
+
+- exact alpha_almost_divides_q.
+
+qed.
+
+lemma usehint_correct (z r : Rq) :
+  cnorm z <= alpha %/ 2 =>
+  let h = makeHint z r in
+    useHint h r = highBits (r + z).
+
+proof.
+
+smt(Flex.usehint_correct rg_alpha even_alpha alpha_almost_divides_q).
+
+qed.
+
+lemma hide_low2 (r : Rq) (h : hint_t) :
+  cnorm (r - shift (useHint h r)) <= alpha + 1.
+
+proof.
+
+smt(Flex.hide_low2 rg_alpha even_alpha alpha_almost_divides_q insubdK Flex.usehint_insub).
+
+qed.
+
+type high2 = Flex.high2.
+
+op base2highbits (z : Rq) = Flex.power2round d z.
+
+op base2shift (z0 : high2) = Flex.shift2 d z0.
+
+op base2lowbits (z : Rq) = z - base2shift (base2highbits z).
+
+lemma base2low_bound z : cnorm (base2lowbits z) <= 2^(d-1).
+
+proof.
+
+apply Flex.power2round_bound; smt(d_bound).
+
+qed.
+
+lemma base2high_low (z : Rq) :
+  base2shift (base2highbits z) + base2lowbits z = z.
+
+proof.
+
+smt(addrC addrA subrr addr0).
+
+qed.
+
+end HighLow.

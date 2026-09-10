@@ -1,0 +1,2043 @@
+require import AllCore List IntDiv.
+
+require import PolyReduce.
+
+require ZModFieldExtras.
+
+import StdOrder IntOrder.
+
+require import Nat.
+
+require import Supplementary.
+
+op q : {int | prime q} as prime_q.
+
+clone import ZModFieldExtras as ZModQ with
+  op p <= q
+proof prime_p by exact prime_q.
+
+lemma modzNDmr m n d :
+  (m - n %% d) %% d = (m - n) %% d.
+
+proof.
+
+smt(modzNm modzDmr).
+
+qed.
+
+lemma positive_multiples_lower_bound d x :
+  0 < x =>
+  0 < d =>
+  d %| x =>
+  d <= x.
+
+proof.
+
+smt(dvdz_eq).
+
+qed.
+
+op lowbits alpha r =
+  if q - alpha %/ 2 <= asint r then r else
+  inzmod (cmod (asint r) alpha).
+
+op round alpha r = r - lowbits alpha r.
+
+op rightshift alpha r = asint r %/ alpha.
+
+op leftshift alpha (r1 : int) = inzmod (r1 * alpha).
+
+op highbits alpha r = rightshift alpha (round alpha r).
+
+lemma round_is_multiple alpha r :
+  2 <= alpha <= q %/ 2 =>
+  alpha %| asint (round alpha r).
+
+proof.
+
+move => ?.
+
+rewrite /round /lowbits /=.
+
+case (q - alpha %/ 2 <= asint r) => ? /=.
+
+- by rewrite ZModpRing.subrr zeroE; exact (mod0z alpha).
+
+rewrite /cmod /mod_to_cmod /=.
+
+case (asint r %% alpha <= alpha %/ 2) => ?.
+
+- rewrite addE oppE inzmodK modzDmr.
+
+have ->: (asint r %% alpha %% q = asint r %% alpha) by smt().
+
+rewrite pmod_small; smt(ge0_asint).
+
+- rewrite addE oppE inzmodK modzDmr modzNDmr.
+
+rewrite pmod_small; first by smt(ge0_asint).
+
+by rewrite {1} (divz_eq (asint r) alpha) => /#.
+
+qed.
+
+lemma round_upper_bound alpha x :
+  2 <= alpha <= q %/ 2 =>
+  2 %| alpha =>
+  alpha %| (q - 1) =>
+  asint (round alpha x) <= q - alpha - 1.
+
+proof.
+
+move => *.
+
+suff: asint (round alpha x) < q - 1 by smt(divzK modzDr round_is_multiple).
+
+suff: asint (round alpha x) <> q - 1 by smt(rg_asint).
+
+rewrite /round /lowbits /=.
+
+case (q - alpha %/ 2 <= asint x) => ?.
+
+-
+  have ->: x - x = ZModQ.zero by field.
+
+by rewrite zeroE => /#.
+
+rewrite addE oppE inzmodK.
+
+rewrite modzDmr modzNDmr.
+
+by rewrite modz_small; smt(rg_asint cmod_lower_bound).
+
+qed.
+
+lemma rg_round alpha x :
+  2 <= alpha <= q %/ 2 =>
+  2 %| alpha =>
+  alpha %| (q - 1) =>
+  0 <= asint (round alpha x) <= q - alpha - 1.
+
+proof.
+
+smt(round_upper_bound rg_asint).
+
+qed.
+
+lemma highbits_lower_bound alpha y :
+  2 <= alpha =>
+  image (highbits alpha) y => 0 <= y.
+
+proof.
+
+smt(rg_asint).
+
+qed.
+
+lemma highbits_upper_bound alpha y :
+  2 <= alpha <= q %/ 2 =>
+  2 %| alpha =>
+  alpha %| (q - 1) =>
+  image (highbits alpha) y => y <= (q - alpha - 1) %/ alpha.
+
+proof.
+
+move => ??? [x H]; rewrite -H.
+
+rewrite /highbits /rightshift.
+
+suff: asint ((round alpha) x) <= (q - alpha - 1) by smt().
+
+exact round_upper_bound.
+
+qed.
+
+lemma rg_highbits alpha y :
+  2 <= alpha <= q %/ 2 =>
+  2 %| alpha =>
+  alpha %| (q - 1) =>
+  image (highbits alpha) y =>
+  0 <= y <= (q - alpha - 1) %/ alpha.
+
+proof.
+
+smt(highbits_lower_bound highbits_upper_bound).
+
+qed.
+
+lemma leftshift_injective alpha (x y : int) :
+  2 <= alpha <= q %/ 2 =>
+  2 %| alpha =>
+  alpha %| (q - 1) =>
+  image (highbits alpha) x =>
+  image (highbits alpha) y =>
+  leftshift alpha x = leftshift alpha y =>
+  x = y.
+
+proof.
+
+move => ????? H.
+
+rewrite /leftshift in H.
+
+have H': asint (inzmod (x * alpha)) = asint (inzmod (y * alpha)) by smt().
+
+rewrite inzmodK modz_small in H'.
+
+- split => [|?]; first by smt(rg_highbits).
+
+apply (ler_lt_trans ((q - alpha - 1) %/ alpha * alpha)); smt(rg_highbits).
+
+rewrite inzmodK modz_small in H'; last by smt().
+
+split => [|?]; first by smt(rg_highbits).
+
+by apply (ler_lt_trans ((q - alpha - 1) %/ alpha * alpha)); smt(rg_highbits).
+
+qed.
+
+lemma leftshift_rightshiftK alpha r :
+  image (round alpha) r =>
+  alpha %| asint r =>
+  leftshift alpha (rightshift alpha r) = r.
+
+proof.
+
+move => ??.
+
+suff: asint r %/ alpha * alpha = asint r by smt(asintK).
+
+by rewrite {2} (divz_eq (asint r) alpha) /#.
+
+qed.
+
+lemma round_lowP alpha r :
+  r = round alpha r + lowbits alpha r.
+
+proof.
+
+rewrite /round; by field.
+
+qed.
+
+lemma high_lowP alpha r :
+  2 <= alpha <= q %/ 2 =>
+  2 %| alpha =>
+  alpha %| (q - 1) =>
+  r = leftshift alpha (highbits alpha r) + lowbits alpha r.
+
+proof.
+
+move => *.
+
+rewrite leftshift_rightshiftK.
+
+- by exists r.
+
+- exact round_is_multiple.
+
+- exact round_lowP.
+
+qed.
+
+lemma lowbits_small alpha x :
+  2 <= alpha <= q %/ 2 =>
+  `|lowbits alpha x| <= alpha %/ 2.
+
+proof.
+
+move => ?.
+
+rewrite /lowbits /=.
+
+case (q - alpha %/ 2 <= asint x) => ?; first smt(gtp_asint).
+
+by rewrite abs_zp_small; smt(cmod_small).
+
+qed.
+
+lemma lowbits_id alpha (x : zmod) :
+  2 <= alpha <= q %/ 2 =>
+  `|x| <= alpha %/ 2 =>
+  lowbits alpha x = x.
+
+proof.
+
+move => *; rewrite /lowbits.
+
+case (q - alpha %/ 2 <= asint x) => [|?]; first by trivial.
+
+apply crepr_eq.
+
+rewrite inzmodK_centered; smt(rg_asint).
+
+qed.
+
+lemma lowbits_unique_aux alpha (x r x0 : zmod) :
+  2 <= alpha <= q %/ 2 =>
+  asint x < q - alpha %/ 2 =>
+  x = r + x0 =>
+  alpha %| asint r =>
+  asint r <= q - alpha - 1 =>
+  - alpha %/ 2 < crepr x0 =>
+  crepr x0 <= alpha %/ 2 =>
+  lowbits alpha x = x0.
+
+proof.
+
+move => *; rewrite /lowbits.
+
+have -> /=: q - alpha %/ 2 <= asint x = false by smt().
+
+apply crepr_eq.
+
+rewrite inzmodK_centered; 1, 2: smt(rg_asint).
+
+apply eq_sym.
+
+apply euclideUl_centered => //; first by smt().
+
+suff: asint x - crepr x0 = asint r by smt().
+
+subst.
+
+rewrite addE.
+
+have ->: asint x0 = crepr x0 %% q by exact asint_crepr.
+
+rewrite modzDmr.
+
+rewrite modz_small; last by ring.
+
+split; last by smt().
+
+case (r = ZModQ.zero) => ?; first by smt(rg_asint ZModpRing.add0r).
+
+suff: alpha <= asint r by smt().
+
+apply positive_multiples_lower_bound => //; last by smt().
+
+smt(rg_asint asint_eq zeroE).
+
+qed.
+
+lemma lowbits_unique alpha (x r x0 : zmod) :
+  2 <= alpha <= q %/ 2 =>
+  x = r + x0 =>
+  alpha %| asint r =>
+  asint r <= q - alpha - 1 =>
+  (- alpha %/ 2 < crepr x0 \/ (crepr x0 = -alpha %/ 2 /\ r = ZModQ.zero))=>
+  crepr x0 <= alpha %/ 2 =>
+  lowbits alpha x = x0.
+
+proof.
+
+move => *.
+
+case (asint x < q - alpha %/ 2) => ?.
+
+- apply (lowbits_unique_aux alpha x r x0) => //.
+
+smt(rg_asint ZModpRing.add0r).
+
+rewrite /lowbits.
+
+have -> /=: q - alpha %/ 2 <= asint x = true by smt().
+
+suff: r = ZModQ.zero by smt(ZModpRing.add0r).
+
+apply contraT => ne0_r.
+
+have ?: alpha <= asint r.
+
+- apply positive_multiples_lower_bound; smt(rg_asint asint_eq zeroE).
+
+suff: asint x = asint r + crepr x0 by smt().
+
+subst.
+
+rewrite addE.
+
+have ->: asint x0 = crepr x0 %% q by exact asint_crepr.
+
+by rewrite modzDmr modz_small => /#.
+
+qed.
+
+lemma round_unique alpha (x r x0 : zmod) :
+  2 <= alpha <= q %/ 2 =>
+  x = r + x0 =>
+  alpha %| asint r =>
+  asint r <= q - alpha - 1 =>
+  (- alpha %/ 2 < crepr x0 \/ (crepr x0 = -alpha %/ 2 /\ r = ZModQ.zero))=>
+  crepr x0 <= alpha %/ 2 =>
+  round alpha x = r.
+
+proof.
+
+move => *.
+
+rewrite /round.
+
+suff: lowbits alpha x = x - r.
+
+- move => H; rewrite H; by field.
+
+apply (lowbits_unique alpha x r (x - r)) => //.
+
+- by field.
+
+- suff: x - r = x0 by trivial.
+
+subst; by field.
+
+- subst.
+
+by have -> //: r + x0 - r = x0 by field.
+
+qed.
+
+lemma hide_low alpha (x y : zmod) b1 b2 :
+  2 <= alpha <= q %/ 2 =>
+  2 %| alpha =>
+  alpha %| (q - 1) =>
+  `|lowbits alpha x| <= b1 =>
+  `|y| <= b2 =>
+  b1 + b2 < alpha %/ 2 =>
+  highbits alpha (x + y) = highbits alpha x.
+
+proof.
+
+move => *.
+
+rewrite /highbits; congr.
+
+rewrite (round_unique alpha (x + y) (round alpha x) (lowbits alpha x + lowbits alpha y)) //.
+
+- rewrite {1} (round_lowP alpha).
+
+have {1} ->: y = lowbits alpha y by smt(lowbits_id).
+
+by field.
+
+- exact round_is_multiple.
+
+- exact round_upper_bound.
+
+- by left; smt(lowbits_id abs_zp_triangle).
+
+- smt(lowbits_id abs_zp_triangle).
+
+qed.
+
+op makehint alpha z r =
+  let r1 = highbits alpha r in
+  let v1 = highbits alpha (r + z) in
+  r1 <> v1.
+
+op usehint alpha h r =
+  let r1 = highbits alpha r in
+  let r0 = lowbits alpha r in
+  if h then
+    if 0 < crepr r0 then
+      if r1 = (q - alpha - 1) %/ alpha then 0 else r1 + 1
+    else
+      if r1 = 0 then (q - alpha - 1) %/ alpha else r1 - 1
+  else r1.
+
+lemma crepr0 : crepr ZModQ.zero = 0.
+
+proof.
+
+rewrite /crepr zeroE /=.
+
+smt(ge2_p).
+
+qed.
+
+lemma im_round alpha x :
+  2 <= alpha <= q %/ 2 =>
+  2 %| alpha =>
+  alpha %| (q - 1) =>
+  image (round alpha) x <=>
+  0 <= asint x <= (q - alpha - 1) /\ alpha %| asint x.
+
+proof.
+
+move => *.
+
+split => [|?].
+
+- smt(rg_round round_is_multiple).
+
+exists x.
+
+by apply (round_unique alpha x x ZModQ.zero); smt(ZModpRing.addr0 crepr0).
+
+qed.
+
+lemma im_highbits alpha x :
+  2 <= alpha <= q %/ 2 =>
+  2 %| alpha =>
+  alpha %| (q - 1) =>
+  image (highbits alpha) x <=>
+  0 <= x <= (q - alpha - 1) %/ alpha.
+
+proof.
+
+move => *.
+
+rewrite /highbits /rightshift /=.
+
+have ?: alpha %| (q - alpha - 1).
+
+- rewrite /( %| ).
+
+have ->: (q - alpha - 1) = ((q - 1) + (-1) * alpha) by ring.
+
+by rewrite modzMDr.
+
+split => H.
+
+- case H => y ?.
+
+subst.
+
+suff: 0 <= asint (round alpha y) <= q - alpha - 1 by smt().
+
+have ?: image (round alpha) (round alpha y) by exists y.
+
+smt(im_round).
+
+have ?: alpha * x <= q - alpha - 1 by smt().
+
+have [y ?]: image (round alpha) (inzmod (x * alpha)).
+
+- apply im_round => //.
+
+smt(inzmodK modz_small).
+
+exists y.
+
+suff: asint (round alpha y) = x * alpha by smt(round_is_multiple).
+
+smt(inzmodK modz_small).
+
+qed.
+
+lemma usehint_im alpha h r :
+  2 <= alpha <= q %/ 2 =>
+  2 %| alpha =>
+  alpha %| (q - 1) =>
+  image (highbits alpha) (usehint alpha h r).
+
+proof.
+
+move => *.
+
+rewrite im_highbits //.
+
+have ?: image (highbits alpha) (highbits alpha r) by exists r.
+
+smt(rg_highbits).
+
+qed.
+
+lemma eq_divz d x y :
+  d %| x =>
+  d %| y =>
+  x %/ d = y %/ d =>
+  x = y.
+
+proof.
+
+smt(divzK).
+
+qed.
+
+lemma round_perturb alpha (z r : zmod) :
+  2 <= alpha <= q %/ 2 =>
+  2 %| alpha =>
+  alpha %| (q - 1) =>
+  `|z| <= alpha %/ 2 =>
+  round alpha r <> round alpha (r + z) =>
+  !(-alpha %/ 2 < crepr (lowbits alpha r + z) <= alpha %/ 2 \/
+    round alpha r = ZModQ.zero /\ crepr (lowbits alpha r + z) = - alpha %/ 2).
+
+proof.
+
+move => rg_alpha ??? round_ne.
+
+suff: (-alpha %/ 2 < crepr (lowbits alpha r + z) <= alpha %/ 2 \/
+       round alpha r = ZModQ.zero /\ crepr (lowbits alpha r + z) = - alpha %/ 2) => false by auto.
+
+move => ?.
+
+suff: round alpha (r + z) = round alpha r by smt().
+
+clear round_ne.
+
+apply (round_unique alpha (r + z) _ (lowbits alpha r + z)) => //.
+
++ rewrite {1}(round_lowP alpha).
+
+by field.
+
++ by apply round_is_multiple => /#.
+
++ smt(rg_round).
+
++ smt().
+
++ smt().
+
+qed.
+
+lemma round_perturb_up alpha (z r : zmod) :
+  2 <= alpha <= q %/ 2 =>
+  2 %| alpha =>
+  alpha %| (q - 1) =>
+  `|z| <= alpha %/ 2 =>
+  0 < crepr (lowbits alpha r) =>
+  round alpha r <> round alpha (r + z) =>
+  alpha %/ 2 < crepr (lowbits alpha r + z).
+
+proof.
+
+move => rg_alpha ???? round_ne.
+
+suff: - alpha %/ 2 < crepr (lowbits alpha r + z) by smt(round_perturb).
+
+rewrite creprD.
+
+rewrite to_crepr_id; last smt(lowbits_small ge2_p).
+
+split => [|_]; first smt(lowbits_small ge2_p).
+
+suff: (crepr (lowbits alpha r) + crepr z) <= q %/ 2 by smt().
+
+smt(lowbits_small ge2_p).
+
+qed.
+
+lemma hints_up_corner alpha (z r : zmod) :
+  2 <= alpha <= q %/ 2 =>
+  2 %| alpha =>
+  alpha %| (q - 1) =>
+  `|z| <= alpha %/ 2 =>
+  0 < crepr (lowbits alpha r) =>
+  highbits alpha r <> highbits alpha (r + z) =>
+  highbits alpha r = (q - alpha - 1) %/ alpha =>
+  highbits alpha (r + z) = 0.
+
+proof.
+
+rewrite /highbits /rightshift => rg_alpha ???? high_ne is_corner.
+
+case rg_alpha => [ge2_alpha ub_alpha].
+
+have {high_ne} round_ne: round alpha r <> round alpha (r + z).
+
+- smt(eq_divz round_is_multiple asintK).
+
+have {is_corner} is_corner: asint (round alpha r) = q - alpha - 1.
+
+- apply (eq_divz alpha) => //.
+
++ by apply round_is_multiple => /#.
+
+have ->: q - alpha - 1 = q - 1 + (-1) * alpha by ring.
+
+by rewrite /( %| ) (modzMDr (-1) (q - 1) alpha).
+
+suff: asint (round alpha (r + z)) = 0.
+
+- smt(rg_round round_is_multiple).
+
+case (alpha = q %/ 2) => [?|alpha_ne_half_q].
+
+- suff: forall x, asint (round alpha x) = 0 \/ asint (round alpha x) = alpha by smt(asintK).
+
+smt(rg_round round_is_multiple).
+
+have {ub_alpha} {alpha_ne_half_q} ub_alpha : alpha < q %/ 2 by smt().
+
+suff: round alpha (r + z) = ZModQ.zero.
+
+- smt(asintK zeroE).
+
+case (alpha = q %/ 2) => ?.
+
+- suff: forall x, round alpha x = ZModQ.zero \/ round alpha x = inzmod alpha by smt(zeroE).
+
+move => x.
+
+suff: asint (round alpha x) = 0 \/ asint (round alpha x) = alpha by smt(asintK).
+
+smt(rg_round round_is_multiple).
+
+have ?: `|r + z| <= alpha %/ 2.
+
+- have ?: alpha %/ 2 < crepr (lowbits alpha r + z) by smt(round_perturb_up).
+
+rewrite (round_lowP alpha r) -ZModpRing.addrA /"`|_|" creprD.
+
+have ->: round alpha r = inzmod (q - alpha - 1) by smt(asintK).
+
+have ->: inzmod (q - alpha - 1) = inzmod (- alpha - 1).
+
++ rewrite -eq_inzmod.
+
+have ->: q - alpha - 1 = - alpha - 1 + 1 * q by ring.
+
+by rewrite modzMDr.
+
+rewrite inzmodK_centered; 1, 2: smt().
+
+rewrite to_crepr_id.
+
++ split => [|_]; first smt().
+
+rewrite creprD.
+
+by rewrite to_crepr_id; smt(lowbits_small ge2_p).
+
+suff: (-alpha) - 1 + crepr (lowbits alpha r + z) <= alpha %/ 2 by smt().
+
+rewrite creprD.
+
+rewrite to_crepr_id; last smt(lowbits_small).
+
++ split => [|_]; first smt(lowbits_small ge2_p).
+
+suff: (crepr (lowbits alpha r) + crepr z) <= q %/ 2 by smt().
+
+smt(lowbits_small ge2_p).
+
+apply (round_unique alpha (r + z) ZModQ.zero (r + z)) => //.
+
+- smt().
+
+- by rewrite ZModule.add0r.
+
+- by rewrite zeroE.
+
+- by rewrite zeroE /#.
+
+- smt().
+
+- smt().
+
+qed.
+
+lemma hints_up alpha (z r : zmod) :
+  2 <= alpha <= q %/ 2 =>
+  2 %| alpha =>
+  alpha %| (q - 1) =>
+  `|z| <= alpha %/ 2 =>
+  0 < crepr (lowbits alpha r) =>
+  highbits alpha r <> highbits alpha (r + z) =>
+  highbits alpha r <> (q - alpha - 1) %/ alpha =>
+  highbits alpha (r + z) = highbits alpha r + 1.
+
+proof.
+
+rewrite /highbits /rightshift => rg_alpha ???? high_ne not_corner.
+
+have {not_corner} not_corner: asint (round alpha r) < (q - alpha - 1).
+
+- have: alpha %| (q - alpha - 1).
+
++ have ->: q - alpha - 1 = q - 1 + (-1) * alpha by ring.
+
+by rewrite /( %| ) modzMDr.
+
+smt(rg_round round_is_multiple).
+
+suff: asint (round alpha (r + z)) = asint (round alpha r) + alpha.
+
+- by move => -> /#.
+
+suff: round alpha (r + z) = round alpha r + inzmod alpha.
+
+-
+  move => ->.
+
+rewrite addE.
+
+rewrite [asint (inzmod alpha)] inzmodK.
+
+rewrite [alpha %% q] modz_small => [/#|].
+
+smt(modz_small rg_round).
+
+have lowbits_lb : alpha %/ 2 < crepr (lowbits alpha r + z) by smt(round_perturb_up).
+
+case (alpha = q %/ 2) => [?|alpha_ne_half_q].
+
+- suff: forall x, asint (round alpha x) = 0 \/ asint (round alpha x) = alpha by smt(asintK).
+
+smt(rg_round round_is_multiple).
+
+have ?: - alpha %/ 2 < crepr (lowbits alpha r + z - inzmod alpha) /\
+        crepr (lowbits alpha r + z - inzmod alpha) <= alpha %/ 2.
+
+- rewrite creprND.
+
+have ->: crepr (inzmod alpha) = alpha by smt(inzmodK_centered).
+
+suff: crepr (lowbits alpha r + z) = crepr (lowbits alpha r) + crepr z.
+
+- smt(to_crepr_id lowbits_small).
+
+rewrite creprD to_crepr_id //.
+
+smt(lowbits_small).
+
+apply (round_unique alpha (r + z)
+        (round alpha r + inzmod alpha) (lowbits alpha r + z - inzmod alpha)).
+
+- smt().
+
+- rewrite {1} (round_lowP alpha) //.
+
+by ring.
+
+-
+  rewrite /( %| ) addE.
+
+rewrite [asint (inzmod alpha)] inzmodK.
+
+rewrite [alpha %% q] modz_small => [/#|].
+
+rewrite [_ %% q] modz_small; first smt(rg_asint).
+
+have ->: asint (round alpha r) + alpha = asint (round alpha r) + 1 * alpha by ring.
+
+rewrite modzMDr.
+
+exact round_is_multiple.
+
+- rewrite addE.
+
+have ->: asint (inzmod alpha) = alpha by rewrite inzmodK /#.
+
+suff: 0 <= asint (round alpha r) + alpha /\ asint (round alpha r) + alpha <= q - alpha - 1.
+
++ smt(modz_small).
+
+split; first smt(rg_asint).
+
+suff: alpha %| (asint (round alpha r) - (q - 2 * alpha - 1)).
+
++ smt(round_is_multiple).
+
+rewrite /(%|) -modzDm.
+
+have -> /=: asint (round alpha r) %% alpha = 0 by exact round_is_multiple.
+
+rewrite modz_mod.
+
+have ->: (- (q - 2 * alpha - 1)) = (2 * alpha - (q - 1)) by ring.
+
+rewrite -modzDm.
+
+have -> /=: 2 * alpha %% alpha = 0 by smt().
+
+rewrite modz_mod.
+
+have ->: -(q - 1) = 0 + (-(q - 1) %/ alpha) * alpha by smt().
+
+exact modzMDr.
+
+- smt().
+
+- smt().
+
+qed.
+
+lemma round_perturb_down alpha (z r : zmod) :
+  2 <= alpha <= q %/ 2 =>
+  2 %| alpha =>
+  alpha %| (q - 1) =>
+  `|z| <= alpha %/ 2 =>
+  crepr (lowbits alpha r) <= 0 =>
+  round alpha r <> round alpha (r + z) =>
+  crepr (lowbits alpha r + z) <= -alpha %/ 2 /\
+  (round alpha r = ZModQ.zero => crepr (lowbits alpha r + z) < -alpha %/ 2).
+
+proof.
+
+move => rg_alpha ???? round_ne.
+
+suff: crepr (lowbits alpha r + z) <= alpha %/ 2 by  smt(round_perturb).
+
+rewrite creprD.
+
+rewrite to_crepr_id; last smt(lowbits_small ge2_p).
+
+split => [|_]; first smt(lowbits_small ge2_p).
+
+suff: (crepr (lowbits alpha r) + crepr z) <= q %/ 2 by smt().
+
+smt(lowbits_small ge2_p).
+
+qed.
+
+lemma hints_down_corner alpha (z r : zmod) :
+  2 <= alpha <= q %/ 2 =>
+  2 %| alpha =>
+  alpha %| (q - 1) =>
+  `|z| <= alpha %/ 2 =>
+  crepr (lowbits alpha r) <= 0 =>
+  highbits alpha r <> highbits alpha (r + z) =>
+  highbits alpha r = 0 =>
+  highbits alpha (r + z) = (q - alpha - 1) %/ alpha.
+
+proof.
+
+rewrite /highbits /rightshift => rg_alpha ???? high_ne is_corner.
+
+case rg_alpha => [ge2_alpha ub_alpha].
+
+have {high_ne} round_ne: round alpha r <> round alpha (r + z).
+
+- smt(eq_divz round_is_multiple asintK).
+
+have {is_corner} is_corner: asint (round alpha r) = 0.
+
+- smt(round_is_multiple rg_round).
+
+have {is_corner} is_corner: round alpha r = ZModQ.zero.
+
+- smt(asintK).
+
+suff: asint (round alpha (r + z)) = q - alpha - 1.
+
+- smt(round_is_multiple).
+
+case (alpha = q %/ 2) => [?|alpha_ne_half_q].
+
+- suff: forall x, asint (round alpha x) = 0 \/ asint (round alpha x) = alpha by smt(asintK).
+
+smt(rg_round round_is_multiple).
+
+have {ub_alpha} {alpha_ne_half_q} ub_alpha : alpha < q %/ 2 by smt().
+
+suff: round alpha (r + z) = inzmod (q - alpha - 1).
+
+- move => ->.
+
+by rewrite inzmodK modz_small /#.
+
+have ?: alpha %| (q - alpha - 1).
+
+- rewrite /( %| ).
+
+have ->: q - alpha - 1 = q - 1 + (-1) * alpha by ring.
+
+by rewrite modzMDr /#.
+
+have ?: - alpha %/ 2 < crepr (r + z - inzmod (q - alpha - 1)) <= alpha %/ 2.
+
+- have ?: crepr (lowbits alpha r + z) < - alpha %/ 2 by smt(round_perturb_down).
+
+have ?: crepr (lowbits alpha r + z) = crepr (lowbits alpha r) + crepr z.
+
++ rewrite creprD to_crepr_id //.
+
+smt(lowbits_small).
+
+have ->: - inzmod (q - alpha - 1) = inzmod (alpha + 1).
+
++ by rewrite -inzmodN -eq_inzmod /#.
+
+rewrite creprD.
+
+rewrite [crepr (inzmod (alpha + 1))]inzmodK_centered; 1, 2: smt().
+
+rewrite (round_lowP alpha r) -ZModpRing.addrA creprD is_corner crepr0 /=.
+
+have ->: to_crepr (crepr (lowbits alpha r + z)) = crepr (lowbits alpha r + z).
+
++ smt(to_crepr_id rg_crepr).
+
+rewrite to_crepr_id.
+
++ smt(lowbits_small).
+
+smt(lowbits_small).
+
+apply (round_unique alpha (r + z) (inzmod (q - alpha - 1)) (r + z - inzmod (q - alpha - 1))) => //.
+
+- smt().
+
+- by ring.
+
+- rewrite inzmodK.
+
+by rewrite modz_small /#.
+
+- rewrite inzmodK.
+
+by rewrite modz_small /#.
+
+- smt().
+
+- smt().
+
+qed.
+
+lemma hints_down alpha (z r : zmod) :
+  2 <= alpha <= q %/ 2 =>
+  2 %| alpha =>
+  alpha %| (q - 1) =>
+  `|z| <= alpha %/ 2 =>
+  crepr (lowbits alpha r) <= 0 =>
+  highbits alpha r <> highbits alpha (r + z) =>
+  highbits alpha r <> 0 =>
+  highbits alpha (r + z) = highbits alpha r - 1.
+
+proof.
+
+rewrite /highbits /rightshift => rg_alpha ???? high_ne not_corner.
+
+case rg_alpha => [ge2_alpha ub_alpha].
+
+have {high_ne} round_ne: round alpha r <> round alpha (r + z).
+
+- smt(eq_divz round_is_multiple asintK).
+
+have {not_corner} not_corner: 0 < asint (round alpha r).
+
+- smt(rg_asint).
+
+suff: asint (round alpha (r + z)) = asint (round alpha r) - alpha.
+
+- by move => -> /#.
+
+case (alpha = q %/ 2) => [?|alpha_ne_half_q].
+
+- suff: forall x, asint (round alpha x) = 0 \/ asint (round alpha x) = alpha by smt(asintK).
+
+smt(rg_round round_is_multiple).
+
+suff: round alpha (r + z) = round alpha r - inzmod alpha.
+
+-
+  move => ->.
+
+rewrite addE -inzmodN.
+
+rewrite [asint (inzmod (-alpha))] inzmodK.
+
+rewrite modzDmr.
+
+rewrite modz_small //.
+
+smt(rg_round round_is_multiple).
+
+have lowbits_ub : crepr (lowbits alpha r + z) <= - alpha %/ 2 by smt(round_perturb_down).
+
+have ?: - alpha %/ 2 < crepr (inzmod alpha + lowbits alpha r + z) /\
+        crepr (inzmod alpha + lowbits alpha r + z) <= alpha %/ 2.
+
+- rewrite -ZModpRing.addrA creprD.
+
+rewrite [crepr (inzmod alpha)] inzmodK_centered; 1, 2: smt().
+
+rewrite to_crepr_id.
+
++ split; first smt(rg_crepr).
+
+smt(lowbits_small).
+
+split; last smt().
+
+rewrite creprD to_crepr_id; last smt(lowbits_small).
+
+smt(lowbits_small).
+
+apply (round_unique alpha (r + z) (round alpha r - inzmod alpha)
+                                  (inzmod alpha + lowbits alpha r + z)) => //.
+
+- rewrite {1} (round_lowP alpha) //.
+
+by ring.
+
+- rewrite addE -inzmodN.
+
+rewrite [_ ( _ (-alpha))]inzmodK.
+
+rewrite modzDmr modz_small.
+
++ smt(rg_round round_is_multiple).
+
+apply dvdz_modzD => [|/#].
+
+exact round_is_multiple.
+
+- rewrite addE -inzmodN.
+
+rewrite [_ ( _ (-alpha))]inzmodK.
+
+rewrite modzDmr modz_small.
+
++ smt(rg_round round_is_multiple).
+
+smt(rg_round round_is_multiple).
+
+- smt().
+
+- smt().
+
+qed.
+
+lemma usehint_correct alpha (z r : zmod) :
+  2 <= alpha <= q %/ 2 =>
+  2 %| alpha =>
+  alpha %| (q - 1) =>
+  `|z| <= alpha %/ 2 =>
+  let h = makehint alpha z r in
+    usehint alpha h r = highbits alpha (r + z).
+
+proof.
+
+rewrite /makehint /usehint /= => *.
+
+case (highbits alpha r = highbits alpha (r + z)) => ? //=.
+
+case (0 < crepr (lowbits alpha r)) => ?.
+
+-
+  case (highbits alpha r = (q - alpha - 1) %/ alpha) => ?.
+
++
+    by rewrite hints_up_corner //.
+
+by rewrite hints_up.
+
+-
+  case (highbits alpha r = 0) => ?.
+
++
+    by rewrite hints_down_corner // /#.
+
+by rewrite hints_down // /#.
+
+qed.
+
+op usehint_round alpha h r =
+  let r1 = round alpha r in
+  let r0 = lowbits alpha r in
+  r1 +
+  if h then
+    if 0 < crepr r0 then
+      if r1 = inzmod (q - alpha - 1) then inzmod (alpha + 1) else inzmod alpha
+    else
+      if r1 = ZModQ.zero then inzmod (- alpha - 1) else inzmod (- alpha)
+  else ZModQ.zero.
+
+lemma usehint_round_correct alpha h r :
+  2 <= alpha <= q %/ 2 =>
+  alpha %| (q - 1) =>
+  leftshift alpha (usehint alpha h r) = usehint_round alpha h r.
+
+proof.
+
+move => rg_alpha ?.
+
+rewrite /usehint_round /usehint /=.
+
+case h => [is_h|not_h]; first last.
+
+- rewrite leftshift_rightshiftK.
+
++ smt().
+
++ exact round_is_multiple.
+
+by rewrite ZModpRing.addr0.
+
+have ?: alpha %| (q - alpha - 1).
+
+- rewrite /( %| ).
+
+have ->: (q - alpha - 1) = ((q - 1) + (-1) * alpha) by ring.
+
+by rewrite modzMDr.
+
+case (0 < crepr (lowbits alpha r)) => ?; first last.
+
+- case (round alpha r = ZModQ.zero) => [round_zero | round_nonzero].
+
++ have -> /=: (highbits alpha r = 0) by smt(zeroE).
+
+rewrite /leftshift.
+
+have ->: (q - alpha - 1) %/ alpha * alpha = q - alpha - 1 by smt().
+
+rewrite round_zero ZModpRing.add0r -eq_inzmod.
+
+have ->: q - alpha - 1 = -alpha - 1 + 1 * q by ring.
+
+by rewrite modzMDr.
+
++ have -> /=: highbits alpha r <> 0 by smt(zeroE round_is_multiple asintK).
+
+rewrite /leftshift.
+
+rewrite /highbits /rightshift.
+
+have ->: (asint (round alpha r) %/ alpha - 1) * alpha =
+              asint (round alpha r) - alpha by smt(round_is_multiple).
+
+by rewrite inzmodD asintK.
+
+case (round alpha r = inzmod (q - alpha - 1)) => H.
+
+- have -> /=: highbits alpha r = (q - alpha - 1) %/ alpha.
+
++ rewrite /highbits /rightshift H.
+
+by rewrite inzmodK modz_small /#.
+
+have ->: leftshift alpha 0 = ZModQ.zero by smt().
+
+rewrite H -inzmodD /=.
+
+smt(inzmodK).
+
+have -> /=: highbits alpha r <> (q - alpha - 1) %/ alpha.
+
+- rewrite /highbits /rightshift.
+
+smt(asintK round_is_multiple).
+
+rewrite /highbits /leftshift /rightshift.
+
+have ->: (asint (round alpha r) %/ alpha + 1) * alpha =
+          asint (round alpha r) + alpha by smt(round_is_multiple).
+
+by rewrite inzmodD asintK.
+
+qed.
+
+lemma hide_low2 alpha (r : zmod) (h : bool) :
+  2 <= alpha <= q %/ 2 =>
+  2 %| alpha =>
+  alpha %| (q - 1) =>
+  `|r - leftshift alpha (usehint alpha h r)| <= alpha + 1.
+
+proof.
+
+move => rg_alpha ??.
+
+rewrite usehint_round_correct //.
+
+case (alpha = q %/ 2) => [alpha_halfq|alpha_not_halfq].
+
+- smt(rg_crepr).
+
+have {alpha_not_halfq} {rg_alpha} rg_alpha: 2 <= alpha < q %/ 2 by smt().
+
+rewrite {1} (round_lowP alpha).
+
+rewrite /usehint_round /=.
+
+case h => [is_h|not_h]; first last.
+
+- have ->: (round alpha r + lowbits alpha r - (round alpha r + ZModQ.zero)) = lowbits alpha r.
+
++ by ring.
+
+smt(lowbits_small).
+
+case (0 < crepr (lowbits alpha r)) => ?.
+
+- case (round alpha r = inzmod (q - alpha - 1)) => ?.
+
++ have ->: (round alpha r + lowbits alpha r - (round alpha r + inzmod (alpha + 1)) =
+              lowbits alpha r - inzmod (alpha + 1)) by ring.
+
+rewrite /"`|_|" creprD -inzmodN.
+
+rewrite inzmodK_centered; 1, 2: smt().
+
+by rewrite to_crepr_id; smt(lowbits_small).
+
++ have ->: (round alpha r + lowbits alpha r - (round alpha r + inzmod alpha) =
+              lowbits alpha r - inzmod alpha) by ring.
+
+rewrite /"`|_|" creprD -inzmodN.
+
+rewrite inzmodK_centered; 1, 2: smt().
+
+by rewrite to_crepr_id; smt(lowbits_small).
+
+- case (round alpha r = ZModQ.zero) => ?.
+
++ have ->: (round alpha r + lowbits alpha r - (round alpha r + inzmod ((-alpha) - 1)) =
+              lowbits alpha r - inzmod (-alpha - 1)) by ring.
+
+rewrite /"`|_|" creprD creprN.
+
+rewrite inzmodK_centered; 1, 2: smt().
+
+by rewrite to_crepr_id; smt(lowbits_small).
+
++ have ->: (round alpha r + lowbits alpha r - (round alpha r + inzmod (-alpha)) =
+              lowbits alpha r - inzmod (-alpha)) by ring.
+
+rewrite /"`|_|" creprD creprN.
+
+rewrite inzmodK_centered; 1, 2: smt().
+
+by rewrite to_crepr_id; smt(lowbits_small).
+
+qed.
+
+require PolyReduce.
+
+op n : int.
+
+axiom gt0_n : 0 < n.
+
+clone import PolyReduceZp as PolyReduceZq with
+  type Zp <= zmod,
+  op p <= q,
+  op n <= n,
+  theory Zp <= ZModQ
+proof ge2_p, gt0_n.
+
+realize ge2_p by exact ge2_p.
+
+realize gt0_n by exact gt0_n.
+
+type high_t = int list.
+
+op poly_lowbits alpha p = polyLX (mkseq (fun i => lowbits alpha p.[i]) n).
+
+op poly_round alpha p = polyLX (mkseq (fun i => round alpha p.[i]) n).
+
+op poly_rightshift alpha p : high_t = mkseq (fun i => rightshift alpha p.[i]) n.
+
+op poly_leftshift alpha p = polyLX (mkseq (fun i => leftshift alpha (nth 0 p i)) n).
+
+op poly_highbits alpha p : high_t = mkseq (fun i => highbits alpha p.[i]) n.
+
+lemma poly_lowbits_correct alpha p i :
+  2 <= alpha =>
+  0 <= i < n =>
+  (poly_lowbits alpha p).[i] = lowbits alpha p.[i].
+
+proof.
+
+rewrite /poly_lowbits polyLXE; first smt(size_mkseq ge0_n).
+
+rewrite nth_mkseq_if /=.
+
+smt(lt0_rcoeff gered_rcoeff).
+
+qed.
+
+lemma poly_highbits_correct alpha p i :
+  2 <= alpha =>
+  0 <= i < n =>
+  nth 0 (poly_highbits alpha p) i = highbits alpha p.[i].
+
+proof.
+
+rewrite /poly_highbits nth_mkseq_if /=.
+
+smt(lt0_rcoeff gered_rcoeff).
+
+qed.
+
+lemma poly_highbits_size alpha p :
+  size (poly_highbits alpha p) = n.
+
+proof.
+
+rewrite /poly_highbits size_mkseq.
+
+smt(ge0_n).
+
+qed.
+
+lemma poly_leftshift_correct alpha p i :
+  size p <= n =>
+  leftshift alpha (nth 0 p i) = (poly_leftshift alpha p).[i].
+
+proof.
+
+move => ?; rewrite /poly_leftshift /=.
+
+rewrite polyLXE; first smt(size_mkseq ge0_n).
+
+rewrite nth_mkseq_if /=.
+
+smt(nth_out).
+
+qed.
+
+lemma poly_high_lowP alpha p :
+  2 <= alpha && alpha <= q %/ 2 =>
+  2 %| alpha =>
+  alpha %| (q - 1) =>
+  poly_leftshift alpha (poly_highbits alpha p) + poly_lowbits alpha p = p.
+
+proof.
+
+move => [??] *.
+
+apply polyXnD1_eqP => i [??].
+
+rewrite rcoeffD.
+
+rewrite -poly_leftshift_correct; first smt(poly_highbits_size).
+
+rewrite poly_highbits_correct //.
+
+rewrite poly_lowbits_correct //.
+
+by rewrite -high_lowP //.
+
+qed.
+
+op inf_norm = BigMax.big predT (fun (q : zmod) => Nat.ofint `|q|).
+
+op "`|_|" p = Nat.ofnat (inf_norm (mkseq (fun i => p.[i]) n)).
+
+lemma ge0_inf_norm_p p :
+  0 <= `|p|.
+
+proof.
+
+exact StNat.valP.
+
+qed.
+
+lemma abs_polyXN (p : polyXnD1) :
+  `|-p| = `|p|.
+
+proof.
+
+rewrite /"`|_|"; congr.
+
+rewrite /inf_norm.
+
+apply BigMax.eq_big_perm_map.
+
+apply perm_eq_refl_eq.
+
+rewrite !map_mkseq /(\o); 1, 2: exact ge0_n.
+
+congr; rewrite fun_ext => x /=; congr.
+
+by rewrite -rcoeffN -abs_zpN.
+
+qed.
+
+lemma inf_norm_le (p : polyXnD1) a :
+  0 <= a =>
+  (forall i, 0 <= i < n => `|p.[i]| <= a) =>
+  `|p| <= a.
+
+proof.
+
+move => ge0_a ?; rewrite /"`|_|" /inf_norm ler_ofnat.
+
+split; first by auto.
+
+rewrite -ler_bigmax /=.
+
+move => x mem_x _.
+
+apply ler_ofint.
+
+split => [|_]; first smt().
+
+rewrite mkseqP in mem_x.
+
+case mem_x => j [rg_j ?]; subst => /#.
+
+qed.
+
+lemma inf_normXE (p : polyXnD1) a i :
+  0 <= a =>
+  `|p| <= a =>
+  0 <= i < n => `|p.[i]| <= a.
+
+proof.
+
+move => ge0_a H rg_i.
+
+rewrite /"`|_|" in H.
+
+rewrite ler_ofnat in H.
+
+case H => [_ H].
+
+rewrite /inf_norm /= in H.
+
+rewrite -ler_bigmax in H.
+
+suff: p.[i] \in mkseq (fun i => p.[i]) n by smt(ler_ofint').
+
+smt(mkseqP).
+
+qed.
+
+lemma inf_norm_ub (p : polyXnD1) :
+  `|p| <= q %/ 2.
+
+proof.
+
+apply inf_norm_le.
+
+- smt(ge2_p).
+
+- move => ?_; exact abs_zp_ub.
+
+qed.
+
+lemma inf_norm0 :
+  `|zeroXnD1| = 0.
+
+proof.
+
+suff: `|zeroXnD1| <= 0 by smt(ge0_inf_norm_p).
+
+apply inf_norm_le => //.
+
+move => i rg_i.
+
+by rewrite rcoeff0 abs_zp_zero.
+
+qed.
+
+lemma inf_norm_poly_ler p i :
+  `|p.[i]| <= `|p|.
+
+proof.
+
+case (0 <= i /\ i < n) => ?.
+
+- apply ler_ofint_ofnat; first smt().
+
+apply (ler_bigmax predT (fun (q: zmod) => Nat.ofint `|q|) (mkseq (fun i => p.[i]) n)).
+
++ smt().
+
++ smt(mkseqP).
+
++ smt().
+
+- have ->: (p.[i] = ZModQ.zero) by smt(lt0_rcoeff gered_rcoeff).
+
+rewrite abs_zp_zero.
+
+exact ge0_inf_norm_p.
+
+qed.
+
+lemma inf_norm_triangle (x y : polyXnD1) :
+  `|x + y| <= `|x| + `|y|.
+
+proof.
+
+apply inf_norm_le; first smt(ge0_inf_norm_p).
+
+move => i rg_i.
+
+apply (StdOrder.IntOrder.ler_trans (`|x.[i]| + `|y.[i]|)).
+
+- rewrite rcoeffD.
+
+exact abs_zp_triangle.
+
+suff: `|x.[i]| <= `|x| /\ `|y.[i]| <= `|y| by smt().
+
+split; exact inf_norm_poly_ler.
+
+qed.
+
+require StdBigop.
+
+import StdBigop.Bigint.BIA.
+
+lemma abs_zp_triangle_big (xs : 'a list) f :
+  `|BasePoly.BigCf.BCA.big predT f xs| <=
+  big predT (fun x => `|f x|) xs.
+
+proof.
+
+elim xs.
+
+- by rewrite big_nil BasePoly.BigCf.BCA.big_nil abs_zp_zero //.
+
+move => head tail IH /=.
+
+rewrite big_consT BasePoly.BigCf.BCA.big_consT /=.
+
+apply (StdOrder.IntOrder.ler_trans (`|f head| + `|BasePoly.BigCf.BCA.big predT f tail|)).
+
+- exact abs_zp_triangle.
+
+smt().
+
+qed.
+
+lemma poly_hide_low_aux alpha px py b1 b2 :
+  2 <= alpha && alpha <= q %/ 2 =>
+  2 %| alpha =>
+  alpha %| (q - 1) =>
+  `|poly_lowbits alpha px| <= b1 =>
+  `|py| <= b2 =>
+  b1 + b2 < alpha %/ 2 => poly_highbits alpha (px + py) = poly_highbits alpha px.
+
+proof.
+
+move => [??] *.
+
+apply (eq_from_nth 0) => [|??]; first by rewrite !poly_highbits_size.
+
+rewrite !poly_highbits_correct //; 1, 2: smt(poly_highbits_size).
+
+rewrite rcoeffD.
+
+apply (hide_low _ _ _ b1 b2) => //; last smt(inf_norm_poly_ler).
+
+apply (ler_trans `|poly_lowbits alpha px|) => //.
+
+rewrite -poly_lowbits_correct //; first smt(poly_highbits_size).
+
+exact inf_norm_poly_ler.
+
+qed.
+
+lemma poly_hide_low alpha r s b :
+  2 <= alpha && alpha <= q %/ 2 =>
+  2 %| alpha =>
+  alpha %| (q - 1) =>
+  `|poly_lowbits alpha r| < alpha %/ 2 - b =>
+  `|s| <= b =>
+  poly_highbits alpha (r + s) = poly_highbits alpha r.
+
+proof.
+
+move => *.
+
+by apply (poly_hide_low_aux alpha r s (alpha %/ 2 - b - 1) b) => /#.
+
+qed.
+
+lemma poly_lowbit_small alpha p :
+  2 <= alpha && alpha <= q %/ 2 =>
+  `|poly_lowbits alpha p| <= alpha %/ 2.
+
+proof.
+
+move => [??].
+
+rewrite /"`|_|".
+
+apply ler_ofnat; split; first smt().
+
+rewrite /inf_norm /=.
+
+apply ler_bigmax => x H _ /=.
+
+suff: `|x| <= alpha %/ 2.
+
+- move => ?.
+
+by apply Nat.ler_ofint => /#.
+
+rewrite mkseqP in H; case H => i [??]; subst.
+
+by rewrite poly_lowbits_correct // lowbits_small.
+
+qed.
+
+lemma poly_leftshift_inj alpha xs ys :
+  2 <= alpha && alpha <= q %/ 2 =>
+  2 %| alpha =>
+  alpha %| (q - 1) =>
+  size xs = n =>
+  size ys = n =>
+  (forall x, x \in xs => image (highbits alpha) x) =>
+  (forall y, y \in ys => image (highbits alpha) y) =>
+  poly_leftshift alpha xs = poly_leftshift alpha ys =>
+  xs = ys.
+
+proof.
+
+move => ??? sz_xs sz_ys rg_x rg_y eq_shift_xy.
+
+have ?: (forall i, leftshift alpha (nth 0 xs i) = leftshift alpha (nth 0 ys i)).
+
+- smt(poly_leftshift_correct).
+
+apply (eq_from_nth 0); first by smt().
+
+move => i rg_i.
+
+apply (leftshift_injective alpha); smt(mem_nth).
+
+qed.
+
+op poly_usehint alpha (h : bool list) (p : polyXnD1) =
+  mkseq (fun i => usehint alpha (nth false h i) p.[i]) n.
+
+lemma poly_usehint_correct alpha h p i :
+  0 <= i < n =>
+  nth 0 (poly_usehint alpha h p) i = usehint alpha (nth false h i) p.[i].
+
+proof.
+
+move => rg_i.
+
+by rewrite nth_mkseq.
+
+qed.
+
+lemma size_poly_usehint alpha h p :
+  size (poly_usehint alpha h p) = n.
+
+proof.
+
+rewrite /poly_usehint.
+
+rewrite size_mkseq.
+
+smt(ge0_n).
+
+qed.
+
+op poly_makehint alpha (zs rs : polyXnD1) =
+  mkseq (fun i => makehint alpha zs.[i] rs.[i]) n.
+
+lemma poly_makehint_correct alpha zs rs i :
+  0 <= i < n =>
+  nth false (poly_makehint alpha zs rs) i = makehint alpha zs.[i] rs.[i].
+
+proof.
+
+move => rg_i.
+
+by rewrite nth_mkseq.
+
+qed.
+
+lemma poly_use_makehint alpha (zs rs : polyXnD1) :
+  2 <= alpha <= q %/ 2 =>
+  2 %| alpha =>
+  alpha %| (q - 1) =>
+  `|zs| <= alpha %/ 2 =>
+  let hs = poly_makehint alpha zs rs in poly_usehint alpha hs rs = poly_highbits alpha (rs + zs).
+
+proof.
+
+move => /= *.
+
+apply eq_in_mkseq => i rg_i /=.
+
+rewrite poly_makehint_correct //.
+
+rewrite rcoeffD usehint_correct //.
+
+smt(inf_norm_poly_ler).
+
+qed.
+
+import ComRingDflInv.
+
+lemma poly_hide_low2 alpha (r : polyXnD1) (h : bool list) :
+  2 <= alpha <= q %/ 2 =>
+  2 %| alpha =>
+  alpha %| (q - 1) =>
+  `|r - poly_leftshift alpha (poly_usehint alpha h r)| <= alpha + 1.
+
+proof.
+
+move => *.
+
+apply inf_norm_le; first smt().
+
+move => i rg_i.
+
+rewrite rcoeffD -rcoeffN.
+
+rewrite -poly_leftshift_correct; first smt(size_poly_usehint).
+
+rewrite poly_usehint_correct //.
+
+exact hide_low2.
+
+qed.
+
+op lowbits2 (d : int) (r : zmod) = inzmod (cmod (asint r) (2 ^ d)).
+
+op round2 (d : int) (r : zmod) = asint r - crepr (lowbits2 d r).
+
+op rightshift2 (d : int) (r : int) = r %/ (2 ^ d).
+
+op highbits2 (d : int) (r : zmod) = rightshift2 d (round2 d r).
+
+op leftshift2 (d : int) (r : int) = inzmod ((2 ^ d) * r).
+
+lemma abs_zp_contract x :
+  `|inzmod x| <= `|x|.
+
+proof.
+
+rewrite /"`|_|" /crepr.
+
+rewrite inzmodK /=.
+
+smt(ge2_p).
+
+qed.
+
+lemma lowbits2_small d x :
+  1 <= d =>
+  `|lowbits2 d x| <= 2 ^ (d - 1).
+
+proof.
+
+move => ge1_d.
+
+rewrite /lowbits2.
+
+apply (ler_trans (`|cmod (asint x) (2 ^ d)|)).
+
+- exact abs_zp_contract.
+
+apply (ler_trans ((2 ^ d) %/ 2)).
+
+- apply cmod_small.
+
+smt(ler_eexpr).
+
+by rewrite expr_pred /#.
+
+qed.
+
+lemma round2_is_multiple d x :
+  1 <= d =>
+  (2 ^ d) < q =>
+  (2 ^ d) %| round2 d x.
+
+proof.
+
+move => ge1_d rg_d.
+
+rewrite /round2 /lowbits2.
+
+pose y := asint x.
+
+rewrite inzmodK_centered; 1,2: smt(cmod_small ler_eexpr).
+
+rewrite /(%|) /cmod /mod_to_cmod /=.
+
+case (y %% 2 ^ d <= 2 ^ d %/ 2) => *.
+
+- by rewrite modzNDmr.
+
+have ->: y - (y %% 2 ^ d - 2 ^ d) = y - y %% 2 ^ d + 2 ^ d by ring.
+
+by rewrite modzDr modzNDmr.
+
+qed.
+
+lemma leftshift2_rightshift2K d r :
+  ((2 ^ d) %| r) => leftshift2 d (rightshift2 d r) = inzmod r.
+
+proof.
+
+move => power2_r.
+
+rewrite /leftshift2 /rightshift2.
+
+congr.
+
+suff: r = (r %/ 2 ^ d) * (2 ^ d) by smt().
+
+apply eqz_mul => //.
+
+smt(expr_gt0).
+
+qed.
+
+lemma round2_low2P d r :
+  inzmod (round2 d r) + lowbits2 d r = r.
+
+proof.
+
+rewrite /round2.
+
+rewrite inzmodD inzmodN.
+
+rewrite creprK asintK.
+
+by ring.
+
+qed.
+
+lemma high2_low2P d r :
+  1 <= d =>
+  2 ^ d < q =>
+  leftshift2 d (highbits2 d r) + lowbits2 d r = r.
+
+proof.
+
+move => ??.
+
+rewrite /highbits2.
+
+rewrite leftshift2_rightshift2K.
+
+- exact round2_is_multiple.
+
+exact round2_low2P.
+
+qed.
+
+op poly_lowbits2 d p = polyLX (mkseq (fun i => lowbits2 d p.[i]) n).
+
+op poly_highbits2 d p = mkseq (fun i => highbits2 d p.[i]) n.
+
+op poly_leftshift2 d p = polyLX (mkseq (fun i => leftshift2 d (nth 0 p i)) n).
+
+lemma poly_lowbits2_correct d p i :
+  0 <= i < n =>
+  (poly_lowbits2 d p).[i] = lowbits2 d p.[i].
+
+proof.
+
+move => rg_i.
+
+rewrite polyLXE; first smt(size_mkseq).
+
+exact nth_mkseq.
+
+qed.
+
+lemma poly_highbits2_correct d p i :
+  0 <= i < n =>
+  nth 0 (poly_highbits2 d p) i = highbits2 d p.[i].
+
+proof.
+
+move => ?.
+
+exact nth_mkseq.
+
+qed.
+
+lemma poly_leftshift2_correct d p i :
+  0 <= i < n =>
+  (poly_leftshift2 d p).[i] = leftshift2 d (nth 0 p i).
+
+proof.
+
+move => rg_i.
+
+rewrite polyLXE; first smt(size_mkseq).
+
+exact nth_mkseq.
+
+qed.
+
+lemma poly_rm_high2 d r :
+  1 <= d =>
+  2 ^ d < q =>
+  r - poly_leftshift2 d (poly_highbits2 d r) = poly_lowbits2 d r.
+
+proof.
+
+move => ??.
+
+apply polyXnD1_eqP => i ?.
+
+rewrite rcoeffD -rcoeffN.
+
+rewrite poly_leftshift2_correct //.
+
+rewrite poly_highbits2_correct //.
+
+rewrite poly_lowbits2_correct //.
+
+suff: r.[i] = leftshift2 d (highbits2 d r.[i]) + lowbits2 d r.[i].
+
+- move => {1}->.
+
+by ring.
+
+smt(high2_low2P).
+
+qed.
+
+lemma poly_lowbits2_small d x :
+  1 <= d =>
+  `|poly_lowbits2 d x| <= 2 ^ (d - 1).
+
+proof.
+
+move => ?.
+
+apply inf_norm_le => [|i rg_i]; first exact expr_ge0.
+
+rewrite poly_lowbits2_correct //.
+
+exact lowbits2_small.
+
+qed.
+
+op usehint_preimage alpha h r = choiceb (fun x => highbits alpha x = usehint alpha h r) witness.
+
+lemma usehint_preimageP alpha h r :
+  2 <= alpha <= q %/ 2 =>
+  2 %| alpha =>
+  alpha %| (q - 1) =>
+  highbits alpha (usehint_preimage alpha h r) = usehint alpha h r.
+
+proof.
+
+move => *.
+
+rewrite /usehint_preimage.
+
+apply (choicebP (fun (x : zmod) => highbits alpha x = usehint alpha h r) witness).
+
+have [x' ?]: exists x, highbits alpha x = usehint alpha h r.
+
+- exact usehint_im.
+
+by exists x'.
+
+qed.
+
+lemma poly_usehint_im alpha hs r :
+  2 <= alpha <= q %/ 2 =>
+  2 %| alpha =>
+  alpha %| (q - 1) =>
+  image (poly_highbits alpha) (poly_usehint alpha hs r).
+
+proof.
+
+move => *.
+
+exists (polyLX (mkseq (fun i => usehint_preimage alpha (nth false hs i) r.[i]) n)).
+
+apply eq_in_mkseq => i rg_i /=.
+
+rewrite polyLXE; first smt(size_mkseq).
+
+rewrite nth_mkseq //=.
+
+exact usehint_preimageP.
+
+qed.

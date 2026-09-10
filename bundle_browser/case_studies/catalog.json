@@ -97,6 +97,224 @@
       "defaultLemma": "conclusion"
     },
     {
+      "id": "dilithium",
+      "title": "Dilithium",
+      "scope": "Security reduction for the supplied simplified Dilithium formalization.",
+      "protocol": "Interleaved",
+      "time": "7h 17m 08s",
+      "timeLabel": "through terminal harness certification",
+      "outer": "GPT-6 Astra / high",
+      "inner": "GPT-6 Astra / high",
+      "defaultFile": "dilithium",
+      "defaultLemma": "Dilithium_secure",
+      "meta": "Interleaved · 10 Sep 2026 · GPT‑6 Astra / GPT‑6 Astra",
+      "note": "Final target plus all 24 unchanged supplied sibling files. Standard EasyCrypt libraries are external. This is the benchmark security formalization, not full ML-DSA implementation verification.",
+      "files": [
+        {
+          "id": "dilithium",
+          "path": "Dilithium.ec",
+          "role": "Completed target file",
+          "sha256": "7b2dca294dabdf66b49cf95f7e289342ee39c0fc864edee5c7ae1e9a36b032b0",
+          "source": "dilithium/Dilithium.ec"
+        },
+        {
+          "id": "dilithium-concretedring",
+          "path": "ConcreteDRing.eca",
+          "role": "Provided dependency",
+          "sha256": "778e7b9977747b2543bc8fdc0538e3c9b0397d3829772a1caf1bf1e16b544717",
+          "source": "dilithium/ConcreteDRing.eca"
+        },
+        {
+          "id": "dilithium-dparams",
+          "path": "DParams.eca",
+          "role": "Provided dependency",
+          "sha256": "cbbe53cd2c08cbb7678faf3a2219d5d5c12a485c29ad72169d46616795e6ef08",
+          "source": "dilithium/DParams.eca"
+        },
+        {
+          "id": "dilithium-dring",
+          "path": "DRing.eca",
+          "role": "Provided dependency",
+          "sha256": "f420e8b1546011c9b4b325a9d42c145a4fbd2456758437982fcadf6026701ef2",
+          "source": "dilithium/DRing.eca"
+        },
+        {
+          "id": "dilithium-dvect",
+          "path": "DVect.eca",
+          "role": "Provided dependency",
+          "sha256": "14a11ab37b39452c3307dcc0e4058fa3f16d1f67a4c039b8a9feee4d979900e6",
+          "source": "dilithium/DVect.eca"
+        },
+        {
+          "id": "dilithium-digitalsignatures",
+          "path": "DigitalSignatures.eca",
+          "role": "Provided dependency",
+          "sha256": "5bd938519cf5dc682658b421d99274a8c42f3243edbcdb0cf432320c44e59f6c",
+          "source": "dilithium/DigitalSignatures.eca"
+        },
+        {
+          "id": "dilithium-digitalsignaturesro",
+          "path": "DigitalSignaturesRO.eca",
+          "role": "Provided dependency",
+          "sha256": "acc4757a167a3885739dfe6235bcc133afd637fc3c38fb5700222b941d7ff020",
+          "source": "dilithium/DigitalSignaturesRO.eca"
+        },
+        {
+          "id": "dilithium-distrextras",
+          "path": "DistrExtras.ec",
+          "role": "Provided dependency",
+          "sha256": "435a80c62c6e8cb583aada8a1423cbf057caf152805ec15d084dbab84d223f4f",
+          "source": "dilithium/DistrExtras.ec"
+        },
+        {
+          "id": "dilithium-distrextras-port",
+          "path": "DistrExtras_port.ec",
+          "role": "Provided dependency",
+          "sha256": "91044324085b44926e443277bb4172369b7a000ae4abdbee2462741311005f92",
+          "source": "dilithium/DistrExtras_port.ec"
+        },
+        {
+          "id": "dilithium-fsa-cmatokoa",
+          "path": "FSa_CMAtoKOA.eca",
+          "role": "Provided dependency",
+          "sha256": "61133277af493ee0716ac823117dbfab435a313a48a82d87e627c3957fc6ffc6",
+          "source": "dilithium/FSa_CMAtoKOA.eca"
+        },
+        {
+          "id": "dilithium-fsa-crtogen",
+          "path": "FSa_CRtoGen.eca",
+          "role": "Provided dependency",
+          "sha256": "7de1eb8a43ea2644178fe60465f4600aa2465ef9d078820889e95725a10f8dab",
+          "source": "dilithium/FSa_CRtoGen.eca"
+        },
+        {
+          "id": "dilithium-fsabort",
+          "path": "FSabort.eca",
+          "role": "Provided dependency",
+          "sha256": "9c0a64e4b62e7b121fe559d0e0423750201d0b20a50d468e1ee263d909e69cb3",
+          "source": "dilithium/FSabort.eca"
+        },
+        {
+          "id": "dilithium-idsabort",
+          "path": "IDSabort.ec",
+          "role": "Provided dependency",
+          "sha256": "dd6a49fab6f598240f23ec8373e9361eb35a7f02116eebb6440b29a47ef0ec5b",
+          "source": "dilithium/IDSabort.ec"
+        },
+        {
+          "id": "dilithium-mlwe",
+          "path": "MLWE.eca",
+          "role": "Provided dependency",
+          "sha256": "811800da89c6cd575fcc28f0600b64eb4c08a187387333ac6aadd2aaafa7fa46",
+          "source": "dilithium/MLWE.eca"
+        },
+        {
+          "id": "dilithium-matplus",
+          "path": "MatPlus.eca",
+          "role": "Provided dependency",
+          "sha256": "3a871405899aadb9dc84b9e904d393c8d3dcafb4b6eb3c8c0d79f7980d8b7909",
+          "source": "dilithium/MatPlus.eca"
+        },
+        {
+          "id": "dilithium-nat",
+          "path": "Nat.ec",
+          "role": "Provided dependency",
+          "sha256": "bf92a596e2e374397ca99e8ae4e47e006f78caa1ade53bfd8d5987125e6ce27a",
+          "source": "dilithium/Nat.ec"
+        },
+        {
+          "id": "dilithium-polyreduce",
+          "path": "PolyReduce.ec",
+          "role": "Provided dependency",
+          "sha256": "be1e08e13ab0171f4de2e0a3cbac79907791c16f7425bd50462ad508185df138",
+          "source": "dilithium/PolyReduce.ec"
+        },
+        {
+          "id": "dilithium-poly-ec2023",
+          "path": "Poly_EC2023.ec",
+          "role": "Provided dependency",
+          "sha256": "24828c94846e335ffcce78780473d01e62d8e89c6c55acb0da7ed1faabed587e",
+          "source": "dilithium/Poly_EC2023.ec"
+        },
+        {
+          "id": "dilithium-reproghybrid",
+          "path": "ReprogHybrid.eca",
+          "role": "Provided dependency",
+          "sha256": "3b2e682f1c59677c50f959cafc1147a82ec9672c349fb19f07a057cb77eae9c0",
+          "source": "dilithium/ReprogHybrid.eca"
+        },
+        {
+          "id": "dilithium-selftargetmsis",
+          "path": "SelfTargetMSIS.eca",
+          "role": "Provided dependency",
+          "sha256": "c6ad6d3a5d4bf6577d94268be919b3539d3f7441877aa51a72d6076b247a022d",
+          "source": "dilithium/SelfTargetMSIS.eca"
+        },
+        {
+          "id": "dilithium-simplifiedscheme",
+          "path": "SimplifiedScheme.ec",
+          "role": "Provided dependency",
+          "sha256": "b0d371c71929012833e964a0f186ee14f6b29a346d64619768d4d1ff0619dc16",
+          "source": "dilithium/SimplifiedScheme.ec"
+        },
+        {
+          "id": "dilithium-subtype-ec2023",
+          "path": "Subtype_EC2023.eca",
+          "role": "Provided dependency",
+          "sha256": "9c1bf2d0bcc0eee09a619570ab63b4cc7022c7191e8aa2b2028a8a1daabb6ca7",
+          "source": "dilithium/Subtype_EC2023.eca"
+        },
+        {
+          "id": "dilithium-supplementary",
+          "path": "Supplementary.ec",
+          "role": "Provided dependency",
+          "sha256": "7878b689ea306fac783bdd501343c25adbcc09ce02326cd206b12914a253cf80",
+          "source": "dilithium/Supplementary.ec"
+        },
+        {
+          "id": "dilithium-zmodfieldextras",
+          "path": "ZModFieldExtras.eca",
+          "role": "Provided dependency",
+          "sha256": "a22704ecca56e9ae0646f405d204617d8aa70a916662dcf55b252d1efd64003b",
+          "source": "dilithium/ZModFieldExtras.eca"
+        },
+        {
+          "id": "dilithium-zqrounding",
+          "path": "ZqRounding.eca",
+          "role": "Provided dependency",
+          "sha256": "493e77cfe9825a5a36d1192871027c6193a093ff4f25b87fb26fa31914a7677f",
+          "source": "dilithium/ZqRounding.eca"
+        }
+      ],
+      "process_source": "dilithium/process.json",
+      "evidence": [
+        [
+          "Target",
+          "Dilithium_secure in Dilithium.ec"
+        ],
+        [
+          "Verification",
+          "Harness and separate independent final verification passed; proof_complete=true, zero admissions, EOF tripwire reached."
+        ],
+        [
+          "Time",
+          "6h59m14s outer execution/cleanup; 7h17m08s from start to terminal harness verification and bookkeeping. Independent monitor recheck passed afterward."
+        ],
+        [
+          "Preservation",
+          "Original claim and protected declarations accepted by the final audit; all 24 sibling files match the launch baseline."
+        ],
+        [
+          "Shannon contribution",
+          "29 verified jobs, 28 imported helper proofs. One nested-theory import failed and was recovered through a flattened replacement."
+        ],
+        [
+          "Final SHA-256",
+          "7b2dca294dabdf66b49cf95f7e289342ee39c0fc864edee5c7ae1e9a36b032b0"
+        ]
+      ]
+    },
+    {
       "title": "ChaChaPoly",
       "files": [
         {
@@ -123,24 +341,7 @@
       ],
       "meta": "Interleaved · 26 Aug 2026 · Opus 5 / GPT‑5.6 Sol",
       "note": "Target file plus the two preserved sibling specifications. Standard EasyCrypt libraries are external.",
-      "process": [
-        [
-          "Build the reduction",
-          "The outer agent constructs the security-game sequence, intermediate declarations and probability bounds."
-        ],
-        [
-          "Delegate helper proofs",
-          "The inner prover completes dmap_dblock_mk_rs and supplies partial progress on encEq and encRepro."
-        ],
-        [
-          "Compose the final theorem",
-          "The outer agent completes the remaining helpers. conclusion applies step1 and step2, followed by SMT."
-        ],
-        [
-          "Check the whole development",
-          "Independent verification accepts the final file; the two sibling specifications are unchanged."
-        ]
-      ],
+      "process_source": "chacha/process.json",
       "evidence": [
         [
           "Target",
@@ -281,5 +482,5 @@
     }
   ],
   "publication_status": "reviewed",
-  "publication_date": "2026-09-09"
+  "publication_date": "2026-09-10"
 }

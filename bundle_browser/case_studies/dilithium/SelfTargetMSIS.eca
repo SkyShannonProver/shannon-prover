@@ -1,0 +1,41 @@
+require import AllCore Distr.
+
+require   DynMatrix PROM.
+
+clone import DynMatrix as M.
+
+type M.
+
+op dR : R distr.
+
+op dC : R distr.
+
+clone import PROM.FullRO as PRO with
+  type in_t <- vector*M,
+  type out_t <- R,
+  op dout <- (fun _ => dC)
+proof*.
+
+op inf_norm : vector -> int.
+
+op m : { int | 0 < m } as gt0_m.
+
+op n : { int | 0 < n } as gt0_n.
+
+op gamma : int.
+
+module type Adversary (H : RO) = {
+  proc guess(mA : matrix) : vector * M { H.get }
+}.
+
+module Game (A : Adversary) (H : RO) = {
+  proc main() = {
+    var mA,y,mu,c,c';
+    H.init();
+    mA <$ dmatrix dR m n;
+    (y,mu) <@ A(H).guess(mA);
+    c <- y.[m + n - 1];
+    c' <@ H.get((onem m || mA) *^ y,mu);
+    return inf_norm y <= gamma /\ c = c';
+  }
+}.

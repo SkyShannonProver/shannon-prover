@@ -43,10 +43,11 @@ def mask_noncode(source: str) -> str:
     return "".join(out)
 
 
-def index_source(source: str, file_id: str, role: str) -> dict:
+def index_source(source: str, file_id: str, role: str,
+                 target_lemma: str | None = "conclusion") -> dict:
     masked = mask_noncode(source)
     candidates = list(re.finditer(
-        r"(?m)^[ \t]*(?:(?:local|global|export)[ \t]+)?lemma[ \t]+([A-Za-z_][A-Za-z0-9_']*)",
+        r"(?m)^[ \t]*(?:(?:local|global|export)[ \t]+)?(?:lemma|equiv)[ \t]+([A-Za-z_][A-Za-z0-9_']*)",
         masked,
     ))
     # A clone substitution such as `lemma addrA <- addbA` is not a new lemma.
@@ -66,7 +67,7 @@ def index_source(source: str, file_id: str, role: str) -> dict:
                 "start": line_at(match.start()), "end": line_at(match.start()),
                 "proofStart": None, "bodyLines": None, "origin": role}
         if role == "Completed target file":
-            if match[1] == "conclusion":
+            if match[1] == target_lemma:
                 item["origin"] = "Fixed target · agent-written proof"
             elif begin >= 0 and begin < match.start() < end:
                 item["origin"] = "Agent-added helper in the designated scratchpad"
@@ -133,7 +134,7 @@ def validate_process_story(story: dict, indexed: dict, default_file: str) -> Non
             check_reference(ref)
         for excerpt in stage["evidence"]:
             require_text(excerpt, "text", "item")
-            if excerpt["kind"] not in {"agent_message", "check"} or not isinstance(excerpt["line"], int) or excerpt["line"] < 1:
+            if excerpt["kind"] not in {"agent_message", "agent_action", "check"} or not isinstance(excerpt["line"], int) or excerpt["line"] < 1:
                 raise ValueError("Invalid process-story trace reference")
     require_text(story["jobs"], "note", "sourceNote")
     seen_jobs = set()
@@ -177,7 +178,8 @@ def package_library(pack: Path | None, output: Path) -> int:
                     raise ValueError(f"Proof-library hash mismatch: {item['path']}")
                 relative = f"{case_id}/files/{item['path']}"
                 confined(output, relative)
-                indexed[file_id] = {**index_source(data.decode("utf-8"), file_id, item["role"]),
+                target_lemma = case.get("defaultLemma") if file_id == case["defaultFile"] else None
+                indexed[file_id] = {**index_source(data.decode("utf-8"), file_id, item["role"], target_lemma),
                                     "path": item["path"], "role": item["role"],
                                     "sha256": item["sha256"], "download": relative}
                 pending.append((source, relative))

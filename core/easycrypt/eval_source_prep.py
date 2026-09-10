@@ -178,7 +178,10 @@ def find_target_proof_block(
         return "admit" in after[:300] or "proof." in after[:300]
 
     match = next((m for m in matches if needs_proving(m)), matches[0])
-    rest = content[match.start():]
+    # Start after the entire declaration head, which can span multiple lines
+    # (for example `local\nlemma target`). Its own `lemma` line must not be
+    # mistaken for the next declaration by the bounded proof search.
+    rest = content[match.end():]
     next_start = _next_declaration_offset(rest)
     if next_start is not None:
         rest = rest[:next_start]
@@ -187,11 +190,11 @@ def find_target_proof_block(
     if proof_pos >= 0:
         qed_pos = rest.find("qed.", proof_pos)
         if qed_pos >= 0:
-            return match.start() + proof_pos, match.start() + qed_pos + len("qed.")
+            return match.end() + proof_pos, match.end() + qed_pos + len("qed.")
 
     admit_pos = _standalone_admit_offset(rest)
     if admit_pos is not None:
-        return match.start() + admit_pos[0], match.start() + admit_pos[1]
+        return match.end() + admit_pos[0], match.end() + admit_pos[1]
     return None
 
 

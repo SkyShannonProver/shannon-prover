@@ -3,10 +3,11 @@
 Pure text transform (re/pathlib only), matching the existing
 ``(* COMPLETE THIS *)`` convention; leaves already-admit proofs untouched.
 
-Handles three proof forms:
+Handles these proof forms:
   1. Multi-line ``proof. ... qed.``
   2. Single-line ``proof. tac. qed.``
   3. ``by`` short form: ``lemma foo : P by tac.``
+  4. Clone/realize ``by`` clauses, including multi-line tactic bodies
 
 Idempotent. Lives in ``core/easycrypt/`` (the lower layer) so that
 eval-source preparation can use it without ``core`` importing ``workflow`` — the
@@ -43,23 +44,135 @@ def _is_admit_only_proof(body_text: str) -> bool:
     return "admit." in body_text and not non_boilerplate
 
 
+_SOURCE_TOKEN = re.compile(r'"(?:\\.|[^"\\])*"|[A-Za-z_][A-Za-z0-9_\']*|\.\.|[^\s]', re.DOTALL)
+
+
+def _source_tokens(content: str):
+    """Lexical offsets only: skip nested comments and keep strings opaque."""
+    i = 0
+    depth = 0
+    while i < len(content):
+        pair = content[i:i + 2]
+        if pair == "(*":
+            depth += 1
+            i += 2
+        elif depth:
+            if pair == "*)":
+                depth -= 1
+                i += 2
+            else:
+                i += 1
+        elif content[i].isspace():
+            i += 1
+        else:
+            token = _SOURCE_TOKEN.match(content, i)
+            assert token is not None
+            if token.group() == '"':
+                raise ValueError("Cannot strip proofs from an unterminated string")
+            yield token.group(), token.start(), token.end()
+            i = token.end()
+    if depth:
+        raise ValueError("Cannot strip proofs from an unterminated comment")
+
+
+def _redact_by_clauses(content: str) -> tuple[str, int]:
+    """Remove residual clone/realize tactics through their lexical boundary.
+
+    EasyCrypt's FINAL token is a dot followed by whitespace/EOF; qualified
+    names, strings and comments do not terminate a command (ecLexer.mll).
+    Within a clone command, commas and proof/rename/remove delimit clauses only
+    outside brackets (ecParser.mly: clone_lemma, theory_clone). This transform
+    does not resolve declarations or certify tactics; native loading validates
+    the prepared source. An incomplete boundary must fail source preparation.
+    """
+    replacements: list[tuple[int, int]] = []
+
+    def collect(command: list[tuple[str, int, int]], complete: bool) -> None:
+        words = [token[0] for token in command]
+        first = 1 if words and words[0] in {"local", "global"} else 0
+        if first >= len(words) or words[first] not in {"clone", "realize", "proof"}:
+            return
+        if words[first:first + 2] == ["proof", "."]:
+            return
+        clone = words[first] != "realize"
+        in_proof = not clone or words[first] == "proof"
+        body_start = None
+        body_words: list[str] = []
+        brackets: list[str] = []
+        closing = {")": "(", "]": "[", "}": "{"}
+
+        def finish(end: int) -> None:
+            nonlocal body_start, body_words
+            if body_start is not None:
+                if not body_words:
+                    raise ValueError("Cannot strip an empty by-proof body")
+                if body_words != ["admit"]:
+                    # Keep the whitespace separating the next clause/command.
+                    end = body_start + len(content[body_start:end].rstrip())
+                    replacements.append((body_start, end))
+                body_start = None
+                body_words = []
+
+        for j in range(first + 1, len(command)):
+            word, start, end = command[j]
+            if not brackets:
+                if complete and j == len(command) - 1:
+                    finish(start)
+                    continue
+                if clone and word in {",", "proof", "rename", "remove"}:
+                    finish(start)
+                    if word != ",":
+                        in_proof = word == "proof"
+                    continue
+                if in_proof and word == "by" and body_start is None:
+                    body_start = end
+                    continue
+            if body_start is not None:
+                body_words.append(word)
+            if word in {"(", "[", "{"}:
+                brackets.append(word)
+            elif word in closing:
+                if not brackets or brackets.pop() != closing[word]:
+                    raise ValueError("Cannot strip a by-proof with unbalanced brackets")
+        if body_start is not None or brackets or not complete:
+            raise ValueError("Cannot strip an unterminated clone/realize proof command")
+
+    command: list[tuple[str, int, int]] = []
+    for token in _source_tokens(content):
+        word, _, end = token
+        command.append(token)
+        if word == "." and (end == len(content) or content[end].isspace()):
+            collect(command, complete=True)
+            command = []
+    if command:
+        collect(command, complete=False)
+    out = []
+    previous = 0
+    for start, end in replacements:
+        out.extend((content[previous:start], " admit"))
+        previous = end
+    out.append(content[previous:])
+    return "".join(out), len(replacements)
+
+
 def _redact_residual_proof_text(content: str) -> tuple[str, int]:
     """Redact proof text outside lemma/equiv/hoare declarations.
 
     Clone realization obligations can appear as `realize foo by ...` or
     `realize foo. proof. ... qed.`. They are proof bodies too.
 
-    All *decisions* run on comment-masked text (offset-aligned with the
-    original), so `proof.`/`qed.`/`by` inside `(* ... *)` comments are never
+    All structure decisions ignore nested comments: the by-clause scan above
+    uses lexical offsets; block scanning below uses offset-aligned masked text.
+    Thus `proof.`/`qed.`/`by` inside `(* ... *)` comments are never
     treated as proof structure — a commented-out lemma must pass through
     byte-identical (a naive scan here previously swallowed the closing `*)`
     and unbalanced every comment after it; same bug class as the 2026-06
     context-builder wedge).
     """
+    content, replaced = _redact_by_clauses(content)
     lines = content.splitlines(keepends=True)
     mlines = mask_comments(content).splitlines(keepends=True)
     out: list[str] = []
-    replaced = 0
     i = 0
     n = len(lines)
 
@@ -67,18 +180,6 @@ def _redact_residual_proof_text(content: str) -> tuple[str, int]:
         line = lines[i]
         mline = mlines[i]
         stripped = mline.strip()
-        by_line = re.match(r"^(?P<indent>\s*)(?:realize|proof)\b.*\bby\b", mline)
-        if by_line and not stripped.startswith("proof."):
-            by_idx = mline.find(" by ")
-            if by_idx < 0:
-                by_idx = mline.find("\tby ")
-            prefix = line[:by_idx].rstrip() if by_idx >= 0 else line.rstrip()
-            suffix = ".\n" if mline.rstrip().endswith(".") else "\n"
-            out.append(f"{prefix} by admit{suffix}")
-            replaced += 1
-            i += 1
-            continue
-
         if stripped.startswith("proof.") and inline_proof(
             line,
             masked_source=mline,

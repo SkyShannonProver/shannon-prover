@@ -1,0 +1,594 @@
+{
+  "schema_version": 1,
+  "title": "How the agent built the ChaChaPoly proof",
+  "deck": "From concrete encryption to a CPA game and two forgery bounds: the outer’s decomposition, Shannon’s complete helper and partial loop proofs, and the final tag-reprogramming argument. Follow each step into the final source or expand its original trace evidence.",
+  "stats": [
+    {
+      "value": "5h 07m 05s",
+      "label": "recorded end-to-end wall time"
+    },
+    {
+      "value": "1 helper",
+      "label": "verified and merged from Shannon"
+    },
+    {
+      "value": "3 partial returns",
+      "label": "reused and completed by the outer"
+    },
+    {
+      "value": "0 admits",
+      "label": "in the final editable proof"
+    }
+  ],
+  "provenance": {
+    "commit": "fb788ce7d634f581ec69687fbfdb282e2567376e",
+    "tracePath": "reviewer_artifacts/chachapoly_opus_codex_20260826/run/outer_agent_events.jsonl",
+    "blob": "04b1bd6e247b7c586dfc6305426c06213a73c643",
+    "note": "This editorial reconstruction uses the frozen 26 August archive, not the separate 4h30m run. It contains 15 public outer text messages, 462 Bash calls, six public Shannon job records and an independent full-file verification receipt. Unlike the ML-KEM trace, most construction detail appears in commands and handoff drafts rather than progress messages. Excerpts are verbatim contiguous slices, identified by original JSONL line and message/tool ID; public messages, command/handoff excerpts and recorded results have distinct labels. Draft code may contain admits and intermediate checks may still have unfinished obligations. Source links open the final checked lemmas, not those drafts. Private reasoning and backend-private proof state are not used or published."
+  },
+  "orderNote": "Stages group the main proof threads rather than claiming a strict serial timeline. The outer constructs probability bounds while Shannon works on relational proofs. All six Shannon job intervals are sequential: two lanes were available, but only one was used at a time. Reported wall time comes from the frozen run records, not the agent’s inconsistent elapsed-time estimates in its notes. An incomplete prefix is not a verified lemma, and these returns overlap; neither tactic counts nor job durations measure speedup.",
+  "stages": [
+    {
+      "title": "Connect the concrete cipher to the block-oracle game",
+      "paragraphs": [
+        "The fixed conclusion compares real authenticated encryption with a random-ciphertext experiment, paying a block-oracle distinguishing gap and two forgery terms. The outer first separated that claim into step1, the concrete-to-oracle equality, and step2, the random-oracle security bound.",
+        "For step1, it aligned the encryption and decryption procedures with the supplied gen_CTR operation. The loop invariant relates the ciphertext already produced to encryption of the remaining plaintext, rather than attempting the final probability inequality in one proof."
+      ],
+      "work": "Outer: choose the two-part reduction and prove the concrete encryption/decryption adapters. No Shannon job yet.",
+      "references": [
+        {
+          "file": "chacha",
+          "lemma": "D_enc_real"
+        },
+        {
+          "file": "chacha",
+          "lemma": "D_dec_real"
+        },
+        {
+          "file": "chacha",
+          "lemma": "step1"
+        }
+      ],
+      "evidence": [
+        {
+          "kind": "agent_action",
+          "line": 265,
+          "item": "toolu_01PxekxQvVGMDAzK4RATgfWz",
+          "text": "## Plan\n- Part I: LHS = Pr[Distinguish(D(BNR_Adv(A)), IndBlock).game()]  (loop <-> gen_CTR op)\n- Part II: Pr[Distinguish(D(B),IndRO)] <= Pr[CCA_game(CCA_CPA_Adv(B),EncRnd)] + qdec*max + qdec*pr1\n  - lazy->eager RO (FiniteRO.RO_FinRO_D)\n  - CCA -> CPA+log, bad = forgery\n  - split dom (counter 0 vs rest), split codom (poly/extra), split poly (r/s)\n  - reprogram s := t - eval r p ; tag uniform ; ciphertext uniform => EncRnd"
+        },
+        {
+          "kind": "agent_action",
+          "line": 392,
+          "item": "toolu_01WK9pSuz1y5gqydPnR6SKKu",
+          "text": "lemma step1 &m :\n  Pr[Indist.Distinguish(D(BNR_Adv(A)), IndBlock).game() @ &m : res] =\n  Pr[CCA_game(BNR_Adv(A), RealOrcls(ChaChaPoly)).main() @ &m : res].\nproof.\nbyequiv => //; proc; inline *; wp.\ncall (_: IndBlock.k{1} = Mem.k{2} /\\ ={BNR.lenc, BNR.ndec}).\n+ proc; sp; if; 1,3: by auto.\n  by wp; call D_enc_real; auto.\n+ proc; sp; if; 1,3: by auto.\n  by wp; call D_dec_real; auto.\nby auto.\nqed."
+        }
+      ]
+    },
+    {
+      "title": "Redesign the oracle split around the adversary’s module restrictions",
+      "paragraphs": [
+        "A direct application of the split-oracle games failed: the instantiated module was not permitted to use adversary A. The outer then built the new games using the allowed RO.m, Mem and BNR state, instead of passing extra split-oracle modules to A.",
+        "Orc3 records encryption outputs and decryption attempts; Orc4 replaces decryption with a log lookup. The L1–L8 skeleton separates real-oracle simulation, eager/lazy changes, an up-to-bad comparison, the CPA equality and a final forgery bound. A compiling skeleton with admits was only a decomposition checkpoint, not a completed proof."
+      ],
+      "work": "Outer: identify the failed module instantiation and redesign the game interfaces before delegating local helpers.",
+      "references": [
+        {
+          "file": "chacha",
+          "lemma": "L1"
+        },
+        {
+          "file": "chacha",
+          "lemma": "L2"
+        },
+        {
+          "file": "chacha",
+          "lemma": "L3"
+        },
+        {
+          "file": "chacha",
+          "lemma": "L4"
+        },
+        {
+          "file": "chacha",
+          "lemma": "L5"
+        },
+        {
+          "file": "chacha",
+          "lemma": "L6"
+        },
+        {
+          "file": "chacha",
+          "lemma": "L7"
+        },
+        {
+          "file": "chacha",
+          "lemma": "L8"
+        },
+        {
+          "file": "chacha",
+          "lemma": "step2"
+        }
+      ],
+      "evidence": [
+        {
+          "kind": "agent_message",
+          "line": 687,
+          "item": "msg_011CeQnEqUdaMoptjbA7XhN3 / text[0]",
+          "text": "Now Part II. Let me first test the critical risk: applying the Split lemmas with the declared adversary."
+        },
+        {
+          "kind": "check",
+          "line": 700,
+          "item": "toolu_01PrjztDLAMRrfwvVNFz9X9T",
+          "text": "the module Top.S12.G4(Top.BNR_Adv(A)) is not allowed to use the modules(s) A"
+        },
+        {
+          "kind": "agent_action",
+          "line": 1206,
+          "item": "toolu_01BGxGhuysNyrbjA79soF4ed",
+          "text": "op enck (m : OpCCRO.globS) (p:plaintext) : ciphertext = CCA_UFCMA.enc m witness p.\nop deck (m : OpCCRO.globS) (c:ciphertext) : plaintext option = CCA_UFCMA.dec m witness c.\nop badf (m : OpCCRO.globS) (lc : ciphertext list) = has (fun c => deck m c <> None) lc."
+        },
+        {
+          "kind": "agent_message",
+          "line": 1274,
+          "item": "msg_011CeQogTFVxeyF4cWFAzVdG / text[0]",
+          "text": "Skeleton compiles. Let me save state and set up delegatable math helpers."
+        }
+      ]
+    },
+    {
+      "title": "Ask Shannon to extract the Poly1305 key distribution",
+      "paragraphs": [
+        "The first mathematical handoff isolates dmap_dblock_mk_rs: extracting (r,s) from a uniform ChaCha block gives the product of the two Poly1305 key distributions. The capsule supplies the two existing sample_spec equalities, byte-conversion identities and a proposed marginalization route; it explicitly says there is no accepted prefix yet.",
+        "The first submission was rejected for an unresolved resource anchor. With the anchor corrected, Shannon proved the helper, and collect recorded merged_and_checked. The outer then used this equality to prove uniform-tag transformations such as dmap_tag; Shannon did not construct the surrounding security-game sequence."
+      ],
+      "work": "Shannon: one complete helper, verified and imported. Outer: prepare the local question and derive the tag-distribution consequences while continuing the game proof.",
+      "references": [
+        {
+          "file": "chacha",
+          "lemma": "dmap_dblock_mk_rs"
+        },
+        {
+          "file": "chacha",
+          "lemma": "dmap_addpoly"
+        },
+        {
+          "file": "chacha",
+          "lemma": "dmap_tag"
+        }
+      ],
+      "evidence": [
+        {
+          "kind": "agent_action",
+          "line": 1294,
+          "item": "toolu_01Q1ETuW1iKm1xJaNVNgnEoP",
+          "text": "Scout type/objective: Prefix/Binding scout. Goal: prove\n  `dmap dblock mk_rs = dpoly_in `*` dpoly_out`\n(distribution of the Poly1305 key pair (r,s) extracted from a uniform ChaCha block).\nOne bounded question: what is the shortest tactic route from the already-realized\n`SplitC1.sample_spec` / `SplitC2.sample_spec` to this equality?"
+        },
+        {
+          "kind": "agent_action",
+          "line": 1294,
+          "item": "toolu_01Q1ETuW1iKm1xJaNVNgnEoP",
+          "text": "Step 3: rewrite (SplitC1.sample_spec witness); rewrite dmap_comp; the composed\n        function is (fun (x:poly*extra_block) => SplitC2.topair x.`1); then use\n        `dmap_dprodE`/`dmap_fst`-style reasoning plus is_lossless dextra_block\n        (`dextra_block_ll`) to get `dmap dpoly SplitC2.topair`; then rewrite\n        (SplitC2.sample_spec witness), dmap_comp, SplitC2 ofpair-cancel, dmap_id."
+        },
+        {
+          "kind": "check",
+          "line": 1997,
+          "item": "toolu_01EHydu416CHPUGrfD6HMV6N",
+          "text": "\"collect_status\": \"merged_and_checked\","
+        },
+        {
+          "kind": "check",
+          "line": 1999,
+          "item": "toolu_01MYQfHtXJE9QSnwvTDWVtGt",
+          "text": "lemma dmap_dblock_mk_rs : dmap dblock mk_rs = dpoly_in `*` dpoly_out.\nproof.\n  rewrite (SplitC1.sample_spec witness) dmap_comp.\n  have -> : (mk_rs \\o SplitC1.ofpair) = (fun (p : poly * extra_block) => SplitC2.topair p.`1).\n  apply fun_ext => p; case: p => x y /=.\n  rewrite /(\\o) /mk_rs /SplitC1.ofpair /SplitC2.topair /=."
+        }
+      ]
+    },
+    {
+      "title": "Make the up-to-bad comparison preserve the encryption log",
+      "paragraphs": [
+        "The oracle comparison needs more than equality of outputs. logok connects logged ciphertexts to their plaintexts; the outer proves encryption preserves it, specifies decryption, and establishes losslessness and persistence of badf.",
+        "Those local contracts support Orc34_enc and Orc34_dec. The latter requires equal decryption results only when badf is false. L3eq lifts this relation through the adversary, and L3 charges the bad event; L5 turns that event into the explicit final forgery test."
+      ],
+      "work": "Outer: build log invariants, oracle contracts and the up-to-bad lifting. This work continues around the first Shannon helper job.",
+      "references": [
+        {
+          "file": "chacha",
+          "lemma": "enc_logok"
+        },
+        {
+          "file": "chacha",
+          "lemma": "enc_logok4"
+        },
+        {
+          "file": "chacha",
+          "lemma": "dec_spec"
+        },
+        {
+          "file": "chacha",
+          "lemma": "Orc34_enc"
+        },
+        {
+          "file": "chacha",
+          "lemma": "Orc34_dec"
+        },
+        {
+          "file": "chacha",
+          "lemma": "L3eq"
+        },
+        {
+          "file": "chacha",
+          "lemma": "L3"
+        },
+        {
+          "file": "chacha",
+          "lemma": "L5"
+        }
+      ],
+      "evidence": [
+        {
+          "kind": "agent_message",
+          "line": 1717,
+          "item": "msg_011CeQphY1dnMtTbJeZt85wH / text[0]",
+          "text": "Now L3 (the up-to-bad step). Let me build the needed oracle specs."
+        },
+        {
+          "kind": "agent_action",
+          "line": 2152,
+          "item": "toolu_01DbABqvFa8d2EgXCTMUcxi9",
+          "text": "equiv Orc34_dec :\n  Orc3(FinRO).dec ~ Orc4(FinRO).dec :\n    ={arg, RO.m, Mem.log, Mem.lc} /\\ logok RO.m{1} Mem.log{1}\n    ==> ={RO.m, Mem.log, Mem.lc} /\\ logok RO.m{1} Mem.log{1} /\\\n        (! badf RO.m{2} Mem.lc{2} => ={res})."
+        }
+      ]
+    },
+    {
+      "title": "Turn fresh-nonce encryption into the CPA random-ciphertext game",
+      "paragraphs": [
+        "For encEq, the outer supplied an opening proof prefix, a two-sided stream-loop invariant and a tested tag-sampling recipe. Counter freshness depends on both map membership and the remaining message length: the proof must keep C.ofintd i injective by showing the integer counter remains in range.",
+        "Shannon returned incomplete with a 76-tactic prefix. The outer reused it and completed the residual counter bound, size/drop arithmetic, romOK facts and tag coupling. The resulting encEq and decEq discharge L7. The completion interval was real remaining proof work as well as prefix integration; the partial result was not an already-finished equivalence."
+      ],
+      "work": "Shannon: state-sensitive progress on the loop proof. Outer: provide the invariant and distribution route, finish residual obligations and compose L7.",
+      "references": [
+        {
+          "file": "chacha",
+          "lemma": "encEq"
+        },
+        {
+          "file": "chacha",
+          "lemma": "ctr_bound"
+        },
+        {
+          "file": "chacha",
+          "lemma": "dmap_tag_set"
+        },
+        {
+          "file": "chacha",
+          "lemma": "decEq"
+        },
+        {
+          "file": "chacha",
+          "lemma": "L7"
+        }
+      ],
+      "evidence": [
+        {
+          "kind": "agent_message",
+          "line": 2422,
+          "item": "msg_011CeQrMABefwmMB4KYqBuD9 / text[0]",
+          "text": "Now L7 — the CPA step. Let me set up its structure."
+        },
+        {
+          "kind": "agent_action",
+          "line": 2553,
+          "item": "toolu_01BriV4Yq53mUwCrbD86PPkf",
+          "text": "Scout type/objective: Prefix scout. Objective: complete the proof body of `encEq`.\nIt is the core CPA step: encrypting with a *fresh* nonce under a lazy RO yields a\nuniformly random ciphertext and a uniformly random tag, i.e. exactly `EncRnd`."
+        },
+        {
+          "kind": "agent_action",
+          "line": 2553,
+          "item": "toolu_01BriV4Yq53mUwCrbD86PPkf",
+          "text": "The last two conjuncts give freshness: inside the body,\n    `(pv.`1, C.ofintd i) \\notin RO.m{1}` because otherwise\n    `1 <= C.toint (C.ofintd i) < i`, and `C.toint (C.ofintd i) = i`\n    by `C.ofintdK` (valid because `0 <= i <= C.max_counter`, see below).\n    The counter bound `i <= C.max_counter` follows from the loop guard\n    `p0 <> []` (so `size p0 >= 1`), the size conjunct, `gt0_block_size`\n    and `max_cipher_size_ok : max_cipher_size <= C.max_counter * block_size`."
+        }
+      ]
+    },
+    {
+      "title": "Separate tag reprogramming from the probability accounting",
+      "paragraphs": [
+        "The remaining L8 argument introduces a game that samples the tag uniformly while preserving the relationship to the original random-oracle block. setS replaces the block’s s component; ginv records the map/log relation that must survive this change. The outer prepares the required distribution identities and the encRepro statement.",
+        "The handoff already describes the main mathematical route: first align the identical stream loops, then turn the left-hand block draw into a block/tag pair and use a translation bijection. Shannon is asked to execute this local relational proof, while the outer develops the independent forgery bounds. The initial encRepro capsule has supporting lemmas and a route, but explicitly no accepted prefix."
+      ],
+      "work": "Outer: invent the reprogramming invariant and game chain. Shannon: attempt the local encryption equivalence; the outer proceeds with L8’s bounds in parallel.",
+      "references": [
+        {
+          "file": "chacha",
+          "lemma": "mk_rs_setS"
+        },
+        {
+          "file": "chacha",
+          "lemma": "dmap_Phi"
+        },
+        {
+          "file": "chacha",
+          "lemma": "dmap_setS"
+        },
+        {
+          "file": "chacha",
+          "lemma": "encRepro"
+        },
+        {
+          "file": "chacha",
+          "lemma": "L8a"
+        },
+        {
+          "file": "chacha",
+          "lemma": "L8b"
+        }
+      ],
+      "evidence": [
+        {
+          "kind": "agent_message",
+          "line": 4385,
+          "item": "msg_011CeQvrDNRF1Wu7HLRWNqmA / text[0]",
+          "text": "Now the final piece, L8. Let me set up the game chain."
+        },
+        {
+          "kind": "agent_message",
+          "line": 4958,
+          "item": "msg_011CeQxZsD1Hoj3JBXz4DuYJ / text[0]",
+          "text": "I'm at a hard sub-problem. Let me parallelize with Shannon while I work."
+        },
+        {
+          "kind": "agent_action",
+          "line": 5070,
+          "item": "toolu_01FnwjF7Dd9rwqKEWk9fR8Zq",
+          "text": "Maturity evidence and machine-checked prefix: empty prefix (body is `admit`); the whole\nfile replays green. All supporting lemmas below are already machine-checked in the file."
+        },
+        {
+          "kind": "agent_action",
+          "line": 5070,
+          "item": "toolu_01FnwjF7Dd9rwqKEWk9fR8Zq",
+          "text": "Recipe (all three ingredients are already proved in the file):\n  * `rndsem*{1} 0` and `rndsem*{2} 0` turn each fragment into ONE sampling.  On the\n    right the two samples merge into a product over `dblock `*` dpoly_out`.  On the left\n    you must first make the left ALSO sample a pair, using\n        `dmap_setS : dmap (dblock `*` dpoly_out) (fun p => setS p.`1 p.`2) = dblock`\n    i.e. replace `r1 <$ dblock` by `bs <$ dblock `*` dpoly_out; r1 <- setS bs.`1 bs.`2`\n    (use `transitivity{1}` or `rndsem` + `rewrite -dmap_setS` on the resulting\n    distribution, whichever fires)."
+        }
+      ]
+    },
+    {
+      "title": "Bound fresh-key and used-key forgeries, then sum over the log",
+      "paragraphs": [
+        "The main forgery bound splits on whether the nonce has an encryption entry. A fresh nonce yields a uniform tag, costing pr1_poly_out per candidate. For an already-used nonce, the argument reduces to a nonzero polynomial equation, costing pr_zeropol. Their common bound is the maximum of the two terms.",
+        "The outer builds a reusable list union bound, filtered versions of these tests, and Lp_bound, an induction over distinct nonces. The accounting counts relevant decryption queries, not merely loop iterations. A loop-to-one-step equivalence lets the induction call the tail contract. L8c_main then bounds the main event under the condition that no earlier decryption query later becomes a logged encryption output."
+      ],
+      "work": "Outer: construct the probability lemmas, list induction and game invariants while encRepro runs. Shannon is not proving this probability bound.",
+      "references": [
+        {
+          "file": "chacha",
+          "lemma": "mu_has_le"
+        },
+        {
+          "file": "chacha",
+          "lemma": "bound_fresh"
+        },
+        {
+          "file": "chacha",
+          "lemma": "bound_used"
+        },
+        {
+          "file": "chacha",
+          "lemma": "ftest_bound"
+        },
+        {
+          "file": "chacha",
+          "lemma": "Lp_loop_step"
+        },
+        {
+          "file": "chacha",
+          "lemma": "Lp_bound"
+        },
+        {
+          "file": "chacha",
+          "lemma": "L8c_main"
+        }
+      ],
+      "evidence": [
+        {
+          "kind": "agent_message",
+          "line": 4826,
+          "item": "msg_011CeQwt3rbHtEAk5PLAXBfW / text[0]",
+          "text": "I need to check FEL's exact requirements — it's the crux for one bad event."
+        },
+        {
+          "kind": "agent_message",
+          "line": 5179,
+          "item": "msg_011CeQy7t7ToxoFCi2RtP3pW / text[0]",
+          "text": "Let me restructure L8c to carry both terms and update notes."
+        },
+        {
+          "kind": "agent_action",
+          "line": 5301,
+          "item": "toolu_01WcUpivQF2UpnJLQn5wFobg",
+          "text": "lemma Lp_bound (l : nonce list) :\n  forall (lcv : ciphertext list) (lgv : (ciphertext,plaintext) fmap) (lencv : nonce list),\n  uniq l =>\n  (forall n, n \\in l => condN lgv lcv lencv n) =>\n  phoare [ Lp(RO).loop :\n     ns = l /\\ !forged /\\ Mem.lc = lcv /\\ Mem.log = lgv /\\ BNR.lenc = lencv /\\\n     (forall n, n \\in l => ! ((n, C.ofintd 0) \\in RO.m))\n     ==> res ]\n  <= (size (filter (fun (c:ciphertext) => c.`1 \\in l) lcv))%r\n     * (maxr pr_zeropol pr1_poly_out)."
+        }
+      ]
+    },
+    {
+      "title": "Pay separately for a decryption query that later matches encryption",
+      "paragraphs": [
+        "The exceptional event cannot be discarded: a previously recorded decryption query can later equal an encryption output. Charging a variable number of queries at each encryption call does not directly fit the attempted failure-event-lemma (FEL) counter. The outer changes the accounting unit to one fixed query index.",
+        "dqj selects from the end of Mem.lc. Because decryption adds a new query at the front, an existing indexed query remains stable, as formalized by dqj_cons. Each index gets a 0/1 counter and a pr1_poly_out bound; pr_range_bound unions over at most qdec indices. L8bad1 supplies the second qdec × pr1_poly_out term, and L8c combines the two events.",
+        "The public checkpoint reports that these lemmas were checked while four admits remained in encRepro. This shows outer proof construction overlapping Shannon work, but not two simultaneous Shannon lanes."
+      ],
+      "work": "Outer: redesign the failure-event accounting, prove the per-index bound and assemble the union bound. The last Shannon job is still active.",
+      "references": [
+        {
+          "file": "chacha",
+          "lemma": "dqj_cons"
+        },
+        {
+          "file": "chacha",
+          "lemma": "L8Ej"
+        },
+        {
+          "file": "chacha",
+          "lemma": "pr_range_bound"
+        },
+        {
+          "file": "chacha",
+          "lemma": "L8bad1"
+        },
+        {
+          "file": "chacha",
+          "lemma": "L8c"
+        }
+      ],
+      "evidence": [
+        {
+          "kind": "agent_action",
+          "line": 6413,
+          "item": "toolu_019cmV8uUqdC1mY3DxQZHwwF",
+          "text": "op dqj (j : int) (lc : ciphertext list) : ciphertext =\n  nth witness lc (size lc - 1 - j).\n\nop Ej (j : int) (lg : (ciphertext,plaintext) fmap) (lc : ciphertext list) =\n  j < size lc /\\ (dqj j lc) \\in lg.\n\nop Ejc (j : int) (lc : ciphertext list) (lenc : nonce list) =\n  j < size lc /\\ (dqj j lc).`1 \\in lenc."
+        },
+        {
+          "kind": "agent_message",
+          "line": 7117,
+          "item": "msg_011CeR71kP8zof7qp51W8g8N / text[0]",
+          "text": "`pr_range_bound` and `L8bad1` are now machine-checked — the file `--check`s green with **only the 4 admits inside `encRepro`** remaining. Notes updated.\n\nShannon job `b5ba3ee059ff4f0b` (encRepro) is at 80 accepted tactics and just past its 40-minute deadline; a background poller is watching for its terminal status and will wake me the moment it lands."
+        }
+      ]
+    },
+    {
+      "title": "Reuse the partial encRepro proofs and close the tag coupling",
+      "paragraphs": [
+        "The first encRepro result returned 96 tactics but not a completed proof. After replaying it, the outer described four remaining obligations in a narrower continuation: right-hand freshness, invariant preservation, loop entry/exit and the tag step. An anchor failure was corrected before the replacement job ran.",
+        "The replacement returned a 77-tactic selected prefix. The outer’s final message records three replay repairs and the remaining work. For the tag step, a direct one-draw-to-two-draw bijection is insufficient; the outer implements the previously proposed transitivity intermediate, proves dlet_setS and completes the tag-translation coupling and log bookkeeping.",
+        "The useful contribution is partial interactive proof progress, not an independently completed encRepro. The final whole-file acceptance certifies the integrated proof after the outer’s additions. The 76-, 96- and 77-tactic returns overlap and are not additive measures of completed work."
+      ],
+      "work": "Shannon: two partial encRepro attempts. Outer: localize the first residual, prepare continuation, repair the second prefix and finish the mathematical bridge.",
+      "references": [
+        {
+          "file": "chacha",
+          "lemma": "encRepro"
+        },
+        {
+          "file": "chacha",
+          "lemma": "dlet_setS"
+        },
+        {
+          "file": "chacha",
+          "lemma": "nlkp_set_new"
+        },
+        {
+          "file": "chacha",
+          "lemma": "nlkp_set_old"
+        },
+        {
+          "file": "chacha",
+          "lemma": "L8a"
+        }
+      ],
+      "evidence": [
+        {
+          "kind": "agent_action",
+          "line": 6092,
+          "item": "toolu_016ARjEJE3uWMsQ4AhrAoMyR",
+          "text": "Target and handoff class: `lemma encRepro`. Progressing continuation of job\n843d9accc80b4599 (which returned `incomplete` with a 96-tactic accepted prefix).\n\nMaturity evidence and machine-checked prefix: the file currently REPLAYS GREEN with\nthe following accepted body (4 `admit`s remain).  The `seq 1 1 : (...)` invariant and\nthe two-sided `while` with the same invariant are ACCEPTED, and the first\n`rcondt{1} 3` freshness side goal is ACCEPTED (using `ctr_bound`, `C.ofintdK`,\n`size_eq0`, `size_ge0`).  Note two syntax fixes that were needed relative to the\nprevious run: `smt (size_eq0)` had to become `smt(size_eq0 size_ge0)`, and\n`move=> hin.` on a `\\notin` goal had to become `apply/negP => hin.`"
+        },
+        {
+          "kind": "agent_action",
+          "line": 6092,
+          "item": "toolu_016ARjEJE3uWMsQ4AhrAoMyR",
+          "text": "First rejected/next tactic and residual goal: the four remaining `admit`s are\n  (a) the `rcondt{2} 3` freshness side goal — same argument as the accepted\n      `rcondt{1} 3` one, but for `RO.m{2}`; use the invariant conjunct\n      `(forall x, x \\in RO.m{1} <=> x \\in RO.m{2})` to transfer it, then reuse the\n      accepted `ctr_bound`/`C.ofintdK` script.  Remember to start the branch with\n      `auto => />.` and an explicit `move=> &hr ...` intro (the previous run's script\n      omitted that prelude and therefore failed to replay).\n  (b) the loop-body postcondition (re-establishing the whole invariant after one\n      stream block).  Both sides sample the SAME `dblock` and store it at the SAME\n      key, so couple with the IDENTITY `rnd`; then the invariant conjuncts follow from\n      `get_set_sameE`, `mem_set`, `size_drop`, `size_eq0`, and the counter bound\n      (i.e. `C.ofintdK`, `ctr_bound`).\n  (c) the loop entry/exit `skip`.\n  (d) the tag step after the loop.  RECIPE (all ingredients proved in the file):"
+        },
+        {
+          "kind": "agent_message",
+          "line": 8057,
+          "item": "msg_011CeRAZwsSRTkokeqSDoJoc / text[0]",
+          "text": "2. **`encRepro`** — the last admit. Shannon job `b5ba3ee059ff4f0b` finished `incomplete` with a 77-tactic accepted prefix covering the stream loop; I replayed it with three local repairs (`exact (hn hbad)` → `smt()`, an `smt(size_drop …)` → explicit `size_drop` steps, tuple-equality destructuring → `congr1 fst`/`congr1 snd`), then finished the loop-body invariant, the loop-entry skip, and the tag step myself.\n\n   The tag step was the real obstacle: `Orc3.enc` samples **one** block while `Orc5v.enc` samples a block **and** a fresh tag, so no bijective `rnd` coupling exists. Bridged with `transitivity{1}` to an intermediate that splits the left sample (`r0 <$ dblock; t <$ dpoly_out; r1 <- setS r0 t`), discharging the three side goals via `rndsem*{2} 0` + a new `dlet_setS` lemma (`dmap_dprodE` with the function given explicitly — the bare `-dmap_dprodE` rewrite does not unify) and a translation bijection on `dpoly_out`."
+        }
+      ]
+    },
+    {
+      "title": "Compose the short conclusion and verify the whole development",
+      "paragraphs": [
+        "After the helpers and game hops are proved, the fixed conclusion is three lines: obtain step1, obtain step2, then close the probability arithmetic with SMT. The short final theorem is the endpoint of the decomposition, not evidence that the whole task was a small SMT problem.",
+        "The archived independent verifier accepted the entire 3,703-line file with the displayed final hash, and both supplied sibling specifications remained unchanged. Intermediate green checks and public completion messages are not used as substitutes for that final receipt. No model or EasyCrypt execution is performed by this page."
+      ],
+      "work": "Outer: complete the theorem and run the final check. Independent verification: accept the full preserved development, not only the displayed final goal.",
+      "references": [
+        {
+          "file": "chacha",
+          "lemma": "step1"
+        },
+        {
+          "file": "chacha",
+          "lemma": "step2"
+        },
+        {
+          "file": "chacha",
+          "lemma": "conclusion"
+        }
+      ],
+      "evidence": [
+        {
+          "kind": "check",
+          "line": 8044,
+          "item": "toolu_01GD3UUcisTXTPbfEBp1Vh4A",
+          "text": "passed = true\nerrors = []"
+        },
+        {
+          "kind": "check",
+          "line": 8049,
+          "item": "toolu_01VrwvMR9SLVxR5MK7ehzPfj",
+          "text": "3690:lemma conclusion &m :\n3691-    Pr[CCA_game(BNR_Adv(A), RealOrcls(ChaChaPoly)).main() @ &m : res] <=\n3692-      Pr[CCA_game(CCA_CPA_Adv(BNR_Adv(A)), EncRnd).main() @ &m : res] +\n3693-      (Pr[Indist.Distinguish(D(BNR_Adv(A)), IndBlock).game() @ &m : res] -\n3694-       Pr[Indist.Distinguish(D(BNR_Adv(A)), IndRO).game() @ &m : res]) +\n3695-       qdec%r * (maxr pr_zeropol pr1_poly_out) +\n3696-       qdec%r * pr1_poly_out.\n3697-proof.\n3698-have h1 := step1 &m.\n3699-have h2 := step2 &m.\n3700-smt().\n3701-qed."
+        },
+        {
+          "kind": "agent_message",
+          "line": 8057,
+          "item": "msg_011CeRAZwsSRTkokeqSDoJoc / text[0]",
+          "text": "**Final state**\n- `conclusion` body: `have h1 := step1 &m. have h2 := step2 &m. smt().`\n- No `admit`, `axiom`, `pragma`, `exit`, `abort`, or `require` anywhere in the scratchpad.\n- Only `experiments/interleaved_shannon/task/chacha_poly.ec` is modified; `ske.ec` and `indistinguishability.eca` hash-match their pinned values.\n- No Shannon jobs running or queued."
+        }
+      ]
+    }
+  ],
+  "jobs": {
+    "note": "All six submissions are shown: one merged helper, three incomplete results with material prefix reuse, and two anchor failures before any proof turn. The latter five are not five completed proofs.",
+    "merged": [
+      {
+        "id": "6433ed42370c4315",
+        "lemma": "dmap_dblock_mk_rs",
+        "duration": "9m 54s",
+        "result": "Merged and checked · one complete helper proof"
+      }
+    ],
+    "other": [
+      {
+        "id": "3f3de3b8a65a476d",
+        "lemma": "dmap_dblock_mk_rs",
+        "duration": "6s",
+        "result": "Not started · unresolved resource anchor; 0 proof turns"
+      },
+      {
+        "id": "ffc33262d89f4508",
+        "lemma": "encEq",
+        "duration": "25m 23s",
+        "result": "Incomplete · 76-tactic prefix reused; outer completed encEq"
+      },
+      {
+        "id": "843d9accc80b4599",
+        "lemma": "encRepro",
+        "duration": "40m 19s",
+        "result": "Incomplete · 96-tactic prefix replayed; four residual obligations identified"
+      },
+      {
+        "id": "1235f6f24bcf4eb9",
+        "lemma": "encRepro",
+        "duration": "10s",
+        "result": "Not started · anchors below the target snapshot; 0 proof turns"
+      },
+      {
+        "id": "b5ba3ee059ff4f0b",
+        "lemma": "encRepro",
+        "duration": "40m 40s",
+        "result": "Incomplete · 77 selected tactics reused after repairs; outer completed encRepro"
+      }
+    ],
+    "sourceNote": "Source: public_shannon/shannon_public_jobs.json in the frozen archive; final acceptance: run/independent_verification.json. Durations are job start-to-finish wall time, not requested timeouts, merge latency or savings. The three partial returns were completed by the outer; they were not automatically merged as verified proofs. This is a single-run account, not a controlled speed comparison with a plain-model baseline."
+  }
+}

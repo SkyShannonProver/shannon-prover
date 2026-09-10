@@ -5,6 +5,11 @@ name: pages
 on:
   push:
     branches: [main]
+    paths:
+      - '.github/workflows/pages.yml'
+      - 'website/**'
+      - 'bundle_browser/**'
+      - 'agent_view_runs/**'
   workflow_dispatch:
 
 permissions:
