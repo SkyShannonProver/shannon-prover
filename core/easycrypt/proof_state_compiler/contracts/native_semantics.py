@@ -22,11 +22,13 @@ NATIVE_PROOF_TERM_ELABORATION = "proof_term_elaboration"
 NATIVE_ATTEMPT_DIAGNOSTIC = "attempt_diagnostic"
 NATIVE_TACTIC_PREFIX_DIAGNOSTIC = "tactic_prefix_diagnostic"
 NATIVE_SELECTED_APPLICATION_BINDING_SET = "selected_application_binding_set"
+NATIVE_NAMESPACE_SPELLING_SET = "namespace_spelling_set"
 NATIVE_SEMANTIC_QUERY_KINDS = frozenset({
     NATIVE_PROOF_TERM_ELABORATION,
     NATIVE_ATTEMPT_DIAGNOSTIC,
     NATIVE_TACTIC_PREFIX_DIAGNOSTIC,
     NATIVE_SELECTED_APPLICATION_BINDING_SET,
+    NATIVE_NAMESPACE_SPELLING_SET,
 })
 NATIVE_PRODUCTION_READY = "ready"
 NATIVE_PRODUCTION_NOT_APPLICABLE = "not_applicable"
@@ -39,6 +41,13 @@ NATIVE_PRODUCTION_DISPOSITIONS = frozenset({
 MAX_NATIVE_CONSUMER_REQUESTS = 32
 MAX_NATIVE_EXECUTION_UNITS = 8
 MAX_NATIVE_BINDING_CANDIDATE_CHECKS = 4096
+# Mirrored by max_namespace_spellings in native_semantic_adapter.ml.
+MAX_NATIVE_NAMESPACE_SPELLINGS = 16
+NATIVE_NAMESPACE_SPELLING_EFFECTS = frozenset({
+    "accepted_changed",
+    "accepted_no_progress",
+    "rejected",
+})
 _PROOF_TERM_OPERATIONS = frozenset({"apply", "exact", "call", "conseq"})
 _ATTEMPT_OPERATIONS = frozenset({
     "apply", "exact", "call", "conseq", "transitivity", "change", "eager",
@@ -235,6 +244,9 @@ class NativeInputArgument:
     syntax_kind: str
     explicit_hole: bool
     source_spelling: str = ""
+    # EasyCrypt located its argument error (wrong kind, or no product left
+    # to apply it to) at exactly this argument.
+    rejected: bool = False
 
     def __post_init__(self) -> None:
         if self.position < 1 or self.syntax_kind not in {
@@ -243,6 +255,8 @@ class NativeInputArgument:
             raise ValueError("native input argument is invalid")
         if self.explicit_hole is not (self.syntax_kind == "hole"):
             raise ValueError("native input hole marker is invalid")
+        if type(self.rejected) is not bool:
+            raise ValueError("native input rejection marker is invalid")
         if self.source_spelling and (
             not _valid_qualified_symbol(self.source_spelling)
             or self.syntax_kind not in {"formula", "module"}
@@ -255,6 +269,7 @@ class NativeInputArgument:
             "syntax_kind": self.syntax_kind,
             "explicit_hole": self.explicit_hole,
             "source_spelling": self.source_spelling,
+            "rejected": self.rejected,
         }
 
 
@@ -525,6 +540,133 @@ class NativeSelectedApplicationBindingSetDescriptor:
         }
 
 
+def namespace_spelling_application_term(head: str, arguments: str) -> str:
+    """The agent's proof term with only its head spelling replaced."""
+
+    return f"{head} {arguments}" if arguments else head
+
+
+def valid_namespace_spelling_arguments(arguments: str) -> bool:
+    """One stripped, single-line argument text with balanced delimiters."""
+
+    if arguments != arguments.strip() or any(
+        char in arguments for char in "\n\r;"
+    ):
+        return False
+    closers = {")": "(", "]": "[", "}": "{"}
+    stack: list[str] = []
+    for char in arguments:
+        if char in "([{":
+            stack.append(char)
+        elif char in closers:
+            if not stack or stack.pop() != closers[char]:
+                return False
+    return not stack
+
+
+@dataclass(frozen=True)
+class NativeNamespaceSpelling:
+    """EasyCrypt's verdict on one usable spelling of the written basename."""
+
+    candidate_head: str
+    resolved_identity: str
+    application_term: str
+    candidate_tactic: str
+    tactic_effect: str
+
+    def __post_init__(self) -> None:
+        if (
+            not _valid_qualified_symbol(self.candidate_head)
+            or not _valid_qualified_symbol(self.resolved_identity)
+            or self.tactic_effect not in NATIVE_NAMESPACE_SPELLING_EFFECTS
+            or not self.candidate_tactic.endswith(".")
+        ):
+            raise ValueError("native namespace spelling is invalid")
+        if (
+            self.resolved_identity.rsplit(".", 1)[-1]
+            != self.candidate_head.rsplit(".", 1)[-1]
+        ):
+            raise ValueError("native namespace spelling resolved another name")
+
+    def to_payload(self) -> dict[str, object]:
+        return {
+            "candidate_head": self.candidate_head,
+            "resolved_identity": self.resolved_identity,
+            "application_term": self.application_term,
+            "candidate_tactic": self.candidate_tactic,
+            "tactic_effect": self.tactic_effect,
+        }
+
+
+@dataclass(frozen=True)
+class NativeNamespaceSpellingSetDescriptor:
+    """Native population and verdicts for one unresolved written name.
+
+    EasyCrypt enumerates every lemma or axiom of the current environment whose
+    last name component equals the written basename, spells each with its
+    shortest name that resolves back to it, and runs the agent's tactic with
+    only that head replaced at the current goal.  An over-bound population is
+    incomplete and carries no verdicts; a written name that already resolves
+    carries none either.
+    """
+
+    operation: str
+    arguments: str
+    written_name: str
+    written_name_resolves: bool
+    population_count: int
+    population_complete: bool
+    spellings: tuple[NativeNamespaceSpelling, ...]
+
+    def __post_init__(self) -> None:
+        if (
+            self.operation not in _PROOF_TERM_OPERATIONS
+            or not valid_namespace_spelling_arguments(self.arguments)
+            or not _valid_qualified_symbol(self.written_name)
+            or type(self.written_name_resolves) is not bool
+            or type(self.population_complete) is not bool
+            or type(self.population_count) is not int
+            or self.population_count < 0
+        ):
+            raise ValueError("native namespace spelling set is invalid")
+        if self.population_complete != (
+            self.population_count <= MAX_NATIVE_NAMESPACE_SPELLINGS
+        ) or len(self.spellings) != (
+            self.population_count if self.population_complete else 0
+        ):
+            raise ValueError("native namespace spelling population is invalid")
+        if self.written_name_resolves and self.population_count:
+            raise ValueError("resolved written name carried spellings")
+        heads = tuple(item.candidate_head for item in self.spellings)
+        identities = tuple(item.resolved_identity for item in self.spellings)
+        if heads != tuple(sorted(set(heads))) or len(set(identities)) != len(
+            identities
+        ):
+            raise ValueError("native namespace spellings are not canonical")
+        basename = self.written_name.rsplit(".", 1)[-1]
+        for item in self.spellings:
+            term = namespace_spelling_application_term(
+                item.candidate_head, self.arguments
+            )
+            if (
+                item.candidate_head.rsplit(".", 1)[-1] != basename
+                or item.application_term != term
+                or item.candidate_tactic != f"{self.operation} ({term})."
+            ):
+                raise ValueError("native namespace spelling changed the tactic")
+
+    def to_payload(self) -> dict[str, object]:
+        return {
+            "operation": self.operation,
+            "arguments": self.arguments,
+            "written_name": self.written_name,
+            "written_name_resolves": self.written_name_resolves,
+            "population_count": self.population_count,
+            "population_complete": self.population_complete,
+            "spellings": [item.to_payload() for item in self.spellings],
+        }
+
+
 @dataclass(frozen=True)
 class NativeApplicationSlotDescriptor:
     """One ordered argument slot exposed by an EasyCrypt proof-term head."""
@@ -575,10 +717,21 @@ class NativeApplicationHeadDescriptor:
     input_arguments: tuple[NativeInputArgument, ...]
     slots: tuple[NativeApplicationSlotDescriptor, ...]
     result: NativeFormulaDescriptor
+    # EasyCrypt's implicit-arguments option; with it on, an implicit-mode
+    # `apply`/`exact` term gets inferred arguments before the written ones.
+    implicits_enabled: bool = False
+    # The result still unfolds into a product, so EasyCrypt takes more
+    # arguments than ``slots`` lists.
+    unfolds_to_more_slots: bool = False
 
     def __post_init__(self) -> None:
         if self.input_mode not in {"explicit", "implicit"}:
             raise ValueError("native application-head input mode is invalid")
+        if (
+            type(self.implicits_enabled) is not bool
+            or type(self.unfolds_to_more_slots) is not bool
+        ):
+            raise ValueError("native application-head flags are invalid")
         if tuple(item.position for item in self.input_arguments) != tuple(
             range(1, len(self.input_arguments) + 1)
         ):
@@ -587,6 +740,8 @@ class NativeApplicationHeadDescriptor:
             range(1, len(self.slots) + 1)
         ):
             raise ValueError("native application-head slot order is invalid")
+        if sum(item.rejected for item in self.input_arguments) > 1:
+            raise ValueError("native application-head rejection is invalid")
 
     def to_payload(self) -> dict[str, object]:
         return {
@@ -595,7 +750,9 @@ class NativeApplicationHeadDescriptor:
             "input_arguments": [
                 item.to_payload() for item in self.input_arguments
             ],
+            "implicits_enabled": self.implicits_enabled,
             "slots": [item.to_payload() for item in self.slots],
+            "unfolds_to_more_slots": self.unfolds_to_more_slots,
             "result": self.result.to_payload(),
         }
 
@@ -663,6 +820,34 @@ class NativeSelectedApplicationBindingSetQuery:
             "operation": self.operation,
             "selected_resource": self.selected_resource,
             "module_candidates": list(self.module_candidates),
+        }
+
+
+@dataclass(frozen=True)
+class NativeNamespaceSpellingSetQuery:
+    """The agent's operation, argument text and unresolved written name."""
+
+    operation: str
+    arguments: str
+    written_name: str
+
+    def __post_init__(self) -> None:
+        if self.operation not in _PROOF_TERM_OPERATIONS:
+            raise ValueError("native namespace spelling operation is invalid")
+        if not valid_namespace_spelling_arguments(self.arguments):
+            raise ValueError("native namespace spelling arguments are invalid")
+        if not _valid_qualified_symbol(self.written_name):
+            raise ValueError("native namespace spelling name is invalid")
+
+    @property
+    def query_kind(self) -> str:
+        return NATIVE_NAMESPACE_SPELLING_SET
+
+    def to_payload(self) -> dict[str, object]:
+        return {
+            "operation": self.operation,
+            "arguments": self.arguments,
+            "written_name": self.written_name,
         }
 
 
@@ -736,6 +921,7 @@ class NativeTacticPrefixDiagnosticQuery:
 NativeSemanticQuery = (
     NativeProofTermElaborationQuery
     | NativeSelectedApplicationBindingSetQuery
+    | NativeNamespaceSpellingSetQuery
     | NativeAttemptDiagnosticQuery
     | NativeTacticPrefixDiagnosticQuery
 )
@@ -1528,6 +1714,7 @@ class NativeAttemptedOperationDescriptor:
 NativeSemanticDescriptor = (
     NativeProofTermDescriptor
     | NativeSelectedApplicationBindingSetDescriptor
+    | NativeNamespaceSpellingSetDescriptor
     | NativeAttemptedOperationDescriptor
     | NativeTacticPrefixDiagnosticDescriptor
 )
@@ -1576,6 +1763,7 @@ class NativeSemanticRequest:
         if not isinstance(self.query, (
             NativeProofTermElaborationQuery,
             NativeSelectedApplicationBindingSetQuery,
+            NativeNamespaceSpellingSetQuery,
             NativeAttemptDiagnosticQuery,
             NativeTacticPrefixDiagnosticQuery,
         )):
@@ -1983,6 +2171,7 @@ class NativeSemanticObservation:
         if not isinstance(self.query, (
             NativeProofTermElaborationQuery,
             NativeSelectedApplicationBindingSetQuery,
+            NativeNamespaceSpellingSetQuery,
             NativeAttemptDiagnosticQuery,
             NativeTacticPrefixDiagnosticQuery,
         )):
@@ -2021,6 +2210,9 @@ class NativeSemanticObservation:
             expected_descriptor_type = {
                 NATIVE_SELECTED_APPLICATION_BINDING_SET: (
                     NativeSelectedApplicationBindingSetDescriptor
+                ),
+                NATIVE_NAMESPACE_SPELLING_SET: (
+                    NativeNamespaceSpellingSetDescriptor
                 ),
                 NATIVE_ATTEMPT_DIAGNOSTIC: NativeAttemptedOperationDescriptor,
                 NATIVE_TACTIC_PREFIX_DIAGNOSTIC: (

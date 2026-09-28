@@ -15,6 +15,7 @@ from core.easycrypt.native_semantics.semantic_adapter import (
     validate_application_head_descriptor,
     validate_native_query_payload,
     validate_proof_term_descriptor,
+    validate_namespace_spelling_set_descriptor,
     validate_selected_application_binding_set_descriptor,
     validate_tactic_prefix_descriptor,
 )
@@ -40,6 +41,7 @@ __all__ = [
     "validate_application_head_descriptor",
     "validate_native_query_payload",
     "validate_proof_term_descriptor",
+    "validate_namespace_spelling_set_descriptor",
     "validate_selected_application_binding_set_descriptor",
     "validate_tactic_prefix_descriptor",
     "NativeStateProjectionRequest",

@@ -22,6 +22,7 @@ from core.easycrypt.proof_state_compiler.contracts.candidate_surface import (
 )
 from core.easycrypt.proof_state_compiler.derived_provenance import derived_provenance
 from core.easycrypt.proof_state_compiler.syntax.attempted_operation import (
+    operation_head_arguments,
     single_operation_identity,
 )
 from core.easycrypt.proof_state_compiler.contracts.failure import (
@@ -310,7 +311,17 @@ def _preserves_attempted_operation(
     if ownership.resource_match_kind == "none":
         return not resource
     if ownership.resource_match_kind == "basename":
-        return resource.rsplit(".", 1)[-1] == (
-            ownership.selected_resource.rsplit(".", 1)[-1]
+        # A namespace-only correction may change the head's theory path and
+        # nothing else: the agent's argument text must be byte-identical.
+        corrected = operation_head_arguments(tactic)
+        rejected = operation_head_arguments(
+            str(getattr(attempted, "rejected_tactic", "") or "")
+        )
+        return bool(
+            corrected is not None
+            and rejected is not None
+            and corrected[2] == rejected[2]
+            and resource.rsplit(".", 1)[-1]
+            == ownership.selected_resource.rsplit(".", 1)[-1]
         )
     return resource == ownership.selected_resource

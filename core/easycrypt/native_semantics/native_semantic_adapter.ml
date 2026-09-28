@@ -42,6 +42,21 @@ type parsed_term =
 
 let located_desc value = value.EcLocation.pl_desc
 
+(* The lexer raises its own exception for an illegal character or an
+   unterminated comment or string. Report it as the parse error it is, so one
+   lexical slip rejects its own query instead of aborting the whole batch. The
+   lexer reads bytes, so its message may hold one byte of a multi-byte
+   character; that message is escaped to stay valid UTF-8. *)
+let parse_sentences text =
+  try EcIo.(parseall (from_string text)) with
+  | EcLexer.LexicalError (location, message) ->
+      let message =
+        if String.is_valid_utf_8 message then message
+        else String.escaped message
+      in
+      raise (EcParsetree.ParseError
+        (Option.value ~default:EcLocation._dummy location, Some message))
+
 let logical_term_of_conseq
     (term : EcParsetree.conseq_ppterm) : EcParsetree.ppterm =
   match term.EcParsetree.fp_head with
@@ -55,7 +70,7 @@ let logical_term_of_conseq
 
 let parse_exact_term operation application_term =
   let tactic = operation ^ " (" ^ application_term ^ ")." in
-  let globals = EcIo.(parseall (from_string tactic)) in
+  let globals = parse_sentences tactic in
   match globals with
   | [{ EcParsetree.gl_action = action; _ }] -> begin
       match located_desc action with
@@ -124,6 +139,11 @@ let lookup_error_json error =
     "lookup_kind", `String kind;
     "message", `String (Format.asprintf "%a" EcEnv.pp_lookup_failure error);
   ]
+
+let typing_error_json error = `Assoc [
+  "code", `String "typing_error";
+  "message", `String (exception_text error);
+]
 
 let tc_error_json error =
   match error.EcCoreGoal.tc_message with
@@ -226,7 +246,7 @@ let input_argument_source_spelling argument =
     end
   | _ -> ""
 
-let input_argument_json index argument =
+let input_argument_json ?(rejected = false) index argument =
   let kind, hole = match argument.EcLocation.pl_desc with
     | EcParsetree.EA_none -> "hole", true
     | EcParsetree.EA_form _ -> "formula", false
@@ -240,6 +260,7 @@ let input_argument_json index argument =
     "syntax_kind", `String kind;
     "explicit_hole", `Bool hole;
     "source_spelling", `String (input_argument_source_spelling argument);
+    "rejected", `Bool rejected;
   ]
 
 let input_argument_kind argument =
@@ -320,7 +341,8 @@ let application_slot_json ppe index product =
   | `Assoc fields -> `Assoc (("position", `Int index) :: fields)
   | _ -> raise (Contract_error "native application slot is not an object")
 
-let describe_application_head ppe parsed (head : EcProofTerm.pt_ev) =
+let describe_application_head ?rejected_position ppe parsed
+    (head : EcProofTerm.pt_ev) =
   let add_local identifier local_kind hyps =
     try EcEnv.LDecl.add_local identifier local_kind hyps with
     | EcEnv.LDecl.LdeclError _ -> hyps
@@ -348,7 +370,7 @@ let describe_application_head ppe parsed (head : EcProofTerm.pt_ev) =
     match (try EcProofTyping.destruct_product ~reduce:false hyps formula with
       | Assert_failure _ -> raise (Contract_error
           (Printf.sprintf "native application-head product %d asserted" index))) with
-    | None -> (List.rev collected, formula, ppe)
+    | None -> (List.rev collected, formula, ppe, hyps)
     | Some product ->
         let descriptor = application_slot_json ppe index product in
         let ppe, hyps, conclusion = match product with
@@ -364,8 +386,16 @@ let describe_application_head ppe parsed (head : EcProofTerm.pt_ev) =
         slots (index + 1) ppe hyps conclusion
           (descriptor :: collected)
   in
-  let slot_values, result, result_ppe =
+  let slot_values, result, result_ppe, result_hyps =
     slots 1 ppe head.ptev_env.pte_hy head.ptev_ax [] in
+  (* Applying the head, EasyCrypt unfolds definitions to find further
+     products, which the slots above do not; say whether the result still
+     unfolds into one, since the slots are then not all the arguments. *)
+  let unfolds_to_more_slots =
+    try Option.is_some (EcProofTyping.destruct_product result_hyps result) with
+    | (Out_of_memory | Stack_overflow) as exn -> raise exn
+    | _ -> true
+  in
   let resolved = try resolved_head head.ptev_pt with
     | Assert_failure _ -> raise (Contract_error
         "native application-head resolution asserted") in
@@ -380,9 +410,16 @@ let describe_application_head ppe parsed (head : EcProofTerm.pt_ev) =
     "input_mode", `String (match input_mode with
       | `Explicit -> "explicit" | `Implicit -> "implicit");
     "input_arguments", `List (List.mapi
-      (fun index argument -> input_argument_json (index + 1) argument)
+      (fun index argument -> input_argument_json
+        ~rejected:(rejected_position = Some (index + 1))
+        (index + 1) argument)
       input_values);
+    (* With implicit arguments on, EasyCrypt inserts inferred arguments
+       before the written ones, so written positions are not slot positions. *)
+    "implicits_enabled", `Bool
+      (EcScope.Options.get_implicits (EcCommands.current ()));
     "slots", `List slot_values;
+    "unfolds_to_more_slots", `Bool unfolds_to_more_slots;
     "result", (try shallow_formula_json result_ppe result with
       | Assert_failure _ -> raise (Contract_error
           "native application-head result printing asserted"));
@@ -601,7 +638,35 @@ type attempted_tactic = {
   at_change_formula : EcParsetree.pformula option;
 }
 
-let application_head_result attempted =
+(* EasyCrypt locates an argument-kind error, or an argument with no product
+   left to apply to, at the rejected argument itself, so an equal location
+   names that top-level argument. An error inside a nested proof term matches
+   no top-level argument. *)
+let rejected_argument_position attempted = function
+  | EcCoreGoal.TcError {
+      EcCoreGoal.tc_message = EcCoreGoal.TCEExn (EcProofTerm.ProofTermError
+        (_, (EcProofTerm.AE_WrongArgKind _ | EcProofTerm.AE_NotFunctional)));
+      tc_location = Some { EcCoreGoal.plc_loc = location; _ }; _ } ->
+      let arguments = match attempted.at_proof_term with
+        | Some (Logical term) -> term.EcParsetree.fp_args
+        | Some (Call term) -> term.EcParsetree.fp_args
+        | None -> []
+      in
+      let rec find position = function
+        | [] -> None
+        | (argument : _ EcLocation.located) :: rest ->
+            let argument_location = argument.EcLocation.pl_loc in
+            if argument_location.EcLocation.loc_bchar
+                 = location.EcLocation.loc_bchar
+               && argument_location.EcLocation.loc_echar
+                 = location.EcLocation.loc_echar
+            then Some position
+            else find (position + 1) rest
+      in
+      find 1 arguments
+  | _ -> None
+
+let application_head_result ?rejected_position attempted =
   match attempted.at_proof_term with
   | None -> None
   | Some parsed -> begin
@@ -621,18 +686,20 @@ let application_head_result attempted =
         in
         let environment = EcScope.env (EcCommands.current ()) in
         let ppe = EcPrinting.PPEnv.ofenv environment in
-        Some (try describe_application_head ppe parsed head with
+        Some (try describe_application_head ?rejected_position
+                    ppe parsed head with
           | Assert_failure _ -> raise (Contract_error
               "native application-head description asserted"))
       with
       | EcCoreGoal.TcError _
       | EcProofTerm.ProofTermError _
       | EcEnv.LookupFailure _
+      | EcTyping.TyError _
       | Contract_error _ -> None
     end
 
 let parse_tactics tactic_text =
-  let globals = EcIo.(parseall (from_string tactic_text)) in
+  let globals = parse_sentences tactic_text in
   match globals with
     | [{ EcParsetree.gl_action = action; _ }] -> begin
         match located_desc action with
@@ -732,7 +799,7 @@ let int_le_view formula =
   | _ -> None
 
 let parse_change_target tactic_text =
-  let globals = EcIo.(parseall (from_string tactic_text)) in
+  let globals = parse_sentences tactic_text in
   match globals with
   | [{ EcParsetree.gl_action = action; _ }] -> begin
       match located_desc action with
@@ -793,10 +860,7 @@ let native_tactic_execution tactic =
       "message", `String
         "tactic target is not convertible to the current goal";
     ])
-  | EcTyping.TyError _ as error -> "rejected", Some (`Assoc [
-      "code", `String "typing_error";
-      "message", `String (Printexc.to_string error);
-    ])
+  | EcTyping.TyError _ as error -> "rejected", Some (typing_error_json error)
   | Contract_error message -> "rejected", Some (`Assoc [
       "code", `String "contract_error";
       "message", `String message;
@@ -913,6 +977,7 @@ let phl_transitivity_attempt_descriptor tactic_text observed_outcome_kind =
           | EcProofTerm.ProofTermError error ->
               Some (proof_term_error_json error)
           | EcEnv.LookupFailure error -> Some (lookup_error_json error)
+          | EcTyping.TyError _ as error -> Some (typing_error_json error)
           | EcCoreGoal.InvalidGoalShape -> Some (`Assoc [
               "code", `String "invalid_goal_shape";
               "message", `String
@@ -1731,6 +1796,7 @@ let proof_term_result attempted =
       | EcProofTerm.ProofTermError error ->
           (None, Some (proof_term_error_json error))
       | EcEnv.LookupFailure error -> (None, Some (lookup_error_json error))
+      | EcTyping.TyError _ as error -> (None, Some (typing_error_json error))
       | Assert_failure _ -> (None, Some (`Assoc [
           "code", `String "proof_term_cannot_concretize";
           "message", `String
@@ -1739,18 +1805,21 @@ let proof_term_result attempted =
     end
 
 let attempt_descriptor tactic_text observed_outcome_kind attempted =
-  let application_head = application_head_result attempted in
   let proof_descriptor, _proof_error = proof_term_result attempted in
   if observed_outcome_kind <> "rejected"
      && observed_outcome_kind <> "no_progress" then
     raise (Contract_error "unsupported observed attempt outcome");
+  let rejected_position = ref None in
   let diagnostic_status, execution_error =
     try ignore (run_tactics attempted.at_tactics); ("no_blocker", None) with
-    | EcCoreGoal.TcError error -> ("blocker", Some (tc_error_json error))
+    | EcCoreGoal.TcError error as exn ->
+        rejected_position := rejected_argument_position attempted exn;
+        ("blocker", Some (tc_error_json error))
     | EcProofTerm.ProofTermError error ->
         ("blocker", Some (proof_term_error_json error))
     | EcEnv.LookupFailure error ->
         ("blocker", Some (lookup_error_json error))
+    | EcTyping.TyError _ as error -> ("blocker", Some (typing_error_json error))
     | EcCoreGoal.InvalidGoalShape -> ("blocker", Some (`Assoc [
         "code", `String "invalid_goal_shape";
         "message", `String "tactic target is not convertible to the current goal";
@@ -1765,6 +1834,8 @@ let attempt_descriptor tactic_text observed_outcome_kind attempted =
      && diagnostic_status = "no_blocker" then
     raise (Contract_error
       "manager rejected the tactic but native diagnosis accepted it");
+  let application_head = application_head_result
+    ?rejected_position:!rejected_position attempted in
   let relation_bridge = change_relation_bridge_result attempted in
   let pure_tail_rewrite = pure_tail_rewrite_result attempted in
   let failure_kind, message = match execution_error with
@@ -2001,25 +2072,56 @@ let count_module_slots (head : EcProofTerm.pt_ev) =
   in
   count head.ptev_env.pte_hy head.ptev_ax 0
 
+let matches_current_goal (value : EcProofTerm.pt_ev) =
+  let value = copy_proof_term value in
+  try
+    EcProofTerm.pf_form_match
+      ~mode:EcMatching.fmdelta value.ptev_env
+      ~ptn:value.ptev_ax
+      (EcCoreGoal.FApi.tc1_goal (current_tcenv1 ()));
+    true
+  with
+  | EcCoreGoal.TcError _
+  | EcProofTerm.ProofTermError _
+  | EcEnv.LookupFailure _
+  | EcTyping.TyError _
+  | EcMatching.MatchFailure
+  | Assert_failure _ -> false
+
 let typed_selected_bindings selected_resource module_candidates head =
   let maximum_typed_bindings = 64 in
   let maximum_candidate_checks = 4096 in
   let overflow = ref false in
   let candidate_checks = ref 0 in
   let completed = ref [] in
+  let record (branch : selected_binding_branch) =
+    completed := branch :: !completed;
+    if List.length !completed > maximum_typed_bindings then
+      overflow := true
+  in
+  (* EasyCrypt's [apply] matches the goal against the conclusion after any
+     number of consumed premises, so once a module argument is bound every
+     product boundary, including one before a later module binder, is itself
+     a candidate form. Only a form that matches the goal is kept, so forms
+     that cannot apply do not use up the bound; a kept form is still checked
+     and executed before it counts. *)
+  let at_boundary (branch : selected_binding_branch) =
+    if List.exists (fun argument -> argument <> "_") branch.sbb_arguments_rev
+       && matches_current_goal branch.sbb_replay
+    then record { branch with sbb_replay = copy_proof_term branch.sbb_replay }
+  in
   let rec visit (branch : selected_binding_branch) =
     if !overflow then () else
     match EcProofTyping.destruct_product ~reduce:false
         branch.sbb_replay.ptev_env.pte_hy branch.sbb_replay.ptev_ax with
-    | None ->
-        completed := branch :: !completed;
-        if List.length !completed > maximum_typed_bindings then
-          overflow := true
+    | None -> record branch
     | Some (`Imp _) ->
+        at_boundary branch;
         let replay = EcProofTerm.apply_pterm_to_hole branch.sbb_replay in
         visit { sbb_replay = replay;
           sbb_arguments_rev = "_" :: branch.sbb_arguments_rev; }
     | Some (`Forall (_, GTmodty _, _)) ->
+        at_boundary branch;
         List.iter (fun candidate ->
           if not !overflow then begin
             if !candidate_checks >= maximum_candidate_checks then
@@ -2050,6 +2152,7 @@ let typed_selected_bindings selected_resource module_candidates head =
           end)
           module_candidates
     | Some (`Forall _) ->
+        at_boundary branch;
         let replay = EcProofTerm.apply_pterm_to_hole branch.sbb_replay in
         visit { sbb_replay = replay;
           sbb_arguments_rev = "_" :: branch.sbb_arguments_rev; }
@@ -2109,18 +2212,58 @@ let selected_application_binding_set_descriptor operation selected_resource
     raise (Contract_error "selected theorem has no module slots");
   let overflow, candidate_check_count, typed_binding_count, typed_bindings =
     typed_selected_bindings selected_resource module_candidates head in
-  let checked = if overflow then [] else List.filter_map
-    (checked_selected_application operation selected_resource)
+  (* A branch's module assignment: its arguments up to the last module. *)
+  let assignment (branch : selected_binding_branch) =
+    let rec drop_holes = function
+      | "_" :: rest -> drop_holes rest
+      | arguments -> arguments
+    in
+    List.rev (drop_holes branch.sbb_arguments_rev)
+  in
+  let checked_pairs = if overflow then [] else List.filter_map
+    (fun branch -> Option.map (fun result -> (assignment branch, result))
+      (checked_selected_application operation selected_resource branch))
     typed_bindings in
-  let checked = List.sort_uniq (fun left right ->
-    String.compare
-      (json_string "application_term" left)
-      (json_string "application_term" right)) checked in
+  (* EasyCrypt's [apply] also unfolds definitions and tries iff and negation
+     views, which the depth forms above do not. If it accepts the shortest
+     form of an assignment that has no checked completion, the checked set is
+     not all that [apply] accepts, so no zero or unique claim is made. *)
+  let apply_accepts arguments =
+    let application_term =
+      selected_resource ^ " " ^ String.concat " " arguments in
+    match native_tactic_execution
+        (operation ^ " (" ^ application_term ^ ").") with
+    | "accepted_changed", _ -> true
+    | _ -> false
+    | exception ((Out_of_memory | Stack_overflow) as exn) -> raise exn
+    | exception _ -> false
+  in
+  let completed_assignments = List.map fst checked_pairs in
+  let unchecked_assignments = List.filter
+    (fun arguments -> not (List.mem arguments completed_assignments))
+    (List.sort_uniq compare (List.map assignment typed_bindings)) in
+  (* At most 32 extra executions; beyond that the set is not claimed. *)
+  let maximum_refutation_runs = 32 in
+  let refutation_exceeds_bound =
+    (not overflow)
+    && List.length unchecked_assignments > maximum_refutation_runs in
+  let unsearched_form_accepted = (not overflow)
+    && (not refutation_exceeds_bound)
+    && List.exists apply_accepts unchecked_assignments in
+  let checked =
+    if unsearched_form_accepted || refutation_exceeds_bound then [] else
+    List.sort_uniq (fun left right ->
+      String.compare
+        (json_string "application_term" left)
+        (json_string "application_term" right))
+      (List.map snd checked_pairs) in
   let checked_count = List.length checked in
   let ppe = EcPrinting.PPEnv.ofenv
     (EcScope.env (EcCommands.current ())) in
   let resolved = resolved_head head.ptev_pt in
-  let complete = not overflow in
+  let complete =
+    not overflow && not unsearched_form_accepted
+    && not refutation_exceeds_bound in
   `Assoc [
     "operation", `String operation;
     "selected_resource", `String selected_resource;
@@ -2135,7 +2278,98 @@ let selected_application_binding_set_descriptor operation selected_resource
       if complete && checked_count <= 4 then checked else []);
     "reason", `String (
       if overflow then "native_binding_search_exceeds_bound"
+      else if refutation_exceeds_bound
+      then "native_binding_refutation_exceeds_bound"
+      else if unsearched_form_accepted
+      then "native_apply_accepts_unsearched_form"
       else "");
+  ]
+
+(* Mirrors MAX_NATIVE_NAMESPACE_SPELLINGS in the Python contracts. *)
+let max_namespace_spellings = 16
+
+(* One agent-written tactic whose head name does not resolve.  EasyCrypt
+   enumerates every lemma or axiom of the environment whose last name
+   component equals the written basename (required theories, clones and
+   earlier declarations alike; abstract theories contribute nothing) and
+   spells each one, as [locate] does, with its shortest name that resolves back
+   to the same path in the goal context, where an unqualified name that is a
+   hypothesis denotes the hypothesis; a shadowed path that no name resolves to
+   is not usable and is skipped.  Each spelling replaces only the head of the
+   agent's tactic,
+   whose operation and argument text are unchanged, and the complete tactic
+   runs at the current goal, so placeholders that only the goal determines are
+   instantiated by the operation itself.  A written name that already denotes
+   a lemma or a local of the goal is not a namespace problem and yields no
+   spellings.  An over-bound population reports no verdicts. *)
+let namespace_spelling_set_descriptor operation arguments written_name =
+  if not (List.mem operation ["apply"; "exact"; "call"; "conseq"]) then
+    raise (Contract_error "namespace spelling set has an unsupported operation");
+  let written =
+    try EcSymbols.qsymbol_of_string written_name with
+    | Invalid_argument _ ->
+        raise (Contract_error "namespace spelling name is invalid")
+  in
+  let hyps = EcCoreGoal.FApi.tc1_hyps (current_tcenv1 ()) in
+  let env = EcEnv.LDecl.toenv hyps in
+  (* Proof-term heads resolve an unqualified name to a hypothesis first. *)
+  let names_hypothesis (qualifier, name) =
+    qualifier = [] && EcEnv.LDecl.hyp_exists name hyps
+  in
+  let written_name_resolves =
+    names_hypothesis written
+    || Option.is_some (EcEnv.Ax.lookup_opt written env)
+  in
+  let resolves path name =
+    (not (names_hypothesis name))
+    && match EcEnv.Ax.lookup_opt name env with
+       | Some (found, _) -> EcPath.p_equal path found
+       | None -> false
+  in
+  let ppe = EcPrinting.PPEnv.ofenv env in
+  let spell path =
+    let long, short = EcPrinting.shorten_path ppe resolves path in
+    let name = Option.value ~default:long short in
+    if resolves path name
+    then Some (path, EcSymbols.string_of_qsymbol name)
+    else None
+  in
+  let population =
+    if written_name_resolves then [] else
+    EcEnv.Ax.all ~check:(fun path _ -> EcPath.basename path = snd written) env
+    |> List.map fst
+    |> List.sort_uniq EcPath.p_compare
+    |> List.filter_map spell
+    |> List.sort (fun (_, left) (_, right) -> String.compare left right)
+  in
+  let complete = List.length population <= max_namespace_spellings in
+  let check (path, spelling) =
+    let application_term =
+      if arguments = "" then spelling else spelling ^ " " ^ arguments in
+    let candidate_tactic = operation ^ " (" ^ application_term ^ ")." in
+    (* One candidate's failure is its own rejection, except resource
+       exhaustion, which aborts the batch rather than shrink the population. *)
+    let effect =
+      try fst (native_tactic_execution candidate_tactic) with
+      | (Out_of_memory | Stack_overflow) as exn -> raise exn
+      | _ -> "rejected"
+    in
+    `Assoc [
+      "candidate_head", `String spelling;
+      "resolved_identity", `String (EcPath.tostring path);
+      "application_term", `String application_term;
+      "candidate_tactic", `String candidate_tactic;
+      "tactic_effect", `String effect;
+    ]
+  in
+  `Assoc [
+    "operation", `String operation;
+    "arguments", `String arguments;
+    "written_name", `String written_name;
+    "written_name_resolves", `Bool written_name_resolves;
+    "population_count", `Int (List.length population);
+    "population_complete", `Bool complete;
+    "spellings", `List (if complete then List.map check population else []);
   ]
 
 let run_query_at_current_proof request evaluation_prefix =
@@ -2167,6 +2401,7 @@ let run_query_at_current_proof request evaluation_prefix =
     | EcProofTerm.ProofTermError error ->
         rejected (proof_term_error_json error)
     | EcEnv.LookupFailure error -> rejected (lookup_error_json error)
+    | EcTyping.TyError _ as error -> rejected (typing_error_json error)
     | EcParsetree.ParseError (_, message) -> rejected (`Assoc [
         "code", `String "parse_error";
         "message", `String (Option.value ~default:"parse error" message);])
@@ -2190,6 +2425,21 @@ let run_query_at_current_proof request evaluation_prefix =
     | Contract_error message -> rejected (`Assoc [
         "code", `String "contract_error";
         "message", `String message;])
+  end else if query_kind = "namespace_spelling_set" then begin
+    let operation = json_string "operation" payload in
+    let arguments = json_string "arguments" payload in
+    let written_name = json_string "written_name" payload in
+    try
+      let descriptor = namespace_spelling_set_descriptor
+        operation arguments written_name in
+      finish ["status", `String "accepted"; "result_formula", `String "";
+        "descriptor", descriptor; "structured_error", `Assoc [];]
+    with
+    | Contract_error message -> rejected (`Assoc [
+        "code", `String "contract_error";
+        "message", `String message;])
+    | EcCoreGoal.TcError error -> rejected (tc_error_json error)
+    | EcEnv.LookupFailure error -> rejected (lookup_error_json error)
   end else if query_kind = "tactic_prefix_diagnostic" then begin
     let tactic_text = json_string "rejected_tactic" payload in
     let candidate_prefixes = json_string_list "candidate_prefixes" payload in
@@ -2230,7 +2480,7 @@ let run_query request =
         run_query_at_current_proof request evaluation_prefix)
 
 let run request =
-  if request |> member "schema_version" |> to_int <> 17 then
+  if request |> member "schema_version" |> to_int <> 19 then
     raise (Contract_error "unsupported request schema_version");
   if request |> member "kind" |> to_string <>
       "native_semantic_batch_request" then
@@ -2251,7 +2501,7 @@ let run request =
   process_file history_file;
   let goal = goal_text () in
   `Assoc [
-    "schema_version", `Int 17;
+    "schema_version", `Int 19;
     "kind", `String "native_semantic_batch_result";
     "batch_id", `String batch_id;
     "goal_before", `String goal;
@@ -2262,13 +2512,13 @@ let () =
   let response =
     try run (Yojson.Safe.from_channel stdin) with
     | Contract_error message -> `Assoc [
-      "schema_version", `Int 17;
+      "schema_version", `Int 19;
         "kind", `String "native_semantic_batch_result";
         "status", `String "contract_error";
         "message", `String message;
       ]
     | exn -> `Assoc [
-      "schema_version", `Int 17;
+      "schema_version", `Int 19;
         "kind", `String "native_semantic_batch_result";
         "status", `String "adapter_error";
         "message", `String (Printexc.to_string exn);

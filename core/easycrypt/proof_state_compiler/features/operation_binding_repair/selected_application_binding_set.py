@@ -61,8 +61,20 @@ def plan_native_selected_application_binding_set(
         == (attempted.operation, attempted.resource)
         and proof_ir.goal.kind not in {"probability", "losslessness"}
     ):
+        # Under EasyCrypt's implicit-arguments option a bare head infers its
+        # formula arguments that later types mention before any written
+        # ones, so the written candidate positions would not be the slots
+        # searched. Module, memory and proof binders are never implicit.
+        if head.implicits_enabled and any(
+            slot.kind == "formula" for slot in head.slots
+        ):
+            return NativeSemanticRequestProduction.abstained(
+                SELECTED_APPLICATION_BINDING_SET_NATIVE_PRODUCER_ID,
+                reason="selected_head_implicit_arguments",
+                considered_candidate_count=0,
+            )
         inventory = proof_ir.module_spelling_inventory
-        if inventory is None or not inventory.terms:
+        if inventory is None:
             return NativeSemanticRequestProduction.not_applicable(
                 SELECTED_APPLICATION_BINDING_SET_NATIVE_PRODUCER_ID
             )
@@ -71,6 +83,10 @@ def plan_native_selected_application_binding_set(
                 SELECTED_APPLICATION_BINDING_SET_NATIVE_PRODUCER_ID,
                 reason=inventory.reason,
                 considered_candidate_count=0,
+            )
+        if not inventory.terms:
+            return NativeSemanticRequestProduction.not_applicable(
+                SELECTED_APPLICATION_BINDING_SET_NATIVE_PRODUCER_ID
             )
         candidates = inventory.terms
         candidate_evidence = tuple(dict.fromkeys(

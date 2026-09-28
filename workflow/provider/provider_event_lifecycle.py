@@ -22,6 +22,11 @@ class AgentEventKind(str, Enum):
     TOOL_COMPLETED = "tool_completed"
     MESSAGE_COMPLETED = "message_completed"
     PASSIVE = "passive"
+    # Provider-declared informational notices outside the protocol (Claude CLI
+    # `system` subtypes other than `init`). They carry no content, tool,
+    # message or terminal semantics, so the guard accepts them at any position
+    # without counting them as protocol events; the audit lists them.
+    PROVIDER_NOTICE = "provider_notice"
     TERMINAL_COMPLETED = "terminal_completed"
     TERMINAL_FAILED = "terminal_failed"
     PROVIDER_ERROR = "provider_error"
@@ -123,6 +128,8 @@ class InvocationEventAudit:
     terminal_kind: str
     process_exit: int | None
     violations: tuple[str, ...]
+    # Raw types of position-free provider notices, kept for audit only.
+    provider_notices: tuple[str, ...] = ()
 
     @property
     def valid(self) -> bool:
@@ -169,6 +176,7 @@ class AgentEventLifecycleGuard:
         self._host_metadata_calls = 0
         self._provider_errors = 0
         self._events_observed = 0
+        self._provider_notices: list[str] = []
         self._finished = False
 
     def record_violation(self, reason: str) -> None:
@@ -193,10 +201,13 @@ class AgentEventLifecycleGuard:
         if event.provider != self.provider:
             self.record_violation("provider event changed provider identity")
             return LifecycleDecision(False, self._violations[-1])
+        kind = event.kind
+        if kind == AgentEventKind.PROVIDER_NOTICE:
+            self._provider_notices.append(event.raw_event_type)
+            return LifecycleDecision(True)
         if self._terminals:
             self.record_violation("provider event arrived after terminal event")
 
-        kind = event.kind
         self._observe_order(kind)
         if kind == AgentEventKind.INVOCATION_STARTED:
             self._invocation_started += 1
@@ -294,6 +305,7 @@ class AgentEventLifecycleGuard:
             terminal_kind=terminal.value if terminal is not None else "",
             process_exit=process_exit,
             violations=tuple(self._violations),
+            provider_notices=tuple(self._provider_notices),
         )
 
     def _observe_order(self, kind: AgentEventKind) -> None:

@@ -16,6 +16,7 @@ from core.easycrypt.proof_state_compiler.frontend.fact_parser import (
 from core.easycrypt.proof_state_compiler.frontend.native_state_lowering import (
     lower_native_current_facts,
     lower_native_goal,
+    lower_native_local_modules,
     lower_native_program_statements,
 )
 from core.easycrypt.proof_state_compiler.frontend.resource_discovery import (
@@ -63,9 +64,16 @@ def build_proof_ir(
     )
     statements = () if native is None else lower_native_program_statements(native)
     current_facts = () if native is None else lower_native_current_facts(native)
+    local_modules, local_module_evidence = (
+        ((), ()) if native is None else lower_native_local_modules(native)
+    )
     module_inventory = (
         bounded_module_spelling_inventory(
-            goal, environment, max_terms=96
+            goal,
+            environment,
+            max_terms=96,
+            local_modules=local_modules,
+            local_module_evidence=local_module_evidence,
         )
         if include_module_spelling_inventory
         and needs_module_spelling_inventory(attempted_operation)

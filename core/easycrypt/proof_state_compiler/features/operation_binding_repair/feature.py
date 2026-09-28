@@ -33,6 +33,10 @@ def operation_binding_repair_feature_spec() -> FeatureSpec:
         correctness_contract=(
             "claim only strict B1/B2/B4 attempted-operation IR and emit one "
             "exact-state-certified correction preserving operation/resource; "
+            "a B1 correction resolves the agent's own unresolved name to the "
+            "unique same-basename declaration EasyCrypt accepts at the goal, "
+            "changes only the head's spelling, and keeps the agent's argument "
+            "text byte-identical; "
             "the B2 losslessness family includes apply and bounded one-module "
             "call certificates with one or two deferred proof premises; one "
             "selected call may also realize its already-written first module "
@@ -50,15 +54,19 @@ def operation_binding_repair_feature_spec() -> FeatureSpec:
         ),
         native_semantic_dependencies=(
             "NativeApplicationSyntaxRepairDescriptor[B2.module_syntax]",
-            "NativeProofTermDescriptor[B1]",
+            "NativeNamespaceSpellingSetDescriptor[B1]",
             "NativeProofTermDescriptor[B2.losslessness]",
             "NativeProofTermDescriptor[B2.losslessness_call]",
             "NativeProofTermDescriptor[B2/B4.probability_multislot]",
             "NativeSelectedApplicationBindingSetDescriptor[B2.selected_head]",
         ),
         shannon_delta_contract=(
-            "preserve one attempted operation/resource; B1 enumerates one "
-            "namespace-only correction; B2 losslessness enumerates one module "
+            "preserve one attempted operation/resource; B1 sends one native "
+            "query in which EasyCrypt enumerates the complete same-basename "
+            "population, spells each declaration by its shortest resolving "
+            "name and runs the complete tactic at the current goal; one "
+            "accepted declaration is admitted, several are never ranked; "
+            "B2 losslessness enumerates one module "
             "spelling for apply or one placeholder-only call with one or two "
             "proof premises; B2 module syntax inserts punctuation only around "
             "an exact agent-written module term and preserves its suffix; "
@@ -71,9 +79,10 @@ def operation_binding_repair_feature_spec() -> FeatureSpec:
             "every candidate"
         ),
         lexical_prefilter_contract=(
-            "B1 basename and B2 losslessness procedure matching only bound "
-            "native requests; module spellings and probability tokens only "
-            "bound native search and have no semantic authority"
+            "B1 head/argument splitting and B2 losslessness procedure "
+            "matching only bound native requests; module spellings and "
+            "probability tokens only bound native search and have no "
+            "semantic authority"
         ),
         required_ir_capabilities=(
             "FailureObservation",

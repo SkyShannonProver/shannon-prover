@@ -1,9 +1,17 @@
 """Native-backed B1 namespace-only repair family.
 
-The lexical phase identifies one same-basename spelling. EasyCrypt owns the
-resolved head and elaborated result. This family deliberately accepts only a
-bare proof-term head, so changing the namespace cannot silently drop or invent
-arguments from the rejected tactic.
+The agent's written lemma name does not resolve. EasyCrypt enumerates every
+lemma or axiom of the current environment with the same basename, spells each
+with its shortest name that resolves back to it, and runs the agent's tactic
+with only that head replaced at the current goal. The proof term must be a bare
+head or one parenthesized application, and its argument text is copied
+unchanged, so no argument is dropped, invented, or reordered.
+
+This is type-directed resolution of the agent's own name, not a replacement
+resource: declarations with a different basename are never considered. A
+correction is formed only for a complete native population in which exactly
+one declaration is accepted with progress; several accepted declarations are
+never ranked.
 """
 
 from __future__ import annotations
@@ -16,16 +24,14 @@ from core.easycrypt.proof_state_compiler.contracts import (
     ApplicationCandidate,
     CompilerInvocationContext,
     EvidenceRef,
+    NativeNamespaceSpellingSetDescriptor,
+    NativeNamespaceSpellingSetQuery,
     NativePlanningBudget,
-    NativeProofTermDescriptor,
-    NativeProofTermElaborationQuery,
     NativeSemanticRequest,
     NativeSemanticRequestProduction,
     ProofCoordinate,
     ProofIR,
-    ProofResource,
-    ResourceAssessment,
-    SlotResolution,
+    valid_namespace_spelling_arguments,
 )
 from core.easycrypt.proof_state_compiler.features.operation_binding_repair.contracts import (
     OPERATION_BINDING_REPAIR_ANALYSIS_PRODUCER_ID,
@@ -37,21 +43,20 @@ from core.easycrypt.proof_state_compiler.middle_end.contributions import (
     AnalysisContribution,
 )
 from core.easycrypt.proof_state_compiler.syntax.attempted_operation import (
-    bare_operation_resource,
+    operation_head_arguments,
 )
 
 
 NAMESPACE_REPAIR_NATIVE_PRODUCER_ID = (
-    "operation_binding_repair.namespace.native_elaboration"
+    "operation_binding_repair.namespace.native_spelling_set"
 )
 
 
 @dataclass(frozen=True)
 class NamespaceRepairSketch:
-    resource: ProofResource
     operation: str
-    attempted_resource: str
-    application_term: str
+    written_name: str
+    arguments: str
     evidence_refs: tuple[EvidenceRef, ...]
 
 
@@ -61,88 +66,82 @@ def plan_native_namespace_repair(
     invocation: CompilerInvocationContext,
     _budget: NativePlanningBudget,
 ) -> NativeSemanticRequestProduction:
-    """Plan exactly one native elaboration for one namespace-only correction."""
+    """Plan one native population query for one unresolved written name."""
 
     if invocation.state_ref != proof_ir.state_ref:
         raise ValueError("B1 native request planning crossed StateRef")
-    sketch = discover_unique_namespace_repair(proof_ir)
+    sketch = discover_namespace_repair(proof_ir)
     if sketch is None:
         return NativeSemanticRequestProduction.not_applicable(
             NAMESPACE_REPAIR_NATIVE_PRODUCER_ID
         )
-    digest = hashlib.sha256(
-        (
-            sketch.operation
-            + "\0"
-            + sketch.attempted_resource
-            + "\0"
-            + sketch.resource.resource_id
-            + "\0"
-            + sketch.application_term
-        ).encode("utf-8")
-    ).hexdigest()[:20]
-    request = NativeSemanticRequest(
-        state_ref=proof_ir.state_ref,
-        request_id=f"operation-binding-b1:{digest}",
-        producer_id=NAMESPACE_REPAIR_NATIVE_PRODUCER_ID,
-        query=NativeProofTermElaborationQuery(
-            operation=sketch.operation,
-            application_term=sketch.application_term,
-        ),
-        evidence_refs=sketch.evidence_refs,
-    )
     return NativeSemanticRequestProduction.ready(
-        NAMESPACE_REPAIR_NATIVE_PRODUCER_ID, (request,)
+        NAMESPACE_REPAIR_NATIVE_PRODUCER_ID,
+        (_request_for_sketch(proof_ir, sketch),),
     )
 
 
-def discover_unique_namespace_repair(
-    proof_ir: ProofIR,
-) -> NamespaceRepairSketch | None:
+def discover_namespace_repair(proof_ir: ProofIR) -> NamespaceRepairSketch | None:
     attempted = proof_ir.attempted_operation
     if (
         attempted is None
         or classify_operation_binding_failure(attempted) != "B1"
-        or "." not in attempted.resource
-        or bare_operation_resource(attempted.rejected_tactic)
-        != (attempted.operation, attempted.resource)
     ):
         return None
-    resources = tuple(
-        item
-        for item in proof_ir.resources
-        if item.symbol.rsplit(".", 1)[-1] == attempted.resource_basename
-        and item.symbol != attempted.resource
-    )
-    if len(resources) != 1:
+    parsed = operation_head_arguments(attempted.rejected_tactic)
+    if (
+        parsed is None
+        or parsed[:2] != (attempted.operation, attempted.resource)
+        or not valid_namespace_spelling_arguments(parsed[2])
+    ):
         return None
-    resource = resources[0]
-    evidence = tuple(dict.fromkeys(
-        attempted.evidence_refs + resource.evidence_refs
-    ))
     return NamespaceRepairSketch(
-        resource=resource,
         operation=attempted.operation,
-        attempted_resource=attempted.resource,
-        application_term=resource.symbol,
-        evidence_refs=evidence,
+        written_name=attempted.resource,
+        arguments=parsed[2],
+        evidence_refs=attempted.evidence_refs,
+    )
+
+
+def _request_for_sketch(
+    proof_ir: ProofIR,
+    sketch: NamespaceRepairSketch,
+) -> NativeSemanticRequest:
+    query = NativeNamespaceSpellingSetQuery(
+        operation=sketch.operation,
+        arguments=sketch.arguments,
+        written_name=sketch.written_name,
+    )
+    digest = hashlib.sha256(
+        json.dumps(
+            query.to_payload(),
+            ensure_ascii=False,
+            sort_keys=True,
+            separators=(",", ":"),
+        ).encode("utf-8")
+    ).hexdigest()[:20]
+    return NativeSemanticRequest(
+        state_ref=proof_ir.state_ref,
+        request_id=f"operation-binding-b1:{digest}",
+        producer_id=NAMESPACE_REPAIR_NATIVE_PRODUCER_ID,
+        query=query,
+        evidence_refs=sketch.evidence_refs,
     )
 
 
 def analyze_native_namespace_repair(
     proof_ir: ProofIR,
-    coordinate: ProofCoordinate,
-    invocation: CompilerInvocationContext,
+    _coordinate: ProofCoordinate,
+    _invocation: CompilerInvocationContext,
 ) -> AnalysisContribution:
-    """Create a B1 application only from one accepted native descriptor."""
+    """Create a B1 application only when exactly one declaration is accepted."""
 
-    sketch = discover_unique_namespace_repair(proof_ir)
-    requests = plan_native_namespace_repair(
-        proof_ir, coordinate, invocation, NativePlanningBudget()
-    ).requests
-    if sketch is None or len(requests) != 1:
+    sketch = discover_namespace_repair(proof_ir)
+    # The application targets the goal the failed operation was run
+    # against; without that goal there is nothing honest to report.
+    if sketch is None or not proof_ir.goal.formula:
         return AnalysisContribution()
-    request = requests[0]
+    request = _request_for_sketch(proof_ir, sketch)
     observations = tuple(
         item
         for item in proof_ir.native_semantic_observations
@@ -152,94 +151,61 @@ def analyze_native_namespace_repair(
     if (
         len(observations) != 1
         or observations[0].status != "accepted"
-        or observations[0].descriptor is None
+        or not isinstance(
+            observations[0].descriptor, NativeNamespaceSpellingSetDescriptor
+        )
     ):
         return AnalysisContribution()
     observation = observations[0]
     descriptor = observation.descriptor
-    if not _descriptor_matches_namespace_repair(
-        descriptor,
-        resource_symbol=sketch.resource.symbol,
+    if (
+        descriptor.operation != sketch.operation
+        or descriptor.arguments != sketch.arguments
+        or descriptor.written_name != sketch.written_name
+        or descriptor.written_name_resolves
+        or not descriptor.population_complete
     ):
         return AnalysisContribution()
+    accepted = tuple(
+        item
+        for item in descriptor.spellings
+        if item.tactic_effect == "accepted_changed"
+    )
+    if len({item.resolved_identity for item in accepted}) != 1:
+        return AnalysisContribution()
+    spelling = accepted[0]
 
     native_evidence = EvidenceRef(
         evidence_id=(
-            "native-proof-term:"
+            "native-namespace-spelling-set:"
             + observation.provenance.source_event_id
         ),
-        source_kind="native_proof_term_descriptor",
+        source_kind="native_namespace_spelling_set",
         source_ref=observation.provenance.artifact_ref,
         source_sha256=observation.provenance.source_sha256,
     )
     evidence = tuple(dict.fromkeys(
         sketch.evidence_refs + (native_evidence,)
     ))
-    slots = tuple(
-        SlotResolution(
-            slot_id=f"native-proof:{item.argument_position}",
-            kind="proof",
-            status="deferred",
-            expected=item.formula.text,
-            reason="native EasyCrypt returned a residual proof premise",
-            evidence_refs=evidence,
-        )
-        for item in descriptor.residual_proof_premises
-    )
-    descriptor_material = json.dumps(
-        descriptor.to_payload(),
-        ensure_ascii=False,
-        separators=(",", ":"),
-        sort_keys=True,
-    )
     material = hashlib.sha256(
         (
-            sketch.operation
+            request.request_id
             + "\0"
-            + sketch.attempted_resource
+            + spelling.resolved_identity
             + "\0"
-            + sketch.resource.resource_id
-            + "\0"
-            + observation.query.application_term
-            + "\0"
-            + descriptor_material
+            + spelling.application_term
         ).encode("utf-8")
     ).hexdigest()[:20]
-    application = ApplicationCandidate(
+    return AnalysisContribution(applications=(ApplicationCandidate(
         candidate_id=f"operation-binding-repair:{material}",
         producer_id=OPERATION_BINDING_REPAIR_ANALYSIS_PRODUCER_ID,
         binding_id=f"native-namespace-binding:{material}",
-        resource_id=sketch.resource.resource_id,
-        target=descriptor.result.text,
-        operation=observation.query.operation,
-        application_term=observation.query.application_term,
-        slot_resolutions=slots,
-        unresolved_premises=tuple(
-            item.formula.text
-            for item in descriptor.residual_proof_premises
-        ),
+        resource_id=f"native-global:{spelling.resolved_identity}",
+        target=proof_ir.goal.formula,
+        operation=sketch.operation,
+        application_term=spelling.application_term,
+        slot_resolutions=(),
+        unresolved_premises=(),
         evidence_refs=evidence,
         trigger_id=proof_ir.attempted_operation.trigger_id,
-    )
-    return AnalysisContribution(
-        resources=(ResourceAssessment(
-            resource_id=sketch.resource.resource_id,
-            status="live",
-            evidence_refs=evidence,
-        ),),
-        applications=(application,),
-    )
-
-
-def _descriptor_matches_namespace_repair(
-    descriptor: NativeProofTermDescriptor,
-    *,
-    resource_symbol: str,
-) -> bool:
-    return (
-        descriptor.resolved_head.kind == "global"
-        and descriptor.resolved_head.identity.rsplit(".", 1)[-1]
-        == resource_symbol.rsplit(".", 1)[-1]
-        and not descriptor.input_arguments
-        and descriptor.explicit_hole_count == 0
-    )
+    ),))

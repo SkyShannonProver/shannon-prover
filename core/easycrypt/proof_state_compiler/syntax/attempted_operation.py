@@ -52,6 +52,20 @@ def bare_operation_resource(tactic: str) -> tuple[str, str] | None:
     cannot silently discard an argument supplied by the agent.
     """
 
+    parsed = operation_head_arguments(tactic)
+    if parsed is None or parsed[2]:
+        return None
+    return parsed[0], parsed[1]
+
+
+def operation_head_arguments(tactic: str) -> tuple[str, str, str] | None:
+    """Return operation, head resource, and the argument text after the head.
+
+    Only a bare head or one parenthesized application spanning the whole
+    proof term is accepted.  Replacing the head spelling in such a term keeps
+    every argument written by the agent byte-identical.
+    """
+
     parsed = operation_resource(tactic)
     if parsed is None:
         return None
@@ -60,9 +74,31 @@ def bare_operation_resource(tactic: str) -> tuple[str, str] | None:
     if not body.startswith(operation):
         return None
     term = body[len(operation):].strip()
-    while term.startswith("(") and term.endswith(")"):
+    parenthesized = False
+    while term.startswith("(") and _closing_index(term) == len(term) - 1:
         term = term[1:-1].strip()
-    return parsed if term == resource else None
+        parenthesized = True
+    if term == resource:
+        return operation, resource, ""
+    if (
+        not parenthesized
+        or not term.startswith(resource)
+        or not term[len(resource)].isspace()
+    ):
+        return None
+    return operation, resource, term[len(resource):].strip()
+
+
+def _closing_index(term: str) -> int:
+    depth = 0
+    for index, char in enumerate(term):
+        if char in _OPEN_TO_CLOSE:
+            depth += 1
+        elif char in _CLOSE_TO_OPEN:
+            depth -= 1
+            if depth == 0:
+                return index
+    return -1
 
 
 def _is_single_bounded_tactic(tactic: str) -> bool:

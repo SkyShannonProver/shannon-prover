@@ -173,6 +173,30 @@ def lower_native_current_facts(
     return tuple(facts)
 
 
+def lower_native_local_modules(
+    native: NativeProofStateSnapshot,
+) -> tuple[tuple[str, ...], tuple[EvidenceRef, ...]]:
+    """Module binders of the goal context, e.g. a lemma's `(O <: Oracle)`.
+
+    Every local declaration is listed by name even when a formula budget
+    truncated the projection, so module binders do not depend on
+    ``native.complete``.
+    """
+
+    declarations = _array(
+        native.projection["local_declarations"],
+        "local_declarations",
+    )
+    names = []
+    for index, value in enumerate(declarations):
+        declaration = _object(value, f"local_declarations[{index}]")
+        if declaration["kind"] == "module":
+            names.append(_string(declaration["name"], "local module name"))
+    if not names:
+        return (), ()
+    return tuple(names), (_evidence(native, "local_declarations"),)
+
+
 def _term(node: FrozenJsonObject) -> TypedTermIR:
     if node.get("complete") is not True or node.get("kind") == "truncated":
         raise ValueError("incomplete native term reached P2 lowering")

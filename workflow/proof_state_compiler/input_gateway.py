@@ -50,6 +50,8 @@ from core.easycrypt.proof_state_compiler.contracts import (
     NativeRelationBridgeChoiceDescriptor,
     NativeRelationBridgeDescriptor,
     NativeResidualProofPremise,
+    NativeNamespaceSpelling,
+    NativeNamespaceSpellingSetDescriptor,
     NativeResolvedHead,
     NativeSelectedApplicationBindingSetDescriptor,
     NativeSemanticObservation,
@@ -501,6 +503,10 @@ def native_semantic_observations(
                 descriptor = _native_selected_application_binding_set_descriptor(
                     member["descriptor"]
                 )
+            elif unit.query_kind == "namespace_spelling_set":
+                descriptor = _native_namespace_spelling_set_descriptor(
+                    member["descriptor"]
+                )
             elif unit.query_kind == "attempt_diagnostic":
                 descriptor = _native_attempted_operation_descriptor(
                     member["descriptor"]
@@ -624,6 +630,29 @@ def _native_selected_application_binding_set_descriptor(
             for item in value["checked_completions"]
         ),
         reason=value["reason"],
+    )
+
+
+def _native_namespace_spelling_set_descriptor(
+    value: dict[str, Any],
+) -> NativeNamespaceSpellingSetDescriptor:
+    return NativeNamespaceSpellingSetDescriptor(
+        operation=value["operation"],
+        arguments=value["arguments"],
+        written_name=value["written_name"],
+        written_name_resolves=value["written_name_resolves"],
+        population_count=value["population_count"],
+        population_complete=value["population_complete"],
+        spellings=tuple(
+            NativeNamespaceSpelling(
+                candidate_head=item["candidate_head"],
+                resolved_identity=item["resolved_identity"],
+                application_term=item["application_term"],
+                candidate_tactic=item["candidate_tactic"],
+                tactic_effect=item["tactic_effect"],
+            )
+            for item in value["spellings"]
+        ),
     )
 
 
@@ -827,9 +856,12 @@ def _native_application_head_descriptor(
                 syntax_kind=item["syntax_kind"],
                 explicit_hole=item["explicit_hole"],
                 source_spelling=str(item.get("source_spelling") or ""),
+                rejected=item["rejected"],
             )
             for item in value["input_arguments"]
         ),
+        implicits_enabled=value["implicits_enabled"],
+        unfolds_to_more_slots=value["unfolds_to_more_slots"],
         slots=tuple(
             NativeApplicationSlotDescriptor(
                 position=item["position"],

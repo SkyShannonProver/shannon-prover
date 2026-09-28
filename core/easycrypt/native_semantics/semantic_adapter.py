@@ -30,12 +30,13 @@ from core.easycrypt.native_semantics.companion import (
 from core.easycrypt.session.session_projection import active_goal_hash_from_raw
 
 
-NATIVE_SEMANTIC_PROTOCOL_VERSION = 17
+NATIVE_SEMANTIC_PROTOCOL_VERSION = 19
 _SHA256_RE = re.compile(r"^[0-9a-f]{64}$")
 _QUERY_KINDS = frozenset({
     "proof_term_elaboration",
     "attempt_diagnostic",
     "selected_application_binding_set",
+    "namespace_spelling_set",
     "tactic_prefix_diagnostic",
 })
 _STATUSES = frozenset({"accepted", "rejected"})
@@ -361,6 +362,11 @@ def _validated_member(
             "selected_application_binding_set": (
                 validate_selected_application_binding_set_descriptor
             ),
+            "namespace_spelling_set": (
+                lambda value: validate_namespace_spelling_set_descriptor(
+                    value, query=query
+                )
+            ),
             "attempt_diagnostic": lambda value: validate_attempt_descriptor(
                 value, query=query
             ),
@@ -438,6 +444,20 @@ def validate_native_query_payload(
             )
         ):
             raise ValueError("native binding-set payload is invalid")
+        return
+    if query_kind == "namespace_spelling_set":
+        if set(payload) != {"operation", "arguments", "written_name"} or (
+            payload.get("operation") not in {"apply", "exact", "call", "conseq"}
+        ):
+            raise ValueError("native namespace spelling payload fields are invalid")
+        arguments = payload.get("arguments")
+        if (
+            type(arguments) is not str
+            or arguments != arguments.strip()
+            or any(char in arguments for char in "\n\r;")
+            or not _valid_qualified_symbol(payload.get("written_name"))
+        ):
+            raise ValueError("native namespace spelling payload is invalid")
         return
     if query_kind != "tactic_prefix_diagnostic":
         raise ValueError("native semantic query kind is unsupported")
@@ -1122,8 +1142,11 @@ def validate_application_head_descriptor(
     """Validate one native head shape without claiming an application."""
 
     if set(value) != {
-        "resolved_head", "input_mode", "input_arguments", "slots", "result"
-    }:
+        "resolved_head", "input_mode", "input_arguments", "implicits_enabled",
+        "slots", "unfolds_to_more_slots", "result",
+    } or type(value.get("implicits_enabled")) is not bool or type(
+        value.get("unfolds_to_more_slots")
+    ) is not bool:
         raise RuntimeError("native application-head fields are invalid")
     _validate_resolved_head(value.get("resolved_head"))
     if value.get("input_mode") not in {"explicit", "implicit"}:
@@ -1133,9 +1156,12 @@ def validate_application_head_descriptor(
         raise RuntimeError("native application-head inputs must be a list")
     for position, item in enumerate(inputs, start=1):
         if type(item) is not dict or set(item) != {
-            "position", "syntax_kind", "explicit_hole", "source_spelling"
+            "position", "syntax_kind", "explicit_hole", "source_spelling",
+            "rejected",
         }:
             raise RuntimeError("native application-head input is invalid")
+        if type(item.get("rejected")) is not bool:
+            raise RuntimeError("native application-head rejection is invalid")
         if item.get("position") != position or item.get("syntax_kind") not in {
             "hole", "formula", "memory", "module", "proof", "proof_tactic"
         } or type(item.get("explicit_hole")) is not bool:
@@ -1148,6 +1174,8 @@ def validate_application_head_descriptor(
             or item.get("syntax_kind") not in {"formula", "module"}
         ):
             raise RuntimeError("native application-head spelling is invalid")
+    if sum(item["rejected"] for item in inputs) > 1:
+        raise RuntimeError("native application-head rejection is invalid")
     slots = value.get("slots")
     if type(slots) is not list:
         raise RuntimeError("native application-head slots must be a list")
@@ -1200,8 +1228,9 @@ def validate_proof_term_descriptor(value: dict[str, Any]) -> dict[str, Any]:
         raise RuntimeError("native proof-term input arguments must be a list")
     for position, item in enumerate(inputs, start=1):
         if type(item) is not dict or set(item) != {
-            "position", "syntax_kind", "explicit_hole", "source_spelling"
-        }:
+            "position", "syntax_kind", "explicit_hole", "source_spelling",
+            "rejected",
+        } or item.get("rejected") is not False:
             raise RuntimeError("native proof-term input argument is invalid")
         if item.get("position") != position or item.get("syntax_kind") not in {
             "hole", "formula", "memory", "module", "proof", "proof_tactic"
@@ -1267,6 +1296,84 @@ def validate_proof_term_descriptor(value: dict[str, Any]) -> dict[str, Any]:
         )
     if value.get("can_concretize") is not True:
         raise RuntimeError("native descriptor is not fully concretized")
+    return dict(value)
+
+
+def validate_namespace_spelling_set_descriptor(
+    value: dict[str, Any],
+    *,
+    query: NativeSemanticQuery,
+) -> dict[str, Any]:
+    """Validate the native population and verdicts for one written name."""
+
+    if set(value) != {
+        "operation",
+        "arguments",
+        "written_name",
+        "written_name_resolves",
+        "population_count",
+        "population_complete",
+        "spellings",
+    }:
+        raise RuntimeError("native namespace spelling set fields are invalid")
+    operation = query.payload.get("operation")
+    arguments = query.payload.get("arguments")
+    written_name = query.payload.get("written_name")
+    if (
+        value.get("operation") != operation
+        or value.get("arguments") != arguments
+        or value.get("written_name") != written_name
+    ):
+        raise RuntimeError("native namespace spelling set changed the tactic")
+    resolves = value.get("written_name_resolves")
+    count = value.get("population_count")
+    complete = value.get("population_complete")
+    spellings = value.get("spellings")
+    if (
+        type(resolves) is not bool
+        or type(count) is not int
+        or count < 0
+        or type(complete) is not bool
+        # Same bound as MAX_NATIVE_NAMESPACE_SPELLINGS and the OCaml adapter.
+        or complete != (count <= 16)
+        or type(spellings) is not list
+        or len(spellings) != (count if complete else 0)
+        or (resolves and count)
+    ):
+        raise RuntimeError("native namespace spelling population is invalid")
+    basename = str(written_name).rsplit(".", 1)[-1]
+    heads: list[str] = []
+    identities: set[str] = set()
+    for item in spellings:
+        if type(item) is not dict or set(item) != {
+            "candidate_head",
+            "resolved_identity",
+            "application_term",
+            "candidate_tactic",
+            "tactic_effect",
+        }:
+            raise RuntimeError("native namespace spelling fields are invalid")
+        head = item["candidate_head"]
+        identity = item["resolved_identity"]
+        term = f"{head} {arguments}" if arguments else head
+        if (
+            not _valid_qualified_symbol(head)
+            or not _valid_qualified_symbol(identity)
+            or head.rsplit(".", 1)[-1] != basename
+            or identity.rsplit(".", 1)[-1] != basename
+            or identity in identities
+            or item.get("application_term") != term
+            or item.get("candidate_tactic") != f"{operation} ({term})."
+        ):
+            raise RuntimeError("native namespace spelling changed the tactic")
+        if item.get("tactic_effect") not in {
+            "accepted_changed", "accepted_no_progress", "rejected"
+        }:
+            raise RuntimeError("native namespace spelling effect is invalid")
+        heads.append(head)
+        identities.add(identity)
+    if heads != sorted(set(heads)):
+        raise RuntimeError("native namespace spellings are not canonical")
     return dict(value)
 
 

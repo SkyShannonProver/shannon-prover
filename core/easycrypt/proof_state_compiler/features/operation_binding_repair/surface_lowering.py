@@ -18,6 +18,9 @@ from core.easycrypt.proof_state_compiler.contracts import (
     DiagnosticCandidate,
     DO_YOU_MEAN,
 )
+from core.easycrypt.proof_state_compiler.features.operation_binding_repair.classification import (
+    classify_operation_binding_failure,
+)
 from core.easycrypt.proof_state_compiler.features.operation_binding_repair.contracts import (
     OPERATION_BINDING_REPAIR_ANALYSIS_PRODUCER_ID,
 )
@@ -60,16 +63,29 @@ def lower_operation_binding_repair(
         witness = state.recovery_ownership.preservation_witness
         if witness is None:
             return SurfaceContribution()
+        if classify_operation_binding_failure(attempted) == "B1":
+            reason_code = "selected_resource_namespace_realization"
+            repair = _namespace_repair_text(
+                application.operation,
+                attempted.resource,
+                application.application_term.split()[0],
+                application.resource_id.removeprefix("native-global:"),
+            )
+        else:
+            reason_code = "selected_operation_argument_realization"
+            repair = (
+                "EasyCrypt accepts one corrected form of your selected "
+                f"`{application.operation}`. It keeps the operation and "
+                "theorem you chose and changes only how its module arguments "
+                "are written or supplied."
+            )
         return SurfaceContribution(actions=(replace(
             action,
             recovery_witness_id=witness.witness_id,
             correction=CorrectionPresentation(
                 presentation_kind=DO_YOU_MEAN,
-                reason_code="selected_operation_argument_realization",
-                reason=_unique_realization_reason(
-                    attempted,
-                    application.operation,
-                ),
+                reason_code=reason_code,
+                reason=_unique_realization_reason(attempted, repair),
             ),
         ),))
     if not applications and len(diagnostics) == 1:
@@ -94,15 +110,37 @@ def lower_operation_binding_repair(
     return SurfaceContribution()
 
 
+def _namespace_repair_text(
+    operation: str,
+    written: str,
+    qualified: str,
+    resolved_identity: str,
+) -> str:
+    text = (
+        f"`{written}` does not resolve here. EasyCrypt accepts your "
+        f"`{operation}` with the loaded name `{qualified}`; nothing else "
+        "changes."
+    )
+    # When the agent's qualifier does not occur in the accepted declaration's
+    # theory path (e.g. `IntOrder.ler_trans` resolved to RealOrder), name that
+    # theory. The sentence states only where the declaration is; whether the
+    # agent's qualifier denotes another theory (an alias, say) is not claimed.
+    qualifier = written.rpartition(".")[0]
+    theory = resolved_identity.rpartition(".")[0]
+    if qualifier and f".{qualifier}." not in f".{theory}.":
+        text += (
+            " The accepted declaration is at the top level."
+            if theory == "Top"
+            else " The accepted declaration is in "
+            f"`{theory.removeprefix('Top.')}`."
+        )
+    return text
+
+
 def _unique_realization_reason(
     attempted: AttemptedOperationIR,
-    operation: str,
+    repair: str,
 ) -> str:
-    repair = (
-        "EasyCrypt accepts one corrected form of your selected "
-        f"`{operation}`. It keeps the operation and theorem you chose and "
-        "changes only how its module arguments are written or supplied."
-    )
     if attempted.recovery_handoff is not None:
         return repair
     native_error = attempted.native_error_message.strip()

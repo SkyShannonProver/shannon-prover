@@ -2,7 +2,7 @@
 
 Status: **current canonical architecture specification for the clean rewrite**
 
-Architecture decision current through: 2026-08-14
+Architecture decision current through: 2026-09-27
 
 Primary conceptual reference: [*ShannonProver: Towards Automating Formal
 Cryptographic Proofs*](https://arxiv.org/pdf/2607.02847), Section 3 and Figures
@@ -237,9 +237,10 @@ fact. It may narrow a native query, but it may not establish type
 compatibility, module compatibility, proof-premise matching, placeholder
 solvability, or application validity.
 
-Current implementation status must not be overstated. B1 namespace repair,
-B2 losslessness/module repair (including bounded one-module calls with
-one or two deferred proof premises), and the frozen probability/multi-slot
+Current implementation status must not be overstated. B1 namespace repair
+consumes an event-bound native namespace spelling set; B2
+losslessness/module repair (including bounded one-module calls with
+one or two deferred proof premises) and the frozen probability/multi-slot
 B2/B4 recovery consume
 event-bound native proof-term descriptors before forming actions. Python
 declaration parsing, token alignment, and proof-fact
@@ -343,11 +344,30 @@ spelling, never identity authority. The old M05 feature-local semantic binder
 is deleted.
 
 N2b.1 connects the first commitment-relative recovery consumer. B1 keeps the
-exact attempted operation and selected basename, permits only a unique
-namespace-only correction of a bare proof-term head, and requires EasyCrypt to
-return the resolved global head before lowering. Attempts with arguments
-abstain rather than dropping or rewriting them lexically. The old Python
-namespace binder is deleted.
+exact attempted operation and written basename and permits only a
+namespace-only correction: the head's spelling may change, and nothing else.
+The proof term must be a bare head or one parenthesized application; the
+agent's argument text is copied byte-identically, and the shared P4 identity
+guard rejects any action whose argument text differs from the rejected
+tactic. One native `namespace_spelling_set` query owns the population and the
+verdicts: EasyCrypt enumerates every lemma or axiom of the current
+environment whose last name component equals the written basename (required
+but unimported theories, clones and earlier declarations alike, via
+`EcEnv.Ax.all`; abstract theories contribute nothing), spells each by its
+shortest name that resolves back to the same path in the goal context (as
+`locate` does, except that an unqualified name that is a goal hypothesis
+denotes the hypothesis; shadowed paths are skipped) and runs the agent's
+tactic with only that head replaced at the
+current goal, so placeholders that only the goal determines are instantiated
+by the operation itself. A written name that already denotes a lemma or a
+goal local is not a namespace problem and yields no population; a population
+over the bound is reported incomplete and yields no verdicts. B1 forms an
+action only for a complete population in which exactly one declaration is
+accepted with progress; several are never ranked, and a declaration with a
+different basename is never considered. Known limit: a same-file lemma that is
+declared later is not in the environment, so a same-basename declaration from
+a loaded theory can be the unique accepted one; the presented tactic names
+that declaration by its shortest resolving name. The old Python namespace binder is deleted.
 
 N2b.2 migrated the first B2 losslessness/module family. Direct `apply` accepts only
 the exact failed bare commitment and requires native result/current-goal
@@ -382,13 +402,18 @@ first module slot and ordinary exact unchanged-state preflight remain
 mandatory. This stays inside `operation_binding_repair`; arbitrary or
 ambiguous parse errors abstain.
 
-Native semantic protocol/artifact schema 14 is canonical rather than
+Native semantic protocol/artifact schema 19 is canonical rather than
 branch-local. Every attempted-operation payload includes both mutually
 exclusive nullable fields `intro_pattern_realization` and
-`application_syntax_repair`. Every batch member also carries an exact
-`evaluation_prefix`: normally empty, or the native-confirmed source prefix of
-one compound-boundary handoff. No earlier-schema compatibility path remains.
-Successful responses and top-level error envelopes report schema 14.
+`application_syntax_repair`. Every application-head input argument carries
+`rejected`, true only for the one top-level argument at whose location
+EasyCrypt reported its argument-kind error or found no product left to apply
+it to. Every application head carries `implicits_enabled`, EasyCrypt's
+implicit-arguments option, and `unfolds_to_more_slots`, whether its result
+still unfolds into a product. Every batch member also carries an
+exact `evaluation_prefix`: normally empty, or the native-confirmed source
+prefix of one compound-boundary handoff. No earlier-schema compatibility path
+remains. Successful responses and top-level error envelopes report schema 19.
 
 Native companion stdout is a framed transport, not a bare JSON assumption.
 EasyCrypt commands replayed from the source may themselves print text, so each
@@ -1249,17 +1274,41 @@ not that EasyCrypt exhausted every possible theorem instantiation.
 For an inference-seeking bare failed `apply L.` or `exact L.` whose selected
 native head has module slots, `operation_binding_repair` may use the shared
 `selected_application_binding_set` query. P2 supplies a complete bounded
-inventory of exact module spellings from hash-bound source declarations and
-native goal module terms. This inventory has no typing authority. In one
-native transaction EasyCrypt resolves `L`, walks the proof-term product,
+inventory of exact module spellings from hash-bound source declarations,
+native goal module terms and the goal's native module binders (for example a
+lemma parameter `(O <: Oracle)`); when the goal was not lowered its module
+terms are unknown, so the inventory is incomplete and the query is not
+planned. This inventory has no typing authority. In
+one native transaction EasyCrypt resolves `L`, walks the proof-term product,
 checks every module term against the required signature/restrictions, leaves
-non-module premises as native holes, matches the resulting conclusion to the
-exact scratch goal, and preflights the complete tactic. Search has a fixed
-native branch bound and never exposes a truncated prefix.
+non-module premises as native holes, and, as `apply` itself does, matches the
+conclusion to the exact scratch goal at every premise depth once a module is
+bound, including a depth before a later module binder, then preflights each
+matching complete tactic. Search has a fixed native branch bound, which only
+depth forms that match the goal count toward, and never exposes a truncated
+prefix. `apply` itself also unfolds definitions and tries iff and negation
+views, which this matching does not; so the adapter executes the shortest
+form of every module assignment without a checked completion (at most 32,
+else the set is incomplete), and if `apply` accepts one with progress, the set
+is reported incomplete and makes no zero or unique claim.
 
 The query admits no supplied arguments. Concrete native-parsed arguments first
 pass one structural alignment gate. A concrete kind/position contradiction
-may receive only the shared factual expected-versus-supplied diagnostic;
+may receive only the shared factual expected-versus-supplied diagnostic.
+EasyCrypt parses every plain term argument as formula syntax, even a
+hypothesis, lemma application or module name the elaborator then uses as a
+proof or module, so formula syntax counts as a kind contradiction only for
+the argument EasyCrypt marked `rejected`. The head's slots are read without
+unfolding definitions, so the diagnostic abstains when the result still
+unfolds into a product, and an argument just past the slots counts only when
+EasyCrypt marked it. Explicit proof/module/memory syntax in another slot kind
+always counts, and supplied names are shown without a kind label. With
+implicit arguments enabled, EasyCrypt inserts inferred arguments before the
+written ones of an implicit-mode `apply`/`exact`, so written positions are
+not slot positions and the diagnostic abstains when the head has a formula
+slot (module, memory and proof binders are never implicit); the binding-set
+query is then not planned either. The diagnostic also abstains when the marked argument's
+syntax fits its slot;
 alternative theorem/module search, reordering, and guessed completion abstain.
 An explicit hole is compatible with every slot, and an omitted trailing
 argument is an inference request rather than an alignment error. The current
@@ -1272,10 +1321,13 @@ P3 interpretations:
 
 ```text
 complete checked set = 0
-  -> current-state bounded inapplicability diagnostic
+  -> current-state bounded inapplicability diagnostic, unless another
+     operation-binding family produced a checked application, including
+     one that another family disagrees with
 
 complete checked set = 1
-  -> ordinary ApplicationCandidate -> exact P4 certification
+  -> ordinary ApplicationCandidate -> exact P4 certification; families that
+     reach the same exact application agree, different ones abstain
 
 complete checked set = 2..4
   -> one choice-required diagnostic listing every checked suffix;
@@ -1716,7 +1768,11 @@ renderer branches.
 
 `accepted_contract_retention` does not synthesize a strengthening fact.
 `operation_binding_repair` repairs an already rejected commitment; it is not a
-broad error helper and does not select a replacement resource. Rejected tactic
+broad error helper and does not select a replacement resource. B1 resolves
+the agent's own unresolved name: when several declarations share the written
+basename, EasyCrypt's acceptance of the agent's exact tactic at the current
+goal decides which one the name denotes. This is type-directed name resolution
+(SC1), recorded as the 2026-09-27 decision below. Rejected tactic
 parsing is shared P2 `FailureObservation`/`AttemptedOperationIR`, not feature
 code. M15 is the horizontal `failure_linked_repair_rule()`; numerical
 complete-Markdown envelopes remain feature-specific. Evidence and result-free
@@ -1754,6 +1810,17 @@ Historical M07 work triggered one such shared extension: bounded P2 declaration
 dependency loading. The service/runtime request/resolve/re-snapshot protocol is
 feature-neutral and remains because the SC1 operation-binding slice consumes
 it. The M07 producer itself is deleted.
+
+Decision 2026-09-27: B1 same-basename resolution adds one native semantic
+query kind, `namespace_spelling_set`, whose population is owned by EasyCrypt
+(`EcEnv.Ax.all` plus `locate`-style shortening) rather than by declaration
+loading or source text. It is consumed only by `operation_binding_repair`,
+like `selected_application_binding_set`; deleting the feature orphans the
+query contract, its validators and its adapter branch, which are then deleted
+with it. No manager, service, renderer or generic pass branch was added. The
+real-EasyCrypt sentinel and the recovery-foundation abstention tests cover
+it, and the existing synthetic second-recovery-feature test still passes
+unchanged.
 
 The experiment boundary follows the same rule. Shared
 `proof_state_compiler_one_step_trial.py` and
@@ -2117,9 +2184,10 @@ Three independent checks protect extensibility:
 
 1. A test-only diagnostic feature uses generic admission/rendering without a
    boundary branch or any real feature dependency.
-2. `operation_binding_repair` consumes native proof-term semantics for B1,
-   B2 losslessness apply/bounded one-module-call families, and the frozen
-   probability/multi-slot B2/B4 family.
+2. `operation_binding_repair` consumes the native namespace spelling set for
+   B1 and native proof-term semantics for the B2 losslessness apply/bounded
+   one-module-call families and the frozen probability/multi-slot B2/B4
+   family.
    Declaration/signature/proof-slot code can only enumerate a bounded native
    request after an exact rejected operation/resource commitment.
 3. A synthetic second recovery feature claims the same authoritative failed
@@ -2231,8 +2299,10 @@ The current implementation has completed the strategy-boundary migration:
 6. The B1/B2/B4 policy lives in the removable SC1
    `operation_binding_repair` feature; B1 and B2 losslessness apply/call
    semantic resolution and probability/multi-slot B2/B4 resolution are native
-   and share that one recovery owner. Direct applications require native
-   result/current-goal convertibility; certificate-backed calls require exact
+   and share that one recovery owner. B1 requires one declaration whose exact
+   tactic native EasyCrypt accepts with progress at the current goal; B2
+   direct applications require native result/current-goal convertibility;
+   certificate-backed calls require exact
    native certificate/callee matching followed by complete-call preflight.
    Multi-candidate B24 additionally materializes an exact-population
    `ApplicationApplicability`. Generic P4 rejects an action whose actual

@@ -95,6 +95,7 @@ def analyze_operation_binding_repair(
         evidence_refs=attempted.evidence_refs,
     )
     contribution = AnalysisContribution()
+    any_checked_application = False
     selected_binding_contribution = AnalysisContribution()
     selected_binding_diagnostic = None
     if failure_class == "B2":
@@ -120,24 +121,38 @@ def analyze_operation_binding_repair(
             ),
         )
     if attempted.native_diagnostic_status != "indeterminate":
-        contribution = (
-            analyze_native_namespace_repair(proof_ir, _coordinate, _invocation)
-            if failure_class == "B1"
-            else _bind_application_shape_repair(
-                proof_ir,
-                _coordinate,
-                _invocation,
-                probability_applicability=probability_applicability,
-                selected_binding_contribution=(
-                    selected_binding_contribution
-                ),
+        if failure_class == "B1":
+            contribution = analyze_native_namespace_repair(
+                proof_ir, _coordinate, _invocation
             )
-        )
+            any_checked_application = bool(contribution.applications)
+        else:
+            contribution, any_checked_application = (
+                _bind_application_shape_repair(
+                    proof_ir,
+                    _coordinate,
+                    _invocation,
+                    probability_applicability=probability_applicability,
+                    selected_binding_contribution=(
+                        selected_binding_contribution
+                    ),
+                )
+            )
     applicability_items = (
         ()
         if probability_applicability is None
         else (probability_applicability,)
     )
+    # A checked application from any family, even one another family
+    # disagrees with, refutes the binding set's "no completed instance"
+    # explanation, which then must not be shown.
+    if (
+        any_checked_application
+        and selected_binding_diagnostic is not None
+        and selected_binding_diagnostic.code
+        == "selected_application_not_applicable"
+    ):
+        selected_binding_diagnostic = None
     if (
         len(contribution.applications) == 1
         and selected_binding_diagnostic is None
@@ -283,8 +298,8 @@ def _analyze_selected_application_binding_set(
         )
         standalone_result = (
             "\n\nThe proof state is unchanged. The compiler found no "
-            f"replacement `{operation}` that EasyCrypt accepts in this "
-            "proof state."
+            f"replacement `{operation}` that EasyCrypt accepts and that "
+            "changes the goal in this proof state."
             if handoff is None
             else ""
         )
@@ -460,6 +475,22 @@ def _module_term_differences(
     return tuple(differences)
 
 
+def agreeing_alternative(
+    alternatives: list[AnalysisContribution],
+) -> AnalysisContribution | None:
+    """Return the one application several families agree on, if any.
+
+    Families that reach the same exact application agree; genuinely
+    different applications are ambiguous and are never ranked.
+    """
+
+    distinct = {
+        (item.applications[0].operation, item.applications[0].application_term)
+        for item in alternatives
+    }
+    return alternatives[0] if len(distinct) == 1 else None
+
+
 def _bind_application_shape_repair(
     proof_ir: ProofIR,
     coordinate: ProofCoordinate,
@@ -467,7 +498,9 @@ def _bind_application_shape_repair(
     *,
     probability_applicability: ApplicationApplicability | None,
     selected_binding_contribution: AnalysisContribution,
-) -> AnalysisContribution:
+) -> tuple[AnalysisContribution, bool]:
+    """Return the agreed application, and whether any family checked one."""
+
     attempted = proof_ir.attempted_operation
     assert attempted is not None
     failure_class = classify_operation_binding_failure(attempted)
@@ -511,9 +544,9 @@ def _bind_application_shape_repair(
         )
         if len(probability.applications) == 1:
             alternatives.append(probability)
-    if len(alternatives) != 1:
-        return AnalysisContribution()
-    contribution = alternatives[0]
+    contribution = agreeing_alternative(alternatives)
+    if contribution is None:
+        return AnalysisContribution(), bool(alternatives)
     application = contribution.applications[0]
     evidence = tuple(dict.fromkeys(
         attempted.evidence_refs + application.evidence_refs
@@ -523,4 +556,4 @@ def _bind_application_shape_repair(
         resources=contribution.resources,
         bindings=contribution.bindings,
         applications=(application,),
-    )
+    ), True

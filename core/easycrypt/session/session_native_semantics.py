@@ -27,6 +27,7 @@ from core.easycrypt.native_semantics import (
     run_native_semantic_batch,
     validate_attempt_descriptor,
     validate_native_query_payload,
+    validate_namespace_spelling_set_descriptor,
     validate_proof_term_descriptor,
     validate_selected_application_binding_set_descriptor,
     validate_tactic_prefix_descriptor,
@@ -327,6 +328,18 @@ def validate_native_semantic_batch_result(
                     elif query_kind == "selected_application_binding_set":
                         validate_selected_application_binding_set_descriptor(
                             descriptor
+                        )
+                    elif query_kind == "namespace_spelling_set":
+                        validate_namespace_spelling_set_descriptor(
+                            descriptor,
+                            query=NativeSemanticQuery(
+                                request_id=str(request_item["request_id"]),
+                                query_kind=str(query_kind),
+                                payload=dict(request_item["payload"]),
+                                evaluation_prefix=tuple(
+                                    request_item["evaluation_prefix"]
+                                ),
+                            ),
                         )
                     elif query_kind == "attempt_diagnostic":
                         validate_attempt_descriptor(

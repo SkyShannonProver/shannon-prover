@@ -56,10 +56,20 @@ class ClaudeEventNormalizer:
             # progress chatter). They carry no tool/protocol semantics; killing
             # the node over vocabulary drift took the whole claude backend down
             # (observed live 2026-08-19: node died in 5s at the first such
-            # event). Same policy as the Codex progress-message fix on main.
+            # event). CLI 2.1.283 also emits `commands_changed` before `init`
+            # and `post_turn_summary` after the terminal `result`, so these are
+            # position-free notices rather than order-checked passive content.
+            subtype = value.get("subtype")
             return _events(CanonicalAgentEvent(
-                **base,
-                kind=AgentEventKind.PASSIVE,
+                **{
+                    **base,
+                    "raw_event_type": (
+                        f"system/{subtype}"
+                        if isinstance(subtype, str) and subtype
+                        else "system"
+                    ),
+                },
+                kind=AgentEventKind.PROVIDER_NOTICE,
             ))
         if event_type == "assistant":
             return self._assistant(value, base)
@@ -88,7 +98,8 @@ class ClaudeEventNormalizer:
         # freely grows informational events (`rate_limit_event` killed a live
         # node minutes after the system-subtype fix). The guard's authority is
         # call pairing, ordering, and terminal cardinality — all carried by the
-        # known types above; malformed KNOWN types still fail closed.
+        # known types above; malformed KNOWN types still fail closed. Unknown
+        # types may carry content, so they stay order-checked PASSIVE.
         return _events(CanonicalAgentEvent(
             **base,
             kind=AgentEventKind.PASSIVE,

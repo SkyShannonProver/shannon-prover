@@ -2,7 +2,8 @@
 
 This frontend helper never claims that a spelling is visible, has a module
 type, or satisfies a restriction.  It collects exact source-declared module
-heads and exact native goal module terms.  A feature may pass the complete
+heads, exact native goal module terms and the goal's module binders (for
+example a lemma parameter `(O <: Oracle)`).  A feature may pass the complete
 bounded inventory to EasyCrypt; only native accepted members become semantic
 evidence.
 """
@@ -52,16 +53,26 @@ def bounded_module_spelling_inventory(
     environment: CompilationEnvironment,
     *,
     max_terms: int,
+    local_modules: tuple[str, ...] = (),
+    local_module_evidence: tuple[EvidenceRef, ...] = (),
 ) -> ModuleSpellingInventory:
     """Return the complete bounded spelling inventory or typed abstention."""
 
     if max_terms < 1:
         raise ValueError("module spelling inventory requires a positive bound")
-    terms: list[str] = []
-    evidence: list[EvidenceRef] = []
-    if goal.formula_ir is not None:
-        _collect_goal_module_terms(goal.formula_ir, terms)
-        evidence.extend(goal.evidence_refs)
+    # The goal's own module terms are part of a complete inventory, so an
+    # unlowered goal leaves it incomplete rather than silently smaller.
+    if goal.formula_ir is None:
+        return ModuleSpellingInventory(
+            terms=(),
+            evidence_refs=(),
+            complete=False,
+            reason="module_spelling_inventory_goal_not_lowered",
+        )
+    terms: list[str] = list(local_modules)
+    evidence: list[EvidenceRef] = list(local_module_evidence)
+    _collect_goal_module_terms(goal.formula_ir, terms)
+    evidence.extend(goal.evidence_refs)
     for unit in environment.source_units:
         terms.extend(match.group(1) for match in _MODULE_HEAD.finditer(unit.text))
         evidence.append(EvidenceRef(

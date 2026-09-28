@@ -85,6 +85,22 @@ def _native_descriptor_summary(
             "population_complete": descriptor["population_complete"],
             "reason": str(descriptor.get("reason") or ""),
         }
+    spellings = descriptor.get("spellings")
+    if isinstance(spellings, list):
+        summary["namespace_spelling_set"] = {
+            "written_name_resolves": bool(
+                descriptor.get("written_name_resolves")
+            ),
+            "population_count": descriptor.get("population_count"),
+            "population_complete": descriptor.get("population_complete"),
+            "tactic_effects": {
+                str(item.get("candidate_head") or ""): str(
+                    item.get("tactic_effect") or ""
+                )
+                for item in spellings
+                if isinstance(item, dict)
+            },
+        }
     return summary
 
 
