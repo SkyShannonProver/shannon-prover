@@ -117,6 +117,13 @@ traces. Simple cases may retain the existing `[title, description]` process
 list. A story's deliberately curated archive identifiers are displayed as
 provenance, unlike private input locations.
 
+Historical staged cases may use `archive_excerpt` evidence with a `source`
+path and original line number for saved proposals and campaign logs. These
+are labeled as archived records, not outer-agent messages or JSONL events.
+JSON proposal excerpts show the decoded text field named by `item`. Jobs may
+specify `file` when a case spans multiple source files. Optional story/work,
+job-table and provenance labels adapt the same layout to the actual records.
+
 Curate statements from frozen evidence and distinguish original public agent
 messages from editorial summaries. Cross-check job outcomes and final claims
 against their verification records; a completion message or an intermediate

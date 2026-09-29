@@ -429,20 +429,7 @@
       ],
       "meta": "Historical staged campaign · 20–21 Aug 2026 · Opus 5 / Opus 5",
       "note": "The archived stitched source tree: generated and existing proofs coexist. CBC.eca is a reused verified dependency.",
-      "process": [
-        [
-          "Propose a decomposition",
-          "The decomposer receives the model and target, with intermediate human lemmas removed for the selected tasks."
-        ],
-        [
-          "Prove the obligations",
-          "Separate campaigns prove the confidentiality, integrity and correctness targets and their helpers."
-        ],
-        [
-          "Compose and check",
-          "Generated proofs are stitched into the development and checked together, reusing the existing CBC library."
-        ]
-      ],
+      "process_source": "mee/process.json",
       "evidence": [
         [
           "Targets",

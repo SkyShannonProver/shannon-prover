@@ -1,0 +1,544 @@
+{
+  "schema_version": 1,
+  "title": "How the agent decomposed and proved the MEE-CBC targets",
+  "deck": "Three saved decomposition proposals explain the confidentiality, plaintext-integrity and correctness proofs. Follow their helper lemmas into the final source, inspect the original archived excerpts, and see the recorded result of every proof task.",
+  "stats": [
+    {
+      "value": "23–41 min",
+      "label": "elapsed time per selected target run"
+    },
+    {
+      "value": "3 targets",
+      "label": "confidentiality, integrity and correctness"
+    },
+    {
+      "value": "33 helpers",
+      "label": "proposed across the three decompositions"
+    },
+    {
+      "value": "36 / 36",
+      "label": "proof tasks recorded as verified"
+    }
+  ],
+  "provenance": {
+    "commit": "d6cd78757b13fd00b845426a9cc2bffadccee4b0",
+    "tracePath": "experiments/phase2_decomposition/results/mee_cbc_20260820",
+    "sourceLabel": "Evidence directory",
+    "blob": "5f2529982dfff30d3af2ba20c483ce55b16de54b",
+    "blobLabel": "Report Git blob",
+    "note": "This account is reconstructed from the saved prompts, original JSON proposals, campaign logs and final source in the frozen archive. The 36 task results were also cross-checked against the retained prover result files. Excerpts below identify their source file and original line; proposal excerpts show decoded JSON text fields. The report excerpt retains its original language. Complete decomposer conversation and tool-call transcripts have not been recovered, so this page does not reconstruct unrecorded intermediate choices or present a continuous agent replay. Proof links open the final combined development, which also retains original human lemmas and supplied libraries."
+  },
+  "workLabel": "Recorded work",
+  "orderNote": "This account uses saved proposals and proof records; complete decomposer transcripts have not been recovered. A decomposer first proposed helpers, then Shannon Prover proved the admitted lemmas and target. The sections group three separate runs by target. Each selected run completed in its first decomposition round. Per-target times run from the first campaign log entry through its successful full-file check; separate supporting runs and the final combined-development check are outside those intervals.",
+  "stages": [
+    {
+      "title": "Start from the model and a fixed target",
+      "paragraphs": [
+        "For each selected target, the harness removed the chosen human intermediate lemma declarations and proofs, stripped comments, and cut the model off at the target. It retained the model infrastructure and imported dependencies. The saved prompt asked for new intermediate declarations from which the target would follow.",
+        "The decomposer returned a JSON proposal: an explanation, helper statements and, where needed, a module definition. A separate admission check preceded the individual proof tasks. The saved proposals and logs support the account below; they do not show every intermediate action taken inside the decomposer call."
+      ],
+      "work": "The decomposer proposed the statements. The harness checked their admission; Shannon Prover then attempted the helpers and target.",
+      "references": [
+        {
+          "file": "mee-top",
+          "lemma": "RCPA_security"
+        },
+        {
+          "file": "mee-top",
+          "lemma": "PTXT_security"
+        },
+        {
+          "file": "mee-functional",
+          "lemma": "mee_correct"
+        }
+      ],
+      "evidence": [
+        {
+          "kind": "archive_excerpt",
+          "source": "top_rcpa_opus5/round_1/prompt.md",
+          "line": 3,
+          "item": "Prompt: decomposition task",
+          "text": "Your job is Phase II of\nproof engineering: invent the intermediate lemma decomposition — the game\nhops, hybrid games, and bridging equalities — from which the top-level claim\nfollows. A separate automated prover (Phase III) will try to prove each of\nyour lemmas one by one; it is good at focused, mechanical goals and bad at\nhuge monolithic ones, so prefer several small hops over one giant step."
+        },
+        {
+          "kind": "archive_excerpt",
+          "source": "top_rcpa_opus5/PROCESS_LOG.md",
+          "line": 18,
+          "item": "Admission result",
+          "text": "**Admission:** PASS; rejected 0 decl(s)"
+        }
+      ]
+    },
+    {
+      "title": "Confidentiality: connect MEE to the supplied CBC bound",
+      "paragraphs": [
+        "The proposal introduced MEE_CBCAdv, an adapter that holds the MAC key, tags and pads each message, and forwards it to the block-list CBC oracle. Eight helper lemmas connect the real and ideal MEE games to the CBC games and align the permutation-adversary terms.",
+        "CBC_advantage_bound then applies the already supplied CBC conclusion. The deep switching argument and birthday bound remain in that verified library; this campaign proves the surrounding connection to MEE. The log records eight helper proofs and RCPA_security completed, with a clean full-file check after 41m 05s."
+      ],
+      "work": "One proposed adapter module, eight helper lemmas and the target. All nine proof tasks have verified result records.",
+      "references": [
+        {
+          "file": "mee-top",
+          "lemma": "MEE_enc_IVCBC_enc"
+        },
+        {
+          "file": "mee-top",
+          "lemma": "MEE_real_to_CBC"
+        },
+        {
+          "file": "mee-top",
+          "lemma": "CBCIdeal_to_CBCRandom"
+        },
+        {
+          "file": "mee-top",
+          "lemma": "CBC_advantage_bound"
+        },
+        {
+          "file": "mee-top",
+          "lemma": "RCPA_security"
+        }
+      ],
+      "evidence": [
+        {
+          "kind": "archive_excerpt",
+          "source": "top_rcpa_opus5/round_1/proposal.json",
+          "line": 1,
+          "item": "decls[0].why",
+          "text": "The reduction adversary: it turns A (an IND$-CPA adversary against the msg-level scheme) into an IND$-CPA adversary against the block-list-level CBC scheme, by owning the MAC key itself and answering A's query p with an oracle query on pad (p, mac mk p)."
+        },
+        {
+          "kind": "archive_excerpt",
+          "source": "top_rcpa_opus5/round_1/proposal.json",
+          "line": 1,
+          "item": "decls[8].why",
+          "text": "The whole quantitative content, obtained by instantiating the imported CBCa.Conclusion at the reduction adversary: `exact/(CBCa.Conclusion MEE_CBCAdv &m MEE_CBCAdv_ll)`. Since CBCa was cloned with q <- q, ell <- n and dBlock <- d_block, Conclusion's additive term 2%r * ((q*ell)^2)%r * mu dBlock (pred1 witness) is syntactically the target's 2%r * ((q * n) ^ 2)%r * mu d_block (pred1 witness) -- the PRP/PRF switch and the birthday-collision bound both live inside CBCa and are never re-proved here."
+        },
+        {
+          "kind": "archive_excerpt",
+          "source": "top_rcpa_opus5/PROCESS_LOG.md",
+          "line": 38,
+          "item": "Final campaign check",
+          "text": "Target `RCPA_security` proved, zero admits, full-file EasyCrypt batch check clean."
+        }
+      ]
+    },
+    {
+      "title": "Plaintext integrity: match the encryption and forgery games",
+      "paragraphs": [
+        "This proposal uses four helper lemmas. enc_oracle_eq matches the encryption procedures; verify_oracle_eq relates the verification conditions so that an accepted new plaintext gives a MAC forgery. forge_eq lifts these local comparisons through the adversary.",
+        "main_eq completes the game comparison, including the different order of the independent key samples. The target then uses this game-level relation. The recorded run completed all four helpers and PTXT_security, with its successful full-file check after 23m 22s."
+      ],
+      "work": "Four proposed helpers and the target. All five proof tasks have verified result records.",
+      "references": [
+        {
+          "file": "mee-top",
+          "lemma": "enc_oracle_eq"
+        },
+        {
+          "file": "mee-top",
+          "lemma": "verify_oracle_eq"
+        },
+        {
+          "file": "mee-top",
+          "lemma": "forge_eq"
+        },
+        {
+          "file": "mee-top",
+          "lemma": "main_eq"
+        },
+        {
+          "file": "mee-top",
+          "lemma": "PTXT_security"
+        }
+      ],
+      "evidence": [
+        {
+          "kind": "archive_excerpt",
+          "source": "top_ptxt_opus5/round_1/proposal.json",
+          "line": 1,
+          "item": "rationale",
+          "text": "The target is a reduction, not a probability-hop chain: `WUF_CMA(MAC,CMAa(PseudoRP,A))` runs exactly the same code as `INT_PTXT(MEE(PseudoRP,MAC),A)`, only re-plumbed so the MAC key lives in `WUF_Wrap` instead of the second component of `PTXT_Wrap.k`. So the decomposition is a single perfect-equivalence argument, split at the seams the prover finds easiest.\n\nThe coupling invariant is `PTXT_Wrap.k{1} = (CMAa.ek{2}, WUF_Wrap.k{2}) /\\ PTXT_Wrap.s{1} = WUF_Wrap.s{2} /\\ (PTXT_Wrap.win{1} => WUF_Wrap.win{2})`."
+        },
+        {
+          "kind": "archive_excerpt",
+          "source": "top_ptxt_opus5/round_1/proposal.json",
+          "line": 1,
+          "item": "decls[3].why",
+          "text": "The whole-game hop, and the only statement the target needs: `byequiv main_eq` closes `PTXT_security` in one tactic."
+        },
+        {
+          "kind": "archive_excerpt",
+          "source": "top_ptxt_opus5/PROCESS_LOG.md",
+          "line": 40,
+          "item": "Final campaign check",
+          "text": "Target `PTXT_security` proved, zero admits, full-file EasyCrypt batch check clean."
+        }
+      ]
+    },
+    {
+      "title": "Correctness: undo CBC encryption, padding and tag handling",
+      "paragraphs": [
+        "The correctness proposal separates CBC inversion from padding inversion. cbc_encK handles the CBC list induction. The other helpers establish padding lengths, conversion between octets and blocks, and the list operations that recover the message, tag and padding.",
+        "unpad_pad combines the padding facts. mee_dec_enc_unpad connects them to CBC inversion, leaving the final mee_correct proof to discharge the tag check. The log records all 21 helpers and the target proved, with a clean full-file check after 23m 48s."
+      ],
+      "work": "Twenty-one proposed helpers and the target. All 22 proof tasks have verified result records.",
+      "references": [
+        {
+          "file": "mee-functional",
+          "lemma": "cbc_encK"
+        },
+        {
+          "file": "mee-functional",
+          "lemma": "bs2osK_P2"
+        },
+        {
+          "file": "mee-functional",
+          "lemma": "unpad_cat_pad"
+        },
+        {
+          "file": "mee-functional",
+          "lemma": "unpad_pad"
+        },
+        {
+          "file": "mee-functional",
+          "lemma": "mee_dec_enc_unpad"
+        },
+        {
+          "file": "mee-functional",
+          "lemma": "mee_correct"
+        }
+      ],
+      "evidence": [
+        {
+          "kind": "archive_excerpt",
+          "source": "mee_correct_opus5/round_1/proposal.json",
+          "line": 8,
+          "item": "decls[1].why",
+          "text": "CBC decryption inverts CBC encryption for every chaining state. The state is quantified after the list so that `elim: p` keeps it generalized, which is exactly what the induction needs (the recursive call runs with st := ci)."
+        },
+        {
+          "kind": "archive_excerpt",
+          "source": "mee_correct_opus5/round_1/proposal.json",
+          "line": 84,
+          "item": "decls[20].why",
+          "text": "Glues the two halves: unfold mee_enc, strip CBC with cbc_encK, then apply unpad_pad at t = M mk m."
+        },
+        {
+          "kind": "archive_excerpt",
+          "source": "mee_correct_opus5/PROCESS_LOG.md",
+          "line": 51,
+          "item": "Final campaign check",
+          "text": "Target `mee_correct` proved, zero admits, full-file EasyCrypt batch check clean."
+        }
+      ]
+    },
+    {
+      "title": "Keep the generated proofs in the combined development",
+      "paragraphs": [
+        "The final merge inserted the generated declarations and target proofs into the original MEE-CBC development. Original human declarations and supplied libraries remain alongside them. Four correctness helpers were renamed to avoid existing names: size_padding_P2, last_padding_P2, os2tK_P2 and bs2osK_P2. Their references were renamed consistently.",
+        "The archived report records passing EasyCrypt batch checks for the four modified files, including FunctionalSpec, which imports the combined chain. The seven source files served by this website match the archived combined tree byte for byte. The 36 statements and proofs listed below match the three selected campaign outputs after those name changes and differences in comments or layout.",
+        "The task table covers these three target runs. The wider archive also contains separate supporting campaigns and a hashed-ElGamal smoke run; their tasks and time are not included in the figures above. A first-round successful decomposition also does not mean every tactic attempt succeeded."
+      ],
+      "work": "The completed proofs were combined with the original development. Final acceptance is reported from the archived checks.",
+      "references": [
+        {
+          "file": "mee-functional",
+          "lemma": "size_padding_P2"
+        },
+        {
+          "file": "mee-functional",
+          "lemma": "last_padding_P2"
+        },
+        {
+          "file": "mee-functional",
+          "lemma": "os2tK_P2"
+        },
+        {
+          "file": "mee-functional",
+          "lemma": "bs2osK_P2"
+        },
+        {
+          "file": "mee-functional",
+          "lemma": "mee_correct"
+        },
+        {
+          "file": "mee-top",
+          "lemma": "RCPA_security"
+        },
+        {
+          "file": "mee-top",
+          "lemma": "PTXT_security"
+        }
+      ],
+      "evidence": [
+        {
+          "kind": "archive_excerpt",
+          "source": "REPORT.md",
+          "line": 66,
+          "item": "Combined check: original report",
+          "text": "**全链 stitch**:七个分解移植回原始 MEE-CBC 树(人类与机器证明并存,4 个重名\n重发明引理以 `_P2` 后缀区分),四个文件(含拉动全链的 FunctionalSpec)EasyCrypt\n批检全部 PASS。见 `stitched/`。"
+        }
+      ]
+    }
+  ],
+  "jobs": {
+    "title": "Recorded helper and target proofs",
+    "note": "The three selected campaigns contain 33 helper proofs and three target proofs. All 36 are recorded as verified, and their retained result files report passing full-file verification. Links open the final combined source; names ending in _P2 identify the four renamed correctness helpers. Task identifiers below are the archived run-directory names.",
+    "merged": [
+      {
+        "id": "2026-08-20_2259_MEE_CBCAdv_ll",
+        "file": "mee-top",
+        "lemma": "MEE_CBCAdv_ll",
+        "duration": "2.2 min",
+        "result": "Verified · 8 proof turns"
+      },
+      {
+        "id": "2026-08-20_2301_MEE_enc_IVCBC_enc",
+        "file": "mee-top",
+        "lemma": "MEE_enc_IVCBC_enc",
+        "duration": "2.1 min",
+        "result": "Verified · 5 proof turns"
+      },
+      {
+        "id": "2026-08-20_2303_MEE_real_to_CBC",
+        "file": "mee-top",
+        "lemma": "MEE_real_to_CBC",
+        "duration": "5.4 min",
+        "result": "Verified · 20 proof turns"
+      },
+      {
+        "id": "2026-08-20_2308_Ideal_to_CBCIdeal",
+        "file": "mee-top",
+        "lemma": "Ideal_to_CBCIdeal",
+        "duration": "3.7 min",
+        "result": "Verified · 22 proof turns"
+      },
+      {
+        "id": "2026-08-20_2312_CBCIdeal_to_CBCRandom",
+        "file": "mee-top",
+        "lemma": "CBCIdeal_to_CBCRandom",
+        "duration": "5.4 min",
+        "result": "Verified · 18 proof turns"
+      },
+      {
+        "id": "2026-08-20_2318_CBC_prp_real_eq",
+        "file": "mee-top",
+        "lemma": "CBC_prp_real_eq",
+        "duration": "4.2 min",
+        "result": "Verified · 21 proof turns"
+      },
+      {
+        "id": "2026-08-20_2322_CBC_prp_ideal_eq",
+        "file": "mee-top",
+        "lemma": "CBC_prp_ideal_eq",
+        "duration": "5.7 min",
+        "result": "Verified · 27 proof turns"
+      },
+      {
+        "id": "2026-08-20_2328_CBC_advantage_bound",
+        "file": "mee-top",
+        "lemma": "CBC_advantage_bound",
+        "duration": "1.1 min",
+        "result": "Verified · 3 proof turns"
+      },
+      {
+        "id": "2026-08-20_2329_RCPA_security",
+        "file": "mee-top",
+        "lemma": "RCPA_security",
+        "duration": "0.8 min",
+        "result": "Verified · 4 proof turns"
+      },
+      {
+        "id": "2026-08-20_2343_enc_oracle_eq",
+        "file": "mee-top",
+        "lemma": "enc_oracle_eq",
+        "duration": "2.4 min",
+        "result": "Verified · 8 proof turns"
+      },
+      {
+        "id": "2026-08-20_2345_verify_oracle_eq",
+        "file": "mee-top",
+        "lemma": "verify_oracle_eq",
+        "duration": "2.5 min",
+        "result": "Verified · 9 proof turns"
+      },
+      {
+        "id": "2026-08-20_2348_forge_eq",
+        "file": "mee-top",
+        "lemma": "forge_eq",
+        "duration": "2.1 min",
+        "result": "Verified · 7 proof turns"
+      },
+      {
+        "id": "2026-08-20_2350_main_eq",
+        "file": "mee-top",
+        "lemma": "main_eq",
+        "duration": "2.1 min",
+        "result": "Verified · 8 proof turns"
+      },
+      {
+        "id": "2026-08-20_2352_PTXT_security",
+        "file": "mee-top",
+        "lemma": "PTXT_security",
+        "duration": "0.9 min",
+        "result": "Verified · 3 proof turns"
+      },
+      {
+        "id": "2026-08-20_2202_xorbKl",
+        "file": "mee-functional",
+        "lemma": "xorbKl",
+        "duration": "0.6 min",
+        "result": "Verified · 3 proof turns"
+      },
+      {
+        "id": "2026-08-20_2202_cbc_encK",
+        "file": "mee-functional",
+        "lemma": "cbc_encK",
+        "duration": "0.7 min",
+        "result": "Verified · 4 proof turns"
+      },
+      {
+        "id": "2026-08-20_2203_size_padding",
+        "file": "mee-functional",
+        "lemma": "size_padding_P2",
+        "duration": "0.5 min",
+        "result": "Verified · 3 proof turns"
+      },
+      {
+        "id": "2026-08-20_2204_nth_padding",
+        "file": "mee-functional",
+        "lemma": "nth_padding",
+        "duration": "0.5 min",
+        "result": "Verified · 3 proof turns"
+      },
+      {
+        "id": "2026-08-20_2204_last_padding",
+        "file": "mee-functional",
+        "lemma": "last_padding_P2",
+        "duration": "1.2 min",
+        "result": "Verified · 3 proof turns"
+      },
+      {
+        "id": "2026-08-20_2205_last_cat_padding",
+        "file": "mee-functional",
+        "lemma": "last_cat_padding",
+        "duration": "0.7 min",
+        "result": "Verified · 3 proof turns"
+      },
+      {
+        "id": "2026-08-20_2206_size_t2os",
+        "file": "mee-functional",
+        "lemma": "size_t2os",
+        "duration": "1.0 min",
+        "result": "Verified · 3 proof turns"
+      },
+      {
+        "id": "2026-08-20_2207_os2tK",
+        "file": "mee-functional",
+        "lemma": "os2tK_P2",
+        "duration": "1.6 min",
+        "result": "Verified · 5 proof turns"
+      },
+      {
+        "id": "2026-08-20_2209_pad_length_rng",
+        "file": "mee-functional",
+        "lemma": "pad_length_rng",
+        "duration": "0.6 min",
+        "result": "Verified · 3 proof turns"
+      },
+      {
+        "id": "2026-08-20_2209_o2int_int2o",
+        "file": "mee-functional",
+        "lemma": "o2int_int2o",
+        "duration": "1.2 min",
+        "result": "Verified · 5 proof turns"
+      },
+      {
+        "id": "2026-08-20_2210_size_cat_pad",
+        "file": "mee-functional",
+        "lemma": "size_cat_pad",
+        "duration": "0.5 min",
+        "result": "Verified · 3 proof turns"
+      },
+      {
+        "id": "2026-08-20_2211_dvd16_size_cat_pad",
+        "file": "mee-functional",
+        "lemma": "dvd16_size_cat_pad",
+        "duration": "0.9 min",
+        "result": "Verified · 5 proof turns"
+      },
+      {
+        "id": "2026-08-20_2212_map_ofblockK",
+        "file": "mee-functional",
+        "lemma": "map_ofblockK",
+        "duration": "1.6 min",
+        "result": "Verified · 4 proof turns"
+      },
+      {
+        "id": "2026-08-20_2213_bs2osK",
+        "file": "mee-functional",
+        "lemma": "bs2osK_P2",
+        "duration": "1.9 min",
+        "result": "Verified · 6 proof turns"
+      },
+      {
+        "id": "2026-08-20_2215_bs2os_pad",
+        "file": "mee-functional",
+        "lemma": "bs2os_pad",
+        "duration": "1.1 min",
+        "result": "Verified · 3 proof turns"
+      },
+      {
+        "id": "2026-08-20_2216_take_msg_cat_pad",
+        "file": "mee-functional",
+        "lemma": "take_msg_cat_pad",
+        "duration": "0.5 min",
+        "result": "Verified · 3 proof turns"
+      },
+      {
+        "id": "2026-08-20_2217_take_tag_cat_pad",
+        "file": "mee-functional",
+        "lemma": "take_tag_cat_pad",
+        "duration": "1.2 min",
+        "result": "Verified · 4 proof turns"
+      },
+      {
+        "id": "2026-08-20_2218_drop_pad_cat_pad",
+        "file": "mee-functional",
+        "lemma": "drop_pad_cat_pad",
+        "duration": "1.5 min",
+        "result": "Verified · 3 proof turns"
+      },
+      {
+        "id": "2026-08-20_2220_unpad_cat_pad",
+        "file": "mee-functional",
+        "lemma": "unpad_cat_pad",
+        "duration": "1.2 min",
+        "result": "Verified · 10 proof turns"
+      },
+      {
+        "id": "2026-08-20_2221_unpad_pad",
+        "file": "mee-functional",
+        "lemma": "unpad_pad",
+        "duration": "0.6 min",
+        "result": "Verified · 4 proof turns"
+      },
+      {
+        "id": "2026-08-20_2221_mee_dec_enc_unpad",
+        "file": "mee-functional",
+        "lemma": "mee_dec_enc_unpad",
+        "duration": "0.6 min",
+        "result": "Verified · 4 proof turns"
+      },
+      {
+        "id": "2026-08-20_2222_mee_correct",
+        "file": "mee-functional",
+        "lemma": "mee_correct",
+        "duration": "0.7 min",
+        "result": "Verified · 5 proof turns"
+      }
+    ],
+    "other": [],
+    "sourceNote": "Source: each selected campaign’s PROCESS_LOG.md, cross-checked against summary.json and prover_run_result.json. Minutes are rounded as recorded in the campaign tables; turns are the recorded proof turns. These per-task intervals omit the preceding decomposition call and must not be read as total development time or measured speedup. Complete decomposer transcripts have not been recovered."
+  }
+}

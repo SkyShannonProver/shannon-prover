@@ -134,8 +134,10 @@ def validate_process_story(story: dict, indexed: dict, default_file: str) -> Non
             check_reference(ref)
         for excerpt in stage["evidence"]:
             require_text(excerpt, "text", "item")
-            if excerpt["kind"] not in {"agent_message", "agent_action", "check"} or not isinstance(excerpt["line"], int) or excerpt["line"] < 1:
+            if excerpt["kind"] not in {"agent_message", "agent_action", "check", "archive_excerpt"} or not isinstance(excerpt["line"], int) or excerpt["line"] < 1:
                 raise ValueError("Invalid process-story trace reference")
+            if excerpt["kind"] == "archive_excerpt":
+                require_text(excerpt, "source")
     require_text(story["jobs"], "note", "sourceNote")
     seen_jobs = set()
     for job in story["jobs"]["merged"] + story["jobs"]["other"]:
@@ -143,7 +145,7 @@ def validate_process_story(story: dict, indexed: dict, default_file: str) -> Non
         if job["id"] in seen_jobs:
             raise ValueError("Duplicate process-story job")
         seen_jobs.add(job["id"])
-        check_reference({"file": default_file, "lemma": job["lemma"]})
+        check_reference({"file": job.get("file", default_file), "lemma": job["lemma"]})
 
 
 def package_library(pack: Path | None, output: Path) -> int:
