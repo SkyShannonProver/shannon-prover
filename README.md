@@ -59,6 +59,13 @@ uv run python tools/bootstrap_easycrypt.py --verify-only
 The bootstrap command installs the repository's pinned EasyCrypt
 `r2026.06` environment. Shannon's Python commands use it automatically.
 
+EasyCrypt's `smt` tactic calls external SMT solvers, which the bootstrap does
+not install. Install [Alt-Ergo](https://alt-ergo.ocamlpro.com),
+[Z3](https://github.com/Z3Prover/z3) and [CVC5](https://cvc5.github.io) and put
+them on your `PATH` before running the bootstrap; it records the solvers it
+finds in `~/.config/easycrypt/why3.conf`, replacing that file. The test suite
+and CI use Alt-Ergo 2.4.3, Z3 4.15.4 and CVC5 1.2.1.
+
 Project-level proving defaults to **OpenAI Codex with `gpt-6-astra` (high
 reasoning effort) for both the overall argument (outer) and auxiliary lemmas
 (inner)**. Install Codex and authenticate with a stored ChatGPT OAuth login.

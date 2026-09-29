@@ -1,0 +1,21 @@
+{
+  "decision_view": {
+    "surface_turn": {
+      "compiler_markdown": "## Optional checked fact available\n\nEasyCrypt checked this exact local action:\n```json\n{\"intent\":\"commit_tactic\",\"payload\":{\"tactic\":\"call (Alossless_F (<: D1(O).O) _).\"}}\n```"
+    }
+  },
+  "result_view": {
+    "last_result": {
+      "intent": "commit_tactic",
+      "payload": {
+        "tactic": "call (Alossless_F (<: D1(O).O) hDO)."
+      },
+      "outcome_kind": "accepted"
+    },
+    "surface_turn": {
+      "turn_outcome": {
+        "outcome_kind": "accepted"
+      }
+    }
+  }
+}
