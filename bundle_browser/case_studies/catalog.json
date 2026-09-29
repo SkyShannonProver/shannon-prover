@@ -453,6 +453,14 @@
           "The campaign report records zero admits in final targets and a passing stitched batch."
         ],
         [
+          "Per-target time",
+          "Confidentiality: 41m 05s; plaintext integrity: 23m 22s; functional correctness: 23m 48s."
+        ],
+        [
+          "Timing scope",
+          "Elapsed time from the first recorded event to the successful full-file check in each target run, including decomposition and proof construction. Separate supporting runs and the final combined-development check are outside these intervals."
+        ],
+        [
           "Protocol",
           "Historical staged decomposition, not the current interleaved protocol."
         ],
@@ -472,8 +480,8 @@
       "id": "mee",
       "scope": "Confidentiality, plaintext integrity and functional correctness.",
       "protocol": "Historical staged",
-      "time": "3 target theorems",
-      "timeLabel": "composition and correctness",
+      "time": "23–41 min",
+      "timeLabel": "per target · 3 theorems proved",
       "outer": "Claude Opus 5",
       "inner": "Claude Opus 5",
       "defaultFile": "mee-top",
