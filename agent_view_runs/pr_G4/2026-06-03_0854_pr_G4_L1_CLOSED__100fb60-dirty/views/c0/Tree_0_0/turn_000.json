@@ -1,0 +1,31 @@
+{
+  "last_result": {},
+  "current_goal": {
+    "goal_type": "probability",
+    "lines": [
+      "Current goal",
+      "",
+      "Type variables: <none>",
+      "",
+      "&m: {}",
+      "------------------------------------------------------------------------",
+      "Pr[G4.main() @ &m : (G3.a, G3.a_, G3.c, G3.d) \\in G3.cilog] <=",
+      "(PKE_.qD%r / order%r) ^ 3 * (PKE_.qD%r / (order - 1)%r)"
+    ],
+    "source": {
+      "ground_truth": false,
+      "label": "Parsed from EasyCrypt pretty goal text"
+    },
+    "text_fully_shown": true,
+    "truncated": false,
+    "view_focus": "probability"
+  },
+  "proof_status": {
+    "current_layer": "pr",
+    "goal_type": "probability",
+    "remaining_goals": 1,
+    "remaining_goals_known": true,
+    "status": "open",
+    "view_focus": "probability"
+  }
+}

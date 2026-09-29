@@ -1,0 +1,430 @@
+{
+  "last_result": {
+    "intent": "commit_tactic",
+    "payload": {
+      "tactic": "auto."
+    },
+    "manager_action": "commit_tactic",
+    "result": "EasyCrypt accepted the committed tactic.",
+    "effect": "EasyCrypt accepted a proof-state change; the refreshed view is based on the new committed state.",
+    "proof_state": "The committed EasyCrypt proof state changed.",
+    "tactic": "auto."
+  },
+  "current_goal": {
+    "lines": [
+      "Current goal (remaining: 13)",
+      "",
+      "Type variables: <none>",
+      "",
+      "&m: {}",
+      "------------------------------------------------------------------------",
+      "Context : hr: {b0 : bool, e, f, h : group, r, r' : ZModE.exp,",
+      "              m0, m1 : PKE_.plaintext}",
+      "Bound   : [<=] PKE_.qD%r / order%r",
+      "",
+      "pre =",
+      "  (g ^ G1.u \\in map (fun (t : PKE_.ciphertext) => t.`1) G3.cilog) /\\",
+      "  (G1.g_ ^ G1.u' \\in map (fun (t : PKE_.ciphertext) => t.`2) G3.cilog) /\\",
+      "  size G3.cilog <= PKE_.qD /\\ G1.w <> zero /\\ G1.g_ = g ^ G1.w",
+      "",
+      "(1)  r' <$ dt                 ",
+      "",
+      "post =",
+      "  (g ^ G1.u \\in map (fun (t : PKE_.ciphertext) => t.`1) G3.cilog) /\\",
+      "  (G1.g_ ^ G1.u' \\in map (fun (t : PKE_.ciphertext) => t.`2) G3.cilog) /\\",
+      "  (g ^ r' \\in map (fun (t : PKE_.ciphertext) => t.`3) G3.cilog) /\\",
+      "  size G3.cilog <= PKE_.qD /\\ G1.w <> zero /\\ G1.g_ = g ^ G1.w",
+      "[179|check]>"
+    ],
+    "text_fully_shown": true,
+    "truncated": false,
+    "goal_type": "phoare",
+    "view_focus": "procedure_frontier",
+    "source": {
+      "label": "Parsed from EasyCrypt pretty goal text",
+      "ground_truth": false
+    }
+  },
+  "proof_status": {
+    "status": "open",
+    "remaining_goals": 13,
+    "remaining_goals_known": true,
+    "goal_type": "phoare",
+    "view_focus": "procedure_frontier",
+    "current_layer": "procedure_body"
+  },
+  "candidate_moves": {
+    "navigation": [
+      {
+        "id": "phoare_frontier",
+        "proof_family": "one_sided_procedure_frontier",
+        "episode": "phoare_entry",
+        "route": "enter_one_sided_procedure_frontier",
+        "confidence": "high",
+        "confidence_reason": "The current view is already a hoare/phoare procedure state, so the next route should advance the current frontier rather than restart with byphoare.",
+        "valid_for": "current_view_only",
+        "why_now": "current goal is a one-sided procedure judgment; use state-local procedure tactics for this frontier.",
+        "fast_track_probe": {
+          "tactic": "proc; inline *; wp; sp.",
+          "preconditions": [
+            "Use when the view is already a hoare/phoare procedure judgment.",
+            "Do not prefix this with byphoare; the proof is already inside the one-sided judgment.",
+            "Probe the bounded block first; commit only accepted block or prefix."
+          ],
+          "expected_next_shape": "A one-sided procedure body/frontier, loop obligation, or pure residual subgoal."
+        },
+        "anti_routes": [
+          {
+            "route": "byphoare_inside_phoare",
+            "reason": "The proof is already inside a hoare/phoare judgment.",
+            "scope": "avoid_until_state_changes_to_top_level_pr"
+          },
+          {
+            "route": "pRHL_branch_tactic_on_one_sided_goal",
+            "reason": "One-sided hoare/phoare states do not have left/right pRHL branches.",
+            "scope": "avoid_for_current_view"
+          }
+        ],
+        "repair_if_fails": [
+          {
+            "failure": "syntax",
+            "next": "inspect tactic_forms for hoare/phoare procedure forms"
+          },
+          {
+            "failure": "frontier",
+            "next": "inspect goal_info for the current one-sided procedure frontier"
+          },
+          {
+            "failure": "invariant",
+            "next": "inspect subgoal_gap or inv_from_lemma for loop invariant shape"
+          },
+          {
+            "failure": "route",
+            "next": "downgrade this route and choose another current-view navigation item"
+          }
+        ],
+        "lemma_pack": []
+      }
+    ],
+    "moves": [
+      {
+        "title": "Proof-route context",
+        "category": "strategy",
+        "guidance": "Probabilistic VC plan: query-counter loss accounting via rnd coupling, distribution facts, proc/wp before bound subgoals",
+        "applicability": "Use this as route-selection context; it is not a tactic to run as-is.",
+        "source": "proof-state analysis"
+      },
+      {
+        "title": "Proof-route context",
+        "category": "strategy",
+        "guidance": "Structured procedure frontier: sample_frontier; primary: choose a rnd coupling/lossless family from sampled variables, distributions, and the post relation",
+        "applicability": "Use this as route-selection context; it is not a tactic to run as-is.",
+        "source": "proof-state analysis"
+      },
+      {
+        "title": "Proof-route context",
+        "category": "strategy",
+        "tactic_shape": "rnd{1}. / rnd{2}. / rnd predT.",
+        "applicability": "Use this as route-selection context; it is not a tactic to run as-is.",
+        "why_relevant": "Sampling statements are visible. proof-state analysis classified this as a typed sampling/coupling obligation: use rnd only after choosing a coupling family from the sampled variables, distr...",
+        "source": "proof-state analysis"
+      },
+      {
+        "title": "Proof-route context",
+        "category": "strategy",
+        "tactic_shape": "wp.",
+        "applicability": "Use this as route-selection context; it is not a tactic to run as-is.",
+        "why_relevant": "Procedure body statements are exposed; wp is the backward pass that consumes assign/call/sample suffixes and reveals the next control-flow obligation.",
+        "source": "proof-state analysis"
+      }
+    ]
+  },
+  "program_frontier": {
+    "authority": "proof-state analysis",
+    "view_focus": "procedure_frontier",
+    "focus": {
+      "live_call_sites": 0,
+      "frontier_call_sites": 0,
+      "live_callable_lemmas": 0,
+      "callable_now_lemmas": 0,
+      "oracle_obligation_handles": 0,
+      "has_invariant_skeleton": false
+    },
+    "frontier_alignment": {
+      "summary": "Frontier alignment: sampling steps are visible inside the frontier. Use this as a proof-reader map before choosing while/rnd/seq/call tactics.",
+      "first_instruction_alignment": {
+        "left_first": "r' <$ dt",
+        "right_first": "no matching right-side sample at this frontier",
+        "left_head": "sample",
+        "branch_alignment": "one-sided_frontier",
+        "proof_read": "The visible frontier is one-sided; use a one-sided tactic, alignment step, or seq cut before applying a symmetric tactic."
+      },
+      "rows": [
+        {
+          "role": "sample inside frontier",
+          "left": "r' <$ dt",
+          "right": "no matching right-side sample at this frontier",
+          "proof_read": "This is a sampling frontier; choose a coupling or distribution argument that connects the sampled values.",
+          "location": {
+            "left_path": "1"
+          }
+        }
+      ]
+    },
+    "procedure_navigation": {
+      "how_to_use": "Positions for choosing wp/sp depth, which `if` to rcond, and where the next loop/call frontier is. Facts only \u2014 pick the tactic and the branch direction yourself.",
+      "next_frontier": {
+        "kind": "sample_frontier",
+        "at_order": 1
+      }
+    },
+    "checks": [
+      "Check the next statement/call frontier before applying local transforms.",
+      "Keep one-sided instrumentation as a map, not as a tactic recipe."
+    ]
+  },
+  "call_site_surface": {},
+  "seq_cut_surface": {
+    "seq_candidate_id": "cp_42_ae4225452510abdc",
+    "state": "inside_seq_scope",
+    "cut_position": {
+      "left_count": 1,
+      "tactic": "seq 1 : (g ^ G1.u \\in map (fun (t : PKE_.ciphertext) => t.`1) G3.cilog /\\ G1.g_ ^ G1.u' \\in map (fun (t : PKE_.ciphertext) => t.`2) G3.cilog /\\ g ^ r' \\in map (fun (t : PKE_.ciphertext) => t.`3) G3.cilog /\\ size G3.cilog <= PKE_.qD /\\ G1.w <> zero /\\ G1.g_ = g ^ G1.w) (PKE_.qD%r / order%r) (PKE_.qD%r / order%r) 1%r 0%r."
+    },
+    "obligation_count": 13,
+    "obligation_kinds": [
+      "postcondition",
+      "probability_or_loss"
+    ],
+    "branch_focus": {
+      "remaining_goals": 13,
+      "latest_event_head": "auto"
+    },
+    "residual_frontier": {
+      "current_layer": "procedure_body",
+      "view_focus": "procedure_frontier",
+      "live_call_site_count": 0,
+      "goal_contains_call_site": false,
+      "latest_seq_tactic_index": 42,
+      "tactics_after_latest_seq": 1
+    }
+  },
+  "application_context": {
+    "selected_handles": [
+      {
+        "title": "Proof-route context",
+        "why_relevant": "Probabilistic VC plan: query-counter loss accounting via rnd coupling, distribution facts, proc/wp before bound subgoals"
+      },
+      {
+        "title": "Proof-route context",
+        "why_relevant": "Structured procedure frontier: sample_frontier; primary: choose a rnd coupling/lossless family from sampled variables, distributions, and the post relation"
+      }
+    ]
+  },
+  "facts_and_diagnostics": {
+    "facts": {
+      "has_invariant_skeleton": false,
+      "unfoldable_goal_head_count": 0
+    },
+    "fact_note": "Only current-frontier facts are shown here; the full proof context artifact keeps the compiler/internal details.",
+    "notes": [
+      {
+        "message": "One-sided sampling residual: r{1} <$ dt. The postcondition still mentions the sampled value or a quantified witness, so this may be a true losslessness side condition or leftover coupling debt.",
+        "severity": "info"
+      }
+    ]
+  },
+  "inspect_lookup_handles": {
+    "effect": "All handles here are read-only manager requests; the committed EasyCrypt proof state stays unchanged.",
+    "manager_note": "Some requests may ask EasyCrypt or name resolution; wait for the manager result before choosing the next proof intent.",
+    "ask_manager_for": [
+      {
+        "intent": "inspect_context",
+        "payload": {
+          "topic": "goal_info"
+        },
+        "use_when": "Need parsed goal shape, resolved names, or KB pattern hints.",
+        "returns": "parsed goal structure and names"
+      },
+      {
+        "intent": "inspect_context",
+        "payload": {
+          "topic": "call_site_options"
+        },
+        "use_when": "The current procedure frontier exposes a call route.",
+        "returns": "call-ready/oracle-equiv context for the current frontier, plus the BODY of the procedure(s) called here (functor aliases resolved) so you can see which oracles/state your call invariant must preserve"
+      },
+      {
+        "intent": "inspect_context",
+        "payload": {
+          "topic": "call_subgoals",
+          "invariant": "<the EasyCrypt invariant expression inside call (_: ...)>"
+        },
+        "use_when": "You are considering `call (_: Inv)` and already have a concrete invariant expression you want to test first.",
+        "returns": "a read-only preview of the obligations caused by that candidate invariant, including pre/init, call-preservation, oracle-side, postcondition, missing-fact signals, and extra conjuncts that may create avoidable obligations"
+      },
+      {
+        "intent": "inspect_context",
+        "payload": {
+          "topic": "tactic_forms",
+          "name": "call"
+        },
+        "use_when": "Need the valid form for call, while, seq, rnd, or rewrite.",
+        "returns": "valid tactic forms and common traps"
+      },
+      {
+        "intent": "inspect_context",
+        "payload": {
+          "topic": "tactic_forms",
+          "name": "sp"
+        },
+        "returns": "valid `sp` forms and common traps"
+      },
+      {
+        "intent": "inspect_context",
+        "payload": {
+          "topic": "tactic_forms",
+          "name": "while"
+        },
+        "use_when": "Need the valid one-sided hoare/phoare loop form.",
+        "returns": "valid `while` forms and common traps"
+      },
+      {
+        "intent": "inspect_context",
+        "payload": {
+          "topic": "tactic_forms",
+          "name": "wp"
+        },
+        "use_when": "Mid-proof pRHL suffix surgery may need indexed `wp`.",
+        "returns": "valid indexed `wp` forms and suffix-alignment traps"
+      },
+      {
+        "intent": "inspect_context",
+        "payload": {
+          "topic": "tactic_forms",
+          "name": "swap"
+        },
+        "use_when": "Statement order may need a small `swap` before `sp`, `wp`, or `sim`.",
+        "returns": "valid `swap` forms and statement-order traps"
+      },
+      {
+        "intent": "inspect_context",
+        "payload": {
+          "topic": "tactic_forms",
+          "name": "rcondt"
+        },
+        "use_when": "A guarded branch may need `rcondt` after a case split or invariant fact.",
+        "returns": "valid `rcondt` forms and guard-obligation traps"
+      },
+      {
+        "intent": "inspect_context",
+        "payload": {
+          "topic": "tactic_forms",
+          "name": "rcondf"
+        },
+        "use_when": "A guarded branch may need `rcondf` after a case split or invariant fact.",
+        "returns": "valid `rcondf` forms and guard-obligation traps"
+      },
+      {
+        "intent": "inspect_context",
+        "payload": {
+          "topic": "tactic_forms",
+          "name": "conseq"
+        },
+        "use_when": "A suffix proof may need `conseq` to weaken to a smaller relation before `sim`.",
+        "returns": "valid `conseq` forms and pRHL memory-annotation traps"
+      },
+      {
+        "intent": "inspect_context",
+        "payload": {
+          "topic": "tactic_forms",
+          "name": "rnd"
+        },
+        "use_when": "One side may have an extra sample or need an explicit sample coupling.",
+        "returns": "valid `rnd` forms, including one-sided sampling"
+      },
+      {
+        "intent": "inspect_context",
+        "payload": {
+          "topic": "tactic_forms",
+          "name": "eager"
+        },
+        "use_when": "A known statement-order mismatch may need an eager/lazy transformation.",
+        "returns": "valid `eager` forms and when to prefer smaller surgery"
+      }
+    ]
+  },
+  "structural_checkpoints": {
+    "items": [
+      {
+        "checkpoint_id": "cp_43_ae4225452510abdc",
+        "semantic_id": "after_seq_opened",
+        "semantic_ids": [
+          "after_seq_opened",
+          "before_branch_work"
+        ],
+        "label": "After seq opened / before branch work #43",
+        "committed_step_index": 43,
+        "committed_tactic": "auto.",
+        "restored_proof_layer": "seq_obligations_opened",
+        "restored_affordances": {
+          "seq_cut": "committed",
+          "branch_work": "not_committed"
+        },
+        "undo_scope": "branch_local",
+        "why_checkpoint": "seq-local branch boundary; selecting it keeps the seq cut and removes branch-local work after it",
+        "effect_if_selected": "Undo committed tactic #43 and every committed tactic after it in this node.",
+        "submit": {
+          "intent": "undo_to_checkpoint",
+          "payload": {
+            "checkpoint_id": "cp_43_ae4225452510abdc"
+          }
+        }
+      },
+      {
+        "checkpoint_id": "cp_42_ae4225452510abdc",
+        "semantic_id": "before_seq_cut",
+        "semantic_ids": [
+          "before_seq_cut"
+        ],
+        "label": "Before product-budget seq cut #42",
+        "committed_step_index": 42,
+        "committed_tactic": "seq 1 : (g ^ G1.u \\in map (fun (t : PKE_.ciphertext) => t.`1) G3.cilog /\\ G1.g_ ^ G1.u' \\in map (fun (t : PKE_.ciphertext) => t.`2) G3.cilog /\\ g ^ r' \\in map (fun (t : PKE_.ciphertext) => t.`3) G3.cilog /\\ size G3.cilog <= PKE_.qD /\\ G1.w <> zero /\\ G1.g_ = g ^ G1.w) (PKE_.qD%r / order%r) (PKE_.qD%r / order%r) 1%r 0%r.",
+        "restored_proof_layer": "pre_seq_cut",
+        "restored_affordances": {
+          "seq_cut": "not_committed",
+          "call_site_state": "as_before_seq_cut"
+        },
+        "undo_scope": "seq_local",
+        "why_checkpoint": "seq-cut boundary; selecting it restores the proof state before this cut was committed",
+        "effect_if_selected": "Undo committed tactic #42 and every committed tactic after it in this node.",
+        "submit": {
+          "intent": "undo_to_checkpoint",
+          "payload": {
+            "checkpoint_id": "cp_42_ae4225452510abdc"
+          }
+        }
+      },
+      {
+        "checkpoint_id": "cp_18_ae4225452510abdc",
+        "semantic_id": "resume_start",
+        "semantic_ids": [
+          "resume_start"
+        ],
+        "label": "Return to resume start",
+        "committed_step_index": 18,
+        "committed_tactic": "conseq (: _ ==> (g ^ G1.u \\in map (fun (t : ciphertext) => t.`1) G3.cilog) /\\ (G1.g_ ^ G1.u' \\in map (fun (t : ciphertext) => t.`2) G3.cilog) /\\ (g ^ r' \\in map (fun (t : ciphertext) => t.`3) G3.cilog) /\\ (g ^ r \\in map (fun (t : ciphertext) => t.`4) G3.cilog) /\\ size G3.cilog <= PKE_.qD /\\ G1.w <> zero /\\ G1.g_ = g ^ G1.w).",
+        "restored_proof_layer": "resume_handoff",
+        "undo_scope": "resume_local",
+        "why_checkpoint": "resume boundary; selecting it preserves the verified replay prefix and removes tactics committed after resume",
+        "effect_if_selected": "Undo committed tactic #18 and every committed tactic after it in this node.",
+        "submit": {
+          "intent": "undo_to_checkpoint",
+          "payload": {
+            "checkpoint_id": "cp_18_ae4225452510abdc"
+          }
+        }
+      }
+    ]
+  }
+}

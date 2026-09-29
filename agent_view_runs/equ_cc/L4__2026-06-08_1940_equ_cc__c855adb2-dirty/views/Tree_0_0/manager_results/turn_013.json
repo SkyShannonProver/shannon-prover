@@ -1,0 +1,19 @@
+{
+  "turn": 13,
+  "handled_intent": {
+    "intent": "commit_tactic",
+    "payload": {
+      "tactic": "while (={c, i} /\\ n{1} = n0 /\\ p{2} = map (fun (_:byte) => witness<:byte>) p{1} /\\ 1 <= i{1} /\\ size c{1} + size p{1} <= max_cipher_size /\\ (p{1} <> [] => size c{1} = (i{1} - 1) * block_size) /\\ ROin.m{1} = mr0 /\\ ROout.m{1} = ms0 /\\ (forall (n1:nonce) (c0:C.counter), (n1, c0) \\in ROF.m{1} => n1 \\in n0 :: BNR.lenc{1}) /\\ (forall (c0:C.counter), (n0, c0) \\in ROF.m{1} => C.toint c0 < i{1}))."
+    }
+  },
+  "ok": true,
+  "manager_note": "Committed tactic accepted; the EasyCrypt proof state changed.",
+  "manager_actions": [
+    {
+      "action": "tactic commit",
+      "outcome": "EasyCrypt accepted the committed tactic.",
+      "timing": "1.6 s"
+    }
+  ],
+  "view_refreshed": true
+}

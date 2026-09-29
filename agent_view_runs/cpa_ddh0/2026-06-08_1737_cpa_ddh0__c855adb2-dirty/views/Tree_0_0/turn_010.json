@@ -1,0 +1,715 @@
+{
+  "last_result": {
+    "intent": "commit_tactic",
+    "payload": {
+      "tactic": "wp."
+    },
+    "manager_action": "commit_tactic",
+    "result": "EasyCrypt accepted the committed tactic.",
+    "effect": "EasyCrypt accepted a proof-state change; the refreshed view is based on the new committed state.",
+    "proof_state": "The committed EasyCrypt proof state changed.",
+    "tactic": "wp."
+  },
+  "current_goal": {
+    "lines": [
+      "Current goal",
+      "",
+      "Type variables: <none>",
+      "",
+      "&m: {}",
+      "------------------------------------------------------------------------",
+      "&1 (left ) : {b, b' : bool, sk0, y : ZModE.exp, pk, pk0 : pkey, sk : skey,",
+      "             m0, m1, m : ptxt, c : ctxt}",
+      "&2 (right) : {b, b0, b' : bool, gy, gz : group, x, y : ZModE.exp, gx : pkey,",
+      "             m0, m1 : ptxt}",
+      "",
+      "pre = (glob A){2} = (glob A){m} /\\ (glob A){1} = (glob A){m}",
+      "",
+      "sk0 <$ dt                  (1)  x <$ dt                  ",
+      "y <$ dt                    (2)  y <$ dt                  ",
+      "",
+      "post =",
+      "  let pk_L = g ^ sk0{1} in",
+      "  (pk_L = g ^ x{2} /\\ (glob A){1} = (glob A){2} /\\ true) &&",
+      "  forall (result_L result_R : ptxt * ptxt) (A_L A_R : (glob A)),",
+      "    result_L = result_R /\\ A_L = A_R /\\ true =>",
+      "    (forall (b0R : bool), b0R \\in {0,1} => b0R = b0R) &&",
+      "    forall (bL : bool),",
+      "      bL \\in {0,1} =>",
+      "      bL = bL &&",
+      "      ((g ^ y{1}, pk_L ^ y{1} * if bL then result_L.`2 else result_L.`1) =",
+      "       (g ^ y{2}, g ^ (x{2} * y{2}) * if bL then result_R.`2 else result_R.`1) /\\",
+      "       A_L = A_R /\\ true) &&",
+      "      forall (result_L0 result_R0 : bool) (A_L0 A_R0 : (glob A)),",
+      "        result_L0 = result_R0 /\\ A_L0 = A_R0 /\\ true =>",
+      "        (result_L0 = bL) = (result_R0 = bL)",
+      "[29|check]>"
+    ],
+    "text_fully_shown": true,
+    "truncated": false,
+    "goal_type": "pRHL",
+    "view_focus": "relational_program",
+    "source": {
+      "label": "Parsed from EasyCrypt pretty goal text",
+      "ground_truth": false
+    }
+  },
+  "proof_status": {
+    "status": "open",
+    "remaining_goals": 1,
+    "remaining_goals_known": true,
+    "goal_type": "pRHL",
+    "view_focus": "relational_program",
+    "current_layer": "procedure_body"
+  },
+  "candidate_moves": {
+    "moves": [
+      {
+        "category": "strategy",
+        "tactic_shape": "wp. / seq <suffix> according to the suffix shape",
+        "applicability": "This tactic shape still has placeholders; replace them with concrete EasyCrypt arguments from the current goal before probing or committing it.",
+        "runnable_status": "Not yet; replace every placeholder with concrete EasyCrypt terms from the current goal before probing or committing this tactic.",
+        "missing_input": [
+          "Concrete EasyCrypt arguments for every placeholder in the displayed tactic."
+        ],
+        "how_to_complete": [
+          "Use the current goal variables, hypotheses, precondition, postcondition, and visible program statements to fill the placeholders."
+        ],
+        "inspect_if_unsure": [
+          {
+            "topic": "goal_info",
+            "why": "Shows parsed goal structure and resolved identifiers."
+          },
+          {
+            "topic": "tactic_forms",
+            "name": "wp",
+            "why": "Shows valid argument forms when this tactic has several shapes."
+          }
+        ],
+        "limitations": [
+          "The displayed tactic is a template; fill every placeholder with current-goal arguments before probing or committing it."
+        ]
+      },
+      {
+        "category": "strategy",
+        "tactic_shape": "Structured procedure frontier: sample_frontier; primary: choose a rnd coupling/lossless family from sampled variables, distributions, and the post relation",
+        "applicability": "Use this as route-selection context; it is not a tactic to run as-is.",
+        "source": "proof-state analysis"
+      },
+      {
+        "category": "strategy",
+        "tactic_shape": "Inspect sample coupling budget: sk0{1}/x{2} <$ dt; y{1}/y{2} <$ dt.",
+        "applicability": "Use this as route-selection context; it is not a tactic to run as-is.",
+        "source": "proof-state analysis"
+      },
+      {
+        "title": "Program-shape context",
+        "category": "strategy",
+        "tactic_shape": "Inspect current procedure region summary: paired sample dt; paired sample dt; asymmetric instrumentation both.",
+        "applicability": "Use this as route-selection context; it is not a tactic to run as-is.",
+        "source": "proof-state analysis"
+      },
+      {
+        "category": "strategy",
+        "tactic_shape": "Inspect proof obligation stack: sample_frontier / statement 2.",
+        "applicability": "Use this as route-selection context; it is not a tactic to run as-is.",
+        "source": "proof-state analysis"
+      },
+      {
+        "category": "strategy",
+        "tactic_shape": "Inspect control/suffix legality: rnd@1:1=blocked_by_suffix, rnd@2:1=blocked_by_suffix, rnd@1:2=structurally_ready, rnd@2:2=structurally_ready.",
+        "applicability": "Use this as route-selection context; it is not a tactic to run as-is.",
+        "source": "proof-state analysis"
+      },
+      {
+        "category": "strategy",
+        "tactic_shape": "wp.",
+        "applicability": "Use this as route-selection context; it is not a tactic to run as-is.",
+        "source": "proof-state analysis"
+      },
+      {
+        "category": "strategy",
+        "tactic_shape": "Inspect asymmetric instrumentation region: one-sided live state sk0, x must be budgeted.",
+        "applicability": "Use this as route-selection context; it is not a tactic to run as-is.",
+        "source": "proof-state analysis"
+      },
+      {
+        "title": "Sampling-coupling route",
+        "category": "strategy",
+        "tactic_shape": "rnd (fun b => if <condition> then b else !b).",
+        "applicability": "Use this as route-selection context; it is not a tactic to run as-is.",
+        "source": "proof-state analysis"
+      },
+      {
+        "category": "strategy",
+        "tactic_shape": "inline <local wrapper>.",
+        "applicability": "Use this as route-selection context; it is not a tactic to run as-is.",
+        "source": "proof-state analysis"
+      },
+      {
+        "category": "strategy",
+        "tactic_shape": "conseq (_: <weaker postcondition preserving live state>) => />.",
+        "applicability": "Use this as route-selection context; it is not a tactic to run as-is.",
+        "source": "proof-state analysis"
+      },
+      {
+        "title": "Residual closing tactic",
+        "category": "strategy",
+        "tactic_shape": "auto => />; smt(domE get_setE mem_set mem_empty).",
+        "applicability": "Use this as route-selection context; it is not a tactic to run as-is.",
+        "source": "proof-state analysis"
+      }
+    ],
+    "route_health": [
+      {
+        "signal": "frame_boundary_gap",
+        "confidence": "high",
+        "message": "A current pRHL postcondition exposes a frame equality that is not available in the displayed precondition.",
+        "evidence": [
+          "current pRHL post requires frame equality absent from the displayed precondition",
+          "missing frame fact(s): ={glob A}",
+          "related structural boundary does not carry the same frame fact(s): Before call invariant #9"
+        ],
+        "missing_frame_facts": [
+          "={glob A}"
+        ],
+        "related_surface": "current_goal.pre_post_frame_facts",
+        "recommended_next": {
+          "intent": "undo_to_checkpoint",
+          "payload": {
+            "checkpoint_id": "cp_9_f42a1108e658beec"
+          }
+        },
+        "primary_next_action": {
+          "intent": "undo_to_checkpoint",
+          "payload": {
+            "checkpoint_id": "cp_9_f42a1108e658beec"
+          }
+        },
+        "repair_checkpoint": {
+          "label": "Before call invariant #9",
+          "committed_tactic": "call (_: true).",
+          "tactic_index": 9,
+          "why_here": "Current pRHL postcondition requires a global frame fact that is absent from this structural boundary assertion.",
+          "submit": {
+            "intent": "undo_to_checkpoint",
+            "payload": {
+              "checkpoint_id": "cp_9_f42a1108e658beec"
+            }
+          },
+          "semantic_id": "before_call_route",
+          "undo_scope": "call_local",
+          "restored_affordances": {
+            "call_route": "not_committed",
+            "frame_facts": "before_call_invariant"
+          }
+        },
+        "recovery_class": "boundary_repair_evidence",
+        "checkpoint_policy": "boundary_checkpoint_visible"
+      }
+    ]
+  },
+  "program_frontier": {
+    "authority": "proof-state analysis",
+    "view_focus": "relational_program",
+    "focus": {
+      "live_call_sites": 0,
+      "frontier_call_sites": 0,
+      "live_callable_lemmas": 0,
+      "callable_now_lemmas": 0,
+      "oracle_obligation_handles": 0,
+      "has_invariant_skeleton": true
+    },
+    "frontier_alignment": {
+      "summary": "Frontier alignment: sampling steps are visible inside the frontier. Use this as a proof-reader map before choosing while/rnd/seq/call tactics.",
+      "first_instruction_alignment": {
+        "left_first": "y <$ dt",
+        "right_first": "y <$ dt",
+        "left_head": "sample",
+        "right_head": "sample",
+        "branch_alignment": "both_sides_at_sample",
+        "proof_read": "The first visible statements have different heads; align or consume setup statements before using a symmetric branch/loop/call tactic."
+      },
+      "rows": [
+        {
+          "role": "sample inside frontier",
+          "left": "y <$ dt",
+          "right": "y <$ dt",
+          "proof_read": "Both sides sample from the same distribution; once the state relation is right, the sampling step can usually be handled by a direct coupling or residual automation.",
+          "location": {
+            "left_path": "2",
+            "right_path": "2"
+          },
+          "observations": [
+            "same sampling distribution: `dt`"
+          ]
+        },
+        {
+          "role": "sample inside frontier",
+          "left": "sk0 <$ dt",
+          "right": "no matching right-side sample at this frontier",
+          "proof_read": "This is a sampling frontier; choose a coupling or distribution argument that connects the sampled values.",
+          "location": {
+            "left_path": "1"
+          }
+        },
+        {
+          "role": "sample inside frontier",
+          "left": "no matching left-side sample at this frontier",
+          "right": "x <$ dt",
+          "proof_read": "This is a sampling frontier; choose a coupling or distribution argument that connects the sampled values.",
+          "location": {
+            "right_path": "1"
+          }
+        }
+      ]
+    },
+    "procedure_navigation": {
+      "how_to_use": "Positions for choosing wp/sp depth, which `if` to rcond, and where the next loop/call frontier is. Facts only \u2014 pick the tactic and the branch direction yourself.",
+      "next_frontier": {
+        "kind": "sample_frontier",
+        "at_order": 1
+      }
+    }
+  },
+  "call_site_surface": {},
+  "pure_tail_surface": {
+    "state": "quantified_ambient_tail",
+    "goal_operators": [
+      "left",
+      "bool",
+      "sk0",
+      "ZModE.exp",
+      "pk",
+      "pk0",
+      "pkey",
+      "sk"
+    ],
+    "obligation_families": [
+      {
+        "family": "sampling_bijection",
+        "evidence": [
+          "distribution or lossless token remains visible"
+        ],
+        "effect": "The remaining pure goal may include invertibility or lossless side conditions from an earlier sampling alignment.",
+        "limitations": "No distribution lemma is selected by this surface."
+      },
+      {
+        "family": "constructor_projection",
+        "selectors": [
+          ".`1",
+          ".`2"
+        ],
+        "tuple_equality_count": 1,
+        "effect": "The pure goal exposes tuple/record projections or constructor equalities that can connect program variables to map/list keys.",
+        "limitations": "Projection equalities are reported only when visible in the current text."
+      },
+      {
+        "family": "quantified_residual_logic",
+        "evidence": [
+          "universal quantifier visible",
+          "implication residual visible"
+        ],
+        "effect": "The current proof point is dominated by local logical obligations rather than program-frontier movement.",
+        "limitations": "Quantifier names are not normalized across EasyCrypt pretty-printer variants."
+      }
+    ],
+    "ambient_memory_translation": {
+      "state": "decorated_memory_terms_visible",
+      "visible_decorations": [
+        "{1}",
+        "{2}"
+      ],
+      "translation_facts": [
+        "Decorations identify the program memory from which a term is read.",
+        "Pretty-printer memory names and introduced proof-context names can differ."
+      ],
+      "effect": "Local claims in the pure tail depend on the currently introduced memory binders as well as displayed term decorations."
+    },
+    "effect": "Summarizes verifier-visible pure-goal structure after program frontier actions have been discharged or hidden by local proof steps.",
+    "limitations": [
+      "This panel records syntactic and proof-state facts from the current view.",
+      "It does not choose a tactic or instantiate a lemma."
+    ]
+  },
+  "application_context": {
+    "selected_handles": [
+      {
+        "title": "Invariant-call route",
+        "tactic_shape": "call (_: Inv).",
+        "why_relevant": "program-difference analysis found this tactic while comparing the current programs/probability expressions. Unverified call/ecall items are structural hints only; proof-state analysis or a daemon probe must establish frontier readiness before they become runnable.",
+        "runnable_status": "Not yet; replace `Inv` with a concrete EasyCrypt invariant before probing or committing this tactic.",
+        "missing_input": [
+          "Concrete invariant expression inside `call (_: ...)`."
+        ],
+        "confidence": "needs_instantiation",
+        "source": "program-difference analysis"
+      }
+    ]
+  },
+  "facts_and_diagnostics": {
+    "facts": {
+      "has_invariant_skeleton": true,
+      "unfoldable_goal_head_count": 0
+    },
+    "fact_note": "Only current-frontier facts are shown here; the full proof context artifact keeps the compiler/internal details.",
+    "notes": [
+      {
+        "message": "proof-state analysis sees no live call sites after a prior `inline *` at tactic 3. Continue at procedure/ambient layer, or undo if a call lemma is needed.",
+        "severity": "info"
+      }
+    ]
+  },
+  "frame_obligation_ledger": {
+    "kind": "frame_obligation_ledger",
+    "scope": "structural_boundary_frame_facts",
+    "active_segment_start": 1,
+    "required_later": [
+      {
+        "fact": "={glob A}",
+        "sources": [
+          "current_goal"
+        ]
+      }
+    ],
+    "current_boundary_carries": [
+      {
+        "tactic_index": 6,
+        "kind": "call",
+        "tactic": "call (_: true)."
+      },
+      {
+        "tactic_index": 9,
+        "kind": "call",
+        "tactic": "call (_: true)."
+      }
+    ],
+    "possibly_dropped": [
+      {
+        "fact": "={glob A}",
+        "required_sources": [
+          "current_goal"
+        ],
+        "boundary": "call #6",
+        "boundary_tactic": "call (_: true).",
+        "evidence": "required fact is visible in the listed source(s), while this boundary assertion does not carry the same frame fact",
+        "related_checkpoint": {
+          "label": "Before call invariant #6",
+          "committed_tactic": "call (_: true).",
+          "tactic_index": 6,
+          "why_here": "Frame fact is visible in required context and absent from this structural boundary assertion.",
+          "submit": {
+            "intent": "undo_to_checkpoint",
+            "payload": {
+              "checkpoint_id": "cp_6_f42a1108e658beec"
+            }
+          }
+        }
+      }
+    ],
+    "interpretation": "This ledger compares visible frame facts with the frame facts carried by committed structural boundary assertions. Possible drops are reported only for facts visible in the current local goal evidence. It is evidence about retained facts, not a proof script."
+  },
+  "recovery_diagnosis_surface": {
+    "kind": "recovery_diagnosis_surface",
+    "recovery_class": "boundary_repair_evidence",
+    "confidence": "high",
+    "checkpoint_policy": "boundary_checkpoint_visible",
+    "evidence": [
+      "current pRHL post requires frame equality absent from the displayed precondition",
+      "missing frame fact(s): ={glob A}",
+      "related structural boundary does not carry the same frame fact(s): Before call invariant #9"
+    ],
+    "available_local_work": [
+      {
+        "kind": "pure_tail_obligation_families",
+        "items": [
+          "sampling_bijection",
+          "constructor_projection",
+          "quantified_residual_logic"
+        ]
+      }
+    ],
+    "related_checkpoints": [
+      {
+        "semantic_id": "before_call_route",
+        "label": "Before call invariant #9",
+        "tactic_index": 9,
+        "committed_step_index": 9,
+        "undo_scope": "call_local",
+        "restored_affordances": {
+          "call_route": "not_committed",
+          "frame_facts": "before_call_invariant"
+        },
+        "why_checkpoint": "Current pRHL postcondition requires a global frame fact that is absent from this structural boundary assertion."
+      },
+      {
+        "label": "Before call invariant #6",
+        "tactic_index": 6,
+        "committed_step_index": 6,
+        "why_checkpoint": "Frame fact is visible in required context and absent from this structural boundary assertion."
+      },
+      {
+        "checkpoint_id": "cp_9_f42a1108e658beec",
+        "semantic_id": "frame_boundary_gap",
+        "semantic_ids": [
+          "frame_boundary_gap",
+          "before_call_route"
+        ],
+        "label": "Before call invariant #9",
+        "committed_step_index": 9,
+        "undo_scope": "call_local",
+        "restored_proof_layer": "pre_call_route",
+        "restored_affordances": {
+          "call_route": "not_committed",
+          "call_obligation_work": "not_committed"
+        },
+        "why_checkpoint": "Current pRHL postcondition requires a global frame fact that is absent from this structural boundary assertion."
+      },
+      {
+        "checkpoint_id": "cp_10_f42a1108e658beec",
+        "semantic_id": "after_call_opened",
+        "semantic_ids": [
+          "after_call_opened"
+        ],
+        "label": "After call opened / before obligation work #10",
+        "committed_step_index": 10,
+        "undo_scope": "call_local",
+        "restored_proof_layer": "call_obligations_opened",
+        "restored_affordances": {
+          "call_route": "committed",
+          "call_obligation_work": "not_committed"
+        },
+        "why_checkpoint": "call-local boundary; selecting it keeps the call tactic and removes work committed after the call opened"
+      },
+      {
+        "checkpoint_id": "cp_3_f42a1108e658beec",
+        "semantic_id": "last_call_site_boundary",
+        "semantic_ids": [
+          "last_call_site_boundary"
+        ],
+        "label": "Before inline expansion #3",
+        "committed_step_index": 3,
+        "undo_scope": "call_site_boundary",
+        "restored_proof_layer": "pre_inline_frontier",
+        "restored_affordances": {
+          "call_site_handles": "as_before_inline"
+        },
+        "why_checkpoint": "inline boundary; selecting it restores the proof state before this expansion"
+      }
+    ],
+    "related_surfaces": [
+      "current_goal.pre_post_frame_facts",
+      "pure_tail_surface",
+      "frame_obligation_ledger",
+      "structural_checkpoints"
+    ],
+    "limitations": [
+      "does not infer a replacement invariant, cut formula, or postcondition",
+      "uses only current residual evidence and recent local repair failures"
+    ]
+  },
+  "inspect_lookup_handles": {
+    "effect": "All handles here are read-only manager requests; the committed EasyCrypt proof state stays unchanged.",
+    "manager_note": "Some requests may ask EasyCrypt or name resolution; wait for the manager result before choosing the next proof intent.",
+    "ask_manager_for": [
+      {
+        "intent": "inspect_context",
+        "payload": {
+          "topic": "goal_info"
+        },
+        "use_when": "Need parsed goal shape, resolved names, or KB pattern hints.",
+        "returns": "parsed goal structure and names"
+      },
+      {
+        "intent": "inspect_context",
+        "payload": {
+          "topic": "call_site_options"
+        },
+        "use_when": "The visible frontier contains call sites or named equiv handles may apply.",
+        "returns": "call-ready/oracle-equiv context for the current frontier, plus the BODY of the procedure(s) called here (functor aliases resolved) so you can see which oracles/state your call invariant must preserve"
+      },
+      {
+        "intent": "inspect_context",
+        "payload": {
+          "topic": "call_invariant_skeleton"
+        },
+        "use_when": "You are at an abstract-adversary `call (_: <inv>)` and want the mechanical glob frame of the invariant before adding your own semantic conjuncts.",
+        "returns": "the mechanical `={glob ...}` frame of the call invariant (shared abstract oracle modules, daemon-confirmed to apply and spawn the obligations). When a named coupling predicate fits the in-scope state it ALSO surfaces a field-threaded carrier (`inv \u2026 s1{1} s2{2}`), plus candidate inductive side-conditions (`dom \u2286 used-set`) for any random oracle the call queries. All revisable starting points \u2014 confirm the coupling and add/adjust the semantic conjuncts (key/state correspondences, set-membership)."
+      },
+      {
+        "intent": "inspect_context",
+        "payload": {
+          "topic": "call_subgoals",
+          "invariant": "<the EasyCrypt invariant expression inside call (_: ...)>"
+        },
+        "use_when": "You are considering `call (_: Inv)` and already have a concrete invariant expression you want to test first.",
+        "returns": "a read-only preview of the obligations caused by that candidate invariant, including pre/init, call-preservation, oracle-side, postcondition, missing-fact signals, and extra conjuncts that may create avoidable obligations"
+      },
+      {
+        "intent": "inspect_context",
+        "payload": {
+          "topic": "tactic_forms",
+          "name": "call"
+        },
+        "use_when": "A tactic has multiple EasyCrypt argument forms.",
+        "returns": "valid tactic forms and common traps"
+      },
+      {
+        "intent": "inspect_context",
+        "payload": {
+          "topic": "tactic_forms",
+          "name": "sp"
+        },
+        "use_when": "The frontier may need indexed `sp i j` before branch or call tactics.",
+        "returns": "valid `sp` forms and branch-frontier traps"
+      },
+      {
+        "intent": "inspect_context",
+        "payload": {
+          "topic": "tactic_forms",
+          "name": "wp"
+        },
+        "use_when": "Mid-proof pRHL suffix surgery may need indexed `wp`.",
+        "returns": "valid indexed `wp` forms and suffix-alignment traps"
+      },
+      {
+        "intent": "inspect_context",
+        "payload": {
+          "topic": "tactic_forms",
+          "name": "swap"
+        },
+        "use_when": "Statement order may need a small `swap` before `sp`, `wp`, or `sim`.",
+        "returns": "valid `swap` forms and statement-order traps"
+      },
+      {
+        "intent": "inspect_context",
+        "payload": {
+          "topic": "tactic_forms",
+          "name": "rcondt"
+        },
+        "use_when": "A guarded branch may need `rcondt` after a case split or invariant fact.",
+        "returns": "valid `rcondt` forms and guard-obligation traps"
+      },
+      {
+        "intent": "inspect_context",
+        "payload": {
+          "topic": "tactic_forms",
+          "name": "rcondf"
+        },
+        "use_when": "A guarded branch may need `rcondf` after a case split or invariant fact.",
+        "returns": "valid `rcondf` forms and guard-obligation traps"
+      },
+      {
+        "intent": "inspect_context",
+        "payload": {
+          "topic": "tactic_forms",
+          "name": "conseq"
+        },
+        "use_when": "A suffix proof may need `conseq` to weaken to a smaller relation before `sim`.",
+        "returns": "valid `conseq` forms and pRHL memory-annotation traps"
+      },
+      {
+        "intent": "inspect_context",
+        "payload": {
+          "topic": "tactic_forms",
+          "name": "rnd"
+        },
+        "use_when": "One side may have an extra sample or need an explicit sample coupling.",
+        "returns": "valid `rnd` forms, including one-sided sampling"
+      },
+      {
+        "intent": "inspect_context",
+        "payload": {
+          "topic": "tactic_forms",
+          "name": "eager"
+        },
+        "use_when": "A known statement-order mismatch may need an eager/lazy transformation.",
+        "returns": "valid `eager` forms and when to prefer smaller surgery"
+      },
+      {
+        "intent": "inspect_context",
+        "payload": {
+          "topic": "align"
+        },
+        "use_when": "LHS/RHS statement order may need swap/alignment context.",
+        "returns": "swap/alignment context for the visible pRHL frontier"
+      }
+    ]
+  },
+  "structural_checkpoints": {
+    "items": [
+      {
+        "checkpoint_id": "cp_9_f42a1108e658beec",
+        "semantic_id": "frame_boundary_gap",
+        "semantic_ids": [
+          "frame_boundary_gap",
+          "before_call_route"
+        ],
+        "label": "Before call invariant #9",
+        "committed_step_index": 9,
+        "committed_tactic": "call (_: true).",
+        "restored_proof_layer": "pre_call_route",
+        "restored_affordances": {
+          "call_route": "not_committed",
+          "call_obligation_work": "not_committed"
+        },
+        "undo_scope": "call_local",
+        "why_checkpoint": "Current pRHL postcondition requires a global frame fact that is absent from this structural boundary assertion.",
+        "effect_if_selected": "Undo committed tactic #9 and every committed tactic after it in this node.",
+        "submit": {
+          "intent": "undo_to_checkpoint",
+          "payload": {
+            "checkpoint_id": "cp_9_f42a1108e658beec"
+          }
+        }
+      },
+      {
+        "checkpoint_id": "cp_10_f42a1108e658beec",
+        "semantic_id": "after_call_opened",
+        "semantic_ids": [
+          "after_call_opened"
+        ],
+        "label": "After call opened / before obligation work #10",
+        "committed_step_index": 10,
+        "committed_tactic": "wp.",
+        "restored_proof_layer": "call_obligations_opened",
+        "restored_affordances": {
+          "call_route": "committed",
+          "call_obligation_work": "not_committed"
+        },
+        "undo_scope": "call_local",
+        "why_checkpoint": "call-local boundary; selecting it keeps the call tactic and removes work committed after the call opened",
+        "effect_if_selected": "Undo committed tactic #10 and every committed tactic after it in this node.",
+        "submit": {
+          "intent": "undo_to_checkpoint",
+          "payload": {
+            "checkpoint_id": "cp_10_f42a1108e658beec"
+          }
+        }
+      },
+      {
+        "checkpoint_id": "cp_3_f42a1108e658beec",
+        "semantic_id": "last_call_site_boundary",
+        "semantic_ids": [
+          "last_call_site_boundary"
+        ],
+        "label": "Before inline expansion #3",
+        "committed_step_index": 3,
+        "committed_tactic": "inline *.",
+        "restored_proof_layer": "pre_inline_frontier",
+        "restored_affordances": {
+          "call_site_handles": "as_before_inline"
+        },
+        "undo_scope": "call_site_boundary",
+        "why_checkpoint": "inline boundary; selecting it restores the proof state before this expansion",
+        "effect_if_selected": "Undo committed tactic #3 and every committed tactic after it in this node.",
+        "submit": {
+          "intent": "undo_to_checkpoint",
+          "payload": {
+            "checkpoint_id": "cp_3_f42a1108e658beec"
+          }
+        }
+      }
+    ]
+  }
+}

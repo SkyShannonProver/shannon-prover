@@ -1,0 +1,35 @@
+{
+  "kind": "agent_view_run_report",
+  "timestamp": "2026-06-06_1331_eq_Game1_Game2",
+  "lemma": "eq_Game1_Game2",
+  "source_file": "eval/examples/br93.ec",
+  "model": "claude-opus-4-8",
+  "surface_profile": "l4_checked_action_surface",
+  "trees": 1,
+  "eval_mode": true,
+  "outcome": "proved",
+  "committed_proofs": [
+    {
+      "tree": "Tree_0_0",
+      "tactics": [
+        "proc.",
+        "call (_: ={glob Log, glob LRO}).",
+        "sim.",
+        "wp.",
+        "rnd (fun (x : ptxt) => x +^ (if b{1} then m0{1} else m1{1})).",
+        "conseq (_ : _ ==> ={glob A, Log.qs, LRO.m, pk, b} /\\ Game1.r{1} = Game2.r{2}).",
+        "smt(addpK dptxt_funi dptxt_fu).",
+        "sim.",
+        "qed."
+      ],
+      "proved": true
+    }
+  ],
+  "turn_count": 22,
+  "views_copied": 23,
+  "run_iteration_dir": "artifacts/eval_suite/wave1_recover_both/l4_checked_action_surface/d1_eq_game12/r01/2026-06-06_1331_eq_Game1_Game2/iteration_1",
+  "commit": "e4a69e8",
+  "commit_full": "e4a69e84448536e27b35e2690da4976ef06001ea",
+  "branch": "mcp-v0",
+  "dirty": true
+}

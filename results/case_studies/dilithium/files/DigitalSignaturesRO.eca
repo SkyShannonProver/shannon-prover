@@ -1,0 +1,117 @@
+require import AllCore List.
+
+require PROM.
+
+require DigitalSignatures.
+
+clone import DigitalSignatures as DS.
+
+clone import Stateless.EFCMA.
+
+import Stateless.
+
+clone import PROM.FullRO as PRO.
+
+module type Hash = {
+  proc get (x : PRO.in_t) : PRO.out_t
+}.
+
+module type Hash_i = {
+  include Hash
+  proc init() : unit
+}.
+
+module type SchemeRO (H : Hash) = { include Scheme }.
+
+module type Adv_EFKOA_RO(H : Hash) = {
+  proc forge(pk : pk_t) : msg_t * sig_t { H.get }
+}.
+
+module EF_KOA_RO(S : SchemeRO, A : Adv_EFKOA_RO, H : Hash_i) = {
+  proc main() : bool = {
+    var r;
+    H.init();
+    r <@ Stateless.EF_KOA(S(H),A(H)).main();
+    return r;
+  }
+}.
+
+module type Adv_EFCMA_RO (H : Hash) (O : SOracle_CMA) = {
+  proc forge(pk : pk_t) : msg_t * sig_t
+}.
+
+module EF_CMA_RO(S : SchemeRO, A : Adv_EFCMA_RO, H : Hash_i, O : Oracle_CMA) = {
+  proc main() : bool = {
+    var r;
+    H.init();
+    r <@ EF_CMA(S(H),A(H),O).main();
+    return r;
+  }
+}.
+
+module BaseOracle = {
+ var qs : msg_t list
+
+  proc fresh(m : msg_t) : bool = {
+    return ! m \in qs;
+  }
+
+  proc nr_queries() : int = {
+    return size qs;
+  }
+}.
+
+module type SOracle_CMAs = {
+  proc get (x : PRO.in_t) : PRO.out_t
+  proc sign(m : msg_t) : sig_t
+}.
+
+module type Adv_EFCMAs (O : SOracle_CMAs) = {
+  proc forge(pk : pk_t) : msg_t * sig_t
+}.
+
+module type Oracle_CMAs (S : Scheme) (H : Hash) = {
+  proc init(sk_init : sk_t) : unit
+  proc sign(m : msg_t) : sig_t
+  proc fresh(m : msg_t) : bool
+  proc nr_queries() : int
+  proc get (x : PRO.in_t) : PRO.out_t
+}.
+
+module (O_CMA_Default : Oracle_CMAs) (S : Scheme) (H : Hash) = {
+  include var O_CMA_Default(S)
+  proc get = H.get
+}.
+
+module EF_CMAs(S : SchemeRO, H : Hash_i, O : Oracle_CMAs, A : Adv_EFCMAs) = {
+  proc main() : bool = {
+    var pk : pk_t;
+    var sk : sk_t;
+    var m : msg_t;
+    var sig : sig_t;
+    var nrqs : int;
+    var is_valid : bool;
+    var is_fresh : bool;
+
+    H.init();
+    (pk, sk) <@ S(H).keygen();
+    O(S(H),H).init(sk);
+    (m, sig) <@ A(O(S(H),H)).forge(pk);
+    is_valid <@ S(H).verify(pk, m, sig);
+    is_fresh <@ O(S(H),H).fresh(m);
+    nrqs <@ O(S(H),H).nr_queries();
+
+    return nrqs <= q_efcma /\ is_valid /\ is_fresh;
+  }
+}.
+
+module Red_EFCMAs (A : Adv_EFCMA_RO) (O : SOracle_CMAs) = {
+  module H = { proc get = O.get }
+  module S = { proc sign = O.sign }
+
+  proc forge (pk) = {
+    var r;
+    r <@ A(H,S).forge(pk);
+    return r;
+  }
+}.

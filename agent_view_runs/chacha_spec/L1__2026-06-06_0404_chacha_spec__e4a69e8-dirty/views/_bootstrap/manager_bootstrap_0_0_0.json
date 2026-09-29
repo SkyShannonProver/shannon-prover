@@ -1,0 +1,534 @@
+{
+  "file": "artifacts/eval_suite/wave1_ablation/l1_goal_projection/d0_chacha_spec/r01/source/ChaChaPoly/chacha_poly.ec",
+  "include_dirs": [
+    "artifacts/eval_suite/wave1_ablation/l1_goal_projection/d0_chacha_spec/r01/source/ChaChaPoly",
+    "easycrypt-src/theories"
+  ],
+  "kind": "manager_session_bootstrap",
+  "lemma": "chacha_spec",
+  "manager_actions": [
+    {
+      "agent_observation": {
+        "effect": "This manager intent does not change the EasyCrypt proof state.",
+        "manager_action": "start",
+        "result": "The manager completed this proof-level request."
+      },
+      "argv": [
+        ".venv/bin/python3",
+        "core/easycrypt/session_cli.py",
+        "-d",
+        ".ec_session_prover_tree_0_0_0",
+        "-start",
+        "-f",
+        "artifacts/eval_suite/wave1_ablation/l1_goal_projection/d0_chacha_spec/r01/source/ChaChaPoly/chacha_poly.ec",
+        "-I",
+        "artifacts/eval_suite/wave1_ablation/l1_goal_projection/d0_chacha_spec/r01/source/ChaChaPoly",
+        "-I",
+        "easycrypt-src/theories",
+        "-lemma",
+        "chacha_spec"
+      ],
+      "duration_ms": 1019,
+      "exit_code": 0,
+      "label": "start",
+      "mutates_proof_state": true,
+      "stderr_chars": 0,
+      "stderr_preview": "",
+      "stdout_chars": 10832,
+      "stdout_has_workspace_view": true,
+      "stdout_lines": 304
+    },
+    {
+      "agent_observation": {
+        "effect": "EasyCrypt accepted a proof-state change; the refreshed view is based on the new committed state.",
+        "manager_action": "replay_prefix_step_1",
+        "proof_state": "The committed EasyCrypt proof state changed.",
+        "result": "The manager completed this proof-level request.",
+        "tactic": "have htake_xor : forall str, take_xor [] str = []."
+      },
+      "argv": [
+        ".venv/bin/python3",
+        "core/easycrypt/session_cli.py",
+        "-d",
+        ".ec_session_prover_tree_0_0_0",
+        "-next",
+        "-c",
+        "have htake_xor : forall str, take_xor [] str = []."
+      ],
+      "duration_ms": 1019,
+      "exit_code": 0,
+      "label": "replay_prefix_step_1",
+      "mutates_proof_state": true,
+      "stderr_chars": 0,
+      "stderr_preview": "",
+      "stdout_chars": 5878,
+      "stdout_has_workspace_view": true,
+      "stdout_lines": 2
+    },
+    {
+      "agent_observation": {
+        "effect": "EasyCrypt accepted a proof-state change; the refreshed view is based on the new committed state.",
+        "manager_action": "replay_prefix_step_2",
+        "proof_state": "The committed EasyCrypt proof state changed.",
+        "result": "The manager completed this proof-level request.",
+        "tactic": "by move=> str; rewrite /take_xor take0."
+      },
+      "argv": [
+        ".venv/bin/python3",
+        "core/easycrypt/session_cli.py",
+        "-d",
+        ".ec_session_prover_tree_0_0_0",
+        "-next",
+        "-c",
+        "by move=> str; rewrite /take_xor take0."
+      ],
+      "duration_ms": 163,
+      "exit_code": 0,
+      "label": "replay_prefix_step_2",
+      "mutates_proof_state": true,
+      "stderr_chars": 0,
+      "stderr_preview": "",
+      "stdout_chars": 10195,
+      "stdout_has_workspace_view": true,
+      "stdout_lines": 2
+    },
+    {
+      "agent_observation": {
+        "effect": "EasyCrypt accepted a proof-state change; the refreshed view is based on the new committed state.",
+        "manager_action": "replay_prefix_step_3",
+        "proof_state": "The committed EasyCrypt proof state changed.",
+        "result": "The manager completed this proof-level request.",
+        "tactic": "proc."
+      },
+      "argv": [
+        ".venv/bin/python3",
+        "core/easycrypt/session_cli.py",
+        "-d",
+        ".ec_session_prover_tree_0_0_0",
+        "-next",
+        "-c",
+        "proc."
+      ],
+      "duration_ms": 168,
+      "exit_code": 0,
+      "label": "replay_prefix_step_3",
+      "mutates_proof_state": true,
+      "stderr_chars": 0,
+      "stderr_preview": "",
+      "stdout_chars": 13816,
+      "stdout_has_workspace_view": true,
+      "stdout_lines": 2
+    },
+    {
+      "agent_observation": {
+        "effect": "EasyCrypt accepted a proof-state change; the refreshed view is based on the new committed state.",
+        "manager_action": "replay_prefix_step_4",
+        "proof_state": "The committed EasyCrypt proof state changed.",
+        "result": "The manager completed this proof-level request.",
+        "tactic": "sp."
+      },
+      "argv": [
+        ".venv/bin/python3",
+        "core/easycrypt/session_cli.py",
+        "-d",
+        ".ec_session_prover_tree_0_0_0",
+        "-next",
+        "-c",
+        "sp."
+      ],
+      "duration_ms": 168,
+      "exit_code": 0,
+      "label": "replay_prefix_step_4",
+      "mutates_proof_state": true,
+      "stderr_chars": 0,
+      "stderr_preview": "",
+      "stdout_chars": 12985,
+      "stdout_has_workspace_view": true,
+      "stdout_lines": 2
+    },
+    {
+      "agent_observation": {
+        "effect": "EasyCrypt accepted a proof-state change; the refreshed view is based on the new committed state.",
+        "manager_action": "replay_prefix_step_5",
+        "proof_state": "The committed EasyCrypt proof state changed.",
+        "result": "The manager completed this proof-level request.",
+        "tactic": "while (OCC.gs = gs0 /\\ k = k0 /\\ n = n0 /\\ c ++ gen_CTR_encrypt_bytes take_xor (cc gs0) k0 n0 i p = gen_CTR_encrypt_bytes take_xor (cc gs0) k0 n0 1 p0) (size p)."
+      },
+      "argv": [
+        ".venv/bin/python3",
+        "core/easycrypt/session_cli.py",
+        "-d",
+        ".ec_session_prover_tree_0_0_0",
+        "-next",
+        "-c",
+        "while (OCC.gs = gs0 /\\ k = k0 /\\ n = n0 /\\ c ++ gen_CTR_encrypt_bytes take_xor (cc gs0) k0 n0 i p = gen_CTR_encrypt_bytes take_xor (cc gs0) k0 n0 1 p0) (size p)."
+      ],
+      "duration_ms": 160,
+      "exit_code": 0,
+      "label": "replay_prefix_step_5",
+      "mutates_proof_state": true,
+      "stderr_chars": 0,
+      "stderr_preview": "",
+      "stdout_chars": 9767,
+      "stdout_has_workspace_view": true,
+      "stdout_lines": 2
+    },
+    {
+      "agent_observation": {
+        "effect": "EasyCrypt accepted a proof-state change; the refreshed view is based on the new committed state.",
+        "manager_action": "replay_prefix_step_6",
+        "proof_state": "The committed EasyCrypt proof state changed.",
+        "result": "The manager completed this proof-level request.",
+        "tactic": "move=> bnd."
+      },
+      "argv": [
+        ".venv/bin/python3",
+        "core/easycrypt/session_cli.py",
+        "-d",
+        ".ec_session_prover_tree_0_0_0",
+        "-next",
+        "-c",
+        "move=> bnd."
+      ],
+      "duration_ms": 162,
+      "exit_code": 0,
+      "label": "replay_prefix_step_6",
+      "mutates_proof_state": true,
+      "stderr_chars": 0,
+      "stderr_preview": "",
+      "stdout_chars": 12038,
+      "stdout_has_workspace_view": true,
+      "stdout_lines": 2
+    },
+    {
+      "agent_observation": {
+        "effect": "This manager intent does not change the EasyCrypt proof state.",
+        "manager_action": "agent_view",
+        "result": "The manager completed this proof-level request."
+      },
+      "argv": [
+        ".venv/bin/python3",
+        "core/easycrypt/session_cli.py",
+        "-d",
+        ".ec_session_prover_tree_0_0_0",
+        "-agent-view"
+      ],
+      "duration_ms": 148,
+      "exit_code": 0,
+      "label": "agent_view",
+      "mutates_proof_state": false,
+      "stderr_chars": 0,
+      "stderr_preview": "",
+      "stdout_chars": 12642,
+      "stdout_has_workspace_view": true,
+      "stdout_lines": 339
+    }
+  ],
+  "node": "Tree-0.0.0",
+  "replay_prefix": [
+    "have htake_xor : forall str, take_xor [] str = [].",
+    "by move=> str; rewrite /take_xor take0.",
+    "proc.",
+    "sp.",
+    "while (OCC.gs = gs0 /\\ k = k0 /\\ n = n0 /\\ c ++ gen_CTR_encrypt_bytes take_xor (cc gs0) k0 n0 i p = gen_CTR_encrypt_bytes take_xor (cc gs0) k0 n0 1 p0) (size p).",
+    "move=> bnd."
+  ],
+  "replay_prefix_count": 6,
+  "schema_version": 2,
+  "session_dir": ".ec_session_prover_tree_0_0_0",
+  "session_tag": "prover_tree_0_0_0",
+  "snapshot": {
+    "execution_refs": {
+      "manager_action_count": 8,
+      "manager_actions": [
+        {
+          "agent_observation": {
+            "effect": "This manager intent does not change the EasyCrypt proof state.",
+            "manager_action": "start",
+            "result": "The manager completed this proof-level request."
+          },
+          "argv": [
+            ".venv/bin/python3",
+            "core/easycrypt/session_cli.py",
+            "-d",
+            ".ec_session_prover_tree_0_0_0",
+            "-start",
+            "-f",
+            "artifacts/eval_suite/wave1_ablation/l1_goal_projection/d0_chacha_spec/r01/source/ChaChaPoly/chacha_poly.ec",
+            "-I",
+            "artifacts/eval_suite/wave1_ablation/l1_goal_projection/d0_chacha_spec/r01/source/ChaChaPoly",
+            "-I",
+            "easycrypt-src/theories",
+            "-lemma",
+            "chacha_spec"
+          ],
+          "duration_ms": 1019,
+          "exit_code": 0,
+          "label": "start",
+          "mutates_proof_state": true,
+          "stderr_chars": 0,
+          "stderr_preview": "",
+          "stdout_chars": 10832,
+          "stdout_has_workspace_view": true,
+          "stdout_lines": 304
+        },
+        {
+          "agent_observation": {
+            "effect": "EasyCrypt accepted a proof-state change; the refreshed view is based on the new committed state.",
+            "manager_action": "replay_prefix_step_1",
+            "proof_state": "The committed EasyCrypt proof state changed.",
+            "result": "The manager completed this proof-level request.",
+            "tactic": "have htake_xor : forall str, take_xor [] str = []."
+          },
+          "argv": [
+            ".venv/bin/python3",
+            "core/easycrypt/session_cli.py",
+            "-d",
+            ".ec_session_prover_tree_0_0_0",
+            "-next",
+            "-c",
+            "have htake_xor : forall str, take_xor [] str = []."
+          ],
+          "duration_ms": 1019,
+          "exit_code": 0,
+          "label": "replay_prefix_step_1",
+          "mutates_proof_state": true,
+          "stderr_chars": 0,
+          "stderr_preview": "",
+          "stdout_chars": 5878,
+          "stdout_has_workspace_view": true,
+          "stdout_lines": 2
+        },
+        {
+          "agent_observation": {
+            "effect": "EasyCrypt accepted a proof-state change; the refreshed view is based on the new committed state.",
+            "manager_action": "replay_prefix_step_2",
+            "proof_state": "The committed EasyCrypt proof state changed.",
+            "result": "The manager completed this proof-level request.",
+            "tactic": "by move=> str; rewrite /take_xor take0."
+          },
+          "argv": [
+            ".venv/bin/python3",
+            "core/easycrypt/session_cli.py",
+            "-d",
+            ".ec_session_prover_tree_0_0_0",
+            "-next",
+            "-c",
+            "by move=> str; rewrite /take_xor take0."
+          ],
+          "duration_ms": 163,
+          "exit_code": 0,
+          "label": "replay_prefix_step_2",
+          "mutates_proof_state": true,
+          "stderr_chars": 0,
+          "stderr_preview": "",
+          "stdout_chars": 10195,
+          "stdout_has_workspace_view": true,
+          "stdout_lines": 2
+        },
+        {
+          "agent_observation": {
+            "effect": "EasyCrypt accepted a proof-state change; the refreshed view is based on the new committed state.",
+            "manager_action": "replay_prefix_step_3",
+            "proof_state": "The committed EasyCrypt proof state changed.",
+            "result": "The manager completed this proof-level request.",
+            "tactic": "proc."
+          },
+          "argv": [
+            ".venv/bin/python3",
+            "core/easycrypt/session_cli.py",
+            "-d",
+            ".ec_session_prover_tree_0_0_0",
+            "-next",
+            "-c",
+            "proc."
+          ],
+          "duration_ms": 168,
+          "exit_code": 0,
+          "label": "replay_prefix_step_3",
+          "mutates_proof_state": true,
+          "stderr_chars": 0,
+          "stderr_preview": "",
+          "stdout_chars": 13816,
+          "stdout_has_workspace_view": true,
+          "stdout_lines": 2
+        },
+        {
+          "agent_observation": {
+            "effect": "EasyCrypt accepted a proof-state change; the refreshed view is based on the new committed state.",
+            "manager_action": "replay_prefix_step_4",
+            "proof_state": "The committed EasyCrypt proof state changed.",
+            "result": "The manager completed this proof-level request.",
+            "tactic": "sp."
+          },
+          "argv": [
+            ".venv/bin/python3",
+            "core/easycrypt/session_cli.py",
+            "-d",
+            ".ec_session_prover_tree_0_0_0",
+            "-next",
+            "-c",
+            "sp."
+          ],
+          "duration_ms": 168,
+          "exit_code": 0,
+          "label": "replay_prefix_step_4",
+          "mutates_proof_state": true,
+          "stderr_chars": 0,
+          "stderr_preview": "",
+          "stdout_chars": 12985,
+          "stdout_has_workspace_view": true,
+          "stdout_lines": 2
+        },
+        {
+          "agent_observation": {
+            "effect": "EasyCrypt accepted a proof-state change; the refreshed view is based on the new committed state.",
+            "manager_action": "replay_prefix_step_5",
+            "proof_state": "The committed EasyCrypt proof state changed.",
+            "result": "The manager completed this proof-level request.",
+            "tactic": "while (OCC.gs = gs0 /\\ k = k0 /\\ n = n0 /\\ c ++ gen_CTR_encrypt_bytes take_xor (cc gs0) k0 n0 i p = gen_CTR_encrypt_bytes take_xor (cc gs0) k0 n0 1 p0) (size p)."
+          },
+          "argv": [
+            ".venv/bin/python3",
+            "core/easycrypt/session_cli.py",
+            "-d",
+            ".ec_session_prover_tree_0_0_0",
+            "-next",
+            "-c",
+            "while (OCC.gs = gs0 /\\ k = k0 /\\ n = n0 /\\ c ++ gen_CTR_encrypt_bytes take_xor (cc gs0) k0 n0 i p = gen_CTR_encrypt_bytes take_xor (cc gs0) k0 n0 1 p0) (size p)."
+          ],
+          "duration_ms": 160,
+          "exit_code": 0,
+          "label": "replay_prefix_step_5",
+          "mutates_proof_state": true,
+          "stderr_chars": 0,
+          "stderr_preview": "",
+          "stdout_chars": 9767,
+          "stdout_has_workspace_view": true,
+          "stdout_lines": 2
+        },
+        {
+          "agent_observation": {
+            "effect": "EasyCrypt accepted a proof-state change; the refreshed view is based on the new committed state.",
+            "manager_action": "replay_prefix_step_6",
+            "proof_state": "The committed EasyCrypt proof state changed.",
+            "result": "The manager completed this proof-level request.",
+            "tactic": "move=> bnd."
+          },
+          "argv": [
+            ".venv/bin/python3",
+            "core/easycrypt/session_cli.py",
+            "-d",
+            ".ec_session_prover_tree_0_0_0",
+            "-next",
+            "-c",
+            "move=> bnd."
+          ],
+          "duration_ms": 162,
+          "exit_code": 0,
+          "label": "replay_prefix_step_6",
+          "mutates_proof_state": true,
+          "stderr_chars": 0,
+          "stderr_preview": "",
+          "stdout_chars": 12038,
+          "stdout_has_workspace_view": true,
+          "stdout_lines": 2
+        },
+        {
+          "agent_observation": {
+            "effect": "This manager intent does not change the EasyCrypt proof state.",
+            "manager_action": "agent_view",
+            "result": "The manager completed this proof-level request."
+          },
+          "argv": [
+            ".venv/bin/python3",
+            "core/easycrypt/session_cli.py",
+            "-d",
+            ".ec_session_prover_tree_0_0_0",
+            "-agent-view"
+          ],
+          "duration_ms": 148,
+          "exit_code": 0,
+          "label": "agent_view",
+          "mutates_proof_state": false,
+          "stderr_chars": 0,
+          "stderr_preview": "",
+          "stdout_chars": 12642,
+          "stdout_has_workspace_view": true,
+          "stdout_lines": 339
+        }
+      ]
+    },
+    "goal_hash": "0ec319f21ae0b3f06effac50b3cb76a065d5b919",
+    "node_id": "Tree-0.0.0",
+    "proof_context_view_artifact": "",
+    "session_dir": ".ec_session_prover_tree_0_0_0",
+    "session_epoch": 1,
+    "session_tag": "prover_tree_0_0_0",
+    "state_version": 1,
+    "workspace_view_artifact": ""
+  },
+  "workspace_view": {
+    "current_goal": {
+      "goal_type": "phoare",
+      "lines": [
+        "Current goal (remaining: 2)",
+        "",
+        "Type variables: <none>",
+        "",
+        "k0: key",
+        "n0: nonce",
+        "p0: message",
+        "gs0: globS",
+        "htake_xor: forall (str : block), take_xor [] str = []",
+        "bnd: int",
+        "------------------------------------------------------------------------",
+        "Context : hr: {i : int, c : byte list, k : key, n : nonce, z : block,",
+        "              p : message}",
+        "Bound   : [=] 1%r",
+        "",
+        "pre =",
+        "  ((OCC.gs = gs0 /\\",
+        "    k = k0 /\\",
+        "    n = n0 /\\",
+        "    c ++ gen_CTR_encrypt_bytes take_xor (cc gs0) k0 n0 i p =",
+        "    gen_CTR_encrypt_bytes take_xor (cc gs0) k0 n0 1 p0) /\\",
+        "   p <> []) /\\",
+        "  size p = bnd",
+        "",
+        "(1)  z <@ OCC(I).cc(k, n, C.ofintd i)                        ",
+        "(2)  c <- c ++ take (size p) (bytes_of_block (extend p +^ z))",
+        "(3)  p <- drop block_size p                                  ",
+        "(4)  i <- i + 1                                              ",
+        "",
+        "post =",
+        "  (OCC.gs = gs0 /\\",
+        "   k = k0 /\\",
+        "   n = n0 /\\",
+        "   c ++ gen_CTR_encrypt_bytes take_xor (cc gs0) k0 n0 i p =",
+        "   gen_CTR_encrypt_bytes take_xor (cc gs0) k0 n0 1 p0) /\\",
+        "  size p < bnd",
+        "[206|check]>"
+      ],
+      "source": {
+        "ground_truth": false,
+        "label": "Parsed from EasyCrypt pretty goal text"
+      },
+      "text_fully_shown": true,
+      "truncated": false,
+      "view_focus": "procedure_frontier"
+    },
+    "kind": "prover_workspace_view",
+    "last_result": {},
+    "proof_status": {
+      "current_layer": "procedure_body",
+      "goal_type": "phoare",
+      "remaining_goals": 2,
+      "remaining_goals_known": true,
+      "status": "open",
+      "view_focus": "procedure_frontier"
+    },
+    "schema_version": 2,
+    "view_hash": "ee5373894b94db53d1c6d89342056dc1c703e635"
+  }
+}

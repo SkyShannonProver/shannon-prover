@@ -1,0 +1,179 @@
+{
+  "node": "Tree-0.1",
+  "discovery": "content_match",
+  "transcripts": [
+    "~/.claude/projects/<PROJECT>--worktrees-eval-suite-48/85867cf0-a726-4a8a-bf95-4c01d247dbb7.jsonl"
+  ],
+  "turns": [
+    {
+      "turn": 1,
+      "intent": "probe_tactic",
+      "payload_key": "auto.",
+      "thinking_chars": 0,
+      "text_chars": 431,
+      "session_id": "85867cf0-a726-4a8a-bf95-4c01d247dbb7",
+      "timestamp": "2026-06-03T20:03:43.957Z",
+      "file": "thinking/turn_001.md"
+    },
+    {
+      "turn": 2,
+      "intent": "inspect_context",
+      "payload_key": "goal_info",
+      "thinking_chars": 0,
+      "text_chars": 321,
+      "session_id": "85867cf0-a726-4a8a-bf95-4c01d247dbb7",
+      "timestamp": "2026-06-03T20:04:28.754Z",
+      "file": "thinking/turn_002.md"
+    },
+    {
+      "turn": 3,
+      "intent": "probe_tactic",
+      "payload_key": "skip.",
+      "thinking_chars": 0,
+      "text_chars": 378,
+      "session_id": "85867cf0-a726-4a8a-bf95-4c01d247dbb7",
+      "timestamp": "2026-06-03T20:05:51.221Z",
+      "file": "thinking/turn_003.md"
+    },
+    {
+      "turn": 4,
+      "intent": "probe_tactic",
+      "payload_key": "rewrite /check_plaintext /=; smt(make_lbad1_size_cons3 leq_make_lbad1 size_cat size_map size_filter ge0_qdec ge0_qenc mem_cat mapP hasP mem_filter).",
+      "thinking_chars": 0,
+      "text_chars": 1018,
+      "session_id": "85867cf0-a726-4a8a-bf95-4c01d247dbb7",
+      "timestamp": "2026-06-03T20:10:53.520Z",
+      "file": "thinking/turn_004.md"
+    },
+    {
+      "turn": 5,
+      "intent": "probe_tactic",
+      "payload_key": "rewrite /check_plaintext /=; move=> />; smt(make_lbad1_size_cons3 leq_make_lbad1 size_cat size_map size_filter ge0_qdec ge0_qenc mem_cat mapP hasP mem_filter).",
+      "thinking_chars": 0,
+      "text_chars": 359,
+      "session_id": "85867cf0-a726-4a8a-bf95-4c01d247dbb7",
+      "timestamp": "2026-06-03T20:11:06.640Z",
+      "file": "thinking/turn_005.md"
+    },
+    {
+      "turn": 6,
+      "intent": "probe_tactic",
+      "payload_key": "rewrite /check_plaintext /=; move=> />.",
+      "thinking_chars": 0,
+      "text_chars": 344,
+      "session_id": "85867cf0-a726-4a8a-bf95-4c01d247dbb7",
+      "timestamp": "2026-06-03T20:11:28.164Z",
+      "file": "thinking/turn_006.md"
+    },
+    {
+      "turn": 7,
+      "intent": "inspect_context",
+      "payload_key": "diagnose",
+      "thinking_chars": 0,
+      "text_chars": 486,
+      "session_id": "85867cf0-a726-4a8a-bf95-4c01d247dbb7",
+      "timestamp": "2026-06-03T20:12:38.865Z",
+      "file": "thinking/turn_007.md"
+    },
+    {
+      "turn": 8,
+      "intent": "probe_tactic",
+      "payload_key": "wp.",
+      "thinking_chars": 0,
+      "text_chars": 576,
+      "session_id": "85867cf0-a726-4a8a-bf95-4c01d247dbb7",
+      "timestamp": "2026-06-03T20:13:47.607Z",
+      "file": "thinking/turn_008.md"
+    },
+    {
+      "turn": 9,
+      "intent": "probe_tactic",
+      "payload_key": "rewrite /check_plaintext /=; smt(make_lbad1_size_cons3 leq_make_lbad1 size_cat size_map size_filter ge0_qdec ge0_qenc mem_cat mapP hasP mem_filter get_setE mem_set).",
+      "thinking_chars": 0,
+      "text_chars": 783,
+      "session_id": "85867cf0-a726-4a8a-bf95-4c01d247dbb7",
+      "timestamp": "2026-06-03T20:15:37.123Z",
+      "file": "thinking/turn_009.md"
+    },
+    {
+      "turn": 10,
+      "intent": "probe_tactic",
+      "payload_key": "split.",
+      "thinking_chars": 0,
+      "text_chars": 931,
+      "session_id": "85867cf0-a726-4a8a-bf95-4c01d247dbb7",
+      "timestamp": "2026-06-03T20:20:40.438Z",
+      "file": "thinking/turn_010.md"
+    },
+    {
+      "turn": 11,
+      "intent": "probe_tactic",
+      "payload_key": "if.",
+      "thinking_chars": 0,
+      "text_chars": 313,
+      "session_id": "85867cf0-a726-4a8a-bf95-4c01d247dbb7",
+      "timestamp": "2026-06-03T20:21:04.810Z",
+      "file": "thinking/turn_011.md"
+    },
+    {
+      "turn": 12,
+      "intent": "probe_tactic",
+      "payload_key": "sp.",
+      "thinking_chars": 0,
+      "text_chars": 166,
+      "session_id": "85867cf0-a726-4a8a-bf95-4c01d247dbb7",
+      "timestamp": "2026-06-03T20:21:09.520Z",
+      "file": "thinking/turn_012.md"
+    },
+    {
+      "turn": 13,
+      "intent": "probe_tactic",
+      "payload_key": "rnd.",
+      "thinking_chars": 0,
+      "text_chars": 449,
+      "session_id": "85867cf0-a726-4a8a-bf95-4c01d247dbb7",
+      "timestamp": "2026-06-03T20:21:48.705Z",
+      "file": "thinking/turn_013.md"
+    },
+    {
+      "turn": 14,
+      "intent": "inspect_context",
+      "payload_key": "call_site_options",
+      "thinking_chars": 0,
+      "text_chars": 398,
+      "session_id": "85867cf0-a726-4a8a-bf95-4c01d247dbb7",
+      "timestamp": "2026-06-03T20:22:02.997Z",
+      "file": "thinking/turn_014.md"
+    },
+    {
+      "turn": 15,
+      "intent": "probe_tactic",
+      "payload_key": "if{1}.",
+      "thinking_chars": 0,
+      "text_chars": 470,
+      "session_id": "85867cf0-a726-4a8a-bf95-4c01d247dbb7",
+      "timestamp": "2026-06-03T20:23:11.155Z",
+      "file": "thinking/turn_015.md"
+    },
+    {
+      "turn": 16,
+      "intent": "commit_tactic",
+      "payload_key": "rewrite /check_plaintext /=; smt(make_lbad1_size_cons3 leq_make_lbad1 size_cat size_map size_filter ge0_qdec ge0_qenc mem_cat mapP hasP mem_filter get_setE mem_set).",
+      "thinking_chars": 0,
+      "text_chars": 677,
+      "session_id": "85867cf0-a726-4a8a-bf95-4c01d247dbb7",
+      "timestamp": "2026-06-03T20:24:03.805Z",
+      "file": "thinking/turn_016.md"
+    },
+    {
+      "turn": 17,
+      "intent": "probe_tactic",
+      "payload_key": "inline*.",
+      "thinking_chars": 0,
+      "text_chars": 391,
+      "session_id": "85867cf0-a726-4a8a-bf95-4c01d247dbb7",
+      "timestamp": "2026-06-03T20:24:40.514Z",
+      "file": "thinking/turn_017.md"
+    }
+  ]
+}

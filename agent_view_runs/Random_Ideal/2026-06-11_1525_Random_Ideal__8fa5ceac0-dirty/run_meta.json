@@ -1,0 +1,53 @@
+{
+  "kind": "agent_view_run_report",
+  "timestamp": "2026-06-11_1525_Random_Ideal",
+  "lemma": "Random_Ideal",
+  "source_file": "eval/examples/MEE-CBC/CBC.eca",
+  "model": "claude-fable-5",
+  "surface_profile": "l1_goal_projection",
+  "trees": 2,
+  "eval_mode": true,
+  "outcome": "proved",
+  "committed_proofs": [
+    {
+      "tree": "Tree_0_0",
+      "tactics": [
+        "proc.",
+        "transitivity{1} { c <@ LoopSnoc.sample(size p + 1); } (={k, p} ==> ={c}) (size p{1} = size p{2} ==> c{1} = r{2}).",
+        "smt().",
+        "smt().",
+        "inline *; wp.",
+        "while (i{1} = i0{2} /\\ c{1} = l{2} /\\ n{2} = size p{1} + 1); auto=> /> /#.",
+        "transitivity{2} { r <@ Sample.sample(size p + 1); } (size p{1} = size p{2} ==> c{1} = r{2}) (={k, p} ==> ={r}).",
+        "smt().",
+        "smt().",
+        "symmetry; call Sample_LoopSnoc_eq; auto=> /#.",
+        "inline *; wp; rnd; auto=> />.",
+        "qed."
+      ],
+      "source": "session",
+      "proved": true
+    },
+    {
+      "tree": "Tree_0_1",
+      "tactics": [
+        "proc.",
+        "transitivity {1} { c <@ LoopSnoc.sample(size p + 1); } (={k, p} ==> ={c}) (size p{1} = size p{2} ==> c{1} = r{2}).",
+        "by move=> &1 &2 h; exists k{1} p{1}.",
+        "by move=> &1 &m &2 ->.",
+        "inline *; wp.",
+        "while (i{1} = i0{2} /\\ n{2} = size p{1} + 1 /\\ c{1} = l{2}); by auto=> /#.",
+        "transitivity {1} { c <@ Sample.sample(size p + 1); } (={p} ==> ={c}) (size p{1} = size p{2} ==> c{1} = r{2})."
+      ],
+      "source": "session",
+      "proved": false
+    }
+  ],
+  "turn_count": 20,
+  "views_copied": 22,
+  "run_iteration_dir": "artifacts/eval_suite/mee_sweep_l1_all/l1_goal_projection/mee_Random_Ideal/r01/2026-06-11_1525_Random_Ideal/iteration_1",
+  "commit": "8fa5ceac0",
+  "commit_full": "8fa5ceac0a4c7ed08e53023adcaade43f89a6de8",
+  "branch": "mcp-v0",
+  "dirty": true
+}

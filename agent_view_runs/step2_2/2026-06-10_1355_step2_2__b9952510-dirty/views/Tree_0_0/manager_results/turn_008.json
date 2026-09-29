@@ -1,0 +1,19 @@
+{
+  "turn": 8,
+  "handled_intent": {
+    "intent": "commit_tactic",
+    "payload": {
+      "tactic": "have dec_kindep : forall gs (k1 k2 : key) (c : ciphertext), (dec gs k1 c <> None) <=> (dec gs k2 c <> None)."
+    }
+  },
+  "ok": true,
+  "manager_note": "Committed tactic accepted; the EasyCrypt proof state changed.",
+  "manager_actions": [
+    {
+      "action": "tactic commit",
+      "outcome": "EasyCrypt accepted the committed tactic.",
+      "timing": "263 ms"
+    }
+  ],
+  "view_refreshed": true
+}

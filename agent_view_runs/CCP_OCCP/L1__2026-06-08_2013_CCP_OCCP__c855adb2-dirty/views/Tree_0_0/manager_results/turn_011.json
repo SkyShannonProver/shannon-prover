@@ -1,0 +1,13 @@
+{
+  "turn": 11,
+  "ok": false,
+  "repair_prompt": "I could not read a proof intent from the last message. Please reply with exactly one JSON object like:\n{\"intent\": \"probe_tactic\", \"payload\": {\"tactic\": \"...\"}}\nor\n{\"intent\": \"inspect_context\", \"payload\": {\"topic\": \"goal_info\"}}",
+  "health_event": {
+    "node_id": "Tree-0.0",
+    "status": "agent_protocol_stuck",
+    "message": "agent produced malformed proof intents repeatedly",
+    "state_version": 9
+  },
+  "manager_note": "Manager handled the previous message and refreshed the latest view.",
+  "view_refreshed": true
+}

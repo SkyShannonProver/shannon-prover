@@ -1,0 +1,22 @@
+{
+  "turn": 1,
+  "handled_intent": {
+    "intent": "lookup_symbol",
+    "payload": {
+      "symbol": "mu_mem_le_mu1_size"
+    }
+  },
+  "ok": true,
+  "manager_note": "Read-only context. Accepted/rejected tactic or call text inside a preview is route-selection information, not the current proof-state error.",
+  "manager_actions": [
+    {
+      "action": "symbol lookup",
+      "outcome": "The manager returned read-only context for the current goal.",
+      "timing": "1.6 s",
+      "content": {
+        "preview": "[WHERE-HIT] mu_mem_le_mu1_size (kind: lemma) * In [lemmas or axioms]: lemma mu_mem_le_mu1_size ['a]: forall (dt : 'a Distr.distr) (l : 'a list) (r : real) (n : int), size l <= n => (forall (x : 'a), mu1 dt x <= r) => mu dt (mem l) <= n%r * r."
+      }
+    }
+  ],
+  "view_refreshed": true
+}

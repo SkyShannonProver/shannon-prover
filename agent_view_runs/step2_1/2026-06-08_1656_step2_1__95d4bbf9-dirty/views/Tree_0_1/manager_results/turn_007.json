@@ -1,0 +1,35 @@
+{
+  "turn": 7,
+  "handled_intent": {
+    "intent": "inspect_context",
+    "payload": {
+      "topic": "call_invariant_skeleton"
+    }
+  },
+  "ok": true,
+  "manager_note": "Read-only context. Accepted/rejected tactic or call text inside a preview is route-selection information, not the current proof-state error.",
+  "manager_actions": [
+    {
+      "action": "inspect call invariant skeleton",
+      "outcome": "The manager returned read-only context for the current goal.",
+      "timing": "1.2 s",
+      "content": {
+        "title": "Call-Invariant Glob Skeleton",
+        "items": [
+          {
+            "candidate": "call (_: inv_cpa \u2039ROin.m | ROout.m | ROF.m\u203a{1} \u2039ROin.m | ROout.m | ROF.m\u203a{1} Mem.log{1} Mem.log{2} Mem.lc{1} Mem.lc{2} BNR.lenc{1} BNR.lenc{2} \u2039BNR.ndec | UFCMA.cbad1 | UFCMA.cbad2 | UFCMA4.cforged | UFCMA_li.i | UFCMA_li.cbadi\u203a{1} \u2039BNR.ndec | UFCMA.cbad1 | UFCMA.cbad2 | UFCMA4.cforged | UFCMA_li.i | UFCMA_li.cbadi\u203a{2}).",
+            "why": "`inv_cpa`'s parameter types match the in-scope state fields."
+          },
+          {
+            "candidate": "call (_: inv \u2039ROin.m | ROout.m | ROF.m\u203a{1} \u2039ROin.m | ROout.m | ROF.m\u203a{2} \u2039ROin.m | ROout.m | ROF.m\u203a{1} \u2039ROin.m | ROout.m | ROF.m\u203a{2} Mem.log{1} Mem.log{2} Mem.lc{1} Mem.lc{2} BNR.lenc{1} BNR.lenc{2} \u2039BNR.ndec | UFCMA.cbad1 | UFCMA.cbad2 | UFCMA4.cforged | UFCMA_li.i | UFCMA_li.cbadi\u203a{1} \u2039BNR.ndec | UFCMA.cbad1 | UFCMA.cbad2 | UFCMA4.cforged | UFCMA_li.i | UFCMA_li.cbadi\u203a{2} \u2039ROin.m | ROout.m | ROF.m\u203a{1}).",
+            "why": "`inv`'s parameter types match the in-scope state fields."
+          },
+          {
+            "why": "No mechanical `={glob}` frame applies at this call \u2014 build the call invariant from THIS development's own in-scope predicates (an invariant conjunct can be a guarded implication / size-or-count bound / domain fact, not only an equality). In-scope forms + named predicates (use lookup_symbol for the full definition of any): guarded implication (guard => relation) \u2014 inv_cpa: log1 = log2 /\\ lenc1 = lenc2 /\\ lc1 = lc2 /\\ ndec1 = ndec2 /\\ (forall n c, (n,c) \\in mr1 => n \\in lenc1) /\\ (forall n c, (n,c) \\in ms1 => n \\in lenc1). local eq; make_lbad1: flatten (map (f | size / count bound \u2014 check_plaintext: let (n, a, m) = p in ! n \\in lenc /\\ valid_topol a m /\\ size lenc < qenc. op check_cipher (ndec:int) (c:ciphertext) = (let (n, a, m, t) = c in valid_topol a m) ; inv: inv_cpa mr1 ms1 log1 log2 lc1 lc2 l | domain membership \u2014 check_plaintext: let (n, a, m) = p in ! n \\in lenc /\\ valid_topol a m /\\ size lenc < qenc. op check_cipher (ndec:int) (c:ciphertext) = (let (n, a, m, t) = c in valid_topol a m) ; inv: inv_cpa mr1 ms1 log1 log2 lc1 lc2 le | relational equality \u2014 check_cipher: (let (n, a, m, t) = c in valid_topol a m) /\\ ndec < qdec. (* Bounded and Nonce Respecting *) module BNR (O:CCA_Oracles) = { var lenc : nonce list var ndec : int"
+          }
+        ]
+      }
+    }
+  ],
+  "view_refreshed": true
+}

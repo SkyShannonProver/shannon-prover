@@ -1,0 +1,99 @@
+{
+  "turn": 46,
+  "handled_intent": {
+    "intent": "undo_to_checkpoint",
+    "payload": {
+      "checkpoint_id": "cp_17_1a5aa9bd42228317"
+    }
+  },
+  "ok": true,
+  "manager_note": "Checkpoint rewind executed; the EasyCrypt proof state changed (see the latest view).",
+  "manager_actions": [
+    {
+      "action": "checkpoint rewind",
+      "outcome": "The manager rewound this branch to the selected checkpoint.",
+      "timing": "1.1 s"
+    },
+    {
+      "action": "replay prefix step 1",
+      "outcome": "The manager completed this proof-level request.",
+      "timing": "864 ms"
+    },
+    {
+      "action": "replay prefix step 2",
+      "outcome": "The manager completed this proof-level request.",
+      "timing": "990 ms"
+    },
+    {
+      "action": "replay prefix step 3",
+      "outcome": "The manager completed this proof-level request.",
+      "timing": "2.5 s"
+    },
+    {
+      "action": "replay prefix step 4",
+      "outcome": "The manager completed this proof-level request.",
+      "timing": "116 ms"
+    },
+    {
+      "action": "replay prefix step 5",
+      "outcome": "The manager completed this proof-level request.",
+      "timing": "3.4 s"
+    },
+    {
+      "action": "replay prefix step 6",
+      "outcome": "The manager completed this proof-level request.",
+      "timing": "3.0 s"
+    },
+    {
+      "action": "replay prefix step 7",
+      "outcome": "The manager completed this proof-level request.",
+      "timing": "3.0 s"
+    },
+    {
+      "action": "replay prefix step 8",
+      "outcome": "The manager completed this proof-level request.",
+      "timing": "118 ms"
+    },
+    {
+      "action": "replay prefix step 9",
+      "outcome": "The manager completed this proof-level request.",
+      "timing": "3.4 s"
+    },
+    {
+      "action": "replay prefix step 10",
+      "outcome": "The manager completed this proof-level request.",
+      "timing": "123 ms"
+    },
+    {
+      "action": "replay prefix step 11",
+      "outcome": "The manager completed this proof-level request.",
+      "timing": "3.8 s"
+    },
+    {
+      "action": "replay prefix step 12",
+      "outcome": "The manager completed this proof-level request.",
+      "timing": "144 ms"
+    },
+    {
+      "action": "replay prefix step 13",
+      "outcome": "The manager completed this proof-level request.",
+      "timing": "3.8 s"
+    },
+    {
+      "action": "replay prefix step 14",
+      "outcome": "The manager completed this proof-level request.",
+      "timing": "3.5 s"
+    },
+    {
+      "action": "replay prefix step 15",
+      "outcome": "The manager completed this proof-level request.",
+      "timing": "3.6 s"
+    },
+    {
+      "action": "replay prefix step 16",
+      "outcome": "The manager completed this proof-level request.",
+      "timing": "1.5 s"
+    }
+  ],
+  "view_refreshed": true
+}

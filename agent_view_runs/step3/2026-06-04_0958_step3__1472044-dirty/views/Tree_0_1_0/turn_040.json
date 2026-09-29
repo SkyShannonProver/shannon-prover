@@ -1,0 +1,681 @@
+{
+  "last_result": {
+    "intent": "finish",
+    "result": "The manager recorded the intent and returned the latest completed workspace view.",
+    "effect": "This manager intent does not change the EasyCrypt proof state."
+  },
+  "current_goal": {
+    "lines": [
+      "[391|check]>"
+    ],
+    "text_fully_shown": true,
+    "truncated": false,
+    "goal_type": "complete",
+    "view_focus": "closed_candidate",
+    "source": {
+      "label": "Projected from session_event_projection",
+      "ground_truth": false
+    }
+  },
+  "proof_status": {
+    "status": "candidate_closed",
+    "remaining_goals": 0,
+    "remaining_goals_known": true,
+    "goal_type": "complete",
+    "view_focus": "closed_candidate",
+    "current_layer": "unknown"
+  },
+  "candidate_moves": {
+    "moves": [
+      {
+        "category": "verify",
+        "applicability": "This tactic is already concrete for the current goal.",
+        "why_relevant": "The proof candidate is closed; run verification next."
+      }
+    ]
+  },
+  "program_frontier": {
+    "authority": "proof-state analysis",
+    "view_focus": "closed_candidate"
+  },
+  "call_site_surface": {},
+  "seq_cut_surface": {
+    "seq_candidate_id": "cp_11_79c4685d08119861",
+    "state": "inside_seq_scope",
+    "cut_position": {
+      "left_count": 1,
+      "right_count": 1,
+      "tactic": "seq 1 1 : (c2{1} = c1{2} /\\ n{1} = n{2} /\\ a{1} = a{2} /\\ p0{1} = p0{2} /\\ n{1} = p{1}.`1 /\\ ! (p{1}.`1 \\in BNR.lenc{1}) /\\ inv_cpa SplitC2.I1.RO.m{1} SplitC2.I2.RO.m{1} Mem.log{1} Mem.log{2} Mem.lc{1} Mem.lc{2} BNR.lenc{1} BNR.lenc{2} BNR.ndec{1} BNR.ndec{2} /\\ (forall (n0 : nonce) (c3 : C.counter), (n0, c3) \\in SplitD.ROF.RO.m{1} => n0 \\in p{1}.`1 :: BNR.lenc{1}) /\\ p{1} = p{2})."
+    },
+    "residual_frontier": {
+      "current_layer": "unknown",
+      "view_focus": "closed_candidate",
+      "live_call_site_count": 0,
+      "goal_contains_call_site": false,
+      "latest_seq_tactic_index": 11,
+      "tactics_after_latest_seq": 19
+    }
+  },
+  "application_context": {
+    "selected_handles": [
+      {
+        "why_relevant": "The proof candidate is closed; run verification next."
+      }
+    ]
+  },
+  "facts_and_diagnostics": {
+    "facts": {
+      "unfoldable_goal_head_count": 0
+    },
+    "fact_note": "Only current-frontier facts are shown here; the full proof context artifact keeps the compiler/internal details.",
+    "notes": [
+      {
+        "message": "proof-state analysis sees no live call sites after a prior `inline *` at tactic 25. Continue at procedure/ambient layer, or undo if a call lemma is needed.",
+        "severity": "info"
+      }
+    ]
+  },
+  "route_replay_memory": {
+    "kind": "route_replay_memory",
+    "state": "manager_owned_route_memory",
+    "items": [
+      {
+        "memory_id": "route_af4c5be9e78d0604",
+        "source": "discarded suffix saved before checkpoint rewind",
+        "from_checkpoint_id": "cp_11_ac02842fbedfaed4",
+        "kept_prefix_end": 10,
+        "progress": {
+          "prefix_matches": true,
+          "covered_old_tactics": 1,
+          "covered_current_tail_tactics": 1,
+          "remaining_old_tactics": 14,
+          "rewrite_anchor": {
+            "old_tactic": "seq 1 1 : (c2{1} = c1{2} /\\ n{1} = n{2} /\\ a{1} = a{2} /\\ p0{1} = p0{2} /\\ n{1} = p{1}.`1 /\\ ! (p{1}.`1 \\in BNR.lenc{1}) /\\ inv_cpa SplitC2.I1.RO.m{1} SplitC2.I2.RO.m{1} Mem.log{1} Mem.log{2} Mem.lc{1} Mem.lc{2} BNR.lenc{1} BNR.lenc{2} BNR.ndec{1} BNR.ndec{2} /\\ (forall (n0 : nonce) (c3 : C.counter), (n0, c3) \\in SplitD.ROF.RO.m{1} => n0 \\in p{1}.`1 :: BNR.lenc{1})).",
+            "current_tactic": "seq 1 1 : (c2{1} = c1{2} /\\ n{1} = n{2} /\\ a{1} = a{2} /\\ p0{1} = p0{2} /\\ n{1} = p{1}.`1 /\\ ! (p{1}.`1 \\in BNR.lenc{1}) /\\ inv_cpa SplitC2.I1.RO.m{1} SplitC2.I2.RO.m{1} Mem.log{1} Mem.log{2} Mem.lc{1} Mem.lc{2} BNR.lenc{1} BNR.lenc{2} BNR.ndec{1} BNR.ndec{2} /\\ (forall (n0 : nonce) (c3 : C.counter), (n0, c3) \\in SplitD.ROF.RO.m{1} => n0 \\in p{1}.`1 :: BNR.lenc{1}) /\\ p{1} = p{2}).",
+            "relation": "same_structural_boundary_head_rewritten"
+          }
+        },
+        "available_chunks": [
+          {
+            "chunk_id": "rch_e78d0604_1_3_e0d0ebc6",
+            "memory_id": "route_af4c5be9e78d0604",
+            "kind": "local_route_suffix",
+            "tactic_count": 2,
+            "first_tactic": "exists* (n{1}), (SplitC2.I1.RO.m{1}), (SplitC2.I2.RO.m{1}).",
+            "last_tactic": "elim* => n0 mr0 ms0.",
+            "effect": "Scratch replay checks this old route chunk from the current committed proof state.",
+            "limitations": "A changed invariant or branch shape can make only a prefix of the old chunk replayable.",
+            "submit_probe": {
+              "intent": "probe_replay_suffix_chunk",
+              "payload": {
+                "chunk_id": "rch_e78d0604_1_3_e0d0ebc6"
+              }
+            },
+            "submit_commit": {
+              "intent": "commit_replay_suffix_chunk",
+              "payload": {
+                "chunk_id": "rch_e78d0604_1_3_e0d0ebc6"
+              }
+            }
+          },
+          {
+            "chunk_id": "rch_e78d0604_3_7_dabee64c",
+            "memory_id": "route_af4c5be9e78d0604",
+            "kind": "call_route_suffix",
+            "tactic_count": 4,
+            "first_tactic": "call (equ_cc n0 mr0 ms0).",
+            "last_tactic": "wp.",
+            "effect": "Scratch replay checks this old route chunk from the current committed proof state.",
+            "limitations": "A changed invariant or branch shape can make only a prefix of the old chunk replayable.",
+            "submit_probe": {
+              "intent": "probe_replay_suffix_chunk",
+              "payload": {
+                "chunk_id": "rch_e78d0604_3_7_dabee64c"
+              }
+            },
+            "submit_commit": {
+              "intent": "commit_replay_suffix_chunk",
+              "payload": {
+                "chunk_id": "rch_e78d0604_3_7_dabee64c"
+              }
+            }
+          },
+          {
+            "chunk_id": "rch_e78d0604_7_13_02f338cb",
+            "memory_id": "route_af4c5be9e78d0604",
+            "kind": "local_route_suffix",
+            "tactic_count": 6,
+            "first_tactic": "inline *.",
+            "last_tactic": "rcondt{1} 17.",
+            "effect": "Scratch replay checks this old route chunk from the current committed proof state.",
+            "limitations": "A changed invariant or branch shape can make only a prefix of the old chunk replayable.",
+            "submit_probe": {
+              "intent": "probe_replay_suffix_chunk",
+              "payload": {
+                "chunk_id": "rch_e78d0604_7_13_02f338cb"
+              }
+            },
+            "submit_commit": {
+              "intent": "commit_replay_suffix_chunk",
+              "payload": {
+                "chunk_id": "rch_e78d0604_7_13_02f338cb"
+              }
+            }
+          }
+        ],
+        "interpretation": "These chunks are old committed tactics after a rewind. A probe checks a chunk in a scratch verifier session before any state-changing replay commit."
+      }
+    ],
+    "repair_episodes": [
+      {
+        "episode_id": "repair_5be9e78d0604",
+        "from_checkpoint_id": "cp_11_ac02842fbedfaed4",
+        "from_tactic_index": 11,
+        "kept_prefix_end": 10,
+        "discarded_piece_count": 15,
+        "piece_counts": {
+          "total": 15,
+          "by_replay_class": {
+            "boundary_sensitive": 2,
+            "local_logic": 10,
+            "structural_replayable": 3
+          },
+          "by_goal_tag": {
+            "seq_boundary": 1,
+            "proof_step": 10,
+            "call_boundary": 1,
+            "program_frontier": 3
+          }
+        },
+        "rewind_note": {
+          "negative_memory_count": 0
+        },
+        "route_memory_id": "route_af4c5be9e78d0604"
+      }
+    ]
+  },
+  "proof_piece_memory": {
+    "kind": "proof_piece_memory",
+    "state": "manager_owned_route_memory",
+    "open_repair_episode": "repair_5be9e78d0604",
+    "route_memories": [
+      {
+        "memory_id": "route_af4c5be9e78d0604",
+        "repair_episode_id": "repair_5be9e78d0604",
+        "from_checkpoint_id": "cp_11_ac02842fbedfaed4",
+        "kept_prefix_end": 10,
+        "progress": {
+          "prefix_matches": true,
+          "covered_old_tactics": 1,
+          "covered_current_tail_tactics": 1,
+          "remaining_old_tactics": 14,
+          "rewrite_anchor": {
+            "old_tactic": "seq 1 1 : (c2{1} = c1{2} /\\ n{1} = n{2} /\\ a{1} = a{2} /\\ p0{1} = p0{2} /\\ n{1} = p{1}.`1 /\\ ! (p{1}.`1 \\in BNR.lenc{1}) /\\ inv_cpa SplitC2.I1.RO.m{1} SplitC2.I2.RO.m{1} Mem.log{1} Mem.log{2} Mem.lc{1} Mem.lc{2} BNR.lenc{1} BNR.lenc{2} BNR.ndec{1} BNR.ndec{2} /\\ (forall (n0 : nonce) (c3 : C.counter), (n0, c3) \\in SplitD.ROF.RO.m{1} => n0 \\in p{1}.`1 :: BNR.lenc{1})).",
+            "current_tactic": "seq 1 1 : (c2{1} = c1{2} /\\ n{1} = n{2} /\\ a{1} = a{2} /\\ p0{1} = p0{2} /\\ n{1} = p{1}.`1 /\\ ! (p{1}.`1 \\in BNR.lenc{1}) /\\ inv_cpa SplitC2.I1.RO.m{1} SplitC2.I2.RO.m{1} Mem.log{1} Mem.log{2} Mem.lc{1} Mem.lc{2} BNR.lenc{1} BNR.lenc{2} BNR.ndec{1} BNR.ndec{2} /\\ (forall (n0 : nonce) (c3 : C.counter), (n0, c3) \\in SplitD.ROF.RO.m{1} => n0 \\in p{1}.`1 :: BNR.lenc{1}) /\\ p{1} = p{2}).",
+            "relation": "same_structural_boundary_head_rewritten"
+          }
+        },
+        "piece_counts": {
+          "total": 15,
+          "by_replay_class": {
+            "boundary_sensitive": 2,
+            "local_logic": 10,
+            "structural_replayable": 3
+          },
+          "by_goal_tag": {
+            "seq_boundary": 1,
+            "proof_step": 10,
+            "call_boundary": 1,
+            "program_frontier": 3
+          }
+        },
+        "pieces": [
+          {
+            "piece_id": "piece_e78d0604_10",
+            "tactic": "seq 1 1 : (c2{1} = c1{2} /\\ n{1} = n{2} /\\ a{1} = a{2} /\\ p0{1} = p0{2} /\\ n{1} = p{1}.`1 /\\ ! (p{1}.`1 \\in BNR.lenc{1}) /\\ inv_cpa SplitC2.I1.RO.m{1} SplitC2.I2.RO.m{1} Mem.log{1} Mem.log{2} Mem.lc{1} Mem.lc{2} BNR.lenc{1} BNR.lenc{2} BNR.ndec{1} BNR.ndec{2} /\\ (forall (n0 : nonce) (c3 : C.counter), (n0, c3) \\in SplitD.ROF.RO.m{1} => n0 \\in p{1}.`1 :: BNR.lenc{1})).",
+            "offset": 10,
+            "replay_class": "boundary_sensitive",
+            "goal_tag": "seq_boundary",
+            "status": "matched_or_rewritten_in_current_route"
+          },
+          {
+            "piece_id": "piece_e78d0604_11",
+            "tactic": "exists* (n{1}), (SplitC2.I1.RO.m{1}), (SplitC2.I2.RO.m{1}).",
+            "offset": 11,
+            "replay_class": "local_logic",
+            "goal_tag": "proof_step",
+            "status": "local_logic_piece"
+          },
+          {
+            "piece_id": "piece_e78d0604_12",
+            "tactic": "elim* => n0 mr0 ms0.",
+            "offset": 12,
+            "replay_class": "local_logic",
+            "goal_tag": "proof_step",
+            "status": "local_logic_piece"
+          },
+          {
+            "piece_id": "piece_e78d0604_13",
+            "tactic": "call (equ_cc n0 mr0 ms0).",
+            "offset": 13,
+            "replay_class": "boundary_sensitive",
+            "goal_tag": "call_boundary",
+            "status": "boundary_sensitive_repair_piece"
+          },
+          {
+            "piece_id": "piece_e78d0604_14",
+            "tactic": "skip.",
+            "offset": 14,
+            "replay_class": "local_logic",
+            "goal_tag": "proof_step",
+            "status": "local_logic_piece"
+          },
+          {
+            "piece_id": "piece_e78d0604_15",
+            "tactic": "move=> &1 &2; rewrite /check_plaintext /valid_topol /=; smt().",
+            "offset": 15,
+            "replay_class": "local_logic",
+            "goal_tag": "proof_step",
+            "status": "local_logic_piece"
+          },
+          {
+            "piece_id": "piece_e78d0604_16",
+            "tactic": "wp.",
+            "offset": 16,
+            "replay_class": "structural_replayable",
+            "goal_tag": "program_frontier",
+            "status": "replay_candidate"
+          },
+          {
+            "piece_id": "piece_e78d0604_17",
+            "tactic": "inline *.",
+            "offset": 17,
+            "replay_class": "structural_replayable",
+            "goal_tag": "program_frontier",
+            "status": "replay_candidate"
+          }
+        ],
+        "candidate_replay_chunks": [
+          {
+            "chunk_id": "rch_e78d0604_1_3_e0d0ebc6",
+            "memory_id": "route_af4c5be9e78d0604",
+            "kind": "local_route_suffix",
+            "tactic_count": 2,
+            "first_tactic": "exists* (n{1}), (SplitC2.I1.RO.m{1}), (SplitC2.I2.RO.m{1}).",
+            "last_tactic": "elim* => n0 mr0 ms0.",
+            "effect": "Scratch replay checks this old route chunk from the current committed proof state.",
+            "limitations": "A changed invariant or branch shape can make only a prefix of the old chunk replayable.",
+            "submit_probe": {
+              "intent": "probe_replay_suffix_chunk",
+              "payload": {
+                "chunk_id": "rch_e78d0604_1_3_e0d0ebc6"
+              }
+            },
+            "submit_commit": {
+              "intent": "commit_replay_suffix_chunk",
+              "payload": {
+                "chunk_id": "rch_e78d0604_1_3_e0d0ebc6"
+              }
+            }
+          },
+          {
+            "chunk_id": "rch_e78d0604_3_7_dabee64c",
+            "memory_id": "route_af4c5be9e78d0604",
+            "kind": "call_route_suffix",
+            "tactic_count": 4,
+            "first_tactic": "call (equ_cc n0 mr0 ms0).",
+            "last_tactic": "wp.",
+            "effect": "Scratch replay checks this old route chunk from the current committed proof state.",
+            "limitations": "A changed invariant or branch shape can make only a prefix of the old chunk replayable.",
+            "submit_probe": {
+              "intent": "probe_replay_suffix_chunk",
+              "payload": {
+                "chunk_id": "rch_e78d0604_3_7_dabee64c"
+              }
+            },
+            "submit_commit": {
+              "intent": "commit_replay_suffix_chunk",
+              "payload": {
+                "chunk_id": "rch_e78d0604_3_7_dabee64c"
+              }
+            }
+          },
+          {
+            "chunk_id": "rch_e78d0604_7_13_02f338cb",
+            "memory_id": "route_af4c5be9e78d0604",
+            "kind": "local_route_suffix",
+            "tactic_count": 6,
+            "first_tactic": "inline *.",
+            "last_tactic": "rcondt{1} 17.",
+            "effect": "Scratch replay checks this old route chunk from the current committed proof state.",
+            "limitations": "A changed invariant or branch shape can make only a prefix of the old chunk replayable.",
+            "submit_probe": {
+              "intent": "probe_replay_suffix_chunk",
+              "payload": {
+                "chunk_id": "rch_e78d0604_7_13_02f338cb"
+              }
+            },
+            "submit_commit": {
+              "intent": "commit_replay_suffix_chunk",
+              "payload": {
+                "chunk_id": "rch_e78d0604_7_13_02f338cb"
+              }
+            }
+          }
+        ]
+      }
+    ],
+    "interpretation": "This is manager-owned evidence about prior route repairs and daemon-verified route options. Replayable pieces should still be verifier-checked before commit; stale and negative pieces are warnings, not tactics."
+  },
+  "lineage_briefing": {
+    "kind": "lineage_briefing",
+    "scope": "current_proof_node",
+    "node_id": "Tree-0.1.0",
+    "current_tactic_count": 30,
+    "open_repair_episode": {
+      "episode_id": "repair_5be9e78d0604",
+      "from_checkpoint_id": "cp_11_ac02842fbedfaed4",
+      "from_tactic_index": 11,
+      "kept_prefix_end": 10,
+      "discarded_piece_count": 15,
+      "piece_counts": {
+        "total": 15,
+        "by_replay_class": {
+          "boundary_sensitive": 2,
+          "local_logic": 10,
+          "structural_replayable": 3
+        },
+        "by_goal_tag": {
+          "seq_boundary": 1,
+          "proof_step": 10,
+          "call_boundary": 1,
+          "program_frontier": 3
+        }
+      },
+      "rewind_note": {
+        "negative_memory_count": 0
+      },
+      "route_memory_id": "route_af4c5be9e78d0604"
+    },
+    "recent_repairs": [
+      {
+        "episode_id": "repair_5be9e78d0604",
+        "from_checkpoint_id": "cp_11_ac02842fbedfaed4",
+        "from_tactic_index": 11,
+        "kept_prefix_end": 10,
+        "discarded_piece_count": 15,
+        "piece_counts": {
+          "total": 15,
+          "by_replay_class": {
+            "boundary_sensitive": 2,
+            "local_logic": 10,
+            "structural_replayable": 3
+          },
+          "by_goal_tag": {
+            "seq_boundary": 1,
+            "proof_step": 10,
+            "call_boundary": 1,
+            "program_frontier": 3
+          }
+        },
+        "rewind_note": {
+          "negative_memory_count": 0
+        },
+        "route_memory_id": "route_af4c5be9e78d0604"
+      }
+    ],
+    "route_memories": [
+      {
+        "memory_id": "route_af4c5be9e78d0604",
+        "repair_episode_id": "repair_5be9e78d0604",
+        "from_checkpoint_id": "cp_11_ac02842fbedfaed4",
+        "from_tactic_index": 11,
+        "kept_prefix_end": 10,
+        "discarded_tactic_count": 15,
+        "progress": {
+          "prefix_matches": true,
+          "covered_old_tactics": 1,
+          "remaining_old_tactics": 14,
+          "rewrite_anchor": {
+            "old_tactic": "seq 1 1 : (c2{1} = c1{2} /\\ n{1} = n{2} /\\ a{1} = a{2} /\\ p0{1} = p0{2} /\\ n{1} = p{1}.`1 /\\ ! (p{1}.`1 \\in BNR.lenc{1}) /\\ inv_cpa SplitC2.I1.RO.m{1} SplitC2.I2.RO.m{1} Mem.log{1} Mem.log{2} Mem.lc{1} Mem.lc{2} BNR.lenc{1} BNR.lenc{2} BNR.ndec{1} BNR.ndec{2} /\\ (forall (n0 : nonce) (c3 : C.counter), (n0, c3) \\in SplitD.ROF.RO.m{1} => n0 \\in p{1}.`1 :: BNR.lenc{1})).",
+            "current_tactic": "seq 1 1 : (c2{1} = c1{2} /\\ n{1} = n{2} /\\ a{1} = a{2} /\\ p0{1} = p0{2} /\\ n{1} = p{1}.`1 /\\ ! (p{1}.`1 \\in BNR.lenc{1}) /\\ inv_cpa SplitC2.I1.RO.m{1} SplitC2.I2.RO.m{1} Mem.log{1} Mem.log{2} Mem.lc{1} Mem.lc{2} BNR.lenc{1} BNR.lenc{2} BNR.ndec{1} BNR.ndec{2} /\\ (forall (n0 : nonce) (c3 : C.counter), (n0, c3) \\in SplitD.ROF.RO.m{1} => n0 \\in p{1}.`1 :: BNR.lenc{1}) /\\ p{1} = p{2}).",
+            "relation": "same_structural_boundary_head_rewritten"
+          }
+        },
+        "piece_counts": {
+          "total": 15,
+          "by_replay_class": {
+            "boundary_sensitive": 2,
+            "local_logic": 10,
+            "structural_replayable": 3
+          },
+          "by_goal_tag": {
+            "seq_boundary": 1,
+            "proof_step": 10,
+            "call_boundary": 1,
+            "program_frontier": 3
+          }
+        },
+        "stale_piece_count": 1,
+        "replayable_chunk_count": 4,
+        "rewind_note": {
+          "negative_memory_count": 0
+        }
+      }
+    ],
+    "interpretation": "Manager-owned continuity notes for this node. Use them as resume/navigation evidence; EasyCrypt replay still decides whether any old route piece is valid."
+  },
+  "inspect_lookup_handles": {
+    "effect": "All handles here are read-only manager requests; the committed EasyCrypt proof state stays unchanged.",
+    "manager_note": "Some requests may ask EasyCrypt or name resolution; wait for the manager result before choosing the next proof intent.",
+    "ask_manager_for": [
+      {
+        "intent": "inspect_context",
+        "payload": {
+          "topic": "verify"
+        },
+        "use_when": "The proof candidate is closed; run verification next.",
+        "returns": "manager-provided read-only context for this proof route"
+      },
+      {
+        "intent": "inspect_context",
+        "payload": {
+          "topic": "goal_info"
+        },
+        "use_when": "Need parsed goal shape, resolved names, or KB pattern hints.",
+        "returns": "parsed goal structure and names"
+      }
+    ]
+  },
+  "structural_checkpoints": {
+    "items": [
+      {
+        "semantic_id": "restore_before_last_rewind",
+        "semantic_ids": [
+          "restore_before_last_rewind"
+        ],
+        "label": "Restore before last checkpoint rewind",
+        "restored_proof_layer": "pre_rewind_state",
+        "undo_scope": "restore_pre_rewind",
+        "why_checkpoint": "state saved before the last checkpoint rewind; selecting it returns to that proof state",
+        "effect_if_selected": "This restores the branch to the proof state saved before the last checkpoint rewind.",
+        "submit": {
+          "intent": "undo_to_checkpoint",
+          "payload": {
+            "restore_id": "restore_6cc845b0c56e153e"
+          }
+        }
+      },
+      {
+        "checkpoint_id": "cp_30_79c4685d08119861",
+        "semantic_id": "before_branch_work",
+        "semantic_ids": [
+          "before_branch_work"
+        ],
+        "label": "Before latest branch-local tactic #30",
+        "committed_step_index": 30,
+        "committed_tactic": "qed.",
+        "restored_proof_layer": "seq_branch",
+        "restored_affordances": {
+          "seq_cut": "committed",
+          "earlier_branch_work": "preserved"
+        },
+        "undo_scope": "branch_local",
+        "why_checkpoint": "latest branch-local step inside the current seq scope",
+        "effect_if_selected": "Undo committed tactic #30 and every committed tactic after it in this node.",
+        "submit": {
+          "intent": "undo_to_checkpoint",
+          "payload": {
+            "checkpoint_id": "cp_30_79c4685d08119861"
+          }
+        }
+      },
+      {
+        "checkpoint_id": "cp_28_79c4685d08119861",
+        "semantic_id": "before_call_obligation_work",
+        "semantic_ids": [
+          "before_call_obligation_work"
+        ],
+        "label": "Before latest call-obligation tactic #28",
+        "committed_step_index": 28,
+        "committed_tactic": "auto.",
+        "restored_proof_layer": "call_obligation",
+        "restored_affordances": {
+          "call_route": "committed",
+          "call_obligation": "preserved",
+          "later_local_work": "not_committed"
+        },
+        "undo_scope": "call_obligation_local",
+        "why_checkpoint": "call-obligation local boundary; selecting it keeps the opened call obligation and removes later local work",
+        "effect_if_selected": "Undo committed tactic #28 and every committed tactic after it in this node.",
+        "submit": {
+          "intent": "undo_to_checkpoint",
+          "payload": {
+            "checkpoint_id": "cp_28_79c4685d08119861"
+          }
+        }
+      },
+      {
+        "checkpoint_id": "cp_12_79c4685d08119861",
+        "semantic_id": "after_seq_opened",
+        "semantic_ids": [
+          "after_seq_opened",
+          "before_branch_work",
+          "resume_start"
+        ],
+        "label": "Return to resume start",
+        "committed_step_index": 12,
+        "committed_tactic": "exists* (n{1}), (SplitC2.I1.RO.m{1}), (SplitC2.I2.RO.m{1}); elim* => n0 mr0 ms0; call (equ_cc n0 mr0 ms0); skip; move=> &1 &2; rewrite /check_plaintext /valid_topol /=; smt().",
+        "restored_proof_layer": "resume_handoff",
+        "restored_affordances": {
+          "seq_cut": "committed",
+          "branch_work": "not_committed"
+        },
+        "undo_scope": "resume_local",
+        "why_checkpoint": "resume boundary; selecting it preserves the verified replay prefix and removes tactics committed after resume",
+        "effect_if_selected": "Undo committed tactic #12 and every committed tactic after it in this node.",
+        "submit": {
+          "intent": "undo_to_checkpoint",
+          "payload": {
+            "checkpoint_id": "cp_12_79c4685d08119861"
+          }
+        }
+      },
+      {
+        "checkpoint_id": "cp_6_79c4685d08119861",
+        "semantic_id": "after_call_opened",
+        "semantic_ids": [
+          "after_call_opened"
+        ],
+        "label": "After call opened / before obligation work #6",
+        "committed_step_index": 6,
+        "committed_tactic": "proc.",
+        "restored_proof_layer": "call_obligations_opened",
+        "restored_affordances": {
+          "call_route": "committed",
+          "call_obligation_work": "not_committed"
+        },
+        "undo_scope": "call_local",
+        "why_checkpoint": "call-local boundary; selecting it keeps the call tactic and removes work committed after the call opened",
+        "effect_if_selected": "Undo committed tactic #6 and every committed tactic after it in this node.",
+        "submit": {
+          "intent": "undo_to_checkpoint",
+          "payload": {
+            "checkpoint_id": "cp_6_79c4685d08119861"
+          }
+        }
+      },
+      {
+        "checkpoint_id": "cp_5_79c4685d08119861",
+        "semantic_id": "before_call_route",
+        "semantic_ids": [
+          "before_call_route"
+        ],
+        "label": "Before call invariant #5",
+        "committed_step_index": 5,
+        "committed_tactic": "call (_: inv_cpa SplitC2.I1.RO.m{1} SplitC2.I2.RO.m{1} Mem.log{1} Mem.log{2} Mem.lc{1} Mem.lc{2} BNR.lenc{1} BNR.lenc{2} BNR.ndec{1} BNR.ndec{2} /\\ (forall n c, (n,c) \\in SplitD.ROF.RO.m{1} => n \\in BNR.lenc{1})).",
+        "restored_proof_layer": "pre_call_route",
+        "restored_affordances": {
+          "call_route": "not_committed",
+          "call_obligation_work": "not_committed"
+        },
+        "undo_scope": "call_local",
+        "why_checkpoint": "call invariant introduction point; later oracle/branch obligations often reveal missing preserved facts or an over-strong equality from this tactic",
+        "effect_if_selected": "Undo committed tactic #5 and every committed tactic after it in this node.",
+        "submit": {
+          "intent": "undo_to_checkpoint",
+          "payload": {
+            "checkpoint_id": "cp_5_79c4685d08119861"
+          }
+        }
+      },
+      {
+        "checkpoint_id": "cp_11_79c4685d08119861",
+        "semantic_id": "before_seq_cut",
+        "semantic_ids": [
+          "before_seq_cut"
+        ],
+        "label": "Before seq cut #11",
+        "committed_step_index": 11,
+        "committed_tactic": "seq 1 1 : (c2{1} = c1{2} /\\ n{1} = n{2} /\\ a{1} = a{2} /\\ p0{1} = p0{2} /\\ n{1} = p{1}.`1 /\\ ! (p{1}.`1 \\in BNR.lenc{1}) /\\ inv_cpa SplitC2.I1.RO.m{1} SplitC2.I2.RO.m{1} Mem.log{1} Mem.log{2} Mem.lc{1} Mem.lc{2} BNR.lenc{1} BNR.lenc{2} BNR.ndec{1} BNR.ndec{2} /\\ (forall (n0 : nonce) (c3 : C.counter), (n0, c3) \\in SplitD.ROF.RO.m{1} => n0 \\in p{1}.`1 :: BNR.lenc{1}) /\\ p{1} = p{2}).",
+        "restored_proof_layer": "pre_seq_cut",
+        "restored_affordances": {
+          "seq_cut": "not_committed",
+          "call_site_state": "as_before_seq_cut"
+        },
+        "undo_scope": "seq_local",
+        "why_checkpoint": "seq-cut boundary; selecting it restores the proof state before this cut was committed",
+        "effect_if_selected": "Undo committed tactic #11 and every committed tactic after it in this node.",
+        "submit": {
+          "intent": "undo_to_checkpoint",
+          "payload": {
+            "checkpoint_id": "cp_11_79c4685d08119861"
+          }
+        }
+      },
+      {
+        "checkpoint_id": "cp_25_79c4685d08119861",
+        "semantic_id": "last_call_site_boundary",
+        "semantic_ids": [
+          "last_call_site_boundary"
+        ],
+        "label": "Before inline expansion #25",
+        "committed_step_index": 25,
+        "committed_tactic": "inline *.",
+        "restored_proof_layer": "pre_inline_frontier",
+        "restored_affordances": {
+          "call_site_handles": "as_before_inline"
+        },
+        "undo_scope": "call_site_boundary",
+        "why_checkpoint": "inline boundary; selecting it restores the proof state before this expansion",
+        "effect_if_selected": "Undo committed tactic #25 and every committed tactic after it in this node.",
+        "submit": {
+          "intent": "undo_to_checkpoint",
+          "payload": {
+            "checkpoint_id": "cp_25_79c4685d08119861"
+          }
+        }
+      }
+    ]
+  }
+}

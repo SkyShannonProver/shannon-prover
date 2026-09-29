@@ -1,0 +1,19 @@
+{
+  "turn": 11,
+  "handled_intent": {
+    "intent": "probe_tactic",
+    "payload": {
+      "tactic": "skip=> /> /#."
+    }
+  },
+  "ok": true,
+  "manager_note": "Accepted structural transition probe. Decide whether to enter this phase using `last_result.structural_transition`; do not solve the speculative preview in your mental model, and do not call `undo_last_step` to undo a read-only probe.",
+  "manager_actions": [
+    {
+      "action": "tactic probe",
+      "outcome": "EasyCrypt accepted this read-only probe. The committed proof state was not changed; `goal_after_probe` shows the goal that would be visible if this tactic were committed.",
+      "timing": "138 ms"
+    }
+  ],
+  "view_refreshed": true
+}

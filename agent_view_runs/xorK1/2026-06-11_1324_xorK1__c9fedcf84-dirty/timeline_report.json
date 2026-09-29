@@ -1,0 +1,256 @@
+{
+  "kind": "agent_view_timeline_report",
+  "run_count": 1,
+  "runs": [
+    {
+      "chronological": false,
+      "first_action_at": "2026-06-11T20:24:41.900000+00:00",
+      "label": "2026-06-11_1324_xorK1",
+      "node_count": 1,
+      "rows": [
+        {
+          "action_submitted_at": "2026-06-11T20:24:41.900000+00:00",
+          "action_time": "+00:00",
+          "agent_think": "",
+          "agent_think_path": "artifacts/eval_suite/rerun_dupfix_fable_l1/l1_goal_projection/cc_xorK1/r01/2026-06-11_1324_xorK1/iteration_1/node_memory/Tree_0_0/thinking/turn_001.md",
+          "agent_think_seconds": null,
+          "decision_followup_path": "",
+          "decision_state_summary": "ambient / ambient_logic, 1 goal, goal 148 chars",
+          "decision_view_path": "artifacts/eval_suite/rerun_dupfix_fable_l1/l1_goal_projection/cc_xorK1/r01/2026-06-11_1324_xorK1/iteration_1/manager_bootstrap_0_0.json",
+          "deterministic_signals": [
+            "commit_without_probe_check_not_inferred",
+            "manager_error:[error] cannot prove goal (strict)",
+            "commit_no_state_change"
+          ],
+          "goal_chars": 148,
+          "inspect_topics": [],
+          "intent": {
+            "intent": "commit_tactic",
+            "payload": {
+              "tactic": "smt()."
+            }
+          },
+          "intent_summary": "commit smt()",
+          "manager_action_summary": [
+            "tactic commit (2.1 s)"
+          ],
+          "manager_result_at": "2026-06-11T20:24:44+00:00",
+          "manager_result_path": "artifacts/eval_suite/rerun_dupfix_fable_l1/l1_goal_projection/cc_xorK1/r01/2026-06-11_1324_xorK1/iteration_1/node_memory/Tree_0_0/manager_results/turn_001.json",
+          "manager_seconds": 2.1,
+          "manager_time": "2.1 s",
+          "node": "Tree-0.0",
+          "node_dir": "artifacts/eval_suite/rerun_dupfix_fable_l1/l1_goal_projection/cc_xorK1/r01/2026-06-11_1324_xorK1/iteration_1/node_memory/Tree_0_0",
+          "ok": true,
+          "result_followup_path": "artifacts/eval_suite/rerun_dupfix_fable_l1/l1_goal_projection/cc_xorK1/r01/2026-06-11_1324_xorK1/iteration_1/node_memory/Tree_0_0/followups/turn_001.md",
+          "result_state_summary": "ambient / ambient_logic, 1 goal, goal 148 chars",
+          "result_summary": "rejected commit: [error] cannot prove goal (strict)",
+          "result_view_path": "artifacts/eval_suite/rerun_dupfix_fable_l1/l1_goal_projection/cc_xorK1/r01/2026-06-11_1324_xorK1/iteration_1/node_memory/Tree_0_0/workspace_views/turn_001.json",
+          "turn": 1,
+          "usage": {
+            "cache_creation_input_tokens": 31744,
+            "cache_read_input_tokens": 31034,
+            "input_tokens": 3,
+            "output_tokens": 1202
+          },
+          "view_chars": 697,
+          "view_id": "T0.0-1",
+          "workspace_view_path": "artifacts/eval_suite/rerun_dupfix_fable_l1/l1_goal_projection/cc_xorK1/r01/2026-06-11_1324_xorK1/iteration_1/manager_bootstrap_0_0.json"
+        },
+        {
+          "action_submitted_at": "2026-06-11T20:24:50+00:00",
+          "action_time": "+00:08",
+          "agent_think": "6 s",
+          "agent_think_path": "artifacts/eval_suite/rerun_dupfix_fable_l1/l1_goal_projection/cc_xorK1/r01/2026-06-11_1324_xorK1/iteration_1/node_memory/Tree_0_0/thinking/turn_002.md",
+          "agent_think_seconds": 6.0,
+          "decision_followup_path": "artifacts/eval_suite/rerun_dupfix_fable_l1/l1_goal_projection/cc_xorK1/r01/2026-06-11_1324_xorK1/iteration_1/node_memory/Tree_0_0/followups/turn_001.md",
+          "decision_state_summary": "ambient / ambient_logic, 1 goal, goal 148 chars",
+          "decision_view_path": "artifacts/eval_suite/rerun_dupfix_fable_l1/l1_goal_projection/cc_xorK1/r01/2026-06-11_1324_xorK1/iteration_1/node_memory/Tree_0_0/workspace_views/turn_001.json",
+          "deterministic_signals": [
+            "commit_without_probe_check_not_inferred",
+            "manager_error:[error] cannot find theory `W8'",
+            "commit_no_state_change"
+          ],
+          "goal_chars": 148,
+          "inspect_topics": [
+            "diagnose",
+            "goal_info",
+            "lemma_hints",
+            "tactic_forms"
+          ],
+          "intent": {
+            "intent": "commit_tactic",
+            "payload": {
+              "tactic": "smt(@W8)."
+            }
+          },
+          "intent_summary": "commit smt(@W8)",
+          "manager_action_summary": [
+            "tactic commit (1.0 s)"
+          ],
+          "manager_result_at": "2026-06-11T20:24:51+00:00",
+          "manager_result_path": "artifacts/eval_suite/rerun_dupfix_fable_l1/l1_goal_projection/cc_xorK1/r01/2026-06-11_1324_xorK1/iteration_1/node_memory/Tree_0_0/manager_results/turn_002.json",
+          "manager_seconds": 1.0,
+          "manager_time": "1 s",
+          "node": "Tree-0.0",
+          "node_dir": "artifacts/eval_suite/rerun_dupfix_fable_l1/l1_goal_projection/cc_xorK1/r01/2026-06-11_1324_xorK1/iteration_1/node_memory/Tree_0_0",
+          "ok": true,
+          "result_followup_path": "artifacts/eval_suite/rerun_dupfix_fable_l1/l1_goal_projection/cc_xorK1/r01/2026-06-11_1324_xorK1/iteration_1/node_memory/Tree_0_0/followups/turn_002.md",
+          "result_state_summary": "ambient / ambient_logic, 1 goal, goal 148 chars",
+          "result_summary": "rejected commit: [error] cannot find theory `W8'",
+          "result_view_path": "artifacts/eval_suite/rerun_dupfix_fable_l1/l1_goal_projection/cc_xorK1/r01/2026-06-11_1324_xorK1/iteration_1/node_memory/Tree_0_0/workspace_views/turn_002.json",
+          "turn": 2,
+          "usage": {
+            "cache_creation_input_tokens": 1953,
+            "cache_read_input_tokens": 31744,
+            "input_tokens": 2,
+            "output_tokens": 202
+          },
+          "view_chars": 3657,
+          "view_id": "T0.0-2",
+          "workspace_view_path": "artifacts/eval_suite/rerun_dupfix_fable_l1/l1_goal_projection/cc_xorK1/r01/2026-06-11_1324_xorK1/iteration_1/node_memory/Tree_0_0/workspace_views/turn_001.json"
+        },
+        {
+          "action_submitted_at": "2026-06-11T20:25:16.805000+00:00",
+          "action_time": "+00:35",
+          "agent_think": "25.8 s",
+          "agent_think_path": "artifacts/eval_suite/rerun_dupfix_fable_l1/l1_goal_projection/cc_xorK1/r01/2026-06-11_1324_xorK1/iteration_1/node_memory/Tree_0_0/thinking/turn_003.md",
+          "agent_think_seconds": 25.805,
+          "decision_followup_path": "artifacts/eval_suite/rerun_dupfix_fable_l1/l1_goal_projection/cc_xorK1/r01/2026-06-11_1324_xorK1/iteration_1/node_memory/Tree_0_0/followups/turn_002.md",
+          "decision_state_summary": "ambient / ambient_logic, 1 goal, goal 148 chars",
+          "decision_view_path": "artifacts/eval_suite/rerun_dupfix_fable_l1/l1_goal_projection/cc_xorK1/r01/2026-06-11_1324_xorK1/iteration_1/node_memory/Tree_0_0/workspace_views/turn_002.json",
+          "deterministic_signals": [
+            "commit_without_probe_check_not_inferred"
+          ],
+          "goal_chars": 148,
+          "inspect_topics": [
+            "diagnose",
+            "goal_info",
+            "lemma_hints",
+            "tactic_forms"
+          ],
+          "intent": {
+            "intent": "commit_tactic",
+            "payload": {
+              "tactic": "by rewrite -addmA addK addm0."
+            }
+          },
+          "intent_summary": "commit by rewrite -addmA addK addm0",
+          "manager_action_summary": [
+            "tactic commit (195 ms)"
+          ],
+          "manager_result_at": "2026-06-11T20:25:17+00:00",
+          "manager_result_path": "artifacts/eval_suite/rerun_dupfix_fable_l1/l1_goal_projection/cc_xorK1/r01/2026-06-11_1324_xorK1/iteration_1/node_memory/Tree_0_0/manager_results/turn_003.json",
+          "manager_seconds": 0.195,
+          "manager_time": "195 ms",
+          "node": "Tree-0.0",
+          "node_dir": "artifacts/eval_suite/rerun_dupfix_fable_l1/l1_goal_projection/cc_xorK1/r01/2026-06-11_1324_xorK1/iteration_1/node_memory/Tree_0_0",
+          "ok": true,
+          "result_followup_path": "artifacts/eval_suite/rerun_dupfix_fable_l1/l1_goal_projection/cc_xorK1/r01/2026-06-11_1324_xorK1/iteration_1/node_memory/Tree_0_0/followups/turn_003.md",
+          "result_state_summary": "ambient / closed_candidate, goal 25 chars",
+          "result_summary": "accepted commit",
+          "result_view_path": "artifacts/eval_suite/rerun_dupfix_fable_l1/l1_goal_projection/cc_xorK1/r01/2026-06-11_1324_xorK1/iteration_1/node_memory/Tree_0_0/workspace_views/turn_003.json",
+          "turn": 3,
+          "usage": {
+            "cache_creation_input_tokens": 3131,
+            "cache_read_input_tokens": 104803,
+            "input_tokens": 6,
+            "output_tokens": 1330
+          },
+          "view_chars": 3660,
+          "view_id": "T0.0-3",
+          "workspace_view_path": "artifacts/eval_suite/rerun_dupfix_fable_l1/l1_goal_projection/cc_xorK1/r01/2026-06-11_1324_xorK1/iteration_1/node_memory/Tree_0_0/workspace_views/turn_002.json"
+        },
+        {
+          "action_submitted_at": "2026-06-11T20:25:22.827000+00:00",
+          "action_time": "+00:41",
+          "agent_think": "5.8 s",
+          "agent_think_path": "artifacts/eval_suite/rerun_dupfix_fable_l1/l1_goal_projection/cc_xorK1/r01/2026-06-11_1324_xorK1/iteration_1/node_memory/Tree_0_0/thinking/turn_004.md",
+          "agent_think_seconds": 5.827,
+          "decision_followup_path": "artifacts/eval_suite/rerun_dupfix_fable_l1/l1_goal_projection/cc_xorK1/r01/2026-06-11_1324_xorK1/iteration_1/node_memory/Tree_0_0/followups/turn_003.md",
+          "decision_state_summary": "ambient / closed_candidate, goal 25 chars",
+          "decision_view_path": "artifacts/eval_suite/rerun_dupfix_fable_l1/l1_goal_projection/cc_xorK1/r01/2026-06-11_1324_xorK1/iteration_1/node_memory/Tree_0_0/workspace_views/turn_003.json",
+          "deterministic_signals": [
+            "commit_without_probe_check_not_inferred"
+          ],
+          "goal_chars": 25,
+          "inspect_topics": [
+            "goal_info"
+          ],
+          "intent": {
+            "intent": "commit_tactic",
+            "payload": {
+              "tactic": "qed."
+            }
+          },
+          "intent_summary": "commit qed",
+          "manager_action_summary": [
+            "tactic commit (173 ms)"
+          ],
+          "manager_result_at": "2026-06-11T20:25:23+00:00",
+          "manager_result_path": "artifacts/eval_suite/rerun_dupfix_fable_l1/l1_goal_projection/cc_xorK1/r01/2026-06-11_1324_xorK1/iteration_1/node_memory/Tree_0_0/manager_results/turn_004.json",
+          "manager_seconds": 0.173,
+          "manager_time": "173 ms",
+          "node": "Tree-0.0",
+          "node_dir": "artifacts/eval_suite/rerun_dupfix_fable_l1/l1_goal_projection/cc_xorK1/r01/2026-06-11_1324_xorK1/iteration_1/node_memory/Tree_0_0",
+          "ok": true,
+          "result_followup_path": "artifacts/eval_suite/rerun_dupfix_fable_l1/l1_goal_projection/cc_xorK1/r01/2026-06-11_1324_xorK1/iteration_1/node_memory/Tree_0_0/followups/turn_004.md",
+          "result_state_summary": "complete / unknown / closed_candidate, 0 goals, goal 11 chars",
+          "result_summary": "accepted commit",
+          "result_view_path": "artifacts/eval_suite/rerun_dupfix_fable_l1/l1_goal_projection/cc_xorK1/r01/2026-06-11_1324_xorK1/iteration_1/node_memory/Tree_0_0/workspace_views/turn_004.json",
+          "turn": 4,
+          "usage": {
+            "cache_creation_input_tokens": 1696,
+            "cache_read_input_tokens": 36828,
+            "input_tokens": 2,
+            "output_tokens": 134
+          },
+          "view_chars": 3026,
+          "view_id": "T0.0-4",
+          "workspace_view_path": "artifacts/eval_suite/rerun_dupfix_fable_l1/l1_goal_projection/cc_xorK1/r01/2026-06-11_1324_xorK1/iteration_1/node_memory/Tree_0_0/workspace_views/turn_003.json"
+        },
+        {
+          "action_submitted_at": "2026-06-11T20:25:28+00:00",
+          "action_time": "+00:46",
+          "agent_think": "5 s",
+          "agent_think_path": "",
+          "agent_think_seconds": 5.0,
+          "decision_followup_path": "artifacts/eval_suite/rerun_dupfix_fable_l1/l1_goal_projection/cc_xorK1/r01/2026-06-11_1324_xorK1/iteration_1/node_memory/Tree_0_0/followups/turn_004.md",
+          "decision_state_summary": "complete / unknown / closed_candidate, 0 goals, goal 11 chars",
+          "decision_view_path": "artifacts/eval_suite/rerun_dupfix_fable_l1/l1_goal_projection/cc_xorK1/r01/2026-06-11_1324_xorK1/iteration_1/node_memory/Tree_0_0/workspace_views/turn_004.json",
+          "deterministic_signals": [],
+          "goal_chars": 11,
+          "inspect_topics": [
+            "verify",
+            "goal_info"
+          ],
+          "intent": {
+            "intent": "finish"
+          },
+          "intent_summary": "finish",
+          "manager_action_summary": [
+            "finish"
+          ],
+          "manager_result_at": "2026-06-11T20:25:28+00:00",
+          "manager_result_path": "artifacts/eval_suite/rerun_dupfix_fable_l1/l1_goal_projection/cc_xorK1/r01/2026-06-11_1324_xorK1/iteration_1/node_memory/Tree_0_0/manager_results/turn_005.json",
+          "manager_seconds": 0.0,
+          "manager_time": "",
+          "node": "Tree-0.0",
+          "node_dir": "artifacts/eval_suite/rerun_dupfix_fable_l1/l1_goal_projection/cc_xorK1/r01/2026-06-11_1324_xorK1/iteration_1/node_memory/Tree_0_0",
+          "ok": true,
+          "result_followup_path": "artifacts/eval_suite/rerun_dupfix_fable_l1/l1_goal_projection/cc_xorK1/r01/2026-06-11_1324_xorK1/iteration_1/node_memory/Tree_0_0/followups/turn_005.md",
+          "result_state_summary": "complete / unknown / closed_candidate, 0 goals, goal 11 chars",
+          "result_summary": "finish requested",
+          "result_view_path": "artifacts/eval_suite/rerun_dupfix_fable_l1/l1_goal_projection/cc_xorK1/r01/2026-06-11_1324_xorK1/iteration_1/node_memory/Tree_0_0/workspace_views/turn_005.json",
+          "turn": 5,
+          "usage": {},
+          "view_chars": 2136,
+          "view_id": "T0.0-5",
+          "workspace_view_path": "artifacts/eval_suite/rerun_dupfix_fable_l1/l1_goal_projection/cc_xorK1/r01/2026-06-11_1324_xorK1/iteration_1/node_memory/Tree_0_0/workspace_views/turn_004.json"
+        }
+      ],
+      "run_dir": "artifacts/eval_suite/rerun_dupfix_fable_l1/l1_goal_projection/cc_xorK1/r01/2026-06-11_1324_xorK1/iteration_1",
+      "turn_count": 5
+    }
+  ],
+  "schema_version": 1
+}

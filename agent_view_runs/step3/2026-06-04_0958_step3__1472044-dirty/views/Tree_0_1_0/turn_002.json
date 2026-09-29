@@ -1,0 +1,893 @@
+{
+  "last_result": {
+    "intent": "commit_tactic",
+    "payload": {
+      "tactic": "elim* => n0 mr0 ms0."
+    },
+    "manager_action": "commit_tactic",
+    "result": "EasyCrypt accepted the committed tactic.",
+    "effect": "EasyCrypt accepted a proof-state change; the refreshed view is based on the new committed state.",
+    "proof_state": "The committed EasyCrypt proof state changed.",
+    "tactic": "elim* => n0 mr0 ms0."
+  },
+  "current_goal": {
+    "lines": [
+      "Current goal (remaining: 5)",
+      "",
+      "Type variables: <none>",
+      "",
+      "&m: {}",
+      "n0: nonce",
+      "mr0: (nonce * C.counter, poly_in) fmap",
+      "ms0: (nonce * C.counter, poly_out) fmap",
+      "------------------------------------------------------------------------",
+      "&1 (left ) : {k : key, n : nonce, c2 : bytes, a : associated_data,",
+      "             p2 : message, nap : nonce * associated_data * message, t : tag,",
+      "             p, p0, p1 : plaintext, c, c0, c1 : ciphertext}",
+      "&2 (right) : {n : nonce, c1 : bytes, t : poly_out, a : associated_data,",
+      "             p1 : message, nap : nonce * associated_data * message,",
+      "             p, p0 : plaintext, c, c0 : ciphertext}",
+      "",
+      "pre =",
+      "  (n0 = n{1} /\\ mr0 = SplitC2.I1.RO.m{1} /\\ ms0 = SplitC2.I2.RO.m{1}) /\\",
+      "  nap{2} = p0{2} /\\",
+      "  (n{2}, a{2}, p1{2}) = nap{2} /\\",
+      "  p1{1} = p0{1} /\\",
+      "  k{1} = Mem.k{1} /\\",
+      "  nap{1} = p1{1} /\\",
+      "  (n{1}, a{1}, p2{1}) = nap{1} /\\",
+      "  p0{2} = p{2} /\\",
+      "  p0{1} = p{1} /\\",
+      "  (c{2} = witness /\\",
+      "   c{1} = witness /\\",
+      "   p{1} = p{2} /\\",
+      "   inv_cpa SplitC2.I1.RO.m{1} SplitC2.I2.RO.m{1} Mem.log{1} Mem.log{2} Mem.",
+      "     lc{1} Mem.lc{2} BNR.lenc{1} BNR.lenc{2} BNR.ndec{1} BNR.ndec{2} /\\",
+      "   forall (n1 : nonce) (c3 : C.counter),",
+      "     (n1, c3) \\in SplitD.ROF.RO.m{1} => n1 \\in BNR.lenc{1}) /\\",
+      "  check_plaintext BNR.lenc{1} p{1}",
+      "",
+      "c2 <@                                    (1)  c1 <@ EncRnd.cc(n, p1)   ",
+      "  ChaCha(                                ( )                           ",
+      "    CCRO(SplitD.                         ( )                           ",
+      "      RO_DOM(SplitC1.                    ( )                           ",
+      "        RO_Pair(SplitC2.                 ( )                           ",
+      "          RO_Pair(SplitC2.I1.RO,         ( )                           ",
+      "            SplitC2.I2.RO), SplitC1.I2.  ( )                           ",
+      "          RO), SplitD.ROF.RO))).enc(k,   ( )                           ",
+      "    n, p2)                               ( )                           ",
+      "",
+      "post =",
+      "  c2{1} = c1{2} /\\",
+      "  n{1} = n{2} /\\",
+      "  a{1} = a{2} /\\",
+      "  p0{1} = p0{2} /\\",
+      "  n{1} = p{1}.`1 /\\",
+      "  ! (p{1}.`1 \\in BNR.lenc{1}) /\\",
+      "  inv_cpa SplitC2.I1.RO.m{1} SplitC2.I2.RO.m{1} Mem.log{1} Mem.log{2} Mem.",
+      "    lc{1} Mem.lc{2} BNR.lenc{1} BNR.lenc{2} BNR.ndec{1} BNR.ndec{2} /\\",
+      "  forall (n0_0 : nonce) (c3 : C.counter),",
+      "    (n0_0, c3) \\in SplitD.ROF.RO.m{1} => n0_0 \\in p{1}.`1 :: BNR.lenc{1}",
+      "[372|check]>"
+    ],
+    "text_fully_shown": true,
+    "truncated": false,
+    "goal_type": "pRHL",
+    "view_focus": "relational_program",
+    "source": {
+      "label": "Parsed from EasyCrypt pretty goal text",
+      "ground_truth": false
+    }
+  },
+  "proof_status": {
+    "status": "open",
+    "remaining_goals": 5,
+    "remaining_goals_known": true,
+    "goal_type": "pRHL",
+    "view_focus": "relational_program",
+    "current_layer": "call_site"
+  },
+  "candidate_moves": {
+    "moves": [
+      {
+        "title": "Named-call route",
+        "category": "strategy",
+        "tactic_shape": "exlim n{2}, ROin.m{1}, ROout.m{1} => n0 mr0 ms0; call (equ_cc n0 mr0 ms0).",
+        "applicability": "This lemma-call shape is not a complete tactic yet; determine the missing module, procedure, or term arguments from the current goal before probing it.",
+        "runnable_status": "Not yet; fill the missing EasyCrypt lemma, module, procedure, or term arguments before probing or committing this tactic.",
+        "missing_input": [
+          "Concrete arguments required by the lemma or call form."
+        ],
+        "symbol_hint": "equ_cc",
+        "lookup_before_use": {
+          "intent": "lookup_symbol",
+          "payload": {
+            "symbol": "equ_cc"
+          }
+        },
+        "how_to_complete": [
+          "Match the lemma or call statement against the visible call sites, module parameters, globals, and hypotheses in the current goal.",
+          "If the arity or argument order is unclear, inspect the tactic form or lookup the symbol before guessing."
+        ],
+        "inspect_if_unsure": [
+          {
+            "topic": "call_site_options",
+            "why": "Shows call-site context and named call handles for this frontier."
+          },
+          {
+            "topic": "tactic_forms",
+            "name": "call",
+            "why": "Shows the valid EasyCrypt forms for `call`."
+          },
+          {
+            "intent": "lookup_symbol",
+            "symbol": "<lemma or symbol name>",
+            "why": "Shows the declaration/signature when a concrete symbol is known."
+          }
+        ],
+        "limitations": [
+          "The call still needs concrete EasyCrypt arguments before it is a tactic to probe or commit.",
+          "Do not probe or commit the displayed call shape solely because the name is visible; the current frontier still determines whether it applies."
+        ]
+      },
+      {
+        "category": "strategy",
+        "tactic_shape": "Inspect proof obligation stack: direct_procedure_call / current_frontier / EncRnd.cc / statement 1.",
+        "applicability": "Use this as route-selection context; it is not a tactic to run as-is.",
+        "source": "proof-state analysis"
+      },
+      {
+        "category": "strategy",
+        "tactic_shape": "Inspect control/suffix legality: call_site@1:1:suffix, call_site@2:1:suffix.",
+        "applicability": "Use this as route-selection context; it is not a tactic to run as-is.",
+        "source": "proof-state analysis"
+      },
+      {
+        "category": "strategy",
+        "tactic_shape": "inline EncRnd.cc.",
+        "applicability": "Use this as route-selection context; it is not a tactic to run as-is.",
+        "source": "proof-state analysis"
+      },
+      {
+        "title": "Invariant-call route",
+        "category": "strategy",
+        "tactic_shape": "call (_: ={n} /\\ c2{1} = c1{2} /\\ n{1} = n{2} /\\ a{1} = a{2} /\\ p0{1} = p0{2} /\\ n{1} = p{1}.`1 /\\ ! (p{1}.`1 \\in BNR.lenc{1}) /\\ inv_cpa SplitC2.I1.RO.m{1} SplitC2.I2.RO.m{1} Mem.log{1} Mem.log{2} Mem. lc{1} Mem.lc{2} BNR.lenc{1} BNR.lenc{2} BNR.ndec{1} BNR.ndec{2} /\\ forall (n0_0 : nonce) (c3 : C.counter), (n0_0, c3) \\in SplitD.ROF.RO.m{1} => n0_0 \\in p{1}.`1 :: BNR.lenc{1} /\\ (n0 = n{1} /\\ mr0 = SplitC2.I1.RO.m{1} /\\ ms0 = SplitC2.I2.RO.m{1}) /\\ nap{2} = p0{2} /\\ (n{2}, a{2}, p1{2}) = nap{2} /\\ p1{1} = p0{1} /\\ k{1} = Mem.k{1} /\\ nap{1} = p1{1} /\\ (n{1}, a{1}, p2{1}) = nap{1} /\\ p0{2} = p{2} /\\ p0{1} = p{1} /\\ p{1} = p{2} /\\ forall (n1 : nonce) (c3 : C.counter), (n1, c3) \\in SplitD.ROF.RO.m{1} => n1 \\in BNR.lenc{1}) /\\ check_plaintext BNR.lenc{1} p{1}).",
+        "applicability": "Use this as route-selection context; it is not a tactic to run as-is.",
+        "source": "proof-state analysis"
+      }
+    ]
+  },
+  "call_site_surface": {
+    "state": "callable_named_call",
+    "live_call_sites": [
+      {
+        "side": "left",
+        "procedure": "ChaCha.enc"
+      },
+      {
+        "side": "right",
+        "procedure": "EncRnd.cc"
+      }
+    ],
+    "named_handles": [
+      {
+        "symbol": "equ_cc",
+        "source": "candidate_moves.moves",
+        "callable_now": false,
+        "why_visible": "This lemma-call shape is not a complete tactic yet; determine the missing module, procedure, or term arguments from the current goal before probing it.",
+        "limitations": [
+          "The tactic shape is hidden until the handle is callable at the current frontier."
+        ]
+      }
+    ],
+    "callable_now": [
+      {
+        "symbol": "equ_cc",
+        "source": "source_equiv_declaration",
+        "procedure": "ChaCha.enc",
+        "procedures": [
+          "ChaCha(CCRO(SplitD.RO_DOM(SplitC1.RO_Pair(SplitC2.RO_Pair(ROin, ROout), SplitC1.I2.RO), ROF))).enc",
+          "EncRnd.cc"
+        ],
+        "frontier_live": true,
+        "callable_now": true,
+        "requires_cut_to_frontier": false,
+        "call_candidate_kind": "direct_current_call",
+        "frontier_status": "callable_now",
+        "live_call_site_ids": [
+          "left:1:ChaCha.enc",
+          "right:1:EncRnd.cc"
+        ],
+        "frontier_call_site_ids": [
+          "left:1:ChaCha.enc",
+          "right:1:EncRnd.cc"
+        ],
+        "matched_call_sites": [
+          {
+            "call_site_id": "left:1:ChaCha.enc",
+            "side": "left",
+            "statement_path": "1",
+            "procedure": "ChaCha.enc",
+            "is_frontier_call": true,
+            "requires_cut_to_frontier": false,
+            "call_boundary_kind": "direct_call",
+            "frontier_role": "current_frontier"
+          },
+          {
+            "call_site_id": "right:1:EncRnd.cc",
+            "side": "right",
+            "statement_path": "1",
+            "procedure": "EncRnd.cc",
+            "is_frontier_call": true,
+            "requires_cut_to_frontier": false,
+            "call_boundary_kind": "direct_call",
+            "frontier_role": "current_frontier"
+          }
+        ],
+        "name_resolution_status": "resolved_local_declaration",
+        "exact_signature_known": true,
+        "instantiation_binding_status": "has_call_elaboration"
+      }
+    ],
+    "frontier_live_named_handles": [
+      {
+        "symbol": "equ_cc",
+        "source": "source_equiv_declaration",
+        "procedure": "ChaCha.enc",
+        "procedures": [
+          "ChaCha(CCRO(SplitD.RO_DOM(SplitC1.RO_Pair(SplitC2.RO_Pair(ROin, ROout), SplitC1.I2.RO), ROF))).enc",
+          "EncRnd.cc"
+        ],
+        "frontier_live": true,
+        "callable_now": true,
+        "requires_cut_to_frontier": false,
+        "call_candidate_kind": "direct_current_call",
+        "frontier_status": "callable_now",
+        "live_call_site_ids": [
+          "left:1:ChaCha.enc",
+          "right:1:EncRnd.cc"
+        ],
+        "frontier_call_site_ids": [
+          "left:1:ChaCha.enc",
+          "right:1:EncRnd.cc"
+        ],
+        "matched_call_sites": [
+          {
+            "call_site_id": "left:1:ChaCha.enc",
+            "side": "left",
+            "statement_path": "1",
+            "procedure": "ChaCha.enc",
+            "is_frontier_call": true,
+            "requires_cut_to_frontier": false,
+            "call_boundary_kind": "direct_call",
+            "frontier_role": "current_frontier"
+          },
+          {
+            "call_site_id": "right:1:EncRnd.cc",
+            "side": "right",
+            "statement_path": "1",
+            "procedure": "EncRnd.cc",
+            "is_frontier_call": true,
+            "requires_cut_to_frontier": false,
+            "call_boundary_kind": "direct_call",
+            "frontier_role": "current_frontier"
+          }
+        ],
+        "name_resolution_status": "resolved_local_declaration",
+        "exact_signature_known": true,
+        "instantiation_binding_status": "has_call_elaboration"
+      }
+    ],
+    "wrapper_depth": 1,
+    "named_call_templates": [
+      {
+        "symbol": "equ_cc",
+        "status": "strategy_hint_not_verified",
+        "preferred_call_form": "exlim_then_call_fallback",
+        "tactic_shape": "exlim n{2}, ROin.m{1}, ROout.m{1} => n0 mr0 ms0; call (equ_cc n0 mr0 ms0).",
+        "direct_ecall_template": "ecall (equ_cc n{2} ROin.m{1} ROout.m{1}).",
+        "lifted_value_arguments": [
+          {
+            "slot": "n0",
+            "logical_name": "n0",
+            "program_expression": "n{2}",
+            "raw_value": "n",
+            "side": "right",
+            "side_index": "2",
+            "source": "lemma_precondition.arg_projection",
+            "confidence": "high",
+            "role": "call_argument_parameter",
+            "belongs_to": "lemma_value_parameter",
+            "reason": "lemma equality binds value slot `n0` to projection `arg{2}.`1` of the current call argument"
+          },
+          {
+            "slot": "mr0",
+            "logical_name": "mr0",
+            "program_expression": "ROin.m{1}",
+            "raw_value": "ROin.m",
+            "side": "left",
+            "side_index": "1",
+            "source": "lemma_precondition.value_slot_equality",
+            "confidence": "high",
+            "role": "state_snapshot_parameter",
+            "belongs_to": "lemma_value_parameter",
+            "reason": "lemma equality binds value slot `mr0` to state expression `ROin.m{1}`"
+          },
+          {
+            "slot": "ms0",
+            "logical_name": "ms0",
+            "program_expression": "ROout.m{1}",
+            "raw_value": "ROout.m",
+            "side": "left",
+            "side_index": "1",
+            "source": "lemma_precondition.value_slot_equality",
+            "confidence": "high",
+            "role": "state_snapshot_parameter",
+            "belongs_to": "lemma_value_parameter",
+            "reason": "lemma equality binds value slot `ms0` to state expression `ROout.m{1}`"
+          }
+        ],
+        "lemma_precondition_coverage": {
+          "available": true,
+          "kind": "call_equiv_precondition_coverage",
+          "coverage_label": "static_precondition_preview",
+          "pre_atom_count": 7,
+          "post_atom_count": 5,
+          "category_counts": {
+            "call_argument_alignment": 2,
+            "value_parameter_binding": 3,
+            "lifted_value_side_condition": 1,
+            "state_invariant_requirement": 1
+          },
+          "covered_by_exlim_count": 3,
+          "expected_residual_count": 4,
+          "precondition_atoms": [
+            {
+              "atom": "arg{2} = (arg.`2, arg.`3){1}",
+              "category": "call_argument_alignment",
+              "coverage": "requires_frontier_unification",
+              "reason": "precondition constrains the current call argument; keep the call-site frontier visible and expect EC/unfolding residuals"
+            },
+            {
+              "atom": "arg{2}.`1 = n0",
+              "category": "value_parameter_binding",
+              "coverage": "bound_by_exlim",
+              "reason": "value slot is explicitly tied to a program-state expression lifted by the generated exlim"
+            },
+            {
+              "atom": "size arg{1}.`3 <= max_cipher_size",
+              "category": "call_argument_alignment",
+              "coverage": "requires_frontier_unification",
+              "reason": "precondition constrains the current call argument; keep the call-site frontier visible and expect EC/unfolding residuals"
+            },
+            {
+              "atom": "!n0 \\in BNR.lenc{1}",
+              "category": "lifted_value_side_condition",
+              "coverage": "expected_residual",
+              "reason": "precondition mentions a lifted logical value outside the binding equality; current invariant or cut must support it"
+            },
+            {
+              "atom": "forall n c, (n,c) \\in ROF.m => n \\in BNR.lenc){1}",
+              "category": "state_invariant_requirement",
+              "coverage": "requires_current_invariant_or_cut",
+              "reason": "precondition mentions side-qualified state; verify the current invariant/cut preserves this fact"
+            },
+            {
+              "atom": "mr0 = ROin.m{1}",
+              "category": "value_parameter_binding",
+              "coverage": "bound_by_exlim",
+              "reason": "value slot is explicitly tied to a program-state expression lifted by the generated exlim"
+            },
+            {
+              "atom": "ms0 = ROout.m{1}",
+              "category": "value_parameter_binding",
+              "coverage": "bound_by_exlim",
+              "reason": "value slot is explicitly tied to a program-state expression lifted by the generated exlim"
+            }
+          ],
+          "expected_residual_atoms": [
+            {
+              "atom": "arg{2} = (arg.`2, arg.`3){1}",
+              "category": "call_argument_alignment",
+              "coverage": "requires_frontier_unification",
+              "reason": "precondition constrains the current call argument; keep the call-site frontier visible and expect EC/unfolding residuals"
+            },
+            {
+              "atom": "size arg{1}.`3 <= max_cipher_size",
+              "category": "call_argument_alignment",
+              "coverage": "requires_frontier_unification",
+              "reason": "precondition constrains the current call argument; keep the call-site frontier visible and expect EC/unfolding residuals"
+            },
+            {
+              "atom": "!n0 \\in BNR.lenc{1}",
+              "category": "lifted_value_side_condition",
+              "coverage": "expected_residual",
+              "reason": "precondition mentions a lifted logical value outside the binding equality; current invariant or cut must support it"
+            },
+            {
+              "atom": "forall n c, (n,c) \\in ROF.m => n \\in BNR.lenc){1}",
+              "category": "state_invariant_requirement",
+              "coverage": "requires_current_invariant_or_cut",
+              "reason": "precondition mentions side-qualified state; verify the current invariant/cut preserves this fact"
+            }
+          ],
+          "postcondition_atoms_preview": [
+            "={res}",
+            "size res{1} <= max_cipher_size",
+            "mr0 = ROin.m{1}",
+            "ms0 = ROout.m{1}",
+            "forall n c, (n,c) \\in ROF.m => n \\in n0 :: BNR.lenc){1}."
+          ],
+          "strategy_boundary": "Static coverage only: it tells the prover what facts the call will need, but it does not prove those facts or rank the proof strategy by lemma name."
+        }
+      },
+      {
+        "symbol": "chacha_enc1",
+        "status": "candidate_named_call",
+        "tactic_shape": "call chacha_enc1."
+      },
+      {
+        "symbol": "chacha_enc2",
+        "status": "candidate_named_call",
+        "tactic_shape": "call chacha_enc2."
+      }
+    ],
+    "frontier_blockers": [
+      {
+        "kind": "named_handle_not_callable_in_current_view",
+        "named_handle_count": 1,
+        "live_call_site_count": 2
+      }
+    ]
+  },
+  "program_frontier": {
+    "authority": "proof-state analysis",
+    "view_focus": "relational_program",
+    "focus": {
+      "live_call_sites": 2,
+      "frontier_call_sites": 2,
+      "live_callable_lemmas": 3,
+      "callable_now_lemmas": 1,
+      "oracle_obligation_handles": 0,
+      "has_invariant_skeleton": true
+    },
+    "call_sites": [
+      {
+        "side": "left",
+        "side_index": 1,
+        "statement_order": 1,
+        "statement_path": "1",
+        "procedure": "ChaCha.enc",
+        "statement": "c2 <@ ChaCha( CCRO(SplitD. RO_DOM(SplitC1. RO_Pair(SplitC2. RO_Pair(SplitC2.I1.RO, SplitC2.I2.RO), SplitC1.I2. RO), SplitD.ROF.RO))).enc(k, n, p2)"
+      },
+      {
+        "side": "right",
+        "side_index": 2,
+        "statement_order": 1,
+        "statement_path": "1",
+        "procedure": "EncRnd.cc",
+        "statement": "c1 <@ EncRnd.cc(n, p1)"
+      }
+    ],
+    "frontier_alignment": {
+      "summary": "Frontier alignment: call sites are visible at the frontier. Use this as a proof-reader map before choosing while/rnd/seq/call tactics.",
+      "first_instruction_alignment": {
+        "left_first": "c2 <@ ChaCha( CCRO(SplitD. RO_DOM(SplitC1. RO_Pair(SplitC2. RO_Pair(SplitC2.I1.RO, SplitC2.I2.RO), SplitC1.I2. RO), SplitD.ROF.RO))).enc(k, n, p2)",
+        "right_first": "no matching right-side call at this frontier",
+        "left_head": "call",
+        "branch_alignment": "one-sided_frontier",
+        "proof_read": "The visible frontier is one-sided; use a one-sided tactic, alignment step, or seq cut before applying a symmetric tactic."
+      },
+      "rows": [
+        {
+          "role": "call frontier",
+          "left": "c2 <@ ChaCha( CCRO(SplitD. RO_DOM(SplitC1. RO_Pair(SplitC2. RO_Pair(SplitC2.I1.RO, SplitC2.I2.RO), SplitC1.I2. RO), SplitD.ROF.RO))).enc(k, n, p2)",
+          "right": "no matching right-side call at this frontier",
+          "proof_read": "This is a call frontier; compare the procedures/oracle wrappers before choosing a named call or invariant call.",
+          "location": {
+            "left_path": "1"
+          }
+        },
+        {
+          "role": "call frontier",
+          "left": "no matching left-side call at this frontier",
+          "right": "c1 <@ EncRnd.cc(n, p1)",
+          "proof_read": "This is a call frontier; compare the procedures/oracle wrappers before choosing a named call or invariant call.",
+          "location": {
+            "right_path": "1"
+          }
+        }
+      ]
+    },
+    "procedure_navigation": {
+      "how_to_use": "Positions for choosing wp/sp depth, which `if` to rcond, and where the next loop/call frontier is. Facts only \u2014 pick the tactic and the branch direction yourself.",
+      "next_frontier": {
+        "kind": "call_site",
+        "at_order": 1
+      }
+    }
+  },
+  "seq_cut_surface": {
+    "seq_candidate_id": "cp_11_ff554e737a89d396",
+    "state": "inside_seq_scope",
+    "cut_position": {
+      "left_count": 1,
+      "right_count": 1,
+      "tactic": "seq 1 1 : (c2{1} = c1{2} /\\ n{1} = n{2} /\\ a{1} = a{2} /\\ p0{1} = p0{2} /\\ n{1} = p{1}.`1 /\\ ! (p{1}.`1 \\in BNR.lenc{1}) /\\ inv_cpa SplitC2.I1.RO.m{1} SplitC2.I2.RO.m{1} Mem.log{1} Mem.log{2} Mem.lc{1} Mem.lc{2} BNR.lenc{1} BNR.lenc{2} BNR.ndec{1} BNR.ndec{2} /\\ (forall (n0 : nonce) (c3 : C.counter), (n0, c3) \\in SplitD.ROF.RO.m{1} => n0 \\in p{1}.`1 :: BNR.lenc{1}))."
+    },
+    "obligation_count": 5,
+    "obligation_kinds": [
+      "relational",
+      "call_site",
+      "postcondition",
+      "quantified"
+    ],
+    "branch_focus": {
+      "remaining_goals": 5,
+      "latest_event_head": "elim"
+    },
+    "residual_frontier": {
+      "current_layer": "call_site",
+      "view_focus": "relational_program",
+      "live_call_site_count": 2,
+      "goal_contains_call_site": true,
+      "latest_seq_tactic_index": 11,
+      "tactics_after_latest_seq": 2
+    }
+  },
+  "application_context": {
+    "visible_call_frontier": {
+      "left": {
+        "procedure": "ChaCha.enc",
+        "statement": "c2 <@ ChaCha( CCRO(SplitD. RO_DOM(SplitC1. RO_Pair(SplitC2. RO_Pair(SplitC2.I1.RO, SplitC2.I2.RO), SplitC1.I2. RO), SplitD.ROF.RO))).enc(k, n, p2)",
+        "statement_path": "1"
+      },
+      "right": {
+        "procedure": "EncRnd.cc",
+        "statement": "c1 <@ EncRnd.cc(n, p1)",
+        "statement_path": "1"
+      }
+    },
+    "how_to_use": "Use this section when constructing the concrete invariant inside `call (_: ...)`. This section is not a tactic. It is a checklist for constructing the concrete invariant before using `probe_tactic` or `commit_tactic`.",
+    "inspect_if_unsure": {
+      "topic": "call_subgoals",
+      "why": "After you draft a concrete invariant, this preview shows the obligations it creates and can reveal missing facts or extra conjuncts that make the proof harder."
+    }
+  },
+  "facts_and_diagnostics": {
+    "facts": {
+      "has_invariant_skeleton": true,
+      "unfoldable_goal_heads": [
+        {
+          "name": "inv_cpa",
+          "unqualified_name": "inv_cpa",
+          "declaration_kind": "op",
+          "unfold_tactic": "rewrite /inv_cpa.",
+          "smt_argument_role": "not_a_lemma_hint"
+        },
+        {
+          "name": "check_plaintext",
+          "unqualified_name": "check_plaintext",
+          "declaration_kind": "op",
+          "unfold_tactic": "rewrite /check_plaintext.",
+          "smt_argument_role": "not_a_lemma_hint"
+        },
+        {
+          "name": "EncRnd.cc",
+          "unqualified_name": "cc",
+          "declaration_kind": "op",
+          "unfold_tactic": "rewrite /EncRnd.cc.",
+          "smt_argument_role": "not_a_lemma_hint"
+        },
+        {
+          "name": "enc",
+          "unqualified_name": "enc",
+          "declaration_kind": "op",
+          "unfold_tactic": "rewrite /enc.",
+          "smt_argument_role": "not_a_lemma_hint"
+        }
+      ],
+      "unfoldable_goal_head_count": 4
+    },
+    "fact_note": "Only current-frontier facts are shown here; the full proof context artifact keeps the compiler/internal details.",
+    "notes": [
+      {
+        "message": "proof-state analysis layer is call_site: 2 call site(s) and 3 callable lemma handle(s) are live (chacha_enc1, chacha_enc2, equ_cc). `inline *` is a broad global transformation here and can hide those handles; named calls and targeted inline are route context for compari...",
+        "severity": "warning"
+      },
+      {
+        "message": "Some imported or cross-scope handles may need lookup if that route is being tested; use lookup_candidates for the concrete symbol instead of treating the whole list as a to-do queue.",
+        "severity": "info"
+      }
+    ]
+  },
+  "inspect_lookup_handles": {
+    "effect": "All handles here are read-only manager requests; the committed EasyCrypt proof state stays unchanged.",
+    "manager_note": "Some requests may ask EasyCrypt or name resolution; wait for the manager result before choosing the next proof intent.",
+    "ask_manager_for": [
+      {
+        "intent": "inspect_context",
+        "payload": {
+          "topic": "goal_info"
+        },
+        "use_when": "Need parsed goal shape, resolved names, or KB pattern hints.",
+        "returns": "parsed goal structure and names"
+      },
+      {
+        "intent": "inspect_context",
+        "payload": {
+          "topic": "call_site_options"
+        },
+        "use_when": "The visible frontier contains call sites or named equiv handles may apply.",
+        "returns": "call-ready/oracle-equiv context for the current frontier, plus the BODY of the procedure(s) called here (functor aliases resolved) so you can see which oracles/state your call invariant must preserve"
+      },
+      {
+        "intent": "inspect_context",
+        "payload": {
+          "topic": "call_invariant_skeleton"
+        },
+        "use_when": "You are at an abstract-adversary `call (_: <inv>)` and want the mechanical glob frame of the invariant before adding your own semantic conjuncts.",
+        "returns": "the mechanical `={glob ...}` frame of the call invariant (shared abstract oracle modules, daemon-confirmed to apply and spawn the obligations). When a named coupling predicate fits the in-scope state it ALSO surfaces a field-threaded carrier (`inv \u2026 s1{1} s2{2}`), plus candidate inductive side-conditions (`dom \u2286 used-set`) for any random oracle the call queries. All revisable starting points \u2014 confirm the coupling and add/adjust the semantic conjuncts (key/state correspondences, set-membership)."
+      },
+      {
+        "intent": "inspect_context",
+        "payload": {
+          "topic": "call_subgoals",
+          "invariant": "<the EasyCrypt invariant expression inside call (_: ...)>"
+        },
+        "use_when": "You are considering `call (_: Inv)` and already have a concrete invariant expression you want to test first.",
+        "returns": "a read-only preview of the obligations caused by that candidate invariant, including pre/init, call-preservation, oracle-side, postcondition, missing-fact signals, and extra conjuncts that may create avoidable obligations"
+      },
+      {
+        "intent": "inspect_context",
+        "payload": {
+          "topic": "tactic_forms",
+          "name": "call"
+        },
+        "use_when": "A tactic has multiple EasyCrypt argument forms.",
+        "returns": "valid tactic forms and common traps"
+      },
+      {
+        "intent": "inspect_context",
+        "payload": {
+          "topic": "tactic_forms",
+          "name": "sp"
+        },
+        "use_when": "The frontier may need indexed `sp i j` before branch or call tactics.",
+        "returns": "valid `sp` forms and branch-frontier traps"
+      },
+      {
+        "intent": "inspect_context",
+        "payload": {
+          "topic": "tactic_forms",
+          "name": "wp"
+        },
+        "use_when": "Mid-proof pRHL suffix surgery may need indexed `wp`.",
+        "returns": "valid indexed `wp` forms and suffix-alignment traps"
+      },
+      {
+        "intent": "inspect_context",
+        "payload": {
+          "topic": "tactic_forms",
+          "name": "swap"
+        },
+        "use_when": "Statement order may need a small `swap` before `sp`, `wp`, or `sim`.",
+        "returns": "valid `swap` forms and statement-order traps"
+      },
+      {
+        "intent": "inspect_context",
+        "payload": {
+          "topic": "tactic_forms",
+          "name": "rcondt"
+        },
+        "use_when": "A guarded branch may need `rcondt` after a case split or invariant fact.",
+        "returns": "valid `rcondt` forms and guard-obligation traps"
+      },
+      {
+        "intent": "inspect_context",
+        "payload": {
+          "topic": "tactic_forms",
+          "name": "rcondf"
+        },
+        "use_when": "A guarded branch may need `rcondf` after a case split or invariant fact.",
+        "returns": "valid `rcondf` forms and guard-obligation traps"
+      },
+      {
+        "intent": "inspect_context",
+        "payload": {
+          "topic": "tactic_forms",
+          "name": "conseq"
+        },
+        "use_when": "A suffix proof may need `conseq` to weaken to a smaller relation before `sim`.",
+        "returns": "valid `conseq` forms and pRHL memory-annotation traps"
+      },
+      {
+        "intent": "inspect_context",
+        "payload": {
+          "topic": "tactic_forms",
+          "name": "rnd"
+        },
+        "use_when": "One side may have an extra sample or need an explicit sample coupling.",
+        "returns": "valid `rnd` forms, including one-sided sampling"
+      },
+      {
+        "intent": "inspect_context",
+        "payload": {
+          "topic": "tactic_forms",
+          "name": "eager"
+        },
+        "use_when": "A known statement-order mismatch may need an eager/lazy transformation.",
+        "returns": "valid `eager` forms and when to prefer smaller surgery"
+      },
+      {
+        "intent": "inspect_context",
+        "payload": {
+          "topic": "align"
+        },
+        "use_when": "LHS/RHS statement order may need swap/alignment context.",
+        "returns": "swap/alignment context for the visible pRHL frontier"
+      }
+    ],
+    "lookup_candidates": [
+      {
+        "symbol": "chacha_enc1",
+        "use_when": "Resolve exact signature for `chacha_enc1` only when this handle route is being tested."
+      },
+      {
+        "symbol": "chacha_enc2",
+        "use_when": "Resolve exact signature for `chacha_enc2` only when this handle route is being tested."
+      }
+    ]
+  },
+  "structural_checkpoints": {
+    "items": [
+      {
+        "checkpoint_id": "cp_13_ff554e737a89d396",
+        "semantic_id": "before_branch_work",
+        "semantic_ids": [
+          "before_branch_work"
+        ],
+        "label": "Before latest branch-local tactic #13",
+        "committed_step_index": 13,
+        "committed_tactic": "elim* => n0 mr0 ms0.",
+        "restored_proof_layer": "seq_branch",
+        "restored_affordances": {
+          "seq_cut": "committed",
+          "earlier_branch_work": "preserved"
+        },
+        "undo_scope": "branch_local",
+        "why_checkpoint": "latest branch-local step inside the current seq scope",
+        "effect_if_selected": "Undo committed tactic #13 and every committed tactic after it in this node.",
+        "submit": {
+          "intent": "undo_to_checkpoint",
+          "payload": {
+            "checkpoint_id": "cp_13_ff554e737a89d396"
+          }
+        }
+      },
+      {
+        "checkpoint_id": "cp_11_ff554e737a89d396",
+        "semantic_id": "before_seq_cut",
+        "semantic_ids": [
+          "before_seq_cut",
+          "before_call_obligation_work"
+        ],
+        "label": "Before latest call-obligation tactic #11",
+        "committed_step_index": 11,
+        "committed_tactic": "seq 1 1 : (c2{1} = c1{2} /\\ n{1} = n{2} /\\ a{1} = a{2} /\\ p0{1} = p0{2} /\\ n{1} = p{1}.`1 /\\ ! (p{1}.`1 \\in BNR.lenc{1}) /\\ inv_cpa SplitC2.I1.RO.m{1} SplitC2.I2.RO.m{1} Mem.log{1} Mem.log{2} Mem.lc{1} Mem.lc{2} BNR.lenc{1} BNR.lenc{2} BNR.ndec{1} BNR.ndec{2} /\\ (forall (n0 : nonce) (c3 : C.counter), (n0, c3) \\in SplitD.ROF.RO.m{1} => n0 \\in p{1}.`1 :: BNR.lenc{1})).",
+        "restored_proof_layer": "call_obligation",
+        "restored_affordances": {
+          "call_route": "committed",
+          "call_obligation": "preserved",
+          "later_local_work": "not_committed"
+        },
+        "undo_scope": "call_obligation_local",
+        "why_checkpoint": "call-obligation local boundary; selecting it keeps the opened call obligation and removes later local work",
+        "effect_if_selected": "Undo committed tactic #11 and every committed tactic after it in this node.",
+        "submit": {
+          "intent": "undo_to_checkpoint",
+          "payload": {
+            "checkpoint_id": "cp_11_ff554e737a89d396"
+          }
+        }
+      },
+      {
+        "checkpoint_id": "cp_12_ff554e737a89d396",
+        "semantic_id": "after_seq_opened",
+        "semantic_ids": [
+          "after_seq_opened",
+          "before_branch_work",
+          "resume_start"
+        ],
+        "label": "Return to resume start",
+        "committed_step_index": 12,
+        "committed_tactic": "exists* (n{1}), (SplitC2.I1.RO.m{1}), (SplitC2.I2.RO.m{1}).",
+        "restored_proof_layer": "resume_handoff",
+        "restored_affordances": {
+          "seq_cut": "committed",
+          "branch_work": "not_committed"
+        },
+        "undo_scope": "resume_local",
+        "why_checkpoint": "resume boundary; selecting it preserves the verified replay prefix and removes tactics committed after resume",
+        "effect_if_selected": "Undo committed tactic #12 and every committed tactic after it in this node.",
+        "submit": {
+          "intent": "undo_to_checkpoint",
+          "payload": {
+            "checkpoint_id": "cp_12_ff554e737a89d396"
+          }
+        }
+      },
+      {
+        "checkpoint_id": "cp_6_ff554e737a89d396",
+        "semantic_id": "after_call_opened",
+        "semantic_ids": [
+          "after_call_opened"
+        ],
+        "label": "After call opened / before obligation work #6",
+        "committed_step_index": 6,
+        "committed_tactic": "proc.",
+        "restored_proof_layer": "call_obligations_opened",
+        "restored_affordances": {
+          "call_route": "committed",
+          "call_obligation_work": "not_committed"
+        },
+        "undo_scope": "call_local",
+        "why_checkpoint": "call-local boundary; selecting it keeps the call tactic and removes work committed after the call opened",
+        "effect_if_selected": "Undo committed tactic #6 and every committed tactic after it in this node.",
+        "submit": {
+          "intent": "undo_to_checkpoint",
+          "payload": {
+            "checkpoint_id": "cp_6_ff554e737a89d396"
+          }
+        }
+      },
+      {
+        "checkpoint_id": "cp_5_ff554e737a89d396",
+        "semantic_id": "before_call_route",
+        "semantic_ids": [
+          "before_call_route"
+        ],
+        "label": "Before call invariant #5",
+        "committed_step_index": 5,
+        "committed_tactic": "call (_: inv_cpa SplitC2.I1.RO.m{1} SplitC2.I2.RO.m{1} Mem.log{1} Mem.log{2} Mem.lc{1} Mem.lc{2} BNR.lenc{1} BNR.lenc{2} BNR.ndec{1} BNR.ndec{2} /\\ (forall n c, (n,c) \\in SplitD.ROF.RO.m{1} => n \\in BNR.lenc{1})).",
+        "restored_proof_layer": "pre_call_route",
+        "restored_affordances": {
+          "call_route": "not_committed",
+          "call_obligation_work": "not_committed"
+        },
+        "undo_scope": "call_local",
+        "why_checkpoint": "call invariant introduction point; later oracle/branch obligations often reveal missing preserved facts or an over-strong equality from this tactic",
+        "effect_if_selected": "Undo committed tactic #5 and every committed tactic after it in this node.",
+        "submit": {
+          "intent": "undo_to_checkpoint",
+          "payload": {
+            "checkpoint_id": "cp_5_ff554e737a89d396"
+          }
+        }
+      },
+      {
+        "checkpoint_id": "cp_3_ff554e737a89d396",
+        "semantic_id": "last_call_site_boundary",
+        "semantic_ids": [
+          "last_call_site_boundary"
+        ],
+        "label": "Before inline expansion #3",
+        "committed_step_index": 3,
+        "committed_tactic": "inline *.",
+        "restored_proof_layer": "pre_inline_frontier",
+        "restored_affordances": {
+          "call_site_handles": "as_before_inline"
+        },
+        "undo_scope": "call_site_boundary",
+        "why_checkpoint": "inline boundary; selecting it restores the proof state before this expansion",
+        "effect_if_selected": "Undo committed tactic #3 and every committed tactic after it in this node.",
+        "submit": {
+          "intent": "undo_to_checkpoint",
+          "payload": {
+            "checkpoint_id": "cp_3_ff554e737a89d396"
+          }
+        }
+      }
+    ]
+  }
+}

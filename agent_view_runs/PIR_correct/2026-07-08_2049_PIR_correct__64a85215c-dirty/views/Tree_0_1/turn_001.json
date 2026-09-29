@@ -1,0 +1,214 @@
+{
+  "last_result": {
+    "intent": "commit_tactic",
+    "payload": {
+      "tactic": "move => hi."
+    },
+    "manager_action": "commit_tactic",
+    "result": "EasyCrypt accepted the committed tactic.",
+    "effect": "EasyCrypt accepted a proof-state change; the refreshed view is based on the new committed state.",
+    "proof_state": "The committed EasyCrypt proof state changed.",
+    "tactic": "move => hi."
+  },
+  "current_goal": {
+    "lines": [
+      "Current goal",
+      "",
+      "Type variables: <none>",
+      "",
+      "&m: {}",
+      "i0: int",
+      "hi: 0 <= i0 < N",
+      "------------------------------------------------------------------------",
+      "Pr[PIR.main(i0) @ &m : res = a i0] = 1%r",
+      "[20|check]>"
+    ],
+    "text_fully_shown": true,
+    "truncated": false,
+    "goal_type": "probability",
+    "view_focus": "probability",
+    "source": {
+      "label": "Parsed from EasyCrypt pretty goal text",
+      "ground_truth": false
+    }
+  },
+  "proof_status": {
+    "status": "open",
+    "remaining_goals": 1,
+    "remaining_goals_known": true,
+    "goal_type": "probability",
+    "view_focus": "probability",
+    "current_layer": "pr"
+  },
+  "candidate_moves": {},
+  "program_frontier": {
+    "authority": "proof-state analysis",
+    "view_focus": "probability",
+    "focus": {
+      "pr_rewrite_candidates": 0,
+      "has_pr_normal_form": false,
+      "has_pr_arithmetic_plan": false,
+      "has_pr_obligation_plan": false,
+      "native_ast_search_hits": 0
+    }
+  },
+  "call_site_surface": {},
+  "application_context": {},
+  "facts_and_diagnostics": {
+    "facts": {
+      "has_pr_normal_form": false,
+      "has_pr_arithmetic_plan": false,
+      "has_pr_obligation_plan": false,
+      "unfoldable_goal_head_count": 0
+    },
+    "fact_note": "Only current-frontier facts are shown here; the full proof context artifact keeps the compiler/internal details."
+  },
+  "proof_so_far": {
+    "committed_count": 1,
+    "steps": [
+      {
+        "step": 1,
+        "tactic": "move => hi."
+      }
+    ],
+    "elided_count": 0,
+    "note": "Your committed proof so far in THIS node, step-numbered \u2014 your own work. Use it to orient; do not re-derive steps already listed here."
+  },
+  "surface_action_preflight": {
+    "schema_version": 1,
+    "results": []
+  },
+  "inspect_lookup_handles": {
+    "effect": "All handles here are read-only manager requests; the committed EasyCrypt proof state stays unchanged.",
+    "manager_note": "Some requests may ask EasyCrypt or name resolution; wait for the manager result before choosing the next proof intent.",
+    "ask_manager_for": [
+      {
+        "intent": "inspect_context",
+        "payload": {
+          "topic": "operator_lemmas",
+          "operator": "OPERATOR"
+        },
+        "use_when": "Need the lemmas that apply to an OPERATOR in your goal \u2014 project-local lemmas included (not just stdlib) \u2014 instead of guessing a lemma name.",
+        "returns": "lemmas mentioning that operator, found by live EC `search` over the loaded context (statements; you pick which to apply)",
+        "intent_class": "context_topic",
+        "read_only": true,
+        "public_intent": "operator_lemmas",
+        "payload_fields": [
+          "operator"
+        ]
+      },
+      {
+        "intent": "inspect_context",
+        "payload": {
+          "topic": "tactic_forms",
+          "name": "while"
+        },
+        "use_when": "Need exact byphoare/phoare-loop tactic syntax before probing the probability route.",
+        "returns": "valid `while` forms and common traps",
+        "intent_class": "context_topic",
+        "read_only": true,
+        "public_intent": "tactic_forms",
+        "payload_fields": [
+          "name"
+        ]
+      }
+    ]
+  },
+  "surface_turn": {
+    "schema_version": 1,
+    "presentation_kind": "proof_state",
+    "proof_surface": {
+      "schema_version": 1,
+      "profile": "l4_checked_action_surface",
+      "phase": "opener",
+      "goal": {
+        "title": "Current Goal",
+        "text": "Current goal\n\nType variables: <none>\n\n&m: {}\ni0: int\nhi: 0 <= i0 < N\n------------------------------------------------------------------------\nPr[PIR.main(i0) @ &m : res = a i0] = 1%r\n[20|check]>",
+        "goal_type": "probability",
+        "truncated": false,
+        "line_count": 10
+      },
+      "status": {
+        "status": "open",
+        "remaining_goals": 1,
+        "remaining_goals_known": true,
+        "view_focus": "probability",
+        "current_layer": "pr",
+        "goal_type": "probability",
+        "surface_phase": "opener"
+      },
+      "primary_panel": {
+        "panel_id": "opener",
+        "phase": "opener",
+        "title": "Probability Goal",
+        "facts": [
+          {
+            "key": "probability_structure",
+            "label": "Probability structure",
+            "kind": "state_fact",
+            "role": "primary",
+            "value": "Pr[...] equality",
+            "source_refs": [
+              "current_goal",
+              "proof_status"
+            ]
+          },
+          {
+            "key": "tactic_affordances",
+            "label": "Tactic applicability",
+            "kind": "state_fact",
+            "role": "primary",
+            "value": [
+              "`byphoare` family for a single Pr bound",
+              "`rewrite` family for a matching Pr lemma",
+              "`byequiv` family if introducing a comparison program"
+            ],
+            "source_refs": [
+              "current_goal",
+              "tactic_forms"
+            ]
+          }
+        ],
+        "display_policy": {
+          "lead_before_goal": false,
+          "verbosity": "normal",
+          "compact_goal": false,
+          "show_status": true,
+          "show_actions": true
+        },
+        "source_refs": [
+          "current_goal",
+          "facts_and_diagnostics"
+        ]
+      },
+      "metadata": {
+        "contract": "raw_workspace_facts -> SurfaceModel -> markdown/card",
+        "primary_panel_id": "opener",
+        "primary_action_count": 0,
+        "available_action_count": 2
+      },
+      "surface_model_hash": "f311e3beadd2ce0a08ec19472221b2c6751c60ff"
+    },
+    "turn_outcome": {
+      "intent": "commit_tactic",
+      "payload": {
+        "tactic": "move => hi."
+      },
+      "ok": true,
+      "result_line": "Last action: `move => hi.` -- EasyCrypt accepted the committed tactic.",
+      "lead_before_goal": false,
+      "proof_state_changed": true,
+      "source_refs": [
+        "last_result"
+      ]
+    },
+    "base_surface_updates": true,
+    "proof_state_changed": true,
+    "metadata": {
+      "contract": "SurfaceModel -> SurfaceTurnModel -> markdown/card",
+      "current_surface_hash": "f311e3beadd2ce0a08ec19472221b2c6751c60ff",
+      "proof_surface_hash": "f311e3beadd2ce0a08ec19472221b2c6751c60ff"
+    },
+    "surface_turn_hash": "7d5db5fb7e008ee12a95c093d007228999ca218c"
+  }
+}

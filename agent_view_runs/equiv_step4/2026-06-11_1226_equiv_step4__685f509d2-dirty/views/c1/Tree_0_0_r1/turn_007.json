@@ -1,0 +1,250 @@
+{
+  "last_result": {
+    "intent": "finish",
+    "result": "The manager recorded the intent and returned the latest completed workspace view.",
+    "effect": "This manager intent does not change the EasyCrypt proof state."
+  },
+  "current_goal": {
+    "lines": [
+      "[575|check]>"
+    ],
+    "text_fully_shown": true,
+    "truncated": false,
+    "goal_type": "complete",
+    "view_focus": "closed_candidate",
+    "source": {
+      "label": "Projected from session_event_projection",
+      "ground_truth": false
+    }
+  },
+  "proof_status": {
+    "status": "candidate_closed",
+    "remaining_goals": 0,
+    "remaining_goals_known": true,
+    "goal_type": "complete",
+    "view_focus": "closed_candidate",
+    "current_layer": "unknown"
+  },
+  "candidate_moves": {
+    "moves": [
+      {
+        "category": "verify",
+        "applicability": "This tactic is already concrete for the current goal.",
+        "why_relevant": "The proof candidate is closed; run verification next."
+      }
+    ]
+  },
+  "program_frontier": {
+    "authority": "proof-state analysis",
+    "view_focus": "closed_candidate"
+  },
+  "call_site_surface": {},
+  "seq_cut_surface": {
+    "seq_candidate_id": "cp_170_b18950b94ffab69c",
+    "state": "inside_seq_scope",
+    "cut_position": {
+      "left_count": 5,
+      "right_count": 5,
+      "tactic": "seq 5 5 : (={UFCMA.bad2, UFCMA.cbad2, UFCMA.log, Mem.lc, RO.m, ROout.m})."
+    },
+    "residual_frontier": {
+      "current_layer": "unknown",
+      "view_focus": "closed_candidate",
+      "live_call_site_count": 0,
+      "goal_contains_call_site": false,
+      "latest_seq_tactic_index": 170,
+      "tactics_after_latest_seq": 26
+    }
+  },
+  "application_context": {
+    "selected_handles": [
+      {
+        "why_relevant": "The proof candidate is closed; run verification next.",
+        "confidence": "high"
+      }
+    ]
+  },
+  "facts_and_diagnostics": {
+    "facts": {
+      "unfoldable_goal_head_count": 0
+    },
+    "fact_note": "Only current-frontier facts are shown here; the full proof context artifact keeps the compiler/internal details.",
+    "notes": [
+      {
+        "message": "proof-state analysis sees no live call sites after a prior `inline *` at tactic 193. Continue at procedure/ambient layer, or undo if a call lemma is needed.",
+        "severity": "info"
+      }
+    ]
+  },
+  "inspect_lookup_handles": {
+    "effect": "All handles here are read-only manager requests; the committed EasyCrypt proof state stays unchanged.",
+    "manager_note": "Some requests may ask EasyCrypt or name resolution; wait for the manager result before choosing the next proof intent.",
+    "ask_manager_for": [
+      {
+        "intent": "inspect_context",
+        "payload": {
+          "topic": "verify"
+        },
+        "use_when": "The proof candidate is closed; run verification next.",
+        "returns": "manager-provided read-only context for this proof route"
+      },
+      {
+        "intent": "inspect_context",
+        "payload": {
+          "topic": "goal_info"
+        },
+        "use_when": "Need parsed goal shape, resolved names, or KB pattern hints.",
+        "returns": "parsed goal structure and names"
+      }
+    ]
+  },
+  "structural_checkpoints": {
+    "items": [
+      {
+        "checkpoint_id": "cp_196_b18950b94ffab69c",
+        "semantic_id": "before_branch_work",
+        "semantic_ids": [
+          "before_branch_work"
+        ],
+        "label": "Before latest branch-local tactic #196",
+        "committed_step_index": 196,
+        "committed_tactic": "qed.",
+        "restored_proof_layer": "seq_branch",
+        "restored_affordances": {
+          "seq_cut": "committed",
+          "earlier_branch_work": "preserved"
+        },
+        "undo_scope": "branch_local",
+        "why_checkpoint": "latest branch-local step inside the current seq scope",
+        "effect_if_selected": "Undo committed tactic #196 and every committed tactic after it in this node.",
+        "submit": {
+          "intent": "undo_to_checkpoint",
+          "payload": {
+            "checkpoint_id": "cp_196_b18950b94ffab69c"
+          }
+        }
+      },
+      {
+        "checkpoint_id": "cp_193_b18950b94ffab69c",
+        "semantic_id": "before_call_obligation_work",
+        "semantic_ids": [
+          "before_call_obligation_work",
+          "last_call_site_boundary"
+        ],
+        "label": "Before inline expansion #193",
+        "committed_step_index": 193,
+        "committed_tactic": "by inline *; auto => />; smt(drop_nth head_cons drop_drop size_drop size_eq0 get_setE).",
+        "restored_proof_layer": "pre_inline_frontier",
+        "restored_affordances": {
+          "call_site_handles": "as_before_inline"
+        },
+        "undo_scope": "call_site_boundary",
+        "why_checkpoint": "inline boundary; selecting it restores the proof state before this expansion",
+        "effect_if_selected": "Undo committed tactic #193 and every committed tactic after it in this node.",
+        "submit": {
+          "intent": "undo_to_checkpoint",
+          "payload": {
+            "checkpoint_id": "cp_193_b18950b94ffab69c"
+          }
+        }
+      },
+      {
+        "checkpoint_id": "cp_171_b18950b94ffab69c",
+        "semantic_id": "after_seq_opened",
+        "semantic_ids": [
+          "after_seq_opened",
+          "before_branch_work"
+        ],
+        "label": "After seq opened / before branch work #171",
+        "committed_step_index": 171,
+        "committed_tactic": "sim.",
+        "restored_proof_layer": "seq_obligations_opened",
+        "restored_affordances": {
+          "seq_cut": "committed",
+          "branch_work": "not_committed"
+        },
+        "undo_scope": "branch_local",
+        "why_checkpoint": "seq-local branch boundary; selecting it keeps the seq cut and removes branch-local work after it",
+        "effect_if_selected": "Undo committed tactic #171 and every committed tactic after it in this node.",
+        "submit": {
+          "intent": "undo_to_checkpoint",
+          "payload": {
+            "checkpoint_id": "cp_171_b18950b94ffab69c"
+          }
+        }
+      },
+      {
+        "checkpoint_id": "cp_29_b18950b94ffab69c",
+        "semantic_id": "after_call_opened",
+        "semantic_ids": [
+          "after_call_opened"
+        ],
+        "label": "After call opened / before obligation work #29",
+        "committed_step_index": 29,
+        "committed_tactic": "proc.",
+        "restored_proof_layer": "call_obligations_opened",
+        "restored_affordances": {
+          "call_route": "committed",
+          "call_obligation_work": "not_committed"
+        },
+        "undo_scope": "call_local",
+        "why_checkpoint": "call-local boundary; selecting it keeps the call tactic and removes work committed after the call opened",
+        "effect_if_selected": "Undo committed tactic #29 and every committed tactic after it in this node.",
+        "submit": {
+          "intent": "undo_to_checkpoint",
+          "payload": {
+            "checkpoint_id": "cp_29_b18950b94ffab69c"
+          }
+        }
+      },
+      {
+        "checkpoint_id": "cp_28_b18950b94ffab69c",
+        "semantic_id": "before_call_route",
+        "semantic_ids": [
+          "before_call_route"
+        ],
+        "label": "Before committed tactic #28",
+        "committed_step_index": 28,
+        "committed_tactic": "call (iter_perm Orcl _).",
+        "restored_proof_layer": "pre_call_route",
+        "restored_affordances": {
+          "call_route": "not_committed",
+          "call_obligation_work": "not_committed"
+        },
+        "undo_scope": "call_local",
+        "why_checkpoint": "named call route point",
+        "effect_if_selected": "Undo committed tactic #28 and every committed tactic after it in this node.",
+        "submit": {
+          "intent": "undo_to_checkpoint",
+          "payload": {
+            "checkpoint_id": "cp_28_b18950b94ffab69c"
+          }
+        }
+      },
+      {
+        "checkpoint_id": "cp_170_b18950b94ffab69c",
+        "semantic_id": "before_seq_cut",
+        "semantic_ids": [
+          "before_seq_cut"
+        ],
+        "label": "Before seq cut #170",
+        "committed_step_index": 170,
+        "committed_tactic": "seq 5 5 : (={UFCMA.bad2, UFCMA.cbad2, UFCMA.log, Mem.lc, RO.m, ROout.m}).",
+        "restored_proof_layer": "pre_seq_cut",
+        "restored_affordances": {
+          "seq_cut": "not_committed",
+          "call_site_state": "as_before_seq_cut"
+        },
+        "undo_scope": "seq_local",
+        "why_checkpoint": "seq-cut boundary; selecting it restores the proof state before this cut was committed",
+        "effect_if_selected": "Undo committed tactic #170 and every committed tactic after it in this node.",
+        "submit": {
+          "intent": "undo_to_checkpoint",
+          "payload": {
+            "checkpoint_id": "cp_170_b18950b94ffab69c"
+          }
+        }
+      }
+    ]
+  }
+}

@@ -1,0 +1,238 @@
+{
+  "last_result": {
+    "intent": "inspect_context",
+    "payload": {
+      "topic": "lemma_index"
+    },
+    "effect": "This asks the manager for information only; it does not change the EasyCrypt proof state.",
+    "result": "The manager returned read-only context for the current goal.",
+    "content": {
+      "preview": "=== chacha_poly.ec: 51 lemma statement(s) (signatures only \u2014 proofs are NOT shown) === These are every lemma declared in the current file. Use them to plan which lemmas you can apply/rewrite/bridge with; `lookup_symbol` for the exact declaration of any one before using it. L14 [lemma, top_level] map2_zip: lemma map2_zip (f:'a -> 'b -> 'c) s t : map2 f s t = map (fun (p:'a * 'b) => f p.`1 p.`2) (zip s t). L21 [lemma, top_level] size_map2: lemma size_map2 (f:'a -> 'b -> 'c) (l1:'a list) l2 : size (map2 f l1 l2) = min (size l1) (size l2). L27 [lemma, top_level] nth_map2: lemma nth_map2 dfla dflb dflc (f:'a -> 'b -> 'c) (l1:'a list) l2 i: 0 <= i < min (size l1) (size l2) => nth dflc (map2 f l1 l2) i = f (nth dfla l1 i) (nth dflb l2 i). L54 [lemma, top_level] xorK1: lemma xorK1 b1 b2 : b1 = b1 +^ b2 +^ b2. L134 [lemma, top_level] dblock_ll: lemma dblock_ll : is_lossless dblock. L140 [lemma, top_level] dblock_uni: lemma dblock_uni: is_uniform dblock. L146 [lemma, top_level] dblock_fu: lemma dblock_fu: is_full dblock. L152 [lemma, top_level] dblock_funi: lemma dblock_funi: is_funiform dblock. L163 [lemma, top_level] nth_xor: lemma nth_xor x y i : 0 <= i < block_size => nth Byte.zero (b..."
+    }
+  },
+  "current_goal": {
+    "lines": [
+      "Current goal",
+      "",
+      "Type variables: <none>",
+      "",
+      "&m: {}",
+      "------------------------------------------------------------------------",
+      "Pr[CPA_game(CCA_CPA_Adv(A), RealOrcls(StLSke(St))).main() @ &m : res] +",
+      "Pr[UFCMA(A, St).main() @ &m :",
+      "   exists (c : ciphertext),",
+      "     (c \\in Mem.lc) /\\",
+      "     dec StLSke.gs Mem.k c <> None<:nonce * associated_data * bytes>] <=",
+      "Pr[CPA_game(CCA_CPA_Adv(A), RealOrcls(GenChaChaPoly(CCRO(FinRO)))).main",
+      "   () @ &m : res] +",
+      "Pr[UFCMA_poly(A, FinRO).main() @ &m : res]"
+    ],
+    "text_fully_shown": true,
+    "truncated": false,
+    "goal_type": "probability",
+    "view_focus": "probability",
+    "source": {
+      "label": "Parsed from EasyCrypt pretty goal text",
+      "ground_truth": false
+    }
+  },
+  "proof_status": {
+    "status": "open",
+    "remaining_goals": 1,
+    "remaining_goals_known": true,
+    "goal_type": "probability",
+    "view_focus": "probability",
+    "current_layer": "pr"
+  },
+  "candidate_moves": {
+    "moves": [
+      {
+        "category": "strategy",
+        "tactic_shape": "Probabilistic VC plan: Pr loss-accounting via have-chain, rewrite Pr/mu rules, real-order smt",
+        "applicability": "Use this as route-selection context; it is not a tactic to run as-is.",
+        "source": "proof-state analysis"
+      },
+      {
+        "category": "strategy",
+        "tactic_shape": "rewrite step1.",
+        "applicability": "Use this as route-selection context; it is not a tactic to run as-is.",
+        "source": "proof-state analysis"
+      },
+      {
+        "category": "strategy",
+        "tactic_shape": "have -> : Pr[CPA_game(CCA_CPA_Adv(A), RealOrcls(GenChaChaPoly(CCRO(FinRO)))).main\n   () @ &m : res] = Pr[MainD(G4(A), FinRO).distinguish() @ &m : res] by byequiv => //; proc; inline *; sim.",
+        "applicability": "Use this as route-selection context; it is not a tactic to run as-is.",
+        "source": "proof-state analysis"
+      }
+    ]
+  },
+  "program_frontier": {
+    "authority": "proof-state analysis",
+    "view_focus": "probability",
+    "focus": {
+      "pr_rewrite_candidates": 5,
+      "has_pr_normal_form": true,
+      "has_pr_arithmetic_plan": true,
+      "has_pr_obligation_plan": true,
+      "native_ast_search_hits": 0
+    }
+  },
+  "call_site_surface": {},
+  "pure_tail_surface": {
+    "state": "ambient_pure_tail",
+    "goal_operators": [
+      "Pr",
+      "CPA_game",
+      "CCA_CPA_Adv",
+      "RealOrcls",
+      "StLSke",
+      "St",
+      "main",
+      "UFCMA"
+    ],
+    "obligation_families": [
+      {
+        "family": "sampling_bijection",
+        "evidence": [
+          "add/sub expression remains visible"
+        ],
+        "effect": "The remaining pure goal may include invertibility or lossless side conditions from an earlier sampling alignment.",
+        "limitations": "No distribution lemma is selected by this surface."
+      }
+    ],
+    "existential_witness_surface": {
+      "binders": [
+        {
+          "name": "c",
+          "type": "ciphertext"
+        }
+      ],
+      "candidate_sources": [
+        {
+          "source": "membership_member",
+          "term": "c",
+          "why_visible": "A visible membership fact binds this member term."
+        }
+      ],
+      "effect": "Lists verifier-visible term sources that can instantiate local existentials in the pure tail.",
+      "limitations": [
+        "No witness is selected by this surface.",
+        "Candidate terms may still require local equality or membership facts."
+      ]
+    },
+    "effect": "Summarizes verifier-visible pure-goal structure after program frontier actions have been discharged or hidden by local proof steps.",
+    "limitations": [
+      "This panel records syntactic and proof-state facts from the current view.",
+      "It does not choose a tactic or instantiate a lemma."
+    ]
+  },
+  "application_context": {},
+  "facts_and_diagnostics": {
+    "facts": {
+      "has_pr_normal_form": true,
+      "has_pr_arithmetic_plan": true,
+      "has_pr_obligation_plan": true,
+      "unfoldable_goal_heads": [
+        {
+          "name": "dec",
+          "unqualified_name": "dec",
+          "declaration_kind": "op",
+          "unfold_tactic": "rewrite /dec.",
+          "smt_argument_role": "not_a_lemma_hint"
+        }
+      ],
+      "unfoldable_goal_head_count": 1
+    },
+    "fact_note": "Only current-frontier facts are shown here; the full proof context artifact keeps the compiler/internal details.",
+    "notes": [
+      {
+        "message": "Some imported or cross-scope handles may need lookup if that route is being tested; use lookup_candidates for the concrete symbol instead of treating the whole list as a to-do queue.",
+        "severity": "info"
+      }
+    ]
+  },
+  "recovery_diagnosis_surface": {
+    "kind": "recovery_diagnosis_surface",
+    "recovery_class": "local_pure_surgery_available",
+    "confidence": "medium",
+    "checkpoint_policy": "current_state_local_work_visible",
+    "evidence": [
+      "pure_tail_surface is visible for the current goal",
+      "current proof state has no program-frontier work before the logical residual"
+    ],
+    "available_local_work": [
+      {
+        "kind": "pure_tail_obligation_families",
+        "items": [
+          "sampling_bijection"
+        ]
+      },
+      {
+        "kind": "existential_witness_sources",
+        "items": [
+          "membership_member"
+        ]
+      }
+    ],
+    "related_surfaces": [
+      "pure_tail_surface"
+    ],
+    "limitations": [
+      "does not select a destructor, witness, rewrite, or SMT lemma",
+      "reported checkpoints are recovery references, not a default route"
+    ]
+  },
+  "inspect_lookup_handles": {
+    "effect": "All handles here are read-only manager requests; the committed EasyCrypt proof state stays unchanged.",
+    "manager_note": "Some requests may ask EasyCrypt or name resolution; wait for the manager result before choosing the next proof intent.",
+    "ask_manager_for": [
+      {
+        "intent": "inspect_context",
+        "payload": {
+          "topic": "goal_info"
+        },
+        "use_when": "No fresh recommendation is available; parse the current goal.",
+        "returns": "manager-provided read-only context for this proof route"
+      },
+      {
+        "intent": "inspect_context",
+        "payload": {
+          "topic": "pr_bridge_routes"
+        },
+        "use_when": "Current Pr equality may need a manager-verified bridge route (game-hop or scheme/endpoint normalization) before direct byequiv/proc lowering.",
+        "returns": "daemon-verified, committable Pr bridge routes with manager-owned intent payloads"
+      },
+      {
+        "intent": "inspect_context",
+        "payload": {
+          "topic": "equiv_bridge_lemmas"
+        },
+        "use_when": "Need pRHL/procedure-equivalence bridge lemma names or context after checking pr_bridge_routes.",
+        "returns": "context-only equiv bridge lemma candidates (names to look up/apply); not a verified Pr route"
+      },
+      {
+        "intent": "inspect_context",
+        "payload": {
+          "topic": "lemma_hints"
+        },
+        "use_when": "Need local lemma hints before choosing a Pr-level proof route.",
+        "returns": "nearby lemma hints and proof-route context"
+      },
+      {
+        "intent": "inspect_context",
+        "payload": {
+          "topic": "tactic_forms",
+          "name": "while"
+        },
+        "use_when": "Need exact byphoare/phoare-loop tactic syntax before probing the probability route.",
+        "returns": "valid `while` forms and common traps"
+      }
+    ],
+    "lookup_candidates": [
+      {
+        "symbol": "step1",
+        "use_when": "Resolve exact signature for `step1` only when this handle route is being tested."
+      }
+    ]
+  }
+}

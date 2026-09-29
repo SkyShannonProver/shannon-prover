@@ -1,0 +1,26 @@
+{
+  "turn": 21,
+  "handled_intent": {
+    "intent": "undo_to_checkpoint",
+    "payload": {
+      "checkpoint_id": "cp_2_678ca75386b57599",
+      "confirm": true,
+      "confirmation_id": "c283d55bd4cf6507"
+    }
+  },
+  "ok": true,
+  "manager_note": "Confirmed checkpoint rewind was handled by the manager; the latest view is authoritative.",
+  "manager_actions": [
+    {
+      "action": "checkpoint rewind",
+      "outcome": "The manager rewound this branch to the selected checkpoint.",
+      "timing": "1.7 s"
+    },
+    {
+      "action": "replay prefix step 1",
+      "outcome": "The manager completed this proof-level request.",
+      "timing": "1.2 s"
+    }
+  ],
+  "view_refreshed": true
+}

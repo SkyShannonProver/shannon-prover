@@ -1,0 +1,19 @@
+{
+  "turn": 13,
+  "handled_intent": {
+    "intent": "commit_tactic",
+    "payload": {
+      "tactic": "move=> &1 &2 [#] hns2 hns12 hns22 hns1 hns11 hns21 hf2 hf1 hb hc hl hlc hr ho hsz."
+    }
+  },
+  "ok": true,
+  "manager_note": "Committed tactic accepted; the EasyCrypt proof state changed.",
+  "manager_actions": [
+    {
+      "action": "tactic commit",
+      "outcome": "EasyCrypt accepted the committed tactic.",
+      "timing": "344 ms"
+    }
+  ],
+  "view_refreshed": true
+}

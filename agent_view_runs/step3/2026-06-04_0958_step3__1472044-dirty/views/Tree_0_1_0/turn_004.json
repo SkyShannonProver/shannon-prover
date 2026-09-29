@@ -1,0 +1,599 @@
+{
+  "last_result": {
+    "intent": "commit_tactic",
+    "payload": {
+      "tactic": "skip."
+    },
+    "manager_action": "commit_tactic",
+    "result": "EasyCrypt accepted the committed tactic.",
+    "effect": "EasyCrypt accepted a proof-state change; the refreshed view is based on the new committed state.",
+    "proof_state": "The committed EasyCrypt proof state changed.",
+    "tactic": "skip."
+  },
+  "current_goal": {
+    "lines": [
+      "Current goal (remaining: 5)",
+      "",
+      "Type variables: <none>",
+      "",
+      "&m: {}",
+      "n0: nonce",
+      "mr0: (nonce * C.counter, poly_in) fmap",
+      "ms0: (nonce * C.counter, poly_out) fmap",
+      "------------------------------------------------------------------------",
+      "forall &1 &2,",
+      "  (n0 = n{1} /\\ mr0 = SplitC2.I1.RO.m{1} /\\ ms0 = SplitC2.I2.RO.m{1}) /\\",
+      "  nap{2} = p0{2} /\\",
+      "  (n{2}, a{2}, p1{2}) = nap{2} /\\",
+      "  p1{1} = p0{1} /\\",
+      "  k{1} = Mem.k{1} /\\",
+      "  nap{1} = p1{1} /\\",
+      "  (n{1}, a{1}, p2{1}) = nap{1} /\\",
+      "  p0{2} = p{2} /\\",
+      "  p0{1} = p{1} /\\",
+      "  (c{2} = witness /\\",
+      "   c{1} = witness /\\",
+      "   p{1} = p{2} /\\",
+      "   inv_cpa SplitC2.I1.RO.m{1} SplitC2.I2.RO.m{1} Mem.log{1} Mem.log{2} Mem.",
+      "     lc{1} Mem.lc{2} BNR.lenc{1} BNR.lenc{2} BNR.ndec{1} BNR.ndec{2} /\\",
+      "   forall (n1 : nonce) (c3 : C.counter),",
+      "     (n1, c3) \\in SplitD.ROF.RO.m{1} => n1 \\in BNR.lenc{1}) /\\",
+      "  check_plaintext BNR.lenc{1} p{1} =>",
+      "  ((n{2}, p1{2}) = ((k{1}, n{1}, p2{1}).`2, (k{1}, n{1}, p2{1}).`3) /\\",
+      "   (n{2}, p1{2}).`1 = n0 /\\",
+      "   size (k{1}, n{1}, p2{1}).`3 <= max_cipher_size /\\",
+      "   ! (n0 \\in BNR.lenc{1}) /\\",
+      "   (forall (n1 : nonce) (c3 : C.counter),",
+      "      (n1, c3) \\in ROF.m{1} => n1 \\in BNR.lenc{1}) /\\",
+      "   mr0 = ROin.m{1} /\\ ms0 = ROout.m{1}) &&",
+      "  forall (result_L result_R : bytes) (m_L : (nonce * C.counter,",
+      "    poly_in) fmap) (m_L0 : (nonce * C.counter, poly_out) fmap)",
+      "    (m_L1 : (nonce * C.counter, block) fmap),",
+      "    (result_L = result_R /\\",
+      "     size result_L <= max_cipher_size /\\",
+      "     mr0 = m_L /\\",
+      "     ms0 = m_L0 /\\",
+      "     forall (n1 : nonce) (c3 : C.counter),",
+      "       (n1, c3) \\in m_L1 => n1 \\in n0 :: BNR.lenc{1}) =>",
+      "    result_L = result_R /\\",
+      "    n{1} = n{2} /\\",
+      "    a{1} = a{2} /\\",
+      "    p0{1} = p0{2} /\\",
+      "    n{1} = p{1}.`1 /\\",
+      "    ! (p{1}.`1 \\in BNR.lenc{1}) /\\",
+      "    inv_cpa m_L m_L0 Mem.log{1} Mem.log{2} Mem.lc{1} Mem.lc{2} BNR.lenc{1}",
+      "      BNR.lenc{2} BNR.ndec{1} BNR.ndec{2} /\\",
+      "    forall (n0_0 : nonce) (c3 : C.counter),",
+      "      (n0_0, c3) \\in m_L1 => n0_0 \\in p{1}.`1 :: BNR.lenc{1}",
+      "[374|check]>"
+    ],
+    "text_fully_shown": true,
+    "truncated": false,
+    "goal_type": "ambient",
+    "view_focus": "relational_program",
+    "source": {
+      "label": "Parsed from EasyCrypt pretty goal text",
+      "ground_truth": false
+    }
+  },
+  "proof_status": {
+    "status": "open",
+    "remaining_goals": 5,
+    "remaining_goals_known": true,
+    "goal_type": "ambient",
+    "view_focus": "relational_program",
+    "current_layer": "ambient_logic"
+  },
+  "candidate_moves": {
+    "moves": [
+      {
+        "title": "Read-only tactic probe",
+        "category": "probe",
+        "tactic": "move=> &1 &2 H.",
+        "applicability": "This tactic-shaped option should be checked with a read-only probe before committing it.",
+        "effect": "This is a read-only probe; it asks EasyCrypt what would happen without changing the committed proof state.",
+        "source": "proof-state analysis",
+        "derivation": "read-only probe surfaced from proof-state analysis",
+        "verified": "read_only_probe_suggestion",
+        "guarantee": "read-only probe shape; proof state unchanged; probe then decide; reversible"
+      },
+      {
+        "title": "Read-only tactic probe",
+        "category": "probe",
+        "tactic": "rewrite /inv_cpa.",
+        "applicability": "This tactic-shaped option should be checked with a read-only probe before committing it.",
+        "effect": "This is a read-only probe; it asks EasyCrypt what would happen without changing the committed proof state.",
+        "source": "proof-state analysis",
+        "derivation": "read-only probe surfaced from proof-state analysis",
+        "verified": "read_only_probe_suggestion",
+        "guarantee": "read-only probe shape; proof state unchanged; probe then decide; reversible"
+      },
+      {
+        "title": "Residual closing tactic",
+        "category": "probe",
+        "tactic": "auto => />.",
+        "applicability": "This tactic-shaped option should be checked with a read-only probe before committing it.",
+        "effect": "This is a read-only probe; it asks EasyCrypt what would happen without changing the committed proof state.",
+        "source": "proof-state analysis",
+        "derivation": "read-only probe surfaced from proof-state analysis",
+        "verified": "read_only_probe_suggestion",
+        "guarantee": "read-only probe shape; proof state unchanged; probe then decide; reversible"
+      },
+      {
+        "title": "Read-only tactic probe",
+        "category": "probe",
+        "tactic": "smt().",
+        "applicability": "This tactic-shaped option should be checked with a read-only probe before committing it.",
+        "effect": "This is a read-only probe; it asks EasyCrypt what would happen without changing the committed proof state.",
+        "source": "proof-state analysis",
+        "derivation": "read-only probe surfaced from proof-state analysis",
+        "verified": "read_only_probe_suggestion",
+        "guarantee": "read-only probe shape; proof state unchanged; probe then decide; reversible"
+      }
+    ]
+  },
+  "program_frontier": {
+    "authority": "proof-state analysis",
+    "view_focus": "relational_program",
+    "focus": {
+      "live_call_sites": 0,
+      "frontier_call_sites": 0,
+      "live_callable_lemmas": 0,
+      "callable_now_lemmas": 0,
+      "oracle_obligation_handles": 0,
+      "has_invariant_skeleton": false
+    }
+  },
+  "call_site_surface": {},
+  "seq_cut_surface": {
+    "seq_candidate_id": "cp_11_64827a29be95ae8c",
+    "state": "inside_seq_scope",
+    "cut_position": {
+      "left_count": 1,
+      "right_count": 1,
+      "tactic": "seq 1 1 : (c2{1} = c1{2} /\\ n{1} = n{2} /\\ a{1} = a{2} /\\ p0{1} = p0{2} /\\ n{1} = p{1}.`1 /\\ ! (p{1}.`1 \\in BNR.lenc{1}) /\\ inv_cpa SplitC2.I1.RO.m{1} SplitC2.I2.RO.m{1} Mem.log{1} Mem.log{2} Mem.lc{1} Mem.lc{2} BNR.lenc{1} BNR.lenc{2} BNR.ndec{1} BNR.ndec{2} /\\ (forall (n0 : nonce) (c3 : C.counter), (n0, c3) \\in SplitD.ROF.RO.m{1} => n0 \\in p{1}.`1 :: BNR.lenc{1}))."
+    },
+    "obligation_count": 5,
+    "obligation_kinds": [
+      "relational",
+      "quantified",
+      "probability_or_loss"
+    ],
+    "branch_focus": {
+      "remaining_goals": 5,
+      "latest_event_head": "skip"
+    },
+    "residual_frontier": {
+      "current_layer": "ambient_logic",
+      "view_focus": "relational_program",
+      "live_call_site_count": 0,
+      "goal_contains_call_site": false,
+      "latest_seq_tactic_index": 11,
+      "tactics_after_latest_seq": 4
+    }
+  },
+  "pure_tail_surface": {
+    "state": "quantified_ambient_tail",
+    "obligation_families": [
+      {
+        "family": "constructor_projection",
+        "selectors": [
+          ".`1",
+          ".`2",
+          ".`3"
+        ],
+        "tuple_equality_count": 1,
+        "effect": "The pure goal exposes tuple/record projections or constructor equalities that can connect program variables to map/list keys.",
+        "limitations": "Projection equalities are reported only when visible in the current text."
+      },
+      {
+        "family": "map_membership_preservation",
+        "cons_heads": [
+          "n0",
+          "p{1}.`1"
+        ],
+        "effect": "The remaining membership obligation relates an updated map key to a list or set membership fact.",
+        "limitations": "The surface reports the alignment facts currently visible; it does not synthesize missing equalities."
+      },
+      {
+        "family": "quantified_residual_logic",
+        "evidence": [
+          "universal quantifier visible",
+          "implication residual visible"
+        ],
+        "effect": "The current proof point is dominated by local logical obligations rather than program-frontier movement.",
+        "limitations": "Quantifier names are not normalized across EasyCrypt pretty-printer variants."
+      }
+    ],
+    "ambient_memory_translation": {
+      "state": "decorated_memory_terms_visible",
+      "visible_decorations": [
+        "{1}",
+        "{2}"
+      ],
+      "translation_facts": [
+        "Decorations identify the program memory from which a term is read.",
+        "Pretty-printer memory names and introduced proof-context names can differ."
+      ],
+      "effect": "Local claims in the pure tail depend on the currently introduced memory binders as well as displayed term decorations."
+    },
+    "membership_decomposition_surface": {
+      "source_shapes": [
+        "cons_membership"
+      ],
+      "membership_hypotheses": [
+        "(n1, c3) \\in SplitD.ROF.RO.m{1} => n1 \\in BNR.lenc{1}) /\\ check_plaintext BNR.lenc{1} p{1} =>",
+        "! (n0 \\in BNR.lenc{1}) /\\ (forall (n1 : nonce) (c3 : C.counter),",
+        "(n1, c3) \\in ROF.m{1} => n1 \\in BNR.lenc{1}) /\\ mr0 = ROin.m{1} /\\ ms0 = ROout.m{1}) &&",
+        "(n1, c3) \\in m_L1 => n1 \\in n0 :: BNR.lenc{1}) => result_L = result_R /\\",
+        "! (p{1}.`1 \\in BNR.lenc{1}) /\\ inv_cpa m_L m_L0 Mem.log{1} Mem.log{2} Mem.lc{1} Mem.lc{2} BNR.lenc{1} BNR.lenc{2} BNR.ndec{1} BNR.ndec{2} /\\"
+      ],
+      "visible_destructors": [
+        {
+          "source_shape": "cons_membership",
+          "source_count": 2,
+          "effect": "Splits list membership into head and tail cases.",
+          "limitations": "The surface does not decide which case applies."
+        }
+      ],
+      "effect": "Summarizes list/map/filter membership sources whose local case facts are visible in the current pure tail.",
+      "limitations": [
+        "No destructor tactic is chosen by this surface.",
+        "The panel does not assume which membership branch is true."
+      ]
+    },
+    "effect": "Summarizes verifier-visible pure-goal structure after program frontier actions have been discharged or hidden by local proof steps.",
+    "limitations": [
+      "This panel records syntactic and proof-state facts from the current view.",
+      "It does not choose a tactic or instantiate a lemma."
+    ]
+  },
+  "application_context": {},
+  "facts_and_diagnostics": {
+    "facts": {
+      "has_invariant_skeleton": false,
+      "unfoldable_goal_heads": [
+        {
+          "name": "inv_cpa",
+          "unqualified_name": "inv_cpa",
+          "declaration_kind": "op",
+          "unfold_tactic": "rewrite /inv_cpa.",
+          "smt_argument_role": "not_a_lemma_hint"
+        },
+        {
+          "name": "check_plaintext",
+          "unqualified_name": "check_plaintext",
+          "declaration_kind": "op",
+          "unfold_tactic": "rewrite /check_plaintext.",
+          "smt_argument_role": "not_a_lemma_hint"
+        },
+        {
+          "name": "max_cipher_size",
+          "unqualified_name": "max_cipher_size",
+          "declaration_kind": "op",
+          "unfold_tactic": "rewrite /max_cipher_size.",
+          "smt_argument_role": "not_a_lemma_hint"
+        }
+      ],
+      "unfoldable_goal_head_count": 3
+    },
+    "fact_note": "Only current-frontier facts are shown here; the full proof context artifact keeps the compiler/internal details.",
+    "notes": [
+      {
+        "message": "Current residual goal mentions unfoldable definition(s): inv_cpa, check_plaintext, max_cipher_size. Use `rewrite /NAME` before SMT when those predicates block simplification; these names are not smt(...) lemma hints.",
+        "severity": "info"
+      },
+      {
+        "message": "proof-state analysis sees no live call sites after a prior `inline *` at tactic 3. Continue at procedure/ambient layer, or undo if a call lemma is needed.",
+        "severity": "info"
+      }
+    ]
+  },
+  "recovery_diagnosis_surface": {
+    "kind": "recovery_diagnosis_surface",
+    "recovery_class": "local_pure_surgery_available",
+    "confidence": "medium",
+    "checkpoint_policy": "current_state_local_work_visible",
+    "evidence": [
+      "pure_tail_surface is visible for the current goal",
+      "current proof state has no program-frontier work before the logical residual"
+    ],
+    "available_local_work": [
+      {
+        "kind": "pure_tail_obligation_families",
+        "items": [
+          "constructor_projection",
+          "map_membership_preservation",
+          "quantified_residual_logic"
+        ]
+      },
+      {
+        "kind": "membership_decomposition_sources",
+        "items": [
+          "cons_membership"
+        ]
+      }
+    ],
+    "related_checkpoints": [
+      {
+        "checkpoint_id": "cp_11_64827a29be95ae8c",
+        "semantic_id": "before_seq_cut",
+        "semantic_ids": [
+          "before_seq_cut"
+        ],
+        "label": "Before seq cut #11",
+        "committed_step_index": 11,
+        "undo_scope": "seq_local",
+        "restored_proof_layer": "pre_seq_cut",
+        "restored_affordances": {
+          "seq_cut": "not_committed",
+          "call_site_state": "as_before_seq_cut"
+        },
+        "why_checkpoint": "seq-cut boundary; selecting it restores the proof state before this cut was committed"
+      }
+    ],
+    "related_surfaces": [
+      "seq_cut_surface",
+      "pure_tail_surface",
+      "structural_checkpoints"
+    ],
+    "limitations": [
+      "does not select a destructor, witness, rewrite, or SMT lemma",
+      "reported checkpoints are recovery references, not a default route"
+    ]
+  },
+  "inspect_lookup_handles": {
+    "effect": "All handles here are read-only manager requests; the committed EasyCrypt proof state stays unchanged.",
+    "manager_note": "Some requests may ask EasyCrypt or name resolution; wait for the manager result before choosing the next proof intent.",
+    "ask_manager_for": [
+      {
+        "intent": "inspect_context",
+        "payload": {
+          "topic": "goal_info"
+        },
+        "use_when": "No fresh recommendation is available; parse the current goal.",
+        "returns": "manager-provided read-only context for this proof route"
+      },
+      {
+        "intent": "inspect_context",
+        "payload": {
+          "topic": "call_site_options"
+        },
+        "use_when": "The visible frontier contains call sites or named equiv handles may apply.",
+        "returns": "call-ready/oracle-equiv context for the current frontier, plus the BODY of the procedure(s) called here (functor aliases resolved) so you can see which oracles/state your call invariant must preserve"
+      },
+      {
+        "intent": "inspect_context",
+        "payload": {
+          "topic": "call_invariant_skeleton"
+        },
+        "use_when": "You are at an abstract-adversary `call (_: <inv>)` and want the mechanical glob frame of the invariant before adding your own semantic conjuncts.",
+        "returns": "the mechanical `={glob ...}` frame of the call invariant (shared abstract oracle modules, daemon-confirmed to apply and spawn the obligations). When a named coupling predicate fits the in-scope state it ALSO surfaces a field-threaded carrier (`inv \u2026 s1{1} s2{2}`), plus candidate inductive side-conditions (`dom \u2286 used-set`) for any random oracle the call queries. All revisable starting points \u2014 confirm the coupling and add/adjust the semantic conjuncts (key/state correspondences, set-membership)."
+      },
+      {
+        "intent": "inspect_context",
+        "payload": {
+          "topic": "call_subgoals",
+          "invariant": "<the EasyCrypt invariant expression inside call (_: ...)>"
+        },
+        "use_when": "You are considering `call (_: Inv)` and already have a concrete invariant expression you want to test first.",
+        "returns": "a read-only preview of the obligations caused by that candidate invariant, including pre/init, call-preservation, oracle-side, postcondition, missing-fact signals, and extra conjuncts that may create avoidable obligations"
+      },
+      {
+        "intent": "inspect_context",
+        "payload": {
+          "topic": "tactic_forms",
+          "name": "call"
+        },
+        "use_when": "A tactic has multiple EasyCrypt argument forms.",
+        "returns": "valid tactic forms and common traps"
+      },
+      {
+        "intent": "inspect_context",
+        "payload": {
+          "topic": "tactic_forms",
+          "name": "sp"
+        },
+        "use_when": "The frontier may need indexed `sp i j` before branch or call tactics.",
+        "returns": "valid `sp` forms and branch-frontier traps"
+      },
+      {
+        "intent": "inspect_context",
+        "payload": {
+          "topic": "tactic_forms",
+          "name": "wp"
+        },
+        "use_when": "Mid-proof pRHL suffix surgery may need indexed `wp`.",
+        "returns": "valid indexed `wp` forms and suffix-alignment traps"
+      },
+      {
+        "intent": "inspect_context",
+        "payload": {
+          "topic": "tactic_forms",
+          "name": "swap"
+        },
+        "use_when": "Statement order may need a small `swap` before `sp`, `wp`, or `sim`.",
+        "returns": "valid `swap` forms and statement-order traps"
+      },
+      {
+        "intent": "inspect_context",
+        "payload": {
+          "topic": "tactic_forms",
+          "name": "rcondt"
+        },
+        "use_when": "A guarded branch may need `rcondt` after a case split or invariant fact.",
+        "returns": "valid `rcondt` forms and guard-obligation traps"
+      },
+      {
+        "intent": "inspect_context",
+        "payload": {
+          "topic": "tactic_forms",
+          "name": "rcondf"
+        },
+        "use_when": "A guarded branch may need `rcondf` after a case split or invariant fact.",
+        "returns": "valid `rcondf` forms and guard-obligation traps"
+      },
+      {
+        "intent": "inspect_context",
+        "payload": {
+          "topic": "tactic_forms",
+          "name": "conseq"
+        },
+        "use_when": "A suffix proof may need `conseq` to weaken to a smaller relation before `sim`.",
+        "returns": "valid `conseq` forms and pRHL memory-annotation traps"
+      },
+      {
+        "intent": "inspect_context",
+        "payload": {
+          "topic": "tactic_forms",
+          "name": "rnd"
+        },
+        "use_when": "One side may have an extra sample or need an explicit sample coupling.",
+        "returns": "valid `rnd` forms, including one-sided sampling"
+      },
+      {
+        "intent": "inspect_context",
+        "payload": {
+          "topic": "tactic_forms",
+          "name": "eager"
+        },
+        "use_when": "A known statement-order mismatch may need an eager/lazy transformation.",
+        "returns": "valid `eager` forms and when to prefer smaller surgery"
+      },
+      {
+        "intent": "inspect_context",
+        "payload": {
+          "topic": "align"
+        },
+        "use_when": "LHS/RHS statement order may need swap/alignment context.",
+        "returns": "swap/alignment context for the visible pRHL frontier"
+      }
+    ]
+  },
+  "structural_checkpoints": {
+    "items": [
+      {
+        "checkpoint_id": "cp_15_64827a29be95ae8c",
+        "semantic_id": "before_branch_work",
+        "semantic_ids": [
+          "before_branch_work",
+          "after_call_opened"
+        ],
+        "label": "After call opened / before obligation work #15",
+        "committed_step_index": 15,
+        "committed_tactic": "skip.",
+        "restored_proof_layer": "call_obligations_opened",
+        "restored_affordances": {
+          "call_route": "committed",
+          "call_obligation_work": "not_committed"
+        },
+        "undo_scope": "call_local",
+        "why_checkpoint": "call-local boundary; selecting it keeps the call tactic and removes work committed after the call opened",
+        "effect_if_selected": "Undo committed tactic #15 and every committed tactic after it in this node.",
+        "submit": {
+          "intent": "undo_to_checkpoint",
+          "payload": {
+            "checkpoint_id": "cp_15_64827a29be95ae8c"
+          }
+        }
+      },
+      {
+        "checkpoint_id": "cp_12_64827a29be95ae8c",
+        "semantic_id": "after_seq_opened",
+        "semantic_ids": [
+          "after_seq_opened",
+          "before_branch_work",
+          "resume_start"
+        ],
+        "label": "Return to resume start",
+        "committed_step_index": 12,
+        "committed_tactic": "exists* (n{1}), (SplitC2.I1.RO.m{1}), (SplitC2.I2.RO.m{1}).",
+        "restored_proof_layer": "resume_handoff",
+        "restored_affordances": {
+          "seq_cut": "committed",
+          "branch_work": "not_committed"
+        },
+        "undo_scope": "resume_local",
+        "why_checkpoint": "resume boundary; selecting it preserves the verified replay prefix and removes tactics committed after resume",
+        "effect_if_selected": "Undo committed tactic #12 and every committed tactic after it in this node.",
+        "submit": {
+          "intent": "undo_to_checkpoint",
+          "payload": {
+            "checkpoint_id": "cp_12_64827a29be95ae8c"
+          }
+        }
+      },
+      {
+        "checkpoint_id": "cp_14_64827a29be95ae8c",
+        "semantic_id": "before_call_route",
+        "semantic_ids": [
+          "before_call_route"
+        ],
+        "label": "Before committed tactic #14",
+        "committed_step_index": 14,
+        "committed_tactic": "call (equ_cc n0 mr0 ms0).",
+        "restored_proof_layer": "pre_call_route",
+        "restored_affordances": {
+          "call_route": "not_committed",
+          "call_obligation_work": "not_committed"
+        },
+        "undo_scope": "call_local",
+        "why_checkpoint": "named call route point",
+        "effect_if_selected": "Undo committed tactic #14 and every committed tactic after it in this node.",
+        "submit": {
+          "intent": "undo_to_checkpoint",
+          "payload": {
+            "checkpoint_id": "cp_14_64827a29be95ae8c"
+          }
+        }
+      },
+      {
+        "checkpoint_id": "cp_11_64827a29be95ae8c",
+        "semantic_id": "before_seq_cut",
+        "semantic_ids": [
+          "before_seq_cut"
+        ],
+        "label": "Before seq cut #11",
+        "committed_step_index": 11,
+        "committed_tactic": "seq 1 1 : (c2{1} = c1{2} /\\ n{1} = n{2} /\\ a{1} = a{2} /\\ p0{1} = p0{2} /\\ n{1} = p{1}.`1 /\\ ! (p{1}.`1 \\in BNR.lenc{1}) /\\ inv_cpa SplitC2.I1.RO.m{1} SplitC2.I2.RO.m{1} Mem.log{1} Mem.log{2} Mem.lc{1} Mem.lc{2} BNR.lenc{1} BNR.lenc{2} BNR.ndec{1} BNR.ndec{2} /\\ (forall (n0 : nonce) (c3 : C.counter), (n0, c3) \\in SplitD.ROF.RO.m{1} => n0 \\in p{1}.`1 :: BNR.lenc{1})).",
+        "restored_proof_layer": "pre_seq_cut",
+        "restored_affordances": {
+          "seq_cut": "not_committed",
+          "call_site_state": "as_before_seq_cut"
+        },
+        "undo_scope": "seq_local",
+        "why_checkpoint": "seq-cut boundary; selecting it restores the proof state before this cut was committed",
+        "effect_if_selected": "Undo committed tactic #11 and every committed tactic after it in this node.",
+        "submit": {
+          "intent": "undo_to_checkpoint",
+          "payload": {
+            "checkpoint_id": "cp_11_64827a29be95ae8c"
+          }
+        }
+      },
+      {
+        "checkpoint_id": "cp_3_64827a29be95ae8c",
+        "semantic_id": "last_call_site_boundary",
+        "semantic_ids": [
+          "last_call_site_boundary"
+        ],
+        "label": "Before inline expansion #3",
+        "committed_step_index": 3,
+        "committed_tactic": "inline *.",
+        "restored_proof_layer": "pre_inline_frontier",
+        "restored_affordances": {
+          "call_site_handles": "as_before_inline"
+        },
+        "undo_scope": "call_site_boundary",
+        "why_checkpoint": "inline boundary; selecting it restores the proof state before this expansion",
+        "effect_if_selected": "Undo committed tactic #3 and every committed tactic after it in this node.",
+        "submit": {
+          "intent": "undo_to_checkpoint",
+          "payload": {
+            "checkpoint_id": "cp_3_64827a29be95ae8c"
+          }
+        }
+      }
+    ]
+  }
+}

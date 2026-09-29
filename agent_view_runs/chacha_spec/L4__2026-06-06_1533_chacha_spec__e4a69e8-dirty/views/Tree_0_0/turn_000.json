@@ -1,0 +1,294 @@
+{
+  "last_result": {},
+  "current_goal": {
+    "goal_type": "phoare",
+    "lines": [
+      "Current goal",
+      "",
+      "Type variables: <none>",
+      "",
+      "k0: key",
+      "n0: nonce",
+      "p0: message",
+      "gs0: globS",
+      "------------------------------------------------------------------------",
+      "pre = k = k0 /\\ n = n0 /\\ p = p0 /\\ OCC.gs = gs0",
+      "",
+      "    ChaCha(OCC(I)).enc ",
+      "    [=] 1%r",
+      "",
+      "post = res = gen_CTR_encrypt_bytes take_xor (cc gs0) k0 n0 1 p0"
+    ],
+    "source": {
+      "ground_truth": false,
+      "label": "Parsed from EasyCrypt pretty goal text"
+    },
+    "text_fully_shown": true,
+    "truncated": false,
+    "view_focus": "procedure_frontier"
+  },
+  "proof_status": {
+    "current_layer": "procedure_entry",
+    "goal_type": "phoare",
+    "remaining_goals": 1,
+    "remaining_goals_known": true,
+    "status": "open",
+    "view_focus": "procedure_frontier"
+  },
+  "candidate_moves": {
+    "moves": [
+      {
+        "applicability": "This tactic-shaped option should be checked with a read-only probe before committing it.",
+        "category": "probe",
+        "derivation": "read-only probe surfaced from proof-state analysis",
+        "effect": "This is a read-only probe; it asks EasyCrypt what would happen without changing the committed proof state.",
+        "guarantee": "read-only probe shape; proof state unchanged; probe then decide; reversible",
+        "source": "proof-state analysis",
+        "tactic": "proc.",
+        "title": "Read-only tactic probe",
+        "verified": "read_only_probe_suggestion"
+      },
+      {
+        "applicability": "Use this as route-selection context; it is not a tactic to run as-is.",
+        "category": "strategy",
+        "source": "proof-state analysis",
+        "tactic_shape": "wp."
+      },
+      {
+        "applicability": "Use this as route-selection context; it is not a tactic to run as-is.",
+        "category": "strategy",
+        "source": "proof-state analysis",
+        "tactic_shape": "sp."
+      },
+      {
+        "applicability": "Use this as route-selection context; it is not a tactic to run as-is.",
+        "category": "strategy",
+        "source": "proof-state analysis",
+        "tactic_shape": "while (<loop invariant>).",
+        "title": "Loop-invariant route"
+      },
+      {
+        "applicability": "Use this as route-selection context; it is not a tactic to run as-is.",
+        "category": "strategy",
+        "source": "proof-state analysis",
+        "tactic_shape": "splitwhile{1} <loop-index>: (<split condition>).",
+        "title": "Loop-splitting route"
+      },
+      {
+        "applicability": "Use this as route-selection context; it is not a tactic to run as-is.",
+        "category": "strategy",
+        "source": "proof-state analysis",
+        "tactic_shape": "swap <range> <offset> => //=."
+      },
+      {
+        "applicability": "Use this as route-selection context; it is not a tactic to run as-is.",
+        "category": "strategy",
+        "source": "proof-state analysis",
+        "tactic_shape": "rnd.",
+        "title": "Sampling-coupling route"
+      },
+      {
+        "applicability": "Use this as route-selection context; it is not a tactic to run as-is.",
+        "category": "strategy",
+        "source": "proof-state analysis",
+        "tactic_shape": "if => //=."
+      },
+      {
+        "applicability": "Use this as route-selection context; it is not a tactic to run as-is.",
+        "category": "strategy",
+        "source": "proof-state analysis",
+        "tactic_shape": "rcondf 1; first auto."
+      },
+      {
+        "applicability": "Use this as route-selection context; it is not a tactic to run as-is.",
+        "category": "strategy",
+        "source": "proof-state analysis",
+        "tactic_shape": "case: (<proof-relevant condition>)."
+      },
+      {
+        "applicability": "Use this as route-selection context; it is not a tactic to run as-is.",
+        "category": "strategy",
+        "source": "proof-state analysis",
+        "tactic_shape": "conseq (_: <weaker postcondition preserving live state>) => />."
+      },
+      {
+        "applicability": "Use this as route-selection context; it is not a tactic to run as-is.",
+        "category": "strategy",
+        "source": "proof-state analysis",
+        "tactic_shape": "inline <local wrapper>."
+      }
+    ]
+  },
+  "program_frontier": {
+    "authority": "proof-state analysis",
+    "checks": [
+      "Keep one-sided instrumentation as a map, not as a tactic recipe."
+    ],
+    "focus": {
+      "callable_now_lemmas": 0,
+      "frontier_call_sites": 0,
+      "has_invariant_skeleton": false,
+      "live_call_sites": 0,
+      "live_callable_lemmas": 0,
+      "oracle_obligation_handles": 0
+    },
+    "view_focus": "procedure_frontier"
+  },
+  "facts_and_diagnostics": {
+    "fact_note": "Only current-frontier facts are shown here; the full proof context artifact keeps the compiler/internal details.",
+    "facts": {
+      "has_invariant_skeleton": false,
+      "unfoldable_goal_head_count": 4,
+      "unfoldable_goal_heads": [
+        {
+          "declaration_kind": "op",
+          "name": "enc",
+          "smt_argument_role": "not_a_lemma_hint",
+          "unfold_tactic": "rewrite /enc.",
+          "unqualified_name": "enc"
+        },
+        {
+          "declaration_kind": "op",
+          "name": "gen_CTR_encrypt_bytes",
+          "smt_argument_role": "not_a_lemma_hint",
+          "unfold_tactic": "rewrite /gen_CTR_encrypt_bytes.",
+          "unqualified_name": "gen_CTR_encrypt_bytes"
+        },
+        {
+          "declaration_kind": "op",
+          "name": "take_xor",
+          "smt_argument_role": "not_a_lemma_hint",
+          "unfold_tactic": "rewrite /take_xor.",
+          "unqualified_name": "take_xor"
+        },
+        {
+          "declaration_kind": "op",
+          "name": "cc",
+          "smt_argument_role": "not_a_lemma_hint",
+          "unfold_tactic": "rewrite /cc.",
+          "unqualified_name": "cc"
+        }
+      ]
+    }
+  },
+  "inspect_lookup_handles": {
+    "ask_manager_for": [
+      {
+        "intent": "inspect_context",
+        "payload": {
+          "topic": "goal_info"
+        },
+        "returns": "manager-provided read-only context for this proof route",
+        "use_when": "No fresh recommendation is available; parse the current goal."
+      },
+      {
+        "intent": "inspect_context",
+        "payload": {
+          "topic": "call_site_options"
+        },
+        "returns": "call-ready/oracle-equiv context for the current frontier, plus the BODY of the procedure(s) called here (functor aliases resolved) so you can see which oracles/state your call invariant must preserve",
+        "use_when": "The current procedure frontier exposes a call route."
+      },
+      {
+        "intent": "inspect_context",
+        "payload": {
+          "invariant": "<the EasyCrypt invariant expression inside call (_: ...)>",
+          "topic": "call_subgoals"
+        },
+        "returns": "a read-only preview of the obligations caused by that candidate invariant, including pre/init, call-preservation, oracle-side, postcondition, missing-fact signals, and extra conjuncts that may create avoidable obligations",
+        "use_when": "You are considering `call (_: Inv)` and already have a concrete invariant expression you want to test first."
+      },
+      {
+        "intent": "inspect_context",
+        "payload": {
+          "name": "call",
+          "topic": "tactic_forms"
+        },
+        "returns": "valid tactic forms and common traps",
+        "use_when": "Need the valid form for call, while, seq, rnd, or rewrite."
+      },
+      {
+        "intent": "inspect_context",
+        "payload": {
+          "name": "sp",
+          "topic": "tactic_forms"
+        },
+        "returns": "valid `sp` forms and common traps"
+      },
+      {
+        "intent": "inspect_context",
+        "payload": {
+          "name": "while",
+          "topic": "tactic_forms"
+        },
+        "returns": "valid `while` forms and common traps",
+        "use_when": "Need the valid one-sided hoare/phoare loop form."
+      },
+      {
+        "intent": "inspect_context",
+        "payload": {
+          "name": "wp",
+          "topic": "tactic_forms"
+        },
+        "returns": "valid indexed `wp` forms and suffix-alignment traps",
+        "use_when": "Mid-proof pRHL suffix surgery may need indexed `wp`."
+      },
+      {
+        "intent": "inspect_context",
+        "payload": {
+          "name": "swap",
+          "topic": "tactic_forms"
+        },
+        "returns": "valid `swap` forms and statement-order traps",
+        "use_when": "Statement order may need a small `swap` before `sp`, `wp`, or `sim`."
+      },
+      {
+        "intent": "inspect_context",
+        "payload": {
+          "name": "rcondt",
+          "topic": "tactic_forms"
+        },
+        "returns": "valid `rcondt` forms and guard-obligation traps",
+        "use_when": "A guarded branch may need `rcondt` after a case split or invariant fact."
+      },
+      {
+        "intent": "inspect_context",
+        "payload": {
+          "name": "rcondf",
+          "topic": "tactic_forms"
+        },
+        "returns": "valid `rcondf` forms and guard-obligation traps",
+        "use_when": "A guarded branch may need `rcondf` after a case split or invariant fact."
+      },
+      {
+        "intent": "inspect_context",
+        "payload": {
+          "name": "conseq",
+          "topic": "tactic_forms"
+        },
+        "returns": "valid `conseq` forms and pRHL memory-annotation traps",
+        "use_when": "A suffix proof may need `conseq` to weaken to a smaller relation before `sim`."
+      },
+      {
+        "intent": "inspect_context",
+        "payload": {
+          "name": "rnd",
+          "topic": "tactic_forms"
+        },
+        "returns": "valid `rnd` forms, including one-sided sampling",
+        "use_when": "One side may have an extra sample or need an explicit sample coupling."
+      },
+      {
+        "intent": "inspect_context",
+        "payload": {
+          "name": "eager",
+          "topic": "tactic_forms"
+        },
+        "returns": "valid `eager` forms and when to prefer smaller surgery",
+        "use_when": "A known statement-order mismatch may need an eager/lazy transformation."
+      }
+    ],
+    "effect": "All handles here are read-only manager requests; the committed EasyCrypt proof state stays unchanged.",
+    "manager_note": "Some requests may ask EasyCrypt or name resolution; wait for the manager result before choosing the next proof intent."
+  }
+}

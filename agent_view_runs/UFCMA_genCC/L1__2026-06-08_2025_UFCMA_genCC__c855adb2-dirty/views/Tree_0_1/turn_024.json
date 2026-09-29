@@ -1,0 +1,548 @@
+{
+  "last_result": {
+    "intent": "commit_tactic",
+    "payload": {
+      "tactic": "have hmerge : forall (str : block), take_xor [] str = [] by move=> str; rewrite /take_xor; smt(take0 size_eq0)."
+    },
+    "manager_action": "commit_tactic",
+    "result": "EasyCrypt accepted the committed tactic.",
+    "effect": "EasyCrypt accepted a proof-state change; the refreshed view is based on the new committed state.",
+    "proof_state": "The committed EasyCrypt proof state changed.",
+    "tactic": "have hmerge : forall (str : block), take_xor [] str = [] by move=> str; rewrite /take_xor; smt(take0 size_eq0)."
+  },
+  "current_goal": {
+    "lines": [
+      "Current goal (remaining: 5)",
+      "",
+      "Type variables: <none>",
+      "",
+      "&m: {k : key, p, p0, p1 : plaintext, c, c0 : ciphertext}",
+      "z: int",
+      "&hr: {i : int, c2 : byte list, k, k0, k1 : key, n, n0, n1 : nonce,",
+      "     c3 : C.counter, x : nonce * C.counter, c1 : bytes, z, result : block,",
+      "     a : associated_data, p1, p2 : message,",
+      "     nap : nonce * associated_data * message, t : tag, p, p0 : plaintext,",
+      "     c, c0 : ciphertext}",
+      "hI: (p{m} = p{hr} /\\",
+      "     Mem.k{m} = Mem.k{hr} /\\",
+      "     Mem.log{m} = Mem.log{hr} /\\ Mem.lc{m} = Mem.lc{hr}) /\\",
+      "    StLSke.gs{m} = RO.m{hr} /\\",
+      "    k0{hr} = Mem.k{hr} /\\",
+      "    n0{hr} = n{hr} /\\",
+      "    k{hr} = Mem.k{hr} /\\",
+      "    (n{hr}, a{hr}, p1{hr}) = p{hr} /\\",
+      "    c2{hr} ++",
+      "    gen_CTR_encrypt_bytes take_xor (get RO.m{hr}) k0{hr} n0{hr} i{hr} p2{hr} =",
+      "    gen_CTR_encrypt_bytes take_xor (get RO.m{hr}) k0{hr} n0{hr} 1 p1{hr}",
+      "hne: p2{hr} <> []",
+      "hsz: size p2{hr} = z",
+      "hmerge: forall (str : block), take_xor [] str = []",
+      "------------------------------------------------------------------------",
+      "let p2_0 = drop block_size p2{hr} in",
+      "((p{m} = p{hr} /\\",
+      "  Mem.k{m} = Mem.k{hr} /\\ Mem.log{m} = Mem.log{hr} /\\ Mem.lc{m} = Mem.lc{hr}) /\\",
+      " StLSke.gs{m} = RO.m{hr} /\\",
+      " k0{hr} = Mem.k{hr} /\\",
+      " n0{hr} = n{hr} /\\",
+      " k{hr} = Mem.k{hr} /\\",
+      " (n{hr}, a{hr}, p1{hr}) = p{hr} /\\",
+      " c2{hr} ++",
+      " take (size p2{hr})",
+      "   (bytes_of_block (extend p2{hr} +^ oget RO.m{hr}.[n0{hr}, C.ofintd i{hr}])) ++",
+      " gen_CTR_encrypt_bytes take_xor (get RO.m{hr}) k0{hr} n0{hr} (i{hr} + 1) p2_0 =",
+      " gen_CTR_encrypt_bytes take_xor (get RO.m{hr}) k0{hr} n0{hr} 1 p1{hr}) /\\",
+      "size p2_0 < z",
+      "[319|check]>"
+    ],
+    "text_fully_shown": true,
+    "truncated": false,
+    "goal_type": "ambient",
+    "view_focus": "ambient_logic",
+    "source": {
+      "label": "Parsed from EasyCrypt pretty goal text",
+      "ground_truth": false
+    }
+  },
+  "proof_status": {
+    "status": "open",
+    "remaining_goals": 5,
+    "remaining_goals_known": true,
+    "goal_type": "ambient",
+    "view_focus": "ambient_logic",
+    "current_layer": "ambient_logic"
+  },
+  "candidate_moves": {
+    "moves": [
+      {
+        "category": "strategy",
+        "tactic_shape": "split.",
+        "applicability": "Use this as route-selection context; it is not a tactic to run as-is.",
+        "source": "proof-state analysis"
+      },
+      {
+        "title": "Read-only tactic probe",
+        "category": "probe",
+        "tactic": "rewrite /gen_CTR_encrypt_bytes.",
+        "applicability": "This tactic-shaped option should be checked with a read-only probe before committing it.",
+        "effect": "This is a read-only probe; it asks EasyCrypt what would happen without changing the committed proof state.",
+        "source": "proof-state analysis",
+        "derivation": "read-only probe surfaced from proof-state analysis",
+        "verified": "read_only_probe_suggestion",
+        "guarantee": "read-only probe shape; proof state unchanged; probe then decide; reversible"
+      },
+      {
+        "title": "Residual closing tactic",
+        "category": "probe",
+        "tactic": "auto => />.",
+        "applicability": "This tactic-shaped option should be checked with a read-only probe before committing it.",
+        "effect": "This is a read-only probe; it asks EasyCrypt what would happen without changing the committed proof state.",
+        "source": "proof-state analysis",
+        "derivation": "read-only probe surfaced from proof-state analysis",
+        "verified": "read_only_probe_suggestion",
+        "guarantee": "read-only probe shape; proof state unchanged; probe then decide; reversible"
+      },
+      {
+        "title": "Read-only tactic probe",
+        "category": "probe",
+        "tactic": "smt().",
+        "applicability": "This tactic-shaped option should be checked with a read-only probe before committing it.",
+        "effect": "This is a read-only probe; it asks EasyCrypt what would happen without changing the committed proof state.",
+        "source": "proof-state analysis",
+        "derivation": "read-only probe surfaced from proof-state analysis",
+        "verified": "read_only_probe_suggestion",
+        "guarantee": "read-only probe shape; proof state unchanged; probe then decide; reversible"
+      }
+    ]
+  },
+  "program_frontier": {
+    "authority": "proof-state analysis",
+    "view_focus": "ambient_logic"
+  },
+  "call_site_surface": {},
+  "seq_cut_surface": {
+    "seq_candidate_id": "cp_15_2faf58a952e8ae97",
+    "state": "inside_seq_scope",
+    "cut_position": {
+      "left_count": 0,
+      "right_count": 1,
+      "tactic": "seq 0 1 : ( (n{2}, a{2}, p1{2}) = p{2} /\\ p{1} = p{2} /\\ Mem.k{1} = Mem.k{2} /\\ Mem.log{1} = Mem.log{2} /\\ Mem.lc{1} = Mem.lc{2} /\\ StLSke.gs{1} = RO.m{2} /\\ k0{2} = Mem.k{2} /\\ n0{2} = n{2} /\\ c2{2} = gen_CTR_encrypt_bytes take_xor (get RO.m{2}) k0{2} n0{2} 1 p1{2} )."
+    },
+    "obligation_count": 5,
+    "obligation_kinds": [
+      "quantified",
+      "probability_or_loss"
+    ],
+    "branch_focus": {
+      "remaining_goals": 5,
+      "latest_event_head": "have"
+    },
+    "residual_frontier": {
+      "current_layer": "ambient_logic",
+      "view_focus": "ambient_logic",
+      "live_call_site_count": 0,
+      "goal_contains_call_site": false,
+      "latest_seq_tactic_index": 15,
+      "tactics_after_latest_seq": 7
+    }
+  },
+  "pure_tail_surface": {
+    "state": "map_projection_tail",
+    "goal_operators": [
+      "p2_0",
+      "drop",
+      "block_size",
+      "p2",
+      "hr",
+      "Mem.k",
+      "Mem.log",
+      "Mem.lc"
+    ],
+    "visible_hypotheses": [
+      "hI: (p{m} = p{hr} /\\",
+      "hne: p2{hr} <> []",
+      "hsz: size p2{hr} = z",
+      "hmerge: forall (str : block), take_xor [] str = []"
+    ],
+    "obligation_families": [
+      {
+        "family": "map_update_projection",
+        "update_count": 0,
+        "lookup_count": 1,
+        "sample_lookup_terms": [
+          "n0{hr}, C.ofintd i{hr}"
+        ],
+        "visible_key_cases": [
+          {
+            "lookup_term": "n0{hr}, C.ofintd i{hr}",
+            "case": "key_case_unresolved",
+            "evidence": "No equality/projection path to an update key is visible in this goal text."
+          }
+        ],
+        "effect": "The pure goal contains finite-map update or lookup structure whose key/projection equalities are verifier-visible facts.",
+        "limitations": "The surface does not rewrite any map expression."
+      },
+      {
+        "family": "quantified_residual_logic",
+        "evidence": [
+          "universal quantifier visible"
+        ],
+        "effect": "The current proof point is dominated by local logical obligations rather than program-frontier movement.",
+        "limitations": "Quantifier names are not normalized across EasyCrypt pretty-printer variants."
+      }
+    ],
+    "map_update_lookup_surface": {
+      "lookup_terms": [
+        "n0{hr}, C.ofintd i{hr}"
+      ],
+      "key_cases": [
+        {
+          "lookup_term": "n0{hr}, C.ofintd i{hr}",
+          "case": "key_case_unresolved",
+          "evidence": "No equality/projection path to an update key is visible in this goal text."
+        }
+      ],
+      "effect": "Summarizes finite-map update and lookup keys that determine same-key versus different-key local obligations.",
+      "limitations": [
+        "This surface does not perform a rewrite or case split.",
+        "A key case marked unresolved only means no equality path is visible in this goal text."
+      ]
+    },
+    "effect": "Summarizes verifier-visible pure-goal structure after program frontier actions have been discharged or hidden by local proof steps.",
+    "limitations": [
+      "This panel records syntactic and proof-state facts from the current view.",
+      "It does not choose a tactic or instantiate a lemma."
+    ]
+  },
+  "application_context": {},
+  "facts_and_diagnostics": {
+    "facts": {
+      "unfoldable_goal_heads": [
+        {
+          "name": "gen_CTR_encrypt_bytes",
+          "unqualified_name": "gen_CTR_encrypt_bytes",
+          "declaration_kind": "op",
+          "unfold_tactic": "rewrite /gen_CTR_encrypt_bytes.",
+          "smt_argument_role": "not_a_lemma_hint"
+        },
+        {
+          "name": "take_xor",
+          "unqualified_name": "take_xor",
+          "declaration_kind": "op",
+          "unfold_tactic": "rewrite /take_xor.",
+          "smt_argument_role": "not_a_lemma_hint"
+        },
+        {
+          "name": "get",
+          "unqualified_name": "get",
+          "declaration_kind": "op",
+          "unfold_tactic": "rewrite /get.",
+          "smt_argument_role": "not_a_lemma_hint"
+        },
+        {
+          "name": "extend",
+          "unqualified_name": "extend",
+          "declaration_kind": "op",
+          "unfold_tactic": "rewrite /extend.",
+          "smt_argument_role": "not_a_lemma_hint"
+        }
+      ],
+      "unfoldable_goal_head_count": 4
+    },
+    "fact_note": "Only current-frontier facts are shown here; the full proof context artifact keeps the compiler/internal details.",
+    "notes": [
+      {
+        "message": "Current residual goal mentions unfoldable definition(s): gen_CTR_encrypt_bytes, take_xor, get, extend. Use `rewrite /NAME` before SMT when those predicates block simplification; these names are not smt(...) lemma hints.",
+        "severity": "info"
+      }
+    ]
+  },
+  "recovery_diagnosis_surface": {
+    "kind": "recovery_diagnosis_surface",
+    "recovery_class": "local_pure_surgery_available",
+    "confidence": "medium",
+    "checkpoint_policy": "current_state_local_work_visible",
+    "evidence": [
+      "pure_tail_surface is visible for the current goal",
+      "current proof state has no program-frontier work before the logical residual"
+    ],
+    "available_local_work": [
+      {
+        "kind": "pure_tail_obligation_families",
+        "items": [
+          "map_update_projection",
+          "quantified_residual_logic"
+        ]
+      },
+      {
+        "kind": "map_update_lookup_cases",
+        "items": [
+          "{'lookup_term': 'n0{hr}, C.ofintd i{hr}', 'case': 'key_case_unresolved', 'evidence': 'No equality/projection path to an update key is visible in this goal text.'}"
+        ]
+      }
+    ],
+    "related_checkpoints": [
+      {
+        "checkpoint_id": "cp_22_2faf58a952e8ae97",
+        "semantic_id": "before_branch_work",
+        "semantic_ids": [
+          "before_branch_work"
+        ],
+        "label": "Before latest branch-local tactic #22",
+        "committed_step_index": 22,
+        "undo_scope": "branch_local",
+        "restored_proof_layer": "seq_branch",
+        "restored_affordances": {
+          "seq_cut": "committed",
+          "earlier_branch_work": "preserved"
+        },
+        "why_checkpoint": "latest branch-local step inside the current seq scope"
+      },
+      {
+        "checkpoint_id": "cp_16_2faf58a952e8ae97",
+        "semantic_id": "after_seq_opened",
+        "semantic_ids": [
+          "after_seq_opened",
+          "before_branch_work"
+        ],
+        "label": "After seq opened / before branch work #16",
+        "committed_step_index": 16,
+        "undo_scope": "branch_local",
+        "restored_proof_layer": "seq_obligations_opened",
+        "restored_affordances": {
+          "seq_cut": "committed",
+          "branch_work": "not_committed"
+        },
+        "why_checkpoint": "seq-local branch boundary; selecting it keeps the seq cut and removes branch-local work after it"
+      },
+      {
+        "checkpoint_id": "cp_15_2faf58a952e8ae97",
+        "semantic_id": "before_seq_cut",
+        "semantic_ids": [
+          "before_seq_cut"
+        ],
+        "label": "Before seq cut #15",
+        "committed_step_index": 15,
+        "undo_scope": "seq_local",
+        "restored_proof_layer": "pre_seq_cut",
+        "restored_affordances": {
+          "seq_cut": "not_committed",
+          "call_site_state": "as_before_seq_cut"
+        },
+        "why_checkpoint": "seq-cut boundary; selecting it restores the proof state before this cut was committed"
+      }
+    ],
+    "related_surfaces": [
+      "seq_cut_surface",
+      "pure_tail_surface",
+      "structural_checkpoints"
+    ],
+    "limitations": [
+      "does not select a destructor, witness, rewrite, or SMT lemma",
+      "reported checkpoints are recovery references, not a default route"
+    ]
+  },
+  "inspect_lookup_handles": {
+    "effect": "All handles here are read-only manager requests; the committed EasyCrypt proof state stays unchanged.",
+    "manager_note": "Some requests may ask EasyCrypt or name resolution; wait for the manager result before choosing the next proof intent.",
+    "ask_manager_for": [
+      {
+        "intent": "inspect_context",
+        "payload": {
+          "topic": "goal_info"
+        },
+        "use_when": "No fresh recommendation is available; parse the current goal.",
+        "returns": "manager-provided read-only context for this proof route"
+      },
+      {
+        "intent": "inspect_context",
+        "payload": {
+          "topic": "lemma_hints"
+        },
+        "use_when": "Need local or standard-library lemma names before rewriting a pure goal.",
+        "returns": "nearby lemma hints and qualified-name lookup guidance"
+      },
+      {
+        "intent": "inspect_context",
+        "payload": {
+          "topic": "tactic_forms",
+          "name": "rewrite"
+        },
+        "use_when": "Need the valid EasyCrypt form for rewrite, apply, conseq, while, or SMT setup.",
+        "returns": "valid tactic forms and common traps"
+      }
+    ]
+  },
+  "structural_checkpoints": {
+    "items": [
+      {
+        "checkpoint_id": "cp_22_2faf58a952e8ae97",
+        "semantic_id": "before_branch_work",
+        "semantic_ids": [
+          "before_branch_work"
+        ],
+        "label": "Before latest branch-local tactic #22",
+        "committed_step_index": 22,
+        "committed_tactic": "have hmerge : forall (str : block), take_xor [] str = [] by move=> str; rewrite /take_xor; smt(take0 size_eq0).",
+        "restored_proof_layer": "seq_branch",
+        "restored_affordances": {
+          "seq_cut": "committed",
+          "earlier_branch_work": "preserved"
+        },
+        "undo_scope": "branch_local",
+        "why_checkpoint": "latest branch-local step inside the current seq scope",
+        "effect_if_selected": "Undo committed tactic #22 and every committed tactic after it in this node.",
+        "submit": {
+          "intent": "undo_to_checkpoint",
+          "payload": {
+            "checkpoint_id": "cp_22_2faf58a952e8ae97"
+          }
+        }
+      },
+      {
+        "checkpoint_id": "cp_19_2faf58a952e8ae97",
+        "semantic_id": "before_call_obligation_work",
+        "semantic_ids": [
+          "before_call_obligation_work"
+        ],
+        "label": "Before latest call-obligation tactic #19",
+        "committed_step_index": 19,
+        "committed_tactic": "wp.",
+        "restored_proof_layer": "call_obligation",
+        "restored_affordances": {
+          "call_route": "committed",
+          "call_obligation": "preserved",
+          "later_local_work": "not_committed"
+        },
+        "undo_scope": "call_obligation_local",
+        "why_checkpoint": "call-obligation local boundary; selecting it keeps the opened call obligation and removes later local work",
+        "effect_if_selected": "Undo committed tactic #19 and every committed tactic after it in this node.",
+        "submit": {
+          "intent": "undo_to_checkpoint",
+          "payload": {
+            "checkpoint_id": "cp_19_2faf58a952e8ae97"
+          }
+        }
+      },
+      {
+        "checkpoint_id": "cp_16_2faf58a952e8ae97",
+        "semantic_id": "after_seq_opened",
+        "semantic_ids": [
+          "after_seq_opened",
+          "before_branch_work"
+        ],
+        "label": "After seq opened / before branch work #16",
+        "committed_step_index": 16,
+        "committed_tactic": "while{2} ( (p{1} = p{2} /\\ Mem.k{1} = Mem.k{2} /\\ Mem.log{1} = Mem.log{2} /\\ Mem.lc{1} = Mem.lc{2}) /\\ StLSke.gs{1} = RO.m{2} /\\ k0{2} = Mem.k{2} /\\ n0{2} = n{2} /\\ k{2} = Mem.k{2} /\\ (n{2}, a{2}, p1{2}) = p{2} /\\ c2{2} ++ gen_CTR_encrypt_bytes take_xor (get RO.m{2}) k0{2} n0{2} i{2} p2{2} = gen_CTR_encrypt_bytes take_xor (get RO.m{2}) k0{2} n0{2} 1 p1{2} ) (size p2{2}).",
+        "restored_proof_layer": "seq_obligations_opened",
+        "restored_affordances": {
+          "seq_cut": "committed",
+          "branch_work": "not_committed"
+        },
+        "undo_scope": "branch_local",
+        "why_checkpoint": "seq-local branch boundary; selecting it keeps the seq cut and removes branch-local work after it",
+        "effect_if_selected": "Undo committed tactic #16 and every committed tactic after it in this node.",
+        "submit": {
+          "intent": "undo_to_checkpoint",
+          "payload": {
+            "checkpoint_id": "cp_16_2faf58a952e8ae97"
+          }
+        }
+      },
+      {
+        "checkpoint_id": "cp_6_2faf58a952e8ae97",
+        "semantic_id": "after_call_opened",
+        "semantic_ids": [
+          "after_call_opened"
+        ],
+        "label": "After call opened / before obligation work #6",
+        "committed_step_index": 6,
+        "committed_tactic": "proc.",
+        "restored_proof_layer": "call_obligations_opened",
+        "restored_affordances": {
+          "call_route": "committed",
+          "call_obligation_work": "not_committed"
+        },
+        "undo_scope": "call_local",
+        "why_checkpoint": "call-local boundary; selecting it keeps the call tactic and removes work committed after the call opened",
+        "effect_if_selected": "Undo committed tactic #6 and every committed tactic after it in this node.",
+        "submit": {
+          "intent": "undo_to_checkpoint",
+          "payload": {
+            "checkpoint_id": "cp_6_2faf58a952e8ae97"
+          }
+        }
+      },
+      {
+        "checkpoint_id": "cp_5_2faf58a952e8ae97",
+        "semantic_id": "before_call_route",
+        "semantic_ids": [
+          "before_call_route"
+        ],
+        "label": "Before call invariant #5",
+        "committed_step_index": 5,
+        "committed_tactic": "call (_: ={Mem.k, Mem.log, Mem.lc} /\\ StLSke.gs{1} = RO.m{2}).",
+        "restored_proof_layer": "pre_call_route",
+        "restored_affordances": {
+          "call_route": "not_committed",
+          "call_obligation_work": "not_committed"
+        },
+        "undo_scope": "call_local",
+        "why_checkpoint": "call invariant introduction point; later oracle/branch obligations often reveal missing preserved facts or an over-strong equality from this tactic",
+        "effect_if_selected": "Undo committed tactic #5 and every committed tactic after it in this node.",
+        "submit": {
+          "intent": "undo_to_checkpoint",
+          "payload": {
+            "checkpoint_id": "cp_5_2faf58a952e8ae97"
+          }
+        }
+      },
+      {
+        "checkpoint_id": "cp_15_2faf58a952e8ae97",
+        "semantic_id": "before_seq_cut",
+        "semantic_ids": [
+          "before_seq_cut"
+        ],
+        "label": "Before seq cut #15",
+        "committed_step_index": 15,
+        "committed_tactic": "seq 0 1 : ( (n{2}, a{2}, p1{2}) = p{2} /\\ p{1} = p{2} /\\ Mem.k{1} = Mem.k{2} /\\ Mem.log{1} = Mem.log{2} /\\ Mem.lc{1} = Mem.lc{2} /\\ StLSke.gs{1} = RO.m{2} /\\ k0{2} = Mem.k{2} /\\ n0{2} = n{2} /\\ c2{2} = gen_CTR_encrypt_bytes take_xor (get RO.m{2}) k0{2} n0{2} 1 p1{2} ).",
+        "restored_proof_layer": "pre_seq_cut",
+        "restored_affordances": {
+          "seq_cut": "not_committed",
+          "call_site_state": "as_before_seq_cut"
+        },
+        "undo_scope": "seq_local",
+        "why_checkpoint": "seq-cut boundary; selecting it restores the proof state before this cut was committed",
+        "effect_if_selected": "Undo committed tactic #15 and every committed tactic after it in this node.",
+        "submit": {
+          "intent": "undo_to_checkpoint",
+          "payload": {
+            "checkpoint_id": "cp_15_2faf58a952e8ae97"
+          }
+        }
+      },
+      {
+        "checkpoint_id": "cp_18_2faf58a952e8ae97",
+        "semantic_id": "last_call_site_boundary",
+        "semantic_ids": [
+          "last_call_site_boundary"
+        ],
+        "label": "Before inline expansion #18",
+        "committed_step_index": 18,
+        "committed_tactic": "inline.",
+        "restored_proof_layer": "pre_inline_frontier",
+        "restored_affordances": {
+          "call_site_handles": "as_before_inline"
+        },
+        "undo_scope": "call_site_boundary",
+        "why_checkpoint": "inline boundary; selecting it restores the proof state before this expansion",
+        "effect_if_selected": "Undo committed tactic #18 and every committed tactic after it in this node.",
+        "submit": {
+          "intent": "undo_to_checkpoint",
+          "payload": {
+            "checkpoint_id": "cp_18_2faf58a952e8ae97"
+          }
+        }
+      }
+    ]
+  }
+}

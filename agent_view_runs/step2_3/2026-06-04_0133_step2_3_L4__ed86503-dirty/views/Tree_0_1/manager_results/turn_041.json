@@ -1,0 +1,19 @@
+{
+  "turn": 41,
+  "handled_intent": {
+    "intent": "commit_tactic",
+    "payload": {
+      "tactic": "rewrite -(FiniteRO.pr_RO_FinRO_D Hll (G5(A)) &m () (fun b => b)) /=."
+    }
+  },
+  "ok": true,
+  "manager_note": "Committed tactic accepted; the EasyCrypt proof state changed.",
+  "manager_actions": [
+    {
+      "action": "tactic commit",
+      "outcome": "EasyCrypt accepted the committed tactic.",
+      "timing": "544 ms"
+    }
+  ],
+  "view_refreshed": true
+}

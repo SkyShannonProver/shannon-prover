@@ -1,0 +1,19 @@
+{
+  "turn": 17,
+  "handled_intent": {
+    "intent": "commit_tactic",
+    "payload": {
+      "tactic": "auto; smt(expN expD exp0 mulVc mulcA mulc1 mulcV mulcC)."
+    }
+  },
+  "ok": true,
+  "manager_note": "Committed tactic accepted; the EasyCrypt proof state changed.",
+  "manager_actions": [
+    {
+      "action": "tactic commit",
+      "outcome": "EasyCrypt accepted the committed tactic.",
+      "timing": "3.8 s"
+    }
+  ],
+  "view_refreshed": true
+}

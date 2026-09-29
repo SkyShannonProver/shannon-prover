@@ -1,0 +1,601 @@
+{
+  "last_result": {
+    "intent": "probe_tactic",
+    "payload": {
+      "tactic": "smt(addpK dptxt_funi dptxt_fu)."
+    },
+    "manager_action": "probe_tactic",
+    "result": "EasyCrypt accepted this read-only probe. The committed proof state was not changed; `goal_after_probe` shows the goal that would be visible if this tactic were committed.",
+    "effect": "This is a read-only probe; it asks EasyCrypt what would happen without changing the committed proof state.",
+    "proof_state": "The committed EasyCrypt proof state was not changed.",
+    "probe_preview": {
+      "tactic": "smt(addpK dptxt_funi dptxt_fu).",
+      "outcome": "EasyCrypt accepted this read-only probe.",
+      "goal_after_remaining": 1,
+      "effect": "This preview is speculative only; the committed EasyCrypt proof state was not changed.",
+      "goal_after_probe": {
+        "lines": [
+          "Current goal",
+          "Type variables: <none>",
+          "------------------------------------------------------------------------",
+          "&1 (left ) : {b, b' : bool, m0, m1, h : ptxt, c : rand * ptxt, pk : pkey,",
+          "             sk : skey}",
+          "&2 (right) : {b, b' : bool, m0, m1, h : ptxt, c : rand * ptxt, pk : pkey,",
+          "             sk : skey}",
+          "pre = (glob A){1} = (glob A){2}",
+          "Log(LRO).init()                 (1)  Log(LRO).init()",
+          "(pk, sk) <$ dkeys               (2)  (pk, sk) <$ dkeys",
+          "(m0, m1) <@ A(Log(LRO)).a1(pk)  (3)  (m0, m1) <@ A(Log(LRO)).a1(pk)",
+          "b <$ {0,1}                      (4)  b <$ {0,1}",
+          "Game1.r <$ drand                (5)  Game2.r <$ drand",
+          "post =",
+          "  ((glob A){1} = (glob A){2} /\\",
+          "   Log.qs{1} = Log.qs{2} /\\",
+          "   LRO.m{1} = LRO.m{2} /\\ pk{1} = pk{2} /\\ b{1} = b{2}) /\\",
+          "  Game1.r{1} = Game2.r{2}",
+          "[81|check]>"
+        ],
+        "text_fully_shown": true,
+        "truncated": false,
+        "source": {
+          "label": "[TRY] goal_after_raw",
+          "ground_truth": false
+        }
+      }
+    },
+    "kind": "accepted_closing_probe",
+    "message": "This closing/checking probe was accepted.",
+    "accepted_tactic": "smt(addpK dptxt_funi dptxt_fu).",
+    "closing_decision": {
+      "id": "closing_or_checking",
+      "kind": "closing_or_checking",
+      "status": "accepted_checkpoint",
+      "tactic": "smt(addpK dptxt_funi dptxt_fu).",
+      "phase": "closing/checking",
+      "valid_for": "current_view_only",
+      "decision": "Commit this exact tactic only if you want to try closing or checking this obligation.",
+      "recommended_next": {
+        "label": "Commit this exact tactic",
+        "submit": {
+          "intent": "commit_tactic",
+          "payload": {
+            "tactic": "smt(addpK dptxt_funi dptxt_fu)."
+          }
+        }
+      },
+      "after_commit": "This is a closing/checking step; it may close the current goal or expose the next remaining goal, but it does not promise a new surgery workbench.",
+      "if_wrong_after_commit": "Use `undo_last_step` if the committed closing/checking step does not match the intended route."
+    },
+    "preview_summary": {
+      "remaining_goals": 1,
+      "truncated": false
+    },
+    "tactic": "smt(addpK dptxt_funi dptxt_fu)."
+  },
+  "current_goal": {
+    "lines": [
+      "Current goal (remaining: 2)",
+      "",
+      "Type variables: <none>",
+      "",
+      "------------------------------------------------------------------------",
+      "forall &1 &2,",
+      "  (glob A){1} = (glob A){2} =>",
+      "  forall (A_L : (glob A)) (r_L : rand) (qs_L : rand list) (m_L : (rand,",
+      "    ptxt) fmap) (b_L : bool) (m0_L m1_L : ptxt) (pk_L : pkey)",
+      "    (A_R : (glob A)) (r_R : rand) (qs_R : rand list) (m_R : (rand,",
+      "    ptxt) fmap) (b_R : bool) (pk_R : pkey),",
+      "    (A_L = A_R /\\ qs_L = qs_R /\\ m_L = m_R /\\ pk_L = pk_R /\\ b_L = b_R) /\\",
+      "    r_L = r_R =>",
+      "    (forall (hR : ptxt),",
+      "       hR \\in dptxt =>",
+      "       hR = (hR +^ if b_L then m0_L else m1_L) +^ if b_L then m0_L else m1_L) &&",
+      "    (forall (hR : ptxt),",
+      "       hR \\in dptxt =>",
+      "       mu1 dptxt hR = mu1 dptxt (hR +^ if b_L then m0_L else m1_L)) &&",
+      "    forall (hL : ptxt),",
+      "      hL \\in dptxt =>",
+      "      ((hL +^ if b_L then m0_L else m1_L) \\in dptxt) &&",
+      "      (hL = (hL +^ if b_L then m0_L else m1_L) +^ if b_L then m0_L else m1_L) &&",
+      "      ((f pk_L r_L, hL +^ if b_L then m0_L else m1_L) =",
+      "       (f pk_R r_R, hL +^ if b_L then m0_L else m1_L) /\\",
+      "       A_L = A_R /\\ qs_L = qs_R /\\ m_L = m_R) &&",
+      "      forall (result_L result_R : bool) (A_L0 : (glob A)) (qs_L0 : rand list)",
+      "        (m_L0 : (rand, ptxt) fmap) (A_R0 : (glob A)) (qs_R0 : rand list)",
+      "        (m_R0 : (rand, ptxt) fmap),",
+      "        result_L = result_R /\\ A_L0 = A_R0 /\\ qs_L0 = qs_R0 /\\ m_L0 = m_R0 =>",
+      "        (qs_L0 = qs_R0 /\\ (result_L = b_L) = (result_R = b_R)) /\\ r_L = r_R",
+      "[80|check]>"
+    ],
+    "text_fully_shown": true,
+    "truncated": false,
+    "goal_type": "ambient",
+    "view_focus": "relational_program",
+    "source": {
+      "label": "Parsed from EasyCrypt pretty goal text",
+      "ground_truth": false
+    }
+  },
+  "proof_status": {
+    "status": "open",
+    "remaining_goals": 2,
+    "remaining_goals_known": true,
+    "goal_type": "ambient",
+    "view_focus": "relational_program",
+    "current_layer": "ambient_logic"
+  },
+  "candidate_moves": {
+    "moves": [
+      {
+        "title": "Read-only tactic probe",
+        "category": "probe",
+        "tactic": "move=> &1 &2 H.",
+        "applicability": "This tactic-shaped option should be checked with a read-only probe before committing it.",
+        "effect": "This is a read-only probe; it asks EasyCrypt what would happen without changing the committed proof state.",
+        "source": "proof-state analysis",
+        "derivation": "read-only probe surfaced from proof-state analysis",
+        "verified": "read_only_probe_suggestion",
+        "guarantee": "read-only probe shape; proof state unchanged; probe then decide; reversible"
+      },
+      {
+        "title": "Read-only tactic probe",
+        "category": "probe",
+        "tactic": "rewrite /dptxt.",
+        "applicability": "This tactic-shaped option should be checked with a read-only probe before committing it.",
+        "effect": "This is a read-only probe; it asks EasyCrypt what would happen without changing the committed proof state.",
+        "source": "proof-state analysis",
+        "derivation": "read-only probe surfaced from proof-state analysis",
+        "verified": "read_only_probe_suggestion",
+        "guarantee": "read-only probe shape; proof state unchanged; probe then decide; reversible"
+      },
+      {
+        "title": "Residual closing tactic",
+        "category": "probe",
+        "tactic": "auto => />.",
+        "applicability": "This tactic-shaped option should be checked with a read-only probe before committing it.",
+        "effect": "This is a read-only probe; it asks EasyCrypt what would happen without changing the committed proof state.",
+        "source": "proof-state analysis",
+        "derivation": "read-only probe surfaced from proof-state analysis",
+        "verified": "read_only_probe_suggestion",
+        "guarantee": "read-only probe shape; proof state unchanged; probe then decide; reversible"
+      },
+      {
+        "title": "Read-only tactic probe",
+        "category": "probe",
+        "tactic": "smt().",
+        "applicability": "This tactic-shaped option should be checked with a read-only probe before committing it.",
+        "effect": "This is a read-only probe; it asks EasyCrypt what would happen without changing the committed proof state.",
+        "source": "proof-state analysis",
+        "derivation": "read-only probe surfaced from proof-state analysis",
+        "verified": "read_only_probe_suggestion",
+        "guarantee": "read-only probe shape; proof state unchanged; probe then decide; reversible"
+      }
+    ],
+    "probe_alternatives": [
+      {
+        "tactic": "smt(addpK dptxt_funi dptxt_fu).",
+        "probe_result": "accepted",
+        "status": "verified_on_current_state",
+        "how_to_use": "This closing/checking tactic was accepted by a read-only probe on the current proof state. Commit it only if you want to try closing or checking this obligation.",
+        "closing_decision": {
+          "id": "closing_or_checking",
+          "kind": "closing_or_checking",
+          "status": "accepted_checkpoint",
+          "tactic": "smt(addpK dptxt_funi dptxt_fu).",
+          "phase": "closing/checking",
+          "valid_for": "current_view_only",
+          "decision": "Commit this exact tactic only if you want to try closing or checking this obligation.",
+          "recommended_next": {
+            "label": "Commit this exact tactic",
+            "submit": {
+              "intent": "commit_tactic",
+              "payload": {
+                "tactic": "smt(addpK dptxt_funi dptxt_fu)."
+              }
+            }
+          },
+          "after_commit": "This is a closing/checking step; it may close the current goal or expose the next remaining goal, but it does not promise a new surgery workbench.",
+          "if_wrong_after_commit": "Use `undo_last_step` if the committed closing/checking step does not match the intended route."
+        },
+        "goal_after_probe_summary": {
+          "remaining_goals": 1,
+          "first_lines": [
+            "Current goal",
+            "Type variables: <none>",
+            "------------------------------------------------------------------------",
+            "&1 (left ) : {b, b' : bool, m0, m1, h : ptxt, c : rand * ptxt, pk : pkey,"
+          ],
+          "truncated": false
+        }
+      }
+    ],
+    "route_health": [
+      {
+        "signal": "local_tool_not_ready",
+        "confidence": "medium",
+        "message": "`sim` is usually useful after branch, sampling, and postcondition alignment. The current frontier still shows unmatched structure.",
+        "evidence": [
+          "recent `sim` rejection",
+          "visible branch/sampling/frontier mismatch"
+        ],
+        "recommended_next": {
+          "intent": "inspect_context",
+          "payload": {
+            "topic": "align"
+          }
+        },
+        "recovery_class": "residual_program_surgery_available",
+        "checkpoint_policy": "current_state_residual_work_visible"
+      }
+    ]
+  },
+  "program_frontier": {
+    "authority": "proof-state analysis",
+    "view_focus": "relational_program",
+    "focus": {
+      "live_call_sites": 0,
+      "frontier_call_sites": 0,
+      "live_callable_lemmas": 0,
+      "callable_now_lemmas": 0,
+      "oracle_obligation_handles": 0,
+      "has_invariant_skeleton": false
+    }
+  },
+  "call_site_surface": {},
+  "pure_tail_surface": {
+    "state": "quantified_ambient_tail",
+    "goal_operators": [
+      "r_L",
+      "rand",
+      "qs_L",
+      "list",
+      "m_L",
+      "ptxt",
+      "fmap",
+      "b_L"
+    ],
+    "obligation_families": [
+      {
+        "family": "sampling_bijection",
+        "evidence": [
+          "distribution or lossless token remains visible"
+        ],
+        "effect": "The remaining pure goal may include invertibility or lossless side conditions from an earlier sampling alignment.",
+        "limitations": "No distribution lemma is selected by this surface."
+      },
+      {
+        "family": "constructor_projection",
+        "tuple_equality_count": 1,
+        "effect": "The pure goal exposes tuple/record projections or constructor equalities that can connect program variables to map/list keys.",
+        "limitations": "Projection equalities are reported only when visible in the current text."
+      },
+      {
+        "family": "quantified_residual_logic",
+        "evidence": [
+          "universal quantifier visible",
+          "implication residual visible"
+        ],
+        "effect": "The current proof point is dominated by local logical obligations rather than program-frontier movement.",
+        "limitations": "Quantifier names are not normalized across EasyCrypt pretty-printer variants."
+      }
+    ],
+    "ambient_memory_translation": {
+      "state": "decorated_memory_terms_visible",
+      "visible_decorations": [
+        "{1}",
+        "{2}"
+      ],
+      "translation_facts": [
+        "Decorations identify the program memory from which a term is read.",
+        "Pretty-printer memory names and introduced proof-context names can differ."
+      ],
+      "effect": "Local claims in the pure tail depend on the currently introduced memory binders as well as displayed term decorations."
+    },
+    "effect": "Summarizes verifier-visible pure-goal structure after program frontier actions have been discharged or hidden by local proof steps.",
+    "limitations": [
+      "This panel records syntactic and proof-state facts from the current view.",
+      "It does not choose a tactic or instantiate a lemma."
+    ]
+  },
+  "application_context": {
+    "selected_handles": [
+      {
+        "title": "Concrete tactic candidate",
+        "tactic": "smt(addpK dptxt_funi dptxt_fu).",
+        "why_relevant": "Daemon probe accepted this tactic and it would leave 1 subgoal(s); commit it if that is the intended decomposition.",
+        "derivation": "surfaced from current-state analysis; not daemon-checked on this goal",
+        "verified": "unverified_suggestion",
+        "guarantee": "not verified on the current goal; probe before committing; reversible"
+      }
+    ]
+  },
+  "facts_and_diagnostics": {
+    "facts": {
+      "has_invariant_skeleton": false,
+      "unfoldable_goal_heads": [
+        {
+          "name": "dptxt",
+          "unqualified_name": "dptxt",
+          "declaration_kind": "op",
+          "unfold_tactic": "rewrite /dptxt.",
+          "smt_argument_role": "not_a_lemma_hint"
+        },
+        {
+          "name": "f",
+          "unqualified_name": "f",
+          "declaration_kind": "op",
+          "unfold_tactic": "rewrite /f.",
+          "smt_argument_role": "not_a_lemma_hint"
+        }
+      ],
+      "unfoldable_goal_head_count": 2
+    },
+    "fact_note": "Only current-frontier facts are shown here; the full proof context artifact keeps the compiler/internal details.",
+    "notes": [
+      {
+        "message": "Current residual goal mentions unfoldable definition(s): dptxt, f. Use `rewrite /NAME` before SMT when those predicates block simplification; these names are not smt(...) lemma hints.",
+        "severity": "info"
+      }
+    ]
+  },
+  "recovery_diagnosis_surface": {
+    "kind": "recovery_diagnosis_surface",
+    "recovery_class": "residual_program_surgery_available",
+    "confidence": "medium",
+    "checkpoint_policy": "current_state_residual_work_visible",
+    "evidence": [
+      "recent `sim` rejection",
+      "visible branch/sampling/frontier mismatch"
+    ],
+    "available_local_work": [
+      {
+        "kind": "pure_tail_obligation_families",
+        "items": [
+          "sampling_bijection",
+          "constructor_projection",
+          "quantified_residual_logic"
+        ]
+      },
+      {
+        "kind": "residual_program_surgery",
+        "source_signal": "local_tool_not_ready",
+        "evidence": [
+          "recent `sim` rejection",
+          "visible branch/sampling/frontier mismatch"
+        ]
+      }
+    ],
+    "related_checkpoints": [
+      {
+        "checkpoint_id": "cp_6_9bdb84950e60db50",
+        "semantic_id": "before_call_obligation_work",
+        "semantic_ids": [
+          "before_call_obligation_work"
+        ],
+        "label": "Before latest call-obligation tactic #6",
+        "committed_step_index": 6,
+        "undo_scope": "call_obligation_local",
+        "restored_proof_layer": "call_obligation",
+        "restored_affordances": {
+          "call_route": "committed",
+          "call_obligation": "preserved",
+          "later_local_work": "not_committed"
+        },
+        "why_checkpoint": "call-obligation local boundary; selecting it keeps the opened call obligation and removes later local work"
+      }
+    ],
+    "related_surfaces": [
+      "pure_tail_surface",
+      "structural_checkpoints"
+    ],
+    "limitations": [
+      "does not prescribe a conseq, sim, wp, or skip script",
+      "reports residual program evidence before pure-tail obligations"
+    ]
+  },
+  "inspect_lookup_handles": {
+    "effect": "All handles here are read-only manager requests; the committed EasyCrypt proof state stays unchanged.",
+    "manager_note": "Some requests may ask EasyCrypt or name resolution; wait for the manager result before choosing the next proof intent.",
+    "ask_manager_for": [
+      {
+        "intent": "inspect_context",
+        "payload": {
+          "topic": "goal_info"
+        },
+        "use_when": "Need parsed goal shape, resolved names, or KB pattern hints.",
+        "returns": "parsed goal structure and names"
+      },
+      {
+        "intent": "inspect_context",
+        "payload": {
+          "topic": "call_site_options"
+        },
+        "use_when": "The visible frontier contains call sites or named equiv handles may apply.",
+        "returns": "call-ready/oracle-equiv context for the current frontier, plus the BODY of the procedure(s) called here (functor aliases resolved) so you can see which oracles/state your call invariant must preserve"
+      },
+      {
+        "intent": "inspect_context",
+        "payload": {
+          "topic": "call_invariant_skeleton"
+        },
+        "use_when": "You are at an abstract-adversary `call (_: <inv>)` and want the mechanical glob frame of the invariant before adding your own semantic conjuncts.",
+        "returns": "the mechanical `={glob ...}` frame of the call invariant (shared abstract oracle modules, daemon-confirmed to apply and spawn the obligations). When a named coupling predicate fits the in-scope state it ALSO surfaces a field-threaded carrier (`inv \u2026 s1{1} s2{2}`), plus candidate inductive side-conditions (`dom \u2286 used-set`) for any random oracle the call queries. All revisable starting points \u2014 confirm the coupling and add/adjust the semantic conjuncts (key/state correspondences, set-membership)."
+      },
+      {
+        "intent": "inspect_context",
+        "payload": {
+          "topic": "call_subgoals",
+          "invariant": "<the EasyCrypt invariant expression inside call (_: ...)>"
+        },
+        "use_when": "You are considering `call (_: Inv)` and already have a concrete invariant expression you want to test first.",
+        "returns": "a read-only preview of the obligations caused by that candidate invariant, including pre/init, call-preservation, oracle-side, postcondition, missing-fact signals, and extra conjuncts that may create avoidable obligations"
+      },
+      {
+        "intent": "inspect_context",
+        "payload": {
+          "topic": "tactic_forms",
+          "name": "call"
+        },
+        "use_when": "A tactic has multiple EasyCrypt argument forms.",
+        "returns": "valid tactic forms and common traps"
+      },
+      {
+        "intent": "inspect_context",
+        "payload": {
+          "topic": "tactic_forms",
+          "name": "sp"
+        },
+        "use_when": "The frontier may need indexed `sp i j` before branch or call tactics.",
+        "returns": "valid `sp` forms and branch-frontier traps"
+      },
+      {
+        "intent": "inspect_context",
+        "payload": {
+          "topic": "tactic_forms",
+          "name": "wp"
+        },
+        "use_when": "Mid-proof pRHL suffix surgery may need indexed `wp`.",
+        "returns": "valid indexed `wp` forms and suffix-alignment traps"
+      },
+      {
+        "intent": "inspect_context",
+        "payload": {
+          "topic": "tactic_forms",
+          "name": "swap"
+        },
+        "use_when": "Statement order may need a small `swap` before `sp`, `wp`, or `sim`.",
+        "returns": "valid `swap` forms and statement-order traps"
+      },
+      {
+        "intent": "inspect_context",
+        "payload": {
+          "topic": "tactic_forms",
+          "name": "rcondt"
+        },
+        "use_when": "A guarded branch may need `rcondt` after a case split or invariant fact.",
+        "returns": "valid `rcondt` forms and guard-obligation traps"
+      },
+      {
+        "intent": "inspect_context",
+        "payload": {
+          "topic": "tactic_forms",
+          "name": "rcondf"
+        },
+        "use_when": "A guarded branch may need `rcondf` after a case split or invariant fact.",
+        "returns": "valid `rcondf` forms and guard-obligation traps"
+      },
+      {
+        "intent": "inspect_context",
+        "payload": {
+          "topic": "tactic_forms",
+          "name": "conseq"
+        },
+        "use_when": "A suffix proof may need `conseq` to weaken to a smaller relation before `sim`.",
+        "returns": "valid `conseq` forms and pRHL memory-annotation traps"
+      },
+      {
+        "intent": "inspect_context",
+        "payload": {
+          "topic": "tactic_forms",
+          "name": "rnd"
+        },
+        "use_when": "One side may have an extra sample or need an explicit sample coupling.",
+        "returns": "valid `rnd` forms, including one-sided sampling"
+      },
+      {
+        "intent": "inspect_context",
+        "payload": {
+          "topic": "tactic_forms",
+          "name": "eager"
+        },
+        "use_when": "A known statement-order mismatch may need an eager/lazy transformation.",
+        "returns": "valid `eager` forms and when to prefer smaller surgery"
+      },
+      {
+        "intent": "inspect_context",
+        "payload": {
+          "topic": "align"
+        },
+        "use_when": "LHS/RHS statement order may need swap/alignment context.",
+        "returns": "swap/alignment context for the visible pRHL frontier"
+      }
+    ]
+  },
+  "structural_checkpoints": {
+    "items": [
+      {
+        "checkpoint_id": "cp_6_9bdb84950e60db50",
+        "semantic_id": "before_call_obligation_work",
+        "semantic_ids": [
+          "before_call_obligation_work"
+        ],
+        "label": "Before latest call-obligation tactic #6",
+        "committed_step_index": 6,
+        "committed_tactic": "conseq (_ : _ ==> ={glob A, Log.qs, LRO.m, pk, b} /\\ Game1.r{1} = Game2.r{2}).",
+        "restored_proof_layer": "call_obligation",
+        "restored_affordances": {
+          "call_route": "committed",
+          "call_obligation": "preserved",
+          "later_local_work": "not_committed"
+        },
+        "undo_scope": "call_obligation_local",
+        "why_checkpoint": "call-obligation local boundary; selecting it keeps the opened call obligation and removes later local work",
+        "effect_if_selected": "Undo committed tactic #6 and every committed tactic after it in this node.",
+        "submit": {
+          "intent": "undo_to_checkpoint",
+          "payload": {
+            "checkpoint_id": "cp_6_9bdb84950e60db50"
+          }
+        }
+      },
+      {
+        "checkpoint_id": "cp_3_9bdb84950e60db50",
+        "semantic_id": "after_call_opened",
+        "semantic_ids": [
+          "after_call_opened"
+        ],
+        "label": "After call opened / before obligation work #3",
+        "committed_step_index": 3,
+        "committed_tactic": "sim.",
+        "restored_proof_layer": "call_obligations_opened",
+        "restored_affordances": {
+          "call_route": "committed",
+          "call_obligation_work": "not_committed"
+        },
+        "undo_scope": "call_local",
+        "why_checkpoint": "call-local boundary; selecting it keeps the call tactic and removes work committed after the call opened",
+        "effect_if_selected": "Undo committed tactic #3 and every committed tactic after it in this node.",
+        "submit": {
+          "intent": "undo_to_checkpoint",
+          "payload": {
+            "checkpoint_id": "cp_3_9bdb84950e60db50"
+          }
+        }
+      },
+      {
+        "checkpoint_id": "cp_2_9bdb84950e60db50",
+        "semantic_id": "before_call_route",
+        "semantic_ids": [
+          "before_call_route"
+        ],
+        "label": "Before call invariant #2",
+        "committed_step_index": 2,
+        "committed_tactic": "call (_: ={glob Log, glob LRO}).",
+        "restored_proof_layer": "pre_call_route",
+        "restored_affordances": {
+          "call_route": "not_committed",
+          "call_obligation_work": "not_committed"
+        },
+        "undo_scope": "call_local",
+        "why_checkpoint": "call invariant introduction point; later oracle/branch obligations often reveal missing preserved facts or an over-strong equality from this tactic",
+        "effect_if_selected": "Undo committed tactic #2 and every committed tactic after it in this node.",
+        "submit": {
+          "intent": "undo_to_checkpoint",
+          "payload": {
+            "checkpoint_id": "cp_2_9bdb84950e60db50"
+          }
+        }
+      }
+    ]
+  }
+}

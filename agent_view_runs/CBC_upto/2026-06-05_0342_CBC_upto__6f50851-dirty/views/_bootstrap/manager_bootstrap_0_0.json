@@ -1,0 +1,320 @@
+{
+  "file": "artifacts/eval_suite/construction_gap_l1l4/l4_checked_action_surface/cbc_upto/r01/source/MEE-CBC/CBC.eca",
+  "include_dirs": [
+    "artifacts/eval_suite/construction_gap_l1l4/l4_checked_action_surface/cbc_upto/r01/source/MEE-CBC",
+    "easycrypt-src/theories"
+  ],
+  "kind": "manager_session_bootstrap",
+  "lemma": "CBC_upto",
+  "manager_actions": [
+    {
+      "agent_observation": {
+        "effect": "This manager intent does not change the EasyCrypt proof state.",
+        "manager_action": "start",
+        "result": "The manager completed this proof-level request."
+      },
+      "argv": [
+        ".venv/bin/python3",
+        "core/easycrypt/session_cli.py",
+        "-d",
+        ".ec_session_prover_tree_0_0",
+        "-start",
+        "-f",
+        "artifacts/eval_suite/construction_gap_l1l4/l4_checked_action_surface/cbc_upto/r01/source/MEE-CBC/CBC.eca",
+        "-I",
+        "artifacts/eval_suite/construction_gap_l1l4/l4_checked_action_surface/cbc_upto/r01/source/MEE-CBC",
+        "-I",
+        "easycrypt-src/theories",
+        "-lemma",
+        "CBC_upto"
+      ],
+      "duration_ms": 1095,
+      "exit_code": 0,
+      "label": "start",
+      "mutates_proof_state": true,
+      "stderr_chars": 0,
+      "stderr_preview": "",
+      "stdout_chars": 7647,
+      "stdout_has_workspace_view": true,
+      "stdout_lines": 180
+    },
+    {
+      "agent_observation": {
+        "effect": "This manager intent does not change the EasyCrypt proof state.",
+        "manager_action": "agent_view",
+        "result": "The manager completed this proof-level request."
+      },
+      "argv": [
+        ".venv/bin/python3",
+        "core/easycrypt/session_cli.py",
+        "-d",
+        ".ec_session_prover_tree_0_0",
+        "-agent-view"
+      ],
+      "duration_ms": 234,
+      "exit_code": 0,
+      "label": "agent_view",
+      "mutates_proof_state": false,
+      "stderr_chars": 0,
+      "stderr_preview": "",
+      "stdout_chars": 7532,
+      "stdout_has_workspace_view": true,
+      "stdout_lines": 175
+    }
+  ],
+  "node": "Tree-0.0",
+  "replay_prefix": [],
+  "replay_prefix_count": 0,
+  "schema_version": 2,
+  "session_dir": ".ec_session_prover_tree_0_0",
+  "session_tag": "prover_tree_0_0",
+  "snapshot": {
+    "execution_refs": {
+      "manager_action_count": 2,
+      "manager_actions": [
+        {
+          "agent_observation": {
+            "effect": "This manager intent does not change the EasyCrypt proof state.",
+            "manager_action": "start",
+            "result": "The manager completed this proof-level request."
+          },
+          "argv": [
+            ".venv/bin/python3",
+            "core/easycrypt/session_cli.py",
+            "-d",
+            ".ec_session_prover_tree_0_0",
+            "-start",
+            "-f",
+            "artifacts/eval_suite/construction_gap_l1l4/l4_checked_action_surface/cbc_upto/r01/source/MEE-CBC/CBC.eca",
+            "-I",
+            "artifacts/eval_suite/construction_gap_l1l4/l4_checked_action_surface/cbc_upto/r01/source/MEE-CBC",
+            "-I",
+            "easycrypt-src/theories",
+            "-lemma",
+            "CBC_upto"
+          ],
+          "duration_ms": 1095,
+          "exit_code": 0,
+          "label": "start",
+          "mutates_proof_state": true,
+          "stderr_chars": 0,
+          "stderr_preview": "",
+          "stdout_chars": 7647,
+          "stdout_has_workspace_view": true,
+          "stdout_lines": 180
+        },
+        {
+          "agent_observation": {
+            "effect": "This manager intent does not change the EasyCrypt proof state.",
+            "manager_action": "agent_view",
+            "result": "The manager completed this proof-level request."
+          },
+          "argv": [
+            ".venv/bin/python3",
+            "core/easycrypt/session_cli.py",
+            "-d",
+            ".ec_session_prover_tree_0_0",
+            "-agent-view"
+          ],
+          "duration_ms": 234,
+          "exit_code": 0,
+          "label": "agent_view",
+          "mutates_proof_state": false,
+          "stderr_chars": 0,
+          "stderr_preview": "",
+          "stdout_chars": 7532,
+          "stdout_has_workspace_view": true,
+          "stdout_lines": 175
+        }
+      ]
+    },
+    "goal_hash": "34b57adee96c48fea116f22c2654d10ce4bf7bcb",
+    "node_id": "Tree-0.0",
+    "proof_context_view_artifact": "",
+    "session_dir": ".ec_session_prover_tree_0_0",
+    "session_epoch": 1,
+    "session_tag": "prover_tree_0_0",
+    "state_version": 1,
+    "workspace_view_artifact": ""
+  },
+  "workspace_view": {
+    "candidate_moves": {
+      "moves": [
+        {
+          "applicability": "Use this as route-selection context; it is not a tactic to run as-is.",
+          "category": "strategy",
+          "source": "proof-state analysis",
+          "tactic_shape": "Probabilistic VC plan: bad-event reduction via have-chain, rewrite Pr/mu rules, real-order smt, byequiv/bad-event bridge"
+        },
+        {
+          "applicability": "Use this as route-selection context; it is not a tactic to run as-is.",
+          "category": "strategy",
+          "source": "proof-state analysis",
+          "tactic_shape": "rewrite DQ_Sample_Compute_pr."
+        },
+        {
+          "applicability": "This tactic-shaped option should be checked with a read-only probe before committing it.",
+          "category": "probe",
+          "derivation": "read-only probe surfaced from proof-state analysis",
+          "effect": "This is a read-only probe; it asks EasyCrypt what would happen without changing the committed proof state.",
+          "guarantee": "read-only probe shape; proof state unchanged; probe then decide; reversible",
+          "source": "proof-state analysis",
+          "tactic": "rewrite (DQ_Sample_Compute_pr &m).",
+          "title": "Read-only tactic probe",
+          "verified": "read_only_probe_suggestion"
+        },
+        {
+          "applicability": "This tactic-shaped option should be checked with a read-only probe before committing it.",
+          "category": "probe",
+          "derivation": "read-only probe surfaced from proof-state analysis",
+          "effect": "This is a read-only probe; it asks EasyCrypt what would happen without changing the committed proof state.",
+          "guarantee": "read-only probe shape; proof state unchanged; probe then decide; reversible",
+          "source": "proof-state analysis",
+          "tactic": "rewrite (success_eq_random &m).",
+          "title": "Read-only tactic probe",
+          "verified": "read_only_probe_suggestion"
+        },
+        {
+          "applicability": "This tactic-shaped option should be checked with a read-only probe before committing it.",
+          "category": "probe",
+          "derivation": "read-only probe surfaced from proof-state analysis",
+          "effect": "This is a read-only probe; it asks EasyCrypt what would happen without changing the committed proof state.",
+          "guarantee": "read-only probe shape; proof state unchanged; probe then decide; reversible",
+          "source": "proof-state analysis",
+          "tactic": "rewrite (success_eq &m).",
+          "title": "Read-only tactic probe",
+          "verified": "read_only_probe_suggestion"
+        },
+        {
+          "applicability": "This tactic-shaped option should be checked with a read-only probe before committing it.",
+          "category": "probe",
+          "derivation": "read-only probe surfaced from proof-state analysis",
+          "effect": "This is a read-only probe; it asks EasyCrypt what would happen without changing the committed proof state.",
+          "guarantee": "read-only probe shape; proof state unchanged; probe then decide; reversible",
+          "source": "proof-state analysis",
+          "tactic": "rewrite (doublequery_eq CBC_Oracle(DoubleQuery(F)) &m).",
+          "title": "Read-only tactic probe",
+          "verified": "read_only_probe_suggestion"
+        },
+        {
+          "applicability": "This tactic-shaped option should be checked with a read-only probe before committing it.",
+          "category": "probe",
+          "derivation": "read-only probe surfaced from proof-state analysis",
+          "effect": "This is a read-only probe; it asks EasyCrypt what would happen without changing the committed proof state.",
+          "guarantee": "read-only probe shape; proof state unchanged; probe then decide; reversible",
+          "source": "proof-state analysis",
+          "tactic": "rewrite (refactor_abstract CBC_Oracle(DoubleQuery(F)) &m).",
+          "title": "Read-only tactic probe",
+          "verified": "read_only_probe_suggestion"
+        }
+      ]
+    },
+    "current_goal": {
+      "goal_type": "probability",
+      "lines": [
+        "Current goal",
+        "",
+        "Type variables: <none>",
+        "",
+        "&m: {}",
+        "------------------------------------------------------------------------",
+        "`|Pr[INDR_CPA_direct(CBC_Oracle(PRFi), A).main() @ &m : res] -",
+        "  Pr[INDR_CPA_direct(CBC_Oracle(Sample), A).main() @ &m : res]| <=",
+        "Pr[INDR_CPA_direct(Compute, A).main() @ &m : Compute.bad]"
+      ],
+      "source": {
+        "ground_truth": false,
+        "label": "Parsed from EasyCrypt pretty goal text"
+      },
+      "text_fully_shown": true,
+      "truncated": false,
+      "view_focus": "probability"
+    },
+    "facts_and_diagnostics": {
+      "fact_note": "Only current-frontier facts are shown here; the full proof context artifact keeps the compiler/internal details.",
+      "facts": {
+        "has_pr_arithmetic_plan": true,
+        "has_pr_normal_form": false,
+        "has_pr_obligation_plan": true,
+        "unfoldable_goal_head_count": 0
+      }
+    },
+    "inspect_lookup_handles": {
+      "ask_manager_for": [
+        {
+          "intent": "inspect_context",
+          "payload": {
+            "topic": "goal_info"
+          },
+          "returns": "manager-provided read-only context for this proof route",
+          "use_when": "No fresh recommendation is available; parse the current goal."
+        },
+        {
+          "intent": "inspect_context",
+          "payload": {
+            "topic": "pr_bridge_routes"
+          },
+          "returns": "daemon-verified, committable Pr bridge routes with manager-owned intent payloads",
+          "use_when": "Current Pr equality may need a manager-verified bridge route (game-hop or scheme/endpoint normalization) before direct byequiv/proc lowering."
+        },
+        {
+          "intent": "inspect_context",
+          "payload": {
+            "topic": "equiv_bridge_lemmas"
+          },
+          "returns": "context-only equiv bridge lemma candidates (names to look up/apply); not a verified Pr route",
+          "use_when": "Need pRHL/procedure-equivalence bridge lemma names or context after checking pr_bridge_routes."
+        },
+        {
+          "intent": "inspect_context",
+          "payload": {
+            "topic": "lemma_hints"
+          },
+          "returns": "nearby lemma hints and proof-route context",
+          "use_when": "Need local lemma hints before choosing a Pr-level proof route."
+        },
+        {
+          "intent": "inspect_context",
+          "payload": {
+            "name": "while",
+            "topic": "tactic_forms"
+          },
+          "returns": "valid `while` forms and common traps",
+          "use_when": "Need exact byphoare/phoare-loop tactic syntax before probing the probability route."
+        }
+      ],
+      "effect": "All handles here are read-only manager requests; the committed EasyCrypt proof state stays unchanged.",
+      "manager_note": "Some requests may ask EasyCrypt or name resolution; wait for the manager result before choosing the next proof intent."
+    },
+    "kind": "prover_workspace_view",
+    "last_result": {},
+    "opener_focus": {
+      "reduce_with": [
+        "`byequiv (_: <pre> ==> <post>)` \u2014 to a pRHL `equiv` (most common)",
+        "`byphoare (_: <pre> ==> <post>)` \u2014 to a `phoare` bound on one program"
+      ],
+      "yours": "the reduction (byequiv vs byphoare), the pre/post, the numeric bound."
+    },
+    "program_frontier": {
+      "authority": "proof-state analysis",
+      "focus": {
+        "has_pr_arithmetic_plan": true,
+        "has_pr_normal_form": false,
+        "has_pr_obligation_plan": true,
+        "native_ast_search_hits": 0,
+        "pr_rewrite_candidates": 6
+      },
+      "view_focus": "probability"
+    },
+    "proof_status": {
+      "current_layer": "pr",
+      "goal_type": "probability",
+      "remaining_goals": 1,
+      "remaining_goals_known": true,
+      "status": "open",
+      "view_focus": "probability"
+    },
+    "schema_version": 2,
+    "view_hash": "740a43e4393693223941253560056c5300e3d2b4"
+  }
+}

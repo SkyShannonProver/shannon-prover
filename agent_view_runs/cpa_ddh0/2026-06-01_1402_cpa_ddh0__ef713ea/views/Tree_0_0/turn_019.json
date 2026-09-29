@@ -1,0 +1,53 @@
+{
+  "last_result": {
+    "intent": "commit_tactic",
+    "payload": {
+      "tactic": "exact pow_pow."
+    },
+    "manager_action": "commit_tactic",
+    "result": "EasyCrypt rejected the committed tactic. Use the error summary and current goal to revise the proof step.",
+    "effect": "The manager attempted to commit a tactic; use the result and latest goal to decide what changed.",
+    "proof_state": "The committed EasyCrypt proof state was not changed.",
+    "tactic": "exact pow_pow."
+  },
+  "current_goal": {
+    "lines": [
+      "Current goal",
+      "",
+      "Type variables: <none>",
+      "",
+      "&m: {}",
+      "&1: {b, b' : bool, sk0, y : ZModE.exp, pk, pk0 : pkey, sk : skey,",
+      "    m0, m1, m : ptxt, c : ctxt}",
+      "&2: {b, b0, b' : bool, gy, gz : group, x, y : ZModE.exp, gx : pkey,",
+      "    m0, m1 : ptxt}",
+      "sk0L: ZModE.exp",
+      "H: sk0L \\in dt",
+      "yL: ZModE.exp",
+      "H0: yL \\in dt",
+      "result_R: ptxt * ptxt",
+      "A_R: (glob A)",
+      "bL: bool",
+      "H1: bL \\in {0,1}",
+      "------------------------------------------------------------------------",
+      "g ^ sk0L ^ yL = g ^ (sk0L * yL)",
+      "[34|check]>"
+    ],
+    "text_fully_shown": true,
+    "truncated": false,
+    "goal_type": "ambient",
+    "view_focus": "ambient_logic",
+    "source": {
+      "label": "Parsed from EasyCrypt pretty goal text",
+      "ground_truth": false
+    }
+  },
+  "proof_status": {
+    "status": "error",
+    "remaining_goals": 1,
+    "remaining_goals_known": true,
+    "goal_type": "ambient",
+    "view_focus": "ambient_logic",
+    "current_layer": "ambient_logic"
+  }
+}

@@ -1,0 +1,78 @@
+{
+  "last_result": {
+    "intent": "commit_tactic",
+    "payload": {
+      "tactic": "rnd{2}."
+    },
+    "manager_action": "commit_tactic",
+    "result": "EasyCrypt accepted the committed tactic.",
+    "effect": "EasyCrypt accepted a proof-state change; the refreshed view is based on the new committed state.",
+    "proof_state": "The committed EasyCrypt proof state changed.",
+    "tactic": "rnd{2}."
+  },
+  "current_goal": {
+    "lines": [
+      "Current goal (remaining: 7)",
+      "",
+      "Type variables: <none>",
+      "",
+      "&m: {}",
+      "------------------------------------------------------------------------",
+      "&1 (left ) : {i : int, s, pi, x, r, x0, r0 : block, p, c : block list}",
+      "&2 (right) : {i : int, s, pi, x, r, x0, r0 : block, p, c : block list}",
+      "",
+      "pre =",
+      "  ((i{1} = i{2} /\\",
+      "    s{1} = s{2} /\\",
+      "    c{1} = c{2} /\\",
+      "    p{1} = p{2} /\\ x{1} = x{2} /\\ DoubleQuery.qs{1} = DoubleQuery.qs{2}) /\\",
+      "   fdom PRFi.m{1} = DoubleQuery.qs{1} /\\",
+      "   !DoubleQuery.bad{2} /\\ i{1} < size p{1} /\\ i{2} < size p{2}) /\\",
+      "  (x{1} \\in DoubleQuery.qs{1})",
+      "",
+      "                           (1)  DoubleQuery.bad <- true  ",
+      "                           (2)  x0 <- x                  ",
+      "",
+      "post =",
+      "  is_lossless dBlock &&",
+      "  forall (r0_0 : block),",
+      "    r0_0 \\in dBlock =>",
+      "    let i_R = i{2} + 1 in",
+      "    let qs_L = DoubleQuery.qs{1} `|` fset1 x{1} in",
+      "    let s_L = oget PRFi.m{1}.[x{1}] in",
+      "    let i_L = i{1} + 1 in",
+      "    ((i_L = i_R /\\ p{1} = p{2}) /\\",
+      "     (!DoubleQuery.bad{2} =>",
+      "      (s_L = r0_0 /\\",
+      "       c{1} ++ [s_L] = c{2} ++ [r0_0] /\\",
+      "       qs_L = DoubleQuery.qs{2} `|` fset1 x{2}) /\\",
+      "      fdom PRFi.m{1} = qs_L)) /\\",
+      "    (i_L < size p{1} <=> i_R < size p{2})",
+      "[143|check]>"
+    ],
+    "text_fully_shown": true,
+    "truncated": false,
+    "goal_type": "pRHL",
+    "view_focus": "relational_program",
+    "source": {
+      "label": "Parsed from EasyCrypt pretty goal text",
+      "ground_truth": false
+    }
+  },
+  "proof_status": {
+    "status": "open",
+    "remaining_goals": 7,
+    "remaining_goals_known": true,
+    "goal_type": "pRHL",
+    "view_focus": "relational_program",
+    "current_layer": "procedure_body"
+  },
+  "surface_profile": {
+    "name": "l1_goal_projection",
+    "surface_profile": "l1_goal_projection",
+    "stage": "l1_goal_projection",
+    "description": "L1 Goal-State Projection: manager transport of ONLY the current goal. No status, no manager-result section, no focus \u2014 the agent sees the raw goal and nothing else (the node-memory recovery anchor and the one-line submit-intent reminder are the only scaffolding).",
+    "paper_level": "L1",
+    "paper_role": "paper"
+  }
+}

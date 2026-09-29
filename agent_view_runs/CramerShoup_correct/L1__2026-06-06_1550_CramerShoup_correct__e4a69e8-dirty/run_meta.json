@@ -1,0 +1,36 @@
+{
+  "kind": "agent_view_run_report",
+  "timestamp": "2026-06-06_1550_CramerShoup_correct",
+  "lemma": "CramerShoup_correct",
+  "source_file": "eval/examples/cramer-shoup/cramer_shoup.ec",
+  "model": "claude-opus-4-8",
+  "surface_profile": "l1_goal_projection",
+  "trees": 1,
+  "eval_mode": true,
+  "outcome": "proved",
+  "committed_proofs": [
+    {
+      "tree": "Tree_0_0",
+      "tactics": [
+        "proc; inline *; auto.",
+        "move=> &hr _ x1 _ x2 _ y1 _ y2 _ z1 _ z2 _ w _ k _ /= u _ /=.",
+        "pose v := H k (DH.G.g ^ u, DH.G.g ^ w ^ u, (DH.G.g ^ z1 * DH.G.g ^ w ^ z2) ^ u * m{hr}).",
+        "have hd : (DH.G.g ^ x1 * DH.G.g ^ w ^ x2) ^ u * (DH.G.g ^ y1 * DH.G.g ^ w ^ y2) ^ (u * v) = DH.G.g ^ u ^ (x1 + v * y1) * DH.G.g ^ w ^ u ^ (x2 + v * y2) by rewrite log_bij !(logg1, logrzM, logDr); ring.",
+        "have hc : (DH.G.g ^ z1 * DH.G.g ^ w ^ z2) ^ u * m{hr} / (DH.G.g ^ u ^ z1 * DH.G.g ^ w ^ u ^ z2) = m{hr} by rewrite log_bij !(logg1, logrzM, logDr, logDrN); ring.",
+        "have hc : (DH.G.g ^ z1 * DH.G.g ^ w ^ z2) ^ u * m{hr} / (DH.G.g ^ u ^ z1 * DH.G.g ^ w ^ u ^ z2) = m{hr} by rewrite log_bij !(logg1, logrzM, logDr, logrV); ring.",
+        "by rewrite hd eqxx /= hc.",
+        "rewrite hd /=.",
+        "exact hc.",
+        "qed."
+      ],
+      "proved": true
+    }
+  ],
+  "turn_count": 11,
+  "views_copied": 12,
+  "run_iteration_dir": "artifacts/eval_suite/wave1_rerun_l1/l1_goal_projection/d1_cramershoup/r01/2026-06-06_1550_CramerShoup_correct/iteration_1",
+  "commit": "e4a69e8",
+  "commit_full": "e4a69e84448536e27b35e2690da4976ef06001ea",
+  "branch": "mcp-v0",
+  "dirty": true
+}

@@ -1,0 +1,41 @@
+{
+  "last_result": {},
+  "current_goal": {
+    "goal_type": "probability",
+    "lines": [
+      "Current goal",
+      "",
+      "Type variables: <none>",
+      "",
+      "&m: {}",
+      "------------------------------------------------------------------------",
+      "`|Pr[SKEa.RCPA.INDR_CPA(PadThenEncrypt(IV_Wrap(CBC(PseudoRP))),",
+      "                 RCPA_WUF_RCPA.RCPAa(MAC, RCPA_QueryBounder(A))).main",
+      "     () @ &m : res] -",
+      "  Pr[SKEa.RCPA.INDR_CPA(SKEa.RCPA.Ideal,",
+      "                 RCPA_WUF_RCPA.RCPAa(MAC, RCPA_QueryBounder(A))).main",
+      "     () @ &m : res]| =",
+      "`|Pr[CoreDefs.RCPA.INDR_CPA(IV_Wrap(CBC(PseudoRP)),",
+      "                     RCPAa(RCPA_WUF_RCPA.RCPAa(MAC, RCPA_QueryBounder(A)))).main",
+      "     () @ &m : res] -",
+      "  Pr[CoreDefs.RCPA.INDR_CPA(CoreDefs.RCPA.Ideal,",
+      "                     RCPAa(RCPA_WUF_RCPA.RCPAa(MAC, RCPA_QueryBounder(A)))).main",
+      "     () @ &m : res]|"
+    ],
+    "source": {
+      "ground_truth": false,
+      "label": "Parsed from EasyCrypt pretty goal text"
+    },
+    "text_fully_shown": true,
+    "truncated": false,
+    "view_focus": "probability"
+  },
+  "proof_status": {
+    "current_layer": "pr",
+    "goal_type": "probability",
+    "remaining_goals": 1,
+    "remaining_goals_known": true,
+    "status": "open",
+    "view_focus": "probability"
+  }
+}

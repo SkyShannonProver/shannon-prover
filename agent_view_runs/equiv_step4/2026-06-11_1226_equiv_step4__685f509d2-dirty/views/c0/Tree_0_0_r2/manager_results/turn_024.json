@@ -1,0 +1,22 @@
+{
+  "turn": 24,
+  "handled_intent": {
+    "intent": "lookup_symbol",
+    "payload": {
+      "symbol": "UFCMA.set_bad2"
+    }
+  },
+  "ok": true,
+  "manager_note": "Read-only context. Accepted/rejected tactic or call text inside a preview is route-selection information, not the current proof-state error.",
+  "manager_actions": [
+    {
+      "action": "symbol lookup",
+      "outcome": "The manager returned read-only context for the current goal.",
+      "timing": "1.3 s",
+      "content": {
+        "preview": "[WHERE-MISS] UFCMA.set_bad2 not found. tried: UFCMA.set_bad2, MB.UFCMA.set_bad2, NonceCount.UFCMA.set_bad2, Poly_in.UFCMA.set_bad2, Poly_out.UFCMA.set_bad2, TPoly.UFCMA.set_bad2, Extra_block.UFCMA.set_bad2, Block.UFCMA.set_bad2, FiniteRO.UFCMA.set_bad2, Indist.UFCMA.set_bad2, OpCCinit.UFCMA.set_bad2, OpCCRO.UFCMA.set_bad2, CCA_UFCMA.UFCMA.set_bad2, Split0.UFCMA.set_bad2, SplitD.UFCMA.set_bad2, SplitC1.UFCMA.set_bad2, Split1.UFCMA.set_bad2, SplitC2.UFCMA.set_bad2, IPNonce.UFCMA.set_bad2, Byte.UFCMA.set_bad2, Key.UFCMA.set_bad2, Nonce.UFCMA.set_bad2, C.UFCMA.set_bad2, MB.I1.UFCMA.set_bad2, MB.I2.UFCMA.set_bad2, MB.RO.UFCMA.set_bad2, MB.RO_Pair.UFCMA.set_bad2, MB.ROF.UFCMA.set_bad2, MB.ROin.UFCMA.set_bad2, MB.ROout.UFCMA.set_bad2, NonceCount.I1.UFCMA.set_bad2 hint: no declaration resolved in the current EasyCrypt context or source-scan fallback. Use a more exact qualified name, or ask the manager for `goal_info` / `lemma_hints` before trying to apply it."
+      }
+    }
+  ],
+  "view_refreshed": true
+}

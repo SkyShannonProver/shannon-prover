@@ -1,0 +1,50 @@
+{
+  "kind": "agent_view_run_report",
+  "timestamp": "2026-06-11_1810_padK",
+  "lemma": "padK",
+  "source_file": "eval/examples/MEE-CBC/FunctionalSpec.ec",
+  "model": "claude-fable-5",
+  "surface_profile": "l1_goal_projection",
+  "trees": 2,
+  "eval_mode": true,
+  "outcome": "proved",
+  "committed_proofs": [
+    {
+      "tree": "Tree_0_0",
+      "tactics": [
+        "rewrite /pad /unpad /=.",
+        "rewrite os2bsK; 1:by rewrite dvdzE padded_is_blocks.",
+        "rewrite !last_cat last_padding.",
+        "rewrite int2oK; 1:smt(modz_ge0 ltz_pmod).",
+        "rewrite size_padded.",
+        "have ->: 48 + (size m - size m %% 16) - (16 - size m %% 16) - 32 = size m by ring.",
+        "have ->: 48 + (size m - size m %% 16) - (16 - size m %% 16) = size m + 32 by ring.",
+        "rewrite take_size_cat."
+      ],
+      "source": "session",
+      "proved": false
+    },
+    {
+      "tree": "Tree_0_1",
+      "tactics": [
+        "rewrite /unpad /pad /=.",
+        "rewrite os2bsK 1:dvdzE 1:padded_is_blocks //.",
+        "rewrite !last_cat last_padding int2oK 1:#smt:(@IntDiv).",
+        "rewrite size_padded (_: 48 + (size m - size m %% 16) - (16 - size m %% 16) - 32 = size m) 1:/# (_: 48 + (size m - size m %% 16) - (16 - size m %% 16) = size m + 32) 1:/#.",
+        "rewrite (drop_size_cat (size m + 32)) 1:size_cat 1:size_t2os //.",
+        "rewrite -!catA (take_size_cat (size m)) // (drop_size_cat (size m)) // (take_size_cat 32) 1:size_t2os // t2osK.",
+        "by rewrite /pad_length /= #smt:(@IntDiv).",
+        "qed."
+      ],
+      "source": "session",
+      "proved": true
+    }
+  ],
+  "turn_count": 21,
+  "views_copied": 23,
+  "run_iteration_dir": "artifacts/eval_suite/mee_sweep_l1_v2/l1_goal_projection/mee_padK/r01/2026-06-11_1810_padK/iteration_1",
+  "commit": "8fa5ceac0",
+  "commit_full": "8fa5ceac0a4c7ed08e53023adcaade43f89a6de8",
+  "branch": "mcp-v0",
+  "dirty": true
+}

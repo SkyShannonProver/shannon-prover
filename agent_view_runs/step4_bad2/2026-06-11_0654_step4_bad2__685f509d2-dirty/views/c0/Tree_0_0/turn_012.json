@@ -1,0 +1,565 @@
+{
+  "last_result": {
+    "intent": "inspect_context",
+    "payload": {
+      "topic": "tactic_forms",
+      "name": "seq"
+    },
+    "effect": "This asks the manager for information only; it does not change the EasyCrypt proof state.",
+    "result": "The manager returned read-only context for the current goal.",
+    "content": {
+      "preview": "=== `seq` tactic \u2014 argument forms === Current proof mode: ambient Form 1: seq K L : (INVARIANT). Use when: Split pRHL goal at K stmts on LHS and L stmts on RHS. INVARIANT is the mid-point predicate. K != L is allowed (asymmetric splits). Generates 2 subgoals: first (prefix) with INV as post, second (suffix) with INV as pre. Example: seq 1 1 : (={Mem.lc} /\\ StLSke.gs{1} = RO.m{2}). Note: K and L are statement counts, not character positions. `inline *` increases the statement count as bodies are expanded. Form 2: seq K L : (INVARIANT) : PROB_BOUND. Use when: Probabilistic seq: the mid-point invariant holds with probability bounded by PROB_BOUND. Example: seq 1 1 : (={glob A}) : (1%r - eps). Form 3: seq N : (R) P1 P2 P3 P4. Use when: bd-hoare/phoare split of ONE program at N statements (NOT a relational `~` goal). R is the mid-point assertion; the four bounds are the probabilities EC makes you discharge \u2014 P1 = `phoare[prefix : pre ==> R]`, P2 = `phoare[suffix : R ==> post]`, P3 = `phoare[prefix : pre ==> !R]`, P4 = `phoare[suffix : !R ==> post]` \u2014 and EC checks the goal bound against `P1*P2 + P3*P4` (`<=` for a `[<=]` goal, `=` for `[=]`). Example: seq 1 : (good) (1%r) (1%r / 2%r)..."
+    }
+  },
+  "current_goal": {
+    "lines": [
+      "Current goal",
+      "",
+      "Type variables: <none>",
+      "",
+      "&m: {}",
+      "------------------------------------------------------------------------",
+      "Context : hr: {b : bool, i : int, n : nonce, ns, ns1, ns2 : nonce list,",
+      "              r : poly_in, t : poly_out}",
+      "Bound   : [<=] qdec%r * maxr pr_zeropol pr1_poly_out",
+      "",
+      "pre = true",
+      "",
+      "(1----)  UFCMA.bad1 <- false                                                            ",
+      "(2----)  UFCMA.cbad1 <- 0                                                               ",
+      "(3----)  UFCMA.bad2 <- false                                                            ",
+      "(4----)  UFCMA.cbad2 <- 0                                                               ",
+      "(5----)  b <@ CPA_game(CCA_CPA_Adv(BNR_Adv(A)), UFCMA3(LRO).O).main()                   ",
+      "(6----)  UF.forged <- false                                                             ",
+      "(7----)  if (size Mem.lc <= qdec) {                                                     ",
+      "(7.1--)    ns <- undup (map (fun (p : ciphertext) => p.`1) Mem.lc)                      ",
+      "(7.2--)    ns1 <- filter (fun (n0 : nonce) => (n0, C.ofintd 0) \\in ROout.m) ns          ",
+      "(7.3--)    ns2 <- filter (fun (n0 : nonce) => (n0, C.ofintd 0) \\notin ROout.m) ns       ",
+      "(7.4--)    i <- 0                                                                       ",
+      "(7.5--)    while (i < size ns1) {                                                       ",
+      "(7.5.1)      n <- nth witness<:nonce> ns1 i                                             ",
+      "(7.5.2)      r <@ LRO.get(n, C.ofintd 0)                                                ",
+      "(7.5.3)      UF.forged <- UF.forged || test_poly_in n Mem.lc r (oget UFCMA.log.[n])     ",
+      "(7.5.4)      i <- i + 1                                                                 ",
+      "(7.5--)    }                                                                            ",
+      "(7.6--)    i <- 0                                                                       ",
+      "(7.7--)    while (i < size ns2) {                                                       ",
+      "(7.7.1)      n <- nth witness<:nonce> ns2 i                                             ",
+      "(7.7.2)      r <@ LRO.get(n, C.ofintd 0)                                                ",
+      "(7.7.3)      t <@                                                                       ",
+      "(     )        UFCMA(LRO).set_bad2(map                                                  ",
+      "(     )                              (fun (c : ciphertext) =>                           ",
+      "(     )                                 c.`4 - poly1305_eval r (topol c.`2 c.`3))       ",
+      "(     )                              (filter (fun (c : ciphertext) => c.`1 = n) Mem.lc))",
+      "(7.7.4)      i <- i + 1                                                                 ",
+      "(7.7--)    }                                                                            ",
+      "(7----)  }                                                                              ",
+      "",
+      "post = UF.forged \\/ UFCMA.bad2",
+      "[390|check]>"
+    ],
+    "text_fully_shown": true,
+    "truncated": false,
+    "goal_type": "phoare",
+    "view_focus": "procedure_frontier",
+    "source": {
+      "label": "Parsed from EasyCrypt pretty goal text",
+      "ground_truth": false
+    }
+  },
+  "proof_status": {
+    "status": "open",
+    "remaining_goals": 1,
+    "remaining_goals_known": true,
+    "goal_type": "phoare",
+    "view_focus": "procedure_frontier",
+    "current_layer": "procedure_body"
+  },
+  "candidate_moves": {
+    "moves": [
+      {
+        "category": "strategy",
+        "tactic_shape": "Probabilistic VC plan: loop bad-event loss accounting via byequiv/bad-event bridge, event preservation, while invariant, rcond/case split",
+        "applicability": "Use this as route-selection context; it is not a tactic to run as-is.",
+        "source": "proof-state analysis"
+      },
+      {
+        "category": "strategy",
+        "tactic_shape": "Structured procedure frontier: straight_line_prefix_before_call_site; primary: use sp if the next invariant/seq cut needs names from the straight-line prefix",
+        "applicability": "Use this as route-selection context; it is not a tactic to run as-is.",
+        "source": "proof-state analysis"
+      },
+      {
+        "title": "Program-shape context",
+        "category": "strategy",
+        "tactic_shape": "Inspect current procedure region summary: guard size Mem.lc <= qdec.",
+        "applicability": "Use this as route-selection context; it is not a tactic to run as-is.",
+        "source": "proof-state analysis"
+      },
+      {
+        "category": "strategy",
+        "tactic_shape": "Inspect proof obligation stack: loop_frontier / statement 7.",
+        "applicability": "Use this as route-selection context; it is not a tactic to run as-is.",
+        "source": "proof-state analysis"
+      },
+      {
+        "category": "strategy",
+        "tactic_shape": "Inspect bad-event candidate map: UFCMA.bad2 (postcondition), UFCMA.bad1 (goal_text), UFCMA.cbad1 (goal_text), UFCMA.cbad2 (goal_text).",
+        "applicability": "Use this as route-selection context; it is not a tactic to run as-is.",
+        "source": "proof-state analysis"
+      },
+      {
+        "category": "strategy",
+        "tactic_shape": "Inspect control/suffix legality: rcond/if/case@1:7=guard_obligation_needed, while@1:7=structurally_ready, while@1:7=structurally_ready.",
+        "applicability": "Use this as route-selection context; it is not a tactic to run as-is.",
+        "source": "proof-state analysis"
+      },
+      {
+        "category": "strategy",
+        "tactic_shape": "Inspect one-sided call-site map: CPA_game on side 1 at statement 5.",
+        "applicability": "Use this as route-selection context; it is not a tactic to run as-is.",
+        "source": "proof-state analysis"
+      },
+      {
+        "category": "strategy",
+        "tactic_shape": "wp.",
+        "applicability": "Use this as route-selection context; it is not a tactic to run as-is.",
+        "source": "proof-state analysis"
+      },
+      {
+        "category": "strategy",
+        "tactic_shape": "sp.",
+        "applicability": "Use this as route-selection context; it is not a tactic to run as-is.",
+        "source": "proof-state analysis"
+      },
+      {
+        "category": "strategy",
+        "tactic_shape": "rcondt{1} 7; first auto.",
+        "applicability": "Use this as route-selection context; it is not a tactic to run as-is.",
+        "source": "proof-state analysis"
+      },
+      {
+        "category": "strategy",
+        "tactic_shape": "rcondf{1} 7; first auto.",
+        "applicability": "Use this as route-selection context; it is not a tactic to run as-is.",
+        "source": "proof-state analysis"
+      },
+      {
+        "category": "strategy",
+        "tactic_shape": "case: (size Mem.lc <= qdec).",
+        "applicability": "Use this as route-selection context; it is not a tactic to run as-is.",
+        "source": "proof-state analysis"
+      },
+      {
+        "category": "strategy",
+        "tactic_shape": "if => //=.",
+        "applicability": "Use this as route-selection context; it is not a tactic to run as-is.",
+        "source": "proof-state analysis"
+      },
+      {
+        "category": "strategy",
+        "tactic_shape": "sp; if => //=.",
+        "applicability": "Use this as route-selection context; it is not a tactic to run as-is.",
+        "source": "proof-state analysis"
+      },
+      {
+        "title": "Loop-splitting route",
+        "category": "strategy",
+        "tactic_shape": "splitwhile{1} 7: (<split of i < size ns1>).",
+        "applicability": "Use this as route-selection context; it is not a tactic to run as-is.",
+        "source": "proof-state analysis"
+      },
+      {
+        "title": "Loop-invariant route",
+        "category": "strategy",
+        "tactic_shape": "while (0 <= i < size ns1); by auto; smt (size_ge0).",
+        "applicability": "Use this as route-selection context; it is not a tactic to run as-is.",
+        "source": "proof-state analysis"
+      },
+      {
+        "title": "Loop-invariant route",
+        "category": "strategy",
+        "tactic_shape": "while (<loop invariant from live variables>).",
+        "applicability": "Use this as route-selection context; it is not a tactic to run as-is.",
+        "source": "proof-state analysis"
+      },
+      {
+        "category": "strategy",
+        "tactic_shape": "swap <range> <offset>; wp.",
+        "applicability": "Use this as route-selection context; it is not a tactic to run as-is.",
+        "source": "proof-state analysis"
+      },
+      {
+        "category": "strategy",
+        "tactic_shape": "conseq (_: <weaker postcondition preserving live state>) => />.",
+        "applicability": "Use this as route-selection context; it is not a tactic to run as-is.",
+        "source": "proof-state analysis"
+      },
+      {
+        "title": "Residual closing tactic",
+        "category": "strategy",
+        "tactic_shape": "auto => />; smt(domE get_setE mem_set mem_empty C.ofintdK C.gt0_max_counter nth0 nth_default).",
+        "applicability": "Use this as route-selection context; it is not a tactic to run as-is.",
+        "source": "proof-state analysis"
+      }
+    ]
+  },
+  "program_frontier": {
+    "authority": "proof-state analysis",
+    "view_focus": "procedure_frontier",
+    "focus": {
+      "live_call_sites": 0,
+      "frontier_call_sites": 0,
+      "live_callable_lemmas": 0,
+      "callable_now_lemmas": 0,
+      "oracle_obligation_handles": 0,
+      "has_invariant_skeleton": false
+    },
+    "call_sites": [
+      {
+        "side": "left",
+        "side_index": 1,
+        "statement_order": 5,
+        "statement_path": "5",
+        "statement": "b <@ CPA_game(CCA_CPA_Adv(BNR_Adv(A)), UFCMA3(LRO).O).main()"
+      },
+      {
+        "side": "left",
+        "side_index": 1,
+        "statement_order": 7,
+        "statement_path": "7.5.2",
+        "statement": "r <@ LRO.get(n, C.ofintd 0)"
+      },
+      {
+        "side": "left",
+        "side_index": 1,
+        "statement_order": 7,
+        "statement_path": "7.7.2",
+        "statement": "r <@ LRO.get(n, C.ofintd 0)"
+      },
+      {
+        "side": "left",
+        "side_index": 1,
+        "statement_order": 7,
+        "statement_path": "7.7.3",
+        "statement": "t <@"
+      }
+    ],
+    "frontier_alignment": {
+      "summary": "Frontier alignment: setup statements appear before the current frontier; loop guards are part of the current proof shape; call sites are visible at the frontier; residual statements remain after a call frontier. Use this as a proof-reader map before choosing while/rnd/seq/call tactics.",
+      "first_instruction_alignment": {
+        "left_first": "UFCMA.bad1 <- false",
+        "right_first": "no right-side setup before this frontier",
+        "left_head": "assignment",
+        "branch_alignment": "one-sided_frontier",
+        "proof_read": "The visible frontier is one-sided; use a one-sided tactic, alignment step, or seq cut before applying a symmetric tactic."
+      },
+      "rows": [
+        {
+          "role": "left-only setup",
+          "left": "4 setup statement(s): UFCMA.bad1 <- false; UFCMA.cbad1 <- 0; UFCMA.bad2 <- false; ... (1 more)",
+          "right": "no right-side setup before this frontier",
+          "proof_read": "The left side has setup before the shared frontier; relate it to the precondition or carry the initialized state in the next invariant/cut.",
+          "location": {
+            "left_paths": [
+              "1",
+              "2",
+              "3",
+              "4"
+            ]
+          }
+        },
+        {
+          "role": "call frontier",
+          "left": "b <@ CPA_game(CCA_CPA_Adv(BNR_Adv(A)), UFCMA3(LRO).O).main()",
+          "right": "no matching right-side call at this frontier",
+          "proof_read": "This is a call frontier; compare the procedures/oracle wrappers before choosing a named call or invariant call.",
+          "location": {
+            "left_path": "5"
+          }
+        },
+        {
+          "role": "call frontier",
+          "left": "r <@ LRO.get(n, C.ofintd 0)",
+          "right": "no matching right-side call at this frontier",
+          "proof_read": "This is a call frontier; compare the procedures/oracle wrappers before choosing a named call or invariant call.",
+          "location": {
+            "left_path": "7.5.2"
+          }
+        },
+        {
+          "role": "call frontier",
+          "left": "t <@",
+          "right": "no matching right-side call at this frontier",
+          "proof_read": "This is a call frontier; compare the procedures/oracle wrappers before choosing a named call or invariant call.",
+          "location": {
+            "left_path": "7.7.3"
+          }
+        },
+        {
+          "role": "left residual after call",
+          "left": "UF.forged <- false",
+          "right": "no right-side residual statement after this call frontier",
+          "proof_read": "The left side has residual statements after the live call frontier; their effects are not part of the callee obligation.",
+          "location": {
+            "left_paths": [
+              "6"
+            ]
+          }
+        },
+        {
+          "role": "loop frontier",
+          "left": "while (i < size ns1) {",
+          "right": "no matching right-side loop at this frontier",
+          "proof_read": "This is the loop frontier; choose a while invariant that carries the state needed by the postcondition.",
+          "location": {
+            "left_path": "7.5"
+          }
+        },
+        {
+          "role": "loop frontier",
+          "left": "while (i < size ns2) {",
+          "right": "no matching right-side loop at this frontier",
+          "proof_read": "This is the loop frontier; choose a while invariant that carries the state needed by the postcondition.",
+          "location": {
+            "left_path": "7.7"
+          }
+        },
+        {
+          "role": "left-only frontier",
+          "left": "if (size Mem.lc <= qdec) {",
+          "right": "no matching right-side statement at this frontier",
+          "proof_read": "Only the left side has this frontier statement; account for it with the precondition, a one-sided transform, or the next invariant.",
+          "location": {
+            "left_path": "7"
+          }
+        }
+      ]
+    },
+    "procedure_navigation": {
+      "how_to_use": "Positions for choosing wp/sp depth, which `if` to rcond, and where the next loop/call frontier is. Facts only \u2014 pick the tactic and the branch direction yourself.",
+      "absorb_depth": {
+        "left": {
+          "side_index": 1,
+          "absorbable_statements": 4,
+          "through_order": 4,
+          "kinds": [
+            "ASSIGN",
+            "ASSIGN",
+            "ASSIGN",
+            "ASSIGN"
+          ]
+        },
+        "sp_hint": "sp 4 0 / wp -4 -0 absorbs the straight-line setup (4 left, 0 right) before the next frontier"
+      },
+      "branch_guards": [
+        {
+          "side_index": 1,
+          "at_order": 7,
+          "at_path": "7",
+          "guard": "size Mem.lc <= qdec",
+          "rcond_forms": "rcondt{1} 7 or rcondf{1} 7 (direction needs guard entailment \u2014 yours to decide)"
+        }
+      ],
+      "loop_frontiers": [
+        {
+          "side_index": 1,
+          "at_order": 7,
+          "statement": null
+        },
+        {
+          "side_index": 1,
+          "at_order": 7,
+          "statement": null
+        }
+      ],
+      "next_frontier": {
+        "kind": "straight_line_prefix_before_call_site",
+        "at_order": 5
+      }
+    },
+    "checks": [
+      "Keep one-sided instrumentation as a map, not as a tactic recipe."
+    ]
+  },
+  "call_site_surface": {
+    "live_call_sites": [
+      {
+        "side": "left"
+      },
+      {
+        "side": "left"
+      },
+      {
+        "side": "left"
+      },
+      {
+        "side": "left"
+      }
+    ],
+    "frontier_blockers": [
+      {
+        "kind": "residual_after_call_site",
+        "left": "UF.forged <- false",
+        "right": "no right-side residual statement after this call frontier",
+        "effect": "Residual statements remain after the live call frontier; their effects are not part of the callee obligation."
+      }
+    ],
+    "residual_frontier": {
+      "state": "residual_after_call",
+      "rows": [
+        {
+          "role": "left residual after call",
+          "left": "UF.forged <- false",
+          "right": "no right-side residual statement after this call frontier",
+          "location": {
+            "left_paths": [
+              "6"
+            ]
+          },
+          "proof_read": "The left side has residual statements after the live call frontier; their effects are not part of the callee obligation."
+        }
+      ],
+      "effect": "These statements remain after the live call frontier and are checked after the call returns.",
+      "limitations": [
+        "The surface reports suffix structure only; it does not choose whether to use a call, inline, wp, or another local tactic."
+      ]
+    },
+    "wrapper_depth": 1
+  },
+  "application_context": {},
+  "facts_and_diagnostics": {
+    "facts": {
+      "has_invariant_skeleton": false,
+      "unfoldable_goal_heads": [
+        {
+          "name": "pr1_poly_out",
+          "unqualified_name": "pr1_poly_out",
+          "declaration_kind": "op",
+          "unfold_tactic": "rewrite /pr1_poly_out.",
+          "smt_argument_role": "not_a_lemma_hint"
+        },
+        {
+          "name": "test_poly_in",
+          "unqualified_name": "test_poly_in",
+          "declaration_kind": "op",
+          "unfold_tactic": "rewrite /test_poly_in.",
+          "smt_argument_role": "not_a_lemma_hint"
+        }
+      ],
+      "unfoldable_goal_head_count": 2
+    },
+    "fact_note": "Only current-frontier facts are shown here; the full proof context artifact keeps the compiler/internal details."
+  },
+  "inspect_lookup_handles": {
+    "effect": "All handles here are read-only manager requests; the committed EasyCrypt proof state stays unchanged.",
+    "manager_note": "Some requests may ask EasyCrypt or name resolution; wait for the manager result before choosing the next proof intent.",
+    "ask_manager_for": [
+      {
+        "intent": "inspect_context",
+        "payload": {
+          "topic": "goal_info"
+        },
+        "use_when": "No fresh recommendation is available; parse the current goal.",
+        "returns": "manager-provided read-only context for this proof route"
+      },
+      {
+        "intent": "inspect_context",
+        "payload": {
+          "topic": "call_site_options"
+        },
+        "use_when": "The current procedure frontier exposes a call route.",
+        "returns": "call-ready/oracle-equiv context for the current frontier, plus the BODY of the procedure(s) called here (functor aliases resolved) so you can see which oracles/state your call invariant must preserve"
+      },
+      {
+        "intent": "inspect_context",
+        "payload": {
+          "topic": "call_subgoals",
+          "invariant": "<the EasyCrypt invariant expression inside call (_: ...)>"
+        },
+        "use_when": "You are considering `call (_: Inv)` and already have a concrete invariant expression you want to test first.",
+        "returns": "a read-only preview of the obligations caused by that candidate invariant, including pre/init, call-preservation, oracle-side, postcondition, missing-fact signals, and extra conjuncts that may create avoidable obligations"
+      },
+      {
+        "intent": "inspect_context",
+        "payload": {
+          "topic": "tactic_forms",
+          "name": "call"
+        },
+        "use_when": "Need the valid form for call, while, seq, rnd, or rewrite.",
+        "returns": "valid tactic forms and common traps"
+      },
+      {
+        "intent": "inspect_context",
+        "payload": {
+          "topic": "tactic_forms",
+          "name": "sp"
+        },
+        "returns": "valid `sp` forms and common traps"
+      },
+      {
+        "intent": "inspect_context",
+        "payload": {
+          "topic": "tactic_forms",
+          "name": "while"
+        },
+        "use_when": "Need the valid one-sided hoare/phoare loop form.",
+        "returns": "valid `while` forms and common traps"
+      },
+      {
+        "intent": "inspect_context",
+        "payload": {
+          "topic": "tactic_forms",
+          "name": "wp"
+        },
+        "use_when": "Mid-proof suffix may need indexed `wp` to absorb a tail before a cut.",
+        "returns": "valid indexed `wp` forms and suffix traps"
+      },
+      {
+        "intent": "inspect_context",
+        "payload": {
+          "topic": "tactic_forms",
+          "name": "swap"
+        },
+        "use_when": "Statement order may need a small `swap` before `sp` or `wp`.",
+        "returns": "valid `swap` forms and statement-order traps"
+      },
+      {
+        "intent": "inspect_context",
+        "payload": {
+          "topic": "tactic_forms",
+          "name": "rcondt"
+        },
+        "use_when": "A guarded branch may need `rcondt` after a case split or invariant fact.",
+        "returns": "valid `rcondt` forms and guard-obligation traps"
+      },
+      {
+        "intent": "inspect_context",
+        "payload": {
+          "topic": "tactic_forms",
+          "name": "rcondf"
+        },
+        "use_when": "A guarded branch may need `rcondf` after a case split or invariant fact.",
+        "returns": "valid `rcondf` forms and guard-obligation traps"
+      },
+      {
+        "intent": "inspect_context",
+        "payload": {
+          "topic": "tactic_forms",
+          "name": "conseq"
+        },
+        "use_when": "A suffix proof may need `conseq` to weaken the pre/postcondition before closing.",
+        "returns": "valid `conseq` forms and pre/post-weakening traps"
+      },
+      {
+        "intent": "inspect_context",
+        "payload": {
+          "topic": "tactic_forms",
+          "name": "rnd"
+        },
+        "use_when": "A sampling step may need `rnd` to reduce it to a distribution/probability fact.",
+        "returns": "valid `rnd` forms, including one-sided sampling"
+      }
+    ]
+  }
+}

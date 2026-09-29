@@ -1,0 +1,18 @@
+{
+  "turn": 18,
+  "handled_intent": {
+    "intent": "undo_to_checkpoint",
+    "payload": {
+      "checkpoint_id": "cp_2_dd6a7dcfb7c3afa8"
+    }
+  },
+  "ok": true,
+  "manager_note": "Checkpoint rewind was handled by the manager; the latest view is authoritative.",
+  "manager_actions": [
+    {
+      "action": "checkpoint rewind confirmation",
+      "outcome": "This rewind leaves the current call obligation scope. Confirm it only if that broader recovery boundary is the state you want to restore."
+    }
+  ],
+  "view_refreshed": true
+}

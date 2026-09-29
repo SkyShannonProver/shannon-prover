@@ -1,0 +1,10 @@
+# Tree-0.0 · turn 25 · commit_tactic
+
+<!-- session 4b15db9f-e792-4df5-8ff1-4c80d607c282 · 2026-06-11T00:52:52.032Z -->
+
+**Intent:** `commit_tactic`  
+**Payload:** `case (j{hr} = i{hr}) => hji.`
+
+---
+
+Let me isolate the leaves. Committing the `j=i` case split to inspect the first branch.

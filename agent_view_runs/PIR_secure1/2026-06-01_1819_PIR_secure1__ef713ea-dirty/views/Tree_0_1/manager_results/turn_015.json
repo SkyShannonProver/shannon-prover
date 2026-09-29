@@ -1,0 +1,19 @@
+{
+  "turn": 15,
+  "handled_intent": {
+    "intent": "undo_to_checkpoint",
+    "payload": {
+      "checkpoint_id": "cp_1_0548457c9a125c97"
+    }
+  },
+  "ok": true,
+  "manager_note": "Checkpoint rewind was handled by the manager; the latest view is authoritative.",
+  "manager_actions": [
+    {
+      "action": "checkpoint rewind",
+      "outcome": "The manager rewound this branch to the selected checkpoint.",
+      "timing": "1.4 s"
+    }
+  ],
+  "view_refreshed": true
+}

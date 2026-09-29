@@ -1,0 +1,19 @@
+{
+  "turn": 3,
+  "handled_intent": {
+    "intent": "commit_tactic",
+    "payload": {
+      "tactic": "sp; rnd; wp; while (={p2, c2, i, n, a, p0, p, Mem.log, Mem.lc, BNR.lenc, BNR.ndec, UFCMA.log, UFCMA.cbad1, glob ROIN.RO, glob ROout, glob ROF} /\\ inv_lbad1 UFCMA_l.lbad1{2} BNR.lenc{2} UFCMA.log{2} Mem.log{2} Mem.lc{2} UFCMA.cbad1{2} BNR.ndec{2} /\\ (UFCMA.bad1{1} <=> exists (tt:tag*tag), (tt \\in UFCMA_l.lbad1{2}) /\\ tt.`1 = tt.`2) /\\ check_plaintext BNR.lenc{1} p{1} /\\ n{1} = (p{1}).`1); auto."
+    }
+  },
+  "ok": true,
+  "manager_note": "Committed tactic accepted; the EasyCrypt proof state changed.",
+  "manager_actions": [
+    {
+      "action": "tactic commit",
+      "outcome": "EasyCrypt accepted the committed tactic.",
+      "timing": "345 ms"
+    }
+  ],
+  "view_refreshed": true
+}

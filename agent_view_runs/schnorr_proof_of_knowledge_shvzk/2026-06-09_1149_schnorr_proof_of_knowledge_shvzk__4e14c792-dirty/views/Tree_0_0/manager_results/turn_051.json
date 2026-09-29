@@ -1,0 +1,19 @@
+{
+  "turn": 51,
+  "handled_intent": {
+    "intent": "commit_tactic",
+    "payload": {
+      "tactic": "rnd (fun (u : ZModE.exp) => u) (fun (u : ZModE.exp) => u)."
+    }
+  },
+  "ok": true,
+  "manager_note": "Committed tactic accepted; the EasyCrypt proof state changed.",
+  "manager_actions": [
+    {
+      "action": "tactic commit",
+      "outcome": "EasyCrypt accepted the committed tactic.",
+      "timing": "171 ms"
+    }
+  ],
+  "view_refreshed": true
+}

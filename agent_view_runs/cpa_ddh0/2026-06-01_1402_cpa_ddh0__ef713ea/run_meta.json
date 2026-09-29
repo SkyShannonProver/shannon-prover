@@ -1,0 +1,72 @@
+{
+  "kind": "agent_view_run_report",
+  "timestamp": "2026-06-01_1402_cpa_ddh0",
+  "lemma": "cpa_ddh0",
+  "source_file": "eval/examples/elgamal.ec",
+  "model": "claude-opus-4-6",
+  "surface_profile": "l1_goal_projection",
+  "trees": 2,
+  "eval_mode": true,
+  "outcome": "proved",
+  "committed_proofs": [
+    {
+      "tree": "Tree_0_0",
+      "tactics": [
+        "byequiv => //.",
+        "proc.",
+        "inline *.",
+        "swap{1} 7 -5.",
+        "wp.",
+        "call (_: ={glob A}).",
+        "call (_: true).",
+        "wp.",
+        "rnd.",
+        "call (_: true).",
+        "wp.",
+        "rnd.",
+        "rnd.",
+        "skip.",
+        "smt(pow_pow).",
+        "progress.",
+        "smt().",
+        "congr.",
+        "exact pow_pow.",
+        "by rewrite expM.",
+        "qed."
+      ],
+      "proved": true
+    },
+    {
+      "tree": "Tree_0_1",
+      "tactics": [
+        "byequiv => //.",
+        "proc.",
+        "inline *.",
+        "swap{1} 7 -3.",
+        "wp.",
+        "call (_: true).",
+        "wp.",
+        "rnd.",
+        "swap{1} 4 -1.",
+        "call (_: true).",
+        "wp.",
+        "rnd.",
+        "wp.",
+        "rnd.",
+        "skip.",
+        "progress.",
+        "by rewrite pow_pow.",
+        "congr.",
+        "smt()."
+      ],
+      "proved": false
+    }
+  ],
+  "turn_count": 41,
+  "views_copied": 43,
+  "run_iteration_dir": "artifacts/eval_suite/l1_l4_surface_ablation/l1_goal_projection/cpa_ddh0_exec/r01/2026-06-01_1402_cpa_ddh0/iteration_1",
+  "commit": "ef713ea",
+  "commit_full": "ef713ea8c34c5bb62c55b40e519465a9e1987406",
+  "branch": "ablation/l1-l4-surface",
+  "dirty": false
+}

@@ -1,0 +1,19 @@
+{
+  "turn": 25,
+  "handled_intent": {
+    "intent": "commit_tactic",
+    "payload": {
+      "tactic": "transitivity UFCMA2(RO).distinguish (={glob A} ==> ={UFCMA.bad2} /\\ res{1} = res{2}) (={glob A} ==> ={UFCMA.bad2} /\\ res{1} = UF.forged{2} /\\ res{2} = (UF.forged{2} \\/ UFCMA.bad2{2})) => //."
+    }
+  },
+  "ok": true,
+  "manager_note": "Committed tactic accepted; the EasyCrypt proof state changed.",
+  "manager_actions": [
+    {
+      "action": "tactic commit",
+      "outcome": "EasyCrypt accepted the committed tactic.",
+      "timing": "405 ms"
+    }
+  ],
+  "view_refreshed": true
+}

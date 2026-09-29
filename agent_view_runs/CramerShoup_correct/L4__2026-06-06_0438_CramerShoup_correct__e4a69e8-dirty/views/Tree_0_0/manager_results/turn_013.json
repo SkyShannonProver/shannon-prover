@@ -1,0 +1,22 @@
+{
+  "turn": 13,
+  "handled_intent": {
+    "intent": "inspect_context",
+    "payload": {
+      "topic": "lemma_hints"
+    }
+  },
+  "ok": true,
+  "manager_note": "Read-only context. Accepted/rejected tactic or call text inside a preview is route-selection information, not the current proof-state error.",
+  "manager_actions": [
+    {
+      "action": "inspect lemma hints",
+      "outcome": "The manager returned read-only context for the current goal.",
+      "timing": "109 ms",
+      "content": {
+        "preview": "[AUTO-LEMMA-HINTS] EC stdlib lemmas relevant to ops in your goal \u2014 paste-ready signatures (apply / rewrite / smt(...)): [current-file-or-cloned-theory / op:`group-algebra`] `expD`: group exponent addition rewrite, typically x^(a + b) = x^a * x^b note: Resolve the actual declaration first with lookup_symbol; cloned theories may require a qualified name such as `DH.G.expD`. [current-file-or-cloned-theory / op:`group-algebra`] `expM`: group exponent multiplication/nesting rewrite, typically (x^a)^b = x^(a*b) note: Resolve the actual declaration first with lookup_symbol; cloned theories may require a qualified name such as `DH.G.expD`. [current-file-or-cloned-theory / op:`group-algebra`] `expN`: group inverse/negative-exponent rewrite when inverses appear note: Resolve the actual declaration first with lookup_symbol; cloned theories may require a qualified name such as `DH.G.expD`. [current-file-or-cloned-theory / op:`group-algebra`] `mulrA`: associativity for group/ring multiplication when products need regrouping note: Resolve the actual declaration first with lookup_symbol; cloned theories may require a qualified name such as `DH.G.expD`. [current-file-or-cloned-theory / op:`grou..."
+      }
+    }
+  ],
+  "view_refreshed": true
+}

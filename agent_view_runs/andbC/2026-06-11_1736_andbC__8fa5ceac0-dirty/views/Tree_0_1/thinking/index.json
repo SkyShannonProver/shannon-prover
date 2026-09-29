@@ -1,0 +1,89 @@
+{
+  "node": "Tree-0.1",
+  "discovery": "recorded_session_id",
+  "transcripts": [
+    "~/.claude/projects/<PROJECT>/b9c20841-eafd-46a6-af5c-1faa6aa00500.jsonl"
+  ],
+  "turns": [
+    {
+      "turn": 1,
+      "intent": "commit_tactic",
+      "payload_key": "by move=> b1 b2; case: b1; case: b2.",
+      "thinking_chars": 0,
+      "text_chars": 65,
+      "tokens": {
+        "output_tokens": 784,
+        "input_tokens": 5,
+        "cache_read_input_tokens": 60171,
+        "cache_creation_input_tokens": 35356
+      },
+      "session_id": "b9c20841-eafd-46a6-af5c-1faa6aa00500",
+      "timestamp": "2026-06-12T00:36:44.882Z",
+      "file": "thinking/turn_001.md"
+    },
+    {
+      "turn": 2,
+      "intent": "commit_tactic",
+      "payload_key": "by smt().",
+      "thinking_chars": 0,
+      "text_chars": 37,
+      "tokens": {
+        "output_tokens": 497,
+        "input_tokens": 2,
+        "cache_read_input_tokens": 32825,
+        "cache_creation_input_tokens": 1174
+      },
+      "session_id": "b9c20841-eafd-46a6-af5c-1faa6aa00500",
+      "timestamp": "2026-06-12T00:36:58.697Z",
+      "file": "thinking/turn_002.md"
+    },
+    {
+      "turn": 3,
+      "intent": "commit_tactic",
+      "payload_key": "by move=> b1 b2; apply/blockP=> i ge0_gti_n; rewrite !andbE // andwC.",
+      "thinking_chars": 0,
+      "text_chars": 76,
+      "tokens": {
+        "output_tokens": 1956,
+        "input_tokens": 14,
+        "cache_read_input_tokens": 254418,
+        "cache_creation_input_tokens": 5286
+      },
+      "session_id": "b9c20841-eafd-46a6-af5c-1faa6aa00500",
+      "timestamp": "2026-06-12T00:37:54.262Z",
+      "file": "thinking/turn_003.md"
+    },
+    {
+      "turn": 4,
+      "intent": "commit_tactic",
+      "payload_key": "qed.",
+      "thinking_chars": 0,
+      "text_chars": 52,
+      "tokens": {
+        "output_tokens": 123,
+        "input_tokens": 2,
+        "cache_read_input_tokens": 39285,
+        "cache_creation_input_tokens": 1106
+      },
+      "session_id": "b9c20841-eafd-46a6-af5c-1faa6aa00500",
+      "timestamp": "2026-06-12T00:37:59.369Z",
+      "file": "thinking/turn_004.md"
+    },
+    {
+      "turn": 5,
+      "intent": "finish",
+      "payload_key": "",
+      "thinking_chars": 0,
+      "text_chars": 67,
+      "tokens": {
+        "output_tokens": 117,
+        "input_tokens": 2,
+        "cache_read_input_tokens": 40391,
+        "cache_creation_input_tokens": 960
+      },
+      "session_id": "b9c20841-eafd-46a6-af5c-1faa6aa00500",
+      "timestamp": "2026-06-12T00:38:05.082Z",
+      "file": "thinking/turn_005.md"
+    }
+  ]
+}

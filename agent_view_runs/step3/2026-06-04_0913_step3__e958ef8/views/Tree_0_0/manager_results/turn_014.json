@@ -1,0 +1,19 @@
+{
+  "turn": 14,
+  "handled_intent": {
+    "intent": "commit_tactic",
+    "payload": {
+      "tactic": "call (_: inv_cpa SplitC2.I1.RO.m{1} SplitC2.I2.RO.m{1} Mem.log{1} Mem.log{2} Mem.lc{1} Mem.lc{2} BNR.lenc{1} BNR.lenc{2} BNR.ndec{1} BNR.ndec{2} /\\ (forall n c, (n,c) \\in SplitC1.I2.RO.m{1} => n \\in BNR.lenc{1}) /\\ (forall n c, (n,c) \\in SplitD.ROF.RO.m{1} => n \\in BNR.lenc{1}))."
+    }
+  },
+  "ok": true,
+  "manager_note": "Committed tactic accepted; the EasyCrypt proof state changed.",
+  "manager_actions": [
+    {
+      "action": "tactic commit",
+      "outcome": "EasyCrypt accepted the committed tactic.",
+      "timing": "329 ms"
+    }
+  ],
+  "view_refreshed": true
+}

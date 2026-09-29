@@ -1,0 +1,6159 @@
+window.SHANNON_MANIFEST = {
+  "generated_for": "public",
+  "runs_base": "agent_view_runs",
+  "count": 138,
+  "bundles": [
+    {
+      "id": "PIR_correct__2026-07-08_2049_PIR_correct__64a85215c-dirty",
+      "dir": "PIR_correct/2026-07-08_2049_PIR_correct__64a85215c-dirty",
+      "lemma": "PIR_correct",
+      "source": "PIR.ec",
+      "profile": "L4",
+      "model": "claude-opus-4-8",
+      "outcome": "proved",
+      "turns": 60,
+      "trees": 2,
+      "date": "2026-07-08 20:49",
+      "timestamp": "2026-07-08_2049_PIR_correct",
+      "commit": "64a85215c",
+      "eval_mode": true,
+      "tier": "public",
+      "proved": true,
+      "view_roots": [],
+      "per_tree": [
+        {
+          "tree": "Tree_0_0",
+          "proved": false,
+          "tactics": [
+            "move => hi.",
+            "byphoare (_ : i = i0 /\\ 0 <= i0 < N ==> res = a i0) => //.",
+            "proc.",
+            "inline PIR.query.",
+            "wp.",
+            "while (i = i0 /\\ 0 <= i0 < N /\\ 0 <= j <= N /\\ (j <= i0 => PIR.s = PIR.s') /\\ (i0 < j => sxor2 PIR.s PIR.s' i0)) (N - j).",
+            "move => z; wp.",
+            "rnd predT.",
+            "skip.",
+            "move => &hr [[[Hinv Hlt] Hz] _]; split.",
+            "exact dbool_ll.",
+            "move => _ v _.",
+            "case: Hinv => [Hi [Hr [Hjb [Hss Hsx]]]]; rewrite Hi /predT /=.",
+            "case: (j{hr} = i0) => Hji.",
+            "rewrite Hji; case: v => Hv."
+          ]
+        },
+        {
+          "tree": "Tree_0_1",
+          "proved": true,
+          "tactics": [
+            "move => hi.",
+            "byphoare (_: i = i0 ==> res = a i0) => //.",
+            "proc.",
+            "inline PIR.query.",
+            "wp.",
+            "while (0 <= j <= N /\\ i = i0 /\\ (j <= i0 => PIR.s = PIR.s') /\\ (i0 < j => sxor2 PIR.s PIR.s' i0)) (N - j).",
+            "move => z; wp.",
+            "rnd predT.",
+            "skip.",
+            "move => &hr [[[[Hjb [Hii [Hs Hsx]]] Hjlt] Hz] _].",
+            "split.",
+            "exact dbool_ll.",
+            "move => _ v hv; rewrite /predT /= Hii /=.",
+            "smt(sxor_cons sxor2_cons).",
+            "wp.",
+            "skip => &hr Hi0; split; first by smt().",
+            "move => s1 s' j0; split; first by smt().",
+            "move => hnlt [hb [hi2 [hle hsxi]]]; have h: sxor2 s1 s' i0 by apply hsxi; smt().",
+            "move: h; rewrite /sxor2 /sxor => -[[u1 u2 [-> ->]]|[u1 u2 [-> ->]]].",
+            "rewrite !big_cat big_consT.",
+            "move: (big predT<:int> a u1) (big predT<:int> a u2) => A B.",
+            "rewrite (xorwC (a i0) B) !xorwA.",
+            "have hz : A +^ B +^ A +^ B = zerow by rewrite -xorwA xorwK.",
+            "by rewrite hz xorwC xorw0.",
+            "rewrite xorwC !big_cat big_consT; move: (big predT<:int> a u1) (big predT<:int> a u2) => A B; rewrite (xorwC (a i0) B) !xorwA.",
+            "have hz : A +^ B +^ A +^ B = zerow by rewrite -xorwA xorwK. by rewrite hz xorwC xorw0.",
+            "qed."
+          ]
+        }
+      ]
+    },
+    {
+      "id": "poly_mac2__2026-06-25_0402_poly_mac2__bd2d1a59",
+      "dir": "poly_mac2/2026-06-25_0402_poly_mac2__bd2d1a59",
+      "lemma": "poly_mac2",
+      "source": "chacha_poly.ec",
+      "profile": "L1",
+      "model": "claude-opus-4-8",
+      "outcome": "proved",
+      "turns": 5,
+      "trees": 2,
+      "date": "2026-06-25 04:02",
+      "timestamp": "2026-06-25_0402_poly_mac2",
+      "commit": "bd2d1a59",
+      "eval_mode": true,
+      "tier": "public",
+      "proved": true,
+      "view_roots": [],
+      "per_tree": [
+        {
+          "tree": "Tree_0_0",
+          "proved": false,
+          "tactics": []
+        },
+        {
+          "tree": "Tree_0_1",
+          "proved": true,
+          "tactics": [
+            "proc.",
+            "inline *.",
+            "auto => />.",
+            "qed."
+          ]
+        }
+      ]
+    },
+    {
+      "id": "dec_ph__2026-06-11_1843_dec_ph__8fa5ceac0-dirty",
+      "dir": "dec_ph/2026-06-11_1843_dec_ph__8fa5ceac0-dirty",
+      "lemma": "dec_ph",
+      "source": "RCPA_CMA.ec",
+      "profile": "L1",
+      "model": "claude-fable-5",
+      "outcome": "open",
+      "turns": 0,
+      "trees": 2,
+      "date": "2026-06-11 18:43",
+      "timestamp": "2026-06-11_1843_dec_ph",
+      "commit": "8fa5ceac0",
+      "eval_mode": true,
+      "tier": "public",
+      "proved": false,
+      "view_roots": [],
+      "per_tree": [
+        {
+          "tree": "Tree_0_0",
+          "proved": false,
+          "tactics": []
+        },
+        {
+          "tree": "Tree_0_1",
+          "proved": false,
+          "tactics": []
+        }
+      ]
+    },
+    {
+      "id": "PtE_Ideal__2026-06-11_1843_PtE_Ideal__8fa5ceac0-dirty",
+      "dir": "PtE_Ideal/2026-06-11_1843_PtE_Ideal__8fa5ceac0-dirty",
+      "lemma": "PtE_Ideal",
+      "source": "RCPA_pad.eca",
+      "profile": "L1",
+      "model": "claude-fable-5",
+      "outcome": "open",
+      "turns": 0,
+      "trees": 2,
+      "date": "2026-06-11 18:43",
+      "timestamp": "2026-06-11_1843_PtE_Ideal",
+      "commit": "8fa5ceac0",
+      "eval_mode": true,
+      "tier": "public",
+      "proved": false,
+      "view_roots": [],
+      "per_tree": [
+        {
+          "tree": "Tree_0_0",
+          "proved": false,
+          "tactics": []
+        },
+        {
+          "tree": "Tree_0_1",
+          "proved": false,
+          "tactics": []
+        }
+      ]
+    },
+    {
+      "id": "E_correct__2026-06-11_1843_E_correct__8fa5ceac0-dirty",
+      "dir": "E_correct/2026-06-11_1843_E_correct__8fa5ceac0-dirty",
+      "lemma": "E_correct",
+      "source": "RCPA_CMA.ec",
+      "profile": "L1",
+      "model": "claude-fable-5",
+      "outcome": "open",
+      "turns": 0,
+      "trees": 2,
+      "date": "2026-06-11 18:43",
+      "timestamp": "2026-06-11_1843_E_correct",
+      "commit": "8fa5ceac0",
+      "eval_mode": true,
+      "tier": "public",
+      "proved": false,
+      "view_roots": [],
+      "per_tree": [
+        {
+          "tree": "Tree_0_0",
+          "proved": false,
+          "tactics": []
+        },
+        {
+          "tree": "Tree_0_1",
+          "proved": false,
+          "tactics": []
+        }
+      ]
+    },
+    {
+      "id": "dec_sem__2026-06-11_1842_dec_sem__8fa5ceac0-dirty",
+      "dir": "dec_sem/2026-06-11_1842_dec_sem__8fa5ceac0-dirty",
+      "lemma": "dec_sem",
+      "source": "RCPA_CMA.ec",
+      "profile": "L1",
+      "model": "claude-fable-5",
+      "outcome": "open",
+      "turns": 0,
+      "trees": 2,
+      "date": "2026-06-11 18:42",
+      "timestamp": "2026-06-11_1842_dec_sem",
+      "commit": "8fa5ceac0",
+      "eval_mode": true,
+      "tier": "public",
+      "proved": false,
+      "view_roots": [],
+      "per_tree": [
+        {
+          "tree": "Tree_0_0",
+          "proved": false,
+          "tactics": []
+        },
+        {
+          "tree": "Tree_0_1",
+          "proved": false,
+          "tactics": []
+        }
+      ]
+    },
+    {
+      "id": "RCPA_preservation_etm__2026-06-11_1842_RCPA_preservation_etm__8fa5ceac0-dirty",
+      "dir": "RCPA_preservation_etm/2026-06-11_1842_RCPA_preservation_etm__8fa5ceac0-dirty",
+      "lemma": "RCPA_preservation_etm",
+      "source": "RCPA_CMA.ec",
+      "profile": "L1",
+      "model": "claude-fable-5",
+      "outcome": "open",
+      "turns": 0,
+      "trees": 2,
+      "date": "2026-06-11 18:42",
+      "timestamp": "2026-06-11_1842_RCPA_preservation_etm",
+      "commit": "8fa5ceac0",
+      "eval_mode": true,
+      "tier": "public",
+      "proved": false,
+      "view_roots": [],
+      "per_tree": [
+        {
+          "tree": "Tree_0_0",
+          "proved": false,
+          "tactics": []
+        },
+        {
+          "tree": "Tree_0_1",
+          "proved": false,
+          "tactics": []
+        }
+      ]
+    },
+    {
+      "id": "RCPA_prob_etm__2026-06-11_1841_RCPA_prob_etm__8fa5ceac0-dirty",
+      "dir": "RCPA_prob_etm/2026-06-11_1841_RCPA_prob_etm__8fa5ceac0-dirty",
+      "lemma": "RCPA_prob_etm",
+      "source": "RCPA_CMA.ec",
+      "profile": "L1",
+      "model": "claude-fable-5",
+      "outcome": "open",
+      "turns": 0,
+      "trees": 2,
+      "date": "2026-06-11 18:41",
+      "timestamp": "2026-06-11_1841_RCPA_prob_etm",
+      "commit": "8fa5ceac0",
+      "eval_mode": true,
+      "tier": "public",
+      "proved": false,
+      "view_roots": [],
+      "per_tree": [
+        {
+          "tree": "Tree_0_0",
+          "proved": false,
+          "tactics": []
+        },
+        {
+          "tree": "Tree_0_1",
+          "proved": false,
+          "tactics": []
+        }
+      ]
+    },
+    {
+      "id": "EtM_dec_ll__2026-06-11_1841_EtM_dec_ll__8fa5ceac0-dirty",
+      "dir": "EtM_dec_ll/2026-06-11_1841_EtM_dec_ll__8fa5ceac0-dirty",
+      "lemma": "EtM_dec_ll",
+      "source": "RCPA_CMA.ec",
+      "profile": "L1",
+      "model": "claude-fable-5",
+      "outcome": "open",
+      "turns": 0,
+      "trees": 2,
+      "date": "2026-06-11 18:41",
+      "timestamp": "2026-06-11_1841_EtM_dec_ll",
+      "commit": "8fa5ceac0",
+      "eval_mode": true,
+      "tier": "public",
+      "proved": false,
+      "view_roots": [],
+      "per_tree": [
+        {
+          "tree": "Tree_0_0",
+          "proved": false,
+          "tactics": []
+        },
+        {
+          "tree": "Tree_0_1",
+          "proved": false,
+          "tactics": []
+        }
+      ]
+    },
+    {
+      "id": "EtM_keygen_ll__2026-06-11_1840_EtM_keygen_ll__8fa5ceac0-dirty",
+      "dir": "EtM_keygen_ll/2026-06-11_1840_EtM_keygen_ll__8fa5ceac0-dirty",
+      "lemma": "EtM_keygen_ll",
+      "source": "RCPA_CMA.ec",
+      "profile": "L1",
+      "model": "claude-fable-5",
+      "outcome": "open",
+      "turns": 0,
+      "trees": 2,
+      "date": "2026-06-11 18:40",
+      "timestamp": "2026-06-11_1840_EtM_keygen_ll",
+      "commit": "8fa5ceac0",
+      "eval_mode": true,
+      "tier": "public",
+      "proved": false,
+      "view_roots": [],
+      "per_tree": [
+        {
+          "tree": "Tree_0_0",
+          "proved": false,
+          "tactics": []
+        },
+        {
+          "tree": "Tree_0_1",
+          "proved": false,
+          "tactics": []
+        }
+      ]
+    },
+    {
+      "id": "EtM_enc_ll__2026-06-11_1840_EtM_enc_ll__8fa5ceac0-dirty",
+      "dir": "EtM_enc_ll/2026-06-11_1840_EtM_enc_ll__8fa5ceac0-dirty",
+      "lemma": "EtM_enc_ll",
+      "source": "RCPA_CMA.ec",
+      "profile": "L1",
+      "model": "claude-fable-5",
+      "outcome": "open",
+      "turns": 0,
+      "trees": 2,
+      "date": "2026-06-11 18:40",
+      "timestamp": "2026-06-11_1840_EtM_enc_ll",
+      "commit": "8fa5ceac0",
+      "eval_mode": true,
+      "tier": "public",
+      "proved": false,
+      "view_roots": [],
+      "per_tree": [
+        {
+          "tree": "Tree_0_0",
+          "proved": false,
+          "tactics": []
+        },
+        {
+          "tree": "Tree_0_1",
+          "proved": false,
+          "tactics": []
+        }
+      ]
+    },
+    {
+      "id": "MtE_keygen_ll__2026-06-11_1839_MtE_keygen_ll__8fa5ceac0-dirty",
+      "dir": "MtE_keygen_ll/2026-06-11_1839_MtE_keygen_ll__8fa5ceac0-dirty",
+      "lemma": "MtE_keygen_ll",
+      "source": "RCPA_CMA.ec",
+      "profile": "L1",
+      "model": "claude-fable-5",
+      "outcome": "open",
+      "turns": 0,
+      "trees": 2,
+      "date": "2026-06-11 18:39",
+      "timestamp": "2026-06-11_1839_MtE_keygen_ll",
+      "commit": "8fa5ceac0",
+      "eval_mode": true,
+      "tier": "public",
+      "proved": false,
+      "view_roots": [],
+      "per_tree": [
+        {
+          "tree": "Tree_0_0",
+          "proved": false,
+          "tactics": []
+        },
+        {
+          "tree": "Tree_0_1",
+          "proved": false,
+          "tactics": []
+        }
+      ]
+    },
+    {
+      "id": "MtE_enc_ll__2026-06-11_1839_MtE_enc_ll__8fa5ceac0-dirty",
+      "dir": "MtE_enc_ll/2026-06-11_1839_MtE_enc_ll__8fa5ceac0-dirty",
+      "lemma": "MtE_enc_ll",
+      "source": "RCPA_CMA.ec",
+      "profile": "L1",
+      "model": "claude-fable-5",
+      "outcome": "open",
+      "turns": 0,
+      "trees": 2,
+      "date": "2026-06-11 18:39",
+      "timestamp": "2026-06-11_1839_MtE_enc_ll",
+      "commit": "8fa5ceac0",
+      "eval_mode": true,
+      "tier": "public",
+      "proved": false,
+      "view_roots": [],
+      "per_tree": [
+        {
+          "tree": "Tree_0_0",
+          "proved": false,
+          "tactics": []
+        },
+        {
+          "tree": "Tree_0_1",
+          "proved": false,
+          "tactics": []
+        }
+      ]
+    },
+    {
+      "id": "MtE_dec_ll__2026-06-11_1839_MtE_dec_ll__8fa5ceac0-dirty",
+      "dir": "MtE_dec_ll/2026-06-11_1839_MtE_dec_ll__8fa5ceac0-dirty",
+      "lemma": "MtE_dec_ll",
+      "source": "RCPA_CMA.ec",
+      "profile": "L1",
+      "model": "claude-fable-5",
+      "outcome": "open",
+      "turns": 0,
+      "trees": 2,
+      "date": "2026-06-11 18:39",
+      "timestamp": "2026-06-11_1839_MtE_dec_ll",
+      "commit": "8fa5ceac0",
+      "eval_mode": true,
+      "tier": "public",
+      "proved": false,
+      "view_roots": [],
+      "per_tree": [
+        {
+          "tree": "Tree_0_0",
+          "proved": false,
+          "tactics": []
+        },
+        {
+          "tree": "Tree_0_1",
+          "proved": false,
+          "tactics": []
+        }
+      ]
+    },
+    {
+      "id": "local_conclusion_ptxt__2026-06-11_1838_local_conclusion_ptxt__8fa5ceac0-dirty",
+      "dir": "local_conclusion_ptxt/2026-06-11_1838_local_conclusion_ptxt__8fa5ceac0-dirty",
+      "lemma": "local_conclusion_ptxt",
+      "source": "MAC_then_Pad_then_CBC.eca",
+      "profile": "L1",
+      "model": "claude-fable-5",
+      "outcome": "open",
+      "turns": 0,
+      "trees": 2,
+      "date": "2026-06-11 18:38",
+      "timestamp": "2026-06-11_1838_local_conclusion_ptxt",
+      "commit": "8fa5ceac0",
+      "eval_mode": true,
+      "tier": "public",
+      "proved": false,
+      "view_roots": [],
+      "per_tree": [
+        {
+          "tree": "Tree_0_0",
+          "proved": false,
+          "tactics": []
+        },
+        {
+          "tree": "Tree_0_1",
+          "proved": false,
+          "tactics": []
+        }
+      ]
+    },
+    {
+      "id": "MEE_unfold_ptxt__2026-06-11_1838_MEE_unfold_ptxt__8fa5ceac0-dirty",
+      "dir": "MEE_unfold_ptxt/2026-06-11_1838_MEE_unfold_ptxt__8fa5ceac0-dirty",
+      "lemma": "MEE_unfold_ptxt",
+      "source": "MAC_then_Pad_then_CBC.eca",
+      "profile": "L1",
+      "model": "claude-fable-5",
+      "outcome": "open",
+      "turns": 0,
+      "trees": 2,
+      "date": "2026-06-11 18:38",
+      "timestamp": "2026-06-11_1838_MEE_unfold_ptxt",
+      "commit": "8fa5ceac0",
+      "eval_mode": true,
+      "tier": "public",
+      "proved": false,
+      "view_roots": [],
+      "per_tree": [
+        {
+          "tree": "Tree_0_0",
+          "proved": false,
+          "tactics": []
+        },
+        {
+          "tree": "Tree_0_1",
+          "proved": false,
+          "tactics": []
+        }
+      ]
+    },
+    {
+      "id": "RCPA_security__2026-06-11_1836_RCPA_security__8fa5ceac0-dirty",
+      "dir": "RCPA_security/2026-06-11_1836_RCPA_security__8fa5ceac0-dirty",
+      "lemma": "RCPA_security",
+      "source": "MAC_then_Pad_then_CBC.eca",
+      "profile": "L1",
+      "model": "claude-fable-5",
+      "outcome": "proved",
+      "turns": 8,
+      "trees": 2,
+      "date": "2026-06-11 18:36",
+      "timestamp": "2026-06-11_1836_RCPA_security",
+      "commit": "8fa5ceac0",
+      "eval_mode": true,
+      "tier": "public",
+      "proved": true,
+      "view_roots": [],
+      "per_tree": [
+        {
+          "tree": "Tree_0_0",
+          "proved": true,
+          "tactics": [
+            "rewrite (MEE_unfold &m).",
+            "rewrite (CleanupAdversary (<:PRP) &m) (CleanupAdversary (<:PRPi) &m).",
+            "exact (local_conclusion &m).",
+            "qed."
+          ]
+        },
+        {
+          "tree": "Tree_0_1",
+          "proved": false,
+          "tactics": [
+            "rewrite (MEE_unfold &m).",
+            "rewrite (CleanupAdversary PRP &m) (CleanupAdversary PRPi &m).",
+            "exact/(local_conclusion &m)."
+          ]
+        }
+      ]
+    },
+    {
+      "id": "PtE_security__2026-06-11_1831_PtE_security__8fa5ceac0-dirty",
+      "dir": "PtE_security/2026-06-11_1831_PtE_security__8fa5ceac0-dirty",
+      "lemma": "PtE_security",
+      "source": "MAC_then_Pad_then_CBC.eca",
+      "profile": "L1",
+      "model": "claude-fable-5",
+      "outcome": "proved",
+      "turns": 8,
+      "trees": 2,
+      "date": "2026-06-11 18:31",
+      "timestamp": "2026-06-11_1831_PtE_security",
+      "commit": "8fa5ceac0",
+      "eval_mode": true,
+      "tier": "public",
+      "proved": true,
+      "view_roots": [],
+      "per_tree": [
+        {
+          "tree": "Tree_0_0",
+          "proved": true,
+          "tactics": [
+            "rewrite -(RCPA_preservation (<: IV_Wrap(CBC(PseudoRP))) (<: RCPA_WUF_RCPA.RCPAa(MAC,RCPA_QueryBounder(A))) &m).",
+            "do !congr.",
+            "by byequiv=> //=; sim.",
+            "by byequiv=> //=; sim.",
+            "qed."
+          ]
+        },
+        {
+          "tree": "Tree_0_1",
+          "proved": false,
+          "tactics": []
+        }
+      ]
+    },
+    {
+      "id": "MtE_security__2026-06-11_1818_MtE_security__8fa5ceac0-dirty",
+      "dir": "MtE_security/2026-06-11_1818_MtE_security__8fa5ceac0-dirty",
+      "lemma": "MtE_security",
+      "source": "MAC_then_Pad_then_CBC.eca",
+      "profile": "L1",
+      "model": "claude-fable-5",
+      "outcome": "proved",
+      "turns": 22,
+      "trees": 2,
+      "date": "2026-06-11 18:18",
+      "timestamp": "2026-06-11_1818_MtE_security",
+      "commit": "8fa5ceac0",
+      "eval_mode": true,
+      "tier": "public",
+      "proved": true,
+      "view_roots": [],
+      "per_tree": [
+        {
+          "tree": "Tree_0_0",
+          "proved": false,
+          "tactics": []
+        },
+        {
+          "tree": "Tree_0_1",
+          "proved": true,
+          "tactics": [
+            "have RP := RCPA_WUF_RCPA.RCPA_preservation (<: PadThenEncrypt(IV_Wrap(CBC(PseudoRP)))) (<: MAC) (<: RCPA_QueryBounder(A)) &m.",
+            "have Mkg_ll: islossless MAC.keygen by proc; auto=> />; smt(d_mK_uffu).",
+            "have Mtag_ll: islossless MAC.tag by proc; auto.",
+            "rewrite -(RP Mkg_ll Mtag_ll).",
+            "do 2!congr.",
+            "byequiv (: ={glob A} ==> ={res})=> //.",
+            "proc; inline *.",
+            "wp; call (: ={glob RCPA_QueryBounder} /\\ RCPA_Wrap.k{1} = Sec.RCPA.RCPA_Wrap.k{2}).",
+            "proc; sp; if=> //; last by sim.",
+            "inline *.",
+            "wp; while (={i0, p3, s, c4, key0} /\\ RCPA_QueryBounder.qC{1} = RCPA_QueryBounder.qC{2} /\\ RCPA_Wrap.k{1} = Sec.RCPA.RCPA_Wrap.k{2}); auto.",
+            "by auto.",
+            "congr.",
+            "byequiv (: ={glob A} ==> ={res})=> //; proc; inline *.",
+            "wp; call (: ={glob RCPA_QueryBounder}).",
+            "proc; sp; if=> //; last by sim.",
+            "inline *; wp; rnd; auto => />; smt(leak_pad).",
+            "by auto.",
+            "qed."
+          ]
+        }
+      ]
+    },
+    {
+      "id": "leak_pad__2026-06-11_1815_leak_pad__8fa5ceac0-dirty",
+      "dir": "leak_pad/2026-06-11_1815_leak_pad__8fa5ceac0-dirty",
+      "lemma": "leak_pad",
+      "source": "FunctionalSpec.ec",
+      "profile": "L1",
+      "model": "claude-fable-5",
+      "outcome": "proved",
+      "turns": 4,
+      "trees": 2,
+      "date": "2026-06-11 18:15",
+      "timestamp": "2026-06-11_1815_leak_pad",
+      "commit": "8fa5ceac0",
+      "eval_mode": true,
+      "tier": "public",
+      "proved": true,
+      "view_roots": [],
+      "per_tree": [
+        {
+          "tree": "Tree_0_0",
+          "proved": false,
+          "tactics": [
+            "by rewrite !size_pad size_mkseq #smt:(size_ge0 @IntDiv)."
+          ]
+        },
+        {
+          "tree": "Tree_0_1",
+          "proved": true,
+          "tactics": [
+            "by rewrite !size_pad size_mkseq #smt:(size_ge0 @IntDiv).",
+            "qed."
+          ]
+        }
+      ]
+    },
+    {
+      "id": "padK__2026-06-11_1810_padK__8fa5ceac0-dirty",
+      "dir": "padK/2026-06-11_1810_padK__8fa5ceac0-dirty",
+      "lemma": "padK",
+      "source": "FunctionalSpec.ec",
+      "profile": "L1",
+      "model": "claude-fable-5",
+      "outcome": "proved",
+      "turns": 21,
+      "trees": 2,
+      "date": "2026-06-11 18:10",
+      "timestamp": "2026-06-11_1810_padK",
+      "commit": "8fa5ceac0",
+      "eval_mode": true,
+      "tier": "public",
+      "proved": true,
+      "view_roots": [],
+      "per_tree": [
+        {
+          "tree": "Tree_0_0",
+          "proved": false,
+          "tactics": [
+            "rewrite /pad /unpad /=.",
+            "rewrite os2bsK; 1:by rewrite dvdzE padded_is_blocks.",
+            "rewrite !last_cat last_padding.",
+            "rewrite int2oK; 1:smt(modz_ge0 ltz_pmod).",
+            "rewrite size_padded.",
+            "have ->: 48 + (size m - size m %% 16) - (16 - size m %% 16) - 32 = size m by ring.",
+            "have ->: 48 + (size m - size m %% 16) - (16 - size m %% 16) = size m + 32 by ring.",
+            "rewrite take_size_cat."
+          ]
+        },
+        {
+          "tree": "Tree_0_1",
+          "proved": true,
+          "tactics": [
+            "rewrite /unpad /pad /=.",
+            "rewrite os2bsK 1:dvdzE 1:padded_is_blocks //.",
+            "rewrite !last_cat last_padding int2oK 1:#smt:(@IntDiv).",
+            "rewrite size_padded (_: 48 + (size m - size m %% 16) - (16 - size m %% 16) - 32 = size m) 1:/# (_: 48 + (size m - size m %% 16) - (16 - size m %% 16) = size m + 32) 1:/#.",
+            "rewrite (drop_size_cat (size m + 32)) 1:size_cat 1:size_t2os //.",
+            "rewrite -!catA (take_size_cat (size m)) // (drop_size_cat (size m)) // (take_size_cat 32) 1:size_t2os // t2osK.",
+            "by rewrite /pad_length /= #smt:(@IntDiv).",
+            "qed."
+          ]
+        }
+      ]
+    },
+    {
+      "id": "size_pad__2026-06-11_1808_size_pad__8fa5ceac0-dirty",
+      "dir": "size_pad/2026-06-11_1808_size_pad__8fa5ceac0-dirty",
+      "lemma": "size_pad",
+      "source": "FunctionalSpec.ec",
+      "profile": "L1",
+      "model": "claude-fable-5",
+      "outcome": "proved",
+      "turns": 3,
+      "trees": 2,
+      "date": "2026-06-11 18:08",
+      "timestamp": "2026-06-11_1808_size_pad",
+      "commit": "8fa5ceac0",
+      "eval_mode": true,
+      "tier": "public",
+      "proved": true,
+      "view_roots": [],
+      "per_tree": [
+        {
+          "tree": "Tree_0_0",
+          "proved": true,
+          "tactics": [
+            "by rewrite /pad /= size_os2bs size_padded #smt:(@IntDiv).",
+            "qed."
+          ]
+        },
+        {
+          "tree": "Tree_0_1",
+          "proved": false,
+          "tactics": [
+            "by rewrite /pad /= size_os2bs size_padded #smt:(@IntDiv)."
+          ]
+        }
+      ]
+    },
+    {
+      "id": "padded_is_blocks__2026-06-11_1807_padded_is_blocks__8fa5ceac0-dirty",
+      "dir": "padded_is_blocks/2026-06-11_1807_padded_is_blocks__8fa5ceac0-dirty",
+      "lemma": "padded_is_blocks",
+      "source": "FunctionalSpec.ec",
+      "profile": "L1",
+      "model": "claude-fable-5",
+      "outcome": "proved",
+      "turns": 3,
+      "trees": 2,
+      "date": "2026-06-11 18:07",
+      "timestamp": "2026-06-11_1807_padded_is_blocks",
+      "commit": "8fa5ceac0",
+      "eval_mode": true,
+      "tier": "public",
+      "proved": true,
+      "view_roots": [],
+      "per_tree": [
+        {
+          "tree": "Tree_0_0",
+          "proved": false,
+          "tactics": []
+        },
+        {
+          "tree": "Tree_0_1",
+          "proved": true,
+          "tactics": [
+            "by rewrite size_padded #smt:(@IntDiv).",
+            "qed."
+          ]
+        }
+      ]
+    },
+    {
+      "id": "size_padded__2026-06-11_1806_size_padded__8fa5ceac0-dirty",
+      "dir": "size_padded/2026-06-11_1806_size_padded__8fa5ceac0-dirty",
+      "lemma": "size_padded",
+      "source": "FunctionalSpec.ec",
+      "profile": "L1",
+      "model": "claude-fable-5",
+      "outcome": "proved",
+      "turns": 3,
+      "trees": 2,
+      "date": "2026-06-11 18:06",
+      "timestamp": "2026-06-11_1806_size_padded",
+      "commit": "8fa5ceac0",
+      "eval_mode": true,
+      "tier": "public",
+      "proved": true,
+      "view_roots": [],
+      "per_tree": [
+        {
+          "tree": "Tree_0_0",
+          "proved": false,
+          "tactics": [
+            "by rewrite !size_cat size_t2os size_padding /#."
+          ]
+        },
+        {
+          "tree": "Tree_0_1",
+          "proved": true,
+          "tactics": [
+            "by rewrite !size_cat size_t2os size_padding /#.",
+            "qed."
+          ]
+        }
+      ]
+    },
+    {
+      "id": "last_padding__2026-06-11_1804_last_padding__8fa5ceac0-dirty",
+      "dir": "last_padding/2026-06-11_1804_last_padding__8fa5ceac0-dirty",
+      "lemma": "last_padding",
+      "source": "FunctionalSpec.ec",
+      "profile": "L1",
+      "model": "claude-fable-5",
+      "outcome": "proved",
+      "turns": 3,
+      "trees": 2,
+      "date": "2026-06-11 18:04",
+      "timestamp": "2026-06-11_1804_last_padding",
+      "commit": "8fa5ceac0",
+      "eval_mode": true,
+      "tier": "public",
+      "proved": true,
+      "view_roots": [],
+      "per_tree": [
+        {
+          "tree": "Tree_0_0",
+          "proved": true,
+          "tactics": [
+            "by rewrite /padding /pad_length mkseq_nseq last_nseq; smt().",
+            "qed."
+          ]
+        },
+        {
+          "tree": "Tree_0_1",
+          "proved": false,
+          "tactics": []
+        }
+      ]
+    },
+    {
+      "id": "size_padding__2026-06-11_1803_size_padding__8fa5ceac0-dirty",
+      "dir": "size_padding/2026-06-11_1803_size_padding__8fa5ceac0-dirty",
+      "lemma": "size_padding",
+      "source": "FunctionalSpec.ec",
+      "profile": "L1",
+      "model": "claude-fable-5",
+      "outcome": "proved",
+      "turns": 3,
+      "trees": 2,
+      "date": "2026-06-11 18:03",
+      "timestamp": "2026-06-11_1803_size_padding",
+      "commit": "8fa5ceac0",
+      "eval_mode": true,
+      "tier": "public",
+      "proved": true,
+      "view_roots": [],
+      "per_tree": [
+        {
+          "tree": "Tree_0_0",
+          "proved": false,
+          "tactics": []
+        },
+        {
+          "tree": "Tree_0_1",
+          "proved": true,
+          "tactics": [
+            "by rewrite /padding size_mkseq /pad_length /#.",
+            "qed."
+          ]
+        }
+      ]
+    },
+    {
+      "id": "size_cbc_enc__2026-06-11_1802_size_cbc_enc__8fa5ceac0-dirty",
+      "dir": "size_cbc_enc/2026-06-11_1802_size_cbc_enc__8fa5ceac0-dirty",
+      "lemma": "size_cbc_enc",
+      "source": "FunctionalSpec.ec",
+      "profile": "L1",
+      "model": "claude-fable-5",
+      "outcome": "proved",
+      "turns": 3,
+      "trees": 2,
+      "date": "2026-06-11 18:02",
+      "timestamp": "2026-06-11_1802_size_cbc_enc",
+      "commit": "8fa5ceac0",
+      "eval_mode": true,
+      "tier": "public",
+      "proved": true,
+      "view_roots": [],
+      "per_tree": [
+        {
+          "tree": "Tree_0_0",
+          "proved": false,
+          "tactics": [
+            "by elim: p iv => //= pi p ih iv; rewrite ih."
+          ]
+        },
+        {
+          "tree": "Tree_0_1",
+          "proved": true,
+          "tactics": [
+            "by elim: p iv => [|pi p ih] iv //=; rewrite ih.",
+            "qed."
+          ]
+        }
+      ]
+    },
+    {
+      "id": "cbc_dec_rcons__2026-06-11_1801_cbc_dec_rcons__8fa5ceac0-dirty",
+      "dir": "cbc_dec_rcons/2026-06-11_1801_cbc_dec_rcons__8fa5ceac0-dirty",
+      "lemma": "cbc_dec_rcons",
+      "source": "FunctionalSpec.ec",
+      "profile": "L1",
+      "model": "claude-fable-5",
+      "outcome": "proved",
+      "turns": 4,
+      "trees": 2,
+      "date": "2026-06-11 18:01",
+      "timestamp": "2026-06-11_1801_cbc_dec_rcons",
+      "commit": "8fa5ceac0",
+      "eval_mode": true,
+      "tier": "public",
+      "proved": true,
+      "view_roots": [],
+      "per_tree": [
+        {
+          "tree": "Tree_0_0",
+          "proved": false,
+          "tactics": []
+        },
+        {
+          "tree": "Tree_0_1",
+          "proved": true,
+          "tactics": [
+            "elim: c st => [|ci c ih] st //=.",
+            "smt(size_ge0).",
+            "qed."
+          ]
+        }
+      ]
+    },
+    {
+      "id": "cbc_enc_rcons__2026-06-11_1759_cbc_enc_rcons__8fa5ceac0-dirty",
+      "dir": "cbc_enc_rcons/2026-06-11_1759_cbc_enc_rcons__8fa5ceac0-dirty",
+      "lemma": "cbc_enc_rcons",
+      "source": "FunctionalSpec.ec",
+      "profile": "L1",
+      "model": "claude-fable-5",
+      "outcome": "proved",
+      "turns": 6,
+      "trees": 2,
+      "date": "2026-06-11 17:59",
+      "timestamp": "2026-06-11_1759_cbc_enc_rcons",
+      "commit": "8fa5ceac0",
+      "eval_mode": true,
+      "tier": "public",
+      "proved": true,
+      "view_roots": [],
+      "per_tree": [
+        {
+          "tree": "Tree_0_0",
+          "proved": true,
+          "tactics": [
+            "elim: p st => [|pi p ih] st //=.",
+            "smt(size_ge0).",
+            "qed."
+          ]
+        },
+        {
+          "tree": "Tree_0_1",
+          "proved": false,
+          "tactics": [
+            "elim: p st => //= pi p ih st.",
+            "have -> /=: 1 + size p <> 0 by smt(size_ge0)."
+          ]
+        }
+      ]
+    },
+    {
+      "id": "cbc_dec_cbc_fold__2026-06-11_1757_cbc_dec_cbc_fold__8fa5ceac0-dirty",
+      "dir": "cbc_dec_cbc_fold/2026-06-11_1757_cbc_dec_cbc_fold__8fa5ceac0-dirty",
+      "lemma": "cbc_dec_cbc_fold",
+      "source": "FunctionalSpec.ec",
+      "profile": "L1",
+      "model": "claude-fable-5",
+      "outcome": "proved",
+      "turns": 9,
+      "trees": 2,
+      "date": "2026-06-11 17:57",
+      "timestamp": "2026-06-11_1757_cbc_dec_cbc_fold",
+      "commit": "8fa5ceac0",
+      "eval_mode": true,
+      "tier": "public",
+      "proved": true,
+      "view_roots": [],
+      "per_tree": [
+        {
+          "tree": "Tree_0_0",
+          "proved": true,
+          "tactics": [
+            "rewrite /cbc_dec_fold /= -(cat0s (cbc_dec Pi k iv c)).",
+            "elim: c iv []=> //= [iv|ci c ih iv acc].",
+            "by rewrite cats0.",
+            "by rewrite -cat_rcons ih.",
+            "qed."
+          ]
+        },
+        {
+          "tree": "Tree_0_1",
+          "proved": false,
+          "tactics": [
+            "rewrite /cbc_dec_fold /= -(cat0s (cbc_dec Pi k iv c)).",
+            "elim: c iv []=> //= [iv|ci c ih iv acc].",
+            "by rewrite cats0."
+          ]
+        }
+      ]
+    },
+    {
+      "id": "cbc_enc_cbc_fold__2026-06-11_1756_cbc_enc_cbc_fold__8fa5ceac0-dirty",
+      "dir": "cbc_enc_cbc_fold/2026-06-11_1756_cbc_enc_cbc_fold__8fa5ceac0-dirty",
+      "lemma": "cbc_enc_cbc_fold",
+      "source": "FunctionalSpec.ec",
+      "profile": "L1",
+      "model": "claude-fable-5",
+      "outcome": "proved",
+      "turns": 6,
+      "trees": 2,
+      "date": "2026-06-11 17:56",
+      "timestamp": "2026-06-11_1756_cbc_enc_cbc_fold",
+      "commit": "8fa5ceac0",
+      "eval_mode": true,
+      "tier": "public",
+      "proved": true,
+      "view_roots": [],
+      "per_tree": [
+        {
+          "tree": "Tree_0_0",
+          "proved": true,
+          "tactics": [
+            "rewrite /cbc_enc_fold /= -(cat0s (cbc_enc P k iv p)).",
+            "elim: p iv []=> //= [iv|pi p ih iv acc].",
+            "by rewrite cats0.",
+            "by rewrite -cat_rcons ih.",
+            "qed."
+          ]
+        },
+        {
+          "tree": "Tree_0_1",
+          "proved": false,
+          "tactics": []
+        }
+      ]
+    },
+    {
+      "id": "os2tK__2026-06-11_1753_os2tK__8fa5ceac0-dirty",
+      "dir": "os2tK/2026-06-11_1753_os2tK__8fa5ceac0-dirty",
+      "lemma": "os2tK",
+      "source": "FunctionalSpec.ec",
+      "profile": "L1",
+      "model": "claude-fable-5",
+      "outcome": "proved",
+      "turns": 6,
+      "trees": 2,
+      "date": "2026-06-11 17:53",
+      "timestamp": "2026-06-11_1753_os2tK",
+      "commit": "8fa5ceac0",
+      "eval_mode": true,
+      "tier": "public",
+      "proved": true,
+      "view_roots": [],
+      "per_tree": [
+        {
+          "tree": "Tree_0_0",
+          "proved": true,
+          "tactics": [
+            "move=> sz_os.",
+            "rewrite /os2t /t2os /chunk sz_os divzz /b2i /=.",
+            "rewrite /mkseq /= (iotaS _ 0) //= drop0.",
+            "by rewrite -sz_os take_size oftagK.",
+            "qed."
+          ]
+        },
+        {
+          "tree": "Tree_0_1",
+          "proved": false,
+          "tactics": []
+        }
+      ]
+    },
+    {
+      "id": "t2osK__2026-06-11_1751_t2osK__8fa5ceac0-dirty",
+      "dir": "t2osK/2026-06-11_1751_t2osK__8fa5ceac0-dirty",
+      "lemma": "t2osK",
+      "source": "FunctionalSpec.ec",
+      "profile": "L1",
+      "model": "claude-fable-5",
+      "outcome": "proved",
+      "turns": 4,
+      "trees": 2,
+      "date": "2026-06-11 17:51",
+      "timestamp": "2026-06-11_1751_t2osK",
+      "commit": "8fa5ceac0",
+      "eval_mode": true,
+      "tier": "public",
+      "proved": true,
+      "view_roots": [],
+      "per_tree": [
+        {
+          "tree": "Tree_0_0",
+          "proved": true,
+          "tactics": [
+            "rewrite /t2os /os2t /chunk size_tag divzz /b2i /=.",
+            "by rewrite /mkseq /= (iotaS _ 0) //= drop0 -(size_tag t) take_size mktagK.",
+            "qed."
+          ]
+        },
+        {
+          "tree": "Tree_0_1",
+          "proved": false,
+          "tactics": []
+        }
+      ]
+    },
+    {
+      "id": "size_t2os__2026-06-11_1750_size_t2os__8fa5ceac0-dirty",
+      "dir": "size_t2os/2026-06-11_1750_size_t2os__8fa5ceac0-dirty",
+      "lemma": "size_t2os",
+      "source": "FunctionalSpec.ec",
+      "profile": "L1",
+      "model": "claude-fable-5",
+      "outcome": "proved",
+      "turns": 4,
+      "trees": 2,
+      "date": "2026-06-11 17:50",
+      "timestamp": "2026-06-11_1750_size_t2os",
+      "commit": "8fa5ceac0",
+      "eval_mode": true,
+      "tier": "public",
+      "proved": true,
+      "view_roots": [],
+      "per_tree": [
+        {
+          "tree": "Tree_0_0",
+          "proved": true,
+          "tactics": [
+            "by rewrite /t2os size_tag.",
+            "qed."
+          ]
+        },
+        {
+          "tree": "Tree_0_1",
+          "proved": false,
+          "tactics": [
+            "by rewrite /t2os size_tag."
+          ]
+        }
+      ]
+    },
+    {
+      "id": "os2bsK__2026-06-11_1747_os2bsK__8fa5ceac0-dirty",
+      "dir": "os2bsK/2026-06-11_1747_os2bsK__8fa5ceac0-dirty",
+      "lemma": "os2bsK",
+      "source": "FunctionalSpec.ec",
+      "profile": "L1",
+      "model": "claude-fable-5",
+      "outcome": "proved",
+      "turns": 9,
+      "trees": 2,
+      "date": "2026-06-11 17:47",
+      "timestamp": "2026-06-11_1747_os2bsK",
+      "commit": "8fa5ceac0",
+      "eval_mode": true,
+      "tier": "public",
+      "proved": true,
+      "view_roots": [],
+      "per_tree": [
+        {
+          "tree": "Tree_0_0",
+          "proved": false,
+          "tactics": [
+            "move=> dvd16.",
+            "rewrite /bs2os /os2bs -map_comp.",
+            "have ->: map (ofblock \\o mkblock) (chunk 16 os) = chunk 16 os."
+          ]
+        },
+        {
+          "tree": "Tree_0_1",
+          "proved": true,
+          "tactics": [
+            "move=> dvd16.",
+            "rewrite /bs2os /os2bs -map_comp.",
+            "have ->: map (ofblock \\o mkblock) (chunk 16 os) = map idfun (chunk 16 os) by apply/eq_in_map => x xin @/(\\o) @/idfun /=; rewrite ofblockK // (@in_chunk_size 16 os).",
+            "by rewrite map_id chunkK.",
+            "qed."
+          ]
+        }
+      ]
+    },
+    {
+      "id": "size_os2bs__2026-06-11_1746_size_os2bs__8fa5ceac0-dirty",
+      "dir": "size_os2bs/2026-06-11_1746_size_os2bs__8fa5ceac0-dirty",
+      "lemma": "size_os2bs",
+      "source": "FunctionalSpec.ec",
+      "profile": "L1",
+      "model": "claude-fable-5",
+      "outcome": "proved",
+      "turns": 3,
+      "trees": 2,
+      "date": "2026-06-11 17:46",
+      "timestamp": "2026-06-11_1746_size_os2bs",
+      "commit": "8fa5ceac0",
+      "eval_mode": true,
+      "tier": "public",
+      "proved": true,
+      "view_roots": [],
+      "per_tree": [
+        {
+          "tree": "Tree_0_0",
+          "proved": true,
+          "tactics": [
+            "by rewrite /os2bs size_map size_chunk.",
+            "qed."
+          ]
+        },
+        {
+          "tree": "Tree_0_1",
+          "proved": false,
+          "tactics": []
+        }
+      ]
+    },
+    {
+      "id": "size_bs2os__2026-06-11_1744_size_bs2os__8fa5ceac0-dirty",
+      "dir": "size_bs2os/2026-06-11_1744_size_bs2os__8fa5ceac0-dirty",
+      "lemma": "size_bs2os",
+      "source": "FunctionalSpec.ec",
+      "profile": "L1",
+      "model": "claude-fable-5",
+      "outcome": "proved",
+      "turns": 6,
+      "trees": 2,
+      "date": "2026-06-11 17:44",
+      "timestamp": "2026-06-11_1744_size_bs2os",
+      "commit": "8fa5ceac0",
+      "eval_mode": true,
+      "tier": "public",
+      "proved": true,
+      "view_roots": [],
+      "per_tree": [
+        {
+          "tree": "Tree_0_0",
+          "proved": true,
+          "tactics": [
+            "rewrite /bs2os; elim: bs => [|b bs ih] //=.",
+            "by rewrite flatten_cons size_cat size_block ih /#.",
+            "qed."
+          ]
+        },
+        {
+          "tree": "Tree_0_1",
+          "proved": false,
+          "tactics": [
+            "elim: bs => [|b bs ih].",
+            "by rewrite /bs2os /= flatten_nil."
+          ]
+        }
+      ]
+    },
+    {
+      "id": "andbDl__2026-06-11_1742_andbDl__8fa5ceac0-dirty",
+      "dir": "andbDl/2026-06-11_1742_andbDl__8fa5ceac0-dirty",
+      "lemma": "andbDl",
+      "source": "FunctionalSpec.ec",
+      "profile": "L1",
+      "model": "claude-fable-5",
+      "outcome": "proved",
+      "turns": 5,
+      "trees": 2,
+      "date": "2026-06-11 17:42",
+      "timestamp": "2026-06-11_1742_andbDl",
+      "commit": "8fa5ceac0",
+      "eval_mode": true,
+      "tier": "public",
+      "proved": true,
+      "view_roots": [],
+      "per_tree": [
+        {
+          "tree": "Tree_0_0",
+          "proved": false,
+          "tactics": [
+            "by move=> b1 b2 b3; apply/blockP=> i ge0_gti_n; rewrite !andbE // !xorbE // !andbE // andwDl."
+          ]
+        },
+        {
+          "tree": "Tree_0_1",
+          "proved": true,
+          "tactics": [
+            "rewrite /left_distributive.",
+            "by move=> x y z; apply/blockP=> i ge0_gti_n; rewrite !(andbE, xorbE) // andwDl.",
+            "qed."
+          ]
+        }
+      ]
+    },
+    {
+      "id": "andbK__2026-06-11_1740_andbK__8fa5ceac0-dirty",
+      "dir": "andbK/2026-06-11_1740_andbK__8fa5ceac0-dirty",
+      "lemma": "andbK",
+      "source": "FunctionalSpec.ec",
+      "profile": "L1",
+      "model": "claude-fable-5",
+      "outcome": "proved",
+      "turns": 4,
+      "trees": 2,
+      "date": "2026-06-11 17:40",
+      "timestamp": "2026-06-11_1740_andbK",
+      "commit": "8fa5ceac0",
+      "eval_mode": true,
+      "tier": "public",
+      "proved": true,
+      "view_roots": [],
+      "per_tree": [
+        {
+          "tree": "Tree_0_0",
+          "proved": false,
+          "tactics": []
+        },
+        {
+          "tree": "Tree_0_1",
+          "proved": true,
+          "tactics": [
+            "by move=> b; apply/blockP=> i ge0_gti_n; rewrite !andbE // andwK.",
+            "qed."
+          ]
+        }
+      ]
+    },
+    {
+      "id": "andbA__2026-06-11_1738_andbA__8fa5ceac0-dirty",
+      "dir": "andbA/2026-06-11_1738_andbA__8fa5ceac0-dirty",
+      "lemma": "andbA",
+      "source": "FunctionalSpec.ec",
+      "profile": "L1",
+      "model": "claude-fable-5",
+      "outcome": "proved",
+      "turns": 8,
+      "trees": 2,
+      "date": "2026-06-11 17:38",
+      "timestamp": "2026-06-11_1738_andbA",
+      "commit": "8fa5ceac0",
+      "eval_mode": true,
+      "tier": "public",
+      "proved": true,
+      "view_roots": [],
+      "per_tree": [
+        {
+          "tree": "Tree_0_0",
+          "proved": true,
+          "tactics": [
+            "by move=> b1 b2 b3; apply/blockP=> i ge0_gti_n; rewrite !andbE // andwA.",
+            "qed."
+          ]
+        },
+        {
+          "tree": "Tree_0_1",
+          "proved": false,
+          "tactics": [
+            "move=> x y z."
+          ]
+        }
+      ]
+    },
+    {
+      "id": "andbC__2026-06-11_1736_andbC__8fa5ceac0-dirty",
+      "dir": "andbC/2026-06-11_1736_andbC__8fa5ceac0-dirty",
+      "lemma": "andbC",
+      "source": "FunctionalSpec.ec",
+      "profile": "L1",
+      "model": "claude-fable-5",
+      "outcome": "proved",
+      "turns": 8,
+      "trees": 2,
+      "date": "2026-06-11 17:36",
+      "timestamp": "2026-06-11_1736_andbC",
+      "commit": "8fa5ceac0",
+      "eval_mode": true,
+      "tier": "public",
+      "proved": true,
+      "view_roots": [],
+      "per_tree": [
+        {
+          "tree": "Tree_0_0",
+          "proved": false,
+          "tactics": []
+        },
+        {
+          "tree": "Tree_0_1",
+          "proved": true,
+          "tactics": [
+            "by move=> b1 b2; apply/blockP=> i ge0_gti_n; rewrite !andbE // andwC.",
+            "qed."
+          ]
+        }
+      ]
+    },
+    {
+      "id": "andb1__2026-06-11_1734_andb1__8fa5ceac0-dirty",
+      "dir": "andb1/2026-06-11_1734_andb1__8fa5ceac0-dirty",
+      "lemma": "andb1",
+      "source": "FunctionalSpec.ec",
+      "profile": "L1",
+      "model": "claude-fable-5",
+      "outcome": "proved",
+      "turns": 3,
+      "trees": 2,
+      "date": "2026-06-11 17:34",
+      "timestamp": "2026-06-11_1734_andb1",
+      "commit": "8fa5ceac0",
+      "eval_mode": true,
+      "tier": "public",
+      "proved": true,
+      "view_roots": [],
+      "per_tree": [
+        {
+          "tree": "Tree_0_0",
+          "proved": false,
+          "tactics": []
+        },
+        {
+          "tree": "Tree_0_1",
+          "proved": true,
+          "tactics": [
+            "by move=> b; apply/blockP=> i ge0_gti_n; rewrite !andbE 2:offunE // andw1.",
+            "qed."
+          ]
+        }
+      ]
+    },
+    {
+      "id": "andbE__2026-06-11_1733_andbE__8fa5ceac0-dirty",
+      "dir": "andbE/2026-06-11_1733_andbE__8fa5ceac0-dirty",
+      "lemma": "andbE",
+      "source": "FunctionalSpec.ec",
+      "profile": "L1",
+      "model": "claude-fable-5",
+      "outcome": "proved",
+      "turns": 3,
+      "trees": 2,
+      "date": "2026-06-11 17:33",
+      "timestamp": "2026-06-11_1733_andbE",
+      "commit": "8fa5ceac0",
+      "eval_mode": true,
+      "tier": "public",
+      "proved": true,
+      "view_roots": [],
+      "per_tree": [
+        {
+          "tree": "Tree_0_0",
+          "proved": true,
+          "tactics": [
+            "by move=> lt_i; rewrite /andb offunE.",
+            "qed."
+          ]
+        },
+        {
+          "tree": "Tree_0_1",
+          "proved": false,
+          "tactics": [
+            "by move=> /offunE ->."
+          ]
+        }
+      ]
+    },
+    {
+      "id": "xorbK__2026-06-11_1732_xorbK__8fa5ceac0-dirty",
+      "dir": "xorbK/2026-06-11_1732_xorbK__8fa5ceac0-dirty",
+      "lemma": "xorbK",
+      "source": "FunctionalSpec.ec",
+      "profile": "L1",
+      "model": "claude-fable-5",
+      "outcome": "proved",
+      "turns": 4,
+      "trees": 2,
+      "date": "2026-06-11 17:32",
+      "timestamp": "2026-06-11_1732_xorbK",
+      "commit": "8fa5ceac0",
+      "eval_mode": true,
+      "tier": "public",
+      "proved": true,
+      "view_roots": [],
+      "per_tree": [
+        {
+          "tree": "Tree_0_0",
+          "proved": true,
+          "tactics": [
+            "by apply/blockP=> i ge0_gti_n; rewrite !xorbE 2:offunE // xorwK.",
+            "qed."
+          ]
+        },
+        {
+          "tree": "Tree_0_1",
+          "proved": false,
+          "tactics": [
+            "by apply/blockP=> i ge0_gti_n; rewrite xorbE // offunE // xorwK."
+          ]
+        }
+      ]
+    },
+    {
+      "id": "xorbA__2026-06-11_1731_xorbA__8fa5ceac0-dirty",
+      "dir": "xorbA/2026-06-11_1731_xorbA__8fa5ceac0-dirty",
+      "lemma": "xorbA",
+      "source": "FunctionalSpec.ec",
+      "profile": "L1",
+      "model": "claude-fable-5",
+      "outcome": "proved",
+      "turns": 3,
+      "trees": 2,
+      "date": "2026-06-11 17:31",
+      "timestamp": "2026-06-11_1731_xorbA",
+      "commit": "8fa5ceac0",
+      "eval_mode": true,
+      "tier": "public",
+      "proved": true,
+      "view_roots": [],
+      "per_tree": [
+        {
+          "tree": "Tree_0_0",
+          "proved": false,
+          "tactics": []
+        },
+        {
+          "tree": "Tree_0_1",
+          "proved": true,
+          "tactics": [
+            "by move=> b1 b2 b3; apply/blockP=> i ge0_gti_n; rewrite !xorbE // xorwA.",
+            "qed."
+          ]
+        }
+      ]
+    },
+    {
+      "id": "xorbC__2026-06-11_1730_xorbC__8fa5ceac0-dirty",
+      "dir": "xorbC/2026-06-11_1730_xorbC__8fa5ceac0-dirty",
+      "lemma": "xorbC",
+      "source": "FunctionalSpec.ec",
+      "profile": "L1",
+      "model": "claude-fable-5",
+      "outcome": "proved",
+      "turns": 5,
+      "trees": 2,
+      "date": "2026-06-11 17:30",
+      "timestamp": "2026-06-11_1730_xorbC",
+      "commit": "8fa5ceac0",
+      "eval_mode": true,
+      "tier": "public",
+      "proved": true,
+      "view_roots": [],
+      "per_tree": [
+        {
+          "tree": "Tree_0_0",
+          "proved": true,
+          "tactics": [
+            "by move=> b1 b2; apply/blockP=> i ge0_gti_n; rewrite !xorbE // xorwC.",
+            "qed."
+          ]
+        },
+        {
+          "tree": "Tree_0_1",
+          "proved": false,
+          "tactics": []
+        }
+      ]
+    },
+    {
+      "id": "xorb0__2026-06-11_1729_xorb0__8fa5ceac0-dirty",
+      "dir": "xorb0/2026-06-11_1729_xorb0__8fa5ceac0-dirty",
+      "lemma": "xorb0",
+      "source": "FunctionalSpec.ec",
+      "profile": "L1",
+      "model": "claude-fable-5",
+      "outcome": "proved",
+      "turns": 4,
+      "trees": 2,
+      "date": "2026-06-11 17:29",
+      "timestamp": "2026-06-11_1729_xorb0",
+      "commit": "8fa5ceac0",
+      "eval_mode": true,
+      "tier": "public",
+      "proved": true,
+      "view_roots": [],
+      "per_tree": [
+        {
+          "tree": "Tree_0_0",
+          "proved": true,
+          "tactics": [
+            "by move=> b; apply/blockP=> i ge0_gti_n; rewrite xorbE // offunE // xorw0.",
+            "qed."
+          ]
+        },
+        {
+          "tree": "Tree_0_1",
+          "proved": false,
+          "tactics": [
+            "by move=> b; apply/blockP=> i ge0_gti_n; rewrite xorbE // offunE // xorw0."
+          ]
+        }
+      ]
+    },
+    {
+      "id": "xorbE__2026-06-11_1728_xorbE__8fa5ceac0-dirty",
+      "dir": "xorbE/2026-06-11_1728_xorbE__8fa5ceac0-dirty",
+      "lemma": "xorbE",
+      "source": "FunctionalSpec.ec",
+      "profile": "L1",
+      "model": "claude-fable-5",
+      "outcome": "proved",
+      "turns": 3,
+      "trees": 2,
+      "date": "2026-06-11 17:28",
+      "timestamp": "2026-06-11_1728_xorbE",
+      "commit": "8fa5ceac0",
+      "eval_mode": true,
+      "tier": "public",
+      "proved": true,
+      "view_roots": [],
+      "per_tree": [
+        {
+          "tree": "Tree_0_0",
+          "proved": false,
+          "tactics": []
+        },
+        {
+          "tree": "Tree_0_1",
+          "proved": true,
+          "tactics": [
+            "by move=> /offunE ->.",
+            "qed."
+          ]
+        }
+      ]
+    },
+    {
+      "id": "oneb_neq0__2026-06-11_1725_oneb_neq0__8fa5ceac0-dirty",
+      "dir": "oneb_neq0/2026-06-11_1725_oneb_neq0__8fa5ceac0-dirty",
+      "lemma": "oneb_neq0",
+      "source": "FunctionalSpec.ec",
+      "profile": "L1",
+      "model": "claude-fable-5",
+      "outcome": "proved",
+      "turns": 7,
+      "trees": 2,
+      "date": "2026-06-11 17:25",
+      "timestamp": "2026-06-11_1725_oneb_neq0",
+      "commit": "8fa5ceac0",
+      "eval_mode": true,
+      "tier": "public",
+      "proved": true,
+      "view_roots": [],
+      "per_tree": [
+        {
+          "tree": "Tree_0_0",
+          "proved": true,
+          "tactics": [
+            "apply/negP=> heq.",
+            "have: oneb.[0] = zerob.[0] by rewrite heq.",
+            "rewrite /oneb /zerob !offunE //; exact/Octet.onew_neq0.",
+            "qed."
+          ]
+        },
+        {
+          "tree": "Tree_0_1",
+          "proved": false,
+          "tactics": []
+        }
+      ]
+    },
+    {
+      "id": "dblock_uffu__2026-06-11_1723_dblock_uffu__8fa5ceac0-dirty",
+      "dir": "dblock_uffu/2026-06-11_1723_dblock_uffu__8fa5ceac0-dirty",
+      "lemma": "dblock_uffu",
+      "source": "FunctionalSpec.ec",
+      "profile": "L1",
+      "model": "claude-fable-5",
+      "outcome": "proved",
+      "turns": 3,
+      "trees": 2,
+      "date": "2026-06-11 17:23",
+      "timestamp": "2026-06-11_1723_dblock_uffu",
+      "commit": "8fa5ceac0",
+      "eval_mode": true,
+      "tier": "public",
+      "proved": true,
+      "view_roots": [],
+      "per_tree": [
+        {
+          "tree": "Tree_0_0",
+          "proved": true,
+          "tactics": [
+            "by split; [exact/DBlock.dunifin_ll | exact/DBlock.dunifin_funi].",
+            "qed."
+          ]
+        },
+        {
+          "tree": "Tree_0_1",
+          "proved": false,
+          "tactics": []
+        }
+      ]
+    },
+    {
+      "id": "int2oK__2026-06-11_1722_int2oK__8fa5ceac0-dirty",
+      "dir": "int2oK/2026-06-11_1722_int2oK__8fa5ceac0-dirty",
+      "lemma": "int2oK",
+      "source": "FunctionalSpec.ec",
+      "profile": "L1",
+      "model": "claude-fable-5",
+      "outcome": "proved",
+      "turns": 8,
+      "trees": 2,
+      "date": "2026-06-11 17:22",
+      "timestamp": "2026-06-11_1722_int2oK",
+      "commit": "8fa5ceac0",
+      "eval_mode": true,
+      "tier": "public",
+      "proved": true,
+      "view_roots": [],
+      "per_tree": [
+        {
+          "tree": "Tree_0_0",
+          "proved": true,
+          "tactics": [
+            "move=> rg_i.",
+            "rewrite /o2int /int2o.",
+            "rewrite ofoctetK 1:size_int2bs //.",
+            "rewrite int2bsK //.",
+            "qed."
+          ]
+        },
+        {
+          "tree": "Tree_0_1",
+          "proved": false,
+          "tactics": [
+            "move=> [ge0_i lt_i].",
+            "rewrite /o2int /int2o ofoctetK ?size_int2bs //."
+          ]
+        }
+      ]
+    },
+    {
+      "id": "o2intK__2026-06-11_1719_o2intK__8fa5ceac0-dirty",
+      "dir": "o2intK/2026-06-11_1719_o2intK__8fa5ceac0-dirty",
+      "lemma": "o2intK",
+      "source": "FunctionalSpec.ec",
+      "profile": "L1",
+      "model": "claude-fable-5",
+      "outcome": "proved",
+      "turns": 5,
+      "trees": 2,
+      "date": "2026-06-11 17:19",
+      "timestamp": "2026-06-11_1719_o2intK",
+      "commit": "8fa5ceac0",
+      "eval_mode": true,
+      "tier": "public",
+      "proved": true,
+      "view_roots": [],
+      "per_tree": [
+        {
+          "tree": "Tree_0_0",
+          "proved": true,
+          "tactics": [
+            "by rewrite /int2o /o2int -(size_octet o) bs2intK mkoctetK.",
+            "qed."
+          ]
+        },
+        {
+          "tree": "Tree_0_1",
+          "proved": true,
+          "tactics": [
+            "by rewrite /int2o /o2int -(size_octet o) bs2intK mkoctetK.",
+            "qed."
+          ]
+        }
+      ]
+    },
+    {
+      "id": "conclusion__2026-06-11_1713_Conclusion__8fa5ceac0-dirty",
+      "dir": "conclusion/2026-06-11_1713_Conclusion__8fa5ceac0-dirty",
+      "lemma": "Conclusion",
+      "source": "CBC.eca",
+      "profile": "L1",
+      "model": "claude-fable-5",
+      "outcome": "proved",
+      "turns": 35,
+      "trees": 2,
+      "date": "2026-06-11 17:13",
+      "timestamp": "2026-06-11_1713_Conclusion",
+      "commit": "8fa5ceac0",
+      "eval_mode": true,
+      "tier": "public",
+      "proved": true,
+      "view_roots": [],
+      "per_tree": [
+        {
+          "tree": "Tree_0_0",
+          "proved": false,
+          "tactics": [
+            "move=> A_run_ll.",
+            "have QBll: forall (O <: RCPA_Oracles{-QueryBounder(A)}), islossless O.enc => islossless QueryBounder(A, O).distinguish.",
+            "move=> O O_ll; proc.",
+            "call (A_run_ll (<: QueryBounder(A, O).O') _).",
+            "proc; sp; if=> //.",
+            "by wp; call O_ll.",
+            "by while true (size p + 1 - i); auto=> /#.",
+            "by auto.",
+            "have Red := reduction (QueryBounder(A)) &m QBll.",
+            "have B1 := Bound_by_PRP_PRF A A_run_ll &m.",
+            "have B2 := Bound_by_Birthday A A_run_ll &m.",
+            "apply (ler_trans _ _ _ Red).",
+            "rewrite -RField.addrA RealOrder.ler_add2l."
+          ]
+        },
+        {
+          "tree": "Tree_0_1",
+          "proved": true,
+          "tactics": [
+            "move=> A_run_ll.",
+            "have QBA_ll: forall (O <: RCPA_Oracles{-QueryBounder(A)}), islossless O.enc => islossless QueryBounder(A, O).distinguish.",
+            "move=> O O_enc_ll; proc.",
+            "call (A_run_ll (<: QueryBounder(A, O).O') _).",
+            "proc; sp; if=> //.",
+            "by wp; call O_enc_ll; auto.",
+            "by while true (size p + 1 - i); auto=> /#.",
+            "by auto.",
+            "have := reduction (QueryBounder(A)) &m QBA_ll.",
+            "have := Bound_by_PRP_PRF A A_run_ll &m.",
+            "have := Bound_by_Birthday A A_run_ll &m.",
+            "have hmu: 0%r <= mu1 dBlock witness<:block> by smt(mu_bounded).",
+            "have hn: 1 <= q * ell by smt(gt0_q gt0_ell).",
+            "have ->: (q * ell) ^ 2 = q * ell * (q * ell) by rewrite expr2.",
+            "smt().",
+            "qed."
+          ]
+        }
+      ]
+    },
+    {
+      "id": "pr_PushBound_list__2026-06-11_1711_pr_PushBound_list__8fa5ceac0-dirty",
+      "dir": "pr_PushBound_list/2026-06-11_1711_pr_PushBound_list__8fa5ceac0-dirty",
+      "lemma": "pr_PushBound_list",
+      "source": "CBC.eca",
+      "profile": "L1",
+      "model": "claude-fable-5",
+      "outcome": "proved",
+      "turns": 3,
+      "trees": 2,
+      "date": "2026-06-11 17:11",
+      "timestamp": "2026-06-11_1711_pr_PushBound_list",
+      "commit": "8fa5ceac0",
+      "eval_mode": true,
+      "tier": "public",
+      "proved": true,
+      "view_roots": [],
+      "per_tree": [
+        {
+          "tree": "Tree_0_0",
+          "proved": false,
+          "tactics": []
+        },
+        {
+          "tree": "Tree_0_1",
+          "proved": true,
+          "tactics": [
+            "byequiv (PushBound Sample (Wrap(A)))=> //.",
+            "qed."
+          ]
+        }
+      ]
+    },
+    {
+      "id": "DQ_Sample_Compute_pr__2026-06-11_1709_DQ_Sample_Compute_pr__8fa5ceac0-dirty",
+      "dir": "DQ_Sample_Compute_pr/2026-06-11_1709_DQ_Sample_Compute_pr__8fa5ceac0-dirty",
+      "lemma": "DQ_Sample_Compute_pr",
+      "source": "CBC.eca",
+      "profile": "L1",
+      "model": "claude-fable-5",
+      "outcome": "proved",
+      "turns": 11,
+      "trees": 2,
+      "date": "2026-06-11 17:09",
+      "timestamp": "2026-06-11_1709_DQ_Sample_Compute_pr",
+      "commit": "8fa5ceac0",
+      "eval_mode": true,
+      "tier": "public",
+      "proved": true,
+      "view_roots": [],
+      "per_tree": [
+        {
+          "tree": "Tree_0_0",
+          "proved": false,
+          "tactics": [
+            "byequiv (: ={glob A} ==> DoubleQuery.bad{1} = Compute.bad{2})=> //.",
+            "proc.",
+            "call (_: ={bad,qs}(DoubleQuery,Compute)).",
+            "by conseq DQ_Sample_Compute_eq."
+          ]
+        },
+        {
+          "tree": "Tree_0_1",
+          "proved": true,
+          "tactics": [
+            "byequiv (: ={glob A} ==> ={bad}(DoubleQuery,Compute))=> //.",
+            "proc.",
+            "call (_: ={bad,qs}(DoubleQuery,Compute)).",
+            "by conseq DQ_Sample_Compute_eq.",
+            "by inline *; auto.",
+            "qed."
+          ]
+        }
+      ]
+    },
+    {
+      "id": "doublequery_eq__2026-06-11_1706_doublequery_eq__8fa5ceac0-dirty",
+      "dir": "doublequery_eq/2026-06-11_1706_doublequery_eq__8fa5ceac0-dirty",
+      "lemma": "doublequery_eq",
+      "source": "CBC.eca",
+      "profile": "L1",
+      "model": "claude-fable-5",
+      "outcome": "proved",
+      "turns": 14,
+      "trees": 2,
+      "date": "2026-06-11 17:06",
+      "timestamp": "2026-06-11_1706_doublequery_eq",
+      "commit": "8fa5ceac0",
+      "eval_mode": true,
+      "tier": "public",
+      "proved": true,
+      "view_roots": [],
+      "per_tree": [
+        {
+          "tree": "Tree_0_0",
+          "proved": false,
+          "tactics": [
+            "byequiv=> //=.",
+            "proc; inline *; sim.",
+            "call (_: ={glob F}).",
+            "proc; inline *; sim."
+          ]
+        },
+        {
+          "tree": "Tree_0_1",
+          "proved": true,
+          "tactics": [
+            "byequiv=> //=.",
+            "proc.",
+            "call (_: ={glob F}).",
+            "proc.",
+            "while (={i, s, c, p} /\\ (glob F){1} = (glob F){2}).",
+            "inline {2} DoubleQuery(F).f; wp; call (_: true); auto.",
+            "auto.",
+            "inline {2} DoubleQuery(F).init; wp; call (_: true); auto.",
+            "qed."
+          ]
+        }
+      ]
+    },
+    {
+      "id": "CBC_PRP_RF__2026-06-11_1704_CBC_PRP_RF__8fa5ceac0-dirty",
+      "dir": "CBC_PRP_RF/2026-06-11_1704_CBC_PRP_RF__8fa5ceac0-dirty",
+      "lemma": "CBC_PRP_RF",
+      "source": "CBC.eca",
+      "profile": "L1",
+      "model": "claude-fable-5",
+      "outcome": "proved",
+      "turns": 5,
+      "trees": 2,
+      "date": "2026-06-11 17:04",
+      "timestamp": "2026-06-11_1704_CBC_PRP_RF",
+      "commit": "8fa5ceac0",
+      "eval_mode": true,
+      "tier": "public",
+      "proved": true,
+      "view_roots": [],
+      "per_tree": [
+        {
+          "tree": "Tree_0_0",
+          "proved": true,
+          "tactics": [
+            "rewrite (refactor_abstract PRP &m) (refactor_abstract PRFi &m).",
+            "smt().",
+            "qed."
+          ]
+        },
+        {
+          "tree": "Tree_0_1",
+          "proved": false,
+          "tactics": [
+            "rewrite (refactor_abstract PRP &m) (refactor_abstract PRFi &m)."
+          ]
+        }
+      ]
+    },
+    {
+      "id": "refactor_abstract__2026-06-11_1701_refactor_abstract__8fa5ceac0-dirty",
+      "dir": "refactor_abstract/2026-06-11_1701_refactor_abstract__8fa5ceac0-dirty",
+      "lemma": "refactor_abstract",
+      "source": "CBC.eca",
+      "profile": "L1",
+      "model": "claude-fable-5",
+      "outcome": "proved",
+      "turns": 7,
+      "trees": 2,
+      "date": "2026-06-11 17:01",
+      "timestamp": "2026-06-11_1701_refactor_abstract",
+      "commit": "8fa5ceac0",
+      "eval_mode": true,
+      "tier": "public",
+      "proved": true,
+      "view_roots": [],
+      "per_tree": [
+        {
+          "tree": "Tree_0_0",
+          "proved": true,
+          "tactics": [
+            "byequiv=> //=.",
+            "proc.",
+            "call (_: ={glob O}).",
+            "by proc; sim.",
+            "by call (_: true); auto.",
+            "qed."
+          ]
+        },
+        {
+          "tree": "Tree_0_1",
+          "proved": false,
+          "tactics": []
+        }
+      ]
+    },
+    {
+      "id": "cleanup__2026-06-11_1700_cleanup__8fa5ceac0-dirty",
+      "dir": "cleanup/2026-06-11_1700_cleanup__8fa5ceac0-dirty",
+      "lemma": "cleanup",
+      "source": "CBC.eca",
+      "profile": "L1",
+      "model": "claude-fable-5",
+      "outcome": "proved",
+      "turns": 4,
+      "trees": 2,
+      "date": "2026-06-11 17:00",
+      "timestamp": "2026-06-11_1700_cleanup",
+      "commit": "8fa5ceac0",
+      "eval_mode": true,
+      "tier": "public",
+      "proved": true,
+      "view_roots": [],
+      "per_tree": [
+        {
+          "tree": "Tree_0_0",
+          "proved": false,
+          "tactics": [
+            "by rewrite (success_eq &m) (success_eq_random &m)."
+          ]
+        },
+        {
+          "tree": "Tree_0_1",
+          "proved": true,
+          "tactics": [
+            "by rewrite (success_eq &m) (success_eq_random &m).",
+            "qed."
+          ]
+        }
+      ]
+    },
+    {
+      "id": "success_eq_random__2026-06-11_1658_success_eq_random__8fa5ceac0-dirty",
+      "dir": "success_eq_random/2026-06-11_1658_success_eq_random__8fa5ceac0-dirty",
+      "lemma": "success_eq_random",
+      "source": "CBC.eca",
+      "profile": "L1",
+      "model": "claude-fable-5",
+      "outcome": "proved",
+      "turns": 10,
+      "trees": 2,
+      "date": "2026-06-11 16:58",
+      "timestamp": "2026-06-11_1658_success_eq_random",
+      "commit": "8fa5ceac0",
+      "eval_mode": true,
+      "tier": "public",
+      "proved": true,
+      "view_roots": [],
+      "per_tree": [
+        {
+          "tree": "Tree_0_0",
+          "proved": true,
+          "tactics": [
+            "byequiv=> //=.",
+            "proc.",
+            "call (_: true); 1:by conseq random_eq.",
+            "by inline *; auto.",
+            "qed."
+          ]
+        },
+        {
+          "tree": "Tree_0_1",
+          "proved": false,
+          "tactics": [
+            "byequiv=> //=.",
+            "proc.",
+            "call (_: true); 1:by conseq random_eq.",
+            "by inline *; auto."
+          ]
+        }
+      ]
+    },
+    {
+      "id": "random_eq__2026-06-11_1654_random_eq__8fa5ceac0-dirty",
+      "dir": "random_eq/2026-06-11_1654_random_eq__8fa5ceac0-dirty",
+      "lemma": "random_eq",
+      "source": "CBC.eca",
+      "profile": "L1",
+      "model": "claude-fable-5",
+      "outcome": "proved",
+      "turns": 14,
+      "trees": 2,
+      "date": "2026-06-11 16:54",
+      "timestamp": "2026-06-11_1654_random_eq",
+      "commit": "8fa5ceac0",
+      "eval_mode": true,
+      "tier": "public",
+      "proved": true,
+      "view_roots": [],
+      "per_tree": [
+        {
+          "tree": "Tree_0_0",
+          "proved": true,
+          "tactics": [
+            "proc; inline *.",
+            "unroll{1} 5.",
+            "rcondt{1} 5.",
+            "by auto=> /=; smt(size_ge0).",
+            "wp; while (c0{1} = c{2} /\\ i{1} = i{2} + 1 /\\ p0{1} = p{2}); auto=> /#.",
+            "qed."
+          ]
+        },
+        {
+          "tree": "Tree_0_1",
+          "proved": false,
+          "tactics": [
+            "proc.",
+            "inline *.",
+            "unroll{1} 5.",
+            "rcondt{1} 5.",
+            "by auto=> /=; smt(size_ge0).",
+            "wp; while (c0{1} = c{2} /\\ i{1} = i{2} + 1 /\\ p0{1} = p{2}).",
+            "by auto=> /#."
+          ]
+        }
+      ]
+    },
+    {
+      "id": "enc_eq__2026-06-11_1551_enc_eq__8fa5ceac0-dirty",
+      "dir": "enc_eq/2026-06-11_1551_enc_eq__8fa5ceac0-dirty",
+      "lemma": "enc_eq",
+      "source": "RCPA_CMA.ec",
+      "profile": "L1",
+      "model": "claude-fable-5",
+      "outcome": "open",
+      "turns": 0,
+      "trees": 2,
+      "date": "2026-06-11 15:51",
+      "timestamp": "2026-06-11_1551_enc_eq",
+      "commit": "8fa5ceac0",
+      "eval_mode": true,
+      "tier": "public",
+      "proved": false,
+      "view_roots": [],
+      "per_tree": [
+        {
+          "tree": "Tree_0_0",
+          "proved": false,
+          "tactics": []
+        },
+        {
+          "tree": "Tree_0_1",
+          "proved": false,
+          "tactics": []
+        }
+      ]
+    },
+    {
+      "id": "success_eq__2026-06-11_1536_success_eq__8fa5ceac0-dirty",
+      "dir": "success_eq/2026-06-11_1536_success_eq__8fa5ceac0-dirty",
+      "lemma": "success_eq",
+      "source": "CBC.eca",
+      "profile": "L1",
+      "model": "claude-fable-5",
+      "outcome": "proved",
+      "turns": 8,
+      "trees": 2,
+      "date": "2026-06-11 15:36",
+      "timestamp": "2026-06-11_1536_success_eq",
+      "commit": "8fa5ceac0",
+      "eval_mode": true,
+      "tier": "public",
+      "proved": true,
+      "view_roots": [],
+      "per_tree": [
+        {
+          "tree": "Tree_0_0",
+          "proved": false,
+          "tactics": [
+            "byequiv=> //=."
+          ]
+        },
+        {
+          "tree": "Tree_0_1",
+          "proved": true,
+          "tactics": [
+            "byequiv=> //=.",
+            "proc.",
+            "call (_: ={k}(RCPA_Wrap,PRP)).",
+            "by conseq enc_eq.",
+            "by inline *; auto.",
+            "qed."
+          ]
+        }
+      ]
+    },
+    {
+      "id": "enc_eq__2026-06-11_1534_enc_eq__8fa5ceac0-dirty",
+      "dir": "enc_eq/2026-06-11_1534_enc_eq__8fa5ceac0-dirty",
+      "lemma": "enc_eq",
+      "source": "CBC.eca",
+      "profile": "L1",
+      "model": "claude-fable-5",
+      "outcome": "proved",
+      "turns": 8,
+      "trees": 2,
+      "date": "2026-06-11 15:34",
+      "timestamp": "2026-06-11_1534_enc_eq",
+      "commit": "8fa5ceac0",
+      "eval_mode": true,
+      "tier": "public",
+      "proved": true,
+      "view_roots": [],
+      "per_tree": [
+        {
+          "tree": "Tree_0_0",
+          "proved": true,
+          "tactics": [
+            "proc; inline *; wp.",
+            "while (={i, s} /\\ key0{1} = PRP.k{2} /\\ p1{1} = p{2} /\\ c1{1} = c{2}); by auto.",
+            "qed."
+          ]
+        },
+        {
+          "tree": "Tree_0_1",
+          "proved": false,
+          "tactics": [
+            "proc; inline *; wp.",
+            "while (={i, s} /\\ key0{1} = PRP.k{2} /\\ p1{1} = p{2} /\\ c1{1} = c{2}).",
+            "auto.",
+            "auto."
+          ]
+        }
+      ]
+    },
+    {
+      "id": "CPA_direct_eq__2026-06-11_1532_CPA_direct_eq__8fa5ceac0-dirty",
+      "dir": "CPA_direct_eq/2026-06-11_1532_CPA_direct_eq__8fa5ceac0-dirty",
+      "lemma": "CPA_direct_eq",
+      "source": "CBC.eca",
+      "profile": "L1",
+      "model": "claude-fable-5",
+      "outcome": "proved",
+      "turns": 15,
+      "trees": 2,
+      "date": "2026-06-11 15:32",
+      "timestamp": "2026-06-11_1532_CPA_direct_eq",
+      "commit": "8fa5ceac0",
+      "eval_mode": true,
+      "tier": "public",
+      "proved": true,
+      "view_roots": [],
+      "per_tree": [
+        {
+          "tree": "Tree_0_0",
+          "proved": true,
+          "tactics": [
+            "move=> P_init_eq P_f_eq &m A.",
+            "byequiv (_: ={glob A} ==> ={res})=> //.",
+            "proc.",
+            "call (_: I (glob P){1} (glob P'){2}).",
+            "by conseq (CBC_Oracle_enc_eq P P' I P_f_eq).",
+            "call P_init_eq.",
+            "by auto.",
+            "qed."
+          ]
+        },
+        {
+          "tree": "Tree_0_1",
+          "proved": false,
+          "tactics": [
+            "move=> P_init_eq P_f_eq &m A.",
+            "byequiv (_: ={glob A} ==> ={res})=> //.",
+            "proc.",
+            "call (_: I (glob P){1} (glob P'){2}).",
+            "exact (CBC_Oracle_enc_eq P P' I P_f_eq).",
+            "by call P_init_eq."
+          ]
+        }
+      ]
+    },
+    {
+      "id": "CBC_Oracle_enc_eq__2026-06-11_1530_CBC_Oracle_enc_eq__8fa5ceac0-dirty",
+      "dir": "CBC_Oracle_enc_eq/2026-06-11_1530_CBC_Oracle_enc_eq__8fa5ceac0-dirty",
+      "lemma": "CBC_Oracle_enc_eq",
+      "source": "CBC.eca",
+      "profile": "L1",
+      "model": "claude-fable-5",
+      "outcome": "proved",
+      "turns": 10,
+      "trees": 2,
+      "date": "2026-06-11 15:30",
+      "timestamp": "2026-06-11_1530_CBC_Oracle_enc_eq",
+      "commit": "8fa5ceac0",
+      "eval_mode": true,
+      "tier": "public",
+      "proved": true,
+      "view_roots": [],
+      "per_tree": [
+        {
+          "tree": "Tree_0_0",
+          "proved": false,
+          "tactics": [
+            "move=> Hf.",
+            "proc.",
+            "while (={i, p, c, s} /\\ I (glob P){1} (glob P'){2}).",
+            "wp; call Hf; auto."
+          ]
+        },
+        {
+          "tree": "Tree_0_1",
+          "proved": true,
+          "tactics": [
+            "move=> Hf; proc.",
+            "while (={i, s, c, p} /\\ I (glob P){1} (glob P'){2}).",
+            "by wp; call Hf; auto.",
+            "by auto.",
+            "qed."
+          ]
+        }
+      ]
+    },
+    {
+      "id": "Random_Ideal__2026-06-11_1525_Random_Ideal__8fa5ceac0-dirty",
+      "dir": "Random_Ideal/2026-06-11_1525_Random_Ideal__8fa5ceac0-dirty",
+      "lemma": "Random_Ideal",
+      "source": "CBC.eca",
+      "profile": "L1",
+      "model": "claude-fable-5",
+      "outcome": "proved",
+      "turns": 20,
+      "trees": 2,
+      "date": "2026-06-11 15:25",
+      "timestamp": "2026-06-11_1525_Random_Ideal",
+      "commit": "8fa5ceac0",
+      "eval_mode": true,
+      "tier": "public",
+      "proved": true,
+      "view_roots": [],
+      "per_tree": [
+        {
+          "tree": "Tree_0_0",
+          "proved": true,
+          "tactics": [
+            "proc.",
+            "transitivity{1} { c <@ LoopSnoc.sample(size p + 1); } (={k, p} ==> ={c}) (size p{1} = size p{2} ==> c{1} = r{2}).",
+            "smt().",
+            "smt().",
+            "inline *; wp.",
+            "while (i{1} = i0{2} /\\ c{1} = l{2} /\\ n{2} = size p{1} + 1); auto=> /> /#.",
+            "transitivity{2} { r <@ Sample.sample(size p + 1); } (size p{1} = size p{2} ==> c{1} = r{2}) (={k, p} ==> ={r}).",
+            "smt().",
+            "smt().",
+            "symmetry; call Sample_LoopSnoc_eq; auto=> /#.",
+            "inline *; wp; rnd; auto=> />.",
+            "qed."
+          ]
+        },
+        {
+          "tree": "Tree_0_1",
+          "proved": false,
+          "tactics": [
+            "proc.",
+            "transitivity {1} { c <@ LoopSnoc.sample(size p + 1); } (={k, p} ==> ={c}) (size p{1} = size p{2} ==> c{1} = r{2}).",
+            "by move=> &1 &2 h; exists k{1} p{1}.",
+            "by move=> &1 &m &2 ->.",
+            "inline *; wp.",
+            "while (i{1} = i0{2} /\\ n{2} = size p{1} + 1 /\\ c{1} = l{2}); by auto=> /#.",
+            "transitivity {1} { c <@ Sample.sample(size p + 1); } (={p} ==> ={c}) (size p{1} = size p{2} ==> c{1} = r{2})."
+          ]
+        }
+      ]
+    },
+    {
+      "id": "RCPA_preservation__2026-06-11_1438_RCPA_preservation__8fa5ceac0-dirty",
+      "dir": "RCPA_preservation/2026-06-11_1438_RCPA_preservation__8fa5ceac0-dirty",
+      "lemma": "RCPA_preservation",
+      "source": "RCPA_CMA.ec",
+      "profile": "L1",
+      "model": "claude-fable-5",
+      "outcome": "proved",
+      "turns": 21,
+      "trees": 2,
+      "date": "2026-06-11 14:38",
+      "timestamp": "2026-06-11_1438_RCPA_preservation",
+      "commit": "8fa5ceac0",
+      "eval_mode": true,
+      "tier": "public",
+      "proved": true,
+      "view_roots": [],
+      "per_tree": [
+        {
+          "tree": "Tree_0_0",
+          "proved": true,
+          "tactics": [
+            "move=> Mkg_ll Mtag_ll.",
+            "rewrite (RCPA_prob E M A &m).",
+            "do 2!congr.",
+            "congr.",
+            "byequiv=> //=.",
+            "proc; inline *.",
+            "wp; call (_: true).",
+            "proc; inline *.",
+            "wp; rnd; wp; call{2} Mtag_ll; auto.",
+            "call{2} Mkg_ll; auto.",
+            "qed."
+          ]
+        },
+        {
+          "tree": "Tree_0_1",
+          "proved": false,
+          "tactics": [
+            "move=> Mkg_ll Mtag_ll.",
+            "have ->: Pr[INDR_CPA(MacThenEncrypt(E, M), A).main() @ &m : res] = Pr[SKEa.RCPA.INDR_CPA(E, RCPAa(M, A)).main() @ &m : res] by exact (RCPA_prob E M A &m).",
+            "have ->: Pr[INDR_CPA(Ideal, A).main() @ &m : res] = Pr[SKEa.RCPA.INDR_CPA(SKEa.RCPA.Ideal, RCPAa(M, A)).main() @ &m : res]; last by done.",
+            "byequiv=> //=.",
+            "proc; inline *.",
+            "wp; call (_: true).",
+            "proc; inline *."
+          ]
+        }
+      ]
+    },
+    {
+      "id": "RCPA_prob__2026-06-11_1435_RCPA_prob__8fa5ceac0-dirty",
+      "dir": "RCPA_prob/2026-06-11_1435_RCPA_prob__8fa5ceac0-dirty",
+      "lemma": "RCPA_prob",
+      "source": "RCPA_CMA.ec",
+      "profile": "L1",
+      "model": "claude-fable-5",
+      "outcome": "proved",
+      "turns": 11,
+      "trees": 2,
+      "date": "2026-06-11 14:35",
+      "timestamp": "2026-06-11_1435_RCPA_prob",
+      "commit": "8fa5ceac0",
+      "eval_mode": true,
+      "tier": "public",
+      "proved": true,
+      "view_roots": [],
+      "per_tree": [
+        {
+          "tree": "Tree_0_0",
+          "proved": true,
+          "tactics": [
+            "byequiv=> //=.",
+            "proc; inline *.",
+            "wp; call (_: ={glob E, glob M} /\\ RCPA_Wrap.k{1} = (SKEa.RCPA.RCPA_Wrap.k, RCPAa.mk){2}).",
+            "proc; inline *.",
+            "wp; call (_: true); wp; call (_: true); auto.",
+            "wp; call (_: true); call (_: true); auto.",
+            "qed."
+          ]
+        },
+        {
+          "tree": "Tree_0_1",
+          "proved": false,
+          "tactics": [
+            "byequiv=> //.",
+            "proc; inline *.",
+            "wp; call (_: ={glob E, glob M} /\\ RCPA_Wrap.k{1} = (SKEa.RCPA.RCPA_Wrap.k{2}, RCPAa.mk{2}))."
+          ]
+        }
+      ]
+    },
+    {
+      "id": "MEE_unfold__2026-06-11_1430_MEE_unfold__8fa5ceac0-dirty",
+      "dir": "MEE_unfold/2026-06-11_1430_MEE_unfold__8fa5ceac0-dirty",
+      "lemma": "MEE_unfold",
+      "source": "MAC_then_Pad_then_CBC.eca",
+      "profile": "L1",
+      "model": "claude-fable-5",
+      "outcome": "proved",
+      "turns": 14,
+      "trees": 2,
+      "date": "2026-06-11 14:30",
+      "timestamp": "2026-06-11_1430_MEE_unfold",
+      "commit": "8fa5ceac0",
+      "eval_mode": true,
+      "tier": "public",
+      "proved": true,
+      "view_roots": [],
+      "per_tree": [
+        {
+          "tree": "Tree_0_0",
+          "proved": false,
+          "tactics": [
+            "byequiv=> //.",
+            "proc; inline *.",
+            "wp; call (_: ={RCPA_Wrap.k, RCPA_QueryBounder.qC}).",
+            "proc; sp; if=> //.",
+            "inline *."
+          ]
+        },
+        {
+          "tree": "Tree_0_1",
+          "proved": true,
+          "tactics": [
+            "byequiv=> //=.",
+            "proc; inline *.",
+            "wp; call (_: ={RCPA_Wrap.k, RCPA_QueryBounder.qC}); last by auto.",
+            "proc; sp; if=> //=; last by sim.",
+            "wp; inline *.",
+            "wp; while (={i0, s} /\\ c1{1} = c4{2} /\\ p'{1} = p3{2} /\\ ek{1} = key0{2}); auto=> />.",
+            "qed."
+          ]
+        }
+      ]
+    },
+    {
+      "id": "local_conclusion__2026-06-11_1325_local_conclusion__c9fedcf84-dirty",
+      "dir": "local_conclusion/2026-06-11_1325_local_conclusion__c9fedcf84-dirty",
+      "lemma": "local_conclusion",
+      "source": "MAC_then_Pad_then_CBC.eca",
+      "profile": "L1",
+      "model": "claude-fable-5",
+      "outcome": "proved",
+      "turns": 53,
+      "trees": 3,
+      "date": "2026-06-11 13:25",
+      "timestamp": "2026-06-11_1325_local_conclusion",
+      "commit": "c9fedcf84",
+      "eval_mode": true,
+      "tier": "public",
+      "proved": true,
+      "view_roots": [],
+      "per_tree": [
+        {
+          "tree": "Tree_0_0",
+          "proved": false,
+          "tactics": [
+            "rewrite (MtE_security &m) (PtE_security &m) (CBC_security &m).",
+            "have <-: Pr[CBCa.SKEa.RCPA.INDR_CPA(Random, QueryBounder(RCPAa(RCPA_WUF_RCPA.RCPAa(MAC, A)))).main() @ &m : res] = Pr[CBCa.SKEa.RCPA.INDR_CPA(CBCa.SKEa.RCPA.Ideal, QueryBounder(RCPAa(RCPA_WUF_RCPA.RCPAa(MAC, A)))).main() @ &m : res].",
+            "byequiv=> //=; proc; inline *.",
+            "wp; call (_: ={OracleBounder.qC, RCPA_WUF_RCPA.RCPAa.mk}); last by auto.",
+            "proc; inline MAC.tag.",
+            "inline{1} RCPAa(RCPA_WUF_RCPA.RCPAa(MAC, A), QueryBounder(RCPAa(RCPA_WUF_RCPA.RCPAa(MAC, A)), CBCa.SKEa.RCPA.RCPA_Wrap(Random)).O').S.enc; inline{2} RCPAa(RCPA_WUF_RCPA.RCPAa(MAC, A), QueryBounder(RCPAa(RCPA_WUF_RCPA.RCPAa(MAC, A)), CBCa.SKEa.RCPA.RCPA_Wrap(CBCa.SKEa.RCPA.Ideal)).O').S.enc.",
+            "inline{1} QueryBounder(RCPAa(RCPA_WUF_RCPA.RCPAa(MAC, A)), CBCa.SKEa.RCPA.RCPA_Wrap(Random)).O'.enc; inline{2} QueryBounder(RCPAa(RCPA_WUF_RCPA.RCPAa(MAC, A)), CBCa.SKEa.RCPA.RCPA_Wrap(CBCa.SKEa.RCPA.Ideal)).O'.enc.",
+            "inline{1} CBCa.SKEa.RCPA.RCPA_Wrap(Random).enc; inline{2} CBCa.SKEa.RCPA.RCPA_Wrap(CBCa.SKEa.RCPA.Ideal).enc.",
+            "sp; if=> //.",
+            "by wp; call Random_Ideal; auto=> />.",
+            "by wp; while (={i, r, p0}); auto=> />.",
+            "have H := CBCa.Conclusion (<: RCPAa(RCPA_WUF_RCPA.RCPAa(MAC, A))) &m.",
+            "have ->: Pr[CBCa.SKEa.RCPA.INDR_CPA(IV_Wrap(CBC(PseudoRP)), QueryBounder(RCPAa(RCPA_WUF_RCPA.RCPAa(MAC, A)))).main() @ &m : res] = Pr[CBCa.SKEa.RCPA.INDR_CPA(IV_Wrap(CBC(PRPr.PseudoRP)), QueryBounder(RCPAa(RCPA_WUF_RCPA.RCPAa(MAC, A)))).main() @ &m : res].",
+            "byequiv=> //=; sim.",
+            "have ->: Pr[IND(PRP, PRPF_Adv(QueryBounder(RCPAa(RCPA_WUF_RCPA.RCPAa(MAC, A))))).main() @ &m : res] = Pr[PRFt.IND(PRPr.PRP, PRPF_Adv(QueryBounder(RCPAa(RCPA_WUF_RCPA.RCPAa(MAC, A))))).main() @ &m : res].",
+            "byequiv=> //=; sim.",
+            "have ->: Pr[IND(PRPi, PRPF_Adv(QueryBounder(RCPAa(RCPA_WUF_RCPA.RCPAa(MAC, A))))).main() @ &m : res] = Pr[PRFt.IND(PRPi.PRPi, PRPF_Adv(QueryBounder(RCPAa(RCPA_WUF_RCPA.RCPAa(MAC, A))))).main() @ &m : res].",
+            "byequiv=> //=; sim.",
+            "apply H.",
+            "move=> O enc_ll; islossless.",
+            "apply (A_distinguish_ll (<: RCPA_WUF_RCPA.RCPAa(MAC, A, RCPAa(RCPA_WUF_RCPA.RCPAa(MAC, A), O).S).Sim) _).",
+            "islossless."
+          ]
+        },
+        {
+          "tree": "Tree_0_1",
+          "proved": false,
+          "tactics": [
+            "rewrite (MtE_security &m) (PtE_security &m) (CBC_security &m).",
+            "have <-: Pr[CBCa.SKEa.RCPA.INDR_CPA(Random,QueryBounder(RCPAa(RCPA_WUF_RCPA.RCPAa(MAC,A)))).main() @ &m: res] = Pr[CBCa.SKEa.RCPA.INDR_CPA(CBCa.SKEa.RCPA.Ideal,QueryBounder(RCPAa(RCPA_WUF_RCPA.RCPAa(MAC,A)))).main() @ &m: res].",
+            "byequiv=> //=; proc; inline *; wp; call (_: ={glob RCPA_WUF_RCPA.RCPAa, glob OracleBounder}).",
+            "proc; call (_: ={glob RCPA_WUF_RCPA.RCPAa, glob OracleBounder}).",
+            "call (_: ={glob RCPA_WUF_RCPA.RCPAa, glob OracleBounder}); auto.",
+            "sp; if; first by smt().",
+            "wp; call (_: ={glob RCPA_WUF_RCPA.RCPAa, glob OracleBounder}); auto.",
+            "call Random_Ideal; auto.",
+            "by sim.",
+            "by inline *; auto.",
+            "by auto.",
+            "have CC := Conclusion (<: RCPAa(RCPA_WUF_RCPA.RCPAa(MAC,A))) &m.",
+            "have eL: Pr[CBCa.SKEa.RCPA.INDR_CPA(IV_Wrap(CBC(PseudoRP)), QueryBounder(RCPAa(RCPA_WUF_RCPA.RCPAa(MAC,A)))).main() @ &m : res] = Pr[CBCa.SKEa.RCPA.INDR_CPA(IV_Wrap(CBC(PRPr.PseudoRP)), QueryBounder(RCPAa(RCPA_WUF_RCPA.RCPAa(MAC,A)))).main() @ &m : res]."
+          ]
+        },
+        {
+          "tree": "Tree_0_1_r1",
+          "proved": true,
+          "tactics": [
+            "rewrite (MtE_security &m) (PtE_security &m) (CBC_security &m).",
+            "have <-: Pr[CBCa.SKEa.RCPA.INDR_CPA(Random,QueryBounder(RCPAa(RCPA_WUF_RCPA.RCPAa(MAC,A)))).main() @ &m: res] = Pr[CBCa.SKEa.RCPA.INDR_CPA(CBCa.SKEa.RCPA.Ideal,QueryBounder(RCPAa(RCPA_WUF_RCPA.RCPAa(MAC,A)))).main() @ &m: res].",
+            "byequiv=> //=; proc; inline *; wp; call (_: ={glob RCPA_WUF_RCPA.RCPAa, glob OracleBounder}).",
+            "proc; call (_: ={glob RCPA_WUF_RCPA.RCPAa, glob OracleBounder}).",
+            "call (_: ={glob RCPA_WUF_RCPA.RCPAa, glob OracleBounder}); auto.",
+            "sp; if; first by smt().",
+            "wp; call (_: ={glob RCPA_WUF_RCPA.RCPAa, glob OracleBounder}); auto.",
+            "call Random_Ideal; auto.",
+            "by sim.",
+            "by inline *; auto.",
+            "by auto.",
+            "have CC := Conclusion (<: RCPAa(RCPA_WUF_RCPA.RCPAa(MAC,A))) &m.",
+            "have eL: Pr[CBCa.SKEa.RCPA.INDR_CPA(IV_Wrap(CBC(PseudoRP)), QueryBounder(RCPAa(RCPA_WUF_RCPA.RCPAa(MAC,A)))).main() @ &m : res] = Pr[CBCa.SKEa.RCPA.INDR_CPA(IV_Wrap(CBC(PRPr.PseudoRP)), QueryBounder(RCPAa(RCPA_WUF_RCPA.RCPAa(MAC,A)))).main() @ &m : res].",
+            "byequiv=> //=; sim.",
+            "rewrite eL.",
+            "have ->: Pr[IND(PRP, PRPF_Adv(QueryBounder(RCPAa(RCPA_WUF_RCPA.RCPAa(MAC, A))))).main () @ &m : res] = Pr[PRFt.IND(PRPr.PRP, PRPF_Adv(QueryBounder(RCPAa(RCPA_WUF_RCPA.RCPAa(MAC, A))))).main () @ &m : res] by byequiv=> //=; sim.",
+            "have ->: Pr[IND(PRPi, PRPF_Adv(QueryBounder(RCPAa(RCPA_WUF_RCPA.RCPAa(MAC, A))))).main () @ &m : res] = Pr[PRFt.IND(PRPi.PRPi, PRPF_Adv(QueryBounder(RCPAa(RCPA_WUF_RCPA.RCPAa(MAC, A))))).main () @ &m : res] by byequiv=> //=; sim.",
+            "apply CC.",
+            "move=> O O_enc_ll; proc.",
+            "call (A_distinguish_ll (<: RCPA_WUF_RCPA.RCPAa(MAC, A, RCPAa(RCPA_WUF_RCPA.RCPAa(MAC, A), O).S).Sim)).",
+            "by proc; inline *; wp; call O_enc_ll; auto.",
+            "by inline *; auto; smt(d_mK_uffu).",
+            "qed."
+          ]
+        }
+      ]
+    },
+    {
+      "id": "xorK1__2026-06-11_1324_xorK1__c9fedcf84-dirty",
+      "dir": "xorK1/2026-06-11_1324_xorK1__c9fedcf84-dirty",
+      "lemma": "xorK1",
+      "source": "chacha_poly.ec",
+      "profile": "L1",
+      "model": "claude-fable-5",
+      "outcome": "proved",
+      "turns": 5,
+      "trees": 2,
+      "date": "2026-06-11 13:24",
+      "timestamp": "2026-06-11_1324_xorK1",
+      "commit": "c9fedcf84",
+      "eval_mode": true,
+      "tier": "public",
+      "proved": true,
+      "view_roots": [],
+      "per_tree": [
+        {
+          "tree": "Tree_0_0",
+          "proved": true,
+          "tactics": [
+            "by rewrite -addmA addK addm0.",
+            "qed."
+          ]
+        },
+        {
+          "tree": "Tree_0_1",
+          "proved": false,
+          "tactics": []
+        }
+      ]
+    },
+    {
+      "id": "equiv_step4__2026-06-11_1226_equiv_step4__685f509d2-dirty",
+      "dir": "equiv_step4/2026-06-11_1226_equiv_step4__685f509d2-dirty",
+      "lemma": "equiv_step4",
+      "source": "chacha_poly.ec",
+      "profile": "L4",
+      "model": "claude-fable-5",
+      "outcome": "proved",
+      "turns": 92,
+      "trees": 2,
+      "date": "2026-06-11 12:26",
+      "timestamp": "2026-06-11_1226_equiv_step4",
+      "commit": "685f509d2",
+      "eval_mode": true,
+      "tier": "public",
+      "proved": true,
+      "view_roots": [
+        "c0",
+        "c1"
+      ],
+      "per_tree": []
+    },
+    {
+      "id": "equiv_step4__2026-06-11_0811_equiv_step4__685f509d2-dirty",
+      "dir": "equiv_step4/2026-06-11_0811_equiv_step4__685f509d2-dirty",
+      "lemma": "equiv_step4",
+      "source": "chacha_poly.ec",
+      "profile": "L1",
+      "model": "claude-fable-5",
+      "outcome": "proved",
+      "turns": 223,
+      "trees": 2,
+      "date": "2026-06-11 08:11",
+      "timestamp": "2026-06-11_0811_equiv_step4",
+      "commit": "685f509d2",
+      "eval_mode": true,
+      "tier": "public",
+      "proved": true,
+      "view_roots": [
+        "c0",
+        "c1",
+        "c2",
+        "c3"
+      ],
+      "per_tree": []
+    },
+    {
+      "id": "step4_bad2__2026-06-11_0654_step4_bad2__685f509d2-dirty",
+      "dir": "step4_bad2/2026-06-11_0654_step4_bad2__685f509d2-dirty",
+      "lemma": "step4_bad2",
+      "source": "chacha_poly.ec",
+      "profile": "L4",
+      "model": "claude-fable-5",
+      "outcome": "proved",
+      "turns": 108,
+      "trees": 2,
+      "date": "2026-06-11 06:54",
+      "timestamp": "2026-06-11_0654_step4_bad2",
+      "commit": "685f509d2",
+      "eval_mode": true,
+      "tier": "public",
+      "proved": true,
+      "view_roots": [
+        "c0",
+        "c1",
+        "c2"
+      ],
+      "per_tree": []
+    },
+    {
+      "id": "step2__2026-06-11_0220_step2__685f509d2-dirty",
+      "dir": "step2/2026-06-11_0220_step2__685f509d2-dirty",
+      "lemma": "step2",
+      "source": "chacha_poly.ec",
+      "profile": "L4",
+      "model": "claude-fable-5",
+      "outcome": "proved",
+      "turns": 6,
+      "trees": 2,
+      "date": "2026-06-11 02:20",
+      "timestamp": "2026-06-11_0220_step2",
+      "commit": "685f509d2",
+      "eval_mode": true,
+      "tier": "public",
+      "proved": true,
+      "view_roots": [],
+      "per_tree": [
+        {
+          "tree": "Tree_0_0",
+          "proved": false,
+          "tactics": [
+            "have h1 := step1 &m.",
+            "have h2 := step2_1 &m.",
+            "have h3 := step2_2 &m.",
+            "have h4 := step2_3 &m."
+          ]
+        },
+        {
+          "tree": "Tree_0_1",
+          "proved": true,
+          "tactics": [
+            "move: (step1 &m) (step2_1 &m) (step2_2 &m) (step2_3 &m) => /#.",
+            "qed."
+          ]
+        }
+      ]
+    },
+    {
+      "id": "poly_spec__2026-06-11_0152_poly_spec__685f509d2-dirty",
+      "dir": "poly_spec/2026-06-11_0152_poly_spec__685f509d2-dirty",
+      "lemma": "poly_spec",
+      "source": "chacha_poly.ec",
+      "profile": "L4",
+      "model": "claude-fable-5",
+      "outcome": "proved",
+      "turns": 6,
+      "trees": 2,
+      "date": "2026-06-11 01:52",
+      "timestamp": "2026-06-11_0152_poly_spec",
+      "commit": "685f509d2",
+      "eval_mode": true,
+      "tier": "public",
+      "proved": true,
+      "view_roots": [],
+      "per_tree": [
+        {
+          "tree": "Tree_0_0",
+          "proved": true,
+          "tactics": [
+            "proc.",
+            "inline *.",
+            "auto => />.",
+            "qed."
+          ]
+        },
+        {
+          "tree": "Tree_0_1",
+          "proved": false,
+          "tactics": [
+            "proc; inline *; wp; skip => />."
+          ]
+        }
+      ]
+    },
+    {
+      "id": "conclusion__2026-06-11_0152_conclusion__685f509d2-dirty",
+      "dir": "conclusion/2026-06-11_0152_conclusion__685f509d2-dirty",
+      "lemma": "conclusion",
+      "source": "chacha_poly.ec",
+      "profile": "L4",
+      "model": "claude-fable-5",
+      "outcome": "proved",
+      "turns": 22,
+      "trees": 2,
+      "date": "2026-06-11 01:52",
+      "timestamp": "2026-06-11_0152_conclusion",
+      "commit": "685f509d2",
+      "eval_mode": true,
+      "tier": "public",
+      "proved": true,
+      "view_roots": [],
+      "per_tree": [
+        {
+          "tree": "Tree_0_0",
+          "proved": false,
+          "tactics": [
+            "have h2 := step2 (BNR_Adv(A)) _ &m.",
+            "move=> O enc_ll dec_ll; proc.",
+            "call (A_ll (<:BNR(O)) _ _).",
+            "proc; sp; if; [wp; call enc_ll; auto | auto].",
+            "proc; sp; if; [wp; call dec_ll; auto | auto].",
+            "inline *; auto.",
+            "have h3 := step3 &m."
+          ]
+        },
+        {
+          "tree": "Tree_0_1",
+          "proved": true,
+          "tactics": [
+            "have h2 := step2 (BNR_Adv(A)) _ &m.",
+            "move=> O enc_ll dec_ll; proc; call (A_ll (BNR(O)) _ _).",
+            "by proc; sp; if; [wp; call enc_ll; auto | auto].",
+            "by proc; sp; if; [wp; call dec_ll; auto | auto].",
+            "by inline *; auto.",
+            "have h3 := step3 &m.",
+            "have h41 := step4_1 &m.",
+            "have hb2 := step4_bad2 &m; have hb1 := step4_bad1 &m.",
+            "smt().",
+            "qed."
+          ]
+        }
+      ]
+    },
+    {
+      "id": "pr_CCP_OCCP__2026-06-11_0151_pr_CCP_OCCP__685f509d2-dirty",
+      "dir": "pr_CCP_OCCP/2026-06-11_0151_pr_CCP_OCCP__685f509d2-dirty",
+      "lemma": "pr_CCP_OCCP",
+      "source": "chacha_poly.ec",
+      "profile": "L4",
+      "model": "claude-fable-5",
+      "outcome": "proved",
+      "turns": 3,
+      "trees": 2,
+      "date": "2026-06-11 01:51",
+      "timestamp": "2026-06-11_0151_pr_CCP_OCCP",
+      "commit": "685f509d2",
+      "eval_mode": true,
+      "tier": "public",
+      "proved": true,
+      "view_roots": [],
+      "per_tree": [
+        {
+          "tree": "Tree_0_0",
+          "proved": false,
+          "tactics": []
+        },
+        {
+          "tree": "Tree_0_1",
+          "proved": true,
+          "tactics": [
+            "by byequiv CCP_OCCP.",
+            "qed."
+          ]
+        }
+      ]
+    },
+    {
+      "id": "mee_encrypt_correct__2026-06-10_2159_mee_encrypt_correct__685f509d2-dirty",
+      "dir": "mee_encrypt_correct/2026-06-10_2159_mee_encrypt_correct__685f509d2-dirty",
+      "lemma": "mee_encrypt_correct",
+      "source": "FunctionalSpec.ec",
+      "profile": "L1",
+      "model": "claude-fable-5",
+      "outcome": "proved",
+      "turns": 34,
+      "trees": 2,
+      "date": "2026-06-10 21:59",
+      "timestamp": "2026-06-10_2159_mee_encrypt_correct",
+      "commit": "685f509d2",
+      "eval_mode": true,
+      "tier": "public",
+      "proved": true,
+      "view_roots": [],
+      "per_tree": [
+        {
+          "tree": "Tree_0_0",
+          "proved": true,
+          "tactics": [
+            "proc.",
+            "inline *.",
+            "seq 8 : (s :: cbc_enc AES _ek s p' = _c) (mu1 (dmap dblock (fun iv => iv :: mee_enc AES hmac_sha256 _ek _mk iv _p)) _c) 1%r _ 0%r (ek = _ek /\\ p' = pad _p (hmac_sha256 _mk _p) /\\ c = [s] /\\ i = 0).",
+            "auto => />.",
+            "wp; rnd (fun v => v :: cbc_enc AES _ek v p' = _c); wp; skip => />.",
+            "by rewrite dmap1E /(\\o) /pred1 /mee_enc /=.",
+            "conseq (_: true ==> true) (_: _ ==> _) => //=.",
+            "while (0 <= i <= size p' /\\ ek = _ek /\\ size c = i + 1 /\\ c = head witness c :: cbc_enc AES _ek (head witness c) (take i p') /\\ s = nth witness c i /\\ head witness c :: cbc_enc AES _ek (head witness c) p' = _c).",
+            "auto => />.",
+            "smt(cbc_enc_rcons take_nth size_take cats1 cat_cons size_cat nth_rcons size_cbc_enc).",
+            "auto => />; smt(take0 take_size size_ge0).",
+            "while true (size p' - i); auto => /#.",
+            "hoare.",
+            "while (0 <= i <= size p' /\\ ek = _ek /\\ size c = i + 1 /\\ c = head witness c :: cbc_enc AES _ek (head witness c) (take i p') /\\ s = nth witness c i /\\ head witness c :: cbc_enc AES _ek (head witness c) p' <> _c).",
+            "auto => />; smt(cbc_enc_rcons take_nth size_take cats1 cat_cons size_cat nth_rcons size_cbc_enc).",
+            "auto => />; smt(take0 take_size size_ge0).",
+            "done.",
+            "qed."
+          ]
+        },
+        {
+          "tree": "Tree_0_1",
+          "proved": false,
+          "tactics": [
+            "proc.",
+            "inline MAC.tag PRPc.PseudoRP.f.",
+            "seq 6: (s :: cbc_enc AES _ek s p' = _c) (mu1 (dmap dblock (fun (iv : block) => iv :: mee_enc AES hmac_sha256 _ek _mk iv _p)) _c) 1%r _ 0%r (ek = _ek /\\ p' = pad _p (hmac_sha256 _mk _p)).",
+            "auto => />.",
+            "rnd; auto => />.",
+            "by rewrite dmap1E; apply mu_eq => x; rewrite /(\\o) /pred1 /mee_enc /=.",
+            "conseq (_: true ==> true) (_: _ ==> _) => //=.",
+            "wp; while (0 <= i <= size p' /\\ ek = _ek /\\ head witness _c :: cbc_enc AES _ek (head witness _c) p' = _c /\\ c = head witness _c :: cbc_enc AES _ek (head witness _c) (take i p') /\\ s = nth witness c i).",
+            "auto => />."
+          ]
+        }
+      ]
+    },
+    {
+      "id": "mee_decrypt_correct__2026-06-10_2153_mee_decrypt_correct__685f509d2-dirty",
+      "dir": "mee_decrypt_correct/2026-06-10_2153_mee_decrypt_correct__685f509d2-dirty",
+      "lemma": "mee_decrypt_correct",
+      "source": "FunctionalSpec.ec",
+      "profile": "L1",
+      "model": "claude-fable-5",
+      "outcome": "proved",
+      "turns": 12,
+      "trees": 2,
+      "date": "2026-06-10 21:53",
+      "timestamp": "2026-06-10_2153_mee_decrypt_correct",
+      "commit": "685f509d2",
+      "eval_mode": true,
+      "tier": "public",
+      "proved": true,
+      "view_roots": [],
+      "per_tree": [
+        {
+          "tree": "Tree_0_0",
+          "proved": false,
+          "tactics": [
+            "proc; inline PRPc.PseudoRP.fi MAC.verify.",
+            "wp.",
+            "while (0 <= i <= size c /\\ ek = _ek /\\ mk = _mk /\\ c = behead _c /\\ s = nth witness (head witness _c :: c) i /\\ padded = cbc_dec AESi _ek (head witness _c) (take i c)) (size c - i).",
+            "auto => />."
+          ]
+        },
+        {
+          "tree": "Tree_0_1",
+          "proved": true,
+          "tactics": [
+            "proc.",
+            "inline *.",
+            "wp.",
+            "while (0 <= i <= size c /\\ ek = _ek /\\ mk = _mk /\\ p = None /\\ c = behead _c /\\ s = (if 0 < i then nth witness c (i - 1) else head witness _c) /\\ padded = cbc_dec AESi _ek (head witness _c) (take i c)) (size c - i).",
+            "auto=> />; smt(take_nth cats1 cbc_dec_rcons size_take nth_take xorbC size_ge0).",
+            "auto=> />; smt(take_size take0).",
+            "qed."
+          ]
+        }
+      ]
+    },
+    {
+      "id": "bs2osK__2026-06-10_2149_bs2osK__685f509d2-dirty",
+      "dir": "bs2osK/2026-06-10_2149_bs2osK__685f509d2-dirty",
+      "lemma": "bs2osK",
+      "source": "FunctionalSpec.ec",
+      "profile": "L1",
+      "model": "claude-fable-5",
+      "outcome": "proved",
+      "turns": 5,
+      "trees": 2,
+      "date": "2026-06-10 21:49",
+      "timestamp": "2026-06-10_2149_bs2osK",
+      "commit": "685f509d2",
+      "eval_mode": true,
+      "tier": "public",
+      "proved": true,
+      "view_roots": [],
+      "per_tree": [
+        {
+          "tree": "Tree_0_0",
+          "proved": true,
+          "tactics": [
+            "rewrite /os2bs /bs2os flattenK //.",
+            "by move=> b /mapP [x [_ ->]]; rewrite size_block.",
+            "by rewrite -map_comp id_map // => x; rewrite /(\\o) mkblockK.",
+            "qed."
+          ]
+        },
+        {
+          "tree": "Tree_0_1",
+          "proved": false,
+          "tactics": []
+        }
+      ]
+    },
+    {
+      "id": "CTXT_security__2026-06-10_2135_CTXT_security__685f509d2",
+      "dir": "CTXT_security/2026-06-10_2135_CTXT_security__685f509d2",
+      "lemma": "CTXT_security",
+      "source": "RCPA_CMA.ec",
+      "profile": "L4",
+      "model": "claude-fable-5",
+      "outcome": "proved",
+      "turns": 59,
+      "trees": 2,
+      "date": "2026-06-10 21:35",
+      "timestamp": "2026-06-10_2135_CTXT_security",
+      "commit": "685f509d2",
+      "eval_mode": true,
+      "tier": "public",
+      "proved": true,
+      "view_roots": [],
+      "per_tree": [
+        {
+          "tree": "Tree_0_0",
+          "proved": false,
+          "tactics": [
+            "have [dec [dec_sem E_corr]]:= dec_op.",
+            "byequiv (_: ={glob A, glob E, glob M} ==> res{1} => res{2}) => //.",
+            "proc.",
+            "inline *.",
+            "swap{2} 4 -3.",
+            "call (_: MACa.SUF_CMA.SUF_Wrap.win, ={glob E, glob M} /\\ CTXT_Wrap.k{1} = (CMAa.ek{2}, MACa.SUF_CMA.SUF_Wrap.k{2}) /\\ CTXT_Wrap.s{1} = MACa.SUF_CMA.SUF_Wrap.s{2} /\\ CTXT_Wrap.win{1} = MACa.SUF_CMA.SUF_Wrap.win{2} /\\ (forall ct, mem MACa.SUF_CMA.SUF_Wrap.s{2} ct => dec CMAa.ek{2} ct.`1 <> None)).",
+            "exact A_forge_ll.",
+            "have enc_corr_eq: forall _k _p, equiv [E.enc ~ E.enc : ={glob E, k, p} /\\ k{1} = _k /\\ p{1} = _p ==> ={glob E, res} /\\ dec _k res{1} = Some _p].",
+            "by move=> _k _p; conseq (_: ={glob E, k, p} ==> ={glob E, res}) (E_corr _k _p) _ => //; proc true.",
+            "proc; inline *.",
+            "exists* CTXT_Wrap.k{1}, p{1}; elim* => kk pp; sp; wp; call (_: true); wp; call (enc_corr_eq kk.`1 pp).",
+            "by skip; smt(in_fsetU in_fset1).",
+            "by move=> &2 _; proc; inline *; wp; call M_tag_ll; wp; call E_enc_ll; auto.",
+            "by move=> &2; proc; inline *; wp; call M_tag_ll; wp; call E_enc_ll; auto.",
+            "have dec_ph: forall (ge : (glob E)) _k _c, phoare [E.dec : (glob E) = ge /\\ k = _k /\\ c = _c ==> (glob E) = ge /\\ res = dec _k _c] = 1%r.",
+            "by move=> ge _k _c; conseq E_dec_ll (dec_sem ge _k _c).",
+            "proc; inline *.",
+            "sp; seq 1 1: (!MACa.SUF_CMA.SUF_Wrap.win{2} /\\ b{1} = b0{2} /\\ c0{1} = m{2} /\\ c{1} = (m{2}, t0{2}) /\\ ek{1} = CMAa.ek{2} /\\ p0{1} = None /\\ (glob E){1} = (glob E){2} /\\ (glob M){1} = (glob M){2} /\\ CTXT_Wrap.k{1} = (CMAa.ek{2}, MACa.SUF_CMA.SUF_Wrap.k{2}) /\\ CTXT_Wrap.s{1} = MACa.SUF_CMA.SUF_Wrap.s{2} /\\ CTXT_Wrap.win{1} = MACa.SUF_CMA.SUF_Wrap.win{2} /\\ (forall ct0, ct0 \\in MACa.SUF_CMA.SUF_Wrap.s{2} => dec CMAa.ek{2} ct0.`1 <> None)).",
+            "by call (_: true); skip; smt().",
+            "if{1}; [exists* (glob E){1}, ek{1}, c0{1}; elim* => ge kk cc; wp; call{1} (dec_ph ge kk cc); skip; smt() | by wp; skip; smt()].",
+            "by move=> &2 _; proc; wp; call (EtM_dec_ll E M E_dec_ll M_verify_ll); auto."
+          ]
+        },
+        {
+          "tree": "Tree_0_1",
+          "proved": true,
+          "tactics": [
+            "have [dec [dec_sem enc_corr]] := dec_op.",
+            "have dec_ph: forall ge k0 c0, phoare [E.dec: (glob E) = ge /\\ k = k0 /\\ c = c0 ==> (glob E) = ge /\\ res = dec k0 c0] = 1%r by move=> ge k0 c0; conseq E_dec_ll (dec_sem ge k0 c0).",
+            "have enc_eq: forall k0 p0, equiv [E.enc ~ E.enc: ={glob E, k, p} /\\ k{1} = k0 /\\ p{1} = p0 ==> ={glob E, res} /\\ dec k0 res{1} = Some p0].",
+            "move=> k0 p0; conseq (_: ={glob E, k, p} ==> ={glob E, res}) (enc_corr k0 p0) _ => //.",
+            "by proc true.",
+            "byequiv (_: ={glob A, glob E, glob M} ==> res{1} => res{2}) => //.",
+            "proc; inline *.",
+            "swap{2} 4 -3.",
+            "call (_: MACa.SUF_CMA.SUF_Wrap.win, ={glob E, glob M} /\\ CTXT_Wrap.k{1} = (CMAa.ek{2}, MACa.SUF_CMA.SUF_Wrap.k{2}) /\\ CTXT_Wrap.s{1} = MACa.SUF_CMA.SUF_Wrap.s{2} /\\ !CTXT_Wrap.win{1} /\\ (forall c t, (c, t) \\in MACa.SUF_CMA.SUF_Wrap.s{2} => dec CMAa.ek{2} c <> None)).",
+            "exact A_forge_ll.",
+            "proc; inline *.",
+            "sp 3 0; exlim ek{1}, p0{1} => ek0 pp0; wp; call (_: true); wp; call (enc_eq ek0 pp0); skip; smt(in_fsetU in_fset1).",
+            "move=> &2 _; proc; inline *; wp; call M_tag_ll; wp; call E_enc_ll; auto.",
+            "move=> &1; proc; conseq (_: _ ==> true: =1%r) (_: MACa.SUF_CMA.SUF_Wrap.win ==> MACa.SUF_CMA.SUF_Wrap.win) => //.",
+            "inline *; wp; call (_: MACa.SUF_CMA.SUF_Wrap.win); wp; call (_: MACa.SUF_CMA.SUF_Wrap.win); auto.",
+            "inline *; wp; call M_tag_ll; wp; call E_enc_ll; auto.",
+            "proc; inline *.",
+            "sp 5 3.",
+            "seq 1 1: (b{1} = b0{2} /\\ c0{1} = m{2} /\\ t{1} = t0{2} /\\ c{1} = (m{2}, t0{2}) /\\ ek{1} = CMAa.ek{2} /\\ p0{1} = None /\\ ((glob E){1} = (glob E){2} /\\ (glob M){1} = (glob M){2}) /\\ CTXT_Wrap.k{1} = (CMAa.ek{2}, MACa.SUF_CMA.SUF_Wrap.k{2}) /\\ CTXT_Wrap.s{1} = MACa.SUF_CMA.SUF_Wrap.s{2} /\\ !CTXT_Wrap.win{1} /\\ !MACa.SUF_CMA.SUF_Wrap.win{2} /\\ (forall (c1 : ctxt) (t1 : tag), (c1, t1) \\in MACa.SUF_CMA.SUF_Wrap.s{2} => dec CMAa.ek{2} c1 <> None)).",
+            "call (_: true); skip; smt().",
+            "case (b{1}).",
+            "rcondt{1} 1; first by auto. exlim (glob E){1}, ek{1}, c0{1} => ge ek0 cc0; wp; call{1} (dec_ph ge ek0 cc0); skip; smt().",
+            "rcondf{1} 1; first by auto. by wp; skip; smt().",
+            "move=> &2 _; proc; inline *; sp; seq 1: true => //; first by call M_verify_ll.",
+            "by if; [wp; call E_dec_ll; auto | auto].",
+            "move=> &1; proc; conseq (_: _ ==> true: =1%r) (_: MACa.SUF_CMA.SUF_Wrap.win ==> MACa.SUF_CMA.SUF_Wrap.win) => //.",
+            "inline *; wp; call (_: MACa.SUF_CMA.SUF_Wrap.win); auto.",
+            "by smt().",
+            "by inline *; wp; call M_verify_ll; auto.",
+            "by wp; call (_: true); call (_: true); skip; smt(in_fset0).",
+            "qed."
+          ]
+        }
+      ]
+    },
+    {
+      "id": "CTXT_security__2026-06-10_2122_CTXT_security__685f509d2-dirty",
+      "dir": "CTXT_security/2026-06-10_2122_CTXT_security__685f509d2-dirty",
+      "lemma": "CTXT_security",
+      "source": "RCPA_CMA.ec",
+      "profile": "L1",
+      "model": "claude-fable-5",
+      "outcome": "proved",
+      "turns": 36,
+      "trees": 2,
+      "date": "2026-06-10 21:22",
+      "timestamp": "2026-06-10_2122_CTXT_security",
+      "commit": "685f509d2",
+      "eval_mode": true,
+      "tier": "public",
+      "proved": true,
+      "view_roots": [],
+      "per_tree": [
+        {
+          "tree": "Tree_0_0",
+          "proved": false,
+          "tactics": []
+        },
+        {
+          "tree": "Tree_0_1",
+          "proved": true,
+          "tactics": [
+            "have [dec [dec_sem enc_corr]] := dec_op.",
+            "byequiv (_: ={glob A, glob E, glob M} ==> res{1} => res{2}) => //.",
+            "proc; inline *.",
+            "swap{2} 4 -3.",
+            "call (_: MACa.SUF_CMA.SUF_Wrap.win, ={glob E, glob M} /\\ CTXT_Wrap.k{1} = (CMAa.ek, MACa.SUF_CMA.SUF_Wrap.k){2} /\\ CTXT_Wrap.s{1} = MACa.SUF_CMA.SUF_Wrap.s{2} /\\ !CTXT_Wrap.win{1} /\\ (forall ct, ct \\in CTXT_Wrap.s{1} => dec CMAa.ek{2} ct.`1 <> None)).",
+            "exact A_forge_ll.",
+            "proc; inline *.",
+            "exists* CMAa.ek{2}, p{2}; elim* => ek_ p_.",
+            "wp; call (_: true); wp.",
+            "call (_: ={glob E, k, p} /\\ k{1} = ek_ /\\ p{1} = p_ ==> ={glob E, res} /\\ dec ek_ res{1} = Some p_).",
+            "conseq (_: ={glob E, k, p} ==> ={glob E, res}) (enc_corr ek_ p_) _ => //.",
+            "by proc true.",
+            "auto => />; smt(in_fsetU in_fset1).",
+            "move=> &2 _; proc; inline *; wp; call M_tag_ll; wp; call E_enc_ll; auto.",
+            "move=> &1; proc; inline *; wp; call M_tag_ll; wp; call E_enc_ll; auto.",
+            "proc; inline *.",
+            "seq 6 4: (={glob E, glob M} /\\ CTXT_Wrap.k{1} = (CMAa.ek{2}, MACa.SUF_CMA.SUF_Wrap.k{2}) /\\ CTXT_Wrap.s{1} = MACa.SUF_CMA.SUF_Wrap.s{2} /\\ !CTXT_Wrap.win{1} /\\ !MACa.SUF_CMA.SUF_Wrap.win{2} /\\ (forall ct0, ct0 \\in CTXT_Wrap.s{1} => dec CMAa.ek{2} ct0.`1 <> None) /\\ b{1} = b0{2} /\\ c0{1} = m{2} /\\ t{1} = t0{2} /\\ c{1} = (m{2}, t0{2}) /\\ ek{1} = CMAa.ek{2} /\\ p0{1} = None).",
+            "call (_: true); auto => /> /#.",
+            "if{1}.",
+            "exists* (glob E){1}, ek{1}, c0{1}; elim* => ge ek_ c_; wp; call{1} (_: (glob E) = ge /\\ k = ek_ /\\ c = c_ ==> (glob E) = ge /\\ res = dec ek_ c_).",
+            "by conseq E_dec_ll (dec_sem ge ek_ c_).",
+            "auto => /> /#.",
+            "auto => />.",
+            "move=> &2 _; proc; inline *; seq 6: true 1%r 1%r 0%r _ => //; [by call M_verify_ll; auto | if; [by wp; call E_dec_ll; auto | by auto]].",
+            "move=> &1; proc; inline *; wp; call M_verify_ll; auto => />.",
+            "wp; call (_: true); call (_: true); auto => />; smt(in_fset0).",
+            "qed."
+          ]
+        }
+      ]
+    },
+    {
+      "id": "PTXT_security__2026-06-10_2112_PTXT_security__685f509d2",
+      "dir": "PTXT_security/2026-06-10_2112_PTXT_security__685f509d2",
+      "lemma": "PTXT_security",
+      "source": "RCPA_CMA.ec",
+      "profile": "L1",
+      "model": "claude-fable-5",
+      "outcome": "proved",
+      "turns": 21,
+      "trees": 2,
+      "date": "2026-06-10 21:12",
+      "timestamp": "2026-06-10_2112_PTXT_security",
+      "commit": "685f509d2",
+      "eval_mode": true,
+      "tier": "public",
+      "proved": true,
+      "view_roots": [],
+      "per_tree": [
+        {
+          "tree": "Tree_0_0",
+          "proved": false,
+          "tactics": [
+            "byequiv=> //.",
+            "proc; inline *.",
+            "swap{2} 4 -3.",
+            "call (_: ={glob E, glob M} /\\ PTXT_Wrap.k{1} = (CMAa.ek, MACa.WUF_CMA.WUF_Wrap.k){2} /\\ PTXT_Wrap.s{1} = MACa.WUF_CMA.WUF_Wrap.s{2} /\\ PTXT_Wrap.win{1} = MACa.WUF_CMA.WUF_Wrap.win{2})."
+          ]
+        },
+        {
+          "tree": "Tree_0_1",
+          "proved": true,
+          "tactics": [
+            "byequiv=> //=.",
+            "proc; inline *.",
+            "call (_:    ={glob E, glob M}",
+            "         /\\ PTXT_Wrap.k{1} = (CMAa.ek, MACa.WUF_CMA.WUF_Wrap.k){2}",
+            "         /\\ PTXT_Wrap.s{1} = MACa.WUF_CMA.WUF_Wrap.s{2}",
+            "         /\\ PTXT_Wrap.win{1} = MACa.WUF_CMA.WUF_Wrap.win{2}).",
+            "proc; inline *.",
+            "wp; call (_: true).",
+            "wp; call (_: true).",
+            "by auto.",
+            "proc; inline *.",
+            "seq 5 2: (   ={glob E, glob M, pt}",
+            "          /\\ PTXT_Wrap.k{1} = (CMAa.ek{2}, MACa.WUF_CMA.WUF_Wrap.k{2})",
+            "          /\\ PTXT_Wrap.s{1} = MACa.WUF_CMA.WUF_Wrap.s{2}",
+            "          /\\ PTXT_Wrap.win{1} = MACa.WUF_CMA.WUF_Wrap.win{2}",
+            "          /\\ mk{1} = MACa.WUF_CMA.WUF_Wrap.k{2}",
+            "          /\\ p0{1} = None",
+            "          /\\ b{2} = false).",
+            "by wp; call (_: true); auto.",
+            "if=> //.",
+            "by wp; call (_: true); auto=> /#.",
+            "by auto=> /#.",
+            "swap{2} 4 -3.",
+            "by wp; call (_: true); call (_: true); auto.",
+            "qed."
+          ]
+        }
+      ]
+    },
+    {
+      "id": "cbc_correct__2026-06-10_1849_cbc_correct__b9952510-dirty",
+      "dir": "cbc_correct/2026-06-10_1849_cbc_correct__b9952510-dirty",
+      "lemma": "cbc_correct",
+      "source": "FunctionalSpec.ec",
+      "profile": "L4",
+      "model": "claude-opus-4-8",
+      "outcome": "proved",
+      "turns": 13,
+      "trees": 2,
+      "date": "2026-06-10 18:49",
+      "timestamp": "2026-06-10_1849_cbc_correct",
+      "commit": "b9952510",
+      "eval_mode": true,
+      "tier": "public",
+      "proved": true,
+      "view_roots": [],
+      "per_tree": [
+        {
+          "tree": "Tree_0_0",
+          "proved": false,
+          "tactics": [
+            "move=> hcancel.",
+            "elim: p st => //= pi p ih st.",
+            "rewrite hcancel ih."
+          ]
+        },
+        {
+          "tree": "Tree_0_1",
+          "proved": true,
+          "tactics": [
+            "move=> kK; elim: p st => //= pi p ih st.",
+            "rewrite kK ih; split=> //; rewrite xorbC xorbA xorbK xorbC xorb0.",
+            "done.",
+            "qed."
+          ]
+        }
+      ]
+    },
+    {
+      "id": "mee_correct__2026-06-10_1810_mee_correct__b9952510-dirty",
+      "dir": "mee_correct/2026-06-10_1810_mee_correct__b9952510-dirty",
+      "lemma": "mee_correct",
+      "source": "FunctionalSpec.ec",
+      "profile": "L4",
+      "model": "claude-opus-4-8",
+      "outcome": "proved",
+      "turns": 7,
+      "trees": 1,
+      "date": "2026-06-10 18:10",
+      "timestamp": "2026-06-10_1810_mee_correct",
+      "commit": "b9952510",
+      "eval_mode": true,
+      "tier": "public",
+      "proved": true,
+      "view_roots": [],
+      "per_tree": [
+        {
+          "tree": "Tree_0_0",
+          "proved": true,
+          "tactics": [
+            "move=> hPi; rewrite /mee_dec /mee_enc /=.",
+            "rewrite (cbc_correct P Pi ek iv (pad m (M mk m)) hPi) padK /=.",
+            "done.",
+            "qed."
+          ]
+        }
+      ]
+    },
+    {
+      "id": "mee_correct__2026-06-10_1809_mee_correct__b9952510-dirty",
+      "dir": "mee_correct/2026-06-10_1809_mee_correct__b9952510-dirty",
+      "lemma": "mee_correct",
+      "source": "FunctionalSpec.ec",
+      "profile": "L1",
+      "model": "claude-opus-4-8",
+      "outcome": "proved",
+      "turns": 4,
+      "trees": 1,
+      "date": "2026-06-10 18:09",
+      "timestamp": "2026-06-10_1809_mee_correct",
+      "commit": "b9952510",
+      "eval_mode": true,
+      "tier": "public",
+      "proved": true,
+      "view_roots": [],
+      "per_tree": [
+        {
+          "tree": "Tree_0_0",
+          "proved": true,
+          "tactics": [
+            "move=> PiK; rewrite /mee_enc /mee_dec /= cbc_correct // padK /=.",
+            "done.",
+            "qed."
+          ]
+        }
+      ]
+    },
+    {
+      "id": "PIR_correct__2026-06-10_1742_PIR_correct__b9952510-dirty",
+      "dir": "PIR_correct/2026-06-10_1742_PIR_correct__b9952510-dirty",
+      "lemma": "PIR_correct",
+      "source": "PIR.ec",
+      "profile": "L4",
+      "model": "claude-opus-4-8",
+      "outcome": "proved",
+      "turns": 54,
+      "trees": 1,
+      "date": "2026-06-10 17:42",
+      "timestamp": "2026-06-10_1742_PIR_correct",
+      "commit": "b9952510",
+      "eval_mode": true,
+      "tier": "public",
+      "proved": true,
+      "view_roots": [],
+      "per_tree": [
+        {
+          "tree": "Tree_0_0",
+          "proved": true,
+          "tactics": [
+            "move=> hi0.",
+            "byphoare (_: i = i0 ==> res = a i0) => //.",
+            "proc; inline *; wp; sp.",
+            "while (0 <= j <= N /\\ i = i0 /\\ big predT a PIR.s +^ big predT a PIR.s' = (if i0 < j then a i0 else zerow)) (N - j).",
+            "auto.",
+            "move=> &hr H; split.",
+            "smt(dbool_ll).",
+            "move=> _ v hv.",
+            "rewrite /predT /=.",
+            "case (j{hr} = i{hr}) => hji.",
+            "case v => hv2.",
+            "rewrite /predT in H; split.",
+            "smt(BBS.big_cons xorwA xorwC xorw0 xorwK).",
+            "smt().",
+            "rewrite /predT in H; smt(BBS.big_cons xorwA xorwC xorw0 xorwK).",
+            "rewrite /predT in H; smt(BBS.big_cons xorwA xorwC xorw0 xorwK).",
+            "skip; smt(BBS.big_nil xorwA xorwC xorw0).",
+            "qed."
+          ]
+        }
+      ]
+    },
+    {
+      "id": "PIR_correct__2026-06-10_1737_PIR_correct__b9952510-dirty",
+      "dir": "PIR_correct/2026-06-10_1737_PIR_correct__b9952510-dirty",
+      "lemma": "PIR_correct",
+      "source": "PIR.ec",
+      "profile": "L1",
+      "model": "claude-opus-4-8",
+      "outcome": "proved",
+      "turns": 15,
+      "trees": 1,
+      "date": "2026-06-10 17:37",
+      "timestamp": "2026-06-10_1737_PIR_correct",
+      "commit": "b9952510",
+      "eval_mode": true,
+      "tier": "public",
+      "proved": true,
+      "view_roots": [],
+      "per_tree": [
+        {
+          "tree": "Tree_0_0",
+          "proved": true,
+          "tactics": [
+            "move=> hi0.",
+            "byphoare (_ : i = i0 ==> res = a i0) => //.",
+            "proc; inline *; wp.",
+            "while (0 <= j <= N /\\ i = i0 /\\ big predT a PIR.s +^ big predT a PIR.s' = (if i0 < j then a i0 else zerow)) (N - j).",
+            "move=> z; wp.",
+            "rnd predT; skip => />.",
+            "move=> &hr ge0 leN hinv jltN.",
+            "split; first by smt(dbool_ll).",
+            "move=> _ v _ _; rewrite !big_cons /=.",
+            "rewrite /predT /=.",
+            "move: hinv; rewrite /predT /= => hinv; smt(xorwA xorwC xorw0 xorwK).",
+            "wp; skip => />; smt(big_nil xorw0 xorwK).",
+            "qed."
+          ]
+        }
+      ]
+    },
+    {
+      "id": "cbc_correct__2026-06-10_1734_cbc_correct__b9952510-dirty",
+      "dir": "cbc_correct/2026-06-10_1734_cbc_correct__b9952510-dirty",
+      "lemma": "cbc_correct",
+      "source": "FunctionalSpec.ec",
+      "profile": "L1",
+      "model": "claude-opus-4-8",
+      "outcome": "proved",
+      "turns": 6,
+      "trees": 1,
+      "date": "2026-06-10 17:34",
+      "timestamp": "2026-06-10_1734_cbc_correct",
+      "commit": "b9952510",
+      "eval_mode": true,
+      "tier": "public",
+      "proved": true,
+      "view_roots": [],
+      "per_tree": [
+        {
+          "tree": "Tree_0_0",
+          "proved": true,
+          "tactics": [
+            "move=> H.",
+            "elim: p st => //= pi p ih st.",
+            "rewrite H ih /=.",
+            "algebra.",
+            "qed."
+          ]
+        }
+      ]
+    },
+    {
+      "id": "step4_lbad1_sum__2026-06-10_1724_step4_lbad1_sum__b9952510-dirty",
+      "dir": "step4_lbad1_sum/2026-06-10_1724_step4_lbad1_sum__b9952510-dirty",
+      "lemma": "step4_lbad1_sum",
+      "source": "chacha_poly.ec",
+      "profile": "L1",
+      "model": "claude-opus-4-8",
+      "outcome": "proved",
+      "turns": 10,
+      "trees": 1,
+      "date": "2026-06-10 17:24",
+      "timestamp": "2026-06-10_1724_step4_lbad1_sum",
+      "commit": "b9952510",
+      "eval_mode": true,
+      "tier": "public",
+      "proved": true,
+      "view_roots": [],
+      "per_tree": [
+        {
+          "tree": "Tree_0_0",
+          "proved": true,
+          "tactics": [
+            "apply (ler_trans Pr[UFCMA_l.f() @ &m : has (fun (i : int) => let tt = nth (w1, w2) UFCMA_l.lbad1 i in tt.`1 = tt.`2) (iota_ 0 qdec)]).",
+            "rewrite Pr[mu_sub].",
+            "move=> &hr [hsz [tt [htt htteq]]]; rewrite hasP; exists (index tt UFCMA_l.lbad1{hr}).",
+            "rewrite mem_iota /=; smt(index_ge0 index_mem nth_index size_ge0).",
+            "done.",
+            "rewrite Pr[mu_has_le].",
+            "done.",
+            "qed."
+          ]
+        }
+      ]
+    },
+    {
+      "id": "step2_3__2026-06-10_1517_step2_3__b9952510-dirty",
+      "dir": "step2_3/2026-06-10_1517_step2_3__b9952510-dirty",
+      "lemma": "step2_3",
+      "source": "chacha_poly.ec",
+      "profile": "L1",
+      "model": "claude-opus-4-8",
+      "outcome": "proved",
+      "turns": 33,
+      "trees": 1,
+      "date": "2026-06-10 15:17",
+      "timestamp": "2026-06-10_1517_step2_3",
+      "commit": "b9952510",
+      "eval_mode": true,
+      "tier": "public",
+      "proved": true,
+      "view_roots": [],
+      "per_tree": [
+        {
+          "tree": "Tree_0_0",
+          "proved": true,
+          "tactics": [
+            "congr.",
+            "rewrite -(SplitC2.pr_RO_split (G8(A)) (fun _ (r:bool) => r) &m ()).",
+            "simplify.",
+            "have ->: Pr[CCA_game(CCA_CPA_Adv(A), RealOrcls(GenChaChaPoly(CCRO(FinRO)))).main() @ &m : res] = Pr[MainD(G4(A), FinRO).distinguish() @ &m : res].",
+            "byequiv => //; proc; inline *; sim.",
+            "have h_dout : forall (_ : nonce * C.counter), is_lossless dblock by move=> _; apply dblock_ll.",
+            "have h2 := pr_RO_FinRO_D h_dout (G4(A)) &m () (fun (r:bool) => r); rewrite /= in h2; rewrite -h2.",
+            "have ->: Pr[MainD(G4(A), RO).distinguish() @ &m : res] = Pr[Split0.IdealAll.MainD(G4(A), Split0.IdealAll.RO).distinguish() @ &m : res] by byequiv => //; proc; inline *; sim.",
+            "have hA := SplitD.pr_RO_split (G4(A)) (fun _ (r:bool) => r) &m (); rewrite /= in hA; rewrite hA.",
+            "have ->: Pr[Split0.IdealAll.MainD(G4(A), RO_DOM(ROT.RO, ROF.RO)).distinguish() @ &m : res] = Pr[Split0.IdealAll.MainD(G6(A), ROT.RO).distinguish() @ &m : res] by byequiv => //; proc; inline *; sim.",
+            "have ->: Pr[Split0.IdealAll.MainD(G6(A), ROT.RO).distinguish() @ &m : res] = Pr[Split0.IdealAll.MainD(G6(A), Split0.IdealAll.RO).distinguish() @ &m : res] by byequiv => //; proc; inline *; sim.",
+            "have hB := SplitC1.pr_RO_split (G6(A)) (fun _ (r:bool) => r) &m (); rewrite /= in hB; rewrite hB.",
+            "have ->: Pr[Split0.IdealAll.MainD(G6(A), SplitC1.RO_Pair(SplitC1.I1.RO, SplitC1.I2.RO)).distinguish() @ &m : res] = Pr[Split1.IdealAll.MainD(G8(A), Split1.IdealAll.RO).distinguish() @ &m : res] by byequiv => //; proc; inline *; sim.",
+            "done.",
+            "rewrite -(SplitC2.pr_RO_split (G9(A)) (fun _ (r:bool) => r) &m ()).",
+            "simplify.",
+            "have ->: Pr[UFCMA_poly(A, FinRO).main() @ &m : res] = Pr[MainD(G5(A), FinRO).distinguish() @ &m : res] by byequiv => //; proc; inline *; sim.",
+            "have h_dout : forall (_ : nonce * C.counter), is_lossless dblock by move=> _; apply dblock_ll. have hC := pr_RO_FinRO_D h_dout (G5(A)) &m () (fun (r:bool) => r); rewrite /= in hC; rewrite -hC.",
+            "have ->: Pr[MainD(G5(A), RO).distinguish() @ &m : res] = Pr[Split0.IdealAll.MainD(G5(A), Split0.IdealAll.RO).distinguish() @ &m : res] by byequiv => //; proc; inline *; sim.",
+            "have hA := SplitD.pr_RO_split (G5(A)) (fun _ (r:bool) => r) &m (); rewrite /= in hA; rewrite hA.",
+            "have ->: Pr[Split0.IdealAll.MainD(G5(A), RO_DOM(ROT.RO, ROF.RO)).distinguish() @ &m : res] = Pr[Split0.IdealAll.MainD(G7(A), ROT.RO).distinguish() @ &m : res] by byequiv => //; proc; inline *; sim.",
+            "have ->: Pr[Split0.IdealAll.MainD(G7(A), ROT.RO).distinguish() @ &m : res] = Pr[Split0.IdealAll.MainD(G7(A), Split0.IdealAll.RO).distinguish() @ &m : res] by byequiv => //; proc; inline *; sim.",
+            "have hB := SplitC1.pr_RO_split (G7(A)) (fun _ (r:bool) => r) &m (); rewrite /= in hB; rewrite hB.",
+            "have ->: Pr[Split0.IdealAll.MainD(G7(A), SplitC1.RO_Pair(SplitC1.I1.RO, SplitC1.I2.RO)).distinguish() @ &m : res] = Pr[Split1.IdealAll.MainD(G9(A), Split1.IdealAll.RO).distinguish() @ &m : res] by byequiv => //; proc; inline *; sim.",
+            "done.",
+            "qed."
+          ]
+        }
+      ]
+    },
+    {
+      "id": "step2_2__2026-06-10_1436_step2_2__b9952510-dirty",
+      "dir": "step2_2/2026-06-10_1436_step2_2__b9952510-dirty",
+      "lemma": "step2_2",
+      "source": "chacha_poly.ec",
+      "profile": "L4",
+      "model": "claude-opus-4-8",
+      "outcome": "proved",
+      "turns": 81,
+      "trees": 1,
+      "date": "2026-06-10 14:36",
+      "timestamp": "2026-06-10_1436_step2_2",
+      "commit": "b9952510",
+      "eval_mode": true,
+      "tier": "public",
+      "proved": true,
+      "view_roots": [],
+      "per_tree": [
+        {
+          "tree": "Tree_0_0",
+          "proved": false,
+          "tactics": [
+            "apply ler_add.",
+            "byequiv (_: ={glob A} ==> ={res}).",
+            "conseq UFCMA_genCC.",
+            "smt().",
+            "done.",
+            "smt().",
+            "byequiv (_: ={glob A} ==> (exists (c:ciphertext), c \\in Mem.lc /\\ dec StLSke.gs Mem.k c <> None){1} => res{2}).",
+            "proc*.",
+            "inline {2} 1.",
+            "seq 1 1 : (={Mem.lc} /\\ StLSke.gs{1} = RO.m{2}).",
+            "call UFCMA_genCC.",
+            "auto.",
+            "sp; wp.",
+            "while{2} (0 <= i{2} <= size ns{2} /\\ Mem.lc{1} = Mem.lc{2} /\\ StLSke.gs{1} = RO.m{2} /\\ ns{2} = undup (map (fun (p:ciphertext) => p.`1) Mem.lc{2}) /\\ (forall (c:ciphertext), c \\in Mem.lc{2} => dec StLSke.gs{1} Mem.k{1} c <> None => (c.`1 \\in take i{2} ns{2}) => forged{2})) (size ns{2} - i{2}).",
+            "move=> &m0 z; inline FinRO.get; wp; skip.",
+            "move=> &hr [[H Hlt] Hz]; case: H => i_rng [Hlc [Hgs [Hns IH]]].",
+            "split; last by smt(); do 4! (split; first by smt()).",
+            "do 4! (split; first by smt()).",
+            "move=> c Hc Hdec; rewrite (take_nth witness) 1:/# mem_rcons in_cons.",
+            "move=> [Hn0 | Hold]; last by have := IH c Hc Hdec Hold; smt().",
+            "right; rewrite /test_poly /=; move=> _; apply/List.hasP; exists (topol c.`2 c.`3, c.`4); split; first by apply/List.mapP; exists c; rewrite mem_filter /=; smt().",
+            "move: Hdec Hc Hn0; rewrite /dec /genpoly1305 /get /=; case: c => cn ca cc ct /=; rewrite Hgs /=; smt().",
+            "skip.",
+            "move=> &1 &2 [Hns [Hf [Hi [Hlc Hgs]]]]; split; first by rewrite Hi; smt(size_ge0 take0 in_nil).",
+            "move=> forged_R i_R; split; first by move=> [hb _] hsz; smt()."
+          ]
+        },
+        {
+          "tree": "Tree_0_0_r2",
+          "proved": true,
+          "tactics": [
+            "apply ler_add.",
+            "byequiv (_: ={glob A} ==> ={res}).",
+            "conseq UFCMA_genCC.",
+            "smt().",
+            "done.",
+            "smt().",
+            "byequiv (_: ={glob A} ==> (exists (c:ciphertext), c \\in Mem.lc /\\ dec StLSke.gs Mem.k c <> None){1} => res{2}).",
+            "proc*.",
+            "inline {2} 1.",
+            "seq 1 1 : (={Mem.lc} /\\ StLSke.gs{1} = RO.m{2}).",
+            "call UFCMA_genCC.",
+            "auto.",
+            "sp; wp.",
+            "while{2} (0 <= i{2} <= size ns{2} /\\ Mem.lc{1} = Mem.lc{2} /\\ StLSke.gs{1} = RO.m{2} /\\ ns{2} = undup (map (fun (p:ciphertext) => p.`1) Mem.lc{2}) /\\ (forall (c:ciphertext), c \\in Mem.lc{2} => dec StLSke.gs{1} Mem.k{1} c <> None => (c.`1 \\in take i{2} ns{2}) => forged{2})) (size ns{2} - i{2}).",
+            "move=> &m0 z; inline FinRO.get; wp; skip.",
+            "move=> &hr [[H Hlt] Hz]; case: H => i_rng [Hlc [Hgs [Hns IH]]].",
+            "split; last by smt(); do 4! (split; first by smt()).",
+            "do 4! (split; first by smt()).",
+            "move=> c Hc Hdec; rewrite (take_nth witness) 1:/# mem_rcons in_cons.",
+            "move=> [Hn0 | Hold]; last by have := IH c Hc Hdec Hold; smt().",
+            "right; rewrite /test_poly /=; move=> _; apply/List.hasP; exists (topol c.`2 c.`3, c.`4); split; first by apply/List.mapP; exists c; rewrite mem_filter /=; smt().",
+            "move: Hdec Hc Hn0; rewrite /dec /genpoly1305 /get /=; case: c => cn ca cc ct /=; rewrite Hgs /=; smt().",
+            "skip.",
+            "move=> &1 &2 [Hns [Hf [Hi [Hlc Hgs]]]]; split; first by rewrite Hi; smt(size_ge0 take0 in_nil).",
+            "move=> forged_R i_R; split; first by move=> [hb _] hsz; smt().",
+            "move=> Hexit [i_rng [Hlc' [Hgs' [Hns' IH]]]] [c [Hc Hdec]].",
+            "apply (IH c); [ by rewrite -Hlc' | exact Hdec | rewrite take_oversize 1:/# Hns' mem_undup -Hlc'; apply/mapP; exists c => /=; exact Hc ].",
+            "done.",
+            "by move=> &1 &2 H Hc; apply H.",
+            "qed."
+          ]
+        }
+      ]
+    },
+    {
+      "id": "step2_2__2026-06-10_1355_step2_2__b9952510-dirty",
+      "dir": "step2_2/2026-06-10_1355_step2_2__b9952510-dirty",
+      "lemma": "step2_2",
+      "source": "chacha_poly.ec",
+      "profile": "L1",
+      "model": "claude-opus-4-8",
+      "outcome": "proved",
+      "turns": 60,
+      "trees": 1,
+      "date": "2026-06-10 13:55",
+      "timestamp": "2026-06-10_1355_step2_2",
+      "commit": "b9952510",
+      "eval_mode": true,
+      "tier": "public",
+      "proved": true,
+      "view_roots": [],
+      "per_tree": [
+        {
+          "tree": "Tree_0_0",
+          "proved": true,
+          "tactics": [
+            "have h1 : Pr[CPA_game(CCA_CPA_Adv(A), RealOrcls(StLSke(St))).main() @ &m : res] = Pr[CPA_game(CCA_CPA_Adv(A), RealOrcls(GenChaChaPoly(CCRO(FinRO)))).main() @ &m : res].",
+            "byequiv UFCMA_genCC => //.",
+            "have h2 : Pr[UFCMA(A, St).main() @ &m : exists (c : ciphertext), (c \\in Mem.lc) /\\ dec StLSke.gs Mem.k c <> None] <= Pr[UFCMA_poly(A, FinRO).main() @ &m : res].",
+            "have ha : Pr[UFCMA(A, St).main() @ &m : exists (c : ciphertext), (c \\in Mem.lc) /\\ dec StLSke.gs Mem.k c <> None] = Pr[CPA_game(CCA_CPA_Adv(A), RealOrcls(GenChaChaPoly(CCRO(FinRO)))).main() @ &m : exists (c : ciphertext), (c \\in Mem.lc) /\\ dec RO.m Mem.k c <> None].",
+            "byequiv UFCMA_genCC => //.",
+            "have dec_kindep : forall gs (k1 k2 : key) (c : ciphertext), (dec gs k1 c <> None) <=> (dec gs k2 c <> None).",
+            "move=> gs k1 k2 [n a cph t]; rewrite /dec /genpoly1305 /get /=; smt().",
+            "move=> &1 &2 [[_ ->] ->].",
+            "smt().",
+            "rewrite ha.",
+            "byequiv (_: ={glob A} ==> (exists (c : ciphertext), (c \\in Mem.lc) /\\ dec RO.m Mem.k c <> None){1} => res{2}) => //.",
+            "proc.",
+            "inline{2} 1.",
+            "seq 2 2 : (={glob A, Mem.lc, Mem.k, RO.m}).",
+            "sim.",
+            "sp 0 3.",
+            "while{2} (0 <= i{2} <= size ns{2} /\\ ns{2} = undup (map (fun (p : ciphertext) => p.`1) Mem.lc{2}) /\\ Mem.lc{1} = Mem.lc{2} /\\ RO.m{1} = RO.m{2} /\\ Mem.k{1} = Mem.k{2} /\\ (forall (c : ciphertext), (c \\in Mem.lc{2}) => dec RO.m{2} Mem.k{2} c <> None => (c.`1 \\in take i{2} ns{2}) => forged{2})) (size ns{2} - i{2}).",
+            "move=> &m0 z.",
+            "inline FinRO.get.",
+            "wp.",
+            "skip.",
+            "move=> &hr [[[[hge0i hlei] [hns [hlc [hro [hk IH]]]]] hi] hz] /=.",
+            "have Hcrux : forall (c : ciphertext), c \\in Mem.lc{hr} => dec RO.m{hr} Mem.k{hr} c <> None<:nonce * associated_data * bytes> => c.`1 \\in take (i{hr} + 1) ns{hr} => forged{hr} || test_poly (nth witness<:nonce> ns{hr} i{hr}) Mem.lc{hr} (mk_rs (oget RO.m{hr}.[nth witness<:nonce> ns{hr} i{hr}, C.ofintd 0])).`1 (mk_rs (oget RO.m{hr}.[nth witness<:nonce> ns{hr} i{hr}, C.ofintd 0])).`2.",
+            "move=> c hcmem hdec hcin.",
+            "have heq : take (i{hr} + 1) ns{hr} = rcons (take i{hr} ns{hr}) (nth witness<:nonce> ns{hr} i{hr}) by apply (take_nth witness<:nonce>); smt().",
+            "move: hcin; rewrite heq mem_rcons in_cons => -[hc1|hc1].",
+            "rewrite -hc1.",
+            "have h: test_poly c.`1 Mem.lc{hr} (mk_rs (oget RO.m{hr}.[c.`1, C.ofintd 0])).`1 (mk_rs (oget RO.m{hr}.[c.`1, C.ofintd 0])).`2.",
+            "rewrite /test_poly /=.",
+            "rewrite hasP.",
+            "exists (topol c.`2 c.`3, c.`4) => /=.",
+            "split.",
+            "rewrite mapP; exists c => //=; rewrite mem_filter /=; exact hcmem.",
+            "move: hdec; rewrite /dec /get /genpoly1305 /=; smt().",
+            "smt().",
+            "have hf := IH c hcmem hdec hc1; smt().",
+            "smt().",
+            "skip.",
+            "smt(mem_undup map_f take_size take0 size_ge0).",
+            "smt().",
+            "qed."
+          ]
+        }
+      ]
+    },
+    {
+      "id": "step4_badi__2026-06-09_1431_step4_badi__45fe210c-dirty",
+      "dir": "step4_badi/2026-06-09_1431_step4_badi__45fe210c-dirty",
+      "lemma": "step4_badi",
+      "source": "chacha_poly.ec",
+      "profile": "L1",
+      "model": "claude-fable-5",
+      "outcome": "proved",
+      "turns": 52,
+      "trees": 2,
+      "date": "2026-06-09 14:31",
+      "timestamp": "2026-06-09_1431_step4_badi",
+      "commit": "45fe210c",
+      "eval_mode": true,
+      "tier": "public",
+      "proved": true,
+      "view_roots": [],
+      "per_tree": [
+        {
+          "tree": "Tree_0_0",
+          "proved": true,
+          "tactics": [
+            "move=> [h0nth0 hnth0q].",
+            "byequiv (: ={glob A, glob BNR, glob Mem, glob UFCMA, glob UFCMA_l, glob ROIN.RO, glob ROout, glob ROF} /\\ arg{2} = nth0 ==> ((let tt = nth (w1, w2) UFCMA_l.lbad1{1} nth0 in tt.`1 = tt.`2) => UFCMA_li.badi{2})) => //.",
+            "proc.",
+            "inline*.",
+            "wp.",
+            "call (: ={BNR.lenc, BNR.ndec, Mem.log, Mem.lc, UFCMA.log, UFCMA.cbad1, UFCMA_l.lbad1, RO.m, SplitC2.I2.RO.m, SplitD.ROF.RO.m} /\\ UFCMA_li.i{2} = nth0 /\\ UFCMA_li.cbadi{2} = (if nth0 < size UFCMA_l.lbad1{2} then 1 else 0) /\\ (nth0 < size UFCMA_l.lbad1{2} => (nth (w1, w2) UFCMA_l.lbad1{2} nth0).`1 = (nth (w1, w2) UFCMA_l.lbad1{2} nth0).`2 => UFCMA_li.badi{2})).",
+            "proc.",
+            "sp; if => //.",
+            "inline CPA_CCA_Orcls(UFCMA_l.O).enc CPA_CCA_Orcls(UFCMA_li.O).enc UFCMA_l.O.enc UFCMA_li.O.enc.",
+            "wp.",
+            "call (: ={SplitC2.I2.RO.m}).",
+            "by auto.",
+            "call (: ={RO.m}).",
+            "by sim.",
+            "call (: ={UFCMA.cbad1, UFCMA_l.lbad1} /\\ UFCMA_li.i{2} = nth0 /\\ (UFCMA_li.cbadi{2} = if nth0 < size UFCMA_l.lbad1{2} then 1 else 0) /\\ (nth0 < size UFCMA_l.lbad1{2} => (nth (w1, w2) UFCMA_l.lbad1{2} nth0).`1 = (nth (w1, w2) UFCMA_l.lbad1{2} nth0).`2 => UFCMA_li.badi{2})).",
+            "inline UFCMA_li.set_bad1i.",
+            "case (UFCMA.cbad1{2} < qenc /\\ size lt{2} <= qdec /\\ size UFCMA_l.lbad1{2} <= UFCMA_li.i{2} < size UFCMA_l.lbad1{2} + size lt{2}).",
+            "rcondt{1} 2; 1: (by auto => /#); rcondt{2} 2; 1: (by auto => /#); rcondt{2} 2; 1: (by auto => /#); rcondt{2} 4; 1: (by auto => /#).",
+            "wp; rnd; wp; rnd{2}; skip => />.",
+            "smt(size_cat size_map nth_cat nth_map size_ge0).",
+            "move=> &2 hinv hc1 hltq hge hlt t1 _ tL _; rewrite size_cat size_map nth_cat; have -> /= : (nth0 < size UFCMA_l.lbad1{2}) = false; 1: by smt(); split; 1: by smt(); move=> _; rewrite (nth_map witness) /=; smt().",
+            "move=> &2 hinv hc1 hltq hge hlt t1 _ tL _; rewrite size_cat size_map nth_cat; have -> /= : (nth0 < size UFCMA_l.lbad1{2}) = false by smt(); have hbnd : 0 <= nth0 - size UFCMA_l.lbad1{2} < size lt{2} by smt(); rewrite (nth_map witness) // /=; smt().",
+            "have hbnd : 0 <= nth0 - size UFCMA_l.lbad1{2} < size lt{2} by smt(); rewrite hlt /= (nth_map witness) // /=; smt().",
+            "rewrite hlt /= (nth_map witness) // /=; smt().",
+            "seq 1 1 : (lt{1} = lt{2} /\\ ={UFCMA.cbad1, UFCMA_l.lbad1, t} /\\ UFCMA_li.i{2} = nth0 /\\ (UFCMA_li.cbadi{2} = if nth0 < size UFCMA_l.lbad1{2} then 1 else 0) /\\ (nth0 < size UFCMA_l.lbad1{2} => (nth (w1, w2) UFCMA_l.lbad1{2} nth0).`1 = (nth (w1, w2) UFCMA_l.lbad1{2} nth0).`2 => UFCMA_li.badi{2}) /\\ !(UFCMA.cbad1{2} < qenc /\\ size lt{2} <= qdec /\\ size UFCMA_l.lbad1{2} <= nth0 < size UFCMA_l.lbad1{2} + size lt{2})); 1: by auto => /#.",
+            "if => //; 1: by move=> &1 &2 /#.",
+            "if => //.",
+            "rcondf{2} 1; 1: (by auto => /#); by auto => />; smt(size_cat size_map nth_cat).",
+            "rcondf{2} 1; 1: by auto => /#.",
+            "auto => /> *; rewrite size_cat size_map nth_cat; case (nth0 < size UFCMA_l.lbad1{2}) => /= hcase; smt().",
+            "auto => /> *; rewrite size_cat size_map nth_cat; smt().",
+            "auto => /> *; rewrite ?size_cat ?size_map ?nth_cat; smt().",
+            "auto => />.",
+            "move=> &2 hinv hneg hc1 hltq; rewrite size_cat size_map nth_cat; smt().",
+            "move=> &2 hinv hneg hc1 hltq; rewrite size_cat size_map nth_cat; case (nth0 < size UFCMA_l.lbad1{2}) => hcase; [ rewrite hcase /=; have -> /= : (nth0 < size UFCMA_l.lbad1{2} + size lt{2}) = true by smt(size_ge0); by apply (hinv hcase) | have -> /= : (nth0 < size UFCMA_l.lbad1{2}) = false by smt(); by have -> /= : (nth0 < size UFCMA_l.lbad1{2} + size lt{2}) = false by smt() ].",
+            "move=> &2 hinv hneg hc1 hltq; rewrite size_cat size_map nth_cat; case (nth0 < size UFCMA_l.lbad1{2}) => hcase /=; [ have -> /= : (nth0 < size UFCMA_l.lbad1{2} + size lt{2}) = true by smt(size_ge0); by apply (hinv hcase) | by have -> /= : (nth0 < size UFCMA_l.lbad1{2} + size lt{2}) = false by smt() ].",
+            "by apply (hinv hcase).",
+            "call (: ={RO.m}).",
+            "by sim.",
+            "by auto => />.",
+            "proc.",
+            "sp; if => //.",
+            "inline CPA_CCA_Orcls(UFCMA_l.O).dec CPA_CCA_Orcls(UFCMA_li.O).dec UFCMA_l.O.dec UFCMA_li.O.dec.",
+            "by auto => />.",
+            "by auto => />; smt().",
+            "auto => />.",
+            "smt().",
+            "smt(neq_w1_w2).",
+            "split; [smt() | move=> _ _ lbad1_R badi_R hinv hproj; smt(nth_out neq_w1_w2)].",
+            "qed."
+          ]
+        },
+        {
+          "tree": "Tree_0_1",
+          "proved": false,
+          "tactics": []
+        }
+      ]
+    },
+    {
+      "id": "schnorr_proof_of_knowledge_shvzk__2026-06-09_1149_schnorr_proof_of_knowledge_shvzk__4e14c792-dirty",
+      "dir": "schnorr_proof_of_knowledge_shvzk/2026-06-09_1149_schnorr_proof_of_knowledge_shvzk__4e14c792-dirty",
+      "lemma": "schnorr_proof_of_knowledge_shvzk",
+      "source": "SchnorrPK.ec",
+      "profile": "L4",
+      "model": "claude-opus-4-8",
+      "outcome": "proved",
+      "turns": 120,
+      "trees": 2,
+      "date": "2026-06-09 11:49",
+      "timestamp": "2026-06-09_1149_schnorr_proof_of_knowledge_shvzk",
+      "commit": "4e14c792",
+      "eval_mode": true,
+      "tier": "public",
+      "proved": true,
+      "view_roots": [],
+      "per_tree": [
+        {
+          "tree": "Tree_0_0",
+          "proved": false,
+          "tactics": [
+            "byequiv => //.",
+            "proc.",
+            "inline *.",
+            "rcondf{1} 28.",
+            "auto => />; smt(expN expD exp0 mulcA mulVc mulcV mulc1).",
+            "conseq (_: ={glob D} ==> _) => //.",
+            "call (_: true).",
+            "rcondt{1} 25.",
+            "auto => />; smt(expN expD exp0 mulcA mulVc mulcV mulc1).",
+            "conseq (_: _ ==> ={x, t, glob D}).",
+            "smt().",
+            "seq 2 2 : (={w0, glob D}).",
+            "auto.",
+            "swap{2} 10 -5.",
+            "wp.",
+            "rnd (fun (u : ZModE.exp) => u + e1{2} * w{2}) (fun (u : ZModE.exp) => u - e1{2} * w{2}).",
+            "wp.",
+            "rnd (fun (u : ZModE.exp) => u - e1{2} * w{2}) (fun (u : ZModE.exp) => u + e1{2} * w{2}).",
+            "wp.",
+            "rnd (fun (u : ZModE.exp) => u) (fun (u : ZModE.exp) => u).",
+            "wp.",
+            "rnd{1}.",
+            "wp.",
+            "auto => />.",
+            "move=> &2 r1 _ eL _; split=> [rR _|_ z1L _]; [by ring | split; [by ring | move=> _; rewrite -expM -expD; congr; ring]]."
+          ]
+        },
+        {
+          "tree": "Tree_0_1",
+          "proved": true,
+          "tactics": [
+            "byequiv (_: ={glob D} ==> ={res}).",
+            "proc.",
+            "call (_: true).",
+            "inline *.",
+            "rcondf{1} 28.",
+            "auto; smt(expN expD exp0 mulVc mulcA mulc1 mulcV mulcC).",
+            "rcondt{1} 25.",
+            "auto; smt(expN expD exp0 mulVc mulcA mulc1 mulcV mulcC).",
+            "swap{1} 15 -5.",
+            "swap{1} 10 1.",
+            "swap{2} 12 -5.",
+            "wp.",
+            "rnd (fun z => z - e{1} * w{1}) (fun r => r + e{1} * w{1}).",
+            "rnd.",
+            "wp.",
+            "rnd{1}.",
+            "auto.",
+            "smt(expD expM expN exp0 GP.ZModE.ZModpRing.mulrC GP.ZModE.ZModpRing.addrK GP.ZModE.ZModpRing.subrK GP.ZModE.ZModpRing.mulr0 GP.ZModE.ZModpRing.addr0 dt_ll dt_fu).",
+            "done.",
+            "smt().",
+            "qed."
+          ]
+        }
+      ]
+    },
+    {
+      "id": "UFCMA_genCC__L1__2026-06-08_2025_UFCMA_genCC__c855adb2-dirty",
+      "dir": "UFCMA_genCC/L1__2026-06-08_2025_UFCMA_genCC__c855adb2-dirty",
+      "lemma": "UFCMA_genCC",
+      "source": "chacha_poly.ec",
+      "profile": "L1",
+      "model": "claude-opus-4-8",
+      "outcome": "proved",
+      "turns": 60,
+      "trees": 2,
+      "date": "2026-06-08 20:25",
+      "timestamp": "2026-06-08_2025_UFCMA_genCC",
+      "commit": "c855adb2",
+      "eval_mode": true,
+      "tier": "public",
+      "proved": true,
+      "view_roots": [],
+      "per_tree": [
+        {
+          "tree": "Tree_0_0",
+          "proved": false,
+          "tactics": []
+        },
+        {
+          "tree": "Tree_0_1",
+          "proved": true,
+          "tactics": [
+            "proc.",
+            "inline{1} 2.",
+            "inline{2} 2.",
+            "wp.",
+            "call (_: ={Mem.k, Mem.log, Mem.lc} /\\ StLSke.gs{1} = RO.m{2}).",
+            "proc.",
+            "inline{1} 1.",
+            "inline{1} 2.",
+            "inline{2} 1.",
+            "inline{2} 2.",
+            "wp.",
+            "sp.",
+            "inline{2} 1.",
+            "sp.",
+            "while{2} ( (p{1} = p{2} /\\ Mem.k{1} = Mem.k{2} /\\ Mem.log{1} = Mem.log{2} /\\ Mem.lc{1} = Mem.lc{2}) /\\ StLSke.gs{1} = RO.m{2} /\\ k0{2} = Mem.k{2} /\\ n0{2} = n{2} /\\ k{2} = Mem.k{2} /\\ (n{2}, a{2}, p1{2}) = p{2} /\\ c2{2} ++ gen_CTR_encrypt_bytes take_xor (get RO.m{2}) k0{2} n0{2} i{2} p2{2} = gen_CTR_encrypt_bytes take_xor (get RO.m{2}) k0{2} n0{2} 1 p1{2} ) (size p2{2}).",
+            "seq 0 1 : ( (n{2}, a{2}, p1{2}) = p{2} /\\ p{1} = p{2} /\\ Mem.k{1} = Mem.k{2} /\\ Mem.log{1} = Mem.log{2} /\\ Mem.lc{1} = Mem.lc{2} /\\ StLSke.gs{1} = RO.m{2} /\\ k0{2} = Mem.k{2} /\\ n0{2} = n{2} /\\ c2{2} = gen_CTR_encrypt_bytes take_xor (get RO.m{2}) k0{2} n0{2} 1 p1{2} ).",
+            "while{2} ( (p{1} = p{2} /\\ Mem.k{1} = Mem.k{2} /\\ Mem.log{1} = Mem.log{2} /\\ Mem.lc{1} = Mem.lc{2}) /\\ StLSke.gs{1} = RO.m{2} /\\ k0{2} = Mem.k{2} /\\ n0{2} = n{2} /\\ k{2} = Mem.k{2} /\\ (n{2}, a{2}, p1{2}) = p{2} /\\ c2{2} ++ gen_CTR_encrypt_bytes take_xor (get RO.m{2}) k0{2} n0{2} i{2} p2{2} = gen_CTR_encrypt_bytes take_xor (get RO.m{2}) k0{2} n0{2} 1 p1{2} ) (size p2{2}).",
+            "move=> &m z.",
+            "inline.",
+            "wp.",
+            "skip.",
+            "move=> &hr [[hI hne] hsz].",
+            "have hmerge : forall (str : block), take_xor [] str = [] by move=> str; rewrite /take_xor; smt(take0 size_eq0).",
+            "rewrite (gen_CTR_encrypt_bytes_cons take_xor (get RO.m{hr}) k0{hr} n0{hr} i{hr} p2{hr} hmerge) in hI.",
+            "rewrite (gen_CTR_encrypt_bytes_cons _ _ _ _ _ _ hmerge) in hI.",
+            "rewrite gen_CTR_encrypt_bytes_cons in hI.",
+            "exact hmerge.",
+            "move=> str; rewrite /take_xor; smt(take0 size_eq0).",
+            "rewrite catA in hI.",
+            "simplify.",
+            "split.",
+            "exact hI.",
+            "smt(size_drop gt0_block_size size_eq0 size_ge0).",
+            "move=> />.",
+            "move=> &1 &2 hpre hyp; smt(cat0s size_ge0 size_eq0).",
+            "move=> &1 &2 hpre c2_R i_R p2_R.",
+            "skip.",
+            "move=> &1 &2 hpre c2_R i_R p2_R.",
+            "have hnil : gen_CTR_encrypt_bytes take_xor (get RO.m{2}) Mem.k{2} n{2} i_R [] = [] by apply gen_CTR_encrypt_bytes0; move=> str; rewrite /take_xor; smt(take0 size_eq0).",
+            "split; [ smt(size_ge0 size_eq0) | smt(hnil cats0) ].",
+            "split; [ smt(size_ge0 size_eq0) | smt(cats0) ].",
+            "sp.",
+            "inline{2} 1.",
+            "inline{2} 5.",
+            "inline{2} 8.",
+            "sp.",
+            "skip.",
+            "move=> &1 &2 />.",
+            "proc.",
+            "auto=> />; smt().",
+            "conseq (_: _ ==> (glob A){1} = (glob A){2} /\\ (Mem.k{1} = Mem.k{2} /\\ Mem.log{1} = Mem.log{2} /\\ Mem.lc{1} = Mem.lc{2}) /\\ StLSke.gs{1} = RO.m{2}).",
+            "move=> /> *; smt().",
+            "inline *.",
+            "sim.",
+            "qed."
+          ]
+        }
+      ]
+    },
+    {
+      "id": "poly_mac2__L4__2026-06-08_2013_poly_mac2__c855adb2-dirty",
+      "dir": "poly_mac2/L4__2026-06-08_2013_poly_mac2__c855adb2-dirty",
+      "lemma": "poly_mac2",
+      "source": "chacha_poly.ec",
+      "profile": "L4",
+      "model": "claude-opus-4-8",
+      "outcome": "proved",
+      "turns": 6,
+      "trees": 2,
+      "date": "2026-06-08 20:13",
+      "timestamp": "2026-06-08_2013_poly_mac2",
+      "commit": "c855adb2",
+      "eval_mode": true,
+      "tier": "public",
+      "proved": true,
+      "view_roots": [],
+      "per_tree": [
+        {
+          "tree": "Tree_0_0",
+          "proved": true,
+          "tactics": [
+            "proc.",
+            "inline *.",
+            "wp; skip; smt().",
+            "qed."
+          ]
+        },
+        {
+          "tree": "Tree_0_1",
+          "proved": false,
+          "tactics": [
+            "proc.",
+            "inline *."
+          ]
+        }
+      ]
+    },
+    {
+      "id": "CCP_OCCP__L1__2026-06-08_2013_CCP_OCCP__c855adb2-dirty",
+      "dir": "CCP_OCCP/L1__2026-06-08_2013_CCP_OCCP__c855adb2-dirty",
+      "lemma": "CCP_OCCP",
+      "source": "chacha_poly.ec",
+      "profile": "L1",
+      "model": "claude-opus-4-8",
+      "outcome": "proved",
+      "turns": 35,
+      "trees": 2,
+      "date": "2026-06-08 20:13",
+      "timestamp": "2026-06-08_2013_CCP_OCCP",
+      "commit": "c855adb2",
+      "eval_mode": true,
+      "tier": "public",
+      "proved": true,
+      "view_roots": [],
+      "per_tree": [
+        {
+          "tree": "Tree_0_0",
+          "proved": false,
+          "tactics": [
+            "proc (={glob I, glob OCC}).",
+            "by move=> /> />.",
+            "by move=> /> />.",
+            "by sim.",
+            "by sim.",
+            "proc.",
+            "seq 1 1 : (={n, a, p, k, glob I, glob OCC}).",
+            "auto."
+          ]
+        },
+        {
+          "tree": "Tree_0_1",
+          "proved": true,
+          "tactics": [
+            "proc (={glob I, glob OCC}).",
+            "by move=> />.",
+            "by move=> />.",
+            "sim.",
+            "sim.",
+            "proc.",
+            "sp 1 1.",
+            "seq 1 1 : (={glob I, glob OCC, k, n, a} /\\ c{1} = c{2}).",
+            "wp.",
+            "exists* (glob OCC){1}, k{1}, n{1}, p{1}; elim* => gs kk nn pp; call {1} (chacha_spec kk nn pp gs).",
+            "skip; smt().",
+            "wp; exists* (glob OCC){1}, k{1}, n{1}, a{1}, c{1}; elim* => gs kk nn aa cc0; call {1} (poly_spec kk nn aa cc0 gs).",
+            "skip; smt().",
+            "proc; sp 2 2.",
+            "seq 1 1 : (={glob I, glob OCC, k, n, a, c, t, t', result}).",
+            "wp; exists* (glob OCC){1}, k{1}, n{1}, a{1}, c{1}; elim* => gs kk nn aa cc0; call {1} (poly_spec kk nn aa cc0 gs); skip; smt().",
+            "if.",
+            "smt().",
+            "wp; exists* (glob OCC){1}, k{1}, n{1}, c{1}; elim* => gs kk nn cc0; call {1} (chacha_spec kk nn cc0 gs); skip; smt().",
+            "auto.",
+            "qed."
+          ]
+        }
+      ]
+    },
+    {
+      "id": "CCP_OCCP__L4__2026-06-08_2002_CCP_OCCP__c855adb2-dirty",
+      "dir": "CCP_OCCP/L4__2026-06-08_2002_CCP_OCCP__c855adb2-dirty",
+      "lemma": "CCP_OCCP",
+      "source": "chacha_poly.ec",
+      "profile": "L4",
+      "model": "claude-opus-4-8",
+      "outcome": "proved",
+      "turns": 39,
+      "trees": 2,
+      "date": "2026-06-08 20:02",
+      "timestamp": "2026-06-08_2002_CCP_OCCP",
+      "commit": "c855adb2",
+      "eval_mode": true,
+      "tier": "public",
+      "proved": true,
+      "view_roots": [],
+      "per_tree": [
+        {
+          "tree": "Tree_0_0",
+          "proved": false,
+          "tactics": [
+            "proc*.",
+            "call (_: ={glob OCC, glob I}).",
+            "sim.",
+            "sim.",
+            "proc."
+          ]
+        },
+        {
+          "tree": "Tree_0_1",
+          "proved": true,
+          "tactics": [
+            "proc*.",
+            "call (_: ={glob OCC, glob I}).",
+            "sim.",
+            "sim.",
+            "proc.",
+            "sp.",
+            "exists* OCC.gs{1}, k{1}, n{1}, a{1}, c{1}; elim* => gs0 k0 n0 a0 c0; call{1} (poly_spec k0 n0 a0 c0 gs0).",
+            "exists* OCC.gs{1}, k{1}, n{1}, p{1}; elim* => gs1 k1 n1 p1; call{1} (chacha_spec k1 n1 p1 gs1).",
+            "seq 1 0 : (c{1} = gen_CTR_encrypt_bytes take_xor (cc OCC.gs{1}) k{1} n{1} 1 p{1} /\\ (n{2}, a{2}, p{2}) = nap{2} /\\ c{2} = gen_CTR_encrypt_bytes take_xor (cc OCC.gs{2}) k{2} n{2} 1 p{2} /\\ t{2} = genpoly1305 (cc OCC.gs{2}) k{2} n{2} (topol a{2} c{2}) /\\ (n{1}, a{1}, p{1}) = nap{1} /\\ k{1} = k{2} /\\ nap{1} = nap{2} /\\ OCC.gs{1} = OCC.gs{2} /\\ (glob I){1} = (glob I){2}).",
+            "exists* OCC.gs{1}, k{1}, n{1}, p{1}; elim* => gs0 k0 n0 p0; call{1} (chacha_spec k0 n0 p0 gs0).",
+            "auto.",
+            "exists* OCC.gs{1}, k{1}, n{1}, a{1}, c{1}; elim* => gs0 k0 n0 a0 c0; call{1} (poly_spec k0 n0 a0 c0 gs0).",
+            "auto.",
+            "proc.",
+            "sp 2 2.",
+            "seq 1 1 : (t'{1} = t'{2} /\\ result{1} = result{2} /\\ n{1} = n{2} /\\ a{1} = a{2} /\\ c{1} = c{2} /\\ t{1} = t{2} /\\ k{1} = k{2} /\\ OCC.gs{1} = OCC.gs{2} /\\ (glob I){1} = (glob I){2}).",
+            "exists* OCC.gs{1}, k{1}, n{1}, a{1}, c{1}; elim* => gs0 k0 n0 a0 c0; call{1} (poly_spec k0 n0 a0 c0 gs0).",
+            "auto.",
+            "if.",
+            "smt().",
+            "wp; exists* OCC.gs{1}, k{1}, n{1}, c{1}; elim* => gs0 k0 n0 c0; call{1} (chacha_spec k0 n0 c0 gs0).",
+            "auto.",
+            "auto.",
+            "auto.",
+            "qed."
+          ]
+        }
+      ]
+    },
+    {
+      "id": "equ_cc__L1__2026-06-08_1940_equ_cc__c855adb2-dirty",
+      "dir": "equ_cc/L1__2026-06-08_1940_equ_cc__c855adb2-dirty",
+      "lemma": "equ_cc",
+      "source": "chacha_poly.ec",
+      "profile": "L1",
+      "model": "claude-opus-4-8",
+      "outcome": "proved",
+      "turns": 74,
+      "trees": 2,
+      "date": "2026-06-08 19:40",
+      "timestamp": "2026-06-08_1940_equ_cc",
+      "commit": "c855adb2",
+      "eval_mode": true,
+      "tier": "public",
+      "proved": true,
+      "view_roots": [],
+      "per_tree": [
+        {
+          "tree": "Tree_0_0",
+          "proved": false,
+          "tactics": [
+            "proc.",
+            "sp 2 3.",
+            "while (={i} /\\ c{1} = c{2} /\\ n{1} = n0 /\\ n{2} = n0 /\\ size p{1} = size p{2} /\\ 1 <= i{1} /\\ size c{1} + size p{1} <= max_cipher_size /\\ (p{1} <> [] => size c{1} = block_size * (i{1} - 1)) /\\ (forall (cc : C.counter), (n0, cc) \\in ROF.m{1} => C.toint cc < i{1}) /\\ (forall (nn : nonce) (cc : C.counter), (nn, cc) \\in ROF.m{1} => nn \\in n0 :: BNR.lenc{1}) /\\ mr0 = ROin.m{1} /\\ ms0 = ROout.m{1}).",
+            "inline{1}.",
+            "rcondf{1} 5.",
+            "auto; smt(C.ofintdK gt0_block_size max_cipher_size_ok C.gt0_max_counter size_eq0 size_ge0).",
+            "auto.",
+            "move=> &hr H; have hp1 : 1 <= size p{hr} by smt(size_eq0 size_ge0); have hmul : block_size * (i{hr} - 1) < block_size * C.max_counter by smt(max_cipher_size_ok mulzC); have hb : i{hr} - 1 < C.max_counter by smt(ltr_pmul2l gt0_block_size); rewrite /SplitD.test /= C.ofintdK 1:/# /#.",
+            "have hc : size c{hr} = block_size * (i{hr} - 1) by smt(); have hmul : block_size * (i{hr} - 1) < block_size * C.max_counter by smt(max_cipher_size_ok mulzC); have hb : i{hr} - 1 < C.max_counter by smt(IntOrder.ltr_pmul2l gt0_block_size); rewrite /SplitD.test /= C.ofintdK 1:/# /#.",
+            "have h1 : block_size * (i{hr} - 1) < C.max_counter * block_size by smt(max_cipher_size_ok); have hb : i{hr} - 1 < C.max_counter by smt(IntOrder.ltr_pmul2r mulzC gt0_block_size); rewrite /SplitD.test /= C.ofintdK 1:/# /#.",
+            "move: h1; rewrite (mulzC block_size (i{hr} - 1)) (IntOrder.ltr_pmul2r block_size gt0_block_size) => hb; rewrite /SplitD.test /=; smt(C.ofintdK).",
+            "rcondt{1} 7.",
+            "auto; move=> &hr H; have hp1 : 1 <= size p{hr} by smt(size_eq0 size_ge0); have hc : size c{hr} = block_size * (i{hr} - 1) by smt(); have h1 : block_size * (i{hr} - 1) < C.max_counter * block_size by smt(max_cipher_size_ok); move: h1; rewrite (mulzC block_size (i{hr} - 1)) (IntOrder.ltr_pmul2r block_size gt0_block_size) => hb; smt(C.ofintdK).",
+            "have hc : size c{hr} = block_size * (i{hr} - 1) by smt().",
+            "have h1 : block_size * (i{hr} - 1) < C.max_counter * block_size by smt(max_cipher_size_ok); move: h1; rewrite (mulzC block_size (i{hr} - 1)) (IntOrder.ltr_pmul2r block_size gt0_block_size) => hb; move=> r0_0 _; smt(C.ofintdK).",
+            "move=> r0_0 _; move: h1; rewrite (mulzC block_size (i{hr} - 1)) (IntOrder.ltr_pmul2r block_size gt0_block_size) => hb; smt(C.ofintdK).",
+            "sp 5 0.",
+            "wp.",
+            "rnd (fun (r:block) => extend p{1} +^ r) (fun (r:block) => extend p{1} +^ r).",
+            "skip.",
+            "move=> &1 &2 H; have inv : forall (b zz:block), b +^ (b +^ zz) = zz by smt(Block.addK Block.MB.addmA Block.MB.add0m Block.MB.addmC).",
+            "split; 1: by move=> zR _; rewrite inv. move=> r0L hr0L; split; 1: by rewrite inv.",
+            "split.",
+            "by move=> zR _; rewrite inv.",
+            "move=> _ r0L hr0L; rewrite inv /=.",
+            "rewrite get_set_sameE /=."
+          ]
+        },
+        {
+          "tree": "Tree_0_1",
+          "proved": true,
+          "tactics": [
+            "proc.",
+            "inline *.",
+            "seq 2 3 : (c{1} = c{2} /\\ size p{1} = size p{2} /\\ size c{1} + size p{1} <= max_cipher_size /\\ 1 <= i{1} /\\ i{1} - 1 + (size p{1} + block_size - 1) %/ block_size <= C.max_counter /\\ n{1} = n0 /\\ mr0 = ROin.m{1} /\\ ms0 = ROout.m{1} /\\ (forall (nn : nonce) (cc : C.counter), (nn, cc) \\in ROF.m{1} => nn \\in n0 :: BNR.lenc{1}) /\\ (forall (cc : C.counter), (n0, cc) \\in ROF.m{1} => C.toint cc < i{1})).",
+            "auto => /> *; smt(size_map max_cipher_size_ok gt0_block_size mem_cons).",
+            "auto => /> *; smt(size_map max_cipher_size_ok gt0_block_size in_cons).",
+            "wp; skip => /> &1 &2 hpre1 hpre2 hsz hnlenc hdom hr hs.",
+            "wp; skip => />.",
+            "move=> &1 hsz hnl hdom; split; first by rewrite size_map.",
+            "split; first by smt(max_cipher_size_ok gt0_block_size).",
+            "split.",
+            "apply (lez_trans ((C.max_counter * block_size + block_size - 1) %/ block_size)); first by apply leq_div2r; smt(max_cipher_size_ok gt0_block_size).",
+            "have heq : C.max_counter * block_size + block_size - 1 = C.max_counter * block_size + (block_size - 1) by smt().",
+            "rewrite heq divzMDl 1:gtr_eqF 1:gt0_block_size divz_small 1:ltr_subl_addr; smt(gt0_block_size).",
+            "rewrite heq divzMDl 1:gtr_eqF // divz_small; smt(gt0_block_size).",
+            "rewrite heq.",
+            "have hbn : block_size <> 0 by smt(gt0_block_size).",
+            "rewrite divzMDl // divz_small; smt(gt0_block_size).",
+            "split; first by move=> nn cc h; right; apply (hdom nn cc h).",
+            "move=> cc h; have := hdom n0 cc h; smt().",
+            "while (c{1} = c{2} /\\ size p{1} = size p{2} /\\ size c{1} + size p{1} <= max_cipher_size /\\ 1 <= i{1} /\\ i{1} - 1 + (size p{1} + block_size - 1) %/ block_size <= C.max_counter /\\ n{1} = n0 /\\ mr0 = ROin.m{1} /\\ ms0 = ROout.m{1} /\\ (forall (nn : nonce) (cc : C.counter), (nn, cc) \\in ROF.m{1} => nn \\in n0 :: BNR.lenc{1}) /\\ (forall (cc : C.counter), (n0, cc) \\in ROF.m{1} => C.toint cc < i{1})).",
+            "rcondf{1} 5.",
+            "move=> &m; auto; smt(C.ofintdK gt0_block_size lez_divRL size_ge0 size_eq0).",
+            "rcondt{1} 7.",
+            "move=> &m; auto; smt(C.ofintdK gt0_block_size lez_divRL size_ge0 size_eq0).",
+            "wp.",
+            "rnd (fun (x : block) => extend p{1} +^ x) (fun (x : block) => extend p{1} +^ x).",
+            "wp; skip => />.",
+            "have hinv : forall (a b : block), a +^ (a +^ b) = b by move=> a b; rewrite Block.MB.addmA Block.addK Block.MB.add0m.",
+            "move=> &1 &2 hsz hc hi1 hcnt hdom1 hdom2 hp1 hp2; split; first by move=> zR _; rewrite hinv.",
+            "move=> _ r0L hr0L; split; first by rewrite hinv.",
+            "move=> _; rewrite !get_set_sameE /=.",
+            "smt(size_cat size_take size_drop size_ge0 size_eq0 Block.bytes_of_blockP mem_set C.ofintdK gt0_block_size divzMDl divz_small).",
+            "split; first by rewrite hsz.",
+            "split; last by smt(size_drop size_eq0 gt0_block_size).",
+            "split; first by rewrite hsz.",
+            "split; first by smt(size_drop gt0_block_size).",
+            "split; first by smt(size_cat size_take size_drop Block.bytes_of_blockP gt0_block_size size_ge0).",
+            "split; first by smt().",
+            "split; first by smt(size_drop divzMDl divz_small lez_divRL leq_div2r gt0_block_size size_ge0 size_eq0).",
+            "split; first by smt(mem_set hdom1).",
+            "split; first by smt(mem_set).",
+            "smt(mem_set C.ofintdK lez_divRL leq_div2r divz_small gt0_block_size size_ge0 size_eq0).",
+            "skip.",
+            "smt(size_eq0).",
+            "qed."
+          ]
+        }
+      ]
+    },
+    {
+      "id": "equ_cc__L4__2026-06-08_1940_equ_cc__c855adb2-dirty",
+      "dir": "equ_cc/L4__2026-06-08_1940_equ_cc__c855adb2-dirty",
+      "lemma": "equ_cc",
+      "source": "chacha_poly.ec",
+      "profile": "L4",
+      "model": "claude-opus-4-8",
+      "outcome": "proved",
+      "turns": 62,
+      "trees": 2,
+      "date": "2026-06-08 19:40",
+      "timestamp": "2026-06-08_1940_equ_cc",
+      "commit": "c855adb2",
+      "eval_mode": true,
+      "tier": "public",
+      "proved": true,
+      "view_roots": [],
+      "per_tree": [
+        {
+          "tree": "Tree_0_0",
+          "proved": false,
+          "tactics": [
+            "proc.",
+            "sp.",
+            "while (={c, i} /\\ p{2} = map (fun (_:byte) => witness<:byte>) p{1} /\\ 1 <= i{1} /\\ size c{1} + size p{1} <= max_cipher_size /\\ (p{1} <> [] => size c{1} = (i{1} - 1) * block_size) /\\ ROin.m{1} = mr0 /\\ ROout.m{1} = ms0 /\\ (forall (n1:nonce) (c0:C.counter), (n1, c0) \\in ROF.m{1} => n1 \\in n0 :: BNR.lenc{1}) /\\ (forall (c0:C.counter), (n0, c0) \\in ROF.m{1} => C.toint c0 < i{1})).",
+            "inline{1}.",
+            "rcondf{1} 5.",
+            "move=> &m; wp; skip; rewrite /SplitD.test /=; smt(C.ofintdK max_cipher_size_ok gt0_block_size size_ge0 size_eq0).",
+            "while (={c, i} /\\ n{1} = n0 /\\ p{2} = map (fun (_:byte) => witness<:byte>) p{1} /\\ 1 <= i{1} /\\ size c{1} + size p{1} <= max_cipher_size /\\ (p{1} <> [] => size c{1} = (i{1} - 1) * block_size) /\\ ROin.m{1} = mr0 /\\ ROout.m{1} = ms0 /\\ (forall (n1:nonce) (c0:C.counter), (n1, c0) \\in ROF.m{1} => n1 \\in n0 :: BNR.lenc{1}) /\\ (forall (c0:C.counter), (n0, c0) \\in ROF.m{1} => C.toint c0 < i{1})).",
+            "inline{1}.",
+            "rcondf{1} 5.",
+            "move=> &m; wp; skip; rewrite /SplitD.test /=; smt(C.ofintdK max_cipher_size_ok gt0_block_size size_ge0 size_eq0).",
+            "rcondt{1} 7.",
+            "move=> &m; auto; smt(C.ofintdK max_cipher_size_ok gt0_block_size size_ge0 size_eq0).",
+            "sp; wp.",
+            "rnd (fun r0 => extend p{1} +^ r0) (fun z => extend p{1} +^ z).",
+            "skip.",
+            "move=> &1 &2 />.",
+            "split=> [zR _|hI r0L hr0L]; first by smt(Block.MB.addmA Block.MB.addmC Block.MB.add0m Block.addK).",
+            "move=> hi hsz hcsz hm1 hm2 hp1 hp2; split=> [zR _|hI r0L hr0L]; first by smt(Block.MB.addmA Block.MB.addmC Block.MB.add0m Block.addK).",
+            "split; [by smt(Block.MB.addmA Block.MB.addmC Block.MB.add0m Block.addK) | move=> _; rewrite !get_set_sameE !oget_some !size_map].",
+            "smt(size_cat size_take size_drop size_map size_eq0 Block.bytes_of_blockP gt0_block_size ge0_block_size size_ge0 mem_set C.ofintdK C.gt0_max_counter max_cipher_size_ok map_drop).",
+            "skip."
+          ]
+        },
+        {
+          "tree": "Tree_0_1",
+          "proved": true,
+          "tactics": [
+            "proc.",
+            "sp 2 3.",
+            "while (c{1} = c{2} /\\ i{1} = i{2} /\\ n{1} = n0 /\\ size p{1} = size p{2} /\\ 1 <= i{1} /\\ size c{1} + size p{1} <= max_cipher_size /\\ (p{1} = [] \\/ size c{1} = (i{1} - 1) * block_size) /\\ mr0 = ROin.m{1} /\\ ms0 = ROout.m{1} /\\ (forall (c0 : C.counter), (n0, c0) \\in ROF.m{1} => C.toint c0 < i{1}) /\\ (forall (n1 : nonce) (c0 : C.counter), (n1, c0) \\in ROF.m{1} => n1 \\in n0 :: BNR.lenc{1})).",
+            "inline{1} 1.",
+            "inline{1} 4.",
+            "rcondf{1} 5.",
+            "auto => />; rewrite /SplitD.test /=; smt(C.ofintdK gt0_block_size max_cipher_size_ok C.gt0_max_counter size_eq0 size_ge0).",
+            "inline{1} 5.",
+            "rcondt{1} 7.",
+            "auto => />; smt(C.ofintdK gt0_block_size max_cipher_size_ok C.gt0_max_counter size_eq0 size_ge0).",
+            "sp 5 0.",
+            "wp.",
+            "rnd (fun (w : block) => extend p{1} +^ w) (fun (w : block) => extend p{1} +^ w).",
+            "auto => />.",
+            "smt(Block.xorK1 Block.addK Block.MB.addmA Block.MB.addmC Block.MB.add0m get_setE get_set_sameE mem_set C.ofintdK C.gt0_max_counter gt0_block_size max_cipher_size_ok size_drop size_take size_cat size_eq0 size_ge0).",
+            "move=> &1 &2 hsz hi hbnd hdisj hc1 hc2 hp1 hp2; split.",
+            "move=> zR _; smt(Block.addK Block.MB.addmA Block.MB.add0m Block.MB.addmC).",
+            "move=> hbij r0L hr0L; split; first by smt(Block.addK Block.MB.addmA Block.MB.add0m Block.MB.addmC).",
+            "move=> _; rewrite !get_set_sameE /=.",
+            "split; last by smt(size_drop size_eq0 size_ge0).",
+            "split.",
+            "smt(Block.bytes_of_blockP mem_set size_cat size_take size_drop size_ge0 size_eq0 ge0_block_size gt0_block_size max_cipher_size_ok C.ofintdK C.gt0_max_counter).",
+            "smt(size_drop size_eq0 size_ge0 ge0_block_size gt0_block_size).",
+            "auto => />.",
+            "smt(size_map size_eq0).",
+            "qed."
+          ]
+        }
+      ]
+    },
+    {
+      "id": "step4_lbad1_sum__2026-06-08_1827_step4_lbad1_sum__c855adb2-dirty",
+      "dir": "step4_lbad1_sum/2026-06-08_1827_step4_lbad1_sum__c855adb2-dirty",
+      "lemma": "step4_lbad1_sum",
+      "source": "chacha_poly.ec",
+      "profile": "L4",
+      "model": "claude-opus-4-8",
+      "outcome": "proved",
+      "turns": 42,
+      "trees": 2,
+      "date": "2026-06-08 18:27",
+      "timestamp": "2026-06-08_1827_step4_lbad1_sum",
+      "commit": "c855adb2",
+      "eval_mode": true,
+      "tier": "public",
+      "proved": true,
+      "view_roots": [],
+      "per_tree": [
+        {
+          "tree": "Tree_0_0",
+          "proved": true,
+          "tactics": [
+            "have HP := LP.list_partitioning UFCMA_l tt (fun (_:unit) (g:glob UFCMA_l) (_:unit) => size g <= qdec /\\ exists (p:tag*tag), p \\in g /\\ p.`1 = p.`2) (fun (_:unit) (g:glob UFCMA_l) (_:unit) => find (fun (p:tag*tag) => p.`1 = p.`2) g) (iota_ 0 qdec) &m (iota_uniq 0 qdec).",
+            "have HP := LP.list_partitioning UFCMA_l tt (fun _ g _ => size g <= qdec /\\ exists (p:tag*tag), p \\in g /\\ p.`1 = p.`2) (fun _ g _ => find (fun (p:tag*tag) => p.`1 = p.`2) g) (iota_ 0 qdec) &m (iota_uniq 0 qdec).",
+            "have HP := LP.list_partitioning UFCMA_l tt.",
+            "have EQ := HP (fun _ (g: glob UFCMA_l) _ => size g.`6 <= qdec /\\ exists (p:tag*tag), p \\in g.`6 /\\ p.`1 = p.`2) (fun _ (g: glob UFCMA_l) _ => find (fun (p:tag*tag) => p.`1 = p.`2) g.`6) (iota_ 0 qdec) &m (iota_uniq 0 qdec).",
+            "move: EQ => /= EQ.",
+            "have R0 : Pr[UFCMA_l.f() @ &m : (size UFCMA_l.lbad1 <= qdec /\\ exists (p : tag * tag), (p \\in UFCMA_l.lbad1) /\\ p.`1 = p.`2) /\\ ! (find (fun (p : tag * tag) => p.`1 = p.`2) UFCMA_l.lbad1 \\in iota_ 0 qdec)] = Pr[UFCMA_l.f() @ &m : false] by rewrite Pr[mu_eq] // => &hr; smt(hasP has_find find_ge0 mem_iota size_ge0).",
+            "have R0 : Pr[UFCMA_l.f() @ &m : (size UFCMA_l.lbad1 <= qdec /\\ exists (p : tag * tag), (p \\in UFCMA_l.lbad1) /\\ p.`1 = p.`2) /\\ ! (find (fun (p : tag * tag) => p.`1 = p.`2) UFCMA_l.lbad1 \\in iota_ 0 qdec)] = Pr[UFCMA_l.f() @ &m : false].",
+            "rewrite Pr[mu_eq].",
+            "move=> &hr; rewrite mem_iota; smt(hasP has_find find_ge0).",
+            "move=> &hr; split=> //; case=> [[hsz hex] hnotin]; move: hex => [p [hp hpp]]; have hh: has (fun (p0:tag*tag) => p0.`1 = p0.`2) UFCMA_l.lbad1{hr} by apply/hasP; exists p; smt(); smt(has_find find_ge0 mem_iota).",
+            "move=> &hr; split=> [|//]; move=> [[hsz [p [hp hpp]]] hnotin].",
+            "have hh: has (fun (p0:tag*tag) => p0.`1 = p0.`2) UFCMA_l.lbad1{hr} by apply/List.hasP; exists p; smt().",
+            "have hf := has_find (fun (p0:tag*tag) => p0.`1 = p0.`2) UFCMA_l.lbad1{hr}; have hg := find_ge0 (fun (p0:tag*tag) => p0.`1 = p0.`2) UFCMA_l.lbad1{hr}; move: hnotin; rewrite mem_iota; smt().",
+            "trivial.",
+            "rewrite EQ R0 Pr[mu_false] addr0.",
+            "rewrite EQ.",
+            "rewrite R0.",
+            "rewrite Pr[mu_false] addr0.",
+            "rewrite Pr[mu_false].",
+            "rewrite addr0.",
+            "rewrite RField.addr0.",
+            "apply ler_sum => a _.",
+            "apply ler_sum.",
+            "apply (ler_sum _ (fun (a : int) => Pr[UFCMA_l.f() @ &m : (size UFCMA_l.lbad1 <= qdec /\\ exists (p : tag * tag), (p \\in UFCMA_l.lbad1) /\\ p.`1 = p.`2) /\\ find (fun (p : tag * tag) => p.`1 = p.`2) UFCMA_l.lbad1 = a]) _ _).",
+            "apply Bigreal.ler_sum.",
+            "apply StdBigop.Bigreal.ler_sum.",
+            "move=> a _ /=.",
+            "rewrite Pr[mu_sub].",
+            "move=> &hr [[hsz [p [hp hpp]]] hfind].",
+            "have hh: has (fun (p0:tag*tag) => p0.`1 = p0.`2) UFCMA_l.lbad1{hr} by (apply/List.hasP; exists p; smt()); rewrite -hfind; apply (nth_find (w1,w2) (fun (p0:tag*tag) => p0.`1 = p0.`2) UFCMA_l.lbad1{hr} hh).",
+            "rewrite -hfind; apply (nth_find (w1,w2) (fun (p0:tag*tag) => p0.`1 = p0.`2) UFCMA_l.lbad1{hr} hh).",
+            "trivial.",
+            "qed."
+          ]
+        },
+        {
+          "tree": "Tree_0_1",
+          "proved": false,
+          "tactics": []
+        }
+      ]
+    },
+    {
+      "id": "cpa_ddh0__2026-06-08_1737_cpa_ddh0__c855adb2-dirty",
+      "dir": "cpa_ddh0/2026-06-08_1737_cpa_ddh0__c855adb2-dirty",
+      "lemma": "cpa_ddh0",
+      "source": "elgamal.ec",
+      "profile": "L4",
+      "model": "claude-opus-4-8",
+      "outcome": "proved",
+      "turns": 24,
+      "trees": 2,
+      "date": "2026-06-08 17:37",
+      "timestamp": "2026-06-08_1737_cpa_ddh0",
+      "commit": "c855adb2",
+      "eval_mode": true,
+      "tier": "public",
+      "proved": true,
+      "view_roots": [],
+      "per_tree": [
+        {
+          "tree": "Tree_0_0",
+          "proved": true,
+          "tactics": [
+            "byequiv => //.",
+            "proc.",
+            "inline *.",
+            "swap{1} 7 -5.",
+            "wp.",
+            "call (_: true).",
+            "wp.",
+            "rnd.",
+            "call (_: true).",
+            "wp.",
+            "auto.",
+            "smt(expM).",
+            "qed."
+          ]
+        },
+        {
+          "tree": "Tree_0_1",
+          "proved": false,
+          "tactics": [
+            "byequiv=> //.",
+            "proc.",
+            "inline *.",
+            "swap{1} 7 -5.",
+            "call (_: true).",
+            "wp.",
+            "call (_: true).",
+            "wp.",
+            "rnd.",
+            "call (_: true)."
+          ]
+        }
+      ]
+    },
+    {
+      "id": "step2_1__2026-06-08_1656_step2_1__95d4bbf9-dirty",
+      "dir": "step2_1/2026-06-08_1656_step2_1__95d4bbf9-dirty",
+      "lemma": "step2_1",
+      "source": "chacha_poly.ec",
+      "profile": "L4",
+      "model": "claude-opus-4-8",
+      "outcome": "proved",
+      "turns": 43,
+      "trees": 2,
+      "date": "2026-06-08 16:56",
+      "timestamp": "2026-06-08_1656_step2_1",
+      "commit": "95d4bbf9",
+      "eval_mode": true,
+      "tier": "public",
+      "proved": true,
+      "view_roots": [],
+      "per_tree": [
+        {
+          "tree": "Tree_0_0",
+          "proved": true,
+          "tactics": [
+            "have ->: Pr[CCA_game(A, RealOrcls(OChaChaPoly(IFinRO))).main() @ &m : res] = Pr[CCA_game(A, RealOrcls(StLSke(St))).main() @ &m : res].",
+            "byequiv (_: ={glob A} ==> ={res}) => //.",
+            "proc.",
+            "call (_: ={Mem.k} /\\ OpCCRO.OCC.gs{1} = StLSke.gs{2}).",
+            "proc; inline *; auto.",
+            "move=> &1 &2 [-> [-> ->]]; rewrite /enc /get /=.",
+            "smt().",
+            "proc; inline *; auto.",
+            "move=> &1 &2 [-> [-> ->]]; rewrite /dec /get /=; smt().",
+            "inline *; auto.",
+            "sim.",
+            "conseq (_: _ ==> ={glob A} /\\ RO.m{1} = RO.m{2}); first by smt().",
+            "sim.",
+            "apply (CCA_UFCMA.CCA_CPA_UFCMA St _ _ A _ &m).",
+            "proc; sim.",
+            "proc; auto.",
+            "apply A_ll.",
+            "qed."
+          ]
+        },
+        {
+          "tree": "Tree_0_1",
+          "proved": false,
+          "tactics": [
+            "have ->: Pr[CCA_game(A, RealOrcls(OChaChaPoly(IFinRO))).main() @ &m : res] = Pr[CCA_game(A, RealOrcls(StLSke(St))).main() @ &m : res].",
+            "byequiv (_: ={glob A} ==> ={res}) => //.",
+            "proc.",
+            "call (_: ={glob Mem} /\\ OpCCRO.OCC.gs{1} = StLSke.gs{2}).",
+            "proc.",
+            "inline *; wp; skip => />.",
+            "by move=> &2; rewrite /enc /get /=.",
+            "move=> &2.",
+            "rewrite /enc /=.",
+            "rewrite /get; case: (p{2}) => n a p1 /=.",
+            "done.",
+            "proc; inline *; wp; skip => />.",
+            "by move=> &2; rewrite /dec /get; case: (c{2}) => n a c0 t /=; smt()."
+          ]
+        }
+      ]
+    },
+    {
+      "id": "step2_1__2026-06-08_1612_step2_1__95d4bbf9-dirty",
+      "dir": "step2_1/2026-06-08_1612_step2_1__95d4bbf9-dirty",
+      "lemma": "step2_1",
+      "source": "chacha_poly.ec",
+      "profile": "L1",
+      "model": "claude-opus-4-8",
+      "outcome": "proved",
+      "turns": 39,
+      "trees": 2,
+      "date": "2026-06-08 16:12",
+      "timestamp": "2026-06-08_1612_step2_1",
+      "commit": "95d4bbf9",
+      "eval_mode": true,
+      "tier": "public",
+      "proved": true,
+      "view_roots": [],
+      "per_tree": [
+        {
+          "tree": "Tree_0_0",
+          "proved": false,
+          "tactics": [
+            "have <- : Pr[CCA_game(A, RealOrcls(StLSke(St))).main() @ &m : res] = Pr[CCA_game(A, RealOrcls(OChaChaPoly(IFinRO))).main() @ &m : res].",
+            "byequiv => //; proc.",
+            "call (_: StLSke.gs{1} = OpCCRO.OCC.gs{2} /\\ ={Mem.k}).",
+            "proc; inline *; wp; skip => />.",
+            "move=> &2; rewrite /enc /get //=.",
+            "by case: (p{2}).",
+            "proc; inline *; wp; skip => />.",
+            "move=> &2; case: (c{2}) => n a c0 t /=; rewrite /dec /get /=; smt().",
+            "inline *; sim.",
+            "conseq (: _ ==> (glob A){1} = (glob A){2} /\\ StLSke.gs{1} = OCC.gs{2} /\\ Mem.k{1} = Mem.k{2}).",
+            "smt().",
+            "inline *; wp; rnd; sim.",
+            "apply (CCA_UFCMA.CCA_CPA_UFCMA St _ _ A A_ll &m).",
+            "proc; sim."
+          ]
+        },
+        {
+          "tree": "Tree_0_1",
+          "proved": true,
+          "tactics": [
+            "have hL : Pr[CCA_game(A, RealOrcls(OChaChaPoly(IFinRO))).main() @ &m : res] = Pr[CCA_game(A, RealOrcls(StLSke(St))).main() @ &m : res].",
+            "byequiv => //.",
+            "proc.",
+            "call (_: ={Mem.k} /\\ OCC.gs{1} = StLSke.gs{2}).",
+            "proc; inline *.",
+            "wp; skip => />.",
+            "move=> &2; rewrite /enc /get /=.",
+            "by case: p{2}.",
+            "smt().",
+            "proc; inline *.",
+            "wp; skip => />.",
+            "move=> &2; rewrite /dec /get /=; smt().",
+            "inline *; sim.",
+            "conseq (_ : _ ==> ={glob A} /\\ Mem.k{1} = Mem.k{2} /\\ OCC.gs{1} = StLSke.gs{2}).",
+            "by move=> />.",
+            "inline *; sim.",
+            "rewrite hL.",
+            "apply (CCA_UFCMA.CCA_CPA_UFCMA St A &m).",
+            "apply (CCA_UFCMA.CCA_CPA_UFCMA St _ _ A _ &m).",
+            "sim.",
+            "proc; auto.",
+            "apply A_ll.",
+            "qed."
+          ]
+        }
+      ]
+    },
+    {
+      "id": "D6_Sample__L4__2026-06-06_1601_D6_Sample__e4a69e8-dirty",
+      "dir": "D6_Sample/L4__2026-06-06_1601_D6_Sample__e4a69e8-dirty",
+      "lemma": "D6_Sample",
+      "source": "Dice4_6.ec",
+      "profile": "L4",
+      "model": "claude-opus-4-8",
+      "outcome": "proved",
+      "turns": 13,
+      "trees": 1,
+      "date": "2026-06-06 16:01",
+      "timestamp": "2026-06-06_1601_D6_Sample",
+      "commit": "e4a69e8",
+      "eval_mode": true,
+      "tier": "public",
+      "proved": true,
+      "view_roots": [],
+      "per_tree": [
+        {
+          "tree": "Tree_0_0",
+          "proved": true,
+          "tactics": [
+            "proc.",
+            "sp.",
+            "while (={r} /\\ 1 <= r{1} <= 6).",
+            "auto=> />; smt(supp_dinter).",
+            "skip=> /> /#.",
+            "qed."
+          ]
+        }
+      ]
+    },
+    {
+      "id": "pedersen_correctness__L1__2026-06-06_1556_pedersen_correctness__e4a69e8-dirty",
+      "dir": "pedersen_correctness/L1__2026-06-06_1556_pedersen_correctness__e4a69e8-dirty",
+      "lemma": "pedersen_correctness",
+      "source": "Pedersen.ec",
+      "profile": "L1",
+      "model": "claude-opus-4-8",
+      "outcome": "proved",
+      "turns": 9,
+      "trees": 1,
+      "date": "2026-06-06 15:56",
+      "timestamp": "2026-06-06_1556_pedersen_correctness",
+      "commit": "e4a69e8",
+      "eval_mode": true,
+      "tier": "public",
+      "proved": true,
+      "view_roots": [],
+      "per_tree": [
+        {
+          "tree": "Tree_0_0",
+          "proved": true,
+          "tactics": [
+            "proc.",
+            "inline *.",
+            "inline Pedersen.gen Pedersen.commit Pedersen.verify.",
+            "inline.",
+            "sp.",
+            "inline *.",
+            "inline *; auto.",
+            "qed."
+          ]
+        }
+      ]
+    },
+    {
+      "id": "CramerShoup_correct__L1__2026-06-06_1550_CramerShoup_correct__e4a69e8-dirty",
+      "dir": "CramerShoup_correct/L1__2026-06-06_1550_CramerShoup_correct__e4a69e8-dirty",
+      "lemma": "CramerShoup_correct",
+      "source": "cramer_shoup.ec",
+      "profile": "L1",
+      "model": "claude-opus-4-8",
+      "outcome": "proved",
+      "turns": 11,
+      "trees": 1,
+      "date": "2026-06-06 15:50",
+      "timestamp": "2026-06-06_1550_CramerShoup_correct",
+      "commit": "e4a69e8",
+      "eval_mode": true,
+      "tier": "public",
+      "proved": true,
+      "view_roots": [],
+      "per_tree": [
+        {
+          "tree": "Tree_0_0",
+          "proved": true,
+          "tactics": [
+            "proc; inline *; auto.",
+            "move=> &hr _ x1 _ x2 _ y1 _ y2 _ z1 _ z2 _ w _ k _ /= u _ /=.",
+            "pose v := H k (DH.G.g ^ u, DH.G.g ^ w ^ u, (DH.G.g ^ z1 * DH.G.g ^ w ^ z2) ^ u * m{hr}).",
+            "have hd : (DH.G.g ^ x1 * DH.G.g ^ w ^ x2) ^ u * (DH.G.g ^ y1 * DH.G.g ^ w ^ y2) ^ (u * v) = DH.G.g ^ u ^ (x1 + v * y1) * DH.G.g ^ w ^ u ^ (x2 + v * y2) by rewrite log_bij !(logg1, logrzM, logDr); ring.",
+            "have hc : (DH.G.g ^ z1 * DH.G.g ^ w ^ z2) ^ u * m{hr} / (DH.G.g ^ u ^ z1 * DH.G.g ^ w ^ u ^ z2) = m{hr} by rewrite log_bij !(logg1, logrzM, logDr, logDrN); ring.",
+            "have hc : (DH.G.g ^ z1 * DH.G.g ^ w ^ z2) ^ u * m{hr} / (DH.G.g ^ u ^ z1 * DH.G.g ^ w ^ u ^ z2) = m{hr} by rewrite log_bij !(logg1, logrzM, logDr, logrV); ring.",
+            "by rewrite hd eqxx /= hc.",
+            "rewrite hd /=.",
+            "exact hc.",
+            "qed."
+          ]
+        }
+      ]
+    },
+    {
+      "id": "chacha_spec__L4__2026-06-06_1533_chacha_spec__e4a69e8-dirty",
+      "dir": "chacha_spec/L4__2026-06-06_1533_chacha_spec__e4a69e8-dirty",
+      "lemma": "chacha_spec",
+      "source": "chacha_poly.ec",
+      "profile": "L4",
+      "model": "claude-opus-4-8",
+      "outcome": "proved",
+      "turns": 41,
+      "trees": 1,
+      "date": "2026-06-06 15:33",
+      "timestamp": "2026-06-06_1533_chacha_spec",
+      "commit": "e4a69e8",
+      "eval_mode": true,
+      "tier": "public",
+      "proved": true,
+      "view_roots": [],
+      "per_tree": [
+        {
+          "tree": "Tree_0_0",
+          "proved": true,
+          "tactics": [
+            "proc.",
+            "while (k = k0 /\\ n = n0 /\\ OCC.gs = gs0 /\\ 1 <= i /\\ c ++ gen_CTR_encrypt_bytes take_xor (cc gs0) k0 n0 i p = gen_CTR_encrypt_bytes take_xor (cc gs0) k0 n0 1 p0) (size p).",
+            "move=> sz; inline OCC(I).cc; wp; skip.",
+            "move=> &hr [[H1 Hne] Hsz]; move: H1 => [eqk [eqn [eqgs [ge1i Heq]]]].",
+            "rewrite eqk eqn eqgs /=.",
+            "have Hnil: forall s, take_xor [] s = [].",
+            "move=> s; rewrite /take_xor /= take0 //.",
+            "split; last by smt(size_drop size_ge0 gt0_block_size size_eq0).",
+            "split; first by smt(). rewrite -Heq (gen_CTR_encrypt_bytes_cons take_xor (cc gs0) k0 n0 i{hr} p{hr} Hnil) /take_xor catA //.",
+            "wp; skip.",
+            "have Hnil: forall s, take_xor [] s = [].",
+            "move=> s; rewrite /take_xor /= take0 //.",
+            "move=> &hr /= [eqk [eqn [eqp eqgs]]].",
+            "split; first by rewrite eqk eqn eqgs eqp /=. move=> c0 i0 p1; split; first by smt(size_ge0 size_eq0). by move=> ->; rewrite (gen_CTR_encrypt_bytes0 take_xor (cc gs0) k0 n0 i0 Hnil) cats0; smt().",
+            "qed."
+          ]
+        }
+      ]
+    },
+    {
+      "id": "formatI__L4__2026-06-06_1339_formatI__e4a69e8-dirty",
+      "dir": "formatI/L4__2026-06-06_1339_formatI__e4a69e8-dirty",
+      "lemma": "formatI",
+      "source": "br93.ec",
+      "profile": "L4",
+      "model": "claude-opus-4-8",
+      "outcome": "proved",
+      "turns": 6,
+      "trees": 1,
+      "date": "2026-06-06 13:39",
+      "timestamp": "2026-06-06_1339_formatI",
+      "commit": "e4a69e8",
+      "eval_mode": true,
+      "tier": "public",
+      "proved": true,
+      "view_roots": [],
+      "per_tree": [
+        {
+          "tree": "Tree_0_0",
+          "proved": true,
+          "tactics": [
+            "by move=> h; rewrite -parseK -parseK h.",
+            "qed."
+          ]
+        }
+      ]
+    },
+    {
+      "id": "formatI__L1__2026-06-06_1337_formatI__e4a69e8-dirty",
+      "dir": "formatI/L1__2026-06-06_1337_formatI__e4a69e8-dirty",
+      "lemma": "formatI",
+      "source": "br93.ec",
+      "profile": "L1",
+      "model": "claude-opus-4-8",
+      "outcome": "proved",
+      "turns": 8,
+      "trees": 1,
+      "date": "2026-06-06 13:37",
+      "timestamp": "2026-06-06_1337_formatI",
+      "commit": "e4a69e8",
+      "eval_mode": true,
+      "tier": "public",
+      "proved": true,
+      "view_roots": [],
+      "per_tree": [
+        {
+          "tree": "Tree_0_0",
+          "proved": true,
+          "tactics": [
+            "move=> h.",
+            "rewrite -(parseK r p) -(parseK r' p') h.",
+            "rewrite -(parseK r p) -(parseK r' p').",
+            "have h1 := parseK r p.",
+            "rewrite h parseK in h1.",
+            "by rewrite h1.",
+            "qed."
+          ]
+        }
+      ]
+    },
+    {
+      "id": "eq_Game1_Game2__L4__2026-06-06_1331_eq_Game1_Game2__e4a69e8-dirty",
+      "dir": "eq_Game1_Game2/L4__2026-06-06_1331_eq_Game1_Game2__e4a69e8-dirty",
+      "lemma": "eq_Game1_Game2",
+      "source": "br93.ec",
+      "profile": "L4",
+      "model": "claude-opus-4-8",
+      "outcome": "proved",
+      "turns": 22,
+      "trees": 1,
+      "date": "2026-06-06 13:31",
+      "timestamp": "2026-06-06_1331_eq_Game1_Game2",
+      "commit": "e4a69e8",
+      "eval_mode": true,
+      "tier": "public",
+      "proved": true,
+      "view_roots": [],
+      "per_tree": [
+        {
+          "tree": "Tree_0_0",
+          "proved": true,
+          "tactics": [
+            "proc.",
+            "call (_: ={glob Log, glob LRO}).",
+            "sim.",
+            "wp.",
+            "rnd (fun (x : ptxt) => x +^ (if b{1} then m0{1} else m1{1})).",
+            "conseq (_ : _ ==> ={glob A, Log.qs, LRO.m, pk, b} /\\ Game1.r{1} = Game2.r{2}).",
+            "smt(addpK dptxt_funi dptxt_fu).",
+            "sim.",
+            "qed."
+          ]
+        }
+      ]
+    },
+    {
+      "id": "eq_Game1_Game2__L1__2026-06-06_1325_eq_Game1_Game2__e4a69e8-dirty",
+      "dir": "eq_Game1_Game2/L1__2026-06-06_1325_eq_Game1_Game2__e4a69e8-dirty",
+      "lemma": "eq_Game1_Game2",
+      "source": "br93.ec",
+      "profile": "L1",
+      "model": "claude-opus-4-8",
+      "outcome": "proved",
+      "turns": 12,
+      "trees": 1,
+      "date": "2026-06-06 13:25",
+      "timestamp": "2026-06-06_1325_eq_Game1_Game2",
+      "commit": "e4a69e8",
+      "eval_mode": true,
+      "tier": "public",
+      "proved": true,
+      "view_roots": [],
+      "per_tree": [
+        {
+          "tree": "Tree_0_0",
+          "proved": true,
+          "tactics": [
+            "proc.",
+            "seq 4 4 : (={glob A, glob Log, glob LRO, pk, m0, m1, b}).",
+            "sim.",
+            "call (_: ={glob Log, glob LRO}).",
+            "sim.",
+            "wp.",
+            "rnd (fun (z:ptxt) => z +^ (if b{2} then m0{2} else m1{2})) (fun (z:ptxt) => z +^ (if b{2} then m0{2} else m1{2})).",
+            "rnd.",
+            "skip.",
+            "smt(addpK dptxt_funi dptxt_fu).",
+            "qed."
+          ]
+        }
+      ]
+    },
+    {
+      "id": "schnorr_proof_of_knowledge_shvzk__L1__2026-06-06_0539_schnorr_proof_of_knowledge_shvzk__e4a69e8-dirty",
+      "dir": "schnorr_proof_of_knowledge_shvzk/L1__2026-06-06_0539_schnorr_proof_of_knowledge_shvzk__e4a69e8-dirty",
+      "lemma": "schnorr_proof_of_knowledge_shvzk",
+      "source": "SchnorrPK.ec",
+      "profile": "L1",
+      "model": "claude-opus-4-8",
+      "outcome": "proved",
+      "turns": 23,
+      "trees": 1,
+      "date": "2026-06-06 05:39",
+      "timestamp": "2026-06-06_0539_schnorr_proof_of_knowledge_shvzk",
+      "commit": "e4a69e8",
+      "eval_mode": true,
+      "tier": "public",
+      "proved": true,
+      "view_roots": [],
+      "per_tree": [
+        {
+          "tree": "Tree_0_0",
+          "proved": true,
+          "tactics": [
+            "byequiv (_: ={glob D} ==> ={res}) => //.",
+            "proc.",
+            "inline *.",
+            "rcondf{1} 28.",
+            "move=> &m0; auto => />.",
+            "move=> w00 _; split=> _ r1 _ e6 _ z10 _; rewrite log_bij !(loggK, logDr, logrzM); ring.",
+            "swap{2} 12 -5.",
+            "call (_: true).",
+            "rcondt{1} 25.",
+            "move=> &m0; auto => />; move=> w00 _; split=> _ r1 _ e6 _ z10 _; rewrite log_bij !(loggK, logDr, logrzM); ring.",
+            "wp.",
+            "rnd (fun (z:exp) => z - e1{2}*w{2}) (fun (r:exp) => r + e1{2}*w{2}).",
+            "wp; rnd.",
+            "wp.",
+            "rnd{1}.",
+            "wp.",
+            "rnd; skip => />.",
+            "move=> w0L _; split=> _ r1 _ eL _; (split; first by move=> rR _; ring); move=> _ z1L _; split; first by ring; move=> _; rewrite log_bij !(loggK, logDr, logrzM); ring.",
+            "move=> _; rewrite log_bij !(loggK, logDr, logrzM); ring.",
+            "ring.",
+            "move=> _; rewrite log_bij !(loggK, logDr, logrzM); ring.",
+            "qed."
+          ]
+        }
+      ]
+    },
+    {
+      "id": "pedersen_correctness__L4__2026-06-06_0538_pedersen_correctness__e4a69e8-dirty",
+      "dir": "pedersen_correctness/L4__2026-06-06_0538_pedersen_correctness__e4a69e8-dirty",
+      "lemma": "pedersen_correctness",
+      "source": "Pedersen.ec",
+      "profile": "L4",
+      "model": "claude-opus-4-8",
+      "outcome": "proved",
+      "turns": 4,
+      "trees": 1,
+      "date": "2026-06-06 05:38",
+      "timestamp": "2026-06-06_0538_pedersen_correctness",
+      "commit": "e4a69e8",
+      "eval_mode": true,
+      "tier": "public",
+      "proved": true,
+      "view_roots": [],
+      "per_tree": [
+        {
+          "tree": "Tree_0_0",
+          "proved": true,
+          "tactics": [
+            "proc; inline *; auto.",
+            "qed."
+          ]
+        }
+      ]
+    },
+    {
+      "id": "CramerShoup_correct__L4__2026-06-06_0438_CramerShoup_correct__e4a69e8-dirty",
+      "dir": "CramerShoup_correct/L4__2026-06-06_0438_CramerShoup_correct__e4a69e8-dirty",
+      "lemma": "CramerShoup_correct",
+      "source": "cramer_shoup.ec",
+      "profile": "L4",
+      "model": "claude-opus-4-8",
+      "outcome": "proved",
+      "turns": 22,
+      "trees": 1,
+      "date": "2026-06-06 04:38",
+      "timestamp": "2026-06-06_0438_CramerShoup_correct",
+      "commit": "e4a69e8",
+      "eval_mode": true,
+      "tier": "public",
+      "proved": true,
+      "view_roots": [],
+      "per_tree": [
+        {
+          "tree": "Tree_0_0",
+          "proved": true,
+          "tactics": [
+            "proc.",
+            "inline *; auto.",
+            "move=> &hr _ x1 hx1 x2 hx2 y1 hy1 y2 hy2 z1 hz1 z2 hz2 w hw k hk /= u hu /=.",
+            "pose V := H k (DH.G.g ^ u, DH.G.g ^ w ^ u, (DH.G.g ^ z1 * DH.G.g ^ w ^ z2) ^ u * m{hr}); have hc: (DH.G.g ^ x1 * DH.G.g ^ w ^ x2) ^ u * (DH.G.g ^ y1 * DH.G.g ^ w ^ y2) ^ (u * V) = DH.G.g ^ u ^ (x1 + V * y1) * DH.G.g ^ w ^ u ^ (x2 + V * y2); first by rewrite log_bij !(logg1, logrzM, logDr); ring.",
+            "rewrite hc /=; have hD: (DH.G.g ^ z1 * DH.G.g ^ w ^ z2) ^ u = DH.G.g ^ u ^ z1 * DH.G.g ^ w ^ u ^ z2; first by rewrite log_bij !(logg1, logrzM, logDr); ring. rewrite -hD log_bij !(logg1, logrzM, logDr) -expN !(logg1, logrzM, logDr); ring.",
+            "qed."
+          ]
+        }
+      ]
+    },
+    {
+      "id": "D6_Sample__L1__2026-06-06_0428_D6_Sample__e4a69e8-dirty",
+      "dir": "D6_Sample/L1__2026-06-06_0428_D6_Sample__e4a69e8-dirty",
+      "lemma": "D6_Sample",
+      "source": "Dice4_6.ec",
+      "profile": "L1",
+      "model": "claude-opus-4-8",
+      "outcome": "proved",
+      "turns": 7,
+      "trees": 1,
+      "date": "2026-06-06 04:28",
+      "timestamp": "2026-06-06_0428_D6_Sample",
+      "commit": "e4a69e8",
+      "eval_mode": true,
+      "tier": "public",
+      "proved": true,
+      "view_roots": [],
+      "per_tree": [
+        {
+          "tree": "Tree_0_0",
+          "proved": true,
+          "tactics": [
+            "proc.",
+            "sp.",
+            "while (={r} /\\ 1 <= r{1} <= 6).",
+            "auto=> />; smt(supp_dinter).",
+            "skip=> /> /#.",
+            "qed."
+          ]
+        }
+      ]
+    },
+    {
+      "id": "chacha_spec__L1__2026-06-06_0404_chacha_spec__e4a69e8-dirty",
+      "dir": "chacha_spec/L1__2026-06-06_0404_chacha_spec__e4a69e8-dirty",
+      "lemma": "chacha_spec",
+      "source": "chacha_poly.ec",
+      "profile": "L1",
+      "model": "claude-opus-4-8",
+      "outcome": "proved",
+      "turns": 30,
+      "trees": 1,
+      "date": "2026-06-06 04:04",
+      "timestamp": "2026-06-06_0404_chacha_spec",
+      "commit": "e4a69e8",
+      "eval_mode": true,
+      "tier": "public",
+      "proved": true,
+      "view_roots": [],
+      "per_tree": [
+        {
+          "tree": "Tree_0_0",
+          "proved": false,
+          "tactics": [
+            "have htake_xor : forall str, take_xor [] str = [].",
+            "by move=> str; rewrite /take_xor take0.",
+            "proc.",
+            "inline OCC(I).cc.",
+            "inline.",
+            "sp.",
+            "while (OCC.gs = gs0 /\\ k = k0 /\\ n = n0 /\\ c ++ gen_CTR_encrypt_bytes take_xor (cc gs0) k0 n0 i p = gen_CTR_encrypt_bytes take_xor (cc gs0) k0 n0 1 p0) (size p).",
+            "move=> bnd.",
+            "inline OCC(I).cc.",
+            "inline.",
+            "inline (1).",
+            "call (_: true ==> res = cc OCC.gs k n c).",
+            "have cc_spec: phoare[OCC(I).cc : true ==> res = cc OCC.gs k n c] = 1%r."
+          ]
+        },
+        {
+          "tree": "Tree_0_0_0",
+          "proved": true,
+          "tactics": [
+            "inline OCC(I).cc.",
+            "inline.",
+            "wp.",
+            "inline *.",
+            "exists* OCC.gs, k, n, i.",
+            "elim* => gsv kv nv iv.",
+            "call (_: k = kv /\\ n = nv /\\ c = C.ofintd iv /\\ OCC.gs = gsv ==> res = cc gsv kv nv (C.ofintd iv)).",
+            "proc; auto => /#.",
+            "skip => />.",
+            "move=> &hr Heq Hne; split; last by smt(size_drop gt0_block_size size_eq0 size_ge0).",
+            "rewrite -Heq (gen_CTR_encrypt_bytes_cons take_xor (cc gs0) k0 n0 iv p{hr} htake_xor) /take_xor //.",
+            "by rewrite catA.",
+            "skip => />.",
+            "move=> c0 i0 p1; split=> [hi hle|]; first by smt(size_eq0 size_ge0).",
+            "by rewrite (gen_CTR_encrypt_bytes0 take_xor (cc gs0) k0 n0 i0 htake_xor) cats0.",
+            "qed."
+          ]
+        }
+      ]
+    },
+    {
+      "id": "mee_decrypt_correct__2026-06-06_0130_mee_decrypt_correct__80bd763-dirty",
+      "dir": "mee_decrypt_correct/2026-06-06_0130_mee_decrypt_correct__80bd763-dirty",
+      "lemma": "mee_decrypt_correct",
+      "source": "FunctionalSpec.ec",
+      "profile": "L4",
+      "model": "claude-opus-4-6",
+      "outcome": "open",
+      "turns": 48,
+      "trees": 2,
+      "date": "2026-06-06 01:30",
+      "timestamp": "2026-06-06_0130_mee_decrypt_correct",
+      "commit": "80bd763",
+      "eval_mode": true,
+      "tier": "public",
+      "proved": false,
+      "view_roots": [],
+      "per_tree": [
+        {
+          "tree": "Tree_0_0",
+          "proved": false,
+          "tactics": [
+            "proc.",
+            "sp.",
+            "seq 1 : (padded = cbc_dec AESi _ek (head witness _c) (behead _c) /\\ ek = _ek /\\ mk = _mk /\\ p = None).",
+            "while (true)."
+          ]
+        },
+        {
+          "tree": "Tree_0_1",
+          "proved": false,
+          "tactics": [
+            "proc.",
+            "sp.",
+            "seq 1 : (padded = cbc_dec AESi _ek (head witness _c) (behead _c) /\\ mk = _mk /\\ p = None).",
+            "while (true).",
+            "wp; call (_: true); auto.",
+            "auto.",
+            "while (0 <= i /\\ i <= size c /\\ padded = cbc_dec AESi ek (head witness _c) (take i c) /\\ s = last (head witness _c) (take i c) /\\ p = None /\\ ek = _ek /\\ mk = _mk /\\ c = behead _c) (size c - i).",
+            "move=> z.",
+            "wp."
+          ]
+        }
+      ]
+    },
+    {
+      "id": "CBC_upto__2026-06-05_0958_CBC_upto__6f50851-dirty",
+      "dir": "CBC_upto/2026-06-05_0958_CBC_upto__6f50851-dirty",
+      "lemma": "CBC_upto",
+      "source": "CBC.eca",
+      "profile": "L1",
+      "model": "claude-opus-4-8",
+      "outcome": "proved",
+      "turns": 104,
+      "trees": 1,
+      "date": "2026-06-05 09:58",
+      "timestamp": "2026-06-05_0958_CBC_upto",
+      "commit": "6f50851",
+      "eval_mode": true,
+      "tier": "public",
+      "proved": true,
+      "view_roots": [],
+      "per_tree": [
+        {
+          "tree": "Tree_0_0",
+          "proved": true,
+          "tactics": [
+            "rewrite (doublequery_eq PRFi &m) (doublequery_eq Sample &m).",
+            "rewrite -(DQ_Sample_Compute_pr &m).",
+            "byequiv (_: ={glob A} ==> ={DoubleQuery.bad} /\\ (!DoubleQuery.bad{2} => ={res})).",
+            "byequiv: DoubleQuery.bad => //.",
+            "proc.",
+            "call (_: DoubleQuery.bad, ={DoubleQuery.qs} /\\ fdom PRFi.m{1} = DoubleQuery.qs{1}).",
+            "exact A_distinguish_ll.",
+            "proc.",
+            "seq 3 3: (={i, s, c, p} /\\ !DoubleQuery.bad{2} /\\ ={DoubleQuery.qs} /\\ fdom PRFi.m{1} = DoubleQuery.qs{1}).",
+            "auto.",
+            "while (={i, p} /\\ (!DoubleQuery.bad{2} => ={s, c, DoubleQuery.qs} /\\ fdom PRFi.m{1} = DoubleQuery.qs{1})).",
+            "inline *.",
+            "case (DoubleQuery.bad{2}).",
+            "conseq (_: _ ==> DoubleQuery.bad{2} /\\ i{1} = i{2} /\\ p{1} = p{2}).",
+            "smt().",
+            "wp.",
+            "rnd{2}.",
+            "seq 4 4: (DoubleQuery.bad{2} /\\ i{1} = i{2} /\\ p{1} = p{2}).",
+            "auto.",
+            "if{1}.",
+            "auto; smt(dBlock_uffu).",
+            "auto; smt(dBlock_uffu).",
+            "sp.",
+            "seq 2 2: (={i, s, c, p, x, DoubleQuery.qs} /\\ fdom PRFi.m{1} = DoubleQuery.qs{1} /\\ !DoubleQuery.bad{2} /\\ i{1} < size p{1} /\\ i{2} < size p{2}).",
+            "auto.",
+            "smt().",
+            "if.",
+            "smt().",
+            "rcondf{1} 3.",
+            "auto; smt(mem_fdom).",
+            "wp.",
+            "rnd{2}.",
+            "auto; smt(dBlock_uffu).",
+            "rcondt{1} 2.",
+            "auto; smt(mem_fdom).",
+            "auto; smt(get_set_sameE fdom_set).",
+            "auto; smt().",
+            "move=> &2 _; proc; inline*.",
+            "while (true) (size p - i).",
+            "move=> z; auto; smt(dBlock_uffu).",
+            "move=> z; auto.",
+            "sp 4.",
+            "if; auto; smt(dBlock_uffu).",
+            "auto; smt(dBlock_uffu).",
+            "move=> _; proc; inline*.",
+            "while (DoubleQuery.bad) (size p - i).",
+            "move=> z; auto; smt(dBlock_uffu).",
+            "auto; smt(dBlock_uffu).",
+            "inline*; auto; smt(fdom0).",
+            "rewrite (doublequery_eq PRFi &m) (doublequery_eq Sample &m).",
+            "rewrite -(DQ_Sample_Compute_pr &m).",
+            "byequiv: DoubleQuery.bad => //.",
+            "proc.",
+            "call (_: DoubleQuery.bad, ={DoubleQuery.qs} /\\ fdom PRFi.m{1} = DoubleQuery.qs{1} /\\ DoubleQuery.bad{1} = DoubleQuery.bad{2}, DoubleQuery.bad{1} = DoubleQuery.bad{2}).",
+            "exact A_distinguish_ll.",
+            "proc.",
+            "seq 3 3: (={i, s, c, p} /\\ !DoubleQuery.bad{2} /\\ ={DoubleQuery.qs} /\\ fdom PRFi.m{1} = DoubleQuery.qs{1} /\\ DoubleQuery.bad{1} = DoubleQuery.bad{2}).",
+            "auto.",
+            "while (={i, p} /\\ DoubleQuery.bad{1} = DoubleQuery.bad{2} /\\ (!DoubleQuery.bad{2} => ={s, c, DoubleQuery.qs} /\\ fdom PRFi.m{1} = DoubleQuery.qs{1})).",
+            "inline *.",
+            "case (DoubleQuery.bad{2}).",
+            "conseq (_: _ ==> DoubleQuery.bad{1} /\\ DoubleQuery.bad{2} /\\ i{1} = i{2} /\\ p{1} = p{2}).",
+            "smt().",
+            "wp.",
+            "rnd{2}.",
+            "seq 4 4: (DoubleQuery.bad{1} /\\ DoubleQuery.bad{2} /\\ i{1} = i{2} /\\ p{1} = p{2}).",
+            "sp.",
+            "auto; smt().",
+            "if{1}.",
+            "auto; smt(dBlock_uffu).",
+            "auto; smt(dBlock_uffu).",
+            "seq 2 2: (={i, s, c, p, x, DoubleQuery.qs} /\\ fdom PRFi.m{1} = DoubleQuery.qs{1} /\\ !DoubleQuery.bad{2} /\\ DoubleQuery.bad{1} = DoubleQuery.bad{2} /\\ i{1} < size p{1} /\\ i{2} < size p{2}).",
+            "auto.",
+            "smt().",
+            "if.",
+            "smt().",
+            "rcondf{1} 3.",
+            "auto; smt(mem_fdom).",
+            "wp.",
+            "rnd{2}.",
+            "auto; smt(dBlock_uffu).",
+            "rcondt{1} 2.",
+            "auto; smt(mem_fdom).",
+            "auto; smt(get_set_sameE fdom_set).",
+            "auto; smt().",
+            "move=> &2 hbad; proc; inline*.",
+            "while (DoubleQuery.bad) (size p - i).",
+            "move=> z; auto.",
+            "sp 4.",
+            "if; auto; smt(dBlock_uffu).",
+            "auto; smt(dBlock_uffu).",
+            "move=> &1; proc; inline*.",
+            "while (DoubleQuery.bad /\\ DoubleQuery.bad{1} = DoubleQuery.bad) (size p - i).",
+            "move=> z; auto; smt(dBlock_uffu).",
+            "auto; smt(dBlock_uffu).",
+            "inline*; auto; smt(fdom0).",
+            "smt().",
+            "qed."
+          ]
+        }
+      ]
+    },
+    {
+      "id": "CBC_upto__2026-06-05_0342_CBC_upto__6f50851-dirty",
+      "dir": "CBC_upto/2026-06-05_0342_CBC_upto__6f50851-dirty",
+      "lemma": "CBC_upto",
+      "source": "CBC.eca",
+      "profile": "L4",
+      "model": "claude-opus-4-8",
+      "outcome": "proved",
+      "turns": 114,
+      "trees": 1,
+      "date": "2026-06-05 03:42",
+      "timestamp": "2026-06-05_0342_CBC_upto",
+      "commit": "6f50851",
+      "eval_mode": true,
+      "tier": "public",
+      "proved": true,
+      "view_roots": [],
+      "per_tree": [
+        {
+          "tree": "Tree_0_0",
+          "proved": true,
+          "tactics": [
+            "rewrite (doublequery_eq PRFi &m).",
+            "rewrite (doublequery_eq Sample &m).",
+            "rewrite -(DQ_Sample_Compute_pr &m).",
+            "byequiv (_: ={glob A} ==> ={DoubleQuery.bad} /\\ (!DoubleQuery.bad{2} => ={res})) => //.",
+            "byequiv: DoubleQuery.bad => //=; 2: by smt().",
+            "proc.",
+            "call (_: DoubleQuery.bad, ={DoubleQuery.qs} /\\ (DoubleQuery.bad{1} <=> DoubleQuery.bad{2}) /\\ fdom PRFi.m{1} = DoubleQuery.qs{1}, DoubleQuery.bad{1} <=> DoubleQuery.bad{2}).",
+            "exact A_distinguish_ll.",
+            "have f_eq : equiv[DoubleQuery(PRFi).f ~ DoubleQuery(Sample).f : (DoubleQuery.bad{1} <=> DoubleQuery.bad{2}) /\\ (!DoubleQuery.bad{2} => ={arg} /\\ ={DoubleQuery.qs} /\\ fdom PRFi.m{1} = DoubleQuery.qs{1}) ==> (DoubleQuery.bad{1} <=> DoubleQuery.bad{2}) /\\ (!DoubleQuery.bad{2} => ={res} /\\ ={DoubleQuery.qs} /\\ fdom PRFi.m{1} = DoubleQuery.qs{1})].",
+            "proc.",
+            "case (DoubleQuery.bad{2}).",
+            "conseq (_: _ ==> DoubleQuery.bad{1} /\\ DoubleQuery.bad{2}); first by smt().",
+            "inline *; auto.",
+            "if{1}; sp; if{1}; auto; smt(dBlock_uffu).",
+            "if=> //=.",
+            "smt().",
+            "conseq (_: _ ==> DoubleQuery.bad{1} /\\ DoubleQuery.bad{2}); first by smt().",
+            "inline*; auto; sp; if{1}; auto; smt(dBlock_uffu).",
+            "inline*; sp; rcondt{1} 1.",
+            "auto; smt(mem_fdom).",
+            "auto; smt(fdom_set get_set_sameE oget_some).",
+            "proc.",
+            "seq 3 3 : (={i, p} /\\ 0 <= i{1} <= size p{1} /\\ (DoubleQuery.bad{1} <=> DoubleQuery.bad{2}) /\\ (!DoubleQuery.bad{2} => c{1} = c{2} /\\ s{1} = s{2} /\\ DoubleQuery.qs{1} = DoubleQuery.qs{2} /\\ fdom PRFi.m{1} = DoubleQuery.qs{1})).",
+            "auto; smt(size_ge0).",
+            "while (={i, p} /\\ 0 <= i{1} <= size p{1} /\\ (DoubleQuery.bad{1} <=> DoubleQuery.bad{2}) /\\ (!DoubleQuery.bad{2} => c{1} = c{2} /\\ s{1} = s{2} /\\ DoubleQuery.qs{1} = DoubleQuery.qs{2} /\\ fdom PRFi.m{1} = DoubleQuery.qs{1})).",
+            "sp 1 1; wp; call f_eq; auto.",
+            "have f_eqM : forall (B : bool), equiv[DoubleQuery(PRFi).f ~ DoubleQuery(Sample).f : DoubleQuery.bad{2} = B /\\ (DoubleQuery.bad{1} <=> DoubleQuery.bad{2}) /\\ (!DoubleQuery.bad{2} => arg{1} = arg{2} /\\ DoubleQuery.qs{1} = DoubleQuery.qs{2} /\\ fdom PRFi.m{1} = DoubleQuery.qs{1}) ==> (B => DoubleQuery.bad{2}) /\\ (DoubleQuery.bad{1} <=> DoubleQuery.bad{2}) /\\ (!DoubleQuery.bad{2} => res{1} = res{2} /\\ DoubleQuery.qs{1} = DoubleQuery.qs{2} /\\ fdom PRFi.m{1} = DoubleQuery.qs{1})].",
+            "move=> B; conseq f_eq (_: true ==> true) (_: DoubleQuery.bad = B ==> B => DoubleQuery.bad).",
+            "smt().",
+            "smt().",
+            "proc; inline*; auto.",
+            "proc; inline*; if; auto; smt().",
+            "sp 1 1; wp; exists* DoubleQuery.bad{2}; elim* => B0; call (f_eqM B0); auto; smt(size_ge0).",
+            "auto; smt().",
+            "move=> &2 bad.",
+            "conseq (_: true ==> true: =1%r) (_: DoubleQuery.bad <=> DoubleQuery.bad{2} ==> DoubleQuery.bad <=> DoubleQuery.bad{2}).",
+            "smt().",
+            "proc; while (DoubleQuery.bad <=> DoubleQuery.bad{2}); inline*; auto.",
+            "sp; if; auto; smt().",
+            "proc; while (0 <= i <= size p) (size p - i).",
+            "move=> z; inline*; auto.",
+            "conseq (_: _ ==> true: =1%r) (_: _ ==> 0 <= i + 1 <= size p /\\ size p - (i + 1) < z).",
+            "smt().",
+            "smt().",
+            "sp; if; auto; smt().",
+            "sp; if; auto; smt(dBlock_uffu).",
+            "auto; smt(size_ge0 dBlock_uffu).",
+            "move=> &1.",
+            "conseq (_: true ==> true: =1%r) (_: DoubleQuery.bad /\\ (DoubleQuery.bad{1} <=> DoubleQuery.bad) ==> DoubleQuery.bad /\\ (DoubleQuery.bad{1} <=> DoubleQuery.bad)).",
+            "smt().",
+            "proc; while (DoubleQuery.bad /\\ (DoubleQuery.bad{1} <=> DoubleQuery.bad)); inline*; auto; sp; if; auto; smt().",
+            "proc; while (0 <= i <= size p) (size p - i).",
+            "move=> z; inline*; auto.",
+            "smt(dBlock_uffu size_ge0).",
+            "auto; smt(size_ge0 dBlock_uffu).",
+            "inline*; auto; smt(fdom0).",
+            "qed."
+          ]
+        }
+      ]
+    },
+    {
+      "id": "step3__2026-06-04_0958_step3__1472044-dirty",
+      "dir": "step3/2026-06-04_0958_step3__1472044-dirty",
+      "lemma": "step3",
+      "source": "chacha_poly.ec",
+      "profile": "L1",
+      "model": "claude-opus-4-8",
+      "outcome": "proved",
+      "turns": 127,
+      "trees": 4,
+      "date": "2026-06-04 09:58",
+      "timestamp": "2026-06-04_0958_step3",
+      "commit": "1472044",
+      "eval_mode": true,
+      "tier": "public",
+      "proved": true,
+      "view_roots": [],
+      "per_tree": [
+        {
+          "tree": "Tree_0_0",
+          "proved": false,
+          "tactics": [
+            "byequiv => //.",
+            "proc.",
+            "inline{1} G8(BNR_Adv(A), SplitC2.RO_Pair(SplitC2.I1.RO, SplitC2.I2.RO)).distinguish.",
+            "inline{1} G6(BNR_Adv(A), SplitC1.RO_Pair(SplitC2.RO_Pair(SplitC2.I1.RO, SplitC2.I2.RO), SplitC1.I2.RO)).distinguish.",
+            "inline{1} G4(BNR_Adv(A), SplitD.RO_DOM(SplitC1.RO_Pair(SplitC2.RO_Pair(SplitC2.I1.RO, SplitC2.I2.RO), SplitC1.I2.RO), SplitD.ROF.RO)).distinguish."
+          ]
+        },
+        {
+          "tree": "Tree_0_1",
+          "proved": false,
+          "tactics": [
+            "byequiv => //.",
+            "inline Split1.IdealAll.MainD(G8(BNR_Adv(A)), SplitC2.RO_Pair(ROin, ROout)).distinguish G8(BNR_Adv(A), SplitC1.RO_Pair(SplitC2.RO_Pair(ROin, ROout), SplitC1.I2.RO)).distinguish.",
+            "inline *.",
+            "proc.",
+            "inline *.",
+            "wp.",
+            "call (_: inv_cpa SplitC2.I1.RO.m{1} SplitC2.I2.RO.m{1} Mem.log{1} Mem.log{2} Mem.lc{1} Mem.lc{2} BNR.lenc{1} BNR.lenc{2} BNR.ndec{1} BNR.ndec{2}).",
+            "proc.",
+            "sp.",
+            "if.",
+            "rewrite /inv_cpa; smt().",
+            "wp.",
+            "inline{2} CPA_CCA_Orcls(EncRnd).enc.",
+            "inline{1} CPA_CCA_Orcls(RealOrcls(GenChaChaPoly(CCRO(SplitD.RO_DOM(SplitC1.RO_Pair(SplitC2.RO_Pair(SplitC2.I1.RO, SplitC2.I2.RO), SplitC1.I2.RO), SplitD.ROF.RO))))).enc.",
+            "sp; wp.",
+            "inline{2} EncRnd.enc.",
+            "inline{1} RealOrcls(GenChaChaPoly(CCRO(SplitD.RO_DOM(SplitC1.RO_Pair(SplitC2.RO_Pair(SplitC2.I1.RO, SplitC2.I2.RO), SplitC1.I2.RO), SplitD.ROF.RO)))).enc.",
+            "inline{1} GenChaChaPoly(CCRO(SplitD.RO_DOM(SplitC1.RO_Pair(SplitC2.RO_Pair(SplitC2.I1.RO, SplitC2.I2.RO), SplitC1.I2.RO), SplitD.ROF.RO))).enc.",
+            "call (_: inv_cpa SplitC2.I1.RO.m{1} SplitC2.I2.RO.m{1} Mem.log{1} Mem.log{2} Mem.lc{1} Mem.lc{2} BNR.lenc{1} BNR.lenc{2} BNR.ndec{1} BNR.ndec{2} /\\ (forall n c, (n,c) \\in SplitD.ROF.RO.m{1} => n \\in BNR.lenc{1})).",
+            "proc.",
+            "sp; if.",
+            "rewrite /inv_cpa; smt().",
+            "wp; inline{2} CPA_CCA_Orcls(EncRnd).enc; inline{1} CPA_CCA_Orcls(RealOrcls(GenChaChaPoly(CCRO(SplitD.RO_DOM(SplitC1.RO_Pair(SplitC2.RO_Pair(SplitC2.I1.RO, SplitC2.I2.RO), SplitC1.I2.RO), SplitD.ROF.RO))))).enc; sp; wp; inline{2} EncRnd.enc; inline{1} RealOrcls(GenChaChaPoly(CCRO(SplitD.RO_DOM(SplitC1.RO_Pair(SplitC2.RO_Pair(SplitC2.I1.RO, SplitC2.I2.RO), SplitC1.I2.RO), SplitD.ROF.RO)))).enc; inline{1} GenChaChaPoly(CCRO(SplitD.RO_DOM(SplitC1.RO_Pair(SplitC2.RO_Pair(SplitC2.I1.RO, SplitC2.I2.RO), SplitC1.I2.RO), SplitD.ROF.RO))).enc.",
+            "sp.",
+            "seq 1 1 : (c2{1} = c1{2} /\\ n{1} = n{2} /\\ a{1} = a{2} /\\ p0{1} = p0{2} /\\ n{1} = p{1}.`1 /\\ ! (p{1}.`1 \\in BNR.lenc{1}) /\\ inv_cpa SplitC2.I1.RO.m{1} SplitC2.I2.RO.m{1} Mem.log{1} Mem.log{2} Mem.lc{1} Mem.lc{2} BNR.lenc{1} BNR.lenc{2} BNR.ndec{1} BNR.ndec{2} /\\ (forall (n0 : nonce) (c3 : C.counter), (n0, c3) \\in SplitD.ROF.RO.m{1} => n0 \\in p{1}.`1 :: BNR.lenc{1})).",
+            "call (equ_cc n{1} SplitC2.I1.RO.m{1} SplitC2.I2.RO.m{1}).",
+            "call (equ_cc (n{1}) (SplitC2.I1.RO.m{1}) (SplitC2.I2.RO.m{1})).",
+            "call (equ_cc _ _ _).",
+            "call (equ_cc (p{1}.`1) (SplitC2.I1.RO.m{1}) (SplitC2.I2.RO.m{1})).",
+            "exists* (SplitC2.I1.RO.m{1}), (SplitC2.I2.RO.m{1}); elim* => mr0 ms0; call (equ_cc (p{1}.`1) mr0 ms0).",
+            "exists* (SplitC2.I1.RO.m{1}), (SplitC2.I2.RO.m{1}).",
+            "elim* => mr0 ms0.",
+            "call (equ_cc _ mr0 ms0).",
+            "conseq (equ_cc (p{1}.`1) mr0 ms0).",
+            "call equ_cc.",
+            "transitivity{1} { c2 <@ ChaCha(CCRO(SplitD.RO_DOM(SplitC1.RO_Pair(SplitC2.RO_Pair(ROin, ROout), SplitC1.I2.RO), ROF))).enc(k, n, p2); } (={k,n,p2,glob ChaCha, glob CCRO, glob SplitD, glob SplitC1, glob SplitC2} ==> ={c2}) (true ==> c2{1}=c1{2}).",
+            "inline{2} EncRnd.cc.",
+            "call (equ_cc witness mr0 ms0).",
+            "exists* (p{1}.`1); elim* => n0; call (equ_cc n0 mr0 ms0).",
+            "rewrite /inv_cpa /check_plaintext /valid_topol; smt().",
+            "rewrite /check_plaintext /valid_topol; move=> />; smt().",
+            "move=> />.",
+            "done.",
+            "wp.",
+            "inline{1} Poly(CCRO(SplitD.RO_DOM(SplitC1.RO_Pair(SplitC2.RO_Pair(SplitC2.I1.RO, SplitC2.I2.RO), SplitC1.I2.RO), SplitD.ROF.RO))).mac.",
+            "inline{1} CCRO(SplitD.RO_DOM(SplitC1.RO_Pair(SplitC2.RO_Pair(SplitC2.I1.RO, SplitC2.I2.RO), SplitC1.I2.RO), SplitD.ROF.RO)).cc.",
+            "inline{1} SplitD.RO_DOM(SplitC1.RO_Pair(SplitC2.RO_Pair(SplitC2.I1.RO, SplitC2.I2.RO), SplitC1.I2.RO), SplitD.ROF.RO).get.",
+            "rcondt{1} 9.",
+            "auto=> />; rewrite /SplitD.test /=; smt(C.gt0_max_counter).",
+            "move=> &m0.",
+            "wp; skip.",
+            "move=> &hr _; rewrite /SplitD.test /=; smt(C.gt0_max_counter).",
+            "move=> &hr _.",
+            "rewrite /SplitD.test /=.",
+            "smt(C.insubdK C.gt0_max_counter).",
+            "smt(C.ofintdK C.gt0_max_counter).",
+            "inline{1} SplitC1.RO_Pair(SplitC2.RO_Pair(SplitC2.I1.RO, SplitC2.I2.RO), SplitC1.I2.RO).get."
+          ]
+        },
+        {
+          "tree": "Tree_0_1_0",
+          "proved": true,
+          "tactics": [
+            "exists* (n{1}), (SplitC2.I1.RO.m{1}), (SplitC2.I2.RO.m{1}).",
+            "elim* => n0 mr0 ms0.",
+            "call (equ_cc n0 mr0 ms0).",
+            "skip.",
+            "move=> &1 &2; rewrite /check_plaintext /valid_topol /=; smt().",
+            "wp.",
+            "inline *.",
+            "rcondt{1} 9.",
+            "move=> &m0; wp; skip; rewrite /SplitD.test /=; smt(@C).",
+            "rcondt{1} 13.",
+            "move=> &m0; rnd; wp; skip => /=; rewrite /inv_cpa; smt().",
+            "rcondt{1} 17.",
+            "move=> &m0; rnd; wp; rnd; wp; skip => /=; rewrite /inv_cpa; smt().",
+            "wp.",
+            "seq 1 1 : (c2{1} = c1{2} /\\ n{1} = n{2} /\\ a{1} = a{2} /\\ p0{1} = p0{2} /\\ n{1} = p{1}.`1 /\\ ! (p{1}.`1 \\in BNR.lenc{1}) /\\ inv_cpa SplitC2.I1.RO.m{1} SplitC2.I2.RO.m{1} Mem.log{1} Mem.log{2} Mem.lc{1} Mem.lc{2} BNR.lenc{1} BNR.lenc{2} BNR.ndec{1} BNR.ndec{2} /\\ (forall (n0 : nonce) (c3 : C.counter), (n0, c3) \\in SplitD.ROF.RO.m{1} => n0 \\in p{1}.`1 :: BNR.lenc{1}) /\\ p{1} = p{2}).",
+            "exists* (n{1}), (SplitC2.I1.RO.m{1}), (SplitC2.I2.RO.m{1}); elim* => n0 mr0 ms0; call (equ_cc n0 mr0 ms0); skip; move=> &1 &2; rewrite /check_plaintext /valid_topol /=; smt().",
+            "wp; inline *.",
+            "rcondt{1} 9; first by move=> &m0; wp; skip; rewrite /SplitD.test /=; smt(@C).",
+            "rcondt{1} 13; first by move=> &m0; rnd; wp; skip => /=; rewrite /inv_cpa; smt().",
+            "rcondt{1} 17; first by move=> &m0; rnd; wp; rnd; wp; skip => /=; rewrite /inv_cpa; smt().",
+            "wp.",
+            "rnd{1}.",
+            "wp.",
+            "rnd (fun (z : poly_out) => z + poly1305_eval r10{1} (topol a0{1} c3{1})) (fun (z : poly_out) => z - poly1305_eval r10{1} (topol a0{1} c3{1})).",
+            "wp; rnd{1}; wp; skip.",
+            "move=> &1 &2; rewrite /inv_cpa /poly1305 /=; smt(mk_rs_ofpair get_set_sameE get_setE mem_set domE poly_out_sub_add poly_out_add_sub).",
+            "skip; smt().",
+            "proc.",
+            "inline *.",
+            "rewrite /inv_cpa; sp; if; auto; smt(mem_set get_setE).",
+            "sp.",
+            "skip; rewrite /inv_cpa /=; smt(mem_set get_setE).",
+            "wp; rnd{1}; wp; skip; rewrite /inv_cpa /=; smt(mem_empty in_emptyE emptyE).",
+            "auto.",
+            "rewrite /inv_cpa /=; smt(mem_empty).",
+            "qed."
+          ]
+        },
+        {
+          "tree": "Tree_0_1_1",
+          "proved": false,
+          "tactics": [
+            "call (equ_cc (p{1}.`1) mr0 ms0).",
+            "exists* (p{1}.`1).",
+            "elim* => n0.",
+            "call (equ_cc n0 mr0 ms0).",
+            "skip.",
+            "move=> &1 &2; rewrite /check_plaintext /valid_topol /inv_cpa /=; smt().",
+            "wp.",
+            "inline{1}.",
+            "sp.",
+            "rcondt{1} 1.",
+            "move=> &m0; skip; rewrite /SplitD.test /=; smt(@C).",
+            "sp.",
+            "rnd{1}.",
+            "wp.",
+            "rnd{1}.",
+            "rcondt{1} 2.",
+            "move=> &m0; rnd; skip => /=; rewrite /inv_cpa; smt(@SmtMap).",
+            "rcondt{1} 6.",
+            "move=> &m0; rnd; wp; rnd; skip => /=; rewrite /inv_cpa; smt(@SmtMap).",
+            "wp.",
+            "rnd (fun (s0:poly_out) => s0 + poly1305_eval r10{1} (topol a0{1} c3{1})) (fun (t0:poly_out) => t0 - poly1305_eval r10{1} (topol a0{1} c3{1}))."
+          ]
+        }
+      ]
+    },
+    {
+      "id": "D4_D6__2026-06-04_0919_D4_D6__ed86503-dirty",
+      "dir": "D4_D6/2026-06-04_0919_D4_D6__ed86503-dirty",
+      "lemma": "D4_D6",
+      "source": "Dice4_6.ec",
+      "profile": "L1",
+      "model": "claude-opus-4-8",
+      "outcome": "open",
+      "turns": 31,
+      "trees": 1,
+      "date": "2026-06-04 09:19",
+      "timestamp": "2026-06-04_0919_D4_D6",
+      "commit": "ed86503",
+      "eval_mode": true,
+      "tier": "public",
+      "proved": false,
+      "view_roots": [],
+      "per_tree": [
+        {
+          "tree": "Tree_0_0",
+          "proved": false,
+          "tactics": [
+            "move=> hf hfinv.",
+            "bypr (res{1}) (finv res{2})=> //.",
+            "move=> &1 &2 a.",
+            "have hL: Pr[D4.sample() @ &1 : res = a] = Pr[D4_6.SampleE.sample(tt) @ &1 : res = a] by byequiv D4_Sample.",
+            "rewrite (prD4 a &1).",
+            "rewrite prD4.",
+            "have ->: Pr[D6.sample() @ &2 : finv res = a] = Pr[D4_6.SampleWi.sample(tt, 5) @ &2 : finv res = a] by byequiv D6_Sample=> //.",
+            "rewrite -D4_6.sampleE_sampleWi_pr.",
+            "rewrite (@D4_6.pr_sampleWi &2 tt 5 (fun (r:int) => finv r = a)).",
+            "by apply (dinter_ll 1 6).",
+            "by smt(dinter_ll).",
+            "have ->/=: (! 1 <= 5 <= 4) = true by smt().",
+            "rewrite (@mu_eq_support ([1..6] \\ (fun (r:int) => ! 1 <= r <= 4)) (fun (r:int) => finv r = a) (pred1 (f a))).",
+            "move=> x; rewrite supp_dexcepted supp_dinter /pred1 /=; smt(hf hfinv).",
+            "move=> x hx.",
+            "move: hx; rewrite supp_dexcepted supp_dinter.",
+            "rewrite /pred1 /=; smt(hf hfinv).",
+            "move=> /= [h1 h2].",
+            "rewrite /pred1.",
+            "smt(hf hfinv).",
+            "rewrite eq_iff; smt(hf hfinv).",
+            "rewrite eq_iff.",
+            "split=> h; smt(hf hfinv).",
+            "split=> h.",
+            "move: (hfinv x h2)=> [hA _]; rewrite -h hA //.",
+            "have ha: 1 <= a <= 4 by smt(hf); move: (hfinv a ha)=> [_ hB]; rewrite h hB //.",
+            "have ha: 1 <= a <= 4 by smt(hf).",
+            "have ha: 1 <= a <= 4 by rewrite hf -h.",
+            "move: (hfinv a ha)=> [_ hB]; rewrite h hB //.",
+            "rewrite -(@D4_6.pr_sampleE &2 tt (pred1 (f a)))."
+          ]
+        }
+      ]
+    },
+    {
+      "id": "step3__2026-06-04_0913_step3__e958ef8",
+      "dir": "step3/2026-06-04_0913_step3__e958ef8",
+      "lemma": "step3",
+      "source": "chacha_poly.ec",
+      "profile": "L4",
+      "model": "claude-opus-4-8",
+      "outcome": "proved",
+      "turns": 89,
+      "trees": 2,
+      "date": "2026-06-04 09:13",
+      "timestamp": "2026-06-04_0913_step3",
+      "commit": "e958ef8",
+      "eval_mode": true,
+      "tier": "public",
+      "proved": true,
+      "view_roots": [],
+      "per_tree": [
+        {
+          "tree": "Tree_0_0",
+          "proved": false,
+          "tactics": [
+            "byequiv => //.",
+            "proc.",
+            "inline*.",
+            "wp.",
+            "call (_: inv_cpa SplitC2.I1.RO.m{1} SplitC2.I2.RO.m{1} Mem.log{1} Mem.log{2} Mem.lc{1} Mem.lc{2} BNR.lenc{1} BNR.lenc{2} BNR.ndec{1} BNR.ndec{2} /\\ (forall n c, (n,c) \\in SplitC1.I2.RO.m{1} => n \\in BNR.lenc{1}) /\\ (forall n c, (n,c) \\in SplitD.ROF.RO.m{1} => n \\in BNR.lenc{1})).",
+            "proc.",
+            "sp; if.",
+            "move=> &1 &2; rewrite /inv_cpa; smt().",
+            "inline{2} CPA_CCA_Orcls(EncRnd).enc EncRnd.enc.",
+            "inline{1} CPA_CCA_Orcls(RealOrcls(GenChaChaPoly(CCRO(SplitD.RO_DOM(SplitC1.RO_Pair(SplitC2.RO_Pair(SplitC2.I1.RO, SplitC2.I2.RO), SplitC1.I2.RO), SplitD.ROF.RO))))).enc RealOrcls(GenChaChaPoly(CCRO(SplitD.RO_DOM(SplitC1.RO_Pair(SplitC2.RO_Pair(SplitC2.I1.RO, SplitC2.I2.RO), SplitC1.I2.RO), SplitD.ROF.RO)))).enc GenChaChaPoly(CCRO(SplitD.RO_DOM(SplitC1.RO_Pair(SplitC2.RO_Pair(SplitC2.I1.RO, SplitC2.I2.RO), SplitC1.I2.RO), SplitD.ROF.RO))).enc.",
+            "sp."
+          ]
+        },
+        {
+          "tree": "Tree_0_1",
+          "proved": true,
+          "tactics": [
+            "byequiv => //.",
+            "proc.",
+            "inline{1} G8(BNR_Adv(A), SplitC2.RO_Pair(SplitC2.I1.RO, SplitC2.I2.RO)).distinguish.",
+            "inline{1} G6(BNR_Adv(A), SplitC1.RO_Pair(SplitC2.RO_Pair(SplitC2.I1.RO, SplitC2.I2.RO), SplitC1.I2.RO)).distinguish.",
+            "inline{1} G4(BNR_Adv(A), SplitD.RO_DOM(SplitC1.RO_Pair(SplitC2.RO_Pair(SplitC2.I1.RO, SplitC2.I2.RO), SplitC1.I2.RO), SplitD.ROF.RO)).distinguish.",
+            "inline{1} GenChaChaPoly(CCRO(SplitD.RO_DOM(SplitC1.RO_Pair(SplitC2.RO_Pair(SplitC2.I1.RO, SplitC2.I2.RO), SplitC1.I2.RO), SplitD.ROF.RO))).kg.",
+            "inline*.",
+            "wp.",
+            "call (_: inv_cpa SplitC2.I1.RO.m{1} SplitC2.I2.RO.m{1} Mem.log{1} Mem.log{2} Mem.lc{1} Mem.lc{2} BNR.lenc{1} BNR.lenc{2} BNR.ndec{1} BNR.ndec{2} /\\ (forall n c, (n, c) \\in SplitD.ROF.RO.m{1} => n \\in BNR.lenc{1})).",
+            "proc.",
+            "sp 1 1.",
+            "if.",
+            "by move=> &1 &2; rewrite /inv_cpa; smt().",
+            "inline{1} CPA_CCA_Orcls(RealOrcls(GenChaChaPoly(CCRO(SplitD.RO_DOM(SplitC1.RO_Pair(SplitC2.RO_Pair(SplitC2.I1.RO, SplitC2.I2.RO), SplitC1.I2.RO), SplitD.ROF.RO))))).enc RealOrcls(GenChaChaPoly(CCRO(SplitD.RO_DOM(SplitC1.RO_Pair(SplitC2.RO_Pair(SplitC2.I1.RO, SplitC2.I2.RO), SplitC1.I2.RO), SplitD.ROF.RO)))).enc GenChaChaPoly(CCRO(SplitD.RO_DOM(SplitC1.RO_Pair(SplitC2.RO_Pair(SplitC2.I1.RO, SplitC2.I2.RO), SplitC1.I2.RO), SplitD.ROF.RO))).enc.",
+            "inline{2} CPA_CCA_Orcls(EncRnd).enc EncRnd.enc.",
+            "sp 5 3.",
+            "seq 1 1 : (c2{1} = c1{2} /\\ n{1} = n{2} /\\ a{1} = a{2} /\\ p0{1} = p0{2} /\\ Mem.log{1} = Mem.log{2} /\\ Mem.lc{1} = Mem.lc{2} /\\ BNR.lenc{1} = BNR.lenc{2} /\\ BNR.ndec{1} = BNR.ndec{2} /\\ !(n{1} \\in BNR.lenc{1}) /\\ (forall nn ci, (nn, ci) \\in SplitC2.I1.RO.m{1} => nn \\in BNR.lenc{1}) /\\ (forall nn ci, (nn, ci) \\in SplitC2.I2.RO.m{1} => nn \\in BNR.lenc{1}) /\\ (forall nn ci, (nn, ci) \\in SplitD.ROF.RO.m{1} => nn \\in n{1} :: BNR.lenc{1})).",
+            "exlim n{2}, SplitC2.I1.RO.m{1}, SplitC2.I2.RO.m{1} => n0 mr0 ms0; call (equ_cc n0 mr0 ms0).",
+            "by move=> /> *.",
+            "inline*.",
+            "rcondt{1} 9.",
+            "by auto; smt(C.ofintdK C.gt0_max_counter).",
+            "rcondt{1} 13; 1: (by auto; smt()).",
+            "rcondt{1} 17; 1: (by auto; smt()).",
+            "wp.",
+            "rnd{1}; wp.",
+            "rnd (fun (u:poly_out) => u + poly1305_eval r5{1} (topol a0{1} c3{1})) (fun (u:poly_out) => u - poly1305_eval r5{1} (topol a0{1} c3{1})); wp; rnd{1}.",
+            "auto.",
+            "seq 1 1 : (c2{1} = c1{2} /\\ n{1} = n{2} /\\ a{1} = a{2} /\\ p0{1} = p0{2} /\\ p{1}.`1 = n{1} /\\ p{2}.`1 = n{2} /\\ Mem.log{1} = Mem.log{2} /\\ Mem.lc{1} = Mem.lc{2} /\\ BNR.lenc{1} = BNR.lenc{2} /\\ BNR.ndec{1} = BNR.ndec{2} /\\ !(n{1} \\in BNR.lenc{1}) /\\ (forall nn ci, (nn, ci) \\in SplitC2.I1.RO.m{1} => nn \\in BNR.lenc{1}) /\\ (forall nn ci, (nn, ci) \\in SplitC2.I2.RO.m{1} => nn \\in BNR.lenc{1}) /\\ (forall nn ci, (nn, ci) \\in SplitD.ROF.RO.m{1} => nn \\in n{1} :: BNR.lenc{1})).",
+            "exlim n{2}, SplitC2.I1.RO.m{1}, SplitC2.I2.RO.m{1} => n0 mr0 ms0; call (equ_cc n0 mr0 ms0).",
+            "by move=> /> *.",
+            "inline*; rcondt{1} 9; 1:(by auto; smt(C.ofintdK C.gt0_max_counter)); rcondt{1} 13; 1:(by auto; smt()); rcondt{1} 17; 1:(by auto; smt()).",
+            "wp; rnd{1}; wp; rnd (fun (u:poly_out) => u + poly1305_eval r5{1} (topol a0{1} c3{1})) (fun (u:poly_out) => u - poly1305_eval r5{1} (topol a0{1} c3{1})); wp; rnd{1}; auto.",
+            "rewrite /poly1305 /inv_cpa /=; smt(mk_rs_ofpair poly_out_sub_add poly_out_add_sub get_set_sameE oget_some mem_set).",
+            "by auto.",
+            "proc; inline*; auto; rewrite /inv_cpa /=; smt(get_setE mem_set).",
+            "auto; rewrite /inv_cpa /=; smt(mem_empty).",
+            "qed."
+          ]
+        }
+      ]
+    },
+    {
+      "id": "step2_3__2026-06-04_0133_step2_3_L4__ed86503-dirty",
+      "dir": "step2_3/2026-06-04_0133_step2_3_L4__ed86503-dirty",
+      "lemma": "step2_3",
+      "source": "chacha_poly.ec",
+      "profile": "L4",
+      "model": "claude-opus-4-8",
+      "outcome": "proved",
+      "turns": 65,
+      "trees": 2,
+      "date": "2026-06-04 01:33",
+      "timestamp": "2026-06-04_0133_step2_3",
+      "commit": "ed86503",
+      "eval_mode": true,
+      "tier": "public",
+      "proved": true,
+      "view_roots": [],
+      "per_tree": [
+        {
+          "tree": "Tree_0_0",
+          "proved": false,
+          "tactics": [
+            "congr.",
+            "have ->: Pr[CPA_game(CCA_CPA_Adv(A), RealOrcls(GenChaChaPoly(CCRO(FinRO)))).main() @ &m : res] = Pr[MainD(G4(A), FinRO).distinguish() @ &m : res].",
+            "byequiv => //; proc; inline *; sim.",
+            "rewrite -(pr_RO_FinRO_D _ (G4(A)) &m tt (fun (r:bool) => r)).",
+            "move=> _; exact dblock_ll.",
+            "have ->: Pr[Split1.IdealAll.MainD(G8(A), SplitC2.RO_Pair(SplitC2.I1.RO, SplitC2.I2.RO)).distinguish() @ &m : res] = Pr[Split1.IdealAll.MainD(G8(A), Split1.IdealAll.RO).distinguish() @ &m : res].",
+            "apply eq_sym; apply (SplitC2.pr_RO_split (G8(A)) (fun _ (r:bool) => r) &m tt).",
+            "have ->: Pr[Split1.IdealAll.MainD(G8(A), Split1.IdealAll.RO).distinguish() @ &m : res] = Pr[Split0.IdealAll.MainD(G6(A), SplitC1.RO_Pair(SplitC1.I1.RO, SplitC1.I2.RO)).distinguish() @ &m : res]."
+          ]
+        },
+        {
+          "tree": "Tree_0_1",
+          "proved": true,
+          "tactics": [
+            "congr.",
+            "have -> : Pr[CPA_game(CCA_CPA_Adv(A), RealOrcls(GenChaChaPoly(CCRO(FinRO)))).main() @ &m : res] = Pr[MainD(G4(A), FinRO).distinguish() @ &m : res] by byequiv => //; proc; inline *; sim.",
+            "rewrite -(SplitC2.pr_RO_split (G8(A)) (fun _ b => b) &m ()) /=.",
+            "have -> : Pr[Split1.IdealAll.MainD(G8(A), Split1.IdealAll.RO).distinguish() @ &m : res] = Pr[Split0.IdealAll.MainD(G6(A), SplitC1.RO_Pair(SplitC1.I1.RO, SplitC1.I2.RO)).distinguish() @ &m : res] by byequiv => //; proc; inline *; sim.",
+            "rewrite -(SplitC1.pr_RO_split (G6(A)) (fun _ b => b) &m ()) /=.",
+            "have -> : Pr[Split0.IdealAll.MainD(G6(A), Split0.IdealAll.RO).distinguish() @ &m : res] = Pr[Split0.IdealAll.MainD(G4(A), SplitD.RO_DOM(SplitD.ROT.RO, SplitD.ROF.RO)).distinguish() @ &m : res] by byequiv => //; proc; inline *; sim.",
+            "rewrite -(SplitD.pr_RO_split (G4(A)) (fun _ b => b) &m ()) /=.",
+            "have Hll : forall (x : nonce * C.counter), is_lossless dblock by move=> ?; exact Block.dblock_ll.",
+            "rewrite -(FiniteRO.pr_RO_FinRO_D Hll (G4(A)) &m () (fun b => b)) /=.",
+            "byequiv => //; proc; inline *; sim.",
+            "have -> : Pr[UFCMA_poly(A, FinRO).main() @ &m : res] = Pr[MainD(G5(A), FinRO).distinguish() @ &m : res] by byequiv => //; proc; inline *; sim.",
+            "rewrite -(SplitC2.pr_RO_split (G9(A)) (fun _ b => b) &m ()) /=.",
+            "have -> : Pr[Split1.IdealAll.MainD(G9(A), Split1.IdealAll.RO).distinguish() @ &m : res] = Pr[Split0.IdealAll.MainD(G7(A), SplitC1.RO_Pair(SplitC1.I1.RO, SplitC1.I2.RO)).distinguish() @ &m : res] by byequiv => //; proc; inline *; sim.",
+            "rewrite -(SplitC1.pr_RO_split (G7(A)) (fun _ b => b) &m ()) /=.",
+            "have -> : Pr[Split0.IdealAll.MainD(G7(A), Split0.IdealAll.RO).distinguish() @ &m : res] = Pr[Split0.IdealAll.MainD(G5(A), SplitD.RO_DOM(SplitD.ROT.RO, SplitD.ROF.RO)).distinguish() @ &m : res] by byequiv => //; proc; inline *; sim.",
+            "rewrite -(SplitD.pr_RO_split (G5(A)) (fun _ b => b) &m ()) /=.",
+            "have Hll : forall (x : nonce * C.counter), is_lossless dblock by move=> ?; exact Block.dblock_ll.",
+            "rewrite -(FiniteRO.pr_RO_FinRO_D Hll (G5(A)) &m () (fun b => b)) /=.",
+            "byequiv => //; proc; inline *; sim.",
+            "qed."
+          ]
+        }
+      ]
+    },
+    {
+      "id": "step4_bad1_lbad1__2026-06-03_step4_bad1_lbad1_L4_OPEN_stitched__0958fbb-dirty",
+      "dir": "step4_bad1_lbad1/2026-06-03_step4_bad1_lbad1_L4_OPEN_stitched__0958fbb-dirty",
+      "lemma": "step4_bad1_lbad1",
+      "source": "chacha_poly.ec",
+      "profile": "L4",
+      "model": "claude-opus-4-8",
+      "outcome": "open",
+      "turns": 476,
+      "trees": 5,
+      "date": "2026-06-03",
+      "timestamp": "2026-06-03_step4_bad1_lbad1_L4_OPEN_stitched",
+      "commit": "0958fbb",
+      "eval_mode": true,
+      "tier": "public",
+      "proved": false,
+      "view_roots": [
+        "c0",
+        "c1",
+        "c2"
+      ],
+      "per_tree": []
+    },
+    {
+      "id": "step1__2026-06-03_1548_step1__0958fbb-dirty",
+      "dir": "step1/2026-06-03_1548_step1__0958fbb-dirty",
+      "lemma": "step1",
+      "source": "chacha_poly.ec",
+      "profile": "L4",
+      "model": "claude-opus-4-8",
+      "outcome": "proved",
+      "turns": 105,
+      "trees": 2,
+      "date": "2026-06-03 15:48",
+      "timestamp": "2026-06-03_1548_step1",
+      "commit": "0958fbb",
+      "eval_mode": true,
+      "tier": "public",
+      "proved": true,
+      "view_roots": [],
+      "per_tree": [
+        {
+          "tree": "Tree_0_0",
+          "proved": true,
+          "tactics": [
+            "congr.",
+            "have -> : Pr[CCA_game(A, RealOrcls(ChaChaPoly)).main() @ &m : res] = Pr[CCA_game(A, RealOrcls(OpCCinit.OChaChaPoly(I_stateless))).main() @ &m : res] by byequiv=>//; proc; inline *; sim.",
+            "byequiv => //.",
+            "rewrite -(OpCCinit.pr_CCP_OCCP I_stateless G1 &m).",
+            "byequiv => //.",
+            "proc.",
+            "inline{2} D(A, IndBlock).guess.",
+            "seq 1 2 : (={glob A} /\\ Mem.k{1} = IndBlock.k{2}).",
+            "inline *; auto.",
+            "wp; call (_: Mem.k{1} = IndBlock.k{2}).",
+            "proc. inline{1} GenChaChaPoly(OpCCinit.OCC(I_stateless)).enc. wp. call poly_mac1. call chacha_enc1. auto.",
+            "proc. inline{1} GenChaChaPoly(OpCCinit.OCC(I_stateless)).dec. sp. seq 1 1 : (t'{1} = t'{2} /\\ t{1} = t{2} /\\ n{1} = n{2} /\\ a{1} = a{2} /\\ c0{1} = c{2} /\\ result{1} = result{2} /\\ k{1} = IndBlock.k{2} /\\ Mem.k{1} = IndBlock.k{2}).",
+            "call poly_mac1. auto. if => //. wp. call chacha_enc1. auto. auto.",
+            "auto.",
+            "congr.",
+            "have -> : Pr[Indist.Distinguish(D(A), IndRO).game() @ &m : res] = Pr[MainD(G2, RO).distinguish() @ &m : res] by byequiv => //; proc; inline *; sim.",
+            "have -> : Pr[MainD(G2, RO).distinguish() @ &m : res] = Pr[MainD(G2, FinRO).distinguish() @ &m : res] by apply (FiniteRO.pr_RO_FinRO_D _ G2 &m tt (fun (b:bool) => b)); move=> ?; exact dblock_ll.",
+            "rewrite -(OpCCRO.pr_CCP_OCCP IFinRO G1 &m).",
+            "byequiv => //.",
+            "proc.",
+            "inline{2} G2(FinRO).distinguish.",
+            "seq 1 3 : (={glob A} /\\ OpCCRO.OCC.gs{1} = RO.m{2}).",
+            "inline{1} RealOrcls(GenChaChaPoly(OCC(IFinRO))).init GenChaChaPoly(OCC(IFinRO)).init GenChaChaPoly(OCC(IFinRO)).kg IFinRO.init. inline{2} D(A, G2(FinRO).CCRO).O.init. seq 1 1 : (={glob A, RO.m}). sim. wp. rnd{1}. auto.",
+            "wp; call (_: OpCCRO.OCC.gs{1} = RO.m{2}).",
+            "proc. inline{1} GenChaChaPoly(OpCCRO.OCC(IFinRO)).enc. wp. call poly_mac2. call chacha_enc2. auto.",
+            "proc. inline{1} GenChaChaPoly(OpCCRO.OCC(IFinRO)).dec. sp. seq 1 1 : (t'{1} = t'{2} /\\ t{1} = t{2} /\\ n{1} = n{2} /\\ a{1} = a{2} /\\ c0{1} = c{2} /\\ result{1} = result{2} /\\ OpCCRO.OCC.gs{1} = RO.m{2}).",
+            "call poly_mac2. auto. if => //. wp. call chacha_enc2. auto. auto.",
+            "auto.",
+            "qed."
+          ]
+        },
+        {
+          "tree": "Tree_0_1",
+          "proved": false,
+          "tactics": [
+            "have ->: Pr[CCA_game(A, RealOrcls(ChaChaPoly)).main() @ &m : res] = Pr[Indist.Distinguish(D(A), IndBlock).game() @ &m : res].",
+            "have ->: Pr[CCA_game(A, RealOrcls(ChaChaPoly)).main() @ &m : res] = Pr[CCA_game(A, RealOrcls(OpCCinit.OChaChaPoly(I_stateless))).main() @ &m : res].",
+            "byequiv => //.",
+            "proc; sim.",
+            "inline *; auto.",
+            "rewrite -(OpCCinit.pr_CCP_OCCP I_stateless G1 &m).",
+            "byequiv => //.",
+            "proc.",
+            "inline{2} D(A, IndBlock).guess.",
+            "wp.",
+            "call (_: Mem.k{1} = IndBlock.k{2}).",
+            "proc; inline{1} GenChaChaPoly(OpCCinit.OCC(I_stateless)).enc; wp; call poly_mac1; call chacha_enc1; auto."
+          ]
+        }
+      ]
+    },
+    {
+      "id": "pr_G4__2026-06-03_1122_pr_G4__8a68a61",
+      "dir": "pr_G4/2026-06-03_1122_pr_G4__8a68a61",
+      "lemma": "pr_G4",
+      "source": "cramer_shoup.ec",
+      "profile": "L4",
+      "model": "claude-opus-4-8",
+      "outcome": "open",
+      "turns": 29,
+      "trees": 1,
+      "date": "2026-06-03 11:22",
+      "timestamp": "2026-06-03_1122_pr_G4",
+      "commit": "8a68a61",
+      "eval_mode": true,
+      "tier": "public",
+      "proved": false,
+      "view_roots": [],
+      "per_tree": [
+        {
+          "tree": "Tree_0_0",
+          "proved": false,
+          "tactics": [
+            "byphoare => //.",
+            "proc.",
+            "seq 21 : ((G3.a, G3.a_, G3.c, G3.d) \\in G3.cilog) ((PKE_.qD%r / order%r) ^ 3 * (PKE_.qD%r / (order - 1)%r)) 1%r 1%r 0%r.",
+            "trivial.",
+            "seq 13 : (size G3.cilog <= PKE_.qD) 1%r ((PKE_.qD%r / order%r) ^ 3 * (PKE_.qD%r / (order - 1)%r)) 0%r 1%r.",
+            "conseq (_ : _ ==> (G3.a, G3.a_, G3.c, G3.d) \\in G3.cilog) (_ : _ ==> size G3.cilog <= PKE_.qD).",
+            "seq 13 : (size G3.cilog <= size G1.log /\\ size G1.log <= PKE_.qD).",
+            "call (_: size G3.cilog <= size G1.log /\\ size G1.log <= PKE_.qD).",
+            "proc; auto; smt(size_ge0).",
+            "auto; smt(PKE_.qD_pos).",
+            "auto; smt().",
+            "wp.",
+            "seq 13 : (size G3.cilog <= PKE_.qD) 1%r ((PKE_.qD%r / order%r) ^ 3 * (PKE_.qD%r / (order - 1)%r)) 0%r 1%r."
+          ]
+        }
+      ]
+    },
+    {
+      "id": "step4_badi__2026-06-03_1019_step4_badi_L4_CLOSED__100fb60-dirty",
+      "dir": "step4_badi/2026-06-03_1019_step4_badi_L4_CLOSED__100fb60-dirty",
+      "lemma": "step4_badi",
+      "source": "chacha_poly.ec",
+      "profile": "L4",
+      "model": "claude-opus-4-8",
+      "outcome": "proved",
+      "turns": 94,
+      "trees": 1,
+      "date": "2026-06-03 10:19",
+      "timestamp": "2026-06-03_1019_step4_badi_L4_CLOSED",
+      "commit": "100fb60",
+      "eval_mode": true,
+      "tier": "public",
+      "proved": true,
+      "view_roots": [
+        "c0",
+        "c1",
+        "c2"
+      ],
+      "per_tree": []
+    },
+    {
+      "id": "pr_G4__2026-06-03_0854_pr_G4_L1_CLOSED__100fb60-dirty",
+      "dir": "pr_G4/2026-06-03_0854_pr_G4_L1_CLOSED__100fb60-dirty",
+      "lemma": "pr_G4",
+      "source": "cramer_shoup.ec",
+      "profile": "L1",
+      "model": "claude-opus-4-8",
+      "outcome": "proved",
+      "turns": 110,
+      "trees": 1,
+      "date": "2026-06-03 08:54",
+      "timestamp": "2026-06-03_0854_pr_G4_L1_CLOSED",
+      "commit": "100fb60",
+      "eval_mode": true,
+      "tier": "public",
+      "proved": true,
+      "view_roots": [
+        "c0",
+        "c1",
+        "c2"
+      ],
+      "per_tree": []
+    },
+    {
+      "id": "pr_Game0_Game1__2026-06-01_1924_pr_Game0_Game1__ef713ea-dirty",
+      "dir": "pr_Game0_Game1/2026-06-01_1924_pr_Game0_Game1__ef713ea-dirty",
+      "lemma": "pr_Game0_Game1",
+      "source": "br93.ec",
+      "profile": "L1",
+      "model": "claude-opus-4-6",
+      "outcome": "open",
+      "turns": 55,
+      "trees": 4,
+      "date": "2026-06-01 19:24",
+      "timestamp": "2026-06-01_1924_pr_Game0_Game1",
+      "commit": "ef713ea",
+      "eval_mode": true,
+      "tier": "public",
+      "proved": false,
+      "view_roots": [],
+      "per_tree": [
+        {
+          "tree": "Tree_0_0",
+          "proved": false,
+          "tactics": [
+            "byequiv (_ : ={glob A, glob LRO, glob Log} ==> !(Game1.r \\in Log.qs){2} => ={res}) : (Game1.r \\in Log.qs) => //.",
+            "byequiv (_ : ={glob A, glob LRO, glob Log} ==> !(Game1.r \\in Log.qs){2} => ={res}) : (Game1.r \\in Log.qs).",
+            "have h : Pr[BR93_CPA(A).main() @ &m : res] <= Pr[Game1.main() @ &m : res \\/ Game1.r \\in Log.qs].",
+            "byequiv (_ : ={glob A, glob LRO, glob Log} ==> res{1} => (res{2} \\/ (Game1.r{2} \\in Log.qs{2}))).",
+            "proc.",
+            "inline{1} BR93(LRO).keygen; inline{1} BR93(LRO).enc.",
+            "inline{1} LRO.o.",
+            "seq 5 4 : (={glob A, glob LRO, glob Log, pk, sk, m0, m1, b}).",
+            "sim.",
+            "call (_ : true); auto.",
+            "inline *; wp; rnd; auto.",
+            "call (_ : ={Log.qs} /\\ eq_except (pred1 Game1.r{2}) LRO.m{1} LRO.m{2})."
+          ]
+        },
+        {
+          "tree": "Tree_0_1",
+          "proved": false,
+          "tactics": [
+            "byequiv (_ : ={glob A, glob LRO} ==> ={res} \\/ (Game1.r \\in Log.qs){2}) => //.",
+            "proc.",
+            "inline BR93(LRO).keygen BR93(LRO).enc.",
+            "call (_: eq_except (pred1 Game1.r{2}) LRO.m{1} LRO.m{2} /\\ ={Log.qs}, Game1.r{2} \\in Log.qs{2}).",
+            "call (_: ={glob Log, glob LRO}).",
+            "call (_: true, (Game1.r \\in Log.qs){2}).",
+            "call (_: (={Log.qs}) /\\ (forall x, x <> Game1.r{2} => LRO.m{1}.[x] = LRO.m{2}.[x]), (Game1.r \\in Log.qs){2}).",
+            "call (_: ={Log.qs, LRO.m}, (Game1.r \\in Log.qs){2}).",
+            "call (_: (={Log.qs, LRO.m}), ((Game1.r \\in Log.qs){2})).",
+            "call (_: ={Log.qs}, (Game1.r \\in Log.qs){2}).",
+            "call (_: true, (Game1.r \\in Log.qs){2}).",
+            "exact A_a2_ll.",
+            "by exfalso.",
+            "by move=> _; proc; call (LRO_o_ll _); auto=> /=; apply dptxt_ll.",
+            "by move=> _; proc; call (LRO_o_ll _); auto=> /=; apply dptxt_ll.",
+            "proc; inline BR93(LRO).keygen BR93(LRO).enc.",
+            "call (_: Log.qs{1} = Log.qs{2}, (Game1.r \\in Log.qs){2}).",
+            "byequiv (_ : ={glob A, glob LRO} ==> !(Game1.r{2} \\in Log.qs{2}) => ={res}) : (Game1.r \\in Log.qs) => //."
+          ]
+        },
+        {
+          "tree": "Tree_0_1_0",
+          "proved": false,
+          "tactics": [
+            "inline{1} LRO.o.",
+            "seq 7 4 : (={glob A, Log.qs, LRO.m, b, pk, sk, m0, m1} /\\ pk0{1} = pk{1} /\\ m{1} = (if b{1} then m0{1} else m1{1})).",
+            "wp.",
+            "rnd.",
+            "call (_: ={Log.qs, LRO.m}).",
+            "by proc; inline*; auto.",
+            "inline*; wp; rnd; skip; auto.",
+            "inline*.",
+            "wp.",
+            "rnd.",
+            "skip; progress.",
+            "wp; skip; progress.",
+            "call (_: ={Log.qs, LRO.m}, (Game1.r \\in Log.qs){2})."
+          ]
+        },
+        {
+          "tree": "Tree_0_1_1",
+          "proved": false,
+          "tactics": [
+            "seq 5 4: (={glob A, glob LRO, glob Log, pk, sk, m0, m1, b}).",
+            "rnd.",
+            "call (_: ={glob LRO, glob Log})."
+          ]
+        }
+      ]
+    },
+    {
+      "id": "PIR_secure1__2026-06-01_1819_PIR_secure1__ef713ea-dirty",
+      "dir": "PIR_secure1/2026-06-01_1819_PIR_secure1__ef713ea-dirty",
+      "lemma": "PIR_secure1",
+      "source": "PIR.ec",
+      "profile": "L4",
+      "model": "claude-opus-4-6",
+      "outcome": "proved",
+      "turns": 52,
+      "trees": 2,
+      "date": "2026-06-01 18:19",
+      "timestamp": "2026-06-01_1819_PIR_secure1",
+      "commit": "ef713ea",
+      "eval_mode": true,
+      "tier": "public",
+      "proved": true,
+      "view_roots": [],
+      "per_tree": [
+        {
+          "tree": "Tree_0_0",
+          "proved": false,
+          "tactics": [
+            "proc.",
+            "inline *.",
+            "call (_: true).",
+            "auto.",
+            "call (_: true).",
+            "auto.",
+            "call (_: ={PIR.s}).",
+            "auto.",
+            "call (_: ={PIR.s}).",
+            "auto."
+          ]
+        },
+        {
+          "tree": "Tree_0_1",
+          "proved": true,
+          "tactics": [
+            "proc.",
+            "inline *.",
+            "bypr (PIR.s{1}) (PIR.s{2}).",
+            "by move=> &1 &2 a -> ->.",
+            "move=> &1 &2 a; byequiv => //.",
+            "proc; inline *; wp.",
+            "while (={PIR.s, j}); last by auto => /> /#.",
+            "wp; rnd; skip => /> /#.",
+            "qed."
+          ]
+        }
+      ]
+    },
+    {
+      "id": "PIR_secure1__2026-06-01_1817_PIR_secure1__ef713ea-dirty",
+      "dir": "PIR_secure1/2026-06-01_1817_PIR_secure1__ef713ea-dirty",
+      "lemma": "PIR_secure1",
+      "source": "PIR.ec",
+      "profile": "L1",
+      "model": "claude-opus-4-6",
+      "outcome": "proved",
+      "turns": 9,
+      "trees": 2,
+      "date": "2026-06-01 18:17",
+      "timestamp": "2026-06-01_1817_PIR_secure1",
+      "commit": "ef713ea",
+      "eval_mode": true,
+      "tier": "public",
+      "proved": true,
+      "view_roots": [],
+      "per_tree": [
+        {
+          "tree": "Tree_0_0",
+          "proved": false,
+          "tactics": [
+            "proc.",
+            "inline *.",
+            "wp."
+          ]
+        },
+        {
+          "tree": "Tree_0_1",
+          "proved": true,
+          "tactics": [
+            "proc; inline *; wp.",
+            "while (={PIR.s, j}).",
+            "auto.",
+            "auto.",
+            "qed."
+          ]
+        }
+      ]
+    },
+    {
+      "id": "cpa_ddh0__2026-06-01_1402_cpa_ddh0__ef713ea",
+      "dir": "cpa_ddh0/2026-06-01_1402_cpa_ddh0__ef713ea",
+      "lemma": "cpa_ddh0",
+      "source": "elgamal.ec",
+      "profile": "L1",
+      "model": "claude-opus-4-6",
+      "outcome": "proved",
+      "turns": 41,
+      "trees": 2,
+      "date": "2026-06-01 14:02",
+      "timestamp": "2026-06-01_1402_cpa_ddh0",
+      "commit": "ef713ea",
+      "eval_mode": true,
+      "tier": "public",
+      "proved": true,
+      "view_roots": [],
+      "per_tree": [
+        {
+          "tree": "Tree_0_0",
+          "proved": true,
+          "tactics": [
+            "byequiv => //.",
+            "proc.",
+            "inline *.",
+            "swap{1} 7 -5.",
+            "wp.",
+            "call (_: ={glob A}).",
+            "call (_: true).",
+            "wp.",
+            "rnd.",
+            "call (_: true).",
+            "wp.",
+            "rnd.",
+            "rnd.",
+            "skip.",
+            "smt(pow_pow).",
+            "progress.",
+            "smt().",
+            "congr.",
+            "exact pow_pow.",
+            "by rewrite expM.",
+            "qed."
+          ]
+        },
+        {
+          "tree": "Tree_0_1",
+          "proved": false,
+          "tactics": [
+            "byequiv => //.",
+            "proc.",
+            "inline *.",
+            "swap{1} 7 -3.",
+            "wp.",
+            "call (_: true).",
+            "wp.",
+            "rnd.",
+            "swap{1} 4 -1.",
+            "call (_: true).",
+            "wp.",
+            "rnd.",
+            "wp.",
+            "rnd.",
+            "skip.",
+            "progress.",
+            "by rewrite pow_pow.",
+            "congr.",
+            "smt()."
+          ]
+        }
+      ]
+    },
+    {
+      "id": "CPprgL__2026-06-01_0002_CPprgL__ef713ea-dirty",
+      "dir": "CPprgL/2026-06-01_0002_CPprgL__ef713ea-dirty",
+      "lemma": "CPprgL",
+      "source": "PRG.ec",
+      "profile": "L4",
+      "model": "claude-opus-4-6",
+      "outcome": "proved",
+      "turns": 4,
+      "trees": 2,
+      "date": "2026-06-01 00:02",
+      "timestamp": "2026-06-01_0002_CPprgL",
+      "commit": "ef713ea",
+      "eval_mode": true,
+      "tier": "public",
+      "proved": true,
+      "view_roots": [],
+      "per_tree": [
+        {
+          "tree": "Tree_0_0",
+          "proved": true,
+          "tactics": [
+            "by move=> PprgL; proc; sp; if=> //; call PprgL; wp.",
+            "qed."
+          ]
+        },
+        {
+          "tree": "Tree_0_1",
+          "proved": false,
+          "tactics": []
+        }
+      ]
+    },
+    {
+      "id": "is_restr_Ueq__2026-05-31_2355_is_restr_Ueq__ef713ea-dirty",
+      "dir": "is_restr_Ueq/2026-05-31_2355_is_restr_Ueq__ef713ea-dirty",
+      "lemma": "is_restr_Ueq",
+      "source": "PIR.ec",
+      "profile": "L4",
+      "model": "claude-opus-4-6",
+      "outcome": "proved",
+      "turns": 7,
+      "trees": 2,
+      "date": "2026-05-31 23:55",
+      "timestamp": "2026-05-31_2355_is_restr_Ueq",
+      "commit": "ef713ea",
+      "eval_mode": true,
+      "tier": "public",
+      "proved": true,
+      "view_roots": [],
+      "per_tree": [
+        {
+          "tree": "Tree_0_0",
+          "proved": true,
+          "tactics": [
+            "move=> h1 h2; rewrite eq_iff; split => [/fsetP heq | ->] //; apply fsetP => x; have := heq x; rewrite !in_fsetU !in_fset1; smt(nin_is_restr).",
+            "qed."
+          ]
+        },
+        {
+          "tree": "Tree_0_1",
+          "proved": false,
+          "tactics": []
+        }
+      ]
+    }
+  ]
+};

@@ -1,0 +1,19 @@
+{
+  "turn": 3,
+  "handled_intent": {
+    "intent": "probe_tactic",
+    "payload": {
+      "tactic": "byequiv (_: ={glob A} /\\ arg{2} = nth0 ==> (let tt = nth (w1, w2) UFCMA_l.lbad1{1} nth0 in tt.`1 = tt.`2) => UFCMA_li.badi{2})."
+    }
+  },
+  "ok": true,
+  "manager_note": "Accepted structural transition probe. Decide whether to enter this phase using `last_result.structural_transition`; do not solve the speculative preview in your mental model, and do not call `undo_last_step` to undo a read-only probe.",
+  "manager_actions": [
+    {
+      "action": "tactic probe",
+      "outcome": "EasyCrypt accepted this read-only probe. The committed proof state was not changed; `goal_after_probe` shows the goal that would be visible if this tactic were committed.",
+      "timing": "3.0 s"
+    }
+  ],
+  "view_refreshed": true
+}

@@ -1,0 +1,19 @@
+{
+  "turn": 14,
+  "handled_intent": {
+    "intent": "commit_tactic",
+    "payload": {
+      "tactic": "exists* CTXT_Wrap.k{1}, p{1}; elim* => kk pp; sp; wp; call (_: true); wp; call (enc_corr_eq kk.`1 pp)."
+    }
+  },
+  "ok": true,
+  "manager_note": "Committed tactic accepted; the EasyCrypt proof state changed.",
+  "manager_actions": [
+    {
+      "action": "tactic commit",
+      "outcome": "EasyCrypt accepted the committed tactic.",
+      "timing": "204 ms"
+    }
+  ],
+  "view_refreshed": true
+}

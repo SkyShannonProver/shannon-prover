@@ -1,0 +1,22 @@
+{
+  "turn": 10,
+  "handled_intent": {
+    "intent": "lookup_symbol",
+    "payload": {
+      "symbol": "sumr_ge0"
+    }
+  },
+  "ok": true,
+  "manager_note": "Read-only context. Accepted/rejected tactic or call text inside a preview is route-selection information, not the current proof-state error.",
+  "manager_actions": [
+    {
+      "action": "symbol lookup",
+      "outcome": "The manager returned read-only context for the current goal.",
+      "timing": "1.2 s",
+      "content": {
+        "preview": "[WHERE-HIT] sumr_ge0 (kind: lemma) * In [lemmas or axioms]: lemma sumr_ge0 ['a]: forall (P : 'a -> bool) (F : 'a -> int) (s : 'a list), (forall (a : 'a), P a => 0 <= F a) => 0 <= BIA.big P F s. (* StdBigop.Bigreal.sumr_ge0 *) lemma sumr_ge0 ['a]: forall (P : 'a -> bool) (F : 'a -> real) (s : 'a list), (forall (a : 'a), P a => 0%r <= F a) => 0%r <= BRA.big P F s."
+      }
+    }
+  ],
+  "view_refreshed": true
+}

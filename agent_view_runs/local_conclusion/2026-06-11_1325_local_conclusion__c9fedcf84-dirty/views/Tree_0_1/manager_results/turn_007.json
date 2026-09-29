@@ -1,0 +1,19 @@
+{
+  "turn": 7,
+  "handled_intent": {
+    "intent": "commit_tactic",
+    "payload": {
+      "tactic": "call (_: ={glob RCPA_WUF_RCPA.RCPAa, glob OracleBounder}); auto."
+    }
+  },
+  "ok": true,
+  "manager_note": "Committed tactic accepted; the EasyCrypt proof state changed.",
+  "manager_actions": [
+    {
+      "action": "tactic commit",
+      "outcome": "EasyCrypt accepted the committed tactic.",
+      "timing": "192 ms"
+    }
+  ],
+  "view_refreshed": true
+}

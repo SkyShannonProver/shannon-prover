@@ -1,0 +1,175 @@
+{
+  "last_result": {
+    "intent": "commit_tactic",
+    "payload": {
+      "tactic": "move=> H."
+    },
+    "manager_action": "commit_tactic",
+    "result": "EasyCrypt accepted the committed tactic.",
+    "effect": "EasyCrypt accepted a proof-state change; the refreshed view is based on the new committed state.",
+    "proof_state": "The committed EasyCrypt proof state changed.",
+    "tactic": "move=> H."
+  },
+  "current_goal": {
+    "lines": [
+      "Current goal",
+      "",
+      "Type variables: <none>",
+      "",
+      "&m: {}",
+      "nth0: int",
+      "H: 0 <= nth0 < qdec",
+      "------------------------------------------------------------------------",
+      "Pr[UFCMA_l.f() @ &m :",
+      "   let tt = nth (w1, w2) UFCMA_l.lbad1 nth0 in tt.`1 = tt.`2] <=",
+      "Pr[UFCMA_li.f(nth0) @ &m : UFCMA_li.badi]",
+      "[419|check]>"
+    ],
+    "text_fully_shown": true,
+    "truncated": false,
+    "goal_type": "probability",
+    "view_focus": "probability",
+    "source": {
+      "label": "Parsed from EasyCrypt pretty goal text",
+      "ground_truth": false
+    }
+  },
+  "proof_status": {
+    "status": "open",
+    "remaining_goals": 1,
+    "remaining_goals_known": true,
+    "goal_type": "probability",
+    "view_focus": "probability",
+    "current_layer": "pr"
+  },
+  "candidate_moves": {
+    "moves": [
+      {
+        "title": "Proof-route context",
+        "category": "strategy",
+        "guidance": "Probabilistic VC plan: bad-event reduction via have-chain, rewrite Pr/mu rules, real-order smt, byequiv/bad-event bridge",
+        "applicability": "Use this as route-selection context; it is not a tactic to run as-is.",
+        "source": "proof-state analysis"
+      }
+    ]
+  },
+  "program_frontier": {
+    "authority": "proof-state analysis",
+    "view_focus": "probability",
+    "focus": {
+      "pr_rewrite_candidates": 0,
+      "has_pr_normal_form": false,
+      "has_pr_arithmetic_plan": true,
+      "has_pr_obligation_plan": true,
+      "pr_obligation_primary_strategy": "use_pr_arithmetic_chain",
+      "native_ast_search_hits": 0
+    },
+    "checks": [
+      "Pr resources are context: use them when they match the visible endpoint and simplify the goal.",
+      "Direct byequiv is a valid route when the goal is naturally a program equivalence."
+    ]
+  },
+  "call_site_surface": {},
+  "application_context": {
+    "selected_handles": [
+      {
+        "title": "Proof-route context",
+        "why_relevant": "Probabilistic VC plan: bad-event reduction via have-chain, rewrite Pr/mu rules, real-order smt, byequiv/bad-event bridge"
+      }
+    ]
+  },
+  "facts_and_diagnostics": {
+    "facts": {
+      "has_pr_normal_form": false,
+      "has_pr_arithmetic_plan": true,
+      "has_pr_obligation_plan": true,
+      "pr_obligation_primary_strategy": "use_pr_arithmetic_chain",
+      "unfoldable_goal_heads": [
+        {
+          "name": "qdec",
+          "unqualified_name": "qdec",
+          "declaration_kind": "op",
+          "unfold_tactic": "rewrite /qdec.",
+          "smt_argument_role": "not_a_lemma_hint"
+        },
+        {
+          "name": "w1",
+          "unqualified_name": "w1",
+          "declaration_kind": "op",
+          "unfold_tactic": "rewrite /w1.",
+          "smt_argument_role": "not_a_lemma_hint"
+        },
+        {
+          "name": "w2",
+          "unqualified_name": "w2",
+          "declaration_kind": "op",
+          "unfold_tactic": "rewrite /w2.",
+          "smt_argument_role": "not_a_lemma_hint"
+        }
+      ],
+      "unfoldable_goal_head_count": 3
+    },
+    "fact_note": "Only current-frontier facts are shown here; the full proof context artifact keeps the compiler/internal details."
+  },
+  "inspect_lookup_handles": {
+    "effect": "All handles here are read-only manager requests; the committed EasyCrypt proof state stays unchanged.",
+    "manager_note": "Some requests may ask EasyCrypt or name resolution; wait for the manager result before choosing the next proof intent.",
+    "ask_manager_for": [
+      {
+        "intent": "inspect_context",
+        "payload": {
+          "topic": "hint"
+        },
+        "use_when": "Direct `apply`/`rewrite` does not match the raw endpoint yet, but this is a live Pr bridge checkpoint. If pursuing this Pr-bridge route, inspect it with `-where pr_CCP_OCCP` and probe a small intermediate Pr equality to one instantiated...",
+        "returns": "manager-provided read-only context for this proof route"
+      },
+      {
+        "intent": "inspect_context",
+        "payload": {
+          "topic": "goal_info"
+        },
+        "use_when": "Need parsed goal shape, resolved names, or KB pattern hints.",
+        "returns": "parsed goal structure and names"
+      },
+      {
+        "intent": "inspect_context",
+        "payload": {
+          "topic": "pr_bridge_routes"
+        },
+        "use_when": "Current Pr equality may need a manager-verified bridge route (game-hop or scheme/endpoint normalization) before direct byequiv/proc lowering.",
+        "returns": "daemon-verified, committable Pr bridge routes with manager-owned intent payloads"
+      },
+      {
+        "intent": "inspect_context",
+        "payload": {
+          "topic": "equiv_bridge_lemmas"
+        },
+        "use_when": "Need pRHL/procedure-equivalence bridge lemma names or context after checking pr_bridge_routes.",
+        "returns": "context-only equiv bridge lemma candidates (names to look up/apply); not a verified Pr route"
+      },
+      {
+        "intent": "inspect_context",
+        "payload": {
+          "topic": "lemma_hints"
+        },
+        "use_when": "Need local lemma hints before choosing a Pr-level proof route.",
+        "returns": "nearby lemma hints and proof-route context"
+      },
+      {
+        "intent": "inspect_context",
+        "payload": {
+          "topic": "tactic_forms",
+          "name": "while"
+        },
+        "use_when": "Need exact byphoare/phoare-loop tactic syntax before probing the probability route.",
+        "returns": "valid `while` forms and common traps"
+      }
+    ],
+    "lookup_candidates": [
+      {
+        "symbol": "pr_CCP_OCCP",
+        "use_when": "Resolve exact signature for `pr_CCP_OCCP` only when this handle route is being tested."
+      }
+    ]
+  }
+}

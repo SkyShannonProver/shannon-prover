@@ -1,0 +1,177 @@
+{
+  "file": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/source/ChaChaPoly/chacha_poly.ec",
+  "include_dirs": [
+    "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/source/ChaChaPoly",
+    "easycrypt-src/theories"
+  ],
+  "kind": "manager_session_bootstrap",
+  "lemma": "UFCMA_genCC",
+  "manager_actions": [
+    {
+      "agent_observation": {
+        "effect": "This manager intent does not change the EasyCrypt proof state.",
+        "manager_action": "start",
+        "result": "The manager completed this proof-level request."
+      },
+      "argv": [
+        "~/Downloads/crypto-agent-pipeline/.venv/bin/python",
+        "core/easycrypt/session_cli.py",
+        "-d",
+        ".ec_session_prover_tree_0_1",
+        "-start",
+        "-f",
+        "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/source/ChaChaPoly/chacha_poly.ec",
+        "-I",
+        "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/source/ChaChaPoly",
+        "-I",
+        "easycrypt-src/theories",
+        "-lemma",
+        "UFCMA_genCC"
+      ],
+      "duration_ms": 1288,
+      "exit_code": 0,
+      "label": "start",
+      "mutates_proof_state": true,
+      "stderr_chars": 0,
+      "stderr_preview": "",
+      "stdout_chars": 9094,
+      "stdout_has_workspace_view": true,
+      "stdout_lines": 230
+    },
+    {
+      "agent_observation": {
+        "effect": "This manager intent does not change the EasyCrypt proof state.",
+        "manager_action": "agent_view",
+        "result": "The manager completed this proof-level request."
+      },
+      "argv": [
+        "~/Downloads/crypto-agent-pipeline/.venv/bin/python",
+        "core/easycrypt/session_cli.py",
+        "-d",
+        ".ec_session_prover_tree_0_1",
+        "-agent-view"
+      ],
+      "duration_ms": 156,
+      "exit_code": 0,
+      "label": "agent_view",
+      "mutates_proof_state": false,
+      "stderr_chars": 0,
+      "stderr_preview": "",
+      "stdout_chars": 8979,
+      "stdout_has_workspace_view": true,
+      "stdout_lines": 225
+    }
+  ],
+  "node": "Tree-0.1",
+  "replay_prefix": [],
+  "replay_prefix_count": 0,
+  "schema_version": 2,
+  "session_dir": ".ec_session_prover_tree_0_1",
+  "session_tag": "prover_tree_0_1",
+  "snapshot": {
+    "execution_refs": {
+      "manager_action_count": 2,
+      "manager_actions": [
+        {
+          "agent_observation": {
+            "effect": "This manager intent does not change the EasyCrypt proof state.",
+            "manager_action": "start",
+            "result": "The manager completed this proof-level request."
+          },
+          "argv": [
+            "~/Downloads/crypto-agent-pipeline/.venv/bin/python",
+            "core/easycrypt/session_cli.py",
+            "-d",
+            ".ec_session_prover_tree_0_1",
+            "-start",
+            "-f",
+            "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/source/ChaChaPoly/chacha_poly.ec",
+            "-I",
+            "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/source/ChaChaPoly",
+            "-I",
+            "easycrypt-src/theories",
+            "-lemma",
+            "UFCMA_genCC"
+          ],
+          "duration_ms": 1288,
+          "exit_code": 0,
+          "label": "start",
+          "mutates_proof_state": true,
+          "stderr_chars": 0,
+          "stderr_preview": "",
+          "stdout_chars": 9094,
+          "stdout_has_workspace_view": true,
+          "stdout_lines": 230
+        },
+        {
+          "agent_observation": {
+            "effect": "This manager intent does not change the EasyCrypt proof state.",
+            "manager_action": "agent_view",
+            "result": "The manager completed this proof-level request."
+          },
+          "argv": [
+            "~/Downloads/crypto-agent-pipeline/.venv/bin/python",
+            "core/easycrypt/session_cli.py",
+            "-d",
+            ".ec_session_prover_tree_0_1",
+            "-agent-view"
+          ],
+          "duration_ms": 156,
+          "exit_code": 0,
+          "label": "agent_view",
+          "mutates_proof_state": false,
+          "stderr_chars": 0,
+          "stderr_preview": "",
+          "stdout_chars": 8979,
+          "stdout_has_workspace_view": true,
+          "stdout_lines": 225
+        }
+      ]
+    },
+    "goal_hash": "53db691346a3b570a45c4f489a5987aa4b50ca90",
+    "node_id": "Tree-0.1",
+    "proof_context_view_artifact": "",
+    "session_dir": ".ec_session_prover_tree_0_1",
+    "session_epoch": 1,
+    "session_tag": "prover_tree_0_1",
+    "state_version": 1,
+    "workspace_view_artifact": ""
+  },
+  "workspace_view": {
+    "current_goal": {
+      "goal_type": "equiv",
+      "lines": [
+        "Current goal",
+        "",
+        "Type variables: <none>",
+        "",
+        "------------------------------------------------------------------------",
+        "pre = (glob A){1} = (glob A){2}",
+        "",
+        "    UFCMA(A, St).main ~ CPA_game(CCA_CPA_Adv(A),",
+        "                          RealOrcls(GenChaChaPoly(CCRO(FinRO)))).main ",
+        "",
+        "post = (res{1} = res{2} /\\ Mem.lc{1} = Mem.lc{2}) /\\ StLSke.gs{1} = RO.m{2}"
+      ],
+      "source": {
+        "ground_truth": false,
+        "label": "Parsed from EasyCrypt pretty goal text"
+      },
+      "text_fully_shown": true,
+      "truncated": false,
+      "view_focus": "relational_program"
+    },
+    "kind": "prover_workspace_view",
+    "last_result": {},
+    "proof_status": {
+      "current_layer": "prhl_module",
+      "goal_type": "equiv",
+      "remaining_goals": 1,
+      "remaining_goals_known": true,
+      "status": "open",
+      "view_focus": "relational_program"
+    },
+    "schema_version": 2,
+    "view_hash": "7c9643b8acdfb0bf2aa758a973ddf2c47f57547d"
+  }
+}

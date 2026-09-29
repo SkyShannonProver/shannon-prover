@@ -1,0 +1,7 @@
+{
+  "turn": 2,
+  "ok": false,
+  "repair_prompt": "I could not read a proof intent from the last message. Please reply with exactly one JSON object like:\n{\"intent\": \"probe_tactic\", \"payload\": {\"tactic\": \"...\"}}\nor\n{\"intent\": \"inspect_context\", \"payload\": {\"topic\": \"goal_info\"}}",
+  "manager_note": "Manager handled the previous message and refreshed the latest view.",
+  "view_refreshed": true
+}

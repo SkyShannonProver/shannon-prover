@@ -1,0 +1,37 @@
+{
+  "last_result": {},
+  "current_goal": {
+    "goal_type": "probability",
+    "lines": [
+      "Current goal",
+      "",
+      "Type variables: <none>",
+      "",
+      "A(O : RCPA_Oracles) : RCPA_Adversary{-PRP, -PRPi, -RCPA_Wrap, -PRFi, -Compute, -QueryBounder}",
+      "&m: {}",
+      "------------------------------------------------------------------------",
+      "(forall (O <: RCPA_Oracles{-A}),",
+      "   islossless O.enc => islossless A(O).distinguish) =>",
+      "`|Pr[INDR_CPA(IV_Wrap(CBC(PseudoRP)), QueryBounder(A)).main() @ &m : res] -",
+      "  Pr[INDR_CPA(Random, QueryBounder(A)).main() @ &m : res]| <=",
+      "`|Pr[IND(PRP, PRPF_Adv(QueryBounder(A))).main() @ &m : res] -",
+      "  Pr[IND(PRPi, PRPF_Adv(QueryBounder(A))).main() @ &m : res]| +",
+      "2%r * ((q * ell) ^ 2)%r * mu1 dBlock witness<:block>"
+    ],
+    "source": {
+      "ground_truth": false,
+      "label": "Parsed from EasyCrypt pretty goal text"
+    },
+    "text_fully_shown": true,
+    "truncated": false,
+    "view_focus": "probability"
+  },
+  "proof_status": {
+    "current_layer": "pr",
+    "goal_type": "probability",
+    "remaining_goals": 1,
+    "remaining_goals_known": true,
+    "status": "open",
+    "view_focus": "probability"
+  }
+}

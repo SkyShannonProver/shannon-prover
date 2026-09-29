@@ -1,0 +1,20 @@
+{
+  "turn": 21,
+  "handled_intent": {
+    "intent": "probe_tactic",
+    "payload": {
+      "tactic": "move=> _ v hv; rewrite /predT /=; case (j{hr} = i{hr}) => hji; case v => hv2; rewrite ?big_cons /=; smt(xorwA xorwC xorw0 xorwK)."
+    }
+  },
+  "ok": true,
+  "manager_note": "Read-only tactic probe. Use any goal-after-probe text as a preview only; there is no probe step to undo.",
+  "manager_actions": [
+    {
+      "action": "tactic probe",
+      "outcome": "EasyCrypt rejected this probe. The committed proof state was not changed; the EasyCrypt error tells you why.",
+      "timing": "4.4 s",
+      "error_summary": "cannot prove goal (strict)"
+    }
+  ],
+  "view_refreshed": true
+}

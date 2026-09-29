@@ -1,0 +1,84 @@
+{
+  "turn": 35,
+  "handled_intent": {
+    "intent": "inspect_context",
+    "payload": {
+      "topic": "goal_info"
+    }
+  },
+  "ok": true,
+  "manager_note": "Read-only context. Accepted/rejected tactic or call text inside a preview is route-selection information, not the current proof-state error.",
+  "manager_actions": [
+    {
+      "action": "inspect goal info",
+      "outcome": "The manager returned read-only context for the current goal.",
+      "timing": "1.3 s",
+      "content": {
+        "title": "Parsed Goal Information",
+        "goal_info": {
+          "goal_type": "phoare",
+          "num_remaining": 3,
+          "num_remaining_determined": true,
+          "pre": "(UF.forged = false /\\ UFCMA.bad2 = false /\\ RO.m = empty<:nonce * C.counter, poly_in>) /\\ ! size Mem.lc <= qdec",
+          "post": "UF.forged \\/ UFCMA.bad2",
+          "phoare_bound": {
+            "comparator": "<=",
+            "bound": "qdec%r * maxr pr_zeropol pr1_poly_out"
+          },
+          "remaining_goals_note": "You have 3 subgoals pending. The `goal_type` above is for the CURRENT (first pending) goal ONLY \u2014 the other 2 subgoal(s) may have DIFFERENT types. This is normal after tactics like `call (_: Inv)`, `byequiv`, `conseq`, or `seq K:` which each generate multiple subgoals with mixed pRHL/phoare/hoare/ambient shapes. Do NOT interpret a mismatch between the current-goal type and your proof plan as 'session is broken'. Close the current subgoal, then inspect the next one via `-goal-info` again. Use `-status` to see total proof progress.",
+          "remaining_goals_inference": [
+            {
+              "subgoal_n": 1,
+              "predicted_type": "(carried-over from earlier branching)",
+              "description": "Pending subgoal from a branching tactic earlier in history; this entry isn't from the latest `have`. Run -goal-info on each subgoal as you reach it to see its actual shape.",
+              "origin_tactic": "(earlier branching, not tracked)"
+            },
+            {
+              "subgoal_n": 2,
+              "predicted_type": "ambient",
+              "description": "Prove the `have` claim (ambient goal based on claim shape)",
+              "origin_tactic": "have [hp [hq h0]] : pr_zeropol <= maxr pr_zeropol pr1_poly_out /\\ pr1_poly_out <= maxr pr_zeropol pr"
+            },
+            {
+              "subgoal_n": 3,
+              "predicted_type": "(inherits prior goal type)",
+              "description": "Continuation with `have` hypothesis in context",
+              "origin_tactic": "have [hp [hq h0]] : pr_zeropol <= maxr pr_zeropol pr1_poly_out /\\ pr1_poly_out <= maxr pr_zeropol pr"
+            }
+          ],
+          "remaining_goals_inference_caveat": "These subgoal shapes are INFERRED from the last branching tactic's known pattern, NOT read from EC directly (EC's emacs output only exposes the current goal). Use as hints, not ground truth. Ground truth is obtained by closing the current subgoal and running -goal-info on the next. Known-wrong cases: 3-arg `call (_: bad, Inv)`, nested branchers, while-variants with different arg counts."
+        },
+        "goal_state": {
+          "state_kind": "open",
+          "goal_type": "phoare",
+          "num_remaining": 3,
+          "num_remaining_determined": true,
+          "proof_candidate_closed": false,
+          "active_goal_hash": "59c37478bfb6a612762896d3c63c3f659f245060",
+          "authority": "pretty_text_fallback",
+          "ec_ground_truth": false
+        },
+        "history": {
+          "tactic_count": 36,
+          "has_qed": false,
+          "latest_tactic": "apply (ler_trans ((size Mem.lc{hr})%r * maxr pr_zeropol pr1_poly_out)); [by rewrite -key RField.mulrDl; apply ler_add; apply ler_wpmul2l | by apply ler_wpmul2r; [exact h0 | smt()]]."
+        },
+        "latest_transition": {
+          "kind": "progress",
+          "status": "ok",
+          "goals_before": 4,
+          "goals_after": 3,
+          "candidate_closed": false,
+          "no_progress": false,
+          "tactic": "apply (ler_trans ((size Mem.lc{hr})%r * maxr pr_zeropol pr1_poly_out)); [by rewrite -key RField.mulrDl; apply ler_add; apply ler_wpmul2l | by apply ler_wpmul2r; [exact h0 | smt()]]."
+        },
+        "notes": [
+          {
+            "message": "You have 3 subgoals pending. The `goal_type` above is for the CURRENT (first pending) goal ONLY \u2014 the other 2 subgoal(s) may have DIFFERENT types. This is normal after tactics like `call (_: Inv)`, `byequiv`, `conseq`, or `seq K:` which each generate multiple subgoals with mixed pRHL/phoare/hoare/ambient shapes. Do NOT interpret a mismatch between the current-goal type and your proof plan as 'session is broken'. Close the current subgoal, then inspect the next one via `-goal-info` again. Use `-status` to see total proof progress."
+          }
+        ]
+      }
+    }
+  ],
+  "view_refreshed": true
+}

@@ -1,0 +1,175 @@
+{
+  "file": "artifacts/eval_suite/mee_sweep_l1_v2/l1_goal_projection/mee_success_eq_random/r01/source/MEE-CBC/CBC.eca",
+  "include_dirs": [
+    "artifacts/eval_suite/mee_sweep_l1_v2/l1_goal_projection/mee_success_eq_random/r01/source/MEE-CBC",
+    "easycrypt-src/theories"
+  ],
+  "kind": "manager_session_bootstrap",
+  "lemma": "success_eq_random",
+  "manager_actions": [
+    {
+      "agent_observation": {
+        "effect": "This manager intent does not change the EasyCrypt proof state.",
+        "manager_action": "start",
+        "result": "The manager completed this proof-level request."
+      },
+      "argv": [
+        ".venv/bin/python3",
+        "core/easycrypt/session_cli.py",
+        "-d",
+        ".ec_session_prover_tree_0_0",
+        "-start",
+        "-f",
+        "artifacts/eval_suite/mee_sweep_l1_v2/l1_goal_projection/mee_success_eq_random/r01/source/MEE-CBC/CBC.eca",
+        "-I",
+        "artifacts/eval_suite/mee_sweep_l1_v2/l1_goal_projection/mee_success_eq_random/r01/source/MEE-CBC",
+        "-I",
+        "easycrypt-src/theories",
+        "-lemma",
+        "success_eq_random"
+      ],
+      "duration_ms": 1163,
+      "exit_code": 0,
+      "label": "start",
+      "mutates_proof_state": true,
+      "stderr_chars": 0,
+      "stderr_preview": "",
+      "stdout_chars": 4792,
+      "stdout_has_workspace_view": true,
+      "stdout_lines": 133
+    },
+    {
+      "agent_observation": {
+        "effect": "This manager intent does not change the EasyCrypt proof state.",
+        "manager_action": "agent_view",
+        "result": "The manager completed this proof-level request."
+      },
+      "argv": [
+        ".venv/bin/python3",
+        "core/easycrypt/session_cli.py",
+        "-d",
+        ".ec_session_prover_tree_0_0",
+        "-agent-view"
+      ],
+      "duration_ms": 244,
+      "exit_code": 0,
+      "label": "agent_view",
+      "mutates_proof_state": false,
+      "stderr_chars": 0,
+      "stderr_preview": "",
+      "stdout_chars": 4698,
+      "stdout_has_workspace_view": true,
+      "stdout_lines": 130
+    }
+  ],
+  "node": "Tree-0.0",
+  "replay_prefix": [],
+  "replay_prefix_count": 0,
+  "replay_prefix_requested_count": 0,
+  "schema_version": 2,
+  "session_dir": ".ec_session_prover_tree_0_0",
+  "session_tag": "prover_tree_0_0",
+  "snapshot": {
+    "execution_refs": {
+      "manager_action_count": 2,
+      "manager_actions": [
+        {
+          "agent_observation": {
+            "effect": "This manager intent does not change the EasyCrypt proof state.",
+            "manager_action": "start",
+            "result": "The manager completed this proof-level request."
+          },
+          "argv": [
+            ".venv/bin/python3",
+            "core/easycrypt/session_cli.py",
+            "-d",
+            ".ec_session_prover_tree_0_0",
+            "-start",
+            "-f",
+            "artifacts/eval_suite/mee_sweep_l1_v2/l1_goal_projection/mee_success_eq_random/r01/source/MEE-CBC/CBC.eca",
+            "-I",
+            "artifacts/eval_suite/mee_sweep_l1_v2/l1_goal_projection/mee_success_eq_random/r01/source/MEE-CBC",
+            "-I",
+            "easycrypt-src/theories",
+            "-lemma",
+            "success_eq_random"
+          ],
+          "duration_ms": 1163,
+          "exit_code": 0,
+          "label": "start",
+          "mutates_proof_state": true,
+          "stderr_chars": 0,
+          "stderr_preview": "",
+          "stdout_chars": 4792,
+          "stdout_has_workspace_view": true,
+          "stdout_lines": 133
+        },
+        {
+          "agent_observation": {
+            "effect": "This manager intent does not change the EasyCrypt proof state.",
+            "manager_action": "agent_view",
+            "result": "The manager completed this proof-level request."
+          },
+          "argv": [
+            ".venv/bin/python3",
+            "core/easycrypt/session_cli.py",
+            "-d",
+            ".ec_session_prover_tree_0_0",
+            "-agent-view"
+          ],
+          "duration_ms": 244,
+          "exit_code": 0,
+          "label": "agent_view",
+          "mutates_proof_state": false,
+          "stderr_chars": 0,
+          "stderr_preview": "",
+          "stdout_chars": 4698,
+          "stdout_has_workspace_view": true,
+          "stdout_lines": 130
+        }
+      ]
+    },
+    "goal_hash": "ed95a4e2738fa7f3c2b7bcb54e22d265a117f166",
+    "node_id": "Tree-0.0",
+    "proof_context_view_artifact": "",
+    "session_dir": ".ec_session_prover_tree_0_0",
+    "session_epoch": 1,
+    "session_tag": "prover_tree_0_0",
+    "state_version": 1,
+    "workspace_view_artifact": ""
+  },
+  "workspace_view": {
+    "current_goal": {
+      "goal_type": "probability",
+      "lines": [
+        "Current goal",
+        "",
+        "Type variables: <none>",
+        "",
+        "&m: {}",
+        "------------------------------------------------------------------------",
+        "Pr[INDR_CPA(Random, A).main() @ &m : res] =",
+        "Pr[INDR_CPA_direct(CBC_Oracle(Sample), A).main() @ &m : res]"
+      ],
+      "source": {
+        "ground_truth": false,
+        "label": "Parsed from EasyCrypt pretty goal text"
+      },
+      "text_fully_shown": true,
+      "truncated": false,
+      "view_focus": "probability"
+    },
+    "kind": "prover_workspace_view",
+    "last_result": {},
+    "proof_status": {
+      "current_layer": "pr",
+      "goal_type": "probability",
+      "remaining_goals": 1,
+      "remaining_goals_known": true,
+      "status": "open",
+      "view_focus": "probability"
+    },
+    "schema_version": 2,
+    "view_hash": "514051c1b90c4cf6a86369b43de8c657a6a2bbc0"
+  }
+}

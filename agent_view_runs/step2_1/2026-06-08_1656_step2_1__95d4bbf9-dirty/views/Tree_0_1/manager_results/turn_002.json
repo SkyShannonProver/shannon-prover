@@ -1,0 +1,22 @@
+{
+  "turn": 2,
+  "handled_intent": {
+    "intent": "inspect_context",
+    "payload": {
+      "topic": "lemma_index"
+    }
+  },
+  "ok": true,
+  "manager_note": "Read-only context. Accepted/rejected tactic or call text inside a preview is route-selection information, not the current proof-state error.",
+  "manager_actions": [
+    {
+      "action": "inspect lemma index",
+      "outcome": "The manager returned read-only context for the current goal.",
+      "timing": "270 ms",
+      "content": {
+        "preview": "=== chacha_poly.ec: 51 lemma statement(s) (signatures only \u2014 proofs are NOT shown) === These are every lemma declared in the current file. Use them to plan which lemmas you can apply/rewrite/bridge with; `lookup_symbol` for the exact declaration of any one before using it. L14 [lemma, top_level] map2_zip: lemma map2_zip (f:'a -> 'b -> 'c) s t : map2 f s t = map (fun (p:'a * 'b) => f p.`1 p.`2) (zip s t). L21 [lemma, top_level] size_map2: lemma size_map2 (f:'a -> 'b -> 'c) (l1:'a list) l2 : size (map2 f l1 l2) = min (size l1) (size l2). L27 [lemma, top_level] nth_map2: lemma nth_map2 dfla dflb dflc (f:'a -> 'b -> 'c) (l1:'a list) l2 i: 0 <= i < min (size l1) (size l2) => nth dflc (map2 f l1 l2) i = f (nth dfla l1 i) (nth dflb l2 i). L54 [lemma, top_level] xorK1: lemma xorK1 b1 b2 : b1 = b1 +^ b2 +^ b2. L134 [lemma, top_level] dblock_ll: lemma dblock_ll : is_lossless dblock. L140 [lemma, top_level] dblock_uni: lemma dblock_uni: is_uniform dblock. L146 [lemma, top_level] dblock_fu: lemma dblock_fu: is_full dblock. L152 [lemma, top_level] dblock_funi: lemma dblock_funi: is_funiform dblock. L163 [lemma, top_level] nth_xor: lemma nth_xor x y i : 0 <= i < block_size => nth Byte.zero (b..."
+      }
+    }
+  ],
+  "view_refreshed": true
+}

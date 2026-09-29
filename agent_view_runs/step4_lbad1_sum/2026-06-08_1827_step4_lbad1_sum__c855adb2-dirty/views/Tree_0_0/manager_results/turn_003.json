@@ -1,0 +1,20 @@
+{
+  "turn": 3,
+  "handled_intent": {
+    "intent": "commit_tactic",
+    "payload": {
+      "tactic": "have HP := LP.list_partitioning UFCMA_l tt (fun _ g _ => size g <= qdec /\\ exists (p:tag*tag), p \\in g /\\ p.`1 = p.`2) (fun _ g _ => find (fun (p:tag*tag) => p.`1 = p.`2) g) (iota_ 0 qdec) &m (iota_uniq 0 qdec)."
+    }
+  },
+  "ok": true,
+  "manager_note": "Commit attempt did not change the committed EasyCrypt proof state; use the returned result and latest view before trying the next proof intent.",
+  "manager_actions": [
+    {
+      "action": "tactic commit",
+      "outcome": "EasyCrypt rejected the committed tactic. Use the error summary and current goal to revise the proof step.",
+      "timing": "2.0 s",
+      "error_summary": "[error] This expression has type"
+    }
+  ],
+  "view_refreshed": true
+}

@@ -1,0 +1,1182 @@
+{
+  "last_result": {
+    "intent": "commit_tactic",
+    "payload": {
+      "tactic": "proc."
+    },
+    "manager_action": "commit_tactic",
+    "result": "EasyCrypt accepted the committed tactic.",
+    "effect": "EasyCrypt accepted a proof-state change; the refreshed view is based on the new committed state.",
+    "proof_state": "The committed EasyCrypt proof state changed.",
+    "tactic": "proc."
+  },
+  "current_goal": {
+    "lines": [
+      "Current goal",
+      "",
+      "Type variables: <none>",
+      "",
+      "&m: {}",
+      "------------------------------------------------------------------------",
+      "Context : hr: {b0 : bool, e, f, h : group, r, r' : ZModE.exp,",
+      "              m0, m1 : PKE_.plaintext}",
+      "Bound   : [<=] (PKE_.qD%r / order%r) ^ 3 * (PKE_.qD%r / (order - 1)%r)",
+      "",
+      "pre = true",
+      "",
+      "( 1)  G1.log <- []                                                           ",
+      "( 2)  G3.cilog <- []                                                         ",
+      "( 3)  G1.cstar <- None                                                       ",
+      "( 4)  G1.w <$ dt \\ pred1 zero                                                ",
+      "( 5)  G1.g_ <- g ^ G1.w                                                      ",
+      "( 6)  G1.k <$ dk                                                             ",
+      "( 7)  G1.y <$ dt                                                             ",
+      "( 8)  f <- g ^ G1.y                                                          ",
+      "( 9)  G1.z <$ dt                                                             ",
+      "(10)  h <- g ^ G1.z                                                          ",
+      "(11)  G1.x <$ dt                                                             ",
+      "(12)  e <- g ^ G1.x                                                          ",
+      "(13)  (m0, m1) <@ G4.A.choose(G1.k, g, G1.g_, e, f, h)                       ",
+      "(14)  G1.u <$ dt                                                             ",
+      "(15)  G1.u' <$ dt \\ pred1 G1.u                                               ",
+      "(16)  r' <$ dt                                                               ",
+      "(17)  r <$ dt                                                                ",
+      "(18)  G3.a <- g ^ G1.u                                                       ",
+      "(19)  G3.a_ <- G1.g_ ^ G1.u'                                                 ",
+      "(20)  G3.c <- g ^ r'                                                         ",
+      "(21)  G3.d <- g ^ r                                                          ",
+      "(22)  G2.v <- H G1.k (G3.a, G3.a_, G3.c)                                     ",
+      "(23)  G2.alpha <- (r - G1.u * (G1.x + G2.v * G1.y)) / (G1.w * (G1.u' - G1.u))",
+      "(24)  G1.cstar <- Some (G3.a, G3.a_, G3.c, G3.d)                             ",
+      "(25)  b0 <@ G4.A.guess(G3.a, G3.a_, G3.c, G3.d)                              ",
+      "",
+      "post = (G3.a, G3.a_, G3.c, G3.d) \\in G3.cilog",
+      "[138|check]>"
+    ],
+    "text_fully_shown": true,
+    "truncated": false,
+    "goal_type": "phoare",
+    "view_focus": "procedure_frontier",
+    "source": {
+      "label": "Parsed from EasyCrypt pretty goal text",
+      "ground_truth": false
+    }
+  },
+  "proof_status": {
+    "status": "open",
+    "remaining_goals": 1,
+    "remaining_goals_known": true,
+    "goal_type": "phoare",
+    "view_focus": "procedure_frontier",
+    "current_layer": "procedure_body"
+  },
+  "candidate_moves": {
+    "navigation": [
+      {
+        "id": "phoare_frontier",
+        "proof_family": "one_sided_procedure_frontier",
+        "episode": "phoare_entry",
+        "route": "enter_one_sided_procedure_frontier",
+        "confidence": "high",
+        "confidence_reason": "The current view is already a hoare/phoare procedure state, so the next route should advance the current frontier rather than restart with byphoare.",
+        "valid_for": "current_view_only",
+        "why_now": "current goal is a one-sided procedure judgment; use state-local procedure tactics for this frontier.",
+        "fast_track_probe": {
+          "tactic": "proc; inline *; wp; sp.",
+          "preconditions": [
+            "Use when the view is already a hoare/phoare procedure judgment.",
+            "Do not prefix this with byphoare; the proof is already inside the one-sided judgment.",
+            "Probe the bounded block first; commit only accepted block or prefix."
+          ],
+          "expected_next_shape": "A one-sided procedure body/frontier, loop obligation, or pure residual subgoal."
+        },
+        "anti_routes": [
+          {
+            "route": "byphoare_inside_phoare",
+            "reason": "The proof is already inside a hoare/phoare judgment.",
+            "scope": "avoid_until_state_changes_to_top_level_pr"
+          },
+          {
+            "route": "pRHL_branch_tactic_on_one_sided_goal",
+            "reason": "One-sided hoare/phoare states do not have left/right pRHL branches.",
+            "scope": "avoid_for_current_view"
+          }
+        ],
+        "repair_if_fails": [
+          {
+            "failure": "syntax",
+            "next": "inspect tactic_forms for hoare/phoare procedure forms"
+          },
+          {
+            "failure": "frontier",
+            "next": "inspect goal_info for the current one-sided procedure frontier"
+          },
+          {
+            "failure": "invariant",
+            "next": "inspect subgoal_gap or inv_from_lemma for loop invariant shape"
+          },
+          {
+            "failure": "route",
+            "next": "downgrade this route and choose another current-view navigation item"
+          }
+        ],
+        "lemma_pack": []
+      },
+      {
+        "id": "probability_budget_ledger_route",
+        "profile_gate": "navigator_upgrade",
+        "proof_family": "probability_budget_ledger",
+        "episode": "product_bound_resource_accounting",
+        "route": "event_budget_decomposition_before_local_sampling",
+        "confidence": "medium",
+        "confidence_reason": "The current probability goal has a product bound; the ledger is partial but still useful for avoiding local-budget traps.",
+        "valid_for": "current_view_only",
+        "why_now": "Treat the product bound as a resource ledger before committing sampling, split, seq, or direct call steps.",
+        "primary_next_action": {
+          "intent": "inspect_context",
+          "payload": {
+            "topic": "probability_budget_ledger"
+          }
+        },
+        "factor_slots": [
+          {
+            "id": "B1",
+            "expr": "PKE_.qD%r / order%r",
+            "grouped_factor": "(PKE_.qD%r / order%r) ^ 3",
+            "grouped_factor_index": 1,
+            "source": "power_expansion",
+            "power_repeat_index": 1,
+            "role": "finite_domain_point_mass"
+          },
+          {
+            "id": "B2",
+            "expr": "PKE_.qD%r / order%r",
+            "grouped_factor": "(PKE_.qD%r / order%r) ^ 3",
+            "grouped_factor_index": 1,
+            "source": "power_expansion",
+            "power_repeat_index": 2,
+            "role": "finite_domain_point_mass"
+          },
+          {
+            "id": "B3",
+            "expr": "PKE_.qD%r / order%r",
+            "grouped_factor": "(PKE_.qD%r / order%r) ^ 3",
+            "grouped_factor_index": 1,
+            "source": "power_expansion",
+            "power_repeat_index": 3,
+            "role": "finite_domain_point_mass"
+          },
+          {
+            "id": "B4",
+            "expr": "PKE_.qD%r / (order - 1)%r",
+            "grouped_factor": "PKE_.qD%r / (order - 1)%r",
+            "grouped_factor_index": 2,
+            "source": "top_level_product",
+            "role": "finite_domain_point_mass"
+          }
+        ],
+        "event_obligations": [
+          {
+            "id": "E1",
+            "event": "(G3.a, G3.a_, G3.c, G3.d) \\in G3.cilog [138|check]>",
+            "event_kind": "membership_event",
+            "collection": "G3.cilog",
+            "bridge_family": "membership_point_mass",
+            "candidate_factor_ids": [
+              "B1",
+              "B2",
+              "B3",
+              "B4"
+            ]
+          }
+        ],
+        "allowed_boundary_moves": [
+          {
+            "id": "seq_event_unit_suffix_boundary",
+            "kind": "event_preservation_boundary",
+            "tactic_family": "seq",
+            "stmt_count_hint": 25,
+            "budget_arg": "1%r",
+            "assertion_must_contain": {
+              "event": "(G3.a, G3.a_, G3.c, G3.d) \\in G3.cilog [138|check]>",
+              "collection": "G3.cilog",
+              "next_after_boundary": "return to the list-size times point-mass ledger; the boundary does not discharge the product budget"
+            },
+            "safe_when": "Use only to isolate a suffix/call that preserves the current membership event; the product budget must remain on the event obligation before this boundary.",
+            "not_a_budget_discharge": true
+          },
+          {
+            "id": "call_event_preservation_boundary",
+            "kind": "event_preservation_boundary",
+            "tactic_family": "call",
+            "tactic_shape": "call (_: PRE /\\ event ==> event).",
+            "assertion_must_contain": {
+              "event": "(G3.a, G3.a_, G3.c, G3.d) \\in G3.cilog [138|check]>",
+              "collection": "G3.cilog",
+              "next_after_boundary": "return to the list-size times point-mass ledger; the boundary does not discharge the product budget"
+            },
+            "safe_when": "Use only when the call proof obligation preserves the same membership event across the abstract call frontier.",
+            "not_a_budget_discharge": true
+          }
+        ],
+        "route_plan": [
+          "stay_at_probability_or_event_level",
+          "decompose product budget into factor obligations",
+          "descend to sampling only after per-point bound is explicit"
+        ],
+        "anti_routes": [
+          {
+            "route": "single_rnd_for_whole_product_budget",
+            "reason": "A single accepted `rnd` step, or a compact `do N!rnd`, may leave a subgoal that charges local samples against the entire product budget."
+          },
+          {
+            "route": "accepted_phoare_split_as_route_quality",
+            "reason": "EasyCrypt may accept `phoare split !`, but the residual goals can still be a bad route under a product budget."
+          },
+          {
+            "route": "seq_cut_allocates_product_budget_to_prefix",
+            "reason": "A plausible `seq K : side_fact` can move the small product budget onto a high-probability prefix or deterministic side condition."
+          },
+          {
+            "route": "direct_call_true_under_le_bound",
+            "reason": "Direct `call (_: true).` under a one-sided `[<=]` bound can fail because EasyCrypt expects a compatible bound direction."
+          }
+        ],
+        "next_after_boundary": "If you use an event-preserving seq/call boundary, keep the product budget on the membership event and return to the list-size times point-mass route.",
+        "repair_if_fails": [
+          {
+            "failure": "local_sampling_residual",
+            "next": "inspect probability_budget_ledger before committing another rnd/seq/split route"
+          },
+          {
+            "failure": "wrong_budget_branch",
+            "next": "use undo_to_checkpoint to return before the budget-misallocated seq/split"
+          }
+        ]
+      }
+    ],
+    "moves": [
+      {
+        "title": "Proof-route context",
+        "category": "strategy",
+        "guidance": "Probabilistic VC plan: query-counter loss accounting via rnd coupling, distribution facts, proc/wp before bound subgoals",
+        "applicability": "Use this as route-selection context; it is not a tactic to run as-is.",
+        "source": "proof-state analysis"
+      },
+      {
+        "title": "Program-shape context",
+        "category": "strategy",
+        "guidance": "Inspect current procedure region summary: visible procedure regions.",
+        "applicability": "Use this as route-selection context; it is not a tactic to run as-is.",
+        "source": "proof-state analysis"
+      },
+      {
+        "title": "Proof-route context",
+        "category": "strategy",
+        "guidance": "Structured procedure frontier: straight_line_prefix_before_sample_frontier; primary: use sp if the next invariant/seq cut needs names from the straight-line prefix",
+        "applicability": "Use this as route-selection context; it is not a tactic to run as-is.",
+        "source": "proof-state analysis"
+      },
+      {
+        "title": "Sampling-coupling route",
+        "category": "strategy",
+        "tactic_shape": "rnd (fun x => x + <offset>) (fun x => x - <offset>).",
+        "applicability": "This tactic shape still has placeholders; replace them with concrete EasyCrypt arguments from the current goal before probing or committing it.",
+        "runnable_status": "Not yet; replace the placeholder coupling or offset with concrete EasyCrypt expressions before probing or committing this tactic.",
+        "missing_input": [
+          "Concrete coupling function, offset, or inverse mapping for the sampled values.",
+          "Any side conditions needed to show the mapping preserves the sampled distributions."
+        ],
+        "how_to_complete": [
+          "Compare the visible sampling statements with the postcondition relation; choose the mapping that turns the left sample into the right sample.",
+          "Use current variables, loop invariants, and support bounds from the goal to justify the sampled values stay in range."
+        ],
+        "inspect_if_unsure": [
+          {
+            "topic": "goal_info",
+            "why": "Shows parsed sampled variables, distributions, and goal identifiers."
+          },
+          {
+            "topic": "align",
+            "why": "Shows whether the LHS/RHS sampling statements are aligned."
+          },
+          {
+            "topic": "tactic_forms",
+            "name": "rnd",
+            "why": "Shows the valid EasyCrypt forms for coupling samples."
+          }
+        ],
+        "limitations": [
+          "The displayed tactic is a template; fill every placeholder with current-goal arguments before probing or committing it."
+        ]
+      }
+    ]
+  },
+  "program_frontier": {
+    "authority": "proof-state analysis",
+    "view_focus": "procedure_frontier",
+    "focus": {
+      "live_call_sites": 0,
+      "frontier_call_sites": 0,
+      "live_callable_lemmas": 0,
+      "callable_now_lemmas": 0,
+      "oracle_obligation_handles": 0,
+      "has_invariant_skeleton": false
+    },
+    "call_sites": [
+      {
+        "side": "left",
+        "side_index": 1,
+        "statement_order": 13,
+        "statement_path": "13",
+        "statement": "(m0, m1) <@ G4.A.choose(G1.k, g, G1.g_, e, f, h)"
+      },
+      {
+        "side": "left",
+        "side_index": 1,
+        "statement_order": 25,
+        "statement_path": "25",
+        "statement": "b0 <@ G4.A.guess(G3.a, G3.a_, G3.c, G3.d)"
+      }
+    ],
+    "frontier_alignment": {
+      "summary": "Frontier alignment: setup statements appear before the current frontier; sampling steps are visible inside the frontier; call sites are visible at the frontier; residual statements remain after a call frontier. Use this as a proof-reader map before choosing while/rnd/seq/call tactics.",
+      "first_instruction_alignment": {
+        "left_first": "(m0, m1) <@ G4.A.choose(G1.k, g, G1.g_, e, f, h)",
+        "right_first": "no matching right-side call at this frontier",
+        "left_head": "call",
+        "branch_alignment": "one-sided_frontier",
+        "proof_read": "The visible frontier is one-sided; use a one-sided tactic, alignment step, or seq cut before applying a symmetric tactic."
+      },
+      "rows": [
+        {
+          "role": "left-only setup",
+          "left": "2 setup statement(s): h <- g ^ G1.z; e <- g ^ G1.x",
+          "right": "no right-side setup before this frontier",
+          "proof_read": "The left side has setup before the shared frontier; relate it to the precondition or carry the initialized state in the next invariant/cut.",
+          "location": {
+            "left_paths": [
+              "10",
+              "12"
+            ]
+          }
+        },
+        {
+          "role": "call frontier",
+          "left": "(m0, m1) <@ G4.A.choose(G1.k, g, G1.g_, e, f, h)",
+          "right": "no matching right-side call at this frontier",
+          "proof_read": "This is a call frontier; compare the procedures/oracle wrappers before choosing a named call or invariant call.",
+          "location": {
+            "left_path": "13"
+          }
+        },
+        {
+          "role": "call frontier",
+          "left": "b0 <@ G4.A.guess(G3.a, G3.a_, G3.c, G3.d)",
+          "right": "no matching right-side call at this frontier",
+          "proof_read": "This is a call frontier; compare the procedures/oracle wrappers before choosing a named call or invariant call.",
+          "location": {
+            "left_path": "25"
+          }
+        },
+        {
+          "role": "left residual after call",
+          "left": "7 setup statement(s): G3.a <- g ^ G1.u; G3.a_ <- G1.g_ ^ G1.u'; G3.c <- g ^ r'; ... (4 more)",
+          "right": "no right-side residual statement after this call frontier",
+          "proof_read": "The left side has residual statements after the live call frontier; their effects are not part of the callee obligation.",
+          "location": {
+            "left_paths": [
+              "18",
+              "19",
+              "20",
+              "21",
+              "22",
+              "23",
+              "24"
+            ]
+          }
+        },
+        {
+          "role": "sample inside frontier",
+          "left": "G1.x <$ dt",
+          "right": "no matching right-side sample at this frontier",
+          "proof_read": "This is a sampling frontier; choose a coupling or distribution argument that connects the sampled values.",
+          "location": {
+            "left_path": "11"
+          }
+        },
+        {
+          "role": "sample inside frontier",
+          "left": "G1.u <$ dt",
+          "right": "no matching right-side sample at this frontier",
+          "proof_read": "This is a sampling frontier; choose a coupling or distribution argument that connects the sampled values.",
+          "location": {
+            "left_path": "14"
+          }
+        },
+        {
+          "role": "sample inside frontier",
+          "left": "G1.u' <$ dt \\ pred1 G1.u",
+          "right": "no matching right-side sample at this frontier",
+          "proof_read": "This is a sampling frontier; choose a coupling or distribution argument that connects the sampled values.",
+          "location": {
+            "left_path": "15"
+          }
+        },
+        {
+          "role": "sample inside frontier",
+          "left": "r' <$ dt",
+          "right": "no matching right-side sample at this frontier",
+          "proof_read": "This is a sampling frontier; choose a coupling or distribution argument that connects the sampled values.",
+          "location": {
+            "left_path": "16"
+          }
+        }
+      ]
+    },
+    "procedure_navigation": {
+      "how_to_use": "Positions for choosing wp/sp depth, which `if` to rcond, and where the next loop/call frontier is. Facts only \u2014 pick the tactic and the branch direction yourself.",
+      "absorb_depth": {
+        "left": {
+          "side_index": 1,
+          "absorbable_statements": 2,
+          "note": "count from frontier alignment; the body parser under-counted the asymmetric (right-only) setup statements (1 parsed)"
+        },
+        "sp_hint": "sp 2 0 / wp -2 -0 absorbs the straight-line setup (2 left, 0 right) before the next frontier"
+      },
+      "next_frontier": {
+        "kind": "straight_line_prefix_before_sample_frontier",
+        "at_order": 11
+      }
+    },
+    "checks": [
+      "Check the next statement/call frontier before applying local transforms.",
+      "Keep one-sided instrumentation as a map, not as a tactic recipe."
+    ]
+  },
+  "call_site_surface": {
+    "live_call_sites": [
+      {
+        "side": "left"
+      },
+      {
+        "side": "left"
+      }
+    ],
+    "frontier_blockers": [
+      {
+        "kind": "residual_after_call_site",
+        "left": "7 setup statement(s): G3.a <- g ^ G1.u; G3.a_ <- G1.g_ ^ G1.u'; G3.c <- g ^ r'; ... (4 more)",
+        "right": "no right-side residual statement after this call frontier",
+        "effect": "Residual statements remain after the live call frontier; their effects are not part of the callee obligation."
+      }
+    ],
+    "residual_frontier": {
+      "state": "residual_after_call",
+      "rows": [
+        {
+          "role": "left residual after call",
+          "left": "7 setup statement(s): G3.a <- g ^ G1.u; G3.a_ <- G1.g_ ^ G1.u'; G3.c <- g ^ r'; ... (4 more)",
+          "right": "no right-side residual statement after this call frontier",
+          "location": {
+            "left_paths": [
+              "18",
+              "19",
+              "20",
+              "21",
+              "22",
+              "23",
+              "24"
+            ]
+          },
+          "proof_read": "The left side has residual statements after the live call frontier; their effects are not part of the callee obligation."
+        }
+      ],
+      "effect": "These statements remain after the live call frontier and are checked after the call returns.",
+      "limitations": [
+        "The surface reports suffix structure only; it does not choose whether to use a call, inline, wp, or another local tactic."
+      ]
+    },
+    "wrapper_depth": 1
+  },
+  "application_context": {
+    "selected_handles": [
+      {
+        "title": "Proof-route context",
+        "why_relevant": "Probabilistic VC plan: query-counter loss accounting via rnd coupling, distribution facts, proc/wp before bound subgoals"
+      },
+      {
+        "title": "Program-shape context",
+        "why_relevant": "Inspect current procedure region summary: visible procedure regions."
+      },
+      {
+        "title": "Probability budget ledger",
+        "kind": "route-selection context",
+        "why_relevant": "A product probability budget is visible; check the budget/event shape before treating a locally accepted sampling, split, or call step as proof progress.",
+        "budget_shape": "product_bound",
+        "bound": "(PKE_.qD%r / order%r) ^ 3 * (PKE_.qD%r / (order - 1)%r)",
+        "event_kind": "membership_event",
+        "budget_ledger": {
+          "schema_version": 1,
+          "kind": "probability_budget_ledger",
+          "status": "partial",
+          "source": "phoare_bound",
+          "bound_relation": "[<=]",
+          "total_bound": "(PKE_.qD%r / order%r) ^ 3 * (PKE_.qD%r / (order - 1)%r)",
+          "grouped_factors": [
+            "(PKE_.qD%r / order%r) ^ 3",
+            "PKE_.qD%r / (order - 1)%r"
+          ],
+          "factor_slots": [
+            {
+              "id": "B1",
+              "expr": "PKE_.qD%r / order%r",
+              "grouped_factor": "(PKE_.qD%r / order%r) ^ 3",
+              "grouped_factor_index": 1,
+              "source": "power_expansion",
+              "power_repeat_index": 1,
+              "role": "finite_domain_point_mass"
+            },
+            {
+              "id": "B2",
+              "expr": "PKE_.qD%r / order%r",
+              "grouped_factor": "(PKE_.qD%r / order%r) ^ 3",
+              "grouped_factor_index": 1,
+              "source": "power_expansion",
+              "power_repeat_index": 2,
+              "role": "finite_domain_point_mass"
+            },
+            {
+              "id": "B3",
+              "expr": "PKE_.qD%r / order%r",
+              "grouped_factor": "(PKE_.qD%r / order%r) ^ 3",
+              "grouped_factor_index": 1,
+              "source": "power_expansion",
+              "power_repeat_index": 3,
+              "role": "finite_domain_point_mass"
+            },
+            {
+              "id": "B4",
+              "expr": "PKE_.qD%r / (order - 1)%r",
+              "grouped_factor": "PKE_.qD%r / (order - 1)%r",
+              "grouped_factor_index": 2,
+              "source": "top_level_product",
+              "role": "finite_domain_point_mass"
+            }
+          ],
+          "event_obligations": [
+            {
+              "id": "E1",
+              "event": "(G3.a, G3.a_, G3.c, G3.d) \\in G3.cilog [138|check]>",
+              "event_kind": "membership_event",
+              "collection": "G3.cilog",
+              "bridge_family": "membership_point_mass",
+              "candidate_factor_ids": [
+                "B1",
+                "B2",
+                "B3",
+                "B4"
+              ]
+            }
+          ],
+          "allowed_boundary_moves": [
+            {
+              "id": "seq_event_unit_suffix_boundary",
+              "kind": "event_preservation_boundary",
+              "tactic_family": "seq",
+              "stmt_count_hint": 25,
+              "budget_arg": "1%r",
+              "assertion_must_contain": {
+                "event": "(G3.a, G3.a_, G3.c, G3.d) \\in G3.cilog [138|check]>",
+                "collection": "G3.cilog",
+                "next_after_boundary": "return to the list-size times point-mass ledger; the boundary does not discharge the product budget"
+              },
+              "safe_when": "Use only to isolate a suffix/call that preserves the current membership event; the product budget must remain on the event obligation before this boundary.",
+              "not_a_budget_discharge": true
+            },
+            {
+              "id": "call_event_preservation_boundary",
+              "kind": "event_preservation_boundary",
+              "tactic_family": "call",
+              "tactic_shape": "call (_: PRE /\\ event ==> event).",
+              "assertion_must_contain": {
+                "event": "(G3.a, G3.a_, G3.c, G3.d) \\in G3.cilog [138|check]>",
+                "collection": "G3.cilog",
+                "next_after_boundary": "return to the list-size times point-mass ledger; the boundary does not discharge the product budget"
+              },
+              "safe_when": "Use only when the call proof obligation preserves the same membership event across the abstract call frontier.",
+              "not_a_budget_discharge": true
+            }
+          ],
+          "route_plan": [
+            "stay_at_probability_or_event_level",
+            "decompose product budget into factor obligations",
+            "descend to sampling only after per-point bound is explicit"
+          ],
+          "unsafe_lowerings": [
+            {
+              "route": "single_rnd_for_whole_product_budget",
+              "reason": "A single accepted `rnd` step, or a compact `do N!rnd`, may leave a subgoal that charges local samples against the entire product budget."
+            },
+            {
+              "route": "accepted_phoare_split_as_route_quality",
+              "reason": "EasyCrypt may accept `phoare split !`, but the residual goals can still be a bad route under a product budget."
+            },
+            {
+              "route": "seq_cut_allocates_product_budget_to_prefix",
+              "reason": "A plausible `seq K : side_fact` can move the small product budget onto a high-probability prefix or deterministic side condition."
+            },
+            {
+              "route": "direct_call_true_under_le_bound",
+              "reason": "Direct `call (_: true).` under a one-sided `[<=]` bound can fail because EasyCrypt expects a compatible bound direction."
+            }
+          ],
+          "read_as": "A probability budget ledger: factor slots are the resources in the product bound, and event obligations are the proof events that should spend those resources before local sampling cleanup."
+        },
+        "factor_slots": [
+          {
+            "id": "B1",
+            "expr": "PKE_.qD%r / order%r",
+            "grouped_factor": "(PKE_.qD%r / order%r) ^ 3",
+            "grouped_factor_index": 1,
+            "source": "power_expansion",
+            "power_repeat_index": 1,
+            "role": "finite_domain_point_mass"
+          },
+          {
+            "id": "B2",
+            "expr": "PKE_.qD%r / order%r",
+            "grouped_factor": "(PKE_.qD%r / order%r) ^ 3",
+            "grouped_factor_index": 1,
+            "source": "power_expansion",
+            "power_repeat_index": 2,
+            "role": "finite_domain_point_mass"
+          },
+          {
+            "id": "B3",
+            "expr": "PKE_.qD%r / order%r",
+            "grouped_factor": "(PKE_.qD%r / order%r) ^ 3",
+            "grouped_factor_index": 1,
+            "source": "power_expansion",
+            "power_repeat_index": 3,
+            "role": "finite_domain_point_mass"
+          },
+          {
+            "id": "B4",
+            "expr": "PKE_.qD%r / (order - 1)%r",
+            "grouped_factor": "PKE_.qD%r / (order - 1)%r",
+            "grouped_factor_index": 2,
+            "source": "top_level_product",
+            "role": "finite_domain_point_mass"
+          }
+        ],
+        "event_obligations": [
+          {
+            "id": "E1",
+            "event": "(G3.a, G3.a_, G3.c, G3.d) \\in G3.cilog [138|check]>",
+            "event_kind": "membership_event",
+            "collection": "G3.cilog",
+            "bridge_family": "membership_point_mass",
+            "candidate_factor_ids": [
+              "B1",
+              "B2",
+              "B3",
+              "B4"
+            ]
+          }
+        ],
+        "allowed_boundary_moves": [
+          {
+            "id": "seq_event_unit_suffix_boundary",
+            "kind": "event_preservation_boundary",
+            "tactic_family": "seq",
+            "stmt_count_hint": 25,
+            "budget_arg": "1%r",
+            "assertion_must_contain": {
+              "event": "(G3.a, G3.a_, G3.c, G3.d) \\in G3.cilog [138|check]>",
+              "collection": "G3.cilog",
+              "next_after_boundary": "return to the list-size times point-mass ledger; the boundary does not discharge the product budget"
+            },
+            "safe_when": "Use only to isolate a suffix/call that preserves the current membership event; the product budget must remain on the event obligation before this boundary.",
+            "not_a_budget_discharge": true
+          },
+          {
+            "id": "call_event_preservation_boundary",
+            "kind": "event_preservation_boundary",
+            "tactic_family": "call",
+            "tactic_shape": "call (_: PRE /\\ event ==> event).",
+            "assertion_must_contain": {
+              "event": "(G3.a, G3.a_, G3.c, G3.d) \\in G3.cilog [138|check]>",
+              "collection": "G3.cilog",
+              "next_after_boundary": "return to the list-size times point-mass ledger; the boundary does not discharge the product budget"
+            },
+            "safe_when": "Use only when the call proof obligation preserves the same membership event across the abstract call frontier.",
+            "not_a_budget_discharge": true
+          }
+        ],
+        "forbidden_routes": [
+          {
+            "route": "single_rnd_for_whole_product_budget",
+            "reason": "A single accepted `rnd` step, or a compact `do N!rnd`, may leave a subgoal that charges local samples against the entire product budget."
+          },
+          {
+            "route": "accepted_phoare_split_as_route_quality",
+            "reason": "EasyCrypt may accept `phoare split !`, but the residual goals can still be a bad route under a product budget."
+          },
+          {
+            "route": "seq_cut_allocates_product_budget_to_prefix",
+            "reason": "A plausible `seq K : side_fact` can move the small product budget onto a high-probability prefix or deterministic side condition."
+          },
+          {
+            "route": "direct_call_true_under_le_bound",
+            "reason": "Direct `call (_: true).` under a one-sided `[<=]` bound can fail because EasyCrypt expects a compatible bound direction."
+          }
+        ],
+        "likely_proof_family": [
+          "event/list membership bound",
+          "probability-level decomposition before local sampling",
+          "split the event/budget before descending into procedure proof",
+          "fel-style probability/event decomposition when applicable"
+        ],
+        "useful_fact_handles": [
+          {
+            "symbol": "gt1_q",
+            "why": "The group order denominator appears in the probability budget."
+          },
+          {
+            "symbol": "PKE_.qD_pos",
+            "why": "The query-bound numerator appears in the probability budget."
+          },
+          {
+            "symbol": "mulr_ge0",
+            "why": "Product-bound side conditions often need non-negativity of factors."
+          },
+          {
+            "symbol": "divr_ge0",
+            "why": "Ratio factors in the bound usually need numerator/denominator non-negativity."
+          },
+          {
+            "symbol": "expr_ge0",
+            "why": "Powered ratio factors often need exponent non-negativity closure."
+          },
+          {
+            "symbol": "mulr_gt0",
+            "why": "Strict positivity is useful when rewriting ratio-over-itself side conditions."
+          },
+          {
+            "symbol": "divr_gt0",
+            "why": "Strictly positive denominator/numerator facts support positive ratio factors."
+          },
+          {
+            "symbol": "expr_gt0",
+            "why": "Powered positive ratio factors stay positive."
+          },
+          {
+            "symbol": "divrr",
+            "why": "B/B residuals often close by rewriting `divrr` after proving B is nonzero."
+          },
+          {
+            "symbol": "mu_mem_le_mu1_size",
+            "why": "Membership-event probability bounds often use list-size or union-bound style lemmas when available."
+          }
+        ],
+        "side_condition_recipe": [
+          {
+            "name": "ratio positivity",
+            "useful_handles": [
+              "PKE_.qD_pos",
+              "gt1_q",
+              "divr_gt0",
+              "expr_gt0",
+              "mulr_gt0"
+            ]
+          },
+          {
+            "name": "B_over_B residual",
+            "read_as": "When a residual becomes a budget divided by the same budget, treat it as B/B: establish B <> 0 or B > 0, then rewrite with `divrr`.",
+            "useful_handles": [
+              "divrr",
+              "mulr_gt0",
+              "divr_gt0",
+              "expr_gt0"
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "facts_and_diagnostics": {
+    "facts": {
+      "has_invariant_skeleton": false,
+      "unfoldable_goal_heads": [
+        {
+          "name": "G3.d",
+          "unqualified_name": "d",
+          "declaration_kind": "op",
+          "unfold_tactic": "rewrite /G3.d.",
+          "smt_argument_role": "not_a_lemma_hint"
+        }
+      ],
+      "unfoldable_goal_head_count": 1
+    },
+    "fact_note": "Only current-frontier facts are shown here; the full proof context artifact keeps the compiler/internal details.",
+    "probability_budget": {
+      "kind": "probability_budget",
+      "budget_shape": "product_bound",
+      "source": "phoare_bound",
+      "bound_relation": "[<=]",
+      "bound": "(PKE_.qD%r / order%r) ^ 3 * (PKE_.qD%r / (order - 1)%r)",
+      "factors": [
+        "(PKE_.qD%r / order%r) ^ 3",
+        "PKE_.qD%r / (order - 1)%r"
+      ],
+      "event_shape": {
+        "text": "(G3.a, G3.a_, G3.c, G3.d) \\in G3.cilog [138|check]>",
+        "kind": "membership_event",
+        "membership": {
+          "collection": "G3.cilog",
+          "element_preview": "(G3.a, G3.a_, G3.c, G3.d)"
+        },
+        "mentions": [
+          "G3.a",
+          "G3.a_",
+          "G3.c",
+          "G3.d",
+          "G3.cilog"
+        ]
+      },
+      "budget_ledger": {
+        "schema_version": 1,
+        "kind": "probability_budget_ledger",
+        "status": "partial",
+        "source": "phoare_bound",
+        "bound_relation": "[<=]",
+        "total_bound": "(PKE_.qD%r / order%r) ^ 3 * (PKE_.qD%r / (order - 1)%r)",
+        "grouped_factors": [
+          "(PKE_.qD%r / order%r) ^ 3",
+          "PKE_.qD%r / (order - 1)%r"
+        ],
+        "factor_slots": [
+          {
+            "id": "B1",
+            "expr": "PKE_.qD%r / order%r",
+            "grouped_factor": "(PKE_.qD%r / order%r) ^ 3",
+            "grouped_factor_index": 1,
+            "source": "power_expansion",
+            "power_repeat_index": 1,
+            "role": "finite_domain_point_mass"
+          },
+          {
+            "id": "B2",
+            "expr": "PKE_.qD%r / order%r",
+            "grouped_factor": "(PKE_.qD%r / order%r) ^ 3",
+            "grouped_factor_index": 1,
+            "source": "power_expansion",
+            "power_repeat_index": 2,
+            "role": "finite_domain_point_mass"
+          },
+          {
+            "id": "B3",
+            "expr": "PKE_.qD%r / order%r",
+            "grouped_factor": "(PKE_.qD%r / order%r) ^ 3",
+            "grouped_factor_index": 1,
+            "source": "power_expansion",
+            "power_repeat_index": 3,
+            "role": "finite_domain_point_mass"
+          },
+          {
+            "id": "B4",
+            "expr": "PKE_.qD%r / (order - 1)%r",
+            "grouped_factor": "PKE_.qD%r / (order - 1)%r",
+            "grouped_factor_index": 2,
+            "source": "top_level_product",
+            "role": "finite_domain_point_mass"
+          }
+        ],
+        "event_obligations": [
+          {
+            "id": "E1",
+            "event": "(G3.a, G3.a_, G3.c, G3.d) \\in G3.cilog [138|check]>",
+            "event_kind": "membership_event",
+            "collection": "G3.cilog",
+            "bridge_family": "membership_point_mass",
+            "candidate_factor_ids": [
+              "B1",
+              "B2",
+              "B3",
+              "B4"
+            ]
+          }
+        ],
+        "allowed_boundary_moves": [
+          {
+            "id": "seq_event_unit_suffix_boundary",
+            "kind": "event_preservation_boundary",
+            "tactic_family": "seq",
+            "stmt_count_hint": 25,
+            "budget_arg": "1%r",
+            "assertion_must_contain": {
+              "event": "(G3.a, G3.a_, G3.c, G3.d) \\in G3.cilog [138|check]>",
+              "collection": "G3.cilog",
+              "next_after_boundary": "return to the list-size times point-mass ledger; the boundary does not discharge the product budget"
+            },
+            "safe_when": "Use only to isolate a suffix/call that preserves the current membership event; the product budget must remain on the event obligation before this boundary.",
+            "not_a_budget_discharge": true
+          },
+          {
+            "id": "call_event_preservation_boundary",
+            "kind": "event_preservation_boundary",
+            "tactic_family": "call",
+            "tactic_shape": "call (_: PRE /\\ event ==> event).",
+            "assertion_must_contain": {
+              "event": "(G3.a, G3.a_, G3.c, G3.d) \\in G3.cilog [138|check]>",
+              "collection": "G3.cilog",
+              "next_after_boundary": "return to the list-size times point-mass ledger; the boundary does not discharge the product budget"
+            },
+            "safe_when": "Use only when the call proof obligation preserves the same membership event across the abstract call frontier.",
+            "not_a_budget_discharge": true
+          }
+        ],
+        "route_plan": [
+          "stay_at_probability_or_event_level",
+          "decompose product budget into factor obligations",
+          "descend to sampling only after per-point bound is explicit"
+        ],
+        "unsafe_lowerings": [
+          {
+            "route": "single_rnd_for_whole_product_budget",
+            "reason": "A single accepted `rnd` step, or a compact `do N!rnd`, may leave a subgoal that charges local samples against the entire product budget."
+          },
+          {
+            "route": "accepted_phoare_split_as_route_quality",
+            "reason": "EasyCrypt may accept `phoare split !`, but the residual goals can still be a bad route under a product budget."
+          },
+          {
+            "route": "seq_cut_allocates_product_budget_to_prefix",
+            "reason": "A plausible `seq K : side_fact` can move the small product budget onto a high-probability prefix or deterministic side condition."
+          },
+          {
+            "route": "direct_call_true_under_le_bound",
+            "reason": "Direct `call (_: true).` under a one-sided `[<=]` bound can fail because EasyCrypt expects a compatible bound direction."
+          }
+        ],
+        "read_as": "A probability budget ledger: factor slots are the resources in the product bound, and event obligations are the proof events that should spend those resources before local sampling cleanup."
+      },
+      "likely_proof_family": [
+        "event/list membership bound",
+        "probability-level decomposition before local sampling",
+        "split the event/budget before descending into procedure proof",
+        "fel-style probability/event decomposition when applicable"
+      ],
+      "useful_fact_handles": [
+        {
+          "symbol": "gt1_q",
+          "why": "The group order denominator appears in the probability budget."
+        },
+        {
+          "symbol": "PKE_.qD_pos",
+          "why": "The query-bound numerator appears in the probability budget."
+        },
+        {
+          "symbol": "mulr_ge0",
+          "why": "Product-bound side conditions often need non-negativity of factors."
+        },
+        {
+          "symbol": "divr_ge0",
+          "why": "Ratio factors in the bound usually need numerator/denominator non-negativity."
+        },
+        {
+          "symbol": "expr_ge0",
+          "why": "Powered ratio factors often need exponent non-negativity closure."
+        },
+        {
+          "symbol": "mulr_gt0",
+          "why": "Strict positivity is useful when rewriting ratio-over-itself side conditions."
+        },
+        {
+          "symbol": "divr_gt0",
+          "why": "Strictly positive denominator/numerator facts support positive ratio factors."
+        },
+        {
+          "symbol": "expr_gt0",
+          "why": "Powered positive ratio factors stay positive."
+        },
+        {
+          "symbol": "divrr",
+          "why": "B/B residuals often close by rewriting `divrr` after proving B is nonzero."
+        },
+        {
+          "symbol": "mu_mem_le_mu1_size",
+          "why": "Membership-event probability bounds often use list-size or union-bound style lemmas when available."
+        }
+      ],
+      "side_condition_recipe": [
+        {
+          "name": "ratio positivity",
+          "useful_handles": [
+            "PKE_.qD_pos",
+            "gt1_q",
+            "divr_gt0",
+            "expr_gt0",
+            "mulr_gt0"
+          ]
+        },
+        {
+          "name": "B_over_B residual",
+          "read_as": "When a residual becomes a budget divided by the same budget, treat it as B/B: establish B <> 0 or B > 0, then rewrite with `divrr`.",
+          "useful_handles": [
+            "divrr",
+            "mulr_gt0",
+            "divr_gt0",
+            "expr_gt0"
+          ]
+        }
+      ],
+      "anti_routes": [
+        {
+          "route": "single_rnd_for_whole_product_budget",
+          "reason": "A single accepted `rnd` step, or a compact `do N!rnd`, may leave a subgoal that charges local samples against the entire product budget."
+        },
+        {
+          "route": "accepted_phoare_split_as_route_quality",
+          "reason": "EasyCrypt may accept `phoare split !`, but the residual goals can still be a bad route under a product budget."
+        },
+        {
+          "route": "seq_cut_allocates_product_budget_to_prefix",
+          "reason": "A plausible `seq K : side_fact` can move the small product budget onto a high-probability prefix or deterministic side condition."
+        },
+        {
+          "route": "direct_call_true_under_le_bound",
+          "reason": "Direct `call (_: true).` under a one-sided `[<=]` bound can fail because EasyCrypt expects a compatible bound direction."
+        }
+      ],
+      "read_as": "Advisory middle-end context for route selection; this is not a proof script or tactic order."
+    },
+    "notes": [
+      {
+        "message": "One-sided sampling residual: G1.x{1} <$ dt. The postcondition still mentions the sampled value or a quantified witness, so this may be a true losslessness side condition or leftover coupling debt.",
+        "severity": "info"
+      }
+    ]
+  },
+  "inspect_lookup_handles": {
+    "effect": "All handles here are read-only manager requests; the committed EasyCrypt proof state stays unchanged.",
+    "manager_note": "Some requests may ask EasyCrypt or name resolution; wait for the manager result before choosing the next proof intent.",
+    "ask_manager_for": [
+      {
+        "intent": "inspect_context",
+        "payload": {
+          "topic": "goal_info"
+        },
+        "use_when": "Need parsed goal shape, resolved names, or KB pattern hints.",
+        "returns": "parsed goal structure and names"
+      },
+      {
+        "intent": "inspect_context",
+        "payload": {
+          "topic": "call_site_options"
+        },
+        "use_when": "The current procedure frontier exposes a call route.",
+        "returns": "call-ready/oracle-equiv context for the current frontier, plus the BODY of the procedure(s) called here (functor aliases resolved) so you can see which oracles/state your call invariant must preserve"
+      },
+      {
+        "intent": "inspect_context",
+        "payload": {
+          "topic": "call_subgoals",
+          "invariant": "<the EasyCrypt invariant expression inside call (_: ...)>"
+        },
+        "use_when": "You are considering `call (_: Inv)` and already have a concrete invariant expression you want to test first.",
+        "returns": "a read-only preview of the obligations caused by that candidate invariant, including pre/init, call-preservation, oracle-side, postcondition, missing-fact signals, and extra conjuncts that may create avoidable obligations"
+      },
+      {
+        "intent": "inspect_context",
+        "payload": {
+          "topic": "tactic_forms",
+          "name": "call"
+        },
+        "use_when": "Need the valid form for call, while, seq, rnd, or rewrite.",
+        "returns": "valid tactic forms and common traps"
+      },
+      {
+        "intent": "inspect_context",
+        "payload": {
+          "topic": "tactic_forms",
+          "name": "sp"
+        },
+        "returns": "valid `sp` forms and common traps"
+      },
+      {
+        "intent": "inspect_context",
+        "payload": {
+          "topic": "tactic_forms",
+          "name": "while"
+        },
+        "use_when": "Need the valid one-sided hoare/phoare loop form.",
+        "returns": "valid `while` forms and common traps"
+      },
+      {
+        "intent": "inspect_context",
+        "payload": {
+          "topic": "tactic_forms",
+          "name": "wp"
+        },
+        "use_when": "Mid-proof pRHL suffix surgery may need indexed `wp`.",
+        "returns": "valid indexed `wp` forms and suffix-alignment traps"
+      },
+      {
+        "intent": "inspect_context",
+        "payload": {
+          "topic": "tactic_forms",
+          "name": "swap"
+        },
+        "use_when": "Statement order may need a small `swap` before `sp`, `wp`, or `sim`.",
+        "returns": "valid `swap` forms and statement-order traps"
+      },
+      {
+        "intent": "inspect_context",
+        "payload": {
+          "topic": "tactic_forms",
+          "name": "rcondt"
+        },
+        "use_when": "A guarded branch may need `rcondt` after a case split or invariant fact.",
+        "returns": "valid `rcondt` forms and guard-obligation traps"
+      },
+      {
+        "intent": "inspect_context",
+        "payload": {
+          "topic": "tactic_forms",
+          "name": "rcondf"
+        },
+        "use_when": "A guarded branch may need `rcondf` after a case split or invariant fact.",
+        "returns": "valid `rcondf` forms and guard-obligation traps"
+      },
+      {
+        "intent": "inspect_context",
+        "payload": {
+          "topic": "tactic_forms",
+          "name": "conseq"
+        },
+        "use_when": "A suffix proof may need `conseq` to weaken to a smaller relation before `sim`.",
+        "returns": "valid `conseq` forms and pRHL memory-annotation traps"
+      },
+      {
+        "intent": "inspect_context",
+        "payload": {
+          "topic": "tactic_forms",
+          "name": "rnd"
+        },
+        "use_when": "One side may have an extra sample or need an explicit sample coupling.",
+        "returns": "valid `rnd` forms, including one-sided sampling"
+      },
+      {
+        "intent": "inspect_context",
+        "payload": {
+          "topic": "tactic_forms",
+          "name": "eager"
+        },
+        "use_when": "A known statement-order mismatch may need an eager/lazy transformation.",
+        "returns": "valid `eager` forms and when to prefer smaller surgery"
+      }
+    ]
+  }
+}

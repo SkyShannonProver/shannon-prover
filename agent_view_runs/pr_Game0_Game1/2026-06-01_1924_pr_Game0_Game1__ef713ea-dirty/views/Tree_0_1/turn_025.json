@@ -1,0 +1,35 @@
+{
+  "last_result": {
+    "intent": "fresh_restart",
+    "kind": "fresh_restart_confirmed",
+    "message": "Fresh restart confirmed. This branch was erased to the target lemma."
+  },
+  "current_goal": {
+    "lines": [
+      "Current goal",
+      "",
+      "Type variables: <none>",
+      "",
+      "&m: {}",
+      "------------------------------------------------------------------------",
+      "Pr[BR93_CPA(A).main() @ &m : res] <=",
+      "Pr[Game1.main() @ &m : res] + Pr[Game1.main() @ &m : Game1.r \\in Log.qs]"
+    ],
+    "text_fully_shown": true,
+    "truncated": false,
+    "goal_type": "probability",
+    "view_focus": "probability",
+    "source": {
+      "label": "Parsed from EasyCrypt pretty goal text",
+      "ground_truth": false
+    }
+  },
+  "proof_status": {
+    "status": "open",
+    "remaining_goals": 1,
+    "remaining_goals_known": true,
+    "goal_type": "probability",
+    "view_focus": "probability",
+    "current_layer": "pr"
+  }
+}

@@ -1,0 +1,34 @@
+{
+  "last_result": {
+    "intent": "commit_tactic",
+    "payload": {
+      "tactic": "qed."
+    },
+    "manager_action": "commit_tactic",
+    "result": "EasyCrypt accepted the committed tactic.",
+    "effect": "EasyCrypt accepted a proof-state change; the refreshed view is based on the new committed state.",
+    "proof_state": "The committed EasyCrypt proof state changed.",
+    "tactic": "qed."
+  },
+  "current_goal": {
+    "lines": [
+      "[30|check]>"
+    ],
+    "text_fully_shown": true,
+    "truncated": false,
+    "goal_type": "complete",
+    "view_focus": "closed_candidate",
+    "source": {
+      "label": "Projected from session_event_projection",
+      "ground_truth": false
+    }
+  },
+  "proof_status": {
+    "status": "candidate_closed",
+    "remaining_goals": 0,
+    "remaining_goals_known": true,
+    "goal_type": "complete",
+    "view_focus": "closed_candidate",
+    "current_layer": "unknown"
+  }
+}

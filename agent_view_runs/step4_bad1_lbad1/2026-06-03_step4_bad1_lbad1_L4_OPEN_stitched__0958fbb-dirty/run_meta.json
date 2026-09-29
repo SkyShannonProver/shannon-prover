@@ -1,0 +1,27 @@
+{
+  "kind": "agent_view_run_report",
+  "timestamp": "2026-06-03_step4_bad1_lbad1_L4_OPEN_stitched",
+  "lemma": "step4_bad1_lbad1",
+  "source_file": "eval/examples/ChaChaPoly/chacha_poly.ec",
+  "model": "claude-opus-4-8",
+  "surface_profile": "l4_checked_action_surface",
+  "trees": 5,
+  "eval_mode": true,
+  "outcome": "incomplete (timeout/open)",
+  "resume_chunks": 3,
+  "resume_lineage": [
+    "artifacts/eval_suite/rerun4_l1l4_90min/l4_checked_action_surface/chacha_step4_bad1_lbad1/r01/2026-06-03_0817_step4_bad1_lbad1/iteration_1",
+    "artifacts/resume-chunks/step4_extend60/2026-06-03_1301_step4_bad1_lbad1/iteration_1",
+    "artifacts/resume-chunks/step4_extend30b/2026-06-03_1408_step4_bad1_lbad1/iteration_1"
+  ],
+  "committed_proof_tactics": 82,
+  "committed_proof_source": "session",
+  "committed_proof_tree": "Tree_0_0",
+  "turn_count": 476,
+  "views_copied": 493,
+  "run_iteration_dir": "artifacts/resume-chunks/step4_extend30b/2026-06-03_1408_step4_bad1_lbad1/iteration_1",
+  "commit": "0958fbb",
+  "commit_full": "0958fbbca732797ded64c5470de30cbae26a3a6e",
+  "branch": "eval-suite-48",
+  "dirty": true
+}

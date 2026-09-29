@@ -1,0 +1,51 @@
+{
+  "kind": "agent_view_run_report",
+  "timestamp": "2026-06-01_1819_PIR_secure1",
+  "lemma": "PIR_secure1",
+  "source_file": "eval/examples/PIR.ec",
+  "model": "claude-opus-4-6",
+  "surface_profile": "l4_checked_action_surface",
+  "trees": 2,
+  "eval_mode": true,
+  "outcome": "proved",
+  "committed_proofs": [
+    {
+      "tree": "Tree_0_0",
+      "tactics": [
+        "proc.",
+        "inline *.",
+        "call (_: true).",
+        "auto.",
+        "call (_: true).",
+        "auto.",
+        "call (_: ={PIR.s}).",
+        "auto.",
+        "call (_: ={PIR.s}).",
+        "auto."
+      ],
+      "proved": false
+    },
+    {
+      "tree": "Tree_0_1",
+      "tactics": [
+        "proc.",
+        "inline *.",
+        "bypr (PIR.s{1}) (PIR.s{2}).",
+        "by move=> &1 &2 a -> ->.",
+        "move=> &1 &2 a; byequiv => //.",
+        "proc; inline *; wp.",
+        "while (={PIR.s, j}); last by auto => /> /#.",
+        "wp; rnd; skip => /> /#.",
+        "qed."
+      ],
+      "proved": true
+    }
+  ],
+  "turn_count": 52,
+  "views_copied": 54,
+  "run_iteration_dir": "artifacts/eval_suite/l1_l4_surface_ablation/l4_checked_action_surface/pir_secure1_exec/r01/2026-06-01_1819_PIR_secure1/iteration_1",
+  "commit": "ef713ea",
+  "commit_full": "ef713ea8c34c5bb62c55b40e519465a9e1987406",
+  "branch": "ablation/l1-l4-surface",
+  "dirty": true
+}

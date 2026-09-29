@@ -1,0 +1,73 @@
+{
+  "node": "Tree-0.0",
+  "discovery": "recorded_session_id",
+  "transcripts": [
+    "~/.claude/projects/<PROJECT>/81bcd8d8-bec8-4b2e-9107-7559bc2a14f8.jsonl"
+  ],
+  "turns": [
+    {
+      "turn": 1,
+      "intent": "commit_tactic",
+      "payload_key": "smt().",
+      "thinking_chars": 0,
+      "text_chars": 71,
+      "tokens": {
+        "output_tokens": 838,
+        "input_tokens": 5,
+        "cache_read_input_tokens": 60182,
+        "cache_creation_input_tokens": 35592
+      },
+      "session_id": "81bcd8d8-bec8-4b2e-9107-7559bc2a14f8",
+      "timestamp": "2026-06-12T00:30:49.381Z",
+      "file": "thinking/turn_001.md"
+    },
+    {
+      "turn": 2,
+      "intent": "commit_tactic",
+      "payload_key": "by move=> b1 b2; apply/blockP=> i ge0_gti_n; rewrite !xorbE // xorwC.",
+      "thinking_chars": 0,
+      "text_chars": 104,
+      "tokens": {
+        "output_tokens": 758,
+        "input_tokens": 6,
+        "cache_read_input_tokens": 101806,
+        "cache_creation_input_tokens": 2438
+      },
+      "session_id": "81bcd8d8-bec8-4b2e-9107-7559bc2a14f8",
+      "timestamp": "2026-06-12T00:31:08.651Z",
+      "file": "thinking/turn_002.md"
+    },
+    {
+      "turn": 3,
+      "intent": "commit_tactic",
+      "payload_key": "qed.",
+      "thinking_chars": 0,
+      "text_chars": 52,
+      "tokens": {
+        "output_tokens": 122,
+        "input_tokens": 2,
+        "cache_read_input_tokens": 35481,
+        "cache_creation_input_tokens": 1155
+      },
+      "session_id": "81bcd8d8-bec8-4b2e-9107-7559bc2a14f8",
+      "timestamp": "2026-06-12T00:31:11.893Z",
+      "file": "thinking/turn_003.md"
+    },
+    {
+      "turn": 4,
+      "intent": "finish",
+      "payload_key": "",
+      "thinking_chars": 0,
+      "text_chars": 0,
+      "tokens": {
+        "output_tokens": 138,
+        "input_tokens": 2,
+        "cache_read_input_tokens": 36636,
+        "cache_creation_input_tokens": 1124
+      },
+      "session_id": "81bcd8d8-bec8-4b2e-9107-7559bc2a14f8",
+      "timestamp": "2026-06-12T00:31:15.705Z",
+      "file": ""
+    }
+  ]
+}

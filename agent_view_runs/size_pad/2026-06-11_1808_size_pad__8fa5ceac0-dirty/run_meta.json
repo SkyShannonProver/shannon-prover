@@ -1,0 +1,37 @@
+{
+  "kind": "agent_view_run_report",
+  "timestamp": "2026-06-11_1808_size_pad",
+  "lemma": "size_pad",
+  "source_file": "eval/examples/MEE-CBC/FunctionalSpec.ec",
+  "model": "claude-fable-5",
+  "surface_profile": "l1_goal_projection",
+  "trees": 2,
+  "eval_mode": true,
+  "outcome": "proved",
+  "committed_proofs": [
+    {
+      "tree": "Tree_0_0",
+      "tactics": [
+        "by rewrite /pad /= size_os2bs size_padded #smt:(@IntDiv).",
+        "qed."
+      ],
+      "source": "session",
+      "proved": true
+    },
+    {
+      "tree": "Tree_0_1",
+      "tactics": [
+        "by rewrite /pad /= size_os2bs size_padded #smt:(@IntDiv)."
+      ],
+      "source": "session",
+      "proved": false
+    }
+  ],
+  "turn_count": 3,
+  "views_copied": 5,
+  "run_iteration_dir": "artifacts/eval_suite/mee_sweep_l1_v2/l1_goal_projection/mee_size_pad/r01/2026-06-11_1808_size_pad/iteration_1",
+  "commit": "8fa5ceac0",
+  "commit_full": "8fa5ceac0a4c7ed08e53023adcaade43f89a6de8",
+  "branch": "mcp-v0",
+  "dirty": true
+}

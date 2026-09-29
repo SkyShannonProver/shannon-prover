@@ -1,0 +1,2256 @@
+{
+  "file": "artifacts/eval_suite/rerun4_l1l4_90min/l4_checked_action_surface/chacha_step4_bad1_lbad1/r01/source/ChaChaPoly/chacha_poly.ec",
+  "include_dirs": [
+    "artifacts/eval_suite/rerun4_l1l4_90min/l4_checked_action_surface/chacha_step4_bad1_lbad1/r01/source/ChaChaPoly",
+    "easycrypt-src/theories"
+  ],
+  "kind": "manager_session_bootstrap",
+  "lemma": "step4_bad1_lbad1",
+  "manager_actions": [
+    {
+      "agent_observation": {
+        "effect": "This manager intent does not change the EasyCrypt proof state.",
+        "manager_action": "start",
+        "result": "The manager completed this proof-level request."
+      },
+      "argv": [
+        ".venv/bin/python3",
+        "core/easycrypt/session_cli.py",
+        "-d",
+        ".ec_session_prover_tree_0_2",
+        "-start",
+        "-f",
+        "artifacts/eval_suite/rerun4_l1l4_90min/l4_checked_action_surface/chacha_step4_bad1_lbad1/r01/source/ChaChaPoly/chacha_poly.ec",
+        "-I",
+        "artifacts/eval_suite/rerun4_l1l4_90min/l4_checked_action_surface/chacha_step4_bad1_lbad1/r01/source/ChaChaPoly",
+        "-I",
+        "easycrypt-src/theories",
+        "-lemma",
+        "step4_bad1_lbad1"
+      ],
+      "duration_ms": 1449,
+      "exit_code": 0,
+      "label": "start",
+      "mutates_proof_state": true,
+      "stderr_chars": 0,
+      "stderr_preview": "",
+      "stdout_chars": 21660,
+      "stdout_has_workspace_view": true,
+      "stdout_lines": 532
+    },
+    {
+      "agent_observation": {
+        "effect": "EasyCrypt accepted a proof-state change; the refreshed view is based on the new committed state.",
+        "manager_action": "replay_prefix_step_1",
+        "proof_state": "The committed EasyCrypt proof state changed.",
+        "result": "The manager completed this proof-level request.",
+        "tactic": "byequiv (_: ={glob A} ==> UFCMA.bad1{1} => (size UFCMA_l.lbad1{2} <= qdec /\\ exists (tt:tag*tag), (tt \\in UFCMA_l.lbad1{2}) /\\ tt.`1 = tt.`2)) => //."
+      },
+      "argv": [
+        ".venv/bin/python3",
+        "core/easycrypt/session_cli.py",
+        "-d",
+        ".ec_session_prover_tree_0_2",
+        "-next",
+        "-c",
+        "byequiv (_: ={glob A} ==> UFCMA.bad1{1} => (size UFCMA_l.lbad1{2} <= qdec /\\ exists (tt:tag*tag), (tt \\in UFCMA_l.lbad1{2}) /\\ tt.`1 = tt.`2)) => //."
+      ],
+      "duration_ms": 1307,
+      "exit_code": 0,
+      "label": "replay_prefix_step_1",
+      "mutates_proof_state": true,
+      "stderr_chars": 0,
+      "stderr_preview": "",
+      "stdout_chars": 15896,
+      "stdout_has_workspace_view": true,
+      "stdout_lines": 2
+    },
+    {
+      "agent_observation": {
+        "effect": "EasyCrypt accepted a proof-state change; the refreshed view is based on the new committed state.",
+        "manager_action": "replay_prefix_step_2",
+        "proof_state": "The committed EasyCrypt proof state changed.",
+        "result": "The manager completed this proof-level request.",
+        "tactic": "proc."
+      },
+      "argv": [
+        ".venv/bin/python3",
+        "core/easycrypt/session_cli.py",
+        "-d",
+        ".ec_session_prover_tree_0_2",
+        "-next",
+        "-c",
+        "proc."
+      ],
+      "duration_ms": 1434,
+      "exit_code": 0,
+      "label": "replay_prefix_step_2",
+      "mutates_proof_state": true,
+      "stderr_chars": 0,
+      "stderr_preview": "",
+      "stdout_chars": 31961,
+      "stdout_has_workspace_view": true,
+      "stdout_lines": 2
+    },
+    {
+      "agent_observation": {
+        "effect": "EasyCrypt accepted a proof-state change; the refreshed view is based on the new committed state.",
+        "manager_action": "replay_prefix_step_3",
+        "proof_state": "The committed EasyCrypt proof state changed.",
+        "result": "The manager completed this proof-level request.",
+        "tactic": "seq 5 3 : (={Mem.log, Mem.lc, BNR.lenc, BNR.ndec, UFCMA.log, UFCMA.cbad1, glob ROIN.RO, glob ROout, glob ROF} /\\ inv_lbad1 UFCMA_l.lbad1{2} BNR.lenc{2} UFCMA.log{2} Mem.log{2} Mem.lc{2} UFCMA.cbad1{2} BNR.ndec{2} /\\ (UFCMA.bad1{1} <=> exists (tt:tag*tag), (tt \\in UFCMA_l.lbad1{2}) /\\ tt.`1 = tt.`2))."
+      },
+      "argv": [
+        ".venv/bin/python3",
+        "core/easycrypt/session_cli.py",
+        "-d",
+        ".ec_session_prover_tree_0_2",
+        "-next",
+        "-c",
+        "seq 5 3 : (={Mem.log, Mem.lc, BNR.lenc, BNR.ndec, UFCMA.log, UFCMA.cbad1, glob ROIN.RO, glob ROout, glob ROF} /\\ inv_lbad1 UFCMA_l.lbad1{2} BNR.lenc{2} UFCMA.log{2} Mem.log{2} Mem.lc{2} UFCMA.cbad1{2} BNR.ndec{2} /\\ (UFCMA.bad1{1} <=> exists (tt:tag*tag), (tt \\in UFCMA_l.lbad1{2}) /\\ tt.`1 = tt.`2))."
+      ],
+      "duration_ms": 1413,
+      "exit_code": 0,
+      "label": "replay_prefix_step_3",
+      "mutates_proof_state": true,
+      "stderr_chars": 0,
+      "stderr_preview": "",
+      "stdout_chars": 25896,
+      "stdout_has_workspace_view": true,
+      "stdout_lines": 2
+    },
+    {
+      "agent_observation": {
+        "effect": "EasyCrypt accepted a proof-state change; the refreshed view is based on the new committed state.",
+        "manager_action": "replay_prefix_step_4",
+        "proof_state": "The committed EasyCrypt proof state changed.",
+        "result": "The manager completed this proof-level request.",
+        "tactic": "inline*."
+      },
+      "argv": [
+        ".venv/bin/python3",
+        "core/easycrypt/session_cli.py",
+        "-d",
+        ".ec_session_prover_tree_0_2",
+        "-next",
+        "-c",
+        "inline*."
+      ],
+      "duration_ms": 1430,
+      "exit_code": 0,
+      "label": "replay_prefix_step_4",
+      "mutates_proof_state": true,
+      "stderr_chars": 0,
+      "stderr_preview": "",
+      "stdout_chars": 28415,
+      "stdout_has_workspace_view": true,
+      "stdout_lines": 2
+    },
+    {
+      "agent_observation": {
+        "effect": "EasyCrypt accepted a proof-state change; the refreshed view is based on the new committed state.",
+        "manager_action": "replay_prefix_step_5",
+        "proof_state": "The committed EasyCrypt proof state changed.",
+        "result": "The manager completed this proof-level request.",
+        "tactic": "wp; sp; call (_: ={Mem.log, Mem.lc, BNR.lenc, BNR.ndec, UFCMA.log, UFCMA.cbad1, glob ROIN.RO, glob ROout, glob ROF} /\\ inv_lbad1 UFCMA_l.lbad1{2} BNR.lenc{2} UFCMA.log{2} Mem.log{2} Mem.lc{2} UFCMA.cbad1{2} BNR.ndec{2} /\\ (UFCMA.bad1{1} <=> exists (tt:tag*tag), (tt \\in UFCMA_l.lbad1{2}) /\\ tt.`1 = tt.`2))."
+      },
+      "argv": [
+        ".venv/bin/python3",
+        "core/easycrypt/session_cli.py",
+        "-d",
+        ".ec_session_prover_tree_0_2",
+        "-next",
+        "-c",
+        "wp; sp; call (_: ={Mem.log, Mem.lc, BNR.lenc, BNR.ndec, UFCMA.log, UFCMA.cbad1, glob ROIN.RO, glob ROout, glob ROF} /\\ inv_lbad1 UFCMA_l.lbad1{2} BNR.lenc{2} UFCMA.log{2} Mem.log{2} Mem.lc{2} UFCMA.cbad1{2} BNR.ndec{2} /\\ (UFCMA.bad1{1} <=> exists (tt:tag*tag), (tt \\in UFCMA_l.lbad1{2}) /\\ tt.`1 = tt.`2))."
+      ],
+      "duration_ms": 187,
+      "exit_code": 0,
+      "label": "replay_prefix_step_5",
+      "mutates_proof_state": true,
+      "stderr_chars": 0,
+      "stderr_preview": "",
+      "stdout_chars": 16836,
+      "stdout_has_workspace_view": true,
+      "stdout_lines": 2
+    },
+    {
+      "agent_observation": {
+        "effect": "EasyCrypt accepted a proof-state change; the refreshed view is based on the new committed state.",
+        "manager_action": "replay_prefix_step_6",
+        "proof_state": "The committed EasyCrypt proof state changed.",
+        "result": "The manager completed this proof-level request.",
+        "tactic": "proc."
+      },
+      "argv": [
+        ".venv/bin/python3",
+        "core/easycrypt/session_cli.py",
+        "-d",
+        ".ec_session_prover_tree_0_2",
+        "-next",
+        "-c",
+        "proc."
+      ],
+      "duration_ms": 259,
+      "exit_code": 0,
+      "label": "replay_prefix_step_6",
+      "mutates_proof_state": true,
+      "stderr_chars": 0,
+      "stderr_preview": "",
+      "stdout_chars": 22253,
+      "stdout_has_workspace_view": true,
+      "stdout_lines": 2
+    },
+    {
+      "agent_observation": {
+        "effect": "EasyCrypt accepted a proof-state change; the refreshed view is based on the new committed state.",
+        "manager_action": "replay_prefix_step_7",
+        "proof_state": "The committed EasyCrypt proof state changed.",
+        "result": "The manager completed this proof-level request.",
+        "tactic": "sp; if => //."
+      },
+      "argv": [
+        ".venv/bin/python3",
+        "core/easycrypt/session_cli.py",
+        "-d",
+        ".ec_session_prover_tree_0_2",
+        "-next",
+        "-c",
+        "sp; if => //."
+      ],
+      "duration_ms": 283,
+      "exit_code": 0,
+      "label": "replay_prefix_step_7",
+      "mutates_proof_state": true,
+      "stderr_chars": 0,
+      "stderr_preview": "",
+      "stdout_chars": 20907,
+      "stdout_has_workspace_view": true,
+      "stdout_lines": 2
+    },
+    {
+      "agent_observation": {
+        "effect": "EasyCrypt accepted a proof-state change; the refreshed view is based on the new committed state.",
+        "manager_action": "replay_prefix_step_8",
+        "proof_state": "The committed EasyCrypt proof state changed.",
+        "result": "The manager completed this proof-level request.",
+        "tactic": "wp."
+      },
+      "argv": [
+        ".venv/bin/python3",
+        "core/easycrypt/session_cli.py",
+        "-d",
+        ".ec_session_prover_tree_0_2",
+        "-next",
+        "-c",
+        "wp."
+      ],
+      "duration_ms": 258,
+      "exit_code": 0,
+      "label": "replay_prefix_step_8",
+      "mutates_proof_state": true,
+      "stderr_chars": 0,
+      "stderr_preview": "",
+      "stdout_chars": 22551,
+      "stdout_has_workspace_view": true,
+      "stdout_lines": 2
+    },
+    {
+      "agent_observation": {
+        "effect": "EasyCrypt accepted a proof-state change; the refreshed view is based on the new committed state.",
+        "manager_action": "replay_prefix_step_9",
+        "proof_state": "The committed EasyCrypt proof state changed.",
+        "result": "The manager completed this proof-level request.",
+        "tactic": "inline*."
+      },
+      "argv": [
+        ".venv/bin/python3",
+        "core/easycrypt/session_cli.py",
+        "-d",
+        ".ec_session_prover_tree_0_2",
+        "-next",
+        "-c",
+        "inline*."
+      ],
+      "duration_ms": 322,
+      "exit_code": 0,
+      "label": "replay_prefix_step_9",
+      "mutates_proof_state": true,
+      "stderr_chars": 0,
+      "stderr_preview": "",
+      "stdout_chars": 21834,
+      "stdout_has_workspace_view": true,
+      "stdout_lines": 2
+    },
+    {
+      "agent_observation": {
+        "effect": "EasyCrypt accepted a proof-state change; the refreshed view is based on the new committed state.",
+        "manager_action": "replay_prefix_step_10",
+        "proof_state": "The committed EasyCrypt proof state changed.",
+        "result": "The manager completed this proof-level request.",
+        "tactic": "seq 12 12 : (={n, a, c1, lt, t0, p0, p, Mem.log, Mem.lc, BNR.lenc, BNR.ndec, UFCMA.log, UFCMA.cbad1, glob ROIN.RO, glob ROout, glob ROF} /\\ inv_lbad1 UFCMA_l.lbad1{2} BNR.lenc{2} UFCMA.log{2} Mem.log{2} Mem.lc{2} UFCMA.cbad1{2} BNR.ndec{2} /\\ (UFCMA.bad1{1} <=> exists (tt:tag*tag), (tt \\in UFCMA_l.lbad1{2}) /\\ tt.`1 = tt.`2) /\\ check_plaintext BNR.lenc{1} p{1} /\\ n{1} = (p{1}).`1)."
+      },
+      "argv": [
+        ".venv/bin/python3",
+        "core/easycrypt/session_cli.py",
+        "-d",
+        ".ec_session_prover_tree_0_2",
+        "-next",
+        "-c",
+        "seq 12 12 : (={n, a, c1, lt, t0, p0, p, Mem.log, Mem.lc, BNR.lenc, BNR.ndec, UFCMA.log, UFCMA.cbad1, glob ROIN.RO, glob ROout, glob ROF} /\\ inv_lbad1 UFCMA_l.lbad1{2} BNR.lenc{2} UFCMA.log{2} Mem.log{2} Mem.lc{2} UFCMA.cbad1{2} BNR.ndec{2} /\\ (UFCMA.bad1{1} <=> exists (tt:tag*tag), (tt \\in UFCMA_l.lbad1{2}) /\\ tt.`1 = tt.`2) /\\ check_plaintext BNR.lenc{1} p{1} /\\ n{1} = (p{1}).`1)."
+      ],
+      "duration_ms": 287,
+      "exit_code": 0,
+      "label": "replay_prefix_step_10",
+      "mutates_proof_state": true,
+      "stderr_chars": 0,
+      "stderr_preview": "",
+      "stdout_chars": 19202,
+      "stdout_has_workspace_view": true,
+      "stdout_lines": 2
+    },
+    {
+      "agent_observation": {
+        "effect": "EasyCrypt accepted a proof-state change; the refreshed view is based on the new committed state.",
+        "manager_action": "replay_prefix_step_11",
+        "proof_state": "The committed EasyCrypt proof state changed.",
+        "result": "The manager completed this proof-level request.",
+        "tactic": "sp; rnd; wp; while (={p2, c2, i, n, a, p0, p, Mem.log, Mem.lc, BNR.lenc, BNR.ndec, UFCMA.log, UFCMA.cbad1, glob ROIN.RO, glob ROout, glob ROF} /\\ inv_lbad1 UFCMA_l.lbad1{2} BNR.lenc{2} UFCMA.log{2} Mem.log{2} Mem.lc{2} UFCMA.cbad1{2} BNR.ndec{2} /\\ (UFCMA.bad1{1} <=> exists (tt:tag*tag), (tt \\in UFCMA_l.lbad1{2}) /\\ tt.`1 = tt.`2) /\\ check_plaintext BNR.lenc{1} p{1} /\\ n{1} = (p{1}).`1); auto."
+      },
+      "argv": [
+        ".venv/bin/python3",
+        "core/easycrypt/session_cli.py",
+        "-d",
+        ".ec_session_prover_tree_0_2",
+        "-next",
+        "-c",
+        "sp; rnd; wp; while (={p2, c2, i, n, a, p0, p, Mem.log, Mem.lc, BNR.lenc, BNR.ndec, UFCMA.log, UFCMA.cbad1, glob ROIN.RO, glob ROout, glob ROF} /\\ inv_lbad1 UFCMA_l.lbad1{2} BNR.lenc{2} UFCMA.log{2} Mem.log{2} Mem.lc{2} UFCMA.cbad1{2} BNR.ndec{2} /\\ (UFCMA.bad1{1} <=> exists (tt:tag*tag), (tt \\in UFCMA_l.lbad1{2}) /\\ tt.`1 = tt.`2) /\\ check_plaintext BNR.lenc{1} p{1} /\\ n{1} = (p{1}).`1); auto."
+      ],
+      "duration_ms": 314,
+      "exit_code": 0,
+      "label": "replay_prefix_step_11",
+      "mutates_proof_state": true,
+      "stderr_chars": 0,
+      "stderr_preview": "",
+      "stdout_chars": 23380,
+      "stdout_has_workspace_view": true,
+      "stdout_lines": 2
+    },
+    {
+      "agent_observation": {
+        "effect": "EasyCrypt accepted a proof-state change; the refreshed view is based on the new committed state.",
+        "manager_action": "replay_prefix_step_12",
+        "proof_state": "The committed EasyCrypt proof state changed.",
+        "result": "The manager completed this proof-level request.",
+        "tactic": "if."
+      },
+      "argv": [
+        ".venv/bin/python3",
+        "core/easycrypt/session_cli.py",
+        "-d",
+        ".ec_session_prover_tree_0_2",
+        "-next",
+        "-c",
+        "if."
+      ],
+      "duration_ms": 246,
+      "exit_code": 0,
+      "label": "replay_prefix_step_12",
+      "mutates_proof_state": true,
+      "stderr_chars": 0,
+      "stderr_preview": "",
+      "stdout_chars": 14070,
+      "stdout_has_workspace_view": true,
+      "stdout_lines": 2
+    },
+    {
+      "agent_observation": {
+        "effect": "EasyCrypt accepted a proof-state change; the refreshed view is based on the new committed state.",
+        "manager_action": "replay_prefix_step_13",
+        "proof_state": "The committed EasyCrypt proof state changed.",
+        "result": "The manager completed this proof-level request.",
+        "tactic": "smt()."
+      },
+      "argv": [
+        ".venv/bin/python3",
+        "core/easycrypt/session_cli.py",
+        "-d",
+        ".ec_session_prover_tree_0_2",
+        "-next",
+        "-c",
+        "smt()."
+      ],
+      "duration_ms": 337,
+      "exit_code": 0,
+      "label": "replay_prefix_step_13",
+      "mutates_proof_state": true,
+      "stderr_chars": 0,
+      "stderr_preview": "",
+      "stdout_chars": 22019,
+      "stdout_has_workspace_view": true,
+      "stdout_lines": 2
+    },
+    {
+      "agent_observation": {
+        "effect": "EasyCrypt accepted a proof-state change; the refreshed view is based on the new committed state.",
+        "manager_action": "replay_prefix_step_14",
+        "proof_state": "The committed EasyCrypt proof state changed.",
+        "result": "The manager completed this proof-level request.",
+        "tactic": "sp; wp; seq 1 1 : (#pre /\\ ={r})."
+      },
+      "argv": [
+        ".venv/bin/python3",
+        "core/easycrypt/session_cli.py",
+        "-d",
+        ".ec_session_prover_tree_0_2",
+        "-next",
+        "-c",
+        "sp; wp; seq 1 1 : (#pre /\\ ={r})."
+      ],
+      "duration_ms": 269,
+      "exit_code": 0,
+      "label": "replay_prefix_step_14",
+      "mutates_proof_state": true,
+      "stderr_chars": 0,
+      "stderr_preview": "",
+      "stdout_chars": 20049,
+      "stdout_has_workspace_view": true,
+      "stdout_lines": 2
+    },
+    {
+      "agent_observation": {
+        "effect": "EasyCrypt accepted a proof-state change; the refreshed view is based on the new committed state.",
+        "manager_action": "replay_prefix_step_15",
+        "proof_state": "The committed EasyCrypt proof state changed.",
+        "result": "The manager completed this proof-level request.",
+        "tactic": "auto."
+      },
+      "argv": [
+        ".venv/bin/python3",
+        "core/easycrypt/session_cli.py",
+        "-d",
+        ".ec_session_prover_tree_0_2",
+        "-next",
+        "-c",
+        "auto."
+      ],
+      "duration_ms": 284,
+      "exit_code": 0,
+      "label": "replay_prefix_step_15",
+      "mutates_proof_state": true,
+      "stderr_chars": 0,
+      "stderr_preview": "",
+      "stdout_chars": 16108,
+      "stdout_has_workspace_view": true,
+      "stdout_lines": 2
+    },
+    {
+      "agent_observation": {
+        "effect": "EasyCrypt accepted a proof-state change; the refreshed view is based on the new committed state.",
+        "manager_action": "replay_prefix_step_16",
+        "proof_state": "The committed EasyCrypt proof state changed.",
+        "result": "The manager completed this proof-level request.",
+        "tactic": "move=> &1 &2 H; split; first done; move=> rL hr; smt(H)."
+      },
+      "argv": [
+        ".venv/bin/python3",
+        "core/easycrypt/session_cli.py",
+        "-d",
+        ".ec_session_prover_tree_0_2",
+        "-next",
+        "-c",
+        "move=> &1 &2 H; split; first done; move=> rL hr; smt(H)."
+      ],
+      "duration_ms": 266,
+      "exit_code": 0,
+      "label": "replay_prefix_step_16",
+      "mutates_proof_state": true,
+      "stderr_chars": 0,
+      "stderr_preview": "",
+      "stdout_chars": 17018,
+      "stdout_has_workspace_view": true,
+      "stdout_lines": 2
+    },
+    {
+      "agent_observation": {
+        "effect": "EasyCrypt accepted a proof-state change; the refreshed view is based on the new committed state.",
+        "manager_action": "replay_prefix_step_17",
+        "proof_state": "The committed EasyCrypt proof state changed.",
+        "result": "The manager completed this proof-level request.",
+        "tactic": "move=> ? rL hr; do !split => //; exact: H."
+      },
+      "argv": [
+        ".venv/bin/python3",
+        "core/easycrypt/session_cli.py",
+        "-d",
+        ".ec_session_prover_tree_0_2",
+        "-next",
+        "-c",
+        "move=> ? rL hr; do !split => //; exact: H."
+      ],
+      "duration_ms": 290,
+      "exit_code": 0,
+      "label": "replay_prefix_step_17",
+      "mutates_proof_state": true,
+      "stderr_chars": 0,
+      "stderr_preview": "",
+      "stdout_chars": 18267,
+      "stdout_has_workspace_view": true,
+      "stdout_lines": 2
+    },
+    {
+      "agent_observation": {
+        "effect": "EasyCrypt accepted a proof-state change; the refreshed view is based on the new committed state.",
+        "manager_action": "replay_prefix_step_18",
+        "proof_state": "The committed EasyCrypt proof state changed.",
+        "result": "The manager completed this proof-level request.",
+        "tactic": "auto."
+      },
+      "argv": [
+        ".venv/bin/python3",
+        "core/easycrypt/session_cli.py",
+        "-d",
+        ".ec_session_prover_tree_0_2",
+        "-next",
+        "-c",
+        "auto."
+      ],
+      "duration_ms": 373,
+      "exit_code": 0,
+      "label": "replay_prefix_step_18",
+      "mutates_proof_state": true,
+      "stderr_chars": 0,
+      "stderr_preview": "",
+      "stdout_chars": 21255,
+      "stdout_has_workspace_view": true,
+      "stdout_lines": 2
+    },
+    {
+      "agent_observation": {
+        "effect": "EasyCrypt accepted a proof-state change; the refreshed view is based on the new committed state.",
+        "manager_action": "replay_prefix_step_19",
+        "proof_state": "The committed EasyCrypt proof state changed.",
+        "result": "The manager completed this proof-level request.",
+        "tactic": "move=> />."
+      },
+      "argv": [
+        ".venv/bin/python3",
+        "core/easycrypt/session_cli.py",
+        "-d",
+        ".ec_session_prover_tree_0_2",
+        "-next",
+        "-c",
+        "move=> />."
+      ],
+      "duration_ms": 337,
+      "exit_code": 0,
+      "label": "replay_prefix_step_19",
+      "mutates_proof_state": true,
+      "stderr_chars": 0,
+      "stderr_preview": "",
+      "stdout_chars": 14852,
+      "stdout_has_workspace_view": true,
+      "stdout_lines": 2
+    },
+    {
+      "agent_observation": {
+        "effect": "This manager intent does not change the EasyCrypt proof state.",
+        "manager_action": "agent_view",
+        "result": "The manager completed this proof-level request."
+      },
+      "argv": [
+        ".venv/bin/python3",
+        "core/easycrypt/session_cli.py",
+        "-d",
+        ".ec_session_prover_tree_0_2",
+        "-agent-view"
+      ],
+      "duration_ms": 159,
+      "exit_code": 0,
+      "label": "agent_view",
+      "mutates_proof_state": false,
+      "stderr_chars": 0,
+      "stderr_preview": "",
+      "stdout_chars": 15455,
+      "stdout_has_workspace_view": true,
+      "stdout_lines": 353
+    }
+  ],
+  "node": "Tree-0.2",
+  "replay_prefix": [
+    "byequiv (_: ={glob A} ==> UFCMA.bad1{1} => (size UFCMA_l.lbad1{2} <= qdec /\\ exists (tt:tag*tag), (tt \\in UFCMA_l.lbad1{2}) /\\ tt.`1 = tt.`2)) => //.",
+    "proc.",
+    "seq 5 3 : (={Mem.log, Mem.lc, BNR.lenc, BNR.ndec, UFCMA.log, UFCMA.cbad1, glob ROIN.RO, glob ROout, glob ROF} /\\ inv_lbad1 UFCMA_l.lbad1{2} BNR.lenc{2} UFCMA.log{2} Mem.log{2} Mem.lc{2} UFCMA.cbad1{2} BNR.ndec{2} /\\ (UFCMA.bad1{1} <=> exists (tt:tag*tag), (tt \\in UFCMA_l.lbad1{2}) /\\ tt.`1 = tt.`2)).",
+    "inline*.",
+    "wp; sp; call (_: ={Mem.log, Mem.lc, BNR.lenc, BNR.ndec, UFCMA.log, UFCMA.cbad1, glob ROIN.RO, glob ROout, glob ROF} /\\ inv_lbad1 UFCMA_l.lbad1{2} BNR.lenc{2} UFCMA.log{2} Mem.log{2} Mem.lc{2} UFCMA.cbad1{2} BNR.ndec{2} /\\ (UFCMA.bad1{1} <=> exists (tt:tag*tag), (tt \\in UFCMA_l.lbad1{2}) /\\ tt.`1 = tt.`2)).",
+    "proc.",
+    "sp; if => //.",
+    "wp.",
+    "inline*.",
+    "seq 12 12 : (={n, a, c1, lt, t0, p0, p, Mem.log, Mem.lc, BNR.lenc, BNR.ndec, UFCMA.log, UFCMA.cbad1, glob ROIN.RO, glob ROout, glob ROF} /\\ inv_lbad1 UFCMA_l.lbad1{2} BNR.lenc{2} UFCMA.log{2} Mem.log{2} Mem.lc{2} UFCMA.cbad1{2} BNR.ndec{2} /\\ (UFCMA.bad1{1} <=> exists (tt:tag*tag), (tt \\in UFCMA_l.lbad1{2}) /\\ tt.`1 = tt.`2) /\\ check_plaintext BNR.lenc{1} p{1} /\\ n{1} = (p{1}).`1).",
+    "sp; rnd; wp; while (={p2, c2, i, n, a, p0, p, Mem.log, Mem.lc, BNR.lenc, BNR.ndec, UFCMA.log, UFCMA.cbad1, glob ROIN.RO, glob ROout, glob ROF} /\\ inv_lbad1 UFCMA_l.lbad1{2} BNR.lenc{2} UFCMA.log{2} Mem.log{2} Mem.lc{2} UFCMA.cbad1{2} BNR.ndec{2} /\\ (UFCMA.bad1{1} <=> exists (tt:tag*tag), (tt \\in UFCMA_l.lbad1{2}) /\\ tt.`1 = tt.`2) /\\ check_plaintext BNR.lenc{1} p{1} /\\ n{1} = (p{1}).`1); auto.",
+    "if.",
+    "smt().",
+    "sp; wp; seq 1 1 : (#pre /\\ ={r}).",
+    "auto.",
+    "move=> &1 &2 H; split; first done; move=> rL hr; smt(H).",
+    "move=> ? rL hr; do !split => //; exact: H.",
+    "auto.",
+    "move=> />."
+  ],
+  "replay_prefix_count": 18,
+  "schema_version": 2,
+  "session_dir": ".ec_session_prover_tree_0_2",
+  "session_tag": "prover_tree_0_2",
+  "snapshot": {
+    "execution_refs": {
+      "manager_action_count": 21,
+      "manager_actions": [
+        {
+          "agent_observation": {
+            "effect": "This manager intent does not change the EasyCrypt proof state.",
+            "manager_action": "start",
+            "result": "The manager completed this proof-level request."
+          },
+          "argv": [
+            ".venv/bin/python3",
+            "core/easycrypt/session_cli.py",
+            "-d",
+            ".ec_session_prover_tree_0_2",
+            "-start",
+            "-f",
+            "artifacts/eval_suite/rerun4_l1l4_90min/l4_checked_action_surface/chacha_step4_bad1_lbad1/r01/source/ChaChaPoly/chacha_poly.ec",
+            "-I",
+            "artifacts/eval_suite/rerun4_l1l4_90min/l4_checked_action_surface/chacha_step4_bad1_lbad1/r01/source/ChaChaPoly",
+            "-I",
+            "easycrypt-src/theories",
+            "-lemma",
+            "step4_bad1_lbad1"
+          ],
+          "duration_ms": 1449,
+          "exit_code": 0,
+          "label": "start",
+          "mutates_proof_state": true,
+          "stderr_chars": 0,
+          "stderr_preview": "",
+          "stdout_chars": 21660,
+          "stdout_has_workspace_view": true,
+          "stdout_lines": 532
+        },
+        {
+          "agent_observation": {
+            "effect": "EasyCrypt accepted a proof-state change; the refreshed view is based on the new committed state.",
+            "manager_action": "replay_prefix_step_1",
+            "proof_state": "The committed EasyCrypt proof state changed.",
+            "result": "The manager completed this proof-level request.",
+            "tactic": "byequiv (_: ={glob A} ==> UFCMA.bad1{1} => (size UFCMA_l.lbad1{2} <= qdec /\\ exists (tt:tag*tag), (tt \\in UFCMA_l.lbad1{2}) /\\ tt.`1 = tt.`2)) => //."
+          },
+          "argv": [
+            ".venv/bin/python3",
+            "core/easycrypt/session_cli.py",
+            "-d",
+            ".ec_session_prover_tree_0_2",
+            "-next",
+            "-c",
+            "byequiv (_: ={glob A} ==> UFCMA.bad1{1} => (size UFCMA_l.lbad1{2} <= qdec /\\ exists (tt:tag*tag), (tt \\in UFCMA_l.lbad1{2}) /\\ tt.`1 = tt.`2)) => //."
+          ],
+          "duration_ms": 1307,
+          "exit_code": 0,
+          "label": "replay_prefix_step_1",
+          "mutates_proof_state": true,
+          "stderr_chars": 0,
+          "stderr_preview": "",
+          "stdout_chars": 15896,
+          "stdout_has_workspace_view": true,
+          "stdout_lines": 2
+        },
+        {
+          "agent_observation": {
+            "effect": "EasyCrypt accepted a proof-state change; the refreshed view is based on the new committed state.",
+            "manager_action": "replay_prefix_step_2",
+            "proof_state": "The committed EasyCrypt proof state changed.",
+            "result": "The manager completed this proof-level request.",
+            "tactic": "proc."
+          },
+          "argv": [
+            ".venv/bin/python3",
+            "core/easycrypt/session_cli.py",
+            "-d",
+            ".ec_session_prover_tree_0_2",
+            "-next",
+            "-c",
+            "proc."
+          ],
+          "duration_ms": 1434,
+          "exit_code": 0,
+          "label": "replay_prefix_step_2",
+          "mutates_proof_state": true,
+          "stderr_chars": 0,
+          "stderr_preview": "",
+          "stdout_chars": 31961,
+          "stdout_has_workspace_view": true,
+          "stdout_lines": 2
+        },
+        {
+          "agent_observation": {
+            "effect": "EasyCrypt accepted a proof-state change; the refreshed view is based on the new committed state.",
+            "manager_action": "replay_prefix_step_3",
+            "proof_state": "The committed EasyCrypt proof state changed.",
+            "result": "The manager completed this proof-level request.",
+            "tactic": "seq 5 3 : (={Mem.log, Mem.lc, BNR.lenc, BNR.ndec, UFCMA.log, UFCMA.cbad1, glob ROIN.RO, glob ROout, glob ROF} /\\ inv_lbad1 UFCMA_l.lbad1{2} BNR.lenc{2} UFCMA.log{2} Mem.log{2} Mem.lc{2} UFCMA.cbad1{2} BNR.ndec{2} /\\ (UFCMA.bad1{1} <=> exists (tt:tag*tag), (tt \\in UFCMA_l.lbad1{2}) /\\ tt.`1 = tt.`2))."
+          },
+          "argv": [
+            ".venv/bin/python3",
+            "core/easycrypt/session_cli.py",
+            "-d",
+            ".ec_session_prover_tree_0_2",
+            "-next",
+            "-c",
+            "seq 5 3 : (={Mem.log, Mem.lc, BNR.lenc, BNR.ndec, UFCMA.log, UFCMA.cbad1, glob ROIN.RO, glob ROout, glob ROF} /\\ inv_lbad1 UFCMA_l.lbad1{2} BNR.lenc{2} UFCMA.log{2} Mem.log{2} Mem.lc{2} UFCMA.cbad1{2} BNR.ndec{2} /\\ (UFCMA.bad1{1} <=> exists (tt:tag*tag), (tt \\in UFCMA_l.lbad1{2}) /\\ tt.`1 = tt.`2))."
+          ],
+          "duration_ms": 1413,
+          "exit_code": 0,
+          "label": "replay_prefix_step_3",
+          "mutates_proof_state": true,
+          "stderr_chars": 0,
+          "stderr_preview": "",
+          "stdout_chars": 25896,
+          "stdout_has_workspace_view": true,
+          "stdout_lines": 2
+        },
+        {
+          "agent_observation": {
+            "effect": "EasyCrypt accepted a proof-state change; the refreshed view is based on the new committed state.",
+            "manager_action": "replay_prefix_step_4",
+            "proof_state": "The committed EasyCrypt proof state changed.",
+            "result": "The manager completed this proof-level request.",
+            "tactic": "inline*."
+          },
+          "argv": [
+            ".venv/bin/python3",
+            "core/easycrypt/session_cli.py",
+            "-d",
+            ".ec_session_prover_tree_0_2",
+            "-next",
+            "-c",
+            "inline*."
+          ],
+          "duration_ms": 1430,
+          "exit_code": 0,
+          "label": "replay_prefix_step_4",
+          "mutates_proof_state": true,
+          "stderr_chars": 0,
+          "stderr_preview": "",
+          "stdout_chars": 28415,
+          "stdout_has_workspace_view": true,
+          "stdout_lines": 2
+        },
+        {
+          "agent_observation": {
+            "effect": "EasyCrypt accepted a proof-state change; the refreshed view is based on the new committed state.",
+            "manager_action": "replay_prefix_step_5",
+            "proof_state": "The committed EasyCrypt proof state changed.",
+            "result": "The manager completed this proof-level request.",
+            "tactic": "wp; sp; call (_: ={Mem.log, Mem.lc, BNR.lenc, BNR.ndec, UFCMA.log, UFCMA.cbad1, glob ROIN.RO, glob ROout, glob ROF} /\\ inv_lbad1 UFCMA_l.lbad1{2} BNR.lenc{2} UFCMA.log{2} Mem.log{2} Mem.lc{2} UFCMA.cbad1{2} BNR.ndec{2} /\\ (UFCMA.bad1{1} <=> exists (tt:tag*tag), (tt \\in UFCMA_l.lbad1{2}) /\\ tt.`1 = tt.`2))."
+          },
+          "argv": [
+            ".venv/bin/python3",
+            "core/easycrypt/session_cli.py",
+            "-d",
+            ".ec_session_prover_tree_0_2",
+            "-next",
+            "-c",
+            "wp; sp; call (_: ={Mem.log, Mem.lc, BNR.lenc, BNR.ndec, UFCMA.log, UFCMA.cbad1, glob ROIN.RO, glob ROout, glob ROF} /\\ inv_lbad1 UFCMA_l.lbad1{2} BNR.lenc{2} UFCMA.log{2} Mem.log{2} Mem.lc{2} UFCMA.cbad1{2} BNR.ndec{2} /\\ (UFCMA.bad1{1} <=> exists (tt:tag*tag), (tt \\in UFCMA_l.lbad1{2}) /\\ tt.`1 = tt.`2))."
+          ],
+          "duration_ms": 187,
+          "exit_code": 0,
+          "label": "replay_prefix_step_5",
+          "mutates_proof_state": true,
+          "stderr_chars": 0,
+          "stderr_preview": "",
+          "stdout_chars": 16836,
+          "stdout_has_workspace_view": true,
+          "stdout_lines": 2
+        },
+        {
+          "agent_observation": {
+            "effect": "EasyCrypt accepted a proof-state change; the refreshed view is based on the new committed state.",
+            "manager_action": "replay_prefix_step_6",
+            "proof_state": "The committed EasyCrypt proof state changed.",
+            "result": "The manager completed this proof-level request.",
+            "tactic": "proc."
+          },
+          "argv": [
+            ".venv/bin/python3",
+            "core/easycrypt/session_cli.py",
+            "-d",
+            ".ec_session_prover_tree_0_2",
+            "-next",
+            "-c",
+            "proc."
+          ],
+          "duration_ms": 259,
+          "exit_code": 0,
+          "label": "replay_prefix_step_6",
+          "mutates_proof_state": true,
+          "stderr_chars": 0,
+          "stderr_preview": "",
+          "stdout_chars": 22253,
+          "stdout_has_workspace_view": true,
+          "stdout_lines": 2
+        },
+        {
+          "agent_observation": {
+            "effect": "EasyCrypt accepted a proof-state change; the refreshed view is based on the new committed state.",
+            "manager_action": "replay_prefix_step_7",
+            "proof_state": "The committed EasyCrypt proof state changed.",
+            "result": "The manager completed this proof-level request.",
+            "tactic": "sp; if => //."
+          },
+          "argv": [
+            ".venv/bin/python3",
+            "core/easycrypt/session_cli.py",
+            "-d",
+            ".ec_session_prover_tree_0_2",
+            "-next",
+            "-c",
+            "sp; if => //."
+          ],
+          "duration_ms": 283,
+          "exit_code": 0,
+          "label": "replay_prefix_step_7",
+          "mutates_proof_state": true,
+          "stderr_chars": 0,
+          "stderr_preview": "",
+          "stdout_chars": 20907,
+          "stdout_has_workspace_view": true,
+          "stdout_lines": 2
+        },
+        {
+          "agent_observation": {
+            "effect": "EasyCrypt accepted a proof-state change; the refreshed view is based on the new committed state.",
+            "manager_action": "replay_prefix_step_8",
+            "proof_state": "The committed EasyCrypt proof state changed.",
+            "result": "The manager completed this proof-level request.",
+            "tactic": "wp."
+          },
+          "argv": [
+            ".venv/bin/python3",
+            "core/easycrypt/session_cli.py",
+            "-d",
+            ".ec_session_prover_tree_0_2",
+            "-next",
+            "-c",
+            "wp."
+          ],
+          "duration_ms": 258,
+          "exit_code": 0,
+          "label": "replay_prefix_step_8",
+          "mutates_proof_state": true,
+          "stderr_chars": 0,
+          "stderr_preview": "",
+          "stdout_chars": 22551,
+          "stdout_has_workspace_view": true,
+          "stdout_lines": 2
+        },
+        {
+          "agent_observation": {
+            "effect": "EasyCrypt accepted a proof-state change; the refreshed view is based on the new committed state.",
+            "manager_action": "replay_prefix_step_9",
+            "proof_state": "The committed EasyCrypt proof state changed.",
+            "result": "The manager completed this proof-level request.",
+            "tactic": "inline*."
+          },
+          "argv": [
+            ".venv/bin/python3",
+            "core/easycrypt/session_cli.py",
+            "-d",
+            ".ec_session_prover_tree_0_2",
+            "-next",
+            "-c",
+            "inline*."
+          ],
+          "duration_ms": 322,
+          "exit_code": 0,
+          "label": "replay_prefix_step_9",
+          "mutates_proof_state": true,
+          "stderr_chars": 0,
+          "stderr_preview": "",
+          "stdout_chars": 21834,
+          "stdout_has_workspace_view": true,
+          "stdout_lines": 2
+        },
+        {
+          "agent_observation": {
+            "effect": "EasyCrypt accepted a proof-state change; the refreshed view is based on the new committed state.",
+            "manager_action": "replay_prefix_step_10",
+            "proof_state": "The committed EasyCrypt proof state changed.",
+            "result": "The manager completed this proof-level request.",
+            "tactic": "seq 12 12 : (={n, a, c1, lt, t0, p0, p, Mem.log, Mem.lc, BNR.lenc, BNR.ndec, UFCMA.log, UFCMA.cbad1, glob ROIN.RO, glob ROout, glob ROF} /\\ inv_lbad1 UFCMA_l.lbad1{2} BNR.lenc{2} UFCMA.log{2} Mem.log{2} Mem.lc{2} UFCMA.cbad1{2} BNR.ndec{2} /\\ (UFCMA.bad1{1} <=> exists (tt:tag*tag), (tt \\in UFCMA_l.lbad1{2}) /\\ tt.`1 = tt.`2) /\\ check_plaintext BNR.lenc{1} p{1} /\\ n{1} = (p{1}).`1)."
+          },
+          "argv": [
+            ".venv/bin/python3",
+            "core/easycrypt/session_cli.py",
+            "-d",
+            ".ec_session_prover_tree_0_2",
+            "-next",
+            "-c",
+            "seq 12 12 : (={n, a, c1, lt, t0, p0, p, Mem.log, Mem.lc, BNR.lenc, BNR.ndec, UFCMA.log, UFCMA.cbad1, glob ROIN.RO, glob ROout, glob ROF} /\\ inv_lbad1 UFCMA_l.lbad1{2} BNR.lenc{2} UFCMA.log{2} Mem.log{2} Mem.lc{2} UFCMA.cbad1{2} BNR.ndec{2} /\\ (UFCMA.bad1{1} <=> exists (tt:tag*tag), (tt \\in UFCMA_l.lbad1{2}) /\\ tt.`1 = tt.`2) /\\ check_plaintext BNR.lenc{1} p{1} /\\ n{1} = (p{1}).`1)."
+          ],
+          "duration_ms": 287,
+          "exit_code": 0,
+          "label": "replay_prefix_step_10",
+          "mutates_proof_state": true,
+          "stderr_chars": 0,
+          "stderr_preview": "",
+          "stdout_chars": 19202,
+          "stdout_has_workspace_view": true,
+          "stdout_lines": 2
+        },
+        {
+          "agent_observation": {
+            "effect": "EasyCrypt accepted a proof-state change; the refreshed view is based on the new committed state.",
+            "manager_action": "replay_prefix_step_11",
+            "proof_state": "The committed EasyCrypt proof state changed.",
+            "result": "The manager completed this proof-level request.",
+            "tactic": "sp; rnd; wp; while (={p2, c2, i, n, a, p0, p, Mem.log, Mem.lc, BNR.lenc, BNR.ndec, UFCMA.log, UFCMA.cbad1, glob ROIN.RO, glob ROout, glob ROF} /\\ inv_lbad1 UFCMA_l.lbad1{2} BNR.lenc{2} UFCMA.log{2} Mem.log{2} Mem.lc{2} UFCMA.cbad1{2} BNR.ndec{2} /\\ (UFCMA.bad1{1} <=> exists (tt:tag*tag), (tt \\in UFCMA_l.lbad1{2}) /\\ tt.`1 = tt.`2) /\\ check_plaintext BNR.lenc{1} p{1} /\\ n{1} = (p{1}).`1); auto."
+          },
+          "argv": [
+            ".venv/bin/python3",
+            "core/easycrypt/session_cli.py",
+            "-d",
+            ".ec_session_prover_tree_0_2",
+            "-next",
+            "-c",
+            "sp; rnd; wp; while (={p2, c2, i, n, a, p0, p, Mem.log, Mem.lc, BNR.lenc, BNR.ndec, UFCMA.log, UFCMA.cbad1, glob ROIN.RO, glob ROout, glob ROF} /\\ inv_lbad1 UFCMA_l.lbad1{2} BNR.lenc{2} UFCMA.log{2} Mem.log{2} Mem.lc{2} UFCMA.cbad1{2} BNR.ndec{2} /\\ (UFCMA.bad1{1} <=> exists (tt:tag*tag), (tt \\in UFCMA_l.lbad1{2}) /\\ tt.`1 = tt.`2) /\\ check_plaintext BNR.lenc{1} p{1} /\\ n{1} = (p{1}).`1); auto."
+          ],
+          "duration_ms": 314,
+          "exit_code": 0,
+          "label": "replay_prefix_step_11",
+          "mutates_proof_state": true,
+          "stderr_chars": 0,
+          "stderr_preview": "",
+          "stdout_chars": 23380,
+          "stdout_has_workspace_view": true,
+          "stdout_lines": 2
+        },
+        {
+          "agent_observation": {
+            "effect": "EasyCrypt accepted a proof-state change; the refreshed view is based on the new committed state.",
+            "manager_action": "replay_prefix_step_12",
+            "proof_state": "The committed EasyCrypt proof state changed.",
+            "result": "The manager completed this proof-level request.",
+            "tactic": "if."
+          },
+          "argv": [
+            ".venv/bin/python3",
+            "core/easycrypt/session_cli.py",
+            "-d",
+            ".ec_session_prover_tree_0_2",
+            "-next",
+            "-c",
+            "if."
+          ],
+          "duration_ms": 246,
+          "exit_code": 0,
+          "label": "replay_prefix_step_12",
+          "mutates_proof_state": true,
+          "stderr_chars": 0,
+          "stderr_preview": "",
+          "stdout_chars": 14070,
+          "stdout_has_workspace_view": true,
+          "stdout_lines": 2
+        },
+        {
+          "agent_observation": {
+            "effect": "EasyCrypt accepted a proof-state change; the refreshed view is based on the new committed state.",
+            "manager_action": "replay_prefix_step_13",
+            "proof_state": "The committed EasyCrypt proof state changed.",
+            "result": "The manager completed this proof-level request.",
+            "tactic": "smt()."
+          },
+          "argv": [
+            ".venv/bin/python3",
+            "core/easycrypt/session_cli.py",
+            "-d",
+            ".ec_session_prover_tree_0_2",
+            "-next",
+            "-c",
+            "smt()."
+          ],
+          "duration_ms": 337,
+          "exit_code": 0,
+          "label": "replay_prefix_step_13",
+          "mutates_proof_state": true,
+          "stderr_chars": 0,
+          "stderr_preview": "",
+          "stdout_chars": 22019,
+          "stdout_has_workspace_view": true,
+          "stdout_lines": 2
+        },
+        {
+          "agent_observation": {
+            "effect": "EasyCrypt accepted a proof-state change; the refreshed view is based on the new committed state.",
+            "manager_action": "replay_prefix_step_14",
+            "proof_state": "The committed EasyCrypt proof state changed.",
+            "result": "The manager completed this proof-level request.",
+            "tactic": "sp; wp; seq 1 1 : (#pre /\\ ={r})."
+          },
+          "argv": [
+            ".venv/bin/python3",
+            "core/easycrypt/session_cli.py",
+            "-d",
+            ".ec_session_prover_tree_0_2",
+            "-next",
+            "-c",
+            "sp; wp; seq 1 1 : (#pre /\\ ={r})."
+          ],
+          "duration_ms": 269,
+          "exit_code": 0,
+          "label": "replay_prefix_step_14",
+          "mutates_proof_state": true,
+          "stderr_chars": 0,
+          "stderr_preview": "",
+          "stdout_chars": 20049,
+          "stdout_has_workspace_view": true,
+          "stdout_lines": 2
+        },
+        {
+          "agent_observation": {
+            "effect": "EasyCrypt accepted a proof-state change; the refreshed view is based on the new committed state.",
+            "manager_action": "replay_prefix_step_15",
+            "proof_state": "The committed EasyCrypt proof state changed.",
+            "result": "The manager completed this proof-level request.",
+            "tactic": "auto."
+          },
+          "argv": [
+            ".venv/bin/python3",
+            "core/easycrypt/session_cli.py",
+            "-d",
+            ".ec_session_prover_tree_0_2",
+            "-next",
+            "-c",
+            "auto."
+          ],
+          "duration_ms": 284,
+          "exit_code": 0,
+          "label": "replay_prefix_step_15",
+          "mutates_proof_state": true,
+          "stderr_chars": 0,
+          "stderr_preview": "",
+          "stdout_chars": 16108,
+          "stdout_has_workspace_view": true,
+          "stdout_lines": 2
+        },
+        {
+          "agent_observation": {
+            "effect": "EasyCrypt accepted a proof-state change; the refreshed view is based on the new committed state.",
+            "manager_action": "replay_prefix_step_16",
+            "proof_state": "The committed EasyCrypt proof state changed.",
+            "result": "The manager completed this proof-level request.",
+            "tactic": "move=> &1 &2 H; split; first done; move=> rL hr; smt(H)."
+          },
+          "argv": [
+            ".venv/bin/python3",
+            "core/easycrypt/session_cli.py",
+            "-d",
+            ".ec_session_prover_tree_0_2",
+            "-next",
+            "-c",
+            "move=> &1 &2 H; split; first done; move=> rL hr; smt(H)."
+          ],
+          "duration_ms": 266,
+          "exit_code": 0,
+          "label": "replay_prefix_step_16",
+          "mutates_proof_state": true,
+          "stderr_chars": 0,
+          "stderr_preview": "",
+          "stdout_chars": 17018,
+          "stdout_has_workspace_view": true,
+          "stdout_lines": 2
+        },
+        {
+          "agent_observation": {
+            "effect": "EasyCrypt accepted a proof-state change; the refreshed view is based on the new committed state.",
+            "manager_action": "replay_prefix_step_17",
+            "proof_state": "The committed EasyCrypt proof state changed.",
+            "result": "The manager completed this proof-level request.",
+            "tactic": "move=> ? rL hr; do !split => //; exact: H."
+          },
+          "argv": [
+            ".venv/bin/python3",
+            "core/easycrypt/session_cli.py",
+            "-d",
+            ".ec_session_prover_tree_0_2",
+            "-next",
+            "-c",
+            "move=> ? rL hr; do !split => //; exact: H."
+          ],
+          "duration_ms": 290,
+          "exit_code": 0,
+          "label": "replay_prefix_step_17",
+          "mutates_proof_state": true,
+          "stderr_chars": 0,
+          "stderr_preview": "",
+          "stdout_chars": 18267,
+          "stdout_has_workspace_view": true,
+          "stdout_lines": 2
+        },
+        {
+          "agent_observation": {
+            "effect": "EasyCrypt accepted a proof-state change; the refreshed view is based on the new committed state.",
+            "manager_action": "replay_prefix_step_18",
+            "proof_state": "The committed EasyCrypt proof state changed.",
+            "result": "The manager completed this proof-level request.",
+            "tactic": "auto."
+          },
+          "argv": [
+            ".venv/bin/python3",
+            "core/easycrypt/session_cli.py",
+            "-d",
+            ".ec_session_prover_tree_0_2",
+            "-next",
+            "-c",
+            "auto."
+          ],
+          "duration_ms": 373,
+          "exit_code": 0,
+          "label": "replay_prefix_step_18",
+          "mutates_proof_state": true,
+          "stderr_chars": 0,
+          "stderr_preview": "",
+          "stdout_chars": 21255,
+          "stdout_has_workspace_view": true,
+          "stdout_lines": 2
+        },
+        {
+          "agent_observation": {
+            "effect": "EasyCrypt accepted a proof-state change; the refreshed view is based on the new committed state.",
+            "manager_action": "replay_prefix_step_19",
+            "proof_state": "The committed EasyCrypt proof state changed.",
+            "result": "The manager completed this proof-level request.",
+            "tactic": "move=> />."
+          },
+          "argv": [
+            ".venv/bin/python3",
+            "core/easycrypt/session_cli.py",
+            "-d",
+            ".ec_session_prover_tree_0_2",
+            "-next",
+            "-c",
+            "move=> />."
+          ],
+          "duration_ms": 337,
+          "exit_code": 0,
+          "label": "replay_prefix_step_19",
+          "mutates_proof_state": true,
+          "stderr_chars": 0,
+          "stderr_preview": "",
+          "stdout_chars": 14852,
+          "stdout_has_workspace_view": true,
+          "stdout_lines": 2
+        },
+        {
+          "agent_observation": {
+            "effect": "This manager intent does not change the EasyCrypt proof state.",
+            "manager_action": "agent_view",
+            "result": "The manager completed this proof-level request."
+          },
+          "argv": [
+            ".venv/bin/python3",
+            "core/easycrypt/session_cli.py",
+            "-d",
+            ".ec_session_prover_tree_0_2",
+            "-agent-view"
+          ],
+          "duration_ms": 159,
+          "exit_code": 0,
+          "label": "agent_view",
+          "mutates_proof_state": false,
+          "stderr_chars": 0,
+          "stderr_preview": "",
+          "stdout_chars": 15455,
+          "stdout_has_workspace_view": true,
+          "stdout_lines": 353
+        }
+      ]
+    },
+    "goal_hash": "6fe65ea2014a32128b07811b27db025bf23ddd6d",
+    "node_id": "Tree-0.2",
+    "proof_context_view_artifact": "",
+    "session_dir": ".ec_session_prover_tree_0_2",
+    "session_epoch": 1,
+    "session_tag": "prover_tree_0_2",
+    "state_version": 1,
+    "workspace_view_artifact": ""
+  },
+  "workspace_view": {
+    "application_context": {
+      "selected_handles": [
+        {
+          "derivation": "read-only probe surfaced from current-state analysis",
+          "guarantee": "read-only probe shape; proof state unchanged; probe then decide; reversible",
+          "tactic": "move=> &2 cbad1_R lbad1_R H.",
+          "title": "Read-only tactic probe",
+          "verified": "read_only_probe_suggestion",
+          "why_relevant": "ambient goal has a leading implication before the proof judgment"
+        },
+        {
+          "derivation": "read-only probe surfaced from current-state analysis",
+          "guarantee": "read-only probe shape; proof state unchanged; probe then decide; reversible",
+          "tactic": "rewrite /qenc.",
+          "title": "Read-only tactic probe",
+          "verified": "read_only_probe_suggestion",
+          "why_relevant": "`qenc` occurs in the residual goal and resolves as an unfoldable op/pred/abbrev, not as an SMT lemma hint."
+        }
+      ]
+    },
+    "candidate_moves": {
+      "moves": [
+        {
+          "applicability": "This tactic-shaped option should be checked with a read-only probe before committing it.",
+          "category": "probe",
+          "derivation": "read-only probe surfaced from proof-state analysis",
+          "effect": "This is a read-only probe; it asks EasyCrypt what would happen without changing the committed proof state.",
+          "evidence": [
+            "ambient goal has a leading implication before the proof judgment"
+          ],
+          "guarantee": "read-only probe shape; proof state unchanged; probe then decide; reversible",
+          "source": "proof-state analysis",
+          "tactic": "move=> &2 cbad1_R lbad1_R H.",
+          "title": "Read-only tactic probe",
+          "verified": "read_only_probe_suggestion"
+        },
+        {
+          "applicability": "This tactic-shaped option should be checked with a read-only probe before committing it.",
+          "category": "probe",
+          "derivation": "read-only probe surfaced from proof-state analysis",
+          "effect": "This is a read-only probe; it asks EasyCrypt what would happen without changing the committed proof state.",
+          "evidence": [
+            "`qenc` occurs in the residual goal and resolves as an unfoldable op/pred/abbrev, not as an SMT lemma hint."
+          ],
+          "guarantee": "read-only probe shape; proof state unchanged; probe then decide; reversible",
+          "source": "proof-state analysis",
+          "tactic": "rewrite /qenc.",
+          "title": "Read-only tactic probe",
+          "verified": "read_only_probe_suggestion"
+        },
+        {
+          "applicability": "This tactic-shaped option should be checked with a read-only probe before committing it.",
+          "category": "probe",
+          "derivation": "read-only probe surfaced from proof-state analysis",
+          "effect": "This is a read-only probe; it asks EasyCrypt what would happen without changing the committed proof state.",
+          "evidence": [
+            "Ambient front-end found a pure residual goal; simplify before asking SMT to solve the remaining logic."
+          ],
+          "guarantee": "read-only probe shape; proof state unchanged; probe then decide; reversible",
+          "source": "proof-state analysis",
+          "tactic": "auto => />.",
+          "title": "Residual closing tactic",
+          "verified": "read_only_probe_suggestion"
+        }
+      ],
+      "navigation": [
+        {
+          "anti_routes": [
+            {
+              "reason": "Blind SMT often misses cloned/local qualified names.",
+              "route": "smt_without_local_lemma_pack",
+              "scope": "avoid_until_lemma_pack_checked"
+            },
+            {
+              "reason": "Prefer the qualified/local name shown by lookup or lemma_hints.",
+              "route": "unqualified_local_symbol_guessing",
+              "scope": "avoid_after_first_unknown_identifier"
+            }
+          ],
+          "confidence": "medium",
+          "confidence_reason": "The current pure goal exposes relevant list/local symbols, but the goal is large or the local evidence is partial.",
+          "episode": "ambient_local_lemma",
+          "fast_track_probe": {
+            "expected_next_shape": "The pure list/subtype obligation closes, or the remaining goal points to one missing local lemma/unfold.",
+            "preconditions": [
+              "Use only when the visible goal is a pure ambient/list obligation.",
+              "Lookup any non-trivial cross-file lemma before using it if its signature is unknown.",
+              "Probe the block; if it fails, shorten to the intro/unfold prefix."
+            ],
+            "tactic": "move=> *; rewrite /qenc; smt(size_cat size_map)."
+          },
+          "id": "ambient_operator_local_lemma",
+          "lemma_pack": [
+            {
+              "role": "list size over concatenation",
+              "symbol": "size_cat"
+            },
+            {
+              "role": "list size over map",
+              "symbol": "size_map"
+            }
+          ],
+          "proof_family": "ambient_logic",
+          "repair_if_fails": [
+            {
+              "failure": "lemma",
+              "next": "inspect lemma_hints or lookup_symbol for the missing qualified name"
+            },
+            {
+              "failure": "syntax",
+              "next": "inspect tactic_forms for rewrite/apply/SMT setup"
+            },
+            {
+              "failure": "route",
+              "next": "try a smaller unfold/rewrite prefix before changing proof family"
+            }
+          ],
+          "route": "unfold_local_head_then_smt_lemma_pack",
+          "valid_for": "current_view_only",
+          "why_now": "current ambient goal mentions list/subtype/local conversion operators that often close after unfolding the local head and supplying qualified lemma names."
+        }
+      ],
+      "route_health": [
+        {
+          "checkpoint_policy": "current_state_local_work_visible",
+          "companion_surfaces": [
+            "pure_tail_surface.existential_witness_surface",
+            "pure_tail_surface.map_update_lookup_surface"
+          ],
+          "confidence": "medium",
+          "evidence": [
+            "membership source shapes: concat_membership, cons_membership, map_membership, map_update_membership",
+            "existential binders: n1, a0, n1",
+            "map update keys: p{2}.`1, p{2}.`1, a{2}, c1{2}, t0{2}",
+            "membership fact: n1 \\in BNR.lenc{2} => let (a0, c3, t1) = oget UFCMA.log{2}.[n1] in"
+          ],
+          "message": "Current pure-tail obligations expose list/map/filter membership source structure whose local facts are not separated in the current context.",
+          "observed_gap": "Visible membership sources carry local case facts that can expose the key, projection, or witness relation, but those source facts are not separated in the current context.",
+          "observed_risk": "local_membership_source_not_exposed",
+          "recovery_class": "local_pure_surgery_available",
+          "related_surface": "pure_tail_surface.membership_decomposition_surface",
+          "signal": "local_membership_decomposition_available"
+        }
+      ]
+    },
+    "current_goal": {
+      "goal_type": "ambient",
+      "lines": [
+        "Current goal (remaining: 5)",
+        "",
+        "Type variables: <none>",
+        "",
+        "&m: {}",
+        "------------------------------------------------------------------------",
+        "forall &2 (cbad1_R : int) (lbad1_R : (tag * tag) list),",
+        "  uniq BNR.lenc{2} =>",
+        "  cbad1_R <= qenc =>",
+        "  size BNR.lenc{2} <= qenc =>",
+        "  size lbad1_R <= size (make_lbad1 UFCMA.log{2} Mem.lc{2} BNR.lenc{2}) =>",
+        "  size (make_lbad1 UFCMA.log{2} Mem.lc{2} BNR.lenc{2}) <= qdec =>",
+        "  size Mem.lc{2} <= BNR.ndec{2} =>",
+        "  BNR.ndec{2} <= qdec =>",
+        "  (forall (n1 : nonce),",
+        "     n1 \\in BNR.lenc{2} =>",
+        "     let (a0, c3, t1) = oget UFCMA.log{2}.[n1] in",
+        "     (n1, a0, c3, t1) \\in Mem.log{2}) =>",
+        "  (forall (n1 : nonce), (n1 \\in BNR.lenc{2}) = (n1 \\in UFCMA.log{2})) =>",
+        "  (forall (t1 t' : tag),",
+        "     (t1, t') \\in lbad1_R =>",
+        "     exists (n1 : nonce),",
+        "       (n1 \\in BNR.lenc{2}) /\\",
+        "       (oget UFCMA.log{2}.[n1]).`3 = t1 /\\",
+        "       exists (a0 : associated_data) (c3 : message),",
+        "         (n1, a0, c3, t') \\in Mem.lc{2}) =>",
+        "  check_plaintext BNR.lenc{2} p{2} =>",
+        "  cbad1_R < qenc =>",
+        "  size lt{2} <= qdec =>",
+        "  ((p{2}.`1, C.ofintd 0) \\notin RO.m{2} =>",
+        "   (! (p{2}.`1 \\in BNR.lenc{2}) /\\",
+        "    cbad1_R + 1 <= qenc /\\",
+        "    1 + size BNR.lenc{2} <= qenc /\\",
+        "    (size (lbad1_R ++ map (fun (t' : tag) => (t0{2}, t')) lt{2}) <=",
+        "     size",
+        "       (make_lbad1 UFCMA.log{2}.[p{2}.`1 <- (a{2}, c1{2}, t0{2})] Mem.lc{2}",
+        "          (p{2}.`1 :: BNR.lenc{2})) /\\",
+        "     (size (lbad1_R ++ map (fun (t' : tag) => (t0{2}, t')) lt{2}) <=",
+        "      size",
+        "        (make_lbad1 UFCMA.log{2}.[p{2}.`1 <- (a{2}, c1{2}, t0{2})] Mem.lc{2}",
+        "           (p{2}.`1 :: BNR.lenc{2})) =>",
+        "      size",
+        "        (make_lbad1 UFCMA.log{2}.[p{2}.`1 <- (a{2}, c1{2}, t0{2})] Mem.lc{2}",
+        "           (p{2}.`1 :: BNR.lenc{2})) <=",
+        "      qdec)) /\\",
+        "    ! (p{2}.`1 \\in BNR.lenc{2}) /\\",
+        "    (forall (n1 : nonce),",
+        "       n1 = p{2}.`1 \\/ (n1 \\in BNR.lenc{2}) =>",
+        "       forall (x10 : associated_data) (x2 : message) (x3 : tag),",
+        "         oget UFCMA.log{2}.[p{2}.`1 <- (a{2}, c1{2}, t0{2})].[n1] =",
+        "         (x10, x2, x3) =>",
+        "         (n1, x10, x2, x3) \\in",
+        "         Mem.log{2}.[p{2}.`1, a{2}, c1{2}, t0{2} <- p0{2}]) /\\",
+        "    (forall (n1 : nonce),",
+        "       (n1 = p{2}.`1 \\/ (n1 \\in BNR.lenc{2})) =",
+        "       (n1 \\in UFCMA.log{2}.[p{2}.`1 <- (a{2}, c1{2}, t0{2})])) /\\",
+        "    forall (t1 t' : tag),",
+        "      (t1, t') \\in lbad1_R ++ map (fun (t'0 : tag) => (t0{2}, t'0)) lt{2} =>",
+        "      exists (n1 : nonce),",
+        "        (n1 = p{2}.`1 \\/ (n1 \\in BNR.lenc{2})) /\\",
+        "        (oget UFCMA.log{2}.[p{2}.`1 <- (a{2}, c1{2}, t0{2})].[n1]).`3 = t1 /\\",
+        "        exists (a0 : associated_data) (c3 : message),",
+        "          (n1, a0, c3, t') \\in Mem.lc{2}) /\\",
+        "   ((exists (tt : tag * tag), (tt \\in lbad1_R) /\\ tt.`1 = tt.`2) ||",
+        "    (t0{2} \\in lt{2}) =>",
+        "    exists (tt : tag * tag),",
+        "      (tt \\in lbad1_R ++ map (fun (t' : tag) => (t0{2}, t')) lt{2}) /\\",
+        "      tt.`1 = tt.`2) /\\",
+        "   forall (tt : tag * tag),",
+        "     tt \\in lbad1_R ++ map (fun (t' : tag) => (t0{2}, t')) lt{2} =>",
+        "     tt.`1 = tt.`2 =>",
+        "     (exists (tt0 : tag * tag), (tt0 \\in lbad1_R) /\\ tt0.`1 = tt0.`2) ||",
+        "     (t0{2} \\in lt{2})) /\\",
+        "  ((p{2}.`1, C.ofintd 0) \\in RO.m{2} =>",
+        "   (! (p{2}.`1 \\in BNR.lenc{2}) /\\",
+        "    cbad1_R + 1 <= qenc /\\",
+        "    1 + size BNR.lenc{2} <= qenc /\\",
+        "    (size (lbad1_R ++ map (fun (t' : tag) => (t0{2}, t')) lt{2}) <=",
+        "     size",
+        "       (make_lbad1 UFCMA.log{2}.[p{2}.`1 <- (a{2}, c1{2}, t0{2})] Mem.lc{2}",
+        "          (p{2}.`1 :: BNR.lenc{2})) /\\",
+        "     (size (lbad1_R ++ map (fun (t' : tag) => (t0{2}, t')) lt{2}) <=",
+        "      size",
+        "        (make_lbad1 UFCMA.log{2}.[p{2}.`1 <- (a{2}, c1{2}, t0{2})] Mem.lc{2}",
+        "           (p{2}.`1 :: BNR.lenc{2})) =>",
+        "      size",
+        "        (make_lbad1 UFCMA.log{2}.[p{2}.`1 <- (a{2}, c1{2}, t0{2})] Mem.lc{2}",
+        "           (p{2}.`1 :: BNR.lenc{2})) <=",
+        "      qdec)) /\\",
+        "    ! (p{2}.`1 \\in BNR.lenc{2}) /\\",
+        "    (forall (n1 : nonce),",
+        "       n1 = p{2}.`1 \\/ (n1 \\in BNR.lenc{2}) =>",
+        "       forall (x10 : associated_data) (x2 : message) (x3 : tag),",
+        "         oget UFCMA.log{2}.[p{2}.`1 <- (a{2}, c1{2}, t0{2})].[n1] =",
+        "         (x10, x2, x3) =>",
+        "         (n1, x10, x2, x3) \\in",
+        "         Mem.log{2}.[p{2}.`1, a{2}, c1{2}, t0{2} <- p0{2}]) /\\",
+        "    (forall (n1 : nonce),",
+        "       (n1 = p{2}.`1 \\/ (n1 \\in BNR.lenc{2})) =",
+        "       (n1 \\in UFCMA.log{2}.[p{2}.`1 <- (a{2}, c1{2}, t0{2})])) /\\",
+        "    forall (t1 t' : tag),",
+        "      (t1, t') \\in lbad1_R ++ map (fun (t'0 : tag) => (t0{2}, t'0)) lt{2} =>",
+        "      exists (n1 : nonce),",
+        "        (n1 = p{2}.`1 \\/ (n1 \\in BNR.lenc{2})) /\\",
+        "        (oget UFCMA.log{2}.[p{2}.`1 <- (a{2}, c1{2}, t0{2})].[n1]).`3 = t1 /\\",
+        "        exists (a0 : associated_data) (c3 : message),",
+        "          (n1, a0, c3, t') \\in Mem.lc{2}) /\\",
+        "   ((exists (tt : tag * tag), (tt \\in lbad1_R) /\\ tt.`1 = tt.`2) ||",
+        "    (t0{2} \\in lt{2}) =>",
+        "    exists (tt : tag * tag),",
+        "      (tt \\in lbad1_R ++ map (fun (t' : tag) => (t0{2}, t')) lt{2}) /\\",
+        "      tt.`1 = tt.`2) /\\",
+        "   forall (tt : tag * tag),",
+        "     tt \\in lbad1_R ++ map (fun (t' : tag) => (t0{2}, t')) lt{2} =>",
+        "     tt.`1 = tt.`2 =>",
+        "     (exists (tt0 : tag * tag), (tt0 \\in lbad1_R) /\\ tt0.`1 = tt0.`2) ||",
+        "     (t0{2} \\in lt{2}))",
+        "[422|check]>"
+      ],
+      "source": {
+        "ground_truth": false,
+        "label": "Parsed from EasyCrypt pretty goal text"
+      },
+      "text_fully_shown": true,
+      "truncated": false,
+      "view_focus": "ambient_logic"
+    },
+    "facts_and_diagnostics": {
+      "fact_note": "Only current-frontier facts are shown here; the full proof context artifact keeps the compiler/internal details.",
+      "facts": {
+        "unfoldable_goal_head_count": 4,
+        "unfoldable_goal_heads": [
+          {
+            "declaration_kind": "op",
+            "name": "qenc",
+            "smt_argument_role": "not_a_lemma_hint",
+            "unfold_tactic": "rewrite /qenc.",
+            "unqualified_name": "qenc"
+          },
+          {
+            "declaration_kind": "op",
+            "name": "make_lbad1",
+            "smt_argument_role": "not_a_lemma_hint",
+            "unfold_tactic": "rewrite /make_lbad1.",
+            "unqualified_name": "make_lbad1"
+          },
+          {
+            "declaration_kind": "op",
+            "name": "qdec",
+            "smt_argument_role": "not_a_lemma_hint",
+            "unfold_tactic": "rewrite /qdec.",
+            "unqualified_name": "qdec"
+          },
+          {
+            "declaration_kind": "op",
+            "name": "check_plaintext",
+            "smt_argument_role": "not_a_lemma_hint",
+            "unfold_tactic": "rewrite /check_plaintext.",
+            "unqualified_name": "check_plaintext"
+          }
+        ]
+      },
+      "notes": [
+        {
+          "message": "Current residual goal mentions unfoldable definition(s): qenc, make_lbad1, qdec, check_plaintext. Use `rewrite /NAME` before SMT when those predicates block simplification; these names are not smt(...) lemma hints.",
+          "severity": "info"
+        }
+      ]
+    },
+    "inspect_lookup_handles": {
+      "ask_manager_for": [
+        {
+          "intent": "inspect_context",
+          "payload": {
+            "topic": "rewrite_candidates"
+          },
+          "returns": "manager-provided read-only context for this proof route",
+          "use_when": "Goal relates list concatenation and size; use native operator-AND search."
+        },
+        {
+          "intent": "inspect_context",
+          "payload": {
+            "topic": "goal_info"
+          },
+          "returns": "parsed goal structure and names",
+          "use_when": "Need parsed goal shape, resolved names, or KB pattern hints."
+        },
+        {
+          "intent": "inspect_context",
+          "payload": {
+            "topic": "lemma_hints"
+          },
+          "returns": "nearby lemma hints and qualified-name lookup guidance",
+          "use_when": "Need local or standard-library lemma names before rewriting a pure goal."
+        },
+        {
+          "intent": "inspect_context",
+          "payload": {
+            "name": "rewrite",
+            "topic": "tactic_forms"
+          },
+          "returns": "valid tactic forms and common traps",
+          "use_when": "Need the valid EasyCrypt form for rewrite, apply, conseq, while, or SMT setup."
+        }
+      ],
+      "effect": "All handles here are read-only manager requests; the committed EasyCrypt proof state stays unchanged.",
+      "manager_note": "Some requests may ask EasyCrypt or name resolution; wait for the manager result before choosing the next proof intent."
+    },
+    "kind": "prover_workspace_view",
+    "last_result": {},
+    "program_frontier": {
+      "authority": "proof-state analysis",
+      "view_focus": "ambient_logic"
+    },
+    "proof_status": {
+      "current_layer": "ambient_logic",
+      "goal_type": "ambient",
+      "remaining_goals": 5,
+      "remaining_goals_known": true,
+      "status": "open",
+      "view_focus": "ambient_logic"
+    },
+    "pure_focus": {
+      "alignment_gap_to_feed_smt": "[{\"signal\": \"local_membership_decomposition_available\", \"confidence\": \"medium\", \"gap\": \"Visible membership sources carry local case facts that can expose the key, projection, or witness relation, but those source facts \u2026",
+      "close_with": [
+        "`smt(<lemmas>)` \u2014 discharge with the right lemmas (YOU pick them)",
+        "`rewrite <eq>` / `move=> <intro>` \u2014 normalise the goal first",
+        "`case (<cond>)` \u2014 split a disjunction / membership in the goal"
+      ],
+      "goal_shape": "map membership tail",
+      "memory_translation": [
+        "memories in play: `{2}`",
+        "Decorations identify the program memory from which a term is read."
+      ],
+      "obligation_families": [
+        "`map_update_projection` \u2014 The pure goal contains finite-map update or lookup structure whose key/projection equalit\u2026 (NOT: The surface does not rewrite any map expression.)",
+        "`constructor_projection` \u2014 The pure goal exposes tuple/record projections or constructor equalities that can connect\u2026 (NOT: Projection equalities are reported only when visible in the current t\u2026)",
+        "`map_membership_preservation` \u2014 The remaining membership obligation relates an updated map key to a list or set membershi\u2026 (NOT: The surface reports the alignment facts currently visible; it does no\u2026)",
+        "`quantified_residual_logic` \u2014 The current proof point is dominated by local logical obligations rather than program-fro\u2026 (seen: universal quantifier visible; implication residual visible) (NOT: Quantifier names are not normalized across EasyCrypt pretty-printer v\u2026)"
+      ],
+      "yours": "the lemmas for `smt`, the rewrite chain, the case condition."
+    },
+    "pure_tail_surface": {
+      "ambient_memory_translation": {
+        "effect": "Local claims in the pure tail depend on the currently introduced memory binders as well as displayed term decorations.",
+        "state": "decorated_memory_terms_visible",
+        "translation_facts": [
+          "Decorations identify the program memory from which a term is read.",
+          "Pretty-printer memory names and introduced proof-context names can differ."
+        ],
+        "visible_decorations": [
+          "{2}"
+        ]
+      },
+      "effect": "Summarizes verifier-visible pure-goal structure after program frontier actions have been discharged or hidden by local proof steps.",
+      "existential_witness_surface": {
+        "binders": [
+          {
+            "name": "n1",
+            "type": "nonce"
+          },
+          {
+            "name": "a0",
+            "type": "associated_data"
+          },
+          {
+            "name": "n1",
+            "type": "nonce"
+          },
+          {
+            "name": "a0",
+            "type": "associated_data"
+          },
+          {
+            "name": "tt",
+            "type": "tag * tag"
+          },
+          {
+            "name": "tt",
+            "type": "tag * tag"
+          }
+        ],
+        "candidate_sources": [
+          {
+            "container_term": "p{2}.`1",
+            "source": "map_update_key",
+            "term": "p{2}.`1",
+            "why_visible": "Finite-map update key appears in the same pure tail."
+          },
+          {
+            "container_term": "p{2}.`1, a{2}, c1{2}, t0{2}",
+            "source": "map_update_key",
+            "term": "p{2}.`1",
+            "why_visible": "Finite-map update key appears in the same pure tail."
+          },
+          {
+            "source": "list_head",
+            "term": "p{2}.`1",
+            "why_visible": "List head appears in a membership target."
+          },
+          {
+            "source": "membership_member",
+            "term": "n1",
+            "why_visible": "A visible membership fact binds this member term."
+          },
+          {
+            "source": "membership_member",
+            "term": "(n1, a0, c3, t1)",
+            "why_visible": "A visible membership fact binds this member term."
+          },
+          {
+            "source": "membership_member",
+            "term": "(t1, t')",
+            "why_visible": "A visible membership fact binds this member term."
+          },
+          {
+            "source": "membership_member",
+            "term": "(n1, a0, c3, t')",
+            "why_visible": "A visible membership fact binds this member term."
+          },
+          {
+            "source": "membership_member",
+            "term": "p{2}.`1",
+            "why_visible": "A visible membership fact binds this member term."
+          }
+        ],
+        "effect": "Lists verifier-visible term sources that can instantiate local existentials in the pure tail.",
+        "limitations": [
+          "No witness is selected by this surface.",
+          "Candidate terms may still require local equality or membership facts."
+        ]
+      },
+      "gap_analysis": [
+        {
+          "confidence": "medium",
+          "evidence": [
+            "membership source shapes: concat_membership, cons_membership, map_membership, map_update_membership",
+            "existential binders: n1, a0, n1",
+            "map update keys: p{2}.`1, p{2}.`1, a{2}, c1{2}, t0{2}",
+            "membership fact: n1 \\in BNR.lenc{2} => let (a0, c3, t1) = oget UFCMA.log{2}.[n1] in"
+          ],
+          "gap": "Visible membership sources carry local case facts that can expose the key, projection, or witness relation, but those source facts are not separated in the current context.",
+          "observed_risk": "local_membership_source_not_exposed",
+          "reversible_to": [
+            {
+              "checkpoint_id": "cp_11_e0353f8a3e6324bd",
+              "label": "After seq opened / before branch work #11",
+              "restored_affordances": {
+                "branch_work": "not_committed",
+                "seq_cut": "committed"
+              },
+              "semantic_id": "after_seq_opened",
+              "semantic_ids": [
+                "after_seq_opened",
+                "before_branch_work"
+              ],
+              "submit": {
+                "intent": "undo_to_checkpoint",
+                "payload": {
+                  "checkpoint_id": "cp_11_e0353f8a3e6324bd"
+                }
+              },
+              "undo_scope": "branch_local"
+            },
+            {
+              "checkpoint_id": "cp_10_e0353f8a3e6324bd",
+              "label": "Before seq cut #10",
+              "restored_affordances": {
+                "call_site_state": "as_before_seq_cut",
+                "seq_cut": "not_committed"
+              },
+              "semantic_id": "before_seq_cut",
+              "semantic_ids": [
+                "before_seq_cut"
+              ],
+              "submit": {
+                "intent": "undo_to_checkpoint",
+                "payload": {
+                  "checkpoint_id": "cp_10_e0353f8a3e6324bd"
+                }
+              },
+              "undo_scope": "seq_local"
+            }
+          ],
+          "signal": "local_membership_decomposition_available"
+        },
+        {
+          "confidence": "medium",
+          "evidence": [
+            "projection term: tt.`1",
+            "map update key heads: p{2}.`1, p{2}.`1"
+          ],
+          "gap": "Projection terms and map-update key heads coexist, but a direct projection/key equality is not visible.",
+          "observed_risk": "pure_tail_alignment_fact_not_visible",
+          "reversible_to": [
+            {
+              "checkpoint_id": "cp_11_e0353f8a3e6324bd",
+              "label": "After seq opened / before branch work #11",
+              "restored_affordances": {
+                "branch_work": "not_committed",
+                "seq_cut": "committed"
+              },
+              "semantic_id": "after_seq_opened",
+              "semantic_ids": [
+                "after_seq_opened",
+                "before_branch_work"
+              ],
+              "submit": {
+                "intent": "undo_to_checkpoint",
+                "payload": {
+                  "checkpoint_id": "cp_11_e0353f8a3e6324bd"
+                }
+              },
+              "undo_scope": "branch_local"
+            },
+            {
+              "checkpoint_id": "cp_10_e0353f8a3e6324bd",
+              "label": "Before seq cut #10",
+              "restored_affordances": {
+                "call_site_state": "as_before_seq_cut",
+                "seq_cut": "not_committed"
+              },
+              "semantic_id": "before_seq_cut",
+              "semantic_ids": [
+                "before_seq_cut"
+              ],
+              "submit": {
+                "intent": "undo_to_checkpoint",
+                "payload": {
+                  "checkpoint_id": "cp_10_e0353f8a3e6324bd"
+                }
+              },
+              "undo_scope": "seq_local"
+            }
+          ],
+          "signal": "projection_key_alignment"
+        }
+      ],
+      "limitations": [
+        "This panel records syntactic and proof-state facts from the current view.",
+        "It does not choose a tactic or instantiate a lemma."
+      ],
+      "map_update_lookup_surface": {
+        "effect": "Summarizes finite-map update and lookup keys that determine same-key versus different-key local obligations.",
+        "key_cases": [
+          {
+            "case": "same_key_visible",
+            "evidence": "A visible equality/projection path connects this lookup to an update key.",
+            "lookup_term": "n1",
+            "matching_key": "p{2}.`1"
+          },
+          {
+            "case": "update_key",
+            "evidence": "The lookup term is itself an update key.",
+            "lookup_term": "p{2}.`1"
+          },
+          {
+            "case": "update_key",
+            "evidence": "The lookup term is itself an update key.",
+            "lookup_term": "p{2}.`1, a{2}, c1{2}, t0{2}"
+          }
+        ],
+        "limitations": [
+          "This surface does not perform a rewrite or case split.",
+          "A key case marked unresolved only means no equality path is visible in this goal text."
+        ],
+        "lookup_terms": [
+          "n1",
+          "p{2}.`1",
+          "p{2}.`1, a{2}, c1{2}, t0{2}"
+        ],
+        "update_keys": [
+          "p{2}.`1",
+          "p{2}.`1, a{2}, c1{2}, t0{2}"
+        ]
+      },
+      "membership_decomposition_surface": {
+        "effect": "Summarizes list/map/filter membership sources whose local case facts are visible in the current pure tail.",
+        "limitations": [
+          "No destructor tactic is chosen by this surface.",
+          "The panel does not assume which membership branch is true."
+        ],
+        "membership_hypotheses": [
+          "n1 \\in BNR.lenc{2} => let (a0, c3, t1) = oget UFCMA.log{2}.[n1] in",
+          "(n1, a0, c3, t1) \\in Mem.log{2}) => (forall (n1 : nonce), (n1 \\in BNR.lenc{2}) = (n1 \\in UFCMA.log{2})) => (forall (t1 t' : tag),",
+          "(forall (n1 : nonce), (n1 \\in BNR.lenc{2}) = (n1 \\in UFCMA.log{2})) => (forall (t1 t' : tag),",
+          "(t1, t') \\in lbad1_R =>",
+          "(n1 \\in BNR.lenc{2}) /\\ (oget UFCMA.log{2}.[n1]).`3 = t1 /\\"
+        ],
+        "source_shapes": [
+          "concat_membership",
+          "map_membership",
+          "cons_membership",
+          "map_update_membership"
+        ],
+        "visible_destructors": [
+          {
+            "effect": "Separates a membership fact into left-source and right-source cases.",
+            "limitations": "This records the case shape only; no branch is selected.",
+            "source_count": 10,
+            "source_shape": "concat_membership"
+          },
+          {
+            "effect": "Exposes a preimage term for a mapped membership source.",
+            "limitations": "The concrete preimage name depends on the local proof context.",
+            "source_count": 10,
+            "source_shape": "map_membership"
+          },
+          {
+            "effect": "Splits list membership into head and tail cases.",
+            "limitations": "The surface does not decide which case applies.",
+            "source_count": 6,
+            "source_shape": "cons_membership"
+          },
+          {
+            "effect": "Keeps finite-map update keys visible beside membership obligations.",
+            "limitations": "Lookup/update equalities remain verifier-checked obligations.",
+            "source_count": 2,
+            "source_shape": "map_update_membership"
+          }
+        ]
+      },
+      "obligation_families": [
+        {
+          "effect": "The pure goal contains finite-map update or lookup structure whose key/projection equalities are verifier-visible facts.",
+          "family": "map_update_projection",
+          "limitations": "The surface does not rewrite any map expression.",
+          "lookup_count": 3,
+          "sample_lookup_terms": [
+            "n1",
+            "p{2}.`1",
+            "p{2}.`1, a{2}, c1{2}, t0{2}"
+          ],
+          "sample_update_keys": [
+            "p{2}.`1",
+            "p{2}.`1, a{2}, c1{2}, t0{2}"
+          ],
+          "update_count": 2,
+          "visible_key_cases": [
+            {
+              "case": "same_key_visible",
+              "evidence": "A visible equality/projection path connects this lookup to an update key.",
+              "lookup_term": "n1",
+              "matching_key": "p{2}.`1"
+            },
+            {
+              "case": "update_key",
+              "evidence": "The lookup term is itself an update key.",
+              "lookup_term": "p{2}.`1"
+            },
+            {
+              "case": "update_key",
+              "evidence": "The lookup term is itself an update key.",
+              "lookup_term": "p{2}.`1, a{2}, c1{2}, t0{2}"
+            }
+          ]
+        },
+        {
+          "effect": "The pure goal exposes tuple/record projections or constructor equalities that can connect program variables to map/list keys.",
+          "family": "constructor_projection",
+          "limitations": "Projection equalities are reported only when visible in the current text.",
+          "selectors": [
+            ".`1",
+            ".`2",
+            ".`3"
+          ],
+          "tuple_equality_count": 4
+        },
+        {
+          "cons_heads": [
+            "p{2}.`1"
+          ],
+          "effect": "The remaining membership obligation relates an updated map key to a list or set membership fact.",
+          "family": "map_membership_preservation",
+          "limitations": "The surface reports the alignment facts currently visible; it does not synthesize missing equalities.",
+          "update_key_heads": [
+            "p{2}.`1",
+            "p{2}.`1"
+          ]
+        },
+        {
+          "effect": "The current proof point is dominated by local logical obligations rather than program-frontier movement.",
+          "evidence": [
+            "universal quantifier visible",
+            "implication residual visible"
+          ],
+          "family": "quantified_residual_logic",
+          "limitations": "Quantifier names are not normalized across EasyCrypt pretty-printer variants."
+        }
+      ],
+      "related_checkpoints": [
+        {
+          "checkpoint_id": "cp_11_e0353f8a3e6324bd",
+          "label": "After seq opened / before branch work #11",
+          "restored_affordances": {
+            "branch_work": "not_committed",
+            "seq_cut": "committed"
+          },
+          "semantic_id": "after_seq_opened",
+          "semantic_ids": [
+            "after_seq_opened",
+            "before_branch_work"
+          ],
+          "submit": {
+            "intent": "undo_to_checkpoint",
+            "payload": {
+              "checkpoint_id": "cp_11_e0353f8a3e6324bd"
+            }
+          },
+          "undo_scope": "branch_local"
+        },
+        {
+          "checkpoint_id": "cp_10_e0353f8a3e6324bd",
+          "label": "Before seq cut #10",
+          "restored_affordances": {
+            "call_site_state": "as_before_seq_cut",
+            "seq_cut": "not_committed"
+          },
+          "semantic_id": "before_seq_cut",
+          "semantic_ids": [
+            "before_seq_cut"
+          ],
+          "submit": {
+            "intent": "undo_to_checkpoint",
+            "payload": {
+              "checkpoint_id": "cp_10_e0353f8a3e6324bd"
+            }
+          },
+          "undo_scope": "seq_local"
+        },
+        {
+          "label": "Restore before last checkpoint rewind",
+          "semantic_id": "restore_before_last_rewind",
+          "semantic_ids": [
+            "restore_before_last_rewind"
+          ],
+          "undo_scope": "restore_pre_rewind"
+        },
+        {
+          "checkpoint_id": "cp_19_e0353f8a3e6324bd",
+          "label": "Return to resume start",
+          "restored_affordances": {
+            "earlier_branch_work": "preserved",
+            "seq_cut": "committed"
+          },
+          "semantic_id": "before_branch_work",
+          "semantic_ids": [
+            "before_branch_work",
+            "resume_start"
+          ],
+          "submit": {
+            "intent": "undo_to_checkpoint",
+            "payload": {
+              "checkpoint_id": "cp_19_e0353f8a3e6324bd"
+            }
+          },
+          "undo_scope": "resume_local"
+        }
+      ],
+      "state": "map_membership_tail"
+    },
+    "recovery_diagnosis_surface": {
+      "available_local_work": [
+        {
+          "items": [
+            "map_update_projection",
+            "constructor_projection",
+            "map_membership_preservation",
+            "quantified_residual_logic"
+          ],
+          "kind": "pure_tail_obligation_families"
+        },
+        {
+          "items": [
+            "concat_membership",
+            "map_membership",
+            "cons_membership",
+            "map_update_membership"
+          ],
+          "kind": "membership_decomposition_sources"
+        },
+        {
+          "items": [
+            "map_update_key",
+            "map_update_key",
+            "list_head",
+            "membership_member",
+            "membership_member",
+            "membership_member"
+          ],
+          "kind": "existential_witness_sources"
+        },
+        {
+          "items": [
+            "{'lookup_term': 'n1', 'case': 'same_key_visible', 'matching_key': 'p{2}.`1', 'evidence': 'A visible equality/projection path connects this lookup to an update key.'}",
+            "{'lookup_term': 'p{2}.`1', 'case': 'update_key', 'evidence': 'The lookup term is itself an update key.'}",
+            "{'lookup_term': 'p{2}.`1, a{2}, c1{2}, t0{2}', 'case': 'update_key', 'evidence': 'The lookup term is itself an update key.'}"
+          ],
+          "kind": "map_update_lookup_cases"
+        }
+      ],
+      "checkpoint_policy": "current_state_local_work_visible",
+      "confidence": "medium",
+      "evidence": [
+        "membership source shapes: concat_membership, cons_membership, map_membership, map_update_membership",
+        "existential binders: n1, a0, n1",
+        "map update keys: p{2}.`1, p{2}.`1, a{2}, c1{2}, t0{2}",
+        "membership fact: n1 \\in BNR.lenc{2} => let (a0, c3, t1) = oget UFCMA.log{2}.[n1] in"
+      ],
+      "kind": "recovery_diagnosis_surface",
+      "limitations": [
+        "does not select a destructor, witness, rewrite, or SMT lemma",
+        "reported checkpoints are recovery references, not a default route"
+      ],
+      "recovery_class": "local_pure_surgery_available",
+      "related_checkpoints": [
+        {
+          "checkpoint_id": "cp_11_e0353f8a3e6324bd",
+          "label": "After seq opened / before branch work #11",
+          "restored_affordances": {
+            "branch_work": "not_committed",
+            "seq_cut": "committed"
+          },
+          "semantic_id": "after_seq_opened",
+          "semantic_ids": [
+            "after_seq_opened",
+            "before_branch_work"
+          ],
+          "undo_scope": "branch_local"
+        },
+        {
+          "checkpoint_id": "cp_10_e0353f8a3e6324bd",
+          "label": "Before seq cut #10",
+          "restored_affordances": {
+            "call_site_state": "as_before_seq_cut",
+            "seq_cut": "not_committed"
+          },
+          "semantic_id": "before_seq_cut",
+          "semantic_ids": [
+            "before_seq_cut"
+          ],
+          "undo_scope": "seq_local"
+        },
+        {
+          "checkpoint_id": "cp_11_e0353f8a3e6324bd",
+          "committed_step_index": 11,
+          "label": "After seq opened / before branch work #11",
+          "restored_affordances": {
+            "branch_work": "not_committed",
+            "seq_cut": "committed"
+          },
+          "restored_proof_layer": "seq_obligations_opened",
+          "semantic_id": "after_seq_opened",
+          "semantic_ids": [
+            "after_seq_opened",
+            "before_branch_work"
+          ],
+          "undo_scope": "branch_local",
+          "why_checkpoint": "seq-local branch boundary; selecting it keeps the seq cut and removes branch-local work after it"
+        },
+        {
+          "checkpoint_id": "cp_10_e0353f8a3e6324bd",
+          "committed_step_index": 10,
+          "label": "Before seq cut #10",
+          "restored_affordances": {
+            "call_site_state": "as_before_seq_cut",
+            "seq_cut": "not_committed"
+          },
+          "restored_proof_layer": "pre_seq_cut",
+          "semantic_id": "before_seq_cut",
+          "semantic_ids": [
+            "before_seq_cut"
+          ],
+          "undo_scope": "seq_local",
+          "why_checkpoint": "seq-cut boundary; selecting it restores the proof state before this cut was committed"
+        }
+      ],
+      "related_surfaces": [
+        "pure_tail_surface.membership_decomposition_surface",
+        "seq_cut_surface",
+        "pure_tail_surface",
+        "structural_checkpoints",
+        "route_replay_memory",
+        "pure_tail_surface.existential_witness_surface"
+      ]
+    },
+    "reference": {
+      "collapsed": [
+        "route_replay_memory",
+        "seq_cut_surface"
+      ],
+      "note": "Panels collapsed for focus. The essentials for THIS phase are in the focus above; the rest were noise here (a flat view of all of them is what disorients). If you genuinely need a precise field from one, ask with `inspect_context`."
+    },
+    "schema_version": 2,
+    "structural_checkpoints": {
+      "items": [
+        {
+          "effect_if_selected": "Legacy capsule preserved this restore marker without the full pre-rewind tactic payload, so it is continuity evidence only.",
+          "label": "Restore before last checkpoint rewind",
+          "legacy_resume_surface": true,
+          "restored_proof_layer": "pre_rewind_state",
+          "semantic_id": "restore_before_last_rewind",
+          "semantic_ids": [
+            "restore_before_last_rewind"
+          ],
+          "undo_scope": "restore_pre_rewind",
+          "why_checkpoint": "state saved before the last checkpoint rewind; selecting it returns to that proof state"
+        },
+        {
+          "effect_if_selected": "Legacy capsule preserved this restore marker without the full pre-rewind tactic payload, so it is continuity evidence only.",
+          "label": "Restore before last checkpoint rewind",
+          "legacy_resume_surface": true,
+          "restored_proof_layer": "pre_rewind_state",
+          "semantic_id": "restore_before_last_rewind",
+          "semantic_ids": [
+            "restore_before_last_rewind"
+          ],
+          "undo_scope": "restore_pre_rewind",
+          "why_checkpoint": "state saved before the last checkpoint rewind; selecting it returns to that proof state"
+        },
+        {
+          "checkpoint_id": "cp_19_e0353f8a3e6324bd",
+          "committed_step_index": 19,
+          "committed_tactic": "move=> />.",
+          "effect_if_selected": "Undo committed tactic #19 and every committed tactic after it in this node.",
+          "label": "Return to resume start",
+          "restored_affordances": {
+            "earlier_branch_work": "preserved",
+            "seq_cut": "committed"
+          },
+          "restored_proof_layer": "resume_handoff",
+          "semantic_id": "before_branch_work",
+          "semantic_ids": [
+            "before_branch_work",
+            "resume_start"
+          ],
+          "submit": {
+            "intent": "undo_to_checkpoint",
+            "payload": {
+              "checkpoint_id": "cp_19_e0353f8a3e6324bd"
+            }
+          },
+          "undo_scope": "resume_local",
+          "why_checkpoint": "resume boundary; selecting it preserves the verified replay prefix and removes tactics committed after resume"
+        },
+        {
+          "checkpoint_id": "cp_11_e0353f8a3e6324bd",
+          "committed_step_index": 11,
+          "committed_tactic": "sp; rnd; wp; while (={p2, c2, i, n, a, p0, p, Mem.log, Mem.lc, BNR.lenc, BNR.ndec, UFCMA.log, UFCMA.cbad1, glob ROIN.RO, glob ROout, glob ROF} /\\ inv_lbad1 UFCMA_l.lbad1{2} BNR.lenc{2} UFCMA.log{2} Mem.log{2} Mem.lc{2} UFCMA.cbad1{2} BNR.ndec{2} /\\ (UFCMA.bad1{1} <=> exists (tt:tag*tag), (tt \\in UFCMA_l.lbad1{2}) /\\ tt.`1 = tt.`2) /\\ check_plaintext BNR.lenc{1} p{1} /\\ n{1} = (p{1}).`1); auto.",
+          "effect_if_selected": "Undo committed tactic #11 and every committed tactic after it in this node.",
+          "label": "After seq opened / before branch work #11",
+          "restored_affordances": {
+            "branch_work": "not_committed",
+            "seq_cut": "committed"
+          },
+          "restored_proof_layer": "seq_obligations_opened",
+          "semantic_id": "after_seq_opened",
+          "semantic_ids": [
+            "after_seq_opened",
+            "before_branch_work"
+          ],
+          "submit": {
+            "intent": "undo_to_checkpoint",
+            "payload": {
+              "checkpoint_id": "cp_11_e0353f8a3e6324bd"
+            }
+          },
+          "undo_scope": "branch_local",
+          "why_checkpoint": "seq-local branch boundary; selecting it keeps the seq cut and removes branch-local work after it"
+        },
+        {
+          "checkpoint_id": "cp_10_e0353f8a3e6324bd",
+          "committed_step_index": 10,
+          "committed_tactic": "seq 12 12 : (={n, a, c1, lt, t0, p0, p, Mem.log, Mem.lc, BNR.lenc, BNR.ndec, UFCMA.log, UFCMA.cbad1, glob ROIN.RO, glob ROout, glob ROF} /\\ inv_lbad1 UFCMA_l.lbad1{2} BNR.lenc{2} UFCMA.log{2} Mem.log{2} Mem.lc{2} UFCMA.cbad1{2} BNR.ndec{2} /\\ (UFCMA.bad1{1} <=> exists (tt:tag*tag), (tt \\in UFCMA_l.lbad1{2}) /\\ tt.`1 = tt.`2) /\\ check_plaintext BNR.lenc{1} p{1} /\\ n{1} = (p{1}).`1).",
+          "effect_if_selected": "Undo committed tactic #10 and every committed tactic after it in this node.",
+          "label": "Before seq cut #10",
+          "restored_affordances": {
+            "call_site_state": "as_before_seq_cut",
+            "seq_cut": "not_committed"
+          },
+          "restored_proof_layer": "pre_seq_cut",
+          "semantic_id": "before_seq_cut",
+          "semantic_ids": [
+            "before_seq_cut"
+          ],
+          "submit": {
+            "intent": "undo_to_checkpoint",
+            "payload": {
+              "checkpoint_id": "cp_10_e0353f8a3e6324bd"
+            }
+          },
+          "undo_scope": "seq_local",
+          "why_checkpoint": "seq-cut boundary; selecting it restores the proof state before this cut was committed"
+        },
+        {
+          "checkpoint_id": "cp_9_e0353f8a3e6324bd",
+          "committed_step_index": 9,
+          "committed_tactic": "inline*.",
+          "effect_if_selected": "Undo committed tactic #9 and every committed tactic after it in this node.",
+          "label": "Before inline expansion #9",
+          "restored_affordances": {
+            "call_site_handles": "as_before_inline"
+          },
+          "restored_proof_layer": "pre_inline_frontier",
+          "semantic_id": "last_call_site_boundary",
+          "semantic_ids": [
+            "last_call_site_boundary"
+          ],
+          "submit": {
+            "intent": "undo_to_checkpoint",
+            "payload": {
+              "checkpoint_id": "cp_9_e0353f8a3e6324bd"
+            }
+          },
+          "undo_scope": "call_site_boundary",
+          "why_checkpoint": "inline boundary; selecting it restores the proof state before this expansion"
+        }
+      ]
+    },
+    "view_hash": "759e5e4433c4b274973e11ec1358d224c1003e3a"
+  }
+}

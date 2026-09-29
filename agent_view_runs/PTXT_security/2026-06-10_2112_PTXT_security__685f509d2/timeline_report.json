@@ -1,0 +1,1231 @@
+{
+  "kind": "agent_view_timeline_report",
+  "run_count": 1,
+  "runs": [
+    {
+      "chronological": false,
+      "first_action_at": "2026-06-11T04:15:26+00:00",
+      "label": "2026-06-10_2112_PTXT_security",
+      "node_count": 2,
+      "rows": [
+        {
+          "action_submitted_at": "2026-06-11T04:16:53.200000+00:00",
+          "action_time": "+01:27",
+          "agent_think": "",
+          "agent_think_path": "artifacts/eval_suite/mee_ptxt_fable_l1/l1_goal_projection/mee_PTXT_security/r01/2026-06-10_2112_PTXT_security/iteration_1/node_memory/Tree_0_0/thinking/turn_001.md",
+          "agent_think_seconds": null,
+          "decision_followup_path": "",
+          "decision_state_summary": "probability / pr / probability, 1 goal, goal 234 chars",
+          "decision_view_path": "artifacts/eval_suite/mee_ptxt_fable_l1/l1_goal_projection/mee_PTXT_security/r01/2026-06-10_2112_PTXT_security/iteration_1/manager_bootstrap_0_0.json",
+          "deterministic_signals": [
+            "commit_without_probe_check_not_inferred"
+          ],
+          "goal_chars": 234,
+          "inspect_topics": [],
+          "intent": {
+            "intent": "commit_tactic",
+            "payload": {
+              "tactic": "byequiv=> //."
+            }
+          },
+          "intent_summary": "commit byequiv=>//",
+          "manager_action_summary": [
+            "tactic commit (1.8 s)"
+          ],
+          "manager_result_at": "2026-06-11T04:16:55+00:00",
+          "manager_result_path": "artifacts/eval_suite/mee_ptxt_fable_l1/l1_goal_projection/mee_PTXT_security/r01/2026-06-10_2112_PTXT_security/iteration_1/node_memory/Tree_0_0/manager_results/turn_001.json",
+          "manager_seconds": 1.8,
+          "manager_time": "1.8 s",
+          "node": "Tree-0.0",
+          "node_dir": "artifacts/eval_suite/mee_ptxt_fable_l1/l1_goal_projection/mee_PTXT_security/r01/2026-06-10_2112_PTXT_security/iteration_1/node_memory/Tree_0_0",
+          "ok": true,
+          "result_followup_path": "artifacts/eval_suite/mee_ptxt_fable_l1/l1_goal_projection/mee_PTXT_security/r01/2026-06-10_2112_PTXT_security/iteration_1/node_memory/Tree_0_0/followups/turn_001.md",
+          "result_state_summary": "equiv / prhl_module / relational_program, 1 goal, goal 489 chars",
+          "result_summary": "accepted commit",
+          "result_view_path": "artifacts/eval_suite/mee_ptxt_fable_l1/l1_goal_projection/mee_PTXT_security/r01/2026-06-10_2112_PTXT_security/iteration_1/node_memory/Tree_0_0/workspace_views/turn_001.json",
+          "turn": 1,
+          "usage": {
+            "cache_creation_input_tokens": 26733,
+            "cache_read_input_tokens": 221065,
+            "input_tokens": 13,
+            "output_tokens": 15098
+          },
+          "view_chars": 776,
+          "view_id": "T0.0-1",
+          "workspace_view_path": "artifacts/eval_suite/mee_ptxt_fable_l1/l1_goal_projection/mee_PTXT_security/r01/2026-06-10_2112_PTXT_security/iteration_1/manager_bootstrap_0_0.json"
+        },
+        {
+          "action_submitted_at": "2026-06-11T04:17:11.100000+00:00",
+          "action_time": "+01:45",
+          "agent_think": "16.1 s",
+          "agent_think_path": "",
+          "agent_think_seconds": 16.1,
+          "decision_followup_path": "artifacts/eval_suite/mee_ptxt_fable_l1/l1_goal_projection/mee_PTXT_security/r01/2026-06-10_2112_PTXT_security/iteration_1/node_memory/Tree_0_0/followups/turn_001.md",
+          "decision_state_summary": "equiv / prhl_module / relational_program, 1 goal, goal 489 chars",
+          "decision_view_path": "artifacts/eval_suite/mee_ptxt_fable_l1/l1_goal_projection/mee_PTXT_security/r01/2026-06-10_2112_PTXT_security/iteration_1/node_memory/Tree_0_0/workspace_views/turn_001.json",
+          "deterministic_signals": [
+            "commit_without_probe_check_not_inferred"
+          ],
+          "goal_chars": 489,
+          "inspect_topics": [
+            "goal_info",
+            "call_site_options",
+            "call_invariant_skeleton",
+            "call_subgoals",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "align"
+          ],
+          "intent": {
+            "intent": "commit_tactic",
+            "payload": {
+              "tactic": "proc; inline *."
+            }
+          },
+          "intent_summary": "commit proc; inline *",
+          "manager_action_summary": [
+            "tactic commit (1.9 s)"
+          ],
+          "manager_result_at": "2026-06-11T04:17:13+00:00",
+          "manager_result_path": "artifacts/eval_suite/mee_ptxt_fable_l1/l1_goal_projection/mee_PTXT_security/r01/2026-06-10_2112_PTXT_security/iteration_1/node_memory/Tree_0_0/manager_results/turn_002.json",
+          "manager_seconds": 1.9,
+          "manager_time": "1.9 s",
+          "node": "Tree-0.0",
+          "node_dir": "artifacts/eval_suite/mee_ptxt_fable_l1/l1_goal_projection/mee_PTXT_security/r01/2026-06-10_2112_PTXT_security/iteration_1/node_memory/Tree_0_0",
+          "ok": true,
+          "result_followup_path": "artifacts/eval_suite/mee_ptxt_fable_l1/l1_goal_projection/mee_PTXT_security/r01/2026-06-10_2112_PTXT_security/iteration_1/node_memory/Tree_0_0/followups/turn_002.md",
+          "result_state_summary": "pRHL / call_site / relational_program, 1 goal, goal 1131 chars",
+          "result_summary": "accepted commit",
+          "result_view_path": "artifacts/eval_suite/mee_ptxt_fable_l1/l1_goal_projection/mee_PTXT_security/r01/2026-06-10_2112_PTXT_security/iteration_1/node_memory/Tree_0_0/workspace_views/turn_002.json",
+          "turn": 2,
+          "usage": {
+            "cache_creation_input_tokens": 14224,
+            "cache_read_input_tokens": 41267,
+            "input_tokens": 2,
+            "output_tokens": 376
+          },
+          "view_chars": 7495,
+          "view_id": "T0.0-2",
+          "workspace_view_path": "artifacts/eval_suite/mee_ptxt_fable_l1/l1_goal_projection/mee_PTXT_security/r01/2026-06-10_2112_PTXT_security/iteration_1/node_memory/Tree_0_0/workspace_views/turn_001.json"
+        },
+        {
+          "action_submitted_at": "2026-06-11T04:17:24.100000+00:00",
+          "action_time": "+01:58",
+          "agent_think": "11.1 s",
+          "agent_think_path": "artifacts/eval_suite/mee_ptxt_fable_l1/l1_goal_projection/mee_PTXT_security/r01/2026-06-10_2112_PTXT_security/iteration_1/node_memory/Tree_0_0/thinking/turn_003.md",
+          "agent_think_seconds": 11.1,
+          "decision_followup_path": "artifacts/eval_suite/mee_ptxt_fable_l1/l1_goal_projection/mee_PTXT_security/r01/2026-06-10_2112_PTXT_security/iteration_1/node_memory/Tree_0_0/followups/turn_002.md",
+          "decision_state_summary": "pRHL / call_site / relational_program, 1 goal, goal 1131 chars",
+          "decision_view_path": "artifacts/eval_suite/mee_ptxt_fable_l1/l1_goal_projection/mee_PTXT_security/r01/2026-06-10_2112_PTXT_security/iteration_1/node_memory/Tree_0_0/workspace_views/turn_002.json",
+          "deterministic_signals": [
+            "commit_without_probe_check_not_inferred"
+          ],
+          "goal_chars": 1131,
+          "inspect_topics": [
+            "goal_info",
+            "call_site_options",
+            "call_invariant_skeleton",
+            "call_subgoals",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "align"
+          ],
+          "intent": {
+            "intent": "commit_tactic",
+            "payload": {
+              "tactic": "swap{2} 4 -3."
+            }
+          },
+          "intent_summary": "commit swap{2} 4 -3",
+          "manager_action_summary": [
+            "tactic commit (1.9 s)"
+          ],
+          "manager_result_at": "2026-06-11T04:17:26+00:00",
+          "manager_result_path": "artifacts/eval_suite/mee_ptxt_fable_l1/l1_goal_projection/mee_PTXT_security/r01/2026-06-10_2112_PTXT_security/iteration_1/node_memory/Tree_0_0/manager_results/turn_003.json",
+          "manager_seconds": 1.9,
+          "manager_time": "1.9 s",
+          "node": "Tree-0.0",
+          "node_dir": "artifacts/eval_suite/mee_ptxt_fable_l1/l1_goal_projection/mee_PTXT_security/r01/2026-06-10_2112_PTXT_security/iteration_1/node_memory/Tree_0_0",
+          "ok": true,
+          "result_followup_path": "artifacts/eval_suite/mee_ptxt_fable_l1/l1_goal_projection/mee_PTXT_security/r01/2026-06-10_2112_PTXT_security/iteration_1/node_memory/Tree_0_0/followups/turn_003.md",
+          "result_state_summary": "pRHL / call_site / relational_program, 1 goal, goal 1131 chars",
+          "result_summary": "accepted commit",
+          "result_view_path": "artifacts/eval_suite/mee_ptxt_fable_l1/l1_goal_projection/mee_PTXT_security/r01/2026-06-10_2112_PTXT_security/iteration_1/node_memory/Tree_0_0/workspace_views/turn_003.json",
+          "turn": 3,
+          "usage": {
+            "cache_creation_input_tokens": 1856,
+            "cache_read_input_tokens": 55491,
+            "input_tokens": 2,
+            "output_tokens": 276
+          },
+          "view_chars": 16150,
+          "view_id": "T0.0-3",
+          "workspace_view_path": "artifacts/eval_suite/mee_ptxt_fable_l1/l1_goal_projection/mee_PTXT_security/r01/2026-06-10_2112_PTXT_security/iteration_1/node_memory/Tree_0_0/workspace_views/turn_002.json"
+        },
+        {
+          "action_submitted_at": "2026-06-11T04:17:44.850000+00:00",
+          "action_time": "+02:19",
+          "agent_think": "18.9 s",
+          "agent_think_path": "artifacts/eval_suite/mee_ptxt_fable_l1/l1_goal_projection/mee_PTXT_security/r01/2026-06-10_2112_PTXT_security/iteration_1/node_memory/Tree_0_0/thinking/turn_004.md",
+          "agent_think_seconds": 18.85,
+          "decision_followup_path": "artifacts/eval_suite/mee_ptxt_fable_l1/l1_goal_projection/mee_PTXT_security/r01/2026-06-10_2112_PTXT_security/iteration_1/node_memory/Tree_0_0/followups/turn_003.md",
+          "decision_state_summary": "pRHL / call_site / relational_program, 1 goal, goal 1131 chars",
+          "decision_view_path": "artifacts/eval_suite/mee_ptxt_fable_l1/l1_goal_projection/mee_PTXT_security/r01/2026-06-10_2112_PTXT_security/iteration_1/node_memory/Tree_0_0/workspace_views/turn_003.json",
+          "deterministic_signals": [
+            "commit_without_probe_check_not_inferred"
+          ],
+          "goal_chars": 1131,
+          "inspect_topics": [
+            "goal_info",
+            "call_site_options",
+            "call_invariant_skeleton",
+            "call_subgoals",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "align"
+          ],
+          "intent": {
+            "intent": "commit_tactic",
+            "payload": {
+              "tactic": "call (_: ={glob E, glob M} /\\ PTXT_Wrap.k{1} = (CMAa.ek, MACa.WUF_CMA.WUF_Wrap.k){2} /\\ PTXT_Wrap.s{1} = MACa.WUF_CMA.WUF_Wrap.s{2} /\\ PTXT_Wrap.win{1} = MACa.WUF_CMA.WUF_Wrap.win{2})."
+            }
+          },
+          "intent_summary": "commit call (_: ={glob E, glob M} /\\ PTXT_Wrap.k{1} = (CMAa.ek, MACa.WUF_CMA...",
+          "manager_action_summary": [
+            "tactic commit (150 ms)"
+          ],
+          "manager_result_at": "2026-06-11T04:17:45+00:00",
+          "manager_result_path": "artifacts/eval_suite/mee_ptxt_fable_l1/l1_goal_projection/mee_PTXT_security/r01/2026-06-10_2112_PTXT_security/iteration_1/node_memory/Tree_0_0/manager_results/turn_004.json",
+          "manager_seconds": 0.15,
+          "manager_time": "150 ms",
+          "node": "Tree-0.0",
+          "node_dir": "artifacts/eval_suite/mee_ptxt_fable_l1/l1_goal_projection/mee_PTXT_security/r01/2026-06-10_2112_PTXT_security/iteration_1/node_memory/Tree_0_0",
+          "ok": true,
+          "result_followup_path": "artifacts/eval_suite/mee_ptxt_fable_l1/l1_goal_projection/mee_PTXT_security/r01/2026-06-10_2112_PTXT_security/iteration_1/node_memory/Tree_0_0/followups/turn_004.md",
+          "result_state_summary": "equiv / prhl_module / relational_program, 3 goals, goal 781 chars",
+          "result_summary": "accepted commit",
+          "result_view_path": "artifacts/eval_suite/mee_ptxt_fable_l1/l1_goal_projection/mee_PTXT_security/r01/2026-06-10_2112_PTXT_security/iteration_1/node_memory/Tree_0_0/workspace_views/turn_004.json",
+          "turn": 4,
+          "usage": {
+            "cache_creation_input_tokens": 1760,
+            "cache_read_input_tokens": 57347,
+            "input_tokens": 2,
+            "output_tokens": 778
+          },
+          "view_chars": 15920,
+          "view_id": "T0.0-4",
+          "workspace_view_path": "artifacts/eval_suite/mee_ptxt_fable_l1/l1_goal_projection/mee_PTXT_security/r01/2026-06-10_2112_PTXT_security/iteration_1/node_memory/Tree_0_0/workspace_views/turn_003.json"
+        },
+        {
+          "action_submitted_at": "2026-06-11T04:15:26+00:00",
+          "action_time": "+00:00",
+          "agent_think": "",
+          "agent_think_path": "artifacts/eval_suite/mee_ptxt_fable_l1/l1_goal_projection/mee_PTXT_security/r01/2026-06-10_2112_PTXT_security/iteration_1/node_memory/Tree_0_1/thinking/turn_001.md",
+          "agent_think_seconds": null,
+          "decision_followup_path": "",
+          "decision_state_summary": "probability / pr / probability, 1 goal, goal 234 chars",
+          "decision_view_path": "artifacts/eval_suite/mee_ptxt_fable_l1/l1_goal_projection/mee_PTXT_security/r01/2026-06-10_2112_PTXT_security/iteration_1/manager_bootstrap_0_1.json",
+          "deterministic_signals": [
+            "commit_without_probe_check_not_inferred"
+          ],
+          "goal_chars": 234,
+          "inspect_topics": [],
+          "intent": {
+            "intent": "commit_tactic",
+            "payload": {
+              "tactic": "byequiv=> //=."
+            }
+          },
+          "intent_summary": "commit byequiv=> //=",
+          "manager_action_summary": [
+            "tactic commit (2.0 s)"
+          ],
+          "manager_result_at": "2026-06-11T04:15:28+00:00",
+          "manager_result_path": "artifacts/eval_suite/mee_ptxt_fable_l1/l1_goal_projection/mee_PTXT_security/r01/2026-06-10_2112_PTXT_security/iteration_1/node_memory/Tree_0_1/manager_results/turn_001.json",
+          "manager_seconds": 2.0,
+          "manager_time": "2 s",
+          "node": "Tree-0.1",
+          "node_dir": "artifacts/eval_suite/mee_ptxt_fable_l1/l1_goal_projection/mee_PTXT_security/r01/2026-06-10_2112_PTXT_security/iteration_1/node_memory/Tree_0_1",
+          "ok": true,
+          "result_followup_path": "artifacts/eval_suite/mee_ptxt_fable_l1/l1_goal_projection/mee_PTXT_security/r01/2026-06-10_2112_PTXT_security/iteration_1/node_memory/Tree_0_1/followups/turn_001.md",
+          "result_state_summary": "equiv / prhl_module / relational_program, 1 goal, goal 489 chars",
+          "result_summary": "accepted commit",
+          "result_view_path": "artifacts/eval_suite/mee_ptxt_fable_l1/l1_goal_projection/mee_PTXT_security/r01/2026-06-10_2112_PTXT_security/iteration_1/node_memory/Tree_0_1/workspace_views/turn_001.json",
+          "turn": 1,
+          "usage": {
+            "cache_creation_input_tokens": 105908,
+            "cache_read_input_tokens": 136964,
+            "input_tokens": 11,
+            "output_tokens": 10585
+          },
+          "view_chars": 776,
+          "view_id": "T0.1-1",
+          "workspace_view_path": "artifacts/eval_suite/mee_ptxt_fable_l1/l1_goal_projection/mee_PTXT_security/r01/2026-06-10_2112_PTXT_security/iteration_1/manager_bootstrap_0_1.json"
+        },
+        {
+          "action_submitted_at": "2026-06-11T04:15:32.100000+00:00",
+          "action_time": "+00:06",
+          "agent_think": "4.1 s",
+          "agent_think_path": "",
+          "agent_think_seconds": 4.1,
+          "decision_followup_path": "artifacts/eval_suite/mee_ptxt_fable_l1/l1_goal_projection/mee_PTXT_security/r01/2026-06-10_2112_PTXT_security/iteration_1/node_memory/Tree_0_1/followups/turn_001.md",
+          "decision_state_summary": "equiv / prhl_module / relational_program, 1 goal, goal 489 chars",
+          "decision_view_path": "artifacts/eval_suite/mee_ptxt_fable_l1/l1_goal_projection/mee_PTXT_security/r01/2026-06-10_2112_PTXT_security/iteration_1/node_memory/Tree_0_1/workspace_views/turn_001.json",
+          "deterministic_signals": [
+            "commit_without_probe_check_not_inferred"
+          ],
+          "goal_chars": 489,
+          "inspect_topics": [
+            "goal_info",
+            "call_site_options",
+            "call_invariant_skeleton",
+            "call_subgoals",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "align"
+          ],
+          "intent": {
+            "intent": "commit_tactic",
+            "payload": {
+              "tactic": "proc; inline *."
+            }
+          },
+          "intent_summary": "commit proc; inline *",
+          "manager_action_summary": [
+            "tactic commit (1.9 s)"
+          ],
+          "manager_result_at": "2026-06-11T04:15:34+00:00",
+          "manager_result_path": "artifacts/eval_suite/mee_ptxt_fable_l1/l1_goal_projection/mee_PTXT_security/r01/2026-06-10_2112_PTXT_security/iteration_1/node_memory/Tree_0_1/manager_results/turn_002.json",
+          "manager_seconds": 1.9,
+          "manager_time": "1.9 s",
+          "node": "Tree-0.1",
+          "node_dir": "artifacts/eval_suite/mee_ptxt_fable_l1/l1_goal_projection/mee_PTXT_security/r01/2026-06-10_2112_PTXT_security/iteration_1/node_memory/Tree_0_1",
+          "ok": true,
+          "result_followup_path": "artifacts/eval_suite/mee_ptxt_fable_l1/l1_goal_projection/mee_PTXT_security/r01/2026-06-10_2112_PTXT_security/iteration_1/node_memory/Tree_0_1/followups/turn_002.md",
+          "result_state_summary": "pRHL / call_site / relational_program, 1 goal, goal 1131 chars",
+          "result_summary": "accepted commit",
+          "result_view_path": "artifacts/eval_suite/mee_ptxt_fable_l1/l1_goal_projection/mee_PTXT_security/r01/2026-06-10_2112_PTXT_security/iteration_1/node_memory/Tree_0_1/workspace_views/turn_002.json",
+          "turn": 2,
+          "usage": {
+            "cache_creation_input_tokens": 1276,
+            "cache_read_input_tokens": 57831,
+            "input_tokens": 2,
+            "output_tokens": 143
+          },
+          "view_chars": 7497,
+          "view_id": "T0.1-2",
+          "workspace_view_path": "artifacts/eval_suite/mee_ptxt_fable_l1/l1_goal_projection/mee_PTXT_security/r01/2026-06-10_2112_PTXT_security/iteration_1/node_memory/Tree_0_1/workspace_views/turn_001.json"
+        },
+        {
+          "action_submitted_at": "2026-06-11T04:15:43.799000+00:00",
+          "action_time": "+00:18",
+          "agent_think": "9.8 s",
+          "agent_think_path": "artifacts/eval_suite/mee_ptxt_fable_l1/l1_goal_projection/mee_PTXT_security/r01/2026-06-10_2112_PTXT_security/iteration_1/node_memory/Tree_0_1/thinking/turn_003.md",
+          "agent_think_seconds": 9.799,
+          "decision_followup_path": "artifacts/eval_suite/mee_ptxt_fable_l1/l1_goal_projection/mee_PTXT_security/r01/2026-06-10_2112_PTXT_security/iteration_1/node_memory/Tree_0_1/followups/turn_002.md",
+          "decision_state_summary": "pRHL / call_site / relational_program, 1 goal, goal 1131 chars",
+          "decision_view_path": "artifacts/eval_suite/mee_ptxt_fable_l1/l1_goal_projection/mee_PTXT_security/r01/2026-06-10_2112_PTXT_security/iteration_1/node_memory/Tree_0_1/workspace_views/turn_002.json",
+          "deterministic_signals": [
+            "commit_without_probe_check_not_inferred"
+          ],
+          "goal_chars": 1131,
+          "inspect_topics": [
+            "goal_info",
+            "call_site_options",
+            "call_invariant_skeleton",
+            "call_subgoals",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "align"
+          ],
+          "intent": {
+            "intent": "commit_tactic",
+            "payload": {
+              "tactic": "call (_:    ={glob E, glob M}\n         /\\ PTXT_Wrap.k{1} = (CMAa.ek, MACa.WUF_CMA.WUF_Wrap.k){2}\n         /\\ PTXT_Wrap.s{1} = MACa.WUF_CMA.WUF_Wrap.s{2}\n         /\\ PTXT_Wrap.win{1} = MACa.WUF_CMA.WUF_Wrap.win{2})."
+            }
+          },
+          "intent_summary": "commit call (_: ={glob E, glob M} /\\ PTXT_Wrap.k{1} = (CMAa.ek, MACa.WUF_CMA...",
+          "manager_action_summary": [
+            "tactic commit (201 ms)"
+          ],
+          "manager_result_at": "2026-06-11T04:15:44+00:00",
+          "manager_result_path": "artifacts/eval_suite/mee_ptxt_fable_l1/l1_goal_projection/mee_PTXT_security/r01/2026-06-10_2112_PTXT_security/iteration_1/node_memory/Tree_0_1/manager_results/turn_003.json",
+          "manager_seconds": 0.201,
+          "manager_time": "201 ms",
+          "node": "Tree-0.1",
+          "node_dir": "artifacts/eval_suite/mee_ptxt_fable_l1/l1_goal_projection/mee_PTXT_security/r01/2026-06-10_2112_PTXT_security/iteration_1/node_memory/Tree_0_1",
+          "ok": true,
+          "result_followup_path": "artifacts/eval_suite/mee_ptxt_fable_l1/l1_goal_projection/mee_PTXT_security/r01/2026-06-10_2112_PTXT_security/iteration_1/node_memory/Tree_0_1/followups/turn_003.md",
+          "result_state_summary": "equiv / prhl_module / relational_program, 3 goals, goal 781 chars",
+          "result_summary": "accepted commit",
+          "result_view_path": "artifacts/eval_suite/mee_ptxt_fable_l1/l1_goal_projection/mee_PTXT_security/r01/2026-06-10_2112_PTXT_security/iteration_1/node_memory/Tree_0_1/workspace_views/turn_003.json",
+          "turn": 3,
+          "usage": {
+            "cache_creation_input_tokens": 1780,
+            "cache_read_input_tokens": 59107,
+            "input_tokens": 2,
+            "output_tokens": 379
+          },
+          "view_chars": 16150,
+          "view_id": "T0.1-3",
+          "workspace_view_path": "artifacts/eval_suite/mee_ptxt_fable_l1/l1_goal_projection/mee_PTXT_security/r01/2026-06-10_2112_PTXT_security/iteration_1/node_memory/Tree_0_1/workspace_views/turn_002.json"
+        },
+        {
+          "action_submitted_at": "2026-06-11T04:15:49.100000+00:00",
+          "action_time": "+00:23",
+          "agent_think": "5.1 s",
+          "agent_think_path": "artifacts/eval_suite/mee_ptxt_fable_l1/l1_goal_projection/mee_PTXT_security/r01/2026-06-10_2112_PTXT_security/iteration_1/node_memory/Tree_0_1/thinking/turn_004.md",
+          "agent_think_seconds": 5.1,
+          "decision_followup_path": "artifacts/eval_suite/mee_ptxt_fable_l1/l1_goal_projection/mee_PTXT_security/r01/2026-06-10_2112_PTXT_security/iteration_1/node_memory/Tree_0_1/followups/turn_003.md",
+          "decision_state_summary": "equiv / prhl_module / relational_program, 3 goals, goal 781 chars",
+          "decision_view_path": "artifacts/eval_suite/mee_ptxt_fable_l1/l1_goal_projection/mee_PTXT_security/r01/2026-06-10_2112_PTXT_security/iteration_1/node_memory/Tree_0_1/workspace_views/turn_003.json",
+          "deterministic_signals": [
+            "commit_without_probe_check_not_inferred"
+          ],
+          "goal_chars": 781,
+          "inspect_topics": [
+            "goal_info",
+            "call_site_options",
+            "call_invariant_skeleton",
+            "call_subgoals",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "align"
+          ],
+          "intent": {
+            "intent": "commit_tactic",
+            "payload": {
+              "tactic": "proc; inline *."
+            }
+          },
+          "intent_summary": "commit proc; inline *",
+          "manager_action_summary": [
+            "tactic commit (1.9 s)"
+          ],
+          "manager_result_at": "2026-06-11T04:15:51+00:00",
+          "manager_result_path": "artifacts/eval_suite/mee_ptxt_fable_l1/l1_goal_projection/mee_PTXT_security/r01/2026-06-10_2112_PTXT_security/iteration_1/node_memory/Tree_0_1/manager_results/turn_004.json",
+          "manager_seconds": 1.9,
+          "manager_time": "1.9 s",
+          "node": "Tree-0.1",
+          "node_dir": "artifacts/eval_suite/mee_ptxt_fable_l1/l1_goal_projection/mee_PTXT_security/r01/2026-06-10_2112_PTXT_security/iteration_1/node_memory/Tree_0_1",
+          "ok": true,
+          "result_followup_path": "artifacts/eval_suite/mee_ptxt_fable_l1/l1_goal_projection/mee_PTXT_security/r01/2026-06-10_2112_PTXT_security/iteration_1/node_memory/Tree_0_1/followups/turn_004.md",
+          "result_state_summary": "pRHL / call_site / seq_cut, 3 goals, goal 1467 chars",
+          "result_summary": "accepted commit",
+          "result_view_path": "artifacts/eval_suite/mee_ptxt_fable_l1/l1_goal_projection/mee_PTXT_security/r01/2026-06-10_2112_PTXT_security/iteration_1/node_memory/Tree_0_1/workspace_views/turn_004.json",
+          "turn": 4,
+          "usage": {
+            "cache_creation_input_tokens": 1888,
+            "cache_read_input_tokens": 60887,
+            "input_tokens": 2,
+            "output_tokens": 242
+          },
+          "view_chars": 10701,
+          "view_id": "T0.1-4",
+          "workspace_view_path": "artifacts/eval_suite/mee_ptxt_fable_l1/l1_goal_projection/mee_PTXT_security/r01/2026-06-10_2112_PTXT_security/iteration_1/node_memory/Tree_0_1/workspace_views/turn_003.json"
+        },
+        {
+          "action_submitted_at": "2026-06-11T04:15:56.200000+00:00",
+          "action_time": "+00:30",
+          "agent_think": "5.2 s",
+          "agent_think_path": "",
+          "agent_think_seconds": 5.2,
+          "decision_followup_path": "artifacts/eval_suite/mee_ptxt_fable_l1/l1_goal_projection/mee_PTXT_security/r01/2026-06-10_2112_PTXT_security/iteration_1/node_memory/Tree_0_1/followups/turn_004.md",
+          "decision_state_summary": "pRHL / call_site / seq_cut, 3 goals, goal 1467 chars",
+          "decision_view_path": "artifacts/eval_suite/mee_ptxt_fable_l1/l1_goal_projection/mee_PTXT_security/r01/2026-06-10_2112_PTXT_security/iteration_1/node_memory/Tree_0_1/workspace_views/turn_004.json",
+          "deterministic_signals": [
+            "commit_without_probe_check_not_inferred"
+          ],
+          "goal_chars": 1467,
+          "inspect_topics": [
+            "goal_info",
+            "call_site_options",
+            "call_subgoals",
+            "align",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms"
+          ],
+          "intent": {
+            "intent": "commit_tactic",
+            "payload": {
+              "tactic": "wp; call (_: true)."
+            }
+          },
+          "intent_summary": "commit wp; call (_: true)",
+          "manager_action_summary": [
+            "tactic commit (1.8 s)"
+          ],
+          "manager_result_at": "2026-06-11T04:15:58+00:00",
+          "manager_result_path": "artifacts/eval_suite/mee_ptxt_fable_l1/l1_goal_projection/mee_PTXT_security/r01/2026-06-10_2112_PTXT_security/iteration_1/node_memory/Tree_0_1/manager_results/turn_005.json",
+          "manager_seconds": 1.8,
+          "manager_time": "1.8 s",
+          "node": "Tree-0.1",
+          "node_dir": "artifacts/eval_suite/mee_ptxt_fable_l1/l1_goal_projection/mee_PTXT_security/r01/2026-06-10_2112_PTXT_security/iteration_1/node_memory/Tree_0_1",
+          "ok": true,
+          "result_followup_path": "artifacts/eval_suite/mee_ptxt_fable_l1/l1_goal_projection/mee_PTXT_security/r01/2026-06-10_2112_PTXT_security/iteration_1/node_memory/Tree_0_1/followups/turn_005.md",
+          "result_state_summary": "pRHL / call_site / relational_program, 3 goals, goal 1442 chars",
+          "result_summary": "accepted commit",
+          "result_view_path": "artifacts/eval_suite/mee_ptxt_fable_l1/l1_goal_projection/mee_PTXT_security/r01/2026-06-10_2112_PTXT_security/iteration_1/node_memory/Tree_0_1/workspace_views/turn_005.json",
+          "turn": 5,
+          "usage": {
+            "cache_creation_input_tokens": 2002,
+            "cache_read_input_tokens": 62775,
+            "input_tokens": 2,
+            "output_tokens": 196
+          },
+          "view_chars": 18495,
+          "view_id": "T0.1-5",
+          "workspace_view_path": "artifacts/eval_suite/mee_ptxt_fable_l1/l1_goal_projection/mee_PTXT_security/r01/2026-06-10_2112_PTXT_security/iteration_1/node_memory/Tree_0_1/workspace_views/turn_004.json"
+        },
+        {
+          "action_submitted_at": "2026-06-11T04:16:15.797000+00:00",
+          "action_time": "+00:50",
+          "agent_think": "17.8 s",
+          "agent_think_path": "",
+          "agent_think_seconds": 17.797,
+          "decision_followup_path": "artifacts/eval_suite/mee_ptxt_fable_l1/l1_goal_projection/mee_PTXT_security/r01/2026-06-10_2112_PTXT_security/iteration_1/node_memory/Tree_0_1/followups/turn_005.md",
+          "decision_state_summary": "pRHL / call_site / relational_program, 3 goals, goal 1442 chars",
+          "decision_view_path": "artifacts/eval_suite/mee_ptxt_fable_l1/l1_goal_projection/mee_PTXT_security/r01/2026-06-10_2112_PTXT_security/iteration_1/node_memory/Tree_0_1/workspace_views/turn_005.json",
+          "deterministic_signals": [
+            "commit_without_probe_check_not_inferred"
+          ],
+          "goal_chars": 1442,
+          "inspect_topics": [
+            "goal_info",
+            "call_site_options",
+            "call_invariant_skeleton",
+            "call_subgoals",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "align"
+          ],
+          "intent": {
+            "intent": "commit_tactic",
+            "payload": {
+              "tactic": "wp; call (_: true)."
+            }
+          },
+          "intent_summary": "commit wp; call (_: true)",
+          "manager_action_summary": [
+            "tactic commit (203 ms)"
+          ],
+          "manager_result_at": "2026-06-11T04:16:16+00:00",
+          "manager_result_path": "artifacts/eval_suite/mee_ptxt_fable_l1/l1_goal_projection/mee_PTXT_security/r01/2026-06-10_2112_PTXT_security/iteration_1/node_memory/Tree_0_1/manager_results/turn_006.json",
+          "manager_seconds": 0.203,
+          "manager_time": "203 ms",
+          "node": "Tree-0.1",
+          "node_dir": "artifacts/eval_suite/mee_ptxt_fable_l1/l1_goal_projection/mee_PTXT_security/r01/2026-06-10_2112_PTXT_security/iteration_1/node_memory/Tree_0_1",
+          "ok": true,
+          "result_followup_path": "artifacts/eval_suite/mee_ptxt_fable_l1/l1_goal_projection/mee_PTXT_security/r01/2026-06-10_2112_PTXT_security/iteration_1/node_memory/Tree_0_1/followups/turn_006.md",
+          "result_state_summary": "pRHL / procedure_body / relational_program, 3 goals, goal 1580 chars",
+          "result_summary": "accepted commit",
+          "result_view_path": "artifacts/eval_suite/mee_ptxt_fable_l1/l1_goal_projection/mee_PTXT_security/r01/2026-06-10_2112_PTXT_security/iteration_1/node_memory/Tree_0_1/workspace_views/turn_006.json",
+          "turn": 6,
+          "usage": {
+            "cache_creation_input_tokens": 2037,
+            "cache_read_input_tokens": 64777,
+            "input_tokens": 2,
+            "output_tokens": 976
+          },
+          "view_chars": 18686,
+          "view_id": "T0.1-6",
+          "workspace_view_path": "artifacts/eval_suite/mee_ptxt_fable_l1/l1_goal_projection/mee_PTXT_security/r01/2026-06-10_2112_PTXT_security/iteration_1/node_memory/Tree_0_1/workspace_views/turn_005.json"
+        },
+        {
+          "action_submitted_at": "2026-06-11T04:16:20.607000+00:00",
+          "action_time": "+00:55",
+          "agent_think": "4.6 s",
+          "agent_think_path": "",
+          "agent_think_seconds": 4.607,
+          "decision_followup_path": "artifacts/eval_suite/mee_ptxt_fable_l1/l1_goal_projection/mee_PTXT_security/r01/2026-06-10_2112_PTXT_security/iteration_1/node_memory/Tree_0_1/followups/turn_006.md",
+          "decision_state_summary": "pRHL / procedure_body / relational_program, 3 goals, goal 1580 chars",
+          "decision_view_path": "artifacts/eval_suite/mee_ptxt_fable_l1/l1_goal_projection/mee_PTXT_security/r01/2026-06-10_2112_PTXT_security/iteration_1/node_memory/Tree_0_1/workspace_views/turn_006.json",
+          "deterministic_signals": [
+            "commit_without_probe_check_not_inferred"
+          ],
+          "goal_chars": 1580,
+          "inspect_topics": [
+            "goal_info",
+            "call_site_options",
+            "call_invariant_skeleton",
+            "call_subgoals",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "align"
+          ],
+          "intent": {
+            "intent": "commit_tactic",
+            "payload": {
+              "tactic": "by auto."
+            }
+          },
+          "intent_summary": "commit by auto",
+          "manager_action_summary": [
+            "tactic commit (393 ms)"
+          ],
+          "manager_result_at": "2026-06-11T04:16:21+00:00",
+          "manager_result_path": "artifacts/eval_suite/mee_ptxt_fable_l1/l1_goal_projection/mee_PTXT_security/r01/2026-06-10_2112_PTXT_security/iteration_1/node_memory/Tree_0_1/manager_results/turn_007.json",
+          "manager_seconds": 0.393,
+          "manager_time": "393 ms",
+          "node": "Tree-0.1",
+          "node_dir": "artifacts/eval_suite/mee_ptxt_fable_l1/l1_goal_projection/mee_PTXT_security/r01/2026-06-10_2112_PTXT_security/iteration_1/node_memory/Tree_0_1",
+          "ok": true,
+          "result_followup_path": "artifacts/eval_suite/mee_ptxt_fable_l1/l1_goal_projection/mee_PTXT_security/r01/2026-06-10_2112_PTXT_security/iteration_1/node_memory/Tree_0_1/followups/turn_007.md",
+          "result_state_summary": "equiv / prhl_module / relational_program, 2 goals, goal 790 chars",
+          "result_summary": "accepted commit",
+          "result_view_path": "artifacts/eval_suite/mee_ptxt_fable_l1/l1_goal_projection/mee_PTXT_security/r01/2026-06-10_2112_PTXT_security/iteration_1/node_memory/Tree_0_1/workspace_views/turn_007.json",
+          "turn": 7,
+          "usage": {
+            "cache_creation_input_tokens": 2899,
+            "cache_read_input_tokens": 66814,
+            "input_tokens": 2,
+            "output_tokens": 185
+          },
+          "view_chars": 17851,
+          "view_id": "T0.1-7",
+          "workspace_view_path": "artifacts/eval_suite/mee_ptxt_fable_l1/l1_goal_projection/mee_PTXT_security/r01/2026-06-10_2112_PTXT_security/iteration_1/node_memory/Tree_0_1/workspace_views/turn_006.json"
+        },
+        {
+          "action_submitted_at": "2026-06-11T04:16:25.100000+00:00",
+          "action_time": "+00:59",
+          "agent_think": "4.1 s",
+          "agent_think_path": "artifacts/eval_suite/mee_ptxt_fable_l1/l1_goal_projection/mee_PTXT_security/r01/2026-06-10_2112_PTXT_security/iteration_1/node_memory/Tree_0_1/thinking/turn_008.md",
+          "agent_think_seconds": 4.1,
+          "decision_followup_path": "artifacts/eval_suite/mee_ptxt_fable_l1/l1_goal_projection/mee_PTXT_security/r01/2026-06-10_2112_PTXT_security/iteration_1/node_memory/Tree_0_1/followups/turn_007.md",
+          "decision_state_summary": "equiv / prhl_module / relational_program, 2 goals, goal 790 chars",
+          "decision_view_path": "artifacts/eval_suite/mee_ptxt_fable_l1/l1_goal_projection/mee_PTXT_security/r01/2026-06-10_2112_PTXT_security/iteration_1/node_memory/Tree_0_1/workspace_views/turn_007.json",
+          "deterministic_signals": [
+            "commit_without_probe_check_not_inferred"
+          ],
+          "goal_chars": 790,
+          "inspect_topics": [
+            "goal_info",
+            "call_site_options",
+            "call_invariant_skeleton",
+            "call_subgoals",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "align"
+          ],
+          "intent": {
+            "intent": "commit_tactic",
+            "payload": {
+              "tactic": "proc; inline *."
+            }
+          },
+          "intent_summary": "commit proc; inline *",
+          "manager_action_summary": [
+            "tactic commit (1.9 s)"
+          ],
+          "manager_result_at": "2026-06-11T04:16:27+00:00",
+          "manager_result_path": "artifacts/eval_suite/mee_ptxt_fable_l1/l1_goal_projection/mee_PTXT_security/r01/2026-06-10_2112_PTXT_security/iteration_1/node_memory/Tree_0_1/manager_results/turn_008.json",
+          "manager_seconds": 1.9,
+          "manager_time": "1.9 s",
+          "node": "Tree-0.1",
+          "node_dir": "artifacts/eval_suite/mee_ptxt_fable_l1/l1_goal_projection/mee_PTXT_security/r01/2026-06-10_2112_PTXT_security/iteration_1/node_memory/Tree_0_1",
+          "ok": true,
+          "result_followup_path": "artifacts/eval_suite/mee_ptxt_fable_l1/l1_goal_projection/mee_PTXT_security/r01/2026-06-10_2112_PTXT_security/iteration_1/node_memory/Tree_0_1/followups/turn_008.md",
+          "result_state_summary": "pRHL / call_site / seq_cut, 2 goals, goal 3388 chars",
+          "result_summary": "accepted commit",
+          "result_view_path": "artifacts/eval_suite/mee_ptxt_fable_l1/l1_goal_projection/mee_PTXT_security/r01/2026-06-10_2112_PTXT_security/iteration_1/node_memory/Tree_0_1/workspace_views/turn_008.json",
+          "turn": 8,
+          "usage": {
+            "cache_creation_input_tokens": 1635,
+            "cache_read_input_tokens": 69713,
+            "input_tokens": 2,
+            "output_tokens": 136
+          },
+          "view_chars": 11078,
+          "view_id": "T0.1-8",
+          "workspace_view_path": "artifacts/eval_suite/mee_ptxt_fable_l1/l1_goal_projection/mee_PTXT_security/r01/2026-06-10_2112_PTXT_security/iteration_1/node_memory/Tree_0_1/workspace_views/turn_007.json"
+        },
+        {
+          "action_submitted_at": "2026-06-11T04:16:57.200000+00:00",
+          "action_time": "+01:31",
+          "agent_think": "30.2 s",
+          "agent_think_path": "",
+          "agent_think_seconds": 30.2,
+          "decision_followup_path": "artifacts/eval_suite/mee_ptxt_fable_l1/l1_goal_projection/mee_PTXT_security/r01/2026-06-10_2112_PTXT_security/iteration_1/node_memory/Tree_0_1/followups/turn_008.md",
+          "decision_state_summary": "pRHL / call_site / seq_cut, 2 goals, goal 3388 chars",
+          "decision_view_path": "artifacts/eval_suite/mee_ptxt_fable_l1/l1_goal_projection/mee_PTXT_security/r01/2026-06-10_2112_PTXT_security/iteration_1/node_memory/Tree_0_1/workspace_views/turn_008.json",
+          "deterministic_signals": [
+            "commit_without_probe_check_not_inferred",
+            "large_goal"
+          ],
+          "goal_chars": 3388,
+          "inspect_topics": [
+            "goal_info",
+            "call_site_options",
+            "call_subgoals",
+            "align",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms"
+          ],
+          "intent": {
+            "intent": "commit_tactic",
+            "payload": {
+              "tactic": "seq 5 2: (   ={glob E, glob M, pt}\n          /\\ PTXT_Wrap.k{1} = (CMAa.ek{2}, MACa.WUF_CMA.WUF_Wrap.k{2})\n          /\\ PTXT_Wrap.s{1} = MACa.WUF_CMA.WUF_Wrap.s{2}\n          /\\ PTXT_Wrap.win{1} = MACa.WUF_CMA.WUF_Wrap.win{2}\n          /\\ mk{1} = MACa.WUF_CMA.WUF_Wrap.k{2}\n          /\\ p0{1} = None\n          /\\ b{2} = false)."
+            }
+          },
+          "intent_summary": "commit seq 5 2: ( ={glob E, glob M, pt} /\\ PTXT_Wrap.k{1} = (CMAa.ek{2}, MAC...",
+          "manager_action_summary": [
+            "tactic commit (1.8 s)"
+          ],
+          "manager_result_at": "2026-06-11T04:16:59+00:00",
+          "manager_result_path": "artifacts/eval_suite/mee_ptxt_fable_l1/l1_goal_projection/mee_PTXT_security/r01/2026-06-10_2112_PTXT_security/iteration_1/node_memory/Tree_0_1/manager_results/turn_009.json",
+          "manager_seconds": 1.8,
+          "manager_time": "1.8 s",
+          "node": "Tree-0.1",
+          "node_dir": "artifacts/eval_suite/mee_ptxt_fable_l1/l1_goal_projection/mee_PTXT_security/r01/2026-06-10_2112_PTXT_security/iteration_1/node_memory/Tree_0_1",
+          "ok": true,
+          "result_followup_path": "artifacts/eval_suite/mee_ptxt_fable_l1/l1_goal_projection/mee_PTXT_security/r01/2026-06-10_2112_PTXT_security/iteration_1/node_memory/Tree_0_1/followups/turn_009.md",
+          "result_state_summary": "pRHL / call_site / seq_cut, 3 goals, goal 1276 chars",
+          "result_summary": "accepted commit",
+          "result_view_path": "artifacts/eval_suite/mee_ptxt_fable_l1/l1_goal_projection/mee_PTXT_security/r01/2026-06-10_2112_PTXT_security/iteration_1/node_memory/Tree_0_1/workspace_views/turn_009.json",
+          "turn": 9,
+          "usage": {
+            "cache_creation_input_tokens": 2348,
+            "cache_read_input_tokens": 71348,
+            "input_tokens": 2,
+            "output_tokens": 2105
+          },
+          "view_chars": 22990,
+          "view_id": "T0.1-9",
+          "workspace_view_path": "artifacts/eval_suite/mee_ptxt_fable_l1/l1_goal_projection/mee_PTXT_security/r01/2026-06-10_2112_PTXT_security/iteration_1/node_memory/Tree_0_1/workspace_views/turn_008.json"
+        },
+        {
+          "action_submitted_at": "2026-06-11T04:17:03.100000+00:00",
+          "action_time": "+01:37",
+          "agent_think": "4.1 s",
+          "agent_think_path": "",
+          "agent_think_seconds": 4.1,
+          "decision_followup_path": "artifacts/eval_suite/mee_ptxt_fable_l1/l1_goal_projection/mee_PTXT_security/r01/2026-06-10_2112_PTXT_security/iteration_1/node_memory/Tree_0_1/followups/turn_009.md",
+          "decision_state_summary": "pRHL / call_site / seq_cut, 3 goals, goal 1276 chars",
+          "decision_view_path": "artifacts/eval_suite/mee_ptxt_fable_l1/l1_goal_projection/mee_PTXT_security/r01/2026-06-10_2112_PTXT_security/iteration_1/node_memory/Tree_0_1/workspace_views/turn_009.json",
+          "deterministic_signals": [
+            "commit_without_probe_check_not_inferred"
+          ],
+          "goal_chars": 1276,
+          "inspect_topics": [
+            "goal_info",
+            "call_site_options",
+            "call_subgoals",
+            "align",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms"
+          ],
+          "intent": {
+            "intent": "commit_tactic",
+            "payload": {
+              "tactic": "by wp; call (_: true); auto."
+            }
+          },
+          "intent_summary": "commit by wp; call (_: true); auto",
+          "manager_action_summary": [
+            "tactic commit (1.9 s)"
+          ],
+          "manager_result_at": "2026-06-11T04:17:05+00:00",
+          "manager_result_path": "artifacts/eval_suite/mee_ptxt_fable_l1/l1_goal_projection/mee_PTXT_security/r01/2026-06-10_2112_PTXT_security/iteration_1/node_memory/Tree_0_1/manager_results/turn_010.json",
+          "manager_seconds": 1.9,
+          "manager_time": "1.9 s",
+          "node": "Tree-0.1",
+          "node_dir": "artifacts/eval_suite/mee_ptxt_fable_l1/l1_goal_projection/mee_PTXT_security/r01/2026-06-10_2112_PTXT_security/iteration_1/node_memory/Tree_0_1",
+          "ok": true,
+          "result_followup_path": "artifacts/eval_suite/mee_ptxt_fable_l1/l1_goal_projection/mee_PTXT_security/r01/2026-06-10_2112_PTXT_security/iteration_1/node_memory/Tree_0_1/followups/turn_010.md",
+          "result_state_summary": "pRHL / call_site / relational_program, 2 goals, goal 2675 chars",
+          "result_summary": "accepted commit",
+          "result_view_path": "artifacts/eval_suite/mee_ptxt_fable_l1/l1_goal_projection/mee_PTXT_security/r01/2026-06-10_2112_PTXT_security/iteration_1/node_memory/Tree_0_1/workspace_views/turn_010.json",
+          "turn": 10,
+          "usage": {
+            "cache_creation_input_tokens": 4024,
+            "cache_read_input_tokens": 73696,
+            "input_tokens": 2,
+            "output_tokens": 112
+          },
+          "view_chars": 18631,
+          "view_id": "T0.1-10",
+          "workspace_view_path": "artifacts/eval_suite/mee_ptxt_fable_l1/l1_goal_projection/mee_PTXT_security/r01/2026-06-10_2112_PTXT_security/iteration_1/node_memory/Tree_0_1/workspace_views/turn_009.json"
+        },
+        {
+          "action_submitted_at": "2026-06-11T04:17:09.900000+00:00",
+          "action_time": "+01:44",
+          "agent_think": "4.9 s",
+          "agent_think_path": "artifacts/eval_suite/mee_ptxt_fable_l1/l1_goal_projection/mee_PTXT_security/r01/2026-06-10_2112_PTXT_security/iteration_1/node_memory/Tree_0_1/thinking/turn_011.md",
+          "agent_think_seconds": 4.9,
+          "decision_followup_path": "artifacts/eval_suite/mee_ptxt_fable_l1/l1_goal_projection/mee_PTXT_security/r01/2026-06-10_2112_PTXT_security/iteration_1/node_memory/Tree_0_1/followups/turn_010.md",
+          "decision_state_summary": "pRHL / call_site / relational_program, 2 goals, goal 2675 chars",
+          "decision_view_path": "artifacts/eval_suite/mee_ptxt_fable_l1/l1_goal_projection/mee_PTXT_security/r01/2026-06-10_2112_PTXT_security/iteration_1/node_memory/Tree_0_1/workspace_views/turn_010.json",
+          "deterministic_signals": [
+            "commit_without_probe_check_not_inferred"
+          ],
+          "goal_chars": 2675,
+          "inspect_topics": [
+            "goal_info",
+            "call_site_options",
+            "call_invariant_skeleton",
+            "call_subgoals",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "align"
+          ],
+          "intent": {
+            "intent": "commit_tactic",
+            "payload": {
+              "tactic": "if=> //."
+            }
+          },
+          "intent_summary": "commit if=> //",
+          "manager_action_summary": [
+            "tactic commit (2.1 s)"
+          ],
+          "manager_result_at": "2026-06-11T04:17:12+00:00",
+          "manager_result_path": "artifacts/eval_suite/mee_ptxt_fable_l1/l1_goal_projection/mee_PTXT_security/r01/2026-06-10_2112_PTXT_security/iteration_1/node_memory/Tree_0_1/manager_results/turn_011.json",
+          "manager_seconds": 2.1,
+          "manager_time": "2.1 s",
+          "node": "Tree-0.1",
+          "node_dir": "artifacts/eval_suite/mee_ptxt_fable_l1/l1_goal_projection/mee_PTXT_security/r01/2026-06-10_2112_PTXT_security/iteration_1/node_memory/Tree_0_1",
+          "ok": true,
+          "result_followup_path": "artifacts/eval_suite/mee_ptxt_fable_l1/l1_goal_projection/mee_PTXT_security/r01/2026-06-10_2112_PTXT_security/iteration_1/node_memory/Tree_0_1/followups/turn_011.md",
+          "result_state_summary": "pRHL / call_site / seq_cut, 3 goals, goal 2025 chars",
+          "result_summary": "accepted commit",
+          "result_view_path": "artifacts/eval_suite/mee_ptxt_fable_l1/l1_goal_projection/mee_PTXT_security/r01/2026-06-10_2112_PTXT_security/iteration_1/node_memory/Tree_0_1/workspace_views/turn_011.json",
+          "turn": 11,
+          "usage": {
+            "cache_creation_input_tokens": 2211,
+            "cache_read_input_tokens": 77720,
+            "input_tokens": 2,
+            "output_tokens": 154
+          },
+          "view_chars": 21842,
+          "view_id": "T0.1-11",
+          "workspace_view_path": "artifacts/eval_suite/mee_ptxt_fable_l1/l1_goal_projection/mee_PTXT_security/r01/2026-06-10_2112_PTXT_security/iteration_1/node_memory/Tree_0_1/workspace_views/turn_010.json"
+        },
+        {
+          "action_submitted_at": "2026-06-11T04:17:21.780000+00:00",
+          "action_time": "+01:56",
+          "agent_think": "9.8 s",
+          "agent_think_path": "artifacts/eval_suite/mee_ptxt_fable_l1/l1_goal_projection/mee_PTXT_security/r01/2026-06-10_2112_PTXT_security/iteration_1/node_memory/Tree_0_1/thinking/turn_012.md",
+          "agent_think_seconds": 9.78,
+          "decision_followup_path": "artifacts/eval_suite/mee_ptxt_fable_l1/l1_goal_projection/mee_PTXT_security/r01/2026-06-10_2112_PTXT_security/iteration_1/node_memory/Tree_0_1/followups/turn_011.md",
+          "decision_state_summary": "pRHL / call_site / seq_cut, 3 goals, goal 2025 chars",
+          "decision_view_path": "artifacts/eval_suite/mee_ptxt_fable_l1/l1_goal_projection/mee_PTXT_security/r01/2026-06-10_2112_PTXT_security/iteration_1/node_memory/Tree_0_1/workspace_views/turn_011.json",
+          "deterministic_signals": [
+            "commit_without_probe_check_not_inferred"
+          ],
+          "goal_chars": 2025,
+          "inspect_topics": [
+            "goal_info",
+            "call_site_options",
+            "call_subgoals",
+            "align",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms"
+          ],
+          "intent": {
+            "intent": "commit_tactic",
+            "payload": {
+              "tactic": "by wp; call (_: true); auto=> /#."
+            }
+          },
+          "intent_summary": "commit by wp; call (_: true); auto=> /#",
+          "manager_action_summary": [
+            "tactic commit (220 ms)"
+          ],
+          "manager_result_at": "2026-06-11T04:17:22+00:00",
+          "manager_result_path": "artifacts/eval_suite/mee_ptxt_fable_l1/l1_goal_projection/mee_PTXT_security/r01/2026-06-10_2112_PTXT_security/iteration_1/node_memory/Tree_0_1/manager_results/turn_012.json",
+          "manager_seconds": 0.22,
+          "manager_time": "220 ms",
+          "node": "Tree-0.1",
+          "node_dir": "artifacts/eval_suite/mee_ptxt_fable_l1/l1_goal_projection/mee_PTXT_security/r01/2026-06-10_2112_PTXT_security/iteration_1/node_memory/Tree_0_1",
+          "ok": true,
+          "result_followup_path": "artifacts/eval_suite/mee_ptxt_fable_l1/l1_goal_projection/mee_PTXT_security/r01/2026-06-10_2112_PTXT_security/iteration_1/node_memory/Tree_0_1/followups/turn_012.md",
+          "result_state_summary": "pRHL / procedure_body / relational_program, 2 goals, goal 1353 chars",
+          "result_summary": "accepted commit",
+          "result_view_path": "artifacts/eval_suite/mee_ptxt_fable_l1/l1_goal_projection/mee_PTXT_security/r01/2026-06-10_2112_PTXT_security/iteration_1/node_memory/Tree_0_1/workspace_views/turn_012.json",
+          "turn": 12,
+          "usage": {
+            "cache_creation_input_tokens": 2137,
+            "cache_read_input_tokens": 79931,
+            "input_tokens": 2,
+            "output_tokens": 381
+          },
+          "view_chars": 24447,
+          "view_id": "T0.1-12",
+          "workspace_view_path": "artifacts/eval_suite/mee_ptxt_fable_l1/l1_goal_projection/mee_PTXT_security/r01/2026-06-10_2112_PTXT_security/iteration_1/node_memory/Tree_0_1/workspace_views/turn_011.json"
+        },
+        {
+          "action_submitted_at": "2026-06-11T04:17:29.100000+00:00",
+          "action_time": "+02:03",
+          "agent_think": "7.1 s",
+          "agent_think_path": "",
+          "agent_think_seconds": 7.1,
+          "decision_followup_path": "artifacts/eval_suite/mee_ptxt_fable_l1/l1_goal_projection/mee_PTXT_security/r01/2026-06-10_2112_PTXT_security/iteration_1/node_memory/Tree_0_1/followups/turn_012.md",
+          "decision_state_summary": "pRHL / procedure_body / relational_program, 2 goals, goal 1353 chars",
+          "decision_view_path": "artifacts/eval_suite/mee_ptxt_fable_l1/l1_goal_projection/mee_PTXT_security/r01/2026-06-10_2112_PTXT_security/iteration_1/node_memory/Tree_0_1/workspace_views/turn_012.json",
+          "deterministic_signals": [
+            "commit_without_probe_check_not_inferred"
+          ],
+          "goal_chars": 1353,
+          "inspect_topics": [
+            "equiv_bridge_lemmas",
+            "goal_info",
+            "call_site_options",
+            "call_invariant_skeleton",
+            "call_subgoals",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "align"
+          ],
+          "intent": {
+            "intent": "commit_tactic",
+            "payload": {
+              "tactic": "by auto=> /#."
+            }
+          },
+          "intent_summary": "commit by auto=> /#",
+          "manager_action_summary": [
+            "tactic commit (1.9 s)"
+          ],
+          "manager_result_at": "2026-06-11T04:17:31+00:00",
+          "manager_result_path": "artifacts/eval_suite/mee_ptxt_fable_l1/l1_goal_projection/mee_PTXT_security/r01/2026-06-10_2112_PTXT_security/iteration_1/node_memory/Tree_0_1/manager_results/turn_013.json",
+          "manager_seconds": 1.9,
+          "manager_time": "1.9 s",
+          "node": "Tree-0.1",
+          "node_dir": "artifacts/eval_suite/mee_ptxt_fable_l1/l1_goal_projection/mee_PTXT_security/r01/2026-06-10_2112_PTXT_security/iteration_1/node_memory/Tree_0_1",
+          "ok": true,
+          "result_followup_path": "artifacts/eval_suite/mee_ptxt_fable_l1/l1_goal_projection/mee_PTXT_security/r01/2026-06-10_2112_PTXT_security/iteration_1/node_memory/Tree_0_1/followups/turn_013.md",
+          "result_state_summary": "pRHL / call_site / relational_program, 1 goal, goal 1422 chars",
+          "result_summary": "accepted commit",
+          "result_view_path": "artifacts/eval_suite/mee_ptxt_fable_l1/l1_goal_projection/mee_PTXT_security/r01/2026-06-10_2112_PTXT_security/iteration_1/node_memory/Tree_0_1/workspace_views/turn_013.json",
+          "turn": 13,
+          "usage": {
+            "cache_creation_input_tokens": 2115,
+            "cache_read_input_tokens": 82068,
+            "input_tokens": 2,
+            "output_tokens": 144
+          },
+          "view_chars": 17409,
+          "view_id": "T0.1-13",
+          "workspace_view_path": "artifacts/eval_suite/mee_ptxt_fable_l1/l1_goal_projection/mee_PTXT_security/r01/2026-06-10_2112_PTXT_security/iteration_1/node_memory/Tree_0_1/workspace_views/turn_012.json"
+        },
+        {
+          "action_submitted_at": "2026-06-11T04:17:36+00:00",
+          "action_time": "+02:10",
+          "agent_think": "5 s",
+          "agent_think_path": "artifacts/eval_suite/mee_ptxt_fable_l1/l1_goal_projection/mee_PTXT_security/r01/2026-06-10_2112_PTXT_security/iteration_1/node_memory/Tree_0_1/thinking/turn_014.md",
+          "agent_think_seconds": 5.0,
+          "decision_followup_path": "artifacts/eval_suite/mee_ptxt_fable_l1/l1_goal_projection/mee_PTXT_security/r01/2026-06-10_2112_PTXT_security/iteration_1/node_memory/Tree_0_1/followups/turn_013.md",
+          "decision_state_summary": "pRHL / call_site / relational_program, 1 goal, goal 1422 chars",
+          "decision_view_path": "artifacts/eval_suite/mee_ptxt_fable_l1/l1_goal_projection/mee_PTXT_security/r01/2026-06-10_2112_PTXT_security/iteration_1/node_memory/Tree_0_1/workspace_views/turn_013.json",
+          "deterministic_signals": [
+            "commit_without_probe_check_not_inferred"
+          ],
+          "goal_chars": 1422,
+          "inspect_topics": [
+            "goal_info",
+            "call_site_options",
+            "call_invariant_skeleton",
+            "call_subgoals",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "align"
+          ],
+          "intent": {
+            "intent": "commit_tactic",
+            "payload": {
+              "tactic": "swap{2} 4 -3."
+            }
+          },
+          "intent_summary": "commit swap{2} 4 -3",
+          "manager_action_summary": [
+            "tactic commit (2.0 s)"
+          ],
+          "manager_result_at": "2026-06-11T04:17:38+00:00",
+          "manager_result_path": "artifacts/eval_suite/mee_ptxt_fable_l1/l1_goal_projection/mee_PTXT_security/r01/2026-06-10_2112_PTXT_security/iteration_1/node_memory/Tree_0_1/manager_results/turn_014.json",
+          "manager_seconds": 2.0,
+          "manager_time": "2 s",
+          "node": "Tree-0.1",
+          "node_dir": "artifacts/eval_suite/mee_ptxt_fable_l1/l1_goal_projection/mee_PTXT_security/r01/2026-06-10_2112_PTXT_security/iteration_1/node_memory/Tree_0_1",
+          "ok": true,
+          "result_followup_path": "artifacts/eval_suite/mee_ptxt_fable_l1/l1_goal_projection/mee_PTXT_security/r01/2026-06-10_2112_PTXT_security/iteration_1/node_memory/Tree_0_1/followups/turn_014.md",
+          "result_state_summary": "pRHL / call_site / relational_program, 1 goal, goal 1422 chars",
+          "result_summary": "accepted commit",
+          "result_view_path": "artifacts/eval_suite/mee_ptxt_fable_l1/l1_goal_projection/mee_PTXT_security/r01/2026-06-10_2112_PTXT_security/iteration_1/node_memory/Tree_0_1/workspace_views/turn_014.json",
+          "turn": 14,
+          "usage": {
+            "cache_creation_input_tokens": 1948,
+            "cache_read_input_tokens": 84183,
+            "input_tokens": 2,
+            "output_tokens": 229
+          },
+          "view_chars": 27549,
+          "view_id": "T0.1-14",
+          "workspace_view_path": "artifacts/eval_suite/mee_ptxt_fable_l1/l1_goal_projection/mee_PTXT_security/r01/2026-06-10_2112_PTXT_security/iteration_1/node_memory/Tree_0_1/workspace_views/turn_013.json"
+        },
+        {
+          "action_submitted_at": "2026-06-11T04:17:43.849000+00:00",
+          "action_time": "+02:18",
+          "agent_think": "5.8 s",
+          "agent_think_path": "",
+          "agent_think_seconds": 5.849,
+          "decision_followup_path": "artifacts/eval_suite/mee_ptxt_fable_l1/l1_goal_projection/mee_PTXT_security/r01/2026-06-10_2112_PTXT_security/iteration_1/node_memory/Tree_0_1/followups/turn_014.md",
+          "decision_state_summary": "pRHL / call_site / relational_program, 1 goal, goal 1422 chars",
+          "decision_view_path": "artifacts/eval_suite/mee_ptxt_fable_l1/l1_goal_projection/mee_PTXT_security/r01/2026-06-10_2112_PTXT_security/iteration_1/node_memory/Tree_0_1/workspace_views/turn_014.json",
+          "deterministic_signals": [
+            "commit_without_probe_check_not_inferred"
+          ],
+          "goal_chars": 1422,
+          "inspect_topics": [
+            "goal_info",
+            "call_site_options",
+            "call_invariant_skeleton",
+            "call_subgoals",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "align"
+          ],
+          "intent": {
+            "intent": "commit_tactic",
+            "payload": {
+              "tactic": "by wp; call (_: true); call (_: true); auto."
+            }
+          },
+          "intent_summary": "commit by wp; call (_: true); call (_: true); auto",
+          "manager_action_summary": [
+            "tactic commit (151 ms)"
+          ],
+          "manager_result_at": "2026-06-11T04:17:44+00:00",
+          "manager_result_path": "artifacts/eval_suite/mee_ptxt_fable_l1/l1_goal_projection/mee_PTXT_security/r01/2026-06-10_2112_PTXT_security/iteration_1/node_memory/Tree_0_1/manager_results/turn_015.json",
+          "manager_seconds": 0.151,
+          "manager_time": "151 ms",
+          "node": "Tree-0.1",
+          "node_dir": "artifacts/eval_suite/mee_ptxt_fable_l1/l1_goal_projection/mee_PTXT_security/r01/2026-06-10_2112_PTXT_security/iteration_1/node_memory/Tree_0_1",
+          "ok": true,
+          "result_followup_path": "artifacts/eval_suite/mee_ptxt_fable_l1/l1_goal_projection/mee_PTXT_security/r01/2026-06-10_2112_PTXT_security/iteration_1/node_memory/Tree_0_1/followups/turn_015.md",
+          "result_state_summary": "ambient / closed_candidate, goal 25 chars",
+          "result_summary": "accepted commit",
+          "result_view_path": "artifacts/eval_suite/mee_ptxt_fable_l1/l1_goal_projection/mee_PTXT_security/r01/2026-06-10_2112_PTXT_security/iteration_1/node_memory/Tree_0_1/workspace_views/turn_015.json",
+          "turn": 15,
+          "usage": {
+            "cache_creation_input_tokens": 2036,
+            "cache_read_input_tokens": 86131,
+            "input_tokens": 2,
+            "output_tokens": 118
+          },
+          "view_chars": 26196,
+          "view_id": "T0.1-15",
+          "workspace_view_path": "artifacts/eval_suite/mee_ptxt_fable_l1/l1_goal_projection/mee_PTXT_security/r01/2026-06-10_2112_PTXT_security/iteration_1/node_memory/Tree_0_1/workspace_views/turn_014.json"
+        },
+        {
+          "action_submitted_at": "2026-06-11T04:17:47.870000+00:00",
+          "action_time": "+02:22",
+          "agent_think": "3.9 s",
+          "agent_think_path": "artifacts/eval_suite/mee_ptxt_fable_l1/l1_goal_projection/mee_PTXT_security/r01/2026-06-10_2112_PTXT_security/iteration_1/node_memory/Tree_0_1/thinking/turn_016.md",
+          "agent_think_seconds": 3.87,
+          "decision_followup_path": "artifacts/eval_suite/mee_ptxt_fable_l1/l1_goal_projection/mee_PTXT_security/r01/2026-06-10_2112_PTXT_security/iteration_1/node_memory/Tree_0_1/followups/turn_015.md",
+          "decision_state_summary": "ambient / closed_candidate, goal 25 chars",
+          "decision_view_path": "artifacts/eval_suite/mee_ptxt_fable_l1/l1_goal_projection/mee_PTXT_security/r01/2026-06-10_2112_PTXT_security/iteration_1/node_memory/Tree_0_1/workspace_views/turn_015.json",
+          "deterministic_signals": [
+            "commit_without_probe_check_not_inferred"
+          ],
+          "goal_chars": 25,
+          "inspect_topics": [
+            "goal_info"
+          ],
+          "intent": {
+            "intent": "commit_tactic",
+            "payload": {
+              "tactic": "qed."
+            }
+          },
+          "intent_summary": "commit qed",
+          "manager_action_summary": [
+            "tactic commit (130 ms)"
+          ],
+          "manager_result_at": "2026-06-11T04:17:48+00:00",
+          "manager_result_path": "artifacts/eval_suite/mee_ptxt_fable_l1/l1_goal_projection/mee_PTXT_security/r01/2026-06-10_2112_PTXT_security/iteration_1/node_memory/Tree_0_1/manager_results/turn_016.json",
+          "manager_seconds": 0.13,
+          "manager_time": "130 ms",
+          "node": "Tree-0.1",
+          "node_dir": "artifacts/eval_suite/mee_ptxt_fable_l1/l1_goal_projection/mee_PTXT_security/r01/2026-06-10_2112_PTXT_security/iteration_1/node_memory/Tree_0_1",
+          "ok": true,
+          "result_followup_path": "artifacts/eval_suite/mee_ptxt_fable_l1/l1_goal_projection/mee_PTXT_security/r01/2026-06-10_2112_PTXT_security/iteration_1/node_memory/Tree_0_1/followups/turn_016.md",
+          "result_state_summary": "complete / unknown / closed_candidate, 0 goals, goal 11 chars",
+          "result_summary": "accepted commit",
+          "result_view_path": "artifacts/eval_suite/mee_ptxt_fable_l1/l1_goal_projection/mee_PTXT_security/r01/2026-06-10_2112_PTXT_security/iteration_1/node_memory/Tree_0_1/workspace_views/turn_016.json",
+          "turn": 16,
+          "usage": {
+            "cache_creation_input_tokens": 1072,
+            "cache_read_input_tokens": 88167,
+            "input_tokens": 2,
+            "output_tokens": 118
+          },
+          "view_chars": 8967,
+          "view_id": "T0.1-16",
+          "workspace_view_path": "artifacts/eval_suite/mee_ptxt_fable_l1/l1_goal_projection/mee_PTXT_security/r01/2026-06-10_2112_PTXT_security/iteration_1/node_memory/Tree_0_1/workspace_views/turn_015.json"
+        },
+        {
+          "action_submitted_at": "2026-06-11T04:17:52+00:00",
+          "action_time": "+02:26",
+          "agent_think": "4 s",
+          "agent_think_path": "",
+          "agent_think_seconds": 4.0,
+          "decision_followup_path": "artifacts/eval_suite/mee_ptxt_fable_l1/l1_goal_projection/mee_PTXT_security/r01/2026-06-10_2112_PTXT_security/iteration_1/node_memory/Tree_0_1/followups/turn_016.md",
+          "decision_state_summary": "complete / unknown / closed_candidate, 0 goals, goal 11 chars",
+          "decision_view_path": "artifacts/eval_suite/mee_ptxt_fable_l1/l1_goal_projection/mee_PTXT_security/r01/2026-06-10_2112_PTXT_security/iteration_1/node_memory/Tree_0_1/workspace_views/turn_016.json",
+          "deterministic_signals": [],
+          "goal_chars": 11,
+          "inspect_topics": [
+            "verify",
+            "goal_info"
+          ],
+          "intent": {
+            "intent": "finish"
+          },
+          "intent_summary": "finish",
+          "manager_action_summary": [
+            "finish"
+          ],
+          "manager_result_at": "2026-06-11T04:17:52+00:00",
+          "manager_result_path": "artifacts/eval_suite/mee_ptxt_fable_l1/l1_goal_projection/mee_PTXT_security/r01/2026-06-10_2112_PTXT_security/iteration_1/node_memory/Tree_0_1/manager_results/turn_017.json",
+          "manager_seconds": 0.0,
+          "manager_time": "",
+          "node": "Tree-0.1",
+          "node_dir": "artifacts/eval_suite/mee_ptxt_fable_l1/l1_goal_projection/mee_PTXT_security/r01/2026-06-10_2112_PTXT_security/iteration_1/node_memory/Tree_0_1",
+          "ok": true,
+          "result_followup_path": "artifacts/eval_suite/mee_ptxt_fable_l1/l1_goal_projection/mee_PTXT_security/r01/2026-06-10_2112_PTXT_security/iteration_1/node_memory/Tree_0_1/followups/turn_017.md",
+          "result_state_summary": "complete / unknown / closed_candidate, 0 goals, goal 11 chars",
+          "result_summary": "finish requested",
+          "result_view_path": "artifacts/eval_suite/mee_ptxt_fable_l1/l1_goal_projection/mee_PTXT_security/r01/2026-06-10_2112_PTXT_security/iteration_1/node_memory/Tree_0_1/workspace_views/turn_017.json",
+          "turn": 17,
+          "usage": {},
+          "view_chars": 8010,
+          "view_id": "T0.1-17",
+          "workspace_view_path": "artifacts/eval_suite/mee_ptxt_fable_l1/l1_goal_projection/mee_PTXT_security/r01/2026-06-10_2112_PTXT_security/iteration_1/node_memory/Tree_0_1/workspace_views/turn_016.json"
+        }
+      ],
+      "run_dir": "artifacts/eval_suite/mee_ptxt_fable_l1/l1_goal_projection/mee_PTXT_security/r01/2026-06-10_2112_PTXT_security/iteration_1",
+      "turn_count": 21
+    }
+  ],
+  "schema_version": 1
+}

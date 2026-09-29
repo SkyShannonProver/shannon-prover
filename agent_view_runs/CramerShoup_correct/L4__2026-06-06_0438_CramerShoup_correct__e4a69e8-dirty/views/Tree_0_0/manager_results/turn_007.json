@@ -1,0 +1,22 @@
+{
+  "turn": 7,
+  "handled_intent": {
+    "intent": "lookup_symbol",
+    "payload": {
+      "symbol": "log_bij"
+    }
+  },
+  "ok": true,
+  "manager_note": "Read-only context. Accepted/rejected tactic or call text inside a preview is route-selection information, not the current proof-state error.",
+  "manager_actions": [
+    {
+      "action": "symbol lookup",
+      "outcome": "The manager returned read-only context for the current goal.",
+      "timing": "960 ms",
+      "content": {
+        "preview": "[WHERE-HIT] log_bij (kind: lemma) * In [lemmas or axioms]: lemma log_bij: forall (x y : group), x = y <=> loge x = loge y."
+      }
+    }
+  ],
+  "view_refreshed": true
+}

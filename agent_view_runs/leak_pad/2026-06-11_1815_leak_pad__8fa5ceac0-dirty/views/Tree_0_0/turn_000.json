@@ -1,0 +1,32 @@
+{
+  "last_result": {},
+  "current_goal": {
+    "goal_type": "ambient",
+    "lines": [
+      "Current goal",
+      "",
+      "Type variables: <none>",
+      "",
+      "m: msg",
+      "t: tag",
+      "------------------------------------------------------------------------",
+      "size (pad m t) =",
+      "size (pad (mkseq (fun (_ : int) => zerow) (size m - size m %% 16)) t)"
+    ],
+    "source": {
+      "ground_truth": false,
+      "label": "Parsed from EasyCrypt pretty goal text"
+    },
+    "text_fully_shown": true,
+    "truncated": false,
+    "view_focus": "ambient_logic"
+  },
+  "proof_status": {
+    "current_layer": "ambient_logic",
+    "goal_type": "ambient",
+    "remaining_goals": 1,
+    "remaining_goals_known": true,
+    "status": "open",
+    "view_focus": "ambient_logic"
+  }
+}

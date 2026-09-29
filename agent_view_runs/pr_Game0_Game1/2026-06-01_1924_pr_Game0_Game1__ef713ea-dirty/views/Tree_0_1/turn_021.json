@@ -1,0 +1,47 @@
+{
+  "last_result": {
+    "intent": "undo_to_checkpoint",
+    "payload": {
+      "checkpoint_id": "cp_2_678ca75386b57599",
+      "confirm": true,
+      "confirmation_id": "c283d55bd4cf6507"
+    },
+    "kind": "checkpoint_rewind",
+    "message": "Rewound this branch to before committed tactic #2.",
+    "tactic_index": 2,
+    "committed_tactic": "proc.",
+    "undone_tactic_count": 7
+  },
+  "current_goal": {
+    "lines": [
+      "Current goal (remaining: 2)",
+      "",
+      "Type variables: <none>",
+      "",
+      "&m: {}",
+      "------------------------------------------------------------------------",
+      "pre = (glob A){1} = (glob A){2} /\\ LRO.m{1} = LRO.m{2}",
+      "",
+      "    BR93_CPA(A).main ~ Game1.main ",
+      "",
+      "post = res{1} = res{2} \\/ (Game1.r{2} \\in Log.qs{2})",
+      "[70|check]>"
+    ],
+    "text_fully_shown": true,
+    "truncated": false,
+    "goal_type": "equiv",
+    "view_focus": "relational_program",
+    "source": {
+      "label": "Parsed from EasyCrypt pretty goal text",
+      "ground_truth": false
+    }
+  },
+  "proof_status": {
+    "status": "open",
+    "remaining_goals": 2,
+    "remaining_goals_known": true,
+    "goal_type": "equiv",
+    "view_focus": "relational_program",
+    "current_layer": "prhl_module"
+  }
+}

@@ -1,0 +1,20 @@
+{
+  "turn": 28,
+  "handled_intent": {
+    "intent": "commit_tactic",
+    "payload": {
+      "tactic": "rcondf{2} 1; 1: (by auto => /#); by auto => />; smt(size_cat size_map nth_cat)."
+    }
+  },
+  "ok": true,
+  "manager_note": "Commit attempt did not change the committed EasyCrypt proof state; use the returned result and latest view before trying the next proof intent.",
+  "manager_actions": [
+    {
+      "action": "tactic commit",
+      "outcome": "EasyCrypt rejected the committed tactic. Use the error summary and current goal to revise the proof step.",
+      "timing": "5.2 s",
+      "error_summary": "[error] cannot prove goal (strict)"
+    }
+  ],
+  "view_refreshed": true
+}

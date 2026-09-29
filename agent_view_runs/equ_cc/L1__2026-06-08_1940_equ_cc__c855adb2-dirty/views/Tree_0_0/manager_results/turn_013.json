@@ -1,0 +1,19 @@
+{
+  "turn": 13,
+  "handled_intent": {
+    "intent": "commit_tactic",
+    "payload": {
+      "tactic": "auto; move=> &hr H; have hp1 : 1 <= size p{hr} by smt(size_eq0 size_ge0); have hc : size c{hr} = block_size * (i{hr} - 1) by smt(); have h1 : block_size * (i{hr} - 1) < C.max_counter * block_size by smt(max_cipher_size_ok); move: h1; rewrite (mulzC block_size (i{hr} - 1)) (IntOrder.ltr_pmul2r block_size gt0_block_size) => hb; smt(C.ofintdK)."
+    }
+  },
+  "ok": true,
+  "manager_note": "Committed tactic accepted; the EasyCrypt proof state changed.",
+  "manager_actions": [
+    {
+      "action": "tactic commit",
+      "outcome": "EasyCrypt accepted the committed tactic.",
+      "timing": "287 ms"
+    }
+  ],
+  "view_refreshed": true
+}

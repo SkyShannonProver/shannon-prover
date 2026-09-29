@@ -1,0 +1,23 @@
+{
+  "turn": 25,
+  "handled_intent": {
+    "intent": "inspect_context",
+    "payload": {
+      "topic": "tactic_forms",
+      "name": "rnd"
+    }
+  },
+  "ok": true,
+  "manager_note": "Read-only context. Accepted/rejected tactic or call text inside a preview is route-selection information, not the current proof-state error.",
+  "manager_actions": [
+    {
+      "action": "inspect tactic forms",
+      "outcome": "The manager returned read-only context for the current goal.",
+      "timing": "212 ms",
+      "content": {
+        "preview": "=== `rnd` tactic \u2014 argument forms === Current proof mode: ambient Form 1: rnd. Use when: Symmetric random sampling: both sides sample from the same distribution and EC can infer the coupling automatically (usually just identity). Example: rnd. Form 2: rnd (fun s => FWD(s)) (fun s => BWD(s)). Use when: Bijection coupling: the two samples are related by a bijection. Provide forward map and backward map. EC generates a subgoal to show FWD and BWD are mutual inverses. Example: rnd (fun s => s + mask) (fun s => s - mask). Note: THE key technique for game hops that shift/mask random samples. Look for it whenever a sampled value on one side equals the other side's sample plus a deterministic offset. Form 3: rnd{1}. / rnd{2}. Use when: Drop a one-sided sampling that's not present on the other side (dead-code elimination for randoms). Typical: LHS samples something the proof doesn't use, RHS doesn't sample. Example: rnd{1}. (* drop useless LHS sample *) Note: In branch-local pRHL surgery, it is also common to combine a one-sided drop with an aligned sample step, e.g. `rnd{2}; rnd.` when the RHS has an extra instrumentation sample before the shared sample. \u26a0\ufe0f Common mistake: Using `rnd.`..."
+      }
+    }
+  ],
+  "view_refreshed": true
+}

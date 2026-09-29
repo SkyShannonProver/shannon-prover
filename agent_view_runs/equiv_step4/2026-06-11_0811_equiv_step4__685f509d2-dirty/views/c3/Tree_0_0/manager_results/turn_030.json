@@ -1,0 +1,19 @@
+{
+  "turn": 30,
+  "handled_intent": {
+    "intent": "commit_tactic",
+    "payload": {
+      "tactic": "by move => &1 &2 h; exists UF.forged{2} UFCMA.bad2{2} UFCMA.cbad2{2} UFCMA.log{2} RO.m{2} Mem.lc{2} SplitC2.I2.RO.m{2} ns{2} ns1{2} ns2{2}; smt()."
+    }
+  },
+  "ok": true,
+  "manager_note": "Committed tactic accepted; the EasyCrypt proof state changed.",
+  "manager_actions": [
+    {
+      "action": "tactic commit",
+      "outcome": "EasyCrypt accepted the committed tactic.",
+      "timing": "389 ms"
+    }
+  ],
+  "view_refreshed": true
+}

@@ -1,0 +1,19 @@
+{
+  "turn": 7,
+  "handled_intent": {
+    "intent": "commit_tactic",
+    "payload": {
+      "tactic": "have eqSet : equiv [ROout.set ~ ROout.set : ={arg, SplitC2.I2.RO.m} ==> ={SplitC2.I2.RO.m}]; first by proc; auto."
+    }
+  },
+  "ok": true,
+  "manager_note": "Committed tactic accepted; the EasyCrypt proof state changed.",
+  "manager_actions": [
+    {
+      "action": "tactic commit",
+      "outcome": "EasyCrypt accepted the committed tactic.",
+      "timing": "477 ms"
+    }
+  ],
+  "view_refreshed": true
+}

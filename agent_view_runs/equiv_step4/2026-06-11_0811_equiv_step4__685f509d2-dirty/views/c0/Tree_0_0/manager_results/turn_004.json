@@ -1,0 +1,19 @@
+{
+  "turn": 4,
+  "handled_intent": {
+    "intent": "commit_tactic",
+    "payload": {
+      "tactic": "have Hsw : equiv [Iter(Orcl).iter_12 ~ Iter(Orcl).iter_21 : ={glob Orcl, t1, t2} ==> ={glob Orcl}]."
+    }
+  },
+  "ok": true,
+  "manager_note": "Committed tactic accepted; the EasyCrypt proof state changed.",
+  "manager_actions": [
+    {
+      "action": "tactic commit",
+      "outcome": "EasyCrypt accepted the committed tactic.",
+      "timing": "270 ms"
+    }
+  ],
+  "view_refreshed": true
+}

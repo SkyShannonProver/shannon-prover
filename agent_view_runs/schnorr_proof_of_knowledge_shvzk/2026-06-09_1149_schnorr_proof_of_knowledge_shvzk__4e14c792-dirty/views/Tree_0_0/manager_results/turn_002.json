@@ -1,0 +1,27 @@
+{
+  "turn": 2,
+  "handled_intent": {
+    "intent": "inspect_context",
+    "payload": {
+      "topic": "pr_bridge_routes"
+    }
+  },
+  "ok": true,
+  "manager_note": "Read-only context. Accepted/rejected tactic or call text inside a preview is route-selection information, not the current proof-state error.",
+  "manager_actions": [
+    {
+      "action": "inspect pr bridge routes",
+      "outcome": "Context returned.",
+      "timing": "1.2 s",
+      "content": {
+        "title": "Verified Pr Bridge Routes",
+        "notes": [
+          {
+            "message": "No runnable tactic is surfaced because the typed bridge frontend could not derive a candidate bridge from the current goal endpoints."
+          }
+        ]
+      }
+    }
+  ],
+  "view_refreshed": true
+}

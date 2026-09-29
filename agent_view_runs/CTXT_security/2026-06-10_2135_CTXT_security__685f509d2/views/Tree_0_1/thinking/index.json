@@ -1,0 +1,201 @@
+{
+  "node": "Tree-0.1",
+  "discovery": "recorded_session_id",
+  "transcripts": [
+    "~/.claude/projects/<PROJECT>--worktrees-mee-ctxt-l4np/32db57e0-fb2e-4cac-a35b-be9ba42eaabf.jsonl"
+  ],
+  "turns": [
+    {
+      "turn": 1,
+      "intent": "commit_tactic",
+      "payload_key": "rcondf{1} 1; first by auto. by wp; skip; smt().",
+      "thinking_chars": 0,
+      "text_chars": 124,
+      "tokens": {
+        "output_tokens": 1211,
+        "input_tokens": 5,
+        "cache_read_input_tokens": 62301,
+        "cache_creation_input_tokens": 66592
+      },
+      "session_id": "32db57e0-fb2e-4cac-a35b-be9ba42eaabf",
+      "timestamp": "2026-06-11T04:46:26.637Z",
+      "file": "thinking/turn_001.md"
+    },
+    {
+      "turn": 2,
+      "intent": "lookup_symbol",
+      "payload_key": "M_verify_ll",
+      "thinking_chars": 0,
+      "text_chars": 0,
+      "tokens": {
+        "output_tokens": 3800,
+        "input_tokens": 2,
+        "cache_read_input_tokens": 48784,
+        "cache_creation_input_tokens": 2129
+      },
+      "session_id": "32db57e0-fb2e-4cac-a35b-be9ba42eaabf",
+      "timestamp": "2026-06-11T04:47:21.116Z",
+      "file": ""
+    },
+    {
+      "turn": 3,
+      "intent": "commit_tactic",
+      "payload_key": "move=> &2 _; proc; inline *; sp; seq 1: true => //; first by call M_verify_ll.",
+      "thinking_chars": 0,
+      "text_chars": 0,
+      "tokens": {
+        "output_tokens": 1509,
+        "input_tokens": 2,
+        "cache_read_input_tokens": 50913,
+        "cache_creation_input_tokens": 4727
+      },
+      "session_id": "32db57e0-fb2e-4cac-a35b-be9ba42eaabf",
+      "timestamp": "2026-06-11T04:47:47.532Z",
+      "file": ""
+    },
+    {
+      "turn": 4,
+      "intent": "commit_tactic",
+      "payload_key": "by if; [wp; call E_dec_ll; auto | auto].",
+      "thinking_chars": 0,
+      "text_chars": 112,
+      "tokens": {
+        "output_tokens": 298,
+        "input_tokens": 2,
+        "cache_read_input_tokens": 55640,
+        "cache_creation_input_tokens": 3390
+      },
+      "session_id": "32db57e0-fb2e-4cac-a35b-be9ba42eaabf",
+      "timestamp": "2026-06-11T04:47:56.576Z",
+      "file": "thinking/turn_004.md"
+    },
+    {
+      "turn": 5,
+      "intent": "commit_tactic",
+      "payload_key": "move=> &1; proc; conseq (_: _ ==> true: =1%r) (_: MACa.SUF_CMA.SUF_Wrap.win ==> MACa.SUF_CMA.SUF_Wrap.win) => //.",
+      "thinking_chars": 0,
+      "text_chars": 0,
+      "tokens": {
+        "output_tokens": 1144,
+        "input_tokens": 2,
+        "cache_read_input_tokens": 59030,
+        "cache_creation_input_tokens": 2046
+      },
+      "session_id": "32db57e0-fb2e-4cac-a35b-be9ba42eaabf",
+      "timestamp": "2026-06-11T04:48:13.684Z",
+      "file": ""
+    },
+    {
+      "turn": 6,
+      "intent": "commit_tactic",
+      "payload_key": "inline *; wp; call (_: MACa.SUF_CMA.SUF_Wrap.win); auto.",
+      "thinking_chars": 0,
+      "text_chars": 0,
+      "tokens": {
+        "output_tokens": 634,
+        "input_tokens": 2,
+        "cache_read_input_tokens": 61076,
+        "cache_creation_input_tokens": 2953
+      },
+      "session_id": "32db57e0-fb2e-4cac-a35b-be9ba42eaabf",
+      "timestamp": "2026-06-11T04:48:27.355Z",
+      "file": ""
+    },
+    {
+      "turn": 7,
+      "intent": "commit_tactic",
+      "payload_key": "by smt().",
+      "thinking_chars": 0,
+      "text_chars": 72,
+      "tokens": {
+        "output_tokens": 170,
+        "input_tokens": 2,
+        "cache_read_input_tokens": 64029,
+        "cache_creation_input_tokens": 2958
+      },
+      "session_id": "32db57e0-fb2e-4cac-a35b-be9ba42eaabf",
+      "timestamp": "2026-06-11T04:48:32.423Z",
+      "file": "thinking/turn_007.md"
+    },
+    {
+      "turn": 8,
+      "intent": "commit_tactic",
+      "payload_key": "by inline *; wp; call M_verify_ll; auto.",
+      "thinking_chars": 0,
+      "text_chars": 111,
+      "tokens": {
+        "output_tokens": 239,
+        "input_tokens": 2,
+        "cache_read_input_tokens": 66987,
+        "cache_creation_input_tokens": 1923
+      },
+      "session_id": "32db57e0-fb2e-4cac-a35b-be9ba42eaabf",
+      "timestamp": "2026-06-11T04:48:38.169Z",
+      "file": "thinking/turn_008.md"
+    },
+    {
+      "turn": 9,
+      "intent": "commit_tactic",
+      "payload_key": "by wp; call (_: true); call (_: true); skip; smt(in_fset0).",
+      "thinking_chars": 0,
+      "text_chars": 196,
+      "tokens": {
+        "output_tokens": 604,
+        "input_tokens": 2,
+        "cache_read_input_tokens": 68910,
+        "cache_creation_input_tokens": 3138
+      },
+      "session_id": "32db57e0-fb2e-4cac-a35b-be9ba42eaabf",
+      "timestamp": "2026-06-11T04:48:52.270Z",
+      "file": "thinking/turn_009.md"
+    },
+    {
+      "turn": 10,
+      "intent": "finish",
+      "payload_key": "",
+      "thinking_chars": 0,
+      "text_chars": 58,
+      "tokens": {
+        "output_tokens": 124,
+        "input_tokens": 2,
+        "cache_read_input_tokens": 72048,
+        "cache_creation_input_tokens": 1710
+      },
+      "session_id": "32db57e0-fb2e-4cac-a35b-be9ba42eaabf",
+      "timestamp": "2026-06-11T04:48:56.527Z",
+      "file": "thinking/turn_010.md"
+    },
+    {
+      "turn": 11,
+      "intent": "commit_tactic",
+      "payload_key": "qed.",
+      "thinking_chars": 0,
+      "text_chars": 0,
+      "tokens": {
+        "output_tokens": 102,
+        "input_tokens": 2,
+        "cache_read_input_tokens": 73758,
+        "cache_creation_input_tokens": 1414
+      },
+      "session_id": "32db57e0-fb2e-4cac-a35b-be9ba42eaabf",
+      "timestamp": "2026-06-11T04:48:59.900Z",
+      "file": ""
+    },
+    {
+      "turn": 12,
+      "intent": "finish",
+      "payload_key": "",
+      "thinking_chars": 0,
+      "text_chars": 59,
+      "tokens": {
+        "output_tokens": 115,
+        "input_tokens": 2,
+        "cache_read_input_tokens": 75172,
+        "cache_creation_input_tokens": 1181
+      },
+      "session_id": "32db57e0-fb2e-4cac-a35b-be9ba42eaabf",
+      "timestamp": "2026-06-11T04:49:03.476Z",
+      "file": "thinking/turn_012.md"
+    }
+  ]
+}

@@ -1,0 +1,19 @@
+{
+  "turn": 6,
+  "handled_intent": {
+    "intent": "commit_tactic",
+    "payload": {
+      "tactic": "inline{1} RCPAa(RCPA_WUF_RCPA.RCPAa(MAC, A), QueryBounder(RCPAa(RCPA_WUF_RCPA.RCPAa(MAC, A)), CBCa.SKEa.RCPA.RCPA_Wrap(Random)).O').S.enc; inline{2} RCPAa(RCPA_WUF_RCPA.RCPAa(MAC, A), QueryBounder(RCPAa(RCPA_WUF_RCPA.RCPAa(MAC, A)), CBCa.SKEa.RCPA.RCPA_Wrap(CBCa.SKEa.RCPA.Ideal)).O').S.enc."
+    }
+  },
+  "ok": true,
+  "manager_note": "Committed tactic accepted; the EasyCrypt proof state changed.",
+  "manager_actions": [
+    {
+      "action": "tactic commit",
+      "outcome": "EasyCrypt accepted the committed tactic.",
+      "timing": "248 ms"
+    }
+  ],
+  "view_refreshed": true
+}

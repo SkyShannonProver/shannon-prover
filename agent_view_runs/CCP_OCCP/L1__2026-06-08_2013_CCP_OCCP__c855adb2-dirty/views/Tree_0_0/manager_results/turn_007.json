@@ -1,0 +1,19 @@
+{
+  "turn": 7,
+  "handled_intent": {
+    "intent": "commit_tactic",
+    "payload": {
+      "tactic": "seq 1 1 : (={n, a, p, k, glob I, glob OCC})."
+    }
+  },
+  "ok": true,
+  "manager_note": "Committed tactic accepted; the EasyCrypt proof state changed.",
+  "manager_actions": [
+    {
+      "action": "tactic commit",
+      "outcome": "EasyCrypt accepted the committed tactic.",
+      "timing": "307 ms"
+    }
+  ],
+  "view_refreshed": true
+}

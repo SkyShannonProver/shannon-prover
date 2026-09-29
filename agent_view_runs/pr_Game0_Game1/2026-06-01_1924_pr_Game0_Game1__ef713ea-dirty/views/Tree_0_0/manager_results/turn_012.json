@@ -1,0 +1,19 @@
+{
+  "turn": 12,
+  "handled_intent": {
+    "intent": "commit_tactic",
+    "payload": {
+      "tactic": "call (_ : ={Log.qs} /\\ eq_except (pred1 Game1.r{2}) LRO.m{1} LRO.m{2})."
+    }
+  },
+  "ok": true,
+  "manager_note": "Committed tactic accepted; the EasyCrypt proof state changed.",
+  "manager_actions": [
+    {
+      "action": "tactic commit",
+      "outcome": "EasyCrypt accepted the committed tactic.",
+      "timing": "281 ms"
+    }
+  ],
+  "view_refreshed": true
+}

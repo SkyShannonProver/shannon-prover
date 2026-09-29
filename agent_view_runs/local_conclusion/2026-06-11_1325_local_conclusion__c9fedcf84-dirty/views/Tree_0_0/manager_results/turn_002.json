@@ -1,0 +1,19 @@
+{
+  "turn": 2,
+  "handled_intent": {
+    "intent": "commit_tactic",
+    "payload": {
+      "tactic": "have <-: Pr[CBCa.SKEa.RCPA.INDR_CPA(Random, QueryBounder(RCPAa(RCPA_WUF_RCPA.RCPAa(MAC, A)))).main() @ &m : res] = Pr[CBCa.SKEa.RCPA.INDR_CPA(CBCa.SKEa.RCPA.Ideal, QueryBounder(RCPAa(RCPA_WUF_RCPA.RCPAa(MAC, A)))).main() @ &m : res]."
+    }
+  },
+  "ok": true,
+  "manager_note": "Committed tactic accepted; the EasyCrypt proof state changed.",
+  "manager_actions": [
+    {
+      "action": "tactic commit",
+      "outcome": "EasyCrypt accepted the committed tactic.",
+      "timing": "487 ms"
+    }
+  ],
+  "view_refreshed": true
+}

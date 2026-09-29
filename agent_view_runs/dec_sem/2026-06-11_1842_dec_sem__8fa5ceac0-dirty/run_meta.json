@@ -1,0 +1,34 @@
+{
+  "kind": "agent_view_run_report",
+  "timestamp": "2026-06-11_1842_dec_sem",
+  "lemma": "dec_sem",
+  "source_file": "eval/examples/MEE-CBC/RCPA_CMA.ec",
+  "model": "claude-fable-5",
+  "surface_profile": "l1_goal_projection",
+  "trees": 2,
+  "eval_mode": true,
+  "outcome": "incomplete (timeout/open)",
+  "committed_proofs": [
+    {
+      "tree": "Tree_0_0",
+      "tactics": [],
+      "source": "timeline_replay",
+      "replay_prefix_count": 0,
+      "proved": false
+    },
+    {
+      "tree": "Tree_0_1",
+      "tactics": [],
+      "source": "timeline_replay",
+      "replay_prefix_count": 0,
+      "proved": false
+    }
+  ],
+  "turn_count": 0,
+  "views_copied": 2,
+  "run_iteration_dir": "artifacts/eval_suite/mee_sweep_l1_v2/l1_goal_projection/mee_dec_sem/r01/2026-06-11_1842_dec_sem/iteration_1",
+  "commit": "8fa5ceac0",
+  "commit_full": "8fa5ceac0a4c7ed08e53023adcaade43f89a6de8",
+  "branch": "mcp-v0",
+  "dirty": true
+}

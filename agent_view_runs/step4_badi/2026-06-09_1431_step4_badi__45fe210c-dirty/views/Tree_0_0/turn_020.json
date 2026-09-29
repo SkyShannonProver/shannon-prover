@@ -1,0 +1,361 @@
+{
+  "last_result": {
+    "intent": "commit_tactic",
+    "payload": {
+      "tactic": "smt(size_cat size_map nth_cat nth_map size_ge0)."
+    },
+    "manager_action": "commit_tactic",
+    "result": "EasyCrypt rejected the committed tactic. Use the error summary and current goal to revise the proof step.",
+    "effect": "The manager attempted to commit a tactic; use the result and latest goal to decide what changed.",
+    "proof_state": "The committed EasyCrypt proof state was not changed.",
+    "tactic": "smt(size_cat size_map nth_cat nth_map size_ge0).",
+    "error_summary": "[error] cannot prove goal (strict)"
+  },
+  "current_goal": {
+    "lines": [
+      "Current goal (remaining: 5)",
+      "",
+      "Type variables: <none>",
+      "",
+      "&m: {}",
+      "nth0: int",
+      "h0nth0: 0 <= nth0",
+      "hnth0q: nth0 < qdec",
+      "------------------------------------------------------------------------",
+      "forall &2,",
+      "  (nth0 < size UFCMA_l.lbad1{2} =>",
+      "   (nth (w1, w2) UFCMA_l.lbad1{2} nth0).`1 =",
+      "   (nth (w1, w2) UFCMA_l.lbad1{2} nth0).`2 => UFCMA_li.badi{2}) =>",
+      "  UFCMA.cbad1{2} < qenc =>",
+      "  size lt{2} <= qdec =>",
+      "  size UFCMA_l.lbad1{2} <= nth0 =>",
+      "  nth0 < size UFCMA_l.lbad1{2} + size lt{2} =>",
+      "  forall (t1 : poly_out),",
+      "    t1 \\in dpoly_out =>",
+      "    forall (tL : poly_out),",
+      "      tL \\in dpoly_out =>",
+      "      ((if nth0 < size UFCMA_l.lbad1{2} then 1 else 0) + 1 =",
+      "       if nth0 <",
+      "          size (UFCMA_l.lbad1{2} ++ map (fun (t' : tag) => (tL, t')) lt{2})",
+      "         then 1",
+      "       else 0) /\\",
+      "      (nth0 <",
+      "       size (UFCMA_l.lbad1{2} ++ map (fun (t' : tag) => (tL, t')) lt{2}) =>",
+      "       (nth (w1, w2)",
+      "          (UFCMA_l.lbad1{2} ++ map (fun (t' : tag) => (tL, t')) lt{2}) nth0).`1 =",
+      "       (nth (w1, w2)",
+      "          (UFCMA_l.lbad1{2} ++ map (fun (t' : tag) => (tL, t')) lt{2}) nth0).`2 =>",
+      "       UFCMA_li.badi{2} ||",
+      "       tL = nth witness<:tag> lt{2} (nth0 - size UFCMA_l.lbad1{2}))",
+      "[437|check]>"
+    ],
+    "text_fully_shown": true,
+    "truncated": false,
+    "goal_type": "ambient",
+    "view_focus": "ambient_logic",
+    "source": {
+      "label": "Parsed from EasyCrypt pretty goal text",
+      "ground_truth": false
+    }
+  },
+  "proof_status": {
+    "status": "open",
+    "remaining_goals": 5,
+    "remaining_goals_known": true,
+    "goal_type": "ambient",
+    "view_focus": "ambient_logic",
+    "current_layer": "ambient_logic"
+  },
+  "candidate_moves": {
+    "moves": [
+      {
+        "title": "Read-only tactic probe",
+        "category": "probe",
+        "tactic": "move=> &2 H.",
+        "applicability": "This tactic-shaped option should be checked with a read-only probe before committing it.",
+        "effect": "This is a read-only probe; it asks EasyCrypt what would happen without changing the committed proof state.",
+        "source": "proof-state analysis",
+        "derivation": "read-only probe surfaced from proof-state analysis",
+        "verified": "read_only_probe_suggestion",
+        "guarantee": "read-only probe shape; proof state unchanged; probe then decide; reversible"
+      },
+      {
+        "title": "Residual closing tactic",
+        "category": "probe",
+        "tactic": "auto => />.",
+        "applicability": "This tactic-shaped option should be checked with a read-only probe before committing it.",
+        "effect": "This is a read-only probe; it asks EasyCrypt what would happen without changing the committed proof state.",
+        "source": "proof-state analysis",
+        "derivation": "read-only probe surfaced from proof-state analysis",
+        "verified": "read_only_probe_suggestion",
+        "guarantee": "read-only probe shape; proof state unchanged; probe then decide; reversible"
+      },
+      {
+        "title": "Read-only tactic probe",
+        "category": "probe",
+        "tactic": "smt().",
+        "applicability": "This tactic-shaped option should be checked with a read-only probe before committing it.",
+        "effect": "This is a read-only probe; it asks EasyCrypt what would happen without changing the committed proof state.",
+        "source": "proof-state analysis",
+        "derivation": "read-only probe surfaced from proof-state analysis",
+        "verified": "read_only_probe_suggestion",
+        "guarantee": "read-only probe shape; proof state unchanged; probe then decide; reversible"
+      }
+    ]
+  },
+  "program_frontier": {
+    "authority": "proof-state analysis",
+    "view_focus": "ambient_logic"
+  },
+  "call_site_surface": {},
+  "pure_tail_surface": {
+    "state": "quantified_ambient_tail",
+    "goal_operators": [
+      "size",
+      "UFCMA_l.lbad1",
+      "nth",
+      "w1",
+      "w2",
+      "UFCMA_li.badi",
+      "UFCMA.cbad1",
+      "qenc"
+    ],
+    "visible_hypotheses": [
+      "h0nth0: 0 <= nth0",
+      "hnth0q: nth0 < qdec"
+    ],
+    "obligation_families": [
+      {
+        "family": "sampling_bijection",
+        "evidence": [
+          "distribution or lossless token remains visible",
+          "add/sub expression remains visible"
+        ],
+        "effect": "The remaining pure goal may include invertibility or lossless side conditions from an earlier sampling alignment.",
+        "limitations": "No distribution lemma is selected by this surface."
+      },
+      {
+        "family": "constructor_projection",
+        "selectors": [
+          ".`1",
+          ".`2"
+        ],
+        "tuple_equality_count": 2,
+        "effect": "The pure goal exposes tuple/record projections or constructor equalities that can connect program variables to map/list keys.",
+        "limitations": "Projection equalities are reported only when visible in the current text."
+      },
+      {
+        "family": "quantified_residual_logic",
+        "evidence": [
+          "universal quantifier visible",
+          "implication residual visible"
+        ],
+        "effect": "The current proof point is dominated by local logical obligations rather than program-frontier movement.",
+        "limitations": "Quantifier names are not normalized across EasyCrypt pretty-printer variants."
+      }
+    ],
+    "ambient_memory_translation": {
+      "state": "decorated_memory_terms_visible",
+      "visible_decorations": [
+        "{2}"
+      ],
+      "translation_facts": [
+        "Decorations identify the program memory from which a term is read.",
+        "Pretty-printer memory names and introduced proof-context names can differ."
+      ],
+      "effect": "Local claims in the pure tail depend on the currently introduced memory binders as well as displayed term decorations."
+    },
+    "membership_decomposition_surface": {
+      "source_shapes": [
+        "concat_membership",
+        "map_membership"
+      ],
+      "membership_hypotheses": [
+        "t1 \\in dpoly_out =>",
+        "tL \\in dpoly_out => ((if nth0 < size UFCMA_l.lbad1{2} then 1 else 0) + 1 ="
+      ],
+      "visible_destructors": [
+        {
+          "source_shape": "concat_membership",
+          "source_count": 4,
+          "effect": "Separates a membership fact into left-source and right-source cases.",
+          "limitations": "This records the case shape only; no branch is selected."
+        },
+        {
+          "source_shape": "map_membership",
+          "source_count": 4,
+          "effect": "Exposes a preimage term for a mapped membership source.",
+          "limitations": "The concrete preimage name depends on the local proof context."
+        }
+      ],
+      "effect": "Summarizes list/map/filter membership sources whose local case facts are visible in the current pure tail.",
+      "limitations": [
+        "No destructor tactic is chosen by this surface.",
+        "The panel does not assume which membership branch is true."
+      ]
+    },
+    "effect": "Summarizes verifier-visible pure-goal structure after program frontier actions have been discharged or hidden by local proof steps.",
+    "limitations": [
+      "This panel records syntactic and proof-state facts from the current view.",
+      "It does not choose a tactic or instantiate a lemma."
+    ]
+  },
+  "application_context": {},
+  "facts_and_diagnostics": {
+    "facts": {
+      "unfoldable_goal_head_count": 0
+    },
+    "fact_note": "Only current-frontier facts are shown here; the full proof context artifact keeps the compiler/internal details."
+  },
+  "recovery_diagnosis_surface": {
+    "kind": "recovery_diagnosis_surface",
+    "recovery_class": "local_pure_surgery_available",
+    "confidence": "medium",
+    "checkpoint_policy": "current_state_local_work_visible",
+    "evidence": [
+      "pure_tail_surface is visible for the current goal",
+      "current proof state has no program-frontier work before the logical residual"
+    ],
+    "available_local_work": [
+      {
+        "kind": "pure_tail_obligation_families",
+        "items": [
+          "sampling_bijection",
+          "constructor_projection",
+          "quantified_residual_logic"
+        ]
+      },
+      {
+        "kind": "membership_decomposition_sources",
+        "items": [
+          "concat_membership",
+          "map_membership"
+        ]
+      }
+    ],
+    "related_surfaces": [
+      "pure_tail_surface",
+      "structural_checkpoints"
+    ],
+    "limitations": [
+      "does not select a destructor, witness, rewrite, or SMT lemma",
+      "reported checkpoints are recovery references, not a default route"
+    ]
+  },
+  "inspect_lookup_handles": {
+    "effect": "All handles here are read-only manager requests; the committed EasyCrypt proof state stays unchanged.",
+    "manager_note": "Some requests may ask EasyCrypt or name resolution; wait for the manager result before choosing the next proof intent.",
+    "ask_manager_for": [
+      {
+        "intent": "inspect_context",
+        "payload": {
+          "topic": "diagnose"
+        },
+        "use_when": "The latest transition recorded an error.",
+        "returns": "manager-provided read-only context for this proof route"
+      },
+      {
+        "intent": "inspect_context",
+        "payload": {
+          "topic": "goal_info"
+        },
+        "use_when": "Need parsed goal shape, resolved names, or KB pattern hints.",
+        "returns": "parsed goal structure and names"
+      },
+      {
+        "intent": "inspect_context",
+        "payload": {
+          "topic": "lemma_hints"
+        },
+        "use_when": "Need local or standard-library lemma names before rewriting a pure goal.",
+        "returns": "nearby lemma hints and qualified-name lookup guidance"
+      },
+      {
+        "intent": "inspect_context",
+        "payload": {
+          "topic": "tactic_forms",
+          "name": "rewrite"
+        },
+        "use_when": "Need the valid EasyCrypt form for rewrite, apply, conseq, while, or SMT setup.",
+        "returns": "valid tactic forms and common traps"
+      }
+    ]
+  },
+  "structural_checkpoints": {
+    "items": [
+      {
+        "checkpoint_id": "cp_19_c4626f364d91fd16",
+        "semantic_id": "before_call_obligation_work",
+        "semantic_ids": [
+          "before_call_obligation_work"
+        ],
+        "label": "Before latest call-obligation tactic #19",
+        "committed_step_index": 19,
+        "committed_tactic": "wp; rnd; wp; rnd{2}; skip => />.",
+        "restored_proof_layer": "call_obligation",
+        "restored_affordances": {
+          "call_route": "committed",
+          "call_obligation": "preserved",
+          "later_local_work": "not_committed"
+        },
+        "undo_scope": "call_obligation_local",
+        "why_checkpoint": "call-obligation local boundary; selecting it keeps the opened call obligation and removes later local work",
+        "effect_if_selected": "Undo committed tactic #19 and every committed tactic after it in this node.",
+        "submit": {
+          "intent": "undo_to_checkpoint",
+          "payload": {
+            "checkpoint_id": "cp_19_c4626f364d91fd16"
+          }
+        }
+      },
+      {
+        "checkpoint_id": "cp_16_c4626f364d91fd16",
+        "semantic_id": "after_call_opened",
+        "semantic_ids": [
+          "after_call_opened",
+          "last_call_site_boundary"
+        ],
+        "label": "Before inline expansion #16",
+        "committed_step_index": 16,
+        "committed_tactic": "inline UFCMA_li.set_bad1i.",
+        "restored_proof_layer": "pre_inline_frontier",
+        "restored_affordances": {
+          "call_site_handles": "as_before_inline"
+        },
+        "undo_scope": "call_site_boundary",
+        "why_checkpoint": "inline boundary; selecting it restores the proof state before this expansion",
+        "effect_if_selected": "Undo committed tactic #16 and every committed tactic after it in this node.",
+        "submit": {
+          "intent": "undo_to_checkpoint",
+          "payload": {
+            "checkpoint_id": "cp_16_c4626f364d91fd16"
+          }
+        }
+      },
+      {
+        "checkpoint_id": "cp_15_c4626f364d91fd16",
+        "semantic_id": "before_call_route",
+        "semantic_ids": [
+          "before_call_route"
+        ],
+        "label": "Before committed tactic #15",
+        "committed_step_index": 15,
+        "committed_tactic": "call (: ={UFCMA.cbad1, UFCMA_l.lbad1} /\\ UFCMA_li.i{2} = nth0 /\\ (UFCMA_li.cbadi{2} = if nth0 < size UFCMA_l.lbad1{2} then 1 else 0) /\\ (nth0 < size UFCMA_l.lbad1{2} => (nth (w1, w2) UFCMA_l.lbad1{2} nth0).`1 = (nth (w1, w2) UFCMA_l.lbad1{2} nth0).`2 => UFCMA_li.badi{2})).",
+        "restored_proof_layer": "pre_call_route",
+        "restored_affordances": {
+          "call_route": "not_committed",
+          "call_obligation_work": "not_committed"
+        },
+        "undo_scope": "call_local",
+        "why_checkpoint": "named call route point",
+        "effect_if_selected": "Undo committed tactic #15 and every committed tactic after it in this node.",
+        "submit": {
+          "intent": "undo_to_checkpoint",
+          "payload": {
+            "checkpoint_id": "cp_15_c4626f364d91fd16"
+          }
+        }
+      }
+    ]
+  }
+}

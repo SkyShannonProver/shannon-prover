@@ -1,0 +1,19 @@
+{
+  "turn": 19,
+  "handled_intent": {
+    "intent": "commit_tactic",
+    "payload": {
+      "tactic": "auto => />; smt(cbc_enc_rcons take_nth size_take cats1 cat_cons size_cat nth_rcons size_cbc_enc)."
+    }
+  },
+  "ok": true,
+  "manager_note": "Committed tactic accepted; the EasyCrypt proof state changed.",
+  "manager_actions": [
+    {
+      "action": "tactic commit",
+      "outcome": "EasyCrypt accepted the committed tactic.",
+      "timing": "211 ms"
+    }
+  ],
+  "view_refreshed": true
+}

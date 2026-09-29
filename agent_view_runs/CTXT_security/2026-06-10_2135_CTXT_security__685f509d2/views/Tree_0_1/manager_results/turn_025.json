@@ -1,0 +1,22 @@
+{
+  "turn": 25,
+  "handled_intent": {
+    "intent": "lookup_symbol",
+    "payload": {
+      "symbol": "M_verify_ll"
+    }
+  },
+  "ok": true,
+  "manager_note": "Read-only context. Accepted/rejected tactic or call text inside a preview is route-selection information, not the current proof-state error.",
+  "manager_actions": [
+    {
+      "action": "symbol lookup",
+      "outcome": "The manager returned read-only context for the current goal.",
+      "timing": "2.3 s",
+      "content": {
+        "preview": "[WHERE-HIT] M_verify_ll (kind: axiom) * In [lemmas or axioms]: declare axiom M_verify_ll: islossless M.verify. [AMBIGUOUS] M_verify_ll also resolves in 1 other clone instance(s): - RCPA_SUF_CTXT.M_verify_ll (kind: axiom) declare axiom M_verify_ll: islossless M.verify. \u2192 If your goal references one specifically, use the qualified name. Re-run `-where Foo.M_verify_ll` to get its body."
+      }
+    }
+  ],
+  "view_refreshed": true
+}

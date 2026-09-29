@@ -1,0 +1,19 @@
+{
+  "turn": 10,
+  "handled_intent": {
+    "intent": "commit_tactic",
+    "payload": {
+      "tactic": "exists* OCC.gs{1}, k{1}, n{1}, p{1}; elim* => gs1 k1 n1 p1; call{1} (chacha_spec k1 n1 p1 gs1)."
+    }
+  },
+  "ok": true,
+  "manager_note": "Committed tactic accepted; the EasyCrypt proof state changed.",
+  "manager_actions": [
+    {
+      "action": "tactic commit",
+      "outcome": "EasyCrypt accepted the committed tactic.",
+      "timing": "272 ms"
+    }
+  ],
+  "view_refreshed": true
+}

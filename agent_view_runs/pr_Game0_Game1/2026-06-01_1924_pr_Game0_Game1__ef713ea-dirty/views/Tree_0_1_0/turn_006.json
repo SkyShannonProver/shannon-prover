@@ -1,0 +1,72 @@
+{
+  "last_result": {
+    "intent": "commit_tactic",
+    "payload": {
+      "tactic": "by proc; inline*; auto."
+    },
+    "manager_action": "commit_tactic",
+    "result": "EasyCrypt accepted the committed tactic.",
+    "effect": "EasyCrypt accepted a proof-state change; the refreshed view is based on the new committed state.",
+    "proof_state": "The committed EasyCrypt proof state changed.",
+    "tactic": "by proc; inline*; auto."
+  },
+  "current_goal": {
+    "lines": [
+      "Current goal (remaining: 3)",
+      "",
+      "Type variables: <none>",
+      "",
+      "&m: {}",
+      "------------------------------------------------------------------------",
+      "&1 (left ) : {b, b' : bool, m0, m1, m, h, r0 : ptxt, r, x : rand,",
+      "             c : rand * ptxt, pk, pk0 : pkey, sk : skey, kp : pkey * skey}",
+      "&2 (right) : {b, b' : bool, m0, m1, h : ptxt, c : rand * ptxt, pk : pkey,",
+      "             sk : skey}",
+      "",
+      "pre = (glob A){1} = (glob A){2} /\\ LRO.m{1} = LRO.m{2}",
+      "",
+      "Log(LRO).init()            (1)  Log(LRO).init()          ",
+      "kp <$ dkeys                (2)  (pk, sk) <$ dkeys        ",
+      "(pk, sk) <- kp             (3)                           ",
+      "",
+      "post =",
+      "  (pk{1} = pk{2} /\\",
+      "   (glob A){1} = (glob A){2} /\\ Log.qs{1} = Log.qs{2} /\\ LRO.m{1} = LRO.m{2}) &&",
+      "  forall (result_L result_R : ptxt * ptxt) (A_L : (glob A))",
+      "    (qs_L : rand list) (m_L : (rand, ptxt) fmap) (A_R : (glob A))",
+      "    (qs_R : rand list) (m_R : (rand, ptxt) fmap),",
+      "    result_L = result_R /\\ A_L = A_R /\\ qs_L = qs_R /\\ m_L = m_R =>",
+      "    let m0_L = result_L.`1 in",
+      "    let m1_L = result_L.`2 in",
+      "    (forall (bR : bool), bR \\in {0,1} => bR = bR) &&",
+      "    forall (bL : bool),",
+      "      bL \\in {0,1} =>",
+      "      bL = bL &&",
+      "      (A_L = A_R /\\",
+      "       qs_L = qs_R /\\",
+      "       m_L = m_R /\\",
+      "       bL = bL /\\",
+      "       pk{1} = pk{2} /\\",
+      "       sk{1} = sk{2} /\\ m0_L = result_R.`1 /\\ m1_L = result_R.`2) /\\",
+      "      pk{1} = pk{1} /\\",
+      "      (if bL then m0_L else m1_L) = if bL then m0_L else m1_L",
+      "[78|check]>"
+    ],
+    "text_fully_shown": true,
+    "truncated": false,
+    "goal_type": "pRHL",
+    "view_focus": "seq_cut",
+    "source": {
+      "label": "Parsed from EasyCrypt pretty goal text",
+      "ground_truth": false
+    }
+  },
+  "proof_status": {
+    "status": "open",
+    "remaining_goals": 3,
+    "remaining_goals_known": true,
+    "goal_type": "pRHL",
+    "view_focus": "seq_cut",
+    "current_layer": "procedure_body"
+  }
+}

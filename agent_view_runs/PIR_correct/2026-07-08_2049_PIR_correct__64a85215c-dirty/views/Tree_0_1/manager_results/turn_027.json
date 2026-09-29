@@ -1,0 +1,20 @@
+{
+  "turn": 27,
+  "handled_intent": {
+    "intent": "commit_tactic",
+    "payload": {
+      "tactic": "rewrite !big_cat big_consT."
+    }
+  },
+  "ok": true,
+  "manager_note": "Committed tactic accepted; the EasyCrypt proof state changed.",
+  "manager_actions": [
+    {
+      "action": "tactic commit",
+      "outcome": "EasyCrypt accepted the committed tactic.",
+      "timing": "140 ms"
+    }
+  ],
+  "view_refreshed": true,
+  "surface_turn_hash": "077d9ff77507434f78984fdefe65b18b4da1c0bc"
+}

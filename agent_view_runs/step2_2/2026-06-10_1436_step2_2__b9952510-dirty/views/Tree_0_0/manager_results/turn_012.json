@@ -1,0 +1,18 @@
+{
+  "turn": 12,
+  "handled_intent": {
+    "intent": "inspect_context",
+    "payload": {
+      "topic": "propose_invariant"
+    }
+  },
+  "ok": true,
+  "manager_note": "Read-only context. Accepted/rejected tactic or call text inside a preview is route-selection information, not the current proof-state error.",
+  "manager_actions": [
+    {
+      "action": "inspect context",
+      "outcome": "The manager action did not complete successfully."
+    }
+  ],
+  "view_refreshed": true
+}

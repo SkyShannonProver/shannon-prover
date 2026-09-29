@@ -1,0 +1,22 @@
+{
+  "turn": 16,
+  "handled_intent": {
+    "intent": "lookup_symbol",
+    "payload": {
+      "symbol": "logDr"
+    }
+  },
+  "ok": true,
+  "manager_note": "Read-only context. Accepted/rejected tactic or call text inside a preview is route-selection information, not the current proof-state error.",
+  "manager_actions": [
+    {
+      "action": "symbol lookup",
+      "outcome": "The manager returned read-only context for the current goal.",
+      "timing": "957 ms",
+      "content": {
+        "preview": "[WHERE-HIT] logDr (kind: lemma) * In [lemmas or axioms]: lemma logDr: forall (x y : group), loge (x * y) = loge x + loge y. (* DH.G.logDr *) lemma logDr: forall (x y : group), log (x * y) = IntDiv.(%%) (log x + log y) order."
+      }
+    }
+  ],
+  "view_refreshed": true
+}

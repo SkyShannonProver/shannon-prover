@@ -1,0 +1,59 @@
+## 🎯 Current Goal
+```
+Current goal (remaining: 4)
+
+Type variables: <none>
+
+_mk: mK
+_ek: block
+_p: msg
+_c: block list
+------------------------------------------------------------------------
+Context : hr: {i : int, ek, s, pi, k0, x : block, p', c : block list,
+              t : tag, p, m : msg, mk, k : mK, key : block * mK}
+
+pre =
+  (ek = _ek /\ p' = pad _p (hmac_sha256 _mk _p) /\ c = [s] /\ i = 0) /\
+  s :: cbc_enc AES _ek s p' = _c
+
+
+post =
+  (0 <= i <= size p' /\
+   ek = _ek /\
+   size c = i + 1 /\
+   c =
+   head witness<:block> c :: cbc_enc AES _ek (head witness<:block> c)
+                               (take i p') /\
+   s = nth witness<:block> c i /\
+   head witness<:block> c :: cbc_enc AES _ek (head witness<:block> c) p' = _c) /\
+  forall (c0 : block list) (i0 : int) (s0 : block),
+    ! i0 < size p' =>
+    0 <= i0 <= size p' /\
+    ek = _ek /\
+    size c0 = i0 + 1 /\
+    c0 =
+    head witness<:block> c0 :: cbc_enc AES _ek (head witness<:block> c0)
+                                 (take i0 p') /\
+    s0 = nth witness<:block> c0 i0 /\
+    head witness<:block> c0 :: cbc_enc AES _ek (head witness<:block> c0) p' =
+    _c => c0 = _c
+
+[225|check]>
+```
+
+**Last action:** `smt(cbc_enc_rcons take_nth size_take cats1 cat_cons size_cat nth_rcons size_cbc…` — EasyCrypt accepted the committed tactic. (The committed EasyCrypt proof state changed.)
+
+---
+
+Submit exactly ONE proof intent via the `submit_proof_intent` MCP tool (only `intent` + `payload`; no node ids, hashes, request ids, or reasoning fields).
+
+### Legal Node Memory Anchor
+
+LEGAL_NODE_MEMORY_DIR: `artifacts/eval_suite/mee_samples_fable_l1/l1_goal_projection/mee_encrypt_correct/r01/2026-06-10_2159_mee_encrypt_correct/iteration_1/node_memory/Tree_0_0`
+LEGAL_LATEST_WORKSPACE_VIEW: `artifacts/eval_suite/mee_samples_fable_l1/l1_goal_projection/mee_encrypt_correct/r01/2026-06-10_2159_mee_encrypt_correct/iteration_1/node_memory/Tree_0_0/latest_workspace_view.json`
+LEGAL_LATEST_MANAGER_RESULT: `artifacts/eval_suite/mee_samples_fable_l1/l1_goal_projection/mee_encrypt_correct/r01/2026-06-10_2159_mee_encrypt_correct/iteration_1/node_memory/Tree_0_0/latest_manager_result.json`
+LEGAL_LATEST_FOLLOWUP: `artifacts/eval_suite/mee_samples_fable_l1/l1_goal_projection/mee_encrypt_correct/r01/2026-06-10_2159_mee_encrypt_correct/iteration_1/node_memory/Tree_0_0/latest_followup.md`
+
+Compaction recovery: if these exact paths are missing from your context, refresh through `submit_proof_intent` with `{"intent":"inspect_context","payload":{"topic":"goal_info"}}` instead of using shell directory discovery for proof-state artifacts.
+
+The current goal above is your complete surface. `LEGAL_LATEST_WORKSPACE_VIEW` is the manager's audit file, not part of your surface — you do not need to open it.

@@ -1,0 +1,22 @@
+{
+  "turn": 9,
+  "handled_intent": {
+    "intent": "lookup_symbol",
+    "payload": {
+      "symbol": "C.insubdK"
+    }
+  },
+  "ok": true,
+  "manager_note": "Read-only context. Accepted/rejected tactic or call text inside a preview is route-selection information, not the current proof-state error.",
+  "manager_actions": [
+    {
+      "action": "symbol lookup",
+      "outcome": "The manager returned read-only context for the current goal.",
+      "timing": "1.3 s",
+      "content": {
+        "preview": "[WHERE-MISS] C.insubdK not found. tried: C.insubdK, MB.C.insubdK, NonceCount.C.insubdK, Poly_in.C.insubdK, Poly_out.C.insubdK, TPoly.C.insubdK, Extra_block.C.insubdK, Block.C.insubdK, FiniteRO.C.insubdK, Indist.C.insubdK, OpCCinit.C.insubdK, OpCCRO.C.insubdK, CCA_UFCMA.C.insubdK, Split0.C.insubdK, SplitD.C.insubdK, SplitC1.C.insubdK, Split1.C.insubdK, SplitC2.C.insubdK, Byte.C.insubdK, Key.C.insubdK, Nonce.C.insubdK, C.C.insubdK, MB.I1.C.insubdK, MB.I2.C.insubdK, MB.RO.C.insubdK, MB.RO_Pair.C.insubdK, MB.ROF.C.insubdK, MB.ROin.C.insubdK, MB.ROout.C.insubdK, NonceCount.I1.C.insubdK, NonceCount.I2.C.insubdK hint: no declaration resolved in the current EasyCrypt context or source-scan fallback. Use a more exact qualified name, or ask the manager for `goal_info` / `lemma_hints` before trying to apply it."
+      }
+    }
+  ],
+  "view_refreshed": true
+}

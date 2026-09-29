@@ -1,0 +1,27 @@
+{
+  "turn": 7,
+  "handled_intent": {
+    "intent": "inspect_context",
+    "payload": {
+      "topic": "call_invariant_skeleton"
+    }
+  },
+  "ok": true,
+  "manager_note": "Read-only context. Accepted/rejected tactic or call text inside a preview is route-selection information, not the current proof-state error.",
+  "manager_actions": [
+    {
+      "action": "inspect call invariant skeleton",
+      "outcome": "The manager returned read-only context for the current goal.",
+      "timing": "250 ms",
+      "content": {
+        "title": "Call-Invariant Glob Skeleton",
+        "items": [
+          {
+            "why": "Named predicates that mention your goal's state (lookup_symbol for each definition): make_lbad1, inv_lbad1, inv_lbad1_i. No mechanical `={glob}` frame applies at this call \u2014 build the call invariant from THIS development's own in-scope predicates (an invariant conjunct can be a guarded implication / size-or-count bound / domain fact, not only an equality). In-scope forms + named predicates (use lookup_symbol for the full definition of any): guarded implication (guard => relation) \u2014 make_lbad1: flatten (map (fun n:nonce => map (fun c:ciphertext => ((oget log.[n]).`3, c.`4)) (filter (fun c:ciphertext => c.`1 = n) lc)) lenc). lemma make_lbad1_size_cons2 ; inv_cpa: log1 = log2 /\\  | size / count bound \u2014 inv_lbad1: uniq lenc /\\ cbad1 <= qenc /\\ size lenc <= qenc /\\ size lbad1 <= size (make_lbad1 ufcmalog lc lenc) <= qdec /\\ size lc <= ndec <= qdec /\\ uniq lenc /\\ (forall n; inv_lbad1_i: uniq lenc /\\ cbad1 <= qenc /\\ siz | domain membership \u2014 check_plaintext: let (n, a, m) = p in ! n \\in lenc /\\ valid_topol a m /\\ size lenc < qenc. op check_cipher (ndec:int) (c:ciphertext) = (let (n, a, m, t) = c in valid_topol a m) ; inv: inv_cpa mr1 ms1 log1 log2 lc1 lc2 le | relational equality \u2014 check_cipher: (let (n, a, m, t) = c in valid_topol a m) /\\ ndec < qdec. (* Bounded and Nonce Respecting *) module BNR (O:CCA_Oracles) = { var lenc : nonce list var ndec : int"
+          }
+        ]
+      }
+    }
+  ],
+  "view_refreshed": true
+}

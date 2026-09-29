@@ -1,0 +1,19 @@
+{
+  "turn": 27,
+  "handled_intent": {
+    "intent": "commit_tactic",
+    "payload": {
+      "tactic": "move=> hi hsz hcsz hm1 hm2 hp1 hp2; split=> [zR _|hI r0L hr0L]; first by smt(Block.MB.addmA Block.MB.addmC Block.MB.add0m Block.addK)."
+    }
+  },
+  "ok": true,
+  "manager_note": "Committed tactic accepted; the EasyCrypt proof state changed.",
+  "manager_actions": [
+    {
+      "action": "tactic commit",
+      "outcome": "EasyCrypt accepted the committed tactic.",
+      "timing": "842 ms"
+    }
+  ],
+  "view_refreshed": true
+}

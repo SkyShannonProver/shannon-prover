@@ -1,0 +1,19 @@
+{
+  "turn": 29,
+  "handled_intent": {
+    "intent": "commit_tactic",
+    "payload": {
+      "tactic": "apply (ler_trans (PKE_.qD%r * (1%r / (order - 1)%r))); last by smt(); apply (mu_mem_le_mu1_size (dt \\ pred1 G1.u{hr}) (map (logb G1.g_{hr}) (map (fun (t : PKE_.ciphertext) => t.`2) G3.cilog{hr})) (1%r / (order - 1)%r) PKE_.qD); [ by rewrite !size_map | by apply hmu1 ]."
+    }
+  },
+  "ok": true,
+  "manager_note": "Commit attempt did not change the committed EasyCrypt proof state; use the returned result and latest view before trying the next proof intent.",
+  "manager_actions": [
+    {
+      "action": "tactic commit",
+      "outcome": "EasyCrypt rejected the committed tactic. Use the error summary and current goal to revise the proof step.",
+      "timing": "2.5 s"
+    }
+  ],
+  "view_refreshed": true
+}

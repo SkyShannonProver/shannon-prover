@@ -1,0 +1,19 @@
+{
+  "turn": 14,
+  "handled_intent": {
+    "intent": "probe_tactic",
+    "payload": {
+      "tactic": "rewrite hc /=; have hD: (DH.G.g ^ z1 * DH.G.g ^ w ^ z2) ^ u = DH.G.g ^ u ^ z1 * DH.G.g ^ w ^ u ^ z2; first by rewrite log_bij !(logg1, logrzM, logDr); ring. rewrite -hD."
+    }
+  },
+  "ok": true,
+  "manager_note": "Accepted structural transition probe. Decide whether to enter this phase using `last_result.structural_transition`; do not solve the speculative preview in your mental model, and do not call `undo_last_step` to undo a read-only probe.",
+  "manager_actions": [
+    {
+      "action": "tactic probe",
+      "outcome": "EasyCrypt accepted this read-only probe. The committed proof state was not changed; `goal_after_probe` shows the goal that would be visible if this tactic were committed.",
+      "timing": "165 ms"
+    }
+  ],
+  "view_refreshed": true
+}

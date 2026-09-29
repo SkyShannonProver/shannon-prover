@@ -1,0 +1,22 @@
+{
+  "turn": 18,
+  "handled_intent": {
+    "intent": "inspect_context",
+    "payload": {
+      "topic": "call_invariant_skeleton"
+    }
+  },
+  "ok": true,
+  "manager_note": "Read-only context. Accepted/rejected tactic or call text inside a preview is route-selection information, not the current proof-state error.",
+  "manager_actions": [
+    {
+      "action": "inspect call invariant skeleton",
+      "outcome": "Context returned.",
+      "timing": "970 ms",
+      "content": {
+        "title": "Call-Invariant Glob Skeleton"
+      }
+    }
+  ],
+  "view_refreshed": true
+}

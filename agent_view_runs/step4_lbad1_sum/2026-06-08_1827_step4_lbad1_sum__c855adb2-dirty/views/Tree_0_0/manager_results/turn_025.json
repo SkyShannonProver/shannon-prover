@@ -1,0 +1,22 @@
+{
+  "turn": 25,
+  "handled_intent": {
+    "intent": "lookup_symbol",
+    "payload": {
+      "symbol": "ler_sum"
+    }
+  },
+  "ok": true,
+  "manager_note": "Read-only context. Accepted/rejected tactic or call text inside a preview is route-selection information, not the current proof-state error.",
+  "manager_actions": [
+    {
+      "action": "symbol lookup",
+      "outcome": "The manager returned read-only context for the current goal.",
+      "timing": "1.2 s",
+      "content": {
+        "preview": "[WHERE-HIT] ler_sum (kind: lemma) * In [lemmas or axioms]: lemma ler_sum ['a]: forall (P : 'a -> bool) (F1 F2 : 'a -> int) (s : 'a list), (forall (a : 'a), P a => F1 a <= F2 a) => BIA.big P F1 s <= BIA.big P F2 s. (* StdBigop.Bigreal.ler_sum *) lemma ler_sum ['a]: forall (P : 'a -> bool) (F1 F2 : 'a -> real) (s : 'a list), (forall (a : 'a), P a => F1 a <= F2 a) => BRA.big P F1 s <= BRA.big P F2 s."
+      }
+    }
+  ],
+  "view_refreshed": true
+}

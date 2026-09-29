@@ -1,0 +1,19 @@
+{
+  "turn": 32,
+  "handled_intent": {
+    "intent": "commit_tactic",
+    "payload": {
+      "tactic": "seq 1 : (g ^ G1.u \\in map (fun (t : PKE_.ciphertext) => t.`1) G3.cilog /\\ G1.g_ ^ G1.u' \\in map (fun (t : PKE_.ciphertext) => t.`2) G3.cilog /\\ g ^ r' \\in map (fun (t : PKE_.ciphertext) => t.`3) G3.cilog /\\ size G3.cilog <= PKE_.qD /\\ G1.w <> zero /\\ G1.g_ = g ^ G1.w) (PKE_.qD%r / order%r) (PKE_.qD%r / order%r) 1%r 0%r."
+    }
+  },
+  "ok": true,
+  "manager_note": "Committed tactic accepted; the EasyCrypt proof state changed.",
+  "manager_actions": [
+    {
+      "action": "tactic commit",
+      "outcome": "EasyCrypt accepted the committed tactic.",
+      "timing": "271 ms"
+    }
+  ],
+  "view_refreshed": true
+}

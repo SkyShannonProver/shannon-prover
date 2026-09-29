@@ -1,0 +1,53 @@
+{
+  "last_result": {},
+  "current_goal": {
+    "goal_type": "pRHL",
+    "lines": [
+      "Current goal (remaining: 2)",
+      "",
+      "Type variables: <none>",
+      "",
+      "&m: {}",
+      "------------------------------------------------------------------------",
+      "&1 (left ) : {b, b' : bool, m0, m1, m, h : ptxt, r : rand, c : rand * ptxt,",
+      "             pk, pk0 : pkey, sk : skey, kp : pkey * skey}",
+      "&2 (right) : {b, b' : bool, m0, m1, h : ptxt, c : rand * ptxt, pk : pkey,",
+      "             sk : skey}",
+      "",
+      "pre = (glob A){1} = (glob A){2} /\\ LRO.m{1} = LRO.m{2}",
+      "",
+      "Log(LRO).init()                 ( 1)  Log(LRO).init()               ",
+      "kp <$ dkeys                     ( 2)  (pk, sk) <$ dkeys             ",
+      "(pk, sk) <- kp                  ( 3)  (m0, m1) <@ A(Log(LRO)).a1(pk)",
+      "(m0, m1) <@ A(Log(LRO)).a1(pk)  ( 4)  b <$ {0,1}                    ",
+      "b <$ {0,1}                      ( 5)  Game1.r <$ drand              ",
+      "pk0 <- pk                       ( 6)  h <$ dptxt                    ",
+      "m <- if b then m0 else m1       ( 7)  c <-                          ",
+      "                                (  )    (f pk Game1.r,              ",
+      "                                (  )     h +^ if b then m0 else m1) ",
+      "r <$ drand                      ( 8)                                ",
+      "h <@ LRO.o(r)                   ( 9)                                ",
+      "c <- (f pk0 r, h +^ m)          (10)                                ",
+      "",
+      "post =",
+      "  forall (result_L result_R : bool) (qs_R : rand list),",
+      "    (result_L = b{1}) = (result_R = b{2}) \\/ (Game1.r{2} \\in qs_R)",
+      "[77|check]>"
+    ],
+    "source": {
+      "ground_truth": false,
+      "label": "Parsed from EasyCrypt pretty goal text"
+    },
+    "text_fully_shown": true,
+    "truncated": false,
+    "view_focus": "seq_cut"
+  },
+  "proof_status": {
+    "current_layer": "call_site",
+    "goal_type": "pRHL",
+    "remaining_goals": 2,
+    "remaining_goals_known": true,
+    "status": "open",
+    "view_focus": "seq_cut"
+  }
+}

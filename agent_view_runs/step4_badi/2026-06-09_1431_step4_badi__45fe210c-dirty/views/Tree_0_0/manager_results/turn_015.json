@@ -1,0 +1,19 @@
+{
+  "turn": 15,
+  "handled_intent": {
+    "intent": "commit_tactic",
+    "payload": {
+      "tactic": "call (: ={UFCMA.cbad1, UFCMA_l.lbad1} /\\ UFCMA_li.i{2} = nth0 /\\ (UFCMA_li.cbadi{2} = if nth0 < size UFCMA_l.lbad1{2} then 1 else 0) /\\ (nth0 < size UFCMA_l.lbad1{2} => (nth (w1, w2) UFCMA_l.lbad1{2} nth0).`1 = (nth (w1, w2) UFCMA_l.lbad1{2} nth0).`2 => UFCMA_li.badi{2}))."
+    }
+  },
+  "ok": true,
+  "manager_note": "Committed tactic accepted; the EasyCrypt proof state changed.",
+  "manager_actions": [
+    {
+      "action": "tactic commit",
+      "outcome": "EasyCrypt accepted the committed tactic.",
+      "timing": "1.9 s"
+    }
+  ],
+  "view_refreshed": true
+}

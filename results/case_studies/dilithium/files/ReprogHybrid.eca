@@ -1,0 +1,565 @@
+require import AllCore Distr DBool PROM List StdOrder StdBigop FelTactic.
+
+require import Real RealSeries RealSeq Xreal.
+
+require import DistrExtras_port.
+
+import Bigreal.BRA Bigreal RField.
+
+import FMap RealOrder Biased FSet.
+
+type M, W, C, Z, ST, PK, SK.
+
+op [lossless] commit : SK -> (W * ST) distr.
+
+op [lossless uniform] dC : C distr.
+
+op respond : SK -> ST -> C -> Z option.
+
+op p :   { real | 0%r <= p < 1%r } as p_bounded.
+
+op bound_reject (sk : SK) =
+  mu1 (dlet (commit sk) (fun (w_st : W * ST) =>
+    dmap dC (fun (c : C) => respond sk w_st.`2 c))) None <= p.
+
+op qs : {int | 0 <= qs} as qs_ge0.
+
+op qh : {int | 0 <= qh} as qh_ge0.
+
+clone import PROM.FullRO as RO with
+  type in_t <= W * M,
+  type out_t <= C,
+  op dout <= (fun _ => dC)
+proof *.
+
+module type Oracle = {
+  proc h(w: W, m: M) : C
+  proc sign(m: M) : (W * C * Z)
+}.
+
+module type Oracle_i = {
+  include Oracle
+  proc init(sk_i : SK) : unit
+}.
+
+module Count (O: Oracle_i) : Oracle = {
+  var countS : int
+  var countH : int
+
+  proc init = O.init
+
+  proc h(w: W, m : M) : C = {
+    var y;
+    countH <- countH + 1;
+    y <@ O.h((w, m));
+    return y;
+  }
+
+  proc sign(x) = {
+    var y;
+    countS <- countS + 1;
+    y <@ O.sign(x);
+    return y;
+  }
+}.
+
+module CountBound (O: Oracle_i) : Oracle = {
+  import var Count
+
+  proc init (sk : SK) = {
+    O.init(sk);
+    countS <- 0;
+    countH <- 0;
+  }
+
+  proc h(w : W, m : M) : C = {
+    var y;
+    y <- witness;
+    if (countH < qh) {
+      y <@ O.h((w, m));
+      countH <- countH + 1;
+    }
+    return y;
+  }
+
+  proc sign(x) = {
+    var y;
+    y <- witness;
+    if (countS < qs) {
+      y <@ O.sign(x);
+      countS <- countS + 1;
+    }
+    return y;
+  }
+}.
+
+module OSign : Oracle_i = { var sk : SK var kappa : int
+
+  proc init(sk_i: SK) = {
+    sk <- sk_i;
+  }
+
+  proc h = RO.get
+
+  proc sign(m: M) = {
+    var w, st, c, oz, i;
+
+    w <- witness;
+    c <- witness;
+    i <- 0;
+    oz <- None;
+    while(oz = None) {
+      (w, st) <$ commit sk;
+      c <@ RO.get(w,m);
+      oz <- respond sk st c;
+      i <- i + 1;
+    }
+    return (w, c, oget oz);
+  }
+}.
+
+module OSet : Oracle_i = {
+  include var OSign[init, h]
+
+  proc sign(m: M) = {
+    var w, st, c, oz, i;
+
+
+    w <- witness;
+    c <- witness;
+
+    i <- 0;
+    oz <- None;
+    while(oz = None /\ i < kappa) {
+      (w, st) <$ commit sk;
+      c <$ dC;
+      oz <- respond sk st c;
+      RO.set((w, m), c);
+      i <- i + 1;
+    }
+    return if oz <> None then (w, c, oget oz) else witness;
+  }
+}.
+
+module OSet1 : Oracle_i = {
+  import var OSign
+  include var OSet[init, h]
+
+  proc sign(m: M) = {
+    var w, st, c, oz, i;
+
+    w <- witness;
+    c <- witness;
+    i <- 0;
+    oz <- None;
+
+    while(oz = None /\ i < OSign.kappa) {
+      (w, st) <$ commit sk;
+      c <$ dC;
+      oz <- respond sk st c;
+      i <- i + 1;
+    }
+
+    if(oz <> None) RO.set((w, m), c);
+    return if oz <> None then (w, c, oget oz) else witness;
+  }
+}.
+
+module OTrans : Oracle_i = {
+  import var OSign
+  include var OSet[init, h]
+
+  proc sign(m: M) = {
+    var w, st, c, oz;
+
+    w <- witness;
+    c <- witness;
+    oz <- None;
+    while(oz = None) {
+      (w, st) <$ commit sk;
+      c <$ dC;
+      oz <- respond sk st c;
+    }
+
+    RO.set((w, m), c);
+    return (w, c, oget oz);
+  }
+}.
+
+module type Adversary(O: Oracle) = {
+  proc distinguish(pk: PK): bool
+}.
+
+module Game (Adv: Adversary) (O: Oracle_i) = {
+  proc main(pk_i:PK,sk_i:SK) = {
+    var b;
+    RO.init();
+    O.init(sk_i);
+    b <@ Adv(O).distinguish(pk_i);
+    return b;
+  }
+}.
+
+module Game_k (Adv: Adversary) (O: Oracle_i) = {
+  proc main(pk_i:PK,sk_i:SK, kappa_i: int) = {
+    var b;
+    OSign.kappa <- kappa_i;
+    b <@ Game(Adv, O).main(pk_i,sk_i);
+    return b;
+  }
+}.
+
+abstract theory ReprogAlways.
+
+module type Oracle_i_i = {
+  include Oracle
+  proc init(sk_i : SK, i:int) : unit
+ }.
+
+module type Oracle_i_ij = {
+  include Oracle
+  proc init(sk_i : SK, i:int, j:int) : unit
+ }.
+
+module Oi : Oracle_i_i = {
+  var sk : SK
+  var i_ : int
+  var j_ : int
+  var countS : int
+  var countH : int
+
+  proc init(sk_i:SK, i_i:int) = {
+    i_ <- i_i;
+    sk <- sk_i;
+    countS <- 0;
+    countH <- 0;
+  }
+
+  proc h(w : W, m : M) : C = {
+    var y;
+    y <- witness;
+    if (countH < qh) {
+      y <@ RO.get((w, m));
+      countH <- countH + 1;
+    }
+    return y;
+  }
+
+  proc sign_i_l (m:M) = {
+    var w, st, c, oz;
+    (w, st) <$ commit sk;
+    c <$ dC;
+    oz <- respond sk st c;
+    RO.set((w, m), c);
+    return (w, c, oz);
+  }
+
+  proc sign_l(m : M) = {
+    var w, c, oz, j';
+
+    w <- witness;
+    c <- witness;
+    j' <- 0;
+    oz <- None;
+    while(oz = None /\ j' < OSign.kappa ) {
+      (w,c,oz) <@ sign_i_l(m);
+      j' <- j' + 1;
+    }
+    return if oz <> None then Some (w, c, oget oz) else None;
+  }
+
+  proc sign_i_r (m:M) = {
+    var w, st, c, oz;
+    (w, st) <$ commit sk;
+    c <@ RO.get(w,m);
+    oz <- respond sk st c;
+    return (w, c, oz);
+  }
+
+  proc sign_r(m : M) = {
+    var w, c, oz, j';
+
+    w <- witness;
+    c <- witness;
+
+    j' <- 0;
+    oz <- None;
+    while(oz = None) {
+      (w,c,oz) <@ sign_i_r(m);
+      j' <- j' + 1;
+    }
+    return (w, c, oget oz);
+  }
+
+  proc sign(m : M) = {
+    var or, r;
+    r <- witness;
+    if (countS < qs) {
+      if (countS < i_) {
+         or <@ sign_l(m);
+         r <- oget or;
+      } else r <@ sign_r(m);
+      countS <- countS + 1;
+    }
+    return r;
+  }
+
+}.
+
+module Oij : Oracle_i_ij = {
+  include var Oi [h]
+
+  proc init(sk_i:SK, i_i:int, j_i:int) = {
+    i_ <- i_i;
+    j_ <- j_i;
+    sk <- sk_i;
+    countS <- 0;
+    countH <- 0;
+  }
+
+  proc sign_i (m:M) : W * C * Z = {
+    var w, c, oz, j';
+    w <- witness;
+    c <- witness;
+    j' <- 0;
+    oz <- None;
+
+    while(oz = None) {
+      if (j' < j_)
+        (w, c, oz) <@ Oi.sign_i_l (m);
+      else
+        (w, c, oz) <@ Oi.sign_i_r (m);
+      j' <- j' + 1;
+    }
+    return (w, c, oget oz);
+  }
+
+  proc sign(m:M) = {
+    var or, r;
+    r <- witness;
+    if (countS < qs) {
+      if (countS < i_) {
+        or <@ Oi.sign_l(m);
+        r <- oget or;
+      } else { if (i_ = countS) r <@ sign_i(m);
+      else r <@ Oi.sign_r(m); }
+      countS <- countS + 1;
+    }
+    return r;
+  }
+
+}.
+
+module Hi (Adv: Adversary) (O: Oracle_i_i) = {
+  proc main(pk_i:PK,sk_i:SK,kappa_i:int, i_i:int) = {
+    var b;
+    OSign.kappa <- kappa_i;
+    RO.init();
+    O.init(sk_i, i_i);
+    b <@ Adv(O).distinguish(pk_i);
+    return b;
+  }
+}.
+
+module Hij (Adv: Adversary) (O: Oracle_i_ij) = {
+  proc main(pk_i:PK,sk_i:SK,kappa_i:int, i_i:int, j_i:int) = {
+    var b;
+    OSign.kappa <- kappa_i;
+    RO.init();
+    O.init(sk_i, i_i, j_i);
+    b <@ Adv(O).distinguish(pk_i);
+    return b;
+  }
+}.
+
+end ReprogAlways.
+
+abstract theory ReprogOnce.
+
+module type Oracle_i_i = {
+  include Oracle
+  proc init(sk_i : SK, i:int) : unit
+}.
+
+module type Oracle_i_ij = {
+  include Oracle
+  proc init(sk_i : SK, i:int, j:int) : unit
+}.
+
+module Oi : Oracle_i_i = {
+  var sk : SK
+  var i_ : int
+  var logh : W list
+
+  var countS : int
+  var countH : int
+
+  var j_ : int
+  var j_end : bool
+  var wo : W option
+  var w_ : W
+
+  proc init(sk_i:SK, i_i:int) = {
+    i_ <- i_i;
+    sk <- sk_i;
+    countS <- 0;
+    countH <- 0;
+    logh <- [];
+  }
+
+  proc h(w : W, m : M) : C = {
+    var y;
+    y <- witness;
+    if (countH < qh) {
+      y <@ RO.get((w, m));
+      countH <- countH + 1;
+      logh <- w::logh;
+    }
+    return y;
+  }
+
+  proc sign_l(m : M) = {
+    var w, st, c, oz, j';
+
+    w <- witness;
+    c <- witness;
+    j' <- 0;
+    oz <- None;
+    while(oz = None /\ j' < OSign.kappa) {
+      (w, st) <$ commit sk;
+      c <$ dC;
+      oz <- respond sk st c;
+      RO.set((w, m), c);
+      j' <- j' + 1;
+    }
+    return if oz <> None then (w, c, oget oz) else witness;
+  }
+
+  proc sign_r(m : M) = {
+    var w, st, c, oz, j';
+
+    w <- witness;
+    c <- witness;
+    j' <- 0;
+    oz <- None;
+    while(oz = None /\ j' < OSign.kappa) {
+      (w, st) <$ commit sk;
+      c <$ dC;
+      oz <- respond sk st c;
+      RO.m <- (oz <> None) ? RO.m.[(w,m) <- c] : RO.m;
+      j' <- j' + 1;
+    }
+    return if oz <> None then (w, c, oget oz) else witness;
+  }
+
+  proc sign(m : M) = {
+    var r;
+    r <- witness;
+    if (countS < qs) {
+      if (countS < i_) r <@ sign_l(m);
+      else r <@ sign_r(m);
+      countS <- countS + 1;
+    }
+    return r;
+  }
+
+}.
+
+module Oij : Oracle_i_ij = {
+  include var Oi [-init, sign]
+
+  proc init(sk_i:SK, i_i:int, j_i:int) = {
+    i_ <- i_i;
+    j_ <- j_i;
+    j_end <- false;
+    sk <- sk_i;
+    countS <- 0;
+    countH <- 0;
+    wo <- None;
+    w_ <- witness;
+    logh <- [];
+  }
+
+  proc sign_i_l (m:M) = {
+    var w, st, c, oz;
+    (w, st) <$ commit sk;
+    c <$ dC;
+    oz <- respond sk st c;
+    RO.set((w, m), c);
+    return (w, c, oz);
+  }
+
+  proc sign_i_j (m:M) = {
+    var st, c, oz;
+    (w_, st) <$ commit sk;
+    c <$ dC;
+    oz <- respond sk st c;
+
+
+    wo <- (!j_end /\ wo = None /\ oz = None) ? Some w_ : wo;
+    j_end <- true;
+    RO.m <- (oz <> None) ? RO.m.[(w_,m) <- c] : RO.m;
+    return (w_, c, oz);
+  }
+
+  proc sign_i_r (m:M) = {
+    var w, st, c, oz;
+    (w, st) <$ commit sk;
+    c <$ dC;
+    oz <- respond sk st c;
+    RO.m <- (oz <> None) ? RO.m.[(w,m) <- c] : RO.m;
+    return (w, c, oz);
+  }
+
+  proc sign_i (m:M) : W * C * Z = {
+    var w, c, oz, j';
+    w <- witness;
+    c <- witness;
+    j' <- 0;
+    oz <- None;
+    while(oz = None /\ j' < OSign.kappa) {
+      if (j' < j_) (w, c, oz) <@ sign_i_l (m);
+      else { if (j_ = j') (w, c, oz) <@ sign_i_j (m);
+      else (w, c, oz) <@ sign_i_r (m); }
+      j' <- j' + 1;
+    }
+    return if oz <> None then (w, c, oget oz) else witness;
+  }
+
+  proc sign(m:M) = {
+    var r;
+    r <- witness;
+    if (countS < qs) {
+      if (countS < i_) r <@ sign_l(m);
+      else { if (i_ = countS) r <@ sign_i(m);
+      else r <@ sign_r(m); }
+      countS <- countS + 1;
+    }
+    return r;
+  }
+
+}.
+
+module Hi (Adv: Adversary) (O: Oracle_i_i) = {
+  proc main(pk_i:PK,sk_i:SK,kappa_i:int, i_i:int) = {
+    var b;
+    OSign.kappa <- kappa_i;
+    RO.init();
+    O.init(sk_i, i_i);
+    b <@ Adv(O).distinguish(pk_i);
+    return b;
+  }
+}.
+
+module Hij (Adv: Adversary) (O: Oracle_i_ij) = {
+  proc main(pk_i:PK,sk_i:SK,kappa_i:int, i_i:int, j_i:int) = {
+    var b;
+    OSign.kappa <- kappa_i;
+    RO.init();
+    O.init(sk_i, i_i, j_i);
+    b <@ Adv(O).distinguish(pk_i);
+    return b;
+  }
+}.
+
+end ReprogOnce.

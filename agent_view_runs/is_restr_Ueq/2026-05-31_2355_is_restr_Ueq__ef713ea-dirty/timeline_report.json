@@ -1,0 +1,316 @@
+{
+  "kind": "agent_view_timeline_report",
+  "run_count": 1,
+  "runs": [
+    {
+      "chronological": false,
+      "first_action_at": "2026-06-01T06:55:29.300000+00:00",
+      "label": "2026-05-31_2355_is_restr_Ueq",
+      "node_count": 2,
+      "rows": [
+        {
+          "action_submitted_at": "2026-06-01T06:55:29.300000+00:00",
+          "action_time": "+00:00",
+          "agent_think": "",
+          "agent_think_path": "artifacts/eval_suite/compiler_ladder_matrix/l4_checked_action_surface/easy_pir_is_restr_Ueq/r01/2026-05-31_2355_is_restr_Ueq/iteration_1/node_memory/Tree_0_0/thinking/turn_001.md",
+          "agent_think_seconds": null,
+          "decision_followup_path": "",
+          "decision_state_summary": "ambient / ambient_logic, 1 goal, goal 223 chars",
+          "decision_view_path": "artifacts/eval_suite/compiler_ladder_matrix/l4_checked_action_surface/easy_pir_is_restr_Ueq/r01/2026-05-31_2355_is_restr_Ueq/iteration_1/manager_bootstrap_0_0.json",
+          "deterministic_signals": [
+            "manager_error:cannot find lemma `is_restrS'"
+          ],
+          "goal_chars": 223,
+          "inspect_topics": [
+            "goal_info",
+            "lemma_hints",
+            "tactic_forms"
+          ],
+          "intent": {
+            "intent": "probe_tactic",
+            "payload": {
+              "tactic": "move=> *; rewrite /is_restr; smt(restrS is_restrS is_restr_addS)."
+            }
+          },
+          "intent_summary": "probe move=> *; rewrite /is_restr; smt(restrS is_restrS is_restr_addS)",
+          "manager_action_summary": [
+            "tactic probe (2.7 s)"
+          ],
+          "manager_result_at": "2026-06-01T06:55:32+00:00",
+          "manager_result_path": "artifacts/eval_suite/compiler_ladder_matrix/l4_checked_action_surface/easy_pir_is_restr_Ueq/r01/2026-05-31_2355_is_restr_Ueq/iteration_1/node_memory/Tree_0_0/manager_results/turn_001.json",
+          "manager_seconds": 2.7,
+          "manager_time": "2.7 s",
+          "node": "Tree-0.0",
+          "node_dir": "artifacts/eval_suite/compiler_ladder_matrix/l4_checked_action_surface/easy_pir_is_restr_Ueq/r01/2026-05-31_2355_is_restr_Ueq/iteration_1/node_memory/Tree_0_0",
+          "ok": true,
+          "result_followup_path": "artifacts/eval_suite/compiler_ladder_matrix/l4_checked_action_surface/easy_pir_is_restr_Ueq/r01/2026-05-31_2355_is_restr_Ueq/iteration_1/node_memory/Tree_0_0/followups/turn_001.md",
+          "result_state_summary": "ambient / ambient_logic, 1 goal, goal 223 chars",
+          "result_summary": "rejected probe: cannot find lemma `is_restrS'",
+          "result_view_path": "artifacts/eval_suite/compiler_ladder_matrix/l4_checked_action_surface/easy_pir_is_restr_Ueq/r01/2026-05-31_2355_is_restr_Ueq/iteration_1/node_memory/Tree_0_0/workspace_views/turn_001.json",
+          "turn": 1,
+          "view_chars": 9105,
+          "view_id": "T0.0-1",
+          "workspace_view_path": "artifacts/eval_suite/compiler_ladder_matrix/l4_checked_action_surface/easy_pir_is_restr_Ueq/r01/2026-05-31_2355_is_restr_Ueq/iteration_1/manager_bootstrap_0_0.json"
+        },
+        {
+          "action_submitted_at": "2026-06-01T06:56:05.632000+00:00",
+          "action_time": "+00:36",
+          "agent_think": "33.6 s",
+          "agent_think_path": "artifacts/eval_suite/compiler_ladder_matrix/l4_checked_action_surface/easy_pir_is_restr_Ueq/r01/2026-05-31_2355_is_restr_Ueq/iteration_1/node_memory/Tree_0_0/thinking/turn_002.md",
+          "agent_think_seconds": 33.632,
+          "decision_followup_path": "artifacts/eval_suite/compiler_ladder_matrix/l4_checked_action_surface/easy_pir_is_restr_Ueq/r01/2026-05-31_2355_is_restr_Ueq/iteration_1/node_memory/Tree_0_0/followups/turn_001.md",
+          "decision_state_summary": "ambient / ambient_logic, 1 goal, goal 223 chars",
+          "decision_view_path": "artifacts/eval_suite/compiler_ladder_matrix/l4_checked_action_surface/easy_pir_is_restr_Ueq/r01/2026-05-31_2355_is_restr_Ueq/iteration_1/node_memory/Tree_0_0/workspace_views/turn_001.json",
+          "deterministic_signals": [],
+          "goal_chars": 223,
+          "inspect_topics": [
+            "diagnose",
+            "goal_info",
+            "lemma_hints",
+            "tactic_forms"
+          ],
+          "intent": {
+            "intent": "probe_tactic",
+            "payload": {
+              "tactic": "move=> h1 h2; rewrite eq_iff; split => [/fsetP heq | ->] //; apply fsetP => x; have := heq x; rewrite !in_fsetU !in_fset1; smt(nin_is_restr)."
+            }
+          },
+          "intent_summary": "probe move=> h1 h2; rewrite eq_iff; split => [/fsetP heq | ->] //; apply fsetP => x; have := heq x;...",
+          "manager_action_summary": [
+            "tactic probe (368 ms)"
+          ],
+          "manager_result_at": "2026-06-01T06:56:06+00:00",
+          "manager_result_path": "artifacts/eval_suite/compiler_ladder_matrix/l4_checked_action_surface/easy_pir_is_restr_Ueq/r01/2026-05-31_2355_is_restr_Ueq/iteration_1/node_memory/Tree_0_0/manager_results/turn_002.json",
+          "manager_seconds": 0.368,
+          "manager_time": "368 ms",
+          "node": "Tree-0.0",
+          "node_dir": "artifacts/eval_suite/compiler_ladder_matrix/l4_checked_action_surface/easy_pir_is_restr_Ueq/r01/2026-05-31_2355_is_restr_Ueq/iteration_1/node_memory/Tree_0_0",
+          "ok": true,
+          "result_followup_path": "artifacts/eval_suite/compiler_ladder_matrix/l4_checked_action_surface/easy_pir_is_restr_Ueq/r01/2026-05-31_2355_is_restr_Ueq/iteration_1/node_memory/Tree_0_0/followups/turn_002.md",
+          "result_state_summary": "ambient / ambient_logic, 1 goal, goal 223 chars",
+          "result_summary": "accepted probe",
+          "result_view_path": "artifacts/eval_suite/compiler_ladder_matrix/l4_checked_action_surface/easy_pir_is_restr_Ueq/r01/2026-05-31_2355_is_restr_Ueq/iteration_1/node_memory/Tree_0_0/workspace_views/turn_002.json",
+          "turn": 2,
+          "view_chars": 9853,
+          "view_id": "T0.0-2",
+          "workspace_view_path": "artifacts/eval_suite/compiler_ladder_matrix/l4_checked_action_surface/easy_pir_is_restr_Ueq/r01/2026-05-31_2355_is_restr_Ueq/iteration_1/node_memory/Tree_0_0/workspace_views/turn_001.json"
+        },
+        {
+          "action_submitted_at": "2026-06-01T06:56:10.709000+00:00",
+          "action_time": "+00:41",
+          "agent_think": "4.7 s",
+          "agent_think_path": "artifacts/eval_suite/compiler_ladder_matrix/l4_checked_action_surface/easy_pir_is_restr_Ueq/r01/2026-05-31_2355_is_restr_Ueq/iteration_1/node_memory/Tree_0_0/thinking/turn_003.md",
+          "agent_think_seconds": 4.709,
+          "decision_followup_path": "artifacts/eval_suite/compiler_ladder_matrix/l4_checked_action_surface/easy_pir_is_restr_Ueq/r01/2026-05-31_2355_is_restr_Ueq/iteration_1/node_memory/Tree_0_0/followups/turn_002.md",
+          "decision_state_summary": "ambient / ambient_logic, 1 goal, goal 223 chars",
+          "decision_view_path": "artifacts/eval_suite/compiler_ladder_matrix/l4_checked_action_surface/easy_pir_is_restr_Ueq/r01/2026-05-31_2355_is_restr_Ueq/iteration_1/node_memory/Tree_0_0/workspace_views/turn_002.json",
+          "deterministic_signals": [
+            "commit_without_probe_check_not_inferred"
+          ],
+          "goal_chars": 223,
+          "inspect_topics": [
+            "goal_info",
+            "lemma_hints",
+            "tactic_forms"
+          ],
+          "intent": {
+            "intent": "commit_tactic",
+            "payload": {
+              "tactic": "move=> h1 h2; rewrite eq_iff; split => [/fsetP heq | ->] //; apply fsetP => x; have := heq x; rewrite !in_fsetU !in_fset1; smt(nin_is_restr)."
+            }
+          },
+          "intent_summary": "commit move=> h1 h2; rewrite eq_iff; split => [/fsetP heq | ->] //; apply fsetP => x; have := heq x;...",
+          "manager_action_summary": [
+            "tactic commit (291 ms)"
+          ],
+          "manager_result_at": "2026-06-01T06:56:11+00:00",
+          "manager_result_path": "artifacts/eval_suite/compiler_ladder_matrix/l4_checked_action_surface/easy_pir_is_restr_Ueq/r01/2026-05-31_2355_is_restr_Ueq/iteration_1/node_memory/Tree_0_0/manager_results/turn_003.json",
+          "manager_seconds": 0.291,
+          "manager_time": "291 ms",
+          "node": "Tree-0.0",
+          "node_dir": "artifacts/eval_suite/compiler_ladder_matrix/l4_checked_action_surface/easy_pir_is_restr_Ueq/r01/2026-05-31_2355_is_restr_Ueq/iteration_1/node_memory/Tree_0_0",
+          "ok": true,
+          "result_followup_path": "artifacts/eval_suite/compiler_ladder_matrix/l4_checked_action_surface/easy_pir_is_restr_Ueq/r01/2026-05-31_2355_is_restr_Ueq/iteration_1/node_memory/Tree_0_0/followups/turn_003.md",
+          "result_state_summary": "ambient / closed_candidate, goal 25 chars",
+          "result_summary": "accepted commit",
+          "result_view_path": "artifacts/eval_suite/compiler_ladder_matrix/l4_checked_action_surface/easy_pir_is_restr_Ueq/r01/2026-05-31_2355_is_restr_Ueq/iteration_1/node_memory/Tree_0_0/workspace_views/turn_003.json",
+          "turn": 3,
+          "view_chars": 13837,
+          "view_id": "T0.0-3",
+          "workspace_view_path": "artifacts/eval_suite/compiler_ladder_matrix/l4_checked_action_surface/easy_pir_is_restr_Ueq/r01/2026-05-31_2355_is_restr_Ueq/iteration_1/node_memory/Tree_0_0/workspace_views/turn_002.json"
+        },
+        {
+          "action_submitted_at": "2026-06-01T06:56:14.826000+00:00",
+          "action_time": "+00:46",
+          "agent_think": "3.8 s",
+          "agent_think_path": "artifacts/eval_suite/compiler_ladder_matrix/l4_checked_action_surface/easy_pir_is_restr_Ueq/r01/2026-05-31_2355_is_restr_Ueq/iteration_1/node_memory/Tree_0_0/thinking/turn_004.md",
+          "agent_think_seconds": 3.826,
+          "decision_followup_path": "artifacts/eval_suite/compiler_ladder_matrix/l4_checked_action_surface/easy_pir_is_restr_Ueq/r01/2026-05-31_2355_is_restr_Ueq/iteration_1/node_memory/Tree_0_0/followups/turn_003.md",
+          "decision_state_summary": "ambient / closed_candidate, goal 25 chars",
+          "decision_view_path": "artifacts/eval_suite/compiler_ladder_matrix/l4_checked_action_surface/easy_pir_is_restr_Ueq/r01/2026-05-31_2355_is_restr_Ueq/iteration_1/node_memory/Tree_0_0/workspace_views/turn_003.json",
+          "deterministic_signals": [
+            "commit_without_probe_check_not_inferred"
+          ],
+          "goal_chars": 25,
+          "inspect_topics": [
+            "goal_info"
+          ],
+          "intent": {
+            "intent": "commit_tactic",
+            "payload": {
+              "tactic": "qed."
+            }
+          },
+          "intent_summary": "commit qed",
+          "manager_action_summary": [
+            "tactic commit (174 ms)"
+          ],
+          "manager_result_at": "2026-06-01T06:56:15+00:00",
+          "manager_result_path": "artifacts/eval_suite/compiler_ladder_matrix/l4_checked_action_surface/easy_pir_is_restr_Ueq/r01/2026-05-31_2355_is_restr_Ueq/iteration_1/node_memory/Tree_0_0/manager_results/turn_004.json",
+          "manager_seconds": 0.174,
+          "manager_time": "174 ms",
+          "node": "Tree-0.0",
+          "node_dir": "artifacts/eval_suite/compiler_ladder_matrix/l4_checked_action_surface/easy_pir_is_restr_Ueq/r01/2026-05-31_2355_is_restr_Ueq/iteration_1/node_memory/Tree_0_0",
+          "ok": true,
+          "result_followup_path": "artifacts/eval_suite/compiler_ladder_matrix/l4_checked_action_surface/easy_pir_is_restr_Ueq/r01/2026-05-31_2355_is_restr_Ueq/iteration_1/node_memory/Tree_0_0/followups/turn_004.md",
+          "result_state_summary": "complete / unknown / closed_candidate, 0 goals, goal 11 chars",
+          "result_summary": "accepted commit",
+          "result_view_path": "artifacts/eval_suite/compiler_ladder_matrix/l4_checked_action_surface/easy_pir_is_restr_Ueq/r01/2026-05-31_2355_is_restr_Ueq/iteration_1/node_memory/Tree_0_0/workspace_views/turn_004.json",
+          "turn": 4,
+          "view_chars": 2491,
+          "view_id": "T0.0-4",
+          "workspace_view_path": "artifacts/eval_suite/compiler_ladder_matrix/l4_checked_action_surface/easy_pir_is_restr_Ueq/r01/2026-05-31_2355_is_restr_Ueq/iteration_1/node_memory/Tree_0_0/workspace_views/turn_003.json"
+        },
+        {
+          "action_submitted_at": "2026-06-01T06:56:20+00:00",
+          "action_time": "+00:51",
+          "agent_think": "5 s",
+          "agent_think_path": "",
+          "agent_think_seconds": 5.0,
+          "decision_followup_path": "artifacts/eval_suite/compiler_ladder_matrix/l4_checked_action_surface/easy_pir_is_restr_Ueq/r01/2026-05-31_2355_is_restr_Ueq/iteration_1/node_memory/Tree_0_0/followups/turn_004.md",
+          "decision_state_summary": "complete / unknown / closed_candidate, 0 goals, goal 11 chars",
+          "decision_view_path": "artifacts/eval_suite/compiler_ladder_matrix/l4_checked_action_surface/easy_pir_is_restr_Ueq/r01/2026-05-31_2355_is_restr_Ueq/iteration_1/node_memory/Tree_0_0/workspace_views/turn_004.json",
+          "deterministic_signals": [],
+          "goal_chars": 11,
+          "inspect_topics": [
+            "goal_info"
+          ],
+          "intent": {
+            "intent": "finish"
+          },
+          "intent_summary": "finish",
+          "manager_action_summary": [
+            "finish"
+          ],
+          "manager_result_at": "2026-06-01T06:56:20+00:00",
+          "manager_result_path": "artifacts/eval_suite/compiler_ladder_matrix/l4_checked_action_surface/easy_pir_is_restr_Ueq/r01/2026-05-31_2355_is_restr_Ueq/iteration_1/node_memory/Tree_0_0/manager_results/turn_005.json",
+          "manager_seconds": 0.0,
+          "manager_time": "",
+          "node": "Tree-0.0",
+          "node_dir": "artifacts/eval_suite/compiler_ladder_matrix/l4_checked_action_surface/easy_pir_is_restr_Ueq/r01/2026-05-31_2355_is_restr_Ueq/iteration_1/node_memory/Tree_0_0",
+          "ok": true,
+          "result_followup_path": "artifacts/eval_suite/compiler_ladder_matrix/l4_checked_action_surface/easy_pir_is_restr_Ueq/r01/2026-05-31_2355_is_restr_Ueq/iteration_1/node_memory/Tree_0_0/followups/turn_005.md",
+          "result_state_summary": "complete / unknown / closed_candidate, 0 goals, goal 11 chars",
+          "result_summary": "finish requested",
+          "result_view_path": "artifacts/eval_suite/compiler_ladder_matrix/l4_checked_action_surface/easy_pir_is_restr_Ueq/r01/2026-05-31_2355_is_restr_Ueq/iteration_1/node_memory/Tree_0_0/workspace_views/turn_005.json",
+          "turn": 5,
+          "view_chars": 1887,
+          "view_id": "T0.0-5",
+          "workspace_view_path": "artifacts/eval_suite/compiler_ladder_matrix/l4_checked_action_surface/easy_pir_is_restr_Ueq/r01/2026-05-31_2355_is_restr_Ueq/iteration_1/node_memory/Tree_0_0/workspace_views/turn_004.json"
+        },
+        {
+          "action_submitted_at": "2026-06-01T06:55:38.500000+00:00",
+          "action_time": "+00:09",
+          "agent_think": "",
+          "agent_think_path": "artifacts/eval_suite/compiler_ladder_matrix/l4_checked_action_surface/easy_pir_is_restr_Ueq/r01/2026-05-31_2355_is_restr_Ueq/iteration_1/node_memory/Tree_0_1/thinking/turn_001.md",
+          "agent_think_seconds": null,
+          "decision_followup_path": "",
+          "decision_state_summary": "ambient / ambient_logic, 1 goal, goal 223 chars",
+          "decision_view_path": "artifacts/eval_suite/compiler_ladder_matrix/l4_checked_action_surface/easy_pir_is_restr_Ueq/r01/2026-05-31_2355_is_restr_Ueq/iteration_1/manager_bootstrap_0_1.json",
+          "deterministic_signals": [
+            "manager_error:cannot find lemma `is_restrS'"
+          ],
+          "goal_chars": 223,
+          "inspect_topics": [
+            "goal_info",
+            "lemma_hints",
+            "tactic_forms"
+          ],
+          "intent": {
+            "intent": "probe_tactic",
+            "payload": {
+              "tactic": "move=> *; rewrite /is_restr; smt(restrS is_restrS is_restr_addS)."
+            }
+          },
+          "intent_summary": "probe move=> *; rewrite /is_restr; smt(restrS is_restrS is_restr_addS)",
+          "manager_action_summary": [
+            "tactic probe (2.5 s)"
+          ],
+          "manager_result_at": "2026-06-01T06:55:41+00:00",
+          "manager_result_path": "artifacts/eval_suite/compiler_ladder_matrix/l4_checked_action_surface/easy_pir_is_restr_Ueq/r01/2026-05-31_2355_is_restr_Ueq/iteration_1/node_memory/Tree_0_1/manager_results/turn_001.json",
+          "manager_seconds": 2.5,
+          "manager_time": "2.5 s",
+          "node": "Tree-0.1",
+          "node_dir": "artifacts/eval_suite/compiler_ladder_matrix/l4_checked_action_surface/easy_pir_is_restr_Ueq/r01/2026-05-31_2355_is_restr_Ueq/iteration_1/node_memory/Tree_0_1",
+          "ok": true,
+          "result_followup_path": "artifacts/eval_suite/compiler_ladder_matrix/l4_checked_action_surface/easy_pir_is_restr_Ueq/r01/2026-05-31_2355_is_restr_Ueq/iteration_1/node_memory/Tree_0_1/followups/turn_001.md",
+          "result_state_summary": "ambient / ambient_logic, 1 goal, goal 223 chars",
+          "result_summary": "rejected probe: cannot find lemma `is_restrS'",
+          "result_view_path": "artifacts/eval_suite/compiler_ladder_matrix/l4_checked_action_surface/easy_pir_is_restr_Ueq/r01/2026-05-31_2355_is_restr_Ueq/iteration_1/node_memory/Tree_0_1/workspace_views/turn_001.json",
+          "turn": 1,
+          "view_chars": 9105,
+          "view_id": "T0.1-1",
+          "workspace_view_path": "artifacts/eval_suite/compiler_ladder_matrix/l4_checked_action_surface/easy_pir_is_restr_Ueq/r01/2026-05-31_2355_is_restr_Ueq/iteration_1/manager_bootstrap_0_1.json"
+        },
+        {
+          "action_submitted_at": "2026-06-01T06:56:09.600000+00:00",
+          "action_time": "+00:40",
+          "agent_think": "28.6 s",
+          "agent_think_path": "artifacts/eval_suite/compiler_ladder_matrix/l4_checked_action_surface/easy_pir_is_restr_Ueq/r01/2026-05-31_2355_is_restr_Ueq/iteration_1/node_memory/Tree_0_1/thinking/turn_002.md",
+          "agent_think_seconds": 28.6,
+          "decision_followup_path": "artifacts/eval_suite/compiler_ladder_matrix/l4_checked_action_surface/easy_pir_is_restr_Ueq/r01/2026-05-31_2355_is_restr_Ueq/iteration_1/node_memory/Tree_0_1/followups/turn_001.md",
+          "decision_state_summary": "ambient / ambient_logic, 1 goal, goal 223 chars",
+          "decision_view_path": "artifacts/eval_suite/compiler_ladder_matrix/l4_checked_action_surface/easy_pir_is_restr_Ueq/r01/2026-05-31_2355_is_restr_Ueq/iteration_1/node_memory/Tree_0_1/workspace_views/turn_001.json",
+          "deterministic_signals": [
+            "manager_error:cannot prove goal (strict)"
+          ],
+          "goal_chars": 223,
+          "inspect_topics": [
+            "diagnose",
+            "goal_info",
+            "lemma_hints",
+            "tactic_forms"
+          ],
+          "intent": {
+            "intent": "probe_tactic",
+            "payload": {
+              "tactic": "move=> h1 h2; smt(nin_is_restr fsetP in_fsetU in_fset1)."
+            }
+          },
+          "intent_summary": "probe move=> h1 h2; smt(nin_is_restr fsetP in_fsetU in_fset1)",
+          "manager_action_summary": [
+            "tactic probe (3.4 s)"
+          ],
+          "manager_result_at": "2026-06-01T06:56:13+00:00",
+          "manager_result_path": "artifacts/eval_suite/compiler_ladder_matrix/l4_checked_action_surface/easy_pir_is_restr_Ueq/r01/2026-05-31_2355_is_restr_Ueq/iteration_1/node_memory/Tree_0_1/manager_results/turn_002.json",
+          "manager_seconds": 3.4,
+          "manager_time": "3.4 s",
+          "node": "Tree-0.1",
+          "node_dir": "artifacts/eval_suite/compiler_ladder_matrix/l4_checked_action_surface/easy_pir_is_restr_Ueq/r01/2026-05-31_2355_is_restr_Ueq/iteration_1/node_memory/Tree_0_1",
+          "ok": true,
+          "result_followup_path": "artifacts/eval_suite/compiler_ladder_matrix/l4_checked_action_surface/easy_pir_is_restr_Ueq/r01/2026-05-31_2355_is_restr_Ueq/iteration_1/node_memory/Tree_0_1/followups/turn_002.md",
+          "result_state_summary": "ambient / ambient_logic, 1 goal, goal 223 chars",
+          "result_summary": "rejected probe: cannot prove goal (strict)",
+          "result_view_path": "artifacts/eval_suite/compiler_ladder_matrix/l4_checked_action_surface/easy_pir_is_restr_Ueq/r01/2026-05-31_2355_is_restr_Ueq/iteration_1/node_memory/Tree_0_1/workspace_views/turn_002.json",
+          "turn": 2,
+          "view_chars": 9853,
+          "view_id": "T0.1-2",
+          "workspace_view_path": "artifacts/eval_suite/compiler_ladder_matrix/l4_checked_action_surface/easy_pir_is_restr_Ueq/r01/2026-05-31_2355_is_restr_Ueq/iteration_1/node_memory/Tree_0_1/workspace_views/turn_001.json"
+        }
+      ],
+      "run_dir": "artifacts/eval_suite/compiler_ladder_matrix/l4_checked_action_surface/easy_pir_is_restr_Ueq/r01/2026-05-31_2355_is_restr_Ueq/iteration_1",
+      "turn_count": 7
+    }
+  ],
+  "schema_version": 1
+}

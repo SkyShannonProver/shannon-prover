@@ -1,0 +1,60 @@
+{
+  "kind": "agent_view_run_report",
+  "timestamp": "2026-06-04_0133_step2_3",
+  "lemma": "step2_3",
+  "source_file": "eval/examples/ChaChaPoly/chacha_poly.ec",
+  "model": "claude-opus-4-8",
+  "surface_profile": "l4_checked_action_surface",
+  "trees": 2,
+  "eval_mode": true,
+  "outcome": "proved",
+  "committed_proofs": [
+    {
+      "tree": "Tree_0_0",
+      "tactics": [
+        "congr.",
+        "have ->: Pr[CPA_game(CCA_CPA_Adv(A), RealOrcls(GenChaChaPoly(CCRO(FinRO)))).main() @ &m : res] = Pr[MainD(G4(A), FinRO).distinguish() @ &m : res].",
+        "byequiv => //; proc; inline *; sim.",
+        "rewrite -(pr_RO_FinRO_D _ (G4(A)) &m tt (fun (r:bool) => r)).",
+        "move=> _; exact dblock_ll.",
+        "have ->: Pr[Split1.IdealAll.MainD(G8(A), SplitC2.RO_Pair(SplitC2.I1.RO, SplitC2.I2.RO)).distinguish() @ &m : res] = Pr[Split1.IdealAll.MainD(G8(A), Split1.IdealAll.RO).distinguish() @ &m : res].",
+        "apply eq_sym; apply (SplitC2.pr_RO_split (G8(A)) (fun _ (r:bool) => r) &m tt).",
+        "have ->: Pr[Split1.IdealAll.MainD(G8(A), Split1.IdealAll.RO).distinguish() @ &m : res] = Pr[Split0.IdealAll.MainD(G6(A), SplitC1.RO_Pair(SplitC1.I1.RO, SplitC1.I2.RO)).distinguish() @ &m : res]."
+      ],
+      "proved": false
+    },
+    {
+      "tree": "Tree_0_1",
+      "tactics": [
+        "congr.",
+        "have -> : Pr[CPA_game(CCA_CPA_Adv(A), RealOrcls(GenChaChaPoly(CCRO(FinRO)))).main() @ &m : res] = Pr[MainD(G4(A), FinRO).distinguish() @ &m : res] by byequiv => //; proc; inline *; sim.",
+        "rewrite -(SplitC2.pr_RO_split (G8(A)) (fun _ b => b) &m ()) /=.",
+        "have -> : Pr[Split1.IdealAll.MainD(G8(A), Split1.IdealAll.RO).distinguish() @ &m : res] = Pr[Split0.IdealAll.MainD(G6(A), SplitC1.RO_Pair(SplitC1.I1.RO, SplitC1.I2.RO)).distinguish() @ &m : res] by byequiv => //; proc; inline *; sim.",
+        "rewrite -(SplitC1.pr_RO_split (G6(A)) (fun _ b => b) &m ()) /=.",
+        "have -> : Pr[Split0.IdealAll.MainD(G6(A), Split0.IdealAll.RO).distinguish() @ &m : res] = Pr[Split0.IdealAll.MainD(G4(A), SplitD.RO_DOM(SplitD.ROT.RO, SplitD.ROF.RO)).distinguish() @ &m : res] by byequiv => //; proc; inline *; sim.",
+        "rewrite -(SplitD.pr_RO_split (G4(A)) (fun _ b => b) &m ()) /=.",
+        "have Hll : forall (x : nonce * C.counter), is_lossless dblock by move=> ?; exact Block.dblock_ll.",
+        "rewrite -(FiniteRO.pr_RO_FinRO_D Hll (G4(A)) &m () (fun b => b)) /=.",
+        "byequiv => //; proc; inline *; sim.",
+        "have -> : Pr[UFCMA_poly(A, FinRO).main() @ &m : res] = Pr[MainD(G5(A), FinRO).distinguish() @ &m : res] by byequiv => //; proc; inline *; sim.",
+        "rewrite -(SplitC2.pr_RO_split (G9(A)) (fun _ b => b) &m ()) /=.",
+        "have -> : Pr[Split1.IdealAll.MainD(G9(A), Split1.IdealAll.RO).distinguish() @ &m : res] = Pr[Split0.IdealAll.MainD(G7(A), SplitC1.RO_Pair(SplitC1.I1.RO, SplitC1.I2.RO)).distinguish() @ &m : res] by byequiv => //; proc; inline *; sim.",
+        "rewrite -(SplitC1.pr_RO_split (G7(A)) (fun _ b => b) &m ()) /=.",
+        "have -> : Pr[Split0.IdealAll.MainD(G7(A), Split0.IdealAll.RO).distinguish() @ &m : res] = Pr[Split0.IdealAll.MainD(G5(A), SplitD.RO_DOM(SplitD.ROT.RO, SplitD.ROF.RO)).distinguish() @ &m : res] by byequiv => //; proc; inline *; sim.",
+        "rewrite -(SplitD.pr_RO_split (G5(A)) (fun _ b => b) &m ()) /=.",
+        "have Hll : forall (x : nonce * C.counter), is_lossless dblock by move=> ?; exact Block.dblock_ll.",
+        "rewrite -(FiniteRO.pr_RO_FinRO_D Hll (G5(A)) &m () (fun b => b)) /=.",
+        "byequiv => //; proc; inline *; sim.",
+        "qed."
+      ],
+      "proved": true
+    }
+  ],
+  "turn_count": 65,
+  "views_copied": 67,
+  "run_iteration_dir": "artifacts/eval_suite/rerun4_l1l4_90min/l4_checked_action_surface/chacha_step2_3/r01/2026-06-04_0133_step2_3/iteration_1",
+  "commit": "ed86503",
+  "commit_full": "ed86503687b599fca00f56148ad005f4240101e5",
+  "branch": "eval-suite-48",
+  "dirty": true
+}

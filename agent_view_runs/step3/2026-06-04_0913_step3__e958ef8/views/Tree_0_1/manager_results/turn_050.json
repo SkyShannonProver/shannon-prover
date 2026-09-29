@@ -1,0 +1,19 @@
+{
+  "turn": 50,
+  "handled_intent": {
+    "intent": "commit_tactic",
+    "payload": {
+      "tactic": "exlim n{2}, SplitC2.I1.RO.m{1}, SplitC2.I2.RO.m{1} => n0 mr0 ms0; call (equ_cc n0 mr0 ms0)."
+    }
+  },
+  "ok": true,
+  "manager_note": "Committed tactic accepted; the EasyCrypt proof state changed.",
+  "manager_actions": [
+    {
+      "action": "tactic commit",
+      "outcome": "EasyCrypt accepted the committed tactic.",
+      "timing": "391 ms"
+    }
+  ],
+  "view_refreshed": true
+}

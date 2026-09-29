@@ -1,0 +1,19 @@
+{
+  "turn": 13,
+  "handled_intent": {
+    "intent": "commit_tactic",
+    "payload": {
+      "tactic": "have hA := SplitD.pr_RO_split (G4(A)) (fun _ (r:bool) => r) &m (); rewrite /= in hA; rewrite hA."
+    }
+  },
+  "ok": true,
+  "manager_note": "Committed tactic accepted; the EasyCrypt proof state changed.",
+  "manager_actions": [
+    {
+      "action": "tactic commit",
+      "outcome": "EasyCrypt accepted the committed tactic.",
+      "timing": "572 ms"
+    }
+  ],
+  "view_refreshed": true
+}

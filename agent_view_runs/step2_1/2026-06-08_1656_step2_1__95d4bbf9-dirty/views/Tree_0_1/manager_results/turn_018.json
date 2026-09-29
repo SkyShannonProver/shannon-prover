@@ -1,0 +1,19 @@
+{
+  "turn": 18,
+  "handled_intent": {
+    "intent": "commit_tactic",
+    "payload": {
+      "tactic": "by move=> &2; rewrite /dec /get; case: (c{2}) => n a c0 t /=; smt()."
+    }
+  },
+  "ok": true,
+  "manager_note": "Committed tactic accepted; the EasyCrypt proof state changed.",
+  "manager_actions": [
+    {
+      "action": "tactic commit",
+      "outcome": "EasyCrypt accepted the committed tactic.",
+      "timing": "414 ms"
+    }
+  ],
+  "view_refreshed": true
+}

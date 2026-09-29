@@ -1,0 +1,28 @@
+{
+  "kind": "agent_view_run_report",
+  "timestamp": "2026-06-11_0811_equiv_step4",
+  "lemma": "equiv_step4",
+  "source_file": "eval/examples/ChaChaPoly/chacha_poly.ec",
+  "model": "claude-fable-5",
+  "surface_profile": "l1_goal_projection",
+  "trees": 2,
+  "eval_mode": true,
+  "outcome": "proved",
+  "resume_chunks": 4,
+  "resume_lineage": [
+    "artifacts/eval_suite/chacha_steps_a2_fable_l1/l1_goal_projection/cc_equiv_step4/r01/2026-06-10_2349_equiv_step4/iteration_1",
+    "artifacts/eval_suite/chacha_steps_a2_fable_l1/l1_goal_projection/cc_equiv_step4/r01/2026-06-11_0054_equiv_step4/iteration_1",
+    "artifacts/eval_suite/chacha_steps_a2_fable_l1/l1_goal_projection/cc_equiv_step4/r01/2026-06-11_0654_equiv_step4/iteration_1",
+    "artifacts/eval_suite/chacha_steps_a2_fable_l1/l1_goal_projection/cc_equiv_step4/r01/2026-06-11_0811_equiv_step4/iteration_1"
+  ],
+  "committed_proof_tactics": 185,
+  "committed_proof_source": "session",
+  "committed_proof_tree": "Tree_0_0_r2",
+  "turn_count": 223,
+  "views_copied": 231,
+  "run_iteration_dir": "artifacts/eval_suite/chacha_steps_a2_fable_l1/l1_goal_projection/cc_equiv_step4/r01/2026-06-11_0811_equiv_step4/iteration_1",
+  "commit": "685f509d2",
+  "commit_full": "685f509d2678739057061c570c67d41c0342d619",
+  "branch": "HEAD",
+  "dirty": true
+}

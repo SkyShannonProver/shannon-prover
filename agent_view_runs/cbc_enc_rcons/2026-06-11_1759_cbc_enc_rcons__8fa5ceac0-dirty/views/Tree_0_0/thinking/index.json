@@ -1,0 +1,73 @@
+{
+  "node": "Tree-0.0",
+  "discovery": "recorded_session_id",
+  "transcripts": [
+    "~/.claude/projects/<PROJECT>/c23ad701-72e9-4d30-9c69-847bb2f8245f.jsonl"
+  ],
+  "turns": [
+    {
+      "turn": 1,
+      "intent": "commit_tactic",
+      "payload_key": "elim: p st => [|pi p ih] st //=.",
+      "thinking_chars": 0,
+      "text_chars": 79,
+      "tokens": {
+        "output_tokens": 3417,
+        "input_tokens": 7,
+        "cache_read_input_tokens": 92160,
+        "cache_creation_input_tokens": 40652
+      },
+      "session_id": "c23ad701-72e9-4d30-9c69-847bb2f8245f",
+      "timestamp": "2026-06-12T01:00:23.374Z",
+      "file": "thinking/turn_001.md"
+    },
+    {
+      "turn": 2,
+      "intent": "commit_tactic",
+      "payload_key": "smt(size_ge0).",
+      "thinking_chars": 0,
+      "text_chars": 0,
+      "tokens": {
+        "output_tokens": 515,
+        "input_tokens": 2,
+        "cache_read_input_tokens": 36653,
+        "cache_creation_input_tokens": 1327
+      },
+      "session_id": "c23ad701-72e9-4d30-9c69-847bb2f8245f",
+      "timestamp": "2026-06-12T01:00:35.002Z",
+      "file": ""
+    },
+    {
+      "turn": 3,
+      "intent": "commit_tactic",
+      "payload_key": "qed.",
+      "thinking_chars": 0,
+      "text_chars": 52,
+      "tokens": {
+        "output_tokens": 122,
+        "input_tokens": 2,
+        "cache_read_input_tokens": 37980,
+        "cache_creation_input_tokens": 1419
+      },
+      "session_id": "c23ad701-72e9-4d30-9c69-847bb2f8245f",
+      "timestamp": "2026-06-12T01:00:41.822Z",
+      "file": "thinking/turn_003.md"
+    },
+    {
+      "turn": 4,
+      "intent": "finish",
+      "payload_key": "",
+      "thinking_chars": 0,
+      "text_chars": 67,
+      "tokens": {
+        "output_tokens": 117,
+        "input_tokens": 2,
+        "cache_read_input_tokens": 39399,
+        "cache_creation_input_tokens": 1015
+      },
+      "session_id": "c23ad701-72e9-4d30-9c69-847bb2f8245f",
+      "timestamp": "2026-06-12T01:00:46.711Z",
+      "file": "thinking/turn_004.md"
+    }
+  ]
+}

@@ -1,0 +1,45 @@
+{
+  "kind": "agent_view_run_report",
+  "timestamp": "2026-06-10_2153_mee_decrypt_correct",
+  "lemma": "mee_decrypt_correct",
+  "source_file": "eval/examples/MEE-CBC/FunctionalSpec.ec",
+  "model": "claude-fable-5",
+  "surface_profile": "l1_goal_projection",
+  "trees": 2,
+  "eval_mode": true,
+  "outcome": "proved",
+  "committed_proofs": [
+    {
+      "tree": "Tree_0_0",
+      "tactics": [
+        "proc; inline PRPc.PseudoRP.fi MAC.verify.",
+        "wp.",
+        "while (0 <= i <= size c /\\ ek = _ek /\\ mk = _mk /\\ c = behead _c /\\ s = nth witness (head witness _c :: c) i /\\ padded = cbc_dec AESi _ek (head witness _c) (take i c)) (size c - i).",
+        "auto => />."
+      ],
+      "source": "session",
+      "proved": false
+    },
+    {
+      "tree": "Tree_0_1",
+      "tactics": [
+        "proc.",
+        "inline *.",
+        "wp.",
+        "while (0 <= i <= size c /\\ ek = _ek /\\ mk = _mk /\\ p = None /\\ c = behead _c /\\ s = (if 0 < i then nth witness c (i - 1) else head witness _c) /\\ padded = cbc_dec AESi _ek (head witness _c) (take i c)) (size c - i).",
+        "auto=> />; smt(take_nth cats1 cbc_dec_rcons size_take nth_take xorbC size_ge0).",
+        "auto=> />; smt(take_size take0).",
+        "qed."
+      ],
+      "source": "session",
+      "proved": true
+    }
+  ],
+  "turn_count": 12,
+  "views_copied": 14,
+  "run_iteration_dir": "artifacts/eval_suite/mee_samples_fable_l1/l1_goal_projection/mee_decrypt_correct/r01/2026-06-10_2153_mee_decrypt_correct/iteration_1",
+  "commit": "685f509d2",
+  "commit_full": "685f509d2678739057061c570c67d41c0342d619",
+  "branch": "HEAD",
+  "dirty": true
+}

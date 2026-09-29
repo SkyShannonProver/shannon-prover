@@ -1,0 +1,20 @@
+{
+  "turn": 20,
+  "handled_intent": {
+    "intent": "commit_tactic",
+    "payload": {
+      "tactic": "case: Hinv => [Hi [Hr [Hjb [Hss Hsx]]]]; rewrite Hi /predT /=."
+    }
+  },
+  "ok": true,
+  "manager_note": "Committed tactic accepted; the EasyCrypt proof state changed.",
+  "manager_actions": [
+    {
+      "action": "tactic commit",
+      "outcome": "EasyCrypt accepted the committed tactic.",
+      "timing": "198 ms"
+    }
+  ],
+  "view_refreshed": true,
+  "surface_turn_hash": "2ceb6b896dce29f848a6140f9959cdf5436b0916"
+}

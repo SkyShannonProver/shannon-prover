@@ -1,0 +1,22 @@
+{
+  "turn": 49,
+  "handled_intent": {
+    "intent": "lookup_symbol",
+    "payload": {
+      "symbol": "fdom_set"
+    }
+  },
+  "ok": true,
+  "manager_note": "Read-only context. Accepted/rejected tactic or call text inside a preview is route-selection information, not the current proof-state error.",
+  "manager_actions": [
+    {
+      "action": "symbol lookup",
+      "outcome": "The manager returned read-only context for the current goal.",
+      "timing": "944 ms",
+      "content": {
+        "preview": "[WHERE-HIT] fdom_set (kind: lemma) * In [lemmas or axioms]: lemma fdom_set ['a, 'b]: forall (m : ('a, 'b) fmap) (x : 'a) (v : 'b), fdom m.[x <- v] = fdom m `|` fset1 x."
+      }
+    }
+  ],
+  "view_refreshed": true
+}

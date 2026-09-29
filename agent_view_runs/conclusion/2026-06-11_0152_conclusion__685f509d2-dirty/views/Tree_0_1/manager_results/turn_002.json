@@ -1,0 +1,22 @@
+{
+  "turn": 2,
+  "handled_intent": {
+    "intent": "lookup_symbol",
+    "payload": {
+      "symbol": "step2"
+    }
+  },
+  "ok": true,
+  "manager_note": "Read-only context. Accepted/rejected tactic or call text inside a preview is route-selection information, not the current proof-state error.",
+  "manager_actions": [
+    {
+      "action": "symbol lookup",
+      "outcome": "The manager returned read-only context for the current goal.",
+      "timing": "1.6 s",
+      "content": {
+        "preview": "[WHERE-HIT] step2 (kind: lemma \u00b7 admit) * In [lemmas or axioms]: local lemma step2: forall (A0(O : CCA_Oracles) <: CCA_Adv{-Mem, -FullRO.RO, -FullRO.FRO, -IndBlock, -OpCCinit.OCC, -OpCCRO.OCC, -CCA_UFCMA.StLSke, -Split0.IdealAll.RO, -SplitD.ROT.RO, -SplitD.ROF.RO, -SplitC1.I1.RO, -SplitC1.I2.RO, -Split1.IdealAll.RO, -SplitC2.I1.RO, -SplitC2.I2.RO}), (forall (O <: CCA_Oracles{-A0}), islossless O.enc => islossless O.dec => islossless A0(O).main) => forall &m, Pr[CCA_game(A0, RealOrcls(ChaChaPoly)).main() @ &m : res] <= Pr[Split1.IdealAll.MainD(G8(A0), SplitC2.RO_Pair(SplitC2.I1.RO, SplitC2.I2.RO)).distinguish () @ &m : res] + Pr[Split1.IdealAll.MainD(G9(A0), SplitC2.RO_Pair(SplitC2.I1.RO, SplitC2.I2.RO)).distinguish () @ &m : res] + (Pr[Indist.Distinguish(D(A0), IndBlock).game() @ &m : res] - Pr[Indist.Distinguish(D(A0), IndRO).game() @ &m : res]). PROOF STATUS: `admit` \u2014 this lemma is declared but its proof body is `admit.` in the in-scope source (still citable in EC; you would be relying on an unproven obligation). SCOPE: `exported_after_section` \u2014 exported once its `section` closes, abstracted over the section's declared parameters (supply them, e.g. the adversary module, when..."
+      }
+    }
+  ],
+  "view_refreshed": true
+}

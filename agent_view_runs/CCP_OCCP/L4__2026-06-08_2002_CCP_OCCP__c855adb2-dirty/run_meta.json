@@ -1,0 +1,62 @@
+{
+  "kind": "agent_view_run_report",
+  "timestamp": "2026-06-08_2002_CCP_OCCP",
+  "lemma": "CCP_OCCP",
+  "source_file": "eval/examples/ChaChaPoly/chacha_poly.ec",
+  "model": "claude-opus-4-8",
+  "surface_profile": "l4_checked_action_surface",
+  "trees": 2,
+  "eval_mode": true,
+  "outcome": "proved",
+  "committed_proofs": [
+    {
+      "tree": "Tree_0_0",
+      "tactics": [
+        "proc*.",
+        "call (_: ={glob OCC, glob I}).",
+        "sim.",
+        "sim.",
+        "proc."
+      ],
+      "proved": false
+    },
+    {
+      "tree": "Tree_0_1",
+      "tactics": [
+        "proc*.",
+        "call (_: ={glob OCC, glob I}).",
+        "sim.",
+        "sim.",
+        "proc.",
+        "sp.",
+        "exists* OCC.gs{1}, k{1}, n{1}, a{1}, c{1}; elim* => gs0 k0 n0 a0 c0; call{1} (poly_spec k0 n0 a0 c0 gs0).",
+        "exists* OCC.gs{1}, k{1}, n{1}, p{1}; elim* => gs1 k1 n1 p1; call{1} (chacha_spec k1 n1 p1 gs1).",
+        "seq 1 0 : (c{1} = gen_CTR_encrypt_bytes take_xor (cc OCC.gs{1}) k{1} n{1} 1 p{1} /\\ (n{2}, a{2}, p{2}) = nap{2} /\\ c{2} = gen_CTR_encrypt_bytes take_xor (cc OCC.gs{2}) k{2} n{2} 1 p{2} /\\ t{2} = genpoly1305 (cc OCC.gs{2}) k{2} n{2} (topol a{2} c{2}) /\\ (n{1}, a{1}, p{1}) = nap{1} /\\ k{1} = k{2} /\\ nap{1} = nap{2} /\\ OCC.gs{1} = OCC.gs{2} /\\ (glob I){1} = (glob I){2}).",
+        "exists* OCC.gs{1}, k{1}, n{1}, p{1}; elim* => gs0 k0 n0 p0; call{1} (chacha_spec k0 n0 p0 gs0).",
+        "auto.",
+        "exists* OCC.gs{1}, k{1}, n{1}, a{1}, c{1}; elim* => gs0 k0 n0 a0 c0; call{1} (poly_spec k0 n0 a0 c0 gs0).",
+        "auto.",
+        "proc.",
+        "sp 2 2.",
+        "seq 1 1 : (t'{1} = t'{2} /\\ result{1} = result{2} /\\ n{1} = n{2} /\\ a{1} = a{2} /\\ c{1} = c{2} /\\ t{1} = t{2} /\\ k{1} = k{2} /\\ OCC.gs{1} = OCC.gs{2} /\\ (glob I){1} = (glob I){2}).",
+        "exists* OCC.gs{1}, k{1}, n{1}, a{1}, c{1}; elim* => gs0 k0 n0 a0 c0; call{1} (poly_spec k0 n0 a0 c0 gs0).",
+        "auto.",
+        "if.",
+        "smt().",
+        "wp; exists* OCC.gs{1}, k{1}, n{1}, c{1}; elim* => gs0 k0 n0 c0; call{1} (chacha_spec k0 n0 c0 gs0).",
+        "auto.",
+        "auto.",
+        "auto.",
+        "qed."
+      ],
+      "proved": true
+    }
+  ],
+  "turn_count": 39,
+  "views_copied": 41,
+  "run_iteration_dir": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l4_checked_action_surface/CCP_OCCP/r01/2026-06-08_2002_CCP_OCCP/iteration_1",
+  "commit": "c855adb2",
+  "commit_full": "c855adb2fa7167175ef63db96f7d642faee3e78b",
+  "branch": "HEAD",
+  "dirty": true
+}

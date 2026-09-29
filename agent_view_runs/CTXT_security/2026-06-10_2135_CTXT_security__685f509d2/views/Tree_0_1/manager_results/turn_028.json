@@ -1,0 +1,19 @@
+{
+  "turn": 28,
+  "handled_intent": {
+    "intent": "commit_tactic",
+    "payload": {
+      "tactic": "move=> &1; proc; conseq (_: _ ==> true: =1%r) (_: MACa.SUF_CMA.SUF_Wrap.win ==> MACa.SUF_CMA.SUF_Wrap.win) => //."
+    }
+  },
+  "ok": true,
+  "manager_note": "Committed tactic accepted; the EasyCrypt proof state changed.",
+  "manager_actions": [
+    {
+      "action": "tactic commit",
+      "outcome": "EasyCrypt accepted the committed tactic.",
+      "timing": "2.9 s"
+    }
+  ],
+  "view_refreshed": true
+}

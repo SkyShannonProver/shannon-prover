@@ -1,0 +1,27 @@
+{
+  "kind": "agent_view_run_report",
+  "timestamp": "2026-06-03_1019_step4_badi_L4_CLOSED",
+  "lemma": "step4_badi",
+  "source_file": "eval/examples/ChaChaPoly/chacha_poly.ec",
+  "model": "claude-opus-4-8",
+  "surface_profile": "l4_checked_action_surface",
+  "trees": 1,
+  "eval_mode": true,
+  "outcome": "proved",
+  "resume_chunks": 3,
+  "resume_lineage": [
+    "tmp/wt/badi_l4/artifacts/eval_suite/step4_badi_l4_opus48/l4_checked_action_surface/chacha_step4_badi/r01/2026-06-03_1019_step4_badi/iteration_1",
+    "tmp/wt/badi_l4/artifacts/resume_loop/BADI-L4/chunk1/2026-06-03_1049_step4_badi/iteration_1",
+    "tmp/wt/badi_l4/artifacts/resume_loop/BADI-L4/chunk2/2026-06-03_1119_step4_badi/iteration_1"
+  ],
+  "committed_proof_tactics": 56,
+  "committed_proof_source": "session",
+  "committed_proof_tree": "Tree_0_0",
+  "turn_count": 94,
+  "views_copied": 97,
+  "run_iteration_dir": "tmp/wt/badi_l4/artifacts/resume_loop/BADI-L4/chunk2/2026-06-03_1119_step4_badi/iteration_1",
+  "commit": "100fb60",
+  "commit_full": "100fb6091adfea49598bf9a702119ff476f8306e",
+  "branch": "eval-suite",
+  "dirty": true
+}

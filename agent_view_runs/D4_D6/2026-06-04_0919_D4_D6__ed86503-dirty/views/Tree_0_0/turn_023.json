@@ -1,0 +1,189 @@
+{
+  "last_result": {
+    "intent": "commit_tactic",
+    "payload": {
+      "tactic": "rewrite eq_iff."
+    },
+    "manager_action": "commit_tactic",
+    "result": "EasyCrypt accepted the committed tactic.",
+    "effect": "EasyCrypt accepted a proof-state change; the refreshed view is based on the new committed state.",
+    "proof_state": "The committed EasyCrypt proof state changed.",
+    "tactic": "rewrite eq_iff."
+  },
+  "current_goal": {
+    "lines": [
+      "Current goal (remaining: 2)",
+      "",
+      "Type variables: <none>",
+      "",
+      "f: int -> int",
+      "finv: int -> int",
+      "hf: forall (i : int), 1 <= i <= 4 <=> 1 <= f i <= 4",
+      "hfinv: forall (i : int), 1 <= i <= 4 => f (finv i) = i /\\ finv (f i) = i",
+      "&1: {arg: {}}",
+      "&2: {arg: {}}",
+      "a: int",
+      "x: int",
+      "h1: 1 <= x <= 6",
+      "h2: 1 <= x <= 4",
+      "------------------------------------------------------------------------",
+      "finv x = a <=> x = f a",
+      "[34|check]>"
+    ],
+    "text_fully_shown": true,
+    "truncated": false,
+    "goal_type": "ambient",
+    "view_focus": "ambient_logic",
+    "source": {
+      "label": "Parsed from EasyCrypt pretty goal text",
+      "ground_truth": false
+    }
+  },
+  "proof_status": {
+    "status": "open",
+    "remaining_goals": 2,
+    "remaining_goals_known": true,
+    "goal_type": "ambient",
+    "view_focus": "ambient_logic",
+    "current_layer": "ambient_logic"
+  },
+  "candidate_moves": {
+    "navigation": [
+      {
+        "id": "ambient_residual_close",
+        "proof_family": "ambient_logic",
+        "episode": "ambient_residual_close",
+        "route": "close_arithmetic_or_pure_residual",
+        "confidence": "medium",
+        "confidence_reason": "The current ambient goal looks like a pure arithmetic/list-size residual with no visible definitions or route-changing frontier.",
+        "valid_for": "current_view_only",
+        "why_now": "current goal is a pure residual; try a small closing probe before switching proof family.",
+        "fast_track_probe": {
+          "tactic": "move=> *; smt(size_ge0 @IntDiv).",
+          "preconditions": [
+            "Use only for pure residual arithmetic/list-size goals.",
+            "Probe first; if SMT fails, inspect lemma_hints rather than adding random lemmas."
+          ],
+          "expected_next_shape": "The residual closes, or the failure reveals a missing arithmetic or local size lemma."
+        },
+        "anti_routes": [
+          {
+            "route": "structural_tactic_before_pure_close",
+            "reason": "No program frontier is visible; structural program tactics are the wrong proof family.",
+            "scope": "avoid_for_current_view"
+          }
+        ],
+        "repair_if_fails": [
+          {
+            "failure": "lemma",
+            "next": "inspect lemma_hints or lookup_symbol for the missing arithmetic/list lemma"
+          },
+          {
+            "failure": "route",
+            "next": "downgrade this route and reread current_goal for a hidden definition"
+          }
+        ],
+        "lemma_pack": []
+      }
+    ]
+  },
+  "program_frontier": {
+    "authority": "proof-state analysis",
+    "view_focus": "ambient_logic"
+  },
+  "call_site_surface": {},
+  "pure_tail_surface": {
+    "state": "quantified_ambient_tail",
+    "obligation_families": [
+      {
+        "family": "quantified_residual_logic",
+        "evidence": [
+          "universal quantifier visible",
+          "implication residual visible"
+        ],
+        "effect": "The current proof point is dominated by local logical obligations rather than program-frontier movement.",
+        "limitations": "Quantifier names are not normalized across EasyCrypt pretty-printer variants."
+      }
+    ],
+    "ambient_memory_translation": {
+      "state": "introduced_memories_visible",
+      "introduced_memory_bindings": [
+        "&1:",
+        "&2:"
+      ],
+      "translation_facts": [
+        "Decorations identify the program memory from which a term is read.",
+        "Pretty-printer memory names and introduced proof-context names can differ."
+      ],
+      "effect": "Local claims in the pure tail depend on the currently introduced memory binders as well as displayed term decorations."
+    },
+    "effect": "Summarizes verifier-visible pure-goal structure after program frontier actions have been discharged or hidden by local proof steps.",
+    "limitations": [
+      "This panel records syntactic and proof-state facts from the current view.",
+      "It does not choose a tactic or instantiate a lemma."
+    ]
+  },
+  "application_context": {},
+  "facts_and_diagnostics": {
+    "facts": {
+      "unfoldable_goal_head_count": 0
+    },
+    "fact_note": "Only current-frontier facts are shown here; the full proof context artifact keeps the compiler/internal details."
+  },
+  "recovery_diagnosis_surface": {
+    "kind": "recovery_diagnosis_surface",
+    "recovery_class": "local_pure_surgery_available",
+    "confidence": "medium",
+    "checkpoint_policy": "current_state_local_work_visible",
+    "evidence": [
+      "pure_tail_surface is visible for the current goal",
+      "current proof state has no program-frontier work before the logical residual"
+    ],
+    "available_local_work": [
+      {
+        "kind": "pure_tail_obligation_families",
+        "items": [
+          "quantified_residual_logic"
+        ]
+      }
+    ],
+    "related_surfaces": [
+      "pure_tail_surface"
+    ],
+    "limitations": [
+      "does not select a destructor, witness, rewrite, or SMT lemma",
+      "reported checkpoints are recovery references, not a default route"
+    ]
+  },
+  "inspect_lookup_handles": {
+    "effect": "All handles here are read-only manager requests; the committed EasyCrypt proof state stays unchanged.",
+    "manager_note": "Some requests may ask EasyCrypt or name resolution; wait for the manager result before choosing the next proof intent.",
+    "ask_manager_for": [
+      {
+        "intent": "inspect_context",
+        "payload": {
+          "topic": "goal_info"
+        },
+        "use_when": "No fresh recommendation is available; parse the current goal.",
+        "returns": "manager-provided read-only context for this proof route"
+      },
+      {
+        "intent": "inspect_context",
+        "payload": {
+          "topic": "lemma_hints"
+        },
+        "use_when": "Need local or standard-library lemma names before rewriting a pure goal.",
+        "returns": "nearby lemma hints and qualified-name lookup guidance"
+      },
+      {
+        "intent": "inspect_context",
+        "payload": {
+          "topic": "tactic_forms",
+          "name": "rewrite"
+        },
+        "use_when": "Need the valid EasyCrypt form for rewrite, apply, conseq, while, or SMT setup.",
+        "returns": "valid tactic forms and common traps"
+      }
+    ]
+  }
+}

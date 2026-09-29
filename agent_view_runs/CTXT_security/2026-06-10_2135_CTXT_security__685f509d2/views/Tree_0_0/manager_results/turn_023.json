@@ -1,0 +1,19 @@
+{
+  "turn": 23,
+  "handled_intent": {
+    "intent": "commit_tactic",
+    "payload": {
+      "tactic": "if{1}; [exists* (glob E){1}, ek{1}, c0{1}; elim* => ge kk cc; wp; call{1} (dec_ph ge kk cc); skip; smt() | by wp; skip; smt()]."
+    }
+  },
+  "ok": true,
+  "manager_note": "Committed tactic accepted; the EasyCrypt proof state changed.",
+  "manager_actions": [
+    {
+      "action": "tactic commit",
+      "outcome": "EasyCrypt accepted the committed tactic.",
+      "timing": "371 ms"
+    }
+  ],
+  "view_refreshed": true
+}

@@ -1,0 +1,19 @@
+{
+  "turn": 4,
+  "handled_intent": {
+    "intent": "commit_tactic",
+    "payload": {
+      "tactic": "move=> &1 &2 hge huniq hout hne hlt; have hhd : head witness<:nonce> (drop i{2} ns2{2}) = nth witness<:nonce> ns2{2} i{2} by smt(drop_nth head_cons); rewrite hhd /=; smt(drop_nth drop_drop drop0 mem_drop mem_set cons_uniq size_drop size_eq0)."
+    }
+  },
+  "ok": true,
+  "manager_note": "Committed tactic accepted; the EasyCrypt proof state changed.",
+  "manager_actions": [
+    {
+      "action": "tactic commit",
+      "outcome": "EasyCrypt accepted the committed tactic.",
+      "timing": "429 ms"
+    }
+  ],
+  "view_refreshed": true
+}

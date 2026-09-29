@@ -1,0 +1,32 @@
+{
+  "turn": 8,
+  "handled_intent": {
+    "intent": "inspect_context",
+    "payload": {
+      "topic": "call_site_options"
+    }
+  },
+  "ok": true,
+  "manager_note": "Read-only context. Accepted/rejected tactic or call text inside a preview is route-selection information, not the current proof-state error.",
+  "manager_actions": [
+    {
+      "action": "inspect call site options",
+      "outcome": "The manager returned current call-site context through the refreshed workspace view.",
+      "content": {
+        "title": "Call-Site Context",
+        "notes": [
+          {
+            "message": "This lightweight inspection uses the current `call_site_surface` and `program_frontier` facts; it does not enumerate unverified named-call candidates."
+          }
+        ],
+        "items": [
+          {
+            "effect": "Read the refreshed view's `call_site_surface` for live call sites, callable handles, frontier blockers, post-call residuals, preview effects, and recovery checkpoints.",
+            "verification": "current workspace facts"
+          }
+        ]
+      }
+    }
+  ],
+  "view_refreshed": true
+}

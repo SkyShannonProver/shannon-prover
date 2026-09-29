@@ -1,0 +1,362 @@
+{
+  "last_result": {
+    "intent": "probe_tactic",
+    "payload": {
+      "tactic": "conseq UFCMA_genCC."
+    },
+    "manager_action": "probe_tactic",
+    "result": "EasyCrypt accepted this read-only probe. The committed proof state was not changed; `goal_after_probe` shows the goal that would be visible if this tactic were committed.",
+    "effect": "This is a read-only probe; it asks EasyCrypt what would happen without changing the committed proof state.",
+    "proof_state": "The committed EasyCrypt proof state was not changed.",
+    "probe_preview": {
+      "tactic": "conseq UFCMA_genCC.",
+      "outcome": "EasyCrypt accepted this read-only probe.",
+      "goal_after_remaining": 4,
+      "effect": "This preview is speculative only; the committed EasyCrypt proof state was not changed.",
+      "goal_after_probe": {
+        "lines": [
+          "Current goal (remaining: 4)",
+          "Type variables: <none>",
+          "&m: {}",
+          "------------------------------------------------------------------------",
+          "forall &1 &2,",
+          "  (glob A){1} = (glob A){2} =>",
+          "  forall (result_L result_R : bool) (lc_L : ciphertext list) (gs_L : globS)",
+          "    (m_R : (nonce * C.counter, block) fmap) (lc_R : ciphertext list),",
+          "    (result_L = result_R /\\ lc_L = lc_R) /\\ gs_L = m_R => result_L = result_R",
+          "[304|check]>"
+        ],
+        "text_fully_shown": true,
+        "truncated": false,
+        "source": {
+          "label": "[TRY] goal_after_raw",
+          "ground_truth": false
+        }
+      }
+    },
+    "kind": "accepted_structural_transition",
+    "message": "This structural transition probe was accepted.",
+    "accepted_tactic": "conseq UFCMA_genCC.",
+    "structural_transition": {
+      "id": "prhl_mid_surgery",
+      "kind": "structural_transition",
+      "status": "accepted_checkpoint",
+      "tactic": "conseq UFCMA_genCC.",
+      "phase": "pRHL mid-surgery",
+      "valid_for": "current_view_only",
+      "decision": "Commit this exact accepted tactic only if you want to enter the pRHL mid-surgery phase.",
+      "recommended_next": {
+        "label": "Enter this transition",
+        "submit": {
+          "intent": "commit_tactic",
+          "payload": {
+            "tactic": "conseq UFCMA_genCC."
+          }
+        }
+      },
+      "after_commit": "The next view should expose the real pRHL mid-surgery workbench for the updated frontier.",
+      "if_wrong_after_commit": "Use `undo_last_step` or `undo_to_checkpoint` if the committed route is wrong."
+    },
+    "question": "Do you want to enter the pRHL mid-surgery workbench?",
+    "recommended_next": {
+      "label": "Enter this transition",
+      "submit": {
+        "intent": "commit_tactic",
+        "payload": {
+          "tactic": "conseq UFCMA_genCC."
+        }
+      }
+    },
+    "guidance": "If yes, commit this exact tactic and read the real post-commit workbench. If no, choose another probe or inspect the current state. Do not solve the speculative preview in your mental model.",
+    "if_route_wrong": "Use `undo_last_step` or `undo_to_checkpoint` if the committed route is wrong.",
+    "preview_summary": {
+      "remaining_goals": 4,
+      "truncated": false
+    },
+    "tactic": "conseq UFCMA_genCC."
+  },
+  "current_goal": {
+    "lines": [
+      "Current goal (remaining: 4)",
+      "",
+      "Type variables: <none>",
+      "",
+      "&m: {}",
+      "------------------------------------------------------------------------",
+      "pre = (glob A){1} = (glob A){2}",
+      "",
+      "    CPA_game(CCA_CPA_Adv(A), RealOrcls(StLSke(St))).main ~ CPA_game(",
+      "                                                             CCA_CPA_Adv(A),",
+      "                                                             RealOrcls(",
+      "                                                               GenChaChaPoly(",
+      "                                                                 CCRO(FinRO)))).main ",
+      "",
+      "post = res{1} = res{2}"
+    ],
+    "text_fully_shown": true,
+    "truncated": false,
+    "goal_type": "equiv",
+    "view_focus": "seq_cut",
+    "source": {
+      "label": "Parsed from EasyCrypt pretty goal text",
+      "ground_truth": false
+    }
+  },
+  "proof_status": {
+    "status": "open",
+    "remaining_goals": 4,
+    "remaining_goals_known": true,
+    "goal_type": "equiv",
+    "view_focus": "seq_cut",
+    "current_layer": "prhl_module"
+  },
+  "candidate_moves": {
+    "moves": [
+      {
+        "title": "Read-only tactic probe",
+        "category": "probe",
+        "tactic": "proc.",
+        "applicability": "This tactic-shaped option should be checked with a read-only probe before committing it.",
+        "effect": "This is a read-only probe; it asks EasyCrypt what would happen without changing the committed proof state.",
+        "source": "proof-state analysis",
+        "derivation": "read-only probe surfaced from proof-state analysis",
+        "verified": "read_only_probe_suggestion",
+        "guarantee": "read-only probe shape; proof state unchanged; probe then decide; reversible"
+      }
+    ],
+    "probe_alternatives": [
+      {
+        "tactic": "conseq UFCMA_genCC.",
+        "probe_result": "accepted",
+        "status": "verified_on_current_state",
+        "how_to_use": "This tactic was accepted by a read-only probe on the current proof state. The transition record describes the checked effect and any visible limitations.",
+        "structural_transition": {
+          "id": "prhl_mid_surgery",
+          "kind": "structural_transition",
+          "status": "accepted_checkpoint",
+          "tactic": "conseq UFCMA_genCC.",
+          "phase": "pRHL mid-surgery",
+          "valid_for": "current_view_only",
+          "decision": "Commit this exact accepted tactic only if you want to enter the pRHL mid-surgery phase.",
+          "recommended_next": {
+            "label": "Enter this transition",
+            "submit": {
+              "intent": "commit_tactic",
+              "payload": {
+                "tactic": "conseq UFCMA_genCC."
+              }
+            }
+          },
+          "after_commit": "The next view should expose the real pRHL mid-surgery workbench for the updated frontier.",
+          "if_wrong_after_commit": "Use `undo_last_step` or `undo_to_checkpoint` if the committed route is wrong."
+        },
+        "goal_after_probe_summary": {
+          "remaining_goals": 4,
+          "first_lines": [
+            "Current goal (remaining: 4)",
+            "Type variables: <none>",
+            "&m: {}",
+            "------------------------------------------------------------------------"
+          ],
+          "truncated": false
+        }
+      }
+    ]
+  },
+  "program_frontier": {
+    "authority": "proof-state analysis",
+    "view_focus": "seq_cut",
+    "focus": {
+      "has_invariant_skeleton": false
+    },
+    "checks": [
+      "A runnable seq candidate is not evidence that the invariant is strong enough."
+    ]
+  },
+  "call_site_surface": {},
+  "seq_cut_surface": {
+    "seq_candidate_id": "probe_d12f5356ee47",
+    "state": "seq_view",
+    "cut_position": {
+      "tactic": "conseq UFCMA_genCC."
+    },
+    "obligation_count": 4,
+    "obligation_kinds": [
+      "relational",
+      "postcondition"
+    ],
+    "branch_focus": {
+      "remaining_goals": 4,
+      "latest_event_head": "conseq"
+    },
+    "residual_frontier": {
+      "current_layer": "prhl_module",
+      "view_focus": "seq_cut",
+      "live_call_site_count": 0,
+      "goal_contains_call_site": false
+    }
+  },
+  "application_context": {
+    "selected_handles": [
+      {
+        "title": "Concrete tactic candidate",
+        "tactic": "conseq UFCMA_genCC.",
+        "why_relevant": "Daemon probe accepted this tactic and it would leave 4 subgoal(s); commit it if that is the intended decomposition.",
+        "confidence": "verified_by_probe",
+        "source": "try",
+        "derivation": "read-only probe surfaced from try",
+        "verified": "read_only_probe_suggestion",
+        "guarantee": "read-only probe shape; proof state unchanged; probe then decide; reversible"
+      },
+      {
+        "title": "Named-call context",
+        "tactic_shape": "call <lemma_name>.",
+        "why_relevant": "program-difference analysis found this tactic while comparing the current programs/probability expressions. Unverified call/ecall items are structural hints only; proof-state analysis or a daemon probe must establish frontier readiness before they become runnable.",
+        "runnable_status": "Not established as runnable from this panel; use the current frontier and call-site context before deciding whether to probe it.",
+        "missing_input": [
+          "Concrete arguments required by the lemma or call form."
+        ],
+        "confidence": "needs_instantiation",
+        "source": "program-difference analysis"
+      }
+    ]
+  },
+  "facts_and_diagnostics": {
+    "facts": {
+      "has_invariant_skeleton": false,
+      "unfoldable_goal_head_count": 0
+    },
+    "fact_note": "Only current-frontier facts are shown here; the full proof context artifact keeps the compiler/internal details.",
+    "errors": [
+      {
+        "message": "guidance.stale_recommendations[2].action must be non-empty"
+      }
+    ]
+  },
+  "inspect_lookup_handles": {
+    "effect": "All handles here are read-only manager requests; the committed EasyCrypt proof state stays unchanged.",
+    "manager_note": "Some requests may ask EasyCrypt or name resolution; wait for the manager result before choosing the next proof intent.",
+    "ask_manager_for": [
+      {
+        "intent": "inspect_context",
+        "payload": {
+          "topic": "goal_info"
+        },
+        "use_when": "Need parsed goal shape, resolved names, or KB pattern hints.",
+        "returns": "parsed goal structure and names"
+      },
+      {
+        "intent": "inspect_context",
+        "payload": {
+          "topic": "call_site_options"
+        },
+        "use_when": "The current cut or frontier context may expose a call route.",
+        "returns": "call-ready/oracle-equiv context for the current frontier, plus the BODY of the procedure(s) called here (functor aliases resolved) so you can see which oracles/state your call invariant must preserve"
+      },
+      {
+        "intent": "inspect_context",
+        "payload": {
+          "topic": "call_subgoals",
+          "invariant": "<the EasyCrypt invariant expression inside call (_: ...)>"
+        },
+        "use_when": "You are considering `call (_: Inv)` and already have a concrete invariant expression you want to test first.",
+        "returns": "a read-only preview of the obligations caused by that candidate invariant, including pre/init, call-preservation, oracle-side, postcondition, missing-fact signals, and extra conjuncts that may create avoidable obligations"
+      },
+      {
+        "intent": "inspect_context",
+        "payload": {
+          "topic": "align"
+        },
+        "use_when": "The visible cut may depend on LHS/RHS statement alignment or missing live facts.",
+        "returns": "swap/alignment context for the visible pRHL frontier"
+      },
+      {
+        "intent": "inspect_context",
+        "payload": {
+          "topic": "tactic_forms",
+          "name": "call"
+        },
+        "use_when": "Need the valid form for call, seq, while, rnd, or rewrite.",
+        "returns": "valid tactic forms and common traps"
+      },
+      {
+        "intent": "inspect_context",
+        "payload": {
+          "topic": "tactic_forms",
+          "name": "sp"
+        },
+        "use_when": "The visible cut/frontier may need indexed `sp i j` before branch tactics.",
+        "returns": "valid `sp` forms and branch-frontier traps"
+      },
+      {
+        "intent": "inspect_context",
+        "payload": {
+          "topic": "tactic_forms",
+          "name": "wp"
+        },
+        "use_when": "Mid-proof pRHL suffix surgery may need indexed `wp`.",
+        "returns": "valid indexed `wp` forms and suffix-alignment traps"
+      },
+      {
+        "intent": "inspect_context",
+        "payload": {
+          "topic": "tactic_forms",
+          "name": "swap"
+        },
+        "use_when": "Statement order may need a small `swap` before `sp`, `wp`, or `sim`.",
+        "returns": "valid `swap` forms and statement-order traps"
+      },
+      {
+        "intent": "inspect_context",
+        "payload": {
+          "topic": "tactic_forms",
+          "name": "rcondt"
+        },
+        "use_when": "A guarded branch may need `rcondt` after a case split or invariant fact.",
+        "returns": "valid `rcondt` forms and guard-obligation traps"
+      },
+      {
+        "intent": "inspect_context",
+        "payload": {
+          "topic": "tactic_forms",
+          "name": "rcondf"
+        },
+        "use_when": "A guarded branch may need `rcondf` after a case split or invariant fact.",
+        "returns": "valid `rcondf` forms and guard-obligation traps"
+      },
+      {
+        "intent": "inspect_context",
+        "payload": {
+          "topic": "tactic_forms",
+          "name": "conseq"
+        },
+        "use_when": "A suffix proof may need `conseq` to weaken to a smaller relation before `sim`.",
+        "returns": "valid `conseq` forms and pRHL memory-annotation traps"
+      },
+      {
+        "intent": "inspect_context",
+        "payload": {
+          "topic": "tactic_forms",
+          "name": "rnd"
+        },
+        "use_when": "One side may have an extra sample or need an explicit sample coupling.",
+        "returns": "valid `rnd` forms, including one-sided sampling"
+      },
+      {
+        "intent": "inspect_context",
+        "payload": {
+          "topic": "tactic_forms",
+          "name": "eager"
+        },
+        "use_when": "A known statement-order mismatch may need an eager/lazy transformation.",
+        "returns": "valid `eager` forms and when to prefer smaller surgery"
+      }
+    ],
+    "lookup_candidates": [
+      {
+        "symbol": "UFCMA_genCC",
+        "use_when": "Resolve exact signature for `UFCMA_genCC` only when this handle route is being tested."
+      }
+    ]
+  }
+}

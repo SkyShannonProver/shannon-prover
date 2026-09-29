@@ -1,0 +1,46 @@
+## 🎯 Current Goal
+```
+Current goal (remaining: 9)
+
+Type variables: <none>
+
+&m: {}
+------------------------------------------------------------------------
+Context : hr: {b0 : bool, e, f, h : group, r, r' : ZModE.exp,
+              m0, m1 : PKE_.plaintext}
+
+pre = (size G3.cilog <= PKE_.qD /\ G1.w <> zero /\ G1.g_ = g ^ G1.w) /\ true
+
+
+post =
+  mu dt
+    (fun (x : ZModE.exp) =>
+       (g ^ x \in map (fun (t : PKE_.ciphertext) => t.`1) G3.cilog) /\
+       size G3.cilog <= PKE_.qD /\ G1.w <> zero /\ G1.g_ = g ^ G1.w) <=
+  PKE_.qD%r / order%r &&
+  forall (v : ZModE.exp),
+    v \in dt =>
+    (g ^ v \in map (fun (t : PKE_.ciphertext) => t.`1) G3.cilog) /\
+    size G3.cilog <= PKE_.qD /\ G1.w <> zero /\ G1.g_ = g ^ G1.w =>
+    (fun (x : ZModE.exp) =>
+       (g ^ x \in map (fun (t : PKE_.ciphertext) => t.`1) G3.cilog) /\
+       size G3.cilog <= PKE_.qD /\ G1.w <> zero /\ G1.g_ = g ^ G1.w) v
+[158|check]>
+```
+
+**Last action:** `skip => &hr [[hsz hw hg] _]; split; last by move=> v _ h; exact h.` — EasyCrypt rejected the committed tactic. Use the error summary and current goal to revise the proof step. (The committed EasyCrypt proof state was not changed.)
+
+---
+
+Submit exactly ONE proof intent via the `submit_proof_intent` MCP tool (only `intent` + `payload`; no node ids, hashes, request ids, or reasoning fields).
+
+### Legal Node Memory Anchor
+
+LEGAL_NODE_MEMORY_DIR: `tmp/wt/l1/artifacts/resume_loop/PRG4b-L1/chunk1/2026-06-03_0924_pr_G4/iteration_1/node_memory/Tree_0_0`
+LEGAL_LATEST_WORKSPACE_VIEW: `tmp/wt/l1/artifacts/resume_loop/PRG4b-L1/chunk1/2026-06-03_0924_pr_G4/iteration_1/node_memory/Tree_0_0/latest_workspace_view.json`
+LEGAL_LATEST_MANAGER_RESULT: `tmp/wt/l1/artifacts/resume_loop/PRG4b-L1/chunk1/2026-06-03_0924_pr_G4/iteration_1/node_memory/Tree_0_0/latest_manager_result.json`
+LEGAL_LATEST_FOLLOWUP: `tmp/wt/l1/artifacts/resume_loop/PRG4b-L1/chunk1/2026-06-03_0924_pr_G4/iteration_1/node_memory/Tree_0_0/latest_followup.md`
+
+Compaction recovery: if these exact paths are missing from your context, refresh through `submit_proof_intent` with `{"intent":"inspect_context","payload":{"topic":"goal_info"}}` instead of using shell directory discovery for proof-state artifacts.
+
+The current goal is shown in full above. Only-if-needed: the complete structured view (every collapsed panel) is in `LEGAL_LATEST_WORKSPACE_VIEW`.

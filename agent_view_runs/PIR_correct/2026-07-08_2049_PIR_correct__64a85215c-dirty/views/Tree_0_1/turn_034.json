@@ -1,0 +1,626 @@
+{
+  "last_result": {
+    "intent": "commit_tactic",
+    "payload": {
+      "tactic": "by rewrite hz xorwC xorw0."
+    },
+    "manager_action": "commit_tactic",
+    "result": "EasyCrypt accepted the committed tactic.",
+    "effect": "EasyCrypt accepted a proof-state change; the refreshed view is based on the new committed state.",
+    "proof_state": "The committed EasyCrypt proof state changed.",
+    "tactic": "by rewrite hz xorwC xorw0."
+  },
+  "current_goal": {
+    "lines": [
+      "Current goal",
+      "",
+      "Type variables: <none>",
+      "",
+      "&m: {}",
+      "i0: int",
+      "hi: 0 <= i0 < N",
+      "&hr: {b : bool, i, j : int, s, s0 : int list, r, r' : word}",
+      "Hi0: i{hr} = i0",
+      "s1: int list",
+      "s': int list",
+      "j0: int",
+      "hnlt: ! j0 < N",
+      "hb: 0 <= j0 <= N",
+      "hi2: i{hr} = i0",
+      "hle: j0 <= i0 => s1 = s'",
+      "hsxi: i0 < j0 => sxor2 s1 s' i0",
+      "u1: int list",
+      "u2: int list",
+      "------------------------------------------------------------------------",
+      "big predT<:int> a (u1 ++ i0 :: u2) +^ big predT<:int> a (u1 ++ u2) = a i0",
+      "[43|check]>"
+    ],
+    "text_fully_shown": true,
+    "truncated": false,
+    "goal_type": "ambient",
+    "view_focus": "ambient_logic",
+    "source": {
+      "label": "Parsed from EasyCrypt pretty goal text",
+      "ground_truth": false
+    }
+  },
+  "proof_status": {
+    "status": "open",
+    "remaining_goals": 1,
+    "remaining_goals_known": true,
+    "goal_type": "ambient",
+    "view_focus": "ambient_logic",
+    "current_layer": "ambient_logic"
+  },
+  "candidate_moves": {
+    "moves": [
+      {
+        "title": "Read-only tactic probe",
+        "category": "probe",
+        "tactic": "rewrite /sxor2.",
+        "applicability": "This tactic-shaped option should be checked with a read-only probe before committing it.",
+        "effect": "This is a read-only probe; it asks EasyCrypt what would happen without changing the committed proof state.",
+        "source": "proof-state analysis",
+        "derivation": "read-only probe surfaced from proof-state analysis",
+        "verified": "read_only_probe_suggestion",
+        "guarantee": "read-only probe shape; proof state unchanged; probe then decide; reversible"
+      }
+    ]
+  },
+  "program_frontier": {
+    "authority": "proof-state analysis",
+    "view_focus": "ambient_logic"
+  },
+  "call_site_surface": {},
+  "pure_tail_surface": {
+    "state": "ambient_pure_tail",
+    "goal_operators": [
+      "big",
+      "predT"
+    ],
+    "visible_hypotheses": [
+      "hi: 0 <= i0 < N",
+      "Hi0: i{hr} = i0",
+      "hnlt: ! j0 < N",
+      "hb: 0 <= j0 <= N",
+      "hi2: i{hr} = i0",
+      "hle: j0 <= i0 => s1 = s'"
+    ],
+    "obligation_families": [
+      {
+        "family": "quantified_residual_logic",
+        "evidence": [
+          "implication residual visible"
+        ],
+        "effect": "The current proof point is dominated by local logical obligations rather than program-frontier movement.",
+        "limitations": "Quantifier names are not normalized across EasyCrypt pretty-printer variants."
+      }
+    ],
+    "ambient_memory_translation": {
+      "state": "introduced_memories_visible",
+      "visible_decorations": [
+        "{hr}"
+      ],
+      "decorated_terms": [
+        "i{hr}"
+      ],
+      "introduced_memory_bindings": [
+        "&hr:",
+        "&m:"
+      ],
+      "translation_facts": [
+        "Decorations identify the program memory from which a term is read.",
+        "Pretty-printer memory names and introduced proof-context names can differ."
+      ],
+      "effect": "Local claims in the pure tail depend on the currently introduced memory binders as well as displayed term decorations."
+    },
+    "effect": "Summarizes verifier-visible pure-goal structure after program frontier actions have been discharged or hidden by local proof steps.",
+    "limitations": [
+      "This panel records syntactic and proof-state facts from the current view.",
+      "It does not choose a tactic or instantiate a lemma."
+    ]
+  },
+  "application_context": {},
+  "facts_and_diagnostics": {
+    "facts": {
+      "unfoldable_goal_heads": [
+        {
+          "name": "sxor2",
+          "unqualified_name": "sxor2",
+          "declaration_kind": "pred",
+          "unfold_tactic": "rewrite /sxor2.",
+          "smt_argument_role": "not_a_lemma_hint"
+        }
+      ],
+      "unfoldable_goal_head_count": 1
+    },
+    "fact_note": "Only current-frontier facts are shown here; the full proof context artifact keeps the compiler/internal details.",
+    "notes": [
+      {
+        "message": "Current residual goal mentions unfoldable definition(s): sxor2. Use `rewrite /NAME` before SMT when those predicates block simplification; these names are not smt(...) lemma hints.",
+        "severity": "info"
+      }
+    ]
+  },
+  "proof_so_far": {
+    "committed_count": 24,
+    "steps": [
+      {
+        "step": 1,
+        "tactic": "move => hi."
+      },
+      {
+        "step": 2,
+        "tactic": "byphoare (_: i = i0 ==> res = a i0) => //."
+      },
+      {
+        "step": 3,
+        "tactic": "proc."
+      },
+      {
+        "step": 4,
+        "tactic": "inline PIR.query."
+      },
+      {
+        "step": 5,
+        "tactic": "wp."
+      },
+      {
+        "step": 6,
+        "tactic": "while (0 <= j <= N /\\ i = i0 /\\ (j <= i0 => PIR.s = PIR.s') /\\ (i0 < j => sxor2 PIR.s PIR.s' i0)) (N - j)."
+      },
+      {
+        "step": 7,
+        "tactic": "move => z; wp."
+      },
+      {
+        "step": 8,
+        "tactic": "rnd predT."
+      },
+      {
+        "step": 9,
+        "tactic": "skip."
+      },
+      {
+        "step": 10,
+        "tactic": "move => &hr [[[[Hjb [Hii [Hs Hsx]]] Hjlt] Hz] _]."
+      },
+      {
+        "step": 11,
+        "tactic": "split."
+      },
+      {
+        "step": 12,
+        "tactic": "exact dbool_ll."
+      },
+      {
+        "step": 13,
+        "tactic": "move => _ v hv; rewrite /predT /= Hii /=."
+      },
+      {
+        "step": 14,
+        "tactic": "smt(sxor_cons sxor2_cons)."
+      },
+      {
+        "step": 15,
+        "tactic": "wp."
+      },
+      {
+        "step": 16,
+        "tactic": "skip => &hr Hi0; split; first by smt()."
+      },
+      {
+        "step": 17,
+        "tactic": "move => s1 s' j0; split; first by smt()."
+      },
+      {
+        "step": 18,
+        "tactic": "move => hnlt [hb [hi2 [hle hsxi]]]; have h: sxor2 s1 s' i0 by apply hsxi; smt()."
+      },
+      {
+        "step": 19,
+        "tactic": "move: h; rewrite /sxor2 /sxor => -[[u1 u2 [-> ->]]|[u1 u2 [-> ->]]]."
+      },
+      {
+        "step": 20,
+        "tactic": "rewrite !big_cat big_consT."
+      },
+      {
+        "step": 21,
+        "tactic": "move: (big predT<:int> a u1) (big predT<:int> a u2) => A B."
+      },
+      {
+        "step": 22,
+        "tactic": "rewrite (xorwC (a i0) B) !xorwA."
+      },
+      {
+        "step": 23,
+        "tactic": "have hz : A +^ B +^ A +^ B = zerow by rewrite -xorwA xorwK."
+      },
+      {
+        "step": 24,
+        "tactic": "by rewrite hz xorwC xorw0."
+      }
+    ],
+    "elided_count": 0,
+    "note": "Your committed proof so far in THIS node, step-numbered \u2014 your own work. Use it to orient; do not re-derive steps already listed here."
+  },
+  "recovery_diagnosis_surface": {
+    "kind": "recovery_diagnosis_surface",
+    "recovery_class": "local_pure_surgery_available",
+    "confidence": "medium",
+    "checkpoint_policy": "current_state_local_work_visible",
+    "evidence": [
+      "pure_tail_surface is visible for the current goal",
+      "current proof state has no program-frontier work before the logical residual"
+    ],
+    "available_local_work": [
+      {
+        "kind": "pure_tail_obligation_families",
+        "items": [
+          "quantified_residual_logic"
+        ]
+      }
+    ],
+    "related_surfaces": [
+      "pure_tail_surface",
+      "structural_checkpoints"
+    ],
+    "limitations": [
+      "does not select a destructor, witness, rewrite, or SMT lemma",
+      "reported checkpoints are recovery references, not a default route"
+    ]
+  },
+  "surface_action_preflight": {
+    "schema_version": 1,
+    "results": []
+  },
+  "inspect_lookup_handles": {
+    "effect": "All handles here are read-only manager requests; the committed EasyCrypt proof state stays unchanged.",
+    "manager_note": "Some requests may ask EasyCrypt or name resolution; wait for the manager result before choosing the next proof intent.",
+    "ask_manager_for": [
+      {
+        "intent": "inspect_context",
+        "payload": {
+          "topic": "operator_lemmas",
+          "operator": "OPERATOR"
+        },
+        "use_when": "Need the lemmas that apply to an OPERATOR in your goal \u2014 project-local lemmas included (not just stdlib) \u2014 instead of guessing a lemma name.",
+        "returns": "lemmas mentioning that operator, found by live EC `search` over the loaded context (statements; you pick which to apply)",
+        "intent_class": "context_topic",
+        "read_only": true,
+        "public_intent": "operator_lemmas",
+        "payload_fields": [
+          "operator"
+        ]
+      },
+      {
+        "intent": "inspect_context",
+        "payload": {
+          "topic": "tactic_forms",
+          "name": "rewrite"
+        },
+        "use_when": "Need the valid EasyCrypt form for rewrite, apply, conseq, while, or SMT setup.",
+        "returns": "valid tactic forms and common traps",
+        "intent_class": "context_topic",
+        "read_only": true,
+        "public_intent": "tactic_forms",
+        "payload_fields": [
+          "name"
+        ]
+      }
+    ]
+  },
+  "structural_checkpoints": {
+    "items": [
+      {
+        "checkpoint_id": "cp_4_8749bb7030081ab9",
+        "semantic_id": "last_call_site_boundary",
+        "semantic_ids": [
+          "last_call_site_boundary"
+        ],
+        "label": "Before inline expansion #4",
+        "committed_step_index": 4,
+        "committed_tactic": "inline PIR.query.",
+        "restored_proof_layer": "pre_inline_frontier",
+        "restored_affordances": {
+          "call_site_handles": "as_before_inline"
+        },
+        "undo_scope": "call_site_boundary",
+        "why_checkpoint": "inline boundary; selecting it restores the proof state before this expansion",
+        "effect_if_selected": "Undo committed tactic #4 and every committed tactic after it in this node.",
+        "submit": {
+          "intent": "undo_to_checkpoint",
+          "payload": {
+            "checkpoint_id": "cp_4_8749bb7030081ab9"
+          }
+        }
+      }
+    ]
+  },
+  "surface_turn": {
+    "schema_version": 1,
+    "presentation_kind": "proof_state",
+    "proof_surface": {
+      "schema_version": 1,
+      "profile": "l4_checked_action_surface",
+      "phase": "pure_logic",
+      "goal": {
+        "title": "Current Goal",
+        "text": "Current goal\n\nType variables: <none>\n\n&m: {}\ni0: int\nhi: 0 <= i0 < N\n&hr: {b : bool, i, j : int, s, s0 : int list, r, r' : word}\nHi0: i{hr} = i0\ns1: int list\ns': int list\nj0: int\nhnlt: ! j0 < N\nhb: 0 <= j0 <= N\nhi2: i{hr} = i0\nhle: j0 <= i0 => s1 = s'\nhsxi: i0 < j0 => sxor2 s1 s' i0\nu1: int list\nu2: int list\n------------------------------------------------------------------------\nbig predT<:int> a (u1 ++ i0 :: u2) +^ big predT<:int> a (u1 ++ u2) = a i0\n[43|check]>",
+        "goal_type": "ambient",
+        "truncated": false,
+        "line_count": 22
+      },
+      "status": {
+        "status": "open",
+        "remaining_goals": 1,
+        "remaining_goals_known": true,
+        "view_focus": "ambient_logic",
+        "current_layer": "ambient_logic",
+        "goal_type": "ambient",
+        "surface_phase": "pure_logic"
+      },
+      "primary_panel": {
+        "panel_id": "pure_logic",
+        "phase": "pure_logic",
+        "title": "Pure Logic Residual",
+        "facts": [
+          {
+            "key": "memory_decorated_terms",
+            "label": "Memory-decorated terms",
+            "kind": "state_fact",
+            "role": "primary",
+            "value": "terms: i{hr}; introduced memory: &hr, &m",
+            "source_refs": [
+              "pure_tail_surface.ambient_memory_translation"
+            ]
+          }
+        ],
+        "actions": [
+          {
+            "intent": "operator_lemmas",
+            "payload": {
+              "operator": "(+^)"
+            },
+            "label": "operator_lemmas: (+^)",
+            "intent_class": "context_topic",
+            "read_only": true,
+            "choices": {
+              "operator": [
+                "(+^)",
+                "(++)",
+                "(big _ _ (_ :: _))",
+                "big",
+                "predT"
+              ]
+            },
+            "description": "Need the lemmas that apply to an OPERATOR in your goal \u2014 project-local lemmas included (not just stdlib) \u2014 instead of guessing a lemma name.",
+            "source_refs": [
+              "inspect_lookup_handles.ask_manager_for",
+              "current_goal"
+            ],
+            "eligibility_reason": "operator query is derived from the current goal",
+            "state_scope": "current_goal"
+          },
+          {
+            "intent": "operator_lemmas",
+            "payload": {
+              "operator": "(++)"
+            },
+            "label": "operator_lemmas: (++)",
+            "intent_class": "context_topic",
+            "read_only": true,
+            "choices": {
+              "operator": [
+                "(+^)",
+                "(++)",
+                "(big _ _ (_ :: _))",
+                "big",
+                "predT"
+              ]
+            },
+            "description": "Need the lemmas that apply to an OPERATOR in your goal \u2014 project-local lemmas included (not just stdlib) \u2014 instead of guessing a lemma name.",
+            "source_refs": [
+              "inspect_lookup_handles.ask_manager_for",
+              "current_goal"
+            ],
+            "eligibility_reason": "operator query is derived from the current goal",
+            "state_scope": "current_goal"
+          },
+          {
+            "intent": "operator_lemmas",
+            "payload": {
+              "operator": "(big _ _ (_ :: _))"
+            },
+            "label": "operator_lemmas: (big _ _ (_ :: _))",
+            "intent_class": "context_topic",
+            "read_only": true,
+            "choices": {
+              "operator": [
+                "(+^)",
+                "(++)",
+                "(big _ _ (_ :: _))",
+                "big",
+                "predT"
+              ]
+            },
+            "description": "Need the lemmas that apply to an OPERATOR in your goal \u2014 project-local lemmas included (not just stdlib) \u2014 instead of guessing a lemma name.",
+            "source_refs": [
+              "inspect_lookup_handles.ask_manager_for",
+              "current_goal"
+            ],
+            "eligibility_reason": "operator query is derived from the current goal",
+            "state_scope": "current_goal"
+          },
+          {
+            "intent": "operator_lemmas",
+            "payload": {
+              "operator": "big"
+            },
+            "label": "operator_lemmas: big",
+            "intent_class": "context_topic",
+            "read_only": true,
+            "choices": {
+              "operator": [
+                "(+^)",
+                "(++)",
+                "(big _ _ (_ :: _))",
+                "big",
+                "predT"
+              ]
+            },
+            "description": "Need the lemmas that apply to an OPERATOR in your goal \u2014 project-local lemmas included (not just stdlib) \u2014 instead of guessing a lemma name.",
+            "source_refs": [
+              "inspect_lookup_handles.ask_manager_for",
+              "current_goal"
+            ],
+            "eligibility_reason": "operator query is derived from the current goal",
+            "state_scope": "current_goal"
+          },
+          {
+            "intent": "operator_lemmas",
+            "payload": {
+              "operator": "predT"
+            },
+            "label": "operator_lemmas: predT",
+            "intent_class": "context_topic",
+            "read_only": true,
+            "choices": {
+              "operator": [
+                "(+^)",
+                "(++)",
+                "(big _ _ (_ :: _))",
+                "big",
+                "predT"
+              ]
+            },
+            "description": "Need the lemmas that apply to an OPERATOR in your goal \u2014 project-local lemmas included (not just stdlib) \u2014 instead of guessing a lemma name.",
+            "source_refs": [
+              "inspect_lookup_handles.ask_manager_for",
+              "current_goal"
+            ],
+            "eligibility_reason": "operator query is derived from the current goal",
+            "state_scope": "current_goal"
+          },
+          {
+            "intent": "tactic_forms",
+            "payload": {
+              "name": "rewrite"
+            },
+            "label": "tactic_forms: rewrite",
+            "intent_class": "context_topic",
+            "read_only": true,
+            "choices": {
+              "name": [
+                "rewrite"
+              ]
+            },
+            "description": "Need the valid EasyCrypt form for rewrite, apply, conseq, while, or SMT setup.",
+            "source_refs": [
+              "inspect_lookup_handles.ask_manager_for",
+              "proof_status",
+              "program_frontier"
+            ],
+            "eligibility_reason": "tactic family matches the current proof phase",
+            "state_scope": "current_phase"
+          }
+        ],
+        "display_policy": {
+          "lead_before_goal": false,
+          "verbosity": "normal",
+          "compact_goal": false,
+          "show_status": true,
+          "show_actions": true
+        },
+        "source_refs": [
+          "pure_tail_surface",
+          "current_goal"
+        ]
+      },
+      "actions": [
+        {
+          "intent": "operator_lemmas",
+          "payload": {
+            "operator": "<operator>"
+          },
+          "label": "operator_lemmas: <operator>",
+          "intent_class": "context_topic",
+          "read_only": true,
+          "requires_input": [
+            "operator"
+          ],
+          "choices": {
+            "operator": [
+              "(+^)",
+              "(++)",
+              "(big _ _ (_ :: _))",
+              "big",
+              "predT"
+            ]
+          },
+          "description": "Need the lemmas that apply to an OPERATOR in your goal \u2014 project-local lemmas included (not just stdlib) \u2014 instead of guessing a lemma name.",
+          "source_refs": [
+            "inspect_lookup_handles.ask_manager_for",
+            "current_goal"
+          ],
+          "eligibility_reason": "operator query is derived from the current goal",
+          "state_scope": "current_goal"
+        },
+        {
+          "intent": "tactic_forms",
+          "payload": {
+            "name": "<name>"
+          },
+          "label": "tactic_forms: <name>",
+          "intent_class": "context_topic",
+          "read_only": true,
+          "requires_input": [
+            "name"
+          ],
+          "choices": {
+            "name": [
+              "rewrite"
+            ]
+          },
+          "description": "Need the valid EasyCrypt form for rewrite, apply, conseq, while, or SMT setup.",
+          "source_refs": [
+            "inspect_lookup_handles.ask_manager_for",
+            "proof_status",
+            "program_frontier"
+          ],
+          "eligibility_reason": "tactic family matches the current proof phase",
+          "state_scope": "current_phase"
+        }
+      ],
+      "metadata": {
+        "contract": "raw_workspace_facts -> SurfaceModel -> markdown/card",
+        "primary_panel_id": "pure_logic",
+        "primary_action_count": 6,
+        "available_action_count": 6
+      },
+      "surface_model_hash": "934003bd2c959b810415a0e67caebfba96aca832"
+    },
+    "turn_outcome": {
+      "intent": "commit_tactic",
+      "payload": {
+        "tactic": "by rewrite hz xorwC xorw0."
+      },
+      "ok": true,
+      "result_line": "Last action: `by rewrite hz xorwC xorw0.` -- EasyCrypt accepted the committed tactic.",
+      "lead_before_goal": false,
+      "proof_state_changed": true,
+      "source_refs": [
+        "last_result"
+      ]
+    },
+    "base_surface_updates": true,
+    "proof_state_changed": true,
+    "metadata": {
+      "contract": "SurfaceModel -> SurfaceTurnModel -> markdown/card",
+      "current_surface_hash": "934003bd2c959b810415a0e67caebfba96aca832",
+      "proof_surface_hash": "934003bd2c959b810415a0e67caebfba96aca832"
+    },
+    "surface_turn_hash": "5fb3fc84f400e86eec7d82102e953a162dcb4159"
+  }
+}

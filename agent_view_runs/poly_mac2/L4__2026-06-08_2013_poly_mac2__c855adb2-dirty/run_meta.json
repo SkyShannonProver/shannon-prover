@@ -1,0 +1,38 @@
+{
+  "kind": "agent_view_run_report",
+  "timestamp": "2026-06-08_2013_poly_mac2",
+  "lemma": "poly_mac2",
+  "source_file": "eval/examples/ChaChaPoly/chacha_poly.ec",
+  "model": "claude-opus-4-8",
+  "surface_profile": "l4_checked_action_surface",
+  "trees": 2,
+  "eval_mode": true,
+  "outcome": "proved",
+  "committed_proofs": [
+    {
+      "tree": "Tree_0_0",
+      "tactics": [
+        "proc.",
+        "inline *.",
+        "wp; skip; smt().",
+        "qed."
+      ],
+      "proved": true
+    },
+    {
+      "tree": "Tree_0_1",
+      "tactics": [
+        "proc.",
+        "inline *."
+      ],
+      "proved": false
+    }
+  ],
+  "turn_count": 6,
+  "views_copied": 8,
+  "run_iteration_dir": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l4_checked_action_surface/poly_mac2/r01/2026-06-08_2013_poly_mac2/iteration_1",
+  "commit": "c855adb2",
+  "commit_full": "c855adb2fa7167175ef63db96f7d642faee3e78b",
+  "branch": "HEAD",
+  "dirty": true
+}

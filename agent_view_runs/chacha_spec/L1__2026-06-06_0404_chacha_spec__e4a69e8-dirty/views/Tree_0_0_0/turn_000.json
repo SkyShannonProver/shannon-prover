@@ -1,0 +1,60 @@
+{
+  "last_result": {},
+  "current_goal": {
+    "goal_type": "phoare",
+    "lines": [
+      "Current goal (remaining: 2)",
+      "",
+      "Type variables: <none>",
+      "",
+      "k0: key",
+      "n0: nonce",
+      "p0: message",
+      "gs0: globS",
+      "htake_xor: forall (str : block), take_xor [] str = []",
+      "bnd: int",
+      "------------------------------------------------------------------------",
+      "Context : hr: {i : int, c : byte list, k : key, n : nonce, z : block,",
+      "              p : message}",
+      "Bound   : [=] 1%r",
+      "",
+      "pre =",
+      "  ((OCC.gs = gs0 /\\",
+      "    k = k0 /\\",
+      "    n = n0 /\\",
+      "    c ++ gen_CTR_encrypt_bytes take_xor (cc gs0) k0 n0 i p =",
+      "    gen_CTR_encrypt_bytes take_xor (cc gs0) k0 n0 1 p0) /\\",
+      "   p <> []) /\\",
+      "  size p = bnd",
+      "",
+      "(1)  z <@ OCC(I).cc(k, n, C.ofintd i)                        ",
+      "(2)  c <- c ++ take (size p) (bytes_of_block (extend p +^ z))",
+      "(3)  p <- drop block_size p                                  ",
+      "(4)  i <- i + 1                                              ",
+      "",
+      "post =",
+      "  (OCC.gs = gs0 /\\",
+      "   k = k0 /\\",
+      "   n = n0 /\\",
+      "   c ++ gen_CTR_encrypt_bytes take_xor (cc gs0) k0 n0 i p =",
+      "   gen_CTR_encrypt_bytes take_xor (cc gs0) k0 n0 1 p0) /\\",
+      "  size p < bnd",
+      "[206|check]>"
+    ],
+    "source": {
+      "ground_truth": false,
+      "label": "Parsed from EasyCrypt pretty goal text"
+    },
+    "text_fully_shown": true,
+    "truncated": false,
+    "view_focus": "procedure_frontier"
+  },
+  "proof_status": {
+    "current_layer": "procedure_body",
+    "goal_type": "phoare",
+    "remaining_goals": 2,
+    "remaining_goals_known": true,
+    "status": "open",
+    "view_focus": "procedure_frontier"
+  }
+}

@@ -1,0 +1,265 @@
+{
+  "node": "Tree-0.1",
+  "discovery": "recorded_session_id",
+  "transcripts": [
+    "~/.claude/projects/<PROJECT>/bd946db8-6bb2-46f8-ab63-3851d56b380a.jsonl"
+  ],
+  "turns": [
+    {
+      "turn": 1,
+      "intent": "commit_tactic",
+      "payload_key": "rewrite (MtE_security &m) (PtE_security &m) (CBC_security &m).",
+      "thinking_chars": 0,
+      "text_chars": 524,
+      "tokens": {
+        "output_tokens": 24162,
+        "input_tokens": 33,
+        "cache_read_input_tokens": 722505,
+        "cache_creation_input_tokens": 70144
+      },
+      "session_id": "bd946db8-6bb2-46f8-ab63-3851d56b380a",
+      "timestamp": "2026-06-11T20:32:37.539Z",
+      "file": "thinking/turn_001.md"
+    },
+    {
+      "turn": 2,
+      "intent": "commit_tactic",
+      "payload_key": "have <-: Pr[CBCa.SKEa.RCPA.INDR_CPA(Random,QueryBounder(RCPAa(RCPA_WUF_RCPA.RCPAa(MAC,A)))).main() @ &m: res] = Pr[CBCa.SKEa.RCPA.INDR_CPA(CBCa.SKEa.RCPA.Ideal,QueryBounder(RCPAa(RCPA_WUF_RCPA.RCPAa(MAC,A)))).main() @ &m: res].",
+      "thinking_chars": 0,
+      "text_chars": 56,
+      "tokens": {
+        "output_tokens": 338,
+        "input_tokens": 2,
+        "cache_read_input_tokens": 68250,
+        "cache_creation_input_tokens": 8523
+      },
+      "session_id": "bd946db8-6bb2-46f8-ab63-3851d56b380a",
+      "timestamp": "2026-06-11T20:32:52.752Z",
+      "file": "thinking/turn_002.md"
+    },
+    {
+      "turn": 3,
+      "intent": "commit_tactic",
+      "payload_key": "byequiv=> //=; proc; call (_: true).",
+      "thinking_chars": 0,
+      "text_chars": 0,
+      "tokens": {
+        "output_tokens": 241,
+        "input_tokens": 2,
+        "cache_read_input_tokens": 76773,
+        "cache_creation_input_tokens": 1500
+      },
+      "session_id": "bd946db8-6bb2-46f8-ab63-3851d56b380a",
+      "timestamp": "2026-06-11T20:33:03.695Z",
+      "file": ""
+    },
+    {
+      "turn": 4,
+      "intent": "undo_last_step",
+      "payload_key": "",
+      "thinking_chars": 0,
+      "text_chars": 184,
+      "tokens": {
+        "output_tokens": 9066,
+        "input_tokens": 2,
+        "cache_read_input_tokens": 78273,
+        "cache_creation_input_tokens": 1573
+      },
+      "session_id": "bd946db8-6bb2-46f8-ab63-3851d56b380a",
+      "timestamp": "2026-06-11T20:35:19.498Z",
+      "file": "thinking/turn_004.md"
+    },
+    {
+      "turn": 5,
+      "intent": "commit_tactic",
+      "payload_key": "byequiv=> //=; proc; inline *; wp; call (_: ={glob RCPA_WUF_RCPA.RCPAa, glob OracleBounder}).",
+      "thinking_chars": 0,
+      "text_chars": 0,
+      "tokens": {
+        "output_tokens": 156,
+        "input_tokens": 2,
+        "cache_read_input_tokens": 79846,
+        "cache_creation_input_tokens": 10147
+      },
+      "session_id": "bd946db8-6bb2-46f8-ab63-3851d56b380a",
+      "timestamp": "2026-06-11T20:35:29.443Z",
+      "file": ""
+    },
+    {
+      "turn": 6,
+      "intent": "commit_tactic",
+      "payload_key": "proc; call (_: ={glob RCPA_WUF_RCPA.RCPAa, glob OracleBounder}).",
+      "thinking_chars": 0,
+      "text_chars": 72,
+      "tokens": {
+        "output_tokens": 1490,
+        "input_tokens": 2,
+        "cache_read_input_tokens": 89993,
+        "cache_creation_input_tokens": 1627
+      },
+      "session_id": "bd946db8-6bb2-46f8-ab63-3851d56b380a",
+      "timestamp": "2026-06-11T20:36:02.162Z",
+      "file": "thinking/turn_006.md"
+    },
+    {
+      "turn": 7,
+      "intent": "commit_tactic",
+      "payload_key": "call (_: ={glob RCPA_WUF_RCPA.RCPAa, glob OracleBounder}); auto.",
+      "thinking_chars": 0,
+      "text_chars": 0,
+      "tokens": {
+        "output_tokens": 842,
+        "input_tokens": 2,
+        "cache_read_input_tokens": 91620,
+        "cache_creation_input_tokens": 2921
+      },
+      "session_id": "bd946db8-6bb2-46f8-ab63-3851d56b380a",
+      "timestamp": "2026-06-11T20:36:20.495Z",
+      "file": ""
+    },
+    {
+      "turn": 8,
+      "intent": "commit_tactic",
+      "payload_key": "sp; if; first by smt().",
+      "thinking_chars": 0,
+      "text_chars": 66,
+      "tokens": {
+        "output_tokens": 5330,
+        "input_tokens": 2,
+        "cache_read_input_tokens": 94541,
+        "cache_creation_input_tokens": 2630
+      },
+      "session_id": "bd946db8-6bb2-46f8-ab63-3851d56b380a",
+      "timestamp": "2026-06-11T20:37:47.381Z",
+      "file": "thinking/turn_008.md"
+    },
+    {
+      "turn": 9,
+      "intent": "commit_tactic",
+      "payload_key": "wp; call (_: ={glob RCPA_WUF_RCPA.RCPAa, glob OracleBounder}); auto.",
+      "thinking_chars": 0,
+      "text_chars": 0,
+      "tokens": {
+        "output_tokens": 201,
+        "input_tokens": 2,
+        "cache_read_input_tokens": 97171,
+        "cache_creation_input_tokens": 6721
+      },
+      "session_id": "bd946db8-6bb2-46f8-ab63-3851d56b380a",
+      "timestamp": "2026-06-11T20:37:57.698Z",
+      "file": ""
+    },
+    {
+      "turn": 10,
+      "intent": "commit_tactic",
+      "payload_key": "call Random_Ideal; auto.",
+      "thinking_chars": 0,
+      "text_chars": 61,
+      "tokens": {
+        "output_tokens": 258,
+        "input_tokens": 2,
+        "cache_read_input_tokens": 103892,
+        "cache_creation_input_tokens": 1506
+      },
+      "session_id": "bd946db8-6bb2-46f8-ab63-3851d56b380a",
+      "timestamp": "2026-06-11T20:38:05.350Z",
+      "file": "thinking/turn_010.md"
+    },
+    {
+      "turn": 11,
+      "intent": "commit_tactic",
+      "payload_key": "by sim.",
+      "thinking_chars": 0,
+      "text_chars": 0,
+      "tokens": {
+        "output_tokens": 286,
+        "input_tokens": 2,
+        "cache_read_input_tokens": 105398,
+        "cache_creation_input_tokens": 1556
+      },
+      "session_id": "bd946db8-6bb2-46f8-ab63-3851d56b380a",
+      "timestamp": "2026-06-11T20:38:17.220Z",
+      "file": ""
+    },
+    {
+      "turn": 12,
+      "intent": "commit_tactic",
+      "payload_key": "by inline *; auto.",
+      "thinking_chars": 0,
+      "text_chars": 0,
+      "tokens": {
+        "output_tokens": 229,
+        "input_tokens": 2,
+        "cache_read_input_tokens": 106954,
+        "cache_creation_input_tokens": 1522
+      },
+      "session_id": "bd946db8-6bb2-46f8-ab63-3851d56b380a",
+      "timestamp": "2026-06-11T20:38:31.100Z",
+      "file": ""
+    },
+    {
+      "turn": 13,
+      "intent": "commit_tactic",
+      "payload_key": "by auto.",
+      "thinking_chars": 0,
+      "text_chars": 0,
+      "tokens": {
+        "output_tokens": 180,
+        "input_tokens": 2,
+        "cache_read_input_tokens": 108476,
+        "cache_creation_input_tokens": 1615
+      },
+      "session_id": "bd946db8-6bb2-46f8-ab63-3851d56b380a",
+      "timestamp": "2026-06-11T20:38:41.003Z",
+      "file": ""
+    },
+    {
+      "turn": 14,
+      "intent": "commit_tactic",
+      "payload_key": "apply (Conclusion (<: RCPAa(RCPA_WUF_RCPA.RCPAa(MAC,A))) &m).",
+      "thinking_chars": 0,
+      "text_chars": 85,
+      "tokens": {
+        "output_tokens": 300,
+        "input_tokens": 2,
+        "cache_read_input_tokens": 110091,
+        "cache_creation_input_tokens": 1465
+      },
+      "session_id": "bd946db8-6bb2-46f8-ab63-3851d56b380a",
+      "timestamp": "2026-06-11T20:38:53.002Z",
+      "file": "thinking/turn_014.md"
+    },
+    {
+      "turn": 15,
+      "intent": "commit_tactic",
+      "payload_key": "have CC := Conclusion (<: RCPAa(RCPA_WUF_RCPA.RCPAa(MAC,A))) &m.",
+      "thinking_chars": 0,
+      "text_chars": 263,
+      "tokens": {
+        "output_tokens": 4884,
+        "input_tokens": 4,
+        "cache_read_input_tokens": 224943,
+        "cache_creation_input_tokens": 5932
+      },
+      "session_id": "bd946db8-6bb2-46f8-ab63-3851d56b380a",
+      "timestamp": "2026-06-11T20:40:18.547Z",
+      "file": "thinking/turn_015.md"
+    },
+    {
+      "turn": 16,
+      "intent": "commit_tactic",
+      "payload_key": "have eL: Pr[CBCa.SKEa.RCPA.INDR_CPA(IV_Wrap(CBC(PseudoRP)), QueryBounder(RCPAa(RCPA_WUF_RCPA.RCPAa(MAC,A)))).main() @ &m : res] = Pr[CBCa.SKEa.RCPA.INDR_CPA(IV_Wrap(CBC(PRPr.PseudoRP)), QueryBounder(RCPAa(RCPA_WUF_RCPA.RCPAa(MAC,A)))).main() @ &m : res].",
+      "thinking_chars": 0,
+      "text_chars": 0,
+      "tokens": {
+        "output_tokens": 16620,
+        "input_tokens": 10,
+        "cache_read_input_tokens": 629749,
+        "cache_creation_input_tokens": 16353
+      },
+      "session_id": "bd946db8-6bb2-46f8-ab63-3851d56b380a",
+      "timestamp": "2026-06-11T20:44:44.338Z",
+      "file": ""
+    }
+  ]
+}

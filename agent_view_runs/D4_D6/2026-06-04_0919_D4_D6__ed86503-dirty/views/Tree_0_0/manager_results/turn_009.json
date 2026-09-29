@@ -1,0 +1,19 @@
+{
+  "turn": 9,
+  "handled_intent": {
+    "intent": "commit_tactic",
+    "payload": {
+      "tactic": "rewrite (@D4_6.pr_sampleWi &2 tt 5 (fun (r:int) => finv r = a))."
+    }
+  },
+  "ok": true,
+  "manager_note": "Committed tactic accepted; the EasyCrypt proof state changed.",
+  "manager_actions": [
+    {
+      "action": "tactic commit",
+      "outcome": "EasyCrypt accepted the committed tactic.",
+      "timing": "296 ms"
+    }
+  ],
+  "view_refreshed": true
+}

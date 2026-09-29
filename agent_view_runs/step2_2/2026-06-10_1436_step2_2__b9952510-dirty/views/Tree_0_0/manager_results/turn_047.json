@@ -1,0 +1,22 @@
+{
+  "turn": 47,
+  "handled_intent": {
+    "intent": "lookup_symbol",
+    "payload": {
+      "symbol": "dec"
+    }
+  },
+  "ok": true,
+  "manager_note": "Read-only context. Accepted/rejected tactic or call text inside a preview is route-selection information, not the current proof-state error.",
+  "manager_actions": [
+    {
+      "action": "symbol lookup",
+      "outcome": "The manager returned read-only context for the current goal.",
+      "timing": "1.2 s",
+      "content": {
+        "preview": "[WHERE-MISS] dec not found. tried: dec, MB.dec, NonceCount.dec, Poly_in.dec, Poly_out.dec, TPoly.dec, Extra_block.dec, Block.dec, FiniteRO.dec, Indist.dec, OpCCinit.dec, OpCCRO.dec, CCA_UFCMA.dec, Split0.dec, SplitD.dec, SplitC1.dec, Split1.dec, SplitC2.dec, Byte.dec, Key.dec, Nonce.dec, C.dec, MB.I1.dec, MB.I2.dec, MB.RO.dec, MB.RO_Pair.dec, MB.ROF.dec, MB.ROin.dec, MB.ROout.dec, NonceCount.I1.dec, NonceCount.I2.dec hint: no declaration resolved in the current EasyCrypt context or source-scan fallback. Use a more exact qualified name, or ask the manager for `goal_info` / `lemma_hints` before trying to apply it."
+      }
+    }
+  ],
+  "view_refreshed": true
+}

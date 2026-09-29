@@ -1,0 +1,131 @@
+{
+  "last_result": {
+    "intent": "inspect_context",
+    "payload": {
+      "topic": "lemma_index"
+    },
+    "effect": "This asks the manager for information only; it does not change the EasyCrypt proof state.",
+    "result": "The manager returned read-only context for the current goal.",
+    "content": {
+      "preview": "=== PIR.ec: 22 lemma statement(s) (signatures only \u2014 proofs are NOT shown) === These are every lemma declared in the current file. Use them to plan which lemmas you can apply/rewrite/bridge with; `lookup_symbol` for the exact declaration of any one before using it. L20 [lemma, top_level] sxor_cons: lemma sxor_cons s i : sxor s (i :: s) i. L23 [lemma, top_level] sxor2_cons: lemma sxor2_cons (s s':int list) (i j:int): sxor2 s s' i => sxor2 (j::s) (j::s') i. L66 [lemma, top_level] PIR_correct: lemma PIR_correct &m i0 : 0 <= i0 < N => Pr [PIR.main(i0) @ &m : res = a i0] = 1%r. L71 [equiv, top_level] PIR_secure1: equiv PIR_secure1: PIR.main ~ PIR.main : true ==> ={PIR.s}. L81 [equiv, top_level] PIR_secure2: equiv PIR_secure2: PIR.main ~ PIR.main : true ==> ={PIR.s'}. L91 [lemma, top_level] PIR_secuity_s_byequiv: lemma PIR_secuity_s_byequiv i1 i2 &m1 &m2 x: Pr[PIR.main(i1) @ &m1 : PIR.s = x] = Pr[PIR.main(i2) @ &m2 : PIR.s = x]. L95 [lemma, top_level] PIR_secuity_s'_byequiv: lemma PIR_secuity_s'_byequiv i1 i2 &m1 &m2 x: Pr[PIR.main(i1) @ &m1 : PIR.s' = x] = Pr[PIR.main(i2) @ &m2 : PIR.s' = x]. L112 [lemma, top_level] restrS: lemma restrS s j : 0 <= j => restr s (j + 1) = (if (j \\in s)..."
+    }
+  },
+  "current_goal": {
+    "lines": [
+      "Current goal",
+      "",
+      "Type variables: <none>",
+      "",
+      "&m: {}",
+      "i0: int",
+      "------------------------------------------------------------------------",
+      "0 <= i0 < N => Pr[PIR.main(i0) @ &m : res = a i0] = 1%r"
+    ],
+    "text_fully_shown": true,
+    "truncated": false,
+    "goal_type": "probability",
+    "view_focus": "probability",
+    "source": {
+      "label": "Parsed from EasyCrypt pretty goal text",
+      "ground_truth": false
+    }
+  },
+  "proof_status": {
+    "status": "open",
+    "remaining_goals": 1,
+    "remaining_goals_known": true,
+    "goal_type": "probability",
+    "view_focus": "probability",
+    "current_layer": "pr"
+  },
+  "candidate_moves": {
+    "moves": [
+      {
+        "title": "Read-only tactic probe",
+        "category": "probe",
+        "tactic": "move=> H.",
+        "applicability": "This tactic-shaped option should be checked with a read-only probe before committing it.",
+        "effect": "This is a read-only probe; it asks EasyCrypt what would happen without changing the committed proof state.",
+        "source": "proof-state analysis",
+        "derivation": "read-only probe surfaced from proof-state analysis",
+        "verified": "read_only_probe_suggestion",
+        "guarantee": "read-only probe shape; proof state unchanged; probe then decide; reversible"
+      },
+      {
+        "category": "strategy",
+        "tactic_shape": "Probabilistic VC plan: Pr loss-accounting via have-chain, rewrite Pr/mu rules, real-order smt",
+        "applicability": "Use this as route-selection context; it is not a tactic to run as-is.",
+        "source": "proof-state analysis"
+      }
+    ]
+  },
+  "program_frontier": {
+    "authority": "proof-state analysis",
+    "view_focus": "probability",
+    "focus": {
+      "pr_rewrite_candidates": 0,
+      "has_pr_normal_form": false,
+      "has_pr_arithmetic_plan": false,
+      "has_pr_obligation_plan": false,
+      "native_ast_search_hits": 0
+    }
+  },
+  "call_site_surface": {},
+  "application_context": {},
+  "facts_and_diagnostics": {
+    "facts": {
+      "has_pr_normal_form": false,
+      "has_pr_arithmetic_plan": false,
+      "has_pr_obligation_plan": false,
+      "unfoldable_goal_head_count": 0
+    },
+    "fact_note": "Only current-frontier facts are shown here; the full proof context artifact keeps the compiler/internal details."
+  },
+  "inspect_lookup_handles": {
+    "effect": "All handles here are read-only manager requests; the committed EasyCrypt proof state stays unchanged.",
+    "manager_note": "Some requests may ask EasyCrypt or name resolution; wait for the manager result before choosing the next proof intent.",
+    "ask_manager_for": [
+      {
+        "intent": "inspect_context",
+        "payload": {
+          "topic": "goal_info"
+        },
+        "use_when": "No fresh recommendation is available; parse the current goal.",
+        "returns": "manager-provided read-only context for this proof route"
+      },
+      {
+        "intent": "inspect_context",
+        "payload": {
+          "topic": "pr_bridge_routes"
+        },
+        "use_when": "Current Pr equality may need a manager-verified bridge route (game-hop or scheme/endpoint normalization) before direct byequiv/proc lowering.",
+        "returns": "daemon-verified, committable Pr bridge routes with manager-owned intent payloads"
+      },
+      {
+        "intent": "inspect_context",
+        "payload": {
+          "topic": "equiv_bridge_lemmas"
+        },
+        "use_when": "Need pRHL/procedure-equivalence bridge lemma names or context after checking pr_bridge_routes.",
+        "returns": "context-only equiv bridge lemma candidates (names to look up/apply); not a verified Pr route"
+      },
+      {
+        "intent": "inspect_context",
+        "payload": {
+          "topic": "lemma_hints"
+        },
+        "use_when": "Need local lemma hints before choosing a Pr-level proof route.",
+        "returns": "nearby lemma hints and proof-route context"
+      },
+      {
+        "intent": "inspect_context",
+        "payload": {
+          "topic": "tactic_forms",
+          "name": "while"
+        },
+        "use_when": "Need exact byphoare/phoare-loop tactic syntax before probing the probability route.",
+        "returns": "valid `while` forms and common traps"
+      }
+    ]
+  }
+}

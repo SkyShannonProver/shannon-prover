@@ -1,0 +1,44 @@
+{
+  "kind": "agent_view_run_report",
+  "timestamp": "2026-06-11_1709_DQ_Sample_Compute_pr",
+  "lemma": "DQ_Sample_Compute_pr",
+  "source_file": "eval/examples/MEE-CBC/CBC.eca",
+  "model": "claude-fable-5",
+  "surface_profile": "l1_goal_projection",
+  "trees": 2,
+  "eval_mode": true,
+  "outcome": "proved",
+  "committed_proofs": [
+    {
+      "tree": "Tree_0_0",
+      "tactics": [
+        "byequiv (: ={glob A} ==> DoubleQuery.bad{1} = Compute.bad{2})=> //.",
+        "proc.",
+        "call (_: ={bad,qs}(DoubleQuery,Compute)).",
+        "by conseq DQ_Sample_Compute_eq."
+      ],
+      "source": "session",
+      "proved": false
+    },
+    {
+      "tree": "Tree_0_1",
+      "tactics": [
+        "byequiv (: ={glob A} ==> ={bad}(DoubleQuery,Compute))=> //.",
+        "proc.",
+        "call (_: ={bad,qs}(DoubleQuery,Compute)).",
+        "by conseq DQ_Sample_Compute_eq.",
+        "by inline *; auto.",
+        "qed."
+      ],
+      "source": "session",
+      "proved": true
+    }
+  ],
+  "turn_count": 11,
+  "views_copied": 13,
+  "run_iteration_dir": "artifacts/eval_suite/mee_sweep_l1_v2/l1_goal_projection/mee_DQ_Sample_Compute_pr/r01/2026-06-11_1709_DQ_Sample_Compute_pr/iteration_1",
+  "commit": "8fa5ceac0",
+  "commit_full": "8fa5ceac0a4c7ed08e53023adcaade43f89a6de8",
+  "branch": "mcp-v0",
+  "dirty": true
+}

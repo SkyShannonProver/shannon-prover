@@ -1,0 +1,19 @@
+{
+  "turn": 2,
+  "handled_intent": {
+    "intent": "commit_tactic",
+    "payload": {
+      "tactic": "have RP := RCPA_WUF_RCPA.RCPA_preservation (<: PadThenEncrypt(IV_Wrap(CBC(PseudoRP)))) (<: MAC) (<: RCPA_QueryBounder(A)) &m."
+    }
+  },
+  "ok": true,
+  "manager_note": "Committed tactic accepted; the EasyCrypt proof state changed.",
+  "manager_actions": [
+    {
+      "action": "tactic commit",
+      "outcome": "EasyCrypt accepted the committed tactic.",
+      "timing": "616 ms"
+    }
+  ],
+  "view_refreshed": true
+}

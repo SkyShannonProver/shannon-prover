@@ -1,0 +1,36 @@
+{
+  "kind": "agent_view_run_report",
+  "timestamp": "2026-06-11_0151_pr_CCP_OCCP",
+  "lemma": "pr_CCP_OCCP",
+  "source_file": "eval/examples/ChaChaPoly/chacha_poly.ec",
+  "model": "claude-fable-5",
+  "surface_profile": "l4_checked_action_surface",
+  "trees": 2,
+  "eval_mode": true,
+  "outcome": "proved",
+  "committed_proofs": [
+    {
+      "tree": "Tree_0_0",
+      "tactics": [],
+      "source": "timeline_replay",
+      "replay_prefix_count": 0,
+      "proved": false
+    },
+    {
+      "tree": "Tree_0_1",
+      "tactics": [
+        "by byequiv CCP_OCCP.",
+        "qed."
+      ],
+      "source": "session",
+      "proved": true
+    }
+  ],
+  "turn_count": 3,
+  "views_copied": 5,
+  "run_iteration_dir": "artifacts/eval_suite/night_ccp_fable_l4np/l4_checked_action_surface/cc_pr_CCP_OCCP/r01/2026-06-11_0151_pr_CCP_OCCP/iteration_1",
+  "commit": "685f509d2",
+  "commit_full": "685f509d2678739057061c570c67d41c0342d619",
+  "branch": "HEAD",
+  "dirty": true
+}

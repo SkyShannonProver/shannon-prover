@@ -1,0 +1,20 @@
+{
+  "turn": 29,
+  "handled_intent": {
+    "intent": "commit_tactic",
+    "payload": {
+      "tactic": "move: (big predT<:int> a u1) (big predT<:int> a u2) => A B."
+    }
+  },
+  "ok": true,
+  "manager_note": "Committed tactic accepted; the EasyCrypt proof state changed.",
+  "manager_actions": [
+    {
+      "action": "tactic commit",
+      "outcome": "EasyCrypt accepted the committed tactic.",
+      "timing": "143 ms"
+    }
+  ],
+  "view_refreshed": true,
+  "surface_turn_hash": "6356adbf75372246e9c84ed6789e8e208d0d5506"
+}

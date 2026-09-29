@@ -1,0 +1,153 @@
+{
+  "node": "Tree-0.0",
+  "discovery": "recorded_session_id",
+  "transcripts": [
+    "~/.claude/projects/<PROJECT>/ea44f941-39df-4508-8e16-30da583c9cd9.jsonl"
+  ],
+  "turns": [
+    {
+      "turn": 1,
+      "intent": "commit_tactic",
+      "payload_key": "move=> P_init_eq P_f_eq &m A.",
+      "thinking_chars": 0,
+      "text_chars": 259,
+      "tokens": {
+        "output_tokens": 2797,
+        "input_tokens": 9,
+        "cache_read_input_tokens": 125962,
+        "cache_creation_input_tokens": 43894
+      },
+      "session_id": "ea44f941-39df-4508-8e16-30da583c9cd9",
+      "timestamp": "2026-06-11T22:33:12.525Z",
+      "file": "thinking/turn_001.md"
+    },
+    {
+      "turn": 2,
+      "intent": "commit_tactic",
+      "payload_key": "byequiv (_: ={glob A} ==> ={res})=> //.",
+      "thinking_chars": 0,
+      "text_chars": 63,
+      "tokens": {
+        "output_tokens": 159,
+        "input_tokens": 2,
+        "cache_read_input_tokens": 37678,
+        "cache_creation_input_tokens": 1375
+      },
+      "session_id": "ea44f941-39df-4508-8e16-30da583c9cd9",
+      "timestamp": "2026-06-11T22:33:19.451Z",
+      "file": "thinking/turn_002.md"
+    },
+    {
+      "turn": 3,
+      "intent": "commit_tactic",
+      "payload_key": "proc.",
+      "thinking_chars": 0,
+      "text_chars": 0,
+      "tokens": {
+        "output_tokens": 102,
+        "input_tokens": 2,
+        "cache_read_input_tokens": 39053,
+        "cache_creation_input_tokens": 1388
+      },
+      "session_id": "ea44f941-39df-4508-8e16-30da583c9cd9",
+      "timestamp": "2026-06-11T22:33:23.278Z",
+      "file": ""
+    },
+    {
+      "turn": 4,
+      "intent": "commit_tactic",
+      "payload_key": "call (_: I (glob P){1} (glob P'){2}).",
+      "thinking_chars": 0,
+      "text_chars": 51,
+      "tokens": {
+        "output_tokens": 191,
+        "input_tokens": 2,
+        "cache_read_input_tokens": 40441,
+        "cache_creation_input_tokens": 1521
+      },
+      "session_id": "ea44f941-39df-4508-8e16-30da583c9cd9",
+      "timestamp": "2026-06-11T22:33:28.468Z",
+      "file": "thinking/turn_004.md"
+    },
+    {
+      "turn": 5,
+      "intent": "commit_tactic",
+      "payload_key": "by conseq (CBC_Oracle_enc_eq P P' I P_f_eq).",
+      "thinking_chars": 0,
+      "text_chars": 82,
+      "tokens": {
+        "output_tokens": 401,
+        "input_tokens": 2,
+        "cache_read_input_tokens": 41962,
+        "cache_creation_input_tokens": 1430
+      },
+      "session_id": "ea44f941-39df-4508-8e16-30da583c9cd9",
+      "timestamp": "2026-06-11T22:33:36.395Z",
+      "file": "thinking/turn_005.md"
+    },
+    {
+      "turn": 6,
+      "intent": "commit_tactic",
+      "payload_key": "call P_init_eq.",
+      "thinking_chars": 0,
+      "text_chars": 41,
+      "tokens": {
+        "output_tokens": 334,
+        "input_tokens": 2,
+        "cache_read_input_tokens": 43392,
+        "cache_creation_input_tokens": 1771
+      },
+      "session_id": "ea44f941-39df-4508-8e16-30da583c9cd9",
+      "timestamp": "2026-06-11T22:33:44.968Z",
+      "file": "thinking/turn_006.md"
+    },
+    {
+      "turn": 7,
+      "intent": "commit_tactic",
+      "payload_key": "by auto.",
+      "thinking_chars": 0,
+      "text_chars": 33,
+      "tokens": {
+        "output_tokens": 156,
+        "input_tokens": 2,
+        "cache_read_input_tokens": 45163,
+        "cache_creation_input_tokens": 1696
+      },
+      "session_id": "ea44f941-39df-4508-8e16-30da583c9cd9",
+      "timestamp": "2026-06-11T22:33:53.655Z",
+      "file": "thinking/turn_007.md"
+    },
+    {
+      "turn": 8,
+      "intent": "commit_tactic",
+      "payload_key": "qed.",
+      "thinking_chars": 0,
+      "text_chars": 52,
+      "tokens": {
+        "output_tokens": 123,
+        "input_tokens": 2,
+        "cache_read_input_tokens": 46859,
+        "cache_creation_input_tokens": 1043
+      },
+      "session_id": "ea44f941-39df-4508-8e16-30da583c9cd9",
+      "timestamp": "2026-06-11T22:33:59.083Z",
+      "file": "thinking/turn_008.md"
+    },
+    {
+      "turn": 9,
+      "intent": "finish",
+      "payload_key": "",
+      "thinking_chars": 0,
+      "text_chars": 67,
+      "tokens": {
+        "output_tokens": 138,
+        "input_tokens": 2,
+        "cache_read_input_tokens": 47902,
+        "cache_creation_input_tokens": 1161
+      },
+      "session_id": "ea44f941-39df-4508-8e16-30da583c9cd9",
+      "timestamp": "2026-06-11T22:34:04.827Z",
+      "file": "thinking/turn_009.md"
+    }
+  ]
+}

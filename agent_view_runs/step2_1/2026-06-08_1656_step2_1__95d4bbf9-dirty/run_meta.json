@@ -1,0 +1,63 @@
+{
+  "kind": "agent_view_run_report",
+  "timestamp": "2026-06-08_1656_step2_1",
+  "lemma": "step2_1",
+  "source_file": "eval/examples/ChaChaPoly/chacha_poly.ec",
+  "model": "claude-opus-4-8",
+  "surface_profile": "l4_checked_action_surface",
+  "trees": 2,
+  "eval_mode": true,
+  "outcome": "proved",
+  "committed_proofs": [
+    {
+      "tree": "Tree_0_0",
+      "tactics": [
+        "have ->: Pr[CCA_game(A, RealOrcls(OChaChaPoly(IFinRO))).main() @ &m : res] = Pr[CCA_game(A, RealOrcls(StLSke(St))).main() @ &m : res].",
+        "byequiv (_: ={glob A} ==> ={res}) => //.",
+        "proc.",
+        "call (_: ={Mem.k} /\\ OpCCRO.OCC.gs{1} = StLSke.gs{2}).",
+        "proc; inline *; auto.",
+        "move=> &1 &2 [-> [-> ->]]; rewrite /enc /get /=.",
+        "smt().",
+        "proc; inline *; auto.",
+        "move=> &1 &2 [-> [-> ->]]; rewrite /dec /get /=; smt().",
+        "inline *; auto.",
+        "sim.",
+        "conseq (_: _ ==> ={glob A} /\\ RO.m{1} = RO.m{2}); first by smt().",
+        "sim.",
+        "apply (CCA_UFCMA.CCA_CPA_UFCMA St _ _ A _ &m).",
+        "proc; sim.",
+        "proc; auto.",
+        "apply A_ll.",
+        "qed."
+      ],
+      "proved": true
+    },
+    {
+      "tree": "Tree_0_1",
+      "tactics": [
+        "have ->: Pr[CCA_game(A, RealOrcls(OChaChaPoly(IFinRO))).main() @ &m : res] = Pr[CCA_game(A, RealOrcls(StLSke(St))).main() @ &m : res].",
+        "byequiv (_: ={glob A} ==> ={res}) => //.",
+        "proc.",
+        "call (_: ={glob Mem} /\\ OpCCRO.OCC.gs{1} = StLSke.gs{2}).",
+        "proc.",
+        "inline *; wp; skip => />.",
+        "by move=> &2; rewrite /enc /get /=.",
+        "move=> &2.",
+        "rewrite /enc /=.",
+        "rewrite /get; case: (p{2}) => n a p1 /=.",
+        "done.",
+        "proc; inline *; wp; skip => />.",
+        "by move=> &2; rewrite /dec /get; case: (c{2}) => n a c0 t /=; smt()."
+      ],
+      "proved": false
+    }
+  ],
+  "turn_count": 43,
+  "views_copied": 45,
+  "run_iteration_dir": "artifacts/eval_suite/medium4_l1_l4noprobe/l4_checked_action_surface/chacha_step2_1/r01/2026-06-08_1656_step2_1/iteration_1",
+  "commit": "95d4bbf9",
+  "commit_full": "95d4bbf95e8b0e104cb0e25fdeaeeae27bcfb339",
+  "branch": "mcp-v0",
+  "dirty": true
+}

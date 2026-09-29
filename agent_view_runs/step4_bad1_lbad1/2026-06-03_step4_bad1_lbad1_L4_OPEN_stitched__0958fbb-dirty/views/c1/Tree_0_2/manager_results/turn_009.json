@@ -1,0 +1,19 @@
+{
+  "turn": 9,
+  "handled_intent": {
+    "intent": "probe_tactic",
+    "payload": {
+      "tactic": "move=> />."
+    }
+  },
+  "ok": true,
+  "manager_note": "Read-only tactic probe. Use any goal-after-probe text as a preview only; there is no probe step to undo.",
+  "manager_actions": [
+    {
+      "action": "tactic probe",
+      "outcome": "EasyCrypt rejected this probe or could not use it. The committed proof state was not changed; use the error summary to revise the tactic.",
+      "timing": "1.1 s"
+    }
+  ],
+  "view_refreshed": true
+}

@@ -1,0 +1,51 @@
+{
+  "kind": "agent_view_run_report",
+  "timestamp": "2026-06-11_0152_conclusion",
+  "lemma": "conclusion",
+  "source_file": "eval/examples/ChaChaPoly/chacha_poly.ec",
+  "model": "claude-fable-5",
+  "surface_profile": "l4_checked_action_surface",
+  "trees": 2,
+  "eval_mode": true,
+  "outcome": "proved",
+  "committed_proofs": [
+    {
+      "tree": "Tree_0_0",
+      "tactics": [
+        "have h2 := step2 (BNR_Adv(A)) _ &m.",
+        "move=> O enc_ll dec_ll; proc.",
+        "call (A_ll (<:BNR(O)) _ _).",
+        "proc; sp; if; [wp; call enc_ll; auto | auto].",
+        "proc; sp; if; [wp; call dec_ll; auto | auto].",
+        "inline *; auto.",
+        "have h3 := step3 &m."
+      ],
+      "source": "session",
+      "proved": false
+    },
+    {
+      "tree": "Tree_0_1",
+      "tactics": [
+        "have h2 := step2 (BNR_Adv(A)) _ &m.",
+        "move=> O enc_ll dec_ll; proc; call (A_ll (BNR(O)) _ _).",
+        "by proc; sp; if; [wp; call enc_ll; auto | auto].",
+        "by proc; sp; if; [wp; call dec_ll; auto | auto].",
+        "by inline *; auto.",
+        "have h3 := step3 &m.",
+        "have h41 := step4_1 &m.",
+        "have hb2 := step4_bad2 &m; have hb1 := step4_bad1 &m.",
+        "smt().",
+        "qed."
+      ],
+      "source": "session",
+      "proved": true
+    }
+  ],
+  "turn_count": 22,
+  "views_copied": 24,
+  "run_iteration_dir": "artifacts/eval_suite/night_ccp_fable_l4np/l4_checked_action_surface/cc_conclusion/r01/2026-06-11_0152_conclusion/iteration_1",
+  "commit": "685f509d2",
+  "commit_full": "685f509d2678739057061c570c67d41c0342d619",
+  "branch": "HEAD",
+  "dirty": true
+}

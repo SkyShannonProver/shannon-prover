@@ -1,0 +1,251 @@
+{
+  "last_result": {
+    "intent": "undo_last_step",
+    "manager_action": "undo_last_step",
+    "result": "The manager completed this proof-level request.",
+    "effect": "EasyCrypt accepted a proof-state change; the refreshed view is based on the new committed state.",
+    "proof_state": "The committed EasyCrypt proof state changed."
+  },
+  "current_goal": {
+    "lines": [
+      "Current goal (remaining: 2)",
+      "",
+      "Type variables: <none>",
+      "",
+      "&m: {}",
+      "------------------------------------------------------------------------",
+      "Pr[CCA_game(A, RealOrcls(OpCCinit.OChaChaPoly(I_stateless))).main() @ &m :",
+      "   res] =",
+      "Pr[Indist.Distinguish(D(A), IndBlock).game() @ &m : res]"
+    ],
+    "text_fully_shown": true,
+    "truncated": false,
+    "goal_type": "probability",
+    "view_focus": "probability",
+    "source": {
+      "label": "Parsed from EasyCrypt pretty goal text",
+      "ground_truth": false
+    }
+  },
+  "proof_status": {
+    "status": "open",
+    "remaining_goals": 2,
+    "remaining_goals_known": true,
+    "goal_type": "probability",
+    "view_focus": "probability",
+    "current_layer": "pr"
+  },
+  "candidate_moves": {
+    "moves": [
+      {
+        "title": "Proof-route context",
+        "category": "strategy",
+        "tactic_shape": "byequiv => //.",
+        "applicability": "Use this as route-selection context; it is not a tactic to run as-is.",
+        "why_relevant": "Daemon probe accepted this tactic and it would leave 2 subgoal(s); commit it if that is the intended decomposition. EasyCrypt accepted this probability-to-program probe, but Pro...",
+        "source": "try"
+      },
+      {
+        "title": "Invariant-call route",
+        "category": "strategy",
+        "tactic_shape": "call (_: Inv).",
+        "applicability": "This is a `call (_: Inv)` route template, not a complete tactic; fill in the invariant expression from the current goal before probing or committing it.",
+        "runnable_status": "Not yet; replace `Inv` with a concrete EasyCrypt invariant before probing or committing this tactic.",
+        "missing_input": [
+          "Concrete invariant expression inside `call (_: ...)`."
+        ],
+        "needs_frame": "Postcondition shape only \u2014 no `={...}` equality frame. Build the `={...}` part from `application_context.write_map` (per candidate field: who writes it \u2014 the read-only/preserved fields are safe to equate), then add your coupling before this is a usable invariant.",
+        "how_to_complete": [
+          "Read the current precondition, postcondition, and the two visible call sites; include the state that must be preserved across the adversary or oracle call.",
+          "If the call generates oracle obligations, include the global/oracle state needed by the named oracle-equivalence handles visible in the current context."
+        ],
+        "inspect_if_unsure": [
+          {
+            "topic": "call_site_options",
+            "why": "Shows the live call frontier and any named call or oracle-equivalence handles."
+          },
+          {
+            "topic": "call_subgoals",
+            "why": "After you have a candidate invariant, previews the obligations and missing facts before changing the proof state."
+          },
+          {
+            "topic": "tactic_forms",
+            "name": "call",
+            "why": "Shows the valid EasyCrypt forms for `call`."
+          }
+        ],
+        "limitations": [
+          "The invariant is not filled in yet; use the current goal and, if helpful, call-subgoal preview to choose the concrete invariant."
+        ]
+      },
+      {
+        "title": "Named-call context",
+        "category": "strategy",
+        "tactic_shape": "call <lemma_name>.",
+        "applicability": "This named-call shape came from program comparison. Treat it as context until a manager inspection or read-only probe confirms the lemma matches the visible call frontier.",
+        "runnable_status": "Not established as runnable from this panel; use the current frontier and call-site context before deciding whether to probe it.",
+        "missing_input": [
+          "Concrete arguments required by the lemma or call form."
+        ],
+        "how_to_complete": [
+          "Match the lemma or call statement against the visible call sites, module parameters, globals, and hypotheses in the current goal.",
+          "If the arity or argument order is unclear, inspect the tactic form or lookup the symbol before guessing."
+        ],
+        "inspect_if_unsure": [
+          {
+            "topic": "call_site_options",
+            "why": "Shows call-site context and named call handles for this frontier."
+          },
+          {
+            "topic": "tactic_forms",
+            "name": "call",
+            "why": "Shows the valid EasyCrypt forms for `call`."
+          },
+          {
+            "intent": "lookup_symbol",
+            "symbol": "<lemma or symbol name>",
+            "why": "Shows the declaration/signature when a concrete symbol is known."
+          }
+        ],
+        "limitations": [
+          "The call still needs concrete EasyCrypt arguments before it is a tactic to probe or commit.",
+          "Do not treat this as the next call tactic solely because the name is visible; the current frontier still determines whether it applies."
+        ]
+      },
+      {
+        "title": "Proof-route context",
+        "category": "strategy",
+        "tactic_shape": "rewrite (OpCCinit.pr_CCP_OCCP I OpCCinit.OChaChaPoly(I_stateless) &m).",
+        "applicability": "Use this as route-selection context; it is not a tactic to run as-is.",
+        "why_relevant": "Name resolution can instantiate `OpCCinit.pr_CCP_OCCP`, but the current Pr endpoint does not match the lemma's endpoint template; build an intermediate Pr equality or wrapper br...",
+        "source": "proof-state analysis"
+      }
+    ],
+    "limitations": [
+      {
+        "category": "avoid",
+        "detail": "program-difference analysis found this tactic while comparing the current programs/probability expressions. Unverified call/ecall items are structural hints only; proof-state analysis or a daemon probe must establish frontier readiness before they become runnable. Pro...",
+        "source": "program-difference analysis"
+      }
+    ]
+  },
+  "program_frontier": {
+    "authority": "proof-state analysis",
+    "view_focus": "probability",
+    "focus": {
+      "pr_rewrite_candidates": 2,
+      "has_pr_normal_form": false,
+      "has_pr_arithmetic_plan": false,
+      "has_pr_obligation_plan": false,
+      "pr_obligation_primary_strategy": "no_pr_obligation",
+      "native_ast_search_hits": 0
+    },
+    "checks": [
+      "Pr resources are context: use them when they match the visible endpoint and simplify the goal.",
+      "Direct byequiv is a valid route when the goal is naturally a program equivalence."
+    ]
+  },
+  "call_site_surface": {},
+  "application_context": {
+    "selected_handles": [
+      {
+        "title": "Proof-route context",
+        "tactic_shape": "byequiv => //.",
+        "why_relevant": "Daemon probe accepted this tactic and it would leave 2 subgoal(s); commit it if that is the intended decomposition. EasyCrypt accepted this probability-to-program probe, but proof-state analysis still has Pr-level normalization/path actions for the c..."
+      },
+      {
+        "title": "Invariant-call route",
+        "tactic_shape": "call (_: Inv).",
+        "why_relevant": "program-difference analysis found this tactic while comparing the current programs/probability expressions. Unverified call/ecall items are structural hints only; proof-state analysis or a daemon probe must establish frontier readiness before they become runnable.",
+        "runnable_status": "Not yet; replace `Inv` with a concrete EasyCrypt invariant before probing or committing this tactic.",
+        "missing_input": [
+          "Concrete invariant expression inside `call (_: ...)`."
+        ]
+      }
+    ]
+  },
+  "facts_and_diagnostics": {
+    "facts": {
+      "has_pr_normal_form": false,
+      "has_pr_arithmetic_plan": false,
+      "has_pr_obligation_plan": false,
+      "pr_obligation_primary_strategy": "no_pr_obligation",
+      "unfoldable_goal_head_count": 0
+    },
+    "fact_note": "Only current-frontier facts are shown here; the full proof context artifact keeps the compiler/internal details."
+  },
+  "inspect_lookup_handles": {
+    "effect": "All handles here are read-only manager requests; the committed EasyCrypt proof state stays unchanged.",
+    "manager_note": "Some requests may ask EasyCrypt or name resolution; wait for the manager result before choosing the next proof intent.",
+    "ask_manager_for": [
+      {
+        "intent": "inspect_context",
+        "payload": {
+          "topic": "goal_info"
+        },
+        "use_when": "Need parsed goal shape, resolved names, or KB pattern hints.",
+        "returns": "parsed goal structure and names"
+      },
+      {
+        "intent": "inspect_context",
+        "payload": {
+          "topic": "pr_bridge_routes"
+        },
+        "use_when": "Current Pr equality may need a manager-verified bridge route (game-hop or scheme/endpoint normalization) before direct byequiv/proc lowering.",
+        "returns": "daemon-verified, committable Pr bridge routes with manager-owned intent payloads"
+      },
+      {
+        "intent": "inspect_context",
+        "payload": {
+          "topic": "equiv_bridge_lemmas"
+        },
+        "use_when": "Need pRHL/procedure-equivalence bridge lemma names or context after checking pr_bridge_routes.",
+        "returns": "context-only equiv bridge lemma candidates (names to look up/apply); not a verified Pr route"
+      },
+      {
+        "intent": "inspect_context",
+        "payload": {
+          "topic": "lemma_hints"
+        },
+        "use_when": "Need local lemma hints before choosing a Pr-level proof route.",
+        "returns": "nearby lemma hints and proof-route context"
+      },
+      {
+        "intent": "inspect_context",
+        "payload": {
+          "topic": "tactic_forms",
+          "name": "while"
+        },
+        "use_when": "Need exact byphoare/phoare-loop tactic syntax before probing the probability route.",
+        "returns": "valid `while` forms and common traps"
+      }
+    ]
+  },
+  "structural_checkpoints": {
+    "items": [
+      {
+        "checkpoint_id": "cp_2_f46213c5d1e6c2d2",
+        "semantic_id": "last_call_site_boundary",
+        "semantic_ids": [
+          "last_call_site_boundary"
+        ],
+        "label": "Before inline expansion #2",
+        "committed_step_index": 2,
+        "committed_tactic": "have -> : Pr[CCA_game(A, RealOrcls(ChaChaPoly)).main() @ &m : res] = Pr[CCA_game(A, RealOrcls(OpCCinit.OChaChaPoly(I_stateless))).main() @ &m : res] by byequiv=>//; proc; inline *; sim.",
+        "restored_proof_layer": "pre_inline_frontier",
+        "restored_affordances": {
+          "call_site_handles": "as_before_inline"
+        },
+        "undo_scope": "call_site_boundary",
+        "why_checkpoint": "inline boundary; selecting it restores the proof state before this expansion",
+        "effect_if_selected": "Undo committed tactic #2 and every committed tactic after it in this node.",
+        "submit": {
+          "intent": "undo_to_checkpoint",
+          "payload": {
+            "checkpoint_id": "cp_2_f46213c5d1e6c2d2"
+          }
+        }
+      }
+    ]
+  }
+}

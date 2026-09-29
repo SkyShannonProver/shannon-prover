@@ -1,0 +1,34 @@
+{
+  "turn": 11,
+  "handled_intent": {
+    "intent": "undo_to_checkpoint",
+    "payload": {
+      "checkpoint_id": "cp_4_92843bd13814cb9f"
+    }
+  },
+  "ok": true,
+  "manager_note": "Checkpoint rewind executed; the EasyCrypt proof state changed (see the latest view).",
+  "manager_actions": [
+    {
+      "action": "checkpoint rewind",
+      "outcome": "The manager rewound this branch to the selected checkpoint.",
+      "timing": "1.7 s"
+    },
+    {
+      "action": "replay prefix step 1",
+      "outcome": "The manager completed this proof-level request.",
+      "timing": "1.5 s"
+    },
+    {
+      "action": "replay prefix step 2",
+      "outcome": "The manager completed this proof-level request.",
+      "timing": "275 ms"
+    },
+    {
+      "action": "replay prefix step 3",
+      "outcome": "The manager completed this proof-level request.",
+      "timing": "276 ms"
+    }
+  ],
+  "view_refreshed": true
+}

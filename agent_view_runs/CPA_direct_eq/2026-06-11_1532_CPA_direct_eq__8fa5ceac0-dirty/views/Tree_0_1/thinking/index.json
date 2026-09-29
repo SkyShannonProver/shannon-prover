@@ -1,0 +1,105 @@
+{
+  "node": "Tree-0.1",
+  "discovery": "content_match",
+  "transcripts": [
+    "~/.claude/projects/<PROJECT>/a0174318-ea81-40d1-8252-863aeb62e630.jsonl"
+  ],
+  "turns": [
+    {
+      "turn": 1,
+      "intent": "commit_tactic",
+      "payload_key": "move=> P_init_eq P_f_eq &m A.",
+      "thinking_chars": 0,
+      "text_chars": 95,
+      "tokens": {
+        "output_tokens": 3367,
+        "input_tokens": 7,
+        "cache_read_input_tokens": 97298,
+        "cache_creation_input_tokens": 38529
+      },
+      "session_id": "a0174318-ea81-40d1-8252-863aeb62e630",
+      "timestamp": "2026-06-11T22:33:23.092Z",
+      "file": "thinking/turn_001.md"
+    },
+    {
+      "turn": 2,
+      "intent": "commit_tactic",
+      "payload_key": "byequiv (_: ={glob A} ==> ={res})=> //.",
+      "thinking_chars": 0,
+      "text_chars": 0,
+      "tokens": {
+        "output_tokens": 150,
+        "input_tokens": 2,
+        "cache_read_input_tokens": 36628,
+        "cache_creation_input_tokens": 2986
+      },
+      "session_id": "a0174318-ea81-40d1-8252-863aeb62e630",
+      "timestamp": "2026-06-11T22:33:30.135Z",
+      "file": ""
+    },
+    {
+      "turn": 3,
+      "intent": "commit_tactic",
+      "payload_key": "proc.",
+      "thinking_chars": 0,
+      "text_chars": 0,
+      "tokens": {
+        "output_tokens": 102,
+        "input_tokens": 2,
+        "cache_read_input_tokens": 39614,
+        "cache_creation_input_tokens": 1379
+      },
+      "session_id": "a0174318-ea81-40d1-8252-863aeb62e630",
+      "timestamp": "2026-06-11T22:33:36.238Z",
+      "file": ""
+    },
+    {
+      "turn": 4,
+      "intent": "commit_tactic",
+      "payload_key": "call (_: I (glob P){1} (glob P'){2}).",
+      "thinking_chars": 0,
+      "text_chars": 68,
+      "tokens": {
+        "output_tokens": 182,
+        "input_tokens": 2,
+        "cache_read_input_tokens": 40993,
+        "cache_creation_input_tokens": 1364
+      },
+      "session_id": "a0174318-ea81-40d1-8252-863aeb62e630",
+      "timestamp": "2026-06-11T22:33:41.981Z",
+      "file": "thinking/turn_004.md"
+    },
+    {
+      "turn": 5,
+      "intent": "commit_tactic",
+      "payload_key": "exact (CBC_Oracle_enc_eq P P' I P_f_eq).",
+      "thinking_chars": 0,
+      "text_chars": 69,
+      "tokens": {
+        "output_tokens": 330,
+        "input_tokens": 2,
+        "cache_read_input_tokens": 42357,
+        "cache_creation_input_tokens": 1578
+      },
+      "session_id": "a0174318-ea81-40d1-8252-863aeb62e630",
+      "timestamp": "2026-06-11T22:33:49.564Z",
+      "file": "thinking/turn_005.md"
+    },
+    {
+      "turn": 6,
+      "intent": "commit_tactic",
+      "payload_key": "by call P_init_eq.",
+      "thinking_chars": 0,
+      "text_chars": 69,
+      "tokens": {
+        "output_tokens": 245,
+        "input_tokens": 2,
+        "cache_read_input_tokens": 43935,
+        "cache_creation_input_tokens": 1698
+      },
+      "session_id": "a0174318-ea81-40d1-8252-863aeb62e630",
+      "timestamp": "2026-06-11T22:33:57.932Z",
+      "file": "thinking/turn_006.md"
+    }
+  ]
+}

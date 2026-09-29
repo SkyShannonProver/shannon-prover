@@ -1,0 +1,19 @@
+{
+  "turn": 16,
+  "handled_intent": {
+    "intent": "commit_tactic",
+    "payload": {
+      "tactic": "have hf := has_find (fun (p0:tag*tag) => p0.`1 = p0.`2) UFCMA_l.lbad1{hr}; have hg := find_ge0 (fun (p0:tag*tag) => p0.`1 = p0.`2) UFCMA_l.lbad1{hr}; move: hnotin; rewrite mem_iota; smt()."
+    }
+  },
+  "ok": true,
+  "manager_note": "Committed tactic accepted; the EasyCrypt proof state changed.",
+  "manager_actions": [
+    {
+      "action": "tactic commit",
+      "outcome": "EasyCrypt accepted the committed tactic.",
+      "timing": "262 ms"
+    }
+  ],
+  "view_refreshed": true
+}

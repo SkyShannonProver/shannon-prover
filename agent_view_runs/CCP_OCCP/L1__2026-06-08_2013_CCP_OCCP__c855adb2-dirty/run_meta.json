@@ -1,0 +1,61 @@
+{
+  "kind": "agent_view_run_report",
+  "timestamp": "2026-06-08_2013_CCP_OCCP",
+  "lemma": "CCP_OCCP",
+  "source_file": "eval/examples/ChaChaPoly/chacha_poly.ec",
+  "model": "claude-opus-4-8",
+  "surface_profile": "l1_goal_projection",
+  "trees": 2,
+  "eval_mode": true,
+  "outcome": "proved",
+  "committed_proofs": [
+    {
+      "tree": "Tree_0_0",
+      "tactics": [
+        "proc (={glob I, glob OCC}).",
+        "by move=> /> />.",
+        "by move=> /> />.",
+        "by sim.",
+        "by sim.",
+        "proc.",
+        "seq 1 1 : (={n, a, p, k, glob I, glob OCC}).",
+        "auto."
+      ],
+      "proved": false
+    },
+    {
+      "tree": "Tree_0_1",
+      "tactics": [
+        "proc (={glob I, glob OCC}).",
+        "by move=> />.",
+        "by move=> />.",
+        "sim.",
+        "sim.",
+        "proc.",
+        "sp 1 1.",
+        "seq 1 1 : (={glob I, glob OCC, k, n, a} /\\ c{1} = c{2}).",
+        "wp.",
+        "exists* (glob OCC){1}, k{1}, n{1}, p{1}; elim* => gs kk nn pp; call {1} (chacha_spec kk nn pp gs).",
+        "skip; smt().",
+        "wp; exists* (glob OCC){1}, k{1}, n{1}, a{1}, c{1}; elim* => gs kk nn aa cc0; call {1} (poly_spec kk nn aa cc0 gs).",
+        "skip; smt().",
+        "proc; sp 2 2.",
+        "seq 1 1 : (={glob I, glob OCC, k, n, a, c, t, t', result}).",
+        "wp; exists* (glob OCC){1}, k{1}, n{1}, a{1}, c{1}; elim* => gs kk nn aa cc0; call {1} (poly_spec kk nn aa cc0 gs); skip; smt().",
+        "if.",
+        "smt().",
+        "wp; exists* (glob OCC){1}, k{1}, n{1}, c{1}; elim* => gs kk nn cc0; call {1} (chacha_spec kk nn cc0 gs); skip; smt().",
+        "auto.",
+        "qed."
+      ],
+      "proved": true
+    }
+  ],
+  "turn_count": 35,
+  "views_copied": 37,
+  "run_iteration_dir": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/CCP_OCCP/r01/2026-06-08_2013_CCP_OCCP/iteration_1",
+  "commit": "c855adb2",
+  "commit_full": "c855adb2fa7167175ef63db96f7d642faee3e78b",
+  "branch": "HEAD",
+  "dirty": true
+}

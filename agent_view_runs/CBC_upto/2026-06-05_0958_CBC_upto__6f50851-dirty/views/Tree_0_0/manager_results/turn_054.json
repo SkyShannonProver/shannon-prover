@@ -1,0 +1,20 @@
+{
+  "turn": 54,
+  "handled_intent": {
+    "intent": "fresh_restart",
+    "payload": {
+      "confirm": true,
+      "confirmation_id": "d0a178cb1c3c8e53"
+    }
+  },
+  "ok": true,
+  "manager_note": "Fresh restart was confirmed; the latest view is the new branch start.",
+  "manager_actions": [
+    {
+      "action": "fresh restart",
+      "outcome": "EasyCrypt restarted this node from the target lemma; prior committed tactics in this node were discarded.",
+      "timing": "1.1 s"
+    }
+  ],
+  "view_refreshed": true
+}

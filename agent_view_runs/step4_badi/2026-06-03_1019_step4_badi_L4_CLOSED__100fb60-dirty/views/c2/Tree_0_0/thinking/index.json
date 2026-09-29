@@ -1,0 +1,79 @@
+{
+  "node": "Tree-0.0",
+  "discovery": "recorded_session_id",
+  "transcripts": [
+    "~/.claude/projects/<PROJECT>-tmp-wt-badi-l4/a2de5c6f-e04f-4d2b-ab6e-ef29b7562b99.jsonl"
+  ],
+  "turns": [
+    {
+      "turn": 1,
+      "intent": "probe_tactic",
+      "payload_key": "move=> *; smt(neq_w1_w2 nth_out_of_range).",
+      "thinking_chars": 0,
+      "text_chars": 669,
+      "session_id": "a2de5c6f-e04f-4d2b-ab6e-ef29b7562b99",
+      "timestamp": "2026-06-03T18:21:07.632Z",
+      "file": "thinking/turn_001.md"
+    },
+    {
+      "turn": 2,
+      "intent": "probe_tactic",
+      "payload_key": "move=> *; smt(neq_w1_w2 nth_default).",
+      "thinking_chars": 0,
+      "text_chars": 95,
+      "session_id": "a2de5c6f-e04f-4d2b-ab6e-ef29b7562b99",
+      "timestamp": "2026-06-03T18:21:15.333Z",
+      "file": "thinking/turn_002.md"
+    },
+    {
+      "turn": 3,
+      "intent": "commit_tactic",
+      "payload_key": "move=> *; smt(neq_w1_w2 nth_default).",
+      "thinking_chars": 0,
+      "text_chars": 84,
+      "session_id": "a2de5c6f-e04f-4d2b-ab6e-ef29b7562b99",
+      "timestamp": "2026-06-03T18:21:19.969Z",
+      "file": "thinking/turn_003.md"
+    },
+    {
+      "turn": 4,
+      "intent": "commit_tactic",
+      "payload_key": "done.",
+      "thinking_chars": 0,
+      "text_chars": 40,
+      "session_id": "a2de5c6f-e04f-4d2b-ab6e-ef29b7562b99",
+      "timestamp": "2026-06-03T18:21:26.292Z",
+      "file": "thinking/turn_004.md"
+    },
+    {
+      "turn": 5,
+      "intent": "commit_tactic",
+      "payload_key": "move=> &1 &2 H; exact H.",
+      "thinking_chars": 0,
+      "text_chars": 69,
+      "session_id": "a2de5c6f-e04f-4d2b-ab6e-ef29b7562b99",
+      "timestamp": "2026-06-03T18:21:35.832Z",
+      "file": "thinking/turn_005.md"
+    },
+    {
+      "turn": 6,
+      "intent": "commit_tactic",
+      "payload_key": "smt().",
+      "thinking_chars": 0,
+      "text_chars": 57,
+      "session_id": "a2de5c6f-e04f-4d2b-ab6e-ef29b7562b99",
+      "timestamp": "2026-06-03T18:21:49.419Z",
+      "file": "thinking/turn_006.md"
+    },
+    {
+      "turn": 7,
+      "intent": "commit_tactic",
+      "payload_key": "qed.",
+      "thinking_chars": 0,
+      "text_chars": 39,
+      "session_id": "a2de5c6f-e04f-4d2b-ab6e-ef29b7562b99",
+      "timestamp": "2026-06-03T18:21:53.275Z",
+      "file": "thinking/turn_007.md"
+    }
+  ]
+}

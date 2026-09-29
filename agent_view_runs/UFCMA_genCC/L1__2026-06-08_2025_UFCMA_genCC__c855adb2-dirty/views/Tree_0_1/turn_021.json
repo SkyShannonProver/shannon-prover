@@ -1,0 +1,463 @@
+{
+  "last_result": {
+    "intent": "commit_tactic",
+    "payload": {
+      "tactic": "wp."
+    },
+    "manager_action": "commit_tactic",
+    "result": "EasyCrypt accepted the committed tactic.",
+    "effect": "EasyCrypt accepted a proof-state change; the refreshed view is based on the new committed state.",
+    "proof_state": "The committed EasyCrypt proof state changed.",
+    "tactic": "wp."
+  },
+  "current_goal": {
+    "lines": [
+      "Current goal (remaining: 5)",
+      "",
+      "Type variables: <none>",
+      "",
+      "&m: {k : key, p, p0, p1 : plaintext, c, c0 : ciphertext}",
+      "z: int",
+      "------------------------------------------------------------------------",
+      "Context : hr: {i : int, c2 : byte list, k, k0, k1 : key, n, n0, n1 : nonce,",
+      "              c3 : C.counter, x : nonce * C.counter, c1 : bytes,",
+      "              z, result : block, a : associated_data, p1, p2 : message,",
+      "              nap : nonce * associated_data * message, t : tag,",
+      "              p, p0 : plaintext, c, c0 : ciphertext}",
+      "Bound   : [=] 1%r",
+      "",
+      "pre =",
+      "  (((p{m} = p /\\",
+      "     Mem.k{m} = Mem.k /\\ Mem.log{m} = Mem.log /\\ Mem.lc{m} = Mem.lc) /\\",
+      "    StLSke.gs{m} = RO.m /\\",
+      "    k0 = Mem.k /\\",
+      "    n0 = n /\\",
+      "    k = Mem.k /\\",
+      "    (n, a, p1) = p /\\",
+      "    c2 ++ gen_CTR_encrypt_bytes take_xor (get RO.m) k0 n0 i p2 =",
+      "    gen_CTR_encrypt_bytes take_xor (get RO.m) k0 n0 1 p1) /\\",
+      "   p2 <> []) /\\",
+      "  size p2 = z",
+      "",
+      "",
+      "post =",
+      "  let p2_0 = drop block_size p2 in",
+      "  ((p{m} = p /\\",
+      "    Mem.k{m} = Mem.k /\\ Mem.log{m} = Mem.log /\\ Mem.lc{m} = Mem.lc) /\\",
+      "   StLSke.gs{m} = RO.m /\\",
+      "   k0 = Mem.k /\\",
+      "   n0 = n /\\",
+      "   k = Mem.k /\\",
+      "   (n, a, p1) = p /\\",
+      "   c2 ++",
+      "   take (size p2) (bytes_of_block (extend p2 +^ oget RO.m.[n0, C.ofintd i])) ++",
+      "   gen_CTR_encrypt_bytes take_xor (get RO.m) k0 n0 (i + 1) p2_0 =",
+      "   gen_CTR_encrypt_bytes take_xor (get RO.m) k0 n0 1 p1) /\\",
+      "  size p2_0 < z",
+      "[316|check]>"
+    ],
+    "text_fully_shown": true,
+    "truncated": false,
+    "goal_type": "phoare",
+    "view_focus": "procedure_frontier",
+    "source": {
+      "label": "Parsed from EasyCrypt pretty goal text",
+      "ground_truth": false
+    }
+  },
+  "proof_status": {
+    "status": "open",
+    "remaining_goals": 5,
+    "remaining_goals_known": true,
+    "goal_type": "phoare",
+    "view_focus": "procedure_frontier",
+    "current_layer": "procedure_body"
+  },
+  "candidate_moves": {
+    "moves": [
+      {
+        "category": "strategy",
+        "tactic_shape": "Probabilistic VC plan: query-counter loss accounting via proc/wp before bound subgoals",
+        "applicability": "Use this as route-selection context; it is not a tactic to run as-is.",
+        "source": "proof-state analysis"
+      },
+      {
+        "title": "Residual closing tactic",
+        "category": "strategy",
+        "tactic_shape": "auto => />; smt(domE get_setE mem_set mem_empty C.ofintdK C.gt0_max_counter nth0 nth_default).",
+        "applicability": "Use this as route-selection context; it is not a tactic to run as-is.",
+        "source": "proof-state analysis"
+      },
+      {
+        "category": "strategy",
+        "tactic_shape": "skip.",
+        "applicability": "Use this as route-selection context; it is not a tactic to run as-is.",
+        "source": "proof-state analysis"
+      },
+      {
+        "title": "Residual closing tactic",
+        "category": "probe",
+        "tactic": "auto.",
+        "applicability": "This tactic-shaped option should be checked with a read-only probe before committing it.",
+        "effect": "This is a read-only probe; it asks EasyCrypt what would happen without changing the committed proof state.",
+        "source": "proof-state analysis",
+        "derivation": "read-only probe surfaced from proof-state analysis",
+        "verified": "read_only_probe_suggestion",
+        "guarantee": "read-only probe shape; proof state unchanged; probe then decide; reversible"
+      },
+      {
+        "category": "strategy",
+        "tactic_shape": "smt().",
+        "applicability": "Use this as route-selection context; it is not a tactic to run as-is.",
+        "source": "proof-state analysis"
+      },
+      {
+        "category": "strategy",
+        "tactic_shape": "wp.",
+        "applicability": "Use this as route-selection context; it is not a tactic to run as-is.",
+        "source": "proof-state analysis"
+      }
+    ]
+  },
+  "program_frontier": {
+    "authority": "proof-state analysis",
+    "view_focus": "procedure_frontier",
+    "focus": {
+      "live_call_sites": 0,
+      "frontier_call_sites": 0,
+      "live_callable_lemmas": 0,
+      "callable_now_lemmas": 0,
+      "oracle_obligation_handles": 0,
+      "has_invariant_skeleton": false
+    },
+    "checks": [
+      "Keep one-sided instrumentation as a map, not as a tactic recipe."
+    ]
+  },
+  "call_site_surface": {},
+  "seq_cut_surface": {
+    "seq_candidate_id": "cp_15_fd52df9aceba4d51",
+    "state": "inside_seq_scope",
+    "cut_position": {
+      "left_count": 0,
+      "right_count": 1,
+      "tactic": "seq 0 1 : ( (n{2}, a{2}, p1{2}) = p{2} /\\ p{1} = p{2} /\\ Mem.k{1} = Mem.k{2} /\\ Mem.log{1} = Mem.log{2} /\\ Mem.lc{1} = Mem.lc{2} /\\ StLSke.gs{1} = RO.m{2} /\\ k0{2} = Mem.k{2} /\\ n0{2} = n{2} /\\ c2{2} = gen_CTR_encrypt_bytes take_xor (get RO.m{2}) k0{2} n0{2} 1 p1{2} )."
+    },
+    "obligation_count": 5,
+    "obligation_kinds": [
+      "postcondition",
+      "probability_or_loss"
+    ],
+    "branch_focus": {
+      "remaining_goals": 5,
+      "latest_event_head": "wp"
+    },
+    "residual_frontier": {
+      "current_layer": "procedure_body",
+      "view_focus": "procedure_frontier",
+      "live_call_site_count": 0,
+      "goal_contains_call_site": false,
+      "latest_seq_tactic_index": 15,
+      "tactics_after_latest_seq": 4
+    }
+  },
+  "application_context": {},
+  "facts_and_diagnostics": {
+    "facts": {
+      "has_invariant_skeleton": false,
+      "unfoldable_goal_heads": [
+        {
+          "name": "gen_CTR_encrypt_bytes",
+          "unqualified_name": "gen_CTR_encrypt_bytes",
+          "declaration_kind": "op",
+          "unfold_tactic": "rewrite /gen_CTR_encrypt_bytes.",
+          "smt_argument_role": "not_a_lemma_hint"
+        },
+        {
+          "name": "take_xor",
+          "unqualified_name": "take_xor",
+          "declaration_kind": "op",
+          "unfold_tactic": "rewrite /take_xor.",
+          "smt_argument_role": "not_a_lemma_hint"
+        },
+        {
+          "name": "get",
+          "unqualified_name": "get",
+          "declaration_kind": "op",
+          "unfold_tactic": "rewrite /get.",
+          "smt_argument_role": "not_a_lemma_hint"
+        },
+        {
+          "name": "extend",
+          "unqualified_name": "extend",
+          "declaration_kind": "op",
+          "unfold_tactic": "rewrite /extend.",
+          "smt_argument_role": "not_a_lemma_hint"
+        }
+      ],
+      "unfoldable_goal_head_count": 4
+    },
+    "fact_note": "Only current-frontier facts are shown here; the full proof context artifact keeps the compiler/internal details."
+  },
+  "inspect_lookup_handles": {
+    "effect": "All handles here are read-only manager requests; the committed EasyCrypt proof state stays unchanged.",
+    "manager_note": "Some requests may ask EasyCrypt or name resolution; wait for the manager result before choosing the next proof intent.",
+    "ask_manager_for": [
+      {
+        "intent": "inspect_context",
+        "payload": {
+          "topic": "goal_info"
+        },
+        "use_when": "No fresh recommendation is available; parse the current goal.",
+        "returns": "manager-provided read-only context for this proof route"
+      },
+      {
+        "intent": "inspect_context",
+        "payload": {
+          "topic": "call_site_options"
+        },
+        "use_when": "The current procedure frontier exposes a call route.",
+        "returns": "call-ready/oracle-equiv context for the current frontier, plus the BODY of the procedure(s) called here (functor aliases resolved) so you can see which oracles/state your call invariant must preserve"
+      },
+      {
+        "intent": "inspect_context",
+        "payload": {
+          "topic": "call_subgoals",
+          "invariant": "<the EasyCrypt invariant expression inside call (_: ...)>"
+        },
+        "use_when": "You are considering `call (_: Inv)` and already have a concrete invariant expression you want to test first.",
+        "returns": "a read-only preview of the obligations caused by that candidate invariant, including pre/init, call-preservation, oracle-side, postcondition, missing-fact signals, and extra conjuncts that may create avoidable obligations"
+      },
+      {
+        "intent": "inspect_context",
+        "payload": {
+          "topic": "tactic_forms",
+          "name": "call"
+        },
+        "use_when": "Need the valid form for call, while, seq, rnd, or rewrite.",
+        "returns": "valid tactic forms and common traps"
+      },
+      {
+        "intent": "inspect_context",
+        "payload": {
+          "topic": "tactic_forms",
+          "name": "sp"
+        },
+        "returns": "valid `sp` forms and common traps"
+      },
+      {
+        "intent": "inspect_context",
+        "payload": {
+          "topic": "tactic_forms",
+          "name": "while"
+        },
+        "use_when": "Need the valid one-sided hoare/phoare loop form.",
+        "returns": "valid `while` forms and common traps"
+      },
+      {
+        "intent": "inspect_context",
+        "payload": {
+          "topic": "tactic_forms",
+          "name": "wp"
+        },
+        "use_when": "Mid-proof suffix may need indexed `wp` to absorb a tail before a cut.",
+        "returns": "valid indexed `wp` forms and suffix traps"
+      },
+      {
+        "intent": "inspect_context",
+        "payload": {
+          "topic": "tactic_forms",
+          "name": "swap"
+        },
+        "use_when": "Statement order may need a small `swap` before `sp` or `wp`.",
+        "returns": "valid `swap` forms and statement-order traps"
+      },
+      {
+        "intent": "inspect_context",
+        "payload": {
+          "topic": "tactic_forms",
+          "name": "rcondt"
+        },
+        "use_when": "A guarded branch may need `rcondt` after a case split or invariant fact.",
+        "returns": "valid `rcondt` forms and guard-obligation traps"
+      },
+      {
+        "intent": "inspect_context",
+        "payload": {
+          "topic": "tactic_forms",
+          "name": "rcondf"
+        },
+        "use_when": "A guarded branch may need `rcondf` after a case split or invariant fact.",
+        "returns": "valid `rcondf` forms and guard-obligation traps"
+      },
+      {
+        "intent": "inspect_context",
+        "payload": {
+          "topic": "tactic_forms",
+          "name": "conseq"
+        },
+        "use_when": "A suffix proof may need `conseq` to weaken the pre/postcondition before closing.",
+        "returns": "valid `conseq` forms and pre/post-weakening traps"
+      },
+      {
+        "intent": "inspect_context",
+        "payload": {
+          "topic": "tactic_forms",
+          "name": "rnd"
+        },
+        "use_when": "A sampling step may need `rnd` to reduce it to a distribution/probability fact.",
+        "returns": "valid `rnd` forms, including one-sided sampling"
+      }
+    ]
+  },
+  "structural_checkpoints": {
+    "items": [
+      {
+        "checkpoint_id": "cp_19_fd52df9aceba4d51",
+        "semantic_id": "before_branch_work",
+        "semantic_ids": [
+          "before_branch_work",
+          "before_call_obligation_work"
+        ],
+        "label": "Before latest call-obligation tactic #19",
+        "committed_step_index": 19,
+        "committed_tactic": "wp.",
+        "restored_proof_layer": "call_obligation",
+        "restored_affordances": {
+          "call_route": "committed",
+          "call_obligation": "preserved",
+          "later_local_work": "not_committed"
+        },
+        "undo_scope": "call_obligation_local",
+        "why_checkpoint": "call-obligation local boundary; selecting it keeps the opened call obligation and removes later local work",
+        "effect_if_selected": "Undo committed tactic #19 and every committed tactic after it in this node.",
+        "submit": {
+          "intent": "undo_to_checkpoint",
+          "payload": {
+            "checkpoint_id": "cp_19_fd52df9aceba4d51"
+          }
+        }
+      },
+      {
+        "checkpoint_id": "cp_16_fd52df9aceba4d51",
+        "semantic_id": "after_seq_opened",
+        "semantic_ids": [
+          "after_seq_opened",
+          "before_branch_work"
+        ],
+        "label": "After seq opened / before branch work #16",
+        "committed_step_index": 16,
+        "committed_tactic": "while{2} ( (p{1} = p{2} /\\ Mem.k{1} = Mem.k{2} /\\ Mem.log{1} = Mem.log{2} /\\ Mem.lc{1} = Mem.lc{2}) /\\ StLSke.gs{1} = RO.m{2} /\\ k0{2} = Mem.k{2} /\\ n0{2} = n{2} /\\ k{2} = Mem.k{2} /\\ (n{2}, a{2}, p1{2}) = p{2} /\\ c2{2} ++ gen_CTR_encrypt_bytes take_xor (get RO.m{2}) k0{2} n0{2} i{2} p2{2} = gen_CTR_encrypt_bytes take_xor (get RO.m{2}) k0{2} n0{2} 1 p1{2} ) (size p2{2}).",
+        "restored_proof_layer": "seq_obligations_opened",
+        "restored_affordances": {
+          "seq_cut": "committed",
+          "branch_work": "not_committed"
+        },
+        "undo_scope": "branch_local",
+        "why_checkpoint": "seq-local branch boundary; selecting it keeps the seq cut and removes branch-local work after it",
+        "effect_if_selected": "Undo committed tactic #16 and every committed tactic after it in this node.",
+        "submit": {
+          "intent": "undo_to_checkpoint",
+          "payload": {
+            "checkpoint_id": "cp_16_fd52df9aceba4d51"
+          }
+        }
+      },
+      {
+        "checkpoint_id": "cp_6_fd52df9aceba4d51",
+        "semantic_id": "after_call_opened",
+        "semantic_ids": [
+          "after_call_opened"
+        ],
+        "label": "After call opened / before obligation work #6",
+        "committed_step_index": 6,
+        "committed_tactic": "proc.",
+        "restored_proof_layer": "call_obligations_opened",
+        "restored_affordances": {
+          "call_route": "committed",
+          "call_obligation_work": "not_committed"
+        },
+        "undo_scope": "call_local",
+        "why_checkpoint": "call-local boundary; selecting it keeps the call tactic and removes work committed after the call opened",
+        "effect_if_selected": "Undo committed tactic #6 and every committed tactic after it in this node.",
+        "submit": {
+          "intent": "undo_to_checkpoint",
+          "payload": {
+            "checkpoint_id": "cp_6_fd52df9aceba4d51"
+          }
+        }
+      },
+      {
+        "checkpoint_id": "cp_5_fd52df9aceba4d51",
+        "semantic_id": "before_call_route",
+        "semantic_ids": [
+          "before_call_route"
+        ],
+        "label": "Before call invariant #5",
+        "committed_step_index": 5,
+        "committed_tactic": "call (_: ={Mem.k, Mem.log, Mem.lc} /\\ StLSke.gs{1} = RO.m{2}).",
+        "restored_proof_layer": "pre_call_route",
+        "restored_affordances": {
+          "call_route": "not_committed",
+          "call_obligation_work": "not_committed"
+        },
+        "undo_scope": "call_local",
+        "why_checkpoint": "call invariant introduction point; later oracle/branch obligations often reveal missing preserved facts or an over-strong equality from this tactic",
+        "effect_if_selected": "Undo committed tactic #5 and every committed tactic after it in this node.",
+        "submit": {
+          "intent": "undo_to_checkpoint",
+          "payload": {
+            "checkpoint_id": "cp_5_fd52df9aceba4d51"
+          }
+        }
+      },
+      {
+        "checkpoint_id": "cp_15_fd52df9aceba4d51",
+        "semantic_id": "before_seq_cut",
+        "semantic_ids": [
+          "before_seq_cut"
+        ],
+        "label": "Before seq cut #15",
+        "committed_step_index": 15,
+        "committed_tactic": "seq 0 1 : ( (n{2}, a{2}, p1{2}) = p{2} /\\ p{1} = p{2} /\\ Mem.k{1} = Mem.k{2} /\\ Mem.log{1} = Mem.log{2} /\\ Mem.lc{1} = Mem.lc{2} /\\ StLSke.gs{1} = RO.m{2} /\\ k0{2} = Mem.k{2} /\\ n0{2} = n{2} /\\ c2{2} = gen_CTR_encrypt_bytes take_xor (get RO.m{2}) k0{2} n0{2} 1 p1{2} ).",
+        "restored_proof_layer": "pre_seq_cut",
+        "restored_affordances": {
+          "seq_cut": "not_committed",
+          "call_site_state": "as_before_seq_cut"
+        },
+        "undo_scope": "seq_local",
+        "why_checkpoint": "seq-cut boundary; selecting it restores the proof state before this cut was committed",
+        "effect_if_selected": "Undo committed tactic #15 and every committed tactic after it in this node.",
+        "submit": {
+          "intent": "undo_to_checkpoint",
+          "payload": {
+            "checkpoint_id": "cp_15_fd52df9aceba4d51"
+          }
+        }
+      },
+      {
+        "checkpoint_id": "cp_18_fd52df9aceba4d51",
+        "semantic_id": "last_call_site_boundary",
+        "semantic_ids": [
+          "last_call_site_boundary"
+        ],
+        "label": "Before inline expansion #18",
+        "committed_step_index": 18,
+        "committed_tactic": "inline.",
+        "restored_proof_layer": "pre_inline_frontier",
+        "restored_affordances": {
+          "call_site_handles": "as_before_inline"
+        },
+        "undo_scope": "call_site_boundary",
+        "why_checkpoint": "inline boundary; selecting it restores the proof state before this expansion",
+        "effect_if_selected": "Undo committed tactic #18 and every committed tactic after it in this node.",
+        "submit": {
+          "intent": "undo_to_checkpoint",
+          "payload": {
+            "checkpoint_id": "cp_18_fd52df9aceba4d51"
+          }
+        }
+      }
+    ]
+  }
+}

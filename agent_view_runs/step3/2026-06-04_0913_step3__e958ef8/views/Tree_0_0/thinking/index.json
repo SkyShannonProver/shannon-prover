@@ -1,0 +1,269 @@
+{
+  "node": "Tree-0.0",
+  "discovery": "content_match",
+  "transcripts": [
+    "~/.claude/projects/<PROJECT>-tmp-wt-l4-step3/85d57332-b3ec-4f7b-92f2-424aa26a1fe9.jsonl"
+  ],
+  "turns": [
+    {
+      "turn": 1,
+      "intent": "probe_tactic",
+      "payload_key": "byequiv => //.",
+      "thinking_chars": 0,
+      "text_chars": 157,
+      "session_id": "85d57332-b3ec-4f7b-92f2-424aa26a1fe9",
+      "timestamp": "2026-06-04T16:13:27.306Z",
+      "file": "thinking/turn_001.md"
+    },
+    {
+      "turn": 2,
+      "intent": "commit_tactic",
+      "payload_key": "byequiv => //.",
+      "thinking_chars": 0,
+      "text_chars": 229,
+      "session_id": "85d57332-b3ec-4f7b-92f2-424aa26a1fe9",
+      "timestamp": "2026-06-04T16:13:44.901Z",
+      "file": "thinking/turn_002.md"
+    },
+    {
+      "turn": 3,
+      "intent": "inspect_context",
+      "payload_key": "proof_map",
+      "thinking_chars": 0,
+      "text_chars": 262,
+      "session_id": "85d57332-b3ec-4f7b-92f2-424aa26a1fe9",
+      "timestamp": "2026-06-04T16:14:04.493Z",
+      "file": "thinking/turn_003.md"
+    },
+    {
+      "turn": 4,
+      "intent": "inspect_context",
+      "payload_key": "call_site_options",
+      "thinking_chars": 0,
+      "text_chars": 116,
+      "session_id": "85d57332-b3ec-4f7b-92f2-424aa26a1fe9",
+      "timestamp": "2026-06-04T16:14:24.658Z",
+      "file": "thinking/turn_004.md"
+    },
+    {
+      "turn": 5,
+      "intent": "probe_tactic",
+      "payload_key": "proc.",
+      "thinking_chars": 0,
+      "text_chars": 101,
+      "session_id": "85d57332-b3ec-4f7b-92f2-424aa26a1fe9",
+      "timestamp": "2026-06-04T16:14:41.043Z",
+      "file": "thinking/turn_005.md"
+    },
+    {
+      "turn": 6,
+      "intent": "commit_tactic",
+      "payload_key": "proc.",
+      "thinking_chars": 0,
+      "text_chars": 210,
+      "session_id": "85d57332-b3ec-4f7b-92f2-424aa26a1fe9",
+      "timestamp": "2026-06-04T16:15:25.400Z",
+      "file": "thinking/turn_006.md"
+    },
+    {
+      "turn": 7,
+      "intent": "probe_tactic",
+      "payload_key": "inline{1} G8(BNR_Adv(A), SplitC2.RO_Pair(SplitC2.I1.RO, SplitC2.I2.RO)).distinguish.",
+      "thinking_chars": 0,
+      "text_chars": 250,
+      "session_id": "85d57332-b3ec-4f7b-92f2-424aa26a1fe9",
+      "timestamp": "2026-06-04T16:16:19.161Z",
+      "file": "thinking/turn_007.md"
+    },
+    {
+      "turn": 8,
+      "intent": "probe_tactic",
+      "payload_key": "inline*.",
+      "thinking_chars": 0,
+      "text_chars": 384,
+      "session_id": "85d57332-b3ec-4f7b-92f2-424aa26a1fe9",
+      "timestamp": "2026-06-04T16:17:31.298Z",
+      "file": "thinking/turn_008.md"
+    },
+    {
+      "turn": 9,
+      "intent": "commit_tactic",
+      "payload_key": "inline*.",
+      "thinking_chars": 0,
+      "text_chars": 279,
+      "session_id": "85d57332-b3ec-4f7b-92f2-424aa26a1fe9",
+      "timestamp": "2026-06-04T16:18:49.858Z",
+      "file": "thinking/turn_009.md"
+    },
+    {
+      "turn": 10,
+      "intent": "probe_tactic",
+      "payload_key": "wp.",
+      "thinking_chars": 0,
+      "text_chars": 131,
+      "session_id": "85d57332-b3ec-4f7b-92f2-424aa26a1fe9",
+      "timestamp": "2026-06-04T16:19:40.997Z",
+      "file": "thinking/turn_010.md"
+    },
+    {
+      "turn": 11,
+      "intent": "commit_tactic",
+      "payload_key": "wp.",
+      "thinking_chars": 0,
+      "text_chars": 189,
+      "session_id": "85d57332-b3ec-4f7b-92f2-424aa26a1fe9",
+      "timestamp": "2026-06-04T16:20:34.092Z",
+      "file": "thinking/turn_011.md"
+    },
+    {
+      "turn": 12,
+      "intent": "inspect_context",
+      "payload_key": "call_subgoals",
+      "thinking_chars": 0,
+      "text_chars": 151,
+      "session_id": "85d57332-b3ec-4f7b-92f2-424aa26a1fe9",
+      "timestamp": "2026-06-04T16:20:46.804Z",
+      "file": "thinking/turn_012.md"
+    },
+    {
+      "turn": 13,
+      "intent": "inspect_context",
+      "payload_key": "call_subgoals",
+      "thinking_chars": 0,
+      "text_chars": 187,
+      "session_id": "85d57332-b3ec-4f7b-92f2-424aa26a1fe9",
+      "timestamp": "2026-06-04T16:21:02.078Z",
+      "file": "thinking/turn_013.md"
+    },
+    {
+      "turn": 14,
+      "intent": "commit_tactic",
+      "payload_key": "call (_: inv_cpa SplitC2.I1.RO.m{1} SplitC2.I2.RO.m{1} Mem.log{1} Mem.log{2} Mem.lc{1} Mem.lc{2} BNR.lenc{1} BNR.lenc{2} BNR.ndec{1} BNR.ndec{2} /\\ (forall n c, (n,c) \\in SplitC1.I2.RO.m{1} => n \\in BNR.lenc{1}) /\\ (forall n c, (n,c) \\in SplitD.ROF.RO.m{1} => n \\in BNR.lenc{1})).",
+      "thinking_chars": 0,
+      "text_chars": 80,
+      "session_id": "85d57332-b3ec-4f7b-92f2-424aa26a1fe9",
+      "timestamp": "2026-06-04T16:21:18.116Z",
+      "file": "thinking/turn_014.md"
+    },
+    {
+      "turn": 15,
+      "intent": "probe_tactic",
+      "payload_key": "proc.",
+      "thinking_chars": 0,
+      "text_chars": 241,
+      "session_id": "85d57332-b3ec-4f7b-92f2-424aa26a1fe9",
+      "timestamp": "2026-06-04T16:21:46.731Z",
+      "file": "thinking/turn_015.md"
+    },
+    {
+      "turn": 16,
+      "intent": "commit_tactic",
+      "payload_key": "proc.",
+      "thinking_chars": 0,
+      "text_chars": 196,
+      "session_id": "85d57332-b3ec-4f7b-92f2-424aa26a1fe9",
+      "timestamp": "2026-06-04T16:22:36.965Z",
+      "file": "thinking/turn_016.md"
+    },
+    {
+      "turn": 17,
+      "intent": "probe_tactic",
+      "payload_key": "sp; if.",
+      "thinking_chars": 0,
+      "text_chars": 97,
+      "session_id": "85d57332-b3ec-4f7b-92f2-424aa26a1fe9",
+      "timestamp": "2026-06-04T16:22:58.054Z",
+      "file": "thinking/turn_017.md"
+    },
+    {
+      "turn": 18,
+      "intent": "commit_tactic",
+      "payload_key": "sp; if.",
+      "thinking_chars": 0,
+      "text_chars": 155,
+      "session_id": "85d57332-b3ec-4f7b-92f2-424aa26a1fe9",
+      "timestamp": "2026-06-04T16:23:21.045Z",
+      "file": "thinking/turn_018.md"
+    },
+    {
+      "turn": 19,
+      "intent": "probe_tactic",
+      "payload_key": "move=> &1 &2; rewrite /inv_cpa; smt().",
+      "thinking_chars": 0,
+      "text_chars": 171,
+      "session_id": "85d57332-b3ec-4f7b-92f2-424aa26a1fe9",
+      "timestamp": "2026-06-04T16:23:46.426Z",
+      "file": "thinking/turn_019.md"
+    },
+    {
+      "turn": 20,
+      "intent": "commit_tactic",
+      "payload_key": "move=> &1 &2; rewrite /inv_cpa; smt().",
+      "thinking_chars": 0,
+      "text_chars": 40,
+      "session_id": "85d57332-b3ec-4f7b-92f2-424aa26a1fe9",
+      "timestamp": "2026-06-04T16:23:53.983Z",
+      "file": "thinking/turn_020.md"
+    },
+    {
+      "turn": 21,
+      "intent": "probe_tactic",
+      "payload_key": "inline{2} CPA_CCA_Orcls(EncRnd).enc.",
+      "thinking_chars": 0,
+      "text_chars": 360,
+      "session_id": "85d57332-b3ec-4f7b-92f2-424aa26a1fe9",
+      "timestamp": "2026-06-04T16:24:35.576Z",
+      "file": "thinking/turn_021.md"
+    },
+    {
+      "turn": 22,
+      "intent": "probe_tactic",
+      "payload_key": "inline{2} CPA_CCA_Orcls(EncRnd).enc EncRnd.enc.",
+      "thinking_chars": 0,
+      "text_chars": 192,
+      "session_id": "85d57332-b3ec-4f7b-92f2-424aa26a1fe9",
+      "timestamp": "2026-06-04T16:25:33.948Z",
+      "file": "thinking/turn_022.md"
+    },
+    {
+      "turn": 23,
+      "intent": "commit_tactic",
+      "payload_key": "inline{2} CPA_CCA_Orcls(EncRnd).enc EncRnd.enc.",
+      "thinking_chars": 0,
+      "text_chars": 128,
+      "session_id": "85d57332-b3ec-4f7b-92f2-424aa26a1fe9",
+      "timestamp": "2026-06-04T16:25:49.098Z",
+      "file": "thinking/turn_023.md"
+    },
+    {
+      "turn": 24,
+      "intent": "probe_tactic",
+      "payload_key": "inline{1} CPA_CCA_Orcls(RealOrcls(GenChaChaPoly(CCRO(SplitD.RO_DOM(SplitC1.RO_Pair(SplitC2.RO_Pair(SplitC2.I1.RO, SplitC2.I2.RO), SplitC1.I2.RO), SplitD.ROF.RO))))).enc RealOrcls(GenChaChaPoly(CCRO(SplitD.RO_DOM(SplitC1.RO_Pair(SplitC2.RO_Pair(SplitC2.I1.RO, SplitC2.I2.RO), SplitC1.I2.RO), SplitD.ROF.RO)))).enc GenChaChaPoly(CCRO(SplitD.RO_DOM(SplitC1.RO_Pair(SplitC2.RO_Pair(SplitC2.I1.RO, SplitC2.I2.RO), SplitC1.I2.RO), SplitD.ROF.RO))).enc.",
+      "thinking_chars": 0,
+      "text_chars": 249,
+      "session_id": "85d57332-b3ec-4f7b-92f2-424aa26a1fe9",
+      "timestamp": "2026-06-04T16:26:08.083Z",
+      "file": "thinking/turn_024.md"
+    },
+    {
+      "turn": 25,
+      "intent": "commit_tactic",
+      "payload_key": "inline{1} CPA_CCA_Orcls(RealOrcls(GenChaChaPoly(CCRO(SplitD.RO_DOM(SplitC1.RO_Pair(SplitC2.RO_Pair(SplitC2.I1.RO, SplitC2.I2.RO), SplitC1.I2.RO), SplitD.ROF.RO))))).enc RealOrcls(GenChaChaPoly(CCRO(SplitD.RO_DOM(SplitC1.RO_Pair(SplitC2.RO_Pair(SplitC2.I1.RO, SplitC2.I2.RO), SplitC1.I2.RO), SplitD.ROF.RO)))).enc GenChaChaPoly(CCRO(SplitD.RO_DOM(SplitC1.RO_Pair(SplitC2.RO_Pair(SplitC2.I1.RO, SplitC2.I2.RO), SplitC1.I2.RO), SplitD.ROF.RO))).enc.",
+      "thinking_chars": 0,
+      "text_chars": 269,
+      "session_id": "85d57332-b3ec-4f7b-92f2-424aa26a1fe9",
+      "timestamp": "2026-06-04T16:27:12.822Z",
+      "file": "thinking/turn_025.md"
+    },
+    {
+      "turn": 26,
+      "intent": "commit_tactic",
+      "payload_key": "sp.",
+      "thinking_chars": 0,
+      "text_chars": 222,
+      "session_id": "85d57332-b3ec-4f7b-92f2-424aa26a1fe9",
+      "timestamp": "2026-06-04T16:28:33.757Z",
+      "file": "thinking/turn_026.md"
+    }
+  ]
+}

@@ -1,0 +1,289 @@
+{
+  "node": "Tree-0.1",
+  "discovery": "recorded_session_id",
+  "transcripts": [
+    "~/.claude/projects/<PROJECT>--claude-worktrees-ablation-l1-l4/8c4e4f6f-af9c-42e3-beaa-964d13603474.jsonl"
+  ],
+  "turns": [
+    {
+      "turn": 1,
+      "intent": "probe_tactic",
+      "payload_key": "proc.",
+      "thinking_chars": 1514,
+      "text_chars": 394,
+      "session_id": "8c4e4f6f-af9c-42e3-beaa-964d13603474",
+      "timestamp": "2026-06-02T01:20:32.690Z",
+      "file": "thinking/turn_001.md"
+    },
+    {
+      "turn": 2,
+      "intent": "commit_tactic",
+      "payload_key": "proc.",
+      "thinking_chars": 1933,
+      "text_chars": 193,
+      "session_id": "8c4e4f6f-af9c-42e3-beaa-964d13603474",
+      "timestamp": "2026-06-02T01:21:07.448Z",
+      "file": "thinking/turn_002.md"
+    },
+    {
+      "turn": 3,
+      "intent": "probe_tactic",
+      "payload_key": "inline *; wp.",
+      "thinking_chars": 984,
+      "text_chars": 91,
+      "session_id": "8c4e4f6f-af9c-42e3-beaa-964d13603474",
+      "timestamp": "2026-06-02T01:21:26.304Z",
+      "file": "thinking/turn_003.md"
+    },
+    {
+      "turn": 4,
+      "intent": "probe_tactic",
+      "payload_key": "inline *.",
+      "thinking_chars": 840,
+      "text_chars": 89,
+      "session_id": "8c4e4f6f-af9c-42e3-beaa-964d13603474",
+      "timestamp": "2026-06-02T01:21:41.572Z",
+      "file": "thinking/turn_004.md"
+    },
+    {
+      "turn": 5,
+      "intent": "probe_tactic",
+      "payload_key": "wp.",
+      "thinking_chars": 1364,
+      "text_chars": 207,
+      "session_id": "8c4e4f6f-af9c-42e3-beaa-964d13603474",
+      "timestamp": "2026-06-02T01:21:58.311Z",
+      "file": "thinking/turn_005.md"
+    },
+    {
+      "turn": 6,
+      "intent": "probe_tactic",
+      "payload_key": "sim.",
+      "thinking_chars": 1602,
+      "text_chars": 234,
+      "session_id": "8c4e4f6f-af9c-42e3-beaa-964d13603474",
+      "timestamp": "2026-06-02T01:22:21.889Z",
+      "file": "thinking/turn_006.md"
+    },
+    {
+      "turn": 7,
+      "intent": "probe_tactic",
+      "payload_key": "while (={PIR.s, j}).",
+      "thinking_chars": 2012,
+      "text_chars": 275,
+      "session_id": "8c4e4f6f-af9c-42e3-beaa-964d13603474",
+      "timestamp": "2026-06-02T01:22:49.157Z",
+      "file": "thinking/turn_007.md"
+    },
+    {
+      "turn": 8,
+      "intent": "probe_tactic",
+      "payload_key": "inline PIR.query.",
+      "thinking_chars": 6141,
+      "text_chars": 490,
+      "session_id": "8c4e4f6f-af9c-42e3-beaa-964d13603474",
+      "timestamp": "2026-06-02T01:24:26.860Z",
+      "file": "thinking/turn_008.md"
+    },
+    {
+      "turn": 9,
+      "intent": "probe_tactic",
+      "payload_key": "seq 3: (={PIR.s}).",
+      "thinking_chars": 2181,
+      "text_chars": 142,
+      "session_id": "8c4e4f6f-af9c-42e3-beaa-964d13603474",
+      "timestamp": "2026-06-02T01:24:55.408Z",
+      "file": "thinking/turn_009.md"
+    },
+    {
+      "turn": 10,
+      "intent": "inspect_context",
+      "payload_key": "tactic_forms",
+      "thinking_chars": 2115,
+      "text_chars": 140,
+      "session_id": "8c4e4f6f-af9c-42e3-beaa-964d13603474",
+      "timestamp": "2026-06-02T01:25:26.836Z",
+      "file": "thinking/turn_010.md"
+    },
+    {
+      "turn": 11,
+      "intent": "commit_tactic",
+      "payload_key": "inline *.",
+      "thinking_chars": 5394,
+      "text_chars": 275,
+      "session_id": "8c4e4f6f-af9c-42e3-beaa-964d13603474",
+      "timestamp": "2026-06-02T01:26:46.320Z",
+      "file": "thinking/turn_011.md"
+    },
+    {
+      "turn": 12,
+      "intent": "probe_tactic",
+      "payload_key": "sim (: true ==> ={PIR.s}).",
+      "thinking_chars": 1545,
+      "text_chars": 166,
+      "session_id": "8c4e4f6f-af9c-42e3-beaa-964d13603474",
+      "timestamp": "2026-06-02T01:27:07.539Z",
+      "file": "thinking/turn_012.md"
+    },
+    {
+      "turn": 13,
+      "intent": "undo_last_step",
+      "payload_key": "",
+      "thinking_chars": 2191,
+      "text_chars": 168,
+      "session_id": "8c4e4f6f-af9c-42e3-beaa-964d13603474",
+      "timestamp": "2026-06-02T01:27:43.561Z",
+      "file": "thinking/turn_013.md"
+    },
+    {
+      "turn": 14,
+      "intent": "undo_to_checkpoint",
+      "payload_key": "",
+      "thinking_chars": 2438,
+      "text_chars": 134,
+      "session_id": "8c4e4f6f-af9c-42e3-beaa-964d13603474",
+      "timestamp": "2026-06-02T01:28:25.529Z",
+      "file": "thinking/turn_014.md"
+    },
+    {
+      "turn": 15,
+      "intent": "undo_to_checkpoint",
+      "payload_key": "{\"checkpoint_id\": \"cp_1_0548457c9a125c97\"}",
+      "thinking_chars": 510,
+      "text_chars": 58,
+      "session_id": "8c4e4f6f-af9c-42e3-beaa-964d13603474",
+      "timestamp": "2026-06-02T01:28:34.429Z",
+      "file": "thinking/turn_015.md"
+    },
+    {
+      "turn": 16,
+      "intent": "probe_tactic",
+      "payload_key": "bypr (PIR.s{1}) (PIR.s{2}).",
+      "thinking_chars": 3530,
+      "text_chars": 135,
+      "session_id": "8c4e4f6f-af9c-42e3-beaa-964d13603474",
+      "timestamp": "2026-06-02T01:29:37.283Z",
+      "file": "thinking/turn_016.md"
+    },
+    {
+      "turn": 17,
+      "intent": "probe_tactic",
+      "payload_key": "proc; sim /i.",
+      "thinking_chars": 1518,
+      "text_chars": 202,
+      "session_id": "8c4e4f6f-af9c-42e3-beaa-964d13603474",
+      "timestamp": "2026-06-02T01:30:13.886Z",
+      "file": "thinking/turn_017.md"
+    },
+    {
+      "turn": 18,
+      "intent": "commit_tactic",
+      "payload_key": "bypr (PIR.s{1}) (PIR.s{2}).",
+      "thinking_chars": 4416,
+      "text_chars": 127,
+      "session_id": "8c4e4f6f-af9c-42e3-beaa-964d13603474",
+      "timestamp": "2026-06-02T01:31:09.628Z",
+      "file": "thinking/turn_018.md"
+    },
+    {
+      "turn": 19,
+      "intent": "commit_tactic",
+      "payload_key": "by move=> &1 &2 a -> ->.",
+      "thinking_chars": 218,
+      "text_chars": 121,
+      "session_id": "8c4e4f6f-af9c-42e3-beaa-964d13603474",
+      "timestamp": "2026-06-02T01:31:19.161Z",
+      "file": "thinking/turn_019.md"
+    },
+    {
+      "turn": 20,
+      "intent": "probe_tactic",
+      "payload_key": "move=> &1 &2 a; byequiv => //.",
+      "thinking_chars": 1117,
+      "text_chars": 235,
+      "session_id": "8c4e4f6f-af9c-42e3-beaa-964d13603474",
+      "timestamp": "2026-06-02T01:31:54.442Z",
+      "file": "thinking/turn_020.md"
+    },
+    {
+      "turn": 21,
+      "intent": "commit_tactic",
+      "payload_key": "move=> &1 &2 a; byequiv => //.",
+      "thinking_chars": 1930,
+      "text_chars": 212,
+      "session_id": "8c4e4f6f-af9c-42e3-beaa-964d13603474",
+      "timestamp": "2026-06-02T01:32:33.338Z",
+      "file": "thinking/turn_021.md"
+    },
+    {
+      "turn": 22,
+      "intent": "probe_tactic",
+      "payload_key": "proc; inline *; wp.",
+      "thinking_chars": 559,
+      "text_chars": 100,
+      "session_id": "8c4e4f6f-af9c-42e3-beaa-964d13603474",
+      "timestamp": "2026-06-02T01:32:42.804Z",
+      "file": "thinking/turn_022.md"
+    },
+    {
+      "turn": 23,
+      "intent": "commit_tactic",
+      "payload_key": "proc; inline *; wp.",
+      "thinking_chars": 784,
+      "text_chars": 161,
+      "session_id": "8c4e4f6f-af9c-42e3-beaa-964d13603474",
+      "timestamp": "2026-06-02T01:33:01.987Z",
+      "file": "thinking/turn_023.md"
+    },
+    {
+      "turn": 24,
+      "intent": "probe_tactic",
+      "payload_key": "while (={PIR.s, j}); last by auto => /> /#.",
+      "thinking_chars": 576,
+      "text_chars": 91,
+      "session_id": "8c4e4f6f-af9c-42e3-beaa-964d13603474",
+      "timestamp": "2026-06-02T01:33:15.059Z",
+      "file": "thinking/turn_024.md"
+    },
+    {
+      "turn": 25,
+      "intent": "commit_tactic",
+      "payload_key": "while (={PIR.s, j}); last by auto => /> /#.",
+      "thinking_chars": 1067,
+      "text_chars": 183,
+      "session_id": "8c4e4f6f-af9c-42e3-beaa-964d13603474",
+      "timestamp": "2026-06-02T01:33:34.170Z",
+      "file": "thinking/turn_025.md"
+    },
+    {
+      "turn": 26,
+      "intent": "probe_tactic",
+      "payload_key": "wp; rnd; skip => /> /#.",
+      "thinking_chars": 606,
+      "text_chars": 122,
+      "session_id": "8c4e4f6f-af9c-42e3-beaa-964d13603474",
+      "timestamp": "2026-06-02T01:33:48.070Z",
+      "file": "thinking/turn_026.md"
+    },
+    {
+      "turn": 27,
+      "intent": "commit_tactic",
+      "payload_key": "wp; rnd; skip => /> /#.",
+      "thinking_chars": 125,
+      "text_chars": 73,
+      "session_id": "8c4e4f6f-af9c-42e3-beaa-964d13603474",
+      "timestamp": "2026-06-02T01:33:55.392Z",
+      "file": "thinking/turn_027.md"
+    },
+    {
+      "turn": 28,
+      "intent": "commit_tactic",
+      "payload_key": "qed.",
+      "thinking_chars": 121,
+      "text_chars": 65,
+      "session_id": "8c4e4f6f-af9c-42e3-beaa-964d13603474",
+      "timestamp": "2026-06-02T01:34:02.029Z",
+      "file": "thinking/turn_028.md"
+    }
+  ]
+}

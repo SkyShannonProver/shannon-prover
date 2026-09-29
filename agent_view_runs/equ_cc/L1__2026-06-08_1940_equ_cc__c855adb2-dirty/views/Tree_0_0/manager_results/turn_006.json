@@ -1,0 +1,20 @@
+{
+  "turn": 6,
+  "handled_intent": {
+    "intent": "commit_tactic",
+    "payload": {
+      "tactic": "auto; smt(C.ofintdK gt0_block_size max_cipher_size_ok C.gt0_max_counter size_eq0 size_ge0)."
+    }
+  },
+  "ok": true,
+  "manager_note": "Commit attempt did not change the committed EasyCrypt proof state; use the returned result and latest view before trying the next proof intent.",
+  "manager_actions": [
+    {
+      "action": "tactic commit",
+      "outcome": "EasyCrypt rejected the committed tactic. Use the error summary and current goal to revise the proof step.",
+      "timing": "4.6 s",
+      "error_summary": "[error] cannot prove goal (strict)"
+    }
+  ],
+  "view_refreshed": true
+}

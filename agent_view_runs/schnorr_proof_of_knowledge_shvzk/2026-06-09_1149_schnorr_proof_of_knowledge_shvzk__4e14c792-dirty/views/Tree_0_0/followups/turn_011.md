@@ -1,0 +1,21 @@
+## 🔍 Probe rejected — `auto => />; smt(expD expM expN mulpV mulVp).` · committed state unchanged
+
+**EasyCrypt error:** `cannot find lemma `mulpV'`
+
+## 🎯 Current Goal (unchanged)
+```
+Current goal (remaining: 2)
+
+Type variables: <none>
+
+D : SigmaTraceDistinguisher
+&m: {}
+------------------------------------------------------------------------
+forall &m0,
+```
+_…(+4 more lines — goal unchanged this turn; full goal in `LEGAL_LATEST_WORKSPACE_VIEW`)_
+
+---
+
+Submit exactly ONE proof intent via the `submit_proof_intent` MCP tool (only `intent` + `payload`; no node ids, hashes, request ids, or reasoning fields).
+

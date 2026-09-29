@@ -1,0 +1,20 @@
+{
+  "turn": 11,
+  "handled_intent": {
+    "intent": "commit_tactic",
+    "payload": {
+      "tactic": "rnd predT."
+    }
+  },
+  "ok": true,
+  "manager_note": "Committed tactic accepted; the EasyCrypt proof state changed.",
+  "manager_actions": [
+    {
+      "action": "tactic commit",
+      "outcome": "EasyCrypt accepted the committed tactic.",
+      "timing": "142 ms"
+    }
+  ],
+  "view_refreshed": true,
+  "surface_turn_hash": "a88e21fcb848170f1318a038b294f21b0bc34919"
+}

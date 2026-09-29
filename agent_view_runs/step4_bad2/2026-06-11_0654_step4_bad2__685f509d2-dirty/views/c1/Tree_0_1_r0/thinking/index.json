@@ -1,0 +1,89 @@
+{
+  "node": "Tree-0.1.r0",
+  "discovery": "content_match",
+  "transcripts": [
+    "~/.claude/projects/<PROJECT>--worktrees-s23-l4np-resume/2bae8347-e51b-41ba-ae72-8b43c0affb20.jsonl"
+  ],
+  "turns": [
+    {
+      "turn": 1,
+      "intent": "commit_tactic",
+      "payload_key": "move=> z; inline *; auto => />; smt(dpoly_in_ll).",
+      "thinking_chars": 0,
+      "text_chars": 79,
+      "tokens": {
+        "output_tokens": 2087,
+        "input_tokens": 5,
+        "cache_read_input_tokens": 87421,
+        "cache_creation_input_tokens": 103713
+      },
+      "session_id": "2bae8347-e51b-41ba-ae72-8b43c0affb20",
+      "timestamp": "2026-06-11T08:07:56.976Z",
+      "file": "thinking/turn_001.md"
+    },
+    {
+      "turn": 2,
+      "intent": "inspect_context",
+      "payload_key": "tactic_forms",
+      "thinking_chars": 0,
+      "text_chars": 0,
+      "tokens": {
+        "output_tokens": 3874,
+        "input_tokens": 2,
+        "cache_read_input_tokens": 67520,
+        "cache_creation_input_tokens": 1748
+      },
+      "session_id": "2bae8347-e51b-41ba-ae72-8b43c0affb20",
+      "timestamp": "2026-06-11T08:08:58.088Z",
+      "file": ""
+    },
+    {
+      "turn": 3,
+      "intent": "inspect_context",
+      "payload_key": "probability_budget_ledger",
+      "thinking_chars": 0,
+      "text_chars": 0,
+      "tokens": {
+        "output_tokens": 6293,
+        "input_tokens": 2,
+        "cache_read_input_tokens": 69268,
+        "cache_creation_input_tokens": 4785
+      },
+      "session_id": "2bae8347-e51b-41ba-ae72-8b43c0affb20",
+      "timestamp": "2026-06-11T08:10:45.284Z",
+      "file": ""
+    },
+    {
+      "turn": 4,
+      "intent": "undo_to_checkpoint",
+      "payload_key": "{\"checkpoint_id\": \"cp_15_5ab41d41a69ed809\"}",
+      "thinking_chars": 0,
+      "text_chars": 0,
+      "tokens": {
+        "output_tokens": 10264,
+        "input_tokens": 2,
+        "cache_read_input_tokens": 74053,
+        "cache_creation_input_tokens": 6685
+      },
+      "session_id": "2bae8347-e51b-41ba-ae72-8b43c0affb20",
+      "timestamp": "2026-06-11T08:13:32.119Z",
+      "file": ""
+    },
+    {
+      "turn": 5,
+      "intent": "inspect_context",
+      "payload_key": "goal_info",
+      "thinking_chars": 0,
+      "text_chars": 115,
+      "tokens": {
+        "output_tokens": 7579,
+        "input_tokens": 6,
+        "cache_read_input_tokens": 267592,
+        "cache_creation_input_tokens": 15766
+      },
+      "session_id": "2bae8347-e51b-41ba-ae72-8b43c0affb20",
+      "timestamp": "2026-06-11T08:15:46.638Z",
+      "file": "thinking/turn_005.md"
+    }
+  ]
+}

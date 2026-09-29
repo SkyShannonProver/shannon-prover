@@ -1,0 +1,19 @@
+{
+  "turn": 40,
+  "handled_intent": {
+    "intent": "commit_tactic",
+    "payload": {
+      "tactic": "split; first by rewrite eqk eqn eqgs eqp /=. move=> c0 i0 p1; split; first by smt(size_ge0 size_eq0). by move=> ->; rewrite (gen_CTR_encrypt_bytes0 take_xor (cc gs0) k0 n0 i0 Hnil) cats0; smt()."
+    }
+  },
+  "ok": true,
+  "manager_note": "Committed tactic accepted; the EasyCrypt proof state changed.",
+  "manager_actions": [
+    {
+      "action": "tactic commit",
+      "outcome": "EasyCrypt accepted the committed tactic.",
+      "timing": "329 ms"
+    }
+  ],
+  "view_refreshed": true
+}

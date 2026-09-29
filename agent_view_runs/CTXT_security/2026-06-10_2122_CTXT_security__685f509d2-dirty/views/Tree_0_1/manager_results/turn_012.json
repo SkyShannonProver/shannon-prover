@@ -1,0 +1,16 @@
+{
+  "turn": 12,
+  "handled_intent": {
+    "intent": "undo_last_step"
+  },
+  "ok": true,
+  "manager_note": "Undo request was handled by the manager; the latest view is authoritative.",
+  "manager_actions": [
+    {
+      "action": "undo",
+      "outcome": "The manager completed this proof-level request.",
+      "timing": "2.3 s"
+    }
+  ],
+  "view_refreshed": true
+}

@@ -1,0 +1,73 @@
+{
+  "kind": "agent_view_run_report",
+  "timestamp": "2026-06-03_1548_step1",
+  "lemma": "step1",
+  "source_file": "eval/examples/ChaChaPoly/chacha_poly.ec",
+  "model": "claude-opus-4-8",
+  "surface_profile": "l4_checked_action_surface",
+  "trees": 2,
+  "eval_mode": true,
+  "outcome": "proved",
+  "committed_proofs": [
+    {
+      "tree": "Tree_0_0",
+      "tactics": [
+        "congr.",
+        "have -> : Pr[CCA_game(A, RealOrcls(ChaChaPoly)).main() @ &m : res] = Pr[CCA_game(A, RealOrcls(OpCCinit.OChaChaPoly(I_stateless))).main() @ &m : res] by byequiv=>//; proc; inline *; sim.",
+        "byequiv => //.",
+        "rewrite -(OpCCinit.pr_CCP_OCCP I_stateless G1 &m).",
+        "byequiv => //.",
+        "proc.",
+        "inline{2} D(A, IndBlock).guess.",
+        "seq 1 2 : (={glob A} /\\ Mem.k{1} = IndBlock.k{2}).",
+        "inline *; auto.",
+        "wp; call (_: Mem.k{1} = IndBlock.k{2}).",
+        "proc. inline{1} GenChaChaPoly(OpCCinit.OCC(I_stateless)).enc. wp. call poly_mac1. call chacha_enc1. auto.",
+        "proc. inline{1} GenChaChaPoly(OpCCinit.OCC(I_stateless)).dec. sp. seq 1 1 : (t'{1} = t'{2} /\\ t{1} = t{2} /\\ n{1} = n{2} /\\ a{1} = a{2} /\\ c0{1} = c{2} /\\ result{1} = result{2} /\\ k{1} = IndBlock.k{2} /\\ Mem.k{1} = IndBlock.k{2}).",
+        "call poly_mac1. auto. if => //. wp. call chacha_enc1. auto. auto.",
+        "auto.",
+        "congr.",
+        "have -> : Pr[Indist.Distinguish(D(A), IndRO).game() @ &m : res] = Pr[MainD(G2, RO).distinguish() @ &m : res] by byequiv => //; proc; inline *; sim.",
+        "have -> : Pr[MainD(G2, RO).distinguish() @ &m : res] = Pr[MainD(G2, FinRO).distinguish() @ &m : res] by apply (FiniteRO.pr_RO_FinRO_D _ G2 &m tt (fun (b:bool) => b)); move=> ?; exact dblock_ll.",
+        "rewrite -(OpCCRO.pr_CCP_OCCP IFinRO G1 &m).",
+        "byequiv => //.",
+        "proc.",
+        "inline{2} G2(FinRO).distinguish.",
+        "seq 1 3 : (={glob A} /\\ OpCCRO.OCC.gs{1} = RO.m{2}).",
+        "inline{1} RealOrcls(GenChaChaPoly(OCC(IFinRO))).init GenChaChaPoly(OCC(IFinRO)).init GenChaChaPoly(OCC(IFinRO)).kg IFinRO.init. inline{2} D(A, G2(FinRO).CCRO).O.init. seq 1 1 : (={glob A, RO.m}). sim. wp. rnd{1}. auto.",
+        "wp; call (_: OpCCRO.OCC.gs{1} = RO.m{2}).",
+        "proc. inline{1} GenChaChaPoly(OpCCRO.OCC(IFinRO)).enc. wp. call poly_mac2. call chacha_enc2. auto.",
+        "proc. inline{1} GenChaChaPoly(OpCCRO.OCC(IFinRO)).dec. sp. seq 1 1 : (t'{1} = t'{2} /\\ t{1} = t{2} /\\ n{1} = n{2} /\\ a{1} = a{2} /\\ c0{1} = c{2} /\\ result{1} = result{2} /\\ OpCCRO.OCC.gs{1} = RO.m{2}).",
+        "call poly_mac2. auto. if => //. wp. call chacha_enc2. auto. auto.",
+        "auto.",
+        "qed."
+      ],
+      "proved": true
+    },
+    {
+      "tree": "Tree_0_1",
+      "tactics": [
+        "have ->: Pr[CCA_game(A, RealOrcls(ChaChaPoly)).main() @ &m : res] = Pr[Indist.Distinguish(D(A), IndBlock).game() @ &m : res].",
+        "have ->: Pr[CCA_game(A, RealOrcls(ChaChaPoly)).main() @ &m : res] = Pr[CCA_game(A, RealOrcls(OpCCinit.OChaChaPoly(I_stateless))).main() @ &m : res].",
+        "byequiv => //.",
+        "proc; sim.",
+        "inline *; auto.",
+        "rewrite -(OpCCinit.pr_CCP_OCCP I_stateless G1 &m).",
+        "byequiv => //.",
+        "proc.",
+        "inline{2} D(A, IndBlock).guess.",
+        "wp.",
+        "call (_: Mem.k{1} = IndBlock.k{2}).",
+        "proc; inline{1} GenChaChaPoly(OpCCinit.OCC(I_stateless)).enc; wp; call poly_mac1; call chacha_enc1; auto."
+      ],
+      "proved": false
+    }
+  ],
+  "turn_count": 105,
+  "views_copied": 107,
+  "run_iteration_dir": "artifacts/eval_suite/rerun4_l1l4_90min/l4_checked_action_surface/chacha_step1/r01/2026-06-03_1548_step1/iteration_1",
+  "commit": "0958fbb",
+  "commit_full": "0958fbbca732797ded64c5470de30cbae26a3a6e",
+  "branch": "eval-suite-48",
+  "dirty": true
+}

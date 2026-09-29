@@ -1,0 +1,3168 @@
+{
+  "kind": "agent_view_timeline_report",
+  "run_count": 1,
+  "runs": [
+    {
+      "chronological": false,
+      "first_action_at": "2026-06-09T03:29:10.400000+00:00",
+      "label": "2026-06-08_2025_UFCMA_genCC",
+      "node_count": 1,
+      "rows": [
+        {
+          "action_submitted_at": "2026-06-09T03:29:10.400000+00:00",
+          "action_time": "+00:00",
+          "agent_think": "",
+          "agent_think_path": "",
+          "agent_think_seconds": null,
+          "decision_followup_path": "",
+          "decision_state_summary": "equiv / prhl_module / relational_program, 1 goal, goal 340 chars",
+          "decision_view_path": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/manager_bootstrap_0_1.json",
+          "deterministic_signals": [
+            "commit_without_probe_check_not_inferred"
+          ],
+          "goal_chars": 340,
+          "inspect_topics": [],
+          "intent": {
+            "intent": "commit_tactic",
+            "payload": {
+              "tactic": "proc."
+            }
+          },
+          "intent_summary": "commit proc",
+          "manager_action_summary": [
+            "tactic commit (1.6 s)"
+          ],
+          "manager_result_at": "2026-06-09T03:29:12+00:00",
+          "manager_result_path": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1/manager_results/turn_001.json",
+          "manager_seconds": 1.6,
+          "manager_time": "1.6 s",
+          "node": "Tree-0.1",
+          "node_dir": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1",
+          "ok": true,
+          "result_followup_path": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1/followups/turn_001.md",
+          "result_state_summary": "pRHL / call_site / relational_program, 1 goal, goal 768 chars",
+          "result_summary": "accepted commit",
+          "result_view_path": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1/workspace_views/turn_001.json",
+          "turn": 1,
+          "usage": {},
+          "view_chars": 904,
+          "view_id": "T0.1-1",
+          "workspace_view_path": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/manager_bootstrap_0_1.json"
+        },
+        {
+          "action_submitted_at": "2026-06-09T03:29:25.631000+00:00",
+          "action_time": "+00:15",
+          "agent_think": "13.6 s",
+          "agent_think_path": "",
+          "agent_think_seconds": 13.631,
+          "decision_followup_path": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1/followups/turn_001.md",
+          "decision_state_summary": "pRHL / call_site / relational_program, 1 goal, goal 768 chars",
+          "decision_view_path": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1/workspace_views/turn_001.json",
+          "deterministic_signals": [
+            "commit_without_probe_check_not_inferred"
+          ],
+          "goal_chars": 768,
+          "inspect_topics": [
+            "goal_info",
+            "call_site_options",
+            "call_invariant_skeleton",
+            "call_subgoals",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "align"
+          ],
+          "intent": {
+            "intent": "commit_tactic",
+            "payload": {
+              "tactic": "inline{1} 2."
+            }
+          },
+          "intent_summary": "commit inline{1} 2",
+          "manager_action_summary": [
+            "tactic commit (369 ms)"
+          ],
+          "manager_result_at": "2026-06-09T03:29:26+00:00",
+          "manager_result_path": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1/manager_results/turn_002.json",
+          "manager_seconds": 0.369,
+          "manager_time": "369 ms",
+          "node": "Tree-0.1",
+          "node_dir": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1",
+          "ok": true,
+          "result_followup_path": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1/followups/turn_002.md",
+          "result_state_summary": "pRHL / call_site / relational_program, 1 goal, goal 1232 chars",
+          "result_summary": "accepted commit",
+          "result_view_path": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1/workspace_views/turn_002.json",
+          "turn": 2,
+          "usage": {},
+          "view_chars": 12141,
+          "view_id": "T0.1-2",
+          "workspace_view_path": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1/workspace_views/turn_001.json"
+        },
+        {
+          "action_submitted_at": "2026-06-09T03:29:29.729000+00:00",
+          "action_time": "+00:19",
+          "agent_think": "3.7 s",
+          "agent_think_path": "",
+          "agent_think_seconds": 3.729,
+          "decision_followup_path": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1/followups/turn_002.md",
+          "decision_state_summary": "pRHL / call_site / relational_program, 1 goal, goal 1232 chars",
+          "decision_view_path": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1/workspace_views/turn_002.json",
+          "deterministic_signals": [
+            "commit_without_probe_check_not_inferred"
+          ],
+          "goal_chars": 1232,
+          "inspect_topics": [
+            "goal_info",
+            "call_site_options",
+            "call_invariant_skeleton",
+            "call_subgoals",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "align"
+          ],
+          "intent": {
+            "intent": "commit_tactic",
+            "payload": {
+              "tactic": "inline{2} 2."
+            }
+          },
+          "intent_summary": "commit inline{2} 2",
+          "manager_action_summary": [
+            "tactic commit (271 ms)"
+          ],
+          "manager_result_at": "2026-06-09T03:29:30+00:00",
+          "manager_result_path": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1/manager_results/turn_003.json",
+          "manager_seconds": 0.271,
+          "manager_time": "271 ms",
+          "node": "Tree-0.1",
+          "node_dir": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1",
+          "ok": true,
+          "result_followup_path": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1/followups/turn_003.md",
+          "result_state_summary": "pRHL / call_site / relational_program, 1 goal, goal 1168 chars",
+          "result_summary": "accepted commit",
+          "result_view_path": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1/workspace_views/turn_003.json",
+          "turn": 3,
+          "usage": {},
+          "view_chars": 17993,
+          "view_id": "T0.1-3",
+          "workspace_view_path": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1/workspace_views/turn_002.json"
+        },
+        {
+          "action_submitted_at": "2026-06-09T03:29:45.697000+00:00",
+          "action_time": "+00:35",
+          "agent_think": "15.7 s",
+          "agent_think_path": "",
+          "agent_think_seconds": 15.697,
+          "decision_followup_path": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1/followups/turn_003.md",
+          "decision_state_summary": "pRHL / call_site / relational_program, 1 goal, goal 1168 chars",
+          "decision_view_path": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1/workspace_views/turn_003.json",
+          "deterministic_signals": [
+            "commit_without_probe_check_not_inferred"
+          ],
+          "goal_chars": 1168,
+          "inspect_topics": [
+            "goal_info",
+            "call_site_options",
+            "call_invariant_skeleton",
+            "call_subgoals",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "align"
+          ],
+          "intent": {
+            "intent": "commit_tactic",
+            "payload": {
+              "tactic": "wp."
+            }
+          },
+          "intent_summary": "commit wp",
+          "manager_action_summary": [
+            "tactic commit (303 ms)"
+          ],
+          "manager_result_at": "2026-06-09T03:29:46+00:00",
+          "manager_result_path": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1/manager_results/turn_004.json",
+          "manager_seconds": 0.303,
+          "manager_time": "303 ms",
+          "node": "Tree-0.1",
+          "node_dir": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1",
+          "ok": true,
+          "result_followup_path": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1/followups/turn_004.md",
+          "result_state_summary": "pRHL / call_site / relational_program, 1 goal, goal 1072 chars",
+          "result_summary": "accepted commit",
+          "result_view_path": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1/workspace_views/turn_004.json",
+          "turn": 4,
+          "usage": {},
+          "view_chars": 16536,
+          "view_id": "T0.1-4",
+          "workspace_view_path": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1/workspace_views/turn_003.json"
+        },
+        {
+          "action_submitted_at": "2026-06-09T03:29:51+00:00",
+          "action_time": "+00:41",
+          "agent_think": "5 s",
+          "agent_think_path": "",
+          "agent_think_seconds": 5.0,
+          "decision_followup_path": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1/followups/turn_004.md",
+          "decision_state_summary": "pRHL / call_site / relational_program, 1 goal, goal 1072 chars",
+          "decision_view_path": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1/workspace_views/turn_004.json",
+          "deterministic_signals": [],
+          "goal_chars": 1072,
+          "inspect_topics": [
+            "goal_info",
+            "call_site_options",
+            "call_invariant_skeleton",
+            "call_subgoals",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "align"
+          ],
+          "intent": {},
+          "intent_summary": "unknown",
+          "manager_action_summary": [],
+          "manager_result_at": "2026-06-09T03:29:51+00:00",
+          "manager_result_path": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1/manager_results/turn_005.json",
+          "manager_seconds": 0,
+          "manager_time": "",
+          "node": "Tree-0.1",
+          "node_dir": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1",
+          "ok": false,
+          "result_followup_path": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1/followups/turn_005.md",
+          "result_state_summary": "pRHL / call_site / relational_program, 1 goal, goal 1072 chars",
+          "result_summary": "repair / unhealthy",
+          "result_view_path": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1/workspace_views/turn_005.json",
+          "turn": 5,
+          "usage": {},
+          "view_chars": 14032,
+          "view_id": "T0.1-5",
+          "workspace_view_path": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1/workspace_views/turn_004.json"
+        },
+        {
+          "action_submitted_at": "2026-06-09T03:29:55.732000+00:00",
+          "action_time": "+00:45",
+          "agent_think": "4.7 s",
+          "agent_think_path": "",
+          "agent_think_seconds": 4.732,
+          "decision_followup_path": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1/followups/turn_005.md",
+          "decision_state_summary": "pRHL / call_site / relational_program, 1 goal, goal 1072 chars",
+          "decision_view_path": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1/workspace_views/turn_005.json",
+          "deterministic_signals": [
+            "commit_without_probe_check_not_inferred"
+          ],
+          "goal_chars": 1072,
+          "inspect_topics": [
+            "goal_info",
+            "call_site_options",
+            "call_invariant_skeleton",
+            "call_subgoals",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "align"
+          ],
+          "intent": {
+            "intent": "commit_tactic",
+            "payload": {
+              "tactic": "call (_: ={Mem.k, Mem.log, Mem.lc} /\\ StLSke.gs{1} = RO.m{2})."
+            }
+          },
+          "intent_summary": "commit call (_: ={Mem.k, Mem.log, Mem.lc} /\\ StLSke.gs{1} = RO.m{2})",
+          "manager_action_summary": [
+            "tactic commit (268 ms)"
+          ],
+          "manager_result_at": "2026-06-09T03:29:56+00:00",
+          "manager_result_path": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1/manager_results/turn_006.json",
+          "manager_seconds": 0.268,
+          "manager_time": "268 ms",
+          "node": "Tree-0.1",
+          "node_dir": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1",
+          "ok": true,
+          "result_followup_path": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1/followups/turn_006.md",
+          "result_state_summary": "equiv / prhl_module / relational_program, 3 goals, goal 610 chars",
+          "result_summary": "accepted commit",
+          "result_view_path": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1/workspace_views/turn_006.json",
+          "turn": 6,
+          "usage": {},
+          "view_chars": 14032,
+          "view_id": "T0.1-6",
+          "workspace_view_path": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1/workspace_views/turn_005.json"
+        },
+        {
+          "action_submitted_at": "2026-06-09T03:30:06.644000+00:00",
+          "action_time": "+00:56",
+          "agent_think": "10.6 s",
+          "agent_think_path": "",
+          "agent_think_seconds": 10.644,
+          "decision_followup_path": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1/followups/turn_006.md",
+          "decision_state_summary": "equiv / prhl_module / relational_program, 3 goals, goal 610 chars",
+          "decision_view_path": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1/workspace_views/turn_006.json",
+          "deterministic_signals": [
+            "commit_without_probe_check_not_inferred"
+          ],
+          "goal_chars": 610,
+          "inspect_topics": [
+            "hint",
+            "goal_info",
+            "call_site_options",
+            "call_invariant_skeleton",
+            "call_subgoals",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "align"
+          ],
+          "intent": {
+            "intent": "commit_tactic",
+            "payload": {
+              "tactic": "proc."
+            }
+          },
+          "intent_summary": "commit proc",
+          "manager_action_summary": [
+            "tactic commit (356 ms)"
+          ],
+          "manager_result_at": "2026-06-09T03:30:07+00:00",
+          "manager_result_path": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1/manager_results/turn_007.json",
+          "manager_seconds": 0.356,
+          "manager_time": "356 ms",
+          "node": "Tree-0.1",
+          "node_dir": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1",
+          "ok": true,
+          "result_followup_path": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1/followups/turn_007.md",
+          "result_state_summary": "pRHL / call_site / relational_program, 3 goals, goal 747 chars",
+          "result_summary": "accepted commit",
+          "result_view_path": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1/workspace_views/turn_007.json",
+          "turn": 7,
+          "usage": {},
+          "view_chars": 10543,
+          "view_id": "T0.1-7",
+          "workspace_view_path": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1/workspace_views/turn_006.json"
+        },
+        {
+          "action_submitted_at": "2026-06-09T03:32:18.674000+00:00",
+          "action_time": "+03:08",
+          "agent_think": "131.7 s",
+          "agent_think_path": "",
+          "agent_think_seconds": 131.674,
+          "decision_followup_path": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1/followups/turn_007.md",
+          "decision_state_summary": "pRHL / call_site / relational_program, 3 goals, goal 747 chars",
+          "decision_view_path": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1/workspace_views/turn_007.json",
+          "deterministic_signals": [
+            "commit_without_probe_check_not_inferred"
+          ],
+          "goal_chars": 747,
+          "inspect_topics": [
+            "goal_info",
+            "call_site_options",
+            "call_invariant_skeleton",
+            "call_subgoals",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "align"
+          ],
+          "intent": {
+            "intent": "commit_tactic",
+            "payload": {
+              "tactic": "inline{1} 1."
+            }
+          },
+          "intent_summary": "commit inline{1} 1",
+          "manager_action_summary": [
+            "tactic commit (326 ms)"
+          ],
+          "manager_result_at": "2026-06-09T03:32:19+00:00",
+          "manager_result_path": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1/manager_results/turn_008.json",
+          "manager_seconds": 0.326,
+          "manager_time": "326 ms",
+          "node": "Tree-0.1",
+          "node_dir": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1",
+          "ok": true,
+          "result_followup_path": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1/followups/turn_008.md",
+          "result_state_summary": "pRHL / call_site / relational_program, 3 goals, goal 919 chars",
+          "result_summary": "accepted commit",
+          "result_view_path": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1/workspace_views/turn_008.json",
+          "turn": 8,
+          "usage": {},
+          "view_chars": 14542,
+          "view_id": "T0.1-8",
+          "workspace_view_path": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1/workspace_views/turn_007.json"
+        },
+        {
+          "action_submitted_at": "2026-06-09T03:32:24.726000+00:00",
+          "action_time": "+03:14",
+          "agent_think": "5.7 s",
+          "agent_think_path": "",
+          "agent_think_seconds": 5.726,
+          "decision_followup_path": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1/followups/turn_008.md",
+          "decision_state_summary": "pRHL / call_site / relational_program, 3 goals, goal 919 chars",
+          "decision_view_path": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1/workspace_views/turn_008.json",
+          "deterministic_signals": [
+            "commit_without_probe_check_not_inferred"
+          ],
+          "goal_chars": 919,
+          "inspect_topics": [
+            "goal_info",
+            "call_site_options",
+            "call_invariant_skeleton",
+            "call_subgoals",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "align"
+          ],
+          "intent": {
+            "intent": "commit_tactic",
+            "payload": {
+              "tactic": "inline{1} 2."
+            }
+          },
+          "intent_summary": "commit inline{1} 2",
+          "manager_action_summary": [
+            "tactic commit (274 ms)"
+          ],
+          "manager_result_at": "2026-06-09T03:32:25+00:00",
+          "manager_result_path": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1/manager_results/turn_009.json",
+          "manager_seconds": 0.274,
+          "manager_time": "274 ms",
+          "node": "Tree-0.1",
+          "node_dir": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1",
+          "ok": true,
+          "result_followup_path": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1/followups/turn_009.md",
+          "result_state_summary": "pRHL / call_site / relational_program, 3 goals, goal 1074 chars",
+          "result_summary": "accepted commit",
+          "result_view_path": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1/workspace_views/turn_009.json",
+          "turn": 9,
+          "usage": {},
+          "view_chars": 16802,
+          "view_id": "T0.1-9",
+          "workspace_view_path": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1/workspace_views/turn_008.json"
+        },
+        {
+          "action_submitted_at": "2026-06-09T03:32:29.721000+00:00",
+          "action_time": "+03:19",
+          "agent_think": "4.7 s",
+          "agent_think_path": "",
+          "agent_think_seconds": 4.721,
+          "decision_followup_path": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1/followups/turn_009.md",
+          "decision_state_summary": "pRHL / call_site / relational_program, 3 goals, goal 1074 chars",
+          "decision_view_path": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1/workspace_views/turn_009.json",
+          "deterministic_signals": [
+            "commit_without_probe_check_not_inferred"
+          ],
+          "goal_chars": 1074,
+          "inspect_topics": [
+            "goal_info",
+            "call_site_options",
+            "call_invariant_skeleton",
+            "call_subgoals",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "align"
+          ],
+          "intent": {
+            "intent": "commit_tactic",
+            "payload": {
+              "tactic": "inline{2} 1."
+            }
+          },
+          "intent_summary": "commit inline{2} 1",
+          "manager_action_summary": [
+            "tactic commit (279 ms)"
+          ],
+          "manager_result_at": "2026-06-09T03:32:30+00:00",
+          "manager_result_path": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1/manager_results/turn_010.json",
+          "manager_seconds": 0.279,
+          "manager_time": "279 ms",
+          "node": "Tree-0.1",
+          "node_dir": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1",
+          "ok": true,
+          "result_followup_path": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1/followups/turn_010.md",
+          "result_state_summary": "pRHL / call_site / relational_program, 3 goals, goal 1107 chars",
+          "result_summary": "accepted commit",
+          "result_view_path": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1/workspace_views/turn_010.json",
+          "turn": 10,
+          "usage": {},
+          "view_chars": 16464,
+          "view_id": "T0.1-10",
+          "workspace_view_path": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1/workspace_views/turn_009.json"
+        },
+        {
+          "action_submitted_at": "2026-06-09T03:32:33.695000+00:00",
+          "action_time": "+03:23",
+          "agent_think": "3.7 s",
+          "agent_think_path": "",
+          "agent_think_seconds": 3.695,
+          "decision_followup_path": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1/followups/turn_010.md",
+          "decision_state_summary": "pRHL / call_site / relational_program, 3 goals, goal 1107 chars",
+          "decision_view_path": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1/workspace_views/turn_010.json",
+          "deterministic_signals": [
+            "commit_without_probe_check_not_inferred"
+          ],
+          "goal_chars": 1107,
+          "inspect_topics": [
+            "goal_info",
+            "call_site_options",
+            "call_invariant_skeleton",
+            "call_subgoals",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "align"
+          ],
+          "intent": {
+            "intent": "commit_tactic",
+            "payload": {
+              "tactic": "inline{2} 2."
+            }
+          },
+          "intent_summary": "commit inline{2} 2",
+          "manager_action_summary": [
+            "tactic commit (305 ms)"
+          ],
+          "manager_result_at": "2026-06-09T03:32:34+00:00",
+          "manager_result_path": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1/manager_results/turn_011.json",
+          "manager_seconds": 0.305,
+          "manager_time": "305 ms",
+          "node": "Tree-0.1",
+          "node_dir": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1",
+          "ok": true,
+          "result_followup_path": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1/followups/turn_011.md",
+          "result_state_summary": "pRHL / call_site / relational_program, 3 goals, goal 1324 chars",
+          "result_summary": "accepted commit",
+          "result_view_path": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1/workspace_views/turn_011.json",
+          "turn": 11,
+          "usage": {},
+          "view_chars": 16767,
+          "view_id": "T0.1-11",
+          "workspace_view_path": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1/workspace_views/turn_010.json"
+        },
+        {
+          "action_submitted_at": "2026-06-09T03:33:30.680000+00:00",
+          "action_time": "+04:20",
+          "agent_think": "56.7 s",
+          "agent_think_path": "",
+          "agent_think_seconds": 56.68,
+          "decision_followup_path": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1/followups/turn_011.md",
+          "decision_state_summary": "pRHL / call_site / relational_program, 3 goals, goal 1324 chars",
+          "decision_view_path": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1/workspace_views/turn_011.json",
+          "deterministic_signals": [
+            "commit_without_probe_check_not_inferred"
+          ],
+          "goal_chars": 1324,
+          "inspect_topics": [
+            "goal_info",
+            "call_site_options",
+            "call_invariant_skeleton",
+            "call_subgoals",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "align"
+          ],
+          "intent": {
+            "intent": "commit_tactic",
+            "payload": {
+              "tactic": "wp."
+            }
+          },
+          "intent_summary": "commit wp",
+          "manager_action_summary": [
+            "tactic commit (320 ms)"
+          ],
+          "manager_result_at": "2026-06-09T03:33:31+00:00",
+          "manager_result_path": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1/manager_results/turn_012.json",
+          "manager_seconds": 0.32,
+          "manager_time": "320 ms",
+          "node": "Tree-0.1",
+          "node_dir": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1",
+          "ok": true,
+          "result_followup_path": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1/followups/turn_012.md",
+          "result_state_summary": "pRHL / call_site / relational_program, 3 goals, goal 1209 chars",
+          "result_summary": "accepted commit",
+          "result_view_path": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1/workspace_views/turn_012.json",
+          "turn": 12,
+          "usage": {},
+          "view_chars": 19823,
+          "view_id": "T0.1-12",
+          "workspace_view_path": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1/workspace_views/turn_011.json"
+        },
+        {
+          "action_submitted_at": "2026-06-09T03:33:37.702000+00:00",
+          "action_time": "+04:27",
+          "agent_think": "6.7 s",
+          "agent_think_path": "",
+          "agent_think_seconds": 6.702,
+          "decision_followup_path": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1/followups/turn_012.md",
+          "decision_state_summary": "pRHL / call_site / relational_program, 3 goals, goal 1209 chars",
+          "decision_view_path": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1/workspace_views/turn_012.json",
+          "deterministic_signals": [
+            "commit_without_probe_check_not_inferred"
+          ],
+          "goal_chars": 1209,
+          "inspect_topics": [
+            "equiv_bridge_lemmas",
+            "goal_info",
+            "call_site_options",
+            "call_invariant_skeleton",
+            "call_subgoals",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "align"
+          ],
+          "intent": {
+            "intent": "commit_tactic",
+            "payload": {
+              "tactic": "sp."
+            }
+          },
+          "intent_summary": "commit sp",
+          "manager_action_summary": [
+            "tactic commit (298 ms)"
+          ],
+          "manager_result_at": "2026-06-09T03:33:38+00:00",
+          "manager_result_path": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1/manager_results/turn_013.json",
+          "manager_seconds": 0.298,
+          "manager_time": "298 ms",
+          "node": "Tree-0.1",
+          "node_dir": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1",
+          "ok": true,
+          "result_followup_path": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1/followups/turn_013.md",
+          "result_state_summary": "pRHL / call_site / relational_program, 3 goals, goal 1014 chars",
+          "result_summary": "accepted commit",
+          "result_view_path": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1/workspace_views/turn_013.json",
+          "turn": 13,
+          "usage": {},
+          "view_chars": 18001,
+          "view_id": "T0.1-13",
+          "workspace_view_path": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1/workspace_views/turn_012.json"
+        },
+        {
+          "action_submitted_at": "2026-06-09T03:33:52.704000+00:00",
+          "action_time": "+04:42",
+          "agent_think": "14.7 s",
+          "agent_think_path": "",
+          "agent_think_seconds": 14.704,
+          "decision_followup_path": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1/followups/turn_013.md",
+          "decision_state_summary": "pRHL / call_site / relational_program, 3 goals, goal 1014 chars",
+          "decision_view_path": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1/workspace_views/turn_013.json",
+          "deterministic_signals": [
+            "commit_without_probe_check_not_inferred"
+          ],
+          "goal_chars": 1014,
+          "inspect_topics": [
+            "equiv_bridge_lemmas",
+            "goal_info",
+            "call_site_options",
+            "call_invariant_skeleton",
+            "call_subgoals",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "align"
+          ],
+          "intent": {
+            "intent": "commit_tactic",
+            "payload": {
+              "tactic": "inline{2} 1."
+            }
+          },
+          "intent_summary": "commit inline{2} 1",
+          "manager_action_summary": [
+            "tactic commit (296 ms)"
+          ],
+          "manager_result_at": "2026-06-09T03:33:53+00:00",
+          "manager_result_path": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1/manager_results/turn_014.json",
+          "manager_seconds": 0.296,
+          "manager_time": "296 ms",
+          "node": "Tree-0.1",
+          "node_dir": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1",
+          "ok": true,
+          "result_followup_path": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1/followups/turn_014.md",
+          "result_state_summary": "pRHL / call_site / relational_program, 3 goals, goal 2147 chars",
+          "result_summary": "accepted commit",
+          "result_view_path": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1/workspace_views/turn_014.json",
+          "turn": 14,
+          "usage": {},
+          "view_chars": 16782,
+          "view_id": "T0.1-14",
+          "workspace_view_path": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1/workspace_views/turn_013.json"
+        },
+        {
+          "action_submitted_at": "2026-06-09T03:34:55.693000+00:00",
+          "action_time": "+05:45",
+          "agent_think": "62.7 s",
+          "agent_think_path": "",
+          "agent_think_seconds": 62.693,
+          "decision_followup_path": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1/followups/turn_014.md",
+          "decision_state_summary": "pRHL / call_site / relational_program, 3 goals, goal 2147 chars",
+          "decision_view_path": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1/workspace_views/turn_014.json",
+          "deterministic_signals": [
+            "commit_without_probe_check_not_inferred"
+          ],
+          "goal_chars": 2147,
+          "inspect_topics": [
+            "equiv_bridge_lemmas",
+            "goal_info",
+            "call_site_options",
+            "call_invariant_skeleton",
+            "call_subgoals",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "align"
+          ],
+          "intent": {
+            "intent": "commit_tactic",
+            "payload": {
+              "tactic": "sp."
+            }
+          },
+          "intent_summary": "commit sp",
+          "manager_action_summary": [
+            "tactic commit (307 ms)"
+          ],
+          "manager_result_at": "2026-06-09T03:34:56+00:00",
+          "manager_result_path": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1/manager_results/turn_015.json",
+          "manager_seconds": 0.307,
+          "manager_time": "307 ms",
+          "node": "Tree-0.1",
+          "node_dir": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1",
+          "ok": true,
+          "result_followup_path": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1/followups/turn_015.md",
+          "result_state_summary": "pRHL / call_site / relational_program, 3 goals, goal 1852 chars",
+          "result_summary": "accepted commit",
+          "result_view_path": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1/workspace_views/turn_015.json",
+          "turn": 15,
+          "usage": {},
+          "view_chars": 18528,
+          "view_id": "T0.1-15",
+          "workspace_view_path": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1/workspace_views/turn_014.json"
+        },
+        {
+          "action_submitted_at": "2026-06-09T03:35:49.600000+00:00",
+          "action_time": "+06:39",
+          "agent_think": "53.6 s",
+          "agent_think_path": "",
+          "agent_think_seconds": 53.6,
+          "decision_followup_path": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1/followups/turn_015.md",
+          "decision_state_summary": "pRHL / call_site / relational_program, 3 goals, goal 1852 chars",
+          "decision_view_path": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1/workspace_views/turn_015.json",
+          "deterministic_signals": [
+            "commit_without_probe_check_not_inferred",
+            "manager_error:[error] invalid last instruction",
+            "commit_no_state_change"
+          ],
+          "goal_chars": 1852,
+          "inspect_topics": [
+            "equiv_bridge_lemmas",
+            "goal_info",
+            "call_site_options",
+            "call_invariant_skeleton",
+            "call_subgoals",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "align"
+          ],
+          "intent": {
+            "intent": "commit_tactic",
+            "payload": {
+              "tactic": "while{2} ( (p{1} = p{2} /\\ Mem.k{1} = Mem.k{2} /\\ Mem.log{1} = Mem.log{2} /\\ Mem.lc{1} = Mem.lc{2}) /\\ StLSke.gs{1} = RO.m{2} /\\ k0{2} = Mem.k{2} /\\ n0{2} = n{2} /\\ k{2} = Mem.k{2} /\\ (n{2}, a{2}, p1{2}) = p{2} /\\ c2{2} ++ gen_CTR_encrypt_bytes take_xor (get RO.m{2}) k0{2} n0{2} i{2} p2{2} = gen_CTR_encrypt_bytes take_xor (get RO.m{2}) k0{2} n0{2} 1 p1{2} ) (size p2{2})."
+            }
+          },
+          "intent_summary": "commit while{2} ( (p{1} = p{2} /\\ Mem.k{1} = Mem.k{2} /\\ Mem.log{1} = Mem.lo...",
+          "manager_action_summary": [
+            "tactic commit (1.4 s)"
+          ],
+          "manager_result_at": "2026-06-09T03:35:51+00:00",
+          "manager_result_path": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1/manager_results/turn_016.json",
+          "manager_seconds": 1.4,
+          "manager_time": "1.4 s",
+          "node": "Tree-0.1",
+          "node_dir": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1",
+          "ok": true,
+          "result_followup_path": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1/followups/turn_016.md",
+          "result_state_summary": "pRHL / call_site / failure_diagnostic, 3 goals, goal 1852 chars",
+          "result_summary": "rejected commit: [error] invalid last instruction",
+          "result_view_path": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1/workspace_views/turn_016.json",
+          "turn": 16,
+          "usage": {},
+          "view_chars": 17888,
+          "view_id": "T0.1-16",
+          "workspace_view_path": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1/workspace_views/turn_015.json"
+        },
+        {
+          "action_submitted_at": "2026-06-09T03:36:23.708000+00:00",
+          "action_time": "+07:13",
+          "agent_think": "32.7 s",
+          "agent_think_path": "",
+          "agent_think_seconds": 32.708,
+          "decision_followup_path": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1/followups/turn_016.md",
+          "decision_state_summary": "pRHL / call_site / failure_diagnostic, 3 goals, goal 1852 chars",
+          "decision_view_path": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1/workspace_views/turn_016.json",
+          "deterministic_signals": [
+            "commit_without_probe_check_not_inferred"
+          ],
+          "goal_chars": 1852,
+          "inspect_topics": [
+            "diagnose",
+            "goal_info",
+            "episode_view"
+          ],
+          "intent": {
+            "intent": "commit_tactic",
+            "payload": {
+              "tactic": "seq 0 1 : ( (n{2}, a{2}, p1{2}) = p{2} /\\ p{1} = p{2} /\\ Mem.k{1} = Mem.k{2} /\\ Mem.log{1} = Mem.log{2} /\\ Mem.lc{1} = Mem.lc{2} /\\ StLSke.gs{1} = RO.m{2} /\\ k0{2} = Mem.k{2} /\\ n0{2} = n{2} /\\ c2{2} = gen_CTR_encrypt_bytes take_xor (get RO.m{2}) k0{2} n0{2} 1 p1{2} )."
+            }
+          },
+          "intent_summary": "commit seq 0 1 : ( (n{2}, a{2}, p1{2}) = p{2} /\\ p{1} = p{2} /\\ Mem.k{1} = M...",
+          "manager_action_summary": [
+            "tactic commit (292 ms)"
+          ],
+          "manager_result_at": "2026-06-09T03:36:24+00:00",
+          "manager_result_path": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1/manager_results/turn_017.json",
+          "manager_seconds": 0.292,
+          "manager_time": "292 ms",
+          "node": "Tree-0.1",
+          "node_dir": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1",
+          "ok": true,
+          "result_followup_path": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1/followups/turn_017.md",
+          "result_state_summary": "pRHL / call_site / relational_program, 4 goals, goal 1733 chars",
+          "result_summary": "accepted commit",
+          "result_view_path": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1/workspace_views/turn_017.json",
+          "turn": 17,
+          "usage": {},
+          "view_chars": 17054,
+          "view_id": "T0.1-17",
+          "workspace_view_path": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1/workspace_views/turn_016.json"
+        },
+        {
+          "action_submitted_at": "2026-06-09T03:36:40.757000+00:00",
+          "action_time": "+07:30",
+          "agent_think": "16.8 s",
+          "agent_think_path": "",
+          "agent_think_seconds": 16.757,
+          "decision_followup_path": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1/followups/turn_017.md",
+          "decision_state_summary": "pRHL / call_site / relational_program, 4 goals, goal 1733 chars",
+          "decision_view_path": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1/workspace_views/turn_017.json",
+          "deterministic_signals": [
+            "commit_without_probe_check_not_inferred"
+          ],
+          "goal_chars": 1733,
+          "inspect_topics": [
+            "equiv_bridge_lemmas",
+            "goal_info",
+            "call_site_options",
+            "call_invariant_skeleton",
+            "call_subgoals",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "align"
+          ],
+          "intent": {
+            "intent": "commit_tactic",
+            "payload": {
+              "tactic": "while{2} ( (p{1} = p{2} /\\ Mem.k{1} = Mem.k{2} /\\ Mem.log{1} = Mem.log{2} /\\ Mem.lc{1} = Mem.lc{2}) /\\ StLSke.gs{1} = RO.m{2} /\\ k0{2} = Mem.k{2} /\\ n0{2} = n{2} /\\ k{2} = Mem.k{2} /\\ (n{2}, a{2}, p1{2}) = p{2} /\\ c2{2} ++ gen_CTR_encrypt_bytes take_xor (get RO.m{2}) k0{2} n0{2} i{2} p2{2} = gen_CTR_encrypt_bytes take_xor (get RO.m{2}) k0{2} n0{2} 1 p1{2} ) (size p2{2})."
+            }
+          },
+          "intent_summary": "commit while{2} ( (p{1} = p{2} /\\ Mem.k{1} = Mem.k{2} /\\ Mem.log{1} = Mem.lo...",
+          "manager_action_summary": [
+            "tactic commit (243 ms)"
+          ],
+          "manager_result_at": "2026-06-09T03:36:41+00:00",
+          "manager_result_path": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1/manager_results/turn_018.json",
+          "manager_seconds": 0.243,
+          "manager_time": "243 ms",
+          "node": "Tree-0.1",
+          "node_dir": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1",
+          "ok": true,
+          "result_followup_path": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1/followups/turn_018.md",
+          "result_state_summary": "phoare / procedure_body / procedure_frontier, 5 goals, goal 1090 chars",
+          "result_summary": "accepted commit",
+          "result_view_path": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1/workspace_views/turn_018.json",
+          "turn": 18,
+          "usage": {},
+          "view_chars": 17505,
+          "view_id": "T0.1-18",
+          "workspace_view_path": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1/workspace_views/turn_017.json"
+        },
+        {
+          "action_submitted_at": "2026-06-09T03:37:19.742000+00:00",
+          "action_time": "+08:09",
+          "agent_think": "38.7 s",
+          "agent_think_path": "",
+          "agent_think_seconds": 38.742,
+          "decision_followup_path": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1/followups/turn_018.md",
+          "decision_state_summary": "phoare / procedure_body / procedure_frontier, 5 goals, goal 1090 chars",
+          "decision_view_path": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1/workspace_views/turn_018.json",
+          "deterministic_signals": [
+            "commit_without_probe_check_not_inferred"
+          ],
+          "goal_chars": 1090,
+          "inspect_topics": [
+            "goal_info",
+            "call_site_options",
+            "call_subgoals",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms"
+          ],
+          "intent": {
+            "intent": "commit_tactic",
+            "payload": {
+              "tactic": "move=> &m z."
+            }
+          },
+          "intent_summary": "commit move=> &m z",
+          "manager_action_summary": [
+            "tactic commit (258 ms)"
+          ],
+          "manager_result_at": "2026-06-09T03:37:20+00:00",
+          "manager_result_path": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1/manager_results/turn_019.json",
+          "manager_seconds": 0.258,
+          "manager_time": "258 ms",
+          "node": "Tree-0.1",
+          "node_dir": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1",
+          "ok": true,
+          "result_followup_path": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1/followups/turn_019.md",
+          "result_state_summary": "phoare / procedure_body / procedure_frontier, 5 goals, goal 1442 chars",
+          "result_summary": "accepted commit",
+          "result_view_path": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1/workspace_views/turn_019.json",
+          "turn": 19,
+          "usage": {},
+          "view_chars": 13817,
+          "view_id": "T0.1-19",
+          "workspace_view_path": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1/workspace_views/turn_018.json"
+        },
+        {
+          "action_submitted_at": "2026-06-09T03:37:24.787000+00:00",
+          "action_time": "+08:14",
+          "agent_think": "4.8 s",
+          "agent_think_path": "",
+          "agent_think_seconds": 4.787,
+          "decision_followup_path": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1/followups/turn_019.md",
+          "decision_state_summary": "phoare / procedure_body / procedure_frontier, 5 goals, goal 1442 chars",
+          "decision_view_path": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1/workspace_views/turn_019.json",
+          "deterministic_signals": [
+            "commit_without_probe_check_not_inferred"
+          ],
+          "goal_chars": 1442,
+          "inspect_topics": [
+            "goal_info",
+            "call_site_options",
+            "call_subgoals",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms"
+          ],
+          "intent": {
+            "intent": "commit_tactic",
+            "payload": {
+              "tactic": "inline."
+            }
+          },
+          "intent_summary": "commit inline",
+          "manager_action_summary": [
+            "tactic commit (213 ms)"
+          ],
+          "manager_result_at": "2026-06-09T03:37:25+00:00",
+          "manager_result_path": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1/manager_results/turn_020.json",
+          "manager_seconds": 0.213,
+          "manager_time": "213 ms",
+          "node": "Tree-0.1",
+          "node_dir": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1",
+          "ok": true,
+          "result_followup_path": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1/followups/turn_020.md",
+          "result_state_summary": "phoare / procedure_body / procedure_frontier, 5 goals, goal 1866 chars",
+          "result_summary": "accepted commit",
+          "result_view_path": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1/workspace_views/turn_020.json",
+          "turn": 20,
+          "usage": {},
+          "view_chars": 17416,
+          "view_id": "T0.1-20",
+          "workspace_view_path": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1/workspace_views/turn_019.json"
+        },
+        {
+          "action_submitted_at": "2026-06-09T03:37:31.793000+00:00",
+          "action_time": "+08:21",
+          "agent_think": "6.8 s",
+          "agent_think_path": "",
+          "agent_think_seconds": 6.793,
+          "decision_followup_path": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1/followups/turn_020.md",
+          "decision_state_summary": "phoare / procedure_body / procedure_frontier, 5 goals, goal 1866 chars",
+          "decision_view_path": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1/workspace_views/turn_020.json",
+          "deterministic_signals": [
+            "commit_without_probe_check_not_inferred"
+          ],
+          "goal_chars": 1866,
+          "inspect_topics": [
+            "goal_info",
+            "call_site_options",
+            "call_subgoals",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms"
+          ],
+          "intent": {
+            "intent": "commit_tactic",
+            "payload": {
+              "tactic": "wp."
+            }
+          },
+          "intent_summary": "commit wp",
+          "manager_action_summary": [
+            "tactic commit (207 ms)"
+          ],
+          "manager_result_at": "2026-06-09T03:37:32+00:00",
+          "manager_result_path": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1/manager_results/turn_021.json",
+          "manager_seconds": 0.207,
+          "manager_time": "207 ms",
+          "node": "Tree-0.1",
+          "node_dir": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1",
+          "ok": true,
+          "result_followup_path": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1/followups/turn_021.md",
+          "result_state_summary": "phoare / procedure_body / procedure_frontier, 5 goals, goal 1355 chars",
+          "result_summary": "accepted commit",
+          "result_view_path": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1/workspace_views/turn_021.json",
+          "turn": 21,
+          "usage": {},
+          "view_chars": 16084,
+          "view_id": "T0.1-21",
+          "workspace_view_path": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1/workspace_views/turn_020.json"
+        },
+        {
+          "action_submitted_at": "2026-06-09T03:37:51.789000+00:00",
+          "action_time": "+08:41",
+          "agent_think": "19.8 s",
+          "agent_think_path": "",
+          "agent_think_seconds": 19.789,
+          "decision_followup_path": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1/followups/turn_021.md",
+          "decision_state_summary": "phoare / procedure_body / procedure_frontier, 5 goals, goal 1355 chars",
+          "decision_view_path": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1/workspace_views/turn_021.json",
+          "deterministic_signals": [
+            "commit_without_probe_check_not_inferred"
+          ],
+          "goal_chars": 1355,
+          "inspect_topics": [
+            "goal_info",
+            "call_site_options",
+            "call_subgoals",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms"
+          ],
+          "intent": {
+            "intent": "commit_tactic",
+            "payload": {
+              "tactic": "skip."
+            }
+          },
+          "intent_summary": "commit skip",
+          "manager_action_summary": [
+            "tactic commit (211 ms)"
+          ],
+          "manager_result_at": "2026-06-09T03:37:52+00:00",
+          "manager_result_path": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1/manager_results/turn_022.json",
+          "manager_seconds": 0.211,
+          "manager_time": "211 ms",
+          "node": "Tree-0.1",
+          "node_dir": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1",
+          "ok": true,
+          "result_followup_path": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1/followups/turn_022.md",
+          "result_state_summary": "ambient / ambient_logic, 5 goals, goal 1265 chars",
+          "result_summary": "accepted commit",
+          "result_view_path": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1/workspace_views/turn_022.json",
+          "turn": 22,
+          "usage": {},
+          "view_chars": 14471,
+          "view_id": "T0.1-22",
+          "workspace_view_path": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1/workspace_views/turn_021.json"
+        },
+        {
+          "action_submitted_at": "2026-06-09T03:39:20.680000+00:00",
+          "action_time": "+10:10",
+          "agent_think": "88.7 s",
+          "agent_think_path": "",
+          "agent_think_seconds": 88.68,
+          "decision_followup_path": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1/followups/turn_022.md",
+          "decision_state_summary": "ambient / ambient_logic, 5 goals, goal 1265 chars",
+          "decision_view_path": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1/workspace_views/turn_022.json",
+          "deterministic_signals": [
+            "commit_without_probe_check_not_inferred"
+          ],
+          "goal_chars": 1265,
+          "inspect_topics": [
+            "goal_info",
+            "lemma_hints",
+            "tactic_forms"
+          ],
+          "intent": {
+            "intent": "commit_tactic",
+            "payload": {
+              "tactic": "move=> &hr [[hI hne] hsz]."
+            }
+          },
+          "intent_summary": "commit move=> &hr [[hI hne] hsz]",
+          "manager_action_summary": [
+            "tactic commit (320 ms)"
+          ],
+          "manager_result_at": "2026-06-09T03:39:21+00:00",
+          "manager_result_path": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1/manager_results/turn_023.json",
+          "manager_seconds": 0.32,
+          "manager_time": "320 ms",
+          "node": "Tree-0.1",
+          "node_dir": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1",
+          "ok": true,
+          "result_followup_path": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1/followups/turn_023.md",
+          "result_state_summary": "ambient / ambient_logic, 5 goals, goal 1487 chars",
+          "result_summary": "accepted commit",
+          "result_view_path": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1/workspace_views/turn_023.json",
+          "turn": 23,
+          "usage": {},
+          "view_chars": 17392,
+          "view_id": "T0.1-23",
+          "workspace_view_path": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1/workspace_views/turn_022.json"
+        },
+        {
+          "action_submitted_at": "2026-06-09T03:45:00.665000+00:00",
+          "action_time": "+15:50",
+          "agent_think": "339.7 s",
+          "agent_think_path": "",
+          "agent_think_seconds": 339.665,
+          "decision_followup_path": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1/followups/turn_023.md",
+          "decision_state_summary": "ambient / ambient_logic, 5 goals, goal 1487 chars",
+          "decision_view_path": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1/workspace_views/turn_023.json",
+          "deterministic_signals": [
+            "commit_without_probe_check_not_inferred"
+          ],
+          "goal_chars": 1487,
+          "inspect_topics": [
+            "goal_info",
+            "lemma_hints",
+            "tactic_forms"
+          ],
+          "intent": {
+            "intent": "commit_tactic",
+            "payload": {
+              "tactic": "have hmerge : forall (str : block), take_xor [] str = [] by move=> str; rewrite /take_xor; smt(take0 size_eq0)."
+            }
+          },
+          "intent_summary": "commit have hmerge : forall (str : block), take_xor [] str = [] by move=> str; rewrite /take_xor; sm...",
+          "manager_action_summary": [
+            "tactic commit (335 ms)"
+          ],
+          "manager_result_at": "2026-06-09T03:45:01+00:00",
+          "manager_result_path": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1/manager_results/turn_024.json",
+          "manager_seconds": 0.335,
+          "manager_time": "335 ms",
+          "node": "Tree-0.1",
+          "node_dir": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1",
+          "ok": true,
+          "result_followup_path": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1/followups/turn_024.md",
+          "result_state_summary": "ambient / ambient_logic, 5 goals, goal 1538 chars",
+          "result_summary": "accepted commit",
+          "result_view_path": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1/workspace_views/turn_024.json",
+          "turn": 24,
+          "usage": {},
+          "view_chars": 17025,
+          "view_id": "T0.1-24",
+          "workspace_view_path": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1/workspace_views/turn_023.json"
+        },
+        {
+          "action_submitted_at": "2026-06-09T03:45:06.500000+00:00",
+          "action_time": "+15:56",
+          "agent_think": "5.5 s",
+          "agent_think_path": "",
+          "agent_think_seconds": 5.5,
+          "decision_followup_path": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1/followups/turn_024.md",
+          "decision_state_summary": "ambient / ambient_logic, 5 goals, goal 1538 chars",
+          "decision_view_path": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1/workspace_views/turn_024.json",
+          "deterministic_signals": [
+            "commit_without_probe_check_not_inferred",
+            "manager_error:[error] expecting a `proof-term', not a `formula'",
+            "commit_no_state_change"
+          ],
+          "goal_chars": 1538,
+          "inspect_topics": [
+            "goal_info",
+            "lemma_hints",
+            "tactic_forms"
+          ],
+          "intent": {
+            "intent": "commit_tactic",
+            "payload": {
+              "tactic": "rewrite (gen_CTR_encrypt_bytes_cons take_xor (get RO.m{hr}) k0{hr} n0{hr} i{hr} p2{hr} hmerge) in hI."
+            }
+          },
+          "intent_summary": "commit rewrite (gen_CTR_encrypt_bytes_cons take_xor (get RO.m{hr}) k0{hr} n0...",
+          "manager_action_summary": [
+            "tactic commit (1.5 s)"
+          ],
+          "manager_result_at": "2026-06-09T03:45:08+00:00",
+          "manager_result_path": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1/manager_results/turn_025.json",
+          "manager_seconds": 1.5,
+          "manager_time": "1.5 s",
+          "node": "Tree-0.1",
+          "node_dir": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1",
+          "ok": true,
+          "result_followup_path": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1/followups/turn_025.md",
+          "result_state_summary": "ambient / ambient_logic, 5 goals, goal 1538 chars",
+          "result_summary": "rejected commit: [error] expecting a `proof-term', not a `formula'",
+          "result_view_path": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1/workspace_views/turn_025.json",
+          "turn": 25,
+          "usage": {},
+          "view_chars": 17732,
+          "view_id": "T0.1-25",
+          "workspace_view_path": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1/workspace_views/turn_024.json"
+        },
+        {
+          "action_submitted_at": "2026-06-09T03:45:40.600000+00:00",
+          "action_time": "+16:30",
+          "agent_think": "32.6 s",
+          "agent_think_path": "",
+          "agent_think_seconds": 32.6,
+          "decision_followup_path": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1/followups/turn_025.md",
+          "decision_state_summary": "ambient / ambient_logic, 5 goals, goal 1538 chars",
+          "decision_view_path": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1/workspace_views/turn_025.json",
+          "deterministic_signals": [
+            "commit_without_probe_check_not_inferred",
+            "manager_error:[error] expecting a `proof-term', not a `formula'",
+            "commit_no_state_change"
+          ],
+          "goal_chars": 1538,
+          "inspect_topics": [
+            "diagnose",
+            "goal_info",
+            "lemma_hints",
+            "tactic_forms"
+          ],
+          "intent": {
+            "intent": "commit_tactic",
+            "payload": {
+              "tactic": "rewrite (gen_CTR_encrypt_bytes_cons _ _ _ _ _ _ hmerge) in hI."
+            }
+          },
+          "intent_summary": "commit rewrite (gen_CTR_encrypt_bytes_cons _ _ _ _ _ _ hmerge) in hI",
+          "manager_action_summary": [
+            "tactic commit (1.4 s)"
+          ],
+          "manager_result_at": "2026-06-09T03:45:42+00:00",
+          "manager_result_path": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1/manager_results/turn_026.json",
+          "manager_seconds": 1.4,
+          "manager_time": "1.4 s",
+          "node": "Tree-0.1",
+          "node_dir": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1",
+          "ok": true,
+          "result_followup_path": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1/followups/turn_026.md",
+          "result_state_summary": "ambient / ambient_logic, 5 goals, goal 1538 chars",
+          "result_summary": "rejected commit: [error] expecting a `proof-term', not a `formula'",
+          "result_view_path": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1/workspace_views/turn_026.json",
+          "turn": 26,
+          "usage": {},
+          "view_chars": 18024,
+          "view_id": "T0.1-26",
+          "workspace_view_path": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1/workspace_views/turn_025.json"
+        },
+        {
+          "action_submitted_at": "2026-06-09T03:46:25.782000+00:00",
+          "action_time": "+17:15",
+          "agent_think": "43.8 s",
+          "agent_think_path": "",
+          "agent_think_seconds": 43.782,
+          "decision_followup_path": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1/followups/turn_026.md",
+          "decision_state_summary": "ambient / ambient_logic, 5 goals, goal 1538 chars",
+          "decision_view_path": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1/workspace_views/turn_026.json",
+          "deterministic_signals": [
+            "commit_without_probe_check_not_inferred"
+          ],
+          "goal_chars": 1538,
+          "inspect_topics": [
+            "diagnose",
+            "goal_info",
+            "lemma_hints",
+            "tactic_forms"
+          ],
+          "intent": {
+            "intent": "commit_tactic",
+            "payload": {
+              "tactic": "rewrite gen_CTR_encrypt_bytes_cons in hI."
+            }
+          },
+          "intent_summary": "commit rewrite gen_CTR_encrypt_bytes_cons in hI",
+          "manager_action_summary": [
+            "tactic commit (218 ms)"
+          ],
+          "manager_result_at": "2026-06-09T03:46:26+00:00",
+          "manager_result_path": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1/manager_results/turn_027.json",
+          "manager_seconds": 0.218,
+          "manager_time": "218 ms",
+          "node": "Tree-0.1",
+          "node_dir": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1",
+          "ok": true,
+          "result_followup_path": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1/followups/turn_027.md",
+          "result_state_summary": "ambient / ambient_logic, 6 goals, goal 530 chars",
+          "result_summary": "accepted commit",
+          "result_view_path": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1/workspace_views/turn_027.json",
+          "turn": 27,
+          "usage": {},
+          "view_chars": 17946,
+          "view_id": "T0.1-27",
+          "workspace_view_path": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1/workspace_views/turn_026.json"
+        },
+        {
+          "action_submitted_at": "2026-06-09T03:46:33.500000+00:00",
+          "action_time": "+17:23",
+          "agent_think": "7.5 s",
+          "agent_think_path": "",
+          "agent_think_seconds": 7.5,
+          "decision_followup_path": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1/followups/turn_027.md",
+          "decision_state_summary": "ambient / ambient_logic, 6 goals, goal 530 chars",
+          "decision_view_path": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1/workspace_views/turn_027.json",
+          "deterministic_signals": [
+            "commit_without_probe_check_not_inferred",
+            "manager_error:[error] unknown lemma `hmerge'",
+            "commit_no_state_change"
+          ],
+          "goal_chars": 530,
+          "inspect_topics": [
+            "goal_info",
+            "lemma_hints",
+            "tactic_forms"
+          ],
+          "intent": {
+            "intent": "commit_tactic",
+            "payload": {
+              "tactic": "exact hmerge."
+            }
+          },
+          "intent_summary": "commit exact hmerge",
+          "manager_action_summary": [
+            "tactic commit (1.5 s)"
+          ],
+          "manager_result_at": "2026-06-09T03:46:35+00:00",
+          "manager_result_path": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1/manager_results/turn_028.json",
+          "manager_seconds": 1.5,
+          "manager_time": "1.5 s",
+          "node": "Tree-0.1",
+          "node_dir": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1",
+          "ok": true,
+          "result_followup_path": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1/followups/turn_028.md",
+          "result_state_summary": "ambient / ambient_logic, 6 goals, goal 530 chars",
+          "result_summary": "rejected commit: [error] unknown lemma `hmerge'",
+          "result_view_path": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1/workspace_views/turn_028.json",
+          "turn": 28,
+          "usage": {},
+          "view_chars": 14182,
+          "view_id": "T0.1-28",
+          "workspace_view_path": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1/workspace_views/turn_027.json"
+        },
+        {
+          "action_submitted_at": "2026-06-09T03:46:48.704000+00:00",
+          "action_time": "+17:38",
+          "agent_think": "13.7 s",
+          "agent_think_path": "",
+          "agent_think_seconds": 13.704,
+          "decision_followup_path": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1/followups/turn_028.md",
+          "decision_state_summary": "ambient / ambient_logic, 6 goals, goal 530 chars",
+          "decision_view_path": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1/workspace_views/turn_028.json",
+          "deterministic_signals": [
+            "commit_without_probe_check_not_inferred"
+          ],
+          "goal_chars": 530,
+          "inspect_topics": [
+            "diagnose",
+            "goal_info",
+            "lemma_hints",
+            "tactic_forms"
+          ],
+          "intent": {
+            "intent": "commit_tactic",
+            "payload": {
+              "tactic": "move=> str; rewrite /take_xor; smt(take0 size_eq0)."
+            }
+          },
+          "intent_summary": "commit move=> str; rewrite /take_xor; smt(take0 size_eq0)",
+          "manager_action_summary": [
+            "tactic commit (296 ms)"
+          ],
+          "manager_result_at": "2026-06-09T03:46:49+00:00",
+          "manager_result_path": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1/manager_results/turn_029.json",
+          "manager_seconds": 0.296,
+          "manager_time": "296 ms",
+          "node": "Tree-0.1",
+          "node_dir": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1",
+          "ok": true,
+          "result_followup_path": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1/followups/turn_029.md",
+          "result_state_summary": "ambient / ambient_logic, 5 goals, goal 1641 chars",
+          "result_summary": "accepted commit",
+          "result_view_path": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1/workspace_views/turn_029.json",
+          "turn": 29,
+          "usage": {},
+          "view_chars": 14414,
+          "view_id": "T0.1-29",
+          "workspace_view_path": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1/workspace_views/turn_028.json"
+        },
+        {
+          "action_submitted_at": "2026-06-09T03:48:19.772000+00:00",
+          "action_time": "+19:09",
+          "agent_think": "90.8 s",
+          "agent_think_path": "",
+          "agent_think_seconds": 90.772,
+          "decision_followup_path": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1/followups/turn_029.md",
+          "decision_state_summary": "ambient / ambient_logic, 5 goals, goal 1641 chars",
+          "decision_view_path": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1/workspace_views/turn_029.json",
+          "deterministic_signals": [
+            "commit_without_probe_check_not_inferred"
+          ],
+          "goal_chars": 1641,
+          "inspect_topics": [
+            "goal_info",
+            "lemma_hints",
+            "tactic_forms"
+          ],
+          "intent": {
+            "intent": "commit_tactic",
+            "payload": {
+              "tactic": "rewrite catA in hI."
+            }
+          },
+          "intent_summary": "commit rewrite catA in hI",
+          "manager_action_summary": [
+            "tactic commit (228 ms)"
+          ],
+          "manager_result_at": "2026-06-09T03:48:20+00:00",
+          "manager_result_path": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1/manager_results/turn_030.json",
+          "manager_seconds": 0.228,
+          "manager_time": "228 ms",
+          "node": "Tree-0.1",
+          "node_dir": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1",
+          "ok": true,
+          "result_followup_path": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1/followups/turn_030.md",
+          "result_state_summary": "ambient / ambient_logic, 5 goals, goal 1633 chars",
+          "result_summary": "accepted commit",
+          "result_view_path": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1/workspace_views/turn_030.json",
+          "turn": 30,
+          "usage": {},
+          "view_chars": 17648,
+          "view_id": "T0.1-30",
+          "workspace_view_path": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1/workspace_views/turn_029.json"
+        },
+        {
+          "action_submitted_at": "2026-06-09T03:48:25.797000+00:00",
+          "action_time": "+19:15",
+          "agent_think": "5.8 s",
+          "agent_think_path": "",
+          "agent_think_seconds": 5.797,
+          "decision_followup_path": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1/followups/turn_030.md",
+          "decision_state_summary": "ambient / ambient_logic, 5 goals, goal 1633 chars",
+          "decision_view_path": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1/workspace_views/turn_030.json",
+          "deterministic_signals": [
+            "commit_without_probe_check_not_inferred"
+          ],
+          "goal_chars": 1633,
+          "inspect_topics": [
+            "goal_info",
+            "lemma_hints",
+            "tactic_forms"
+          ],
+          "intent": {
+            "intent": "commit_tactic",
+            "payload": {
+              "tactic": "simplify."
+            }
+          },
+          "intent_summary": "commit simplify",
+          "manager_action_summary": [
+            "tactic commit (203 ms)"
+          ],
+          "manager_result_at": "2026-06-09T03:48:26+00:00",
+          "manager_result_path": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1/manager_results/turn_031.json",
+          "manager_seconds": 0.203,
+          "manager_time": "203 ms",
+          "node": "Tree-0.1",
+          "node_dir": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1",
+          "ok": true,
+          "result_followup_path": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1/followups/turn_031.md",
+          "result_state_summary": "ambient / ambient_logic, 5 goals, goal 1639 chars",
+          "result_summary": "accepted commit",
+          "result_view_path": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1/workspace_views/turn_031.json",
+          "turn": 31,
+          "usage": {},
+          "view_chars": 17545,
+          "view_id": "T0.1-31",
+          "workspace_view_path": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1/workspace_views/turn_030.json"
+        },
+        {
+          "action_submitted_at": "2026-06-09T03:48:33.792000+00:00",
+          "action_time": "+19:23",
+          "agent_think": "7.8 s",
+          "agent_think_path": "",
+          "agent_think_seconds": 7.792,
+          "decision_followup_path": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1/followups/turn_031.md",
+          "decision_state_summary": "ambient / ambient_logic, 5 goals, goal 1639 chars",
+          "decision_view_path": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1/workspace_views/turn_031.json",
+          "deterministic_signals": [
+            "commit_without_probe_check_not_inferred"
+          ],
+          "goal_chars": 1639,
+          "inspect_topics": [
+            "goal_info",
+            "lemma_hints",
+            "tactic_forms"
+          ],
+          "intent": {
+            "intent": "commit_tactic",
+            "payload": {
+              "tactic": "split."
+            }
+          },
+          "intent_summary": "commit split",
+          "manager_action_summary": [
+            "tactic commit (208 ms)"
+          ],
+          "manager_result_at": "2026-06-09T03:48:34+00:00",
+          "manager_result_path": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1/manager_results/turn_032.json",
+          "manager_seconds": 0.208,
+          "manager_time": "208 ms",
+          "node": "Tree-0.1",
+          "node_dir": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1",
+          "ok": true,
+          "result_followup_path": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1/followups/turn_032.md",
+          "result_state_summary": "ambient / ambient_logic, 6 goals, goal 1588 chars",
+          "result_summary": "accepted commit",
+          "result_view_path": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1/workspace_views/turn_032.json",
+          "turn": 32,
+          "usage": {},
+          "view_chars": 17519,
+          "view_id": "T0.1-32",
+          "workspace_view_path": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1/workspace_views/turn_031.json"
+        },
+        {
+          "action_submitted_at": "2026-06-09T03:48:44.783000+00:00",
+          "action_time": "+19:34",
+          "agent_think": "10.8 s",
+          "agent_think_path": "",
+          "agent_think_seconds": 10.783,
+          "decision_followup_path": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1/followups/turn_032.md",
+          "decision_state_summary": "ambient / ambient_logic, 6 goals, goal 1588 chars",
+          "decision_view_path": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1/workspace_views/turn_032.json",
+          "deterministic_signals": [
+            "commit_without_probe_check_not_inferred"
+          ],
+          "goal_chars": 1588,
+          "inspect_topics": [
+            "goal_info",
+            "lemma_hints",
+            "tactic_forms"
+          ],
+          "intent": {
+            "intent": "commit_tactic",
+            "payload": {
+              "tactic": "exact hI."
+            }
+          },
+          "intent_summary": "commit exact hI",
+          "manager_action_summary": [
+            "tactic commit (217 ms)"
+          ],
+          "manager_result_at": "2026-06-09T03:48:45+00:00",
+          "manager_result_path": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1/manager_results/turn_033.json",
+          "manager_seconds": 0.217,
+          "manager_time": "217 ms",
+          "node": "Tree-0.1",
+          "node_dir": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1",
+          "ok": true,
+          "result_followup_path": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1/followups/turn_033.md",
+          "result_state_summary": "ambient / ambient_logic, 5 goals, goal 1124 chars",
+          "result_summary": "accepted commit",
+          "result_view_path": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1/workspace_views/turn_033.json",
+          "turn": 33,
+          "usage": {},
+          "view_chars": 17452,
+          "view_id": "T0.1-33",
+          "workspace_view_path": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1/workspace_views/turn_032.json"
+        },
+        {
+          "action_submitted_at": "2026-06-09T03:48:53.609000+00:00",
+          "action_time": "+19:43",
+          "agent_think": "8.6 s",
+          "agent_think_path": "",
+          "agent_think_seconds": 8.609,
+          "decision_followup_path": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1/followups/turn_033.md",
+          "decision_state_summary": "ambient / ambient_logic, 5 goals, goal 1124 chars",
+          "decision_view_path": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1/workspace_views/turn_033.json",
+          "deterministic_signals": [
+            "commit_without_probe_check_not_inferred"
+          ],
+          "goal_chars": 1124,
+          "inspect_topics": [
+            "goal_info",
+            "lemma_hints",
+            "tactic_forms"
+          ],
+          "intent": {
+            "intent": "commit_tactic",
+            "payload": {
+              "tactic": "smt(size_drop gt0_block_size size_eq0 size_ge0)."
+            }
+          },
+          "intent_summary": "commit smt(size_drop gt0_block_size size_eq0 size_ge0)",
+          "manager_action_summary": [
+            "tactic commit (391 ms)"
+          ],
+          "manager_result_at": "2026-06-09T03:48:54+00:00",
+          "manager_result_path": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1/manager_results/turn_034.json",
+          "manager_seconds": 0.391,
+          "manager_time": "391 ms",
+          "node": "Tree-0.1",
+          "node_dir": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1",
+          "ok": true,
+          "result_followup_path": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1/followups/turn_034.md",
+          "result_state_summary": "pRHL / prhl_module / relational_program, 4 goals, goal 2367 chars",
+          "result_summary": "accepted commit",
+          "result_view_path": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1/workspace_views/turn_034.json",
+          "turn": 34,
+          "usage": {},
+          "view_chars": 15297,
+          "view_id": "T0.1-34",
+          "workspace_view_path": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1/workspace_views/turn_033.json"
+        },
+        {
+          "action_submitted_at": "2026-06-09T03:50:25.681000+00:00",
+          "action_time": "+21:15",
+          "agent_think": "91.7 s",
+          "agent_think_path": "",
+          "agent_think_seconds": 91.681,
+          "decision_followup_path": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1/followups/turn_034.md",
+          "decision_state_summary": "pRHL / prhl_module / relational_program, 4 goals, goal 2367 chars",
+          "decision_view_path": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1/workspace_views/turn_034.json",
+          "deterministic_signals": [
+            "commit_without_probe_check_not_inferred"
+          ],
+          "goal_chars": 2367,
+          "inspect_topics": [
+            "equiv_bridge_lemmas",
+            "goal_info",
+            "call_site_options",
+            "call_invariant_skeleton",
+            "call_subgoals",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "align"
+          ],
+          "intent": {
+            "intent": "commit_tactic",
+            "payload": {
+              "tactic": "move=> />."
+            }
+          },
+          "intent_summary": "commit move=> />",
+          "manager_action_summary": [
+            "tactic commit (319 ms)"
+          ],
+          "manager_result_at": "2026-06-09T03:50:26+00:00",
+          "manager_result_path": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1/manager_results/turn_035.json",
+          "manager_seconds": 0.319,
+          "manager_time": "319 ms",
+          "node": "Tree-0.1",
+          "node_dir": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1",
+          "ok": true,
+          "result_followup_path": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1/followups/turn_035.md",
+          "result_state_summary": "ambient / ambient_logic / relational_program, 5 goals, goal 2563 chars",
+          "result_summary": "accepted commit",
+          "result_view_path": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1/workspace_views/turn_035.json",
+          "turn": 35,
+          "usage": {},
+          "view_chars": 18605,
+          "view_id": "T0.1-35",
+          "workspace_view_path": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1/workspace_views/turn_034.json"
+        },
+        {
+          "action_submitted_at": "2026-06-09T03:51:10.589000+00:00",
+          "action_time": "+22:00",
+          "agent_think": "44.6 s",
+          "agent_think_path": "",
+          "agent_think_seconds": 44.589,
+          "decision_followup_path": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1/followups/turn_035.md",
+          "decision_state_summary": "ambient / ambient_logic / relational_program, 5 goals, goal 2563 chars",
+          "decision_view_path": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1/workspace_views/turn_035.json",
+          "deterministic_signals": [
+            "commit_without_probe_check_not_inferred"
+          ],
+          "goal_chars": 2563,
+          "inspect_topics": [
+            "goal_info",
+            "call_site_options",
+            "call_invariant_skeleton",
+            "call_subgoals",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "align"
+          ],
+          "intent": {
+            "intent": "commit_tactic",
+            "payload": {
+              "tactic": "move=> &1 &2 hpre hyp; smt(cat0s size_ge0 size_eq0)."
+            }
+          },
+          "intent_summary": "commit move=> &1 &2 hpre hyp; smt(cat0s size_ge0 size_eq0)",
+          "manager_action_summary": [
+            "tactic commit (411 ms)"
+          ],
+          "manager_result_at": "2026-06-09T03:51:11+00:00",
+          "manager_result_path": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1/manager_results/turn_036.json",
+          "manager_seconds": 0.411,
+          "manager_time": "411 ms",
+          "node": "Tree-0.1",
+          "node_dir": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1",
+          "ok": true,
+          "result_followup_path": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1/followups/turn_036.md",
+          "result_state_summary": "pRHL / prhl_module / relational_program, 4 goals, goal 1280 chars",
+          "result_summary": "accepted commit",
+          "result_view_path": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1/workspace_views/turn_036.json",
+          "turn": 36,
+          "usage": {},
+          "view_chars": 21519,
+          "view_id": "T0.1-36",
+          "workspace_view_path": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1/workspace_views/turn_035.json"
+        },
+        {
+          "action_submitted_at": "2026-06-09T03:51:53.400000+00:00",
+          "action_time": "+22:43",
+          "agent_think": "42.4 s",
+          "agent_think_path": "",
+          "agent_think_seconds": 42.4,
+          "decision_followup_path": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1/followups/turn_036.md",
+          "decision_state_summary": "pRHL / prhl_module / relational_program, 4 goals, goal 1280 chars",
+          "decision_view_path": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1/workspace_views/turn_036.json",
+          "deterministic_signals": [
+            "commit_without_probe_check_not_inferred",
+            "manager_error:[error] nothing to introduce",
+            "commit_no_state_change"
+          ],
+          "goal_chars": 1280,
+          "inspect_topics": [
+            "equiv_bridge_lemmas",
+            "goal_info",
+            "call_site_options",
+            "call_invariant_skeleton",
+            "call_subgoals",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "align"
+          ],
+          "intent": {
+            "intent": "commit_tactic",
+            "payload": {
+              "tactic": "move=> &1 &2 hpre c2_R i_R p2_R."
+            }
+          },
+          "intent_summary": "commit move=> &1 &2 hpre c2_R i_R p2_R",
+          "manager_action_summary": [
+            "tactic commit (1.6 s)"
+          ],
+          "manager_result_at": "2026-06-09T03:51:55+00:00",
+          "manager_result_path": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1/manager_results/turn_037.json",
+          "manager_seconds": 1.6,
+          "manager_time": "1.6 s",
+          "node": "Tree-0.1",
+          "node_dir": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1",
+          "ok": true,
+          "result_followup_path": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1/followups/turn_037.md",
+          "result_state_summary": "pRHL / prhl_module / relational_program, 4 goals, goal 1280 chars",
+          "result_summary": "rejected commit: [error] nothing to introduce",
+          "result_view_path": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1/workspace_views/turn_037.json",
+          "turn": 37,
+          "usage": {},
+          "view_chars": 18517,
+          "view_id": "T0.1-37",
+          "workspace_view_path": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1/workspace_views/turn_036.json"
+        },
+        {
+          "action_submitted_at": "2026-06-09T03:52:40.701000+00:00",
+          "action_time": "+23:30",
+          "agent_think": "45.7 s",
+          "agent_think_path": "",
+          "agent_think_seconds": 45.701,
+          "decision_followup_path": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1/followups/turn_037.md",
+          "decision_state_summary": "pRHL / prhl_module / relational_program, 4 goals, goal 1280 chars",
+          "decision_view_path": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1/workspace_views/turn_037.json",
+          "deterministic_signals": [
+            "commit_without_probe_check_not_inferred"
+          ],
+          "goal_chars": 1280,
+          "inspect_topics": [
+            "diagnose",
+            "goal_info",
+            "call_site_options",
+            "call_invariant_skeleton",
+            "call_subgoals",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "align"
+          ],
+          "intent": {
+            "intent": "commit_tactic",
+            "payload": {
+              "tactic": "skip."
+            }
+          },
+          "intent_summary": "commit skip",
+          "manager_action_summary": [
+            "tactic commit (299 ms)"
+          ],
+          "manager_result_at": "2026-06-09T03:52:41+00:00",
+          "manager_result_path": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1/manager_results/turn_038.json",
+          "manager_seconds": 0.299,
+          "manager_time": "299 ms",
+          "node": "Tree-0.1",
+          "node_dir": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1",
+          "ok": true,
+          "result_followup_path": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1/followups/turn_038.md",
+          "result_state_summary": "ambient / ambient_logic / relational_program, 4 goals, goal 958 chars",
+          "result_summary": "accepted commit",
+          "result_view_path": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1/workspace_views/turn_038.json",
+          "turn": 38,
+          "usage": {},
+          "view_chars": 18567,
+          "view_id": "T0.1-38",
+          "workspace_view_path": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1/workspace_views/turn_037.json"
+        },
+        {
+          "action_submitted_at": "2026-06-09T03:52:48.706000+00:00",
+          "action_time": "+23:38",
+          "agent_think": "7.7 s",
+          "agent_think_path": "",
+          "agent_think_seconds": 7.706,
+          "decision_followup_path": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1/followups/turn_038.md",
+          "decision_state_summary": "ambient / ambient_logic / relational_program, 4 goals, goal 958 chars",
+          "decision_view_path": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1/workspace_views/turn_038.json",
+          "deterministic_signals": [
+            "commit_without_probe_check_not_inferred"
+          ],
+          "goal_chars": 958,
+          "inspect_topics": [
+            "goal_info",
+            "call_site_options",
+            "call_invariant_skeleton",
+            "call_subgoals",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "align"
+          ],
+          "intent": {
+            "intent": "commit_tactic",
+            "payload": {
+              "tactic": "move=> &1 &2 hpre c2_R i_R p2_R."
+            }
+          },
+          "intent_summary": "commit move=> &1 &2 hpre c2_R i_R p2_R",
+          "manager_action_summary": [
+            "tactic commit (294 ms)"
+          ],
+          "manager_result_at": "2026-06-09T03:52:49+00:00",
+          "manager_result_path": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1/manager_results/turn_039.json",
+          "manager_seconds": 0.294,
+          "manager_time": "294 ms",
+          "node": "Tree-0.1",
+          "node_dir": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1",
+          "ok": true,
+          "result_followup_path": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1/followups/turn_039.md",
+          "result_state_summary": "ambient / ambient_logic / relational_program, 4 goals, goal 1216 chars",
+          "result_summary": "accepted commit",
+          "result_view_path": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1/workspace_views/turn_039.json",
+          "turn": 39,
+          "usage": {},
+          "view_chars": 19736,
+          "view_id": "T0.1-39",
+          "workspace_view_path": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1/workspace_views/turn_038.json"
+        },
+        {
+          "action_submitted_at": "2026-06-09T03:52:56.647000+00:00",
+          "action_time": "+23:46",
+          "agent_think": "7.6 s",
+          "agent_think_path": "",
+          "agent_think_seconds": 7.647,
+          "decision_followup_path": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1/followups/turn_039.md",
+          "decision_state_summary": "ambient / ambient_logic / relational_program, 4 goals, goal 1216 chars",
+          "decision_view_path": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1/workspace_views/turn_039.json",
+          "deterministic_signals": [
+            "commit_without_probe_check_not_inferred"
+          ],
+          "goal_chars": 1216,
+          "inspect_topics": [
+            "goal_info",
+            "call_site_options",
+            "call_invariant_skeleton",
+            "call_subgoals",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "align"
+          ],
+          "intent": {
+            "intent": "commit_tactic",
+            "payload": {
+              "tactic": "have hnil : gen_CTR_encrypt_bytes take_xor (get RO.m{2}) Mem.k{2} n{2} i_R [] = [] by apply gen_CTR_encrypt_bytes0; move=> str; rewrite /take_xor; smt(take0 size_eq0)."
+            }
+          },
+          "intent_summary": "commit have hnil : gen_CTR_encrypt_bytes take_xor (get RO.m{2}) Mem.k{2} n{2} i_R [] = [] by apply g...",
+          "manager_action_summary": [
+            "tactic commit (353 ms)"
+          ],
+          "manager_result_at": "2026-06-09T03:52:57+00:00",
+          "manager_result_path": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1/manager_results/turn_040.json",
+          "manager_seconds": 0.353,
+          "manager_time": "353 ms",
+          "node": "Tree-0.1",
+          "node_dir": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1",
+          "ok": true,
+          "result_followup_path": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1/followups/turn_040.md",
+          "result_state_summary": "ambient / ambient_logic / relational_program, 4 goals, goal 1293 chars",
+          "result_summary": "accepted commit",
+          "result_view_path": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1/workspace_views/turn_040.json",
+          "turn": 40,
+          "usage": {},
+          "view_chars": 19775,
+          "view_id": "T0.1-40",
+          "workspace_view_path": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1/workspace_views/turn_039.json"
+        },
+        {
+          "action_submitted_at": "2026-06-09T03:53:03.100000+00:00",
+          "action_time": "+23:53",
+          "agent_think": "6.1 s",
+          "agent_think_path": "",
+          "agent_think_seconds": 6.1,
+          "decision_followup_path": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1/followups/turn_040.md",
+          "decision_state_summary": "ambient / ambient_logic / relational_program, 4 goals, goal 1293 chars",
+          "decision_view_path": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1/workspace_views/turn_040.json",
+          "deterministic_signals": [
+            "commit_without_probe_check_not_inferred",
+            "manager_error:[error] cannot find lemma `hnil'",
+            "commit_no_state_change"
+          ],
+          "goal_chars": 1293,
+          "inspect_topics": [
+            "goal_info",
+            "call_site_options",
+            "call_invariant_skeleton",
+            "call_subgoals",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "align"
+          ],
+          "intent": {
+            "intent": "commit_tactic",
+            "payload": {
+              "tactic": "split; [ smt(size_ge0 size_eq0) | smt(hnil cats0) ]."
+            }
+          },
+          "intent_summary": "commit split; [ smt(size_ge0 size_eq0) | smt(hnil cats0) ]",
+          "manager_action_summary": [
+            "tactic commit (1.9 s)"
+          ],
+          "manager_result_at": "2026-06-09T03:53:05+00:00",
+          "manager_result_path": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1/manager_results/turn_041.json",
+          "manager_seconds": 1.9,
+          "manager_time": "1.9 s",
+          "node": "Tree-0.1",
+          "node_dir": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1",
+          "ok": true,
+          "result_followup_path": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1/followups/turn_041.md",
+          "result_state_summary": "ambient / ambient_logic / relational_program, 4 goals, goal 1293 chars",
+          "result_summary": "rejected commit: [error] cannot find lemma `hnil'",
+          "result_view_path": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1/workspace_views/turn_041.json",
+          "turn": 41,
+          "usage": {},
+          "view_chars": 20340,
+          "view_id": "T0.1-41",
+          "workspace_view_path": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1/workspace_views/turn_040.json"
+        },
+        {
+          "action_submitted_at": "2026-06-09T03:53:17.525000+00:00",
+          "action_time": "+24:07",
+          "agent_think": "12.5 s",
+          "agent_think_path": "",
+          "agent_think_seconds": 12.525,
+          "decision_followup_path": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1/followups/turn_041.md",
+          "decision_state_summary": "ambient / ambient_logic / relational_program, 4 goals, goal 1293 chars",
+          "decision_view_path": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1/workspace_views/turn_041.json",
+          "deterministic_signals": [
+            "commit_without_probe_check_not_inferred"
+          ],
+          "goal_chars": 1293,
+          "inspect_topics": [
+            "diagnose",
+            "goal_info",
+            "call_site_options",
+            "call_invariant_skeleton",
+            "call_subgoals",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "align"
+          ],
+          "intent": {
+            "intent": "commit_tactic",
+            "payload": {
+              "tactic": "split; [ smt(size_ge0 size_eq0) | smt(cats0) ]."
+            }
+          },
+          "intent_summary": "commit split; [ smt(size_ge0 size_eq0) | smt(cats0) ]",
+          "manager_action_summary": [
+            "tactic commit (475 ms)"
+          ],
+          "manager_result_at": "2026-06-09T03:53:18+00:00",
+          "manager_result_path": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1/manager_results/turn_042.json",
+          "manager_seconds": 0.475,
+          "manager_time": "475 ms",
+          "node": "Tree-0.1",
+          "node_dir": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1",
+          "ok": true,
+          "result_followup_path": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1/followups/turn_042.md",
+          "result_state_summary": "pRHL / call_site / relational_program, 3 goals, goal 1134 chars",
+          "result_summary": "accepted commit",
+          "result_view_path": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1/workspace_views/turn_042.json",
+          "turn": 42,
+          "usage": {},
+          "view_chars": 20403,
+          "view_id": "T0.1-42",
+          "workspace_view_path": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1/workspace_views/turn_041.json"
+        },
+        {
+          "action_submitted_at": "2026-06-09T03:58:49.800000+00:00",
+          "action_time": "+29:39",
+          "agent_think": "331.8 s",
+          "agent_think_path": "",
+          "agent_think_seconds": 331.8,
+          "decision_followup_path": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1/followups/turn_042.md",
+          "decision_state_summary": "pRHL / call_site / relational_program, 3 goals, goal 1134 chars",
+          "decision_view_path": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1/workspace_views/turn_042.json",
+          "deterministic_signals": [
+            "commit_without_probe_check_not_inferred"
+          ],
+          "goal_chars": 1134,
+          "inspect_topics": [
+            "equiv_bridge_lemmas",
+            "goal_info",
+            "call_site_options",
+            "call_invariant_skeleton",
+            "call_subgoals",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "align"
+          ],
+          "intent": {
+            "intent": "commit_tactic",
+            "payload": {
+              "tactic": "sp."
+            }
+          },
+          "intent_summary": "commit sp",
+          "manager_action_summary": [
+            "tactic commit (2.2 s)"
+          ],
+          "manager_result_at": "2026-06-09T03:58:52+00:00",
+          "manager_result_path": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1/manager_results/turn_043.json",
+          "manager_seconds": 2.2,
+          "manager_time": "2.2 s",
+          "node": "Tree-0.1",
+          "node_dir": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1",
+          "ok": true,
+          "result_followup_path": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1/followups/turn_043.md",
+          "result_state_summary": "pRHL / call_site / relational_program, 3 goals, goal 1081 chars",
+          "result_summary": "accepted commit",
+          "result_view_path": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1/workspace_views/turn_043.json",
+          "turn": 43,
+          "usage": {},
+          "view_chars": 19821,
+          "view_id": "T0.1-43",
+          "workspace_view_path": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1/workspace_views/turn_042.json"
+        },
+        {
+          "action_submitted_at": "2026-06-09T03:58:59.710000+00:00",
+          "action_time": "+29:49",
+          "agent_think": "7.7 s",
+          "agent_think_path": "",
+          "agent_think_seconds": 7.71,
+          "decision_followup_path": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1/followups/turn_043.md",
+          "decision_state_summary": "pRHL / call_site / relational_program, 3 goals, goal 1081 chars",
+          "decision_view_path": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1/workspace_views/turn_043.json",
+          "deterministic_signals": [
+            "commit_without_probe_check_not_inferred"
+          ],
+          "goal_chars": 1081,
+          "inspect_topics": [
+            "equiv_bridge_lemmas",
+            "goal_info",
+            "call_site_options",
+            "call_invariant_skeleton",
+            "call_subgoals",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "align"
+          ],
+          "intent": {
+            "intent": "commit_tactic",
+            "payload": {
+              "tactic": "inline{2} 1."
+            }
+          },
+          "intent_summary": "commit inline{2} 1",
+          "manager_action_summary": [
+            "tactic commit (290 ms)"
+          ],
+          "manager_result_at": "2026-06-09T03:59:00+00:00",
+          "manager_result_path": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1/manager_results/turn_044.json",
+          "manager_seconds": 0.29,
+          "manager_time": "290 ms",
+          "node": "Tree-0.1",
+          "node_dir": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1",
+          "ok": true,
+          "result_followup_path": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1/followups/turn_044.md",
+          "result_state_summary": "pRHL / call_site / relational_program, 3 goals, goal 1572 chars",
+          "result_summary": "accepted commit",
+          "result_view_path": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1/workspace_views/turn_044.json",
+          "turn": 44,
+          "usage": {},
+          "view_chars": 18220,
+          "view_id": "T0.1-44",
+          "workspace_view_path": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1/workspace_views/turn_043.json"
+        },
+        {
+          "action_submitted_at": "2026-06-09T03:59:05.681000+00:00",
+          "action_time": "+29:55",
+          "agent_think": "5.7 s",
+          "agent_think_path": "",
+          "agent_think_seconds": 5.681,
+          "decision_followup_path": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1/followups/turn_044.md",
+          "decision_state_summary": "pRHL / call_site / relational_program, 3 goals, goal 1572 chars",
+          "decision_view_path": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1/workspace_views/turn_044.json",
+          "deterministic_signals": [
+            "commit_without_probe_check_not_inferred"
+          ],
+          "goal_chars": 1572,
+          "inspect_topics": [
+            "equiv_bridge_lemmas",
+            "goal_info",
+            "call_site_options",
+            "call_invariant_skeleton",
+            "call_subgoals",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "align"
+          ],
+          "intent": {
+            "intent": "commit_tactic",
+            "payload": {
+              "tactic": "inline{2} 5."
+            }
+          },
+          "intent_summary": "commit inline{2} 5",
+          "manager_action_summary": [
+            "tactic commit (319 ms)"
+          ],
+          "manager_result_at": "2026-06-09T03:59:06+00:00",
+          "manager_result_path": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1/manager_results/turn_045.json",
+          "manager_seconds": 0.319,
+          "manager_time": "319 ms",
+          "node": "Tree-0.1",
+          "node_dir": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1",
+          "ok": true,
+          "result_followup_path": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1/followups/turn_045.md",
+          "result_state_summary": "pRHL / call_site / relational_program, 3 goals, goal 1815 chars",
+          "result_summary": "accepted commit",
+          "result_view_path": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1/workspace_views/turn_045.json",
+          "turn": 45,
+          "usage": {},
+          "view_chars": 19869,
+          "view_id": "T0.1-45",
+          "workspace_view_path": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1/workspace_views/turn_044.json"
+        },
+        {
+          "action_submitted_at": "2026-06-09T04:00:02.673000+00:00",
+          "action_time": "+30:52",
+          "agent_think": "56.7 s",
+          "agent_think_path": "",
+          "agent_think_seconds": 56.673,
+          "decision_followup_path": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1/followups/turn_045.md",
+          "decision_state_summary": "pRHL / call_site / relational_program, 3 goals, goal 1815 chars",
+          "decision_view_path": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1/workspace_views/turn_045.json",
+          "deterministic_signals": [
+            "commit_without_probe_check_not_inferred"
+          ],
+          "goal_chars": 1815,
+          "inspect_topics": [
+            "equiv_bridge_lemmas",
+            "goal_info",
+            "call_site_options",
+            "call_invariant_skeleton",
+            "call_subgoals",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "align"
+          ],
+          "intent": {
+            "intent": "commit_tactic",
+            "payload": {
+              "tactic": "inline{2} 8."
+            }
+          },
+          "intent_summary": "commit inline{2} 8",
+          "manager_action_summary": [
+            "tactic commit (327 ms)"
+          ],
+          "manager_result_at": "2026-06-09T04:00:03+00:00",
+          "manager_result_path": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1/manager_results/turn_046.json",
+          "manager_seconds": 0.327,
+          "manager_time": "327 ms",
+          "node": "Tree-0.1",
+          "node_dir": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1",
+          "ok": true,
+          "result_followup_path": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1/followups/turn_046.md",
+          "result_state_summary": "pRHL / procedure_body / relational_program, 3 goals, goal 1916 chars",
+          "result_summary": "accepted commit",
+          "result_view_path": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1/workspace_views/turn_046.json",
+          "turn": 46,
+          "usage": {},
+          "view_chars": 20206,
+          "view_id": "T0.1-46",
+          "workspace_view_path": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1/workspace_views/turn_045.json"
+        },
+        {
+          "action_submitted_at": "2026-06-09T04:00:17.681000+00:00",
+          "action_time": "+31:07",
+          "agent_think": "14.7 s",
+          "agent_think_path": "",
+          "agent_think_seconds": 14.681,
+          "decision_followup_path": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1/followups/turn_046.md",
+          "decision_state_summary": "pRHL / procedure_body / relational_program, 3 goals, goal 1916 chars",
+          "decision_view_path": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1/workspace_views/turn_046.json",
+          "deterministic_signals": [
+            "commit_without_probe_check_not_inferred"
+          ],
+          "goal_chars": 1916,
+          "inspect_topics": [
+            "equiv_bridge_lemmas",
+            "goal_info",
+            "call_site_options",
+            "call_invariant_skeleton",
+            "call_subgoals",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "align"
+          ],
+          "intent": {
+            "intent": "commit_tactic",
+            "payload": {
+              "tactic": "sp."
+            }
+          },
+          "intent_summary": "commit sp",
+          "manager_action_summary": [
+            "tactic commit (319 ms)"
+          ],
+          "manager_result_at": "2026-06-09T04:00:18+00:00",
+          "manager_result_path": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1/manager_results/turn_047.json",
+          "manager_seconds": 0.319,
+          "manager_time": "319 ms",
+          "node": "Tree-0.1",
+          "node_dir": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1",
+          "ok": true,
+          "result_followup_path": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1/followups/turn_047.md",
+          "result_state_summary": "pRHL / procedure_entry / relational_program, 3 goals, goal 1439 chars",
+          "result_summary": "accepted commit",
+          "result_view_path": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1/workspace_views/turn_047.json",
+          "turn": 47,
+          "usage": {},
+          "view_chars": 23116,
+          "view_id": "T0.1-47",
+          "workspace_view_path": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1/workspace_views/turn_046.json"
+        },
+        {
+          "action_submitted_at": "2026-06-09T04:00:42.701000+00:00",
+          "action_time": "+31:32",
+          "agent_think": "24.7 s",
+          "agent_think_path": "",
+          "agent_think_seconds": 24.701,
+          "decision_followup_path": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1/followups/turn_047.md",
+          "decision_state_summary": "pRHL / procedure_entry / relational_program, 3 goals, goal 1439 chars",
+          "decision_view_path": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1/workspace_views/turn_047.json",
+          "deterministic_signals": [
+            "commit_without_probe_check_not_inferred"
+          ],
+          "goal_chars": 1439,
+          "inspect_topics": [
+            "equiv_bridge_lemmas",
+            "goal_info",
+            "call_site_options",
+            "call_invariant_skeleton",
+            "call_subgoals",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "align"
+          ],
+          "intent": {
+            "intent": "commit_tactic",
+            "payload": {
+              "tactic": "skip."
+            }
+          },
+          "intent_summary": "commit skip",
+          "manager_action_summary": [
+            "tactic commit (299 ms)"
+          ],
+          "manager_result_at": "2026-06-09T04:00:43+00:00",
+          "manager_result_path": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1/manager_results/turn_048.json",
+          "manager_seconds": 0.299,
+          "manager_time": "299 ms",
+          "node": "Tree-0.1",
+          "node_dir": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1",
+          "ok": true,
+          "result_followup_path": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1/followups/turn_048.md",
+          "result_state_summary": "ambient / ambient_logic / relational_program, 3 goals, goal 990 chars",
+          "result_summary": "accepted commit",
+          "result_view_path": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1/workspace_views/turn_048.json",
+          "turn": 48,
+          "usage": {},
+          "view_chars": 21947,
+          "view_id": "T0.1-48",
+          "workspace_view_path": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1/workspace_views/turn_047.json"
+        },
+        {
+          "action_submitted_at": "2026-06-09T04:01:13.752000+00:00",
+          "action_time": "+32:03",
+          "agent_think": "30.8 s",
+          "agent_think_path": "",
+          "agent_think_seconds": 30.752,
+          "decision_followup_path": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1/followups/turn_048.md",
+          "decision_state_summary": "ambient / ambient_logic / relational_program, 3 goals, goal 990 chars",
+          "decision_view_path": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1/workspace_views/turn_048.json",
+          "deterministic_signals": [
+            "commit_without_probe_check_not_inferred"
+          ],
+          "goal_chars": 990,
+          "inspect_topics": [
+            "goal_info",
+            "call_site_options",
+            "call_invariant_skeleton",
+            "call_subgoals",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "align"
+          ],
+          "intent": {
+            "intent": "commit_tactic",
+            "payload": {
+              "tactic": "move=> &1 &2 />."
+            }
+          },
+          "intent_summary": "commit move=> &1 &2 />",
+          "manager_action_summary": [
+            "tactic commit (248 ms)"
+          ],
+          "manager_result_at": "2026-06-09T04:01:14+00:00",
+          "manager_result_path": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1/manager_results/turn_049.json",
+          "manager_seconds": 0.248,
+          "manager_time": "248 ms",
+          "node": "Tree-0.1",
+          "node_dir": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1",
+          "ok": true,
+          "result_followup_path": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1/followups/turn_049.md",
+          "result_state_summary": "equiv / prhl_module / relational_program, 2 goals, goal 610 chars",
+          "result_summary": "accepted commit",
+          "result_view_path": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1/workspace_views/turn_049.json",
+          "turn": 49,
+          "usage": {},
+          "view_chars": 22157,
+          "view_id": "T0.1-49",
+          "workspace_view_path": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1/workspace_views/turn_048.json"
+        },
+        {
+          "action_submitted_at": "2026-06-09T04:01:56.690000+00:00",
+          "action_time": "+32:46",
+          "agent_think": "42.7 s",
+          "agent_think_path": "",
+          "agent_think_seconds": 42.69,
+          "decision_followup_path": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1/followups/turn_049.md",
+          "decision_state_summary": "equiv / prhl_module / relational_program, 2 goals, goal 610 chars",
+          "decision_view_path": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1/workspace_views/turn_049.json",
+          "deterministic_signals": [
+            "commit_without_probe_check_not_inferred"
+          ],
+          "goal_chars": 610,
+          "inspect_topics": [
+            "hint",
+            "goal_info",
+            "call_site_options",
+            "call_invariant_skeleton",
+            "call_subgoals",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "align"
+          ],
+          "intent": {
+            "intent": "commit_tactic",
+            "payload": {
+              "tactic": "proc."
+            }
+          },
+          "intent_summary": "commit proc",
+          "manager_action_summary": [
+            "tactic commit (310 ms)"
+          ],
+          "manager_result_at": "2026-06-09T04:01:57+00:00",
+          "manager_result_path": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1/manager_results/turn_050.json",
+          "manager_seconds": 0.31,
+          "manager_time": "310 ms",
+          "node": "Tree-0.1",
+          "node_dir": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1",
+          "ok": true,
+          "result_followup_path": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1/followups/turn_050.md",
+          "result_state_summary": "pRHL / verification_residue / relational_program, 2 goals, goal 566 chars",
+          "result_summary": "accepted commit",
+          "result_view_path": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1/workspace_views/turn_050.json",
+          "turn": 50,
+          "usage": {},
+          "view_chars": 15487,
+          "view_id": "T0.1-50",
+          "workspace_view_path": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1/workspace_views/turn_049.json"
+        },
+        {
+          "action_submitted_at": "2026-06-09T04:02:27.607000+00:00",
+          "action_time": "+33:17",
+          "agent_think": "30.6 s",
+          "agent_think_path": "",
+          "agent_think_seconds": 30.607,
+          "decision_followup_path": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1/followups/turn_050.md",
+          "decision_state_summary": "pRHL / verification_residue / relational_program, 2 goals, goal 566 chars",
+          "decision_view_path": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1/workspace_views/turn_050.json",
+          "deterministic_signals": [
+            "commit_without_probe_check_not_inferred"
+          ],
+          "goal_chars": 566,
+          "inspect_topics": [
+            "equiv_bridge_lemmas",
+            "goal_info",
+            "call_site_options",
+            "call_invariant_skeleton",
+            "call_subgoals",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "align"
+          ],
+          "intent": {
+            "intent": "commit_tactic",
+            "payload": {
+              "tactic": "auto=> />; smt()."
+            }
+          },
+          "intent_summary": "commit auto=> />; smt()",
+          "manager_action_summary": [
+            "tactic commit (393 ms)"
+          ],
+          "manager_result_at": "2026-06-09T04:02:28+00:00",
+          "manager_result_path": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1/manager_results/turn_051.json",
+          "manager_seconds": 0.393,
+          "manager_time": "393 ms",
+          "node": "Tree-0.1",
+          "node_dir": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1",
+          "ok": true,
+          "result_followup_path": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1/followups/turn_051.md",
+          "result_state_summary": "pRHL / procedure_body / relational_program, 1 goal, goal 1077 chars",
+          "result_summary": "accepted commit",
+          "result_view_path": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1/workspace_views/turn_051.json",
+          "turn": 51,
+          "usage": {},
+          "view_chars": 15294,
+          "view_id": "T0.1-51",
+          "workspace_view_path": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1/workspace_views/turn_050.json"
+        },
+        {
+          "action_submitted_at": "2026-06-09T04:05:56+00:00",
+          "action_time": "+36:46",
+          "agent_think": "208 s",
+          "agent_think_path": "",
+          "agent_think_seconds": 208.0,
+          "decision_followup_path": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1/followups/turn_051.md",
+          "decision_state_summary": "pRHL / procedure_body / relational_program, 1 goal, goal 1077 chars",
+          "decision_view_path": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1/workspace_views/turn_051.json",
+          "deterministic_signals": [],
+          "goal_chars": 1077,
+          "inspect_topics": [
+            "goal_info",
+            "call_site_options",
+            "call_invariant_skeleton",
+            "call_subgoals",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "align"
+          ],
+          "intent": {},
+          "intent_summary": "unknown",
+          "manager_action_summary": [],
+          "manager_result_at": "2026-06-09T04:05:56+00:00",
+          "manager_result_path": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1/manager_results/turn_052.json",
+          "manager_seconds": 0,
+          "manager_time": "",
+          "node": "Tree-0.1",
+          "node_dir": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1",
+          "ok": false,
+          "result_followup_path": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1/followups/turn_052.md",
+          "result_state_summary": "pRHL / procedure_body / relational_program, 1 goal, goal 1077 chars",
+          "result_summary": "repair / unhealthy",
+          "result_view_path": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1/workspace_views/turn_052.json",
+          "turn": 52,
+          "usage": {},
+          "view_chars": 21013,
+          "view_id": "T0.1-52",
+          "workspace_view_path": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1/workspace_views/turn_051.json"
+        },
+        {
+          "action_submitted_at": "2026-06-09T04:06:03+00:00",
+          "action_time": "+36:53",
+          "agent_think": "7 s",
+          "agent_think_path": "",
+          "agent_think_seconds": 7.0,
+          "decision_followup_path": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1/followups/turn_052.md",
+          "decision_state_summary": "pRHL / procedure_body / relational_program, 1 goal, goal 1077 chars",
+          "decision_view_path": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1/workspace_views/turn_052.json",
+          "deterministic_signals": [],
+          "goal_chars": 1077,
+          "inspect_topics": [
+            "goal_info",
+            "call_site_options",
+            "call_invariant_skeleton",
+            "call_subgoals",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "align"
+          ],
+          "intent": {},
+          "intent_summary": "unknown",
+          "manager_action_summary": [],
+          "manager_result_at": "2026-06-09T04:06:03+00:00",
+          "manager_result_path": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1/manager_results/turn_053.json",
+          "manager_seconds": 0,
+          "manager_time": "",
+          "node": "Tree-0.1",
+          "node_dir": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1",
+          "ok": false,
+          "result_followup_path": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1/followups/turn_053.md",
+          "result_state_summary": "pRHL / procedure_body / relational_program, 1 goal, goal 1077 chars",
+          "result_summary": "repair / unhealthy",
+          "result_view_path": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1/workspace_views/turn_053.json",
+          "turn": 53,
+          "usage": {},
+          "view_chars": 21013,
+          "view_id": "T0.1-53",
+          "workspace_view_path": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1/workspace_views/turn_052.json"
+        },
+        {
+          "action_submitted_at": "2026-06-09T04:06:09.612000+00:00",
+          "action_time": "+36:59",
+          "agent_think": "6.6 s",
+          "agent_think_path": "",
+          "agent_think_seconds": 6.612,
+          "decision_followup_path": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1/followups/turn_053.md",
+          "decision_state_summary": "pRHL / procedure_body / relational_program, 1 goal, goal 1077 chars",
+          "decision_view_path": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1/workspace_views/turn_053.json",
+          "deterministic_signals": [
+            "commit_without_probe_check_not_inferred"
+          ],
+          "goal_chars": 1077,
+          "inspect_topics": [
+            "goal_info",
+            "call_site_options",
+            "call_invariant_skeleton",
+            "call_subgoals",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "align"
+          ],
+          "intent": {
+            "intent": "commit_tactic",
+            "payload": {
+              "tactic": "conseq (_: _ ==> (glob A){1} = (glob A){2} /\\ (Mem.k{1} = Mem.k{2} /\\ Mem.log{1} = Mem.log{2} /\\ Mem.lc{1} = Mem.lc{2}) /\\ StLSke.gs{1} = RO.m{2})."
+            }
+          },
+          "intent_summary": "commit conseq (_: _ ==> (glob A){1} = (glob A){2} /\\ (Mem.k{1} = Mem.k{2} /\\...",
+          "manager_action_summary": [
+            "tactic commit (388 ms)"
+          ],
+          "manager_result_at": "2026-06-09T04:06:10+00:00",
+          "manager_result_path": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1/manager_results/turn_054.json",
+          "manager_seconds": 0.388,
+          "manager_time": "388 ms",
+          "node": "Tree-0.1",
+          "node_dir": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1",
+          "ok": true,
+          "result_followup_path": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1/followups/turn_054.md",
+          "result_state_summary": "ambient / ambient_logic / relational_program, 2 goals, goal 1025 chars",
+          "result_summary": "accepted commit",
+          "result_view_path": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1/workspace_views/turn_054.json",
+          "turn": 54,
+          "usage": {},
+          "view_chars": 21013,
+          "view_id": "T0.1-54",
+          "workspace_view_path": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1/workspace_views/turn_053.json"
+        },
+        {
+          "action_submitted_at": "2026-06-09T04:06:27.679000+00:00",
+          "action_time": "+37:17",
+          "agent_think": "17.7 s",
+          "agent_think_path": "",
+          "agent_think_seconds": 17.679,
+          "decision_followup_path": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1/followups/turn_054.md",
+          "decision_state_summary": "ambient / ambient_logic / relational_program, 2 goals, goal 1025 chars",
+          "decision_view_path": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1/workspace_views/turn_054.json",
+          "deterministic_signals": [
+            "commit_without_probe_check_not_inferred"
+          ],
+          "goal_chars": 1025,
+          "inspect_topics": [
+            "goal_info",
+            "call_site_options",
+            "call_invariant_skeleton",
+            "call_subgoals",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "align"
+          ],
+          "intent": {
+            "intent": "commit_tactic",
+            "payload": {
+              "tactic": "move=> /> *; smt()."
+            }
+          },
+          "intent_summary": "commit move=> /> *; smt()",
+          "manager_action_summary": [
+            "tactic commit (321 ms)"
+          ],
+          "manager_result_at": "2026-06-09T04:06:28+00:00",
+          "manager_result_path": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1/manager_results/turn_055.json",
+          "manager_seconds": 0.321,
+          "manager_time": "321 ms",
+          "node": "Tree-0.1",
+          "node_dir": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1",
+          "ok": true,
+          "result_followup_path": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1/followups/turn_055.md",
+          "result_state_summary": "pRHL / procedure_body / relational_program, 1 goal, goal 650 chars",
+          "result_summary": "accepted commit",
+          "result_view_path": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1/workspace_views/turn_055.json",
+          "turn": 55,
+          "usage": {},
+          "view_chars": 17762,
+          "view_id": "T0.1-55",
+          "workspace_view_path": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1/workspace_views/turn_054.json"
+        },
+        {
+          "action_submitted_at": "2026-06-09T04:06:55.200000+00:00",
+          "action_time": "+37:45",
+          "agent_think": "27.2 s",
+          "agent_think_path": "",
+          "agent_think_seconds": 27.2,
+          "decision_followup_path": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1/followups/turn_055.md",
+          "decision_state_summary": "pRHL / procedure_body / relational_program, 1 goal, goal 650 chars",
+          "decision_view_path": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1/workspace_views/turn_055.json",
+          "deterministic_signals": [
+            "commit_without_probe_check_not_inferred"
+          ],
+          "goal_chars": 650,
+          "inspect_topics": [
+            "goal_info",
+            "call_site_options",
+            "call_invariant_skeleton",
+            "call_subgoals",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "align"
+          ],
+          "intent": {
+            "intent": "commit_tactic",
+            "payload": {
+              "tactic": "inline *."
+            }
+          },
+          "intent_summary": "commit inline *",
+          "manager_action_summary": [
+            "tactic commit (5.8 s)"
+          ],
+          "manager_result_at": "2026-06-09T04:07:01+00:00",
+          "manager_result_path": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1/manager_results/turn_056.json",
+          "manager_seconds": 5.8,
+          "manager_time": "5.8 s",
+          "node": "Tree-0.1",
+          "node_dir": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1",
+          "ok": true,
+          "result_followup_path": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1/followups/turn_056.md",
+          "result_state_summary": "pRHL / procedure_body / seq_cut, 1 goal, goal 2118 chars",
+          "result_summary": "accepted commit",
+          "result_view_path": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1/workspace_views/turn_056.json",
+          "turn": 56,
+          "usage": {},
+          "view_chars": 21058,
+          "view_id": "T0.1-56",
+          "workspace_view_path": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1/workspace_views/turn_055.json"
+        },
+        {
+          "action_submitted_at": "2026-06-09T04:07:32.747000+00:00",
+          "action_time": "+38:22",
+          "agent_think": "31.7 s",
+          "agent_think_path": "",
+          "agent_think_seconds": 31.747,
+          "decision_followup_path": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1/followups/turn_056.md",
+          "decision_state_summary": "pRHL / procedure_body / seq_cut, 1 goal, goal 2118 chars",
+          "decision_view_path": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1/workspace_views/turn_056.json",
+          "deterministic_signals": [
+            "commit_without_probe_check_not_inferred"
+          ],
+          "goal_chars": 2118,
+          "inspect_topics": [
+            "goal_info",
+            "call_site_options",
+            "call_subgoals",
+            "align",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms"
+          ],
+          "intent": {
+            "intent": "commit_tactic",
+            "payload": {
+              "tactic": "sim."
+            }
+          },
+          "intent_summary": "commit sim",
+          "manager_action_summary": [
+            "tactic commit (253 ms)"
+          ],
+          "manager_result_at": "2026-06-09T04:07:33+00:00",
+          "manager_result_path": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1/manager_results/turn_057.json",
+          "manager_seconds": 0.253,
+          "manager_time": "253 ms",
+          "node": "Tree-0.1",
+          "node_dir": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1",
+          "ok": true,
+          "result_followup_path": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1/followups/turn_057.md",
+          "result_state_summary": "ambient / closed_candidate, goal 26 chars",
+          "result_summary": "accepted commit",
+          "result_view_path": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1/workspace_views/turn_057.json",
+          "turn": 57,
+          "usage": {},
+          "view_chars": 27108,
+          "view_id": "T0.1-57",
+          "workspace_view_path": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1/workspace_views/turn_056.json"
+        },
+        {
+          "action_submitted_at": "2026-06-09T04:07:37+00:00",
+          "action_time": "+38:27",
+          "agent_think": "4 s",
+          "agent_think_path": "",
+          "agent_think_seconds": 4.0,
+          "decision_followup_path": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1/followups/turn_057.md",
+          "decision_state_summary": "ambient / closed_candidate, goal 26 chars",
+          "decision_view_path": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1/workspace_views/turn_057.json",
+          "deterministic_signals": [],
+          "goal_chars": 26,
+          "inspect_topics": [
+            "goal_info"
+          ],
+          "intent": {
+            "intent": "finish"
+          },
+          "intent_summary": "finish",
+          "manager_action_summary": [
+            "finish requires qed"
+          ],
+          "manager_result_at": "2026-06-09T04:07:37+00:00",
+          "manager_result_path": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1/manager_results/turn_058.json",
+          "manager_seconds": 0.0,
+          "manager_time": "",
+          "node": "Tree-0.1",
+          "node_dir": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1",
+          "ok": false,
+          "result_followup_path": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1/followups/turn_058.md",
+          "result_state_summary": "ambient / closed_candidate, goal 26 chars",
+          "result_summary": "repair / unhealthy",
+          "result_view_path": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1/workspace_views/turn_058.json",
+          "turn": 58,
+          "usage": {},
+          "view_chars": 8875,
+          "view_id": "T0.1-58",
+          "workspace_view_path": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1/workspace_views/turn_057.json"
+        },
+        {
+          "action_submitted_at": "2026-06-09T04:07:40.784000+00:00",
+          "action_time": "+38:30",
+          "agent_think": "3.8 s",
+          "agent_think_path": "",
+          "agent_think_seconds": 3.784,
+          "decision_followup_path": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1/followups/turn_058.md",
+          "decision_state_summary": "ambient / closed_candidate, goal 26 chars",
+          "decision_view_path": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1/workspace_views/turn_058.json",
+          "deterministic_signals": [
+            "commit_without_probe_check_not_inferred"
+          ],
+          "goal_chars": 26,
+          "inspect_topics": [
+            "goal_info"
+          ],
+          "intent": {
+            "intent": "commit_tactic",
+            "payload": {
+              "tactic": "qed."
+            }
+          },
+          "intent_summary": "commit qed",
+          "manager_action_summary": [
+            "tactic commit (216 ms)"
+          ],
+          "manager_result_at": "2026-06-09T04:07:41+00:00",
+          "manager_result_path": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1/manager_results/turn_059.json",
+          "manager_seconds": 0.216,
+          "manager_time": "216 ms",
+          "node": "Tree-0.1",
+          "node_dir": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1",
+          "ok": true,
+          "result_followup_path": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1/followups/turn_059.md",
+          "result_state_summary": "complete / unknown / closed_candidate, 0 goals, goal 12 chars",
+          "result_summary": "accepted commit",
+          "result_view_path": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1/workspace_views/turn_059.json",
+          "turn": 59,
+          "usage": {},
+          "view_chars": 9011,
+          "view_id": "T0.1-59",
+          "workspace_view_path": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1/workspace_views/turn_058.json"
+        },
+        {
+          "action_submitted_at": "2026-06-09T04:07:45+00:00",
+          "action_time": "+38:35",
+          "agent_think": "4 s",
+          "agent_think_path": "",
+          "agent_think_seconds": 4.0,
+          "decision_followup_path": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1/followups/turn_059.md",
+          "decision_state_summary": "complete / unknown / closed_candidate, 0 goals, goal 12 chars",
+          "decision_view_path": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1/workspace_views/turn_059.json",
+          "deterministic_signals": [],
+          "goal_chars": 12,
+          "inspect_topics": [
+            "verify",
+            "goal_info"
+          ],
+          "intent": {
+            "intent": "finish"
+          },
+          "intent_summary": "finish",
+          "manager_action_summary": [
+            "finish"
+          ],
+          "manager_result_at": "2026-06-09T04:07:45+00:00",
+          "manager_result_path": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1/manager_results/turn_060.json",
+          "manager_seconds": 0.0,
+          "manager_time": "",
+          "node": "Tree-0.1",
+          "node_dir": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1",
+          "ok": true,
+          "result_followup_path": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1/followups/turn_060.md",
+          "result_state_summary": "complete / unknown / closed_candidate, 0 goals, goal 12 chars",
+          "result_summary": "finish requested",
+          "result_view_path": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1/workspace_views/turn_060.json",
+          "turn": 60,
+          "usage": {},
+          "view_chars": 8037,
+          "view_id": "T0.1-60",
+          "workspace_view_path": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1/node_memory/Tree_0_1/workspace_views/turn_059.json"
+        }
+      ],
+      "run_dir": "artifacts/eval_suite/chachapoly_l1_l4noprobe/l1_goal_projection/UFCMA_genCC/r01/2026-06-08_2025_UFCMA_genCC/iteration_1",
+      "turn_count": 60
+    }
+  ],
+  "schema_version": 1
+}

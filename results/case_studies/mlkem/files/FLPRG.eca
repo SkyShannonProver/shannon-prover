@@ -1,0 +1,34 @@
+type seed.
+
+type output.
+
+op prg : seed -> output.
+
+op dseed: seed distr.
+
+op dout : output distr.
+
+module type RG = {
+  proc get(sd : seed): output
+}.
+
+module type Distinguisher = { proc distinguish(x : output): bool }.
+
+module IND(PRG : RG, D:Distinguisher) = {
+  proc main(): bool = {
+    var b,sd,x;
+
+    sd <$ dseed;
+    x <@ PRG.get(sd);
+    b <@ D.distinguish(x);
+    return b;
+  }
+}.
+
+module PRGr:RG = {
+  proc get(sd : seed): output = { var r; r <- prg sd; return r; }
+}.
+
+module PRGi:RG = {
+  proc get(sd : seed): output = { var r; r <$ dout; return r; }
+}.

@@ -1,0 +1,19 @@
+{
+  "turn": 5,
+  "handled_intent": {
+    "intent": "commit_tactic",
+    "payload": {
+      "tactic": "wp; while (c0{1} = c{2} /\\ i{1} = i{2} + 1 /\\ p0{1} = p{2}); auto=> /#."
+    }
+  },
+  "ok": true,
+  "manager_note": "Committed tactic accepted; the EasyCrypt proof state changed.",
+  "manager_actions": [
+    {
+      "action": "tactic commit",
+      "outcome": "EasyCrypt accepted the committed tactic.",
+      "timing": "256 ms"
+    }
+  ],
+  "view_refreshed": true
+}

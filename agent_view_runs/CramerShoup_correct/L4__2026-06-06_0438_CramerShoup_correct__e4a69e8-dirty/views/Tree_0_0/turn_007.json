@@ -1,0 +1,254 @@
+{
+  "last_result": {
+    "intent": "lookup_symbol",
+    "payload": {
+      "symbol": "log_bij"
+    },
+    "effect": "This asks the manager for information only; it does not change the EasyCrypt proof state.",
+    "result": "The manager returned read-only context for the current goal.",
+    "content": {
+      "preview": "[WHERE-HIT] log_bij (kind: lemma) * In [lemmas or axioms]: lemma log_bij: forall (x y : group), x = y <=> loge x = loge y."
+    }
+  },
+  "current_goal": {
+    "lines": [
+      "Current goal",
+      "",
+      "Type variables: <none>",
+      "",
+      "&hr: {g_, g, g_0, e, f, h, a, a_, c0, d, g0, g_1, a0, a_0, c1, d0 : group,",
+      "     x1, x2, y1, y2, z1, z2, w, u, v, x10, x20, y10, y20, z10, z20, v0 :",
+      "     ZModE.exp, k, k0, k1 : K,",
+      "     pk0 : K * group * group * group * group * group,",
+      "     sk0 : K * group * group * ZModE.exp * ZModE.exp * ZModE.exp *",
+      "     ZModE.exp * ZModE.exp * ZModE.exp, pk, pk1 : PKE_.pkey,",
+      "     sk, sk1 : PKE_.skey, m, m0 : PKE_.plaintext, c, ci : PKE_.ciphertext,",
+      "     m' : PKE_.plaintext option}",
+      "x1: ZModE.exp",
+      "hx1: x1 \\in dt",
+      "x2: ZModE.exp",
+      "hx2: x2 \\in dt",
+      "y1: ZModE.exp",
+      "hy1: y1 \\in dt",
+      "y2: ZModE.exp",
+      "hy2: y2 \\in dt",
+      "z1: ZModE.exp",
+      "hz1: z1 \\in dt",
+      "z2: ZModE.exp",
+      "hz2: z2 \\in dt",
+      "w: ZModE.exp",
+      "hw: w \\in dt \\ pred1 zero",
+      "k: K",
+      "hk: k \\in dk",
+      "u: ZModE.exp",
+      "hu: u \\in dt",
+      "------------------------------------------------------------------------",
+      "(if (DH.G.g ^ x1 * DH.G.g ^ w ^ x2) ^ u *",
+      "    (DH.G.g ^ y1 * DH.G.g ^ w ^ y2) ^",
+      "    (u *",
+      "     H k",
+      "       (DH.G.g ^ u, DH.G.g ^ w ^ u,",
+      "        (DH.G.g ^ z1 * DH.G.g ^ w ^ z2) ^ u * m{hr})) =",
+      "    DH.G.g ^ u ^",
+      "    (x1 +",
+      "     H k",
+      "       (DH.G.g ^ u, DH.G.g ^ w ^ u,",
+      "        (DH.G.g ^ z1 * DH.G.g ^ w ^ z2) ^ u * m{hr}) *",
+      "     y1) *",
+      "    DH.G.g ^ w ^ u ^",
+      "    (x2 +",
+      "     H k",
+      "       (DH.G.g ^ u, DH.G.g ^ w ^ u,",
+      "        (DH.G.g ^ z1 * DH.G.g ^ w ^ z2) ^ u * m{hr}) *",
+      "     y2) then",
+      "   Some",
+      "     ((DH.G.g ^ z1 * DH.G.g ^ w ^ z2) ^ u * m{hr} /",
+      "      (DH.G.g ^ u ^ z1 * DH.G.g ^ w ^ u ^ z2))",
+      " else None) =",
+      "Some m{hr}",
+      "[53|check]>"
+    ],
+    "text_fully_shown": true,
+    "truncated": false,
+    "goal_type": "ambient",
+    "view_focus": "ambient_logic",
+    "source": {
+      "label": "Parsed from EasyCrypt pretty goal text",
+      "ground_truth": false
+    }
+  },
+  "proof_status": {
+    "status": "open",
+    "remaining_goals": 1,
+    "remaining_goals_known": true,
+    "goal_type": "ambient",
+    "view_focus": "ambient_logic",
+    "current_layer": "ambient_logic"
+  },
+  "candidate_moves": {
+    "moves": [
+      {
+        "title": "Read-only tactic probe",
+        "category": "probe",
+        "tactic": "rewrite /d.",
+        "applicability": "This tactic-shaped option should be checked with a read-only probe before committing it.",
+        "effect": "This is a read-only probe; it asks EasyCrypt what would happen without changing the committed proof state.",
+        "source": "proof-state analysis",
+        "derivation": "read-only probe surfaced from proof-state analysis",
+        "verified": "read_only_probe_suggestion",
+        "guarantee": "read-only probe shape; proof state unchanged; probe then decide; reversible"
+      },
+      {
+        "title": "Residual closing tactic",
+        "category": "probe",
+        "tactic": "auto => />.",
+        "applicability": "This tactic-shaped option should be checked with a read-only probe before committing it.",
+        "effect": "This is a read-only probe; it asks EasyCrypt what would happen without changing the committed proof state.",
+        "source": "proof-state analysis",
+        "derivation": "read-only probe surfaced from proof-state analysis",
+        "verified": "read_only_probe_suggestion",
+        "guarantee": "read-only probe shape; proof state unchanged; probe then decide; reversible"
+      },
+      {
+        "title": "Read-only tactic probe",
+        "category": "probe",
+        "tactic": "smt().",
+        "applicability": "This tactic-shaped option should be checked with a read-only probe before committing it.",
+        "effect": "This is a read-only probe; it asks EasyCrypt what would happen without changing the committed proof state.",
+        "source": "proof-state analysis",
+        "derivation": "read-only probe surfaced from proof-state analysis",
+        "verified": "read_only_probe_suggestion",
+        "guarantee": "read-only probe shape; proof state unchanged; probe then decide; reversible"
+      }
+    ]
+  },
+  "program_frontier": {
+    "authority": "proof-state analysis",
+    "view_focus": "ambient_logic"
+  },
+  "call_site_surface": {},
+  "pure_tail_surface": {
+    "state": "ambient_pure_tail",
+    "goal_operators": [
+      "DH.G.g",
+      "hr",
+      "Some",
+      "None"
+    ],
+    "visible_hypotheses": [
+      "hx1: x1 \\in dt",
+      "hx2: x2 \\in dt",
+      "hy1: y1 \\in dt",
+      "hy2: y2 \\in dt",
+      "hz1: z1 \\in dt",
+      "hz2: z2 \\in dt"
+    ],
+    "effect": "Summarizes verifier-visible pure-goal structure after program frontier actions have been discharged or hidden by local proof steps.",
+    "limitations": [
+      "This panel records syntactic and proof-state facts from the current view.",
+      "It does not choose a tactic or instantiate a lemma."
+    ]
+  },
+  "application_context": {},
+  "facts_and_diagnostics": {
+    "facts": {
+      "unfoldable_goal_heads": [
+        {
+          "name": "d",
+          "unqualified_name": "d",
+          "declaration_kind": "op",
+          "unfold_tactic": "rewrite /d.",
+          "smt_argument_role": "not_a_lemma_hint"
+        }
+      ],
+      "unfoldable_goal_head_count": 1
+    },
+    "fact_note": "Only current-frontier facts are shown here; the full proof context artifact keeps the compiler/internal details.",
+    "notes": [
+      {
+        "message": "Current residual goal mentions unfoldable definition(s): d. Use `rewrite /NAME` before SMT when those predicates block simplification; these names are not smt(...) lemma hints.",
+        "severity": "info"
+      },
+      {
+        "message": "proof-state analysis sees no live call sites after a prior `inline *` at tactic 2. Continue at procedure/ambient layer, or undo if a call lemma is needed.",
+        "severity": "info"
+      }
+    ]
+  },
+  "recovery_diagnosis_surface": {
+    "kind": "recovery_diagnosis_surface",
+    "recovery_class": "local_pure_surgery_available",
+    "confidence": "medium",
+    "checkpoint_policy": "current_state_local_work_visible",
+    "evidence": [
+      "pure_tail_surface is visible for the current goal",
+      "current proof state has no program-frontier work before the logical residual"
+    ],
+    "related_surfaces": [
+      "pure_tail_surface",
+      "structural_checkpoints"
+    ],
+    "limitations": [
+      "does not select a destructor, witness, rewrite, or SMT lemma",
+      "reported checkpoints are recovery references, not a default route"
+    ]
+  },
+  "inspect_lookup_handles": {
+    "effect": "All handles here are read-only manager requests; the committed EasyCrypt proof state stays unchanged.",
+    "manager_note": "Some requests may ask EasyCrypt or name resolution; wait for the manager result before choosing the next proof intent.",
+    "ask_manager_for": [
+      {
+        "intent": "inspect_context",
+        "payload": {
+          "topic": "goal_info"
+        },
+        "use_when": "No fresh recommendation is available; parse the current goal.",
+        "returns": "manager-provided read-only context for this proof route"
+      },
+      {
+        "intent": "inspect_context",
+        "payload": {
+          "topic": "lemma_hints"
+        },
+        "use_when": "Need local or standard-library lemma names before rewriting a pure goal.",
+        "returns": "nearby lemma hints and qualified-name lookup guidance"
+      },
+      {
+        "intent": "inspect_context",
+        "payload": {
+          "topic": "tactic_forms",
+          "name": "rewrite"
+        },
+        "use_when": "Need the valid EasyCrypt form for rewrite, apply, conseq, while, or SMT setup.",
+        "returns": "valid tactic forms and common traps"
+      }
+    ]
+  },
+  "structural_checkpoints": {
+    "items": [
+      {
+        "checkpoint_id": "cp_2_e7b0f9e3321ad37d",
+        "semantic_id": "last_call_site_boundary",
+        "semantic_ids": [
+          "last_call_site_boundary"
+        ],
+        "label": "Before inline expansion #2",
+        "committed_step_index": 2,
+        "committed_tactic": "inline *; auto.",
+        "restored_proof_layer": "pre_inline_frontier",
+        "restored_affordances": {
+          "call_site_handles": "as_before_inline"
+        },
+        "undo_scope": "call_site_boundary",
+        "why_checkpoint": "inline boundary; selecting it restores the proof state before this expansion",
+        "effect_if_selected": "Undo committed tactic #2 and every committed tactic after it in this node.",
+        "submit": {
+          "intent": "undo_to_checkpoint",
+          "payload": {
+            "checkpoint_id": "cp_2_e7b0f9e3321ad37d"
+          }
+        }
+      }
+    ]
+  }
+}

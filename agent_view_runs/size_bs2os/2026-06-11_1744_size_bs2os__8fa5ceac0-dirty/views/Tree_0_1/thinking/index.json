@@ -1,0 +1,41 @@
+{
+  "node": "Tree-0.1",
+  "discovery": "content_match",
+  "transcripts": [
+    "~/.claude/projects/<PROJECT>/c2331656-d559-49bc-b02f-d8920b1d9791.jsonl"
+  ],
+  "turns": [
+    {
+      "turn": 1,
+      "intent": "commit_tactic",
+      "payload_key": "elim: bs => [|b bs ih].",
+      "thinking_chars": 0,
+      "text_chars": 199,
+      "tokens": {
+        "output_tokens": 2089,
+        "input_tokens": 9,
+        "cache_read_input_tokens": 125430,
+        "cache_creation_input_tokens": 41594
+      },
+      "session_id": "c2331656-d559-49bc-b02f-d8920b1d9791",
+      "timestamp": "2026-06-12T00:45:21.795Z",
+      "file": "thinking/turn_001.md"
+    },
+    {
+      "turn": 2,
+      "intent": "commit_tactic",
+      "payload_key": "by rewrite /bs2os /= flatten_nil.",
+      "thinking_chars": 0,
+      "text_chars": 10,
+      "tokens": {
+        "output_tokens": 381,
+        "input_tokens": 2,
+        "cache_read_input_tokens": 36428,
+        "cache_creation_input_tokens": 1037
+      },
+      "session_id": "c2331656-d559-49bc-b02f-d8920b1d9791",
+      "timestamp": "2026-06-12T00:45:35.839Z",
+      "file": "thinking/turn_002.md"
+    }
+  ]
+}

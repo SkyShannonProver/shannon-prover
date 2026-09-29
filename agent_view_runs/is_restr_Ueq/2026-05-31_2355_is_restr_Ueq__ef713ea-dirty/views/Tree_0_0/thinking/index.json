@@ -1,0 +1,59 @@
+{
+  "node": "Tree-0.0",
+  "discovery": "recorded_session_id",
+  "transcripts": [
+    "~/.claude/projects/<PROJECT>/2e75d736-140d-4a8e-9742-884a1444224e.jsonl"
+  ],
+  "turns": [
+    {
+      "turn": 1,
+      "intent": "probe_tactic",
+      "payload_key": "move=> *; rewrite /is_restr; smt(restrS is_restrS is_restr_addS).",
+      "thinking_chars": 1207,
+      "text_chars": 238,
+      "session_id": "2e75d736-140d-4a8e-9742-884a1444224e",
+      "timestamp": "2026-06-01T06:55:29.867Z",
+      "file": "thinking/turn_001.md"
+    },
+    {
+      "turn": 2,
+      "intent": "probe_tactic",
+      "payload_key": "move=> h1 h2; rewrite eq_iff; split => [/fsetP heq | ->] //; apply fsetP => x; have := heq x; rewrite !in_fsetU !in_fset1; smt(nin_is_restr).",
+      "thinking_chars": 1465,
+      "text_chars": 284,
+      "session_id": "2e75d736-140d-4a8e-9742-884a1444224e",
+      "timestamp": "2026-06-01T06:56:06.116Z",
+      "file": "thinking/turn_002.md"
+    },
+    {
+      "turn": 3,
+      "intent": "commit_tactic",
+      "payload_key": "move=> h1 h2; rewrite eq_iff; split => [/fsetP heq | ->] //; apply fsetP => x; have := heq x; rewrite !in_fsetU !in_fset1; smt(nin_is_restr).",
+      "thinking_chars": 110,
+      "text_chars": 95,
+      "session_id": "2e75d736-140d-4a8e-9742-884a1444224e",
+      "timestamp": "2026-06-01T06:56:11.261Z",
+      "file": "thinking/turn_003.md"
+    },
+    {
+      "turn": 4,
+      "intent": "commit_tactic",
+      "payload_key": "qed.",
+      "thinking_chars": 120,
+      "text_chars": 67,
+      "session_id": "2e75d736-140d-4a8e-9742-884a1444224e",
+      "timestamp": "2026-06-01T06:56:15.526Z",
+      "file": "thinking/turn_004.md"
+    },
+    {
+      "turn": 5,
+      "intent": "finish",
+      "payload_key": "",
+      "thinking_chars": 170,
+      "text_chars": 58,
+      "session_id": "2e75d736-140d-4a8e-9742-884a1444224e",
+      "timestamp": "2026-06-01T06:56:20.004Z",
+      "file": "thinking/turn_005.md"
+    }
+  ]
+}

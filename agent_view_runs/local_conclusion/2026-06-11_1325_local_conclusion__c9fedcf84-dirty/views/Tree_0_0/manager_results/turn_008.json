@@ -1,0 +1,19 @@
+{
+  "turn": 8,
+  "handled_intent": {
+    "intent": "commit_tactic",
+    "payload": {
+      "tactic": "inline{1} CBCa.SKEa.RCPA.RCPA_Wrap(Random).enc; inline{2} CBCa.SKEa.RCPA.RCPA_Wrap(CBCa.SKEa.RCPA.Ideal).enc."
+    }
+  },
+  "ok": true,
+  "manager_note": "Committed tactic accepted; the EasyCrypt proof state changed.",
+  "manager_actions": [
+    {
+      "action": "tactic commit",
+      "outcome": "EasyCrypt accepted the committed tactic.",
+      "timing": "211 ms"
+    }
+  ],
+  "view_refreshed": true
+}

@@ -1,0 +1,49 @@
+{
+  "turn": 13,
+  "handled_intent": {
+    "intent": "undo_to_checkpoint",
+    "payload": {
+      "checkpoint_id": "cp_7_c5822fcae3bff6ca"
+    }
+  },
+  "ok": true,
+  "manager_note": "Checkpoint rewind was handled by the manager; the latest view is authoritative.",
+  "manager_actions": [
+    {
+      "action": "checkpoint rewind",
+      "outcome": "The manager rewound this branch to the selected checkpoint.",
+      "timing": "1.8 s"
+    },
+    {
+      "action": "replay prefix step 1",
+      "outcome": "The manager completed this proof-level request.",
+      "timing": "1.5 s"
+    },
+    {
+      "action": "replay prefix step 2",
+      "outcome": "The manager completed this proof-level request.",
+      "timing": "247 ms"
+    },
+    {
+      "action": "replay prefix step 3",
+      "outcome": "The manager completed this proof-level request.",
+      "timing": "233 ms"
+    },
+    {
+      "action": "replay prefix step 4",
+      "outcome": "The manager completed this proof-level request.",
+      "timing": "232 ms"
+    },
+    {
+      "action": "replay prefix step 5",
+      "outcome": "The manager completed this proof-level request.",
+      "timing": "236 ms"
+    },
+    {
+      "action": "replay prefix step 6",
+      "outcome": "The manager completed this proof-level request.",
+      "timing": "248 ms"
+    }
+  ],
+  "view_refreshed": true
+}

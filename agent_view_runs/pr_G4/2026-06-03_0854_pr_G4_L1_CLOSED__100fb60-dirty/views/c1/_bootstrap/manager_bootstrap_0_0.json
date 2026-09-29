@@ -1,0 +1,1123 @@
+{
+  "file": "artifacts/eval_suite/prg4_l1_opus48/l1_goal_projection/cs_pr_G4/r01/source/cramer-shoup/cramer_shoup.ec",
+  "include_dirs": [
+    "artifacts/eval_suite/prg4_l1_opus48/l1_goal_projection/cs_pr_G4/r01/source/cramer-shoup",
+    "easycrypt-src/theories"
+  ],
+  "kind": "manager_session_bootstrap",
+  "lemma": "pr_G4",
+  "manager_actions": [
+    {
+      "agent_observation": {
+        "effect": "This manager intent does not change the EasyCrypt proof state.",
+        "manager_action": "start",
+        "result": "The manager completed this proof-level request."
+      },
+      "argv": [
+        "/Library/Developer/CommandLineTools/usr/bin/python3",
+        "core/easycrypt/session_cli.py",
+        "-d",
+        ".ec_session_prover_tree_0_0",
+        "-start",
+        "-f",
+        "artifacts/eval_suite/prg4_l1_opus48/l1_goal_projection/cs_pr_G4/r01/source/cramer-shoup/cramer_shoup.ec",
+        "-I",
+        "artifacts/eval_suite/prg4_l1_opus48/l1_goal_projection/cs_pr_G4/r01/source/cramer-shoup",
+        "-I",
+        "easycrypt-src/theories",
+        "-lemma",
+        "pr_G4"
+      ],
+      "duration_ms": 1654,
+      "exit_code": 0,
+      "label": "start",
+      "mutates_proof_state": true,
+      "stderr_chars": 0,
+      "stderr_preview": "",
+      "stdout_chars": 30840,
+      "stdout_has_workspace_view": true,
+      "stdout_lines": 779
+    },
+    {
+      "agent_observation": {
+        "effect": "EasyCrypt accepted a proof-state change; the refreshed view is based on the new committed state.",
+        "manager_action": "replay_prefix_step_1",
+        "proof_state": "The committed EasyCrypt proof state changed.",
+        "result": "The manager completed this proof-level request.",
+        "tactic": "byphoare => //."
+      },
+      "argv": [
+        "/Library/Developer/CommandLineTools/usr/bin/python3",
+        "core/easycrypt/session_cli.py",
+        "-d",
+        ".ec_session_prover_tree_0_0",
+        "-next",
+        "-c",
+        "byphoare => //."
+      ],
+      "duration_ms": 1728,
+      "exit_code": 0,
+      "label": "replay_prefix_step_1",
+      "mutates_proof_state": true,
+      "stderr_chars": 0,
+      "stderr_preview": "",
+      "stdout_chars": 11273,
+      "stdout_has_workspace_view": true,
+      "stdout_lines": 2
+    },
+    {
+      "agent_observation": {
+        "effect": "EasyCrypt accepted a proof-state change; the refreshed view is based on the new committed state.",
+        "manager_action": "replay_prefix_step_2",
+        "proof_state": "The committed EasyCrypt proof state changed.",
+        "result": "The manager completed this proof-level request.",
+        "tactic": "proc."
+      },
+      "argv": [
+        "/Library/Developer/CommandLineTools/usr/bin/python3",
+        "core/easycrypt/session_cli.py",
+        "-d",
+        ".ec_session_prover_tree_0_0",
+        "-next",
+        "-c",
+        "proc."
+      ],
+      "duration_ms": 257,
+      "exit_code": 0,
+      "label": "replay_prefix_step_2",
+      "mutates_proof_state": true,
+      "stderr_chars": 0,
+      "stderr_preview": "",
+      "stdout_chars": 37062,
+      "stdout_has_workspace_view": true,
+      "stdout_lines": 2
+    },
+    {
+      "agent_observation": {
+        "effect": "EasyCrypt accepted a proof-state change; the refreshed view is based on the new committed state.",
+        "manager_action": "replay_prefix_step_3",
+        "proof_state": "The committed EasyCrypt proof state changed.",
+        "result": "The manager completed this proof-level request.",
+        "tactic": "seq 21 : ((G3.a, G3.a_, G3.c, G3.d) \\in G3.cilog) ((PKE_.qD%r / order%r) ^ 3 * (PKE_.qD%r / (order - 1)%r)) 1%r 1%r 0%r."
+      },
+      "argv": [
+        "/Library/Developer/CommandLineTools/usr/bin/python3",
+        "core/easycrypt/session_cli.py",
+        "-d",
+        ".ec_session_prover_tree_0_0",
+        "-next",
+        "-c",
+        "seq 21 : ((G3.a, G3.a_, G3.c, G3.d) \\in G3.cilog) ((PKE_.qD%r / order%r) ^ 3 * (PKE_.qD%r / (order - 1)%r)) 1%r 1%r 0%r."
+      ],
+      "duration_ms": 241,
+      "exit_code": 0,
+      "label": "replay_prefix_step_3",
+      "mutates_proof_state": true,
+      "stderr_chars": 0,
+      "stderr_preview": "",
+      "stdout_chars": 16886,
+      "stdout_has_workspace_view": true,
+      "stdout_lines": 2
+    },
+    {
+      "agent_observation": {
+        "effect": "EasyCrypt accepted a proof-state change; the refreshed view is based on the new committed state.",
+        "manager_action": "replay_prefix_step_4",
+        "proof_state": "The committed EasyCrypt proof state changed.",
+        "result": "The manager completed this proof-level request.",
+        "tactic": "have ll_dec : islossless G4.O.dec by islossless."
+      },
+      "argv": [
+        "/Library/Developer/CommandLineTools/usr/bin/python3",
+        "core/easycrypt/session_cli.py",
+        "-d",
+        ".ec_session_prover_tree_0_0",
+        "-next",
+        "-c",
+        "have ll_dec : islossless G4.O.dec by islossless."
+      ],
+      "duration_ms": 234,
+      "exit_code": 0,
+      "label": "replay_prefix_step_4",
+      "mutates_proof_state": true,
+      "stderr_chars": 0,
+      "stderr_preview": "",
+      "stdout_chars": 16841,
+      "stdout_has_workspace_view": true,
+      "stdout_lines": 2
+    },
+    {
+      "agent_observation": {
+        "effect": "EasyCrypt accepted a proof-state change; the refreshed view is based on the new committed state.",
+        "manager_action": "replay_prefix_step_5",
+        "proof_state": "The committed EasyCrypt proof state changed.",
+        "result": "The manager completed this proof-level request.",
+        "tactic": "wp."
+      },
+      "argv": [
+        "/Library/Developer/CommandLineTools/usr/bin/python3",
+        "core/easycrypt/session_cli.py",
+        "-d",
+        ".ec_session_prover_tree_0_0",
+        "-next",
+        "-c",
+        "wp."
+      ],
+      "duration_ms": 228,
+      "exit_code": 0,
+      "label": "replay_prefix_step_5",
+      "mutates_proof_state": true,
+      "stderr_chars": 0,
+      "stderr_preview": "",
+      "stdout_chars": 15967,
+      "stdout_has_workspace_view": true,
+      "stdout_lines": 2
+    },
+    {
+      "agent_observation": {
+        "effect": "EasyCrypt accepted a proof-state change; the refreshed view is based on the new committed state.",
+        "manager_action": "replay_prefix_step_6",
+        "proof_state": "The committed EasyCrypt proof state changed.",
+        "result": "The manager completed this proof-level request.",
+        "tactic": "auto; call (_: true); auto."
+      },
+      "argv": [
+        "/Library/Developer/CommandLineTools/usr/bin/python3",
+        "core/easycrypt/session_cli.py",
+        "-d",
+        ".ec_session_prover_tree_0_0",
+        "-next",
+        "-c",
+        "auto; call (_: true); auto."
+      ],
+      "duration_ms": 242,
+      "exit_code": 0,
+      "label": "replay_prefix_step_6",
+      "mutates_proof_state": true,
+      "stderr_chars": 0,
+      "stderr_preview": "",
+      "stdout_chars": 36177,
+      "stdout_has_workspace_view": true,
+      "stdout_lines": 2
+    },
+    {
+      "agent_observation": {
+        "effect": "EasyCrypt accepted a proof-state change; the refreshed view is based on the new committed state.",
+        "manager_action": "replay_prefix_step_7",
+        "proof_state": "The committed EasyCrypt proof state changed.",
+        "result": "The manager completed this proof-level request.",
+        "tactic": "seq 13 : (size G3.cilog <= PKE_.qD /\\ G1.w <> zero /\\ G1.g_ = g ^ G1.w) 1%r ((PKE_.qD%r / order%r) ^ 3 * (PKE_.qD%r / (order - 1)%r)) 0%r 1%r."
+      },
+      "argv": [
+        "/Library/Developer/CommandLineTools/usr/bin/python3",
+        "core/easycrypt/session_cli.py",
+        "-d",
+        ".ec_session_prover_tree_0_0",
+        "-next",
+        "-c",
+        "seq 13 : (size G3.cilog <= PKE_.qD /\\ G1.w <> zero /\\ G1.g_ = g ^ G1.w) 1%r ((PKE_.qD%r / order%r) ^ 3 * (PKE_.qD%r / (order - 1)%r)) 0%r 1%r."
+      ],
+      "duration_ms": 228,
+      "exit_code": 0,
+      "label": "replay_prefix_step_7",
+      "mutates_proof_state": true,
+      "stderr_chars": 0,
+      "stderr_preview": "",
+      "stdout_chars": 15658,
+      "stdout_has_workspace_view": true,
+      "stdout_lines": 2
+    },
+    {
+      "agent_observation": {
+        "effect": "EasyCrypt accepted a proof-state change; the refreshed view is based on the new committed state.",
+        "manager_action": "replay_prefix_step_8",
+        "proof_state": "The committed EasyCrypt proof state changed.",
+        "result": "The manager completed this proof-level request.",
+        "tactic": "auto; call (_: true); auto."
+      },
+      "argv": [
+        "/Library/Developer/CommandLineTools/usr/bin/python3",
+        "core/easycrypt/session_cli.py",
+        "-d",
+        ".ec_session_prover_tree_0_0",
+        "-next",
+        "-c",
+        "auto; call (_: true); auto."
+      ],
+      "duration_ms": 226,
+      "exit_code": 0,
+      "label": "replay_prefix_step_8",
+      "mutates_proof_state": true,
+      "stderr_chars": 0,
+      "stderr_preview": "",
+      "stdout_chars": 15613,
+      "stdout_has_workspace_view": true,
+      "stdout_lines": 2
+    },
+    {
+      "agent_observation": {
+        "effect": "EasyCrypt accepted a proof-state change; the refreshed view is based on the new committed state.",
+        "manager_action": "replay_prefix_step_9",
+        "proof_state": "The committed EasyCrypt proof state changed.",
+        "result": "The manager completed this proof-level request.",
+        "tactic": "auto; call (_: true); auto."
+      },
+      "argv": [
+        "/Library/Developer/CommandLineTools/usr/bin/python3",
+        "core/easycrypt/session_cli.py",
+        "-d",
+        ".ec_session_prover_tree_0_0",
+        "-next",
+        "-c",
+        "auto; call (_: true); auto."
+      ],
+      "duration_ms": 236,
+      "exit_code": 0,
+      "label": "replay_prefix_step_9",
+      "mutates_proof_state": true,
+      "stderr_chars": 0,
+      "stderr_preview": "",
+      "stdout_chars": 65833,
+      "stdout_has_workspace_view": true,
+      "stdout_lines": 2
+    },
+    {
+      "agent_observation": {
+        "effect": "EasyCrypt accepted a proof-state change; the refreshed view is based on the new committed state.",
+        "manager_action": "replay_prefix_step_10",
+        "proof_state": "The committed EasyCrypt proof state changed.",
+        "result": "The manager completed this proof-level request.",
+        "tactic": "wp."
+      },
+      "argv": [
+        "/Library/Developer/CommandLineTools/usr/bin/python3",
+        "core/easycrypt/session_cli.py",
+        "-d",
+        ".ec_session_prover_tree_0_0",
+        "-next",
+        "-c",
+        "wp."
+      ],
+      "duration_ms": 236,
+      "exit_code": 0,
+      "label": "replay_prefix_step_10",
+      "mutates_proof_state": true,
+      "stderr_chars": 0,
+      "stderr_preview": "",
+      "stdout_chars": 63990,
+      "stdout_has_workspace_view": true,
+      "stdout_lines": 2
+    },
+    {
+      "agent_observation": {
+        "effect": "EasyCrypt accepted a proof-state change; the refreshed view is based on the new committed state.",
+        "manager_action": "replay_prefix_step_11",
+        "proof_state": "The committed EasyCrypt proof state changed.",
+        "result": "The manager completed this proof-level request.",
+        "tactic": "conseq (: _ ==> ((g ^ G1.u, G1.g_ ^ G1.u', g ^ r', g ^ r) \\in G3.cilog)) (: _ ==> size G3.cilog <= PKE_.qD /\\ G1.w <> zero /\\ G1.g_ = g ^ G1.w)."
+      },
+      "argv": [
+        "/Library/Developer/CommandLineTools/usr/bin/python3",
+        "core/easycrypt/session_cli.py",
+        "-d",
+        ".ec_session_prover_tree_0_0",
+        "-next",
+        "-c",
+        "conseq (: _ ==> ((g ^ G1.u, G1.g_ ^ G1.u', g ^ r', g ^ r) \\in G3.cilog)) (: _ ==> size G3.cilog <= PKE_.qD /\\ G1.w <> zero /\\ G1.g_ = g ^ G1.w)."
+      ],
+      "duration_ms": 219,
+      "exit_code": 0,
+      "label": "replay_prefix_step_11",
+      "mutates_proof_state": true,
+      "stderr_chars": 0,
+      "stderr_preview": "",
+      "stdout_chars": 8185,
+      "stdout_has_workspace_view": true,
+      "stdout_lines": 2
+    },
+    {
+      "agent_observation": {
+        "effect": "EasyCrypt accepted a proof-state change; the refreshed view is based on the new committed state.",
+        "manager_action": "replay_prefix_step_12",
+        "proof_state": "The committed EasyCrypt proof state changed.",
+        "result": "The manager completed this proof-level request.",
+        "tactic": "by move=> &hr />."
+      },
+      "argv": [
+        "/Library/Developer/CommandLineTools/usr/bin/python3",
+        "core/easycrypt/session_cli.py",
+        "-d",
+        ".ec_session_prover_tree_0_0",
+        "-next",
+        "-c",
+        "by move=> &hr />."
+      ],
+      "duration_ms": 232,
+      "exit_code": 0,
+      "label": "replay_prefix_step_12",
+      "mutates_proof_state": true,
+      "stderr_chars": 0,
+      "stderr_preview": "",
+      "stdout_chars": 13352,
+      "stdout_has_workspace_view": true,
+      "stdout_lines": 2
+    },
+    {
+      "agent_observation": {
+        "effect": "EasyCrypt accepted a proof-state change; the refreshed view is based on the new committed state.",
+        "manager_action": "replay_prefix_step_13",
+        "proof_state": "The committed EasyCrypt proof state changed.",
+        "result": "The manager completed this proof-level request.",
+        "tactic": "auto."
+      },
+      "argv": [
+        "/Library/Developer/CommandLineTools/usr/bin/python3",
+        "core/easycrypt/session_cli.py",
+        "-d",
+        ".ec_session_prover_tree_0_0",
+        "-next",
+        "-c",
+        "auto."
+      ],
+      "duration_ms": 234,
+      "exit_code": 0,
+      "label": "replay_prefix_step_13",
+      "mutates_proof_state": true,
+      "stderr_chars": 0,
+      "stderr_preview": "",
+      "stdout_chars": 64278,
+      "stdout_has_workspace_view": true,
+      "stdout_lines": 2
+    },
+    {
+      "agent_observation": {
+        "effect": "EasyCrypt accepted a proof-state change; the refreshed view is based on the new committed state.",
+        "manager_action": "replay_prefix_step_14",
+        "proof_state": "The committed EasyCrypt proof state changed.",
+        "result": "The manager completed this proof-level request.",
+        "tactic": "conseq (: _ ==> ((g ^ G1.u, G1.g_ ^ G1.u', g ^ r', g ^ r) \\in G3.cilog) /\\ size G3.cilog <= PKE_.qD /\\ G1.w <> zero /\\ G1.g_ = g ^ G1.w) (: _ ==> size G3.cilog <= PKE_.qD /\\ G1.w <> zero /\\ G1.g_ = g ^ G1.w)."
+      },
+      "argv": [
+        "/Library/Developer/CommandLineTools/usr/bin/python3",
+        "core/easycrypt/session_cli.py",
+        "-d",
+        ".ec_session_prover_tree_0_0",
+        "-next",
+        "-c",
+        "conseq (: _ ==> ((g ^ G1.u, G1.g_ ^ G1.u', g ^ r', g ^ r) \\in G3.cilog) /\\ size G3.cilog <= PKE_.qD /\\ G1.w <> zero /\\ G1.g_ = g ^ G1.w) (: _ ==> size G3.cilog <= PKE_.qD /\\ G1.w <> zero /\\ G1.g_ = g ^ G1.w)."
+      ],
+      "duration_ms": 223,
+      "exit_code": 0,
+      "label": "replay_prefix_step_14",
+      "mutates_proof_state": true,
+      "stderr_chars": 0,
+      "stderr_preview": "",
+      "stdout_chars": 8252,
+      "stdout_has_workspace_view": true,
+      "stdout_lines": 2
+    },
+    {
+      "agent_observation": {
+        "effect": "EasyCrypt accepted a proof-state change; the refreshed view is based on the new committed state.",
+        "manager_action": "replay_prefix_step_15",
+        "proof_state": "The committed EasyCrypt proof state changed.",
+        "result": "The manager completed this proof-level request.",
+        "tactic": "by move=> &hr />."
+      },
+      "argv": [
+        "/Library/Developer/CommandLineTools/usr/bin/python3",
+        "core/easycrypt/session_cli.py",
+        "-d",
+        ".ec_session_prover_tree_0_0",
+        "-next",
+        "-c",
+        "by move=> &hr />."
+      ],
+      "duration_ms": 223,
+      "exit_code": 0,
+      "label": "replay_prefix_step_15",
+      "mutates_proof_state": true,
+      "stderr_chars": 0,
+      "stderr_preview": "",
+      "stdout_chars": 8822,
+      "stdout_has_workspace_view": true,
+      "stdout_lines": 2
+    },
+    {
+      "agent_observation": {
+        "effect": "EasyCrypt accepted a proof-state change; the refreshed view is based on the new committed state.",
+        "manager_action": "replay_prefix_step_16",
+        "proof_state": "The committed EasyCrypt proof state changed.",
+        "result": "The manager completed this proof-level request.",
+        "tactic": "by move=> &hr /> *."
+      },
+      "argv": [
+        "/Library/Developer/CommandLineTools/usr/bin/python3",
+        "core/easycrypt/session_cli.py",
+        "-d",
+        ".ec_session_prover_tree_0_0",
+        "-next",
+        "-c",
+        "by move=> &hr /> *."
+      ],
+      "duration_ms": 225,
+      "exit_code": 0,
+      "label": "replay_prefix_step_16",
+      "mutates_proof_state": true,
+      "stderr_chars": 0,
+      "stderr_preview": "",
+      "stdout_chars": 13403,
+      "stdout_has_workspace_view": true,
+      "stdout_lines": 2
+    },
+    {
+      "agent_observation": {
+        "effect": "EasyCrypt accepted a proof-state change; the refreshed view is based on the new committed state.",
+        "manager_action": "replay_prefix_step_17",
+        "proof_state": "The committed EasyCrypt proof state changed.",
+        "result": "The manager completed this proof-level request.",
+        "tactic": "auto."
+      },
+      "argv": [
+        "/Library/Developer/CommandLineTools/usr/bin/python3",
+        "core/easycrypt/session_cli.py",
+        "-d",
+        ".ec_session_prover_tree_0_0",
+        "-next",
+        "-c",
+        "auto."
+      ],
+      "duration_ms": 239,
+      "exit_code": 0,
+      "label": "replay_prefix_step_17",
+      "mutates_proof_state": true,
+      "stderr_chars": 0,
+      "stderr_preview": "",
+      "stdout_chars": 65481,
+      "stdout_has_workspace_view": true,
+      "stdout_lines": 2
+    },
+    {
+      "agent_observation": {
+        "effect": "This manager intent does not change the EasyCrypt proof state.",
+        "manager_action": "agent_view",
+        "result": "The manager completed this proof-level request."
+      },
+      "argv": [
+        "/Library/Developer/CommandLineTools/usr/bin/python3",
+        "core/easycrypt/session_cli.py",
+        "-d",
+        ".ec_session_prover_tree_0_0",
+        "-agent-view"
+      ],
+      "duration_ms": 248,
+      "exit_code": 0,
+      "label": "agent_view",
+      "mutates_proof_state": false,
+      "stderr_chars": 0,
+      "stderr_preview": "",
+      "stdout_chars": 88328,
+      "stdout_has_workspace_view": true,
+      "stdout_lines": 1812
+    }
+  ],
+  "node": "Tree-0.0",
+  "replay_prefix": [
+    "byphoare => //.",
+    "proc.",
+    "seq 21 : ((G3.a, G3.a_, G3.c, G3.d) \\in G3.cilog) ((PKE_.qD%r / order%r) ^ 3 * (PKE_.qD%r / (order - 1)%r)) 1%r 1%r 0%r.",
+    "have ll_dec : islossless G4.O.dec by islossless.",
+    "wp.",
+    "auto; call (_: true); auto.",
+    "seq 13 : (size G3.cilog <= PKE_.qD /\\ G1.w <> zero /\\ G1.g_ = g ^ G1.w) 1%r ((PKE_.qD%r / order%r) ^ 3 * (PKE_.qD%r / (order - 1)%r)) 0%r 1%r.",
+    "auto; call (_: true); auto.",
+    "auto; call (_: true); auto.",
+    "wp.",
+    "conseq (: _ ==> ((g ^ G1.u, G1.g_ ^ G1.u', g ^ r', g ^ r) \\in G3.cilog)) (: _ ==> size G3.cilog <= PKE_.qD /\\ G1.w <> zero /\\ G1.g_ = g ^ G1.w).",
+    "by move=> &hr />.",
+    "auto.",
+    "conseq (: _ ==> ((g ^ G1.u, G1.g_ ^ G1.u', g ^ r', g ^ r) \\in G3.cilog) /\\ size G3.cilog <= PKE_.qD /\\ G1.w <> zero /\\ G1.g_ = g ^ G1.w) (: _ ==> size G3.cilog <= PKE_.qD /\\ G1.w <> zero /\\ G1.g_ = g ^ G1.w).",
+    "by move=> &hr />.",
+    "by move=> &hr /> *.",
+    "auto."
+  ],
+  "replay_prefix_count": 17,
+  "schema_version": 2,
+  "session_dir": ".ec_session_prover_tree_0_0",
+  "session_tag": "prover_tree_0_0",
+  "snapshot": {
+    "execution_refs": {
+      "manager_action_count": 19,
+      "manager_actions": [
+        {
+          "agent_observation": {
+            "effect": "This manager intent does not change the EasyCrypt proof state.",
+            "manager_action": "start",
+            "result": "The manager completed this proof-level request."
+          },
+          "argv": [
+            "/Library/Developer/CommandLineTools/usr/bin/python3",
+            "core/easycrypt/session_cli.py",
+            "-d",
+            ".ec_session_prover_tree_0_0",
+            "-start",
+            "-f",
+            "artifacts/eval_suite/prg4_l1_opus48/l1_goal_projection/cs_pr_G4/r01/source/cramer-shoup/cramer_shoup.ec",
+            "-I",
+            "artifacts/eval_suite/prg4_l1_opus48/l1_goal_projection/cs_pr_G4/r01/source/cramer-shoup",
+            "-I",
+            "easycrypt-src/theories",
+            "-lemma",
+            "pr_G4"
+          ],
+          "duration_ms": 1654,
+          "exit_code": 0,
+          "label": "start",
+          "mutates_proof_state": true,
+          "stderr_chars": 0,
+          "stderr_preview": "",
+          "stdout_chars": 30840,
+          "stdout_has_workspace_view": true,
+          "stdout_lines": 779
+        },
+        {
+          "agent_observation": {
+            "effect": "EasyCrypt accepted a proof-state change; the refreshed view is based on the new committed state.",
+            "manager_action": "replay_prefix_step_1",
+            "proof_state": "The committed EasyCrypt proof state changed.",
+            "result": "The manager completed this proof-level request.",
+            "tactic": "byphoare => //."
+          },
+          "argv": [
+            "/Library/Developer/CommandLineTools/usr/bin/python3",
+            "core/easycrypt/session_cli.py",
+            "-d",
+            ".ec_session_prover_tree_0_0",
+            "-next",
+            "-c",
+            "byphoare => //."
+          ],
+          "duration_ms": 1728,
+          "exit_code": 0,
+          "label": "replay_prefix_step_1",
+          "mutates_proof_state": true,
+          "stderr_chars": 0,
+          "stderr_preview": "",
+          "stdout_chars": 11273,
+          "stdout_has_workspace_view": true,
+          "stdout_lines": 2
+        },
+        {
+          "agent_observation": {
+            "effect": "EasyCrypt accepted a proof-state change; the refreshed view is based on the new committed state.",
+            "manager_action": "replay_prefix_step_2",
+            "proof_state": "The committed EasyCrypt proof state changed.",
+            "result": "The manager completed this proof-level request.",
+            "tactic": "proc."
+          },
+          "argv": [
+            "/Library/Developer/CommandLineTools/usr/bin/python3",
+            "core/easycrypt/session_cli.py",
+            "-d",
+            ".ec_session_prover_tree_0_0",
+            "-next",
+            "-c",
+            "proc."
+          ],
+          "duration_ms": 257,
+          "exit_code": 0,
+          "label": "replay_prefix_step_2",
+          "mutates_proof_state": true,
+          "stderr_chars": 0,
+          "stderr_preview": "",
+          "stdout_chars": 37062,
+          "stdout_has_workspace_view": true,
+          "stdout_lines": 2
+        },
+        {
+          "agent_observation": {
+            "effect": "EasyCrypt accepted a proof-state change; the refreshed view is based on the new committed state.",
+            "manager_action": "replay_prefix_step_3",
+            "proof_state": "The committed EasyCrypt proof state changed.",
+            "result": "The manager completed this proof-level request.",
+            "tactic": "seq 21 : ((G3.a, G3.a_, G3.c, G3.d) \\in G3.cilog) ((PKE_.qD%r / order%r) ^ 3 * (PKE_.qD%r / (order - 1)%r)) 1%r 1%r 0%r."
+          },
+          "argv": [
+            "/Library/Developer/CommandLineTools/usr/bin/python3",
+            "core/easycrypt/session_cli.py",
+            "-d",
+            ".ec_session_prover_tree_0_0",
+            "-next",
+            "-c",
+            "seq 21 : ((G3.a, G3.a_, G3.c, G3.d) \\in G3.cilog) ((PKE_.qD%r / order%r) ^ 3 * (PKE_.qD%r / (order - 1)%r)) 1%r 1%r 0%r."
+          ],
+          "duration_ms": 241,
+          "exit_code": 0,
+          "label": "replay_prefix_step_3",
+          "mutates_proof_state": true,
+          "stderr_chars": 0,
+          "stderr_preview": "",
+          "stdout_chars": 16886,
+          "stdout_has_workspace_view": true,
+          "stdout_lines": 2
+        },
+        {
+          "agent_observation": {
+            "effect": "EasyCrypt accepted a proof-state change; the refreshed view is based on the new committed state.",
+            "manager_action": "replay_prefix_step_4",
+            "proof_state": "The committed EasyCrypt proof state changed.",
+            "result": "The manager completed this proof-level request.",
+            "tactic": "have ll_dec : islossless G4.O.dec by islossless."
+          },
+          "argv": [
+            "/Library/Developer/CommandLineTools/usr/bin/python3",
+            "core/easycrypt/session_cli.py",
+            "-d",
+            ".ec_session_prover_tree_0_0",
+            "-next",
+            "-c",
+            "have ll_dec : islossless G4.O.dec by islossless."
+          ],
+          "duration_ms": 234,
+          "exit_code": 0,
+          "label": "replay_prefix_step_4",
+          "mutates_proof_state": true,
+          "stderr_chars": 0,
+          "stderr_preview": "",
+          "stdout_chars": 16841,
+          "stdout_has_workspace_view": true,
+          "stdout_lines": 2
+        },
+        {
+          "agent_observation": {
+            "effect": "EasyCrypt accepted a proof-state change; the refreshed view is based on the new committed state.",
+            "manager_action": "replay_prefix_step_5",
+            "proof_state": "The committed EasyCrypt proof state changed.",
+            "result": "The manager completed this proof-level request.",
+            "tactic": "wp."
+          },
+          "argv": [
+            "/Library/Developer/CommandLineTools/usr/bin/python3",
+            "core/easycrypt/session_cli.py",
+            "-d",
+            ".ec_session_prover_tree_0_0",
+            "-next",
+            "-c",
+            "wp."
+          ],
+          "duration_ms": 228,
+          "exit_code": 0,
+          "label": "replay_prefix_step_5",
+          "mutates_proof_state": true,
+          "stderr_chars": 0,
+          "stderr_preview": "",
+          "stdout_chars": 15967,
+          "stdout_has_workspace_view": true,
+          "stdout_lines": 2
+        },
+        {
+          "agent_observation": {
+            "effect": "EasyCrypt accepted a proof-state change; the refreshed view is based on the new committed state.",
+            "manager_action": "replay_prefix_step_6",
+            "proof_state": "The committed EasyCrypt proof state changed.",
+            "result": "The manager completed this proof-level request.",
+            "tactic": "auto; call (_: true); auto."
+          },
+          "argv": [
+            "/Library/Developer/CommandLineTools/usr/bin/python3",
+            "core/easycrypt/session_cli.py",
+            "-d",
+            ".ec_session_prover_tree_0_0",
+            "-next",
+            "-c",
+            "auto; call (_: true); auto."
+          ],
+          "duration_ms": 242,
+          "exit_code": 0,
+          "label": "replay_prefix_step_6",
+          "mutates_proof_state": true,
+          "stderr_chars": 0,
+          "stderr_preview": "",
+          "stdout_chars": 36177,
+          "stdout_has_workspace_view": true,
+          "stdout_lines": 2
+        },
+        {
+          "agent_observation": {
+            "effect": "EasyCrypt accepted a proof-state change; the refreshed view is based on the new committed state.",
+            "manager_action": "replay_prefix_step_7",
+            "proof_state": "The committed EasyCrypt proof state changed.",
+            "result": "The manager completed this proof-level request.",
+            "tactic": "seq 13 : (size G3.cilog <= PKE_.qD /\\ G1.w <> zero /\\ G1.g_ = g ^ G1.w) 1%r ((PKE_.qD%r / order%r) ^ 3 * (PKE_.qD%r / (order - 1)%r)) 0%r 1%r."
+          },
+          "argv": [
+            "/Library/Developer/CommandLineTools/usr/bin/python3",
+            "core/easycrypt/session_cli.py",
+            "-d",
+            ".ec_session_prover_tree_0_0",
+            "-next",
+            "-c",
+            "seq 13 : (size G3.cilog <= PKE_.qD /\\ G1.w <> zero /\\ G1.g_ = g ^ G1.w) 1%r ((PKE_.qD%r / order%r) ^ 3 * (PKE_.qD%r / (order - 1)%r)) 0%r 1%r."
+          ],
+          "duration_ms": 228,
+          "exit_code": 0,
+          "label": "replay_prefix_step_7",
+          "mutates_proof_state": true,
+          "stderr_chars": 0,
+          "stderr_preview": "",
+          "stdout_chars": 15658,
+          "stdout_has_workspace_view": true,
+          "stdout_lines": 2
+        },
+        {
+          "agent_observation": {
+            "effect": "EasyCrypt accepted a proof-state change; the refreshed view is based on the new committed state.",
+            "manager_action": "replay_prefix_step_8",
+            "proof_state": "The committed EasyCrypt proof state changed.",
+            "result": "The manager completed this proof-level request.",
+            "tactic": "auto; call (_: true); auto."
+          },
+          "argv": [
+            "/Library/Developer/CommandLineTools/usr/bin/python3",
+            "core/easycrypt/session_cli.py",
+            "-d",
+            ".ec_session_prover_tree_0_0",
+            "-next",
+            "-c",
+            "auto; call (_: true); auto."
+          ],
+          "duration_ms": 226,
+          "exit_code": 0,
+          "label": "replay_prefix_step_8",
+          "mutates_proof_state": true,
+          "stderr_chars": 0,
+          "stderr_preview": "",
+          "stdout_chars": 15613,
+          "stdout_has_workspace_view": true,
+          "stdout_lines": 2
+        },
+        {
+          "agent_observation": {
+            "effect": "EasyCrypt accepted a proof-state change; the refreshed view is based on the new committed state.",
+            "manager_action": "replay_prefix_step_9",
+            "proof_state": "The committed EasyCrypt proof state changed.",
+            "result": "The manager completed this proof-level request.",
+            "tactic": "auto; call (_: true); auto."
+          },
+          "argv": [
+            "/Library/Developer/CommandLineTools/usr/bin/python3",
+            "core/easycrypt/session_cli.py",
+            "-d",
+            ".ec_session_prover_tree_0_0",
+            "-next",
+            "-c",
+            "auto; call (_: true); auto."
+          ],
+          "duration_ms": 236,
+          "exit_code": 0,
+          "label": "replay_prefix_step_9",
+          "mutates_proof_state": true,
+          "stderr_chars": 0,
+          "stderr_preview": "",
+          "stdout_chars": 65833,
+          "stdout_has_workspace_view": true,
+          "stdout_lines": 2
+        },
+        {
+          "agent_observation": {
+            "effect": "EasyCrypt accepted a proof-state change; the refreshed view is based on the new committed state.",
+            "manager_action": "replay_prefix_step_10",
+            "proof_state": "The committed EasyCrypt proof state changed.",
+            "result": "The manager completed this proof-level request.",
+            "tactic": "wp."
+          },
+          "argv": [
+            "/Library/Developer/CommandLineTools/usr/bin/python3",
+            "core/easycrypt/session_cli.py",
+            "-d",
+            ".ec_session_prover_tree_0_0",
+            "-next",
+            "-c",
+            "wp."
+          ],
+          "duration_ms": 236,
+          "exit_code": 0,
+          "label": "replay_prefix_step_10",
+          "mutates_proof_state": true,
+          "stderr_chars": 0,
+          "stderr_preview": "",
+          "stdout_chars": 63990,
+          "stdout_has_workspace_view": true,
+          "stdout_lines": 2
+        },
+        {
+          "agent_observation": {
+            "effect": "EasyCrypt accepted a proof-state change; the refreshed view is based on the new committed state.",
+            "manager_action": "replay_prefix_step_11",
+            "proof_state": "The committed EasyCrypt proof state changed.",
+            "result": "The manager completed this proof-level request.",
+            "tactic": "conseq (: _ ==> ((g ^ G1.u, G1.g_ ^ G1.u', g ^ r', g ^ r) \\in G3.cilog)) (: _ ==> size G3.cilog <= PKE_.qD /\\ G1.w <> zero /\\ G1.g_ = g ^ G1.w)."
+          },
+          "argv": [
+            "/Library/Developer/CommandLineTools/usr/bin/python3",
+            "core/easycrypt/session_cli.py",
+            "-d",
+            ".ec_session_prover_tree_0_0",
+            "-next",
+            "-c",
+            "conseq (: _ ==> ((g ^ G1.u, G1.g_ ^ G1.u', g ^ r', g ^ r) \\in G3.cilog)) (: _ ==> size G3.cilog <= PKE_.qD /\\ G1.w <> zero /\\ G1.g_ = g ^ G1.w)."
+          ],
+          "duration_ms": 219,
+          "exit_code": 0,
+          "label": "replay_prefix_step_11",
+          "mutates_proof_state": true,
+          "stderr_chars": 0,
+          "stderr_preview": "",
+          "stdout_chars": 8185,
+          "stdout_has_workspace_view": true,
+          "stdout_lines": 2
+        },
+        {
+          "agent_observation": {
+            "effect": "EasyCrypt accepted a proof-state change; the refreshed view is based on the new committed state.",
+            "manager_action": "replay_prefix_step_12",
+            "proof_state": "The committed EasyCrypt proof state changed.",
+            "result": "The manager completed this proof-level request.",
+            "tactic": "by move=> &hr />."
+          },
+          "argv": [
+            "/Library/Developer/CommandLineTools/usr/bin/python3",
+            "core/easycrypt/session_cli.py",
+            "-d",
+            ".ec_session_prover_tree_0_0",
+            "-next",
+            "-c",
+            "by move=> &hr />."
+          ],
+          "duration_ms": 232,
+          "exit_code": 0,
+          "label": "replay_prefix_step_12",
+          "mutates_proof_state": true,
+          "stderr_chars": 0,
+          "stderr_preview": "",
+          "stdout_chars": 13352,
+          "stdout_has_workspace_view": true,
+          "stdout_lines": 2
+        },
+        {
+          "agent_observation": {
+            "effect": "EasyCrypt accepted a proof-state change; the refreshed view is based on the new committed state.",
+            "manager_action": "replay_prefix_step_13",
+            "proof_state": "The committed EasyCrypt proof state changed.",
+            "result": "The manager completed this proof-level request.",
+            "tactic": "auto."
+          },
+          "argv": [
+            "/Library/Developer/CommandLineTools/usr/bin/python3",
+            "core/easycrypt/session_cli.py",
+            "-d",
+            ".ec_session_prover_tree_0_0",
+            "-next",
+            "-c",
+            "auto."
+          ],
+          "duration_ms": 234,
+          "exit_code": 0,
+          "label": "replay_prefix_step_13",
+          "mutates_proof_state": true,
+          "stderr_chars": 0,
+          "stderr_preview": "",
+          "stdout_chars": 64278,
+          "stdout_has_workspace_view": true,
+          "stdout_lines": 2
+        },
+        {
+          "agent_observation": {
+            "effect": "EasyCrypt accepted a proof-state change; the refreshed view is based on the new committed state.",
+            "manager_action": "replay_prefix_step_14",
+            "proof_state": "The committed EasyCrypt proof state changed.",
+            "result": "The manager completed this proof-level request.",
+            "tactic": "conseq (: _ ==> ((g ^ G1.u, G1.g_ ^ G1.u', g ^ r', g ^ r) \\in G3.cilog) /\\ size G3.cilog <= PKE_.qD /\\ G1.w <> zero /\\ G1.g_ = g ^ G1.w) (: _ ==> size G3.cilog <= PKE_.qD /\\ G1.w <> zero /\\ G1.g_ = g ^ G1.w)."
+          },
+          "argv": [
+            "/Library/Developer/CommandLineTools/usr/bin/python3",
+            "core/easycrypt/session_cli.py",
+            "-d",
+            ".ec_session_prover_tree_0_0",
+            "-next",
+            "-c",
+            "conseq (: _ ==> ((g ^ G1.u, G1.g_ ^ G1.u', g ^ r', g ^ r) \\in G3.cilog) /\\ size G3.cilog <= PKE_.qD /\\ G1.w <> zero /\\ G1.g_ = g ^ G1.w) (: _ ==> size G3.cilog <= PKE_.qD /\\ G1.w <> zero /\\ G1.g_ = g ^ G1.w)."
+          ],
+          "duration_ms": 223,
+          "exit_code": 0,
+          "label": "replay_prefix_step_14",
+          "mutates_proof_state": true,
+          "stderr_chars": 0,
+          "stderr_preview": "",
+          "stdout_chars": 8252,
+          "stdout_has_workspace_view": true,
+          "stdout_lines": 2
+        },
+        {
+          "agent_observation": {
+            "effect": "EasyCrypt accepted a proof-state change; the refreshed view is based on the new committed state.",
+            "manager_action": "replay_prefix_step_15",
+            "proof_state": "The committed EasyCrypt proof state changed.",
+            "result": "The manager completed this proof-level request.",
+            "tactic": "by move=> &hr />."
+          },
+          "argv": [
+            "/Library/Developer/CommandLineTools/usr/bin/python3",
+            "core/easycrypt/session_cli.py",
+            "-d",
+            ".ec_session_prover_tree_0_0",
+            "-next",
+            "-c",
+            "by move=> &hr />."
+          ],
+          "duration_ms": 223,
+          "exit_code": 0,
+          "label": "replay_prefix_step_15",
+          "mutates_proof_state": true,
+          "stderr_chars": 0,
+          "stderr_preview": "",
+          "stdout_chars": 8822,
+          "stdout_has_workspace_view": true,
+          "stdout_lines": 2
+        },
+        {
+          "agent_observation": {
+            "effect": "EasyCrypt accepted a proof-state change; the refreshed view is based on the new committed state.",
+            "manager_action": "replay_prefix_step_16",
+            "proof_state": "The committed EasyCrypt proof state changed.",
+            "result": "The manager completed this proof-level request.",
+            "tactic": "by move=> &hr /> *."
+          },
+          "argv": [
+            "/Library/Developer/CommandLineTools/usr/bin/python3",
+            "core/easycrypt/session_cli.py",
+            "-d",
+            ".ec_session_prover_tree_0_0",
+            "-next",
+            "-c",
+            "by move=> &hr /> *."
+          ],
+          "duration_ms": 225,
+          "exit_code": 0,
+          "label": "replay_prefix_step_16",
+          "mutates_proof_state": true,
+          "stderr_chars": 0,
+          "stderr_preview": "",
+          "stdout_chars": 13403,
+          "stdout_has_workspace_view": true,
+          "stdout_lines": 2
+        },
+        {
+          "agent_observation": {
+            "effect": "EasyCrypt accepted a proof-state change; the refreshed view is based on the new committed state.",
+            "manager_action": "replay_prefix_step_17",
+            "proof_state": "The committed EasyCrypt proof state changed.",
+            "result": "The manager completed this proof-level request.",
+            "tactic": "auto."
+          },
+          "argv": [
+            "/Library/Developer/CommandLineTools/usr/bin/python3",
+            "core/easycrypt/session_cli.py",
+            "-d",
+            ".ec_session_prover_tree_0_0",
+            "-next",
+            "-c",
+            "auto."
+          ],
+          "duration_ms": 239,
+          "exit_code": 0,
+          "label": "replay_prefix_step_17",
+          "mutates_proof_state": true,
+          "stderr_chars": 0,
+          "stderr_preview": "",
+          "stdout_chars": 65481,
+          "stdout_has_workspace_view": true,
+          "stdout_lines": 2
+        },
+        {
+          "agent_observation": {
+            "effect": "This manager intent does not change the EasyCrypt proof state.",
+            "manager_action": "agent_view",
+            "result": "The manager completed this proof-level request."
+          },
+          "argv": [
+            "/Library/Developer/CommandLineTools/usr/bin/python3",
+            "core/easycrypt/session_cli.py",
+            "-d",
+            ".ec_session_prover_tree_0_0",
+            "-agent-view"
+          ],
+          "duration_ms": 248,
+          "exit_code": 0,
+          "label": "agent_view",
+          "mutates_proof_state": false,
+          "stderr_chars": 0,
+          "stderr_preview": "",
+          "stdout_chars": 88328,
+          "stdout_has_workspace_view": true,
+          "stdout_lines": 1812
+        }
+      ]
+    },
+    "goal_hash": "f6b3bec7276e464bc46530a635c4ab3956df7914",
+    "node_id": "Tree-0.0",
+    "proof_context_view_artifact": "",
+    "session_dir": ".ec_session_prover_tree_0_0",
+    "session_epoch": 1,
+    "session_tag": "prover_tree_0_0",
+    "state_version": 1,
+    "workspace_view_artifact": ""
+  },
+  "workspace_view": {
+    "current_goal": {
+      "goal_type": "phoare",
+      "lines": [
+        "Current goal (remaining: 6)",
+        "",
+        "Type variables: <none>",
+        "",
+        "&m: {}",
+        "------------------------------------------------------------------------",
+        "Context : hr: {b0 : bool, e, f, h : group, r, r' : ZModE.exp,",
+        "              m0, m1 : PKE_.plaintext}",
+        "Bound   : [<=] (PKE_.qD%r / order%r) ^ 3 * (PKE_.qD%r / (order - 1)%r)",
+        "",
+        "pre = size G3.cilog <= PKE_.qD /\\ G1.w <> zero /\\ G1.g_ = g ^ G1.w",
+        "",
+        "(1)  G1.u <$ dt               ",
+        "(2)  G1.u' <$ dt \\ pred1 G1.u ",
+        "(3)  r' <$ dt                 ",
+        "(4)  r <$ dt                  ",
+        "",
+        "post =",
+        "  ((g ^ G1.u, G1.g_ ^ G1.u', g ^ r', g ^ r) \\in G3.cilog) /\\",
+        "  size G3.cilog <= PKE_.qD /\\ G1.w <> zero /\\ G1.g_ = g ^ G1.w",
+        "[153|check]>"
+      ],
+      "source": {
+        "ground_truth": false,
+        "label": "Parsed from EasyCrypt pretty goal text"
+      },
+      "text_fully_shown": true,
+      "truncated": false,
+      "view_focus": "seq_cut"
+    },
+    "kind": "prover_workspace_view",
+    "last_result": {},
+    "proof_status": {
+      "current_layer": "procedure_body",
+      "goal_type": "phoare",
+      "remaining_goals": 6,
+      "remaining_goals_known": true,
+      "status": "open",
+      "view_focus": "seq_cut"
+    },
+    "schema_version": 2,
+    "view_hash": "9639b70772bf3d48c4cc72453b47453e80944908"
+  }
+}

@@ -1,0 +1,57 @@
+{
+  "node": "Tree-0.0",
+  "discovery": "content_match",
+  "transcripts": [
+    "~/.claude/projects/<PROJECT>/2c1e1edf-7ae4-4650-8549-3da54635f0b3.jsonl"
+  ],
+  "turns": [
+    {
+      "turn": 1,
+      "intent": "commit_tactic",
+      "payload_key": "by move=> b1 b2; case b1; case b2.",
+      "thinking_chars": 0,
+      "text_chars": 199,
+      "tokens": {
+        "output_tokens": 853,
+        "input_tokens": 5,
+        "cache_read_input_tokens": 60171,
+        "cache_creation_input_tokens": 35436
+      },
+      "session_id": "2c1e1edf-7ae4-4650-8549-3da54635f0b3",
+      "timestamp": "2026-06-12T00:36:37.526Z",
+      "file": "thinking/turn_001.md"
+    },
+    {
+      "turn": 2,
+      "intent": "commit_tactic",
+      "payload_key": "by move=> b1 b2; case: b1; case: b2.",
+      "thinking_chars": 0,
+      "text_chars": 66,
+      "tokens": {
+        "output_tokens": 554,
+        "input_tokens": 2,
+        "cache_read_input_tokens": 32902,
+        "cache_creation_input_tokens": 1164
+      },
+      "session_id": "2c1e1edf-7ae4-4650-8549-3da54635f0b3",
+      "timestamp": "2026-06-12T00:36:51.780Z",
+      "file": "thinking/turn_002.md"
+    },
+    {
+      "turn": 3,
+      "intent": "commit_tactic",
+      "payload_key": "by smt().",
+      "thinking_chars": 0,
+      "text_chars": 91,
+      "tokens": {
+        "output_tokens": 428,
+        "input_tokens": 2,
+        "cache_read_input_tokens": 34066,
+        "cache_creation_input_tokens": 1480
+      },
+      "session_id": "2c1e1edf-7ae4-4650-8549-3da54635f0b3",
+      "timestamp": "2026-06-12T00:37:03.269Z",
+      "file": "thinking/turn_003.md"
+    }
+  ]
+}

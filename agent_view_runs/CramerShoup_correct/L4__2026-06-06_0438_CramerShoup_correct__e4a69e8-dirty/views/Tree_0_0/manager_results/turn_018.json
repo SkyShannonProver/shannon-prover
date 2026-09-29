@@ -1,0 +1,22 @@
+{
+  "turn": 18,
+  "handled_intent": {
+    "intent": "lookup_symbol",
+    "payload": {
+      "symbol": "expN"
+    }
+  },
+  "ok": true,
+  "manager_note": "Read-only context. Accepted/rejected tactic or call text inside a preview is route-selection information, not the current proof-state error.",
+  "manager_actions": [
+    {
+      "action": "symbol lookup",
+      "outcome": "The manager returned read-only context for the current goal.",
+      "timing": "938 ms",
+      "content": {
+        "preview": "[WHERE-HIT] expN (kind: lemma) * In [lemmas or axioms]: lemma expN: forall (x : group) (k : ZModE.exp), x ^ -k = inv (x ^ k). (* DH.G.expN *) lemma expN: forall (x : group) (k : int), x ^ -k = inv (x ^ k). (* Distr.expN *) lemma expN ['a]: forall (d : 'a Distr.distr) (f : 'a -> real), E d (fun (x : 'a) => - f x) = - E d f."
+      }
+    }
+  ],
+  "view_refreshed": true
+}

@@ -1,0 +1,18 @@
+{
+  "turn": 11,
+  "handled_intent": {
+    "intent": "commit_tactic",
+    "payload": {
+      "tactic": "seq 13 : (size G3.cilog <= PKE_.qD) 1%r ((PKE_.qD%r / order%r) ^ 3 * (PKE_.qD%r / (order - 1)%r)) 0%r 1%r."
+    }
+  },
+  "ok": true,
+  "manager_note": "Commit attempt did not change the committed EasyCrypt proof state; use the returned result and latest view before trying the next proof intent.",
+  "manager_actions": [
+    {
+      "action": "probability budget risky commit repair",
+      "outcome": "The manager did not commit this tactic because route health marks it as risky under the product probability budget."
+    }
+  ],
+  "view_refreshed": true
+}

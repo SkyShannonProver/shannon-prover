@@ -1,0 +1,253 @@
+{
+  "last_result": {
+    "intent": "commit_tactic",
+    "payload": {
+      "tactic": "qed."
+    },
+    "manager_action": "commit_tactic",
+    "result": "EasyCrypt accepted the committed tactic.",
+    "effect": "EasyCrypt accepted a proof-state change; the refreshed view is based on the new committed state.",
+    "proof_state": "The committed EasyCrypt proof state changed.",
+    "tactic": "qed."
+  },
+  "current_goal": {
+    "lines": [
+      "[87|check]>"
+    ],
+    "text_fully_shown": true,
+    "truncated": false,
+    "goal_type": "complete",
+    "view_focus": "closed_candidate",
+    "source": {
+      "label": "Projected from session_event_projection",
+      "ground_truth": false
+    }
+  },
+  "proof_status": {
+    "status": "candidate_closed",
+    "remaining_goals": 0,
+    "remaining_goals_known": true,
+    "goal_type": "complete",
+    "view_focus": "closed_candidate",
+    "current_layer": "unknown"
+  },
+  "candidate_moves": {
+    "moves": [
+      {
+        "category": "verify",
+        "applicability": "This tactic is already concrete for the current goal.",
+        "why_relevant": "The proof candidate is closed; run verification next."
+      }
+    ]
+  },
+  "program_frontier": {
+    "authority": "proof-state analysis",
+    "view_focus": "closed_candidate"
+  },
+  "call_site_surface": {},
+  "seq_cut_surface": {
+    "seq_candidate_id": "cp_2_c54cf00f553dbe28",
+    "state": "inside_seq_scope",
+    "cut_position": {
+      "left_count": 4,
+      "right_count": 4,
+      "tactic": "seq 4 4 : (={glob A, glob Log, glob LRO, pk, m0, m1, b})."
+    },
+    "branch_focus": {
+      "latest_event_head": "qed"
+    },
+    "residual_frontier": {
+      "current_layer": "unknown",
+      "view_focus": "closed_candidate",
+      "live_call_site_count": 0,
+      "goal_contains_call_site": false,
+      "latest_seq_tactic_index": 2,
+      "tactics_after_latest_seq": 9
+    }
+  },
+  "application_context": {
+    "selected_handles": [
+      {
+        "why_relevant": "The proof candidate is closed; run verification next."
+      }
+    ]
+  },
+  "facts_and_diagnostics": {
+    "facts": {
+      "unfoldable_goal_head_count": 0
+    },
+    "fact_note": "Only current-frontier facts are shown here; the full proof context artifact keeps the compiler/internal details."
+  },
+  "inspect_lookup_handles": {
+    "effect": "All handles here are read-only manager requests; the committed EasyCrypt proof state stays unchanged.",
+    "manager_note": "Some requests may ask EasyCrypt or name resolution; wait for the manager result before choosing the next proof intent.",
+    "ask_manager_for": [
+      {
+        "intent": "inspect_context",
+        "payload": {
+          "topic": "verify"
+        },
+        "use_when": "The proof candidate is closed; run verification next.",
+        "returns": "manager-provided read-only context for this proof route"
+      },
+      {
+        "intent": "inspect_context",
+        "payload": {
+          "topic": "goal_info"
+        },
+        "use_when": "Need parsed goal shape, resolved names, or KB pattern hints.",
+        "returns": "parsed goal structure and names"
+      }
+    ]
+  },
+  "structural_checkpoints": {
+    "items": [
+      {
+        "checkpoint_id": "cp_11_c54cf00f553dbe28",
+        "semantic_id": "before_branch_work",
+        "semantic_ids": [
+          "before_branch_work"
+        ],
+        "label": "Before latest branch-local tactic #11",
+        "committed_step_index": 11,
+        "committed_tactic": "qed.",
+        "restored_proof_layer": "seq_branch",
+        "restored_affordances": {
+          "seq_cut": "committed",
+          "earlier_branch_work": "preserved"
+        },
+        "undo_scope": "branch_local",
+        "why_checkpoint": "latest branch-local step inside the current seq scope",
+        "effect_if_selected": "Undo committed tactic #11 and every committed tactic after it in this node.",
+        "submit": {
+          "intent": "undo_to_checkpoint",
+          "payload": {
+            "checkpoint_id": "cp_11_c54cf00f553dbe28"
+          }
+        }
+      },
+      {
+        "checkpoint_id": "cp_10_c54cf00f553dbe28",
+        "semantic_id": "before_call_obligation_work",
+        "semantic_ids": [
+          "before_call_obligation_work"
+        ],
+        "label": "Before latest call-obligation tactic #10",
+        "committed_step_index": 10,
+        "committed_tactic": "smt(addpK dptxt_funi dptxt_fu).",
+        "restored_proof_layer": "call_obligation",
+        "restored_affordances": {
+          "call_route": "committed",
+          "call_obligation": "preserved",
+          "later_local_work": "not_committed"
+        },
+        "undo_scope": "call_obligation_local",
+        "why_checkpoint": "call-obligation local boundary; selecting it keeps the opened call obligation and removes later local work",
+        "effect_if_selected": "Undo committed tactic #10 and every committed tactic after it in this node.",
+        "submit": {
+          "intent": "undo_to_checkpoint",
+          "payload": {
+            "checkpoint_id": "cp_10_c54cf00f553dbe28"
+          }
+        }
+      },
+      {
+        "checkpoint_id": "cp_3_c54cf00f553dbe28",
+        "semantic_id": "after_seq_opened",
+        "semantic_ids": [
+          "after_seq_opened",
+          "before_branch_work"
+        ],
+        "label": "After seq opened / before branch work #3",
+        "committed_step_index": 3,
+        "committed_tactic": "sim.",
+        "restored_proof_layer": "seq_obligations_opened",
+        "restored_affordances": {
+          "seq_cut": "committed",
+          "branch_work": "not_committed"
+        },
+        "undo_scope": "branch_local",
+        "why_checkpoint": "seq-local branch boundary; selecting it keeps the seq cut and removes branch-local work after it",
+        "effect_if_selected": "Undo committed tactic #3 and every committed tactic after it in this node.",
+        "submit": {
+          "intent": "undo_to_checkpoint",
+          "payload": {
+            "checkpoint_id": "cp_3_c54cf00f553dbe28"
+          }
+        }
+      },
+      {
+        "checkpoint_id": "cp_5_c54cf00f553dbe28",
+        "semantic_id": "after_call_opened",
+        "semantic_ids": [
+          "after_call_opened"
+        ],
+        "label": "After call opened / before obligation work #5",
+        "committed_step_index": 5,
+        "committed_tactic": "sim.",
+        "restored_proof_layer": "call_obligations_opened",
+        "restored_affordances": {
+          "call_route": "committed",
+          "call_obligation_work": "not_committed"
+        },
+        "undo_scope": "call_local",
+        "why_checkpoint": "call-local boundary; selecting it keeps the call tactic and removes work committed after the call opened",
+        "effect_if_selected": "Undo committed tactic #5 and every committed tactic after it in this node.",
+        "submit": {
+          "intent": "undo_to_checkpoint",
+          "payload": {
+            "checkpoint_id": "cp_5_c54cf00f553dbe28"
+          }
+        }
+      },
+      {
+        "checkpoint_id": "cp_4_c54cf00f553dbe28",
+        "semantic_id": "before_call_route",
+        "semantic_ids": [
+          "before_call_route"
+        ],
+        "label": "Before call invariant #4",
+        "committed_step_index": 4,
+        "committed_tactic": "call (_: ={glob Log, glob LRO}).",
+        "restored_proof_layer": "pre_call_route",
+        "restored_affordances": {
+          "call_route": "not_committed",
+          "call_obligation_work": "not_committed"
+        },
+        "undo_scope": "call_local",
+        "why_checkpoint": "call invariant introduction point; later oracle/branch obligations often reveal missing preserved facts or an over-strong equality from this tactic",
+        "effect_if_selected": "Undo committed tactic #4 and every committed tactic after it in this node.",
+        "submit": {
+          "intent": "undo_to_checkpoint",
+          "payload": {
+            "checkpoint_id": "cp_4_c54cf00f553dbe28"
+          }
+        }
+      },
+      {
+        "checkpoint_id": "cp_2_c54cf00f553dbe28",
+        "semantic_id": "before_seq_cut",
+        "semantic_ids": [
+          "before_seq_cut"
+        ],
+        "label": "Before seq cut #2",
+        "committed_step_index": 2,
+        "committed_tactic": "seq 4 4 : (={glob A, glob Log, glob LRO, pk, m0, m1, b}).",
+        "restored_proof_layer": "pre_seq_cut",
+        "restored_affordances": {
+          "seq_cut": "not_committed",
+          "call_site_state": "as_before_seq_cut"
+        },
+        "undo_scope": "seq_local",
+        "why_checkpoint": "seq-cut boundary; selecting it restores the proof state before this cut was committed",
+        "effect_if_selected": "Undo committed tactic #2 and every committed tactic after it in this node.",
+        "submit": {
+          "intent": "undo_to_checkpoint",
+          "payload": {
+            "checkpoint_id": "cp_2_c54cf00f553dbe28"
+          }
+        }
+      }
+    ]
+  }
+}

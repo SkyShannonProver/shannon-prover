@@ -1,0 +1,60 @@
+{
+  "last_result": {
+    "intent": "commit_tactic",
+    "payload": {
+      "tactic": "inline *."
+    },
+    "manager_action": "commit_tactic",
+    "result": "EasyCrypt accepted the committed tactic.",
+    "effect": "EasyCrypt accepted a proof-state change; the refreshed view is based on the new committed state.",
+    "proof_state": "The committed EasyCrypt proof state changed.",
+    "tactic": "inline *."
+  },
+  "current_goal": {
+    "lines": [
+      "Current goal",
+      "",
+      "Type variables: <none>",
+      "",
+      "&m: {}",
+      "------------------------------------------------------------------------",
+      "&1 (left ) : {b, b' : bool, sk0, y : ZModE.exp, pk, pk0 : pkey, sk : skey,",
+      "             m0, m1, m : ptxt, c : ctxt}",
+      "&2 (right) : {b, b0, b' : bool, gy, gz : group, x, y : ZModE.exp, gx : pkey,",
+      "             m0, m1 : ptxt}",
+      "",
+      "pre = (glob A){2} = (glob A){m} /\\ (glob A){1} = (glob A){m}",
+      "",
+      "sk0 <$ dt                   (1)  x <$ dt                        ",
+      "(pk, sk) <- (g ^ sk0, sk0)  (2)  y <$ dt                        ",
+      "(m0, m1) <@ A.choose(pk)    (3)  gx <- g ^ x                    ",
+      "b <$ {0,1}                  (4)  gy <- g ^ y                    ",
+      "pk0 <- pk                   (5)  gz <- g ^ (x * y)              ",
+      "m <- if b then m1 else m0   (6)  (m0, m1) <@ A.choose(gx)       ",
+      "y <$ dt                     (7)  b0 <$ {0,1}                    ",
+      "c <- (g ^ y, pk0 ^ y * m)   (8)  b' <@                          ",
+      "                            ( )    A.guess(gy,                  ",
+      "                            ( )      gz * if b0 then m1 else m0)",
+      "b' <@ A.guess(c)            (9)  b <- b' = b0                   ",
+      "",
+      "post = (b'{1} = b{1}) = b{2}",
+      "[22|check]>"
+    ],
+    "text_fully_shown": true,
+    "truncated": false,
+    "goal_type": "pRHL",
+    "view_focus": "seq_cut",
+    "source": {
+      "label": "Parsed from EasyCrypt pretty goal text",
+      "ground_truth": false
+    }
+  },
+  "proof_status": {
+    "status": "open",
+    "remaining_goals": 1,
+    "remaining_goals_known": true,
+    "goal_type": "pRHL",
+    "view_focus": "seq_cut",
+    "current_layer": "call_site"
+  }
+}

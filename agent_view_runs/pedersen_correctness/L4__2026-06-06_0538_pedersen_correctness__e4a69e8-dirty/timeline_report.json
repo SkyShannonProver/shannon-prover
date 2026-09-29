@@ -1,0 +1,241 @@
+{
+  "kind": "agent_view_timeline_report",
+  "run_count": 1,
+  "runs": [
+    {
+      "chronological": false,
+      "first_action_at": "2026-06-06T12:39:09+00:00",
+      "label": "2026-06-06_0538_pedersen_correctness",
+      "node_count": 1,
+      "rows": [
+        {
+          "action_submitted_at": "2026-06-06T12:39:09+00:00",
+          "action_time": "+00:00",
+          "agent_think": "",
+          "agent_think_path": "artifacts/eval_suite/wave1_ablation/l4_checked_action_surface/d2_pedersen/r01/2026-06-06_0538_pedersen_correctness/iteration_1/node_memory/Tree_0_0/thinking/turn_001.md",
+          "agent_think_seconds": null,
+          "decision_followup_path": "",
+          "decision_state_summary": "hoare / procedure_entry / procedure_frontier, 1 goal, goal 166 chars",
+          "decision_view_path": "artifacts/eval_suite/wave1_ablation/l4_checked_action_surface/d2_pedersen/r01/2026-06-06_0538_pedersen_correctness/iteration_1/manager_bootstrap_0_0.json",
+          "deterministic_signals": [],
+          "goal_chars": 166,
+          "inspect_topics": [
+            "goal_info",
+            "call_site_options",
+            "call_subgoals",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms"
+          ],
+          "intent": {
+            "intent": "inspect_context",
+            "payload": {
+              "topic": "call_site_options"
+            }
+          },
+          "intent_summary": "inspect call_site_options",
+          "manager_action_summary": [
+            "inspect call site options"
+          ],
+          "manager_result_at": "2026-06-06T12:39:09+00:00",
+          "manager_result_path": "artifacts/eval_suite/wave1_ablation/l4_checked_action_surface/d2_pedersen/r01/2026-06-06_0538_pedersen_correctness/iteration_1/node_memory/Tree_0_0/manager_results/turn_001.json",
+          "manager_seconds": 0.0,
+          "manager_time": "",
+          "node": "Tree-0.0",
+          "node_dir": "artifacts/eval_suite/wave1_ablation/l4_checked_action_surface/d2_pedersen/r01/2026-06-06_0538_pedersen_correctness/iteration_1/node_memory/Tree_0_0",
+          "ok": true,
+          "result_followup_path": "artifacts/eval_suite/wave1_ablation/l4_checked_action_surface/d2_pedersen/r01/2026-06-06_0538_pedersen_correctness/iteration_1/node_memory/Tree_0_0/followups/turn_001.md",
+          "result_state_summary": "hoare / procedure_entry / procedure_frontier, 1 goal, goal 166 chars",
+          "result_summary": "read-only inspect",
+          "result_view_path": "artifacts/eval_suite/wave1_ablation/l4_checked_action_surface/d2_pedersen/r01/2026-06-06_0538_pedersen_correctness/iteration_1/node_memory/Tree_0_0/workspace_views/turn_001.json",
+          "turn": 1,
+          "usage": {
+            "cache_creation_input_tokens": 43317,
+            "cache_read_input_tokens": 30547,
+            "input_tokens": 2076,
+            "output_tokens": 970
+          },
+          "view_chars": 7682,
+          "view_id": "T0.0-1",
+          "workspace_view_path": "artifacts/eval_suite/wave1_ablation/l4_checked_action_surface/d2_pedersen/r01/2026-06-06_0538_pedersen_correctness/iteration_1/manager_bootstrap_0_0.json"
+        },
+        {
+          "action_submitted_at": "2026-06-06T12:39:13.400000+00:00",
+          "action_time": "+00:04",
+          "agent_think": "4.4 s",
+          "agent_think_path": "artifacts/eval_suite/wave1_ablation/l4_checked_action_surface/d2_pedersen/r01/2026-06-06_0538_pedersen_correctness/iteration_1/node_memory/Tree_0_0/thinking/turn_002.md",
+          "agent_think_seconds": 4.4,
+          "decision_followup_path": "artifacts/eval_suite/wave1_ablation/l4_checked_action_surface/d2_pedersen/r01/2026-06-06_0538_pedersen_correctness/iteration_1/node_memory/Tree_0_0/followups/turn_001.md",
+          "decision_state_summary": "hoare / procedure_entry / procedure_frontier, 1 goal, goal 166 chars",
+          "decision_view_path": "artifacts/eval_suite/wave1_ablation/l4_checked_action_surface/d2_pedersen/r01/2026-06-06_0538_pedersen_correctness/iteration_1/node_memory/Tree_0_0/workspace_views/turn_001.json",
+          "deterministic_signals": [],
+          "goal_chars": 166,
+          "inspect_topics": [
+            "goal_info",
+            "call_site_options",
+            "call_subgoals",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms"
+          ],
+          "intent": {
+            "intent": "probe_tactic",
+            "payload": {
+              "tactic": "proc; inline *; auto."
+            }
+          },
+          "intent_summary": "probe proc; inline *; auto",
+          "manager_action_summary": [
+            "tactic probe (1.6 s)"
+          ],
+          "manager_result_at": "2026-06-06T12:39:15+00:00",
+          "manager_result_path": "artifacts/eval_suite/wave1_ablation/l4_checked_action_surface/d2_pedersen/r01/2026-06-06_0538_pedersen_correctness/iteration_1/node_memory/Tree_0_0/manager_results/turn_002.json",
+          "manager_seconds": 1.6,
+          "manager_time": "1.6 s",
+          "node": "Tree-0.0",
+          "node_dir": "artifacts/eval_suite/wave1_ablation/l4_checked_action_surface/d2_pedersen/r01/2026-06-06_0538_pedersen_correctness/iteration_1/node_memory/Tree_0_0",
+          "ok": true,
+          "result_followup_path": "artifacts/eval_suite/wave1_ablation/l4_checked_action_surface/d2_pedersen/r01/2026-06-06_0538_pedersen_correctness/iteration_1/node_memory/Tree_0_0/followups/turn_002.md",
+          "result_state_summary": "hoare / procedure_entry / procedure_frontier, 1 goal, goal 166 chars",
+          "result_summary": "accepted probe",
+          "result_view_path": "artifacts/eval_suite/wave1_ablation/l4_checked_action_surface/d2_pedersen/r01/2026-06-06_0538_pedersen_correctness/iteration_1/node_memory/Tree_0_0/workspace_views/turn_002.json",
+          "turn": 2,
+          "usage": {
+            "cache_creation_input_tokens": 1754,
+            "cache_read_input_tokens": 38576,
+            "input_tokens": 2,
+            "output_tokens": 226
+          },
+          "view_chars": 8342,
+          "view_id": "T0.0-2",
+          "workspace_view_path": "artifacts/eval_suite/wave1_ablation/l4_checked_action_surface/d2_pedersen/r01/2026-06-06_0538_pedersen_correctness/iteration_1/node_memory/Tree_0_0/workspace_views/turn_001.json"
+        },
+        {
+          "action_submitted_at": "2026-06-06T12:39:35.895000+00:00",
+          "action_time": "+00:27",
+          "agent_think": "20.9 s",
+          "agent_think_path": "artifacts/eval_suite/wave1_ablation/l4_checked_action_surface/d2_pedersen/r01/2026-06-06_0538_pedersen_correctness/iteration_1/node_memory/Tree_0_0/thinking/turn_003.md",
+          "agent_think_seconds": 20.895,
+          "decision_followup_path": "artifacts/eval_suite/wave1_ablation/l4_checked_action_surface/d2_pedersen/r01/2026-06-06_0538_pedersen_correctness/iteration_1/node_memory/Tree_0_0/followups/turn_002.md",
+          "decision_state_summary": "hoare / procedure_entry / procedure_frontier, 1 goal, goal 166 chars",
+          "decision_view_path": "artifacts/eval_suite/wave1_ablation/l4_checked_action_surface/d2_pedersen/r01/2026-06-06_0538_pedersen_correctness/iteration_1/node_memory/Tree_0_0/workspace_views/turn_002.json",
+          "deterministic_signals": [
+            "commit_without_probe_check_not_inferred"
+          ],
+          "goal_chars": 166,
+          "inspect_topics": [
+            "goal_info",
+            "call_site_options",
+            "call_subgoals",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms"
+          ],
+          "intent": {
+            "intent": "commit_tactic",
+            "payload": {
+              "tactic": "proc; inline *; auto."
+            }
+          },
+          "intent_summary": "commit proc; inline *; auto",
+          "manager_action_summary": [
+            "tactic commit (105 ms)"
+          ],
+          "manager_result_at": "2026-06-06T12:39:36+00:00",
+          "manager_result_path": "artifacts/eval_suite/wave1_ablation/l4_checked_action_surface/d2_pedersen/r01/2026-06-06_0538_pedersen_correctness/iteration_1/node_memory/Tree_0_0/manager_results/turn_003.json",
+          "manager_seconds": 0.105,
+          "manager_time": "105 ms",
+          "node": "Tree-0.0",
+          "node_dir": "artifacts/eval_suite/wave1_ablation/l4_checked_action_surface/d2_pedersen/r01/2026-06-06_0538_pedersen_correctness/iteration_1/node_memory/Tree_0_0",
+          "ok": true,
+          "result_followup_path": "artifacts/eval_suite/wave1_ablation/l4_checked_action_surface/d2_pedersen/r01/2026-06-06_0538_pedersen_correctness/iteration_1/node_memory/Tree_0_0/followups/turn_003.md",
+          "result_state_summary": "ambient / closed_candidate, goal 25 chars",
+          "result_summary": "accepted commit",
+          "result_view_path": "artifacts/eval_suite/wave1_ablation/l4_checked_action_surface/d2_pedersen/r01/2026-06-06_0538_pedersen_correctness/iteration_1/node_memory/Tree_0_0/workspace_views/turn_003.json",
+          "turn": 3,
+          "usage": {
+            "cache_creation_input_tokens": 4059,
+            "cache_read_input_tokens": 126160,
+            "input_tokens": 6,
+            "output_tokens": 989
+          },
+          "view_chars": 11569,
+          "view_id": "T0.0-3",
+          "workspace_view_path": "artifacts/eval_suite/wave1_ablation/l4_checked_action_surface/d2_pedersen/r01/2026-06-06_0538_pedersen_correctness/iteration_1/node_memory/Tree_0_0/workspace_views/turn_002.json"
+        },
+        {
+          "action_submitted_at": "2026-06-06T12:39:38.886000+00:00",
+          "action_time": "+00:30",
+          "agent_think": "2.9 s",
+          "agent_think_path": "artifacts/eval_suite/wave1_ablation/l4_checked_action_surface/d2_pedersen/r01/2026-06-06_0538_pedersen_correctness/iteration_1/node_memory/Tree_0_0/thinking/turn_004.md",
+          "agent_think_seconds": 2.886,
+          "decision_followup_path": "artifacts/eval_suite/wave1_ablation/l4_checked_action_surface/d2_pedersen/r01/2026-06-06_0538_pedersen_correctness/iteration_1/node_memory/Tree_0_0/followups/turn_003.md",
+          "decision_state_summary": "ambient / closed_candidate, goal 25 chars",
+          "decision_view_path": "artifacts/eval_suite/wave1_ablation/l4_checked_action_surface/d2_pedersen/r01/2026-06-06_0538_pedersen_correctness/iteration_1/node_memory/Tree_0_0/workspace_views/turn_003.json",
+          "deterministic_signals": [
+            "commit_without_probe_check_not_inferred"
+          ],
+          "goal_chars": 25,
+          "inspect_topics": [
+            "goal_info"
+          ],
+          "intent": {
+            "intent": "commit_tactic",
+            "payload": {
+              "tactic": "qed."
+            }
+          },
+          "intent_summary": "commit qed",
+          "manager_action_summary": [
+            "tactic commit (114 ms)"
+          ],
+          "manager_result_at": "2026-06-06T12:39:39+00:00",
+          "manager_result_path": "artifacts/eval_suite/wave1_ablation/l4_checked_action_surface/d2_pedersen/r01/2026-06-06_0538_pedersen_correctness/iteration_1/node_memory/Tree_0_0/manager_results/turn_004.json",
+          "manager_seconds": 0.114,
+          "manager_time": "114 ms",
+          "node": "Tree-0.0",
+          "node_dir": "artifacts/eval_suite/wave1_ablation/l4_checked_action_surface/d2_pedersen/r01/2026-06-06_0538_pedersen_correctness/iteration_1/node_memory/Tree_0_0",
+          "ok": true,
+          "result_followup_path": "artifacts/eval_suite/wave1_ablation/l4_checked_action_surface/d2_pedersen/r01/2026-06-06_0538_pedersen_correctness/iteration_1/node_memory/Tree_0_0/followups/turn_004.md",
+          "result_state_summary": "complete / unknown / closed_candidate, 0 goals, goal 11 chars",
+          "result_summary": "accepted commit",
+          "result_view_path": "artifacts/eval_suite/wave1_ablation/l4_checked_action_surface/d2_pedersen/r01/2026-06-06_0538_pedersen_correctness/iteration_1/node_memory/Tree_0_0/workspace_views/turn_004.json",
+          "turn": 4,
+          "usage": {
+            "cache_creation_input_tokens": 1206,
+            "cache_read_input_tokens": 44389,
+            "input_tokens": 131,
+            "output_tokens": 127
+          },
+          "view_chars": 3872,
+          "view_id": "T0.0-4",
+          "workspace_view_path": "artifacts/eval_suite/wave1_ablation/l4_checked_action_surface/d2_pedersen/r01/2026-06-06_0538_pedersen_correctness/iteration_1/node_memory/Tree_0_0/workspace_views/turn_003.json"
+        }
+      ],
+      "run_dir": "artifacts/eval_suite/wave1_ablation/l4_checked_action_surface/d2_pedersen/r01/2026-06-06_0538_pedersen_correctness/iteration_1",
+      "turn_count": 4
+    }
+  ],
+  "schema_version": 1
+}

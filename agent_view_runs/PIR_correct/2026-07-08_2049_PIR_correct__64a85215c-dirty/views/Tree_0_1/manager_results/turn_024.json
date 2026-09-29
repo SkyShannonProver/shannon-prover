@@ -1,0 +1,20 @@
+{
+  "turn": 24,
+  "handled_intent": {
+    "intent": "commit_tactic",
+    "payload": {
+      "tactic": "move => hnlt [hb [hi2 [hle hsxi]]]; have h: sxor2 s1 s' i0 by apply hsxi; smt()."
+    }
+  },
+  "ok": true,
+  "manager_note": "Committed tactic accepted; the EasyCrypt proof state changed.",
+  "manager_actions": [
+    {
+      "action": "tactic commit",
+      "outcome": "EasyCrypt accepted the committed tactic.",
+      "timing": "167 ms"
+    }
+  ],
+  "view_refreshed": true,
+  "surface_turn_hash": "da941b5701213e8d0e86cef88226664c1e2d1775"
+}

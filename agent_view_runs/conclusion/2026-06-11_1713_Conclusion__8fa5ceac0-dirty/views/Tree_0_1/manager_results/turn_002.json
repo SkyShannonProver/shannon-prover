@@ -1,0 +1,19 @@
+{
+  "turn": 2,
+  "handled_intent": {
+    "intent": "commit_tactic",
+    "payload": {
+      "tactic": "have QBA_ll: forall (O <: RCPA_Oracles{-QueryBounder(A)}), islossless O.enc => islossless QueryBounder(A, O).distinguish."
+    }
+  },
+  "ok": true,
+  "manager_note": "Committed tactic accepted; the EasyCrypt proof state changed.",
+  "manager_actions": [
+    {
+      "action": "tactic commit",
+      "outcome": "EasyCrypt accepted the committed tactic.",
+      "timing": "183 ms"
+    }
+  ],
+  "view_refreshed": true
+}

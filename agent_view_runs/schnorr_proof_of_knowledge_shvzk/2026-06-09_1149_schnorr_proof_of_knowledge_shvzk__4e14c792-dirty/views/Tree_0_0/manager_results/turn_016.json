@@ -1,0 +1,27 @@
+{
+  "turn": 16,
+  "handled_intent": {
+    "intent": "inspect_context",
+    "payload": {
+      "topic": "call_invariant_skeleton"
+    }
+  },
+  "ok": true,
+  "manager_note": "Read-only context. Accepted/rejected tactic or call text inside a preview is route-selection information, not the current proof-state error.",
+  "manager_actions": [
+    {
+      "action": "inspect call invariant skeleton",
+      "outcome": "The manager returned read-only context for the current goal.",
+      "timing": "151 ms",
+      "content": {
+        "title": "Call-Invariant Glob Skeleton",
+        "items": [
+          {
+            "why": "No mechanical `={glob}` frame applies at this call \u2014 build the call invariant from THIS development's own in-scope predicates (an invariant conjunct can be a guarded implication / size-or-count bound / domain fact, not only an equality). In-scope forms + named predicates (use lookup_symbol for the full definition of any): size / count bound \u2014 dt: > !1 <= r <= 4 proof *. module D4 = { proc sample () : int = { var r : int; r <$ [1..4]; return r; } }. lemma prD4 : forall k &m, Pr[D4.sample() @ &m : res = k] | relational equality \u2014 sxor: exists s1 s2, s = s1 ++ s2 /\\ s' = s1 ++ i :: s2. pred sxor2 (s s':int list) (i:int) = sxor s s' i \\/ sxor s' s i. lemma sxor_cons s i : sxor s (i :: s) i. proo"
+          }
+        ]
+      }
+    }
+  ],
+  "view_refreshed": true
+}

@@ -1,0 +1,453 @@
+{
+  "last_result": {
+    "intent": "tactic_forms",
+    "payload": {
+      "name": "rnd"
+    },
+    "effect": "This asks the manager for information only; it does not change the EasyCrypt proof state.",
+    "result": "The manager returned read-only context for the current goal.",
+    "content": {
+      "preview": "=== `rnd` tactic \u2014 argument forms ===\n\nCurrent proof mode: ambient\n\nForm 1:  rnd.\n  Use when: Symmetric random sampling: both sides sample from the same distribution and EC can infer the coupling automatically (usually just identity).\n  Example:  rnd.\n\nForm 2:  rnd (fun s => FWD(s)) (fun s => BWD(s)).\n  Use when: Bijection coupling: the two samples are related by a bijection. Provide forward map and backward map. EC generates a subgoal to show FWD and BWD are mutual inverses.\n  Example:  rnd (fun s => s + mask) (fun s => s - mask).\n  Note:     THE key technique for game hops that shift/mask random samples. Look for it whenever a sampled value on one side equals the other side's sample plus a deterministic offset.\n\nForm 3:  rnd{1}. / rnd{2}.\n  Use when: Drop a one-sided sampling that's not present on the other side (dead-code elimination for randoms). Typical: LHS samples something the proof doesn't use, RHS doesn't sample.\n  Example:  rnd{1}.    (* drop useless LHS sample *)\n  Note:     In branch-local pRHL surgery, it is also common to combine a one-sided drop with an aligned sample step, e.g. `rnd{2}; rnd.` when the RHS has an extra instrumentation sample before the shared sample.\n\nForm 4:  rnd predT.    (* phoare/pHL single program *)\n  Use when: SINGLE-program phoare/bd_hoare goal (`phoare[...] = p` / `[<=] p` / `[>=] p`, or `bd_hoare`) whose program ends in a sample `x <$ d`, where the postcondition does NOT constrain the sampled value \u2014 the probability-1 / losslessness case. `predT` is the always-true event, so EC reduces the sample step to `mu d predT = 1%r` (i.e. `is_lossless d`); discharge it with the distribution's `*_ll` lemma.\n  Example:  proc; rnd predT; skip => />; smt(dbool_ll).\n  Note:     The argument is a PREDICATE / event (`'a -> bool`), NOT a probability-mass function \u2014 EC computes the sample's contribution as `mu d <event>`. `rnd.` (no argument) also works when the post is independent of the sampled variable (EC infers the event as `predT`); pass `predT` explicitly when that inference fails. Do NOT use the two-function `rnd (fwd) (bwd)` bijection form here \u2014 that is pRHL-only and EC rejects it in a single-program goal.\n\nForm 5:  rnd (fun x => P x).    (* phoare/pHL single program *)\n  Use when: SINGLE-program phoare/bd_hoare goal where the bound is the probability that the freshly sampled value satisfies a specific predicate `P`. EC reduces the sample step to `mu d (fun x => P x) <cmp> bound` (the `<cmp>` matches the goal's `=` / `<=` / `>=`).\n  Example:  rnd (fun b => !b); skip; smt(dbool_funi dbool_fu).    (* EasyCrypt examples/PIR.ec *)\n  Note:     `P` ranges over the sampled value's type only (no `{1}`/`{2}` side annotation \u2014 this is one program). Discharge the residual mass obligation with the distribution's mass lemmas (`mu1_*`, `dboolE`, `*_funi`, `*_fu`, `*_ll`).\n\n\u26a0\ufe0f  Common mistake: Mode confusion is the #1 trap. In pRHL (two programs, `equiv [_ ~ _]`), `rnd.` with a non-trivial coupling fails \u2014 use `rnd (fwd) (bwd)` with explicit mutually-inverse maps. In a SINGLE-program phoare/bd_hoare goal (`phoare[...] = p`), the two-function bijection form is INVALID; `rnd` there takes one predicate/event argument \u2014 `rnd predT.` for a probability-1 sample (residual is the distribution's losslessness), or `rnd (fun x => P x).` to reduce to `mu d P`. Read the goal head (`equiv [...]` vs `phoare[...]`/`bd_hoare`) before choosing the form.\n\nSee also: while, wp, phoare, conseq  (run `-tactic-forms <name>` for any of these)"
+    }
+  },
+  "current_goal": {
+    "lines": [
+      "Current goal (remaining: 2)",
+      "",
+      "Type variables: <none>",
+      "",
+      "&m: {}",
+      "i0: int",
+      "hi: 0 <= i0 < N",
+      "z: int",
+      "------------------------------------------------------------------------",
+      "Context : hr: {b : bool, i, j : int, s, s0 : int list, r, r' : word}",
+      "Bound   : [=] 1%r",
+      "",
+      "pre =",
+      "  ((i = i0 /\\",
+      "    0 <= i0 < N /\\",
+      "    0 <= j <= N /\\",
+      "    (j <= i0 => PIR.s = PIR.s') /\\ (i0 < j => sxor2 PIR.s PIR.s' i0)) /\\",
+      "   j < N) /\\",
+      "  N - j = z",
+      "",
+      "(1)  b <$ {0,1}               ",
+      "",
+      "post =",
+      "  if j = i then",
+      "    if b then",
+      "      let s1 = j :: PIR.s in",
+      "      let j0 = j + 1 in",
+      "      (i = i0 /\\",
+      "       0 <= i0 < N /\\",
+      "       0 <= j0 <= N /\\",
+      "       (j0 <= i0 => s1 = PIR.s') /\\ (i0 < j0 => sxor2 s1 PIR.s' i0)) /\\",
+      "      N - j0 < z",
+      "    else",
+      "      let s' = j :: PIR.s' in",
+      "      let j0 = j + 1 in",
+      "      (i = i0 /\\",
+      "       0 <= i0 < N /\\",
+      "       0 <= j0 <= N /\\",
+      "       (j0 <= i0 => PIR.s = s') /\\ (i0 < j0 => sxor2 PIR.s s' i0)) /\\",
+      "      N - j0 < z",
+      "  else",
+      "    if b then",
+      "      let s1 = j :: PIR.s in",
+      "      let s' = j :: PIR.s' in",
+      "      let j0 = j + 1 in",
+      "      (i = i0 /\\",
+      "       0 <= i0 < N /\\",
+      "       0 <= j0 <= N /\\ (j0 <= i0 => s1 = s') /\\ (i0 < j0 => sxor2 s1 s' i0)) /\\",
+      "      N - j0 < z",
+      "    else",
+      "      let j0 = j + 1 in",
+      "      (i = i0 /\\",
+      "       0 <= i0 < N /\\",
+      "       0 <= j0 <= N /\\",
+      "       (j0 <= i0 => PIR.s = PIR.s') /\\ (i0 < j0 => sxor2 PIR.s PIR.s' i0)) /\\",
+      "      N - j0 < z",
+      "[26|check]>"
+    ],
+    "text_fully_shown": true,
+    "truncated": false,
+    "goal_type": "phoare",
+    "view_focus": "procedure_frontier",
+    "source": {
+      "label": "Parsed from EasyCrypt pretty goal text",
+      "ground_truth": false
+    }
+  },
+  "proof_status": {
+    "status": "open",
+    "remaining_goals": 2,
+    "remaining_goals_known": true,
+    "goal_type": "phoare",
+    "view_focus": "procedure_frontier",
+    "current_layer": "procedure_body"
+  },
+  "candidate_moves": {
+    "moves": [
+      {
+        "category": "strategy",
+        "tactic_shape": "Inspect proof obligation stack: sample_frontier / statement 1.",
+        "applicability": "Use this as route-selection context; it is not a tactic to run as-is.",
+        "source": "proof-state analysis"
+      },
+      {
+        "category": "strategy",
+        "tactic_shape": "Inspect one-sided sampling residual: b{1} <$ {0,1}.",
+        "applicability": "Use this as route-selection context; it is not a tactic to run as-is.",
+        "source": "proof-state analysis"
+      },
+      {
+        "category": "strategy",
+        "tactic_shape": "Inspect control/suffix legality: rnd@1:1=structurally_ready.",
+        "applicability": "Use this as route-selection context; it is not a tactic to run as-is.",
+        "source": "proof-state analysis"
+      }
+    ]
+  },
+  "program_frontier": {
+    "authority": "proof-state analysis",
+    "view_focus": "procedure_frontier",
+    "focus": {
+      "live_call_sites": 0,
+      "frontier_call_sites": 0,
+      "live_callable_lemmas": 0,
+      "callable_now_lemmas": 0,
+      "oracle_obligation_handles": 0,
+      "has_invariant_skeleton": false
+    },
+    "frontier_alignment": {
+      "summary": "Frontier alignment: sampling steps are visible inside the frontier. Use this as a proof-reader map before choosing while/rnd/seq/call tactics.",
+      "first_instruction_alignment": {
+        "left_first": "b <$ {0,1}",
+        "right_first": "no matching right-side sample at this frontier",
+        "left_head": "sample",
+        "branch_alignment": "single_program_frontier",
+        "proof_read": "Single-program (phoare/hoare) frontier; there is no second side to align."
+      },
+      "rows": [
+        {
+          "role": "sample inside frontier",
+          "left": "b <$ {0,1}",
+          "right": "no matching right-side sample at this frontier",
+          "proof_read": "This is a sampling frontier; choose a coupling or distribution argument that connects the sampled values.",
+          "location": {
+            "left_path": "1"
+          }
+        }
+      ]
+    },
+    "current_frontier_scope": {
+      "frontier": {
+        "kind": "left_sample",
+        "left": {
+          "side": "left",
+          "path": "1",
+          "path_key": [
+            1
+          ],
+          "statement": "b <$ {0,1}",
+          "head": "sample",
+          "source_row": 0
+        }
+      }
+    },
+    "procedure_navigation": {
+      "how_to_use": "Positions for choosing wp/sp depth, which `if` to rcond, and where the next loop/call frontier is. Facts only \u2014 pick the tactic and the branch direction yourself.",
+      "next_frontier": {
+        "kind": "sample_frontier",
+        "at_order": 1
+      }
+    },
+    "checks": [
+      "Keep one-sided instrumentation as a map, not as a tactic recipe."
+    ]
+  },
+  "call_site_surface": {},
+  "application_context": {},
+  "facts_and_diagnostics": {
+    "facts": {
+      "has_invariant_skeleton": false,
+      "unfoldable_goal_heads": [
+        {
+          "name": "sxor2",
+          "unqualified_name": "sxor2",
+          "declaration_kind": "pred",
+          "unfold_tactic": "rewrite /sxor2.",
+          "smt_argument_role": "not_a_lemma_hint"
+        }
+      ],
+      "unfoldable_goal_head_count": 1
+    },
+    "fact_note": "Only current-frontier facts are shown here; the full proof context artifact keeps the compiler/internal details.",
+    "notes": [
+      {
+        "message": "One-sided sampling residual: b{1} <$ {0,1}. The postcondition still mentions the sampled value or a quantified witness, so this may be a true losslessness side condition or leftover coupling debt.",
+        "severity": "info"
+      }
+    ]
+  },
+  "proof_so_far": {
+    "committed_count": 7,
+    "steps": [
+      {
+        "step": 1,
+        "tactic": "move => hi."
+      },
+      {
+        "step": 2,
+        "tactic": "byphoare (_ : i = i0 /\\ 0 <= i0 < N ==> res = a i0) => //."
+      },
+      {
+        "step": 3,
+        "tactic": "proc."
+      },
+      {
+        "step": 4,
+        "tactic": "inline PIR.query."
+      },
+      {
+        "step": 5,
+        "tactic": "wp."
+      },
+      {
+        "step": 6,
+        "tactic": "while (i = i0 /\\ 0 <= i0 < N /\\ 0 <= j <= N /\\ (j <= i0 => PIR.s = PIR.s') /\\ (i0 < j => sxor2 PIR.s PIR.s' i0)) (N - j)."
+      },
+      {
+        "step": 7,
+        "tactic": "move => z; wp."
+      }
+    ],
+    "elided_count": 0,
+    "note": "Your committed proof so far in THIS node, step-numbered \u2014 your own work. Use it to orient; do not re-derive steps already listed here."
+  },
+  "surface_action_preflight": {
+    "schema_version": 1,
+    "results": []
+  },
+  "inspect_lookup_handles": {
+    "effect": "All handles here are read-only manager requests; the committed EasyCrypt proof state stays unchanged.",
+    "manager_note": "Some requests may ask EasyCrypt or name resolution; wait for the manager result before choosing the next proof intent.",
+    "ask_manager_for": [
+      {
+        "intent": "inspect_context",
+        "payload": {
+          "topic": "operator_lemmas",
+          "operator": "OPERATOR"
+        },
+        "use_when": "Need the lemmas that apply to an OPERATOR in your goal \u2014 project-local lemmas included (not just stdlib) \u2014 instead of guessing a lemma name.",
+        "returns": "lemmas mentioning that operator, found by live EC `search` over the loaded context (statements; you pick which to apply)",
+        "intent_class": "context_topic",
+        "read_only": true,
+        "public_intent": "operator_lemmas",
+        "payload_fields": [
+          "operator"
+        ]
+      },
+      {
+        "intent": "inspect_context",
+        "payload": {
+          "topic": "tactic_forms",
+          "name": "while"
+        },
+        "use_when": "Need the valid one-sided hoare/phoare loop form.",
+        "returns": "valid `while` forms and common traps",
+        "intent_class": "context_topic",
+        "read_only": true,
+        "public_intent": "tactic_forms",
+        "payload_fields": [
+          "name"
+        ]
+      },
+      {
+        "intent": "inspect_context",
+        "payload": {
+          "topic": "tactic_forms",
+          "name": "rnd"
+        },
+        "use_when": "A sampling step may need `rnd` to reduce it to a distribution/probability fact.",
+        "returns": "valid `rnd` forms, including one-sided sampling",
+        "intent_class": "context_topic",
+        "read_only": true,
+        "public_intent": "tactic_forms",
+        "payload_fields": [
+          "name"
+        ]
+      }
+    ]
+  },
+  "structural_checkpoints": {
+    "items": [
+      {
+        "checkpoint_id": "cp_4_17f357ee99686b57",
+        "semantic_id": "last_call_site_boundary",
+        "semantic_ids": [
+          "last_call_site_boundary"
+        ],
+        "label": "Before inline expansion #4",
+        "committed_step_index": 4,
+        "committed_tactic": "inline PIR.query.",
+        "restored_proof_layer": "pre_inline_frontier",
+        "restored_affordances": {
+          "call_site_handles": "as_before_inline"
+        },
+        "undo_scope": "call_site_boundary",
+        "why_checkpoint": "inline boundary; selecting it restores the proof state before this expansion",
+        "effect_if_selected": "Undo committed tactic #4 and every committed tactic after it in this node.",
+        "submit": {
+          "intent": "undo_to_checkpoint",
+          "payload": {
+            "checkpoint_id": "cp_4_17f357ee99686b57"
+          }
+        }
+      }
+    ]
+  },
+  "surface_turn": {
+    "schema_version": 1,
+    "presentation_kind": "read_only_overlay",
+    "proof_surface": {
+      "schema_version": 1,
+      "profile": "l4_checked_action_surface",
+      "phase": "plain",
+      "goal": {
+        "title": "Current Goal",
+        "text": "Current goal (remaining: 2)\n\nType variables: <none>\n\n&m: {}\ni0: int\nhi: 0 <= i0 < N\nz: int\n------------------------------------------------------------------------\nContext : hr: {b : bool, i, j : int, s, s0 : int list, r, r' : word}\nBound   : [=] 1%r\n\npre =\n  ((i = i0 /\\\n    0 <= i0 < N /\\\n    0 <= j <= N /\\\n    (j <= i0 => PIR.s = PIR.s') /\\ (i0 < j => sxor2 PIR.s PIR.s' i0)) /\\\n   j < N) /\\\n  N - j = z\n\n(1)  b <$ {0,1}               \n\npost =\n  if j = i then\n    if b then\n      let s1 = j :: PIR.s in\n      let j0 = j + 1 in\n      (i = i0 /\\\n       0 <= i0 < N /\\\n       0 <= j0 <= N /\\\n       (j0 <= i0 => s1 = PIR.s') /\\ (i0 < j0 => sxor2 s1 PIR.s' i0)) /\\\n      N - j0 < z\n    else\n      let s' = j :: PIR.s' in\n      let j0 = j + 1 in\n      (i = i0 /\\\n       0 <= i0 < N /\\\n       0 <= j0 <= N /\\\n       (j0 <= i0 => PIR.s = s') /\\ (i0 < j0 => sxor2 PIR.s s' i0)) /\\\n      N - j0 < z\n  else\n    if b then\n      let s1 = j :: PIR.s in\n      let s' = j :: PIR.s' in\n      let j0 = j + 1 in\n      (i = i0 /\\\n       0 <= i0 < N /\\\n       0 <= j0 <= N /\\ (j0 <= i0 => s1 = s') /\\ (i0 < j0 => sxor2 s1 s' i0)) /\\\n      N - j0 < z\n    else\n      let j0 = j + 1 in\n      (i = i0 /\\\n       0 <= i0 < N /\\\n       0 <= j0 <= N /\\\n       (j0 <= i0 => PIR.s = PIR.s') /\\ (i0 < j0 => sxor2 PIR.s PIR.s' i0)) /\\\n      N - j0 < z\n[26|check]>",
+        "goal_type": "phoare",
+        "truncated": false,
+        "line_count": 57
+      },
+      "status": {
+        "status": "open",
+        "remaining_goals": 2,
+        "remaining_goals_known": true,
+        "view_focus": "procedure_frontier",
+        "current_layer": "procedure_body",
+        "goal_type": "phoare",
+        "surface_phase": "plain"
+      },
+      "actions": [
+        {
+          "intent": "tactic_forms",
+          "payload": {
+            "name": "<name>"
+          },
+          "label": "tactic_forms: <name>",
+          "intent_class": "context_topic",
+          "read_only": true,
+          "requires_input": [
+            "name"
+          ],
+          "choices": {
+            "name": [
+              "while",
+              "rnd",
+              "wp",
+              "rcondt",
+              "rcondf",
+              "rewrite",
+              "apply"
+            ]
+          },
+          "description": "Need the valid one-sided hoare/phoare loop form.",
+          "source_refs": [
+            "inspect_lookup_handles.ask_manager_for",
+            "proof_status",
+            "program_frontier"
+          ],
+          "eligibility_reason": "tactic family matches the current proof phase",
+          "state_scope": "current_phase"
+        }
+      ],
+      "metadata": {
+        "contract": "raw_workspace_facts -> SurfaceModel -> markdown/card",
+        "primary_panel_id": "",
+        "primary_action_count": 0,
+        "available_action_count": 3
+      },
+      "surface_model_hash": "2a9ceeb3f81542d989a0ee5df72fd9bb973a241d"
+    },
+    "overlay_surface": {
+      "schema_version": 1,
+      "profile": "l4_checked_action_surface",
+      "phase": "context_result",
+      "goal": {
+        "title": "Current Goal",
+        "text": "Current goal (remaining: 2)\n\nType variables: <none>\n\n&m: {}\ni0: int\nhi: 0 <= i0 < N\nz: int\n------------------------------------------------------------------------\nContext : hr: {b : bool, i, j : int, s, s0 : int list, r, r' : word}\nBound   : [=] 1%r\n\npre =\n  ((i = i0 /\\\n    0 <= i0 < N /\\\n    0 <= j <= N /\\\n    (j <= i0 => PIR.s = PIR.s') /\\ (i0 < j => sxor2 PIR.s PIR.s' i0)) /\\\n   j < N) /\\\n  N - j = z\n\n(1)  b <$ {0,1}               \n\npost =\n  if j = i then\n    if b then\n      let s1 = j :: PIR.s in\n      let j0 = j + 1 in\n      (i = i0 /\\\n       0 <= i0 < N /\\\n       0 <= j0 <= N /\\\n       (j0 <= i0 => s1 = PIR.s') /\\ (i0 < j0 => sxor2 s1 PIR.s' i0)) /\\\n      N - j0 < z\n    else\n      let s' = j :: PIR.s' in\n      let j0 = j + 1 in\n      (i = i0 /\\\n       0 <= i0 < N /\\\n       0 <= j0 <= N /\\\n       (j0 <= i0 => PIR.s = s') /\\ (i0 < j0 => sxor2 PIR.s s' i0)) /\\\n      N - j0 < z\n  else\n    if b then\n      let s1 = j :: PIR.s in\n      let s' = j :: PIR.s' in\n      let j0 = j + 1 in\n      (i = i0 /\\\n       0 <= i0 < N /\\\n       0 <= j0 <= N /\\ (j0 <= i0 => s1 = s') /\\ (i0 < j0 => sxor2 s1 s' i0)) /\\\n      N - j0 < z\n    else\n      let j0 = j + 1 in\n      (i = i0 /\\\n       0 <= i0 < N /\\\n       0 <= j0 <= N /\\\n       (j0 <= i0 => PIR.s = PIR.s') /\\ (i0 < j0 => sxor2 PIR.s PIR.s' i0)) /\\\n      N - j0 < z\n[26|check]>",
+        "goal_type": "phoare",
+        "truncated": false,
+        "line_count": 57
+      },
+      "status": {
+        "status": "open",
+        "remaining_goals": 2,
+        "remaining_goals_known": true,
+        "view_focus": "procedure_frontier",
+        "current_layer": "procedure_body",
+        "goal_type": "phoare",
+        "surface_phase": "context_result"
+      },
+      "primary_panel": {
+        "panel_id": "context_result",
+        "phase": "context_result",
+        "title": "Requested: `tactic_forms` -- `rnd`",
+        "facts": [
+          {
+            "key": "content_preview",
+            "label": "Returned text",
+            "kind": "manager_result",
+            "role": "primary",
+            "value": "=== `rnd` tactic \u2014 argument forms ===\n\nCurrent proof mode: ambient\n\nForm 1:  rnd.\n  Use when: Symmetric random sampling: both sides sample from the same distribution and EC can infer the coupling automatically (usually just identity).\n  Example:  rnd.\n\nForm 2:  rnd (fun s => FWD(s)) (fun s => BWD(s)).\n  Use when: Bijection coupling: the two samples are related by a bijection. Provide forward map and backward map. EC generates a subgoal to show FWD and BWD are mutual inverses.\n  Example:  rnd (fun s => s + mask) (fun s => s - mask).\n  Note:     THE key technique for game hops that shift/mask random samples. Look for it whenever a sampled value on one side equals the other side's sample plus a deterministic offset.\n\nForm 3:  rnd{1}. / rnd{2}.\n  Use when: Drop a one-sided sampling that's not present on the other side (dead-code elimination for randoms). Typical: LHS samples something the proof doesn't use, RHS doesn't sample.\n  Example:  rnd{1}.    (* drop useless LHS sample *)\n  Note:     In branch-local pRHL surgery, it is also common to combine a one-sided drop with an aligned sample step, e.g. `rnd{2}; rnd.` when the RHS has an extra instrumentation sample before the shared sample.\n\nForm 4:  rnd predT.    (* phoare/pHL single program *)\n  Use when: SINGLE-program phoare/bd_hoare goal (`phoare[...] = p` / `[<=] p` / `[>=] p`, or `bd_hoare`) whose program ends in a sample `x <$ d`, where the postcondition does NOT constrain the sampled value \u2014 the probability-1 / losslessness case. `predT` is the always-true event, so EC reduces the sample step to `mu d predT = 1%r` (i.e. `is_lossless d`); discharge it with the distribution's `*_ll` lemma.\n  Example:  proc; rnd predT; skip => />; smt(dbool_ll).\n  Note:     The argument is a PREDICATE / event (`'a -> bool`), NOT a probability-mass function \u2014 EC computes the sample's contribution as `mu d <event>`. `rnd.` (no argument) also works when the post is independent of the sampled variable (EC infers the event as `predT`); pass `predT` explicitly when that inference fails. Do NOT use the two-function `rnd (fwd) (bwd)` bijection form here \u2014 that is pRHL-only and EC rejects it in a single-program goal.\n\nForm 5:  rnd (fun x => P x).    (* phoare/pHL single program *)\n  Use when: SINGLE-program phoare/bd_hoare goal where the bound is the probability that the freshly sampled value satisfies a specific predicate `P`. EC reduces the sample step to `mu d (fun x => P x) <cmp> bound` (the `<cmp>` matches the goal's `=` / `<=` / `>=`).\n  Example:  rnd (fun b => !b); skip; smt(dbool_funi dbool_fu).    (* EasyCrypt examples/PIR.ec *)\n  Note:     `P` ranges over the sampled value's type only (no `{1}`/`{2}` side annotation \u2014 this is one program). Discharge the residual mass obligation with the distribution's mass lemmas (`mu1_*`, `dboolE`, `*_funi`, `*_fu`, `*_ll`).\n\n\u26a0\ufe0f  Common mistake: Mode confusion is the #1 trap. In pRHL (two programs, `equiv [_ ~ _]`), `rnd.` with a non-trivial coupling fails \u2014 use `rnd (fwd) (bwd)` with explicit mutually-inverse maps. In a SINGLE-program phoare/bd_hoare goal (`phoare[...] = p`), the two-function bijection form is INVALID; `rnd` there takes one predicate/event argument \u2014 `rnd predT.` for a probability-1 sample (residual is the distribution's losslessness), or `rnd (fun x => P x).` to reduce to `mu d P`. Read the goal head (`equiv [...]` vs `phoare[...]`/`bd_hoare`) before choosing the form.\n\nSee also: while, wp, phoare, conseq  (run `-tactic-forms <name>` for any of these)",
+            "source_refs": [
+              "last_result.content.preview"
+            ]
+          }
+        ],
+        "display_policy": {
+          "lead_before_goal": true,
+          "verbosity": "answer",
+          "compact_goal": true,
+          "show_status": true,
+          "show_actions": false
+        },
+        "source_refs": [
+          "last_result"
+        ]
+      },
+      "metadata": {
+        "contract": "raw_workspace_facts -> SurfaceModel -> markdown/card",
+        "primary_panel_id": "context_result",
+        "primary_action_count": 0,
+        "available_action_count": 3
+      },
+      "surface_model_hash": "d7537d1d79fd12569f7617ee4a0ad1c6d8c4001a"
+    },
+    "turn_outcome": {
+      "intent": "tactic_forms",
+      "payload": {
+        "name": "rnd"
+      },
+      "ok": true,
+      "result_line": "The manager returned read-only context for the current goal.",
+      "lead_before_goal": false,
+      "proof_state_changed": false,
+      "source_refs": [
+        "last_result"
+      ]
+    },
+    "base_surface_updates": false,
+    "proof_state_changed": false,
+    "metadata": {
+      "contract": "SurfaceModel -> SurfaceTurnModel -> markdown/card",
+      "current_surface_hash": "d7537d1d79fd12569f7617ee4a0ad1c6d8c4001a",
+      "proof_surface_hash": "2a9ceeb3f81542d989a0ee5df72fd9bb973a241d",
+      "overlay_surface_hash": "d7537d1d79fd12569f7617ee4a0ad1c6d8c4001a"
+    },
+    "surface_turn_hash": "032c4b79348f58c98d95e6859c4591844df09da9"
+  }
+}

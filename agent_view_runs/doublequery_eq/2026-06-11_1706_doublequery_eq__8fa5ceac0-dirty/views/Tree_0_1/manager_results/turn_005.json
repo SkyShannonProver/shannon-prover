@@ -1,0 +1,19 @@
+{
+  "turn": 5,
+  "handled_intent": {
+    "intent": "commit_tactic",
+    "payload": {
+      "tactic": "while (={i, s, c, p} /\\ (glob F){1} = (glob F){2})."
+    }
+  },
+  "ok": true,
+  "manager_note": "Committed tactic accepted; the EasyCrypt proof state changed.",
+  "manager_actions": [
+    {
+      "action": "tactic commit",
+      "outcome": "EasyCrypt accepted the committed tactic.",
+      "timing": "231 ms"
+    }
+  ],
+  "view_refreshed": true
+}

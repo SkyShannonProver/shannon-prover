@@ -1,0 +1,38 @@
+{
+  "last_result": {},
+  "current_goal": {
+    "goal_type": "equiv",
+    "lines": [
+      "Current goal",
+      "",
+      "Type variables: <none>",
+      "",
+      "------------------------------------------------------------------------",
+      "pre =",
+      "  (glob A){1} = (glob A){2} /\\",
+      "  (glob I){1} = (glob I){2} /\\ OCC.gs{1} = OCC.gs{2} /\\ arg{1} = arg{2}",
+      "",
+      "    A(GenChaChaPoly(OCC(I))).main ~ A(OChaChaPoly(I)).main ",
+      "",
+      "post =",
+      "  res{1} = res{2} /\\",
+      "  (glob A){1} = (glob A){2} /\\",
+      "  (glob I){1} = (glob I){2} /\\ OCC.gs{1} = OCC.gs{2}"
+    ],
+    "source": {
+      "ground_truth": false,
+      "label": "Parsed from EasyCrypt pretty goal text"
+    },
+    "text_fully_shown": true,
+    "truncated": false,
+    "view_focus": "relational_program"
+  },
+  "proof_status": {
+    "current_layer": "prhl_module",
+    "goal_type": "equiv",
+    "remaining_goals": 1,
+    "remaining_goals_known": true,
+    "status": "open",
+    "view_focus": "relational_program"
+  }
+}

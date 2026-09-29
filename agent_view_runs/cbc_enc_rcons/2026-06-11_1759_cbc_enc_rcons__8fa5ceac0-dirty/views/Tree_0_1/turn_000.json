@@ -1,0 +1,36 @@
+{
+  "last_result": {},
+  "current_goal": {
+    "goal_type": "ambient",
+    "lines": [
+      "Current goal",
+      "",
+      "Type variables: <none>",
+      "",
+      "P: block -> block -> block",
+      "k: block",
+      "st: block",
+      "p: block list",
+      "pn: block",
+      "------------------------------------------------------------------------",
+      "rcons (cbc_enc P k st p)",
+      "  (P k (nth witness<:block> (st :: cbc_enc P k st p) (size p) +^ pn)) =",
+      "cbc_enc P k st (rcons p pn)"
+    ],
+    "source": {
+      "ground_truth": false,
+      "label": "Parsed from EasyCrypt pretty goal text"
+    },
+    "text_fully_shown": true,
+    "truncated": false,
+    "view_focus": "ambient_logic"
+  },
+  "proof_status": {
+    "current_layer": "ambient_logic",
+    "goal_type": "ambient",
+    "remaining_goals": 1,
+    "remaining_goals_known": true,
+    "status": "open",
+    "view_focus": "ambient_logic"
+  }
+}

@@ -1,0 +1,471 @@
+{
+  "last_result": {
+    "intent": "probe_tactic",
+    "payload": {
+      "tactic": "auto => />; smt(expN expD exp0 mulcA mulVc mulcV mulc1)."
+    },
+    "manager_action": "probe_tactic",
+    "result": "EasyCrypt accepted this read-only probe. The committed proof state was not changed; `goal_after_probe` shows the goal that would be visible if this tactic were committed.",
+    "effect": "This is a read-only probe; it asks EasyCrypt what would happen without changing the committed proof state.",
+    "proof_state": "The committed EasyCrypt proof state was not changed.",
+    "probe_preview": {
+      "tactic": "auto => />; smt(expN expD exp0 mulcA mulVc mulcV mulc1).",
+      "outcome": "EasyCrypt accepted this read-only probe.",
+      "goal_after_remaining": 1,
+      "effect": "This preview is speculative only; the committed EasyCrypt proof state was not changed.",
+      "goal_after_probe": {
+        "lines": [
+          "Current goal",
+          "Type variables: <none>",
+          "D : SigmaTraceDistinguisher",
+          "&m: {}",
+          "------------------------------------------------------------------------",
+          "&1 (left ) : {b, v, v0 : bool, i : int,",
+          "             h, a, a0, v1, v', a2, v2, v'0 : group,",
+          "             w0, r, z1, z3 : ZModE.exp,",
+          "             x, h0, x0, x1, h1, h2, h3, h4 : statement, w, w1 : witness,",
+          "             m, m0, m1, a1, a3 : message, s : secret,",
+          "             e, e0, e1, e2, e3, e4, e5 : challenge, z, z0, z2, z4 : response,",
+          "             t : message * challenge * response,",
+          "             to, to0, to1 : (message * challenge * response) option}",
+          "&2 (right) : {b : bool, h, a : group, w0, r, e1, z1 : ZModE.exp,",
+          "             x, x0, h0, h1 : statement, w, w1, w2 : witness,",
+          "             m, m0, a0 : message, s, r0 : secret, e, e0, e2 : challenge,",
+          "             z, z0 : response, t : message * challenge * response,",
+          "             sw : statement * witness, ms : message * secret}",
+          "pre = (glob D){2} = (glob D){m} /\\ (glob D){1} = (glob D){m}",
+          "w0 <$ dt                              ( 1--)  w0 <$ dt",
+          "if (w0 = zero) {                      ( 2--)  if (w0 = zero) {",
+          "  w0 <- zero                          ( 2.1)    w0 <- zero",
+          "}                                     ( 2--)  }",
+          "h <- g ^ w0                           ( 3--)  h <- g ^ w0",
+          "(x, w) <- (h, w0)                     ( 4--)  (x0, w) <- (h, w0)",
+          "h0 <- x                               ( 5--)  h0 <- x0",
+          "w1 <- w                               ( 6--)  w1 <- w",
+          "r <$ dt                               ( 7--)  r <$ dt",
+          "a <- g ^ r                            ( 8--)  a <- g ^ r",
+          "(m, s) <- (a, r)                      ( 9--)  (m0, s) <- (a, r)",
+          "e <$ de                               (10--)  h1 <- x0",
+          "x0 <- x                               (11--)  a0 <- m0",
+          "e0 <- e                               (12--)  e1 <$ dt",
+          "h1 <- x0                              (13--)  e0 <- e1",
+          "e2 <- e0                              (14--)  sw <- (x0, w)",
+          "z1 <$ dt                              (15--)  ms <- (m0, s)",
+          "a0 <- g ^ z1 * h1 ^ -e2               (16--)  e2 <- e0",
+          "(m0, e0, z) <- (a0, e2, z1)           (17--)  w2 <- sw.`2",
+          "h2 <- x0                              (18--)  r0 <- ms.`2",
+          "a1 <- m0                              (19--)  z1 <- r0 + e2 * w2",
+          "e3 <- e0                              (20--)  z0 <- z1",
+          "z2 <- z                               (21--)  (x, m, e, z) <- (x0, m0, e0, z0)",
+          "v1 <- a1 * h2 ^ e3                    (22--)  t <- (m, e, z)",
+          "v' <- g ^ z2                          (23--)  b <@ D.distinguish(x, t)",
+          "v <- v1 = v'                          (24--)",
+          "if (v) {                              (25--)",
+          "  to0 <- Some (m0, e0, z)             (25.1)",
+          "} else {                              (25--)",
+          "  to0 <- None<:message * challenge *  (25?1)",
+          "    response>                         (    )",
+          "}                                     (25--)",
+          "to <- to0                             (26--)",
+          "i <- 0                                (27--)",
+          "t <- oget to                          (28--)",
+          "b <@ D.distinguish(x, t)              (29--)",
+          "post = b{1} = b{2}",
+          "[45|check]>"
+        ],
+        "text_fully_shown": true,
+        "truncated": false,
+        "source": {
+          "label": "[TRY] goal_after_raw",
+          "ground_truth": false
+        }
+      }
+    },
+    "kind": "accepted_closing_probe",
+    "message": "This closing/checking probe was accepted.",
+    "accepted_tactic": "auto => />; smt(expN expD exp0 mulcA mulVc mulcV mulc1).",
+    "closing_decision": {
+      "id": "closing_or_checking",
+      "kind": "closing_or_checking",
+      "status": "accepted_checkpoint",
+      "tactic": "auto => />; smt(expN expD exp0 mulcA mulVc mulcV mulc1).",
+      "phase": "closing/checking",
+      "valid_for": "current_view_only",
+      "decision": "Commit this exact tactic only if you want to try closing or checking this obligation.",
+      "recommended_next": {
+        "label": "Commit this exact tactic",
+        "submit": {
+          "intent": "commit_tactic",
+          "payload": {
+            "tactic": "auto => />; smt(expN expD exp0 mulcA mulVc mulcV mulc1)."
+          }
+        }
+      },
+      "after_commit": "This is a closing/checking step; it may close the current goal or expose the next remaining goal, but it does not promise a new surgery workbench.",
+      "if_wrong_after_commit": "Use `undo_last_step` if the committed closing/checking step does not match the intended route."
+    },
+    "preview_summary": {
+      "remaining_goals": 1,
+      "truncated": false
+    },
+    "tactic": "auto => />; smt(expN expD exp0 mulcA mulVc mulcV mulc1)."
+  },
+  "current_goal": {
+    "lines": [
+      "Current goal (remaining: 2)",
+      "",
+      "Type variables: <none>",
+      "",
+      "D : SigmaTraceDistinguisher",
+      "&m: {}",
+      "------------------------------------------------------------------------",
+      "forall &m0,",
+      "  hoare[ w0 <$ $dt; ...; i <- 0; :",
+      "          (glob D){m0} = (glob D){m} /\\ (glob D) = (glob D){m} ==>",
+      "          to <> None<:message * challenge * response> ]",
+      "[44|check]>"
+    ],
+    "text_fully_shown": true,
+    "truncated": false,
+    "goal_type": "hoare",
+    "view_focus": "procedure_frontier",
+    "source": {
+      "label": "Parsed from EasyCrypt pretty goal text",
+      "ground_truth": false
+    }
+  },
+  "proof_status": {
+    "status": "open",
+    "remaining_goals": 2,
+    "remaining_goals_known": true,
+    "goal_type": "hoare",
+    "view_focus": "procedure_frontier",
+    "current_layer": "procedure_body"
+  },
+  "candidate_moves": {
+    "moves": [
+      {
+        "category": "strategy",
+        "tactic_shape": "skip.",
+        "applicability": "Use this as route-selection context; it is not a tactic to run as-is.",
+        "source": "proof-state analysis"
+      },
+      {
+        "title": "Residual closing tactic",
+        "category": "probe",
+        "tactic": "auto.",
+        "applicability": "This tactic-shaped option should be checked with a read-only probe before committing it.",
+        "effect": "This is a read-only probe; it asks EasyCrypt what would happen without changing the committed proof state.",
+        "source": "proof-state analysis",
+        "derivation": "read-only probe surfaced from proof-state analysis",
+        "verified": "read_only_probe_suggestion",
+        "guarantee": "read-only probe shape; proof state unchanged; probe then decide; reversible"
+      },
+      {
+        "category": "strategy",
+        "tactic_shape": "smt().",
+        "applicability": "Use this as route-selection context; it is not a tactic to run as-is.",
+        "source": "proof-state analysis"
+      },
+      {
+        "category": "strategy",
+        "tactic_shape": "wp.",
+        "applicability": "Use this as route-selection context; it is not a tactic to run as-is.",
+        "source": "proof-state analysis"
+      }
+    ],
+    "probe_alternatives": [
+      {
+        "tactic": "auto => />; smt(expN expD exp0 mulcA mulVc mulcV mulc1).",
+        "probe_result": "accepted",
+        "status": "verified_on_current_state",
+        "how_to_use": "This closing/checking tactic was accepted by a read-only probe on the current proof state. Commit it only if you want to try closing or checking this obligation.",
+        "closing_decision": {
+          "id": "closing_or_checking",
+          "kind": "closing_or_checking",
+          "status": "accepted_checkpoint",
+          "tactic": "auto => />; smt(expN expD exp0 mulcA mulVc mulcV mulc1).",
+          "phase": "closing/checking",
+          "valid_for": "current_view_only",
+          "decision": "Commit this exact tactic only if you want to try closing or checking this obligation.",
+          "recommended_next": {
+            "label": "Commit this exact tactic",
+            "submit": {
+              "intent": "commit_tactic",
+              "payload": {
+                "tactic": "auto => />; smt(expN expD exp0 mulcA mulVc mulcV mulc1)."
+              }
+            }
+          },
+          "after_commit": "This is a closing/checking step; it may close the current goal or expose the next remaining goal, but it does not promise a new surgery workbench.",
+          "if_wrong_after_commit": "Use `undo_last_step` if the committed closing/checking step does not match the intended route."
+        },
+        "goal_after_probe_summary": {
+          "remaining_goals": 1,
+          "first_lines": [
+            "Current goal",
+            "Type variables: <none>",
+            "D : SigmaTraceDistinguisher",
+            "&m: {}"
+          ],
+          "truncated": false
+        }
+      }
+    ]
+  },
+  "program_frontier": {
+    "authority": "proof-state analysis",
+    "view_focus": "procedure_frontier",
+    "focus": {
+      "live_call_sites": 0,
+      "frontier_call_sites": 0,
+      "live_callable_lemmas": 0,
+      "callable_now_lemmas": 0,
+      "oracle_obligation_handles": 0,
+      "has_invariant_skeleton": false
+    },
+    "checks": [
+      "Keep one-sided instrumentation as a map, not as a tactic recipe."
+    ]
+  },
+  "call_site_surface": {},
+  "pure_tail_surface": {
+    "state": "quantified_ambient_tail",
+    "goal_operators": [
+      "m0",
+      "hoare",
+      "w0",
+      "dt",
+      "None",
+      "message",
+      "challenge",
+      "response"
+    ],
+    "obligation_families": [
+      {
+        "family": "sampling_bijection",
+        "evidence": [
+          "distribution or lossless token remains visible"
+        ],
+        "effect": "The remaining pure goal may include invertibility or lossless side conditions from an earlier sampling alignment.",
+        "limitations": "No distribution lemma is selected by this surface."
+      },
+      {
+        "family": "quantified_residual_logic",
+        "evidence": [
+          "universal quantifier visible",
+          "implication residual visible"
+        ],
+        "effect": "The current proof point is dominated by local logical obligations rather than program-frontier movement.",
+        "limitations": "Quantifier names are not normalized across EasyCrypt pretty-printer variants."
+      }
+    ],
+    "effect": "Summarizes verifier-visible pure-goal structure after program frontier actions have been discharged or hidden by local proof steps.",
+    "limitations": [
+      "This panel records syntactic and proof-state facts from the current view.",
+      "It does not choose a tactic or instantiate a lemma."
+    ]
+  },
+  "application_context": {
+    "selected_handles": [
+      {
+        "title": "Residual closing tactic",
+        "tactic": "auto => />; smt(expN expD exp0 mulcA mulVc mulcV mulc1).",
+        "why_relevant": "Daemon probe accepted this tactic and it would leave 1 subgoal(s); commit it if that is the intended decomposition.",
+        "confidence": "verified_by_probe",
+        "source": "try",
+        "derivation": "read-only probe surfaced from try",
+        "verified": "read_only_probe_suggestion",
+        "guarantee": "read-only probe shape; proof state unchanged; probe then decide; reversible"
+      },
+      {
+        "title": "Residual closing tactic",
+        "tactic": "auto.",
+        "why_relevant": "Daemon probe accepted this tactic and it would leave 2 subgoal(s); commit it if that is the intended decomposition.",
+        "confidence": "verified_by_probe",
+        "source": "try",
+        "derivation": "read-only probe surfaced from try",
+        "verified": "read_only_probe_suggestion",
+        "guarantee": "read-only probe shape; proof state unchanged; probe then decide; reversible"
+      }
+    ]
+  },
+  "facts_and_diagnostics": {
+    "facts": {
+      "has_invariant_skeleton": false,
+      "unfoldable_goal_head_count": 0
+    },
+    "fact_note": "Only current-frontier facts are shown here; the full proof context artifact keeps the compiler/internal details.",
+    "notes": [
+      {
+        "message": "proof-state analysis sees no live call sites after a prior `inline *` at tactic 3. Continue at procedure/ambient layer, or undo if a call lemma is needed.",
+        "severity": "info"
+      }
+    ]
+  },
+  "recovery_diagnosis_surface": {
+    "kind": "recovery_diagnosis_surface",
+    "recovery_class": "local_pure_surgery_available",
+    "confidence": "medium",
+    "checkpoint_policy": "current_state_local_work_visible",
+    "evidence": [
+      "pure_tail_surface is visible for the current goal",
+      "current proof state has no program-frontier work before the logical residual"
+    ],
+    "available_local_work": [
+      {
+        "kind": "pure_tail_obligation_families",
+        "items": [
+          "sampling_bijection",
+          "quantified_residual_logic"
+        ]
+      }
+    ],
+    "related_surfaces": [
+      "pure_tail_surface",
+      "structural_checkpoints"
+    ],
+    "limitations": [
+      "does not select a destructor, witness, rewrite, or SMT lemma",
+      "reported checkpoints are recovery references, not a default route"
+    ]
+  },
+  "inspect_lookup_handles": {
+    "effect": "All handles here are read-only manager requests; the committed EasyCrypt proof state stays unchanged.",
+    "manager_note": "Some requests may ask EasyCrypt or name resolution; wait for the manager result before choosing the next proof intent.",
+    "ask_manager_for": [
+      {
+        "intent": "inspect_context",
+        "payload": {
+          "topic": "goal_info"
+        },
+        "use_when": "Need parsed goal shape, resolved names, or KB pattern hints.",
+        "returns": "parsed goal structure and names"
+      },
+      {
+        "intent": "inspect_context",
+        "payload": {
+          "topic": "call_site_options"
+        },
+        "use_when": "The current procedure frontier exposes a call route.",
+        "returns": "call-ready/oracle-equiv context for the current frontier, plus the BODY of the procedure(s) called here (functor aliases resolved) so you can see which oracles/state your call invariant must preserve"
+      },
+      {
+        "intent": "inspect_context",
+        "payload": {
+          "topic": "call_subgoals",
+          "invariant": "<the EasyCrypt invariant expression inside call (_: ...)>"
+        },
+        "use_when": "You are considering `call (_: Inv)` and already have a concrete invariant expression you want to test first.",
+        "returns": "a read-only preview of the obligations caused by that candidate invariant, including pre/init, call-preservation, oracle-side, postcondition, missing-fact signals, and extra conjuncts that may create avoidable obligations"
+      },
+      {
+        "intent": "inspect_context",
+        "payload": {
+          "topic": "tactic_forms",
+          "name": "call"
+        },
+        "use_when": "Need the valid form for call, while, seq, rnd, or rewrite.",
+        "returns": "valid tactic forms and common traps"
+      },
+      {
+        "intent": "inspect_context",
+        "payload": {
+          "topic": "tactic_forms",
+          "name": "sp"
+        },
+        "returns": "valid `sp` forms and common traps"
+      },
+      {
+        "intent": "inspect_context",
+        "payload": {
+          "topic": "tactic_forms",
+          "name": "while"
+        },
+        "use_when": "Need the valid one-sided hoare/phoare loop form.",
+        "returns": "valid `while` forms and common traps"
+      },
+      {
+        "intent": "inspect_context",
+        "payload": {
+          "topic": "tactic_forms",
+          "name": "wp"
+        },
+        "use_when": "Mid-proof suffix may need indexed `wp` to absorb a tail before a cut.",
+        "returns": "valid indexed `wp` forms and suffix traps"
+      },
+      {
+        "intent": "inspect_context",
+        "payload": {
+          "topic": "tactic_forms",
+          "name": "swap"
+        },
+        "use_when": "Statement order may need a small `swap` before `sp` or `wp`.",
+        "returns": "valid `swap` forms and statement-order traps"
+      },
+      {
+        "intent": "inspect_context",
+        "payload": {
+          "topic": "tactic_forms",
+          "name": "rcondt"
+        },
+        "use_when": "A guarded branch may need `rcondt` after a case split or invariant fact.",
+        "returns": "valid `rcondt` forms and guard-obligation traps"
+      },
+      {
+        "intent": "inspect_context",
+        "payload": {
+          "topic": "tactic_forms",
+          "name": "rcondf"
+        },
+        "use_when": "A guarded branch may need `rcondf` after a case split or invariant fact.",
+        "returns": "valid `rcondf` forms and guard-obligation traps"
+      },
+      {
+        "intent": "inspect_context",
+        "payload": {
+          "topic": "tactic_forms",
+          "name": "conseq"
+        },
+        "use_when": "A suffix proof may need `conseq` to weaken the pre/postcondition before closing.",
+        "returns": "valid `conseq` forms and pre/post-weakening traps"
+      },
+      {
+        "intent": "inspect_context",
+        "payload": {
+          "topic": "tactic_forms",
+          "name": "rnd"
+        },
+        "use_when": "A sampling step may need `rnd` to reduce it to a distribution/probability fact.",
+        "returns": "valid `rnd` forms, including one-sided sampling"
+      }
+    ]
+  },
+  "structural_checkpoints": {
+    "items": [
+      {
+        "checkpoint_id": "cp_3_5bb2adf3f7bf5a93",
+        "semantic_id": "last_call_site_boundary",
+        "semantic_ids": [
+          "last_call_site_boundary"
+        ],
+        "label": "Before inline expansion #3",
+        "committed_step_index": 3,
+        "committed_tactic": "inline *.",
+        "restored_proof_layer": "pre_inline_frontier",
+        "restored_affordances": {
+          "call_site_handles": "as_before_inline"
+        },
+        "undo_scope": "call_site_boundary",
+        "why_checkpoint": "inline boundary; selecting it restores the proof state before this expansion",
+        "effect_if_selected": "Undo committed tactic #3 and every committed tactic after it in this node.",
+        "submit": {
+          "intent": "undo_to_checkpoint",
+          "payload": {
+            "checkpoint_id": "cp_3_5bb2adf3f7bf5a93"
+          }
+        }
+      }
+    ]
+  }
+}

@@ -1,0 +1,510 @@
+{
+  "kind": "agent_view_timeline_report",
+  "run_count": 1,
+  "runs": [
+    {
+      "chronological": false,
+      "first_action_at": "2026-06-06T22:57:10.059000+00:00",
+      "label": "2026-06-06_1556_pedersen_correctness",
+      "node_count": 1,
+      "rows": [
+        {
+          "action_submitted_at": "2026-06-06T22:57:10.059000+00:00",
+          "action_time": "+00:00",
+          "agent_think": "",
+          "agent_think_path": "artifacts/eval_suite/wave1_rerun_l1/l1_goal_projection/d2_pedersen/r01/2026-06-06_1556_pedersen_correctness/iteration_1/node_memory/Tree_0_0/thinking/turn_001.md",
+          "agent_think_seconds": null,
+          "decision_followup_path": "",
+          "decision_state_summary": "hoare / procedure_entry / procedure_frontier, 1 goal, goal 166 chars",
+          "decision_view_path": "artifacts/eval_suite/wave1_rerun_l1/l1_goal_projection/d2_pedersen/r01/2026-06-06_1556_pedersen_correctness/iteration_1/manager_bootstrap_0_0.json",
+          "deterministic_signals": [
+            "commit_without_probe_check_not_inferred"
+          ],
+          "goal_chars": 166,
+          "inspect_topics": [],
+          "intent": {
+            "intent": "commit_tactic",
+            "payload": {
+              "tactic": "proc."
+            }
+          },
+          "intent_summary": "commit proc",
+          "manager_action_summary": [
+            "tactic commit (941 ms)"
+          ],
+          "manager_result_at": "2026-06-06T22:57:11+00:00",
+          "manager_result_path": "artifacts/eval_suite/wave1_rerun_l1/l1_goal_projection/d2_pedersen/r01/2026-06-06_1556_pedersen_correctness/iteration_1/node_memory/Tree_0_0/manager_results/turn_001.json",
+          "manager_seconds": 0.941,
+          "manager_time": "941 ms",
+          "node": "Tree-0.0",
+          "node_dir": "artifacts/eval_suite/wave1_rerun_l1/l1_goal_projection/d2_pedersen/r01/2026-06-06_1556_pedersen_correctness/iteration_1/node_memory/Tree_0_0",
+          "ok": true,
+          "result_followup_path": "artifacts/eval_suite/wave1_rerun_l1/l1_goal_projection/d2_pedersen/r01/2026-06-06_1556_pedersen_correctness/iteration_1/node_memory/Tree_0_0/followups/turn_001.md",
+          "result_state_summary": "hoare / procedure_body / procedure_frontier, 1 goal, goal 355 chars",
+          "result_summary": "accepted commit",
+          "result_view_path": "artifacts/eval_suite/wave1_rerun_l1/l1_goal_projection/d2_pedersen/r01/2026-06-06_1556_pedersen_correctness/iteration_1/node_memory/Tree_0_0/workspace_views/turn_001.json",
+          "turn": 1,
+          "usage": {
+            "cache_creation_input_tokens": 33264,
+            "cache_read_input_tokens": 83427,
+            "input_tokens": 2080,
+            "output_tokens": 1274
+          },
+          "view_chars": 729,
+          "view_id": "T0.0-1",
+          "workspace_view_path": "artifacts/eval_suite/wave1_rerun_l1/l1_goal_projection/d2_pedersen/r01/2026-06-06_1556_pedersen_correctness/iteration_1/manager_bootstrap_0_0.json"
+        },
+        {
+          "action_submitted_at": "2026-06-06T22:57:13.868000+00:00",
+          "action_time": "+00:04",
+          "agent_think": "2.9 s",
+          "agent_think_path": "artifacts/eval_suite/wave1_rerun_l1/l1_goal_projection/d2_pedersen/r01/2026-06-06_1556_pedersen_correctness/iteration_1/node_memory/Tree_0_0/thinking/turn_002.md",
+          "agent_think_seconds": 2.868,
+          "decision_followup_path": "artifacts/eval_suite/wave1_rerun_l1/l1_goal_projection/d2_pedersen/r01/2026-06-06_1556_pedersen_correctness/iteration_1/node_memory/Tree_0_0/followups/turn_001.md",
+          "decision_state_summary": "hoare / procedure_body / procedure_frontier, 1 goal, goal 355 chars",
+          "decision_view_path": "artifacts/eval_suite/wave1_rerun_l1/l1_goal_projection/d2_pedersen/r01/2026-06-06_1556_pedersen_correctness/iteration_1/node_memory/Tree_0_0/workspace_views/turn_001.json",
+          "deterministic_signals": [
+            "commit_without_probe_check_not_inferred"
+          ],
+          "goal_chars": 355,
+          "inspect_topics": [
+            "goal_info",
+            "call_site_options",
+            "call_subgoals",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms"
+          ],
+          "intent": {
+            "intent": "commit_tactic",
+            "payload": {
+              "tactic": "inline *."
+            }
+          },
+          "intent_summary": "commit inline *",
+          "manager_action_summary": [
+            "tactic commit (132 ms)"
+          ],
+          "manager_result_at": "2026-06-06T22:57:14+00:00",
+          "manager_result_path": "artifacts/eval_suite/wave1_rerun_l1/l1_goal_projection/d2_pedersen/r01/2026-06-06_1556_pedersen_correctness/iteration_1/node_memory/Tree_0_0/manager_results/turn_002.json",
+          "manager_seconds": 0.132,
+          "manager_time": "132 ms",
+          "node": "Tree-0.0",
+          "node_dir": "artifacts/eval_suite/wave1_rerun_l1/l1_goal_projection/d2_pedersen/r01/2026-06-06_1556_pedersen_correctness/iteration_1/node_memory/Tree_0_0",
+          "ok": true,
+          "result_followup_path": "artifacts/eval_suite/wave1_rerun_l1/l1_goal_projection/d2_pedersen/r01/2026-06-06_1556_pedersen_correctness/iteration_1/node_memory/Tree_0_0/followups/turn_002.md",
+          "result_state_summary": "hoare / procedure_body / procedure_frontier, 1 goal, goal 355 chars",
+          "result_summary": "rejected commit: manager reported rejection",
+          "result_view_path": "artifacts/eval_suite/wave1_rerun_l1/l1_goal_projection/d2_pedersen/r01/2026-06-06_1556_pedersen_correctness/iteration_1/node_memory/Tree_0_0/workspace_views/turn_002.json",
+          "turn": 2,
+          "usage": {
+            "cache_creation_input_tokens": 1176,
+            "cache_read_input_tokens": 32724,
+            "input_tokens": 2,
+            "output_tokens": 121
+          },
+          "view_chars": 8862,
+          "view_id": "T0.0-2",
+          "workspace_view_path": "artifacts/eval_suite/wave1_rerun_l1/l1_goal_projection/d2_pedersen/r01/2026-06-06_1556_pedersen_correctness/iteration_1/node_memory/Tree_0_0/workspace_views/turn_001.json"
+        },
+        {
+          "action_submitted_at": "2026-06-06T22:57:24.178000+00:00",
+          "action_time": "+00:14",
+          "agent_think": "10.2 s",
+          "agent_think_path": "artifacts/eval_suite/wave1_rerun_l1/l1_goal_projection/d2_pedersen/r01/2026-06-06_1556_pedersen_correctness/iteration_1/node_memory/Tree_0_0/thinking/turn_003.md",
+          "agent_think_seconds": 10.178,
+          "decision_followup_path": "artifacts/eval_suite/wave1_rerun_l1/l1_goal_projection/d2_pedersen/r01/2026-06-06_1556_pedersen_correctness/iteration_1/node_memory/Tree_0_0/followups/turn_002.md",
+          "decision_state_summary": "hoare / procedure_body / procedure_frontier, 1 goal, goal 355 chars",
+          "decision_view_path": "artifacts/eval_suite/wave1_rerun_l1/l1_goal_projection/d2_pedersen/r01/2026-06-06_1556_pedersen_correctness/iteration_1/node_memory/Tree_0_0/workspace_views/turn_002.json",
+          "deterministic_signals": [
+            "commit_without_probe_check_not_inferred"
+          ],
+          "goal_chars": 355,
+          "inspect_topics": [
+            "goal_info",
+            "call_site_options",
+            "call_subgoals",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms"
+          ],
+          "intent": {
+            "intent": "commit_tactic",
+            "payload": {
+              "tactic": "inline Pedersen.gen Pedersen.commit Pedersen.verify."
+            }
+          },
+          "intent_summary": "commit inline Pedersen.gen Pedersen.commit Pedersen.verify",
+          "manager_action_summary": [
+            "tactic commit (822 ms)"
+          ],
+          "manager_result_at": "2026-06-06T22:57:25+00:00",
+          "manager_result_path": "artifacts/eval_suite/wave1_rerun_l1/l1_goal_projection/d2_pedersen/r01/2026-06-06_1556_pedersen_correctness/iteration_1/node_memory/Tree_0_0/manager_results/turn_003.json",
+          "manager_seconds": 0.822,
+          "manager_time": "822 ms",
+          "node": "Tree-0.0",
+          "node_dir": "artifacts/eval_suite/wave1_rerun_l1/l1_goal_projection/d2_pedersen/r01/2026-06-06_1556_pedersen_correctness/iteration_1/node_memory/Tree_0_0",
+          "ok": true,
+          "result_followup_path": "artifacts/eval_suite/wave1_rerun_l1/l1_goal_projection/d2_pedersen/r01/2026-06-06_1556_pedersen_correctness/iteration_1/node_memory/Tree_0_0/followups/turn_003.md",
+          "result_state_summary": "hoare / procedure_body / procedure_frontier, 1 goal, goal 355 chars",
+          "result_summary": "rejected commit: manager reported rejection",
+          "result_view_path": "artifacts/eval_suite/wave1_rerun_l1/l1_goal_projection/d2_pedersen/r01/2026-06-06_1556_pedersen_correctness/iteration_1/node_memory/Tree_0_0/workspace_views/turn_003.json",
+          "turn": 3,
+          "usage": {
+            "cache_creation_input_tokens": 1678,
+            "cache_read_input_tokens": 68996,
+            "input_tokens": 4,
+            "output_tokens": 727
+          },
+          "view_chars": 8872,
+          "view_id": "T0.0-3",
+          "workspace_view_path": "artifacts/eval_suite/wave1_rerun_l1/l1_goal_projection/d2_pedersen/r01/2026-06-06_1556_pedersen_correctness/iteration_1/node_memory/Tree_0_0/workspace_views/turn_002.json"
+        },
+        {
+          "action_submitted_at": "2026-06-06T22:57:44.177000+00:00",
+          "action_time": "+00:34",
+          "agent_think": "19.2 s",
+          "agent_think_path": "artifacts/eval_suite/wave1_rerun_l1/l1_goal_projection/d2_pedersen/r01/2026-06-06_1556_pedersen_correctness/iteration_1/node_memory/Tree_0_0/thinking/turn_004.md",
+          "agent_think_seconds": 19.177,
+          "decision_followup_path": "artifacts/eval_suite/wave1_rerun_l1/l1_goal_projection/d2_pedersen/r01/2026-06-06_1556_pedersen_correctness/iteration_1/node_memory/Tree_0_0/followups/turn_003.md",
+          "decision_state_summary": "hoare / procedure_body / procedure_frontier, 1 goal, goal 355 chars",
+          "decision_view_path": "artifacts/eval_suite/wave1_rerun_l1/l1_goal_projection/d2_pedersen/r01/2026-06-06_1556_pedersen_correctness/iteration_1/node_memory/Tree_0_0/workspace_views/turn_003.json",
+          "deterministic_signals": [
+            "commit_without_probe_check_not_inferred"
+          ],
+          "goal_chars": 355,
+          "inspect_topics": [
+            "goal_info",
+            "call_site_options",
+            "call_subgoals",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms"
+          ],
+          "intent": {
+            "intent": "commit_tactic",
+            "payload": {
+              "tactic": "inline."
+            }
+          },
+          "intent_summary": "commit inline",
+          "manager_action_summary": [
+            "tactic commit (823 ms)"
+          ],
+          "manager_result_at": "2026-06-06T22:57:45+00:00",
+          "manager_result_path": "artifacts/eval_suite/wave1_rerun_l1/l1_goal_projection/d2_pedersen/r01/2026-06-06_1556_pedersen_correctness/iteration_1/node_memory/Tree_0_0/manager_results/turn_004.json",
+          "manager_seconds": 0.823,
+          "manager_time": "823 ms",
+          "node": "Tree-0.0",
+          "node_dir": "artifacts/eval_suite/wave1_rerun_l1/l1_goal_projection/d2_pedersen/r01/2026-06-06_1556_pedersen_correctness/iteration_1/node_memory/Tree_0_0",
+          "ok": true,
+          "result_followup_path": "artifacts/eval_suite/wave1_rerun_l1/l1_goal_projection/d2_pedersen/r01/2026-06-06_1556_pedersen_correctness/iteration_1/node_memory/Tree_0_0/followups/turn_004.md",
+          "result_state_summary": "hoare / procedure_body / procedure_frontier, 1 goal, goal 355 chars",
+          "result_summary": "rejected commit: manager reported rejection",
+          "result_view_path": "artifacts/eval_suite/wave1_rerun_l1/l1_goal_projection/d2_pedersen/r01/2026-06-06_1556_pedersen_correctness/iteration_1/node_memory/Tree_0_0/workspace_views/turn_004.json",
+          "turn": 4,
+          "usage": {
+            "cache_creation_input_tokens": 3942,
+            "cache_read_input_tokens": 72724,
+            "input_tokens": 640,
+            "output_tokens": 1177
+          },
+          "view_chars": 8958,
+          "view_id": "T0.0-4",
+          "workspace_view_path": "artifacts/eval_suite/wave1_rerun_l1/l1_goal_projection/d2_pedersen/r01/2026-06-06_1556_pedersen_correctness/iteration_1/node_memory/Tree_0_0/workspace_views/turn_003.json"
+        },
+        {
+          "action_submitted_at": "2026-06-06T22:58:49.900000+00:00",
+          "action_time": "+01:40",
+          "agent_think": "64.9 s",
+          "agent_think_path": "artifacts/eval_suite/wave1_rerun_l1/l1_goal_projection/d2_pedersen/r01/2026-06-06_1556_pedersen_correctness/iteration_1/node_memory/Tree_0_0/thinking/turn_005.md",
+          "agent_think_seconds": 64.9,
+          "decision_followup_path": "artifacts/eval_suite/wave1_rerun_l1/l1_goal_projection/d2_pedersen/r01/2026-06-06_1556_pedersen_correctness/iteration_1/node_memory/Tree_0_0/followups/turn_004.md",
+          "decision_state_summary": "hoare / procedure_body / procedure_frontier, 1 goal, goal 355 chars",
+          "decision_view_path": "artifacts/eval_suite/wave1_rerun_l1/l1_goal_projection/d2_pedersen/r01/2026-06-06_1556_pedersen_correctness/iteration_1/node_memory/Tree_0_0/workspace_views/turn_004.json",
+          "deterministic_signals": [
+            "commit_without_probe_check_not_inferred"
+          ],
+          "goal_chars": 355,
+          "inspect_topics": [
+            "goal_info",
+            "call_site_options",
+            "call_subgoals",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms"
+          ],
+          "intent": {
+            "intent": "commit_tactic",
+            "payload": {
+              "tactic": "sp."
+            }
+          },
+          "intent_summary": "commit sp",
+          "manager_action_summary": [
+            "tactic commit (1.1 s)"
+          ],
+          "manager_result_at": "2026-06-06T22:58:51+00:00",
+          "manager_result_path": "artifacts/eval_suite/wave1_rerun_l1/l1_goal_projection/d2_pedersen/r01/2026-06-06_1556_pedersen_correctness/iteration_1/node_memory/Tree_0_0/manager_results/turn_005.json",
+          "manager_seconds": 1.1,
+          "manager_time": "1.1 s",
+          "node": "Tree-0.0",
+          "node_dir": "artifacts/eval_suite/wave1_rerun_l1/l1_goal_projection/d2_pedersen/r01/2026-06-06_1556_pedersen_correctness/iteration_1/node_memory/Tree_0_0",
+          "ok": true,
+          "result_followup_path": "artifacts/eval_suite/wave1_rerun_l1/l1_goal_projection/d2_pedersen/r01/2026-06-06_1556_pedersen_correctness/iteration_1/node_memory/Tree_0_0/followups/turn_005.md",
+          "result_state_summary": "hoare / procedure_body / procedure_frontier, 1 goal, goal 355 chars",
+          "result_summary": "rejected commit: manager reported rejection",
+          "result_view_path": "artifacts/eval_suite/wave1_rerun_l1/l1_goal_projection/d2_pedersen/r01/2026-06-06_1556_pedersen_correctness/iteration_1/node_memory/Tree_0_0/workspace_views/turn_005.json",
+          "turn": 5,
+          "usage": {
+            "cache_creation_input_tokens": 5415,
+            "cache_read_input_tokens": 168247,
+            "input_tokens": 614,
+            "output_tokens": 3071
+          },
+          "view_chars": 8868,
+          "view_id": "T0.0-5",
+          "workspace_view_path": "artifacts/eval_suite/wave1_rerun_l1/l1_goal_projection/d2_pedersen/r01/2026-06-06_1556_pedersen_correctness/iteration_1/node_memory/Tree_0_0/workspace_views/turn_004.json"
+        },
+        {
+          "action_submitted_at": "2026-06-06T23:00:23.175000+00:00",
+          "action_time": "+03:13",
+          "agent_think": "92.2 s",
+          "agent_think_path": "artifacts/eval_suite/wave1_rerun_l1/l1_goal_projection/d2_pedersen/r01/2026-06-06_1556_pedersen_correctness/iteration_1/node_memory/Tree_0_0/thinking/turn_006.md",
+          "agent_think_seconds": 92.175,
+          "decision_followup_path": "artifacts/eval_suite/wave1_rerun_l1/l1_goal_projection/d2_pedersen/r01/2026-06-06_1556_pedersen_correctness/iteration_1/node_memory/Tree_0_0/followups/turn_005.md",
+          "decision_state_summary": "hoare / procedure_body / procedure_frontier, 1 goal, goal 355 chars",
+          "decision_view_path": "artifacts/eval_suite/wave1_rerun_l1/l1_goal_projection/d2_pedersen/r01/2026-06-06_1556_pedersen_correctness/iteration_1/node_memory/Tree_0_0/workspace_views/turn_005.json",
+          "deterministic_signals": [
+            "commit_without_probe_check_not_inferred"
+          ],
+          "goal_chars": 355,
+          "inspect_topics": [
+            "goal_info",
+            "call_site_options",
+            "call_subgoals",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms"
+          ],
+          "intent": {
+            "intent": "commit_tactic",
+            "payload": {
+              "tactic": "inline *."
+            }
+          },
+          "intent_summary": "commit inline *",
+          "manager_action_summary": [
+            "tactic commit (825 ms)"
+          ],
+          "manager_result_at": "2026-06-06T23:00:24+00:00",
+          "manager_result_path": "artifacts/eval_suite/wave1_rerun_l1/l1_goal_projection/d2_pedersen/r01/2026-06-06_1556_pedersen_correctness/iteration_1/node_memory/Tree_0_0/manager_results/turn_006.json",
+          "manager_seconds": 0.825,
+          "manager_time": "825 ms",
+          "node": "Tree-0.0",
+          "node_dir": "artifacts/eval_suite/wave1_rerun_l1/l1_goal_projection/d2_pedersen/r01/2026-06-06_1556_pedersen_correctness/iteration_1/node_memory/Tree_0_0",
+          "ok": true,
+          "result_followup_path": "artifacts/eval_suite/wave1_rerun_l1/l1_goal_projection/d2_pedersen/r01/2026-06-06_1556_pedersen_correctness/iteration_1/node_memory/Tree_0_0/followups/turn_006.md",
+          "result_state_summary": "hoare / procedure_body / procedure_frontier, 1 goal, goal 355 chars",
+          "result_summary": "rejected commit: manager reported rejection",
+          "result_view_path": "artifacts/eval_suite/wave1_rerun_l1/l1_goal_projection/d2_pedersen/r01/2026-06-06_1556_pedersen_correctness/iteration_1/node_memory/Tree_0_0/workspace_views/turn_006.json",
+          "turn": 6,
+          "usage": {
+            "cache_creation_input_tokens": 10526,
+            "cache_read_input_tokens": 192484,
+            "input_tokens": 137,
+            "output_tokens": 5453
+          },
+          "view_chars": 8860,
+          "view_id": "T0.0-6",
+          "workspace_view_path": "artifacts/eval_suite/wave1_rerun_l1/l1_goal_projection/d2_pedersen/r01/2026-06-06_1556_pedersen_correctness/iteration_1/node_memory/Tree_0_0/workspace_views/turn_005.json"
+        },
+        {
+          "action_submitted_at": "2026-06-06T23:00:33.170000+00:00",
+          "action_time": "+03:23",
+          "agent_think": "9.2 s",
+          "agent_think_path": "artifacts/eval_suite/wave1_rerun_l1/l1_goal_projection/d2_pedersen/r01/2026-06-06_1556_pedersen_correctness/iteration_1/node_memory/Tree_0_0/thinking/turn_007.md",
+          "agent_think_seconds": 9.17,
+          "decision_followup_path": "artifacts/eval_suite/wave1_rerun_l1/l1_goal_projection/d2_pedersen/r01/2026-06-06_1556_pedersen_correctness/iteration_1/node_memory/Tree_0_0/followups/turn_006.md",
+          "decision_state_summary": "hoare / procedure_body / procedure_frontier, 1 goal, goal 355 chars",
+          "decision_view_path": "artifacts/eval_suite/wave1_rerun_l1/l1_goal_projection/d2_pedersen/r01/2026-06-06_1556_pedersen_correctness/iteration_1/node_memory/Tree_0_0/workspace_views/turn_006.json",
+          "deterministic_signals": [
+            "commit_without_probe_check_not_inferred"
+          ],
+          "goal_chars": 355,
+          "inspect_topics": [
+            "goal_info",
+            "call_site_options",
+            "call_subgoals",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms",
+            "tactic_forms"
+          ],
+          "intent": {
+            "intent": "commit_tactic",
+            "payload": {
+              "tactic": "inline *; auto."
+            }
+          },
+          "intent_summary": "commit inline *; auto",
+          "manager_action_summary": [
+            "tactic commit (830 ms)"
+          ],
+          "manager_result_at": "2026-06-06T23:00:34+00:00",
+          "manager_result_path": "artifacts/eval_suite/wave1_rerun_l1/l1_goal_projection/d2_pedersen/r01/2026-06-06_1556_pedersen_correctness/iteration_1/node_memory/Tree_0_0/manager_results/turn_007.json",
+          "manager_seconds": 0.83,
+          "manager_time": "830 ms",
+          "node": "Tree-0.0",
+          "node_dir": "artifacts/eval_suite/wave1_rerun_l1/l1_goal_projection/d2_pedersen/r01/2026-06-06_1556_pedersen_correctness/iteration_1/node_memory/Tree_0_0",
+          "ok": true,
+          "result_followup_path": "artifacts/eval_suite/wave1_rerun_l1/l1_goal_projection/d2_pedersen/r01/2026-06-06_1556_pedersen_correctness/iteration_1/node_memory/Tree_0_0/followups/turn_007.md",
+          "result_state_summary": "ambient / closed_candidate, goal 25 chars",
+          "result_summary": "accepted commit",
+          "result_view_path": "artifacts/eval_suite/wave1_rerun_l1/l1_goal_projection/d2_pedersen/r01/2026-06-06_1556_pedersen_correctness/iteration_1/node_memory/Tree_0_0/workspace_views/turn_007.json",
+          "turn": 7,
+          "usage": {
+            "cache_creation_input_tokens": 2393,
+            "cache_read_input_tokens": 55461,
+            "input_tokens": 2,
+            "output_tokens": 466
+          },
+          "view_chars": 8872,
+          "view_id": "T0.0-7",
+          "workspace_view_path": "artifacts/eval_suite/wave1_rerun_l1/l1_goal_projection/d2_pedersen/r01/2026-06-06_1556_pedersen_correctness/iteration_1/node_memory/Tree_0_0/workspace_views/turn_006.json"
+        },
+        {
+          "action_submitted_at": "2026-06-06T23:00:39.871000+00:00",
+          "action_time": "+03:30",
+          "agent_think": "5.9 s",
+          "agent_think_path": "artifacts/eval_suite/wave1_rerun_l1/l1_goal_projection/d2_pedersen/r01/2026-06-06_1556_pedersen_correctness/iteration_1/node_memory/Tree_0_0/thinking/turn_008.md",
+          "agent_think_seconds": 5.871,
+          "decision_followup_path": "artifacts/eval_suite/wave1_rerun_l1/l1_goal_projection/d2_pedersen/r01/2026-06-06_1556_pedersen_correctness/iteration_1/node_memory/Tree_0_0/followups/turn_007.md",
+          "decision_state_summary": "ambient / closed_candidate, goal 25 chars",
+          "decision_view_path": "artifacts/eval_suite/wave1_rerun_l1/l1_goal_projection/d2_pedersen/r01/2026-06-06_1556_pedersen_correctness/iteration_1/node_memory/Tree_0_0/workspace_views/turn_007.json",
+          "deterministic_signals": [
+            "commit_without_probe_check_not_inferred"
+          ],
+          "goal_chars": 25,
+          "inspect_topics": [
+            "goal_info"
+          ],
+          "intent": {
+            "intent": "commit_tactic",
+            "payload": {
+              "tactic": "qed."
+            }
+          },
+          "intent_summary": "commit qed",
+          "manager_action_summary": [
+            "tactic commit (129 ms)"
+          ],
+          "manager_result_at": "2026-06-06T23:00:40+00:00",
+          "manager_result_path": "artifacts/eval_suite/wave1_rerun_l1/l1_goal_projection/d2_pedersen/r01/2026-06-06_1556_pedersen_correctness/iteration_1/node_memory/Tree_0_0/manager_results/turn_008.json",
+          "manager_seconds": 0.129,
+          "manager_time": "129 ms",
+          "node": "Tree-0.0",
+          "node_dir": "artifacts/eval_suite/wave1_rerun_l1/l1_goal_projection/d2_pedersen/r01/2026-06-06_1556_pedersen_correctness/iteration_1/node_memory/Tree_0_0",
+          "ok": true,
+          "result_followup_path": "artifacts/eval_suite/wave1_rerun_l1/l1_goal_projection/d2_pedersen/r01/2026-06-06_1556_pedersen_correctness/iteration_1/node_memory/Tree_0_0/followups/turn_008.md",
+          "result_state_summary": "complete / unknown / closed_candidate, 0 goals, goal 11 chars",
+          "result_summary": "accepted commit",
+          "result_view_path": "artifacts/eval_suite/wave1_rerun_l1/l1_goal_projection/d2_pedersen/r01/2026-06-06_1556_pedersen_correctness/iteration_1/node_memory/Tree_0_0/workspace_views/turn_008.json",
+          "turn": 8,
+          "usage": {
+            "cache_creation_input_tokens": 1405,
+            "cache_read_input_tokens": 57854,
+            "input_tokens": 2,
+            "output_tokens": 266
+          },
+          "view_chars": 3854,
+          "view_id": "T0.0-8",
+          "workspace_view_path": "artifacts/eval_suite/wave1_rerun_l1/l1_goal_projection/d2_pedersen/r01/2026-06-06_1556_pedersen_correctness/iteration_1/node_memory/Tree_0_0/workspace_views/turn_007.json"
+        },
+        {
+          "action_submitted_at": "2026-06-06T23:00:44+00:00",
+          "action_time": "+03:34",
+          "agent_think": "4 s",
+          "agent_think_path": "",
+          "agent_think_seconds": 4.0,
+          "decision_followup_path": "artifacts/eval_suite/wave1_rerun_l1/l1_goal_projection/d2_pedersen/r01/2026-06-06_1556_pedersen_correctness/iteration_1/node_memory/Tree_0_0/followups/turn_008.md",
+          "decision_state_summary": "complete / unknown / closed_candidate, 0 goals, goal 11 chars",
+          "decision_view_path": "artifacts/eval_suite/wave1_rerun_l1/l1_goal_projection/d2_pedersen/r01/2026-06-06_1556_pedersen_correctness/iteration_1/node_memory/Tree_0_0/workspace_views/turn_008.json",
+          "deterministic_signals": [],
+          "goal_chars": 11,
+          "inspect_topics": [
+            "verify",
+            "goal_info"
+          ],
+          "intent": {
+            "intent": "finish"
+          },
+          "intent_summary": "finish",
+          "manager_action_summary": [
+            "finish"
+          ],
+          "manager_result_at": "2026-06-06T23:00:44+00:00",
+          "manager_result_path": "artifacts/eval_suite/wave1_rerun_l1/l1_goal_projection/d2_pedersen/r01/2026-06-06_1556_pedersen_correctness/iteration_1/node_memory/Tree_0_0/manager_results/turn_009.json",
+          "manager_seconds": 0.0,
+          "manager_time": "",
+          "node": "Tree-0.0",
+          "node_dir": "artifacts/eval_suite/wave1_rerun_l1/l1_goal_projection/d2_pedersen/r01/2026-06-06_1556_pedersen_correctness/iteration_1/node_memory/Tree_0_0",
+          "ok": true,
+          "result_followup_path": "artifacts/eval_suite/wave1_rerun_l1/l1_goal_projection/d2_pedersen/r01/2026-06-06_1556_pedersen_correctness/iteration_1/node_memory/Tree_0_0/followups/turn_009.md",
+          "result_state_summary": "complete / unknown / closed_candidate, 0 goals, goal 11 chars",
+          "result_summary": "finish requested",
+          "result_view_path": "artifacts/eval_suite/wave1_rerun_l1/l1_goal_projection/d2_pedersen/r01/2026-06-06_1556_pedersen_correctness/iteration_1/node_memory/Tree_0_0/workspace_views/turn_009.json",
+          "turn": 9,
+          "usage": {},
+          "view_chars": 3038,
+          "view_id": "T0.0-9",
+          "workspace_view_path": "artifacts/eval_suite/wave1_rerun_l1/l1_goal_projection/d2_pedersen/r01/2026-06-06_1556_pedersen_correctness/iteration_1/node_memory/Tree_0_0/workspace_views/turn_008.json"
+        }
+      ],
+      "run_dir": "artifacts/eval_suite/wave1_rerun_l1/l1_goal_projection/d2_pedersen/r01/2026-06-06_1556_pedersen_correctness/iteration_1",
+      "turn_count": 9
+    }
+  ],
+  "schema_version": 1
+}

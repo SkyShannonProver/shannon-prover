@@ -1,0 +1,247 @@
+{
+  "file": "artifacts/eval_suite/demo_pir/l4_checked_action_surface/pir_correct/r01/source/PIR.ec",
+  "include_dirs": [
+    "artifacts/eval_suite/demo_pir/l4_checked_action_surface/pir_correct/r01/source",
+    "easycrypt-src/theories"
+  ],
+  "kind": "manager_session_bootstrap",
+  "lemma": "PIR_correct",
+  "manager_actions": [
+    {
+      "agent_observation": {
+        "effect": "This manager intent does not change the EasyCrypt proof state.",
+        "manager_action": "start",
+        "result": "The manager completed this proof-level request."
+      },
+      "argv": [
+        ".venv/bin/python3",
+        "core/easycrypt/session_cli.py",
+        "-d",
+        ".ec_session_prover_tree_0_0",
+        "-start",
+        "-f",
+        "artifacts/eval_suite/demo_pir/l4_checked_action_surface/pir_correct/r01/source/PIR.ec",
+        "-I",
+        "artifacts/eval_suite/demo_pir/l4_checked_action_surface/pir_correct/r01/source",
+        "-I",
+        "easycrypt-src/theories",
+        "-lemma",
+        "PIR_correct"
+      ],
+      "duration_ms": 740,
+      "exit_code": 0,
+      "label": "start",
+      "mutates_proof_state": true,
+      "stderr_chars": 0,
+      "stderr_preview": "",
+      "stdout_chars": 3922,
+      "stdout_has_workspace_view": true,
+      "stdout_lines": 118
+    },
+    {
+      "agent_observation": {
+        "effect": "This manager intent does not change the EasyCrypt proof state.",
+        "manager_action": "agent_view",
+        "result": "The manager completed this proof-level request."
+      },
+      "argv": [
+        ".venv/bin/python3",
+        "core/easycrypt/session_cli.py",
+        "-d",
+        ".ec_session_prover_tree_0_0",
+        "-agent-view"
+      ],
+      "duration_ms": 98,
+      "exit_code": 0,
+      "label": "agent_view",
+      "mutates_proof_state": false,
+      "stderr_chars": 0,
+      "stderr_preview": "",
+      "stdout_chars": 3807,
+      "stdout_has_workspace_view": true,
+      "stdout_lines": 113
+    }
+  ],
+  "node": "Tree-0.0",
+  "replay_prefix": [],
+  "replay_prefix_count": 0,
+  "replay_prefix_requested_count": 0,
+  "schema_version": 2,
+  "session_dir": ".ec_session_prover_tree_0_0",
+  "session_tag": "prover_tree_0_0",
+  "snapshot": {
+    "execution_refs": {
+      "manager_action_count": 2,
+      "manager_actions": [
+        {
+          "agent_observation": {
+            "effect": "This manager intent does not change the EasyCrypt proof state.",
+            "manager_action": "start",
+            "result": "The manager completed this proof-level request."
+          },
+          "argv": [
+            ".venv/bin/python3",
+            "core/easycrypt/session_cli.py",
+            "-d",
+            ".ec_session_prover_tree_0_0",
+            "-start",
+            "-f",
+            "artifacts/eval_suite/demo_pir/l4_checked_action_surface/pir_correct/r01/source/PIR.ec",
+            "-I",
+            "artifacts/eval_suite/demo_pir/l4_checked_action_surface/pir_correct/r01/source",
+            "-I",
+            "easycrypt-src/theories",
+            "-lemma",
+            "PIR_correct"
+          ],
+          "duration_ms": 740,
+          "exit_code": 0,
+          "label": "start",
+          "mutates_proof_state": true,
+          "stderr_chars": 0,
+          "stderr_preview": "",
+          "stdout_chars": 3922,
+          "stdout_has_workspace_view": true,
+          "stdout_lines": 118
+        },
+        {
+          "agent_observation": {
+            "effect": "This manager intent does not change the EasyCrypt proof state.",
+            "manager_action": "agent_view",
+            "result": "The manager completed this proof-level request."
+          },
+          "argv": [
+            ".venv/bin/python3",
+            "core/easycrypt/session_cli.py",
+            "-d",
+            ".ec_session_prover_tree_0_0",
+            "-agent-view"
+          ],
+          "duration_ms": 98,
+          "exit_code": 0,
+          "label": "agent_view",
+          "mutates_proof_state": false,
+          "stderr_chars": 0,
+          "stderr_preview": "",
+          "stdout_chars": 3807,
+          "stdout_has_workspace_view": true,
+          "stdout_lines": 113
+        }
+      ]
+    },
+    "goal_hash": "d02a59d11fd36f8f1fb01629097ad694f5b6a85d",
+    "node_id": "Tree-0.0",
+    "proof_context_view_artifact": "",
+    "session_dir": ".ec_session_prover_tree_0_0",
+    "session_epoch": 1,
+    "session_tag": "prover_tree_0_0",
+    "state_version": 1,
+    "workspace_view_artifact": ""
+  },
+  "workspace_view": {
+    "candidate_moves": {
+      "moves": [
+        {
+          "applicability": "This tactic-shaped option is concrete for the current goal; commit it only if it matches your proof plan.",
+          "category": "commit",
+          "derivation": "candidate tactic surfaced from proof-state analysis",
+          "effect": "Committing this tactic would change the EasyCrypt proof state if EasyCrypt accepts it.",
+          "guarantee": "candidate tactic shape; proof state unchanged; decide; reversible",
+          "source": "proof-state analysis",
+          "tactic": "move=> H.",
+          "title": "Concrete tactic candidate",
+          "verified": "static_candidate"
+        }
+      ]
+    },
+    "current_goal": {
+      "goal_type": "probability",
+      "lines": [
+        "Current goal",
+        "",
+        "Type variables: <none>",
+        "",
+        "&m: {}",
+        "i0: int",
+        "------------------------------------------------------------------------",
+        "0 <= i0 < N => Pr[PIR.main(i0) @ &m : res = a i0] = 1%r"
+      ],
+      "source": {
+        "ground_truth": false,
+        "label": "Parsed from EasyCrypt pretty goal text"
+      },
+      "text_fully_shown": true,
+      "truncated": false,
+      "view_focus": "probability"
+    },
+    "facts_and_diagnostics": {
+      "fact_note": "Only current-frontier facts are shown here; the full proof context artifact keeps the compiler/internal details.",
+      "facts": {
+        "has_pr_arithmetic_plan": false,
+        "has_pr_normal_form": false,
+        "has_pr_obligation_plan": false,
+        "unfoldable_goal_head_count": 0
+      }
+    },
+    "inspect_lookup_handles": {
+      "ask_manager_for": [
+        {
+          "intent": "operator_lemmas",
+          "intent_class": "context_topic",
+          "payload": {
+            "operator": "OPERATOR"
+          },
+          "payload_fields": [
+            "operator"
+          ],
+          "public_intent": "operator_lemmas",
+          "read_only": true,
+          "returns": "lemmas mentioning that operator, found by live EC `search` over the loaded context (statements; you pick which to apply)",
+          "use_when": "Need the lemmas that apply to an OPERATOR in your goal \u2014 project-local lemmas included (not just stdlib) \u2014 instead of guessing a lemma name."
+        },
+        {
+          "intent": "tactic_forms",
+          "intent_class": "context_topic",
+          "payload": {
+            "name": "while"
+          },
+          "payload_fields": [
+            "name"
+          ],
+          "public_intent": "tactic_forms",
+          "read_only": true,
+          "returns": "valid `while` forms and common traps",
+          "use_when": "Need exact byphoare/phoare-loop tactic syntax before choosing the probability route."
+        }
+      ],
+      "effect": "All handles here are read-only manager requests; the committed EasyCrypt proof state stays unchanged.",
+      "manager_note": "Some requests may ask EasyCrypt or name resolution; wait for the manager result before choosing the next proof intent."
+    },
+    "kind": "prover_workspace_view",
+    "program_frontier": {
+      "authority": "proof-state analysis",
+      "focus": {
+        "has_pr_arithmetic_plan": false,
+        "has_pr_normal_form": false,
+        "has_pr_obligation_plan": false,
+        "native_ast_search_hits": 0,
+        "pr_rewrite_candidates": 0
+      },
+      "view_focus": "probability"
+    },
+    "proof_status": {
+      "current_layer": "pr",
+      "goal_type": "probability",
+      "remaining_goals": 1,
+      "remaining_goals_known": true,
+      "status": "open",
+      "view_focus": "probability"
+    },
+    "schema_version": 2,
+    "surface_action_preflight": {
+      "results": [],
+      "schema_version": 1
+    },
+    "view_hash": "bbf745c3904588e51964d521c15021a07303a6be"
+  }
+}

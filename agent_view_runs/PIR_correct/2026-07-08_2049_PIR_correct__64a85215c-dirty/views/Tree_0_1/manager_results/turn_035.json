@@ -1,0 +1,20 @@
+{
+  "turn": 35,
+  "handled_intent": {
+    "intent": "commit_tactic",
+    "payload": {
+      "tactic": "rewrite xorwC !big_cat big_consT; move: (big predT<:int> a u1) (big predT<:int> a u2) => A B; rewrite (xorwC (a i0) B) !xorwA."
+    }
+  },
+  "ok": true,
+  "manager_note": "Committed tactic accepted; the EasyCrypt proof state changed.",
+  "manager_actions": [
+    {
+      "action": "tactic commit",
+      "outcome": "EasyCrypt accepted the committed tactic.",
+      "timing": "197 ms"
+    }
+  ],
+  "view_refreshed": true,
+  "surface_turn_hash": "61cb8b7c9cf16d94883c109a4a0c453b0da86e69"
+}

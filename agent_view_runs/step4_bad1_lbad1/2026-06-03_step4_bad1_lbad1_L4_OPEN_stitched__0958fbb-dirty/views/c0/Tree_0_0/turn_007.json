@@ -1,0 +1,976 @@
+{
+  "last_result": {
+    "intent": "commit_tactic",
+    "payload": {
+      "tactic": "seq 5 3 : (={glob A, Mem.log, Mem.lc, BNR.lenc, BNR.ndec, UFCMA.log, UFCMA.cbad1, ROIN.RO.m, ROout.m} /\\ inv_lbad1 UFCMA_l.lbad1{2} BNR.lenc{2} UFCMA.log{2} Mem.log{2} Mem.lc{2} UFCMA.cbad1{2} BNR.ndec{2} /\\ (UFCMA.bad1{1} => exists (tt:tag*tag), (tt \\in UFCMA_l.lbad1{2}) /\\ tt.`1 = tt.`2))."
+    },
+    "manager_action": "commit_tactic",
+    "result": "EasyCrypt accepted the committed tactic.",
+    "effect": "EasyCrypt accepted a proof-state change; the refreshed view is based on the new committed state.",
+    "proof_state": "The committed EasyCrypt proof state changed.",
+    "tactic": "seq 5 3 : (={glob A, Mem.log, Mem.lc, BNR.lenc, BNR.ndec, UFCMA.log, UFCMA.cbad1, ROIN.RO.m, ROout.m} /\\ inv_lbad1 UFCMA_l.lbad1{2} BNR.lenc{2} UFCMA.log{2} Mem.log{2} Mem.lc{2} UFCMA.cbad1{2} BNR.ndec{2} /\\ (UFCMA.bad1{1} => exists (tt:tag*tag), (tt \\in UFCMA_l.lbad1{2}) /\\ tt.`1 = tt.`2))."
+  },
+  "current_goal": {
+    "lines": [
+      "Current goal (remaining: 4)",
+      "",
+      "Type variables: <none>",
+      "",
+      "&m: {}",
+      "------------------------------------------------------------------------",
+      "&1 (left ) : {b, forged : bool, i : int, n : nonce, ns : nonce list,",
+      "             r : poly_in, t : poly_out}",
+      "&2 (right) : {b : bool}",
+      "",
+      "pre = (glob A){1} = (glob A){2}",
+      "",
+      "UFCMA.bad1 <- false                  (1)  UFCMA_l.lbad1 <- []                ",
+      "UFCMA.cbad1 <- 0                     (2)  UFCMA.cbad1 <- 0                   ",
+      "UFCMA.bad2 <- false                  (3)  b <@                               ",
+      "                                     ( )    CPA_game(CCA_CPA_Adv(BNR_Adv(A)),",
+      "                                     ( )      UFCMA_l.O).main()              ",
+      "UFCMA.cbad2 <- 0                     (4)                                     ",
+      "b <@                                 (5)                                     ",
+      "  CPA_game(CCA_CPA_Adv(BNR_Adv(A)),  ( )                                     ",
+      "    UFCMA(RO).O).main()              ( )                                     ",
+      "",
+      "post =",
+      "  ((glob A){1} = (glob A){2} /\\",
+      "   Mem.log{1} = Mem.log{2} /\\",
+      "   Mem.lc{1} = Mem.lc{2} /\\",
+      "   BNR.lenc{1} = BNR.lenc{2} /\\",
+      "   BNR.ndec{1} = BNR.ndec{2} /\\",
+      "   UFCMA.log{1} = UFCMA.log{2} /\\",
+      "   UFCMA.cbad1{1} = UFCMA.cbad1{2} /\\",
+      "   RO.m{1} = RO.m{2} /\\ ROout.m{1} = ROout.m{2}) /\\",
+      "  inv_lbad1 UFCMA_l.lbad1{2} BNR.lenc{2} UFCMA.log{2} Mem.log{2} Mem.lc{2}",
+      "    UFCMA.cbad1{2} BNR.ndec{2} /\\",
+      "  (UFCMA.bad1{1} =>",
+      "   exists (tt : tag * tag), (tt \\in UFCMA_l.lbad1{2}) /\\ tt.`1 = tt.`2)",
+      "[406|check]>"
+    ],
+    "text_fully_shown": true,
+    "truncated": false,
+    "goal_type": "pRHL",
+    "view_focus": "seq_cut",
+    "source": {
+      "label": "Parsed from EasyCrypt pretty goal text",
+      "ground_truth": false
+    }
+  },
+  "proof_status": {
+    "status": "open",
+    "remaining_goals": 4,
+    "remaining_goals_known": true,
+    "goal_type": "pRHL",
+    "view_focus": "seq_cut",
+    "current_layer": "call_site"
+  },
+  "candidate_moves": {
+    "navigation": [
+      {
+        "id": "call_site_route",
+        "profile_gate": "navigator_upgrade",
+        "proof_family": "pRHL_call_site",
+        "episode": "live_named_call_needs_resolution",
+        "route": "live_named_call_needs_resolution",
+        "confidence": "medium",
+        "confidence_reason": "proof-state analysis has a typed named-call handle and current call-site/frontier facts for this proof state.",
+        "valid_for": "current_view_only",
+        "state": "live_named_call_needs_resolution",
+        "live_call_sites": [
+          {
+            "id": "left:5:CPA_game.main",
+            "side": "left",
+            "position": 5,
+            "statement_path": "5",
+            "procedure": "CPA_game.main",
+            "is_frontier_call": true,
+            "requires_cut_to_frontier": false,
+            "frontier_role": "current_frontier",
+            "statement": "b <@ CPA_game(CCA_CPA_Adv(BNR_Adv(A)), UFCMA(RO).O).main()"
+          },
+          {
+            "id": "right:3:CPA_game.main",
+            "side": "right",
+            "position": 3,
+            "statement_path": "3",
+            "procedure": "CPA_game.main",
+            "is_frontier_call": true,
+            "requires_cut_to_frontier": false,
+            "frontier_role": "current_frontier",
+            "statement": "b <@ CPA_game(CCA_CPA_Adv(BNR_Adv(A)), UFCMA_l.O).main()"
+          }
+        ],
+        "named_handles": [
+          {
+            "symbol": "UFCMA_genCC",
+            "source": "source_equiv_declaration",
+            "procedure": "CPA_game.main",
+            "procedures": [
+              "UFCMA(A, St).main",
+              "CPA_game(CCA_CPA_Adv(A), RealOrcls(GenChaChaPoly(CCRO(FinRO)))).main"
+            ],
+            "frontier_live": true,
+            "callable_now": false,
+            "requires_cut_to_frontier": false,
+            "call_candidate_kind": "source_lookup_landmark",
+            "frontier_status": "source_lookup_landmark",
+            "live_call_site_ids": [
+              "left:5:CPA_game.main",
+              "right:3:CPA_game.main"
+            ],
+            "frontier_call_site_ids": [
+              "left:5:CPA_game.main",
+              "right:3:CPA_game.main"
+            ],
+            "matched_call_sites": [
+              {
+                "call_site_id": "left:5:CPA_game.main",
+                "side": "left",
+                "statement_path": "5",
+                "procedure": "CPA_game.main",
+                "is_frontier_call": true,
+                "requires_cut_to_frontier": false,
+                "call_boundary_kind": "direct_call",
+                "frontier_role": "current_frontier"
+              },
+              {
+                "call_site_id": "right:3:CPA_game.main",
+                "side": "right",
+                "statement_path": "3",
+                "procedure": "CPA_game.main",
+                "is_frontier_call": true,
+                "requires_cut_to_frontier": false,
+                "call_boundary_kind": "direct_call",
+                "frontier_role": "current_frontier"
+              }
+            ],
+            "name_resolution_status": "needs_where_lookup",
+            "exact_signature_known": false,
+            "instantiation_binding_status": "not_required"
+          }
+        ],
+        "callable_now_count": 0,
+        "wrapper_depth": 0,
+        "named_call_templates": [
+          {
+            "symbol": "UFCMA_genCC",
+            "status": "candidate_named_call",
+            "tactic_shape": "call UFCMA_genCC."
+          }
+        ],
+        "effect": "This panel summarizes current call-site and frontier facts; it does not commit a tactic.",
+        "limitations": [
+          "A displayed tactic shape is evidence about the current frontier, not proof by itself."
+        ]
+      },
+      {
+        "id": "prhl_mid_surgery",
+        "proof_family": "pRHL_procedure_frontier",
+        "episode": "pRHL_mid_surgery",
+        "route": "case_split_then_rcond_swap_wp_conseq",
+        "confidence": "medium",
+        "confidence_reason": "The current pRHL goal exposes a bad-event/instrumented branch together with sampling or one-sided suffix evidence; this is the shape where experts use `case`, `rcondt/rcondf`, `swap`, indexed `wp`, `conseq`, or one-sided `rnd` before local SMT. The fast-track tactic is schematic, so confidence is capped until the current view or an inspect result supplies concrete terms.",
+        "valid_for": "current_view_only",
+        "why_now": "current pRHL state looks past the main opener: the useful next work is local branch/suffix surgery, not changing proof family.",
+        "fast_track_probe": {
+          "tactic": "case: (<current branch guard>).",
+          "preconditions": [
+            "Use only when the visible goal has a concrete guard controlling the local branch.",
+            "After the case split, use `rcondt`/`rcondf` for forced branches, `swap` for statement order, indexed `wp` for suffixes, `conseq` for a smaller post, or `rnd{1}`/`rnd{2}` for one-sided samples.",
+            "If the guard fact needed for `rcondt`/`rcondf` is not in the precondition, treat that as an invariant repair signal.",
+            "Probe the smallest local block; do not fresh-restart just because this surgery is syntax-sensitive."
+          ],
+          "expected_next_shape": "Branch-specific pRHL residuals where forced-condition, swap, indexed-wp, one-sided-random, or conseq steps can be checked."
+        },
+        "anti_routes": [
+          {
+            "route": "fresh_restart_for_local_surgery",
+            "reason": "This is a branch-local/suffix alignment problem; a fresh restart throws away useful opener and invariant work.",
+            "scope": "avoid_unless_current_branch_is_irrecoverable"
+          },
+          {
+            "route": "blind_wp_over_one_sided_sampling",
+            "reason": "One side has sampling or instrumentation before the suffix; use `rcond`, `swap`, or one-sided `rnd` before plain `wp`.",
+            "scope": "avoid_until_sampling_alignment_checked"
+          },
+          {
+            "route": "sim_before_branch_surgery",
+            "reason": "`sim` is usually too late/too strong before the guard and suffix shape are aligned.",
+            "scope": "avoid_until_branch_suffix_relation_is_small"
+          }
+        ],
+        "repair_if_fails": [
+          {
+            "failure": "syntax",
+            "next": "inspect tactic_forms for swap, rcondt, rcondf, wp, conseq, rnd, or eager"
+          },
+          {
+            "failure": "frontier",
+            "next": "inspect align or goal_info for statement indexes before retrying"
+          },
+          {
+            "failure": "invariant",
+            "next": "use undo_to_checkpoint {} and choose the checkpoint before the call/loop invariant that should carry the missing guard or size fact"
+          },
+          {
+            "failure": "lemma",
+            "next": "inspect lemma_hints or lookup_symbol for the local size/nth/bad-event lemma"
+          },
+          {
+            "failure": "route",
+            "next": "downgrade this surgery route only after a smaller prefix and relevant tactic_forms fail"
+          }
+        ]
+      },
+      {
+        "id": "prhl_branch_frontier",
+        "proof_family": "pRHL_procedure_frontier",
+        "episode": "pRHL_frontier",
+        "route": "call_frontier_with_invariant",
+        "confidence": "medium",
+        "confidence_reason": "The current view exposes a live call frontier for a pRHL/procedure state.",
+        "valid_for": "current_view_only",
+        "why_now": "current pRHL/procedure frontier has both_sides_at_call evidence; choose a structural step before local closure.",
+        "fast_track_probe": {
+          "tactic": "call (_: <invariant>).",
+          "preconditions": [
+            "Use only on the current pRHL/procedure frontier.",
+            "If the first instructions are not aligned, consume or align setup before branch tactics.",
+            "When one side has setup before an aligned branch, prefer indexed `sp i j` from the alignment counts.",
+            "Probe first; commit only the accepted structural step or prefix."
+          ],
+          "expected_next_shape": "Call preservation obligations, or a concrete invariant gap."
+        },
+        "anti_routes": [
+          {
+            "route": "if_before_branch_alignment",
+            "reason": "first instructions are left `call` and right `call`, so branch frontiers are not aligned.",
+            "scope": "avoid_until_align_or_prefix_consumed"
+          },
+          {
+            "route": "inline_all_before_call_checks",
+            "reason": "Inlining everything erases live call handles before the call route is checked.",
+            "scope": "avoid_until_call_site_options_considered"
+          },
+          {
+            "route": "plain_sim_without_explicit_equalities",
+            "reason": "Plain `sim.` needs EasyCrypt to infer the equality relation. At a pRHL frontier with visible call/setup structure, first make the relation explicit with call, seq/wp, alignment, or conseq.",
+            "usable_when": "`sim.` becomes a good short tactic when the frontiers are already synchronized or after `conseq`/call/structural steps expose an explicit equality relation for the remaining instructions.",
+            "scope": "avoid_until_relation_or_postcondition_is_explicit"
+          },
+          {
+            "route": "smt_before_exposure",
+            "reason": "Procedure/frontier goals usually need structural exposure before pure SMT.",
+            "scope": "avoid_until_frontier_reduced"
+          }
+        ],
+        "repair_if_fails": [
+          {
+            "failure": "frontier",
+            "next": "inspect goal_info or align for first-instruction details"
+          },
+          {
+            "failure": "invariant",
+            "next": "inspect call_subgoals/subgoal_gap; if generated obligations lack facts that should have been preserved, use undo_to_checkpoint {} before the call or loop invariant"
+          },
+          {
+            "failure": "lemma",
+            "next": "lookup_symbol before applying non-trivial call/branch lemmas"
+          },
+          {
+            "failure": "route",
+            "next": "downgrade this route and choose another current-view navigation item"
+          }
+        ]
+      }
+    ],
+    "moves": [
+      {
+        "title": "Proof-route context",
+        "category": "strategy",
+        "guidance": "Inspect bad-event candidate map: UFCMA.bad1 (postcondition), UFCMA.cbad1 (postcondition), UFCMA_l.lbad1 (postcondition), inv_lbad1 (postcondition).",
+        "applicability": "Use this as route-selection context; it is not a tactic to run as-is.",
+        "source": "proof-state analysis"
+      },
+      {
+        "title": "Seq-cut route",
+        "category": "commit",
+        "tactic": "seq 5 3 : (={b}).",
+        "applicability": "This tactic is already concrete for the current goal.",
+        "effect": "Committing this tactic would change the EasyCrypt proof state if EasyCrypt accepts it.",
+        "evidence": [
+          "Asymmetric pRHL split candidate `full_prefix_alignment` (LHS 5 stmts, RHS 3). Synthesized invariant from 1 column-matches. Coverage: weak_visible_live_coverage. Probe this split point; if the invariant is incomplete,...",
+          "EasyCrypt accepted this tactic in a read-only probe on the current goal; committing it would still be a separate proof-state change."
+        ],
+        "source": "asymmetric seq-cut check",
+        "derivation": "surfaced from asymmetric seq-cut check; not daemon-checked on this goal",
+        "verified": "unverified_suggestion",
+        "guarantee": "not verified on the current goal; probe before committing; reversible"
+      },
+      {
+        "title": "Invariant-call route",
+        "category": "strategy",
+        "tactic_shape": "call (_: ((glob A){1} = (glob A){2} /\\ Mem.log{1} = Mem.log{2} /\\ Mem.lc{1} = Mem.lc{2} /\\ BNR.lenc{1} = BNR.lenc{2} /\\ BNR.ndec{1} = BNR.ndec{2} /\\ UFCMA.log{1} = UFCMA.log{2} /\\ UFCMA.cbad1{1} = UFCMA.cbad1{2} /\\ RO.m{1} = RO.m{2} /\\ ROout.m{1} = ROout.m{2}) /\\ inv_lbad1 UFCMA_l.lbad1{2} BNR.lenc{2} UFCMA.log{2} Mem.log{2} Mem.lc{2} UFCMA.cbad1{2} BNR.ndec{2} /\\ (UFCMA.bad1{1} => exists (tt : tag * tag), (tt \\in UFCMA_l.lbad1{2})).",
+        "applicability": "Use this as route-selection context; it is not a tactic to run as-is.",
+        "needs_frame": "Postcondition shape only \u2014 no `={...}` equality frame. Build the `={...}` part from `application_context.write_map` (per candidate field: who writes it \u2014 the read-only/preserved fields are safe to equate), then add your coupling before this is a usable invariant.",
+        "why_relevant": "proof-state analysis extracted an invariant skeleton from the pRHL postcondition and sees a procedure-like call frontier.",
+        "source": "proof-state analysis"
+      }
+    ],
+    "route_health": [
+      {
+        "signal": "seq_cut_mismatch",
+        "confidence": "medium",
+        "message": "Recent rejected work is inside the current seq-cut scope.",
+        "evidence": [
+          "latest seq cut tactic #3: seq 5 3 : (={glob A, Mem.log, Mem.lc, BNR.lenc, BNR.ndec, UFCMA.log, UFCMA.cbad1, ROIN.RO.m, ROout.m} /\\ inv_lbad1 UFCMA_l.lbad1{2} BNR.lenc{2} UFCMA.log{2} Mem.log{2} Mem.lc{2} UFCMA.cbad1{2} BNR.ndec{2} /\\ (UFCMA.bad1{1} => exists (tt:tag*tag), (tt \\in UFCMA_l.lbad1{2}) /\\ tt.`1 = tt.`2)).",
+          "recent rejected tactic head: seq",
+          "mismatch kind: cut_formula"
+        ],
+        "repair_checkpoint": {
+          "label": "Before seq cut #3",
+          "committed_tactic": "seq 5 3 : (={glob A, Mem.log, Mem.lc, BNR.lenc, BNR.ndec, UFCMA.log, UFCMA.cbad1, ROIN.RO.m, ROout.m} /\\ inv_lbad1 UFCMA_l.lbad1{2} BNR.lenc{2} UFCMA.log{2} Mem.log{2} Mem.lc{2} UFCMA.cbad1{2} BNR.ndec{2} /\\ (UFCMA.bad1{1} => exists (tt:tag*tag), (tt \\in UFCMA_l.lbad1{2}) /\\ tt.`1 = tt.`2)).",
+          "tactic_index": 3,
+          "why_here": "seq-local boundary associated with recent rejected work inside the current seq scope",
+          "submit": {
+            "intent": "undo_to_checkpoint",
+            "payload": {
+              "checkpoint_id": "cp_3_6f94f300399b9573"
+            }
+          },
+          "undo_scope": "seq_local",
+          "semantic_id": "before_seq_cut"
+        },
+        "recommended_next": {
+          "intent": "undo_to_checkpoint",
+          "payload": {
+            "checkpoint_id": "cp_3_6f94f300399b9573"
+          }
+        },
+        "primary_next_action": {
+          "intent": "undo_to_checkpoint",
+          "payload": {
+            "checkpoint_id": "cp_3_6f94f300399b9573"
+          }
+        },
+        "related_checkpoints": [
+          {
+            "checkpoint_id": "cp_3_6f94f300399b9573",
+            "semantic_id": "before_seq_cut",
+            "semantic_ids": [
+              "before_seq_cut"
+            ],
+            "label": "Before seq cut #3",
+            "committed_step_index": 3,
+            "committed_tactic": "seq 5 3 : (={glob A, Mem.log, Mem.lc, BNR.lenc, BNR.ndec, UFCMA.log, UFCMA.cbad1, ROIN.RO.m, ROout.m} /\\ inv_lbad1 UFCMA_l.lbad1{2} BNR.lenc{2} UFCMA.log{2} Mem.log{2} Mem.lc{2} UFCMA.cbad1{2} BNR.ndec{2} /\\ (UFCMA.bad1{1} => exists (tt:tag*tag), (tt \\in UFCMA_l.lbad1{2}) /\\ tt.`1 = tt.`2)).",
+            "restored_proof_layer": "pre_seq_cut",
+            "restored_affordances": {
+              "seq_cut": "not_committed",
+              "call_site_state": "as_before_seq_cut"
+            },
+            "undo_scope": "seq_local",
+            "why_checkpoint": "seq-cut boundary; selecting it restores the proof state before this cut was committed",
+            "effect_if_selected": "Undo committed tactic #3 and every committed tactic after it in this node.",
+            "submit": {
+              "intent": "undo_to_checkpoint",
+              "payload": {
+                "checkpoint_id": "cp_3_6f94f300399b9573"
+              }
+            }
+          }
+        ],
+        "recovery_class": "seq_midpoint_repair_evidence",
+        "checkpoint_policy": "seq_local_checkpoint_visible"
+      }
+    ],
+    "structural_transitions": [
+      {
+        "id": "post_wp_surgery",
+        "kind": "structural_transition",
+        "status": "candidate_reversible_probe",
+        "tactic": "wp.",
+        "phase": "post-wp surgery",
+        "valid_for": "current_view_only",
+        "why_here": "The current pRHL seq-cut exposes a large postcondition. Probe `wp.` if you want to test entry into the real post-wp suffix/surgery workbench.",
+        "decision": "Probe this tactic if you want to test entry into the post-wp surgery phase.",
+        "recommended_next": {
+          "label": "Probe this transition",
+          "submit": {
+            "intent": "probe_tactic",
+            "payload": {
+              "tactic": "wp."
+            }
+          }
+        },
+        "after_commit": "The next authoritative view will expose the real post-wp surgery workbench, so you do not need to mentally simulate now what will happen.",
+        "if_wrong_after_commit": "Use `undo_last_step` or `undo_to_checkpoint` if the committed route is wrong."
+      }
+    ]
+  },
+  "call_site_surface": {
+    "state": "live_named_call_needs_resolution",
+    "live_call_sites": [
+      {
+        "side": "right",
+        "procedure": "CPA_game.main"
+      },
+      {
+        "side": "left",
+        "procedure": "CPA_game.main"
+      }
+    ],
+    "wrapper_depth": 1,
+    "named_call_templates": [
+      {
+        "symbol": "UFCMA_genCC",
+        "status": "candidate_named_call",
+        "tactic_shape": "call UFCMA_genCC."
+      }
+    ],
+    "named_handles": [
+      {
+        "symbol": "UFCMA_genCC",
+        "source": "candidate_moves.moves",
+        "callable_now": false,
+        "why_visible": "This named-call shape came from program comparison. Treat it as context until a manager inspection or read-only probe confirms the lemma matches the visible call frontier.",
+        "limitations": [
+          "The tactic shape is hidden until the handle is callable at the current frontier."
+        ]
+      }
+    ],
+    "frontier_blockers": [
+      {
+        "kind": "named_handle_not_callable_in_current_view",
+        "named_handle_count": 1,
+        "live_call_site_count": 2
+      }
+    ]
+  },
+  "program_frontier": {
+    "authority": "proof-state analysis",
+    "view_focus": "seq_cut",
+    "focus": {
+      "has_invariant_skeleton": true
+    },
+    "call_sites": [
+      {
+        "side": "right",
+        "side_index": 2,
+        "statement_order": 3,
+        "statement_path": "3",
+        "procedure": "CPA_game.main",
+        "statement": "b <@ CPA_game(CCA_CPA_Adv(BNR_Adv(A)), UFCMA_l.O).main()"
+      },
+      {
+        "side": "left",
+        "side_index": 1,
+        "statement_order": 5,
+        "statement_path": "5",
+        "procedure": "CPA_game.main",
+        "statement": "b <@ CPA_game(CCA_CPA_Adv(BNR_Adv(A)), UFCMA(RO).O).main()"
+      }
+    ],
+    "frontier_alignment": {
+      "summary": "Frontier alignment: setup statements appear before the current frontier; call sites are visible at the frontier. Use this as a proof-reader map before choosing while/rnd/seq/call tactics.",
+      "first_instruction_alignment": {
+        "left_first": "b <@ CPA_game(CCA_CPA_Adv(BNR_Adv(A)), UFCMA(RO).O).main()",
+        "right_first": "b <@ CPA_game(CCA_CPA_Adv(BNR_Adv(A)), UFCMA_l.O).main()",
+        "left_head": "call",
+        "right_head": "call",
+        "branch_alignment": "both_sides_at_call",
+        "proof_read": "Both sides are at call frontiers; inspect call options or use a call tactic form before guessing an invariant."
+      },
+      "rows": [
+        {
+          "role": "setup / initialization",
+          "left": "4 setup statement(s): UFCMA.bad1 <- false; UFCMA.cbad1 <- 0; UFCMA.bad2 <- false; ... (1 more)",
+          "right": "2 setup statement(s): UFCMA_l.lbad1 <- []; UFCMA.cbad1 <- 0",
+          "proof_read": "These are setup statements before the current frontier; preserve the proof-relevant initialized state in later invariants, seq cuts, or calls.",
+          "location": {
+            "left_paths": [
+              "1",
+              "2",
+              "3",
+              "4"
+            ],
+            "right_paths": [
+              "1",
+              "2"
+            ]
+          }
+        },
+        {
+          "role": "call frontier",
+          "left": "b <@ CPA_game(CCA_CPA_Adv(BNR_Adv(A)), UFCMA(RO).O).main()",
+          "right": "b <@ CPA_game(CCA_CPA_Adv(BNR_Adv(A)), UFCMA_l.O).main()",
+          "proof_read": "Both sides expose the same call procedure; a named equiv call or an invariant call may apply at this frontier.",
+          "location": {
+            "left_path": "5",
+            "right_path": "3"
+          },
+          "observations": [
+            "same procedure name: `CPA_game.main`"
+          ]
+        }
+      ]
+    },
+    "procedure_navigation": {
+      "how_to_use": "Positions for choosing wp/sp depth, which `if` to rcond, and where the next loop/call frontier is. Facts only \u2014 pick the tactic and the branch direction yourself.",
+      "absorb_depth": {
+        "left": {
+          "side_index": 1,
+          "absorbable_statements": 4,
+          "through_order": 4,
+          "kinds": [
+            "ASSIGN",
+            "ASSIGN",
+            "ASSIGN",
+            "ASSIGN"
+          ]
+        },
+        "right": {
+          "side_index": 2,
+          "absorbable_statements": 2,
+          "note": "count from frontier alignment; the body parser under-counted the asymmetric (right-only) setup statements (0 parsed)"
+        },
+        "sp_hint": "sp 4 2 / wp -4 -2 absorbs the straight-line setup (4 left, 2 right) before the next frontier"
+      },
+      "next_frontier": {
+        "kind": "straight_line_prefix_before_call_site",
+        "at_order": 3
+      }
+    },
+    "checks": [
+      "Read coverage and missing live facts before committing a seq cut.",
+      "A runnable seq candidate is not evidence that the invariant is strong enough."
+    ]
+  },
+  "seq_cut_surface": {
+    "seq_candidate_id": "cp_3_6f94f300399b9573",
+    "state": "after_seq_opened",
+    "cut_position": {
+      "left_count": 5,
+      "right_count": 3,
+      "tactic": "seq 5 3 : (={glob A, Mem.log, Mem.lc, BNR.lenc, BNR.ndec, UFCMA.log, UFCMA.cbad1, ROIN.RO.m, ROout.m} /\\ inv_lbad1 UFCMA_l.lbad1{2} BNR.lenc{2} UFCMA.log{2} Mem.log{2} Mem.lc{2} UFCMA.cbad1{2} BNR.ndec{2} /\\ (UFCMA.bad1{1} => exists (tt:tag*tag), (tt \\in UFCMA_l.lbad1{2}) /\\ tt.`1 = tt.`2))."
+    },
+    "obligation_count": 4,
+    "obligation_kinds": [
+      "relational",
+      "call_site",
+      "postcondition"
+    ],
+    "branch_focus": {
+      "remaining_goals": 4,
+      "latest_event_head": "seq"
+    },
+    "residual_frontier": {
+      "current_layer": "call_site",
+      "view_focus": "seq_cut",
+      "live_call_site_count": 2,
+      "goal_contains_call_site": true,
+      "latest_seq_tactic_index": 3,
+      "tactics_after_latest_seq": 0
+    }
+  },
+  "application_context": {
+    "visible_call_frontier": {
+      "left": {
+        "procedure": "CPA_game.main",
+        "statement": "b <@ CPA_game(CCA_CPA_Adv(BNR_Adv(A)), UFCMA(RO).O).main()",
+        "statement_path": "5"
+      },
+      "right": {
+        "procedure": "CPA_game.main",
+        "statement": "b <@ CPA_game(CCA_CPA_Adv(BNR_Adv(A)), UFCMA_l.O).main()",
+        "statement_path": "3"
+      }
+    },
+    "how_to_use": "Use this section when constructing the concrete invariant inside `call (_: ...)`. This section is not a tactic. It is a checklist for constructing the concrete invariant before using `probe_tactic` or `commit_tactic`.",
+    "inspect_if_unsure": {
+      "topic": "call_subgoals",
+      "why": "After you draft a concrete invariant, this preview shows the obligations it creates and can reveal missing facts or extra conjuncts that make the proof harder."
+    }
+  },
+  "facts_and_diagnostics": {
+    "facts": {
+      "has_invariant_skeleton": true,
+      "unfoldable_goal_heads": [
+        {
+          "name": "inv_lbad1",
+          "unqualified_name": "inv_lbad1",
+          "declaration_kind": "op",
+          "unfold_tactic": "rewrite /inv_lbad1.",
+          "smt_argument_role": "not_a_lemma_hint"
+        }
+      ],
+      "unfoldable_goal_head_count": 1
+    },
+    "fact_note": "Only current-frontier facts are shown here; the full proof context artifact keeps the compiler/internal details.",
+    "gap_signal": {
+      "unconstrained_state": [
+        "Mem.log",
+        "Mem.lc",
+        "BNR.lenc",
+        "BNR.ndec",
+        "UFCMA.log",
+        "UFCMA.cbad1",
+        "RO.m",
+        "ROout.m",
+        "UFCMA_l.lbad1",
+        "UFCMA.bad1"
+      ],
+      "note": "Gap likely \u2014 the conclusion depends on Mem.log, Mem.lc, BNR.lenc, BNR.ndec, UFCMA.log, UFCMA.cbad1, RO.m, ROout.m, UFCMA_l.lbad1, UFCMA.bad1, but no hypothesis or invariant in the current context constrains this state. If you are building or repairing a call/loop invariant it probably needs a conjunct over these. Inspect `call_invariant_skeleton` to see the invariant shapes already used in this development."
+    },
+    "errors": [
+      {
+        "message": "guidance.stale_recommendations[2].action must be non-empty"
+      }
+    ],
+    "notes": [
+      {
+        "message": "proof-state analysis layer is call_site: 2 call site(s) and 1 callable lemma handle(s) are live (UFCMA_genCC). `inline *` is a broad global transformation here and can hide those handles; named calls and targeted inline are route context for comparison.",
+        "severity": "warning"
+      },
+      {
+        "message": "Some imported or cross-scope handles may need lookup if that route is being tested; use lookup_candidates for the concrete symbol instead of treating the whole list as a to-do queue.",
+        "severity": "info"
+      },
+      {
+        "message": "guidance.stale_recommendations[5].confidence has unusual value 'speculative'"
+      }
+    ]
+  },
+  "frame_obligation_ledger": {
+    "kind": "frame_obligation_ledger",
+    "scope": "structural_boundary_frame_facts",
+    "active_segment_start": 1,
+    "required_later": [
+      {
+        "fact": "={glob A}",
+        "sources": [
+          "top_level_contract",
+          "current_goal"
+        ]
+      },
+      {
+        "fact": "={Mem.log}",
+        "sources": [
+          "current_goal"
+        ]
+      },
+      {
+        "fact": "={Mem.lc}",
+        "sources": [
+          "current_goal"
+        ]
+      },
+      {
+        "fact": "={BNR.lenc}",
+        "sources": [
+          "current_goal"
+        ]
+      },
+      {
+        "fact": "={BNR.ndec}",
+        "sources": [
+          "current_goal"
+        ]
+      },
+      {
+        "fact": "={UFCMA.log}",
+        "sources": [
+          "current_goal"
+        ]
+      },
+      {
+        "fact": "={UFCMA.cbad1}",
+        "sources": [
+          "current_goal"
+        ]
+      },
+      {
+        "fact": "={RO.m}",
+        "sources": [
+          "current_goal"
+        ]
+      },
+      {
+        "fact": "={ROout.m}",
+        "sources": [
+          "current_goal"
+        ]
+      }
+    ],
+    "current_boundary_carries": [
+      {
+        "tactic_index": 3,
+        "kind": "seq",
+        "carried_facts": [
+          "={glob A}",
+          "={Mem.log}",
+          "={Mem.lc}",
+          "={BNR.lenc}",
+          "={BNR.ndec}",
+          "={UFCMA.log}",
+          "={UFCMA.cbad1}",
+          "={ROIN.RO.m}",
+          "={ROout.m}"
+        ],
+        "tactic": "seq 5 3 : (={glob A, Mem.log, Mem.lc, BNR.lenc, BNR.ndec, UFCMA.log, UFCMA.cbad1, ROIN.RO.m, ROout.m} /\\ inv_lbad1 UFCMA_l.lbad1{2} BNR.lenc{2} UFCMA.log{2} Mem.log{2} Mem.lc{2} UFCMA.cbad1{2} BNR.ndec{2} /\\ (UFCMA.bad1{1} => exists (tt:tag*tag), (tt \\in UFCMA_l.lbad1{2}) /\\ tt.`1 = tt.`2))."
+      }
+    ],
+    "possibly_dropped": [
+      {
+        "fact": "={RO.m}",
+        "required_sources": [
+          "current_goal"
+        ],
+        "boundary": "seq #3",
+        "boundary_tactic": "seq 5 3 : (={glob A, Mem.log, Mem.lc, BNR.lenc, BNR.ndec, UFCMA.log, UFCMA.cbad1, ROIN.RO.m, ROout.m} /\\ inv_lbad1 UFCMA_l.lbad1{2} BNR.lenc{2} UFCMA.log{2} Mem.log{2} Mem.lc{2} UFCMA.cbad1{2} BNR.ndec{2} /\\ (UFCMA.bad1{1} => exists (tt:tag*tag), (tt \\in UFCMA_l.lbad1{2}) /\\ tt.`1 = tt.`2)).",
+        "evidence": "required fact is visible in the listed source(s), while this boundary assertion does not carry the same frame fact",
+        "related_checkpoint": {
+          "label": "Before seq cut #3",
+          "committed_tactic": "seq 5 3 : (={glob A, Mem.log, Mem.lc, BNR.lenc, BNR.ndec, UFCMA.log, UFCMA.cbad1, ROIN.RO.m, ROout.m} /\\ inv_lbad1 UFCMA_l.lbad1{2} BNR.lenc{2} UFCMA.log{2} Mem.log{2} Mem.lc{2} UFCMA.cbad1{2} BNR.ndec{2} /\\ (UFCMA.bad1{1} => exists (tt:tag*tag), (tt \\in UFCMA_l.lbad1{2}) /\\ tt.`1 = tt.`2)).",
+          "tactic_index": 3,
+          "why_here": "Frame fact is visible in required context and absent from this structural boundary assertion.",
+          "submit": {
+            "intent": "undo_to_checkpoint",
+            "payload": {
+              "checkpoint_id": "cp_3_6f94f300399b9573"
+            }
+          }
+        }
+      }
+    ],
+    "interpretation": "This ledger compares visible frame facts with the frame facts carried by committed structural boundary assertions. Possible drops are reported only for facts visible in the current local goal evidence. It is evidence about retained facts, not a proof script."
+  },
+  "recovery_diagnosis_surface": {
+    "kind": "recovery_diagnosis_surface",
+    "recovery_class": "seq_midpoint_repair_evidence",
+    "confidence": "medium",
+    "checkpoint_policy": "seq_local_checkpoint_visible",
+    "evidence": [
+      "latest seq cut tactic #3: seq 5 3 : (={glob A, Mem.log, Mem.lc, BNR.lenc, BNR.ndec, UFCMA.log, UFCMA.cbad1, ROIN.RO.m, ROout.m} /\\ inv_lbad1 UFCMA_l.lbad1{2} BNR.lenc{2} UFCMA.log{2} Mem.log{2} Mem.lc{2} UFCMA.cbad1{2} BNR.ndec{2} /\\ (UFCMA.bad1{1} => exists (tt:tag*tag), (tt \\in UFCMA_l.lbad1{2}) /\\ tt.`1 = tt.`2)).",
+      "recent rejected tactic head: seq",
+      "mismatch kind: cut_formula"
+    ],
+    "available_local_work": [
+      {
+        "kind": "local_work_status",
+        "items": [
+          "current evidence points at a structural recovery boundary"
+        ]
+      }
+    ],
+    "related_checkpoints": [
+      {
+        "semantic_id": "before_seq_cut",
+        "label": "Before seq cut #3",
+        "tactic_index": 3,
+        "committed_step_index": 3,
+        "undo_scope": "seq_local",
+        "why_checkpoint": "seq-local boundary associated with recent rejected work inside the current seq scope"
+      },
+      {
+        "checkpoint_id": "cp_3_6f94f300399b9573",
+        "semantic_id": "before_seq_cut",
+        "semantic_ids": [
+          "before_seq_cut"
+        ],
+        "label": "Before seq cut #3",
+        "committed_step_index": 3,
+        "undo_scope": "seq_local",
+        "restored_proof_layer": "pre_seq_cut",
+        "restored_affordances": {
+          "seq_cut": "not_committed",
+          "call_site_state": "as_before_seq_cut"
+        },
+        "why_checkpoint": "seq-cut boundary; selecting it restores the proof state before this cut was committed"
+      },
+      {
+        "label": "Before seq cut #3",
+        "tactic_index": 3,
+        "committed_step_index": 3,
+        "why_checkpoint": "Frame fact is visible in required context and absent from this structural boundary assertion."
+      },
+      {
+        "checkpoint_id": "cp_3_6f94f300399b9573",
+        "semantic_id": "seq_cut_mismatch",
+        "semantic_ids": [
+          "seq_cut_mismatch",
+          "before_seq_cut"
+        ],
+        "label": "Before seq cut #3",
+        "committed_step_index": 3,
+        "undo_scope": "seq_local",
+        "restored_proof_layer": "pre_seq_cut",
+        "restored_affordances": {
+          "seq_cut": "not_committed",
+          "call_site_state": "as_before_seq_cut"
+        },
+        "why_checkpoint": "seq-cut boundary; selecting it restores the proof state before this cut was committed"
+      }
+    ],
+    "related_surfaces": [
+      "call_site_surface",
+      "seq_cut_surface",
+      "frame_obligation_ledger",
+      "structural_checkpoints"
+    ],
+    "limitations": [
+      "does not synthesize a replacement seq midpoint",
+      "reports obligation shape and local recovery boundaries only"
+    ]
+  },
+  "inspect_lookup_handles": {
+    "effect": "All handles here are read-only manager requests; the committed EasyCrypt proof state stays unchanged.",
+    "manager_note": "Some requests may ask EasyCrypt or name resolution; wait for the manager result before choosing the next proof intent.",
+    "ask_manager_for": [
+      {
+        "intent": "inspect_context",
+        "payload": {
+          "topic": "goal_info"
+        },
+        "use_when": "Need parsed goal shape, resolved names, or KB pattern hints.",
+        "returns": "parsed goal structure and names"
+      },
+      {
+        "intent": "inspect_context",
+        "payload": {
+          "topic": "call_site_options"
+        },
+        "use_when": "The current cut or frontier context may expose a call route.",
+        "returns": "call-ready/oracle-equiv context for the current frontier, plus the BODY of the procedure(s) called here (functor aliases resolved) so you can see which oracles/state your call invariant must preserve"
+      },
+      {
+        "intent": "inspect_context",
+        "payload": {
+          "topic": "call_subgoals",
+          "invariant": "<the EasyCrypt invariant expression inside call (_: ...)>"
+        },
+        "use_when": "You are considering `call (_: Inv)` and already have a concrete invariant expression you want to test first.",
+        "returns": "a read-only preview of the obligations caused by that candidate invariant, including pre/init, call-preservation, oracle-side, postcondition, missing-fact signals, and extra conjuncts that may create avoidable obligations"
+      },
+      {
+        "intent": "inspect_context",
+        "payload": {
+          "topic": "align"
+        },
+        "use_when": "The visible cut may depend on LHS/RHS statement alignment or missing live facts.",
+        "returns": "swap/alignment context for the visible pRHL frontier"
+      },
+      {
+        "intent": "inspect_context",
+        "payload": {
+          "topic": "tactic_forms",
+          "name": "call"
+        },
+        "use_when": "Need the valid form for call, seq, while, rnd, or rewrite.",
+        "returns": "valid tactic forms and common traps"
+      },
+      {
+        "intent": "inspect_context",
+        "payload": {
+          "topic": "tactic_forms",
+          "name": "sp"
+        },
+        "use_when": "The visible cut/frontier may need indexed `sp i j` before branch tactics.",
+        "returns": "valid `sp` forms and branch-frontier traps"
+      },
+      {
+        "intent": "inspect_context",
+        "payload": {
+          "topic": "tactic_forms",
+          "name": "wp"
+        },
+        "use_when": "Mid-proof pRHL suffix surgery may need indexed `wp`.",
+        "returns": "valid indexed `wp` forms and suffix-alignment traps"
+      },
+      {
+        "intent": "inspect_context",
+        "payload": {
+          "topic": "tactic_forms",
+          "name": "swap"
+        },
+        "use_when": "Statement order may need a small `swap` before `sp`, `wp`, or `sim`.",
+        "returns": "valid `swap` forms and statement-order traps"
+      },
+      {
+        "intent": "inspect_context",
+        "payload": {
+          "topic": "tactic_forms",
+          "name": "rcondt"
+        },
+        "use_when": "A guarded branch may need `rcondt` after a case split or invariant fact.",
+        "returns": "valid `rcondt` forms and guard-obligation traps"
+      },
+      {
+        "intent": "inspect_context",
+        "payload": {
+          "topic": "tactic_forms",
+          "name": "rcondf"
+        },
+        "use_when": "A guarded branch may need `rcondf` after a case split or invariant fact.",
+        "returns": "valid `rcondf` forms and guard-obligation traps"
+      },
+      {
+        "intent": "inspect_context",
+        "payload": {
+          "topic": "tactic_forms",
+          "name": "conseq"
+        },
+        "use_when": "A suffix proof may need `conseq` to weaken to a smaller relation before `sim`.",
+        "returns": "valid `conseq` forms and pRHL memory-annotation traps"
+      },
+      {
+        "intent": "inspect_context",
+        "payload": {
+          "topic": "tactic_forms",
+          "name": "rnd"
+        },
+        "use_when": "One side may have an extra sample or need an explicit sample coupling.",
+        "returns": "valid `rnd` forms, including one-sided sampling"
+      },
+      {
+        "intent": "inspect_context",
+        "payload": {
+          "topic": "tactic_forms",
+          "name": "eager"
+        },
+        "use_when": "A known statement-order mismatch may need an eager/lazy transformation.",
+        "returns": "valid `eager` forms and when to prefer smaller surgery"
+      }
+    ]
+  },
+  "structural_checkpoints": {
+    "items": [
+      {
+        "checkpoint_id": "cp_3_6f94f300399b9573",
+        "semantic_id": "seq_cut_mismatch",
+        "semantic_ids": [
+          "seq_cut_mismatch",
+          "before_seq_cut"
+        ],
+        "label": "Before seq cut #3",
+        "committed_step_index": 3,
+        "committed_tactic": "seq 5 3 : (={glob A, Mem.log, Mem.lc, BNR.lenc, BNR.ndec, UFCMA.log, UFCMA.cbad1, ROIN.RO.m, ROout.m} /\\ inv_lbad1 UFCMA_l.lbad1{2} BNR.lenc{2} UFCMA.log{2} Mem.log{2} Mem.lc{2} UFCMA.cbad1{2} BNR.ndec{2} /\\ (UFCMA.bad1{1} => exists (tt:tag*tag), (tt \\in UFCMA_l.lbad1{2}) /\\ tt.`1 = tt.`2)).",
+        "restored_proof_layer": "pre_seq_cut",
+        "restored_affordances": {
+          "seq_cut": "not_committed",
+          "call_site_state": "as_before_seq_cut"
+        },
+        "undo_scope": "seq_local",
+        "why_checkpoint": "seq-cut boundary; selecting it restores the proof state before this cut was committed",
+        "effect_if_selected": "Undo committed tactic #3 and every committed tactic after it in this node.",
+        "submit": {
+          "intent": "undo_to_checkpoint",
+          "payload": {
+            "checkpoint_id": "cp_3_6f94f300399b9573"
+          }
+        }
+      }
+    ]
+  }
+}

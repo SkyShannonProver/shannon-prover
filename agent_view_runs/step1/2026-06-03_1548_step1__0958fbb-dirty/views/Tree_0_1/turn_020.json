@@ -1,0 +1,177 @@
+{
+  "last_result": {
+    "intent": "commit_tactic",
+    "payload": {
+      "tactic": "rewrite -(OpCCinit.pr_CCP_OCCP I_stateless G1 &m)."
+    },
+    "manager_action": "commit_tactic",
+    "result": "EasyCrypt accepted the committed tactic.",
+    "effect": "EasyCrypt accepted a proof-state change; the refreshed view is based on the new committed state.",
+    "proof_state": "The committed EasyCrypt proof state changed.",
+    "tactic": "rewrite -(OpCCinit.pr_CCP_OCCP I_stateless G1 &m)."
+  },
+  "current_goal": {
+    "lines": [
+      "Current goal (remaining: 2)",
+      "",
+      "Type variables: <none>",
+      "",
+      "&m: {}",
+      "------------------------------------------------------------------------",
+      "Pr[G1(GenChaChaPoly(OpCCinit.OCC(I_stateless))).main() @ &m : res] =",
+      "Pr[Indist.Distinguish(D(A), IndBlock).game() @ &m : res]",
+      "[294|check]>"
+    ],
+    "text_fully_shown": true,
+    "truncated": false,
+    "goal_type": "probability",
+    "view_focus": "probability",
+    "source": {
+      "label": "Parsed from EasyCrypt pretty goal text",
+      "ground_truth": false
+    }
+  },
+  "proof_status": {
+    "status": "open",
+    "remaining_goals": 2,
+    "remaining_goals_known": true,
+    "goal_type": "probability",
+    "view_focus": "probability",
+    "current_layer": "pr"
+  },
+  "candidate_moves": {
+    "moves": [
+      {
+        "title": "Proof-route context",
+        "category": "strategy",
+        "tactic_shape": "rewrite (OpCCinit.pr_CCP_OCCP I GenChaChaPoly(OpCCinit.OCC(I_stateless)) &m).",
+        "applicability": "Use this as route-selection context; it is not a tactic to run as-is.",
+        "why_relevant": "Name resolution can instantiate `OpCCinit.pr_CCP_OCCP`, but the current Pr endpoint does not match the lemma's endpoint template; build an intermediate Pr equality or wrapper br...",
+        "source": "proof-state analysis"
+      },
+      {
+        "title": "Proof-route context",
+        "category": "strategy",
+        "tactic_shape": "rewrite (pr_CCP_OCCP I GenChaChaPoly(OpCCinit.OCC(I_stateless)) &m).",
+        "applicability": "Use this as route-selection context; it is not a tactic to run as-is.",
+        "why_relevant": "Name resolution can instantiate `pr_CCP_OCCP`, but the current Pr endpoint does not match the lemma's endpoint template; build an intermediate Pr equality or wrapper bridge first.",
+        "source": "proof-state analysis"
+      }
+    ]
+  },
+  "program_frontier": {
+    "authority": "proof-state analysis",
+    "view_focus": "probability",
+    "focus": {
+      "pr_rewrite_candidates": 0,
+      "has_pr_normal_form": false,
+      "has_pr_arithmetic_plan": false,
+      "has_pr_obligation_plan": false,
+      "pr_obligation_primary_strategy": "no_pr_obligation",
+      "native_ast_search_hits": 0
+    },
+    "checks": [
+      "Pr resources are context: use them when they match the visible endpoint and simplify the goal.",
+      "Direct byequiv is a valid route when the goal is naturally a program equivalence."
+    ]
+  },
+  "call_site_surface": {},
+  "application_context": {
+    "selected_handles": [
+      {
+        "title": "Proof-route context",
+        "tactic_shape": "rewrite (OpCCinit.pr_CCP_OCCP I GenChaChaPoly(OpCCinit.OCC(I_stateless)) &m).",
+        "why_relevant": "Name resolution can instantiate `OpCCinit.pr_CCP_OCCP`, but the current Pr endpoint does not match the lemma's endpoint template; build an intermediate Pr equality or wrapper bridge first."
+      },
+      {
+        "title": "Proof-route context",
+        "tactic_shape": "rewrite (pr_CCP_OCCP I GenChaChaPoly(OpCCinit.OCC(I_stateless)) &m).",
+        "why_relevant": "Name resolution can instantiate `pr_CCP_OCCP`, but the current Pr endpoint does not match the lemma's endpoint template; build an intermediate Pr equality or wrapper bridge first."
+      }
+    ]
+  },
+  "facts_and_diagnostics": {
+    "facts": {
+      "has_pr_normal_form": false,
+      "has_pr_arithmetic_plan": false,
+      "has_pr_obligation_plan": false,
+      "pr_obligation_primary_strategy": "no_pr_obligation",
+      "unfoldable_goal_head_count": 0
+    },
+    "fact_note": "Only current-frontier facts are shown here; the full proof context artifact keeps the compiler/internal details."
+  },
+  "inspect_lookup_handles": {
+    "effect": "All handles here are read-only manager requests; the committed EasyCrypt proof state stays unchanged.",
+    "manager_note": "Some requests may ask EasyCrypt or name resolution; wait for the manager result before choosing the next proof intent.",
+    "ask_manager_for": [
+      {
+        "intent": "inspect_context",
+        "payload": {
+          "topic": "goal_info"
+        },
+        "use_when": "Need parsed goal shape, resolved names, or KB pattern hints.",
+        "returns": "parsed goal structure and names"
+      },
+      {
+        "intent": "inspect_context",
+        "payload": {
+          "topic": "pr_bridge_routes"
+        },
+        "use_when": "Current Pr equality may need a manager-verified bridge route (game-hop or scheme/endpoint normalization) before direct byequiv/proc lowering.",
+        "returns": "daemon-verified, committable Pr bridge routes with manager-owned intent payloads"
+      },
+      {
+        "intent": "inspect_context",
+        "payload": {
+          "topic": "equiv_bridge_lemmas"
+        },
+        "use_when": "Need pRHL/procedure-equivalence bridge lemma names or context after checking pr_bridge_routes.",
+        "returns": "context-only equiv bridge lemma candidates (names to look up/apply); not a verified Pr route"
+      },
+      {
+        "intent": "inspect_context",
+        "payload": {
+          "topic": "lemma_hints"
+        },
+        "use_when": "Need local lemma hints before choosing a Pr-level proof route.",
+        "returns": "nearby lemma hints and proof-route context"
+      },
+      {
+        "intent": "inspect_context",
+        "payload": {
+          "topic": "tactic_forms",
+          "name": "while"
+        },
+        "use_when": "Need exact byphoare/phoare-loop tactic syntax before probing the probability route.",
+        "returns": "valid `while` forms and common traps"
+      }
+    ]
+  },
+  "structural_checkpoints": {
+    "items": [
+      {
+        "checkpoint_id": "cp_5_d74d5a12d9b77bd1",
+        "semantic_id": "last_call_site_boundary",
+        "semantic_ids": [
+          "last_call_site_boundary"
+        ],
+        "label": "Before inline expansion #5",
+        "committed_step_index": 5,
+        "committed_tactic": "inline *; auto.",
+        "restored_proof_layer": "pre_inline_frontier",
+        "restored_affordances": {
+          "call_site_handles": "as_before_inline"
+        },
+        "undo_scope": "call_site_boundary",
+        "why_checkpoint": "inline boundary; selecting it restores the proof state before this expansion",
+        "effect_if_selected": "Undo committed tactic #5 and every committed tactic after it in this node.",
+        "submit": {
+          "intent": "undo_to_checkpoint",
+          "payload": {
+            "checkpoint_id": "cp_5_d74d5a12d9b77bd1"
+          }
+        }
+      }
+    ]
+  }
+}

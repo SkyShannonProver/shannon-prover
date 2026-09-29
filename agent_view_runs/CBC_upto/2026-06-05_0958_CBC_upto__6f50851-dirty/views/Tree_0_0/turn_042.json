@@ -1,0 +1,52 @@
+{
+  "last_result": {
+    "intent": "commit_tactic",
+    "payload": {
+      "tactic": "move=> z; auto; smt(dBlock_uffu)."
+    },
+    "manager_action": "commit_tactic",
+    "result": "EasyCrypt rejected the committed tactic. Use the error summary and current goal to revise the proof step.",
+    "effect": "The manager attempted to commit a tactic; use the result and latest goal to decide what changed.",
+    "proof_state": "The committed EasyCrypt proof state was not changed.",
+    "tactic": "move=> z; auto; smt(dBlock_uffu)."
+  },
+  "current_goal": {
+    "lines": [
+      "Current goal (remaining: 5)",
+      "",
+      "Type variables: <none>",
+      "",
+      "&m: {}",
+      "&2: {}",
+      "------------------------------------------------------------------------",
+      "forall (z : int),",
+      "  phoare[ pi <- nth witness p i; ...; i <- i + 1; {&1}:",
+      "           i < size p /\\ size p - i = z ==> size p - i < z] = 1%r",
+      "[150|check]>"
+    ],
+    "text_fully_shown": true,
+    "truncated": false,
+    "goal_type": "ambient",
+    "view_focus": "ambient_logic",
+    "source": {
+      "label": "Parsed from EasyCrypt pretty goal text",
+      "ground_truth": false
+    }
+  },
+  "proof_status": {
+    "status": "error",
+    "remaining_goals": 5,
+    "remaining_goals_known": true,
+    "goal_type": "ambient",
+    "view_focus": "ambient_logic",
+    "current_layer": "ambient_logic"
+  },
+  "surface_profile": {
+    "name": "l1_goal_projection",
+    "surface_profile": "l1_goal_projection",
+    "stage": "l1_goal_projection",
+    "description": "L1 Goal-State Projection: manager transport of ONLY the current goal. No status, no manager-result section, no focus \u2014 the agent sees the raw goal and nothing else (the node-memory recovery anchor and the one-line submit-intent reminder are the only scaffolding).",
+    "paper_level": "L1",
+    "paper_role": "paper"
+  }
+}

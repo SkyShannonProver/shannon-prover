@@ -1,0 +1,19 @@
+{
+  "turn": 42,
+  "handled_intent": {
+    "intent": "commit_tactic",
+    "payload": {
+      "tactic": "split; [ smt(size_ge0 size_eq0) | smt(cats0) ]."
+    }
+  },
+  "ok": true,
+  "manager_note": "Committed tactic accepted; the EasyCrypt proof state changed.",
+  "manager_actions": [
+    {
+      "action": "tactic commit",
+      "outcome": "EasyCrypt accepted the committed tactic.",
+      "timing": "475 ms"
+    }
+  ],
+  "view_refreshed": true
+}

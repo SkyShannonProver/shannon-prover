@@ -1,0 +1,66 @@
+{
+  "last_result": {
+    "intent": "commit_tactic",
+    "payload": {
+      "tactic": "proc."
+    },
+    "manager_action": "commit_tactic",
+    "result": "EasyCrypt accepted the committed tactic.",
+    "effect": "EasyCrypt accepted a proof-state change; the refreshed view is based on the new committed state.",
+    "proof_state": "The committed EasyCrypt proof state changed.",
+    "tactic": "proc."
+  },
+  "current_goal": {
+    "lines": [
+      "Current goal",
+      "",
+      "Type variables: <none>",
+      "",
+      "------------------------------------------------------------------------",
+      "&1 (left ) : {b : bool, i, j : int, r, r' : word} [programs are in sync]",
+      "&2 (right) : {b : bool, i, j : int, r, r' : word}",
+      "",
+      "pre = true",
+      "",
+      "(1------)  j <- 0                     ",
+      "(2------)  (PIR.s, PIR.s') <- ([], [])",
+      "(3------)  while (j < Top.N) {        ",
+      "(3.1----)    b <$ {0,1}               ",
+      "(3.2----)    if (j = i) {             ",
+      "(3.2.1--)      if (b) {               ",
+      "(3.2.1.1)        PIR.s <- j :: PIR.s  ",
+      "(3.2.1--)      } else {               ",
+      "(3.2.1?1)        PIR.s' <- j :: PIR.s'",
+      "(3.2.1--)      }                      ",
+      "(3.2----)    } else {                 ",
+      "(3.2?1--)      if (b) {               ",
+      "(3.2?1.1)        PIR.s <- j :: PIR.s  ",
+      "(3.2?1.2)        PIR.s' <- j :: PIR.s'",
+      "(3.2?1--)      }                      ",
+      "(3.2----)    }                        ",
+      "(3.3----)    j <- j + 1               ",
+      "(3------)  }                          ",
+      "(4------)  r <@ PIR.query(PIR.s)      ",
+      "(5------)  r' <@ PIR.query(PIR.s')    ",
+      "",
+      "post = PIR.s{1} = PIR.s{2}",
+      "[24|check]>"
+    ],
+    "text_fully_shown": true,
+    "truncated": false,
+    "goal_type": "pRHL",
+    "view_focus": "relational_program",
+    "source": {
+      "label": "Parsed from EasyCrypt pretty goal text",
+      "ground_truth": false
+    }
+  },
+  "proof_status": {
+    "status": "open",
+    "remaining_goals": 1,
+    "remaining_goals_known": true,
+    "goal_type": "pRHL",
+    "view_focus": "relational_program",
+    "current_layer": "verification_residue"
+  }
+}

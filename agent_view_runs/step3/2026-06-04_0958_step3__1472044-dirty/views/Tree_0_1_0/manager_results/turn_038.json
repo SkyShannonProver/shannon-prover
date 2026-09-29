@@ -1,0 +1,19 @@
+{
+  "turn": 38,
+  "handled_intent": {
+    "intent": "commit_tactic",
+    "payload": {
+      "tactic": "rewrite /inv_cpa /=; smt(mem_empty)."
+    }
+  },
+  "ok": true,
+  "manager_note": "Committed tactic accepted; the EasyCrypt proof state changed.",
+  "manager_actions": [
+    {
+      "action": "tactic commit",
+      "outcome": "EasyCrypt accepted the committed tactic.",
+      "timing": "578 ms"
+    }
+  ],
+  "view_refreshed": true
+}

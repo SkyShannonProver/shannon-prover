@@ -1,0 +1,55 @@
+{
+  "kind": "agent_view_run_report",
+  "timestamp": "2026-06-08_1737_cpa_ddh0",
+  "lemma": "cpa_ddh0",
+  "source_file": "eval/examples/elgamal.ec",
+  "model": "claude-opus-4-8",
+  "surface_profile": "l4_checked_action_surface",
+  "trees": 2,
+  "eval_mode": true,
+  "outcome": "proved",
+  "committed_proofs": [
+    {
+      "tree": "Tree_0_0",
+      "tactics": [
+        "byequiv => //.",
+        "proc.",
+        "inline *.",
+        "swap{1} 7 -5.",
+        "wp.",
+        "call (_: true).",
+        "wp.",
+        "rnd.",
+        "call (_: true).",
+        "wp.",
+        "auto.",
+        "smt(expM).",
+        "qed."
+      ],
+      "proved": true
+    },
+    {
+      "tree": "Tree_0_1",
+      "tactics": [
+        "byequiv=> //.",
+        "proc.",
+        "inline *.",
+        "swap{1} 7 -5.",
+        "call (_: true).",
+        "wp.",
+        "call (_: true).",
+        "wp.",
+        "rnd.",
+        "call (_: true)."
+      ],
+      "proved": false
+    }
+  ],
+  "turn_count": 24,
+  "views_copied": 26,
+  "run_iteration_dir": "artifacts/eval_suite/medium4_l1_l4noprobe/l4_checked_action_surface/elgamal_cpa_ddh0/r01/2026-06-08_1737_cpa_ddh0/iteration_1",
+  "commit": "c855adb2",
+  "commit_full": "c855adb2fa7167175ef63db96f7d642faee3e78b",
+  "branch": "mcp-v0",
+  "dirty": true
+}

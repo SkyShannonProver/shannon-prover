@@ -1,0 +1,57 @@
+{
+  "node": "Tree-0.1",
+  "discovery": "content_match",
+  "transcripts": [
+    "~/.claude/projects/<PROJECT>/289da3bf-fd45-48bf-9eb0-811d4f277560.jsonl"
+  ],
+  "turns": [
+    {
+      "turn": 1,
+      "intent": "commit_tactic",
+      "payload_key": "rewrite /cbc_dec_fold /= -(cat0s (cbc_dec Pi k iv c)).",
+      "thinking_chars": 0,
+      "text_chars": 198,
+      "tokens": {
+        "output_tokens": 2561,
+        "input_tokens": 7,
+        "cache_read_input_tokens": 110902,
+        "cache_creation_input_tokens": 20090
+      },
+      "session_id": "289da3bf-fd45-48bf-9eb0-811d4f277560",
+      "timestamp": "2026-06-12T00:58:34.011Z",
+      "file": "thinking/turn_001.md"
+    },
+    {
+      "turn": 2,
+      "intent": "commit_tactic",
+      "payload_key": "elim: c iv []=> //= [iv|ci c ih iv acc].",
+      "thinking_chars": 0,
+      "text_chars": 71,
+      "tokens": {
+        "output_tokens": 166,
+        "input_tokens": 2,
+        "cache_read_input_tokens": 34621,
+        "cache_creation_input_tokens": 2701
+      },
+      "session_id": "289da3bf-fd45-48bf-9eb0-811d4f277560",
+      "timestamp": "2026-06-12T00:58:40.789Z",
+      "file": "thinking/turn_002.md"
+    },
+    {
+      "turn": 3,
+      "intent": "commit_tactic",
+      "payload_key": "by rewrite cats0.",
+      "thinking_chars": 0,
+      "text_chars": 71,
+      "tokens": {
+        "output_tokens": 143,
+        "input_tokens": 2,
+        "cache_read_input_tokens": 37322,
+        "cache_creation_input_tokens": 1173
+      },
+      "session_id": "289da3bf-fd45-48bf-9eb0-811d4f277560",
+      "timestamp": "2026-06-12T00:58:45.895Z",
+      "file": "thinking/turn_003.md"
+    }
+  ]
+}

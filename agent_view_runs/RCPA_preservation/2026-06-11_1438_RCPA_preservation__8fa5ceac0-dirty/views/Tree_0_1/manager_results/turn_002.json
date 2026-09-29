@@ -1,0 +1,19 @@
+{
+  "turn": 2,
+  "handled_intent": {
+    "intent": "commit_tactic",
+    "payload": {
+      "tactic": "have ->: Pr[INDR_CPA(MacThenEncrypt(E, M), A).main() @ &m : res] = Pr[SKEa.RCPA.INDR_CPA(E, RCPAa(M, A)).main() @ &m : res] by exact (RCPA_prob E M A &m)."
+    }
+  },
+  "ok": true,
+  "manager_note": "Committed tactic accepted; the EasyCrypt proof state changed.",
+  "manager_actions": [
+    {
+      "action": "tactic commit",
+      "outcome": "EasyCrypt accepted the committed tactic.",
+      "timing": "479 ms"
+    }
+  ],
+  "view_refreshed": true
+}

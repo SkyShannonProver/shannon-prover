@@ -1,0 +1,35 @@
+{
+  "last_result": {},
+  "current_goal": {
+    "goal_type": "equiv",
+    "lines": [
+      "Current goal",
+      "",
+      "Type variables: <none>",
+      "",
+      "------------------------------------------------------------------------",
+      "pre = (glob A){1} = (glob A){2}",
+      "",
+      "    UFCMA(RO).distinguish ~ UFCMA3(RO).distinguish ",
+      "",
+      "post =",
+      "  UFCMA.bad2{1} = UFCMA.bad2{2} /\\",
+      "  res{1} = UF.forged{2} /\\ res{2} = (UF.forged{2} \\/ UFCMA.bad2{2})"
+    ],
+    "source": {
+      "ground_truth": false,
+      "label": "Parsed from EasyCrypt pretty goal text"
+    },
+    "text_fully_shown": true,
+    "truncated": false,
+    "view_focus": "relational_program"
+  },
+  "proof_status": {
+    "current_layer": "prhl_module",
+    "goal_type": "equiv",
+    "remaining_goals": 1,
+    "remaining_goals_known": true,
+    "status": "open",
+    "view_focus": "relational_program"
+  }
+}

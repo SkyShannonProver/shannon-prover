@@ -1,0 +1,358 @@
+{
+  "file": "artifacts/eval_suite/tree_expand_ig_multi/l4_checked_action_surface/cbc_correct/r01/source/MEE-CBC/FunctionalSpec.ec",
+  "include_dirs": [
+    "artifacts/eval_suite/tree_expand_ig_multi/l4_checked_action_surface/cbc_correct/r01/source/MEE-CBC",
+    "easycrypt-src/theories"
+  ],
+  "kind": "manager_session_bootstrap",
+  "lemma": "cbc_correct",
+  "manager_actions": [
+    {
+      "agent_observation": {
+        "effect": "This manager intent does not change the EasyCrypt proof state.",
+        "manager_action": "start",
+        "result": "The manager completed this proof-level request."
+      },
+      "argv": [
+        ".venv/bin/python",
+        "core/easycrypt/session_cli.py",
+        "-d",
+        ".ec_session_prover_tree_0_0",
+        "-start",
+        "-f",
+        "artifacts/eval_suite/tree_expand_ig_multi/l4_checked_action_surface/cbc_correct/r01/source/MEE-CBC/FunctionalSpec.ec",
+        "-I",
+        "artifacts/eval_suite/tree_expand_ig_multi/l4_checked_action_surface/cbc_correct/r01/source/MEE-CBC",
+        "-I",
+        "easycrypt-src/theories",
+        "-lemma",
+        "cbc_correct"
+      ],
+      "duration_ms": 1308,
+      "exit_code": 0,
+      "label": "start",
+      "mutates_proof_state": true,
+      "stderr_chars": 0,
+      "stderr_preview": "",
+      "stdout_chars": 5971,
+      "stdout_has_workspace_view": true,
+      "stdout_lines": 153
+    },
+    {
+      "agent_observation": {
+        "effect": "This manager intent does not change the EasyCrypt proof state.",
+        "manager_action": "agent_view",
+        "result": "The manager completed this proof-level request."
+      },
+      "argv": [
+        ".venv/bin/python",
+        "core/easycrypt/session_cli.py",
+        "-d",
+        ".ec_session_prover_tree_0_0",
+        "-agent-view"
+      ],
+      "duration_ms": 142,
+      "exit_code": 0,
+      "label": "agent_view",
+      "mutates_proof_state": false,
+      "stderr_chars": 0,
+      "stderr_preview": "",
+      "stdout_chars": 5877,
+      "stdout_has_workspace_view": true,
+      "stdout_lines": 150
+    }
+  ],
+  "node": "Tree-0.0",
+  "replay_prefix": [],
+  "replay_prefix_count": 0,
+  "replay_prefix_requested_count": 0,
+  "schema_version": 2,
+  "session_dir": ".ec_session_prover_tree_0_0",
+  "session_tag": "prover_tree_0_0",
+  "snapshot": {
+    "execution_refs": {
+      "manager_action_count": 2,
+      "manager_actions": [
+        {
+          "agent_observation": {
+            "effect": "This manager intent does not change the EasyCrypt proof state.",
+            "manager_action": "start",
+            "result": "The manager completed this proof-level request."
+          },
+          "argv": [
+            ".venv/bin/python",
+            "core/easycrypt/session_cli.py",
+            "-d",
+            ".ec_session_prover_tree_0_0",
+            "-start",
+            "-f",
+            "artifacts/eval_suite/tree_expand_ig_multi/l4_checked_action_surface/cbc_correct/r01/source/MEE-CBC/FunctionalSpec.ec",
+            "-I",
+            "artifacts/eval_suite/tree_expand_ig_multi/l4_checked_action_surface/cbc_correct/r01/source/MEE-CBC",
+            "-I",
+            "easycrypt-src/theories",
+            "-lemma",
+            "cbc_correct"
+          ],
+          "duration_ms": 1308,
+          "exit_code": 0,
+          "label": "start",
+          "mutates_proof_state": true,
+          "stderr_chars": 0,
+          "stderr_preview": "",
+          "stdout_chars": 5971,
+          "stdout_has_workspace_view": true,
+          "stdout_lines": 153
+        },
+        {
+          "agent_observation": {
+            "effect": "This manager intent does not change the EasyCrypt proof state.",
+            "manager_action": "agent_view",
+            "result": "The manager completed this proof-level request."
+          },
+          "argv": [
+            ".venv/bin/python",
+            "core/easycrypt/session_cli.py",
+            "-d",
+            ".ec_session_prover_tree_0_0",
+            "-agent-view"
+          ],
+          "duration_ms": 142,
+          "exit_code": 0,
+          "label": "agent_view",
+          "mutates_proof_state": false,
+          "stderr_chars": 0,
+          "stderr_preview": "",
+          "stdout_chars": 5877,
+          "stdout_has_workspace_view": true,
+          "stdout_lines": 150
+        }
+      ]
+    },
+    "goal_hash": "360740184cdb8da2d29bfa193728003af4b28f9a",
+    "node_id": "Tree-0.0",
+    "proof_context_view_artifact": "",
+    "session_dir": ".ec_session_prover_tree_0_0",
+    "session_epoch": 1,
+    "session_tag": "prover_tree_0_0",
+    "state_version": 1,
+    "workspace_view_artifact": ""
+  },
+  "workspace_view": {
+    "candidate_moves": {
+      "moves": [
+        {
+          "applicability": "This tactic-shaped option should be checked with a read-only probe before committing it.",
+          "category": "probe",
+          "derivation": "read-only probe surfaced from proof-state analysis",
+          "effect": "This is a read-only probe; it asks EasyCrypt what would happen without changing the committed proof state.",
+          "guarantee": "read-only probe shape; proof state unchanged; probe then decide; reversible",
+          "source": "proof-state analysis",
+          "tactic": "move=> H.",
+          "title": "Read-only tactic probe",
+          "verified": "read_only_probe_suggestion"
+        },
+        {
+          "applicability": "This tactic-shaped option should be checked with a read-only probe before committing it.",
+          "category": "probe",
+          "derivation": "read-only probe surfaced from proof-state analysis",
+          "effect": "This is a read-only probe; it asks EasyCrypt what would happen without changing the committed proof state.",
+          "guarantee": "read-only probe shape; proof state unchanged; probe then decide; reversible",
+          "source": "proof-state analysis",
+          "tactic": "rewrite /cbc_dec.",
+          "title": "Read-only tactic probe",
+          "verified": "read_only_probe_suggestion"
+        },
+        {
+          "applicability": "This tactic-shaped option should be checked with a read-only probe before committing it.",
+          "category": "probe",
+          "derivation": "read-only probe surfaced from proof-state analysis",
+          "effect": "This is a read-only probe; it asks EasyCrypt what would happen without changing the committed proof state.",
+          "guarantee": "read-only probe shape; proof state unchanged; probe then decide; reversible",
+          "source": "proof-state analysis",
+          "tactic": "auto => />.",
+          "title": "Residual closing tactic",
+          "verified": "read_only_probe_suggestion"
+        },
+        {
+          "applicability": "This tactic-shaped option should be checked with a read-only probe before committing it.",
+          "category": "probe",
+          "derivation": "read-only probe surfaced from proof-state analysis",
+          "effect": "This is a read-only probe; it asks EasyCrypt what would happen without changing the committed proof state.",
+          "guarantee": "read-only probe shape; proof state unchanged; probe then decide; reversible",
+          "source": "proof-state analysis",
+          "tactic": "smt().",
+          "title": "Read-only tactic probe",
+          "verified": "read_only_probe_suggestion"
+        }
+      ]
+    },
+    "current_goal": {
+      "goal_type": "ambient",
+      "lines": [
+        "Current goal",
+        "",
+        "Type variables: <none>",
+        "",
+        "P: block -> block -> block",
+        "Pi: block -> block -> block",
+        "k: block",
+        "st: block",
+        "p: block list",
+        "------------------------------------------------------------------------",
+        "cancel (P k) (Pi k) => cbc_dec Pi k st (cbc_enc P k st p) = p"
+      ],
+      "source": {
+        "ground_truth": false,
+        "label": "Parsed from EasyCrypt pretty goal text"
+      },
+      "text_fully_shown": true,
+      "truncated": false,
+      "view_focus": "ambient_logic"
+    },
+    "facts_and_diagnostics": {
+      "fact_note": "Only current-frontier facts are shown here; the full proof context artifact keeps the compiler/internal details.",
+      "facts": {
+        "unfoldable_goal_head_count": 2,
+        "unfoldable_goal_heads": [
+          {
+            "declaration_kind": "op",
+            "name": "cbc_dec",
+            "smt_argument_role": "not_a_lemma_hint",
+            "unfold_tactic": "rewrite /cbc_dec.",
+            "unqualified_name": "cbc_dec"
+          },
+          {
+            "declaration_kind": "op",
+            "name": "cbc_enc",
+            "smt_argument_role": "not_a_lemma_hint",
+            "unfold_tactic": "rewrite /cbc_enc.",
+            "unqualified_name": "cbc_enc"
+          }
+        ]
+      },
+      "notes": [
+        {
+          "message": "Current residual goal mentions unfoldable definition(s): cbc_dec, cbc_enc. Use `rewrite /NAME` before SMT when those predicates block simplification; these names are not smt(...) lemma hints.",
+          "severity": "info"
+        }
+      ]
+    },
+    "inspect_lookup_handles": {
+      "ask_manager_for": [
+        {
+          "intent": "inspect_context",
+          "payload": {
+            "topic": "goal_info"
+          },
+          "returns": "manager-provided read-only context for this proof route",
+          "use_when": "No fresh recommendation is available; parse the current goal."
+        },
+        {
+          "intent": "inspect_context",
+          "payload": {
+            "topic": "lemma_hints"
+          },
+          "returns": "nearby lemma hints and qualified-name lookup guidance",
+          "use_when": "Need local or standard-library lemma names before rewriting a pure goal."
+        },
+        {
+          "intent": "inspect_context",
+          "payload": {
+            "name": "rewrite",
+            "topic": "tactic_forms"
+          },
+          "returns": "valid tactic forms and common traps",
+          "use_when": "Need the valid EasyCrypt form for rewrite, apply, conseq, while, or SMT setup."
+        }
+      ],
+      "effect": "All handles here are read-only manager requests; the committed EasyCrypt proof state stays unchanged.",
+      "manager_note": "Some requests may ask EasyCrypt or name resolution; wait for the manager result before choosing the next proof intent."
+    },
+    "kind": "prover_workspace_view",
+    "last_result": {},
+    "program_frontier": {
+      "authority": "proof-state analysis",
+      "view_focus": "ambient_logic"
+    },
+    "proof_status": {
+      "current_layer": "ambient_logic",
+      "goal_type": "ambient",
+      "remaining_goals": 1,
+      "remaining_goals_known": true,
+      "status": "open",
+      "view_focus": "ambient_logic"
+    },
+    "pure_focus": {
+      "close_with": [
+        "`smt(<lemmas>)` \u2014 discharge with the right lemmas (YOU pick them)",
+        "`rewrite <eq>` / `move=> <intro>` \u2014 normalise the goal first",
+        "`case (<cond>)` \u2014 split a disjunction / membership in the goal"
+      ],
+      "goal_operators": [
+        "`cancel`",
+        "`cbc_dec`",
+        "`cbc_enc`"
+      ],
+      "visible_hypotheses": [
+        "`P: block -> block -> block`",
+        "`Pi: block -> block -> block`"
+      ],
+      "yours": "the lemmas for `smt`, the rewrite chain, the case condition \u2014 `lookup_symbol` any operator above for its definition and lemmas."
+    },
+    "pure_tail_surface": {
+      "effect": "Summarizes verifier-visible pure-goal structure after program frontier actions have been discharged or hidden by local proof steps.",
+      "goal_operators": [
+        "cancel",
+        "cbc_dec",
+        "cbc_enc"
+      ],
+      "limitations": [
+        "This panel records syntactic and proof-state facts from the current view.",
+        "It does not choose a tactic or instantiate a lemma."
+      ],
+      "obligation_families": [
+        {
+          "effect": "The current proof point is dominated by local logical obligations rather than program-frontier movement.",
+          "evidence": [
+            "implication residual visible"
+          ],
+          "family": "quantified_residual_logic",
+          "limitations": "Quantifier names are not normalized across EasyCrypt pretty-printer variants."
+        }
+      ],
+      "state": "ambient_pure_tail",
+      "visible_hypotheses": [
+        "P: block -> block -> block",
+        "Pi: block -> block -> block"
+      ]
+    },
+    "recovery_diagnosis_surface": {
+      "available_local_work": [
+        {
+          "items": [
+            "quantified_residual_logic"
+          ],
+          "kind": "pure_tail_obligation_families"
+        }
+      ],
+      "checkpoint_policy": "current_state_local_work_visible",
+      "confidence": "medium",
+      "evidence": [
+        "pure_tail_surface is visible for the current goal",
+        "current proof state has no program-frontier work before the logical residual"
+      ],
+      "kind": "recovery_diagnosis_surface",
+      "limitations": [
+        "does not select a destructor, witness, rewrite, or SMT lemma",
+        "reported checkpoints are recovery references, not a default route"
+      ],
+      "recovery_class": "local_pure_surgery_available",
+      "related_surfaces": [
+        "pure_tail_surface"
+      ]
+    },
+    "schema_version": 2,
+    "view_hash": "5a257a9bf8a128283121b0dde84370572606c85f"
+  }
+}

@@ -1,0 +1,137 @@
+{
+  "node": "Tree-0.0",
+  "discovery": "recorded_session_id",
+  "transcripts": [
+    "~/.claude/projects/<PROJECT>--worktrees-mcp-v0/7507390e-3397-450f-af34-e9dbd0b6cf44.jsonl"
+  ],
+  "turns": [
+    {
+      "turn": 1,
+      "intent": "commit_tactic",
+      "payload_key": "move=> h.",
+      "thinking_chars": 0,
+      "text_chars": 571,
+      "tokens": {
+        "output_tokens": 2103,
+        "input_tokens": 2084,
+        "cache_read_input_tokens": 143429,
+        "cache_creation_input_tokens": 33633
+      },
+      "session_id": "7507390e-3397-450f-af34-e9dbd0b6cf44",
+      "timestamp": "2026-06-06T20:37:44.117Z",
+      "file": "thinking/turn_001.md"
+    },
+    {
+      "turn": 2,
+      "intent": "commit_tactic",
+      "payload_key": "rewrite -(parseK r p) -(parseK r' p') h.",
+      "thinking_chars": 0,
+      "text_chars": 76,
+      "tokens": {
+        "output_tokens": 150,
+        "input_tokens": 131,
+        "cache_read_input_tokens": 33008,
+        "cache_creation_input_tokens": 1101
+      },
+      "session_id": "7507390e-3397-450f-af34-e9dbd0b6cf44",
+      "timestamp": "2026-06-06T20:37:50.209Z",
+      "file": "thinking/turn_002.md"
+    },
+    {
+      "turn": 3,
+      "intent": "commit_tactic",
+      "payload_key": "rewrite -(parseK r p) -(parseK r' p').",
+      "thinking_chars": 0,
+      "text_chars": 131,
+      "tokens": {
+        "output_tokens": 1779,
+        "input_tokens": 4,
+        "cache_read_input_tokens": 69513,
+        "cache_creation_input_tokens": 1791
+      },
+      "session_id": "7507390e-3397-450f-af34-e9dbd0b6cf44",
+      "timestamp": "2026-06-06T20:38:16.238Z",
+      "file": "thinking/turn_003.md"
+    },
+    {
+      "turn": 4,
+      "intent": "commit_tactic",
+      "payload_key": "have h1 := parseK r p.",
+      "thinking_chars": 0,
+      "text_chars": 274,
+      "tokens": {
+        "output_tokens": 3574,
+        "input_tokens": 4,
+        "cache_read_input_tokens": 74382,
+        "cache_creation_input_tokens": 5260
+      },
+      "session_id": "7507390e-3397-450f-af34-e9dbd0b6cf44",
+      "timestamp": "2026-06-06T20:39:04.230Z",
+      "file": "thinking/turn_004.md"
+    },
+    {
+      "turn": 5,
+      "intent": "commit_tactic",
+      "payload_key": "rewrite h parseK in h1.",
+      "thinking_chars": 0,
+      "text_chars": 74,
+      "tokens": {
+        "output_tokens": 230,
+        "input_tokens": 131,
+        "cache_read_input_tokens": 41160,
+        "cache_creation_input_tokens": 2752
+      },
+      "session_id": "7507390e-3397-450f-af34-e9dbd0b6cf44",
+      "timestamp": "2026-06-06T20:39:08.669Z",
+      "file": "thinking/turn_005.md"
+    },
+    {
+      "turn": 6,
+      "intent": "commit_tactic",
+      "payload_key": "by rewrite h1.",
+      "thinking_chars": 0,
+      "text_chars": 66,
+      "tokens": {
+        "output_tokens": 349,
+        "input_tokens": 2,
+        "cache_read_input_tokens": 43912,
+        "cache_creation_input_tokens": 1359
+      },
+      "session_id": "7507390e-3397-450f-af34-e9dbd0b6cf44",
+      "timestamp": "2026-06-06T20:39:14.638Z",
+      "file": "thinking/turn_006.md"
+    },
+    {
+      "turn": 7,
+      "intent": "commit_tactic",
+      "payload_key": "qed.",
+      "thinking_chars": 0,
+      "text_chars": 36,
+      "tokens": {
+        "output_tokens": 117,
+        "input_tokens": 2,
+        "cache_read_input_tokens": 45271,
+        "cache_creation_input_tokens": 1257
+      },
+      "session_id": "7507390e-3397-450f-af34-e9dbd0b6cf44",
+      "timestamp": "2026-06-06T20:39:18.105Z",
+      "file": "thinking/turn_007.md"
+    },
+    {
+      "turn": 8,
+      "intent": "finish",
+      "payload_key": "",
+      "thinking_chars": 0,
+      "text_chars": 67,
+      "tokens": {
+        "output_tokens": 144,
+        "input_tokens": 2,
+        "cache_read_input_tokens": 46528,
+        "cache_creation_input_tokens": 1015
+      },
+      "session_id": "7507390e-3397-450f-af34-e9dbd0b6cf44",
+      "timestamp": "2026-06-06T20:39:21.535Z",
+      "file": "thinking/turn_008.md"
+    }
+  ]
+}

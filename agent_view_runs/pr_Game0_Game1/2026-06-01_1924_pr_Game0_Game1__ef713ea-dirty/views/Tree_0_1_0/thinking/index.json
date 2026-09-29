@@ -1,0 +1,139 @@
+{
+  "node": "Tree-0.1.0",
+  "discovery": "content_match",
+  "transcripts": [
+    "~/.claude/projects/<PROJECT>--claude-worktrees-ablation-l1-l4/1a85e7aa-e3cb-4466-a034-9c782f2d2105.jsonl"
+  ],
+  "turns": [
+    {
+      "turn": 1,
+      "intent": "commit_tactic",
+      "payload_key": "inline{1} LRO.o.",
+      "thinking_chars": 29624,
+      "text_chars": 553,
+      "session_id": "1a85e7aa-e3cb-4466-a034-9c782f2d2105",
+      "timestamp": "2026-06-02T02:54:59.125Z",
+      "file": "thinking/turn_001.md"
+    },
+    {
+      "turn": 2,
+      "intent": "commit_tactic",
+      "payload_key": "seq 7 4 : (={glob A, Log.qs, LRO.m, b, pk, sk, m0, m1} /\\ pk0{1} = pk{1} /\\ m{1} = (if b{1} then m0{1} else m1{1})).",
+      "thinking_chars": 3381,
+      "text_chars": 517,
+      "session_id": "1a85e7aa-e3cb-4466-a034-9c782f2d2105",
+      "timestamp": "2026-06-02T02:55:51.616Z",
+      "file": "thinking/turn_002.md"
+    },
+    {
+      "turn": 3,
+      "intent": "commit_tactic",
+      "payload_key": "wp.",
+      "thinking_chars": 4516,
+      "text_chars": 321,
+      "session_id": "1a85e7aa-e3cb-4466-a034-9c782f2d2105",
+      "timestamp": "2026-06-02T02:56:46.212Z",
+      "file": "thinking/turn_003.md"
+    },
+    {
+      "turn": 4,
+      "intent": "commit_tactic",
+      "payload_key": "rnd.",
+      "thinking_chars": 697,
+      "text_chars": 117,
+      "session_id": "1a85e7aa-e3cb-4466-a034-9c782f2d2105",
+      "timestamp": "2026-06-02T02:56:57.855Z",
+      "file": "thinking/turn_004.md"
+    },
+    {
+      "turn": 5,
+      "intent": "commit_tactic",
+      "payload_key": "call (_: ={Log.qs, LRO.m}).",
+      "thinking_chars": 651,
+      "text_chars": 124,
+      "session_id": "1a85e7aa-e3cb-4466-a034-9c782f2d2105",
+      "timestamp": "2026-06-02T02:57:08.053Z",
+      "file": "thinking/turn_005.md"
+    },
+    {
+      "turn": 6,
+      "intent": "commit_tactic",
+      "payload_key": "by proc; inline*; auto.",
+      "thinking_chars": 489,
+      "text_chars": 97,
+      "session_id": "1a85e7aa-e3cb-4466-a034-9c782f2d2105",
+      "timestamp": "2026-06-02T02:57:15.644Z",
+      "file": "thinking/turn_006.md"
+    },
+    {
+      "turn": 7,
+      "intent": "commit_tactic",
+      "payload_key": "inline*; wp; rnd; skip; auto.",
+      "thinking_chars": 1523,
+      "text_chars": 162,
+      "session_id": "1a85e7aa-e3cb-4466-a034-9c782f2d2105",
+      "timestamp": "2026-06-02T02:57:35.971Z",
+      "file": "thinking/turn_007.md"
+    },
+    {
+      "turn": 8,
+      "intent": "commit_tactic",
+      "payload_key": "inline*.",
+      "thinking_chars": 2350,
+      "text_chars": 111,
+      "session_id": "1a85e7aa-e3cb-4466-a034-9c782f2d2105",
+      "timestamp": "2026-06-02T02:57:57.017Z",
+      "file": "thinking/turn_008.md"
+    },
+    {
+      "turn": 9,
+      "intent": "commit_tactic",
+      "payload_key": "wp.",
+      "thinking_chars": 419,
+      "text_chars": 136,
+      "session_id": "1a85e7aa-e3cb-4466-a034-9c782f2d2105",
+      "timestamp": "2026-06-02T02:58:05.114Z",
+      "file": "thinking/turn_009.md"
+    },
+    {
+      "turn": 10,
+      "intent": "commit_tactic",
+      "payload_key": "rnd.",
+      "thinking_chars": 458,
+      "text_chars": 93,
+      "session_id": "1a85e7aa-e3cb-4466-a034-9c782f2d2105",
+      "timestamp": "2026-06-02T02:58:11.535Z",
+      "file": "thinking/turn_010.md"
+    },
+    {
+      "turn": 11,
+      "intent": "commit_tactic",
+      "payload_key": "skip; progress.",
+      "thinking_chars": 470,
+      "text_chars": 148,
+      "session_id": "1a85e7aa-e3cb-4466-a034-9c782f2d2105",
+      "timestamp": "2026-06-02T02:58:18.524Z",
+      "file": "thinking/turn_011.md"
+    },
+    {
+      "turn": 12,
+      "intent": "commit_tactic",
+      "payload_key": "wp; skip; progress.",
+      "thinking_chars": 1635,
+      "text_chars": 224,
+      "session_id": "1a85e7aa-e3cb-4466-a034-9c782f2d2105",
+      "timestamp": "2026-06-02T02:58:40.597Z",
+      "file": "thinking/turn_012.md"
+    },
+    {
+      "turn": 13,
+      "intent": "commit_tactic",
+      "payload_key": "call (_: ={Log.qs, LRO.m}, (Game1.r \\in Log.qs){2}).",
+      "thinking_chars": 19889,
+      "text_chars": 431,
+      "session_id": "1a85e7aa-e3cb-4466-a034-9c782f2d2105",
+      "timestamp": "2026-06-02T03:02:30.139Z",
+      "file": "thinking/turn_013.md"
+    }
+  ]
+}

@@ -1,0 +1,19 @@
+{
+  "turn": 26,
+  "handled_intent": {
+    "intent": "commit_tactic",
+    "payload": {
+      "tactic": "smt(Block.bytes_of_blockP mem_set size_cat size_take size_drop size_ge0 size_eq0 ge0_block_size gt0_block_size max_cipher_size_ok C.ofintdK C.gt0_max_counter)."
+    }
+  },
+  "ok": true,
+  "manager_note": "Committed tactic accepted; the EasyCrypt proof state changed.",
+  "manager_actions": [
+    {
+      "action": "tactic commit",
+      "outcome": "EasyCrypt accepted the committed tactic.",
+      "timing": "510 ms"
+    }
+  ],
+  "view_refreshed": true
+}

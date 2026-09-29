@@ -1,0 +1,19 @@
+{
+  "turn": 8,
+  "handled_intent": {
+    "intent": "commit_tactic",
+    "payload": {
+      "tactic": "rewrite (drop_size_cat (size m + 32)) 1:size_cat 1:size_t2os //."
+    }
+  },
+  "ok": true,
+  "manager_note": "Committed tactic accepted; the EasyCrypt proof state changed.",
+  "manager_actions": [
+    {
+      "action": "tactic commit",
+      "outcome": "EasyCrypt accepted the committed tactic.",
+      "timing": "1.6 s"
+    }
+  ],
+  "view_refreshed": true
+}

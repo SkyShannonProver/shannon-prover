@@ -1,0 +1,174 @@
+{
+  "file": "artifacts/eval_suite/mee_sweep_l1_v2/l1_goal_projection/mee_t2osK/r01/source/MEE-CBC/FunctionalSpec.ec",
+  "include_dirs": [
+    "artifacts/eval_suite/mee_sweep_l1_v2/l1_goal_projection/mee_t2osK/r01/source/MEE-CBC",
+    "easycrypt-src/theories"
+  ],
+  "kind": "manager_session_bootstrap",
+  "lemma": "t2osK",
+  "manager_actions": [
+    {
+      "agent_observation": {
+        "effect": "This manager intent does not change the EasyCrypt proof state.",
+        "manager_action": "start",
+        "result": "The manager completed this proof-level request."
+      },
+      "argv": [
+        ".venv/bin/python3",
+        "core/easycrypt/session_cli.py",
+        "-d",
+        ".ec_session_prover_tree_0_0",
+        "-start",
+        "-f",
+        "artifacts/eval_suite/mee_sweep_l1_v2/l1_goal_projection/mee_t2osK/r01/source/MEE-CBC/FunctionalSpec.ec",
+        "-I",
+        "artifacts/eval_suite/mee_sweep_l1_v2/l1_goal_projection/mee_t2osK/r01/source/MEE-CBC",
+        "-I",
+        "easycrypt-src/theories",
+        "-lemma",
+        "t2osK"
+      ],
+      "duration_ms": 1185,
+      "exit_code": 0,
+      "label": "start",
+      "mutates_proof_state": true,
+      "stderr_chars": 0,
+      "stderr_preview": "",
+      "stdout_chars": 5151,
+      "stdout_has_workspace_view": true,
+      "stdout_lines": 138
+    },
+    {
+      "agent_observation": {
+        "effect": "This manager intent does not change the EasyCrypt proof state.",
+        "manager_action": "agent_view",
+        "result": "The manager completed this proof-level request."
+      },
+      "argv": [
+        ".venv/bin/python3",
+        "core/easycrypt/session_cli.py",
+        "-d",
+        ".ec_session_prover_tree_0_0",
+        "-agent-view"
+      ],
+      "duration_ms": 120,
+      "exit_code": 0,
+      "label": "agent_view",
+      "mutates_proof_state": false,
+      "stderr_chars": 0,
+      "stderr_preview": "",
+      "stdout_chars": 5057,
+      "stdout_has_workspace_view": true,
+      "stdout_lines": 135
+    }
+  ],
+  "node": "Tree-0.0",
+  "replay_prefix": [],
+  "replay_prefix_count": 0,
+  "replay_prefix_requested_count": 0,
+  "schema_version": 2,
+  "session_dir": ".ec_session_prover_tree_0_0",
+  "session_tag": "prover_tree_0_0",
+  "snapshot": {
+    "execution_refs": {
+      "manager_action_count": 2,
+      "manager_actions": [
+        {
+          "agent_observation": {
+            "effect": "This manager intent does not change the EasyCrypt proof state.",
+            "manager_action": "start",
+            "result": "The manager completed this proof-level request."
+          },
+          "argv": [
+            ".venv/bin/python3",
+            "core/easycrypt/session_cli.py",
+            "-d",
+            ".ec_session_prover_tree_0_0",
+            "-start",
+            "-f",
+            "artifacts/eval_suite/mee_sweep_l1_v2/l1_goal_projection/mee_t2osK/r01/source/MEE-CBC/FunctionalSpec.ec",
+            "-I",
+            "artifacts/eval_suite/mee_sweep_l1_v2/l1_goal_projection/mee_t2osK/r01/source/MEE-CBC",
+            "-I",
+            "easycrypt-src/theories",
+            "-lemma",
+            "t2osK"
+          ],
+          "duration_ms": 1185,
+          "exit_code": 0,
+          "label": "start",
+          "mutates_proof_state": true,
+          "stderr_chars": 0,
+          "stderr_preview": "",
+          "stdout_chars": 5151,
+          "stdout_has_workspace_view": true,
+          "stdout_lines": 138
+        },
+        {
+          "agent_observation": {
+            "effect": "This manager intent does not change the EasyCrypt proof state.",
+            "manager_action": "agent_view",
+            "result": "The manager completed this proof-level request."
+          },
+          "argv": [
+            ".venv/bin/python3",
+            "core/easycrypt/session_cli.py",
+            "-d",
+            ".ec_session_prover_tree_0_0",
+            "-agent-view"
+          ],
+          "duration_ms": 120,
+          "exit_code": 0,
+          "label": "agent_view",
+          "mutates_proof_state": false,
+          "stderr_chars": 0,
+          "stderr_preview": "",
+          "stdout_chars": 5057,
+          "stdout_has_workspace_view": true,
+          "stdout_lines": 135
+        }
+      ]
+    },
+    "goal_hash": "fcb03601bdb15d04d6761cbb03a5a9b8b581631b",
+    "node_id": "Tree-0.0",
+    "proof_context_view_artifact": "",
+    "session_dir": ".ec_session_prover_tree_0_0",
+    "session_epoch": 1,
+    "session_tag": "prover_tree_0_0",
+    "state_version": 1,
+    "workspace_view_artifact": ""
+  },
+  "workspace_view": {
+    "current_goal": {
+      "goal_type": "ambient",
+      "lines": [
+        "Current goal",
+        "",
+        "Type variables: <none>",
+        "",
+        "t: tag",
+        "------------------------------------------------------------------------",
+        "os2t (t2os t) = t"
+      ],
+      "source": {
+        "ground_truth": false,
+        "label": "Parsed from EasyCrypt pretty goal text"
+      },
+      "text_fully_shown": true,
+      "truncated": false,
+      "view_focus": "ambient_logic"
+    },
+    "kind": "prover_workspace_view",
+    "last_result": {},
+    "proof_status": {
+      "current_layer": "ambient_logic",
+      "goal_type": "ambient",
+      "remaining_goals": 1,
+      "remaining_goals_known": true,
+      "status": "open",
+      "view_focus": "ambient_logic"
+    },
+    "schema_version": 2,
+    "view_hash": "4547f398d58a26eee2b7141dcdf4fb6d7eec2d41"
+  }
+}

@@ -1,0 +1,489 @@
+{
+  "node": "Tree-0.0",
+  "discovery": "recorded_session_id",
+  "transcripts": [
+    "~/.claude/projects/<PROJECT>/89741c4d-97d4-4e85-92cf-0be265f01f88.jsonl"
+  ],
+  "turns": [
+    {
+      "turn": 1,
+      "intent": "commit_tactic",
+      "payload_key": "have hbnd : 0 <= nth0 - size UFCMA_l.lbad1{2} < size lt{2} by smt(); rewrite hlt /= (nth_map witness) // /=; smt().",
+      "thinking_chars": 0,
+      "text_chars": 94,
+      "tokens": {
+        "output_tokens": 2383,
+        "input_tokens": 5,
+        "cache_read_input_tokens": 60291,
+        "cache_creation_input_tokens": 47879
+      },
+      "session_id": "89741c4d-97d4-4e85-92cf-0be265f01f88",
+      "timestamp": "2026-06-09T21:47:45.740Z",
+      "file": "thinking/turn_001.md"
+    },
+    {
+      "turn": 2,
+      "intent": "commit_tactic",
+      "payload_key": "rewrite hlt /= (nth_map witness) // /=; smt().",
+      "thinking_chars": 0,
+      "text_chars": 0,
+      "tokens": {
+        "output_tokens": 1726,
+        "input_tokens": 2,
+        "cache_read_input_tokens": 39921,
+        "cache_creation_input_tokens": 1705
+      },
+      "session_id": "89741c4d-97d4-4e85-92cf-0be265f01f88",
+      "timestamp": "2026-06-09T21:48:13.036Z",
+      "file": ""
+    },
+    {
+      "turn": 3,
+      "intent": "commit_tactic",
+      "payload_key": "seq 1 1 : (lt{1} = lt{2} /\\ ={UFCMA.cbad1, UFCMA_l.lbad1, t} /\\ UFCMA_li.i{2} = nth0 /\\ (UFCMA_li.cbadi{2} = if nth0 < size UFCMA_l.lbad1{2} then 1 else 0) /\\ (nth0 < size UFCMA_l.lbad1{2} => (nth (w1, w2) UFCMA_l.lbad1{2} nth0).`1 = (nth (w1, w2) UFCMA_l.lbad1{2} nth0).`2 => UFCMA_li.badi{2}) /\\ !(UFCMA.cbad1{2} < qenc /\\ size lt{2} <= qdec /\\ size UFCMA_l.lbad1{2} <= nth0 < size UFCMA_l.lbad1{2} + size lt{2})); 1: by auto => /#.",
+      "thinking_chars": 0,
+      "text_chars": 0,
+      "tokens": {
+        "output_tokens": 3909,
+        "input_tokens": 2,
+        "cache_read_input_tokens": 41626,
+        "cache_creation_input_tokens": 4057
+      },
+      "session_id": "89741c4d-97d4-4e85-92cf-0be265f01f88",
+      "timestamp": "2026-06-09T21:49:08.005Z",
+      "file": ""
+    },
+    {
+      "turn": 4,
+      "intent": "commit_tactic",
+      "payload_key": "if => //; 1: by move=> &1 &2 /#.",
+      "thinking_chars": 0,
+      "text_chars": 81,
+      "tokens": {
+        "output_tokens": 390,
+        "input_tokens": 2,
+        "cache_read_input_tokens": 45683,
+        "cache_creation_input_tokens": 6256
+      },
+      "session_id": "89741c4d-97d4-4e85-92cf-0be265f01f88",
+      "timestamp": "2026-06-09T21:49:18.877Z",
+      "file": "thinking/turn_004.md"
+    },
+    {
+      "turn": 5,
+      "intent": "commit_tactic",
+      "payload_key": "if => //.",
+      "thinking_chars": 0,
+      "text_chars": 111,
+      "tokens": {
+        "output_tokens": 313,
+        "input_tokens": 2,
+        "cache_read_input_tokens": 51939,
+        "cache_creation_input_tokens": 2733
+      },
+      "session_id": "89741c4d-97d4-4e85-92cf-0be265f01f88",
+      "timestamp": "2026-06-09T21:49:27.611Z",
+      "file": "thinking/turn_005.md"
+    },
+    {
+      "turn": 6,
+      "intent": "commit_tactic",
+      "payload_key": "rcondf{2} 1; 1: (by auto => /#); by auto => />; smt(size_cat size_map nth_cat).",
+      "thinking_chars": 0,
+      "text_chars": 142,
+      "tokens": {
+        "output_tokens": 414,
+        "input_tokens": 2,
+        "cache_read_input_tokens": 54672,
+        "cache_creation_input_tokens": 2673
+      },
+      "session_id": "89741c4d-97d4-4e85-92cf-0be265f01f88",
+      "timestamp": "2026-06-09T21:49:36.469Z",
+      "file": "thinking/turn_006.md"
+    },
+    {
+      "turn": 7,
+      "intent": "commit_tactic",
+      "payload_key": "rcondf{2} 1; 1: by auto => /#.",
+      "thinking_chars": 0,
+      "text_chars": 71,
+      "tokens": {
+        "output_tokens": 446,
+        "input_tokens": 2,
+        "cache_read_input_tokens": 57345,
+        "cache_creation_input_tokens": 2704
+      },
+      "session_id": "89741c4d-97d4-4e85-92cf-0be265f01f88",
+      "timestamp": "2026-06-09T21:49:51.318Z",
+      "file": "thinking/turn_007.md"
+    },
+    {
+      "turn": 8,
+      "intent": "commit_tactic",
+      "payload_key": "auto => /> *; rewrite size_cat size_map nth_cat; case (nth0 < size UFCMA_l.lbad1{2}) => /= hcase; smt().",
+      "thinking_chars": 0,
+      "text_chars": 0,
+      "tokens": {
+        "output_tokens": 1765,
+        "input_tokens": 2,
+        "cache_read_input_tokens": 60049,
+        "cache_creation_input_tokens": 2308
+      },
+      "session_id": "89741c4d-97d4-4e85-92cf-0be265f01f88",
+      "timestamp": "2026-06-09T21:50:17.351Z",
+      "file": ""
+    },
+    {
+      "turn": 9,
+      "intent": "commit_tactic",
+      "payload_key": "auto => /> *; rewrite size_cat size_map nth_cat; smt().",
+      "thinking_chars": 0,
+      "text_chars": 0,
+      "tokens": {
+        "output_tokens": 627,
+        "input_tokens": 2,
+        "cache_read_input_tokens": 62357,
+        "cache_creation_input_tokens": 3696
+      },
+      "session_id": "89741c4d-97d4-4e85-92cf-0be265f01f88",
+      "timestamp": "2026-06-09T21:50:30.859Z",
+      "file": ""
+    },
+    {
+      "turn": 10,
+      "intent": "commit_tactic",
+      "payload_key": "auto => /> *; rewrite ?size_cat ?size_map ?nth_cat; smt().",
+      "thinking_chars": 0,
+      "text_chars": 0,
+      "tokens": {
+        "output_tokens": 1916,
+        "input_tokens": 2,
+        "cache_read_input_tokens": 66053,
+        "cache_creation_input_tokens": 2544
+      },
+      "session_id": "89741c4d-97d4-4e85-92cf-0be265f01f88",
+      "timestamp": "2026-06-09T21:51:05.845Z",
+      "file": ""
+    },
+    {
+      "turn": 11,
+      "intent": "commit_tactic",
+      "payload_key": "auto => />.",
+      "thinking_chars": 0,
+      "text_chars": 119,
+      "tokens": {
+        "output_tokens": 403,
+        "input_tokens": 2,
+        "cache_read_input_tokens": 68597,
+        "cache_creation_input_tokens": 3839
+      },
+      "session_id": "89741c4d-97d4-4e85-92cf-0be265f01f88",
+      "timestamp": "2026-06-09T21:51:20.141Z",
+      "file": "thinking/turn_011.md"
+    },
+    {
+      "turn": 12,
+      "intent": "commit_tactic",
+      "payload_key": "move=> &2 hinv hneg hc1 hltq; rewrite size_cat size_map nth_cat; smt().",
+      "thinking_chars": 0,
+      "text_chars": 0,
+      "tokens": {
+        "output_tokens": 2163,
+        "input_tokens": 2,
+        "cache_read_input_tokens": 72436,
+        "cache_creation_input_tokens": 1892
+      },
+      "session_id": "89741c4d-97d4-4e85-92cf-0be265f01f88",
+      "timestamp": "2026-06-09T21:51:55.571Z",
+      "file": ""
+    },
+    {
+      "turn": 13,
+      "intent": "commit_tactic",
+      "payload_key": "move=> &2 hinv hneg hc1 hltq; rewrite size_cat size_map nth_cat; case (nth0 < size UFCMA_l.lbad1{2}) => hcase; [ rewrite hcase /=; have -> /= : (nth0 < size UFCMA_l.lbad1{2} + size lt{2}) = true by smt(size_ge0); by apply (hinv hcase) | have -> /= : (nth0 < size UFCMA_l.lbad1{2}) = false by smt(); by have -> /= : (nth0 < size UFCMA_l.lbad1{2} + size lt{2}) = false by smt() ].",
+      "thinking_chars": 0,
+      "text_chars": 0,
+      "tokens": {
+        "output_tokens": 3641,
+        "input_tokens": 2,
+        "cache_read_input_tokens": 74328,
+        "cache_creation_input_tokens": 3892
+      },
+      "session_id": "89741c4d-97d4-4e85-92cf-0be265f01f88",
+      "timestamp": "2026-06-09T21:52:48.246Z",
+      "file": ""
+    },
+    {
+      "turn": 14,
+      "intent": "commit_tactic",
+      "payload_key": "move=> &2 hinv hneg hc1 hltq; rewrite size_cat size_map nth_cat; case (nth0 < size UFCMA_l.lbad1{2}) => hcase /=; [ have -> /= : (nth0 < size UFCMA_l.lbad1{2} + size lt{2}) = true by smt(size_ge0); by apply (hinv hcase) | by have -> /= : (nth0 < size UFCMA_l.lbad1{2} + size lt{2}) = false by smt() ].",
+      "thinking_chars": 0,
+      "text_chars": 0,
+      "tokens": {
+        "output_tokens": 2253,
+        "input_tokens": 2,
+        "cache_read_input_tokens": 78220,
+        "cache_creation_input_tokens": 5216
+      },
+      "session_id": "89741c4d-97d4-4e85-92cf-0be265f01f88",
+      "timestamp": "2026-06-09T21:53:24.116Z",
+      "file": ""
+    },
+    {
+      "turn": 15,
+      "intent": "commit_tactic",
+      "payload_key": "by apply (hinv hcase).",
+      "thinking_chars": 0,
+      "text_chars": 80,
+      "tokens": {
+        "output_tokens": 527,
+        "input_tokens": 2,
+        "cache_read_input_tokens": 83436,
+        "cache_creation_input_tokens": 3601
+      },
+      "session_id": "89741c4d-97d4-4e85-92cf-0be265f01f88",
+      "timestamp": "2026-06-09T21:53:35.467Z",
+      "file": "thinking/turn_015.md"
+    },
+    {
+      "turn": 16,
+      "intent": "commit_tactic",
+      "payload_key": "call (: ={RO.m}).",
+      "thinking_chars": 0,
+      "text_chars": 0,
+      "tokens": {
+        "output_tokens": 2023,
+        "input_tokens": 2,
+        "cache_read_input_tokens": 87037,
+        "cache_creation_input_tokens": 3810
+      },
+      "session_id": "89741c4d-97d4-4e85-92cf-0be265f01f88",
+      "timestamp": "2026-06-09T21:54:10.094Z",
+      "file": ""
+    },
+    {
+      "turn": 17,
+      "intent": "commit_tactic",
+      "payload_key": "by sim.",
+      "thinking_chars": 0,
+      "text_chars": 93,
+      "tokens": {
+        "output_tokens": 224,
+        "input_tokens": 2,
+        "cache_read_input_tokens": 90847,
+        "cache_creation_input_tokens": 3469
+      },
+      "session_id": "89741c4d-97d4-4e85-92cf-0be265f01f88",
+      "timestamp": "2026-06-09T21:54:17.228Z",
+      "file": "thinking/turn_017.md"
+    },
+    {
+      "turn": 18,
+      "intent": "commit_tactic",
+      "payload_key": "by auto => />.",
+      "thinking_chars": 0,
+      "text_chars": 81,
+      "tokens": {
+        "output_tokens": 300,
+        "input_tokens": 2,
+        "cache_read_input_tokens": 94316,
+        "cache_creation_input_tokens": 3615
+      },
+      "session_id": "89741c4d-97d4-4e85-92cf-0be265f01f88",
+      "timestamp": "2026-06-09T21:54:25.542Z",
+      "file": "thinking/turn_018.md"
+    },
+    {
+      "turn": 19,
+      "intent": "commit_tactic",
+      "payload_key": "proc.",
+      "thinking_chars": 0,
+      "text_chars": 84,
+      "tokens": {
+        "output_tokens": 1816,
+        "input_tokens": 2,
+        "cache_read_input_tokens": 97931,
+        "cache_creation_input_tokens": 2256
+      },
+      "session_id": "89741c4d-97d4-4e85-92cf-0be265f01f88",
+      "timestamp": "2026-06-09T21:54:56.042Z",
+      "file": "thinking/turn_019.md"
+    },
+    {
+      "turn": 20,
+      "intent": "commit_tactic",
+      "payload_key": "sp; if => //.",
+      "thinking_chars": 0,
+      "text_chars": 50,
+      "tokens": {
+        "output_tokens": 1215,
+        "input_tokens": 2,
+        "cache_read_input_tokens": 100187,
+        "cache_creation_input_tokens": 4118
+      },
+      "session_id": "89741c4d-97d4-4e85-92cf-0be265f01f88",
+      "timestamp": "2026-06-09T21:55:19.958Z",
+      "file": "thinking/turn_020.md"
+    },
+    {
+      "turn": 21,
+      "intent": "commit_tactic",
+      "payload_key": "inline CPA_CCA_Orcls(UFCMA_l.O).dec CPA_CCA_Orcls(UFCMA_li.O).dec UFCMA_l.O.dec UFCMA_li.O.dec.",
+      "thinking_chars": 0,
+      "text_chars": 57,
+      "tokens": {
+        "output_tokens": 458,
+        "input_tokens": 2,
+        "cache_read_input_tokens": 104305,
+        "cache_creation_input_tokens": 3329
+      },
+      "session_id": "89741c4d-97d4-4e85-92cf-0be265f01f88",
+      "timestamp": "2026-06-09T21:55:31.297Z",
+      "file": "thinking/turn_021.md"
+    },
+    {
+      "turn": 22,
+      "intent": "commit_tactic",
+      "payload_key": "by auto => />.",
+      "thinking_chars": 0,
+      "text_chars": 82,
+      "tokens": {
+        "output_tokens": 162,
+        "input_tokens": 2,
+        "cache_read_input_tokens": 107634,
+        "cache_creation_input_tokens": 2637
+      },
+      "session_id": "89741c4d-97d4-4e85-92cf-0be265f01f88",
+      "timestamp": "2026-06-09T21:55:36.776Z",
+      "file": "thinking/turn_022.md"
+    },
+    {
+      "turn": 23,
+      "intent": "commit_tactic",
+      "payload_key": "by auto => />; smt().",
+      "thinking_chars": 0,
+      "text_chars": 0,
+      "tokens": {
+        "output_tokens": 1269,
+        "input_tokens": 2,
+        "cache_read_input_tokens": 110271,
+        "cache_creation_input_tokens": 3844
+      },
+      "session_id": "89741c4d-97d4-4e85-92cf-0be265f01f88",
+      "timestamp": "2026-06-09T21:55:59.860Z",
+      "file": ""
+    },
+    {
+      "turn": 24,
+      "intent": "commit_tactic",
+      "payload_key": "auto => />.",
+      "thinking_chars": 0,
+      "text_chars": 93,
+      "tokens": {
+        "output_tokens": 424,
+        "input_tokens": 2,
+        "cache_read_input_tokens": 114115,
+        "cache_creation_input_tokens": 5002
+      },
+      "session_id": "89741c4d-97d4-4e85-92cf-0be265f01f88",
+      "timestamp": "2026-06-09T21:56:14.604Z",
+      "file": "thinking/turn_024.md"
+    },
+    {
+      "turn": 25,
+      "intent": "commit_tactic",
+      "payload_key": "smt().",
+      "thinking_chars": 0,
+      "text_chars": 0,
+      "tokens": {
+        "output_tokens": 1085,
+        "input_tokens": 2,
+        "cache_read_input_tokens": 119117,
+        "cache_creation_input_tokens": 1599
+      },
+      "session_id": "89741c4d-97d4-4e85-92cf-0be265f01f88",
+      "timestamp": "2026-06-09T21:56:33.091Z",
+      "file": ""
+    },
+    {
+      "turn": 26,
+      "intent": "commit_tactic",
+      "payload_key": "smt(neq_w1_w2).",
+      "thinking_chars": 0,
+      "text_chars": 174,
+      "tokens": {
+        "output_tokens": 751,
+        "input_tokens": 4,
+        "cache_read_input_tokens": 243895,
+        "cache_creation_input_tokens": 3123
+      },
+      "session_id": "89741c4d-97d4-4e85-92cf-0be265f01f88",
+      "timestamp": "2026-06-09T21:56:55.052Z",
+      "file": "thinking/turn_026.md"
+    },
+    {
+      "turn": 27,
+      "intent": "commit_tactic",
+      "payload_key": "split; [smt() | move=> _ _ lbad1_R badi_R hinv hproj; smt(nth_out neq_w1_w2)].",
+      "thinking_chars": 0,
+      "text_chars": 151,
+      "tokens": {
+        "output_tokens": 1555,
+        "input_tokens": 2,
+        "cache_read_input_tokens": 123839,
+        "cache_creation_input_tokens": 1519
+      },
+      "session_id": "89741c4d-97d4-4e85-92cf-0be265f01f88",
+      "timestamp": "2026-06-09T21:57:23.829Z",
+      "file": "thinking/turn_027.md"
+    },
+    {
+      "turn": 28,
+      "intent": "finish",
+      "payload_key": "",
+      "thinking_chars": 0,
+      "text_chars": 52,
+      "tokens": {
+        "output_tokens": 128,
+        "input_tokens": 2,
+        "cache_read_input_tokens": 125358,
+        "cache_creation_input_tokens": 2458
+      },
+      "session_id": "89741c4d-97d4-4e85-92cf-0be265f01f88",
+      "timestamp": "2026-06-09T21:57:28.235Z",
+      "file": "thinking/turn_028.md"
+    },
+    {
+      "turn": 29,
+      "intent": "commit_tactic",
+      "payload_key": "qed.",
+      "thinking_chars": 0,
+      "text_chars": 0,
+      "tokens": {
+        "output_tokens": 102,
+        "input_tokens": 2,
+        "cache_read_input_tokens": 127816,
+        "cache_creation_input_tokens": 995
+      },
+      "session_id": "89741c4d-97d4-4e85-92cf-0be265f01f88",
+      "timestamp": "2026-06-09T21:57:31.904Z",
+      "file": ""
+    },
+    {
+      "turn": 30,
+      "intent": "finish",
+      "payload_key": "",
+      "thinking_chars": 0,
+      "text_chars": 0,
+      "tokens": {
+        "output_tokens": 89,
+        "input_tokens": 2,
+        "cache_read_input_tokens": 128811,
+        "cache_creation_input_tokens": 955
+      },
+      "session_id": "89741c4d-97d4-4e85-92cf-0be265f01f88",
+      "timestamp": "2026-06-09T21:57:36.606Z",
+      "file": ""
+    }
+  ]
+}

@@ -1,0 +1,22 @@
+{
+  "turn": 4,
+  "handled_intent": {
+    "intent": "inspect_context",
+    "payload": {
+      "topic": "diagnose"
+    }
+  },
+  "ok": true,
+  "manager_note": "Read-only context. Accepted/rejected tactic or call text inside a preview is route-selection information, not the current proof-state error.",
+  "manager_actions": [
+    {
+      "action": "inspect diagnose",
+      "outcome": "The manager returned read-only context for the current goal.",
+      "timing": "476 ms",
+      "content": {
+        "preview": "No known diagnosis for this error. Error: [error] This expression has type Tactic: have HP := LP.list_partitioning UFCMA_l tt (fun _ g _ => size g <= qdec /\\ exists (p:tag*tag), p \\in g /\\ p.`1 = p.`2) (fun _ g _ => find (fun (p:tag*tag) => p.`1 = p.`2) g) (iota_ 0 qdec) &m (iota_uniq 0 qdec). General suggestions: - Read the goal state carefully - Try a simpler version of the tactic - Use -search to verify lemma names - Step back: if stuck >5 min, reconsider the approach (Pitfall P4)"
+      }
+    }
+  ],
+  "view_refreshed": true
+}

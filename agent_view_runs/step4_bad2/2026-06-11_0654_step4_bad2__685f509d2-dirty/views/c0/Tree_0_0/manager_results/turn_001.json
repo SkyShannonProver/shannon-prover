@@ -1,0 +1,22 @@
+{
+  "turn": 1,
+  "handled_intent": {
+    "intent": "inspect_context",
+    "payload": {
+      "topic": "pr_bridge_routes"
+    }
+  },
+  "ok": true,
+  "manager_note": "Read-only context. Accepted/rejected tactic or call text inside a preview is route-selection information, not the current proof-state error.",
+  "manager_actions": [
+    {
+      "action": "inspect pr bridge routes",
+      "outcome": "No matching context was found for the current goal.",
+      "timing": "1.4 s",
+      "content": {
+        "title": "Verified Pr Bridge Routes"
+      }
+    }
+  ],
+  "view_refreshed": true
+}

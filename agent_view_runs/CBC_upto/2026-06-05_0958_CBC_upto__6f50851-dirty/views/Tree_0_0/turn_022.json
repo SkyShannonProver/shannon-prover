@@ -1,0 +1,61 @@
+{
+  "last_result": {
+    "intent": "commit_tactic",
+    "payload": {
+      "tactic": "auto; smt(dBlock_uffu)."
+    },
+    "manager_action": "commit_tactic",
+    "result": "EasyCrypt accepted the committed tactic.",
+    "effect": "EasyCrypt accepted a proof-state change; the refreshed view is based on the new committed state.",
+    "proof_state": "The committed EasyCrypt proof state changed.",
+    "tactic": "auto; smt(dBlock_uffu)."
+  },
+  "current_goal": {
+    "lines": [
+      "Current goal (remaining: 7)",
+      "",
+      "Type variables: <none>",
+      "",
+      "&m: {}",
+      "------------------------------------------------------------------------",
+      "&1 (left ) : {i : int, s, pi, x, r, x0, r0 : block, p, c : block list} [programs are in sync]",
+      "&2 (right) : {i : int, s, pi, x, r, x0, r0 : block, p, c : block list}",
+      "",
+      "pre =",
+      "  (DoubleQuery.bad{2} /\\ i{1} = i{2} /\\ p{1} = p{2}) /\\",
+      "  ! (x0{1} \\notin PRFi.m{1})",
+      "",
+      "",
+      "post =",
+      "  is_lossless dBlock &&",
+      "  forall (r0_0 : block),",
+      "    r0_0 \\in dBlock =>",
+      "    DoubleQuery.bad{2} /\\ i{1} + 1 = i{2} + 1 /\\ p{1} = p{2}",
+      "[133|check]>"
+    ],
+    "text_fully_shown": true,
+    "truncated": false,
+    "goal_type": "pRHL",
+    "view_focus": "relational_program",
+    "source": {
+      "label": "Parsed from EasyCrypt pretty goal text",
+      "ground_truth": false
+    }
+  },
+  "proof_status": {
+    "status": "open",
+    "remaining_goals": 7,
+    "remaining_goals_known": true,
+    "goal_type": "pRHL",
+    "view_focus": "relational_program",
+    "current_layer": "verification_residue"
+  },
+  "surface_profile": {
+    "name": "l1_goal_projection",
+    "surface_profile": "l1_goal_projection",
+    "stage": "l1_goal_projection",
+    "description": "L1 Goal-State Projection: manager transport of ONLY the current goal. No status, no manager-result section, no focus \u2014 the agent sees the raw goal and nothing else (the node-memory recovery anchor and the one-line submit-intent reminder are the only scaffolding).",
+    "paper_level": "L1",
+    "paper_role": "paper"
+  }
+}

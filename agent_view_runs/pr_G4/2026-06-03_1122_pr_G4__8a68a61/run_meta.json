@@ -1,0 +1,39 @@
+{
+  "kind": "agent_view_run_report",
+  "timestamp": "2026-06-03_1122_pr_G4",
+  "lemma": "pr_G4",
+  "source_file": "eval/examples/cramer-shoup/cramer_shoup.ec",
+  "model": "claude-opus-4-8",
+  "surface_profile": "l4_checked_action_surface",
+  "trees": 1,
+  "eval_mode": true,
+  "outcome": "incomplete (timeout/open)",
+  "committed_proofs": [
+    {
+      "tree": "Tree_0_0",
+      "tactics": [
+        "byphoare => //.",
+        "proc.",
+        "seq 21 : ((G3.a, G3.a_, G3.c, G3.d) \\in G3.cilog) ((PKE_.qD%r / order%r) ^ 3 * (PKE_.qD%r / (order - 1)%r)) 1%r 1%r 0%r.",
+        "trivial.",
+        "seq 13 : (size G3.cilog <= PKE_.qD) 1%r ((PKE_.qD%r / order%r) ^ 3 * (PKE_.qD%r / (order - 1)%r)) 0%r 1%r.",
+        "conseq (_ : _ ==> (G3.a, G3.a_, G3.c, G3.d) \\in G3.cilog) (_ : _ ==> size G3.cilog <= PKE_.qD).",
+        "seq 13 : (size G3.cilog <= size G1.log /\\ size G1.log <= PKE_.qD).",
+        "call (_: size G3.cilog <= size G1.log /\\ size G1.log <= PKE_.qD).",
+        "proc; auto; smt(size_ge0).",
+        "auto; smt(PKE_.qD_pos).",
+        "auto; smt().",
+        "wp.",
+        "seq 13 : (size G3.cilog <= PKE_.qD) 1%r ((PKE_.qD%r / order%r) ^ 3 * (PKE_.qD%r / (order - 1)%r)) 0%r 1%r."
+      ],
+      "proved": false
+    }
+  ],
+  "turn_count": 29,
+  "views_copied": 30,
+  "run_iteration_dir": "artifacts/eval_suite/prg4_l4_opus48/l4_checked_action_surface/cs_pr_G4/r01/2026-06-03_1122_pr_G4/iteration_1",
+  "commit": "8a68a61",
+  "commit_full": "8a68a61771746a873cd559fa5e1f9d31ee47c4fb",
+  "branch": "HEAD",
+  "dirty": false
+}

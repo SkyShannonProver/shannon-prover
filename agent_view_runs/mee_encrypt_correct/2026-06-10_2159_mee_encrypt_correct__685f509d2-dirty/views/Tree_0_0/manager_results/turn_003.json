@@ -1,0 +1,19 @@
+{
+  "turn": 3,
+  "handled_intent": {
+    "intent": "commit_tactic",
+    "payload": {
+      "tactic": "seq 8 : (s :: cbc_enc AES _ek s p' = _c) (mu1 (dmap dblock (fun iv => iv :: mee_enc AES hmac_sha256 _ek _mk iv _p)) _c) 1%r _ 0%r (ek = _ek /\\ p' = pad _p (hmac_sha256 _mk _p) /\\ c = [s] /\\ i = 0)."
+    }
+  },
+  "ok": true,
+  "manager_note": "Committed tactic accepted; the EasyCrypt proof state changed.",
+  "manager_actions": [
+    {
+      "action": "tactic commit",
+      "outcome": "EasyCrypt accepted the committed tactic.",
+      "timing": "178 ms"
+    }
+  ],
+  "view_refreshed": true
+}

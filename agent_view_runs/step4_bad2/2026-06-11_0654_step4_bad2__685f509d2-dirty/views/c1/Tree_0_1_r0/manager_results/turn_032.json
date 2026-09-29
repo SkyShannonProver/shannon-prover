@@ -1,0 +1,19 @@
+{
+  "turn": 32,
+  "handled_intent": {
+    "intent": "commit_tactic",
+    "payload": {
+      "tactic": "have [hp [hq h0]] : pr_zeropol <= maxr pr_zeropol pr1_poly_out /\\ pr1_poly_out <= maxr pr_zeropol pr1_poly_out /\\ 0%r <= maxr pr_zeropol pr1_poly_out by smt(ge0_pr_zeropol)."
+    }
+  },
+  "ok": true,
+  "manager_note": "Committed tactic accepted; the EasyCrypt proof state changed.",
+  "manager_actions": [
+    {
+      "action": "tactic commit",
+      "outcome": "EasyCrypt accepted the committed tactic.",
+      "timing": "271 ms"
+    }
+  ],
+  "view_refreshed": true
+}

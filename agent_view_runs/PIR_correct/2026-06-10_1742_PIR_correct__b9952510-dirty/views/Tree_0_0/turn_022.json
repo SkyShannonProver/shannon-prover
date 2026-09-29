@@ -1,0 +1,287 @@
+{
+  "last_result": {
+    "intent": "commit_tactic",
+    "payload": {
+      "tactic": "move=> _ v hv."
+    },
+    "manager_action": "commit_tactic",
+    "result": "EasyCrypt accepted the committed tactic.",
+    "effect": "EasyCrypt accepted a proof-state change; the refreshed view is based on the new committed state.",
+    "proof_state": "The committed EasyCrypt proof state changed.",
+    "tactic": "move=> _ v hv."
+  },
+  "current_goal": {
+    "lines": [
+      "Current goal (remaining: 2)",
+      "",
+      "Type variables: <none>",
+      "",
+      "&m: {}",
+      "i0: int",
+      "hi0: 0 <= i0 < N",
+      "z: int",
+      "&hr: {b : bool, i, j : int, s, s0 : int list, r, r' : word}",
+      "H: (((0 <= j{hr} <= N /\\",
+      "      i{hr} = i0 /\\",
+      "      big predT<:int> a PIR.s{hr} +^ big predT<:int> a PIR.s'{hr} =",
+      "      if i0 < j{hr} then a i0 else zerow) /\\",
+      "     j{hr} < N) /\\",
+      "    N - j{hr} = z) /\\",
+      "   true",
+      "v: bool",
+      "hv: v \\in {0,1}",
+      "------------------------------------------------------------------------",
+      "predT v <=>",
+      "if j{hr} = i{hr} then",
+      "  if v then",
+      "    let j0 = j{hr} + 1 in",
+      "    (0 <= j0 <= N /\\",
+      "     i{hr} = i0 /\\",
+      "     big predT<:int> a (j{hr} :: PIR.s{hr}) +^ big predT<:int> a PIR.s'{hr} =",
+      "     if i0 < j0 then a i0 else zerow) /\\",
+      "    N - j0 < z",
+      "  else",
+      "    let j0 = j{hr} + 1 in",
+      "    (0 <= j0 <= N /\\",
+      "     i{hr} = i0 /\\",
+      "     big predT<:int> a PIR.s{hr} +^ big predT<:int> a (j{hr} :: PIR.s'{hr}) =",
+      "     if i0 < j0 then a i0 else zerow) /\\",
+      "    N - j0 < z",
+      "else",
+      "  if v then",
+      "    let j0 = j{hr} + 1 in",
+      "    (0 <= j0 <= N /\\",
+      "     i{hr} = i0 /\\",
+      "     big predT<:int> a (j{hr} :: PIR.s{hr}) +^",
+      "     big predT<:int> a (j{hr} :: PIR.s'{hr}) =",
+      "     if i0 < j0 then a i0 else zerow) /\\",
+      "    N - j0 < z",
+      "  else",
+      "    let j0 = j{hr} + 1 in",
+      "    (0 <= j0 <= N /\\",
+      "     i{hr} = i0 /\\",
+      "     big predT<:int> a PIR.s{hr} +^ big predT<:int> a PIR.s'{hr} =",
+      "     if i0 < j0 then a i0 else zerow) /\\",
+      "    N - j0 < z",
+      "[27|check]>"
+    ],
+    "text_fully_shown": true,
+    "truncated": false,
+    "goal_type": "ambient",
+    "view_focus": "ambient_logic",
+    "source": {
+      "label": "Parsed from EasyCrypt pretty goal text",
+      "ground_truth": false
+    }
+  },
+  "proof_status": {
+    "status": "open",
+    "remaining_goals": 2,
+    "remaining_goals_known": true,
+    "goal_type": "ambient",
+    "view_focus": "ambient_logic",
+    "current_layer": "ambient_logic"
+  },
+  "candidate_moves": {
+    "moves": [
+      {
+        "category": "strategy",
+        "tactic_shape": "split.",
+        "applicability": "Use this as route-selection context; it is not a tactic to run as-is.",
+        "source": "proof-state analysis"
+      },
+      {
+        "title": "Residual closing tactic",
+        "category": "probe",
+        "tactic": "auto => />.",
+        "applicability": "This tactic-shaped option should be checked with a read-only probe before committing it.",
+        "effect": "This is a read-only probe; it asks EasyCrypt what would happen without changing the committed proof state.",
+        "source": "proof-state analysis",
+        "derivation": "read-only probe surfaced from proof-state analysis",
+        "verified": "read_only_probe_suggestion",
+        "guarantee": "read-only probe shape; proof state unchanged; probe then decide; reversible"
+      },
+      {
+        "title": "Read-only tactic probe",
+        "category": "probe",
+        "tactic": "smt().",
+        "applicability": "This tactic-shaped option should be checked with a read-only probe before committing it.",
+        "effect": "This is a read-only probe; it asks EasyCrypt what would happen without changing the committed proof state.",
+        "source": "proof-state analysis",
+        "derivation": "read-only probe surfaced from proof-state analysis",
+        "verified": "read_only_probe_suggestion",
+        "guarantee": "read-only probe shape; proof state unchanged; probe then decide; reversible"
+      }
+    ]
+  },
+  "program_frontier": {
+    "authority": "proof-state analysis",
+    "view_focus": "ambient_logic"
+  },
+  "call_site_surface": {},
+  "pure_tail_surface": {
+    "state": "ambient_pure_tail",
+    "goal_operators": [
+      "predT",
+      "hr",
+      "j0",
+      "big",
+      "int",
+      "PIR.s",
+      "zerow"
+    ],
+    "visible_hypotheses": [
+      "hi0: 0 <= i0 < N",
+      "H: (((0 <= j{hr} <= N /\\",
+      "hv: v \\in {0,1}"
+    ],
+    "obligation_families": [
+      {
+        "family": "map_membership_preservation",
+        "cons_heads": [
+          "j{hr}"
+        ],
+        "effect": "The remaining membership obligation relates an updated map key to a list or set membership fact.",
+        "limitations": "The surface reports the alignment facts currently visible; it does not synthesize missing equalities."
+      },
+      {
+        "family": "quantified_residual_logic",
+        "evidence": [
+          "implication residual visible"
+        ],
+        "effect": "The current proof point is dominated by local logical obligations rather than program-frontier movement.",
+        "limitations": "Quantifier names are not normalized across EasyCrypt pretty-printer variants."
+      }
+    ],
+    "membership_decomposition_surface": {
+      "source_shapes": [
+        "cons_membership"
+      ],
+      "membership_hypotheses": [
+        "hv: v \\in {0,1} ------------------------------------------------------------------------ predT v <=>"
+      ],
+      "visible_destructors": [
+        {
+          "source_shape": "cons_membership",
+          "source_count": 4,
+          "effect": "Splits list membership into head and tail cases.",
+          "limitations": "The surface does not decide which case applies."
+        }
+      ],
+      "effect": "Summarizes list/map/filter membership sources whose local case facts are visible in the current pure tail.",
+      "limitations": [
+        "No destructor tactic is chosen by this surface.",
+        "The panel does not assume which membership branch is true."
+      ]
+    },
+    "effect": "Summarizes verifier-visible pure-goal structure after program frontier actions have been discharged or hidden by local proof steps.",
+    "limitations": [
+      "This panel records syntactic and proof-state facts from the current view.",
+      "It does not choose a tactic or instantiate a lemma."
+    ]
+  },
+  "application_context": {},
+  "facts_and_diagnostics": {
+    "facts": {
+      "unfoldable_goal_head_count": 0
+    },
+    "fact_note": "Only current-frontier facts are shown here; the full proof context artifact keeps the compiler/internal details.",
+    "notes": [
+      {
+        "message": "proof-state analysis sees no live call sites after a prior `inline *` at tactic 3. Continue at procedure/ambient layer, or undo if a call lemma is needed.",
+        "severity": "info"
+      }
+    ]
+  },
+  "recovery_diagnosis_surface": {
+    "kind": "recovery_diagnosis_surface",
+    "recovery_class": "local_pure_surgery_available",
+    "confidence": "medium",
+    "checkpoint_policy": "current_state_local_work_visible",
+    "evidence": [
+      "pure_tail_surface is visible for the current goal",
+      "current proof state has no program-frontier work before the logical residual"
+    ],
+    "available_local_work": [
+      {
+        "kind": "pure_tail_obligation_families",
+        "items": [
+          "map_membership_preservation",
+          "quantified_residual_logic"
+        ]
+      },
+      {
+        "kind": "membership_decomposition_sources",
+        "items": [
+          "cons_membership"
+        ]
+      }
+    ],
+    "related_surfaces": [
+      "pure_tail_surface",
+      "structural_checkpoints"
+    ],
+    "limitations": [
+      "does not select a destructor, witness, rewrite, or SMT lemma",
+      "reported checkpoints are recovery references, not a default route"
+    ]
+  },
+  "inspect_lookup_handles": {
+    "effect": "All handles here are read-only manager requests; the committed EasyCrypt proof state stays unchanged.",
+    "manager_note": "Some requests may ask EasyCrypt or name resolution; wait for the manager result before choosing the next proof intent.",
+    "ask_manager_for": [
+      {
+        "intent": "inspect_context",
+        "payload": {
+          "topic": "goal_info"
+        },
+        "use_when": "No fresh recommendation is available; parse the current goal.",
+        "returns": "manager-provided read-only context for this proof route"
+      },
+      {
+        "intent": "inspect_context",
+        "payload": {
+          "topic": "lemma_hints"
+        },
+        "use_when": "Need local or standard-library lemma names before rewriting a pure goal.",
+        "returns": "nearby lemma hints and qualified-name lookup guidance"
+      },
+      {
+        "intent": "inspect_context",
+        "payload": {
+          "topic": "tactic_forms",
+          "name": "rewrite"
+        },
+        "use_when": "Need the valid EasyCrypt form for rewrite, apply, conseq, while, or SMT setup.",
+        "returns": "valid tactic forms and common traps"
+      }
+    ]
+  },
+  "structural_checkpoints": {
+    "items": [
+      {
+        "checkpoint_id": "cp_3_a6e3d7b51b802b10",
+        "semantic_id": "last_call_site_boundary",
+        "semantic_ids": [
+          "last_call_site_boundary"
+        ],
+        "label": "Before inline expansion #3",
+        "committed_step_index": 3,
+        "committed_tactic": "proc; inline *; wp; sp.",
+        "restored_proof_layer": "pre_inline_frontier",
+        "restored_affordances": {
+          "call_site_handles": "as_before_inline"
+        },
+        "undo_scope": "call_site_boundary",
+        "why_checkpoint": "inline boundary; selecting it restores the proof state before this expansion",
+        "effect_if_selected": "Undo committed tactic #3 and every committed tactic after it in this node.",
+        "submit": {
+          "intent": "undo_to_checkpoint",
+          "payload": {
+            "checkpoint_id": "cp_3_a6e3d7b51b802b10"
+          }
+        }
+      }
+    ]
+  }
+}

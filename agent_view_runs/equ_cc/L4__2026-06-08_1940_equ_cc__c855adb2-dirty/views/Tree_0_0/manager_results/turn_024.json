@@ -1,0 +1,22 @@
+{
+  "turn": 24,
+  "handled_intent": {
+    "intent": "lookup_symbol",
+    "payload": {
+      "symbol": "Block.addmA"
+    }
+  },
+  "ok": true,
+  "manager_note": "Read-only context. Accepted/rejected tactic or call text inside a preview is route-selection information, not the current proof-state error.",
+  "manager_actions": [
+    {
+      "action": "symbol lookup",
+      "outcome": "The manager returned read-only context for the current goal.",
+      "timing": "3.7 s",
+      "content": {
+        "preview": "[WHERE-MISS] Block.addmA not found. tried: Block.addmA, MB.Block.addmA, NonceCount.Block.addmA, Poly_in.Block.addmA, Poly_out.Block.addmA, TPoly.Block.addmA, Extra_block.Block.addmA, Block.Block.addmA, FiniteRO.Block.addmA, Indist.Block.addmA, OpCCinit.Block.addmA, OpCCRO.Block.addmA, CCA_UFCMA.Block.addmA, Split0.Block.addmA, SplitD.Block.addmA, SplitC1.Block.addmA, Split1.Block.addmA, SplitC2.Block.addmA, Byte.Block.addmA, Key.Block.addmA, Nonce.Block.addmA, C.Block.addmA, MB.I1.Block.addmA, MB.I2.Block.addmA, MB.RO.Block.addmA, MB.RO_Pair.Block.addmA, MB.ROF.Block.addmA, MB.ROin.Block.addmA, MB.ROout.Block.addmA, NonceCount.I1.Block.addmA, NonceCount.I2.Block.addmA hint: no declaration resolved in the current EasyCrypt context or source-scan fallback. Use a more exact qualified name, or ask the manager for `goal_info` / `lemma_hints` before trying to apply it."
+      }
+    }
+  ],
+  "view_refreshed": true
+}

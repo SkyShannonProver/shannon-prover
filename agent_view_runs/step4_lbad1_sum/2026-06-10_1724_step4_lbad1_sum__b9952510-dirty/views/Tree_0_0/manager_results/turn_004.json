@@ -1,0 +1,19 @@
+{
+  "turn": 4,
+  "handled_intent": {
+    "intent": "commit_tactic",
+    "payload": {
+      "tactic": "move=> &hr [hsz [tt [htt htteq]]]; rewrite hasP; exists (index tt UFCMA_l.lbad1{hr})."
+    }
+  },
+  "ok": true,
+  "manager_note": "Committed tactic accepted; the EasyCrypt proof state changed.",
+  "manager_actions": [
+    {
+      "action": "tactic commit",
+      "outcome": "EasyCrypt accepted the committed tactic.",
+      "timing": "231 ms"
+    }
+  ],
+  "view_refreshed": true
+}

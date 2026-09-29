@@ -1,0 +1,34 @@
+{
+  "kind": "agent_view_run_report",
+  "timestamp": "2026-06-06_1556_pedersen_correctness",
+  "lemma": "pedersen_correctness",
+  "source_file": "eval/examples/Pedersen.ec",
+  "model": "claude-opus-4-8",
+  "surface_profile": "l1_goal_projection",
+  "trees": 1,
+  "eval_mode": true,
+  "outcome": "proved",
+  "committed_proofs": [
+    {
+      "tree": "Tree_0_0",
+      "tactics": [
+        "proc.",
+        "inline *.",
+        "inline Pedersen.gen Pedersen.commit Pedersen.verify.",
+        "inline.",
+        "sp.",
+        "inline *.",
+        "inline *; auto.",
+        "qed."
+      ],
+      "proved": true
+    }
+  ],
+  "turn_count": 9,
+  "views_copied": 10,
+  "run_iteration_dir": "artifacts/eval_suite/wave1_rerun_l1/l1_goal_projection/d2_pedersen/r01/2026-06-06_1556_pedersen_correctness/iteration_1",
+  "commit": "e4a69e8",
+  "commit_full": "e4a69e84448536e27b35e2690da4976ef06001ea",
+  "branch": "mcp-v0",
+  "dirty": true
+}

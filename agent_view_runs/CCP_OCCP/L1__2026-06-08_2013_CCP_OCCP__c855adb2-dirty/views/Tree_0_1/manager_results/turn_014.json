@@ -1,0 +1,19 @@
+{
+  "turn": 14,
+  "handled_intent": {
+    "intent": "commit_tactic",
+    "payload": {
+      "tactic": "wp; exists* (glob OCC){1}, k{1}, n{1}, a{1}, c{1}; elim* => gs kk nn aa cc0; call {1} (poly_spec kk nn aa cc0 gs)."
+    }
+  },
+  "ok": true,
+  "manager_note": "Committed tactic accepted; the EasyCrypt proof state changed.",
+  "manager_actions": [
+    {
+      "action": "tactic commit",
+      "outcome": "EasyCrypt accepted the committed tactic.",
+      "timing": "282 ms"
+    }
+  ],
+  "view_refreshed": true
+}

@@ -1,0 +1,27 @@
+{
+  "turn": 2,
+  "handled_intent": {
+    "intent": "inspect_context",
+    "payload": {
+      "topic": "pr_bridge_routes"
+    }
+  },
+  "ok": true,
+  "manager_note": "Read-only context. Accepted/rejected tactic or call text inside a preview is route-selection information, not the current proof-state error.",
+  "manager_actions": [
+    {
+      "action": "inspect pr bridge routes",
+      "outcome": "Context returned.",
+      "timing": "2.8 s",
+      "content": {
+        "title": "Verified Pr Bridge Routes",
+        "notes": [
+          {
+            "message": "Candidate routes exist, but none passed daemon verification; treat direct byequiv as a fallback only after inspecting this failure."
+          }
+        ]
+      }
+    }
+  ],
+  "view_refreshed": true
+}

@@ -1,0 +1,61 @@
+{
+  "kind": "agent_view_run_report",
+  "timestamp": "2026-06-10_2159_mee_encrypt_correct",
+  "lemma": "mee_encrypt_correct",
+  "source_file": "eval/examples/MEE-CBC/FunctionalSpec.ec",
+  "model": "claude-fable-5",
+  "surface_profile": "l1_goal_projection",
+  "trees": 2,
+  "eval_mode": true,
+  "outcome": "proved",
+  "committed_proofs": [
+    {
+      "tree": "Tree_0_0",
+      "tactics": [
+        "proc.",
+        "inline *.",
+        "seq 8 : (s :: cbc_enc AES _ek s p' = _c) (mu1 (dmap dblock (fun iv => iv :: mee_enc AES hmac_sha256 _ek _mk iv _p)) _c) 1%r _ 0%r (ek = _ek /\\ p' = pad _p (hmac_sha256 _mk _p) /\\ c = [s] /\\ i = 0).",
+        "auto => />.",
+        "wp; rnd (fun v => v :: cbc_enc AES _ek v p' = _c); wp; skip => />.",
+        "by rewrite dmap1E /(\\o) /pred1 /mee_enc /=.",
+        "conseq (_: true ==> true) (_: _ ==> _) => //=.",
+        "while (0 <= i <= size p' /\\ ek = _ek /\\ size c = i + 1 /\\ c = head witness c :: cbc_enc AES _ek (head witness c) (take i p') /\\ s = nth witness c i /\\ head witness c :: cbc_enc AES _ek (head witness c) p' = _c).",
+        "auto => />.",
+        "smt(cbc_enc_rcons take_nth size_take cats1 cat_cons size_cat nth_rcons size_cbc_enc).",
+        "auto => />; smt(take0 take_size size_ge0).",
+        "while true (size p' - i); auto => /#.",
+        "hoare.",
+        "while (0 <= i <= size p' /\\ ek = _ek /\\ size c = i + 1 /\\ c = head witness c :: cbc_enc AES _ek (head witness c) (take i p') /\\ s = nth witness c i /\\ head witness c :: cbc_enc AES _ek (head witness c) p' <> _c).",
+        "auto => />; smt(cbc_enc_rcons take_nth size_take cats1 cat_cons size_cat nth_rcons size_cbc_enc).",
+        "auto => />; smt(take0 take_size size_ge0).",
+        "done.",
+        "qed."
+      ],
+      "source": "session",
+      "proved": true
+    },
+    {
+      "tree": "Tree_0_1",
+      "tactics": [
+        "proc.",
+        "inline MAC.tag PRPc.PseudoRP.f.",
+        "seq 6: (s :: cbc_enc AES _ek s p' = _c) (mu1 (dmap dblock (fun (iv : block) => iv :: mee_enc AES hmac_sha256 _ek _mk iv _p)) _c) 1%r _ 0%r (ek = _ek /\\ p' = pad _p (hmac_sha256 _mk _p)).",
+        "auto => />.",
+        "rnd; auto => />.",
+        "by rewrite dmap1E; apply mu_eq => x; rewrite /(\\o) /pred1 /mee_enc /=.",
+        "conseq (_: true ==> true) (_: _ ==> _) => //=.",
+        "wp; while (0 <= i <= size p' /\\ ek = _ek /\\ head witness _c :: cbc_enc AES _ek (head witness _c) p' = _c /\\ c = head witness _c :: cbc_enc AES _ek (head witness _c) (take i p') /\\ s = nth witness c i).",
+        "auto => />."
+      ],
+      "source": "session",
+      "proved": false
+    }
+  ],
+  "turn_count": 34,
+  "views_copied": 36,
+  "run_iteration_dir": "artifacts/eval_suite/mee_samples_fable_l1/l1_goal_projection/mee_encrypt_correct/r01/2026-06-10_2159_mee_encrypt_correct/iteration_1",
+  "commit": "685f509d2",
+  "commit_full": "685f509d2678739057061c570c67d41c0342d619",
+  "branch": "HEAD",
+  "dirty": true
+}

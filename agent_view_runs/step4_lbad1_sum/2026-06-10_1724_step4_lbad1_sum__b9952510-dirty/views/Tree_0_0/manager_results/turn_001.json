@@ -1,0 +1,19 @@
+{
+  "turn": 1,
+  "handled_intent": {
+    "intent": "commit_tactic",
+    "payload": {
+      "tactic": "apply (ler_trans Pr[UFCMA_l.f() @ &m : has (fun (i : int) => let tt = nth (w1, w2) UFCMA_l.lbad1 i in tt.`1 = tt.`2) (iota_ 0 qdec)])."
+    }
+  },
+  "ok": true,
+  "manager_note": "Committed tactic accepted; the EasyCrypt proof state changed.",
+  "manager_actions": [
+    {
+      "action": "tactic commit",
+      "outcome": "EasyCrypt accepted the committed tactic.",
+      "timing": "2.0 s"
+    }
+  ],
+  "view_refreshed": true
+}

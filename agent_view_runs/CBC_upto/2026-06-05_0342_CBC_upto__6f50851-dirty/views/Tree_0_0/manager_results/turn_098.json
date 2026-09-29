@@ -1,0 +1,19 @@
+{
+  "turn": 98,
+  "handled_intent": {
+    "intent": "probe_tactic",
+    "payload": {
+      "tactic": "auto; smt(size_ge0 dBlock_uffu)."
+    }
+  },
+  "ok": true,
+  "manager_note": "Accepted closing/checking probe. Commit the exact tactic only if you want to try closing or checking this obligation.",
+  "manager_actions": [
+    {
+      "action": "tactic probe",
+      "outcome": "EasyCrypt accepted this read-only probe. The committed proof state was not changed; `goal_after_probe` shows the goal that would be visible if this tactic were committed.",
+      "timing": "1.9 s"
+    }
+  ],
+  "view_refreshed": true
+}

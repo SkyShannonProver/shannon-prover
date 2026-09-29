@@ -1,0 +1,19 @@
+{
+  "turn": 8,
+  "handled_intent": {
+    "intent": "commit_tactic",
+    "payload": {
+      "tactic": "have -> : Pr[UFCMA3(ROIN.RO).distinguish() @ &m : res] = Pr[UFCMA3(ROIN.LRO).distinguish() @ &m : res] by byequiv eqLRO."
+    }
+  },
+  "ok": true,
+  "manager_note": "Committed tactic accepted; the EasyCrypt proof state changed.",
+  "manager_actions": [
+    {
+      "action": "tactic commit",
+      "outcome": "EasyCrypt accepted the committed tactic.",
+      "timing": "738 ms"
+    }
+  ],
+  "view_refreshed": true
+}
