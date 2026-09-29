@@ -38,34 +38,37 @@
       return '<a href="' + routeHash(c.id, ref.file, matches[0].id) + '">' + esc(ref.lemma) + ' →</a>';
     }
     function evidence(items) {
-      return '<details class="sb-trace"><summary>Read ' + items.length + ' trace excerpts</summary>' + items.map(e =>
+      const archived = items.every(e => e.kind === 'archive_excerpt');
+      return '<details class="sb-trace"><summary>Read ' + items.length + (archived ? ' archived excerpt' : ' trace excerpt') + (items.length === 1 ? '' : 's') + '</summary>' + items.map(e =>
         '<figure><figcaption><span class="pill ' + (e.kind === 'agent_message' ? 'p-purp' : 'p-info') + '">' +
         esc(e.kind === 'agent_message' ? 'Outer agent · public message' :
-          e.kind === 'agent_action' ? 'Outer agent · command / handoff excerpt' : 'Recorded check · selected result fields') +
-        '</span><span>JSONL L' + esc(e.line) + ' · ' + esc(e.item) + '</span></figcaption>' +
+          e.kind === 'agent_action' ? 'Outer agent · command / handoff excerpt' :
+          e.kind === 'archive_excerpt' ? 'Archived experiment record · excerpt' : 'Recorded check · selected result fields') +
+        '</span><span>' + (e.kind === 'archive_excerpt' ? esc(e.source) + ' · L' : 'JSONL L') +
+        esc(e.line) + ' · ' + esc(e.item) + '</span></figcaption>' +
         (e.kind === 'agent_message' ? '<blockquote>' + esc(e.text) + '</blockquote>' : '<pre>' + esc(e.text) + '</pre>') +
         '</figure>').join('') + '</details>';
     }
     function outcome(result) {
       const parts = String(result || '').split(' · '), head = parts.shift() || '';
-      const cls = /^merged/i.test(head) ? 'p-ok' : /^not accepted/i.test(head) ? 'p-bad' : /^incomplete/i.test(head) ? 'p-warn' : 'p-mut';
+      const cls = /^(merged|verified)/i.test(head) ? 'p-ok' : /^not accepted/i.test(head) ? 'p-bad' : /^incomplete/i.test(head) ? 'p-warn' : 'p-mut';
       return '<span class="pill ' + cls + '">' + esc(head) + '</span>' + (parts.length ? '<small>' + esc(parts.join(' · ')) + '</small>' : '');
     }
-    const jobRows = jobs => jobs.map(j => '<tr><td>' + lemmaLink({file:c.defaultFile, lemma:j.lemma}) +
+    const jobRows = jobs => jobs.map(j => '<tr><td>' + lemmaLink({file:j.file || c.defaultFile, lemma:j.lemma}) +
       '<small>' + esc(j.id) + '</small></td><td class="sb-jobtime">' + esc(j.duration) + '</td><td>' + outcome(j.result) + '</td></tr>').join('');
     const jobTable = jobs => '<div class="sb-table-scroll" role="region" aria-label="Inner job records" tabindex="0"><table class="sb-job-table"><thead><tr><th scope="col">Local obligation / job</th><th scope="col">Job wall time</th><th scope="col">Recorded outcome</th></tr></thead><tbody>' + jobRows(jobs) + '</tbody></table></div>';
     return '<h2>' + esc(story.title) + '</h2><p class="sb-story-deck">' + esc(story.deck) + '</p>' +
       '<div class="sb-process-stats">' + story.stats.map(s => '<div><strong>' + esc(s.value) + '</strong><span>' + esc(s.label) + '</span></div>').join('') + '</div>' +
       '<details class="sb-trace sb-provenance"><summary>What this account is based on</summary><p>' + esc(story.provenance.note) + '</p>' +
-      '<dl><div><dt>Frozen archive</dt><dd>' + esc(story.provenance.commit) + '</dd></div><div><dt>Trace</dt><dd>' + esc(story.provenance.tracePath) + '</dd></div>' +
-      '<div><dt>Git blob</dt><dd>' + esc(story.provenance.blob) + '</dd></div></dl></details>' +
+      '<dl><div><dt>Frozen archive</dt><dd>' + esc(story.provenance.commit) + '</dd></div><div><dt>' + esc(story.provenance.sourceLabel || 'Trace') + '</dt><dd>' + esc(story.provenance.tracePath) + '</dd></div>' +
+      '<div><dt>' + esc(story.provenance.blobLabel || 'Git blob') + '</dt><dd>' + esc(story.provenance.blob) + '</dd></div></dl></details>' +
       '<p class="sb-story-order">' + esc(story.orderNote) + '</p><ol class="sb-story-stages" role="list">' + story.stages.map((s, i) =>
         '<li><div class="sb-stage-heading"><span aria-hidden="true">' + String(i + 1).padStart(2, '0') + '</span><h3>' + esc(s.title) + '</h3></div>' +
         s.paragraphs.map(p => '<p>' + esc(p) + '</p>').join('') +
-        '<p class="sb-work-split"><span>Outer / inner</span> ' + esc(s.work) + '</p>' +
+        '<p class="sb-work-split"><span>' + esc(story.workLabel || 'Outer / inner') + '</span> ' + esc(s.work) + '</p>' +
         '<div class="sb-process-links" aria-label="Related final proofs">' + s.references.map(lemmaLink).join('') + '</div>' + evidence(s.evidence) + '</li>').join('') + '</ol>' +
-      '<section class="sb-inner-record"><h2>What the inner agents actually delivered</h2><p>' + esc(story.jobs.note) + '</p>' + jobTable(story.jobs.merged) +
-      '<details class="sb-trace"><summary>The other ' + story.jobs.other.length + ' jobs — incomplete, rejected or cancelled</summary>' + jobTable(story.jobs.other) + '</details>' +
+      '<section class="sb-inner-record"><h2>' + esc(story.jobs.title || 'What the inner agents actually delivered') + '</h2><p>' + esc(story.jobs.note) + '</p>' + jobTable(story.jobs.merged) +
+      (story.jobs.other.length ? '<details class="sb-trace"><summary>The other ' + story.jobs.other.length + ' jobs — incomplete, rejected or cancelled</summary>' + jobTable(story.jobs.other) + '</details>' : '') +
       '<p class="sb-footnote">' + esc(story.jobs.sourceNote) + '</p></section>';
   }
   function cards() {
