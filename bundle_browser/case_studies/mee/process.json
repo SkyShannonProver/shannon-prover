@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
-  "title": "How the agent decomposed and proved the MEE-CBC targets",
-  "deck": "Three saved decomposition proposals explain the confidentiality, plaintext-integrity and correctness proofs. Follow their helper lemmas into the final source, inspect the original archived excerpts, and see the recorded result of every proof task.",
+  "title": "How the agent built the MEE-CBC proofs",
+  "deck": "The saved proposals show concrete proof choices: construct a reduction to CBC, relate the security games, choose invariants for the integrity proof, and break correctness into reusable lemmas. The sections below explain why those choices matter and link them to the completed proofs.",
   "stats": [
     {
       "value": "23–41 min",
@@ -26,68 +26,27 @@
     "sourceLabel": "Evidence directory",
     "blob": "5f2529982dfff30d3af2ba20c483ce55b16de54b",
     "blobLabel": "Report Git blob",
-    "note": "This account is reconstructed from the saved prompts, original JSON proposals, campaign logs and final source in the frozen archive. The 36 task results were also cross-checked against the retained prover result files. Excerpts below identify their source file and original line; proposal excerpts show decoded JSON text fields. The report excerpt retains its original language. Complete decomposer conversation and tool-call transcripts have not been recovered, so this page does not reconstruct unrecorded intermediate choices or present a continuous agent replay. Proof links open the final combined development, which also retains original human lemmas and supplied libraries."
+    "note": "The explanations below are based on the original JSON proposals and final source in the frozen archive. Excerpts show the decoded proposal fields, with their source file and original line. They document the proposed proof structure, rather than a continuous record of how it was discovered. Complete decomposer conversation and tool-call transcripts have not been recovered. The 36 task results were cross-checked against retained prover result files. Each selected run completed in its first decomposition round. Per-target times include decomposition and proof construction, from the first campaign log entry to the successful full-file check; separate supporting runs and the final combined-development check are excluded. Proof links open the combined development, which retains human lemmas and supplied libraries. Four correctness helpers were renamed with _P2 suffixes to avoid existing names. The report records the combined batch checks; all seven website source files match the archived combined tree."
   },
-  "workLabel": "Recorded work",
-  "orderNote": "This account uses saved proposals and proof records; complete decomposer transcripts have not been recovered. A decomposer first proposed helpers, then Shannon Prover proved the admitted lemmas and target. The sections group three separate runs by target. Each selected run completed in its first decomposition round. Per-target times run from the first campaign log entry through its successful full-file check; separate supporting runs and the final combined-development check are outside those intervals.",
+  "workLabel": "Proof idea",
+  "orderNote": "This account explains choices documented in the saved proposals and final proofs. Complete decomposer transcripts have not been recovered.",
   "stages": [
     {
-      "title": "Start from the model and a fixed target",
+      "title": "Turn a MEE adversary into a CBC adversary",
       "paragraphs": [
-        "For each selected target, the harness removed the chosen human intermediate lemma declarations and proofs, stripped comments, and cut the model off at the target. It retained the model infrastructure and imported dependencies. The saved prompt asked for new intermediate declarations from which the target would follow.",
-        "The decomposer returned a JSON proposal: an explanation, helper statements and, where needed, a module definition. A separate admission check preceded the individual proof tasks. The saved proposals and logs support the account below; they do not show every intermediate action taken inside the decomposer call."
+        "The existing CBC theorem accepts lists of blocks, while a MEE adversary submits messages. The agent proposed MEE_CBCAdv to connect the two: the adapter generates a MAC key, tags and pads each message, then forwards the resulting blocks to the CBC encryption oracle.",
+        "The proposal explicitly chooses a direct reduction to CBC. MEE already inlines tagging, padding and encryption, so going through generic composition theorems would require additional program comparisons. The direct route still has to match query limits: pad_tag establishes that the padded length does not depend on the tag, so both games accept the same queries.",
+        "This construction makes the existing CBC security bound applicable to MEE. The agent supplies the adapter and the connecting proofs; the switching argument and birthday bound come from the supplied CBC library."
       ],
-      "work": "The decomposer proposed the statements. The harness checked their admission; Shannon Prover then attempted the helpers and target.",
+      "work": "Choose a reduction that matches the actual MEE code, and prove that it preserves the query limits.",
       "references": [
         {
           "file": "mee-top",
-          "lemma": "RCPA_security"
-        },
-        {
-          "file": "mee-top",
-          "lemma": "PTXT_security"
-        },
-        {
-          "file": "mee-functional",
-          "lemma": "mee_correct"
-        }
-      ],
-      "evidence": [
-        {
-          "kind": "archive_excerpt",
-          "source": "top_rcpa_opus5/round_1/prompt.md",
-          "line": 3,
-          "item": "Prompt: decomposition task",
-          "text": "Your job is Phase II of\nproof engineering: invent the intermediate lemma decomposition — the game\nhops, hybrid games, and bridging equalities — from which the top-level claim\nfollows. A separate automated prover (Phase III) will try to prove each of\nyour lemmas one by one; it is good at focused, mechanical goals and bad at\nhuge monolithic ones, so prefer several small hops over one giant step."
-        },
-        {
-          "kind": "archive_excerpt",
-          "source": "top_rcpa_opus5/PROCESS_LOG.md",
-          "line": 18,
-          "item": "Admission result",
-          "text": "**Admission:** PASS; rejected 0 decl(s)"
-        }
-      ]
-    },
-    {
-      "title": "Confidentiality: connect MEE to the supplied CBC bound",
-      "paragraphs": [
-        "The proposal introduced MEE_CBCAdv, an adapter that holds the MAC key, tags and pads each message, and forwards it to the block-list CBC oracle. Eight helper lemmas connect the real and ideal MEE games to the CBC games and align the permutation-adversary terms.",
-        "CBC_advantage_bound then applies the already supplied CBC conclusion. The deep switching argument and birthday bound remain in that verified library; this campaign proves the surrounding connection to MEE. The log records eight helper proofs and RCPA_security completed, with a clean full-file check after 41m 05s."
-      ],
-      "work": "One proposed adapter module, eight helper lemmas and the target. All nine proof tasks have verified result records.",
-      "references": [
-        {
-          "file": "mee-top",
-          "lemma": "MEE_enc_IVCBC_enc"
+          "lemma": "MEE_CBCAdv_ll"
         },
         {
           "file": "mee-top",
           "lemma": "MEE_real_to_CBC"
-        },
-        {
-          "file": "mee-top",
-          "lemma": "CBCIdeal_to_CBCRandom"
         },
         {
           "file": "mee-top",
@@ -110,25 +69,70 @@
           "kind": "archive_excerpt",
           "source": "top_rcpa_opus5/round_1/proposal.json",
           "line": 1,
-          "item": "decls[8].why",
-          "text": "The whole quantitative content, obtained by instantiating the imported CBCa.Conclusion at the reduction adversary: `exact/(CBCa.Conclusion MEE_CBCAdv &m MEE_CBCAdv_ll)`. Since CBCa was cloned with q <- q, ell <- n and dBlock <- d_block, Conclusion's additive term 2%r * ((q*ell)^2)%r * mu dBlock (pred1 witness) is syntactically the target's 2%r * ((q * n) ^ 2)%r * mu d_block (pred1 witness) -- the PRP/PRF switch and the birthday-collision bound both live inside CBCa and are never re-proved here."
-        },
-        {
-          "kind": "archive_excerpt",
-          "source": "top_rcpa_opus5/PROCESS_LOG.md",
-          "line": 38,
-          "item": "Final campaign check",
-          "text": "Target `RCPA_security` proved, zero admits, full-file EasyCrypt batch check clean."
+          "item": "rationale",
+          "text": "I deliberately go direct rather than through CPA_CMA/PtE RCPA_preservation: MEE is written inline rather than as MacThenEncrypt(PadThenEncrypt(...),MAC), so routing through those clones would need the same inline-vs-composition equivs plus two extra namespace hops."
         }
       ]
     },
     {
-      "title": "Plaintext integrity: match the encryption and forgery games",
+      "title": "Separate the two mismatches in the ideal encryption game",
       "paragraphs": [
-        "This proposal uses four helper lemmas. enc_oracle_eq matches the encryption procedures; verify_oracle_eq relates the verification conditions so that an accepted new plaintext gives a MAC forgery. forge_eq lifts these local comparisons through the adversary.",
-        "main_eq completes the game comparison, including the different order of the independent key samples. The target then uses this game-level relation. The recorded run completed all four helpers and PTXT_security, with its successful full-file check after 23m 22s."
+        "The ideal MEE game samples a whole random ciphertext list at once. The CBC theorem uses a procedure that samples its blocks one at a time in a loop. Applying the theorem requires connecting these two programs as well as accounting for the message-to-block conversion.",
+        "The agent inserted an intermediate game to separate these issues. Ideal_to_CBCIdeal first relates two whole-list samplers, using pad_tag to show that their list lengths agree. CBCIdeal_to_CBCRandom then uses the existing Random_Ideal equivalence to connect whole-list sampling with the loop. Each lemma handles one mismatch.",
+        "The real encryption game has its own comparison of the CBC loops. Two further lemmas match the real- and random-permutation adversaries appearing in the bound. With these relations in place, the final RCPA_security proof rewrites the game probabilities and applies CBC_advantage_bound."
       ],
-      "work": "Four proposed helpers and the target. All five proof tasks have verified result records.",
+      "work": "Introduce an intermediate game so that ciphertext length and sampling procedure can be proved separately.",
+      "references": [
+        {
+          "file": "mee-top",
+          "lemma": "MEE_enc_IVCBC_enc"
+        },
+        {
+          "file": "mee-top",
+          "lemma": "Ideal_to_CBCIdeal"
+        },
+        {
+          "file": "mee-top",
+          "lemma": "CBCIdeal_to_CBCRandom"
+        },
+        {
+          "file": "mee-top",
+          "lemma": "CBC_prp_real_eq"
+        },
+        {
+          "file": "mee-top",
+          "lemma": "CBC_prp_ideal_eq"
+        },
+        {
+          "file": "mee-top",
+          "lemma": "RCPA_security"
+        }
+      ],
+      "evidence": [
+        {
+          "kind": "archive_excerpt",
+          "source": "top_rcpa_opus5/round_1/proposal.json",
+          "line": 1,
+          "item": "decls[4].why",
+          "text": "First half of the ideal branch, and the easy half: both oracles sample from a single dlist. The model's SKEa was cloned with dC l = dlist d_block (l + 1) and leak m = size (pad (m,witness)); CBCa's SKEa was cloned with dC l = dBlocks (l + 1) = dlist d_block (l + 1) and leak = size. On query p the left samples dlist d_block (size (pad (p,witness)) + 1) and the right dlist d_block (size (pad (p, mac mk p)) + 1); pad_tag makes the two lengths equal, so the oracle case is auto; smt(pad_tag). Splitting the ideal branch here keeps the distribution-shape reasoning apart from the loop-vs-dlist reasoning of the next lemma."
+        },
+        {
+          "kind": "archive_excerpt",
+          "source": "top_rcpa_opus5/round_1/proposal.json",
+          "line": 1,
+          "item": "decls[5].why",
+          "text": "Second half of the ideal branch: CBCa.Conclusion is stated against CBCa.Random (which samples size p + 1 blocks one at a time in a loop), not against CBCa's Ideal (which samples a dlist in one shot). CBCa already exports exactly the bridging equiv `CBCa.Random_Ideal : Random.enc ~ Ideal.enc : size p{1} = size p{2} ==> ={res}`, so this is byequiv; proc; call (_: ={CBCa.OracleBounder.qC, MEE_CBCAdv.mk, glob A}) with the oracle case discharged by call CBCa.Random_Ideal. Both games run the identical adversary, so nothing else moves."
+        }
+      ]
+    },
+    {
+      "title": "Choose the state relation that turns an accepted plaintext into a MAC forgery",
+      "paragraphs": [
+        "For plaintext integrity, the key step is to relate the state of the MEE game to the state of the MAC-forgery game. The proposed invariant matches their encryption and MAC keys, keeps their queried-message sets equal, and requires a MEE win to imply a MAC win. If decryption accepts a new plaintext, its recovered tag must pass the MAC check; verify_oracle_eq makes that implication precise.",
+        "The encryption procedures update their query sets at different times. During the CBC loop, one side has already inserted the current message and the other has not. The final enc_oracle_eq proof accounts for this by relating one set plus the current message to the other set, then restoring equality at the procedure boundary.",
+        "The decomposition isolates the encryption and verification procedures, lifts both relations through the adversary in forge_eq, and handles key initialization in main_eq. The last step swaps independent key samples to align their order. PTXT_security then follows directly from main_eq."
+      ],
+      "work": "Track keys, query history and the implication between success events, including the different timing of state updates.",
       "references": [
         {
           "file": "mee-top",
@@ -157,39 +161,83 @@
           "source": "top_ptxt_opus5/round_1/proposal.json",
           "line": 1,
           "item": "rationale",
-          "text": "The target is a reduction, not a probability-hop chain: `WUF_CMA(MAC,CMAa(PseudoRP,A))` runs exactly the same code as `INT_PTXT(MEE(PseudoRP,MAC),A)`, only re-plumbed so the MAC key lives in `WUF_Wrap` instead of the second component of `PTXT_Wrap.k`. So the decomposition is a single perfect-equivalence argument, split at the seams the prover finds easiest.\n\nThe coupling invariant is `PTXT_Wrap.k{1} = (CMAa.ek{2}, WUF_Wrap.k{2}) /\\ PTXT_Wrap.s{1} = WUF_Wrap.s{2} /\\ (PTXT_Wrap.win{1} => WUF_Wrap.win{2})`."
+          "text": "The coupling invariant is `PTXT_Wrap.k{1} = (CMAa.ek{2}, WUF_Wrap.k{2}) /\\ PTXT_Wrap.s{1} = WUF_Wrap.s{2} /\\ (PTXT_Wrap.win{1} => WUF_Wrap.win{2})`. The win implication is the crux: on the left `PTXT_Wrap.verify` sets win when `MEE.dec` returns `Some p'` for an unqueried `p'`, and `MEE.dec` returns `Some p'` exactly when `mac mk p' = t` for the `(p',t)` recovered by `unpad`; on the right `WUF_Wrap.verify` sets win on exactly that same condition. No `mac` reasoning beyond unfolding is needed, and the query set is synchronised because `PTXT_Wrap.enc` adds `p` after the call while `WUF_Wrap.tag` adds it before."
+        },
+        {
+          "kind": "archive_excerpt",
+          "source": "top_ptxt_opus5/round_1/proposal.json",
+          "line": 1,
+          "item": "decls[0].why",
+          "text": "The encryption oracle of the INT-PTXT game and the simulated encryption oracle of the WUF-CMA adversary run the identical CBC loop over `pad (p,t)`; the only differences are where the MAC key is stored and that the queried-message set is updated inside `WUF_Wrap.tag` on the right rather than after the call on the left. Mechanical goal: inline, then one `while` with the loop state matched (`c0{1}=c{2}`, `s{1}=s{2}`, `p'{1}=padded{2}`, `ek{1}=CMAa.ek{2}`)."
         },
         {
           "kind": "archive_excerpt",
           "source": "top_ptxt_opus5/round_1/proposal.json",
           "line": 1,
           "item": "decls[3].why",
-          "text": "The whole-game hop, and the only statement the target needs: `byequiv main_eq` closes `PTXT_security` in one tactic."
-        },
-        {
-          "kind": "archive_excerpt",
-          "source": "top_ptxt_opus5/PROCESS_LOG.md",
-          "line": 40,
-          "item": "Final campaign check",
-          "text": "Target `PTXT_security` proved, zero admits, full-file EasyCrypt batch check clean."
+          "text": "The whole-game hop, and the only statement the target needs: `byequiv main_eq` closes `PTXT_security` in one tactic. After `call forge_eq` the residual goal is just the key setup — the INT-PTXT game draws the block-cipher key (in `MEE.keygen`) before the MAC key, whereas the WUF game draws the MAC key in `WUF_Wrap.init` and only draws the block-cipher key later inside `CMAa.forge` — so it is discharged by swapping the two independent samplings and `auto`."
         }
       ]
     },
     {
-      "title": "Correctness: undo CBC encryption, padding and tag handling",
+      "title": "Make the CBC induction work after the chaining state changes",
       "paragraphs": [
-        "The correctness proposal separates CBC inversion from padding inversion. cbc_encK handles the CBC list induction. The other helpers establish padding lengths, conversion between octets and blocks, and the list operations that recover the message, tag and padding.",
-        "unpad_pad combines the padding facts. mee_dec_enc_unpad connects them to CBC inversion, leaving the final mee_correct proof to discharge the tag check. The log records all 21 helpers and the target proved, with a clean full-file check after 23m 48s."
+        "Decrypting a CBC ciphertext processes the blocks recursively, and each block changes the chaining state used for the next one. The induction hypothesis therefore needs to hold for every chaining state, so it can be applied to the state produced by the current block.",
+        "The agent states cbc_encK with the state quantified after the block list. When the proof performs induction on that list, the hypothesis stays general enough for the recursive call. The supporting xorbKl lemma removes the extra XOR with the previous state. In the final proof, cipher inversion, XOR cancellation and the induction hypothesis finish the step."
       ],
-      "work": "Twenty-one proposed helpers and the target. All 22 proof tasks have verified result records.",
+      "work": "Strengthen the induction statement just enough to cover the changing state in the recursive call.",
       "references": [
         {
           "file": "mee-functional",
+          "lemma": "xorbKl"
+        },
+        {
+          "file": "mee-functional",
           "lemma": "cbc_encK"
+        }
+      ],
+      "evidence": [
+        {
+          "kind": "archive_excerpt",
+          "source": "mee_correct_opus5/round_1/proposal.json",
+          "line": 8,
+          "item": "decls[1].why",
+          "text": "CBC decryption inverts CBC encryption for every chaining state. The state is quantified after the list so that `elim: p` keeps it generalized, which is exactly what the induction needs (the recursive call runs with st := ci). Uses xorbKl in the cons case."
+        }
+      ]
+    },
+    {
+      "title": "Choose padding lemmas that match the operations in unpad",
+      "paragraphs": [
+        "Undoing the padding requires several facts to fit together. The encoded message contains the message bytes, a 32-byte tag and padding. The proof must recover the bytes from 16-byte blocks, read the padding length from the last byte, and show that the resulting slices recover exactly those three components.",
+        "The agent makes the byte/block conversion a separate lemma, with divisibility by 16 as an explicit condition, and proves that the padding rule guarantees it. It also isolates the padding-length range and the last-byte conversion. This lets the remaining proof work with ordinary byte lists.",
+        "The slicing lemmas are stated at the indices unpad needs after simplifying its length expressions: size m for the message boundary and size m + 32 for the padding boundary. unpad_cat_pad combines these facts, and unpad_pad specializes them to the chosen padding length. Combining that result with CBC inversion leaves the final mee_correct proof with the check that the recovered tag equals the original tag."
+      ],
+      "work": "Select helper statements that line up with the conversions, guards and slice indices in the decryption code.",
+      "references": [
+        {
+          "file": "mee-functional",
+          "lemma": "pad_length_rng"
+        },
+        {
+          "file": "mee-functional",
+          "lemma": "dvd16_size_cat_pad"
         },
         {
           "file": "mee-functional",
           "lemma": "bs2osK_P2"
+        },
+        {
+          "file": "mee-functional",
+          "lemma": "take_msg_cat_pad"
+        },
+        {
+          "file": "mee-functional",
+          "lemma": "take_tag_cat_pad"
+        },
+        {
+          "file": "mee-functional",
+          "lemma": "drop_pad_cat_pad"
         },
         {
           "file": "mee-functional",
@@ -201,10 +249,6 @@
         },
         {
           "file": "mee-functional",
-          "lemma": "mee_dec_enc_unpad"
-        },
-        {
-          "file": "mee-functional",
           "lemma": "mee_correct"
         }
       ],
@@ -212,71 +256,23 @@
         {
           "kind": "archive_excerpt",
           "source": "mee_correct_opus5/round_1/proposal.json",
-          "line": 8,
-          "item": "decls[1].why",
-          "text": "CBC decryption inverts CBC encryption for every chaining state. The state is quantified after the list so that `elim: p` keeps it generalized, which is exactly what the induction needs (the recursive call runs with st := ci)."
+          "line": 44,
+          "item": "decls[10].why",
+          "text": "Turns every size-dependent index inside unpad into explicit arithmetic: size os - l - 32 = size m and size os - l = size m + 32, which is what the take/drop lemmas below are keyed on."
         },
         {
           "kind": "archive_excerpt",
           "source": "mee_correct_opus5/round_1/proposal.json",
-          "line": 84,
-          "item": "decls[20].why",
-          "text": "Glues the two halves: unfold mee_enc, strip CBC with cbc_encK, then apply unpad_pad at t = M mk m."
+          "line": 56,
+          "item": "decls[13].why",
+          "text": "The octets/blocks round trip: bs2os (os2bs os) = flatten (map ofblock (map mkblock (chunk 16 os))) = flatten (chunk 16 os) = os, by map_ofblockK (with in_chunk_size) then chunkK. This is the bridge that lets all remaining reasoning happen at octet-list level."
         },
         {
           "kind": "archive_excerpt",
-          "source": "mee_correct_opus5/PROCESS_LOG.md",
-          "line": 51,
-          "item": "Final campaign check",
-          "text": "Target `mee_correct` proved, zero admits, full-file EasyCrypt batch check clean."
-        }
-      ]
-    },
-    {
-      "title": "Keep the generated proofs in the combined development",
-      "paragraphs": [
-        "The final merge inserted the generated declarations and target proofs into the original MEE-CBC development. Original human declarations and supplied libraries remain alongside them. Four correctness helpers were renamed to avoid existing names: size_padding_P2, last_padding_P2, os2tK_P2 and bs2osK_P2. Their references were renamed consistently.",
-        "The archived report records passing EasyCrypt batch checks for the four modified files, including FunctionalSpec, which imports the combined chain. The seven source files served by this website match the archived combined tree byte for byte. The 36 statements and proofs listed below match the three selected campaign outputs after those name changes and differences in comments or layout.",
-        "The task table covers these three target runs. The wider archive also contains separate supporting campaigns and a hashed-ElGamal smoke run; their tasks and time are not included in the figures above. A first-round successful decomposition also does not mean every tactic attempt succeeded."
-      ],
-      "work": "The completed proofs were combined with the original development. Final acceptance is reported from the archived checks.",
-      "references": [
-        {
-          "file": "mee-functional",
-          "lemma": "size_padding_P2"
-        },
-        {
-          "file": "mee-functional",
-          "lemma": "last_padding_P2"
-        },
-        {
-          "file": "mee-functional",
-          "lemma": "os2tK_P2"
-        },
-        {
-          "file": "mee-functional",
-          "lemma": "bs2osK_P2"
-        },
-        {
-          "file": "mee-functional",
-          "lemma": "mee_correct"
-        },
-        {
-          "file": "mee-top",
-          "lemma": "RCPA_security"
-        },
-        {
-          "file": "mee-top",
-          "lemma": "PTXT_security"
-        }
-      ],
-      "evidence": [
-        {
-          "kind": "archive_excerpt",
-          "source": "REPORT.md",
-          "line": 66,
-          "item": "Combined check: original report",
-          "text": "**全链 stitch**:七个分解移植回原始 MEE-CBC 树(人类与机器证明并存,4 个重名\n重发明引理以 `_P2` 后缀区分),四个文件(含拉动全链的 FunctionalSpec)EasyCrypt\n批检全部 PASS。见 `stitched/`。"
+          "source": "mee_correct_opus5/round_1/proposal.json",
+          "line": 64,
+          "item": "decls[15].why",
+          "text": "Recovers the message component. Pure take_size_cat; stated at index `size m` because size_cat_pad rewrites unpad's `size os - l - 32` to exactly that."
         }
       ]
     }
