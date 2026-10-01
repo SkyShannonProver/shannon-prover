@@ -1,9 +1,24 @@
 # Changelog
 
-Notable changes to Shannon Prover, newest first. Starting with the next
-release, each public release is tagged with a version number.
+Notable changes to Shannon Prover, newest first. Each public release from
+0.2.0 on is tagged `vX.Y.Z`. Earlier releases are listed by date and tagged
+together as `v0.1.0`.
 
-## Unreleased
+## 0.2.0 (2026-09-30)
+
+- Keep Why3 solver configuration inside the managed toolchain. Runtime checks
+  are read-only, and `--configure-solvers` refreshes configuration without
+  rebuilding EasyCrypt or replacing the user's global settings.
+- Make production runtime and compiler feature tests runnable in the public
+  source tree; retain research configuration and campaign tests privately.
+- Document system build dependencies, solver installation and migration for
+  existing installations; refresh solver configuration explicitly in CI.
+- Clarify that both project-level agents default to Codex, and add a reading
+  guide to the compiler design.
+- Install the pinned SMT solvers in CI through one shared action, and rebuild
+  the cached EasyCrypt toolchain whenever the bootstrap script changes.
+
+## 2026-09-29
 
 - Serve the website from the `gh-pages` branch. The recorded run bundles it
   displays no longer live in the main branch, which shrinks a checkout from

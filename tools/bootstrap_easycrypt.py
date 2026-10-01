@@ -11,6 +11,7 @@ import shlex
 import shutil
 import subprocess
 import sys
+import tempfile
 from pathlib import Path
 
 
@@ -24,9 +25,15 @@ from core.easycrypt.toolchain import (  # noqa: E402
     load_toolchain_receipt,
     managed_opam_root,
     managed_switch_name,
+    managed_why3_config_file,
     sha256_file,
     toolchain_receipt_path,
     verify_locked_easycrypt_source,
+)
+from core.easycrypt.ec_env import (  # noqa: E402
+    MANAGED_WHY3_CONFIG_ENV,
+    easycrypt_command,
+    managed_why3_config_path,
 )
 
 
@@ -43,13 +50,27 @@ def main() -> int:
         help="validate the existing receipt and artifacts without installing",
     )
     mode.add_argument(
+        "--configure-solvers",
+        action="store_true",
+        help="refresh repository-local solver configuration without rebuilding",
+    )
+    mode.add_argument(
         "--print-env",
         action="store_true",
         help="print verified shell exports for developer-only direct commands",
     )
     args = parser.parse_args()
     lock = verify_locked_easycrypt_source()
-    if not args.verify_only and not args.print_env:
+    if args.configure_solvers:
+        _verify_installed(require_solver_config=False)
+        opam = shutil.which("opam")
+        if not opam:
+            raise RuntimeError("opam is required to configure EasyCrypt")
+        env = _switch_env(
+            opam, managed_opam_root(), managed_switch_name(), dict(os.environ),
+        )
+        _configure_solvers(_required_tool("easycrypt", env), env)
+    elif not args.verify_only and not args.print_env:
         _bootstrap(
             lock.source_repository,
             lock.source_commit,
@@ -67,6 +88,7 @@ def main() -> int:
         "switch": managed_switch_name(),
         "easycrypt": str(paths[0]),
         "ecLib": str(paths[1]),
+        "why3_config": str(managed_why3_config_file()),
         "receipt": receipt.payload(),
     }, indent=2, sort_keys=True))
     return 0
@@ -82,6 +104,9 @@ def _print_environment() -> None:
         managed_switch_name(),
         dict(os.environ),
     )
+    environment[MANAGED_WHY3_CONFIG_ENV] = str(
+        managed_why3_config_path(environment)
+    )
     for name in (
         "OPAMROOT",
         "OPAMSWITCH",
@@ -90,6 +115,7 @@ def _print_environment() -> None:
         "OCAML_TOPLEVEL_PATH",
         "MANPATH",
         "PATH",
+        MANAGED_WHY3_CONFIG_ENV,
     ):
         value = environment.get(name)
         if value is not None:
@@ -131,7 +157,7 @@ def _bootstrap(repository: str, commit: str, ocaml_package: str) -> None:
     ], env=base, timeout=3600)
     env = _switch_env(opam, root, switch, base)
     easycrypt = _required_tool("easycrypt", env)
-    _run([str(easycrypt), "why3config"], env=env, timeout=120)
+    _configure_solvers(easycrypt, env)
     library = _library_archive(env)
     build_id = _easycrypt_build_id(easycrypt, env)
     lock = load_easycrypt_lock()
@@ -153,7 +179,28 @@ def _bootstrap(repository: str, commit: str, ocaml_package: str) -> None:
     )
 
 
-def _verify_installed() -> tuple[EasyCryptToolchainReceipt, tuple[Path, Path]]:
+def _configure_solvers(easycrypt: Path, env: dict[str, str]) -> None:
+    path = managed_why3_config_file()
+    path.parent.mkdir(parents=True, exist_ok=True)
+    # EasyCrypt removes the requested config before detection. Generate beside
+    # the final file and replace it only after success, preserving an existing
+    # working configuration when detection fails.
+    with tempfile.TemporaryDirectory(prefix=".why3-config-", dir=path.parent) as tmp:
+        generated = Path(tmp) / "why3.conf"
+        _run(
+            [str(easycrypt), "why3config", "-why3", str(generated)],
+            env=env,
+            timeout=120,
+        )
+        if not generated.is_file():
+            raise RuntimeError("solver detection did not create a Why3 configuration")
+        generated.replace(path)
+    managed_why3_config_path(env)
+
+
+def _verify_installed(
+    *, require_solver_config: bool = True,
+) -> tuple[EasyCryptToolchainReceipt, tuple[Path, Path]]:
     lock = load_easycrypt_lock()
     receipt = load_toolchain_receipt()
     opam = shutil.which("opam")
@@ -170,9 +217,11 @@ def _verify_installed() -> tuple[EasyCryptToolchainReceipt, tuple[Path, Path]]:
     env = _switch_env(opam, root, managed_switch_name(), dict(os.environ))
     easycrypt = _required_tool("easycrypt", env)
     library = _library_archive(env)
-    build_id = _easycrypt_build_id(easycrypt, env)
-    if build_id != receipt.build_id:
-        raise RuntimeError("installed EasyCrypt build ID differs from receipt")
+    if require_solver_config:
+        managed_why3_config_path(env)
+        build_id = _easycrypt_build_id(easycrypt, env)
+        if build_id != receipt.build_id:
+            raise RuntimeError("installed EasyCrypt build ID differs from receipt")
     if sha256_file(easycrypt) != receipt.executable_sha256:
         raise RuntimeError("installed EasyCrypt executable differs from receipt")
     if sha256_file(library) != receipt.library_sha256:
@@ -240,7 +289,7 @@ def _library_archive(env: dict[str, str]) -> Path:
 
 
 def _easycrypt_build_id(binary: Path, env: dict[str, str]) -> str:
-    result = _run([str(binary), "config"], env=env, timeout=60)
+    result = _run(easycrypt_command("config", binary=str(binary)), env=env, timeout=60)
     match = _BUILD_ID_RE.search(result.stdout + "\n" + result.stderr)
     if match is None or match.group(1) in {"n/a", "[unspecified]"}:
         raise RuntimeError("managed EasyCrypt did not report a locked build ID")

@@ -1,0 +1,93 @@
+name: EasyCrypt toolchain
+description: >-
+  Install the pinned SMT solvers, build or restore the repository-managed
+  EasyCrypt toolchain, and verify it. Every workflow that runs EasyCrypt uses
+  this action, so all of them test against the same solvers. Run `uv sync`
+  first.
+
+inputs:
+  z3-version:
+    description: Z3 release installed from the official binary.
+    default: "4.15.4"
+  cvc5-version:
+    description: CVC5 release installed from the official binary.
+    default: "1.2.1"
+  alt-ergo-version:
+    description: Alt-Ergo release installed into the managed opam switch.
+    default: "2.4.3"
+
+runs:
+  using: composite
+  steps:
+    - name: Install build tools
+      shell: bash
+      run: |
+        sudo apt-get update -qq
+        sudo apt-get install -y git curl opam build-essential autoconf automake m4 pkg-config \
+          libgmp-dev libpcre2-dev zlib1g-dev unzip
+
+    - name: Install Z3 and CVC5
+      shell: bash
+      env:
+        Z3_VERSION: ${{ inputs.z3-version }}
+        CVC5_VERSION: ${{ inputs.cvc5-version }}
+      run: |
+        mkdir -p "$HOME/.local/bin" "$RUNNER_TEMP/solvers"
+        cd "$RUNNER_TEMP/solvers"
+        curl -fsSL -o z3.zip \
+          "https://github.com/Z3Prover/z3/releases/download/z3-${Z3_VERSION}/z3-${Z3_VERSION}-x64-glibc-2.39.zip"
+        curl -fsSL -o cvc5.zip \
+          "https://github.com/cvc5/cvc5/releases/download/cvc5-${CVC5_VERSION}/cvc5-Linux-x86_64-static.zip"
+        unzip -q z3.zip && unzip -q cvc5.zip
+        install -m 755 "$(find . -path '*/bin/z3' -type f | head -1)" "$HOME/.local/bin/z3"
+        install -m 755 "$(find . -path '*/bin/cvc5' -type f | head -1)" "$HOME/.local/bin/cvc5"
+        echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+
+    # The key covers everything that decides what the build produces: the
+    # EasyCrypt lock, the bootstrap script, the runner image and Alt-Ergo.
+    - name: Compute the toolchain cache key
+      id: key
+      shell: bash
+      env:
+        ALT_ERGO_VERSION: ${{ inputs.alt-ergo-version }}
+      run: |
+        digest="$(cat core/easycrypt/easycrypt.lock.json tools/bootstrap_easycrypt.py | sha256sum | cut -c1-16)"
+        echo "key=easycrypt-${RUNNER_OS}-${ImageOS:-unknown}-${digest}-alt-ergo-${ALT_ERGO_VERSION}" >> "$GITHUB_OUTPUT"
+
+    - name: Restore the EasyCrypt toolchain
+      id: restore
+      uses: actions/cache/restore@v4
+      with:
+        path: .toolchains
+        key: ${{ steps.key.outputs.key }}
+
+    - name: Build EasyCrypt
+      shell: bash
+      run: uv run python tools/bootstrap_easycrypt.py
+
+    - name: Add Alt-Ergo to the managed switch
+      shell: bash
+      env:
+        ALT_ERGO_VERSION: ${{ inputs.alt-ergo-version }}
+      run: |
+        SHANNON_OPAM_ROOT="$(uv run python -c \
+          'from core.easycrypt.toolchain import managed_opam_root; print(managed_opam_root())')"
+        SHANNON_OPAM_SWITCH="$(uv run python -c \
+          'from core.easycrypt.toolchain import managed_switch_name; print(managed_switch_name())')"
+        opam install --yes --root "$SHANNON_OPAM_ROOT" \
+          --switch "$SHANNON_OPAM_SWITCH" "alt-ergo.${ALT_ERGO_VERSION}"
+
+    - name: Refresh the installation receipt and solver configuration
+      shell: bash
+      run: |
+        uv run python tools/bootstrap_easycrypt.py
+        uv run python tools/bootstrap_easycrypt.py --verify-only
+
+    # Save right after verification, so a later test failure or timeout does
+    # not force the next run to rebuild EasyCrypt.
+    - name: Save the EasyCrypt toolchain
+      if: steps.restore.outputs.cache-hit != 'true'
+      uses: actions/cache/save@v4
+      with:
+        path: .toolchains
+        key: ${{ steps.key.outputs.key }}

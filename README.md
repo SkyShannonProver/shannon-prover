@@ -45,26 +45,98 @@ flowchart LR
 ## Install
 
 Use macOS or Linux with Git, [opam](https://opam.ocaml.org), Python ≥ 3.12,
-and [uv](https://docs.astral.sh/uv/). Install `uv` outside the project's
-`.venv` directory.
+and [uv](https://docs.astral.sh/uv/).
+
+Install the system build tools and native libraries before bootstrapping
+EasyCrypt. On Ubuntu/Debian:
+
+```bash
+sudo apt-get update
+sudo apt-get install -y git curl opam build-essential autoconf automake m4 pkg-config \
+  libgmp-dev libpcre2-dev zlib1g-dev unzip
+```
+
+On macOS, install Xcode Command Line Tools (`xcode-select --install` if needed).
+If you use Homebrew, install the native dependencies with:
+
+```bash
+brew install opam autoconf automake pkgconf gmp pcre2 zlib
+```
+
+For other package managers, see the vendored
+[EasyCrypt installation guide](easycrypt-src/INSTALL.md). Shannon's bootstrap
+builds the OCaml dependencies but expects these system dependencies to be
+installed already.
+
+### 1. Python environment
+
+Install `uv` outside this project's `.venv`, then synchronize the locked Python
+environment:
 
 ```bash
 git clone https://github.com/SkyShannonProver/shannon-prover.git
 cd shannon-prover
 uv sync
+```
+
+### 2. SMT solvers
+
+EasyCrypt's `smt` tactic calls external solvers. Install
+[Z3](https://github.com/Z3Prover/z3) and [CVC5](https://cvc5.github.io) and put
+their executables on your `PATH` before bootstrapping. CI uses Z3 4.15.4 and
+CVC5 1.2.1. Check that both commands work:
+
+```bash
+z3 --version
+cvc5 --version
+```
+
+The next step installs Alt-Ergo 2.4.3 in Shannon's managed opam switch.
+
+### 3. Repository-managed EasyCrypt
+
+Shannon Prover is locked to EasyCrypt `r2026.06`. The bootstrap command creates
+and verifies the repository-managed opam root and switch:
+
+```bash
+uv run python tools/bootstrap_easycrypt.py
+
+SHANNON_OPAM_ROOT="$(uv run python -c \
+  'from core.easycrypt.toolchain import managed_opam_root; print(managed_opam_root())')"
+SHANNON_OPAM_SWITCH="$(uv run python -c \
+  'from core.easycrypt.toolchain import managed_switch_name; print(managed_switch_name())')"
+opam install --yes --root "$SHANNON_OPAM_ROOT" \
+  --switch "$SHANNON_OPAM_SWITCH" alt-ergo.2.4.3
+
 uv run python tools/bootstrap_easycrypt.py
 uv run python tools/bootstrap_easycrypt.py --verify-only
 ```
 
-The bootstrap command installs the repository's pinned EasyCrypt
-`r2026.06` environment. Shannon's Python commands use it automatically.
+The solver configuration lives in `.toolchains/opam-r2026.06/why3.conf`.
+Installing Alt-Ergo can cause opam to rebuild EasyCrypt dependencies. The second
+bootstrap command records and verifies the resulting installation as well as
+refreshing its solver configuration.
 
-EasyCrypt's `smt` tactic calls external SMT solvers, which the bootstrap does
-not install. Install [Alt-Ergo](https://alt-ergo.ocamlpro.com),
-[Z3](https://github.com/Z3Prover/z3) and [CVC5](https://cvc5.github.io) and put
-them on your `PATH` before running the bootstrap; it records the solvers it
-finds in `~/.config/easycrypt/why3.conf`, replacing that file. The test suite
-and CI use Alt-Ergo 2.4.3, Z3 4.15.4 and CVC5 1.2.1.
+Worktrees of one repository share this configuration; independent clones have
+their own. Bootstrap and runtime checks preserve your global Why3 configuration.
+After changing solvers on `PATH`, rerun `--configure-solvers`. After package
+changes in the managed opam switch, rerun the full bootstrap instead. Existing
+Shannon installations need `--configure-solvers` once to create the local config
+if their recorded toolchain is otherwise unchanged.
+
+Python entry points select this environment and configuration automatically.
+For a developer command that invokes `easycrypt` directly, export the verified
+environment and pass the configuration explicitly:
+
+```bash
+eval "$(uv run python tools/bootstrap_easycrypt.py --print-env)"
+easycrypt -why3 "$SHANNON_WHY3_CONFIG" config
+```
+
+`--verify-only` and runtime availability checks read the configuration without
+regenerating it.
+
+### 4. Agent login
 
 Project-level proving defaults to **OpenAI Codex with `gpt-6-astra` (high
 reasoning effort) for both the overall argument (outer) and auxiliary lemmas
@@ -161,6 +233,11 @@ fixed task.
 ## Single-lemma proving
 
 This workflow covers Phase III for a lemma you have already stated.
+
+The standalone Codex prover defaults to `gpt-5.6-sol` with high reasoning
+effort. Project-level proving uses `gpt-6-astra` with high reasoning effort
+for both outer and inner agents, as described above. Both workflows default
+to Codex; their model settings are separate.
 
 If you already know the decomposition, you can ask Shannon to prove
 one lemma. Put its EasyCrypt file and local dependencies under `projects/`,

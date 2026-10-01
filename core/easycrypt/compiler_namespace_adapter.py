@@ -21,7 +21,7 @@ import tempfile
 from pathlib import Path
 from typing import Iterable
 
-from core.easycrypt.ec_env import get_ec_env
+from core.easycrypt.ec_env import easycrypt_command, get_ec_env
 
 
 _ANCHOR = "__shannon_compiler_namespace_anchor_zXyQ__"
@@ -203,7 +203,7 @@ def _run_easycrypt(
     timeout: float,
     emacs: bool,
 ) -> str:
-    command = ["easycrypt", "cli", "-emacs"] if emacs else ["easycrypt"]
+    command = easycrypt_command("cli", "-emacs") if emacs else easycrypt_command()
     for directory in include_dirs:
         command.extend(("-I", str(directory)))
     if emacs:

@@ -16,6 +16,7 @@ import subprocess
 from dataclasses import dataclass
 from pathlib import Path
 from typing import TYPE_CHECKING, Optional
+from core.easycrypt.ec_env import easycrypt_command
 from core.easycrypt.committed_history import (
     closed_history_tactics,
     read_committed_commands,
@@ -213,7 +214,7 @@ def _verify_ec_file(
 
     def _run(why3_socket: Optional[str]) -> tuple[bool, str]:
         env = _get_opam_env()
-        cmd = ["easycrypt", "-timeout", "30"]
+        cmd = easycrypt_command("-timeout", "30")
         if why3_socket and os.path.exists(why3_socket) \
                 and _is_why3server_responsive(why3_socket):
             cmd.extend(["-server", why3_socket])

@@ -12,6 +12,7 @@ def handle_verify_lemma(session, args) -> int:
 
     from core.easycrypt.lemma_extract import extract_lemma
     from core.easycrypt.session.session_common import get_ec_env
+    from core.easycrypt.ec_env import easycrypt_command
 
     def emit(status: str, **payload) -> None:
         session.emit_event(
@@ -65,7 +66,7 @@ def handle_verify_lemma(session, args) -> int:
     if use_session_proof:
         content += ("" if content.endswith("\n") else "\n") + history
     verify_tmp.write_text(content, encoding="utf-8")
-    command = ["easycrypt", "-emacs"]
+    command = easycrypt_command("-emacs")
     for include_dir in session._include_dirs:
         command.extend(["-I", include_dir])
     try:

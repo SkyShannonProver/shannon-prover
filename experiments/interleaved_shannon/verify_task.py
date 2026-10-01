@@ -17,6 +17,7 @@ _IMPORT_ROOT = Path(__file__).resolve().parents[2]
 if str(_IMPORT_ROOT) not in sys.path:
     sys.path.insert(0, str(_IMPORT_ROOT))
 
+from core.easycrypt.ec_env import easycrypt_command as managed_easycrypt_command
 from experiments.interleaved_shannon.source_projection import (
     ANSWER_SOURCE,
 )
@@ -258,22 +259,21 @@ def easycrypt_command(
     if mode == "check":
         if upto is not None:
             raise ValueError("--upto is not valid with --check")
-        return [str(executable), "llm", "-lastgoals", *loader]
+        return managed_easycrypt_command("llm", "-lastgoals", binary=str(executable)) + loader
     if mode == "upto":
         if upto is None:
             raise ValueError("upto mode requires a source location")
-        return [
-            str(executable),
+        return managed_easycrypt_command(
             "llm",
             "-lastgoals",
             "-upto",
             validate_upto_location(upto),
-            *loader,
-        ]
+            binary=str(executable),
+        ) + loader
     if mode in {"preflight", "final"}:
         if upto is not None:
             raise ValueError(f"--upto is not valid with --{mode}")
-        return [str(executable), "-no-eco", *loader]
+        return managed_easycrypt_command("-no-eco", binary=str(executable)) + loader
     raise ValueError(f"unsupported verification mode: {mode}")
 
 

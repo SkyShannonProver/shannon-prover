@@ -33,19 +33,21 @@ a release snapshot, so pull requests are not merged here directly:
 ## Development setup
 
 Use macOS or Linux with Git, [opam](https://opam.ocaml.org), Python ≥ 3.12,
-and [uv](https://docs.astral.sh/uv/):
+and [uv](https://docs.astral.sh/uv/). Follow the
+[installation instructions](README.md#install), including the solver setup,
+before running the checks below. The bootstrap builds the pinned EasyCrypt
+release in a repository-local opam root and uses a local Why3 configuration.
+It preserves your existing global configuration.
 
 ```bash
 uv sync
-uv run python tools/bootstrap_easycrypt.py
 uv run python tools/bootstrap_easycrypt.py --verify-only
 ```
 
-The bootstrap builds the pinned EasyCrypt release from the vendored
-`easycrypt-src/` into a repository-local opam root.
-
-EasyCrypt's `smt` tactic needs the external solvers listed in the
-[README](README.md#install); install them before the bootstrap.
+After changing installed solvers, run
+`uv run python tools/bootstrap_easycrypt.py --configure-solvers` to refresh
+their registration. Existing installations need this once to create the local
+configuration.
 
 Before opening a pull request, run the test suite, check that the demo still
 plans correctly without calling a model, and check for whitespace errors:

@@ -35,12 +35,16 @@ uv run python tools/bootstrap_easycrypt.py
 uv run python tools/bootstrap_easycrypt.py --verify-only
 ```
 
-Python runtime entry points select the verified managed environment
-automatically. Only developer commands that invoke `easycrypt` directly need:
+Python runtime entry points select the verified managed environment and solver
+configuration automatically. For developer commands that invoke `easycrypt`
+directly, export the environment and pass the configuration explicitly:
 
 ```bash
 eval "$(uv run python tools/bootstrap_easycrypt.py --print-env)"
+easycrypt -why3 "$SHANNON_WHY3_CONFIG" config
 ```
+
+Pass `-why3 "$SHANNON_WHY3_CONFIG"` to every direct EasyCrypt command.
 
 If an OS sandbox blocks `why3server`/`nice()`, rerun the bounded test with the
 required permission. Do not add a parser, stdout, ambient-opam, or stale-file
@@ -61,7 +65,7 @@ When `[EVAL MODE ACTIVE]` is present or `EVAL_TARGET_LEMMA` is set:
 - `docs/ARCHITECTURE.md` — compact architecture map
 - `docs/design/proof_state_compiler_v2.md` — compiler design authority
 - `docs/architecture/proof_terminal_outcome.md` — final-proof outcome contract
-- `TESTING.md` — deterministic and live experiment procedure (private trunk only)
+- `TESTING.md` — deterministic and live experiment procedure (maintainers only; not in the public tree)
 
 Historical reports and offline bundle readers retain old names as provenance.
 They do not define a runnable profile, context topic, or compatibility path.

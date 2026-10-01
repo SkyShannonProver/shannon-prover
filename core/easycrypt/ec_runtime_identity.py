@@ -21,7 +21,7 @@ import subprocess
 from dataclasses import dataclass
 from pathlib import Path
 
-from core.easycrypt.ec_env import get_ec_env
+from core.easycrypt.ec_env import easycrypt_command, get_ec_env
 from core.easycrypt.session.session_events import read_events
 from core.easycrypt.toolchain import load_easycrypt_lock
 
@@ -114,7 +114,7 @@ def discover_easycrypt_runtime_identity() -> EasyCryptRuntimeIdentity:
     binary_sha256 = _sha256_file(binary_path)
     try:
         result = subprocess.run(
-            [str(binary_path), "config"],
+            easycrypt_command("config", binary=str(binary_path)),
             env=env,
             capture_output=True,
             text=True,

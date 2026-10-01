@@ -19,7 +19,7 @@ _IMPORT_ROOT = Path(__file__).resolve().parents[2]
 if str(_IMPORT_ROOT) not in sys.path:
     sys.path.insert(0, str(_IMPORT_ROOT))
 
-from core.easycrypt.ec_env import get_ec_env
+from core.easycrypt.ec_env import easycrypt_command, get_ec_env
 from core.easycrypt.eval_source_prep import find_target_proof_block
 from core.easycrypt.lemma_extract import extract_lemma
 from core.easycrypt.lemma_decls import lemma_decl_matches
@@ -78,7 +78,7 @@ def verify_lemma_import(
         if check_file.resolve() in {target.resolve(), candidate.resolve()}:
             raise ValueError("verification scratch file must not overwrite its input")
         check_file.write_text(extracted, encoding="utf-8")
-        command = ["easycrypt", "-no-eco", "-timeout", "30"]
+        command = easycrypt_command("-no-eco", "-timeout", "30")
         for include in include_dirs:
             command.extend(["-I", str(root / include)])
         command.extend(["-I", str(target.parent), str(check_file)])
@@ -149,7 +149,7 @@ def _write(path: Path, payload: dict[str, Any]) -> None:
 
 
 def _easycrypt_command(executable: Path, project: InterleavedProject) -> list[str]:
-    command = [str(executable), "-no-eco", "-timeout", "60"]
+    command = easycrypt_command("-no-eco", "-timeout", "60", binary=str(executable))
     for include in project.include_dirs:
         command.extend(["-I", include])
     command.append(project.target_file)

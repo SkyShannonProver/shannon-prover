@@ -34,6 +34,29 @@ Empirical feature admission is tracked separately from this architecture.
 Experiment results are evidence about features; they do not define production
 behavior.
 
+For a first reading, follow the sections that match your task:
+
+- **Understand the system:** [mission and boundaries](#1-mission-and-non-goals),
+  [compiler passes](#2-one-architecture-three-independent-axes), and
+  [end-to-end dataflow](#3-end-to-end-dataflow).
+- **Change the implementation:** [package boundaries](#4-package-boundaries),
+  [contracts by stage](#5-contracts-by-stage), and
+  [shared binding subsystem](#9-binding-is-one-shared-middle-end-subsystem).
+- **Add or evaluate a feature:** [feature registration](#6-feature-registration),
+  [evidence lifecycle](#7-evidence-feature-lifecycle), and
+  [testing](#13-testing-pyramid).
+- **Check the current production boundary:** [private M05 scope](#10-branch-confined-proactive-slice),
+  [recovery checkpoint](#14-recovery-foundation-checkpoint), and
+  [acceptance criteria](#15-architecture-acceptance-criteria).
+
+These links are a reading guide. The contracts throughout this document still
+apply to changes that cross more than one area.
+
+The package map also identifies private research modules. Those modules and
+private experiment programs are maintainer tooling, excluded from
+the public source release. They are not required to run the public workflows.
+Historical experiment descriptions record evidence, not additional setup steps.
+
 ### Three program pillars
 
 The rewrite has three independent proof obligations:
@@ -857,7 +880,7 @@ workflow/proof_state_compiler/
   native_semantic_gateway.py       target feature-agnostic request dispatch
   telemetry.py
 
-workflow/validation/
+workflow/proof_state_compiler/research/
   proof_state_compiler_research_profile_ids.py
                                    private audit/ablation identities
   proof_state_compiler_research_profile_registry.py
@@ -1656,9 +1679,9 @@ projection. They cannot name an audit arm, and the production aggregate never
 runs an `AUDIT` activation. The eval harness uses a separate hidden transport
 argument to select a private research registration; a normal config file
 cannot persist that identity. The research registry and superset feature
-catalog live under `workflow.validation` so a future public source package can
-omit them physically without modifying manager, compiler, renderer, or feature
-contracts.
+catalog live under `workflow.proof_state_compiler.research` and are excluded
+from the public source package. Their absence does not require changes to
+manager, compiler, renderer, or feature contracts.
 
 The machine-readable `production_release_manifest()` must equal the feature
 set activated as `TREATMENT` by `proof_state_compiler`. Packages absent from
@@ -2171,8 +2194,12 @@ commitment-relative `operation_binding_repair` feature consumes them.
 
 The frozen M05 implementation, experiment manifest, sentinel, fixture-specific
 tests, and optional-advisory delivery helper are maintained only on the private
-`compiler-proactive` branch. That branch is a compiler-only delta from
-`main`; it is not part of the default runtime or the interleaved product.
+`compiler-proactive` branch. Its M05 scope remains fixed while the shared runtime
+baseline can advance by merging a reviewed `compiler` commit under the repository
+release contract. The branch's delta is measured against that compiler baseline,
+not against the assembled `main` tree. Refreshing the baseline does not change
+the source commits or artifacts recorded for historical experiments. M05 is not
+part of the default runtime or the interleaved product.
 
 Historical M05 reports remain in this branch as evidence provenance. They do
 not make M05 runnable and do not authorize another proactive feature.

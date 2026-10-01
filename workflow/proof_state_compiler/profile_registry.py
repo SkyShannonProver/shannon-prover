@@ -2,8 +2,8 @@
 
 Ordinary Shannon runs expose exactly the goal-only fallback and the curated
 compiler treatment. Hidden audits and single-feature ablations are research
-assets, resolved lazily from ``workflow.validation`` only when the evaluation
-harness supplies their exact internal identity.
+assets, resolved lazily from ``workflow.proof_state_compiler.research`` only
+when the evaluation harness supplies their exact internal identity.
 """
 from __future__ import annotations
 

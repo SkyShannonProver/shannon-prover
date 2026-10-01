@@ -282,6 +282,12 @@ def managed_switch_name() -> str:
     return f"shannon-easycrypt-{load_easycrypt_lock().release_tag}"
 
 
+def managed_why3_config_file() -> Path:
+    """Solver configuration shared by this repository's managed worktrees."""
+
+    return managed_opam_root() / "why3.conf"
+
+
 def toolchain_receipt_path() -> Path:
     return managed_opam_root() / "shannon-easycrypt-receipt.json"
 

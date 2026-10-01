@@ -120,12 +120,16 @@ environment is synchronized, use `.venv/bin/python
 tools/bootstrap_easycrypt.py --verify-only` when no stable external `uv` is
 available.
 
-Python entry points select it automatically. For developer-only direct
-EasyCrypt commands, export the verified environment with:
+Python entry points select the environment and solver configuration
+automatically. For developer-only direct EasyCrypt commands, export the
+verified environment and pass the configuration explicitly:
 
 ```bash
 eval "$(uv run python tools/bootstrap_easycrypt.py --print-env)"
+easycrypt -why3 "$SHANNON_WHY3_CONFIG" config
 ```
+
+Pass `-why3 "$SHANNON_WHY3_CONFIG"` to every direct EasyCrypt command.
 
 `why3server` may fail under an OS sandbox that blocks `nice()`. Rerun the
 bounded backend test with the required permission. Do not change compiler

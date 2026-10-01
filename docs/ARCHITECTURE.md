@@ -97,9 +97,10 @@ and `workflow/surface_*` source paths have been physically removed. Historical
 reports preserve their names only as experiment provenance.
 
 OpenAI Codex, managed tree mode, and the `proof_state_compiler` runtime profile
-are the proof-node defaults. The interleaved runner separately defaults to
-Claude for its outer agent and Codex for its inner proof nodes, as configured
-in `workflow/interleaved/agent_profiles.json`.
+are the proof-node defaults. New interleaved runs also default to Codex for
+both the outer agent and inner proof nodes. Their model and effort settings
+come from [`workflow/interleaved/agent_profiles.json`](../workflow/interleaved/agent_profiles.json).
+Claude is available for either role through an explicit provider selection.
 The goal-only no-compiler profile is an experiment control.
 Compiler features are independently removable vertical slices with atomic
 off/audit/treatment activation. EasyCrypt owns parsing, typing, resolution,

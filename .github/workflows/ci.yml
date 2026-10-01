@@ -16,62 +16,22 @@ concurrency:
 jobs:
   test:
     # Runs in the public repository. In the development repository it runs
-    # only on ci-trial/* branches, which exist to validate this workflow.
+    # only on ci-trial/* branches, where release candidates are validated
+    # before main advances.
     if: >-
       github.repository == 'SkyShannonProver/shannon-prover'
       || startsWith(github.ref, 'refs/heads/ci-trial/')
     runs-on: ubuntu-24.04
     timeout-minutes: 150
-    env:
-      Z3_VERSION: "4.15.4"
-      CVC5_VERSION: "1.2.1"
-      ALT_ERGO_VERSION: "2.4.3"
     steps:
       - uses: actions/checkout@v4
 
       - uses: astral-sh/setup-uv@v6
 
-      - name: Install build tools
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y opam build-essential m4 pkg-config \
-            libgmp-dev zlib1g-dev unzip
-
-      - name: Install Z3 and CVC5
-        run: |
-          mkdir -p "$HOME/.local/bin" /tmp/solvers
-          cd /tmp/solvers
-          curl -fsSL -o z3.zip \
-            "https://github.com/Z3Prover/z3/releases/download/z3-${Z3_VERSION}/z3-${Z3_VERSION}-x64-glibc-2.39.zip"
-          curl -fsSL -o cvc5.zip \
-            "https://github.com/cvc5/cvc5/releases/download/cvc5-${CVC5_VERSION}/cvc5-Linux-x86_64-static.zip"
-          unzip -q z3.zip && unzip -q cvc5.zip
-          install -m 755 "$(find . -path '*/bin/z3' -type f | head -1)" "$HOME/.local/bin/z3"
-          install -m 755 "$(find . -path '*/bin/cvc5' -type f | head -1)" "$HOME/.local/bin/cvc5"
-          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
-
-      - name: Restore the EasyCrypt toolchain
-        uses: actions/cache@v4
-        with:
-          path: .toolchains
-          key: easycrypt-${{ runner.os }}-${{ hashFiles('core/easycrypt/easycrypt.lock.json') }}-alt-ergo-${{ env.ALT_ERGO_VERSION }}
-
       - name: Install Python dependencies
-        run: uv sync
+        run: uv sync --frozen
 
-      - name: Build EasyCrypt
-        run: uv run python tools/bootstrap_easycrypt.py
-
-      - name: Add Alt-Ergo to the managed switch
-        run: |
-          read -r ROOT SWITCH < <(uv run python -c \
-            "from core.easycrypt.toolchain import managed_opam_root, managed_switch_name; print(managed_opam_root(), managed_switch_name())")
-          opam install --yes --root "$ROOT" --switch "$SWITCH" "alt-ergo.${ALT_ERGO_VERSION}"
-
-      - name: Refresh the solver configuration and verify EasyCrypt
-        run: |
-          uv run python tools/bootstrap_easycrypt.py
-          uv run python tools/bootstrap_easycrypt.py --verify-only
+      - uses: ./.github/actions/easycrypt-toolchain
 
       - name: Run the test suite
         run: uv run python -m pytest -q tests

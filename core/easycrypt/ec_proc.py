@@ -9,9 +9,8 @@ and the documented shared-``/tmp/why3ec.sock`` confound). Centralizing the argv
 here keeps the include flags + why3 wiring identical everywhere and gives one
 place to evolve how EasyCrypt is launched.
 
-Pure stdlib + no sibling imports, so it loads both as ``core.easycrypt.ec_proc``
-(package import) and as a bare ``ec_proc`` (when ``ec_daemon.py`` runs as a
-script with ``core/easycrypt`` on ``sys.path``).
+The environment helper is loaded when constructing a command, after backend
+entry points have made the repository package importable.
 
 The legacy ``repl.py`` pexpect lineage is intentionally NOT routed through here:
 it is a deprecated, isolated path with its own (abspath) include handling used
@@ -50,7 +49,9 @@ def emacs_command(
     socket never turns into a hard ``-server`` connect failure — then ``-I
     <dir>`` per include dir, then any ``extra_args``.
     """
-    cmd = ["easycrypt", "-emacs"]
+    from core.easycrypt.ec_env import easycrypt_command
+
+    cmd = easycrypt_command("-emacs")
     if why3_socket and os.path.exists(why3_socket):
         cmd.extend(["-server", why3_socket])
     for d in include_dirs or ():

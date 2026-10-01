@@ -76,12 +76,13 @@ def _preflight_target_loads(
     include_dirs = [str(Path(ec_file).parent)]
     if include_dir and include_dir not in include_dirs:
         include_dirs.append(include_dir)
-    ec_cmd = ["easycrypt"]
+    from core.easycrypt.ec_env import easycrypt_command, get_ec_env
+
+    ec_cmd = easycrypt_command()
     for d in include_dirs:
         ec_cmd += ["-I", d]
     ec_cmd.append(ec_file)
     try:
-        from core.easycrypt.ec_env import get_ec_env
         proc = subprocess.run(
             ec_cmd, capture_output=True, text=True,
             timeout=timeout, env=get_ec_env(),

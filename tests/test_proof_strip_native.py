@@ -4,17 +4,17 @@ import subprocess
 
 import pytest
 
-from core.easycrypt.ec_env import get_ec_env
+from core.easycrypt.ec_env import easycrypt_command, get_ec_env
 from core.easycrypt.eval_source_prep import prepare_eval_source
 from core.easycrypt.proof_strip import replace_proofs
 
 ROOT = Path(__file__).resolve().parents[1]
 
 
-def native_load(path: Path) -> None:
+def native_load(path: Path, *, cwd: Path = ROOT) -> None:
     result = subprocess.run(
-        ["easycrypt", "-timeout", "10", str(path)], env=get_ec_env(),
-        cwd=ROOT, capture_output=True, text=True, timeout=60,
+        easycrypt_command("-timeout", "10", str(path)), env=get_ec_env(),
+        cwd=cwd, capture_output=True, text=True, timeout=60,
     )
     assert result.returncode == 0, result.stdout + result.stderr
 
@@ -22,7 +22,11 @@ def native_load(path: Path) -> None:
 def test_native_mlkem_clone_survives_actual_eval_source_preparation(tmp_path):
     original = ROOT / "tests/fixtures/proof_strip/mlkem_clone.ec"
     before = original.read_bytes()
-    native_load(original)  # The unmodified fixture must itself be valid EasyCrypt.
+    # A valid ambient user config must not conceal an unbound native invocation.
+    (tmp_path / "easycrypt.project").write_text(
+        "[general]\nwhy3conf = /missing/proof-strip-why3.conf\n"
+    )
+    native_load(original, cwd=tmp_path)  # The original fixture must itself be valid.
     prepared = prepare_eval_source(source_file=original, target_lemma="target",
                                    output_dir=tmp_path / "prepared")
     text = prepared.isolated_file.read_text()
@@ -30,7 +34,7 @@ def test_native_mlkem_clone_survives_actual_eval_source_preparation(tmp_path):
     assert "rewrite -List.size_eq0" not in text
     assert prepared.manifest["proofs_replaced_total"] == 2
     assert original.read_bytes() == before
-    native_load(prepared.isolated_file)
+    native_load(prepared.isolated_file, cwd=tmp_path)
     assert replace_proofs(text) == (text, 0)
 
 

@@ -17,6 +17,39 @@ from workflow.interleaved import verify as verifier
 ROOT = Path(__file__).resolve().parents[1]
 
 
+def test_native_verifiers_use_managed_solver_config_over_project_config(tmp_path, monkeypatch):
+    from core.easycrypt.ec_env import get_ec_env
+    from experiments.interleaved_shannon import verify_task as reference
+    import shutil
+
+    target = tmp_path / "Target.ec"
+    target.write_text("lemma L : true.\nproof. trivial. qed.\n")
+    config = tmp_path / "easycrypt.project"
+    config.write_text("[general]\nwhy3conf = /missing/project-why3.conf\n")
+    before = (config.read_bytes(), config.stat().st_mtime_ns)
+    environment = get_ec_env()
+    executable = shutil.which("easycrypt", path=environment["PATH"])
+    assert executable is not None
+
+    imported = verifier.verify_lemma_import(
+        root=tmp_path, candidate=target, lemma="L", target=target,
+        include_dirs=(), check_dir=tmp_path / "check",
+    )
+    assert imported["passed"], imported
+
+    project = InterleavedProject(target_file="Target.ec", final_lemma="L")
+    monkeypatch.setattr(reference, "TARGET_REL", Path("Target.ec"))
+    commands = [verifier._easycrypt_command(Path(executable), project)]
+    commands.extend(reference.easycrypt_command(Path(executable), mode=mode)
+                    for mode in ("preflight", "final", "check"))
+    commands.append(reference.easycrypt_command(Path(executable), mode="upto", upto="1"))
+    for command in commands:
+        checked = subprocess.run(command, cwd=tmp_path, env=environment,
+                                 capture_output=True, text=True, timeout=30)
+        assert checked.returncode == 0, (command, checked.stdout, checked.stderr)
+    assert (config.read_bytes(), config.stat().st_mtime_ns) == before
+
+
 def test_scheduler_does_not_own_native_verification():
     source = (ROOT / "workflow/interleaved/jobs.py").read_text()
     tree = ast.parse(source)

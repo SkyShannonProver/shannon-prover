@@ -5,7 +5,7 @@ proof-state compiler is a clean rewrite. Do not restore the retired rich panel,
 text-derived semantic analysis pipeline, inspect menu, or compatibility
 profiles.
 
-Private repository lifecycle and release work follows RELEASING.md when present.
+Maintainer branch and release work follows RELEASING.md where that file exists.
 
 ## Non-negotiable boundaries
 
@@ -16,8 +16,10 @@ Private repository lifecycle and release work follows RELEASING.md when present.
 - The agent interacts with proof state only through the manager-owned
   `submit_proof_intent` MCP tool. `session_cli.py`, sockets, tokens, and raw
   session artifacts are backend/private.
-- OpenAI Codex is the default proof-node agent. Claude is available only when
-  an experiment explicitly selects it.
+- OpenAI Codex is the default proof-node agent. New interleaved runs also
+  default to Codex for both outer and inner roles, as configured in
+  `workflow/interleaved/agent_profiles.json` when that product is included.
+  Claude is available through an explicit provider selection.
 - Only managed tree mode is current. Do not add fallback routing for retired
   run modes or surface profiles.
 
@@ -141,8 +143,8 @@ certification, and admission work:
 
 Feature removal must not require changes to manager, service, shared pass
 driver, renderer, or another feature. Strategy-selecting outputs are not
-present on `main`. The frozen proactive M05 slice is maintained only on the
-private `compiler-proactive` branch.
+present on `main`; proactive compiler features are developed on a separate
+maintainer branch.
 
 ## EasyCrypt-native semantic boundary
 
@@ -189,7 +191,9 @@ EasyCrypt is repository-locked to `r2026.06`. Bootstrap or verify it with
 entry points select this managed environment through `core/easycrypt/ec_env.py`
 and never fall back to an ambient opam switch. Use
 `eval "$(uv run python tools/bootstrap_easycrypt.py --print-env)"` only for a
-developer command that invokes `easycrypt` directly. When SMT/Why3 is blocked
+developer command that invokes `easycrypt` directly; that command must also pass
+`-why3 "$SHANNON_WHY3_CONFIG"`. Python entry points bind this configuration
+automatically. When SMT/Why3 is blocked
 by the OS sandbox, run the bounded backend check with the required permission
 rather than adding semantic fallbacks.
 
@@ -232,5 +236,5 @@ After any terminal/session/tree/finalization change, also run the no-model
 `workflow.validation.proof_terminal_outcome_sentinel` before a live agent
 experiment.
 
-Commands and remote-run discipline live in the private-side testing
-procedure (`TESTING.md` on the private trunk; not part of the public tree).
+Commands and remote-run discipline live in the maintainers' testing
+procedure (`TESTING.md`, not part of the public tree).

@@ -67,13 +67,13 @@ homepage, benchmark browser and public bundles, creates both manifests, and
 checks that every listed run has a readable timeline. It generates browser
 sidecars in the output, without modifying captured source bundles.
 
-Use the public export procedure first when working in the private repository.
-The builder refuses the private checkout. Serving the raw `website/` directory
-does not provide `results/`; that route exists only in the assembled site.
-GitHub Pages uses this same builder, including when mounted below the
+Run the builder from a public checkout; it refuses a development checkout that
+has not been exported. Serving the raw `website/` directory does not provide
+`results/`; that route exists only in the assembled site. The published site on
+the `gh-pages` branch is the output of this same builder, served below the
 `/shannon-prover/` project prefix.
 
-### Local review of new case studies (private checkout only)
+### Local review of new case studies (development checkout only)
 
 To review uncommitted website changes and an explicitly curated local proof
 catalog without publishing or changing the public export policy:
@@ -84,7 +84,7 @@ python3 bundle_browser/build_site.py --local-preview \
 python3 -m http.server 8000 --bind 127.0.0.1 --directory artifacts/site-review
 ```
 
-The ordinary builder still refuses a private checkout. `--local-preview` is an
+The ordinary builder still refuses a development checkout. `--local-preview` is an
 explicit opt-in; it continues to include only public-tier single-node bundles.
 Default builds use only the reviewed catalog in `bundle_browser/case_studies/`.
 Its publication marker, source hashes and explicit input list are checked.
@@ -133,16 +133,8 @@ The builder validates structure and navigation, not the truth of the narrative.
 The reviewed case directory contains only the selected final sources and
 curated process text; raw run directories and reviewer packs are not shipped.
 
-The private website-only branch has no compiler dependency. Never merge or
-rebase compiler/main into it. Its release is selected by exact website snapshot;
-see RELEASING.md in the private checkout.
-
-Run the browser-specific checks from the private website checkout:
-
-```bash
-python3 -m pytest -q bundle_browser/tests/test_proof_library.py
-node --test bundle_browser/tests/proof_browser.test.cjs
-```
+The browser regression tests run in the website's own CI and are not part of
+the public tree.
 
 ## Browse local proof bundles only
 
