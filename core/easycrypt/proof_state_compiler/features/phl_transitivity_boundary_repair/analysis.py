@@ -16,6 +16,7 @@ from core.easycrypt.proof_state_compiler.compound_boundary_text import (
     checked_goal_reference,
 )
 from .feature import PHL_TRANSITIVITY_BOUNDARY_REPAIR_FEATURE_ID
+from .realization import phl_transitivity_boundary_of
 
 
 PHL_TRANSITIVITY_BOUNDARY_ANALYSIS_PRODUCER_ID = (
@@ -32,7 +33,7 @@ def analyze_phl_transitivity_boundary(
     descriptor = (
         None
         if attempted is None
-        else attempted.phl_transitivity_boundary_descriptor
+        else phl_transitivity_boundary_of(attempted)
     )
     if (
         attempted is None

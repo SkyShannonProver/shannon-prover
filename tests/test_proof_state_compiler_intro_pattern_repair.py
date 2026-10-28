@@ -12,7 +12,6 @@ from core.easycrypt.proof_state_compiler.backend import admit_action_surface
 from core.easycrypt.proof_state_compiler.contracts import (
     CertificationResult,
     CompilerTurnEvidence,
-    NativeIntroPatternRepairDescriptor,
     TargetRef,
     TransitionRef,
     compiler_invocation_context,
@@ -35,6 +34,9 @@ from tests.proof_state_compiler_test_support import (
 from workflow.proof_state_compiler.activation import (
     AUDIT,
     TREATMENT,
+)
+from core.easycrypt.proof_state_compiler.features.intro_pattern_repair.realization import (
+    NativeIntroPatternRepairDescriptor,
 )
 
 

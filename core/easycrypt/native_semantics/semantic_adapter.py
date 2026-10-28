@@ -30,8 +30,12 @@ from core.easycrypt.native_semantics.companion import (
 from core.easycrypt.session.session_projection import active_goal_hash_from_raw
 
 
-NATIVE_SEMANTIC_PROTOCOL_VERSION = 19
+NATIVE_SEMANTIC_PROTOCOL_VERSION = 20
 _SHA256_RE = re.compile(r"^[0-9a-f]{64}$")
+# A realization kind is owned by one feature: ``<feature_id>.<name>``.
+_REALIZATION_KIND_RE = re.compile(r"^[a-z][a-z0-9_]*\.[a-z][a-z0-9_]*$")
+_OPERATION_FAMILY_RE = re.compile(r"^[a-z][a-z_]*$")
+_MAX_REALIZER_KINDS = 32
 _QUERY_KINDS = frozenset({
     "proof_term_elaboration",
     "attempt_diagnostic",
@@ -41,6 +45,20 @@ _QUERY_KINDS = frozenset({
 })
 _STATUSES = frozenset({"accepted", "rejected"})
 _SOURCE_DIR = Path(__file__).resolve().parent
+
+
+def _valid_realizer_kinds(value: object) -> bool:
+    """The kinds an attempt diagnosis may realize: sorted, unique, owned."""
+
+    return (
+        type(value) is list
+        and len(value) <= _MAX_REALIZER_KINDS
+        and all(
+            type(item) is str and _REALIZATION_KIND_RE.fullmatch(item)
+            for item in value
+        )
+        and value == sorted(set(value))
+    )
 
 
 def _valid_qualified_symbol(value: object) -> bool:
@@ -410,9 +428,11 @@ def validate_native_query_payload(
             raise ValueError("native proof-term payload requires exact application")
         return
     if query_kind == "attempt_diagnostic":
-        expected = {"rejected_tactic", "observed_outcome_kind"}
+        expected = {"rejected_tactic", "observed_outcome_kind", "realizer_kinds"}
         if set(payload) != expected:
             raise ValueError("native diagnostic payload fields are invalid")
+        if not _valid_realizer_kinds(payload.get("realizer_kinds")):
+            raise ValueError("native diagnostic realizer kinds are invalid")
         tactic = payload.get("rejected_tactic")
         if type(tactic) is not str or not tactic or tactic != tactic.strip():
             raise ValueError("native diagnostic payload requires exact tactic")
@@ -461,7 +481,9 @@ def validate_native_query_payload(
         return
     if query_kind != "tactic_prefix_diagnostic":
         raise ValueError("native semantic query kind is unsupported")
-    if set(payload) != {"rejected_tactic", "candidate_prefixes"}:
+    if set(payload) != {
+        "rejected_tactic", "candidate_prefixes", "realizer_kinds"
+    } or not _valid_realizer_kinds(payload.get("realizer_kinds")):
         raise ValueError("native tactic-prefix payload fields are invalid")
     tactic = payload.get("rejected_tactic")
     prefixes = payload.get("candidate_prefixes")
@@ -570,6 +592,7 @@ def validate_tactic_prefix_descriptor(
                 payload={
                     "rejected_tactic": boundary_tactic,
                     "observed_outcome_kind": "rejected",
+                    "realizer_kinds": query.payload.get("realizer_kinds"),
                 },
             ),
         )
@@ -595,21 +618,12 @@ def validate_attempt_descriptor(
         "goal_kind",
         "application_head",
         "proof_term",
-        "relation_bridge",
-        "relation_bridge_choice",
-        "phl_transitivity_boundary",
-        "eager_while_dialect",
-        "pure_tail_rewrite",
-        "intro_pattern_realization",
-        "application_syntax_repair",
+        "realization",
     }
     if set(value) != required:
         raise RuntimeError("native attempted-operation descriptor fields are invalid")
     family = value.get("operation_family")
-    if family not in {
-        "apply", "exact", "call", "conseq", "transitivity", "change",
-        "eager", "rewrite", "intro_pattern",
-    }:
+    if type(family) is not str or not _OPERATION_FAMILY_RE.fullmatch(family):
         raise RuntimeError("native attempted-operation family is invalid")
     if value.get("rejected_tactic") != query.payload.get("rejected_tactic"):
         raise RuntimeError("native attempted-operation tactic identity drifted")
@@ -663,13 +677,6 @@ def validate_attempt_descriptor(
         raise RuntimeError("native attempted-operation goal kind is invalid")
     proof_term = value.get("proof_term")
     application_head = value.get("application_head")
-    relation_bridge = value.get("relation_bridge")
-    relation_bridge_choice = value.get("relation_bridge_choice")
-    phl_boundary = value.get("phl_transitivity_boundary")
-    eager_while = value.get("eager_while_dialect")
-    pure_tail_rewrite = value.get("pure_tail_rewrite")
-    intro_pattern_realization = value.get("intro_pattern_realization")
-    application_syntax = value.get("application_syntax_repair")
     if application_head is not None:
         if type(application_head) is not dict or not resource:
             raise RuntimeError("native attempted-operation head is invalid")
@@ -684,455 +691,25 @@ def validate_attempt_descriptor(
             raise RuntimeError("native attempted-operation proof term is invalid")
         value = dict(value)
         value["proof_term"] = validate_proof_term_descriptor(proof_term)
-    if relation_bridge is not None:
-        if type(relation_bridge) is not dict or family not in {
-            "transitivity", "change"
-        } or resource or proof_term is not None or application_head is not None:
-            raise RuntimeError("native attempted relation bridge is invalid")
-        value = dict(value)
-        value["relation_bridge"] = validate_relation_bridge_descriptor(
-            relation_bridge,
-            source_operation=str(family),
-        )
-    if relation_bridge_choice is not None:
+    realization = value.get("realization")
+    if realization is not None:
+        # Feature-neutral envelope only.  The feature that owns the kind
+        # reads its payload and checks it against this attempt in the
+        # compiler, where an inconsistency fails closed.
         if (
-            type(relation_bridge_choice) is not dict
-            or family != "transitivity"
-            or resource
-            or proof_term is not None
-            or application_head is not None
-            or relation_bridge is not None
+            type(realization) is not dict
+            or set(realization) != {"kind", "failure_kind", "payload"}
+            or realization.get("kind")
+            not in (query.payload.get("realizer_kinds") or ())
+            or type(realization.get("payload")) is not dict
+            or not realization.get("payload")
         ):
-            raise RuntimeError("native attempted relation choice is invalid")
-        value = dict(value)
-        value["relation_bridge_choice"] = (
-            validate_relation_bridge_choice_descriptor(
-                relation_bridge_choice,
-                source_operation=str(family),
-            )
-        )
-    if phl_boundary is not None:
+            raise RuntimeError("native attempt realization is invalid")
         if (
-            type(phl_boundary) is not dict
-            or family != "transitivity"
-            or resource
-            or proof_term is not None
-            or application_head is not None
-            or relation_bridge is not None
-            or relation_bridge_choice is not None
+            diagnostic_status != "blocker"
+            or realization.get("failure_kind") != failure_kind
         ):
-            raise RuntimeError("native attempted PHL boundary is invalid")
-        value = dict(value)
-        value["phl_transitivity_boundary"] = (
-            validate_phl_transitivity_boundary_descriptor(phl_boundary)
-        )
-    if eager_while is not None:
-        if (
-            type(eager_while) is not dict
-            or family != "eager"
-            or resource
-            or proof_term is not None
-            or application_head is not None
-            or relation_bridge is not None
-            or relation_bridge_choice is not None
-            or phl_boundary is not None
-            or value.get("side")
-            or value.get("positions")
-        ):
-            raise RuntimeError("native attempted eager dialect is invalid")
-        value = dict(value)
-        value["eager_while_dialect"] = validate_eager_while_descriptor(
-            eager_while
-        )
-    if pure_tail_rewrite is not None:
-        if (
-            type(pure_tail_rewrite) is not dict
-            or family != "rewrite"
-            or not resource
-            or proof_term is not None
-            or application_head is not None
-            or relation_bridge is not None
-            or relation_bridge_choice is not None
-            or phl_boundary is not None
-            or eager_while is not None
-            or value.get("side")
-            or value.get("positions")
-        ):
-            raise RuntimeError("native attempted pure-tail rewrite is invalid")
-        value = dict(value)
-        value["pure_tail_rewrite"] = validate_pure_tail_rewrite_descriptor(
-            pure_tail_rewrite,
-            selected_resource=str(resource),
-        )
-    if intro_pattern_realization is not None:
-        if (
-            type(intro_pattern_realization) is not dict
-            or family != "intro_pattern"
-            or resource
-            or proof_term is not None
-            or application_head is not None
-            or relation_bridge is not None
-            or relation_bridge_choice is not None
-            or phl_boundary is not None
-            or eager_while is not None
-            or pure_tail_rewrite is not None
-            or application_syntax is not None
-            or value.get("side")
-            or value.get("positions")
-        ):
-            raise RuntimeError("native attempted intro-pattern repair is invalid")
-        value = dict(value)
-        value["intro_pattern_realization"] = (
-            validate_intro_pattern_realization_descriptor(
-                intro_pattern_realization
-            )
-        )
-    if application_syntax is not None:
-        if (
-            type(application_syntax) is not dict
-            or family != "call"
-            or not resource
-            or proof_term is not None
-            or application_head is None
-            or relation_bridge is not None
-            or relation_bridge_choice is not None
-            or phl_boundary is not None
-            or eager_while is not None
-            or pure_tail_rewrite is not None
-            or intro_pattern_realization is not None
-            or value.get("argument_kinds")
-            or value.get("side")
-            or value.get("positions")
-        ):
-            raise RuntimeError(
-                "native application syntax repair changed attempted identity"
-            )
-        value = dict(value)
-        value["application_syntax_repair"] = (
-            validate_application_syntax_repair_descriptor(
-                application_syntax,
-                selected_resource=str(resource),
-            )
-        )
-    return dict(value)
-
-
-def validate_intro_pattern_realization_descriptor(
-    value: dict[str, Any],
-) -> dict[str, Any]:
-    required = {
-        "source_operation",
-        "surface_operation",
-        "attempted_pattern_kind",
-        "binder_names",
-        "candidate_tactic",
-        "failure_kind",
-        "selected_pattern_count",
-    }
-    binders = value.get("binder_names")
-    candidate = value.get("candidate_tactic")
-    if (
-        set(value) != required
-        or value.get("source_operation") != "intro_pattern"
-        or value.get("surface_operation") != "move"
-        or value.get("attempted_pattern_kind") != "nested_case"
-        or type(binders) is not list
-        or not 2 <= len(binders) <= 32
-        or len(binders) != len(set(binders))
-        or any(type(item) is not str or not item for item in binders)
-        or type(candidate) is not str
-        or not candidate.endswith(".")
-        or value.get("failure_kind")
-        != "intro_pattern_structure_mismatch"
-        or value.get("selected_pattern_count") != 1
-    ):
-        raise RuntimeError("native intro-pattern repair identity is invalid")
-    return dict(value)
-
-
-def validate_application_syntax_repair_descriptor(
-    value: dict[str, Any],
-    *,
-    selected_resource: str,
-) -> dict[str, Any]:
-    required = {
-        "source_operation",
-        "selected_resource",
-        "module_argument_position",
-        "module_term_text",
-        "candidate_application_term",
-        "candidate_tactic",
-        "candidate_argument_kinds",
-        "failure_kind",
-        "resolved_candidate_count",
-    }
-    if set(value) != required:
-        raise RuntimeError("native application syntax repair fields are invalid")
-    module_term = value.get("module_term_text")
-    application = value.get("candidate_application_term")
-    tactic = value.get("candidate_tactic")
-    arguments = value.get("candidate_argument_kinds")
-    if (
-        value.get("source_operation") != "call"
-        or value.get("selected_resource") != selected_resource
-        or value.get("module_argument_position") != 1
-        or type(module_term) is not str
-        or not module_term
-        or type(application) is not str
-        or not application.startswith(selected_resource + " ")
-        or f"(<: {module_term})" not in application
-        or tactic != f"call ({application})."
-        or type(arguments) is not list
-        or not arguments
-        or arguments[0] != "module"
-        or any(type(item) is not str or not item for item in arguments)
-        or value.get("failure_kind")
-        != "application_module_argument_syntax"
-        or value.get("resolved_candidate_count") != 1
-        or any(
-            token in tactic
-            for token in (";", "\n", "\r", '"', "(*", "*)", "|")
-        )
-    ):
-        raise RuntimeError("native application syntax repair is invalid")
-    return dict(value)
-
-
-def validate_pure_tail_rewrite_descriptor(
-    value: dict[str, Any],
-    *,
-    selected_resource: str,
-) -> dict[str, Any]:
-    required = {
-        "source_operation",
-        "selected_resource",
-        "target_kind",
-        "target_name",
-        "candidate_tactic",
-        "failure_kind",
-        "accepted_target_count",
-    }
-    if set(value) != required:
-        raise RuntimeError("native pure-tail rewrite fields are invalid")
-    target_name = value.get("target_name")
-    if (
-        value.get("source_operation") != "rewrite"
-        or value.get("selected_resource") != selected_resource
-        or value.get("target_kind") != "hypothesis"
-        or type(target_name) is not str
-        or not target_name
-        or value.get("candidate_tactic")
-        != f"rewrite {selected_resource} in {target_name}."
-        or value.get("failure_kind") != "rewrite_target_mismatch"
-        or value.get("accepted_target_count") != 1
-    ):
-        raise RuntimeError("native pure-tail rewrite identity is invalid")
-    return dict(value)
-
-
-def validate_relation_bridge_descriptor(
-    value: dict[str, Any],
-    *,
-    source_operation: str,
-) -> dict[str, Any]:
-    required = {
-        "source_operation",
-        "relation_family",
-        "intermediate_text",
-        "intermediate_type",
-        "candidate_tactic",
-        "failure_kind",
-        "source_target_present",
-        "source_target_convertible_to_current_goal",
-        "source_target_right_convertible_to_current_right",
-    }
-    if set(value) != required or value.get("source_operation") != source_operation:
-        raise RuntimeError("native relation-bridge identity is invalid")
-    relation_family = value.get("relation_family")
-    if relation_family not in {"real_le", "int_le"}:
-        raise RuntimeError("native relation-bridge family is unsupported")
-    for field in (
-        "intermediate_text",
-        "intermediate_type",
-        "candidate_tactic",
-        "failure_kind",
-    ):
-        if type(value.get(field)) is not str or not value.get(field):
-            raise RuntimeError("native relation-bridge text is incomplete")
-    if not str(value["candidate_tactic"]).endswith("."):
-        raise RuntimeError("native relation-bridge candidate is not a tactic")
-    expected_failure = {
-        "transitivity": "formula_transitivity_surface_mismatch",
-        "change": "change_target_not_convertible",
-    }[source_operation]
-    expected_type, certificate_family = {
-        "real_le": ("real", "ler_trans"),
-        "int_le": ("int", "Int.lez_trans"),
-    }[relation_family]
-    expected_candidate = (
-        f"apply ({certificate_family} {value['intermediate_text']}); first last."
-    )
-    if (
-        value["intermediate_type"] != expected_type
-        or value["failure_kind"] != expected_failure
-        or value["candidate_tactic"] != expected_candidate
-        or (relation_family == "int_le" and source_operation != "transitivity")
-    ):
-        raise RuntimeError("native relation-bridge certificate is invalid")
-    flags = tuple(
-        value.get(field)
-        for field in (
-            "source_target_present",
-            "source_target_convertible_to_current_goal",
-            "source_target_right_convertible_to_current_right",
-        )
-    )
-    if any(type(flag) is not bool for flag in flags):
-        raise RuntimeError("native relation-bridge flags are invalid")
-    if source_operation == "transitivity" and any(flags):
-        raise RuntimeError("transitivity bridge claimed a change target")
-    if source_operation == "change" and flags != (True, False, True):
-        raise RuntimeError("change bridge lacks convertibility evidence")
-    return dict(value)
-
-
-def validate_relation_bridge_choice_descriptor(
-    value: dict[str, Any],
-    *,
-    source_operation: str,
-) -> dict[str, Any]:
-    required = {
-        "source_operation",
-        "relation_family",
-        "goal_left_text",
-        "intermediate_text",
-        "goal_right_text",
-        "intermediate_type",
-        "failure_kind",
-        "choices",
-    }
-    if set(value) != required or value.get("source_operation") != source_operation:
-        raise RuntimeError("native relation-choice identity is invalid")
-    if (
-        source_operation != "transitivity"
-        or value.get("relation_family") != "real_lt"
-        or value.get("intermediate_type") != "real"
-        or value.get("failure_kind")
-        != "formula_transitivity_surface_mismatch"
-    ):
-        raise RuntimeError("native relation-choice family is unsupported")
-    for field in ("goal_left_text", "intermediate_text", "goal_right_text"):
-        if type(value.get(field)) is not str or not value.get(field):
-            raise RuntimeError("native relation-choice text is incomplete")
-    choices = value.get("choices")
-    expected = (
-        ("ler_lt_trans", "<=", "<"),
-        ("ltr_le_trans", "<", "<="),
-        ("ltr_trans", "<", "<"),
-    )
-    if type(choices) is not list or len(choices) != len(expected):
-        raise RuntimeError("native relation choices are incomplete")
-    intermediate = value["intermediate_text"]
-    for item, (family, left_relation, right_relation) in zip(choices, expected):
-        if type(item) is not dict or set(item) != {
-            "certificate_family",
-            "left_relation",
-            "right_relation",
-            "candidate_tactic",
-        }:
-            raise RuntimeError("native relation choice fields are invalid")
-        if item != {
-            "certificate_family": family,
-            "left_relation": left_relation,
-            "right_relation": right_relation,
-            "candidate_tactic": (
-                f"apply ({family} {intermediate}); first last."
-            ),
-        }:
-            raise RuntimeError("native relation choice is not canonical")
-    return dict(value)
-
-
-def validate_phl_transitivity_boundary_descriptor(
-    value: dict[str, Any],
-) -> dict[str, Any]:
-    required = {
-        "source_operation",
-        "attempted_form",
-        "current_goal_form",
-        "side",
-        "failure_kind",
-    }
-    attempted_form = value.get("attempted_form")
-    current_goal_form = value.get("current_goal_form")
-    side = value.get("side")
-    if (
-        set(value) != required
-        or value.get("source_operation") != "transitivity"
-        or attempted_form not in {"function", "statement"}
-        or current_goal_form not in {"function", "statement"}
-        or attempted_form == current_goal_form
-        or side not in {"", "left", "right"}
-        or (attempted_form == "function" and side)
-        or (attempted_form == "statement" and not side)
-        or value.get("failure_kind") != "phl_transitivity_boundary_mismatch"
-    ):
-        raise RuntimeError("native PHL transitivity boundary is invalid")
-    return dict(value)
-
-
-def validate_eager_while_descriptor(
-    value: dict[str, Any],
-) -> dict[str, Any]:
-    required = {
-        "source_operation",
-        "eager_subform",
-        "attempted_shape",
-        "failure_kind",
-        "candidates",
-    }
-    attempted_shape = value.get("attempted_shape")
-    failure_kind = value.get("failure_kind")
-    candidates = value.get("candidates")
-    if (
-        set(value) != required
-        or value.get("source_operation") != "eager"
-        or value.get("eager_subform") != "while"
-        or attempted_shape not in {
-            "explicit_statement_contract", "invariant"
-        }
-        or failure_kind not in {
-            "eager_while_dialect_mismatch",
-            "eager_while_guard_mismatch",
-        }
-        or type(candidates) is not list
-        or len(candidates) > 2
-    ):
-        raise RuntimeError("native eager-while descriptor is incomplete")
-    if failure_kind == "eager_while_dialect_mismatch" and (
-        attempted_shape != "explicit_statement_contract"
-    ):
-        raise RuntimeError("native eager dialect mismatch has the wrong shape")
-    if failure_kind == "eager_while_guard_mismatch" and (
-        attempted_shape != "invariant" or candidates
-    ):
-        raise RuntimeError("native eager guard mismatch carried candidates")
-    seen: set[tuple[str, str]] = set()
-    for item in candidates:
-        if type(item) is not dict or set(item) != {
-            "invariant_text", "candidate_tactic"
-        }:
-            raise RuntimeError("native eager-while candidate fields are invalid")
-        invariant = item.get("invariant_text")
-        tactic = item.get("candidate_tactic")
-        if (
-            type(invariant) is not str
-            or not invariant
-            or tactic != f"eager while ({invariant})."
-            or (invariant, tactic) in seen
-        ):
-            raise RuntimeError("native eager-while candidate is invalid")
-        seen.add((invariant, tactic))
+            raise RuntimeError("native realization does not explain the blocker")
     return dict(value)
 
 

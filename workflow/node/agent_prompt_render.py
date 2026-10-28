@@ -15,6 +15,9 @@ from workflow.proof_management.common import _drop_empty
 from core.context_intents import (
     persistent_control_specs,
 )
+from workflow.proof_state_compiler.profile_registry import (
+    profile_exposes_compiler_output,
+)
 from workflow.proof_state_compiler.runtime_profiles import (
     resolve_runtime_surface_profile,
 )
@@ -117,9 +120,14 @@ def render_long_lived_agent_prompt(
         if compact_pointer.strip():
             tail += f"\n\n{compact_pointer.strip()}"
     else:
+        surface_label = (
+            "the current compiler profile"
+            if _exposes_compiler_output(surface_profile)
+            else "the current proof surface"
+        )
         tail = (
             "The original prover prompt follows — your specific lemma, the file, "
-            "and the current compiler profile.\n\n---\n\n"
+            f"and {surface_label}.\n\n---\n\n"
             f"{profile_safe_prompt}"
         )
     return f"""# Long-Lived Prover Agent Runtime
@@ -247,7 +255,12 @@ def _profile_safe_original_prompt(
         blocks = [head.rstrip()]
         if handoff:
             blocks.append(handoff)
-        blocks.append(_profile_safe_protocol(tool_name=tool_name))
+        blocks.append(
+            _profile_safe_protocol(
+                tool_name=tool_name,
+                compiler_output_visible=_exposes_compiler_output(surface_profile),
+            )
+        )
         return "\n\n".join(block for block in blocks if block)
     cut_markers = [
         "\n## What you can reason about vs what you need EC for",
@@ -257,13 +270,27 @@ def _profile_safe_original_prompt(
     cut_points = [prompt.find(marker) for marker in cut_markers]
     cut_points = [point for point in cut_points if point >= 0]
     head = prompt[: min(cut_points)].rstrip() if cut_points else prompt.rstrip()
-    return head + "\n\n" + _profile_safe_protocol(tool_name=tool_name)
+    return head + "\n\n" + _profile_safe_protocol(
+        tool_name=tool_name,
+        compiler_output_visible=_exposes_compiler_output(surface_profile),
+    )
 
 
-def _profile_safe_protocol(*, tool_name: str) -> str:
+def _exposes_compiler_output(surface_profile: str | None) -> bool:
+    """L1 and hidden-audit arms get a prompt that never names a compiler."""
+
+    return profile_exposes_compiler_output(surface_profile)
+
+
+def _profile_safe_protocol(
+    *,
+    tool_name: str,
+    compiler_output_visible: bool = True,
+) -> str:
+    surface_kind = "compiler profile" if compiler_output_visible else "proof surface"
     return f"""## Profile-Safe Proof Protocol
 
-This compiler profile is part of the experiment contract. Treat intents absent
+This {surface_kind} is part of the experiment contract. Treat intents absent
 from the current surface as unavailable.
 
 Read the rendered `SurfaceTurnModel` as the authority for the current state.

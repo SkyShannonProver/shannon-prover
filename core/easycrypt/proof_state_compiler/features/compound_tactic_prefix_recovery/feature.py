@@ -84,14 +84,26 @@ def compound_tactic_prefix_recovery_feature_spec() -> FeatureSpec:
 
 
 def compound_tactic_prefix_recovery_feature() -> FeatureDefinition:
+    from core.easycrypt.proof_state_compiler.features.failed_commit import (
+        failed_commit_gate,
+    )
     from .analysis import analyze_compound_tactic_prefix_recovery
-    from .execution import COMPOUND_TACTIC_PREFIX_RECOVERY_EXECUTION_GATE
     from .native_attempt import plan_native_compound_prefix_attempt
     from .surface_lowering import lower_compound_tactic_prefix_recovery
+    from .syntax import compound_prefix_candidates
+
+    def has_prefix_candidates(tactic: str) -> bool:
+        return bool(compound_prefix_candidates(tactic))
 
     return FeatureDefinition(
         spec=compound_tactic_prefix_recovery_feature_spec(),
-        execution_gate=COMPOUND_TACTIC_PREFIX_RECOVERY_EXECUTION_GATE,
+        execution_gate=failed_commit_gate(
+            gate_id="owned_current_compound_tactic_failure",
+            prefilter=has_prefix_candidates,
+            not_prefiltered_reason="compound_tactic_not_prefiltered",
+            eligible_reason="candidate_compound_tactic_failure",
+            produces_recovery_handoff=True,
+        ),
         native_semantic_request_producers=(
             plan_native_compound_prefix_attempt,
         ),

@@ -2,11 +2,15 @@
 
 from __future__ import annotations
 
+import fcntl
 import hashlib
 import json
 import re
 import shutil
 import subprocess
+import time
+from collections.abc import Iterator
+from contextlib import contextmanager
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -123,6 +127,35 @@ class NativeCompanionIdentity:
         return hashlib.sha256(encoded).hexdigest()
 
 
+@contextmanager
+def _exclusive_build(deadline: float) -> Iterator[None]:
+    """Let one process at a time run dune in the shared companion tree.
+
+    dune exits with "Another Dune instance is currently running" instead of
+    waiting, so concurrent sessions in one checkout would otherwise fail
+    their native requests intermittently.  The binary is hashed under the
+    same lock so its identity matches the build that produced it.
+    """
+
+    build_dir = _SOURCE_DIR / "_build"
+    build_dir.mkdir(exist_ok=True)
+    with open(build_dir / ".shannon-companion-build.lock", "a") as handle:
+        while True:
+            try:
+                fcntl.flock(handle, fcntl.LOCK_EX | fcntl.LOCK_NB)
+                break
+            except BlockingIOError:
+                if time.monotonic() >= deadline:
+                    raise RuntimeError(
+                        "native companion build lock wait timed out"
+                    ) from None
+                time.sleep(0.05)
+        try:
+            yield
+        finally:
+            fcntl.flock(handle, fcntl.LOCK_UN)
+
+
 def build_and_identify_companion(
     executable_name: str,
     runtime_identity: EasyCryptRuntimeIdentity,
@@ -145,20 +178,23 @@ def build_and_identify_companion(
     if lock.native_adapter_abi != NATIVE_ADAPTER_ABI:
         raise RuntimeError("native companion implementation/lock ABI mismatch")
     executable = _SOURCE_DIR / "_build" / "default" / f"{executable_name}.exe"
-    build = subprocess.run(
-        [
-            dune,
-            "build",
-            f"./{executable_name}.exe",
-        ],
-        cwd=str(_SOURCE_DIR),
-        env=env,
-        capture_output=True,
-        text=True,
-        timeout=timeout,
-    )
-    if build.returncode != 0 or not executable.is_file():
-        raise RuntimeError("native companion build failed")
+    deadline = time.monotonic() + timeout
+    with _exclusive_build(deadline):
+        build = subprocess.run(
+            [
+                dune,
+                "build",
+                f"./{executable_name}.exe",
+            ],
+            cwd=str(_SOURCE_DIR),
+            env=env,
+            capture_output=True,
+            text=True,
+            timeout=max(1.0, deadline - time.monotonic()),
+        )
+        if build.returncode != 0 or not executable.is_file():
+            raise RuntimeError("native companion build failed")
+        companion_binary_sha256 = _sha256_file(executable)
     receipt = load_toolchain_receipt()
     library_dir = Path(_ocamlfind_query(ocamlfind, env, "%d"))
     library_archive = library_dir / "ecLib.cmxa"
@@ -175,7 +211,7 @@ def build_and_identify_companion(
         protocol_version=NATIVE_COMPANION_PROTOCOL_VERSION,
         easycrypt_toolchain_build_id=receipt.build_id,
         easycrypt_library_sha256=library_sha256,
-        companion_binary_sha256=_sha256_file(executable),
+        companion_binary_sha256=companion_binary_sha256,
         why3_config_sha256=_sha256_file(why3_config),
     )
 

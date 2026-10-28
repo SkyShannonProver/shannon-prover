@@ -145,12 +145,30 @@ class ClaudeEventNormalizer:
         value: Mapping[str, Any],
         base: Mapping[str, Any],
     ) -> EventNormalizationResult:
+        # When a safety classifier stops a response, the CLI closes the
+        # refused tool calls with error tool_results, then injects an isMeta
+        # user nudge and retries once (CLI 2.1.283 and 2.1.311). The nudge is
+        # CLI-authored content with no tool semantics; rejecting it killed the
+        # worker and forced a crash respawn (observed live 2026-10-26/27 on
+        # Opus 5.5 and Sonnet 5.5). It stays PASSIVE, so it is order-checked
+        # like assistant text and still fails closed after the terminal. Only
+        # CLI-marked (isMeta) text is accepted: any other user text in an
+        # agent stream is unexpected input and still fails closed.
+        injected = value.get("isMeta") is True
+        message = value.get("message")
+        if injected and isinstance(message, Mapping) and isinstance(
+            message.get("content"), str
+        ):
+            return _events(_injected_user_text(base))
         blocks, error = _message_blocks(value)
         if error:
             return EventNormalizationResult(violations=(error,))
         events: list[CanonicalAgentEvent] = []
         for block in blocks:
             block_type = block.get("type")
+            if block_type == "text" and injected:
+                events.append(_injected_user_text(base))
+                continue
             if block_type != "tool_result":
                 return EventNormalizationResult(violations=(
                     f"unknown Claude user block {block_type!r}",
@@ -205,6 +223,13 @@ def _claude_tool_identity(value: Any) -> tuple[ToolIdentity | None, str]:
             return ToolIdentity(parts[1], parts[2]), "mcp_tool"
         return None, "mcp_tool"
     return ToolIdentity("claude", value), f"provider_tool:{value}"
+
+
+def _injected_user_text(base: Mapping[str, Any]) -> CanonicalAgentEvent:
+    return CanonicalAgentEvent(
+        **{**base, "raw_event_type": "user/text"},
+        kind=AgentEventKind.PASSIVE,
+    )
 
 
 def _events(*events: CanonicalAgentEvent) -> EventNormalizationResult:

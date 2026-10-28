@@ -21,6 +21,7 @@ from core.easycrypt.proof_state_compiler.contracts import (
     ProofIR,
     NativeSemanticPlan,
     NativeSemanticPlanningReport,
+    RealizationCodec,
     ResourceLoadPlan,
     StateRef,
     compiler_invocation_context,
@@ -81,13 +82,7 @@ IR_CAPABILITIES = frozenset({
     "AnalyzedProofState",
     "NativeSemanticObservation",
     "NativeProofTermDescriptor",
-    "NativeApplicationSyntaxRepairDescriptor",
-    "NativeRelationBridgeDescriptor",
-    "NativeRelationBridgeChoiceDescriptor",
-    "NativePhlTransitivityBoundaryDescriptor",
-    "NativePureTailRewriteDescriptor",
-    "NativeEagerWhileDialectDescriptor",
-    "NativeIntroPatternRepairDescriptor",
+    "AttemptRealization",
     "NativeTacticPrefixDiagnosticDescriptor",
     "NativeSemanticRequest.proof_term_elaboration",
 })
@@ -95,17 +90,33 @@ IR_CAPABILITIES = frozenset({
 
 @dataclass(frozen=True)
 class ProofStateCompiler:
-    """The pipeline is fixed; registered features contribute typed producers."""
+    """The pipeline is fixed; registered features contribute typed producers.
+
+    ``realization_codecs`` belong to the features of the activation plan, not
+    to the per-turn execution subset: every executed feature's realizers run
+    whenever an attempt is diagnosed, identically in audit and treatment.
+    They default to the codecs of ``features``.
+    """
 
     features: tuple[FeatureDefinition, ...] = ()
     native_planning_budget: NativePlanningBudget = field(
         default_factory=NativePlanningBudget
     )
+    realization_codecs: tuple[RealizationCodec, ...] | None = None
 
     def __post_init__(self) -> None:
         feature_ids = [feature.spec.feature_id for feature in self.features]
         if len(feature_ids) != len(set(feature_ids)):
             raise ValueError("compiler contains duplicate feature IDs")
+        if self.realization_codecs is None:
+            object.__setattr__(self, "realization_codecs", tuple(
+                codec
+                for feature in self.features
+                for codec in feature.realization_codecs
+            ))
+        kinds = [codec.kind for codec in self.realization_codecs]
+        if len(kinds) != len(set(kinds)):
+            raise ValueError("compiler contains duplicate realization kinds")
         for feature in self.features:
             missing = sorted(
                 set(feature.spec.required_ir_capabilities) - IR_CAPABILITIES
@@ -175,7 +186,14 @@ class ProofStateCompiler:
                 if item.spec.feature_id in selected
             ),
             native_planning_budget=self.native_planning_budget,
+            realization_codecs=self.realization_codecs,
         )
+
+    @property
+    def realizer_kinds(self) -> tuple[str, ...]:
+        """The realization kinds every attempt diagnosis may produce."""
+
+        return tuple(sorted(codec.kind for codec in self.realization_codecs))
 
     def compile(
         self,
@@ -236,6 +254,7 @@ class ProofStateCompiler:
             _native_producer_bindings(self.features),
             invocation,
             native_budget or self.native_planning_budget,
+            realizer_kinds=self.realizer_kinds,
         )
         dependency_check_done = time.perf_counter_ns()
         if unresolved_native.requests:
@@ -411,6 +430,7 @@ class ProofStateCompiler:
             _native_producer_bindings(self.features),
             invocation,
             budget or self.native_planning_budget,
+            realizer_kinds=self.realizer_kinds,
         )
 
 

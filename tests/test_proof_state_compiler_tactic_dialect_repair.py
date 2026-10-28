@@ -20,8 +20,6 @@ from core.easycrypt.proof_state_compiler.backend.presentation import (
 from core.easycrypt.proof_state_compiler.contracts import (
     CertificationResult,
     CompilerTurnEvidence,
-    NativeEagerWhileCandidateDescriptor,
-    NativeEagerWhileDialectDescriptor,
     TargetRef,
     TransitionRef,
     compiler_invocation_context,
@@ -44,6 +42,10 @@ from tests.proof_state_compiler_test_support import (
 from workflow.proof_state_compiler.activation import (
     AUDIT,
     TREATMENT,
+)
+from core.easycrypt.proof_state_compiler.features.tactic_dialect_repair.realization import (
+    NativeEagerWhileCandidateDescriptor,
+    NativeEagerWhileDialectDescriptor,
 )
 
 

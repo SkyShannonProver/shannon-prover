@@ -24,6 +24,7 @@ from core.easycrypt.proof_state_compiler.compound_boundary_text import (
     checked_goal_reference,
 )
 from .feature import TACTIC_DIALECT_REPAIR_FEATURE_ID
+from .realization import eager_while_dialect_of
 
 
 TACTIC_DIALECT_REPAIR_ANALYSIS_PRODUCER_ID = (
@@ -118,7 +119,7 @@ def analyze_eager_while_dialect(
 ) -> AnalysisContribution:
     attempted = proof_ir.attempted_operation
     descriptor = (
-        None if attempted is None else attempted.eager_while_dialect_descriptor
+        None if attempted is None else eager_while_dialect_of(attempted)
     )
     if (
         attempted is None

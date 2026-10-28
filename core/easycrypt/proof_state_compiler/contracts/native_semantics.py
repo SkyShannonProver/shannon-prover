@@ -4,7 +4,10 @@ from __future__ import annotations
 
 import hashlib
 import json
+import re
+from collections.abc import Callable
 from dataclasses import dataclass, field
+from typing import Protocol
 
 from core.easycrypt.proof_state_compiler.contracts.evidence import EvidenceRef
 from core.easycrypt.proof_state_compiler.contracts.frozen_json import (
@@ -49,15 +52,27 @@ NATIVE_NAMESPACE_SPELLING_EFFECTS = frozenset({
     "rejected",
 })
 _PROOF_TERM_OPERATIONS = frozenset({"apply", "exact", "call", "conseq"})
-_ATTEMPT_OPERATIONS = frozenset({
-    "apply", "exact", "call", "conseq", "transitivity", "change", "eager",
-    "rewrite", "intro_pattern",
-})
+_ATTEMPT_OPERATION_RE = re.compile(r"^[a-z][a-z_]*$")
+# A realization kind is owned by one feature: ``<feature_id>.<name>``.
+REALIZATION_KIND_RE = re.compile(r"^[a-z][a-z0-9_]*\.[a-z][a-z0-9_]*$")
+MAX_REALIZER_KINDS = 32
 NATIVE_TACTIC_PREFIX_EFFECTS = frozenset({
     "accepted_changed",
     "accepted_no_progress",
     "rejected",
 })
+
+
+def _valid_realizer_kinds(value: object) -> bool:
+    return (
+        type(value) is tuple
+        and len(value) <= MAX_REALIZER_KINDS
+        and all(
+            type(item) is str and REALIZATION_KIND_RE.fullmatch(item)
+            for item in value
+        )
+        and value == tuple(sorted(set(value)))
+    )
 
 
 def _valid_qualified_symbol(value: str) -> bool:
@@ -853,10 +868,20 @@ class NativeNamespaceSpellingSetQuery:
 
 @dataclass(frozen=True)
 class NativeAttemptDiagnosticQuery:
+    """Diagnose one exact rejected tactic.
+
+    ``realizer_kinds`` names the realizations EasyCrypt may attempt.  The
+    native planner sets it from the compiler's activation plan; a feature
+    producer leaves it empty.
+    """
+
     rejected_tactic: str
     observed_outcome_kind: str
+    realizer_kinds: tuple[str, ...] = ()
 
     def __post_init__(self) -> None:
+        if not _valid_realizer_kinds(self.realizer_kinds):
+            raise ValueError("native attempt diagnostic realizer kinds are invalid")
         if (
             not self.rejected_tactic
             or self.rejected_tactic != self.rejected_tactic.strip()
@@ -873,6 +898,7 @@ class NativeAttemptDiagnosticQuery:
         return {
             "rejected_tactic": self.rejected_tactic,
             "observed_outcome_kind": self.observed_outcome_kind,
+            "realizer_kinds": list(self.realizer_kinds),
         }
 
 
@@ -882,8 +908,11 @@ class NativeTacticPrefixDiagnosticQuery:
 
     rejected_tactic: str
     candidate_prefixes: tuple[str, ...]
+    realizer_kinds: tuple[str, ...] = ()
 
     def __post_init__(self) -> None:
+        if not _valid_realizer_kinds(self.realizer_kinds):
+            raise ValueError("native tactic-prefix realizer kinds are invalid")
         if (
             type(self.rejected_tactic) is not str
             or not self.rejected_tactic
@@ -915,6 +944,7 @@ class NativeTacticPrefixDiagnosticQuery:
         return {
             "rejected_tactic": self.rejected_tactic,
             "candidate_prefixes": list(self.candidate_prefixes),
+            "realizer_kinds": list(self.realizer_kinds),
         }
 
 
@@ -925,421 +955,6 @@ NativeSemanticQuery = (
     | NativeAttemptDiagnosticQuery
     | NativeTacticPrefixDiagnosticQuery
 )
-
-
-@dataclass(frozen=True)
-class NativeRelationBridgeDescriptor:
-    """Native-established realization of one agent-written intermediate."""
-
-    source_operation: str
-    relation_family: str
-    intermediate_text: str
-    intermediate_type_text: str
-    candidate_tactic: str
-    failure_kind: str
-    source_target_present: bool
-    source_target_convertible_to_current_goal: bool
-    source_target_right_convertible_to_current_right: bool
-
-    def __post_init__(self) -> None:
-        if (
-            self.source_operation not in {"transitivity", "change"}
-            or self.relation_family not in {"real_le", "int_le"}
-            or not self.intermediate_text
-            or not self.candidate_tactic.endswith(".")
-            or not self.failure_kind
-        ):
-            raise ValueError("native relation-bridge descriptor is incomplete")
-        expected_type, certificate_family = {
-            "real_le": ("real", "ler_trans"),
-            "int_le": ("int", "Int.lez_trans"),
-        }[self.relation_family]
-        expected_failure = {
-            "transitivity": "formula_transitivity_surface_mismatch",
-            "change": "change_target_not_convertible",
-        }[self.source_operation]
-        if (
-            self.failure_kind != expected_failure
-            or self.intermediate_type_text != expected_type
-            or self.candidate_tactic
-            != (
-                f"apply ({certificate_family} {self.intermediate_text}); "
-                "first last."
-            )
-            or (
-                self.relation_family == "int_le"
-                and self.source_operation != "transitivity"
-            )
-        ):
-            raise ValueError("native relation-bridge certificate is invalid")
-        booleans = (
-            self.source_target_present,
-            self.source_target_convertible_to_current_goal,
-            self.source_target_right_convertible_to_current_right,
-        )
-        if any(type(value) is not bool for value in booleans):
-            raise TypeError("native relation-bridge flags must be booleans")
-        if self.source_operation == "transitivity" and any(booleans):
-            raise ValueError("transitivity sketch cannot claim a change target")
-        if self.source_operation == "change" and (
-            not self.source_target_present
-            or self.source_target_convertible_to_current_goal
-            or not self.source_target_right_convertible_to_current_right
-        ):
-            raise ValueError("change bridge requires one non-convertible target")
-
-    def to_payload(self) -> dict[str, object]:
-        return {
-            "source_operation": self.source_operation,
-            "relation_family": self.relation_family,
-            "intermediate_text": self.intermediate_text,
-            "intermediate_type": self.intermediate_type_text,
-            "candidate_tactic": self.candidate_tactic,
-            "failure_kind": self.failure_kind,
-            "source_target_present": self.source_target_present,
-            "source_target_convertible_to_current_goal": (
-                self.source_target_convertible_to_current_goal
-            ),
-            "source_target_right_convertible_to_current_right": (
-                self.source_target_right_convertible_to_current_right
-            ),
-        }
-
-
-@dataclass(frozen=True)
-class NativeRelationBridgeChoice:
-    """One native-checked interpretation of a preserved strict bridge."""
-
-    certificate_family: str
-    left_relation: str
-    right_relation: str
-    candidate_tactic: str
-
-    def __post_init__(self) -> None:
-        if (
-            self.certificate_family not in {
-                "ler_lt_trans", "ltr_le_trans", "ltr_trans"
-            }
-            or self.left_relation not in {"<", "<="}
-            or self.right_relation not in {"<", "<="}
-            or not self.candidate_tactic.endswith(".")
-        ):
-            raise ValueError("native relation-bridge choice is incomplete")
-
-    def to_payload(self) -> dict[str, str]:
-        return {
-            "certificate_family": self.certificate_family,
-            "left_relation": self.left_relation,
-            "right_relation": self.right_relation,
-            "candidate_tactic": self.candidate_tactic,
-        }
-
-
-@dataclass(frozen=True)
-class NativeRelationBridgeChoiceDescriptor:
-    """Native-established alternatives when one strict bridge is ambiguous."""
-
-    source_operation: str
-    relation_family: str
-    goal_left_text: str
-    intermediate_text: str
-    goal_right_text: str
-    intermediate_type_text: str
-    failure_kind: str
-    choices: tuple[NativeRelationBridgeChoice, ...]
-
-    def __post_init__(self) -> None:
-        if (
-            self.source_operation != "transitivity"
-            or self.relation_family != "real_lt"
-            or not self.goal_left_text
-            or not self.intermediate_text
-            or not self.goal_right_text
-            or self.intermediate_type_text != "real"
-            or self.failure_kind != "formula_transitivity_surface_mismatch"
-        ):
-            raise ValueError(
-                "native relation-bridge choice descriptor is incomplete"
-            )
-        expected = (
-            ("ler_lt_trans", "<=", "<"),
-            ("ltr_le_trans", "<", "<="),
-            ("ltr_trans", "<", "<"),
-        )
-        observed = tuple(
-            (item.certificate_family, item.left_relation, item.right_relation)
-            for item in self.choices
-        )
-        if observed != expected or any(
-            item.candidate_tactic
-            != (
-                f"apply ({item.certificate_family} "
-                f"{self.intermediate_text}); first last."
-            )
-            for item in self.choices
-        ):
-            raise ValueError("native strict relation choices are not canonical")
-
-    def to_payload(self) -> dict[str, object]:
-        return {
-            "source_operation": self.source_operation,
-            "relation_family": self.relation_family,
-            "goal_left_text": self.goal_left_text,
-            "intermediate_text": self.intermediate_text,
-            "goal_right_text": self.goal_right_text,
-            "intermediate_type": self.intermediate_type_text,
-            "failure_kind": self.failure_kind,
-            "choices": [item.to_payload() for item in self.choices],
-        }
-
-
-@dataclass(frozen=True)
-class NativePhlTransitivityBoundaryDescriptor:
-    """Native PHL transitivity form/current-goal boundary mismatch."""
-
-    source_operation: str
-    attempted_form: str
-    current_goal_form: str
-    side: str
-    failure_kind: str
-
-    def __post_init__(self) -> None:
-        if (
-            self.source_operation != "transitivity"
-            or self.attempted_form not in {"function", "statement"}
-            or self.current_goal_form not in {"function", "statement"}
-            or self.attempted_form == self.current_goal_form
-            or self.side not in {"", "left", "right"}
-            or (
-                self.attempted_form == "function" and self.side
-            )
-            or (
-                self.attempted_form == "statement" and not self.side
-            )
-            or self.failure_kind != "phl_transitivity_boundary_mismatch"
-        ):
-            raise ValueError("native PHL transitivity boundary is incomplete")
-
-    def to_payload(self) -> dict[str, str]:
-        return {
-            "source_operation": self.source_operation,
-            "attempted_form": self.attempted_form,
-            "current_goal_form": self.current_goal_form,
-            "side": self.side,
-            "failure_kind": self.failure_kind,
-        }
-
-
-@dataclass(frozen=True)
-class NativeEagerWhileCandidateDescriptor:
-    """One agent-supplied invariant accepted by native eager preflight."""
-
-    invariant_text: str
-    candidate_tactic: str
-
-    def __post_init__(self) -> None:
-        if (
-            not self.invariant_text
-            or self.candidate_tactic
-            != f"eager while ({self.invariant_text})."
-        ):
-            raise ValueError("native eager-while candidate is not canonical")
-
-    def to_payload(self) -> dict[str, str]:
-        return {
-            "invariant_text": self.invariant_text,
-            "candidate_tactic": self.candidate_tactic,
-        }
-
-
-@dataclass(frozen=True)
-class NativeEagerWhileDialectDescriptor:
-    """Native classification of one selected eager-while failure."""
-
-    source_operation: str
-    eager_subform: str
-    attempted_shape: str
-    failure_kind: str
-    candidates: tuple[NativeEagerWhileCandidateDescriptor, ...]
-
-    def __post_init__(self) -> None:
-        if (
-            self.source_operation != "eager"
-            or self.eager_subform != "while"
-            or self.attempted_shape not in {
-                "explicit_statement_contract", "invariant"
-            }
-            or self.failure_kind not in {
-                "eager_while_dialect_mismatch",
-                "eager_while_guard_mismatch",
-            }
-            or len(self.candidates) > 2
-            or len(self.candidates) != len(set(self.candidates))
-        ):
-            raise ValueError("native eager-while dialect descriptor is incomplete")
-        if self.failure_kind == "eager_while_dialect_mismatch" and (
-            self.attempted_shape != "explicit_statement_contract"
-        ):
-            raise ValueError("native eager dialect mismatch has the wrong shape")
-        if self.failure_kind == "eager_while_guard_mismatch" and (
-            self.attempted_shape != "invariant" or self.candidates
-        ):
-            raise ValueError("native eager guard mismatch carried candidates")
-
-    def to_payload(self) -> dict[str, object]:
-        return {
-            "source_operation": self.source_operation,
-            "eager_subform": self.eager_subform,
-            "attempted_shape": self.attempted_shape,
-            "failure_kind": self.failure_kind,
-            "candidates": [item.to_payload() for item in self.candidates],
-        }
-
-
-@dataclass(frozen=True)
-class NativePureTailRewriteDescriptor:
-    """Unique native realization of an agent-selected rewrite target.
-
-    The descriptor does not choose a lemma, direction, occurrence, witness, or
-    proof route.  It only records that the exact left-to-right rewrite already
-    attempted by the agent fails at the conclusion and succeeds at exactly one
-    named hypothesis in the unchanged current state.
-    """
-
-    source_operation: str
-    selected_resource: str
-    target_kind: str
-    target_name: str
-    candidate_tactic: str
-    failure_kind: str
-    accepted_target_count: int
-
-    def __post_init__(self) -> None:
-        if (
-            self.source_operation != "rewrite"
-            or not self.selected_resource
-            or self.target_kind != "hypothesis"
-            or not self.target_name
-            or self.candidate_tactic
-            != f"rewrite {self.selected_resource} in {self.target_name}."
-            or self.failure_kind != "rewrite_target_mismatch"
-            or self.accepted_target_count != 1
-        ):
-            raise ValueError("native pure-tail rewrite descriptor is incomplete")
-
-    def to_payload(self) -> dict[str, object]:
-        return {
-            "source_operation": self.source_operation,
-            "selected_resource": self.selected_resource,
-            "target_kind": self.target_kind,
-            "target_name": self.target_name,
-            "candidate_tactic": self.candidate_tactic,
-            "failure_kind": self.failure_kind,
-            "accepted_target_count": self.accepted_target_count,
-        }
-
-
-@dataclass(frozen=True)
-class NativeIntroPatternRepairDescriptor:
-    """Unique native repair of one agent-selected nested intro pattern.
-
-    EasyCrypt has parsed both tactics and accepted the candidate in the exact
-    unchanged state.  Shannon records only the already selected binder names
-    and their order; it does not choose a hypothesis, decomposition, or proof
-    route.
-    """
-
-    source_operation: str
-    surface_operation: str
-    attempted_pattern_kind: str
-    binder_names: tuple[str, ...]
-    candidate_tactic: str
-    failure_kind: str
-    selected_pattern_count: int
-
-    def __post_init__(self) -> None:
-        if (
-            self.source_operation != "intro_pattern"
-            or self.surface_operation != "move"
-            or self.attempted_pattern_kind != "nested_case"
-            or len(self.binder_names) < 2
-            or len(self.binder_names) > 32
-            or len(self.binder_names) != len(set(self.binder_names))
-            or any(not name for name in self.binder_names)
-            or not self.candidate_tactic.endswith(".")
-            or self.failure_kind != "intro_pattern_structure_mismatch"
-            or self.selected_pattern_count != 1
-        ):
-            raise ValueError("native intro-pattern repair descriptor is incomplete")
-
-    def to_payload(self) -> dict[str, object]:
-        return {
-            "source_operation": self.source_operation,
-            "surface_operation": self.surface_operation,
-            "attempted_pattern_kind": self.attempted_pattern_kind,
-            "binder_names": list(self.binder_names),
-            "candidate_tactic": self.candidate_tactic,
-            "failure_kind": self.failure_kind,
-            "selected_pattern_count": self.selected_pattern_count,
-        }
-
-
-@dataclass(frozen=True)
-class NativeApplicationSyntaxRepairDescriptor:
-    """One native-resolved grammar realization of a selected application.
-
-    The descriptor carries the native candidate, but feature-local admission
-    must still reconstruct the exact source-to-candidate punctuation transform
-    from the rejected tactic before using it.
-    """
-
-    source_operation: str
-    selected_resource: str
-    module_argument_position: int
-    module_term_text: str
-    candidate_application_term: str
-    candidate_tactic: str
-    candidate_argument_kinds: tuple[str, ...]
-    failure_kind: str
-    resolved_candidate_count: int
-
-    def __post_init__(self) -> None:
-        marker = f"(<: {self.module_term_text})"
-        if (
-            self.source_operation != "call"
-            or not self.selected_resource
-            or self.module_argument_position != 1
-            or not self.module_term_text
-            or not self.candidate_application_term.startswith(
-                self.selected_resource + " "
-            )
-            or marker not in self.candidate_application_term
-            or self.candidate_tactic
-            != f"call ({self.candidate_application_term})."
-            or not self.candidate_argument_kinds
-            or self.candidate_argument_kinds[0] != "module"
-            or any(not item for item in self.candidate_argument_kinds)
-            or self.failure_kind != "application_module_argument_syntax"
-            or self.resolved_candidate_count != 1
-            or any(
-                token in self.candidate_tactic
-                for token in (";", "\n", "\r", '"', "(*", "*)", "|")
-            )
-        ):
-            raise ValueError("native application syntax repair is incomplete")
-
-    def to_payload(self) -> dict[str, object]:
-        return {
-            "source_operation": self.source_operation,
-            "selected_resource": self.selected_resource,
-            "module_argument_position": self.module_argument_position,
-            "module_term_text": self.module_term_text,
-            "candidate_application_term": self.candidate_application_term,
-            "candidate_tactic": self.candidate_tactic,
-            "candidate_argument_kinds": list(self.candidate_argument_kinds),
-            "failure_kind": self.failure_kind,
-            "resolved_candidate_count": self.resolved_candidate_count,
-        }
 
 
 @dataclass(frozen=True)
@@ -1468,6 +1083,98 @@ class NativeTacticPrefixDiagnosticDescriptor:
 
 
 @dataclass(frozen=True)
+class AttemptRealization:
+    """One feature's native realization of a failed attempt.
+
+    Shared contracts know only the owned kind, the native failure it
+    explains, and an untyped payload.  The owning feature's
+    ``RealizationCodec`` types the payload and checks it against the attempt.
+    """
+
+    kind: str
+    failure_kind: str
+    payload: FrozenJsonObject
+
+    def __post_init__(self) -> None:
+        if type(self.kind) is not str or not REALIZATION_KIND_RE.fullmatch(
+            self.kind
+        ):
+            raise ValueError("attempt realization kind is not feature-owned")
+        if type(self.failure_kind) is not str or not self.failure_kind:
+            raise ValueError("attempt realization requires a failure kind")
+        if not isinstance(self.payload, FrozenJsonObject) or not self.payload:
+            raise ValueError("attempt realization requires a payload object")
+
+    def to_payload(self) -> dict[str, object]:
+        return {
+            "kind": self.kind,
+            "failure_kind": self.failure_kind,
+            "payload": self.payload.to_dict(),
+        }
+
+
+# Query types whose realizer kinds the native planner sets for every
+# consumer; a feature producer leaves them empty.
+REALIZING_QUERY_TYPES = (
+    NativeAttemptDiagnosticQuery,
+    NativeTacticPrefixDiagnosticQuery,
+)
+
+
+class CarriesRealization(Protocol):
+    """An attempt descriptor or IR node that may carry one realization."""
+
+    @property
+    def realization(self) -> AttemptRealization | None: ...
+
+
+def attempt_realization(
+    attempt: CarriesRealization | None,
+    kind: str,
+) -> AttemptRealization | None:
+    """``attempt``'s realization when it has ``kind``."""
+
+    realization = None if attempt is None else attempt.realization
+    if realization is None or realization.kind != kind:
+        return None
+    return realization
+
+
+def realization_fields(
+    realization: AttemptRealization,
+    fields: frozenset[str],
+) -> dict[str, object]:
+    """The payload of ``realization`` when it has exactly ``fields``."""
+
+    payload = realization.payload.to_dict()
+    if set(payload) != fields:
+        raise ValueError(f"{realization.kind} realization fields are invalid")
+    return payload
+
+
+@dataclass(frozen=True)
+class RealizationCodec:
+    """How one feature reads its own realization kind.
+
+    ``read`` returns the feature's typed descriptor for an attempt whose
+    realization has ``kind`` and raises ``ValueError`` when the payload is
+    malformed or does not realize that attempt.  The compiler applies it to
+    every realization it receives, so an inconsistent one fails closed.
+    """
+
+    kind: str
+    read: Callable[["NativeAttemptedOperationDescriptor"], object]
+
+    def __post_init__(self) -> None:
+        if type(self.kind) is not str or not REALIZATION_KIND_RE.fullmatch(
+            self.kind
+        ):
+            raise ValueError("realization codec kind is not feature-owned")
+        if not callable(self.read):
+            raise TypeError("realization codec requires a reader")
+
+
+@dataclass(frozen=True)
 class NativeAttemptedOperationDescriptor:
     """Native parse and applicability result for one exact rejected tactic."""
 
@@ -1484,20 +1191,10 @@ class NativeAttemptedOperationDescriptor:
     goal_kind: str
     application_head: NativeApplicationHeadDescriptor | None = None
     proof_term: NativeProofTermDescriptor | None = None
-    relation_bridge: NativeRelationBridgeDescriptor | None = None
-    relation_bridge_choice: NativeRelationBridgeChoiceDescriptor | None = None
-    phl_transitivity_boundary: (
-        NativePhlTransitivityBoundaryDescriptor | None
-    ) = None
-    eager_while_dialect: NativeEagerWhileDialectDescriptor | None = None
-    pure_tail_rewrite: NativePureTailRewriteDescriptor | None = None
-    intro_pattern_realization: NativeIntroPatternRepairDescriptor | None = None
-    application_syntax_repair: (
-        NativeApplicationSyntaxRepairDescriptor | None
-    ) = None
+    realization: AttemptRealization | None = None
 
     def __post_init__(self) -> None:
-        if self.operation_family not in _ATTEMPT_OPERATIONS:
+        if not _ATTEMPT_OPERATION_RE.fullmatch(self.operation_family):
             raise ValueError("native attempted operation family is invalid")
         if not self.rejected_tactic:
             raise ValueError("native attempted operation requires exact tactic")
@@ -1553,104 +1250,14 @@ class NativeAttemptedOperationDescriptor:
             and self.proof_term.resolved_head != self.application_head.resolved_head
         ):
             raise ValueError("native application and head descriptors disagree")
-        if self.relation_bridge is not None and (
-            self.operation_family != self.relation_bridge.source_operation
-            or self.exact_resource
-            or self.proof_term is not None
-            or self.application_head is not None
+        # A realization explains this attempt's blocker.  Whether its
+        # payload realizes the attempt is the owning feature's codec check.
+        if self.realization is not None and (
+            not isinstance(self.realization, AttemptRealization)
+            or self.native_diagnostic_status != "blocker"
+            or self.realization.failure_kind != self.native_failure_kind
         ):
-            raise ValueError("native relation bridge changed attempted identity")
-        if self.relation_bridge_choice is not None and (
-            self.operation_family
-            != self.relation_bridge_choice.source_operation
-            or self.exact_resource
-            or self.proof_term is not None
-            or self.application_head is not None
-            or self.relation_bridge is not None
-        ):
-            raise ValueError("native relation choice changed attempted identity")
-        if self.phl_transitivity_boundary is not None and (
-            self.operation_family
-            != self.phl_transitivity_boundary.source_operation
-            or self.exact_resource
-            or self.proof_term is not None
-            or self.application_head is not None
-            or self.relation_bridge is not None
-            or self.relation_bridge_choice is not None
-            or self.side != self.phl_transitivity_boundary.side
-        ):
-            raise ValueError("native PHL boundary changed attempted identity")
-        if self.eager_while_dialect is not None and (
-            self.operation_family
-            != self.eager_while_dialect.source_operation
-            or self.exact_resource
-            or self.proof_term is not None
-            or self.application_head is not None
-            or self.relation_bridge is not None
-            or self.relation_bridge_choice is not None
-            or self.phl_transitivity_boundary is not None
-            or self.side
-            or self.positions
-        ):
-            raise ValueError("native eager dialect changed attempted identity")
-        if self.pure_tail_rewrite is not None and (
-            self.operation_family != self.pure_tail_rewrite.source_operation
-            or self.operation_family != "rewrite"
-            or self.exact_resource
-            != self.pure_tail_rewrite.selected_resource
-            or self.proof_term is not None
-            or self.application_head is not None
-            or self.relation_bridge is not None
-            or self.relation_bridge_choice is not None
-            or self.phl_transitivity_boundary is not None
-            or self.eager_while_dialect is not None
-            or self.side
-            or self.positions
-        ):
-            raise ValueError("native pure-tail rewrite changed attempted identity")
-        if self.intro_pattern_realization is not None and (
-            self.operation_family
-            != self.intro_pattern_realization.source_operation
-            or self.operation_family != "intro_pattern"
-            or self.exact_resource
-            or self.proof_term is not None
-            or self.application_head is not None
-            or self.relation_bridge is not None
-            or self.relation_bridge_choice is not None
-            or self.phl_transitivity_boundary is not None
-            or self.eager_while_dialect is not None
-            or self.pure_tail_rewrite is not None
-            or self.application_syntax_repair is not None
-            or self.side
-            or self.positions
-        ):
-            raise ValueError("native intro-pattern repair changed attempted identity")
-        syntax = self.application_syntax_repair
-        if syntax is not None and (
-            self.operation_family != syntax.source_operation
-            or self.exact_resource != syntax.selected_resource
-            or self.native_failure_kind != syntax.failure_kind
-            or self.application_head is None
-            or not self.application_head.slots
-            or self.application_head.slots[0].kind != "module"
-            or tuple(
-                item.syntax_kind for item in self.application_head.input_arguments
-            )
-            != syntax.candidate_argument_kinds
-            or self.proof_term is not None
-            or self.relation_bridge is not None
-            or self.relation_bridge_choice is not None
-            or self.phl_transitivity_boundary is not None
-            or self.eager_while_dialect is not None
-            or self.pure_tail_rewrite is not None
-            or self.intro_pattern_realization is not None
-            or self.argument_kinds
-            or self.side
-            or self.positions
-        ):
-            raise ValueError(
-                "native application syntax repair changed attempted identity"
-            )
+            raise ValueError("native attempt realization is invalid")
 
     def to_payload(self) -> dict[str, object]:
         return {
@@ -1673,40 +1280,10 @@ class NativeAttemptedOperationDescriptor:
             "proof_term": (
                 None if self.proof_term is None else self.proof_term.to_payload()
             ),
-            "relation_bridge": (
+            "realization": (
                 None
-                if self.relation_bridge is None
-                else self.relation_bridge.to_payload()
-            ),
-            "relation_bridge_choice": (
-                None
-                if self.relation_bridge_choice is None
-                else self.relation_bridge_choice.to_payload()
-            ),
-            "phl_transitivity_boundary": (
-                None
-                if self.phl_transitivity_boundary is None
-                else self.phl_transitivity_boundary.to_payload()
-            ),
-            "eager_while_dialect": (
-                None
-                if self.eager_while_dialect is None
-                else self.eager_while_dialect.to_payload()
-            ),
-            "pure_tail_rewrite": (
-                None
-                if self.pure_tail_rewrite is None
-                else self.pure_tail_rewrite.to_payload()
-            ),
-            "intro_pattern_realization": (
-                None
-                if self.intro_pattern_realization is None
-                else self.intro_pattern_realization.to_payload()
-            ),
-            "application_syntax_repair": (
-                None
-                if self.application_syntax_repair is None
-                else self.application_syntax_repair.to_payload()
+                if self.realization is None
+                else self.realization.to_payload()
             ),
         }
 

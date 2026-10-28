@@ -234,10 +234,10 @@ fixed task.
 
 This workflow covers Phase III for a lemma you have already stated.
 
-The standalone Codex prover defaults to `gpt-5.6-sol` with high reasoning
-effort. Project-level proving uses `gpt-6-astra` with high reasoning effort
-for both outer and inner agents, as described above. Both workflows default
-to Codex; their model settings are separate.
+The standalone Codex prover defaults to `gpt-6-astra` with high reasoning
+effort, the same model that project-level proving uses for both outer and
+inner agents, as described above. Both workflows default to Codex; their
+model settings are separate.
 
 If you already know the decomposition, you can ask Shannon to prove
 one lemma. Put its EasyCrypt file and local dependencies under `projects/`,

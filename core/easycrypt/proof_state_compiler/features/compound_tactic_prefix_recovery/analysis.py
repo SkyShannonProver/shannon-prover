@@ -156,7 +156,6 @@ def _compound_boundary_diagnostic(
             )
             + "\n\n"
             + compound_boundary_continuation(
-                accepted_prefix=accepted_prefix,
                 accepted_effect=accepted_effect,
                 accepted_stage_count=accepted_stage_count,
             )

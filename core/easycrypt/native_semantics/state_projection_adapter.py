@@ -480,7 +480,12 @@ def _validate_lvalue(value: object, label: str) -> None:
     if type(value) is not dict or value.get("kind") not in {"variable", "tuple"}:
         raise RuntimeError(f"native state {label} lvalue is invalid")
     variables = value.get("variables")
-    if type(variables) is not list or not variables:
+    # A variable target has exactly one variable.  A tuple target may be
+    # empty: `inline *` binds a unit argument to a parameterless procedure
+    # as `() <- x`.
+    if type(variables) is not list or (
+        value["kind"] == "variable" and len(variables) != 1
+    ):
         raise RuntimeError(f"native state {label}.variables is invalid")
     for index, variable in enumerate(variables):
         if type(variable) is not dict:

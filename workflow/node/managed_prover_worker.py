@@ -99,6 +99,9 @@ def main(argv: list[str] | None = None) -> int:
         )
         return 1
     if result.returncode != 0:
+        # Mirror the reason onto stderr BEFORE the final stdout event, so it
+        # is already in the pipe when the supervisor sees stdout EOF.
+        _report_agent_exit_to_stderr(result.returncode, result.text or "")
         _emit_final(
             (result.text or "")
             + f"\n\nMANAGER WORKER ERROR: agent exited with {result.returncode}.",
@@ -129,6 +132,45 @@ def _release_daemon_session(session_tag: str) -> None:
     except Exception:
         pass
 
+
+
+_STDERR_EXIT_REASON_MAX_CHARS = 2000
+_STDERR_EXIT_HEADLINE_MAX_CHARS = 300
+
+
+def _report_agent_exit_to_stderr(returncode: int, text: str) -> None:
+    """Write a nonzero agent exit's reason to stderr as well as stdout.
+
+    The supervisor's crash line and ``worker_stderr.log`` see only stderr;
+    with the reason in the final stdout event alone, every event-guard kill
+    read "(no stderr captured)". The bounded tail keeps the guard violation
+    and provider error text; the closing headline line is what the
+    supervisor's one-line crash hint shows.
+    """
+    reason = text.strip()
+    if len(reason) > _STDERR_EXIT_REASON_MAX_CHARS:
+        reason = "..." + reason[-_STDERR_EXIT_REASON_MAX_CHARS:]
+    lines = [line.strip() for line in text.splitlines() if line.strip()]
+    # A guard violation or provider error leads the text; the runtime's own
+    # verdict (e.g. an unhealthy node) is appended after the agent's text.
+    headline = next(
+        (
+            line
+            for line in reversed(lines)
+            if line.startswith("MANAGER WORKER ERROR:")
+        ),
+        lines[0] if lines else "(no reason text)",
+    )[:_STDERR_EXIT_HEADLINE_MAX_CHARS]
+    if reason:
+        print(
+            f"managed worker: agent exit {returncode} reason:\n{reason}",
+            file=sys.stderr,
+        )
+    print(
+        f"managed worker: agent exit {returncode}: {headline}",
+        file=sys.stderr,
+        flush=True,
+    )
 
 
 def _emit_final(

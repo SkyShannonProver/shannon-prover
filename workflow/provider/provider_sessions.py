@@ -173,7 +173,8 @@ class _ProviderAgentSessionBase:
         # end the loop BETWEEN turns and surface `ctx_pressure` so the runtime can
         # swap in a fresh Claude context against the SAME bridge/manager/EC
         # session (zero replay). See docs/design/fresh_context_continuation.md.
-        self._ctx_detector = CtxWatermarkDetector()
+        # The default watermark scales with this model's context window.
+        self._ctx_detector = CtxWatermarkDetector(model=model)
         self.ctx_pressure = False
         # Transient, in-memory ring buffer of the last K assistant message texts
         # (the agent's own reasoning). On a watermark respawn this is forwarded —
@@ -493,6 +494,19 @@ class ClaudeAgentSession(_ProviderAgentSessionBase):
             # followup. Empty on callers that don't supply one.
             *(["--append-system-prompt", system_prompt] if system_prompt.strip() else []),
             "--dangerously-skip-permissions",
+            # Eval mode: no built-in tools and no skills/commands at all. CLI
+            # 2.1.311 offers built-ins no denylist names (ToolSearch, Skill,
+            # ListAgents, ScheduleWakeup, ...) plus the host skill listing;
+            # any call is a capability violation that kills the node (the
+            # likely cause of fresh post-swap sessions dying within seconds).
+            # `--tools ""` empties only the built-in set (--mcp-config tools
+            # stay); the explicit "" argv element is the CLI's documented
+            # "disable all". The denylist below stays as defense in depth.
+            *(
+                ("--tools", "", "--disable-slash-commands")
+                if self.eval_mode
+                else ()
+            ),
             "--disallowedTools",
             *(
                 (

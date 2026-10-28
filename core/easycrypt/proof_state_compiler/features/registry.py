@@ -19,6 +19,9 @@ from core.easycrypt.proof_state_compiler.middle_end.contributions import (
 from core.easycrypt.proof_state_compiler.middle_end.native_dependencies import (
     NativeSemanticRequestProducer,
 )
+from core.easycrypt.proof_state_compiler.contracts.native_semantics import (
+    RealizationCodec,
+)
 from core.easycrypt.proof_state_compiler.contracts.strategy import (
     StrategyContract,
 )
@@ -94,10 +97,21 @@ class FeatureDefinition:
     ] = ()
     analysis_producers: tuple[AnalysisProducer, ...] = ()
     surface_lowerers: tuple[SurfaceLowerer, ...] = ()
+    # Readers of this feature's own native realization kinds; each kind is
+    # namespaced by the feature ID, and the companion runs the realizer with
+    # the same kind only while the activation plan includes this feature
+    # (in audit or treatment), on every attempt diagnosis.
+    realization_codecs: tuple[RealizationCodec, ...] = ()
 
     def __post_init__(self) -> None:
         if not isinstance(self.execution_gate, FeatureExecutionGate):
             raise TypeError("feature definition requires an execution gate")
+        if any(
+            not isinstance(codec, RealizationCodec)
+            or not codec.kind.startswith(self.spec.feature_id + ".")
+            for codec in self.realization_codecs
+        ):
+            raise ValueError("feature realization kinds must be its own")
         if not (
             self.resource_load_request_producers
             or self.resource_discoverers

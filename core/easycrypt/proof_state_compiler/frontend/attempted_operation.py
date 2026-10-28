@@ -146,10 +146,6 @@ def parse_attempted_operation(
             side="",
             positions=(),
             application_head_descriptor=None,
-            relation_bridge_descriptor=None,
-            relation_bridge_choice_descriptor=None,
-            phl_transitivity_boundary_descriptor=None,
-            eager_while_dialect_descriptor=None,
             proof_term_descriptor=freeze_json_object({}),
             evidence_refs=evidence_refs,
         )
@@ -177,17 +173,7 @@ def parse_attempted_operation(
         side=descriptor.side,
         positions=descriptor.positions,
         application_head_descriptor=descriptor.application_head,
-        relation_bridge_descriptor=descriptor.relation_bridge,
-        relation_bridge_choice_descriptor=descriptor.relation_bridge_choice,
-        phl_transitivity_boundary_descriptor=(
-            descriptor.phl_transitivity_boundary
-        ),
-        eager_while_dialect_descriptor=descriptor.eager_while_dialect,
-        pure_tail_rewrite_descriptor=descriptor.pure_tail_rewrite,
-        intro_pattern_realization_descriptor=descriptor.intro_pattern_realization,
-        application_syntax_repair_descriptor=(
-            descriptor.application_syntax_repair
-        ),
+        realization=descriptor.realization,
         proof_term_descriptor=freeze_json_object(
             descriptor.proof_term.to_payload()
             if descriptor.proof_term is not None

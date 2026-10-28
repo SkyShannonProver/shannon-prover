@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import re
 from dataclasses import dataclass
 
 from core.easycrypt.proof_state_compiler.contracts.evidence import EvidenceRef
@@ -16,18 +17,13 @@ from core.easycrypt.proof_state_compiler.contracts.frozen_json import (
     FrozenJsonObject,
 )
 from core.easycrypt.proof_state_compiler.contracts.native_semantics import (
+    AttemptRealization,
     NativeApplicationHeadDescriptor,
-    NativeApplicationSyntaxRepairDescriptor,
-    NativeEagerWhileDialectDescriptor,
-    NativeIntroPatternRepairDescriptor,
-    NativePhlTransitivityBoundaryDescriptor,
-    NativePureTailRewriteDescriptor,
-    NativeRelationBridgeChoiceDescriptor,
-    NativeRelationBridgeDescriptor,
 )
 from core.easycrypt.proof_state_compiler.contracts.state_ref import StateRef
 
 
+_OPERATION_FAMILY_RE = re.compile(r"^[a-z][a-z_]*$")
 RECOVERY_NOT_APPLICABLE = "not_applicable"
 RECOVERY_UNCLAIMED = "unclaimed"
 RECOVERY_OWNED = "owned"
@@ -386,21 +382,9 @@ class AttemptedOperationIR:
     side: str
     positions: tuple[int, ...]
     application_head_descriptor: NativeApplicationHeadDescriptor | None
-    relation_bridge_descriptor: NativeRelationBridgeDescriptor | None
-    relation_bridge_choice_descriptor: NativeRelationBridgeChoiceDescriptor | None
-    phl_transitivity_boundary_descriptor: (
-        NativePhlTransitivityBoundaryDescriptor | None
-    )
-    eager_while_dialect_descriptor: NativeEagerWhileDialectDescriptor | None
     proof_term_descriptor: FrozenJsonObject
     evidence_refs: tuple[EvidenceRef, ...]
-    pure_tail_rewrite_descriptor: NativePureTailRewriteDescriptor | None = None
-    intro_pattern_realization_descriptor: (
-        NativeIntroPatternRepairDescriptor | None
-    ) = None
-    application_syntax_repair_descriptor: (
-        NativeApplicationSyntaxRepairDescriptor | None
-    ) = None
+    realization: AttemptRealization | None = None
     recovery_handoff: RecoveryHandoff | None = None
 
     def __post_init__(self) -> None:
@@ -419,10 +403,7 @@ class AttemptedOperationIR:
             != self.state_ref.committed_prefix_identity
         ):
             raise ValueError("attempted operation prefix is stale")
-        if self.operation_family not in {
-            "apply", "exact", "call", "conseq", "transitivity", "change",
-            "eager", "rewrite", "intro_pattern", "compound_tactic",
-        }:
+        if not _OPERATION_FAMILY_RE.fullmatch(self.operation_family):
             raise ValueError("attempted operation has unsupported operation")
         if (
             self.resource_basename
@@ -472,98 +453,12 @@ class AttemptedOperationIR:
             != self.resource_basename
         ):
             raise ValueError("attempted operation head changed selected resource")
-        if self.relation_bridge_descriptor is not None and (
-            self.operation_family
-            != self.relation_bridge_descriptor.source_operation
-            or self.exact_resource
+        if self.realization is not None and (
+            not isinstance(self.realization, AttemptRealization)
+            or self.native_diagnostic_status != "blocker"
+            or self.realization.failure_kind != self.native_failure_kind
         ):
-            raise ValueError("attempted relation bridge changed its identity")
-        if self.relation_bridge_choice_descriptor is not None and (
-            self.operation_family
-            != self.relation_bridge_choice_descriptor.source_operation
-            or self.exact_resource
-            or self.relation_bridge_descriptor is not None
-            or self.application_head_descriptor is not None
-            or self.proof_term_descriptor.to_dict()
-        ):
-            raise ValueError("attempted relation choice changed its identity")
-        if self.phl_transitivity_boundary_descriptor is not None and (
-            self.operation_family
-            != self.phl_transitivity_boundary_descriptor.source_operation
-            or self.exact_resource
-            or self.relation_bridge_descriptor is not None
-            or self.relation_bridge_choice_descriptor is not None
-            or self.application_head_descriptor is not None
-            or self.proof_term_descriptor.to_dict()
-            or self.side != self.phl_transitivity_boundary_descriptor.side
-        ):
-            raise ValueError("attempted PHL boundary changed its identity")
-        if self.eager_while_dialect_descriptor is not None and (
-            self.operation_family
-            != self.eager_while_dialect_descriptor.source_operation
-            or self.exact_resource
-            or self.relation_bridge_descriptor is not None
-            or self.relation_bridge_choice_descriptor is not None
-            or self.phl_transitivity_boundary_descriptor is not None
-            or self.application_head_descriptor is not None
-            or self.proof_term_descriptor.to_dict()
-            or self.side
-            or self.positions
-        ):
-            raise ValueError("attempted eager dialect changed its identity")
-        if self.pure_tail_rewrite_descriptor is not None and (
-            self.operation_family
-            != self.pure_tail_rewrite_descriptor.source_operation
-            or self.operation_family != "rewrite"
-            or self.exact_resource
-            != self.pure_tail_rewrite_descriptor.selected_resource
-            or self.relation_bridge_descriptor is not None
-            or self.relation_bridge_choice_descriptor is not None
-            or self.phl_transitivity_boundary_descriptor is not None
-            or self.eager_while_dialect_descriptor is not None
-            or self.application_head_descriptor is not None
-            or self.proof_term_descriptor.to_dict()
-            or self.side
-            or self.positions
-        ):
-            raise ValueError("attempted pure-tail rewrite changed its identity")
-        if self.intro_pattern_realization_descriptor is not None and (
-            self.operation_family
-            != self.intro_pattern_realization_descriptor.source_operation
-            or self.operation_family != "intro_pattern"
-            or self.exact_resource
-            or self.relation_bridge_descriptor is not None
-            or self.relation_bridge_choice_descriptor is not None
-            or self.phl_transitivity_boundary_descriptor is not None
-            or self.eager_while_dialect_descriptor is not None
-            or self.pure_tail_rewrite_descriptor is not None
-            or self.application_syntax_repair_descriptor is not None
-            or self.application_head_descriptor is not None
-            or self.proof_term_descriptor.to_dict()
-            or self.side
-            or self.positions
-        ):
-            raise ValueError("attempted intro-pattern repair changed its identity")
-        syntax = self.application_syntax_repair_descriptor
-        if syntax is not None and (
-            self.operation_family != syntax.source_operation
-            or self.exact_resource != syntax.selected_resource
-            or self.native_failure_kind != syntax.failure_kind
-            or self.application_head_descriptor is None
-            or self.proof_term_descriptor.to_dict()
-            or self.relation_bridge_descriptor is not None
-            or self.relation_bridge_choice_descriptor is not None
-            or self.phl_transitivity_boundary_descriptor is not None
-            or self.eager_while_dialect_descriptor is not None
-            or self.pure_tail_rewrite_descriptor is not None
-            or self.intro_pattern_realization_descriptor is not None
-            or self.parsed_arguments
-            or self.side
-            or self.positions
-        ):
-            raise ValueError(
-                "attempted application syntax repair changed its identity"
-            )
+            raise ValueError("attempted operation realization is invalid")
         if self.recovery_handoff is not None and (
             not isinstance(self.recovery_handoff, RecoveryHandoff)
             or self.recovery_handoff.derived_rejected_tactic
@@ -604,40 +499,10 @@ class AttemptedOperationIR:
                 if self.application_head_descriptor is None
                 else self.application_head_descriptor.to_payload()
             ),
-            "relation_bridge_descriptor": (
+            "realization": (
                 None
-                if self.relation_bridge_descriptor is None
-                else self.relation_bridge_descriptor.to_payload()
-            ),
-            "relation_bridge_choice_descriptor": (
-                None
-                if self.relation_bridge_choice_descriptor is None
-                else self.relation_bridge_choice_descriptor.to_payload()
-            ),
-            "phl_transitivity_boundary_descriptor": (
-                None
-                if self.phl_transitivity_boundary_descriptor is None
-                else self.phl_transitivity_boundary_descriptor.to_payload()
-            ),
-            "eager_while_dialect_descriptor": (
-                None
-                if self.eager_while_dialect_descriptor is None
-                else self.eager_while_dialect_descriptor.to_payload()
-            ),
-            "pure_tail_rewrite_descriptor": (
-                None
-                if self.pure_tail_rewrite_descriptor is None
-                else self.pure_tail_rewrite_descriptor.to_payload()
-            ),
-            "intro_pattern_realization_descriptor": (
-                None
-                if self.intro_pattern_realization_descriptor is None
-                else self.intro_pattern_realization_descriptor.to_payload()
-            ),
-            "application_syntax_repair_descriptor": (
-                None
-                if self.application_syntax_repair_descriptor is None
-                else self.application_syntax_repair_descriptor.to_payload()
+                if self.realization is None
+                else self.realization.to_payload()
             ),
             "recovery_handoff": (
                 None

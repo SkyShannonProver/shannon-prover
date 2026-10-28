@@ -32,9 +32,6 @@ from core.easycrypt.proof_state_compiler.contracts import (
     DeliveryPolicyDefinition,
     NativeAttemptedOperationDescriptor,
     NativeProofTermElaborationQuery,
-    NativeRelationBridgeChoice,
-    NativeRelationBridgeChoiceDescriptor,
-    NativeRelationBridgeDescriptor,
     NativeSemanticObservation,
     NativeSemanticRequest,
     NativeSemanticRequestProduction,
@@ -64,6 +61,7 @@ from core.easycrypt.proof_state_compiler.middle_end.native_dependencies import (
 )
 from tests.compiler_feature_assembly import feature_assembly
 from tests.proof_state_compiler_test_support import (
+    realization_of,
     attempted_operation_native_observation,
     native_state,
     typed_node,
@@ -73,6 +71,11 @@ from workflow.proof_state_compiler.activation import (
     TREATMENT,
 )
 from workflow.proof_state_compiler.assembly import assemble_feature_set
+from core.easycrypt.proof_state_compiler.features.relation_bridge_realization.realization import (
+    NativeRelationBridgeChoice,
+    NativeRelationBridgeChoiceDescriptor,
+    NativeRelationBridgeDescriptor,
+)
 
 
 def _state_ref() -> StateRef:
@@ -157,7 +160,7 @@ def _compile(tactic: str):
         source_operation=operation,
         relation_family="real_le",
         intermediate_text="0%r",
-        intermediate_type_text="real",
+        intermediate_type="real",
         candidate_tactic="apply (ler_trans 0%r); first last.",
         failure_kind=failure_kind,
         source_target_present=operation == "change",
@@ -188,7 +191,7 @@ def _compile_strict_choice():
         goal_left_text="x",
         intermediate_text="0%r",
         goal_right_text="y",
-        intermediate_type_text="real",
+        intermediate_type="real",
         failure_kind="formula_transitivity_surface_mismatch",
         choices=tuple(
             NativeRelationBridgeChoice(
@@ -228,7 +231,7 @@ def _compile_int_bridge():
         source_operation="transitivity",
         relation_family="int_le",
         intermediate_text="0",
-        intermediate_type_text="int",
+        intermediate_type="int",
         candidate_tactic="apply (Int.lez_trans 0); first last.",
         failure_kind="formula_transitivity_surface_mismatch",
         source_target_present=False,
@@ -284,7 +287,7 @@ def _compile_relation_handoff(
             goal_left_text="x",
             intermediate_text="0%r",
             goal_right_text="y",
-            intermediate_type_text="real",
+            intermediate_type="real",
             failure_kind="formula_transitivity_surface_mismatch",
             choices=tuple(
                 NativeRelationBridgeChoice(
@@ -307,7 +310,7 @@ def _compile_relation_handoff(
             source_operation="transitivity",
             relation_family="real_le",
             intermediate_text="0%r",
-            intermediate_type_text="real",
+            intermediate_type="real",
             candidate_tactic="apply (ler_trans 0%r); first last.",
             failure_kind="formula_transitivity_surface_mismatch",
             source_target_present=False,
@@ -337,8 +340,7 @@ def _compile_relation_handoff(
             native_error_message=native_error_message,
             attempt_outcome="rejected",
             goal_kind="formula",
-            relation_bridge=bridge,
-            relation_bridge_choice=bridge_choice,
+            realization=realization_of(bridge or bridge_choice),
         ),
     )
     observation = NativeSemanticObservation.accepted(
@@ -486,8 +488,9 @@ def test_compound_no_progress_handoff_routes_to_relation_recovery() -> None:
     }
     assert action.correction is not None
     assert action.correction.reason.startswith(
-        "Your compound tactic failed and was rolled back. `wp.` was not "
-        "committed.\n\nEasyCrypt can execute the first stage:\n\n  wp."
+        "Your compound tactic failed and was rolled back; nothing was "
+        "committed.\n\nEasyCrypt can execute the first stage, which does not "
+        "change the goal:\n\n  wp."
     )
     assert "The next stage fails:\n\n  transitivity 0%r." in (
         action.correction.reason
@@ -516,8 +519,9 @@ def test_state_changing_handoff_reconstructs_complete_certifiable_action() -> No
     )
     assert action.correction is not None
     assert action.correction.reason.startswith(
-        "Your compound tactic failed and was rolled back. `move=> H.` was "
-        "not committed.\n\nEasyCrypt can execute the first stage:\n\n  move=> H."
+        "Your compound tactic failed and was rolled back; nothing was "
+        "committed.\n\nEasyCrypt can execute the first stage, which changes "
+        "the goal:\n\n  move=> H."
     )
     certification = CertificationResult(
         candidate_id=action.candidate_id,
@@ -669,7 +673,7 @@ def test_handoff_preserves_complete_choice_semantics_past_420_bytes() -> None:
     diagnostic = bundle.candidate_surface.diagnostics[0].diagnostic
     assert diagnostic.identity_payload_bytes > 420
     assert diagnostic.applicability == "choice_required"
-    assert "That stage does not change the goal" in (
+    assert "the first stage, which does not change the goal" in (
         diagnostic.primary
     )
     assert "ler_lt_trans" in diagnostic.help
@@ -686,7 +690,8 @@ def test_state_changing_strict_choice_names_temporary_goal_and_selects_none() ->
     )
 
     diagnostic = bundle.candidate_surface.diagnostics[0].diagnostic
-    assert "temporary goal produced by `move=> H.`" in diagnostic.primary
+    assert "temporary goal produced by that accepted stage" in diagnostic.primary
+    assert diagnostic.primary.count("move=> H.") == 1
     assert "the current goal" not in diagnostic.primary
     assert "for the failing stage" in diagnostic.help
     assert diagnostic.help.endswith("the compiler selected none.")

@@ -402,7 +402,7 @@ class _Runtime:
             "elapsed_ms": 3,
         } for request in requests]
         result = {
-            "schema_version": 19,
+            "schema_version": 20,
             "kind": "easycrypt_native_semantic_batch_result",
             "ok": True,
             "query_id": f"native-query-{self.native_calls}",
@@ -725,6 +725,49 @@ def test_collective_budget_conflict_abstains_independently_of_feature_order(
     }
 
 
+class _ClosedRuntime(_Runtime):
+    """The proof is closed (goals discharged, qed pending): no open goal."""
+
+    def read_compiler_input_v2(self, *, timeout: int = 30) -> dict[str, Any]:
+        result = super().read_compiler_input_v2(timeout=timeout)
+        result["snapshot"]["state"].update({
+            "goal_identity": "",
+            "goal_identity_required": False,
+            "goal_lines": [],
+            "goal_count": 0,
+            "closed": True,
+        })
+        return result
+
+
+def test_closed_state_abstains_instead_of_querying_easycrypt(
+    tmp_path: Path,
+) -> None:
+    source = tmp_path / "native_scheduling.ec"
+    source.write_text("lemma native_scheduling_sentinel : true.\n", encoding="utf-8")
+    feature_id = "synthetic_closed_state"
+    runtime = _ClosedRuntime(source)
+    assembly = assemble_feature_set(
+        profile_id="native-closed-state-audit",
+        features=(_feature(
+            _many_requests(producer_id=feature_id, count=1),
+            feature_id=feature_id,
+        ),),
+        modes={feature_id: AUDIT},
+    )
+
+    result = ProofStateCompilerService.create(
+        runtime=runtime, assembly=assembly
+    ).compile_current_state()
+
+    assert runtime.native_calls == 0
+    decisions = result.telemetry["native_semantics"]["planning"]["decisions"]
+    assert {
+        (item["disposition"], item["reason"])
+        for item in decisions if item["feature_id"] == feature_id
+    } == {("abstained", "native_query_requires_open_goal")}
+
+
 def test_off_feature_executes_no_native_producer(tmp_path: Path) -> None:
     source = tmp_path / "native_scheduling.ec"
     source.write_text("lemma native_scheduling_sentinel : true.\n", encoding="utf-8")
@@ -918,4 +961,5 @@ def test_native_semantic_join_rejects_goal_body_identity_drift(
             execution_units=(unit,),
             expected_batch_id=batch_id,
             expected_runtime=RUNTIME,
+            realization_codecs={},
         )

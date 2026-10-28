@@ -25,6 +25,7 @@ from workflow.proof_management.node_bootstrap import (
 )
 from workflow.proof_state_compiler.profile_registry import (
     normalize_runtime_surface_profile_id,
+    profile_exposes_compiler_output,
 )
 from workflow.node.manager_followup_render import render_manager_followup
 from workflow.node.node_memory import (
@@ -79,6 +80,8 @@ def _prover_system_anchor(
     memory: NodeMemory,
     manifest: ProofToolContractManifest,
     source_resource: EasyCryptSourceResource | None = None,
+    *,
+    compiler_output_visible: bool = True,
 ) -> str:
     """Durable per-node anchor for the agent's standing prompt.
 
@@ -113,8 +116,13 @@ def _prover_system_anchor(
         f"`{manifest.identity.tool}`: exactly "
         "one intent object per turn, and NEVER end a turn without that call (a turn "
         "with only text abandons the proof)."
-        f"{source_anchor} The current goal and any bounded "
-        "compiler output arrive in each manager turn; these durable node-memory "
+        f"{source_anchor} "
+        + (
+            "The current goal and any bounded compiler output arrive"
+            if compiler_output_visible
+            else "The current goal arrives"
+        )
+        + " in each manager turn; these durable node-memory "
         "files are always available to "
         "read on demand:\n\n"
         f"{_legal_node_memory_anchor(memory)}"
@@ -357,6 +365,19 @@ class ProofNodeRuntime:
                     "checkpoint_count": len(capsules),
                 })
         return rendered
+
+    def _system_anchor(self, source_resource) -> str:
+        """The durable system prompt; arms that never show compiler output
+        get one that does not name a compiler."""
+
+        return _prover_system_anchor(
+            self.memory,
+            self.proof_tool_manifest,
+            source_resource,
+            compiler_output_visible=profile_exposes_compiler_output(
+                self.surface_profile
+            ),
+        )
 
     def _committed_count(self) -> int:
         """Last manager-returned accepted-spine size (the progress metric)."""
@@ -636,11 +657,7 @@ class ProofNodeRuntime:
                 committed_at_gen_start = self._committed_count()
                 result = self.agent.run(
                     prompt,
-                    system_prompt=_prover_system_anchor(
-                        self.memory,
-                        self.proof_tool_manifest,
-                        source_resource,
-                    ),
+                    system_prompt=self._system_anchor(source_resource),
                     mcp_launch_spec=self.mcp_launch_spec,
                 )
                 # A failed invocation-bound readiness handshake is retried with a
@@ -659,11 +676,7 @@ class ProofNodeRuntime:
                     })
                     result = self.agent.run(
                         prompt,
-                        system_prompt=_prover_system_anchor(
-                            self.memory,
-                            self.proof_tool_manifest,
-                            source_resource,
-                        ),
+                        system_prompt=self._system_anchor(source_resource),
                         mcp_launch_spec=self.mcp_launch_spec,
                     )
                 if getattr(self.agent, "mcp_failed_to_start", False):

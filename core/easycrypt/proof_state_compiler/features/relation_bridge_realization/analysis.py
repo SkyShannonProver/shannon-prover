@@ -22,6 +22,7 @@ from core.easycrypt.proof_state_compiler.compound_boundary_text import (
     checked_goal_reference,
 )
 from .feature import RELATION_BRIDGE_REALIZATION_FEATURE_ID
+from .realization import relation_bridge_choice_of, relation_bridge_of
 
 
 _REASONS = {
@@ -48,7 +49,7 @@ _CHOICE_PRODUCER_ID = "relation_bridge_realization.choice_analysis"
 def _strict_relation_choice(
     attempted,
 ) -> AnalysisContribution:
-    descriptor = attempted.relation_bridge_choice_descriptor
+    descriptor = relation_bridge_choice_of(attempted)
     if (
         descriptor is None
         or attempted.native_diagnostic_status != "blocker"
@@ -124,11 +125,11 @@ def analyze_relation_bridge_realization(
 ) -> AnalysisContribution:
     attempted = proof_ir.attempted_operation
     if attempted is not None and (
-        attempted.relation_bridge_choice_descriptor is not None
+        relation_bridge_choice_of(attempted) is not None
     ):
         return _strict_relation_choice(attempted)
     bridge = (
-        None if attempted is None else attempted.relation_bridge_descriptor
+        None if attempted is None else relation_bridge_of(attempted)
     )
     if (
         attempted is None

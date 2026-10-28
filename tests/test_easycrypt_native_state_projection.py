@@ -22,6 +22,14 @@ Type variables: <none>
 ------------------------------------------------------------------------
 true
 """
+# `inline *` binds a unit argument to a procedure declared without
+# parameters as `() <- x`; trailing padding is EasyCrypt's own printing.
+UNIT_ARGUMENT_GOAL = (
+    "Current goal\n\nType variables: <none>\n\n"
+    "------------------------------------------------------------------------\n"
+    "Context : hr: {x : unit}\n\npre = true\n\n"
+    "(1)  () <- x                  \n\npost = true\n"
+)
 STATEMENT_GOAL = """Current goal
 
 Type variables: <none>
@@ -195,6 +203,26 @@ def test_native_state_projects_statement_instruction_tree_and_locals() -> None:
     assert conditional["then_statement"]["instructions"][0]["kind"] == "assign"
     assert conditional["else_statement"]["instructions"][0]["kind"] == "assign"
     assert projection["local_declarations"] == []
+
+
+def test_native_state_projects_empty_tuple_assignment_target() -> None:
+    result = run_native_state_projection(
+        _request(
+            "native-state-unit-argument",
+            FIXTURES / "unit_argument_goal.ec",
+            FIXTURES / "inline_history.ec",
+            UNIT_ARGUMENT_GOAL,
+        ),
+        runtime_identity=discover_easycrypt_runtime_identity(),
+        timeout=30,
+    )
+
+    instruction = result.projection["focused_goal"]["programs"][0][
+        "statement"
+    ]["instructions"][0]
+    assert instruction["kind"] == "assign"
+    assert instruction["text"] == "() <- x{hr};"
+    assert instruction["target"] == {"kind": "tuple", "variables": []}
 
 
 def test_native_state_rejects_goal_identity_drift_after_valid_projection() -> None:

@@ -17,7 +17,7 @@ from workflow.proof_state_compiler.profile_registry import (
 
 
 DEFAULT_CLAUDE_MODEL = "claude-opus-4-8"
-DEFAULT_CODEX_MODEL = "gpt-5.6-sol"
+DEFAULT_CODEX_MODEL = "gpt-6-astra"
 SUPPORTED_AGENT_BACKENDS = frozenset({"claude", "codex"})
 
 

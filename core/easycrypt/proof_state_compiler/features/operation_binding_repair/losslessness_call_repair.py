@@ -43,6 +43,9 @@ from core.easycrypt.proof_state_compiler.middle_end.procedure_binding import (
 from core.easycrypt.proof_state_compiler.syntax.module_terms import (
     lexical_procedure_views,
 )
+from core.easycrypt.proof_state_compiler.features.operation_binding_repair.realization import (
+    application_syntax_repair_of,
+)
 
 
 LOSSLESSNESS_CALL_REPAIR_NATIVE_PRODUCER_ID = (
@@ -128,7 +131,7 @@ def discover_unique_losslessness_call_repair(
         attempted is None
         or classify_operation_binding_failure(attempted) != "B2"
         or attempted.operation != "call"
-        or attempted.application_syntax_repair_descriptor is not None
+        or application_syntax_repair_of(attempted) is not None
         or any(item != "hole" for item in attempted.parsed_arguments)
         or bool(attempted.side)
         or bool(attempted.positions)

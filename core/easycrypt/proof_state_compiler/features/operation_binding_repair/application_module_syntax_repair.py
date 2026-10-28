@@ -14,7 +14,6 @@ from dataclasses import dataclass
 from core.easycrypt.proof_state_compiler.contracts import (
     CompilerInvocationContext,
     EvidenceRef,
-    NativeApplicationSyntaxRepairDescriptor,
     NativePlanningBudget,
     NativeProofTermDescriptor,
     NativeProofTermElaborationQuery,
@@ -36,6 +35,10 @@ from core.easycrypt.proof_state_compiler.middle_end.contributions import (
 from core.easycrypt.proof_state_compiler.middle_end.native_application import (
     native_application_contribution,
     resolved_head_matches_resource,
+)
+from core.easycrypt.proof_state_compiler.features.operation_binding_repair.realization import (
+    NativeApplicationSyntaxRepairDescriptor,
+    application_syntax_repair_of,
 )
 
 
@@ -141,7 +144,7 @@ def discover_unique_application_module_syntax_repair(
     attempted = proof_ir.attempted_operation
     if attempted is None:
         return None
-    syntax = attempted.application_syntax_repair_descriptor
+    syntax = application_syntax_repair_of(attempted)
     head = attempted.application_head_descriptor
     realization = realize_application_module_syntax(
         attempted.rejected_tactic

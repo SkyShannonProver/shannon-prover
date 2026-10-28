@@ -4,6 +4,67 @@ Notable changes to Shannon Prover, newest first. Each public release from
 0.2.0 on is tagged `vX.Y.Z`. Earlier releases are listed by date and tagged
 together as `v0.1.0`.
 
+## 0.3.0 (2026-10-27)
+
+- Concurrent proof nodes in one checkout no longer lose compiler help at
+  random. Every native EasyCrypt query first runs `dune build` in the shared
+  companion directory, and dune refuses to start while another instance is
+  running there, so the query failed and the compiler silently skipped that
+  turn. Companion builds now take turns through a file lock.
+- The compiler no longer fails when the agent submits a tactic after the
+  proof is already closed. A failed tactic there still made recovery
+  features ask EasyCrypt for a diagnosis, which EasyCrypt refuses without an
+  open goal; the planner now records a typed abstention instead. The agent
+  sees the same turn as before.
+- Compound-tactic diagnosis no longer fails when the agent's tactic clashes
+  with an existing name (`move=> H` when `H` exists) or clears a hypothesis
+  that is still used. EasyCrypt reports these outside its ordinary tactic
+  errors; they escaped the native adapter and failed the whole native batch.
+  They are now diagnosed with EasyCrypt's own message. The same holds for
+  the intro-pattern, PHL-transitivity and eager-while recognizers, which run
+  the agent's tactic themselves: a nested `move=> [H [a b]]` whose `H`
+  already existed, or an `eager while` invariant that does not type, failed
+  the batch there too.
+- Native diagnoses now carry EasyCrypt's message for typing errors, alias
+  clashes and failed `apply` instances instead of the OCaml exception name,
+  such as `EcLib.EcTyping.TyError(_, _, _)`. A compound-tactic diagnosis
+  quotes this message to the agent when part of the tactic succeeded.
+- An attempted `call` whose native diagnosis ends in an internal EasyCrypt
+  assertion is reported as undiagnosed. It used to be labelled a
+  call-applicability failure, which the transport rejects, so the whole
+  native batch failed and the compiler skipped that turn.
+- The typed-state projection accepts `() <- e`, the empty tuple target that
+  `inline *` produces when a unit argument meets a procedure declared
+  without parameters. Such states used to lose their native projection.
+- Native semantic protocol schema 20. Each compiler feature that explains a
+  failed tactic now brings its own EasyCrypt realizer, and the compiler asks
+  EasyCrypt to run only the realizers of the features it enables, so a disabled
+  feature does no native work. What the agent sees is unchanged.
+- Compound-tactic diagnoses quote the accepted prefix once in their
+  explanation instead of up to five times. Long compound tactics, as Opus
+  5.5 writes them, pushed 15 of 50 recorded diagnoses past the 700-byte
+  delivery budget, so the agent never saw them; now only those with the
+  longest prefixes still exceed it.
+- Arms that never show compiler output (L1 and hidden audits) get a prompt
+  that does not mention a compiler, and a suite can give each arm's output
+  directory a neutral name, since the agent sees paths under it. The
+  production treatment's prompt is unchanged.
+- Eval suites can give every arm the manager-owned source navigation tools
+  (`source_navigation: true`); each arm is bound to its own proof-stripped
+  source copy before any model starts. Suites previously never enabled them.
+- Claude workers survive a safety-classifier retry. The note the CLI
+  injects before retrying counted as a protocol violation, which killed the
+  worker and restarted it with a fresh context.
+- Claude eval workers run without built-in tools or slash commands; with
+  CLI 2.1.311, calling one was a capability violation that killed the worker.
+  Models with a 1M-token context window swap context at 400k tokens instead
+  of 140k, and a worker that exits with an error writes the reason to its
+  stderr log.
+- The Codex backend now defaults to `gpt-6-astra` instead of `gpt-5.6-sol`,
+  still with high reasoning effort. Runs that name a model are unchanged; if
+  your account cannot use GPT-6, select an available model with
+  `--prover-model` or the suite `model` setting.
+
 ## 0.2.0 (2026-09-30)
 
 - Keep Why3 solver configuration inside the managed toolchain. Runtime checks

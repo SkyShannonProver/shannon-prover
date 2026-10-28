@@ -419,3 +419,123 @@ def test_worker_reports_runtime_initialization_failure_as_result_event(
     event = json.loads(capsys.readouterr().out)
     assert event["type"] == "result"
     assert "confinement unavailable" in event["result"]
+
+
+def _run_worker_with_result(monkeypatch, tmp_path: Path, result) -> int:
+    from workflow.node import managed_prover_worker
+
+    prompt = tmp_path / "prompt.md"
+    bootstrap = tmp_path / "bootstrap.json"
+    prompt.write_text("prove it\n", encoding="utf-8")
+    bootstrap.write_text("{}\n", encoding="utf-8")
+
+    class FinishedRuntime:
+        def __init__(self, **_kwargs) -> None:
+            pass
+
+        def run(self):
+            return result
+
+        def request_safe_stop(self, _reason: str) -> None:
+            pass
+
+    monkeypatch.setattr(managed_prover_worker, "ProofNodeRuntime", FinishedRuntime)
+    monkeypatch.setattr(managed_prover_worker, "_release_daemon_session", lambda _tag: None)
+    return managed_prover_worker.main([
+        "--prompt-file", str(prompt),
+        "--bootstrap-file", str(bootstrap),
+        "--file", "Target.ec",
+        "--lemma", "target",
+        "--include-dir", "theories",
+        "--session-tag", "worker-test",
+        "--node-id", "Tree-0.0",
+        "--run-dir", str(tmp_path / "run"),
+        "--agent-backend", "claude",
+        "--model", "claude-sonnet-5-5",
+    ])
+
+
+def _supervisor_crash_hint(stderr: str) -> str:
+    # The exact last-line extraction in the supervisor's Layer-3 crash line.
+    tail = stderr.strip()
+    return tail.splitlines()[-1][:160] if tail else ""
+
+
+def test_worker_mirrors_agent_exit_reason_to_stderr(
+    monkeypatch,
+    tmp_path: Path,
+    capsys,
+) -> None:
+    from workflow.provider.provider_sessions import ClaudeRunResult
+
+    text = (
+        "provider attempted a disabled tool: claude:ToolSearch\n"
+        "provider errors:\nAPI Error: 400 capture endpoint"
+    )
+    returncode = _run_worker_with_result(
+        monkeypatch,
+        tmp_path,
+        ClaudeRunResult(text=text, session_id="s-1", returncode=2, turns=3),
+    )
+
+    assert returncode == 2
+    captured = capsys.readouterr()
+    # stdout protocol unchanged: exactly one final result event.
+    event = json.loads(captured.out)
+    assert event["result"] == (
+        text + "\n\nMANAGER WORKER ERROR: agent exited with 2."
+    )
+    assert event["session_id"] == "s-1" and event["turns"] == 3
+    # stderr now carries the guard violation and the provider error text, and
+    # the supervisor's one-line crash hint names the violation.
+    assert "API Error: 400 capture endpoint" in captured.err
+    assert _supervisor_crash_hint(captured.err) == (
+        "managed worker: agent exit 2: "
+        "provider attempted a disabled tool: claude:ToolSearch"
+    )
+
+
+def test_worker_exit_reason_on_stderr_is_bounded(
+    monkeypatch,
+    tmp_path: Path,
+    capsys,
+) -> None:
+    from workflow.provider.provider_sessions import ClaudeRunResult
+
+    text = (
+        "agent final message\n" + "x" * 10_000
+        + "\n\nMANAGER WORKER ERROR: proof node became unhealthy: bridge lost"
+    )
+    _run_worker_with_result(
+        monkeypatch,
+        tmp_path,
+        ClaudeRunResult(text=text, session_id="", returncode=2),
+    )
+
+    captured = capsys.readouterr()
+    assert len(captured.err) < 2_600
+    assert "bridge lost" in captured.err
+    # The runtime's own appended verdict outranks the agent's leading text.
+    assert _supervisor_crash_hint(captured.err) == (
+        "managed worker: agent exit 2: MANAGER WORKER ERROR: proof node "
+        "became unhealthy: bridge lost"
+    )
+
+
+def test_worker_clean_exit_writes_no_stderr(
+    monkeypatch,
+    tmp_path: Path,
+    capsys,
+) -> None:
+    from workflow.provider.provider_sessions import ClaudeRunResult
+
+    returncode = _run_worker_with_result(
+        monkeypatch,
+        tmp_path,
+        ClaudeRunResult(text="gave up", session_id="", returncode=0),
+    )
+
+    assert returncode == 0
+    captured = capsys.readouterr()
+    assert captured.err == ""
+    assert json.loads(captured.out)["result"] == "gave up"

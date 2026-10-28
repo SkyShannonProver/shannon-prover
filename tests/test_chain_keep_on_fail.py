@@ -15,7 +15,9 @@ The fix: chain uses `history.ec` line count as ground truth for
 asserts that the line count of history.ec matches the chain's reported
 `accepted` count after the chain returns.
 
-Run: `python3 tools/bootstrap_easycrypt.py --verify-only` followed by this file.
+Run: `uv run python tools/bootstrap_easycrypt.py --verify-only`, then
+`uv run python -m pytest tests/test_chain_keep_on_fail.py` (the tests
+conftest stops the EasyCrypt daemon these session_cli calls spawn).
 """
 from __future__ import annotations
 
@@ -43,8 +45,11 @@ def run(args: list[str], env_extra: dict | None = None) -> tuple[int, str]:
     env = os.environ.copy()
     if env_extra:
         env.update(env_extra)
+    # Same interpreter as the test, as ReplSessionManager runs session_cli.
+    # PATH's ``python3`` may be an unsupported system Python (3.9 on macOS)
+    # that cannot import the commit path.
     p = subprocess.run(
-        ["python3", str(SCLI), *args],
+        [sys.executable, str(SCLI), *args],
         cwd=ROOT, env=env, capture_output=True, text=True,
     )
     return p.returncode, p.stdout + p.stderr

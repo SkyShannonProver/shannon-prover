@@ -23,37 +23,25 @@ def compound_boundary_summary(
     rejected_extension: str,
     native_error: str,
 ) -> str:
-    """Describe rollback, the accepted prefix, and the first failed stage."""
+    """Describe rollback, the accepted prefix, and the first failed stage.
 
-    accepted_inline = markdown_inline_code(accepted_prefix)
-    execute_label = (
-        "EasyCrypt can execute the first stage:"
-        if accepted_stage_count == 1
-        else "EasyCrypt can execute through:"
-    )
-    changed = accepted_effect == "accepted_changed"
-    effect = (
-        "That stage changes the goal. The next stage fails:"
-        if changed and accepted_stage_count == 1
-        else (
-            "That accepted prefix changes the goal. The next stage fails:"
-            if changed
-            else (
-                "That stage does not change the goal. The next stage fails:"
-                if accepted_stage_count == 1
-                else (
-                    "That accepted prefix does not change the goal. "
-                    "The next stage fails:"
-                )
-            )
-        )
-    )
+    The accepted prefix is quoted exactly once: the agent already holds the
+    tactic it submitted, and repeating a long prefix is what pushed real
+    boundaries past their delivery budget.
+    """
+
+    if accepted_stage_count == 1:
+        accepted = "the first stage, which"
+        verb = "changes" if accepted_effect == "accepted_changed" else "does not change"
+    else:
+        accepted = f"the first {accepted_stage_count} stages, which"
+        verb = "change" if accepted_effect == "accepted_changed" else "do not change"
     return (
-        "Your compound tactic failed and was rolled back. "
-        f"{accepted_inline} was not committed.\n\n"
-        f"{execute_label}\n\n"
+        "Your compound tactic failed and was rolled back; nothing was "
+        "committed.\n\n"
+        f"EasyCrypt can execute {accepted} {verb} the goal:\n\n"
         f"{_indented_block(accepted_prefix)}\n\n"
-        f"{effect}\n\n"
+        "The next stage fails:\n\n"
         f"{_indented_block(rejected_extension)}\n\n"
         "EasyCrypt reports:\n\n"
         f"{_indented_block(native_error)}"
@@ -62,36 +50,46 @@ def compound_boundary_summary(
 
 def compound_boundary_continuation(
     *,
-    accepted_prefix: str,
     accepted_effect: str,
     accepted_stage_count: int,
 ) -> str:
-    """State strategy-preserving options after an explanation-only result."""
+    """State strategy-preserving options after an explanation-only result.
 
-    accepted_inline = markdown_inline_code(accepted_prefix)
+    The boundary summary above always quotes the prefix, so this text refers
+    to it rather than repeating it.
+    """
+
+    stages, it = (
+        ("that stage", "it") if accepted_stage_count == 1
+        else ("those stages", "them")
+    )
     if accepted_effect == "accepted_changed":
-        unit = "step" if accepted_stage_count == 1 else "prefix"
         return (
-            f"If you want to continue from the goal produced by that {unit}, "
-            f"submit {accepted_inline} separately. You may instead replace "
-            "the failing suffix and resubmit the compound. The compiler does "
-            "not choose between these options."
+            f"To continue from the goal after {stages}, submit {it} alone, "
+            "or fix the failing suffix and resubmit the compound. The "
+            "compiler does not choose between these options."
         )
     return (
-        f"Submitting {accepted_inline} separately would not change the goal. "
-        "Repair the failing suffix or choose a different tactic; the compiler "
-        "does not choose between these options."
+        f"Submitting {stages} alone would not change the goal; fix the "
+        "failing suffix or choose a different tactic. The compiler does not "
+        "choose between these options."
     )
 
 
 def checked_goal_reference(handoff: RecoveryHandoff | None) -> str:
-    """Name the exact goal in which a failed operation was checked."""
+    """Name the exact goal in which a failed operation was checked.
+
+    A state-changing handoff is always presented after the boundary summary,
+    which quotes the accepted prefix; refer back to it instead of quoting it
+    again in every sentence.
+    """
 
     if handoff is not None and handoff.prefix_changes_state:
-        return (
-            "the temporary goal produced by "
-            + markdown_inline_code(handoff.accepted_prefix_tactic)
+        stages = (
+            "that accepted stage" if handoff.accepted_prefix_stage_count == 1
+            else "those accepted stages"
         )
+        return f"the temporary goal produced by {stages}"
     return "the current goal"
 
 
@@ -108,15 +106,6 @@ def checked_state_reference(handoff: RecoveryHandoff | None) -> str:
     if handoff is not None and handoff.prefix_changes_state:
         return checked_goal_reference(handoff)
     return "the current proof state"
-
-
-def markdown_inline_code(value: str) -> str:
-    """Fence one exact dynamic value without assuming it contains no ticks."""
-
-    fence = "`"
-    while fence in value:
-        fence += "`"
-    return f"{fence}{value}{fence}"
 
 
 def _indented_block(value: str) -> str:

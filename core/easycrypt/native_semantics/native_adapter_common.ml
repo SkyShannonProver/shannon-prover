@@ -5,10 +5,16 @@ open Yojson.Safe.Util
 
 exception Contract_error of string
 
+(* EasyCrypt's registered printers give the text its own toplevel shows.  An
+   exception without one falls through to Why3's base printer, which prints
+   "anomaly: " and the constructor; report the bare constructor instead. *)
 let exception_text = function
   | EcCoreGoal.TcError error ->
       Format.asprintf "%a" EcUserMessages.pp_tc_error error
-  | exn -> Printexc.to_string exn
+  | exn ->
+      let constructor = Printexc.to_string exn in
+      let text = String.trim (EcPException.tostring exn) in
+      if text = "anomaly: " ^ constructor then constructor else text
 
 let json_string name value =
   try value |> member name |> to_string

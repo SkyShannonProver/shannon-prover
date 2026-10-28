@@ -45,7 +45,7 @@ For a first reading, follow the sections that match your task:
 - **Add or evaluate a feature:** [feature registration](#6-feature-registration),
   [evidence lifecycle](#7-evidence-feature-lifecycle), and
   [testing](#13-testing-pyramid).
-- **Check the current production boundary:** [private M05 scope](#10-branch-confined-proactive-slice),
+- **Check the current production boundary:** [archived M05 scope](#10-archived-proactive-slice),
   [recovery checkpoint](#14-recovery-foundation-checkpoint), and
   [acceptance criteria](#15-architecture-acceptance-criteria).
 
@@ -65,7 +65,7 @@ The rewrite has three independent proof obligations:
 |---|---|---|
 | Value/evidence | L1 bundles identify real mechanical cost; one isolated Shannon delta repays its hidden and visible cost in matched micro and diverse full-route experiments. | Evidence inventory is substantial; efficacy remains feature-specific and continuously gated. |
 | Clean rewrite/removal | V2 is a fixed P1-P4 skeleton with isolated removable features, and the legacy compiler can be physically deleted without deleting the neutral managed-prover foundation. | **Complete at the source/runtime boundary.** The old parser/ProofIR/analyzer/panel/presentation, inspect/search, compatibility profile, and mixed runtime branches have been removed. Historical reports retain names only as provenance. |
-| Native reuse/contribution | EasyCrypt supplies every semantic result it already owns; Shannon adds only bounded search/commitment logic and harness delivery/economics, stated and measured separately. | Architecture-level ownership, M01-M25 decomposition, N1a/N1b, N1c typed-state endpoint, N1d native P1/P2 lowering, N1e proof-term descriptors, and N2b.1-N2b.3a SC1 application migrations are complete locally; the frozen remote N2b.3a trigger-parity gate remains. Historical N2a M05 validation is maintained only on `compiler-proactive`. |
+| Native reuse/contribution | EasyCrypt supplies every semantic result it already owns; Shannon adds only bounded search/commitment logic and harness delivery/economics, stated and measured separately. | Architecture-level ownership, M01-M25 decomposition, N1a/N1b, N1c typed-state endpoint, N1d native P1/P2 lowering, N1e proof-term descriptors, and N2b.1-N2b.3a SC1 application migrations are complete locally; the frozen remote N2b.3a trigger-parity gate remains. Historical N2a M05 validation is archived at `archive/2026-10-27/compiler-proactive`. |
 
 Success in one pillar never substitutes for another. A locally helpful feature
 does not justify architectural coupling; a clean feature does not establish
@@ -425,10 +425,14 @@ first module slot and ordinary exact unchanged-state preflight remain
 mandatory. This stays inside `operation_binding_repair`; arbitrary or
 ambiguous parse errors abstain.
 
-Native semantic protocol/artifact schema 19 is canonical rather than
-branch-local. Every attempted-operation payload includes both mutually
-exclusive nullable fields `intro_pattern_realization` and
-`application_syntax_repair`. Every application-head input argument carries
+Native semantic protocol/artifact schema 20 is canonical rather than
+branch-local. Every attempted-operation payload carries one nullable
+`realization` object, `{kind, failure_kind, payload}`, in place of one
+nullable field per feature. Every attempt or tactic-prefix diagnosis request
+carries `realizer_kinds`, the sorted realization kinds of the features in the
+compiler's activation plan; the native planner sets it, never a feature
+producer, so audit and treatment send identical requests and an OFF feature's
+realizer never runs. Every application-head input argument carries
 `rejected`, true only for the one top-level argument at whose location
 EasyCrypt reported its argument-kind error or found no product left to apply
 it to. Every application head carries `implicits_enabled`, EasyCrypt's
@@ -436,7 +440,27 @@ implicit-arguments option, and `unfolds_to_more_slots`, whether its result
 still unfolds into a product. Every batch member also carries an
 exact `evaluation_prefix`: normally empty, or the native-confirmed source
 prefix of one compound-boundary handoff. No earlier-schema compatibility path
-remains. Successful responses and top-level error envelopes report schema 19.
+remains. Successful responses and top-level error envelopes report schema 20.
+
+Realization is a feature-neutral seam on both sides of the wire. In the
+companion, `Realizer` defines the triggers (a parsed operation with a native
+blocker, a parse error, an unsupported shape) and the claim a realizer
+returns; each feature that realizes failures owns one file under
+`native_semantics/realizers/`, and `Realizer_catalog.all` is the companion's
+only composition root. The companion runs every requested realizer: no claim
+leaves the attempt unrealized, one claim realizes it, and two or more make
+the member a `realization_ambiguous` rejection, so registration order is
+never semantic. Inside the compiler the realization is one
+`AttemptRealization` on `NativeAttemptedOperationDescriptor` and
+`AttemptedOperationIR`, required to explain the attempt's blocker. The
+transport validates only its envelope and that its kind was requested. Each
+feature declares a `RealizationCodec` per kind; the input gateway applies the
+owner's codec to every realization it receives, so a payload that is
+malformed or does not realize its attempt fails closed. No shared contract,
+transport check or gateway path names a realization kind. Query kinds are a
+separate seam: the gateway still decodes each native query kind itself, and
+`selected_application_binding_set`, `namespace_spelling_set` and
+`tactic_prefix_diagnostic` each serve one feature.
 
 Native companion stdout is a framed transport, not a bare JSON assumption.
 EasyCrypt commands replayed from the source may themselves print text, so each
@@ -569,8 +593,8 @@ delta whose production treatment has been separately authorized. It is not a
 general route-advisory trigger. The fact that only one registered candidate
 exists, or that EasyCrypt accepts it, does not prove route neutrality. This
 branch contains no proactive exception, SC2 producer, delivery rule, or
-profile. The frozen M05 research exception is maintained only on the private
-`compiler-proactive` branch.
+profile. The frozen M05 research exception is archived at the private tag
+`archive/2026-10-27/compiler-proactive`.
 
 ### Strategy ownership boundary
 
@@ -601,7 +625,7 @@ agent may be SC1.
 Consequences for the current codebase:
 
 - keep M05 physically absent from `main`; its frozen implementation and
-  evidence harness belong only to `compiler-proactive`;
+  evidence harness are archived at `archive/2026-10-27/compiler-proactive`;
 - remove or disable M07's state-only proactive producer/profile, while keeping
   its generic declaration parser, application signature, proof-slot binder,
   lowerer, and certifier only where an SC1 selected-operation or same-resource
@@ -828,6 +852,9 @@ core/easycrypt/proof_state_compiler/
   features/
     registry.py                    FeatureSpec + immutable FeatureCatalog
     catalog.py                     only production feature composition root
+    execution.py                   execution gate/plan contracts
+    failed_commit.py               shared failed-commit gate and exact-attempt
+                                   native request factories for recovery slices
     losslessness_certificate_application/
       resource_discovery.py        losslessness declaration discovery
       candidate_discovery.py       bounded lexical native-query planning
@@ -847,16 +874,18 @@ core/easycrypt/proof_state_compiler/
       feature.py                   independent SC1 semantic slice
     pure_tail_recovery/
       syntax.py                    plain selected-rewrite lexical gate
-      native_attempt.py            exact failure-bound native request
+      realization.py               typed native unique-target realization
       analysis.py                  unique-target claim and preservation witness
       surface_lowering.py          one certified `Do you mean?` action
-      feature.py                   removable SC1 semantic slice
+      feature.py                   removable SC1 slice; gate and native request
+                                   from failed_commit.py
     intro_pattern_repair/
       syntax.py                    bounded failed nested-`move` lexical gate
-      native_attempt.py            exact failure-bound native request
+      realization.py               typed native ordered-binder realization
       analysis.py                  ordered-binder realization witness and claim
       surface_lowering.py          one certified `Do you mean?` action
-      feature.py                   removable SC1 semantic slice
+      feature.py                   removable SC1 slice; gate and native request
+                                   from failed_commit.py
 
   compiler.py                      pure P1-P4 orchestration
   serialization.py
@@ -907,8 +936,8 @@ it.
 
 The proactive `losslessness_certificate_application` package is absent from
 `main`; there is no alias or compatibility package. M05 remains here only as
-historical evidence-ledger provenance. Its executable slice is maintained on
-`compiler-proactive`.
+historical evidence-ledger provenance. Its executable slice is archived at
+`archive/2026-10-27/compiler-proactive`.
 The proactive `probability_theorem_application` package and profiles are
 removed. Its declaration/signature parsing, proof-slot binding, generic
 application lowering, and certification path remain shared infrastructure and
@@ -1849,7 +1878,7 @@ The experiment boundary follows the same rule. Shared
 `proof_state_compiler_one_step_trial.py` and
 `proof_state_compiler_one_step_model.py` own the packet, provider invocation,
 tool prohibition, JSONL decoding, and metrics. Proactive validation modules
-exist only on `compiler-proactive`; `main` has no feature-specific manager or
+are archived at `archive/2026-10-27/compiler-proactive`; `main` has no feature-specific manager or
 renderer.
 
 ## 7. Evidence feature lifecycle
@@ -2185,7 +2214,7 @@ The subsystem must not become a global search panel, candidate ranker, tactic
 planner, or cumulative context dump. It runs only the resolvers requested by
 registered feature capabilities; admission still defaults to silence.
 
-## 10. Branch-confined proactive slice
+## 10. Archived proactive slice
 
 The proactive M05 `losslessness_certificate_application` slice is physically
 absent from `main`. The shared native proof-term descriptor, application
@@ -2193,13 +2222,13 @@ lowering, and exact preflight infrastructure remain because the
 commitment-relative `operation_binding_repair` feature consumes them.
 
 The frozen M05 implementation, experiment manifest, sentinel, fixture-specific
-tests, and optional-advisory delivery helper are maintained only on the private
-`compiler-proactive` branch. Its M05 scope remains fixed while the shared runtime
-baseline can advance by merging a reviewed `compiler` commit under the repository
-release contract. The branch's delta is measured against that compiler baseline,
-not against the assembled `main` tree. Refreshing the baseline does not change
-the source commits or artifacts recorded for historical experiments. M05 is not
-part of the default runtime or the interleaved product.
+tests, and optional-advisory delivery helper are archived at the private tag
+`archive/2026-10-27/compiler-proactive`, the last state of the former `compiler-proactive` branch.
+That branch was retired on 2026-10-27: M05 was its only feature, it stayed off
+in every profile, and failure-linked repair sufficed in every valid sampled
+positive run. The tag is not synchronized with `compiler`, so any future
+proactive work starts from the current `compiler`, not from the tag. M05 is
+not part of the default runtime or the interleaved product.
 
 Historical M05 reports remain in this branch as evidence provenance. They do
 not make M05 runnable and do not authorize another proactive feature.
@@ -2306,8 +2335,8 @@ never substitutes for full-route economics.
 The current implementation has completed the strategy-boundary migration:
 
 1. M05 `losslessness_certificate_application` is absent from `main`; its
-   frozen SC2 implementation and validation material live only on
-   `compiler-proactive`.
+   frozen SC2 implementation and validation material are archived at
+   `archive/2026-10-27/compiler-proactive`.
 2. The proactive M07 package, audit/treatment profiles, and active validation
    launchers are removed. Generic declaration parsing, application signatures,
    proof-slot binding, lowering, and certification remain shared.
@@ -2411,8 +2440,8 @@ The foundation is ready for managed experiments only when:
 - M07 proactive treatment cannot be assembled and its historical artifacts do
   not reactivate deleted production code;
 - recovery ownership conflict tests pass independently of feature order;
-- the historical M05 micro and managed evidence remain reproducible on the
-  private `compiler-proactive` branch; and
+- the historical M05 micro and managed evidence remain reproducible from the
+  private tag `archive/2026-10-27/compiler-proactive`; and
 - L1 has no compiler service, while audit/treatment use the same feature
   compiler and certification set and differ in exposure only through the
   independently resolved delivery plan.

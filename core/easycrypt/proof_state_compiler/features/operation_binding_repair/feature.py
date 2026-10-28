@@ -94,7 +94,7 @@ def operation_binding_repair_feature_spec() -> FeatureSpec:
             "ApplicationSignature",
             "SlotResolution",
             "ApplicationCandidate",
-            "NativeApplicationSyntaxRepairDescriptor",
+            "AttemptRealization",
         ),
         certification_policy="exact_tactic_preflight",
         strategy_contracts=(OPERATION_BINDING_REPAIR_STRATEGY_CONTRACT,),
@@ -103,6 +103,7 @@ def operation_binding_repair_feature_spec() -> FeatureSpec:
 
 def operation_binding_repair_feature() -> FeatureDefinition:
     from .analysis import analyze_operation_binding_repair
+    from .realization import APPLICATION_SYNTAX_REPAIR_CODEC
     from .resource_discovery import discover_attempted_operation_resources
     from .resource_loading import request_attempted_resource_declaration
     from .surface_lowering import lower_operation_binding_repair
@@ -122,12 +123,35 @@ def operation_binding_repair_feature() -> FeatureDefinition:
     from .selected_application_binding_set import (
         plan_native_selected_application_binding_set,
     )
-    from .execution import OPERATION_BINDING_FAILURE_EXECUTION_GATE
-    from .attempt_diagnostic import plan_native_operation_binding_attempt
+    from core.easycrypt.proof_state_compiler.features.failed_commit import (
+        attempt_diagnostic_producer,
+        failed_commit_gate,
+    )
+    from core.easycrypt.proof_state_compiler.syntax.attempted_operation import (
+        operation_resource,
+    )
+
+    def names_a_resource(tactic: str) -> bool:
+        # Work avoidance only: native EasyCrypt owns the parse and the
+        # semantic failure kind consumed by the B1/B2/B4 classifier.
+        return operation_resource(tactic) is not None
+
+    plan_native_operation_binding_attempt = attempt_diagnostic_producer(
+        producer_id="operation_binding_repair.attempt.native_diagnostic",
+        request_prefix="operation-binding-attempt",
+        prefilter=names_a_resource,
+    )
 
     return FeatureDefinition(
         spec=operation_binding_repair_feature_spec(),
-        execution_gate=OPERATION_BINDING_FAILURE_EXECUTION_GATE,
+        execution_gate=failed_commit_gate(
+            gate_id="owned_current_state_failure",
+            prefilter=names_a_resource,
+            not_prefiltered_reason="operation_not_prefiltered",
+            eligible_reason="candidate_binding_operation_failure",
+            missing_tactic_reason="missing_attempted_tactic",
+            accepts_recovery_handoff=True,
+        ),
         resource_load_request_producers=(request_attempted_resource_declaration,),
         resource_discoverers=(discover_attempted_operation_resources,),
         native_semantic_request_producers=(
@@ -141,4 +165,5 @@ def operation_binding_repair_feature() -> FeatureDefinition:
         ),
         analysis_producers=(analyze_operation_binding_repair,),
         surface_lowerers=(lower_operation_binding_repair,),
+        realization_codecs=(APPLICATION_SYNTAX_REPAIR_CODEC,),
     )

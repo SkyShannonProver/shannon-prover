@@ -246,7 +246,6 @@ def _present_diagnostic(
     diagnostic = item.diagnostic
     continuation = (
         compound_boundary_continuation(
-            accepted_prefix=handoff.accepted_prefix_tactic,
             accepted_effect=handoff.accepted_prefix_effect,
             accepted_stage_count=handoff.accepted_prefix_stage_count,
         )

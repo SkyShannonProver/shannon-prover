@@ -15,6 +15,7 @@ from core.easycrypt.proof_state_compiler.contracts import (
     NativeSemanticRequestProduction,
     ProofCoordinate,
     ProofIR,
+    REALIZING_QUERY_TYPES,
 )
 from core.easycrypt.proof_state_compiler.contracts.native_semantics import (
     NATIVE_PRODUCTION_ABSTAINED,
@@ -66,8 +67,15 @@ def plan_native_semantics(
     producers: tuple[NativeSemanticProducerBinding, ...],
     invocation: CompilerInvocationContext,
     budget: NativePlanningBudget | None = None,
+    *,
+    realizer_kinds: tuple[str, ...] = (),
 ) -> NativeSemanticPlan:
     """Collect a complete, bounded native plan for the exact current StateRef.
+
+    Like the evaluation prefix, the realizer kinds of an attempt diagnosis
+    are the planner's to set, never a producer's: they are the compiler's
+    activation-plan kinds, so every consumer of one diagnosis shares one
+    native unit and audit issues exactly treatment's requests.
 
     Capacity is an ordinary compiler admission decision, not an exception. A
     feature whose complete unresolved request population does not fit is
@@ -116,6 +124,14 @@ def plan_native_semantics(
                 raise ValueError(
                     "feature producer cannot choose a native evaluation prefix"
                 )
+            # A query that diagnoses an attempt carries realizer kinds.
+            query = produced_request.query
+            if isinstance(query, REALIZING_QUERY_TYPES):
+                if query.realizer_kinds:
+                    raise ValueError(
+                        "feature producer cannot choose native realizer kinds"
+                    )
+                query = replace(query, realizer_kinds=realizer_kinds)
             handoff = (
                 None
                 if proof_ir.attempted_operation is None
@@ -131,6 +147,7 @@ def plan_native_semantics(
                 produced_request,
                 feature_id=binding.feature_id,
                 evaluation_prefix=evaluation_prefix,
+                query=query,
             )
             if request.state_ref != proof_ir.state_ref:
                 raise ValueError("native semantic producer crossed StateRef")
@@ -161,6 +178,10 @@ def plan_native_semantics(
     prepared.sort(key=lambda item: (
         item.feature_id, item.production.producer_id
     ))
+    if not proof_ir.state_ref.goal_identity_required:
+        # EasyCrypt answers native queries only against an open goal; a
+        # failed tactic after the proof closed must abstain, not reach it.
+        return _closed_state_plan(proof_ir, prepared, budget)
     ready_by_feature: dict[str, list[_PreparedProduction]] = {}
     for item in prepared:
         if (
@@ -240,6 +261,45 @@ def plan_native_semantics(
         state_ref=proof_ir.state_ref,
         requests=admitted,
         execution_units=admitted_units,
+        budget=budget,
+        decisions=tuple(decisions),
+    )
+
+
+def _closed_state_plan(
+    proof_ir: ProofIR,
+    prepared: list[_PreparedProduction],
+    budget: NativePlanningBudget,
+) -> NativeSemanticPlan:
+    decisions = []
+    for item in prepared:
+        production = item.production
+        abstain = (
+            production.disposition == NATIVE_PRODUCTION_READY
+            and bool(item.unresolved)
+        )
+        decisions.append(NativeSemanticPlanningDecision(
+            feature_id=item.feature_id,
+            producer_id=production.producer_id,
+            disposition=(
+                NATIVE_PRODUCTION_ABSTAINED if abstain else production.disposition
+            ),
+            reason=(
+                "native_query_requires_open_goal" if abstain else production.reason
+            ),
+            considered_candidate_count=production.considered_candidate_count,
+            proposed_request_ids=tuple(sorted(
+                request.request_id for request in production.requests
+            )),
+            unresolved_request_count=len(item.unresolved),
+            unresolved_execution_unit_count=len(_execution_units(
+                proof_ir, item.unresolved
+            )),
+        ))
+    return NativeSemanticPlan(
+        state_ref=proof_ir.state_ref,
+        requests=(),
+        execution_units=(),
         budget=budget,
         decisions=tuple(decisions),
     )

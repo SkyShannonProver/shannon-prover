@@ -19,6 +19,7 @@ from core.easycrypt.proof_state_compiler.compound_boundary_text import (
     checked_goal_reference,
 )
 from .feature import PURE_TAIL_RECOVERY_FEATURE_ID
+from .realization import pure_tail_rewrite_of
 
 
 def analyze_pure_tail_recovery(
@@ -28,7 +29,7 @@ def analyze_pure_tail_recovery(
 ) -> AnalysisContribution:
     attempted = proof_ir.attempted_operation
     descriptor = (
-        None if attempted is None else attempted.pure_tail_rewrite_descriptor
+        None if attempted is None else pure_tail_rewrite_of(attempted)
     )
     if (
         attempted is None

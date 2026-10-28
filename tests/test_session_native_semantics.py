@@ -31,7 +31,7 @@ COMPANION = NativeCompanionIdentity(
 
 def _data(session: Path) -> dict:
     return {
-        "schema_version": 19,
+        "schema_version": 20,
         "kind": "easycrypt_native_semantic_batch_result",
         "ok": True,
         "query_id": "query-1",

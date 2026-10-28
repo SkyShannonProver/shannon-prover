@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import pytest
+
 from workflow.provider.claude_event_normalizer import ClaudeEventNormalizer
 from workflow.provider.codex_event_normalizer import (
     audit_codex_event_log,
@@ -775,6 +777,89 @@ def test_claude_content_after_result_still_fails_closed() -> None:
     assert any("after terminal event" in error for error in audit.violations)
 
 
+_CLASSIFIER_NUDGE = (
+    "Your response above was stopped by a safety classifier — this is not a "
+    "tool or API error."
+)
+
+
+def test_claude_classifier_retry_keeps_the_invocation_valid() -> None:
+    # The CLI's refusal path: the refused call is closed with an error
+    # tool_result, a notice is emitted, an isMeta user nudge is injected and
+    # the model is asked once more.
+    audit = _claude_audit([
+        _CLAUDE_PROOF_TURN[0],
+        {
+            "type": "assistant",
+            "message": {"content": [{
+                "type": "tool_use",
+                "id": "refused",
+                "name": "mcp__proof_node_manager__submit_proof_intent",
+                "input": {"intent": "commit_tactic"},
+            }]},
+        },
+        {
+            "type": "user",
+            "message": {"content": [{
+                "type": "tool_result",
+                "tool_use_id": "refused",
+                "is_error": True,
+                "content": "Not run: the response that made this tool call "
+                "was stopped by a safety classifier.",
+            }]},
+        },
+        {"type": "system", "subtype": "informational"},
+        {
+            "type": "user",
+            "isMeta": True,
+            "message": {"content": [{"type": "text", "text": _CLASSIFIER_NUDGE}]},
+        },
+        {"type": "user", "isMeta": True, "message": {"content": _CLASSIFIER_NUDGE}},
+        *_CLAUDE_PROOF_TURN[1:],
+    ])
+
+    assert audit.valid, audit.violations
+    assert audit.provider_notices == ("system/informational",)
+
+
+def test_claude_injected_user_text_after_result_still_fails_closed() -> None:
+    audit = _claude_audit([
+        *_CLAUDE_PROOF_TURN,
+        {
+            "type": "user",
+            "isMeta": True,
+            "message": {"content": [{"type": "text", "text": _CLASSIFIER_NUDGE}]},
+        },
+    ])
+
+    assert not audit.valid
+    assert any("after terminal event" in error for error in audit.violations)
+
+
+@pytest.mark.parametrize(
+    "message",
+    [
+        {"content": "Host memory: the target closes with byupto."},
+        {"content": [{"type": "text", "text": "Host memory."}]},
+        {"content": [
+            {"type": "tool_result", "tool_use_id": "t", "content": "ok"},
+            {"type": "text", "text": "Host memory."},
+        ]},
+    ],
+)
+def test_claude_user_text_without_the_cli_marker_fails_closed(
+    message: dict,
+) -> None:
+    # Only the CLI's own isMeta retry note may appear as user text.
+    audit = _claude_audit([
+        _CLAUDE_PROOF_TURN[0],
+        {"type": "user", "message": message},
+        *_CLAUDE_PROOF_TURN[1:],
+    ])
+
+    assert not audit.valid
+
+
 def test_codex_reasoning_after_turn_completed_still_fails_closed() -> None:
     audit = _strict_codex_audit(
         {"type": "thread.started", "thread_id": "thread-1"},
@@ -791,3 +876,103 @@ def test_codex_reasoning_after_turn_completed_still_fails_closed() -> None:
 
     assert not audit.valid
     assert any("after terminal event" in error for error in audit.violations)
+
+
+# --- Claude eval launch: no built-in tools, skills or commands -------------
+#
+# CLI 2.1.311 offers built-ins no denylist names (ToolSearch, Skill,
+# ListAgents, ScheduleWakeup, ...). The eval guard kills the node on the first
+# such call, so eval launches must not offer them at all.
+
+
+class _FakeClaudeProc:
+    def __init__(self) -> None:
+        self.stdout = iter(())
+        self.stderr = None
+        self.returncode = 0
+
+    def wait(self, timeout: float | None = None) -> int:
+        return 0
+
+    def poll(self) -> int:
+        return 0
+
+    def terminate(self) -> None:
+        pass
+
+
+def _claude_launch_argv(monkeypatch, tmp_path, *, eval_mode: bool) -> list[str]:
+    import workflow.provider.provider_sessions as sessions
+
+    launched: list[list[str]] = []
+
+    def _popen(cmd, **_kwargs):
+        launched.append(list(cmd))
+        return _FakeClaudeProc()
+
+    monkeypatch.setattr(sessions.subprocess, "Popen", _popen)
+    agent = sessions.ClaudeAgentSession(
+        model="claude-sonnet-5-5",
+        source_file=str(tmp_path / "target.ec"),
+        session_tag="launch",
+        project_root=tmp_path,
+        eval_mode=eval_mode,
+    )
+    agent.run("PROMPT", system_prompt="ANCHOR")
+    assert len(launched) == 1
+    return launched[0]
+
+
+def test_claude_eval_launch_disables_builtin_tools_and_slash_commands(
+    monkeypatch,
+    tmp_path,
+) -> None:
+    cmd = _claude_launch_argv(monkeypatch, tmp_path, eval_mode=True)
+
+    # The prompt stays the positional argument of -p, ahead of every
+    # variadic option.
+    assert cmd[1:3] == ["-p", "PROMPT"]
+    tools_at = cmd.index("--tools")
+    # A real empty-string argv element (the CLI's "disable all built-ins"),
+    # immediately closed by the next option so the variadic list stays empty.
+    assert cmd[tools_at + 1] == ""
+    assert cmd[tools_at + 2].startswith("--")
+    assert cmd.count("--tools") == 1
+    assert "--disable-slash-commands" in cmd
+    # Defense in depth: the denylist is still rendered.
+    assert "--disallowedTools" in cmd
+    assert "Bash(*)" in cmd and "Agent(*)" in cmd
+
+
+def test_claude_prove_launch_keeps_builtin_tools_and_commands(
+    monkeypatch,
+    tmp_path,
+) -> None:
+    cmd = _claude_launch_argv(monkeypatch, tmp_path, eval_mode=False)
+
+    assert "--tools" not in cmd
+    assert "" not in cmd
+    assert "--disable-slash-commands" not in cmd
+    assert "Bash(*)" not in cmd
+
+
+def test_claude_eval_guard_kills_unlisted_builtin_tool_calls() -> None:
+    # Why the launch must not offer them: each is a disabled-tool violation.
+    for name in ("ToolSearch", "Skill", "ListAgents", "ScheduleWakeup"):
+        audit = _claude_audit([
+            _CLAUDE_PROOF_TURN[0],
+            {
+                "type": "assistant",
+                "message": {"content": [{
+                    "type": "tool_use",
+                    "id": "builtin",
+                    "name": name,
+                    "input": {},
+                }]},
+            },
+        ])
+
+        assert not audit.valid
+        assert f"provider attempted a disabled tool: claude:{name}" in (
+            audit.violations
+        )

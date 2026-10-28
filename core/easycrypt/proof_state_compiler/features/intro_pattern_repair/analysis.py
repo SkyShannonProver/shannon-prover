@@ -16,6 +16,7 @@ from core.easycrypt.proof_state_compiler.middle_end.contributions import (
     AnalysisContribution,
 )
 from .feature import INTRO_PATTERN_REPAIR_FEATURE_ID
+from .realization import intro_pattern_realization_of
 
 
 def analyze_intro_pattern_repair(
@@ -27,7 +28,7 @@ def analyze_intro_pattern_repair(
     descriptor = (
         None
         if attempted is None
-        else attempted.intro_pattern_realization_descriptor
+        else intro_pattern_realization_of(attempted)
     )
     if (
         attempted is None

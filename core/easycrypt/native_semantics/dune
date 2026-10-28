@@ -1,3 +1,5 @@
+(include_subdirs unqualified)
+
 (library
  (name native_adapter_support)
  (wrapped false)
@@ -5,9 +7,12 @@
  (libraries easycrypt.ecLib yojson)
  (flags (:standard -rectypes)))
 
+; Every other module (the shared attempt support, the feature-neutral
+; Realizer interface, its catalog, and the feature realizers under
+; realizers/) belongs to the semantic companion.
 (executable
  (name native_semantic_adapter)
- (modules native_semantic_adapter)
+ (modules :standard \ native_adapter_common native_state_projection_adapter)
  (libraries native_adapter_support easycrypt.ecLib yojson)
  (flags (:standard -rectypes)))
 

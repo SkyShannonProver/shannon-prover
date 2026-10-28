@@ -161,6 +161,61 @@ def test_bad_env_falls_back_to_default(monkeypatch):
     assert cr.watermark_tokens() == 140_000
 
 
+# --- model-aware watermark default -------------------------------------------
+
+_ONE_M_MODELS = (
+    "claude-opus-4-7", "claude-opus-4-8", "claude-opus-5", "claude-opus-5-5",
+    "claude-sonnet-5", "claude-sonnet-5-5", "claude-haiku-5-5",
+    "claude-fable-5", "claude-fable-5-1", "claude-mythos-5", "claude-mythos-5-1",
+)
+
+
+def test_watermark_default_scales_with_context_window(monkeypatch):
+    monkeypatch.delenv("SHANNON_CTX_WATERMARK_TOKENS", raising=False)
+    assert set(_ONE_M_MODELS) == cr.ONE_M_WINDOW_MODELS
+    for model in _ONE_M_MODELS:
+        assert cr.watermark_tokens(model) == 400_000, model
+    # 200k-window Claude models and unknown/non-Claude models keep 140k.
+    for model in (
+        "claude-opus-4-6", "claude-sonnet-4-6", "claude-sonnet-4-5",
+        "claude-haiku-4-5", "claude-haiku-4-5-20251001",
+        "gpt-5.6-sol", "opus", "", None,
+    ):
+        assert cr.watermark_tokens(model) == 140_000, model
+    # A snapshot date and the explicit long-context suffix are understood.
+    assert cr.watermark_tokens(" Claude-Opus-5-5-20261001 ") == 400_000
+    assert cr.watermark_tokens("claude-sonnet-4-6[1m]") == 400_000
+
+
+def test_watermark_env_override_beats_model_default(monkeypatch):
+    monkeypatch.setenv("SHANNON_CTX_WATERMARK_TOKENS", "90000")
+    assert cr.watermark_tokens("claude-opus-5-5") == 90_000
+    assert cr.CtxWatermarkDetector(model="claude-sonnet-5-5").tokens == 90_000
+    # A malformed override falls back to the MODEL's default, not 140k.
+    monkeypatch.setenv("SHANNON_CTX_WATERMARK_TOKENS", "not-a-number")
+    assert cr.watermark_tokens("claude-sonnet-5-5") == 400_000
+
+
+def test_provider_sessions_size_watermark_from_their_model(monkeypatch):
+    from workflow.provider.provider_sessions import (
+        ClaudeAgentSession,
+        CodexAgentSession,
+    )
+
+    monkeypatch.delenv("SHANNON_CTX_WATERMARK_TOKENS", raising=False)
+
+    def tokens(cls, model):
+        return cls(
+            model=model, source_file="f.ec", session_tag="tag",
+            project_root=Path("/tmp"),
+        )._ctx_detector.tokens
+
+    assert tokens(ClaudeAgentSession, "claude-sonnet-5-5") == 400_000
+    assert tokens(ClaudeAgentSession, "claude-opus-4-6") == 140_000
+    # Codex is unchanged (and its adapter abstains from Layer-1 anyway).
+    assert tokens(CodexAgentSession, "gpt-5.6-sol") == 140_000
+
+
 # --- Layer 2 classifier: proof-open ------------------------------------------
 
 # --- handoff: dead-end ledger dedup + cap ------------------------------------

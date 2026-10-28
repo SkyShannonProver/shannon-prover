@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import hashlib
 import re
+from collections.abc import Mapping
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
@@ -33,22 +34,14 @@ from core.easycrypt.proof_state_compiler.contracts import (
     NativeFormulaBoundaryDescriptor,
     NativeFormulaDescriptor,
     NativeInputArgument,
-    NativeIntroPatternRepairDescriptor,
     NativeModuleTermDescriptor,
-    NativePhlTransitivityBoundaryDescriptor,
-    NativePureTailRewriteDescriptor,
+    AttemptRealization,
     NativeAttemptedOperationDescriptor,
     NativeCheckedApplication,
     NativeApplicationHeadDescriptor,
-    NativeApplicationSyntaxRepairDescriptor,
     NativeApplicationSlotDescriptor,
-    NativeEagerWhileCandidateDescriptor,
-    NativeEagerWhileDialectDescriptor,
     NativeProofTermArgument,
     NativeProofTermDescriptor,
-    NativeRelationBridgeChoice,
-    NativeRelationBridgeChoiceDescriptor,
-    NativeRelationBridgeDescriptor,
     NativeResidualProofPremise,
     NativeNamespaceSpelling,
     NativeNamespaceSpellingSetDescriptor,
@@ -57,6 +50,7 @@ from core.easycrypt.proof_state_compiler.contracts import (
     NativeSemanticObservation,
     NativeSemanticExecutionUnit,
     NativeTacticPrefixDiagnosticDescriptor,
+    RealizationCodec,
     TargetRef,
     TransitionRef,
     freeze_json_object,
@@ -413,8 +407,13 @@ def native_semantic_observations(
     execution_units: tuple[NativeSemanticExecutionUnit, ...],
     expected_batch_id: str,
     expected_runtime: EasyCryptRuntimeIdentity,
+    realization_codecs: Mapping[str, RealizationCodec],
 ) -> tuple[NativeSemanticObservation, ...]:
-    """Split one event-bound batch into ordered typed observations."""
+    """Split one event-bound batch into ordered typed observations.
+
+    ``realization_codecs`` holds the active features' readers by kind; every
+    realization in the batch must be read by its owner without error.
+    """
 
     if type(manager_result) is not dict:
         raise TypeError("manager native semantic batch result must be an object")
@@ -509,11 +508,11 @@ def native_semantic_observations(
                 )
             elif unit.query_kind == "attempt_diagnostic":
                 descriptor = _native_attempted_operation_descriptor(
-                    member["descriptor"]
+                    member["descriptor"], realization_codecs
                 )
             else:
                 descriptor = _native_tactic_prefix_descriptor(
-                    member["descriptor"]
+                    member["descriptor"], realization_codecs
                 )
         for request in unit.requests:
             common = {
@@ -658,6 +657,7 @@ def _native_namespace_spelling_set_descriptor(
 
 def _native_tactic_prefix_descriptor(
     value: dict[str, Any],
+    realization_codecs: Mapping[str, RealizationCodec],
 ) -> NativeTacticPrefixDiagnosticDescriptor:
     boundary_attempt = value.get("boundary_attempt")
     return NativeTacticPrefixDiagnosticDescriptor(
@@ -672,7 +672,9 @@ def _native_tactic_prefix_descriptor(
         boundary_error_message=value["boundary_error_message"],
         goal_kind=value["goal_kind"],
         boundary_attempt=(
-            _native_attempted_operation_descriptor(boundary_attempt)
+            _native_attempted_operation_descriptor(
+                boundary_attempt, realization_codecs
+            )
             if isinstance(boundary_attempt, dict)
             else None
         ),
@@ -681,17 +683,12 @@ def _native_tactic_prefix_descriptor(
 
 def _native_attempted_operation_descriptor(
     value: dict[str, Any],
+    realization_codecs: Mapping[str, RealizationCodec],
 ) -> NativeAttemptedOperationDescriptor:
     proof_term = value.get("proof_term")
     application_head = value.get("application_head")
-    relation_bridge = value.get("relation_bridge")
-    relation_bridge_choice = value.get("relation_bridge_choice")
-    phl_boundary = value.get("phl_transitivity_boundary")
-    eager_while = value.get("eager_while_dialect")
-    pure_tail_rewrite = value.get("pure_tail_rewrite")
-    intro_pattern_realization = value.get("intro_pattern_realization")
-    application_syntax = value.get("application_syntax_repair")
-    return NativeAttemptedOperationDescriptor(
+    realization = value.get("realization")
+    descriptor = NativeAttemptedOperationDescriptor(
         operation_family=value["operation_family"],
         rejected_tactic=value["rejected_tactic"],
         exact_resource=value["exact_resource"],
@@ -713,135 +710,22 @@ def _native_attempted_operation_descriptor(
             if isinstance(proof_term, dict)
             else None
         ),
-        relation_bridge=(
-            NativeRelationBridgeDescriptor(
-                source_operation=relation_bridge["source_operation"],
-                relation_family=relation_bridge["relation_family"],
-                intermediate_text=relation_bridge["intermediate_text"],
-                intermediate_type_text=relation_bridge["intermediate_type"],
-                candidate_tactic=relation_bridge["candidate_tactic"],
-                failure_kind=relation_bridge["failure_kind"],
-                source_target_present=relation_bridge["source_target_present"],
-                source_target_convertible_to_current_goal=(
-                    relation_bridge["source_target_convertible_to_current_goal"]
-                ),
-                source_target_right_convertible_to_current_right=(
-                    relation_bridge[
-                        "source_target_right_convertible_to_current_right"
-                    ]
-                ),
+        realization=(
+            AttemptRealization(
+                kind=realization["kind"],
+                failure_kind=realization["failure_kind"],
+                payload=freeze_json_object(realization["payload"]),
             )
-            if isinstance(relation_bridge, dict)
-            else None
-        ),
-        relation_bridge_choice=(
-            NativeRelationBridgeChoiceDescriptor(
-                source_operation=relation_bridge_choice["source_operation"],
-                relation_family=relation_bridge_choice["relation_family"],
-                goal_left_text=relation_bridge_choice["goal_left_text"],
-                intermediate_text=relation_bridge_choice["intermediate_text"],
-                goal_right_text=relation_bridge_choice["goal_right_text"],
-                intermediate_type_text=(
-                    relation_bridge_choice["intermediate_type"]
-                ),
-                failure_kind=relation_bridge_choice["failure_kind"],
-                choices=tuple(
-                    NativeRelationBridgeChoice(
-                        certificate_family=item["certificate_family"],
-                        left_relation=item["left_relation"],
-                        right_relation=item["right_relation"],
-                        candidate_tactic=item["candidate_tactic"],
-                    )
-                    for item in relation_bridge_choice["choices"]
-                ),
-            )
-            if isinstance(relation_bridge_choice, dict)
-            else None
-        ),
-        phl_transitivity_boundary=(
-            NativePhlTransitivityBoundaryDescriptor(
-                source_operation=phl_boundary["source_operation"],
-                attempted_form=phl_boundary["attempted_form"],
-                current_goal_form=phl_boundary["current_goal_form"],
-                side=phl_boundary["side"],
-                failure_kind=phl_boundary["failure_kind"],
-            )
-            if isinstance(phl_boundary, dict)
-            else None
-        ),
-        eager_while_dialect=(
-            NativeEagerWhileDialectDescriptor(
-                source_operation=eager_while["source_operation"],
-                eager_subform=eager_while["eager_subform"],
-                attempted_shape=eager_while["attempted_shape"],
-                failure_kind=eager_while["failure_kind"],
-                candidates=tuple(
-                    NativeEagerWhileCandidateDescriptor(
-                        invariant_text=item["invariant_text"],
-                        candidate_tactic=item["candidate_tactic"],
-                    )
-                    for item in eager_while["candidates"]
-                ),
-            )
-            if isinstance(eager_while, dict)
-            else None
-        ),
-        pure_tail_rewrite=(
-            NativePureTailRewriteDescriptor(
-                source_operation=pure_tail_rewrite["source_operation"],
-                selected_resource=pure_tail_rewrite["selected_resource"],
-                target_kind=pure_tail_rewrite["target_kind"],
-                target_name=pure_tail_rewrite["target_name"],
-                candidate_tactic=pure_tail_rewrite["candidate_tactic"],
-                failure_kind=pure_tail_rewrite["failure_kind"],
-                accepted_target_count=(
-                    pure_tail_rewrite["accepted_target_count"]
-                ),
-            )
-            if isinstance(pure_tail_rewrite, dict)
-            else None
-        ),
-        intro_pattern_realization=(
-            NativeIntroPatternRepairDescriptor(
-                source_operation=intro_pattern_realization["source_operation"],
-                surface_operation=intro_pattern_realization["surface_operation"],
-                attempted_pattern_kind=(
-                    intro_pattern_realization["attempted_pattern_kind"]
-                ),
-                binder_names=tuple(intro_pattern_realization["binder_names"]),
-                candidate_tactic=intro_pattern_realization["candidate_tactic"],
-                failure_kind=intro_pattern_realization["failure_kind"],
-                selected_pattern_count=(
-                    intro_pattern_realization["selected_pattern_count"]
-                ),
-            )
-            if isinstance(intro_pattern_realization, dict)
-            else None
-        ),
-        application_syntax_repair=(
-            NativeApplicationSyntaxRepairDescriptor(
-                source_operation=application_syntax["source_operation"],
-                selected_resource=application_syntax["selected_resource"],
-                module_argument_position=(
-                    application_syntax["module_argument_position"]
-                ),
-                module_term_text=application_syntax["module_term_text"],
-                candidate_application_term=(
-                    application_syntax["candidate_application_term"]
-                ),
-                candidate_tactic=application_syntax["candidate_tactic"],
-                candidate_argument_kinds=tuple(
-                    application_syntax["candidate_argument_kinds"]
-                ),
-                failure_kind=application_syntax["failure_kind"],
-                resolved_candidate_count=(
-                    application_syntax["resolved_candidate_count"]
-                ),
-            )
-            if isinstance(application_syntax, dict)
+            if isinstance(realization, dict)
             else None
         ),
     )
+    if descriptor.realization is not None:
+        codec = realization_codecs.get(descriptor.realization.kind)
+        if codec is None:
+            raise ValueError("native realization has no active reader")
+        codec.read(descriptor)
+    return descriptor
 
 
 def _native_application_head_descriptor(

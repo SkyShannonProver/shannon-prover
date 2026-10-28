@@ -13,6 +13,9 @@ from core.easycrypt.ec_runtime_identity import (
     discover_easycrypt_runtime_identity,
 )
 from core.easycrypt.ec_env import MANAGED_WHY3_CONFIG_ENV, get_ec_env
+from core.easycrypt.proof_state_compiler.features.catalog import (
+    production_feature_catalog,
+)
 from core.easycrypt.native_semantics import (
     NativeSemanticBatchRequest,
     NativeSemanticQuery,
@@ -209,6 +212,33 @@ Hright: m.[x <- v].[x] = z2
 ------------------------------------------------------------------------
 z1 = z2
 """
+LOCAL_NAME_CLASH_GOAL = """Current goal
+
+Type variables: <none>
+
+x: int
+H: x = 0
+------------------------------------------------------------------------
+x = 0 => x = 0
+"""
+CLEAR_IN_GOAL_GOAL = """Current goal
+
+Type variables: <none>
+
+------------------------------------------------------------------------
+forall (y : int), y = y
+"""
+NESTED_CLASH_GOAL = """Current goal
+
+Type variables: <none>
+
+a: bool
+b: bool
+c: bool
+H: a
+------------------------------------------------------------------------
+a /\\ b /\\ c => true
+"""
 INTRO_PATTERN_GOAL = """Current goal
 
 Type variables: <none>
@@ -257,6 +287,30 @@ def _request(
     )
 
 
+# Every realization kind a production feature declares, as the treatment
+# asks.  The companion fails the batch for a kind it has no realizer for, so
+# every native test here also checks that the two catalogs agree.
+ALL_REALIZER_KINDS = tuple(sorted(
+    codec.kind
+    for definition in production_feature_catalog().definitions
+    for codec in definition.realization_codecs
+))
+
+
+def _realized(descriptor: dict, kind: str) -> dict | None:
+    """The payload of ``descriptor``'s realization when it has ``kind``.
+
+    The realization's failure kind is folded back in, so the result reads
+    like the feature's descriptor.
+    """
+
+    realization = descriptor["realization"]
+    if realization is None or realization["kind"] != kind:
+        return None
+    assert realization["failure_kind"] == descriptor["native_failure_kind"]
+    return {**realization["payload"], "failure_kind": realization["failure_kind"]}
+
+
 def _diagnostic_request(
     *,
     request_id: str,
@@ -266,10 +320,12 @@ def _diagnostic_request(
     rejected_tactic: str,
     expected_goal_identity: str,
     observed_outcome_kind: str = "rejected",
+    realizer_kinds: tuple[str, ...] = ALL_REALIZER_KINDS,
 ) -> NativeSemanticBatchRequest:
     payload = {
         "rejected_tactic": rejected_tactic,
         "observed_outcome_kind": observed_outcome_kind,
+        "realizer_kinds": list(realizer_kinds),
     }
     return NativeSemanticBatchRequest(
         batch_id=f"batch-{request_id}",
@@ -295,6 +351,7 @@ def _prefix_request(
     rejected_tactic: str,
     candidate_prefixes: tuple[str, ...],
     expected_goal_identity: str,
+    realizer_kinds: tuple[str, ...] = ALL_REALIZER_KINDS,
 ) -> NativeSemanticBatchRequest:
     return NativeSemanticBatchRequest(
         batch_id=f"batch-{request_id}",
@@ -307,6 +364,7 @@ def _prefix_request(
             payload={
                 "rejected_tactic": rejected_tactic,
                 "candidate_prefixes": list(candidate_prefixes),
+                "realizer_kinds": list(realizer_kinds),
             },
         ),),
         expected_goal_identity=expected_goal_identity,
@@ -538,7 +596,7 @@ def test_native_semantic_query_runs_in_exact_scratch_prefix_context() -> None:
     assert (context.read_bytes(), history.read_bytes()) == before
 
 
-def test_native_semantic_adapter_error_envelope_uses_schema_19() -> None:
+def test_native_semantic_adapter_error_envelope_uses_schema_20() -> None:
     executable, _identity = build_and_identify_companion(
         "native_semantic_adapter",
         discover_easycrypt_runtime_identity(),
@@ -560,7 +618,7 @@ def test_native_semantic_adapter_error_envelope_uses_schema_19() -> None:
         prefix=NATIVE_SEMANTIC_FRAME_PREFIX,
     )
     assert payload == {
-        "schema_version": 19,
+        "schema_version": 20,
         "kind": "native_semantic_batch_result",
         "status": "contract_error",
         "message": "unsupported request schema_version",
@@ -622,7 +680,7 @@ def test_native_attempt_finds_one_unique_selected_rewrite_target(
     assert result.descriptor["native_failure_kind"] == (
         "rewrite_target_mismatch"
     )
-    assert result.descriptor["pure_tail_rewrite"] == {
+    assert _realized(result.descriptor, "pure_tail_recovery.rewrite_target") == {
         "source_operation": "rewrite",
         "selected_resource": resource,
         "target_kind": "hypothesis",
@@ -654,7 +712,7 @@ def test_native_selected_rewrite_abstains_when_two_hypotheses_accept() -> None:
 
     assert result.status == "accepted"
     assert result.descriptor["operation_family"] == "rewrite"
-    assert result.descriptor["pure_tail_rewrite"] is None
+    assert _realized(result.descriptor, "pure_tail_recovery.rewrite_target") is None
 
 
 def test_native_intro_pattern_repair_preserves_ordered_binders() -> None:
@@ -680,8 +738,8 @@ def test_native_intro_pattern_repair_preserves_ordered_binders() -> None:
     assert result.descriptor["native_failure_kind"] == (
         "intro_pattern_structure_mismatch"
     )
-    assert result.descriptor["application_syntax_repair"] is None
-    assert result.descriptor["intro_pattern_realization"] == {
+    assert _realized(result.descriptor, "operation_binding_repair.module_argument_syntax") is None
+    assert _realized(result.descriptor, "intro_pattern_repair.nested_case") == {
         "source_operation": "intro_pattern",
         "surface_operation": "move",
         "attempted_pattern_kind": "nested_case",
@@ -721,6 +779,72 @@ def test_native_intro_pattern_repair_abstains_without_one_unique_tree(
 
     assert result.status == "rejected"
     assert result.descriptor == {}
+
+
+def test_native_intro_pattern_repair_abstains_on_local_name_clash() -> None:
+    """The recognizer runs the agent's tactic itself.
+
+    A binder that clashes with an existing hypothesis raises LdeclError, not
+    TcError.  It used to escape the recognizer and fail the whole batch; the
+    flattened candidate clashes too, so the recognizer abstains.
+    """
+
+    request = _diagnostic_request(
+        request_id="native-intro-pattern-name-clash",
+        context_file=FIXTURES / "nested_clash_goal.ec",
+        history_file=FIXTURES / "nested_clash_history.ec",
+        query_kind="attempt_diagnostic",
+        rejected_tactic="move=> [H [hb hc]].",
+        expected_goal_identity=active_goal_hash_from_raw(NESTED_CLASH_GOAL),
+    )
+    result = run_native_semantic_batch(
+        request,
+        runtime_identity=discover_easycrypt_runtime_identity(),
+        timeout=30,
+    ).results[0]
+
+    assert result.status == "rejected"
+    assert result.descriptor == {}
+    assert result.structured_error["code"] == "unsupported_attempt_shape"
+
+
+def test_native_companion_has_a_realizer_for_every_feature_kind() -> None:
+    assert len(ALL_REALIZER_KINDS) == 7
+    request = _diagnostic_request(
+        request_id="native-every-realizer-kind",
+        context_file=FIXTURES / "nested_clash_goal.ec",
+        history_file=FIXTURES / "nested_clash_history.ec",
+        query_kind="attempt_diagnostic",
+        rejected_tactic="move=> [H [hb hc]].",
+        expected_goal_identity=active_goal_hash_from_raw(NESTED_CLASH_GOAL),
+    )
+    run_native_semantic_batch(
+        request,
+        runtime_identity=discover_easycrypt_runtime_identity(),
+        timeout=30,
+    )
+
+
+def test_native_batch_fails_for_a_realizer_kind_the_companion_lacks() -> None:
+    """A missing catalog line must not silently disable a feature."""
+
+    request = _diagnostic_request(
+        request_id="native-unknown-realizer-kind",
+        context_file=FIXTURES / "nested_clash_goal.ec",
+        history_file=FIXTURES / "nested_clash_history.ec",
+        query_kind="attempt_diagnostic",
+        rejected_tactic="move=> [H [hb hc]].",
+        expected_goal_identity=active_goal_hash_from_raw(NESTED_CLASH_GOAL),
+        realizer_kinds=tuple(sorted((*ALL_REALIZER_KINDS, "retired_feature.kind"))),
+    )
+    with pytest.raises(
+        RuntimeError, match="no native realizer for kind retired_feature.kind",
+    ):
+        run_native_semantic_batch(
+            request,
+            runtime_identity=discover_easycrypt_runtime_identity(),
+            timeout=30,
+        )
 
 
 def test_native_semantic_adapter_exports_accepted_head_descriptor() -> None:
@@ -912,8 +1036,8 @@ def test_native_attempt_resolves_selected_first_module_argument_syntax(
     )
     assert descriptor["argument_kinds"] == []
     assert descriptor["application_head"]["slots"][0]["kind"] == "module"
-    assert descriptor["intro_pattern_realization"] is None
-    assert descriptor["application_syntax_repair"] == {
+    assert _realized(descriptor, "intro_pattern_repair.nested_case") is None
+    assert _realized(descriptor, "operation_binding_repair.module_argument_syntax") == {
         "source_operation": "call",
         "selected_resource": "native_descriptor_certificate",
         "module_argument_position": 1,
@@ -981,7 +1105,7 @@ def test_native_module_syntax_repair_abstains_on_non_module_slot() -> None:
     assert result.descriptor["native_failure_kind"] == (
         "call_applicability_failure"
     )
-    assert result.descriptor["application_syntax_repair"] is None
+    assert _realized(result.descriptor, "operation_binding_repair.module_argument_syntax") is None
 
 
 def test_native_descriptor_reports_easycrypt_inserted_implicit_arguments() -> None:
@@ -1163,6 +1287,134 @@ def test_native_tactic_prefix_diagnostic_reports_longest_accepted_prefix() -> No
     assert "cannot prove goal" in result.descriptor["boundary_error_message"]
 
 
+@pytest.mark.parametrize(
+    ("fixture", "history", "goal", "rejected", "prefixes", "accepted", "kind", "message"),
+    (
+        (
+            "local_name_clash_goal.ec",
+            "local_name_clash_history.ec",
+            LOCAL_NAME_CLASH_GOAL,
+            "move=> H; trivial.",
+            ("move=> H.",),
+            [],
+            "local_declaration_error",
+            "an hypothesis or variable named `H` already exists",
+        ),
+        (
+            "local_name_clash_goal.ec",
+            "local_name_clash_history.ec",
+            LOCAL_NAME_CLASH_GOAL,
+            "idtac; move=> H; trivial.",
+            ("idtac.", "idtac; move=> H."),
+            ["idtac."],
+            "local_declaration_error",
+            "an hypothesis or variable named `H` already exists",
+        ),
+        (
+            # pose raises the clash inside EcLocation.LocError.
+            "local_name_clash_goal.ec",
+            "local_name_clash_history.ec",
+            LOCAL_NAME_CLASH_GOAL,
+            "idtac; pose H := 0; trivial.",
+            ("idtac.", "idtac; pose H := 0."),
+            ["idtac."],
+            "local_declaration_error",
+            "an hypothesis or variable named `H` already exists",
+        ),
+        (
+            "clear_in_goal_goal.ec",
+            "empty_history.ec",
+            CLEAR_IN_GOAL_GOAL,
+            "move=> _; trivial.",
+            ("move=> _.",),
+            [],
+            "clear_error",
+            "cannot clear _ that is/are used in the conclusion",
+        ),
+    ),
+)
+def test_native_tactic_prefix_diagnostic_reports_local_context_errors(
+    fixture: str,
+    history: str,
+    goal: str,
+    rejected: str,
+    prefixes: tuple[str, ...],
+    accepted: list[str],
+    kind: str,
+    message: str,
+) -> None:
+    """Name clashes and uncleared dependencies are tactic failures.
+
+    EasyCrypt raises them outside TcError.  They used to escape the adapter
+    and fail the whole native batch; they are now diagnosed with EasyCrypt's
+    own message.
+    """
+
+    request = _prefix_request(
+        request_id=f"compound-prefix-{kind}-{len(prefixes)}",
+        context_file=FIXTURES / fixture,
+        history_file=FIXTURES / history,
+        rejected_tactic=rejected,
+        candidate_prefixes=prefixes,
+        expected_goal_identity=active_goal_hash_from_raw(goal),
+    )
+
+    result = run_native_semantic_batch(
+        request,
+        runtime_identity=discover_easycrypt_runtime_identity(),
+    ).results[0]
+
+    assert result.status == "accepted"
+    assert result.descriptor["accepted_prefixes"] == accepted
+    assert result.descriptor["native_failure_kind"] == kind
+    assert result.descriptor["native_error_message"] == message
+    assert result.descriptor["boundary_failure_kind"] == kind
+    assert result.descriptor["boundary_error_message"] == message
+
+
+@pytest.mark.parametrize(
+    ("rejected", "message"),
+    (
+        (
+            "idtac; have h : nosuchop = 0.",
+            "unknown variable or constant: `nosuchop'",
+        ),
+        (
+            "idtac; have h : x = true.",
+            "no matching operator, named `=', for the following parameters'"
+            " type:\n  [1]: int\n  [2]: bool",
+        ),
+    ),
+)
+def test_native_tactic_prefix_diagnostic_renders_typing_errors(
+    rejected: str,
+    message: str,
+) -> None:
+    """Typing errors carry EasyCrypt's message, not the OCaml constructor.
+
+    They used to reach the agent as `EcLib.EcTyping.TyError(_, _, _)`.
+    """
+
+    request = _prefix_request(
+        request_id="compound-prefix-typing-error",
+        context_file=FIXTURES / "local_name_clash_goal.ec",
+        history_file=FIXTURES / "local_name_clash_history.ec",
+        rejected_tactic=rejected,
+        candidate_prefixes=("idtac.",),
+        expected_goal_identity=active_goal_hash_from_raw(LOCAL_NAME_CLASH_GOAL),
+    )
+
+    result = run_native_semantic_batch(
+        request,
+        runtime_identity=discover_easycrypt_runtime_identity(),
+    ).results[0]
+
+    assert result.status == "accepted"
+    assert result.descriptor["accepted_prefixes"] == ["idtac."]
+    assert result.descriptor["native_failure_kind"] == "typing_error"
+    assert result.descriptor["native_error_message"] == message
+
+
 def test_native_no_progress_prefix_reuses_full_attempt_dispatch_for_suffix() -> None:
     context = FIXTURES / "real_relation_goal.ec"
     history = FIXTURES / "empty_history.ec"
@@ -1189,8 +1441,8 @@ def test_native_no_progress_prefix_reuses_full_attempt_dispatch_for_suffix() -> 
     boundary = descriptor["boundary_attempt"]
     assert boundary["operation_family"] == "transitivity"
     assert boundary["rejected_tactic"] == "transitivity 0%r."
-    assert boundary["relation_bridge"]["relation_family"] == "real_le"
-    assert boundary["relation_bridge"]["candidate_tactic"] == (
+    assert _realized(boundary, "relation_bridge_realization.bridge")["relation_family"] == "real_le"
+    assert _realized(boundary, "relation_bridge_realization.bridge")["candidate_tactic"] == (
         "apply (ler_trans 0%r); first last."
     )
 
@@ -1286,7 +1538,7 @@ def test_native_attempt_identifies_unique_eager_while_dialect_repair() -> None:
     assert descriptor["operation_family"] == "eager"
     assert descriptor["goal_kind"] == "equiv_statement"
     assert descriptor["native_failure_kind"] == "eager_while_dialect_mismatch"
-    assert descriptor["eager_while_dialect"] == {
+    assert _realized(descriptor, "tactic_dialect_repair.eager_while") == {
         "source_operation": "eager",
         "eager_subform": "while",
         "attempted_shape": "explicit_statement_contract",
@@ -1317,7 +1569,7 @@ def test_native_attempt_exposes_all_checked_submitted_eager_invariants() -> None
     ).results[0]
 
     assert result.status == "accepted"
-    assert result.descriptor["eager_while_dialect"]["candidates"] == [
+    assert _realized(result.descriptor, "tactic_dialect_repair.eager_while")["candidates"] == [
         {
             "invariant_text": "true",
             "candidate_tactic": "eager while (true).",
@@ -1352,13 +1604,47 @@ def test_native_attempt_identifies_eager_while_guard_mismatch() -> None:
     descriptor = result.descriptor
     assert descriptor["native_failure_kind"] == "eager_while_guard_mismatch"
     assert "both while guards" in descriptor["native_error_message"]
-    assert descriptor["eager_while_dialect"] == {
+    assert _realized(descriptor, "tactic_dialect_repair.eager_while") == {
         "source_operation": "eager",
         "eager_subform": "while",
         "attempted_shape": "invariant",
         "failure_kind": "eager_while_guard_mismatch",
         "candidates": [],
     }
+
+
+@pytest.mark.parametrize(
+    "rejected_tactic",
+    ("eager while (nosuchop).", "eager while (x{1} = true)."),
+)
+def test_native_eager_while_guard_abstains_on_ill_typed_invariant(
+    rejected_tactic: str,
+) -> None:
+    """The guard recognizer runs the agent's tactic itself.
+
+    An invariant that does not type raises TyError, not TcError.  It used to
+    escape the recognizer and fail the whole batch.
+    """
+
+    request = _diagnostic_request(
+        request_id="attempt-eager-while-ill-typed",
+        context_file=FIXTURES / "eager_while_guard_goal.ec",
+        history_file=FIXTURES / "eager_while_history.ec",
+        query_kind="attempt_diagnostic",
+        rejected_tactic=rejected_tactic,
+        expected_goal_identity=active_goal_hash_from_raw(
+            EAGER_WHILE_GUARD_GOAL
+        ),
+    )
+
+    result = run_native_semantic_batch(
+        request,
+        runtime_identity=discover_easycrypt_runtime_identity(),
+    ).results[0]
+
+    assert result.status == "rejected"
+    assert result.descriptor == {}
+    assert result.structured_error["code"] == "unsupported_attempt_shape"
 
 
 def test_native_eager_while_dialect_abstains_on_non_phl_goal() -> None:
@@ -1429,7 +1715,7 @@ def test_native_attempt_identifies_real_le_relation_realization(
     assert descriptor["native_failure_kind"] == failure_kind
     assert descriptor["application_head"] is None
     assert descriptor["proof_term"] is None
-    bridge = descriptor["relation_bridge"]
+    bridge = _realized(descriptor, "relation_bridge_realization.bridge")
     assert bridge["source_operation"] == operation
     assert bridge["relation_family"] == "real_le"
     assert bridge["intermediate_text"] == intermediate
@@ -1446,6 +1732,53 @@ def test_native_attempt_identifies_real_le_relation_realization(
         ] is True
     else:
         assert bridge["source_target_present"] is False
+
+
+def test_native_attempt_runs_only_requested_realizers() -> None:
+    """An unrequested realizer does no work and claims nothing.
+
+    The parsed rewrite keeps its native blocker under EasyCrypt's own error
+    code; the unparsable transitivity, which only a realizer can describe,
+    stays a parse error.
+    """
+
+    rewrite = run_native_semantic_batch(
+        _diagnostic_request(
+            request_id="native-pure-tail-unrequested",
+            context_file=FIXTURES / "pure_tail_map_goal.ec",
+            history_file=FIXTURES / "pure_tail_map_history.ec",
+            query_kind="attempt_diagnostic",
+            rejected_tactic="rewrite get_setE.",
+            expected_goal_identity=active_goal_hash_from_raw(
+                PURE_TAIL_MAP_GOAL
+            ),
+            realizer_kinds=("relation_bridge_realization.bridge",),
+        ),
+        runtime_identity=discover_easycrypt_runtime_identity(),
+    ).results[0]
+    assert rewrite.status == "accepted"
+    assert rewrite.descriptor["native_diagnostic_status"] == "blocker"
+    assert rewrite.descriptor["realization"] is None
+    assert rewrite.descriptor["native_failure_kind"] not in {
+        "", "rewrite_target_mismatch",
+    }
+
+    transitivity = run_native_semantic_batch(
+        _diagnostic_request(
+            request_id="attempt-real-bridge-unrequested",
+            context_file=FIXTURES / "real_relation_goal.ec",
+            history_file=FIXTURES / "empty_history.ec",
+            query_kind="attempt_diagnostic",
+            rejected_tactic="transitivity 0%r.",
+            expected_goal_identity=active_goal_hash_from_raw(
+                REAL_RELATION_GOAL
+            ),
+            realizer_kinds=("pure_tail_recovery.rewrite_target",),
+        ),
+        runtime_identity=discover_easycrypt_runtime_identity(),
+    ).results[0]
+    assert transitivity.status == "rejected"
+    assert transitivity.structured_error["code"] == "parse_error"
 
 
 def test_native_attempt_identifies_checked_int_le_relation_realization() -> None:
@@ -1466,7 +1799,7 @@ def test_native_attempt_identifies_checked_int_le_relation_realization() -> None
     ).results[0]
 
     assert result.status == "accepted"
-    bridge = result.descriptor["relation_bridge"]
+    bridge = _realized(result.descriptor, "relation_bridge_realization.bridge")
     assert bridge["source_operation"] == "transitivity"
     assert bridge["relation_family"] == "int_le"
     assert bridge["intermediate_text"] == "0"
@@ -1497,8 +1830,8 @@ def test_native_attempt_exposes_all_checked_real_lt_bridge_choices() -> None:
 
     assert result.status == "accepted"
     descriptor = result.descriptor
-    assert descriptor["relation_bridge"] is None
-    choice = descriptor["relation_bridge_choice"]
+    assert _realized(descriptor, "relation_bridge_realization.bridge") is None
+    choice = _realized(descriptor, "relation_bridge_realization.choice")
     assert choice == {
         "source_operation": "transitivity",
         "relation_family": "real_lt",
@@ -1562,9 +1895,9 @@ def test_native_attempt_identifies_phl_function_statement_boundary() -> None:
     assert descriptor["native_failure_kind"] == (
         "phl_transitivity_boundary_mismatch"
     )
-    assert descriptor["relation_bridge"] is None
-    assert descriptor["relation_bridge_choice"] is None
-    assert descriptor["phl_transitivity_boundary"] == {
+    assert _realized(descriptor, "relation_bridge_realization.bridge") is None
+    assert _realized(descriptor, "relation_bridge_realization.choice") is None
+    assert _realized(descriptor, "phl_transitivity_boundary_repair.boundary") == {
         "source_operation": "transitivity",
         "attempted_form": "function",
         "current_goal_form": "statement",
@@ -1600,7 +1933,7 @@ def test_native_attempt_identifies_phl_statement_function_boundary() -> None:
     descriptor = result.descriptor
     assert descriptor["goal_kind"] == "equiv_function"
     assert descriptor["side"] == "left"
-    assert descriptor["phl_transitivity_boundary"] == {
+    assert _realized(descriptor, "phl_transitivity_boundary_repair.boundary") == {
         "source_operation": "transitivity",
         "attempted_form": "statement",
         "current_goal_form": "function",
@@ -1634,7 +1967,7 @@ def test_native_attempt_preserves_right_side_for_phl_statement_form() -> None:
 
     assert result.status == "accepted"
     assert result.descriptor["side"] == "right"
-    assert result.descriptor["phl_transitivity_boundary"]["side"] == "right"
+    assert _realized(result.descriptor, "phl_transitivity_boundary_repair.boundary")["side"] == "right"
 
 
 @pytest.mark.parametrize(
@@ -1679,7 +2012,7 @@ def test_native_phl_same_form_does_not_emit_boundary_descriptor(
     if result.status == "rejected":
         assert result.descriptor == {}
     else:
-        assert result.descriptor["phl_transitivity_boundary"] is None
+        assert _realized(result.descriptor, "phl_transitivity_boundary_repair.boundary") is None
 
 
 def test_native_phl_transitivity_abstains_on_non_phl_goal() -> None:
@@ -1737,8 +2070,8 @@ def test_native_relation_realization_abstains_outside_registered_real_le_row(
     ).results[0]
 
     if result.status == "accepted":
-        assert result.descriptor["relation_bridge"] is None
-        assert result.descriptor["relation_bridge_choice"] is None
+        assert _realized(result.descriptor, "relation_bridge_realization.bridge") is None
+        assert _realized(result.descriptor, "relation_bridge_realization.choice") is None
     else:
         assert result.structured_error
 

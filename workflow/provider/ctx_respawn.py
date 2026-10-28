@@ -38,7 +38,31 @@ from typing import Any
 # ~159-169k SDK compaction band. (NOTE: the ~145k death point itself should be
 # investigated separately — out of scope here.) Env-overridable via
 # SHANNON_CTX_WATERMARK_TOKENS.
+#
+# That 140k was tuned for ~200k-window models. Opus 5.5 / Sonnet 5.5 have
+# native 1M windows, and at 140k their long runs swapped every ~5 minutes
+# (2026-10 A/B): each swap discards the agent's working context, and swap
+# sessions were where every observed crash started. 1M-window models
+# therefore default to 400k; 200k-window and unknown models keep 140k. The
+# env override still wins for every model.
 DEFAULT_WATERMARK_TOKENS = 140_000
+ONE_M_WINDOW_WATERMARK_TOKENS = 400_000
+# Native 1M-context models per the Claude Code CLI 2.1.311 model table. Every
+# other Claude model (opus-4-6 and older, sonnet-4-6 and older, haiku-4-5) has
+# a 200k window; non-Claude models are unknown and keep the 140k default.
+ONE_M_WINDOW_MODELS = frozenset({
+    "claude-opus-4-7",
+    "claude-opus-4-8",
+    "claude-opus-5",
+    "claude-opus-5-5",
+    "claude-sonnet-5",
+    "claude-sonnet-5-5",
+    "claude-haiku-5-5",
+    "claude-fable-5",
+    "claude-fable-5-1",
+    "claude-mythos-5",
+    "claude-mythos-5-1",
+})
 DEFAULT_WATERMARK_TURNS = 2
 DEFAULT_RESPAWN_MAX = 2
 
@@ -57,8 +81,22 @@ def _env_int(name: str, default: int) -> int:
         return default
 
 
-def watermark_tokens() -> int:
-    return _env_int("SHANNON_CTX_WATERMARK_TOKENS", DEFAULT_WATERMARK_TOKENS)
+def default_watermark_tokens(model: str | None = None) -> int:
+    """Context-window-aware default; see ``ONE_M_WINDOW_MODELS``.
+
+    A trailing ``-YYYYMMDD`` snapshot date is ignored, and the CLI's explicit
+    ``[1m]`` long-context suffix selects the 1M window for any model.
+    """
+    name = str(model or "").strip().lower()
+    if name.endswith("[1m]"):
+        return ONE_M_WINDOW_WATERMARK_TOKENS
+    if re.sub(r"-\d{8}$", "", name) in ONE_M_WINDOW_MODELS:
+        return ONE_M_WINDOW_WATERMARK_TOKENS
+    return DEFAULT_WATERMARK_TOKENS
+
+
+def watermark_tokens(model: str | None = None) -> int:
+    return _env_int("SHANNON_CTX_WATERMARK_TOKENS", default_watermark_tokens(model))
 
 
 def watermark_turns() -> int:
@@ -142,7 +180,8 @@ class CtxWatermarkDetector:
 
     Feed every `assistant` event. ``ctx_pressure`` latches True once context has
     been at/above the watermark for ``turns`` consecutive assistant turns. Reset
-    between generations with :meth:`reset`.
+    between generations with :meth:`reset`. ``model`` selects the
+    context-window-aware default when ``tokens`` is not given.
     """
 
     def __init__(
@@ -151,8 +190,9 @@ class CtxWatermarkDetector:
         tokens: int | None = None,
         turns: int | None = None,
         enabled: bool | None = None,
+        model: str | None = None,
     ) -> None:
-        self.tokens = watermark_tokens() if tokens is None else int(tokens)
+        self.tokens = watermark_tokens(model) if tokens is None else int(tokens)
         self.turns = watermark_turns() if turns is None else max(1, int(turns))
         self.enabled = (not respawn_disabled()) if enabled is None else bool(enabled)
         self.hot_turns = 0

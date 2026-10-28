@@ -72,7 +72,7 @@ mode choices through this skill.
      --prover-timeout-minutes 30 \
      --surface-profile proof_state_compiler \
      --agent-backend codex \
-     --prover-model gpt-5.6-sol \
+     --prover-model gpt-6-astra \
      --prover-effort high \
      --tree-initial-provers 1 \
      --tree-max-concurrent 1 \

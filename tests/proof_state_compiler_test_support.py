@@ -2,15 +2,14 @@
 
 from __future__ import annotations
 
+import dataclasses
 from typing import Any
 
 from core.easycrypt.proof_state_compiler.contracts import (
     NativeApplicationHeadDescriptor,
-    NativeApplicationSyntaxRepairDescriptor,
     NativeApplicationSlotDescriptor,
-    NativeEagerWhileDialectDescriptor,
-    NativeIntroPatternRepairDescriptor,
     NativeFormulaDescriptor,
+    AttemptRealization,
     NativeAttemptedOperationDescriptor,
     NativeAttemptDiagnosticQuery,
     NativeInputArgument,
@@ -19,12 +18,8 @@ from core.easycrypt.proof_state_compiler.contracts import (
     NativeNamespaceSpellingSetQuery,
     MAX_NATIVE_NAMESPACE_SPELLINGS,
     namespace_spelling_application_term,
-    NativePhlTransitivityBoundaryDescriptor,
-    NativePureTailRewriteDescriptor,
     NativeProofTermArgument,
     NativeProofTermDescriptor,
-    NativeRelationBridgeChoiceDescriptor,
-    NativeRelationBridgeDescriptor,
     NativeProofStateSnapshot,
     NativeResidualProofPremise,
     NativeResolvedHead,
@@ -400,6 +395,49 @@ def default_namespace_spelling_observation(
     )
 
 
+_REALIZATION_KINDS = {
+    "NativeRelationBridgeDescriptor": "relation_bridge_realization.bridge",
+    "NativeRelationBridgeChoiceDescriptor": "relation_bridge_realization.choice",
+    "NativePhlTransitivityBoundaryDescriptor": (
+        "phl_transitivity_boundary_repair.boundary"
+    ),
+    "NativeEagerWhileDialectDescriptor": "tactic_dialect_repair.eager_while",
+    "NativePureTailRewriteDescriptor": "pure_tail_recovery.rewrite_target",
+    "NativeIntroPatternRepairDescriptor": "intro_pattern_repair.nested_case",
+    "NativeApplicationSyntaxRepairDescriptor": (
+        "operation_binding_repair.module_argument_syntax"
+    ),
+}
+
+
+def _wire(value: Any) -> Any:
+    if dataclasses.is_dataclass(value):
+        return {
+            item.name: _wire(getattr(value, item.name))
+            for item in dataclasses.fields(value)
+        }
+    if isinstance(value, tuple):
+        return [_wire(item) for item in value]
+    return value
+
+
+def realization_of(descriptor: Any) -> AttemptRealization | None:
+    """Encode a slice-typed descriptor as the realizer's wire realization.
+
+    Descriptor fields are wire names; the failure kind is the envelope's.
+    The owning codec's exact field check keeps this encoder honest.
+    """
+
+    if descriptor is None:
+        return None
+    payload = _wire(descriptor)
+    return AttemptRealization(
+        kind=_REALIZATION_KINDS[type(descriptor).__name__],
+        failure_kind=payload.pop("failure_kind"),
+        payload=freeze_json_object(payload),
+    )
+
+
 def attempted_operation_native_observation(
     request: NativeSemanticRequest,
     *,
@@ -409,17 +447,13 @@ def attempted_operation_native_observation(
     argument_kinds: tuple[str, ...] = (),
     side: str = "",
     application_head: NativeApplicationHeadDescriptor | None = None,
-    relation_bridge: NativeRelationBridgeDescriptor | None = None,
-    relation_bridge_choice: NativeRelationBridgeChoiceDescriptor | None = None,
-    phl_transitivity_boundary: (
-        NativePhlTransitivityBoundaryDescriptor | None
-    ) = None,
-    eager_while_dialect: NativeEagerWhileDialectDescriptor | None = None,
-    pure_tail_rewrite: NativePureTailRewriteDescriptor | None = None,
-    intro_pattern_repair: NativeIntroPatternRepairDescriptor | None = None,
-    application_syntax_repair: (
-        NativeApplicationSyntaxRepairDescriptor | None
-    ) = None,
+    relation_bridge: Any = None,
+    relation_bridge_choice: Any = None,
+    phl_transitivity_boundary: Any = None,
+    eager_while_dialect: Any = None,
+    pure_tail_rewrite: Any = None,
+    intro_pattern_repair: Any = None,
+    application_syntax_repair: Any = None,
 ) -> NativeSemanticObservation:
     """Accepted native parse/applicability descriptor for a rejected tactic."""
 
@@ -463,13 +497,7 @@ def attempted_operation_native_observation(
         attempt_outcome=request.query.observed_outcome_kind,
         goal_kind=goal_kind,
         application_head=application_head,
-        relation_bridge=relation_bridge,
-        relation_bridge_choice=relation_bridge_choice,
-        phl_transitivity_boundary=phl_transitivity_boundary,
-        eager_while_dialect=eager_while_dialect,
-        pure_tail_rewrite=pure_tail_rewrite,
-        intro_pattern_realization=intro_pattern_repair,
-        application_syntax_repair=application_syntax_repair,
+        realization=realization_of(relation_descriptor),
     )
     return NativeSemanticObservation.accepted(
         request=request,

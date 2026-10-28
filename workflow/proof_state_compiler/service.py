@@ -27,6 +27,7 @@ from core.easycrypt.proof_state_compiler.contracts import (
     NativeSemanticPlanningStage,
     ResourceLoadPlan,
     ProvenanceRef,
+    RealizationCodec,
     StateRef,
     CompilerInvocationContext,
     CompilerTurnEvidence,
@@ -453,6 +454,7 @@ class ProofStateCompilerService:
             self.runtime,
             initial,
             native_stage_one,
+            compiler.realization_codecs,
         )
         native_stage_one_execution_done = time.perf_counter_ns()
         plan = compiler.plan_resource_loads(
@@ -579,6 +581,7 @@ class ProofStateCompilerService:
             self.runtime,
             live,
             native_stage_two,
+            compiler.realization_codecs,
         )
         native_execution_done = time.perf_counter_ns()
         unresolved = compiler.plan_native_semantics(
@@ -867,6 +870,7 @@ def _execute_native_semantic_plan(
     runtime: CompilerRuntime,
     live: LiveCompilerInput,
     plan: NativeSemanticPlan,
+    realization_codecs: tuple[RealizationCodec, ...],
 ) -> tuple[LiveCompilerInput, tuple[NativeSemanticObservation, ...]]:
     """Execute one bounded stage and fan one native unit out to its consumers."""
 
@@ -891,6 +895,7 @@ def _execute_native_semantic_plan(
         execution_units=plan.execution_units,
         expected_batch_id=batch_id,
         expected_runtime=runtime_identity,
+        realization_codecs={codec.kind: codec for codec in realization_codecs},
     )
     return LiveCompilerInput(
         snapshot=live.snapshot,

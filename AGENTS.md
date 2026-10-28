@@ -143,8 +143,8 @@ certification, and admission work:
 
 Feature removal must not require changes to manager, service, shared pass
 driver, renderer, or another feature. Strategy-selecting outputs are not
-present on `main`; proactive compiler features are developed on a separate
-maintainer branch.
+present. The one historical proactive feature is archived outside the
+released tree.
 
 ## EasyCrypt-native semantic boundary
 

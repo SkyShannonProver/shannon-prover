@@ -208,6 +208,18 @@ def normalize_runtime_surface_profile_id(profile_id: str | None) -> str:
     return runtime_profile_registration(profile_id).profile_id
 
 
+def profile_exposes_compiler_output(profile_id: str | None) -> bool:
+    """Return whether an arm can ever show compiler bytes to the agent.
+
+    Only a profile with delivery policies (some feature in TREATMENT) can
+    present compiler output. L1 and hidden-audit arms never do, so their
+    static prompt must not mention a compiler at all.
+    """
+
+    registration = runtime_profile_registration(profile_id)
+    return bool(registration.compiler_profile.delivery_policy_ids)
+
+
 def normalize_public_surface_profile_id(profile_id: str | None) -> str:
     """Resolve only profiles supported by an ordinary user configuration."""
 

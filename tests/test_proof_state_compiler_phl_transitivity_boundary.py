@@ -13,7 +13,6 @@ from core.easycrypt.proof_state_compiler import (
 from core.easycrypt.proof_state_compiler.backend import admit_action_surface
 from core.easycrypt.proof_state_compiler.contracts import (
     CompilerTurnEvidence,
-    NativePhlTransitivityBoundaryDescriptor,
     TargetRef,
     TransitionRef,
     compiler_invocation_context,
@@ -36,6 +35,13 @@ from tests.proof_state_compiler_test_support import (
 from workflow.proof_state_compiler.activation import (
     AUDIT,
     TREATMENT,
+)
+from core.easycrypt.proof_state_compiler.features.phl_transitivity_boundary_repair.realization import (
+    phl_transitivity_boundary_of,
+    NativePhlTransitivityBoundaryDescriptor,
+)
+from core.easycrypt.proof_state_compiler.features.relation_bridge_realization.realization import (
+    relation_bridge_of,
 )
 
 
@@ -261,11 +267,9 @@ def test_relation_and_phl_overlap_coalesces_once_and_only_phl_owns() -> None:
 
     assert len(bundle.proof_ir.native_semantic_observations) == 2
     assert bundle.proof_ir.attempted_operation is not None
-    assert bundle.proof_ir.attempted_operation.relation_bridge_descriptor is None
-    assert (
-        bundle.proof_ir.attempted_operation.phl_transitivity_boundary_descriptor
-        == boundary
-    )
+    attempted = bundle.proof_ir.attempted_operation
+    assert relation_bridge_of(attempted) is None
+    assert phl_transitivity_boundary_of(attempted) == boundary
     ownership = bundle.analyzed_state.recovery_ownership
     assert ownership.owner_feature_id == PHL_TRANSITIVITY_BOUNDARY_REPAIR_FEATURE_ID
     assert ownership.owner_feature_id != RELATION_BRIDGE_REALIZATION_FEATURE_ID

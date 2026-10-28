@@ -55,7 +55,7 @@ def pure_tail_recovery_feature_spec() -> FeatureSpec:
             "AttemptedOperationIR",
             "RecoveryClaim",
             "RecoveryActionRealization",
-            "NativePureTailRewriteDescriptor",
+            "AttemptRealization",
         ),
         certification_policy="exact_tactic_preflight",
         strategy_contracts=(PURE_TAIL_RECOVERY_STRATEGY_CONTRACT,),
@@ -63,17 +63,33 @@ def pure_tail_recovery_feature_spec() -> FeatureSpec:
 
 
 def pure_tail_recovery_feature() -> FeatureDefinition:
+    from core.easycrypt.proof_state_compiler.features.failed_commit import (
+        attempt_diagnostic_producer,
+        failed_commit_gate,
+    )
     from .analysis import analyze_pure_tail_recovery
-    from .execution import PURE_TAIL_RECOVERY_EXECUTION_GATE
-    from .native_attempt import plan_native_pure_tail_rewrite_attempt
+    from .realization import PURE_TAIL_REWRITE_CODEC
     from .surface_lowering import lower_pure_tail_recovery
+    from .syntax import selected_plain_rewrite
+
+    def plain_rewrite(tactic: str) -> bool:
+        return selected_plain_rewrite(tactic) is not None
 
     return FeatureDefinition(
         spec=pure_tail_recovery_feature_spec(),
-        execution_gate=PURE_TAIL_RECOVERY_EXECUTION_GATE,
-        native_semantic_request_producers=(
-            plan_native_pure_tail_rewrite_attempt,
+        execution_gate=failed_commit_gate(
+            gate_id="owned_current_pure_tail_failure",
+            prefilter=plain_rewrite,
+            not_prefiltered_reason="plain_rewrite_not_prefiltered",
+            eligible_reason="candidate_selected_rewrite_failure",
+            accepts_recovery_handoff=True,
         ),
+        native_semantic_request_producers=(attempt_diagnostic_producer(
+            producer_id="pure_tail_recovery.rewrite_target.native_diagnostic",
+            request_prefix="pure-tail-rewrite-attempt",
+            prefilter=plain_rewrite,
+        ),),
         analysis_producers=(analyze_pure_tail_recovery,),
         surface_lowerers=(lower_pure_tail_recovery,),
+        realization_codecs=(PURE_TAIL_REWRITE_CODEC,),
     )

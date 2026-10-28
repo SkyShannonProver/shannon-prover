@@ -26,13 +26,9 @@ from core.easycrypt.proof_state_compiler.contracts import (
     NativeApplicationHeadDescriptor,
     NativeApplicationSlotDescriptor,
     NativeAttemptedOperationDescriptor,
-    NativeEagerWhileCandidateDescriptor,
-    NativeEagerWhileDialectDescriptor,
     NativeFormulaDescriptor,
     NativeInputArgument,
     NativeNamespaceSpellingSetQuery,
-    NativePhlTransitivityBoundaryDescriptor,
-    NativePureTailRewriteDescriptor,
     NativeResolvedHead,
     NativeSemanticObservation,
     NativeTacticPrefixDiagnosticDescriptor,
@@ -45,9 +41,6 @@ from core.easycrypt.proof_state_compiler.contracts import (
 from core.easycrypt.proof_state_compiler.features.compound_tactic_prefix_recovery import (
     COMPOUND_TACTIC_PREFIX_RECOVERY_FEATURE_ID,
     compound_tactic_prefix_recovery_feature,
-)
-from core.easycrypt.proof_state_compiler.features.compound_tactic_prefix_recovery.execution import (
-    COMPOUND_TACTIC_PREFIX_RECOVERY_EXECUTION_GATE,
 )
 from core.easycrypt.proof_state_compiler.features.compound_tactic_prefix_recovery.syntax import (
     compound_accepted_prefix_extension,
@@ -68,6 +61,7 @@ from core.easycrypt.proof_state_compiler.features.tactic_dialect_repair import (
 )
 from tests.compiler_feature_assembly import feature_assembly
 from tests.proof_state_compiler_test_support import (
+    realization_of,
     namespace_spelling_set_observation,
     native_state,
     typed_node,
@@ -78,6 +72,16 @@ from workflow.proof_state_compiler.activation import (
 )
 from workflow.proof_state_compiler.delivery_policies import (
     COMPOUND_TACTIC_PREFIX_RECOVERY_ONCE_POLICY_ID,
+)
+from core.easycrypt.proof_state_compiler.features.phl_transitivity_boundary_repair.realization import (
+    NativePhlTransitivityBoundaryDescriptor,
+)
+from core.easycrypt.proof_state_compiler.features.pure_tail_recovery.realization import (
+    NativePureTailRewriteDescriptor,
+)
+from core.easycrypt.proof_state_compiler.features.tactic_dialect_repair.realization import (
+    NativeEagerWhileCandidateDescriptor,
+    NativeEagerWhileDialectDescriptor,
 )
 
 
@@ -94,15 +98,53 @@ def test_shared_compound_narration_safely_wraps_dynamic_text() -> None:
         native_error="first line\nsecond line",
     )
     continuation = compound_boundary_continuation(
-        accepted_prefix="move=> `x`.",
         accepted_effect="accepted_changed",
         accepted_stage_count=1,
     )
 
-    assert "``move=> `x`.`` was not committed" in summary
+    assert summary.count("move=> `x`.") == 1
+    assert "  move=> `x`.\n\nThe next stage fails:" in summary
     assert "  rewrite H.\n  smt()." in summary
     assert "  first line\n  second line" in summary
-    assert "submit ``move=> `x`.`` separately" in continuation
+    assert "move=> `x`" not in continuation
+    assert "after that stage, submit it alone" in continuation
+
+
+def test_long_real_prefix_is_quoted_once_and_fits_the_owner_budget() -> None:
+    """A recorded Opus 5.5 boundary that the old triple quote pushed to 721 B."""
+
+    from workflow.proof_state_compiler.delivery_policies import (
+        COMPOUND_TACTIC_PREFIX_RECOVERY_ONCE_POLICY_ID,
+        default_delivery_policy_catalog,
+    )
+
+    prefix = (
+        "move=> &2 Hnp Hp Hl Hb _ _ _ _ _ Hn r; do! split; "
+        "[by rewrite mem_set | | | | ]."
+    )
+    args = {
+        "accepted_effect": "accepted_changed",
+        "accepted_stage_count": 3,
+    }
+    text = (
+        compound_boundary_summary(
+            **args,
+            accepted_prefix=prefix,
+            rejected_extension="smt(get_setE mem_set domE).",
+            native_error="cannot prove goal (strict)",
+        )
+        + "\n\n"
+        + compound_boundary_continuation(**args)
+    )
+    markdown = "## Compiler diagnostic\n\n" + text
+    policy = next(
+        item
+        for item in default_delivery_policy_catalog().definitions
+        if item.policy_id == COMPOUND_TACTIC_PREFIX_RECOVERY_ONCE_POLICY_ID
+    )
+
+    assert text.count(prefix) == 1
+    assert len(markdown.encode("utf-8")) <= policy.max_markdown_bytes
 
 
 def _state_ref() -> StateRef:
@@ -335,18 +377,18 @@ def test_longest_contiguous_native_prefix_becomes_one_owned_diagnostic() -> None
     assert payload == {
         "code": "compound_prefix_diagnostic",
         "primary": (
-            "Your compound tactic failed and was rolled back. `move=> &hr _; "
-            "rewrite /eps.` was not committed.\n\n"
-            "EasyCrypt can execute through:\n\n"
+            "Your compound tactic failed and was rolled back; nothing was "
+            "committed.\n\n"
+            "EasyCrypt can execute the first 2 stages, which change the "
+            "goal:\n\n"
             "  move=> &hr _; rewrite /eps.\n\n"
-            "That accepted prefix changes the goal. The next stage fails:\n\n"
+            "The next stage fails:\n\n"
             "  smt(sum_leq mu_bounded).\n\n"
             "EasyCrypt reports:\n\n"
             "  the first rejected extension failed\n\n"
-            "If you want to continue from the goal produced by that prefix, "
-            "submit `move=> &hr _; rewrite /eps.` separately. You may "
-            "instead replace the failing suffix and resubmit the compound. "
-            "The compiler does not choose between these options."
+            "To continue from the goal after those stages, submit them alone, "
+            "or fix the failing suffix and resubmit the compound. The "
+            "compiler does not choose between these options."
         ),
         "applicability": "explanation_only",
     }
@@ -354,7 +396,8 @@ def test_longest_contiguous_native_prefix_becomes_one_owned_diagnostic() -> None
 
 def test_gate_accepts_unchanged_no_progress_compound_failure() -> None:
     state_ref = _state_ref()
-    eligibility = COMPOUND_TACTIC_PREFIX_RECOVERY_EXECUTION_GATE.evaluate(
+    gate = compound_tactic_prefix_recovery_feature().execution_gate
+    eligibility = gate.evaluate(
         _turn(state_ref, REJECTED_TACTIC, outcome_kind="no_progress")
     )
 
@@ -456,7 +499,7 @@ def test_state_changing_eager_explanation_names_temporary_goal_and_ends_terminal
         native_error_message="the two guards are not equal",
         attempt_outcome="rejected",
         goal_kind="equiv_statement",
-        eager_while_dialect=eager,
+        realization=realization_of(eager),
     )
 
     _invocation, bundle = _compile(
@@ -470,7 +513,7 @@ def test_state_changing_eager_explanation_names_temporary_goal_and_ends_terminal
     )
 
     diagnostic = bundle.candidate_surface.diagnostics[0].diagnostic
-    assert "while guards in the temporary goal produced by `move=> H.`" in (
+    assert "while guards in the temporary goal produced by that accepted stage" in (
         diagnostic.primary
     )
     assert "current while guards" not in diagnostic.primary
@@ -505,7 +548,7 @@ def test_state_changing_pure_tail_action_names_temporary_goal() -> None:
         native_error_message="rewrite did not match the conclusion",
         attempt_outcome="rejected",
         goal_kind="formula",
-        pure_tail_rewrite=rewrite,
+        realization=realization_of(rewrite),
     )
 
     _invocation, bundle = _compile(
@@ -524,7 +567,7 @@ def test_state_changing_pure_tail_action_names_temporary_goal() -> None:
     }
     assert action.correction is not None
     assert action.correction.reason.count(
-        "the temporary goal produced by `move=> H.`"
+        "the temporary goal produced by that accepted stage"
     ) == 2
     assert "current conclusion" not in action.correction.reason
 
@@ -555,7 +598,7 @@ def test_state_changing_eager_action_names_temporary_goal() -> None:
         native_error_message="native parse error",
         attempt_outcome="rejected",
         goal_kind="equiv_statement",
-        eager_while_dialect=eager,
+        realization=realization_of(eager),
     )
 
     _invocation, bundle = _compile(
@@ -573,7 +616,7 @@ def test_state_changing_eager_action_names_temporary_goal() -> None:
         "tactic": "move=> H; eager while (true)."
     }
     assert action.correction is not None
-    assert "accepted for the temporary goal produced by `move=> H.`" in (
+    assert "accepted for the temporary goal produced by that accepted stage" in (
         action.correction.reason
     )
     assert "unchanged state" not in action.correction.reason
@@ -603,7 +646,7 @@ def test_state_changing_phl_boundary_is_explanation_without_undo() -> None:
         native_error_message="native rejected PHL transitivity boundary",
         attempt_outcome="rejected",
         goal_kind="equiv_statement",
-        phl_transitivity_boundary=phl,
+        realization=realization_of(phl),
     )
 
     _invocation, bundle = _compile(
@@ -618,7 +661,7 @@ def test_state_changing_phl_boundary_is_explanation_without_undo() -> None:
 
     diagnostic = bundle.candidate_surface.diagnostics[0].diagnostic
     assert diagnostic.applicability == "explanation_only"
-    assert "temporary goal produced by `proc.`" in diagnostic.primary
+    assert "temporary goal produced by that accepted stage" in diagnostic.primary
     assert "undo" not in diagnostic.help.lower()
     assert "Both are proof-strategy choices" in diagnostic.help
     assert "The compiler selected neither" in diagnostic.help
@@ -672,9 +715,10 @@ def test_unhandled_typed_suffix_falls_back_to_compound_boundary_diagnostic(
     assert diagnostic.primary.startswith(
         recovery_handoff_message(attempted.recovery_handoff) + "\n\n"
     )
-    assert "EasyCrypt can execute the first stage:\n\n  move=> H." in (
-        diagnostic.primary
-    )
+    assert (
+        "EasyCrypt can execute the first stage, which changes the goal:"
+        "\n\n  move=> H."
+    ) in diagnostic.primary
     assert "The next stage fails:\n\n  exact MissingFact." in (
         diagnostic.primary
     )
@@ -749,9 +793,10 @@ def test_typed_suffix_argument_diagnostic_replaces_generic_fallback(
     diagnostic = bundle.candidate_surface.diagnostics[0].diagnostic
     assert diagnostic.code == "selected_application_argument_layout"
     assert diagnostic.primary.startswith(
-        "Your compound tactic failed and was rolled back. `symmetry.` was "
-        "not committed."
+        "Your compound tactic failed and was rolled back; nothing was "
+        "committed."
     )
+    assert diagnostic.primary.count("symmetry.") == 1
     assert "1. a proof of `forall x, is_lossless dblock`" in (
         diagnostic.primary
     )

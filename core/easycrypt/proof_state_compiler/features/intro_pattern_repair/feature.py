@@ -59,7 +59,7 @@ def intro_pattern_repair_feature_spec() -> FeatureSpec:
             "AttemptedOperationIR",
             "RecoveryClaim",
             "RecoveryActionRealization",
-            "NativeIntroPatternRepairDescriptor",
+            "AttemptRealization",
         ),
         certification_policy="exact_tactic_preflight",
         strategy_contracts=(INTRO_PATTERN_REPAIR_STRATEGY_CONTRACT,),
@@ -67,15 +67,30 @@ def intro_pattern_repair_feature_spec() -> FeatureSpec:
 
 
 def intro_pattern_repair_feature() -> FeatureDefinition:
+    from core.easycrypt.proof_state_compiler.features.failed_commit import (
+        attempt_diagnostic_producer,
+        failed_commit_gate,
+    )
     from .analysis import analyze_intro_pattern_repair
-    from .execution import INTRO_PATTERN_REPAIR_EXECUTION_GATE
-    from .native_attempt import plan_native_intro_pattern_attempt
+    from .realization import INTRO_PATTERN_REALIZATION_CODEC
     from .surface_lowering import lower_intro_pattern_repair
+    from .syntax import is_nested_intro_pattern_candidate
 
     return FeatureDefinition(
         spec=intro_pattern_repair_feature_spec(),
-        execution_gate=INTRO_PATTERN_REPAIR_EXECUTION_GATE,
-        native_semantic_request_producers=(plan_native_intro_pattern_attempt,),
+        execution_gate=failed_commit_gate(
+            gate_id="owned_current_intro_pattern_failure",
+            prefilter=is_nested_intro_pattern_candidate,
+            not_prefiltered_reason="intro_pattern_not_prefiltered",
+            eligible_reason="candidate_structured_intro_failure",
+            accepts_recovery_handoff=True,
+        ),
+        native_semantic_request_producers=(attempt_diagnostic_producer(
+            producer_id="intro_pattern_repair.native_diagnostic",
+            request_prefix="intro-pattern-attempt",
+            prefilter=is_nested_intro_pattern_candidate,
+        ),),
         analysis_producers=(analyze_intro_pattern_repair,),
         surface_lowerers=(lower_intro_pattern_repair,),
+        realization_codecs=(INTRO_PATTERN_REALIZATION_CODEC,),
     )

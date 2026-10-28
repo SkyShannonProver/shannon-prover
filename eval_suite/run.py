@@ -35,6 +35,11 @@ from workflow.provider.eval_agent_confinement import (
     clear_confinement_environment,
     confinement_environment,
 )
+from workflow.proof_tool.easycrypt_source_resource import (
+    SOURCE_RESOURCE_MANIFEST_ENV,
+    EasyCryptSourceResource,
+    EasyCryptSourceResourceError,
+)
 from workflow.schemas.config import PROVER_DEFAULTS
 from workflow.proof_state_compiler.surface_profiles import (
     ensure_current_surface_profile,
@@ -290,10 +295,20 @@ def main(argv: list[str] | None = None) -> int:
             "eval filesystem confinement requires source_isolation=true and "
             "strip_proofs=true"
         )
+    source_navigation = bool(defaults.get("source_navigation", False))
+    if source_navigation and not (
+        bool(defaults.get("source_isolation", True))
+        and bool(defaults.get("strip_proofs", True))
+    ):
+        parser.error(
+            "source_navigation requires source_isolation=true and "
+            "strip_proofs=true"
+        )
     profiles = _selected_profiles(args.profiles, suite.get("profiles") or [])
+    suite_name = str(suite.get("suite") or args.suite.stem)
+    _validate_arm_directory_labels(defaults, profiles, suite_name=suite_name)
     targets = _selected_targets(args.targets, suite.get("targets") or [])
     repeats = int(args.repeats or defaults.get("repeats") or 1)
-    suite_name = str(suite.get("suite") or args.suite.stem)
     bundle_environment: dict[str, Any] | None = None
     execution_manifest: dict[str, Any] | None = None
     execution_manifest_path: Path | None = None
@@ -597,6 +612,39 @@ def main(argv: list[str] | None = None) -> int:
                 manifest_path=source_manifest,
                 base=run_env,
             )
+        navigation = _bind_source_navigation(
+            cmd,
+            run_env,
+            enabled=source_navigation,
+            source_manifest=output_dir / "source_manifest.json",
+        )
+        if navigation is not None:
+            navigation_ok, navigation_reason = navigation
+            execution_record["source_navigation"] = {
+                "status": "enabled" if navigation_ok else "failed",
+                "reason": navigation_reason,
+            }
+            if not navigation_ok:
+                print(
+                    f"SOURCE NAVIGATION FAILED — target '{target.get('id')}' "
+                    f"(profile {profile}): {navigation_reason}. No model "
+                    "process was launched.",
+                    file=sys.stderr,
+                )
+                overall_rc = 2
+                execution_record.update({
+                    "status": "source_navigation_failed",
+                    "reason": navigation_reason,
+                    "returncode": None,
+                    "finished_at": _utc_now(),
+                })
+                _append_execution_record(
+                    execution_manifest_path,
+                    execution_manifest,
+                    execution_record,
+                )
+                retain_preflight(execution_record)
+                continue
         if args.preflight_only:
             execution_record.update({
                 "status": "preflight_valid",
@@ -816,7 +864,14 @@ def _run_output_dir(
     suite_name: str,
 ) -> Path:
     output_root = Path(defaults.get("output_dir") or "artifacts/eval_suite")
-    return output_root / suite_name / profile / str(target["id"]) / f"r{repeat:02d}"
+    # The prepared source and node-memory paths under this directory are shown
+    # to the agent. A blinded suite maps each profile to a neutral label so the
+    # path cannot reveal the arm.
+    labels = defaults.get("arm_directory_labels") or {}
+    if labels and not labels.get(profile):
+        raise ValueError(f"arm_directory_labels has no label for {profile!r}")
+    arm_dir = str(labels.get(profile) or profile)
+    return output_root / suite_name / arm_dir / str(target["id"]) / f"r{repeat:02d}"
 
 
 def _summary_paths(output_dir: Path) -> frozenset[Path]:
@@ -1063,6 +1118,111 @@ def _read_suite(path: Path) -> dict[str, Any]:
     if not isinstance(data, dict):
         raise ValueError(f"suite must be a JSON object: {path}")
     return data
+
+
+def _bind_source_navigation(
+    cmd: list[str],
+    run_env: dict[str, str],
+    *,
+    enabled: bool,
+    source_manifest: Path,
+) -> tuple[bool, str] | None:
+    """Clear any inherited source manifest, then bind this arm's if enabled.
+
+    An arm never sees another run's source: the variable is removed first,
+    and set again only for a verified proof-stripped manifest of this target.
+    Returns None when the suite does not enable source navigation.
+    """
+
+    run_env.pop(SOURCE_RESOURCE_MANIFEST_ENV, None)
+    if not enabled:
+        return None
+    return _enable_source_navigation(
+        cmd, run_env, source_manifest=source_manifest
+    )
+
+
+def _enable_source_navigation(
+    cmd: list[str],
+    run_env: dict[str, str],
+    *,
+    source_manifest: Path,
+) -> tuple[bool, str]:
+    """Bind the manager-owned source tools to this arm's stripped copy.
+
+    The proof node enables `search/read/resolve` source tools only when this
+    variable names the run's proof-stripped source manifest. Check here, before
+    any model launch, that the manifest binds exactly this target.
+    """
+
+    if not source_manifest.is_file():
+        return False, f"source manifest is missing: {source_manifest}"
+    candidate = dict(run_env)
+    candidate[SOURCE_RESOURCE_MANIFEST_ENV] = str(source_manifest)
+    try:
+        resource = EasyCryptSourceResource.from_environment(
+            project_root=Path.cwd(),
+            source_file=_cmd_flag(cmd, "--file") or "",
+            target_lemma=_cmd_flag(cmd, "--lemma") or "",
+            include_dir=_cmd_flag(cmd, "--include-dir") or "",
+            environ=candidate,
+        )
+    except (EasyCryptSourceResourceError, OSError, ValueError) as exc:
+        return False, f"{type(exc).__name__}: {exc}"
+    if resource is None:
+        return False, "source resource resolved to OFF"
+    run_env[SOURCE_RESOURCE_MANIFEST_ENV] = str(source_manifest)
+    return True, "proof-stripped source navigation bound to the target"
+
+
+# Words that would tell a blinded agent which arm it is in.
+_ARM_REVEALING_TOKENS = frozenset({
+    "audit", "compiler", "l1", "l4", "prod", "production", "treatment",
+})
+
+
+def _reveals_arm(text: str, profiles: list[str]) -> bool:
+    lowered = text.lower()
+    if "compiler" in lowered or any(p.lower() in lowered for p in profiles):
+        return True
+    return any(
+        token in _ARM_REVEALING_TOKENS
+        for token in re.split(r"[^a-z0-9]+", lowered)
+    )
+
+
+def _validate_arm_directory_labels(
+    defaults: dict[str, Any],
+    profiles: list[str],
+    *,
+    suite_name: str = "",
+) -> None:
+    """Blinded suites need one distinct, neutral label per arm.
+
+    The agent sees paths under ``<output_dir>/<suite>/<label>/``, so the
+    output directory and suite name must not name an arm either.
+    """
+
+    labels = defaults.get("arm_directory_labels")
+    if not labels:
+        return
+    if not isinstance(labels, dict):
+        raise ValueError("arm_directory_labels must map profile to label")
+    chosen = [str(labels.get(profile) or "") for profile in profiles]
+    if not all(chosen):
+        missing = [p for p, label in zip(profiles, chosen) if not label]
+        raise ValueError("arm_directory_labels omits: " + ", ".join(missing))
+    if len(set(chosen)) != len(chosen):
+        raise ValueError("arm_directory_labels must be distinct")
+    for label in chosen:
+        if "/" in label or _reveals_arm(label, profiles):
+            raise ValueError(f"arm directory label {label!r} is not neutral")
+    for name, value in (
+        ("suite name", suite_name),
+        ("output_dir", str(defaults.get("output_dir") or "")),
+    ):
+        if _reveals_arm(value, profiles):
+            raise ValueError(f"blinded suite {name} {value!r} names an arm")
 
 
 def _selected_profiles(override: str, suite_profiles: list[Any]) -> list[str]:
