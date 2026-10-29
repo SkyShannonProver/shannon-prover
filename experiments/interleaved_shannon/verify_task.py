@@ -18,6 +18,7 @@ if str(_IMPORT_ROOT) not in sys.path:
     sys.path.insert(0, str(_IMPORT_ROOT))
 
 from core.easycrypt.ec_env import easycrypt_command as managed_easycrypt_command
+from core.easycrypt.proof_text import discard_sibling_eco
 from experiments.interleaved_shannon.source_projection import (
     ANSWER_SOURCE,
 )
@@ -35,7 +36,8 @@ ALWAYS_FORBIDDEN = re.compile(
     r"\b(?:axiom|pragma|exit|abort|require)\b",
     re.IGNORECASE,
 )
-ADMIT = re.compile(r"\badmit\b", re.IGNORECASE)
+# `admitted` ends a proof without checking it, like `admit` closes a goal.
+ADMIT = re.compile(r"\badmit(?:ted)?\b", re.IGNORECASE)
 UPTO_LOCATION = re.compile(r"[1-9][0-9]*(?::[0-9]+)?\Z")
 
 
@@ -548,6 +550,7 @@ def _replay_check(
         else "stateless_goal_at_location" if mode == "upto"
         else "full_file_acceptance"
     )
+    discard_sibling_eco(ROOT / TARGET_REL)
     check = run(command, environment=environment)
     ec_stdout, ec_stderr = check.stdout, check.stderr
     report["easycrypt_exit_code"] = check.returncode

@@ -98,3 +98,37 @@ if __name__ == "__main__":
     test_responsive_probe_returns_false_for_orphan_socket_inode()
     test_responsive_probe_returns_true_for_live_listener()
     print("PASS test_why3server_health")
+
+
+def test_responsive_probe_refuses_a_listener_owned_by_another_user(monkeypatch) -> None:
+    """A why3server on a predictable /tmp path could belong to another
+    account on a shared host and answer every SMT call as proved."""
+    with tempfile.TemporaryDirectory() as td:
+        path = str(Path(td) / "foreign.sock")
+        srv = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+        srv.bind(path)
+        srv.listen(1)
+        try:
+            monkeypatch.setattr(os, "getuid", lambda: os.stat(path).st_uid + 1)
+            assert _is_why3server_responsive(path, timeout=0.5) is False
+        finally:
+            srv.close()
+            os.unlink(path)
+
+
+def test_run_socket_avoids_a_path_owned_by_another_user(tmp_path, monkeypatch) -> None:
+    from workflow.agents import ec_services
+
+    # The function writes os.environ directly; setenv makes teardown restore it.
+    monkeypatch.setenv("WHY3EC_SOCKET", "placeholder")
+    first = ec_services._configure_run_why3_socket(tmp_path)
+    taken = Path(first)
+    taken.write_text("")
+    try:
+        monkeypatch.setattr(os, "getuid", lambda: taken.stat().st_uid + 1)
+        chosen = ec_services._configure_run_why3_socket(tmp_path)
+        assert chosen != first
+        assert not Path(chosen).exists()
+        assert os.environ["WHY3EC_SOCKET"] == chosen
+    finally:
+        taken.unlink()

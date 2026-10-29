@@ -4,6 +4,76 @@ Notable changes to Shannon Prover, newest first. Each public release from
 0.2.0 on is tagged `vX.Y.Z`. Earlier releases are listed by date and tagged
 together as `v0.1.0`.
 
+## 0.3.1 (2026-10-28)
+
+- Installing Shannon Prover no longer installs litellm, anthropic, openai
+  and pexpect. Nothing imported them: the agents run through the Codex and
+  Claude command-line tools. The locked environment is now pytest and its
+  dependencies, about 7 MB instead of about 120 MB.
+- A single-lemma proof is no longer reported verified when EasyCrypt accepts
+  it without checking a goal. The guard used to match only a literal
+  `admit.`, so `admit; trivial.`, `by (admit).`, `try admit; done.`, the
+  `admitted` proof end, `exit.`, `abort.` or `pragma reset.` followed by a
+  restated lemma, and `pragma Proofs:weak` or `Proofs:report` followed by
+  `smt()` all passed with a "proof" of `false`. The guard now reads text as
+  EasyCrypt's lexer does, so comments, string literals and operators such
+  as `(*)` cannot hide these. Write-back rejects each of them, a file with
+  `exit` or such a pragma stops the run with an explanation, a proof left
+  open at the end of a file no longer counts as already proved, and
+  verification deletes a `.eco` cache next to the checked file, since
+  EasyCrypt skips checking a file whose cache it accepts.
+- A project-level run is no longer reported `proved` when the target uses
+  one of those constructs. Its final check matched only a literal `admit.`;
+  it now rejects every form above anywhere in the target, and auxiliary
+  lemma imports and finished auxiliary jobs apply the same rule.
+- A project-level run is no longer reported `proved` when, by its end, a
+  tracked file other than the target differs from the starting commit, a new
+  unignored file exists outside the run artifacts, or the managed EasyCrypt
+  toolchain changed. The overall agent can write the whole checkout, so the
+  final check could otherwise run a modified verifier or dependency. The
+  manifest lists such changes as `checkout_integrity_violations`.
+- Proof verification and why3server reuse now accept only a why3server
+  socket owned by your own account. The sockets live at predictable `/tmp`
+  paths, so on a shared machine another account could have answered every
+  SMT call as proved.
+- The backend `session_cli -verify` check now fails when EasyCrypt exits
+  with an error, is killed, runs past ten minutes, or leaves the proof open.
+  It used to pass whenever the output contained no `[error` line.
+- SECURITY.md now states what each agent can do on your machine. It used to
+  say that the agent tools' own configuration and sandbox settings govern
+  their access, but Shannon ignores your Codex configuration and rules,
+  never asks for approval, and runs the project-level overall agent without
+  a sandbox.
+- A single-lemma run or the demo suite no longer blocks a later
+  project-level run. Both wrote run bundles to a new, untracked
+  `agent_view_runs/` directory, and a project-level run refuses a checkout
+  with untracked files. Shannon now marks a bundle directory it creates as
+  ignored by Git.
+- The suite example in `eval_suite/README.md` now runs; it lacked the
+  target `id` and named the output key `output_root` instead of
+  `output_dir`.
+- The public tree no longer includes a research campaign suite that named
+  unreleased profiles and stopped with `ModuleNotFoundError`, or the
+  scheduler that only that suite used. A missing research package now
+  reports an unknown profile.
+- The documented first run now works. The bundled examples already contain
+  their proofs, so `$prove PIR_correct` only reports that the lemma is
+  verified; the README and the `$prove` skill now point a first run at the
+  PIR demo suite, which proves a proof-stripped copy, and the skip message
+  says how to try the prover on a proved lemma.
+- Choosing another model, corrected from the 0.3.0 note: `$prove` and
+  `/prove` take only a lemma name, so run the orchestrator command they use
+  with a different `--prover-model`. `/prove` uses `claude-opus-4-8` unless
+  a model is named. Project-level models are set in
+  `workflow/interleaved/agent_profiles.json`.
+- The README and the project-level guide now give the sign-in steps, say
+  that project-level runs accept only a ChatGPT or Claude account login,
+  describe what the overall agent can access, and say that the bootstrap
+  needs network access and a Git clone. They also give rough durations.
+- The public compiler design document no longer points at a tag that
+  exists only in the private repository, and the public export now rejects
+  such tag names.
+
 ## 0.3.0 (2026-10-27)
 
 - Concurrent proof nodes in one checkout no longer lose compiler help at

@@ -642,6 +642,59 @@ def invoke_verifier(mode: str, output: Path) -> subprocess.CompletedProcess[str]
     )
 
 
+def toolchain_fingerprint() -> dict[str, str]:
+    """Hash the files that select the EasyCrypt build and solvers that verify.
+
+    `--verify-only` binds the executable and ecLib to the receipt, so the
+    receipt and the Why3 configuration identify the whole toolchain.
+    """
+    from core.easycrypt.toolchain import (
+        managed_why3_config_file,
+        sha256_file,
+        toolchain_receipt_path,
+    )
+
+    files = {
+        "receipt": toolchain_receipt_path(),
+        "why3_config": managed_why3_config_file(),
+    }
+    return {
+        name: sha256_file(path) if path.is_file() else "missing"
+        for name, path in files.items()
+    }
+
+
+def checkout_integrity_violations(
+    *, start_commit: str, start_toolchain: dict[str, str],
+) -> list[str]:
+    """List changes that would let the final check run code the agent wrote.
+
+    The outer agent can write the whole checkout. Only the target file may
+    differ from the starting commit, apart from this product's ignored run
+    artifacts, and the managed toolchain must be the one the run started
+    with. Otherwise the verifier, its EasyCrypt build or a dependency of the
+    target may not be the reviewed one.
+    """
+    violations: list[str] = []
+    changed = run(["git", "diff", "--name-only", "--no-renames", start_commit, "--"])
+    untracked = run(["git", "ls-files", "--others", "--exclude-standard"])
+    if changed.returncode != 0 or untracked.returncode != 0:
+        violations.append("could not compare the checkout with the starting commit")
+    artifact_prefix = Path(ARTIFACT_ROOT).as_posix().rstrip("/") + "/"
+    target = Path(TARGET_REL).as_posix()
+    violations.extend(
+        f"modified {path}" for path in changed.stdout.splitlines()
+        if path and path != target
+    )
+    violations.extend(
+        f"added {path}" for path in untracked.stdout.splitlines()
+        if path and not path.startswith(artifact_prefix)
+    )
+    if toolchain_fingerprint() != start_toolchain:
+        violations.append("managed EasyCrypt toolchain changed during the run")
+    return violations
+
+
 def terminate_group(process: subprocess.Popen[str]) -> None:
     if process.poll() is not None:
         return
@@ -740,6 +793,7 @@ def main() -> int:
         print(preflight.stdout, file=sys.stderr)
         print(preflight.stderr, file=sys.stderr)
         raise SystemExit("preflight verification failed")
+    start_toolchain = toolchain_fingerprint()
 
     outer_environment, removed_credential_keys = experiment_environment(
         agent_config.required_provider_keys
@@ -942,6 +996,7 @@ resuming large construction-mode edits.
         "experiment_family": "interleaved_phase2_phase3_shannon",
         "arm_id": f"outer_{outer_profile.key}_inner_{inner_profile.key}",
         "commit": commit,
+        "toolchain_fingerprint_at_start": start_toolchain,
         "started_at": now(),
         "run_directory": run_rel.as_posix(),
         "run_kind": kind,
@@ -1208,6 +1263,9 @@ resuming large construction-mode edits.
             caffeinate.terminate()
         elapsed = time.monotonic() - start
 
+    integrity_violations = checkout_integrity_violations(
+        start_commit=commit, start_toolchain=start_toolchain,
+    )
     final_path = run_dir / "final_verification.json"
     final = invoke_verifier("final", final_path)
     shannon_summary = public_job_summary(run_dir)
@@ -1224,7 +1282,11 @@ resuming large construction-mode edits.
     orphan_invocation_audit = run_dir / "shannon_invocations.jsonl"
     if orphan_invocation_audit.exists():
         inner_config_mismatches.append("orphan_direct_wrapper_invocation")
-    final_passed = final.returncode == 0 and not inner_config_mismatches
+    final_passed = (
+        final.returncode == 0
+        and not inner_config_mismatches
+        and not integrity_violations
+    )
     premature_agent_stop = is_premature_agent_stop(
         final_passed=final_passed,
         timed_out=timed_out,
@@ -1250,6 +1312,7 @@ resuming large construction-mode edits.
             "shannon_job_cleanup_error": scheduler_cleanup_error,
             "shannon_job_summary": shannon_summary,
             "inner_config_mismatches": inner_config_mismatches,
+            "checkout_integrity_violations": integrity_violations,
             "final_verification_passed": final_passed,
             "premature_agent_stop": premature_agent_stop,
             "partial_candidate": partial_candidate,
@@ -1275,6 +1338,12 @@ resuming large construction-mode edits.
             print(
                 "inner-agent configuration drift in jobs: "
                 + ", ".join(inner_config_mismatches),
+                file=sys.stderr,
+            )
+        if integrity_violations:
+            print(
+                "the checkout changed outside the target file, so the final "
+                "check cannot be trusted: " + "; ".join(integrity_violations),
                 file=sys.stderr,
             )
     print(run_dir)

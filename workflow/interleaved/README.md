@@ -26,7 +26,9 @@ qed.
 You supply the definitions, assumptions, and target statement. You can also
 supply helpful lemmas or a partial argument, but a decomposition is not
 required. During development, unfinished proofs are allowed; the final check
-rejects any remaining `admit.` in the target.
+rejects any remaining `admit` or `admitted`, and any `pragma Proofs:weak` or
+`Proofs:report`, in the target. EasyCrypt accepts each of these without
+checking the goals they skip.
 
 Save the following as `projects/my-proof/interleaved_project.json`, changing
 `Target.ec` and `TargetSecurity` to your file and final lemma:
@@ -52,6 +54,8 @@ EasyCrypt libraries.
 
 Commit your project and configuration before running. Both preflight and live
 runs require a clean Git working tree, including no unignored untracked files.
+During a run only the target file may change; see
+[Preserve the intended security problem](#preserve-the-intended-security-problem).
 
 ## Choose the agents and limits
 
@@ -72,15 +76,26 @@ The launcher passes these model names explicitly; it does not inherit the
 model selected in your Codex app or user configuration. You need access to
 the selected models through the installed CLIs.
 
-The default pair requires Codex with a stored ChatGPT OAuth login. If you
-select Claude for either role, also install Claude Code with a stored Claude
-OAuth login. The runner removes injected API credentials when launching the
-selected agents. Preflight checks the installed CLIs, login method, and
-required capabilities before proof generation begins.
+The default pair requires Codex with a stored ChatGPT OAuth login: run
+`codex` once and choose **Sign in with ChatGPT**. If you select Claude for
+either role, also install Claude Code and sign in with your Claude account.
+API keys are not used: the runner removes `OPENAI_API_KEY`,
+`CODEX_ACCESS_TOKEN` and `ANTHROPIC_API_KEY` when launching the agents, and
+preflight refuses any other login method. Preflight also checks the installed
+CLIs and the capabilities they need before proof generation begins.
+
+The overall agent runs without an operating-system sandbox and without
+approval prompts, with your user account's access to files, credentials,
+network and Git, for up to the overall time limit. Shannon ignores your own
+Codex configuration and rules files. Run project-level proofs in a virtual
+machine, container or separate account; [SECURITY.md](../../SECURITY.md)
+lists what each agent can do.
 
 The example configuration permits two simultaneous auxiliary-lemma attempts,
 with at most 120 minutes per attempt and a 43,200-second (12-hour) overall
 task. These limits do not cap total spending or the total number of attempts.
+Agent use counts against your ChatGPT or Claude plan's usage limits, and a
+run that uses its whole allowance keeps agents working for many hours.
 The checked-in Claude overall-agent profile additionally sets 8,000 turns
 and a USD 500 budget; Codex has no corresponding runner-enforced monetary cap.
 
@@ -130,11 +145,12 @@ progress to revise its approach, but partial progress is not proof success.
 ## Read the result
 
 The command prints a results directory below your configured
-`artifact_root`. It contains:
+`artifact_root`, named `preflight_TIMESTAMP`, `official_TIMESTAMP` or
+`continuation_TIMESTAMP` by kind of run. It contains:
 
 | File | What it tells you |
 |---|---|
-| `manifest.json` | Selected agents and models, time limits, run status, and whether final verification passed. |
+| `manifest.json` | Selected agents and models, time limits, run status, whether final verification passed, and any changes outside the target (`checkout_integrity_violations`). |
 | `final_verification.json` | The final EasyCrypt check and any errors. It is produced after a live proof attempt. |
 | `partial_candidate.ec` | A saved copy of the target when the attempt did not pass final verification. |
 
@@ -151,9 +167,19 @@ writes back a generated proof only after verification.
 ### Preserve the intended security problem
 
 The built-in verifier runs the pinned EasyCrypt on the complete target,
-requires the named final lemma to exist, and rejects `admit.` in the target
-at final verification. It does **not** enforce byte-for-byte preservation of
-your original theorem, definitions, assumptions, or dependency files.
+requires the named final lemma to exist, and at final verification rejects
+`admit`, `admitted` and weakening `pragma Proofs` settings in the target. It
+does **not** enforce byte-for-byte preservation of your original theorem,
+definitions or assumptions inside the target.
+
+The runner also refuses `proved` if, at the end of the run, any tracked file
+other than the target differs from the starting commit, a new unignored file
+exists outside `artifact_root`, or the managed EasyCrypt toolchain changed.
+The overall agent can write the whole checkout, so a verdict from a modified
+verifier, dependency or toolchain would not be meaningful. The check cannot
+see changes to ignored files such as the Python environment; it guards
+against mistakes and simple tampering, not a determined agent with your
+account's access, which is another reason to run in an isolated machine.
 
 For a fixed security claim, review those changes and add project-specific
 restrictions where needed. The optional `prompt_file` supplies your proof
@@ -194,7 +220,8 @@ uv run python -m workflow.interleaved \
     artifacts/my-proof-interleaved/official_TIMESTAMP/partial_candidate.ec
 ```
 
-Replace `official_TIMESTAMP` with the actual directory name. The new run
+Replace `official_TIMESTAMP` with the actual directory name, which may also
+start with `continuation_` when you continue a continuation. The new run
 records its connection to the prior attempt and inherits its provider choices.
 Changing a provider requires `--allow-provider-change` and is recorded.
 Compatible saved lemma progress can be made available to the agent; a

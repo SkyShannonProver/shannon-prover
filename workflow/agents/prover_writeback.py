@@ -24,9 +24,10 @@ from core.easycrypt.committed_history import (
     split_trailing_qed,
 )
 from core.easycrypt.proof_text import (
-    ADMIT_TOKEN_RE as _ADMIT_TOKEN_RE,
-    strip_comments as _strip_comments_for_admit_check,
+    discard_sibling_eco as _discard_sibling_eco,
+    file_wide_unchecked_constructs as _file_wide_unchecked_constructs,
     tactics_contain_admit as _tactics_contain_admit,
+    unchecked_proof_constructs as _unchecked_proof_constructs,
 )
 from workflow.agents.ec_services import (
     _claude_scratch_path,
@@ -224,6 +225,7 @@ def _verify_ec_file(
             if d:
                 cmd.extend(["-I", str(d)])
         cmd.append(str(ec_path))
+        _discard_sibling_eco(ec_path)
         result = subprocess.run(
             cmd,
             capture_output=True,
@@ -524,11 +526,12 @@ def _extract_prover_report(output_text: str) -> dict:
 def _proof_body_has_admit(
     content: str, lemma_name: str, decl_start: int | None = None,
 ) -> bool:
-    """Return True if the `lemma_name`'s proof block contains `admit.`.
+    """Return True if the `lemma_name`'s proof block skips a goal.
 
     Scans the proof. ... qed. block after the lemma declaration, strips
-    comments, and looks for a bare `admit` at word boundary. Used as a
-    post-verify safety net — EC accepts admit as a closer, but we don't.
+    comments, and looks for `admit`, `admitted` or a weakening `Proofs`
+    pragma as whole tokens. Used as a post-verify safety net — EC accepts
+    these, but we don't.
 
     Pass the `decl_start` the write-back targeted so this checks the SAME
     declaration that was just filled — without it, a same-name duplicate
@@ -539,9 +542,7 @@ def _proof_body_has_admit(
     if block is None:
         return False
     start, end = block
-    body = content[start:end]
-    scrubbed = _strip_comments_for_admit_check(body)
-    return bool(_ADMIT_TOKEN_RE.search(scrubbed))
+    return bool(_unchecked_proof_constructs(content[start:end]))
 
 
 
@@ -618,6 +619,19 @@ def _write_and_verify_proof(
         )
         return ProofVerificationEvidence(
             status="fail", error="proof contains admit",
+        )
+
+    # `exit` or a weakening pragma anywhere in the file skips checks for the
+    # proofs after it, so EasyCrypt accepting the file would not show the
+    # lemma proved.
+    weakening = _file_wide_unchecked_constructs(content)
+    if weakening:
+        logger.error(
+            "Rejecting proof for %s: %s disables strict proof checking (%s).",
+            lemma_name, ec_path, ", ".join(sorted(set(weakening))),
+        )
+        return ProofVerificationEvidence(
+            status="fail", error="source disables strict proof checking",
         )
 
     from workflow.proof_acceptance import validate_completion_candidate_contract

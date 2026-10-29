@@ -214,8 +214,9 @@ def test_codex_and_claude_prove_launchers_share_one_canonical_workflow() -> None
     assert "eval_suite.run" not in claude
     assert "do not add `--eval-mode`" in claude
 
-    assert "$prove PIR_correct" in readme
-    assert "/prove PIR_correct" in readme
+    assert "$prove my_lemma" in readme
+    assert "/prove my_lemma" in readme
+    assert "eval_suite/suites/demo_pir.json" in readme
     assert "$prove PIR_correct claude" not in readme
     assert "/prove PIR_correct claude" not in readme
     assert "type `/` and choose **Prove**" in readme

@@ -65,16 +65,17 @@ and remains enabled.
     "eval_mode": true,
     "source_isolation": true,
     "strip_proofs": true,
-    "output_root": "artifacts/eval_suite"
+    "output_dir": "artifacts/eval_suite"
   },
   "targets": [
-    {"file": "eval/examples/PIR.ec", "lemma": "PIR_correct"}
+    {"id": "pir_correct", "file": "eval/examples/PIR.ec", "lemma": "PIR_correct"}
   ],
   "profiles": ["proof_state_compiler"]
 }
 ```
 
-Useful keys include per-target `timeout_minutes`, `defaults.model`,
+Each target needs a unique `id`, which names its output directory. Useful
+keys include per-target `timeout_minutes`, `defaults.model`,
 `copy_root`, `tree_initial_provers`, and `tree_max_concurrent`. CLI
 `--targets` and `--repeats` select a checked-in subset. Compiler experiment
 suites may additionally select registered profiles and counterbalance their

@@ -29,6 +29,13 @@ _RUN_WHY3_SOCKET: Optional[str] = None
 _WHY3_ATEXIT_REGISTERED = False
 
 
+def _owned_by_current_user(path: str) -> bool:
+    try:
+        return os.stat(path).st_uid == os.getuid()
+    except OSError:
+        return False
+
+
 def _is_why3server_responsive(socket_path: str, timeout: float = 1.0) -> bool:
     """Probe a Unix-domain socket to confirm why3server is actually
     accepting connections.
@@ -45,6 +52,10 @@ def _is_why3server_responsive(socket_path: str, timeout: float = 1.0) -> bool:
     listener bound to that path.
     """
     import socket as _socket
+    # On a shared host another account could listen on a predictable /tmp
+    # path and answer every SMT call as proved, so only reuse our own server.
+    if not _owned_by_current_user(socket_path):
+        return False
     try:
         s = _socket.socket(_socket.AF_UNIX, _socket.SOCK_STREAM)
         s.settimeout(timeout)
@@ -268,8 +279,12 @@ def _configure_run_why3_socket(run_dir: Path) -> str:
     """
     import hashlib
 
+    import secrets
+
     digest = hashlib.sha1(str(run_dir.resolve()).encode("utf-8")).hexdigest()[:12]
     socket_path = f"/tmp/why3ec_{digest}.sock"
+    while os.path.lexists(socket_path) and not _owned_by_current_user(socket_path):
+        socket_path = f"/tmp/why3ec_{digest}_{secrets.token_hex(4)}.sock"
     os.environ["WHY3EC_SOCKET"] = socket_path
     return socket_path
 

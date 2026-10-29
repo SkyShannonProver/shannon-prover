@@ -17,6 +17,7 @@ import os
 import re
 import shutil
 import signal
+import stat
 import subprocess
 import sys
 import threading
@@ -33,6 +34,7 @@ if str(_IMPORT_ROOT) not in sys.path:
 
 from core.easycrypt.eval_source_prep import find_target_proof_block
 from core.easycrypt.lemma_decls import lemma_decl_matches
+from core.easycrypt.proof_text import unchecked_proof_constructs
 from workflow.interleaved.agent_config import (
     agent_profile_sha256,
     PROFILE_PATH,
@@ -289,10 +291,35 @@ def _all_jobs(run_dir: Path) -> list[dict[str, Any]]:
     return sorted(jobs, key=lambda item: str(item.get("created_at") or ""))
 
 
+_RUNTIME_PARENT = Path("/tmp")
+
+
+def _private_runtime_root() -> Path:
+    """Return a /tmp directory that only the current user can enter.
+
+    Lanes run code checked out into them and the registry lock serializes
+    job state, so neither may live where another account could create or
+    replace them first, as at a predictable path shared by all users.
+    """
+
+    root = _RUNTIME_PARENT / f"interleaved-shannon-{os.getuid()}"
+    root.mkdir(mode=0o700, exist_ok=True)
+    info = root.lstat()
+    if (
+        not stat.S_ISDIR(info.st_mode)
+        or info.st_uid != os.getuid()
+        or info.st_mode & 0o077
+    ):
+        raise RuntimeError(
+            f"{root} must be a directory owned by the current user with mode 0700"
+        )
+    return root
+
+
 @contextmanager
 def _registry_lock(run_dir: Path) -> Iterator[None]:
     identity = hashlib.sha256(str(run_dir.resolve()).encode("utf-8")).hexdigest()[:16]
-    path = Path("/tmp") / f"interleaved-shannon-jobs-{identity}.lock"
+    path = _private_runtime_root() / f"jobs-{identity}.lock"
     with path.open("a+", encoding="utf-8") as stream:
         fcntl.flock(stream.fileno(), fcntl.LOCK_EX)
         yield
@@ -1598,7 +1625,7 @@ def wait_for_terminal_events(
 
 def _lane_path(run_dir: Path, job_id: str) -> Path:
     identity = hashlib.sha256(str(run_dir.resolve()).encode("utf-8")).hexdigest()[:16]
-    return Path("/tmp") / "interleaved-shannon-lanes" / identity / job_id
+    return _private_runtime_root() / "lanes" / identity / job_id
 
 
 def _run_checked(command: list[str], *, cwd: Path) -> None:
@@ -1899,7 +1926,7 @@ def _worker_result(
         proved = (lane / TARGET).read_bytes()
         proved_text = proved.decode("utf-8")
         proof_body, _ = _proof_body_span(proved_text, lemma)
-        if re.search(r"\badmit\b", proof_body, re.IGNORECASE):
+        if unchecked_proof_constructs(proof_body):
             raise ValueError("verified Shannon result still contains admit")
         _atomic_bytes(
             _job_dir(run_dir, job_id) / "proved_candidate.ec",

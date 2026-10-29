@@ -11,10 +11,6 @@ place to evolve how EasyCrypt is launched.
 
 The environment helper is loaded when constructing a command, after backend
 entry points have made the repository package importable.
-
-The legacy ``repl.py`` pexpect lineage is intentionally NOT routed through here:
-it is a deprecated, isolated path with its own (abspath) include handling used
-in three places, and it spawns via ``pexpect`` rather than ``subprocess``.
 """
 
 from __future__ import annotations

@@ -23,7 +23,13 @@ from core.easycrypt.ec_env import easycrypt_command, get_ec_env
 from core.easycrypt.eval_source_prep import find_target_proof_block
 from core.easycrypt.lemma_extract import extract_lemma
 from core.easycrypt.lemma_decls import lemma_decl_matches
-from core.easycrypt.proof_text import strip_comments, tactics_contain_admit
+from core.easycrypt.proof_text import (
+    discard_sibling_eco,
+    file_wide_unchecked_constructs,
+    strip_comments,
+    tactics_contain_admit,
+    unchecked_proof_constructs,
+)
 from workflow.interleaved.project import InterleavedProject
 from workflow.interleaved.runtime import load_runtime_settings
 
@@ -72,12 +78,15 @@ def verify_lemma_import(
         body = source[slice(*span)]
         if tactics_contain_admit([body]) or re.search(r"\babort\s*\.", strip_comments(body)):
             raise ValueError("candidate proof contains admit or abort")
+        if file_wide_unchecked_constructs(source):
+            raise ValueError("candidate source disables strict proof checking")
         extracted = extract_lemma(candidate, lemma, verify_proof=True)
         check_dir.mkdir(parents=True, exist_ok=True)
         check_file = check_dir / target.name
         if check_file.resolve() in {target.resolve(), candidate.resolve()}:
             raise ValueError("verification scratch file must not overwrite its input")
         check_file.write_text(extracted, encoding="utf-8")
+        discard_sibling_eco(check_file)
         command = easycrypt_command("-no-eco", "-timeout", "30")
         for include in include_dirs:
             command.extend(["-I", str(root / include)])
@@ -169,8 +178,11 @@ def verify(mode: str, *, candidate: Path | None = None, lemma: str | None = None
     elif not (lemma_decl_matches(source, project.final_lemma) if mode == "import"
               else find_target_proof_block(source, project.final_lemma)):
         errors.append(f"final lemma is missing: {project.final_lemma}")
-    if mode == "final" and re.search(r"(?i)\badmit\s*\.", source):
-        errors.append("final target still contains admit.")
+    # EasyCrypt accepts admit forms, the `admitted` proof end, `exit`,
+    # `abort` and weakening pragmas without checking the goals they skip.
+    unchecked = sorted(set(unchecked_proof_constructs(source))) if mode == "final" else []
+    if unchecked:
+        errors.append("final target skips proof obligations: " + ", ".join(unchecked))
 
     bootstrap = subprocess.run(
         [sys.executable, "tools/bootstrap_easycrypt.py", "--verify-only"],
@@ -202,6 +214,7 @@ def verify(mode: str, *, candidate: Path | None = None, lemma: str | None = None
             executable = Path(executable_name).resolve()
         command = _easycrypt_command(executable, project)
         if executable_name is not None:
+            discard_sibling_eco(target)
             replay = subprocess.run(
                 command,
                 cwd=ROOT,

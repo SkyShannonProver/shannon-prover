@@ -96,7 +96,11 @@ The next step installs Alt-Ergo 2.4.3 in Shannon's managed opam switch.
 ### 3. Repository-managed EasyCrypt
 
 Shannon Prover is locked to EasyCrypt `r2026.06`. The bootstrap command creates
-and verifies the repository-managed opam root and switch:
+and verifies the repository-managed opam root and switch. It downloads
+EasyCrypt from GitHub at the pinned commit, so it needs network access and a
+Git clone of this repository (not an unpacked archive). Building OCaml and
+EasyCrypt the first time usually takes between a few minutes and a quarter
+of an hour:
 
 ```bash
 uv run python tools/bootstrap_easycrypt.py
@@ -140,11 +144,20 @@ regenerating it.
 
 Project-level proving defaults to **OpenAI Codex with `gpt-6-astra` (high
 reasoning effort) for both the overall argument (outer) and auxiliary lemmas
-(inner)**. Install Codex and authenticate with a stored ChatGPT OAuth login.
-The commands below use this pair without additional provider flags. Claude
-Code remains available when explicitly selected for either role.
+(inner)**. Install the Codex CLI, run `codex` once and choose **Sign in with
+ChatGPT**. Project-level runs accept only this stored account login (or a
+Claude account login for Claude Code); they remove API-key variables from the
+agents' environment. The commands below use the Codex pair without
+additional provider flags. Claude Code remains available when explicitly
+selected for either role.
 See the [project-level proving guide](workflow/interleaved/README.md#choose-the-agents-and-limits)
 for model settings, login requirements, and time limits.
+
+Shannon starts these agents with its own settings, ignores your Codex
+configuration, and never asks you to approve an action. The project-level
+overall agent runs without a sandbox, with your user account's access to
+files, credentials, network and Git. Read [SECURITY.md](SECURITY.md) and run
+Shannon in a virtual machine, container or separate account.
 
 <a id="prove-a-security-theorem"></a>
 
@@ -215,7 +228,9 @@ and uses stricter checks that preserve the supplied problem.
 ## What counts as a proof?
 
 For an interleaved run, success requires a fresh EasyCrypt check of the
-complete target file and no remaining `admit.` in that file. The run's
+complete target file, with no `admit`, `admitted` or weakening
+`pragma Proofs` left in it, and no change to any other file or to the
+EasyCrypt toolchain during the run. The run's
 `manifest.json` records `status: "proved"` and
 `final_verification_passed: true`; `final_verification.json` contains the
 final checking result. A completed auxiliary lemma alone does not establish
@@ -236,8 +251,24 @@ This workflow covers Phase III for a lemma you have already stated.
 
 The standalone Codex prover defaults to `gpt-6-astra` with high reasoning
 effort, the same model that project-level proving uses for both outer and
-inner agents, as described above. Both workflows default to Codex; their
-model settings are separate.
+inner agents, as described above; the Claude command uses
+`claude-opus-4-8`. Both workflows default to Codex; their model settings are
+separate. The commands below take only a lemma name. To use another model,
+run the orchestrator command in the [Prove instructions](.agents/skills/prove/SKILL.md)
+yourself with a different `--prover-model`; for project-level runs, edit
+`workflow/interleaved/agent_profiles.json` and commit it.
+
+To watch a proof without preparing a file, run the bundled demo. It copies
+the supplied PIR example, removes the proof of `PIR_correct`, and asks Codex
+to prove it again. It runs on macOS and Linux and does not change your
+files:
+
+```bash
+uv run python -m eval_suite.run --suite eval_suite/suites/demo_pir.json
+```
+
+A single-lemma attempt stops after 30 minutes; small lemmas often finish in
+a few minutes.
 
 If you already know the decomposition, you can ask Shannon to prove
 one lemma. Put its EasyCrypt file and local dependencies under `projects/`,
@@ -252,17 +283,14 @@ qed.
 
 Run Codex from the repository and enter `$prove my_lemma`. In the Codex
 desktop app, type `/` and choose **Prove** from the skills list.
-It searches `projects/` first, then the bundled `eval/examples/`.
-For example, the supplied PIR lemma can be launched with:
-
-```text
-$prove PIR_correct
-```
+It searches `projects/` first, then the bundled `eval/examples/`. The
+bundled examples already contain complete proofs, so `$prove PIR_correct`
+only reports that the lemma is verified; use the demo above to watch one.
 
 Claude Code has the corresponding command:
 
 ```text
-/prove PIR_correct
+/prove my_lemma
 ```
 
 These commands prove a selected lemma; they do not start the interleaved

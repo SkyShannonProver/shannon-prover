@@ -881,6 +881,23 @@ def _build_chain_bundle(
     return dest
 
 
+def _ensure_bundle_root(root: Path) -> None:
+    """Create a missing bundle root that Git ignores.
+
+    Project-level runs refuse a checkout with untracked files, so a bundle
+    from a single-lemma run must not appear in `git status`. A root that
+    already exists (such as a checkout that tracks curated bundles) is left
+    as it is.
+    """
+    if root.exists():
+        return
+    root.mkdir(parents=True)
+    (root / ".gitignore").write_text(
+        "# Created by Shannon Prover: local run bundles are not versioned.\n*\n",
+        encoding="utf-8",
+    )
+
+
 def build_bundle(
     run_iter_dir: str | Path,
     *,
@@ -912,6 +929,7 @@ def build_bundle(
     run_iter_dir = Path(run_iter_dir)
     if not (run_iter_dir / "node_memory").is_dir():
         return None
+    _ensure_bundle_root(_REPO_ROOT / dest_root)
     if follow_resume:
         chain = _resolve_lineage(run_iter_dir)
         if len(chain) > 1:

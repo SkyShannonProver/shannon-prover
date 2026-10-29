@@ -58,7 +58,8 @@ managed Shannon proof node A              managed Shannon proof node B
                                 |
                                 v
 runner-owned whole-file verifier
-  final lemma exists + no admits in target + locked EasyCrypt replay
+  final lemma exists + no admit/admitted/weakening pragma in target
+  + locked EasyCrypt replay + checkout unchanged outside the target
   reference adapter additionally protects target statement and immutable regions
 ```
 

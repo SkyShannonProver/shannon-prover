@@ -65,7 +65,7 @@ The rewrite has three independent proof obligations:
 |---|---|---|
 | Value/evidence | L1 bundles identify real mechanical cost; one isolated Shannon delta repays its hidden and visible cost in matched micro and diverse full-route experiments. | Evidence inventory is substantial; efficacy remains feature-specific and continuously gated. |
 | Clean rewrite/removal | V2 is a fixed P1-P4 skeleton with isolated removable features, and the legacy compiler can be physically deleted without deleting the neutral managed-prover foundation. | **Complete at the source/runtime boundary.** The old parser/ProofIR/analyzer/panel/presentation, inspect/search, compatibility profile, and mixed runtime branches have been removed. Historical reports retain names only as provenance. |
-| Native reuse/contribution | EasyCrypt supplies every semantic result it already owns; Shannon adds only bounded search/commitment logic and harness delivery/economics, stated and measured separately. | Architecture-level ownership, M01-M25 decomposition, N1a/N1b, N1c typed-state endpoint, N1d native P1/P2 lowering, N1e proof-term descriptors, and N2b.1-N2b.3a SC1 application migrations are complete locally; the frozen remote N2b.3a trigger-parity gate remains. Historical N2a M05 validation is archived at `archive/2026-10-27/compiler-proactive`. |
+| Native reuse/contribution | EasyCrypt supplies every semantic result it already owns; Shannon adds only bounded search/commitment logic and harness delivery/economics, stated and measured separately. | Architecture-level ownership, M01-M25 decomposition, N1a/N1b, N1c typed-state endpoint, N1d native P1/P2 lowering, N1e proof-term descriptors, and N2b.1-N2b.3a SC1 application migrations are complete locally; the frozen remote N2b.3a trigger-parity gate remains. Historical N2a M05 validation is archived in the private repository. |
 
 Success in one pillar never substitutes for another. A locally helpful feature
 does not justify architectural coupling; a clean feature does not establish
@@ -593,8 +593,8 @@ delta whose production treatment has been separately authorized. It is not a
 general route-advisory trigger. The fact that only one registered candidate
 exists, or that EasyCrypt accepts it, does not prove route neutrality. This
 branch contains no proactive exception, SC2 producer, delivery rule, or
-profile. The frozen M05 research exception is archived at the private tag
-`archive/2026-10-27/compiler-proactive`.
+profile. The frozen M05 research exception is archived in the private
+repository.
 
 ### Strategy ownership boundary
 
@@ -625,7 +625,7 @@ agent may be SC1.
 Consequences for the current codebase:
 
 - keep M05 physically absent from `main`; its frozen implementation and
-  evidence harness are archived at `archive/2026-10-27/compiler-proactive`;
+  evidence harness are archived in the private repository;
 - remove or disable M07's state-only proactive producer/profile, while keeping
   its generic declaration parser, application signature, proof-slot binder,
   lowerer, and certifier only where an SC1 selected-operation or same-resource
@@ -936,8 +936,8 @@ it.
 
 The proactive `losslessness_certificate_application` package is absent from
 `main`; there is no alias or compatibility package. M05 remains here only as
-historical evidence-ledger provenance. Its executable slice is archived at
-`archive/2026-10-27/compiler-proactive`.
+historical evidence-ledger provenance. Its executable slice is archived in the
+private repository.
 The proactive `probability_theorem_application` package and profiles are
 removed. Its declaration/signature parsing, proof-slot binding, generic
 application lowering, and certification path remain shared infrastructure and
@@ -1878,7 +1878,7 @@ The experiment boundary follows the same rule. Shared
 `proof_state_compiler_one_step_trial.py` and
 `proof_state_compiler_one_step_model.py` own the packet, provider invocation,
 tool prohibition, JSONL decoding, and metrics. Proactive validation modules
-are archived at `archive/2026-10-27/compiler-proactive`; `main` has no feature-specific manager or
+are archived in the private repository; `main` has no feature-specific manager or
 renderer.
 
 ## 7. Evidence feature lifecycle
@@ -2222,8 +2222,8 @@ lowering, and exact preflight infrastructure remain because the
 commitment-relative `operation_binding_repair` feature consumes them.
 
 The frozen M05 implementation, experiment manifest, sentinel, fixture-specific
-tests, and optional-advisory delivery helper are archived at the private tag
-`archive/2026-10-27/compiler-proactive`, the last state of the former `compiler-proactive` branch.
+tests, and optional-advisory delivery helper are archived in the private
+repository at the last state of the former `compiler-proactive` branch.
 That branch was retired on 2026-10-27: M05 was its only feature, it stayed off
 in every profile, and failure-linked repair sufficed in every valid sampled
 positive run. The tag is not synchronized with `compiler`, so any future
@@ -2335,8 +2335,8 @@ never substitutes for full-route economics.
 The current implementation has completed the strategy-boundary migration:
 
 1. M05 `losslessness_certificate_application` is absent from `main`; its
-   frozen SC2 implementation and validation material are archived at
-   `archive/2026-10-27/compiler-proactive`.
+   frozen SC2 implementation and validation material are archived in the
+   private repository.
 2. The proactive M07 package, audit/treatment profiles, and active validation
    launchers are removed. Generic declaration parsing, application signatures,
    proof-slot binding, lowering, and certification remain shared.
@@ -2441,7 +2441,7 @@ The foundation is ready for managed experiments only when:
   not reactivate deleted production code;
 - recovery ownership conflict tests pass independently of feature order;
 - the historical M05 micro and managed evidence remain reproducible from the
-  private tag `archive/2026-10-27/compiler-proactive`; and
+  private repository's archive; and
 - L1 has no compiler service, while audit/treatment use the same feature
   compiler and certification set and differ in exposure only through the
   independently resolved delivery plan.

@@ -172,6 +172,12 @@ CURRENT_COMPILER_PROFILES = PRODUCTION_COMPILER_PROFILES
 CURRENT_TURN_PROFILES = PRODUCTION_TURN_PROFILES
 
 
+_RESEARCH_PACKAGE = "workflow.proof_state_compiler.research"
+_RESEARCH_REGISTRY_MODULE = (
+    f"{_RESEARCH_PACKAGE}.proof_state_compiler_research_profile_registry"
+)
+
+
 def _research_profile_registrations() -> Mapping[
     str, RuntimeProfileRegistration
 ]:
@@ -180,9 +186,9 @@ def _research_profile_registrations() -> Mapping[
             RESEARCH_PROFILE_REGISTRATIONS,
         )
     except ModuleNotFoundError as exc:
-        if exc.name != (
-            "workflow.proof_state_compiler.research.proof_state_compiler_research_profile_registry"
-        ):
+        # The public tree omits the whole research package, so the missing
+        # module may be the package itself. Anything else is a real error.
+        if exc.name not in {_RESEARCH_PACKAGE, _RESEARCH_REGISTRY_MODULE}:
             raise
         return MappingProxyType({})
 

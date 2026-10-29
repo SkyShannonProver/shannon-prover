@@ -42,8 +42,7 @@ mode choices through this skill.
    ```
 
    Replace `<LEMMA>` with the requested lemma name. If there is no match, search
-   the repository's checked-in examples so bundled demos such as `PIR_correct`
-   remain runnable:
+   the repository's checked-in examples:
 
    ```bash
    rg -l "(lemma|equiv|hoare)[[:space:]]+<LEMMA>" eval/examples \
@@ -54,6 +53,12 @@ mode choices through this skill.
    bundles, or historical reports. Inspect plausible matches before choosing.
    If multiple distinct declarations remain ambiguous, ask the user which
    target they intend.
+
+   The checked-in examples contain complete reference proofs, so a run on one
+   of them only reports that the lemma is already verified. Before launching,
+   tell the user so, and point out that the demo suite
+   `eval_suite/suites/demo_pir.json` (see the README) proves a proof-stripped
+   copy of `PIR_correct` without changing their files.
 
 3. Tell the user which file and lemma were resolved. The proof workflow may
    write a verified proof back into that target file; invoking `$prove` or
@@ -80,15 +85,18 @@ mode choices through this skill.
    ```
 
    For the Claude Code `/prove` wrapper, use the same command with
-   `--agent-backend claude` and omit the Codex `--prover-model` value so the
-   Claude runtime selects its own default. Do not add `--eval-mode`. Do not
-   accept a backend override from the invocation text. A live proof can take
-   tens of minutes; keep the user informed while it runs.
+   `--agent-backend claude` and omit `--prover-model`; Shannon then uses its
+   Claude default, `claude-opus-4-8`. Do not add `--eval-mode`. Do not
+   accept a backend or model override from the invocation text. A user who
+   wants another model runs the command above themselves with a different
+   `--prover-model`. A live proof can take tens of minutes; keep the user
+   informed while it runs.
 
 5. Report the canonical `ProverResult`, the target file, and the printed run
    directory. Count the proof as successful only when the terminal result is
-   `verified`, the committed proof contains no `admit.`, and fresh offline
-   EasyCrypt verification passed. Clearly distinguish an already-verified
+   `verified`, which requires that the committed proof contains no `admit` or
+   `admitted`, that the file has no weakening `pragma Proofs`, and that fresh
+   offline EasyCrypt verification passed. Clearly distinguish an already-verified
    target, timeout, infrastructure failure, unverified output, and verified
    proof success.
 

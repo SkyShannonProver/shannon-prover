@@ -22,6 +22,11 @@ import time
 from pathlib import Path
 from typing import Any, Optional
 
+from core.easycrypt.proof_text import (
+    easycrypt_code,
+    file_wide_unchecked_constructs,
+    unchecked_proof_constructs,
+)
 from workflow.schemas.config import ProverConfig, normalize_agent_backend
 from workflow.agents.ec_services import (
     _configure_run_ec_daemon_socket,
@@ -406,12 +411,15 @@ def _precheck_lemma(ec_path: Path, lemma_name: str, include_dir: str = "") -> st
         "has_admit"             — lemma has `admit.` (normal case, go prove)
         "proved_and_verified"   — lemma has a real proof and file verifies
         "has_proof_but_fails"   — lemma has a real proof but file doesn't verify
+        "unchecked_source"      — file weakens checking (`exit` or a pragma)
         "not_found"             — lemma not found in file
     """
     if not ec_path.exists():
         return "not_found"
 
     content = ec_path.read_text(encoding="utf-8")
+    if file_wide_unchecked_constructs(content):
+        return "unchecked_source"
 
     # Check if the lemma exists.
     # When multiple lemmas share the same name (e.g., inside/outside section),
@@ -422,6 +430,11 @@ def _precheck_lemma(ec_path: Path, lemma_name: str, include_dir: str = "") -> st
     all_matches = list(lemma_re.finditer(content))
     if not all_matches:
         return "not_found"
+    # A second declaration of the same name can follow an `abort` of the
+    # first, so the file can verify without proving the one requested. Runs
+    # reject duplicate names at startup; never certify such a file here.
+    if len(all_matches) > 1:
+        return "has_admit"
 
     def _match_needs_proving(m):
         after = content[m.end():m.end() + 500]
@@ -436,22 +449,26 @@ def _precheck_lemma(ec_path: Path, lemma_name: str, include_dir: str = "") -> st
     # Using index('.') is fragile (matches dots inside expressions like A).main()).
     # Instead, find the "proof." keyword explicitly.
     after_decl = content[decl_pos:]
-    proof_kw = re.search(r'\bproof\.', after_decl)
+    # Search the text as EasyCrypt reads it, so a commented-out `qed.` does
+    # not end the body early. Masking keeps positions.
+    code = easycrypt_code(after_decl)
+    proof_kw = re.search(r'\bproof\.', code)
     if not proof_kw:
         return "not_found"
     proof_body = after_decl[proof_kw.end():]
 
-    # Check if the proof body contains admit or is empty (before the qed)
-    qed_match = re.search(r'\bqed\.', proof_body)
-    if qed_match:
-        body_to_qed = proof_body[:qed_match.start()]
-        if re.search(r'\badmit\b', body_to_qed):
-            return "has_admit"
-        # Detect empty proofs: only whitespace/comments between proof. and qed.
-        stripped = re.sub(r'\(\*.*?\*\)', '', body_to_qed, flags=re.DOTALL)
-        if not stripped.strip():
-            return "has_admit"
-    elif re.search(r'\badmit\.', proof_body[:500]):
+    # Check if the proof body contains admit or is empty (before the qed).
+    # EasyCrypt accepts a proof left open at the end of the file, so a proof
+    # without qed still needs proving even when the file compiles.
+    qed_match = re.search(r'\bqed\.', code[proof_kw.end():])
+    if not qed_match:
+        return "has_admit"
+    body_to_qed = proof_body[:qed_match.start()]
+    if unchecked_proof_constructs(body_to_qed):
+        return "has_admit"
+    # Detect empty proofs: only whitespace/comments between proof. and qed.
+    stripped = re.sub(r'\(\*.*?\*\)', '', body_to_qed, flags=re.DOTALL)
+    if not stripped.strip():
         return "has_admit"
 
     # Has a real proof (no admit before qed) — verify the file
@@ -577,8 +594,28 @@ def run(
     ec_full_path = _PROJECT_ROOT / file_path
     precheck = _precheck_lemma(ec_full_path, lemma_name, include_dir=include_dir)
 
+    if precheck == "unchecked_source":
+        constructs = ", ".join(sorted(set(file_wide_unchecked_constructs(
+            ec_full_path.read_text(encoding="utf-8")
+        ))))
+        message = (
+            f"{file_path} weakens proof checking ({constructs}), so no proof "
+            f"of {lemma_name} in it can be verified. Remove it and retry."
+        )
+        pstatus("Prover", message, "\033[31m")
+        result = ProverResult(status=PROVER_RUN_INCOMPLETE, error=message)
+        result.save(run_dir / "prover_run_result.json")
+        return result
+
     if precheck == "proved_and_verified":
-        pstatus("Prover", f"{lemma_name} already has a verified proof. Skipping.", "\033[32m")
+        pstatus(
+            "Prover",
+            f"{lemma_name} already has a verified proof. Skipping. To try the "
+            "prover on it, replace its proof with `admit.` in a copy, or run "
+            "the demo suite eval_suite/suites/demo_pir.json, which proves a "
+            "proof-stripped copy.",
+            "\033[32m",
+        )
         result = ProverResult(
             status=PROVER_RUN_VERIFIED,
             skipped=True,

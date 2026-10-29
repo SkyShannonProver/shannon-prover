@@ -25,6 +25,7 @@ from core.easycrypt.eval_source_prep import (
     prepare_eval_source,
 )
 from core.easycrypt.ec_lifecycle import split_ec_commands
+from core.easycrypt.proof_text import unchecked_proof_constructs
 from workflow.interleaved.agent_config import (
     agent_profile_sha256,
     AgentProfile,
@@ -333,7 +334,7 @@ def _merge_verified_proof(
     )
     if isolated_projection != prepared_projection:
         raise ValueError("confined source drifted outside the delegated proof body")
-    if re.search(r"\badmit\b", proof_body, re.IGNORECASE):
+    if unchecked_proof_constructs(proof_body):
         raise ValueError("confined verified proof still contains admit")
     _, (body_start, body_end) = _proof_body_span(current, lemma)
     merged = current[:body_start] + proof_body + current[body_end:]
