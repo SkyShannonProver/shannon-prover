@@ -1,25 +1,22 @@
 """Argument-preserving real relation realization rows."""
 
-from core.easycrypt.proof_state_compiler.contracts import (
-    COMMITMENT_RELATIVE,
-    StrategyContract,
-)
 from core.easycrypt.proof_state_compiler.features.registry import (
     ExperimentGate,
     FeatureDefinition,
     FeatureSpec,
 )
-
-
-RELATION_BRIDGE_REALIZATION_FEATURE_ID = "relation_bridge_realization"
-RELATION_BRIDGE_REALIZATION_STRATEGY_CONTRACT = StrategyContract(
-    strategy_class=COMMITMENT_RELATIVE,
-    rationale=(
-        "the correction preserves the native-identified intermediate supplied "
-        "by the failed intent and changes only its certified realization"
-    ),
-    required_commitment="agent_supplied_relation_intermediate",
+from core.easycrypt.proof_state_compiler.features.failed_commit import (
+    attempt_diagnostic_producer,
+    failed_commit_gate,
 )
+from .ids import (
+    RELATION_BRIDGE_REALIZATION_FEATURE_ID,
+    RELATION_BRIDGE_REALIZATION_STRATEGY_CONTRACT,
+)
+from .analysis import analyze_relation_bridge_realization
+from .realization import RELATION_BRIDGE_CODECS
+from .surface_lowering import lower_relation_bridge_realization
+from .syntax import relation_bridge_intent_family
 
 
 def relation_bridge_realization_feature_spec() -> FeatureSpec:
@@ -66,14 +63,6 @@ def relation_bridge_realization_feature_spec() -> FeatureSpec:
     )
 
 def relation_bridge_realization_feature() -> FeatureDefinition:
-    from core.easycrypt.proof_state_compiler.features.failed_commit import (
-        attempt_diagnostic_producer,
-        failed_commit_gate,
-    )
-    from .analysis import analyze_relation_bridge_realization
-    from .realization import RELATION_BRIDGE_CODECS
-    from .surface_lowering import lower_relation_bridge_realization
-    from .syntax import relation_bridge_intent_family
 
     def relation_intent(tactic: str) -> bool:
         return relation_bridge_intent_family(tactic) is not None

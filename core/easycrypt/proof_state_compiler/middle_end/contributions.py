@@ -8,11 +8,8 @@ from typing import Protocol
 from core.easycrypt.proof_state_compiler.contracts.analyzed_state import (
     ApplicationCandidate,
     BindingResolution,
-    BoundaryContractAssessment,
     ProofCoordinate,
     ResourceAssessment,
-    ScopeAssessment,
-    TransformAssessment,
 )
 from core.easycrypt.proof_state_compiler.contracts.application_applicability import (
     ApplicationApplicability,
@@ -34,9 +31,6 @@ class AnalysisContribution:
     bindings: tuple[BindingResolution, ...] = ()
     applications: tuple[ApplicationCandidate, ...] = ()
     application_applicabilities: tuple[ApplicationApplicability, ...] = ()
-    scope: tuple[ScopeAssessment, ...] = ()
-    boundary_contracts: tuple[BoundaryContractAssessment, ...] = ()
-    transforms: tuple[TransformAssessment, ...] = ()
     diagnostics: tuple[StructuredDiagnostic, ...] = ()
     recovery_action_realizations: tuple[RecoveryActionRealization, ...] = ()
     recovery_claims: tuple[RecoveryClaim, ...] = ()

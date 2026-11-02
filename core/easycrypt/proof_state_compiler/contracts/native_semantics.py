@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-import hashlib
-import json
 import re
 from collections.abc import Callable
 from dataclasses import dataclass, field
@@ -19,6 +17,8 @@ from core.easycrypt.proof_state_compiler.contracts.state_ref import (
     ProvenanceRef,
     StateRef,
 )
+from core.easycrypt.proof_state_compiler.contracts.digest import json_sha256
+from core.easycrypt.proof_state_compiler.delimiters import balanced
 
 
 NATIVE_PROOF_TERM_ELABORATION = "proof_term_elaboration"
@@ -26,13 +26,6 @@ NATIVE_ATTEMPT_DIAGNOSTIC = "attempt_diagnostic"
 NATIVE_TACTIC_PREFIX_DIAGNOSTIC = "tactic_prefix_diagnostic"
 NATIVE_SELECTED_APPLICATION_BINDING_SET = "selected_application_binding_set"
 NATIVE_NAMESPACE_SPELLING_SET = "namespace_spelling_set"
-NATIVE_SEMANTIC_QUERY_KINDS = frozenset({
-    NATIVE_PROOF_TERM_ELABORATION,
-    NATIVE_ATTEMPT_DIAGNOSTIC,
-    NATIVE_TACTIC_PREFIX_DIAGNOSTIC,
-    NATIVE_SELECTED_APPLICATION_BINDING_SET,
-    NATIVE_NAMESPACE_SPELLING_SET,
-})
 NATIVE_PRODUCTION_READY = "ready"
 NATIVE_PRODUCTION_NOT_APPLICABLE = "not_applicable"
 NATIVE_PRODUCTION_ABSTAINED = "abstained"
@@ -564,19 +557,11 @@ def namespace_spelling_application_term(head: str, arguments: str) -> str:
 def valid_namespace_spelling_arguments(arguments: str) -> bool:
     """One stripped, single-line argument text with balanced delimiters."""
 
-    if arguments != arguments.strip() or any(
-        char in arguments for char in "\n\r;"
-    ):
-        return False
-    closers = {")": "(", "]": "[", "}": "{"}
-    stack: list[str] = []
-    for char in arguments:
-        if char in "([{":
-            stack.append(char)
-        elif char in closers:
-            if not stack or stack.pop() != closers[char]:
-                return False
-    return not stack
+    return bool(
+        arguments == arguments.strip()
+        and not any(char in arguments for char in "\n\r;")
+        and balanced(arguments)
+    )
 
 
 @dataclass(frozen=True)
@@ -1297,16 +1282,6 @@ NativeSemanticDescriptor = (
 )
 
 
-def _semantic_unit_sha256(payload: dict[str, object]) -> str:
-    encoded = json.dumps(
-        payload,
-        ensure_ascii=False,
-        separators=(",", ":"),
-        sort_keys=True,
-    ).encode("utf-8")
-    return hashlib.sha256(encoded).hexdigest()
-
-
 @dataclass(frozen=True)
 class NativeSemanticRequest:
     """One bounded semantic fact requested by an active P3 feature slice."""
@@ -1362,7 +1337,7 @@ class NativeSemanticRequest:
 
     @property
     def semantic_unit_sha256(self) -> str:
-        return _semantic_unit_sha256(self.semantic_payload())
+        return json_sha256(self.semantic_payload())
 
     def runtime_payload(self, *, request_id: str | None = None) -> dict[str, object]:
         return {
@@ -1385,13 +1360,7 @@ class NativeSemanticRequest:
 
     @property
     def identity_sha256(self) -> str:
-        encoded = json.dumps(
-            self.identity_payload(),
-            ensure_ascii=False,
-            separators=(",", ":"),
-            sort_keys=True,
-        ).encode("utf-8")
-        return hashlib.sha256(encoded).hexdigest()
+        return json_sha256(self.identity_payload())
 
 
 @dataclass(frozen=True)
@@ -1824,7 +1793,7 @@ class NativeSemanticObservation:
         must use this unit identity rather than equating the two IDs.
         """
 
-        return _semantic_unit_sha256({
+        return json_sha256({
             "state": self.state_ref.identity_payload(),
             "evaluation_prefix": list(self.evaluation_prefix),
             "query_kind": self.query_kind,

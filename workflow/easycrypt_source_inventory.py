@@ -9,57 +9,10 @@ launching independent prover runs.
 from __future__ import annotations
 
 import re
+from bisect import bisect_right
 
-
-def _mask_comments(content: str) -> str:
-    """Replace nested EasyCrypt comments with spaces while preserving offsets."""
-    masked = list(content)
-    depth = 0
-    i = 0
-    while i < len(content):
-        pair = content[i:i + 2]
-        if pair == "(*":
-            depth += 1
-            masked[i:i + 2] = "  "
-            i += 2
-            continue
-        if pair == "*)" and depth:
-            depth -= 1
-            masked[i:i + 2] = "  "
-            i += 2
-            continue
-        if depth and content[i] != "\n":
-            masked[i] = " "
-        i += 1
-    return "".join(masked)
-
-
-def _statement_end_dot(content: str, start: int) -> int:
-    """Find a declaration's terminating top-level dot."""
-    paren = 0
-    bracket = 0
-    brace = 0
-    i = start
-    while i < len(content):
-        char = content[i]
-        if char == "(":
-            paren += 1
-        elif char == ")" and paren > 0:
-            paren -= 1
-        elif char == "[":
-            bracket += 1
-        elif char == "]" and bracket > 0:
-            bracket -= 1
-        elif char == "{":
-            brace += 1
-        elif char == "}" and brace > 0:
-            brace -= 1
-        elif char == "." and paren == bracket == brace == 0:
-            following = content[i + 1:i + 2]
-            if not following or following.isspace():
-                return i + 1
-        i += 1
-    return len(content)
+from core.easycrypt.lemma_decls import target_declaration
+from core.easycrypt.proof_text import sentence_ends, strip_comments
 
 
 def extract_declarations(content: str) -> list[dict]:
@@ -70,7 +23,8 @@ def extract_declarations(content: str) -> list[dict]:
     agent-facing lemma index.
     """
     declarations: list[dict] = []
-    searchable = _mask_comments(content)
+    searchable = strip_comments(content)
+    ends = list(sentence_ends(content))
     declaration_re = re.compile(
         r"(?:local\s+)?(lemma|theorem|axiom|equiv)\s+(\w+)\b",
     )
@@ -78,7 +32,8 @@ def extract_declarations(content: str) -> list[dict]:
     for index, match in enumerate(matches):
         kind = match.group(1)
         name = match.group(2)
-        statement_end = _statement_end_dot(searchable, match.start())
+        position = bisect_right(ends, match.start())
+        statement_end = ends[position] if position < len(ends) else len(content)
         statement = content[match.start():statement_end].strip()
         if len(statement) > 400:
             statement = statement[:400] + "..."
@@ -113,25 +68,16 @@ def extract_declarations(content: str) -> list[dict]:
 
 
 def _proof_body(content: str, declaration_name: str) -> str:
-    """Return the proof body of a lemma or theorem when one is present."""
-    searchable = _mask_comments(content)
-    declaration_re = re.compile(
-        rf"(?:local\s+)?(?:lemma|theorem)\s+{re.escape(declaration_name)}\b",
-    )
-    declaration = declaration_re.search(searchable)
-    if not declaration:
+    """Return the tactics of the declaration's own proof, after `proof.` and
+    before the first `admit.` or `qed.`."""
+    declaration = target_declaration(content, declaration_name)
+    if declaration is None or declaration.proof is None:
         return ""
-
-    following = searchable[declaration.end():]
-    proof = re.search(r"\bproof\b", following[:500])
-    if not proof:
-        return ""
-    body_start = declaration.end() + proof.end()
-    remainder = searchable[body_start:]
-    end = re.search(r"\b(?:qed|admit)\s*\.", remainder)
-    if not end:
-        return content[body_start:body_start + 2000]
-    return content[body_start:body_start + end.start()]
+    proof = content[declaration.proof.start:declaration.proof.end]
+    searchable = strip_comments(proof)
+    opener = re.match(r"proof\s*\.", searchable)
+    end = re.search(r"\b(?:qed|admit)\s*\.", searchable)
+    return proof[opener.end() if opener else 0:end.start() if end else len(proof)]
 
 
 def detect_admit_dependencies(
@@ -149,7 +95,7 @@ def detect_admit_dependencies(
 
     result: dict[str, dict] = {}
     for name in admitted:
-        body = _mask_comments(_proof_body(content, name))
+        body = strip_comments(_proof_body(content, name))
         dependencies = [
             other
             for other in all_names

@@ -13,6 +13,9 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Literal, Sequence
 
+from core.easycrypt.lemma_decls import lemma_declarations, proof_tactics_span
+from core.easycrypt.proof_text import strip_comments
+
 
 PolicyDecision = Literal["allow", "warn", "node_fatal", "deny"]
 
@@ -1078,10 +1081,10 @@ def _target_source_answer_safety(
         text = path.read_text(encoding="utf-8", errors="replace")
     except OSError as exc:
         return "target_source_unreadable", f"{type(exc).__name__}: {exc}"
-    body = _target_lemma_proof_body(text, lemma)
-    if body is None:
+    span = _target_lemma_proof_span(text, lemma)
+    if span is None:
         return "unverified_target_source", f"lemma {lemma!r} not found in file"
-    scrubbed = _strip_ec_comments(body)
+    scrubbed = strip_comments(text)[span[0]:span[1]]
     normalized = re.sub(r"\s+", " ", scrubbed).strip()
     if not normalized:
         return "open_or_empty_target_proof", ""
@@ -1151,9 +1154,8 @@ def detect_target_proof_output_exposure(
                     sources[source] = (None, False)
                 else:
                     start, end = span
-                    body = text[start:end]
                     normalized = re.sub(
-                        r"\s+", " ", _strip_ec_comments(body)
+                        r"\s+", " ", strip_comments(text)[start:end]
                     ).strip()
                     substantive = bool(
                         normalized
@@ -1176,57 +1178,20 @@ def detect_target_proof_output_exposure(
     return None
 
 
-def _target_lemma_proof_body(text: str, lemma: str) -> str | None:
-    span = _target_lemma_proof_span(text, lemma)
-    return text[span[0]:span[1]] if span is not None else None
-
-
 def _target_lemma_proof_span(text: str, lemma: str) -> tuple[int, int] | None:
-    name = re.escape(lemma)
-    decl_re = re.compile(
-        rf"(?m)^\s*(?:local\s+)?(?:lemma|equiv|hoare|phoare)\s+{name}\b"
-    )
-    match = decl_re.search(text)
-    if not match:
+    """The tactics of the target's own proof, or ``None`` if it is not declared.
+
+    The first declaration of the name decides; one without a proof yields an
+    empty span at its name.
+    """
+    declarations = lemma_declarations(text, lemma)
+    if not declarations:
         return None
-    rest = text[match.end():]
-    next_decl = re.search(
-        r"(?m)^\s*(?:local\s+)?(?:lemma|equiv|hoare|phoare)\s+"
-        r"[A-Za-z_][A-Za-z0-9_']*\b",
-        rest,
-    )
-    region = rest[: next_decl.start()] if next_decl else rest
-    proof = re.search(r"\bproof\s*\.\s*", region)
-    if proof:
-        after_proof = region[proof.end():]
-        qed = re.search(r"\bqed\s*\.", after_proof)
-        start = match.end() + proof.end()
-        end = start + (qed.start() if qed else len(after_proof))
-        return start, end
-    bare_admit = re.search(r"\badmit\s*\.", region)
-    if bare_admit:
-        start = match.end() + bare_admit.start()
-        return start, match.end() + bare_admit.end()
-    return match.end(), match.end()
-
-
-def _strip_ec_comments(text: str) -> str:
-    out: list[str] = []
-    idx = 0
-    depth = 0
-    while idx < len(text):
-        if text.startswith("(*", idx):
-            depth += 1
-            idx += 2
-            continue
-        if depth and text.startswith("*)", idx):
-            depth -= 1
-            idx += 2
-            continue
-        if depth == 0:
-            out.append(text[idx])
-        idx += 1
-    return "".join(out)
+    declaration = declarations[0]
+    span = proof_tactics_span(text, declaration)
+    if span is None:
+        return declaration.name_end, declaration.name_end
+    return span
 
 
 def _path_is_relative_to(path: Path, parent: Path) -> bool:

@@ -36,6 +36,7 @@ from core.easycrypt.session.session_artifact_io import (
 )
 from core.easycrypt.session.session_events import record_authoritative_artifact_event
 from core.easycrypt.session.session_projection import read_proof_state_projection
+from core.easycrypt.toolchain import sha256_file
 
 
 NATIVE_STATE_SCHEMA_VERSION = 2
@@ -361,14 +362,10 @@ def read_bound_native_state_event(
 
 
 def _sha256_file(path: Path) -> str:
-    digest = hashlib.sha256()
     try:
-        with path.open("rb") as stream:
-            for chunk in iter(lambda: stream.read(1024 * 1024), b""):
-                digest.update(chunk)
+        return sha256_file(path)
     except OSError as exc:
         raise ValueError(f"native state input is unavailable: {path.name}") from exc
-    return digest.hexdigest()
 
 
 def _canonical_text(data: dict[str, Any]) -> str:

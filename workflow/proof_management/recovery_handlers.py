@@ -7,7 +7,7 @@ from __future__ import annotations
 
 from collections.abc import Callable
 from dataclasses import dataclass, field
-from typing import Any, Literal
+from typing import TYPE_CHECKING, Any, Literal
 
 from core.easycrypt.session.session_placeholders import requires_placeholder_instantiation
 from core.easycrypt.value_shapes import as_list as _list
@@ -17,12 +17,16 @@ from .checkpoint_surface import (
     semantic_checkpoint_overrides,
 )
 from .checkpoint_store import ProofCheckpointManager
+from .node_state import NodeTurnState
 from .protocol_repair import AgentIntent
 from .checkpoint_surface import history_hash
 from .turn_view import intent_payload_surface
 
+if TYPE_CHECKING:
+    from .repl_session import ReplSessionManager
 
-RecoveryPlanKind = Literal["menu", "repl_call", "nonmutating"]
+
+RecoveryPlanKind = Literal["menu", "repl_call"]
 
 
 @dataclass(frozen=True)
@@ -32,7 +36,6 @@ class RecoveryTurnPlan:
     label: str = ""
     audit_kind: str = ""
     call: Callable[[], tuple[Any, list[dict[str, Any]]]] | None = None
-    actions: list[Any] = field(default_factory=list)
     audit_extra: dict[str, Any] = field(default_factory=dict)
 
 
@@ -43,28 +46,18 @@ class ProofRecoveryIntentHandler:
         self,
         *,
         node_id: str,
+        state: NodeTurnState,
         checkpoints: ProofCheckpointManager,
-        repl: Any,
-        committed_tactics: Callable[[], list[str]],
-        replay_prefix_count: Callable[[], int],
-        clear_replay_prefix: Callable[[], None],
-        resumed_lineage: Callable[[], bool],
+        repl: "ReplSessionManager",
     ) -> None:
         self.node_id = node_id
+        self.state = state
         self.checkpoints = checkpoints
         self.repl = repl
-        self._committed_tactics = committed_tactics
-        self._replay_prefix_count = replay_prefix_count
-        # Durable "node was resumed from an inherited prefix" predicate. The
-        # transient ``replay_prefix_count`` is cleared by a rewind that crosses
-        # the resume floor, so a guard that keys only off the count silently
-        # lets a resumed node back into amend_and_replay after such a rewind.
-        self._resumed_lineage = resumed_lineage
-        self._clear_replay_prefix = clear_replay_prefix
 
     def handle_fresh_restart(self, intent: AgentIntent) -> RecoveryTurnPlan:
         if intent.payload.get("confirm") is not True:
-            tactics = self._committed_tactics()
+            tactics = self.repl.committed_history()
             if self.checkpoints.structural_recovery_available(tactics):
                 return self._fresh_restart_structural_recovery_plan(
                     intent,
@@ -73,7 +66,7 @@ class ProofRecoveryIntentHandler:
             return self._fresh_restart_confirmation_plan(intent)
 
         confirmation_id = intent.payload.get("confirmation_id", "")
-        if self._replay_prefix_count() > 0:
+        if self.state.replay_prefix_count > 0:
             return self._fresh_restart_confirmation_plan(
                 intent,
                 notice=(
@@ -91,7 +84,7 @@ class ProofRecoveryIntentHandler:
 
         def restart_and_clear_resume_prefix() -> tuple[Any, list[dict[str, Any]]]:
             snapshot, actions = self.repl.fresh_restart()
-            self._clear_replay_prefix()
+            self.state.clear_replay_prefix()
             return snapshot, actions
 
         return RecoveryTurnPlan(
@@ -114,7 +107,7 @@ class ProofRecoveryIntentHandler:
         session at the divergence point. A pre-edit restore anchor is saved so the
         agent can back out via `undo_to_checkpoint` with the returned restore id.
         """
-        tactics = self._committed_tactics()
+        tactics = self.repl.committed_history()
         if self._is_resumed_node():
             return self.amend_selection_plan(
                 intent,
@@ -191,7 +184,7 @@ class ProofRecoveryIntentHandler:
         include_items: bool = True,
     ) -> RecoveryTurnPlan:
         """Return the typed step-selection menu for Amend & replay."""
-        tactics = self._committed_tactics()
+        tactics = self.repl.committed_history()
         items: list[dict[str, Any]] = []
         if include_items:
             for index, tactic in enumerate(tactics, start=1):
@@ -239,7 +232,7 @@ class ProofRecoveryIntentHandler:
         crosses the resume floor clears it, which would otherwise re-enable
         amend_and_replay on a resumed node (CBC_upto Tree-0.0.r2, 2026-06-25).
         """
-        return bool(self._resumed_lineage())
+        return self.state.resumed_from_prefix
 
     def handle_undo_to_checkpoint(self, intent: AgentIntent) -> RecoveryTurnPlan:
         restore_id = intent.payload.get("restore_id", "")
@@ -249,7 +242,7 @@ class ProofRecoveryIntentHandler:
         if not checkpoint_id:
             return self.checkpoint_selection_plan(intent)
 
-        tactics = self._committed_tactics()
+        tactics = self.repl.committed_history()
         parsed = self.checkpoints.parse_checkpoint_id(checkpoint_id)
         digest = history_hash(tactics)
         if parsed is None or parsed[0] < 1 or parsed[0] > len(tactics):
@@ -329,7 +322,7 @@ class ProofRecoveryIntentHandler:
         # We only keep an INTERNAL audit note (audit_extra is debug, never shown
         # to the agent). The rewind mechanism itself (rewind_before_tactic) was
         # never prefix-gated — it simply replays a shorter prefix.
-        replay_count = self._replay_prefix_count()
+        replay_count = self.state.replay_prefix_count
         rewind_enters_replayed_prefix = bool(
             replay_count > 0 and tactic_index <= replay_count
         )
@@ -345,7 +338,7 @@ class ProofRecoveryIntentHandler:
         def rewind_and_clear_prefix() -> tuple[Any, list[dict[str, Any]]]:
             result = self.repl.rewind_before_tactic(tactic_index)
             if rewind_enters_replayed_prefix:
-                self._clear_replay_prefix()
+                self.state.clear_replay_prefix()
             return result
 
         return RecoveryTurnPlan(
@@ -364,10 +357,10 @@ class ProofRecoveryIntentHandler:
         *,
         notice: str = "",
     ) -> RecoveryTurnPlan:
-        tactics = self._committed_tactics()
+        tactics = self.repl.committed_history()
         checkpoint_options = self.checkpoints.menu_options(
             tactics,
-            replay_prefix_count=self._replay_prefix_count(),
+            replay_prefix_count=self.state.replay_prefix_count,
         )
         restore_option = self.checkpoints.pre_rewind_restore_option()
         checkpoint_index = self.checkpoints.build_index(
@@ -396,7 +389,7 @@ class ProofRecoveryIntentHandler:
             intent=intent.intent,
             tactics=tactics,
             state_version=self.repl.state_version,
-            replay_prefix_count=self._replay_prefix_count(),
+            replay_prefix_count=self.state.replay_prefix_count,
         )
         return RecoveryTurnPlan(
             kind="menu",
@@ -413,9 +406,9 @@ class ProofRecoveryIntentHandler:
     ) -> RecoveryTurnPlan:
         observation = self.checkpoints.fresh_restart_confirmation_observation(
             intent=intent.intent,
-            tactics=self._committed_tactics(),
+            tactics=self.repl.committed_history(),
             state_version=self.repl.state_version,
-            replay_prefix_count=self._replay_prefix_count(),
+            replay_prefix_count=self.state.replay_prefix_count,
             notice=notice,
         )
         return RecoveryTurnPlan(
@@ -495,7 +488,7 @@ class ProofRecoveryIntentHandler:
             tactic_index,
             override=semantic_checkpoint_overrides(
                 tactics,
-                replay_prefix_count=self._replay_prefix_count(),
+                replay_prefix_count=self.state.replay_prefix_count,
             ).get(tactic_index),
         )
         option["submit"] = {

@@ -8,13 +8,13 @@ _IMPORT_ROOT = Path(__file__).resolve().parents[2]
 if str(_IMPORT_ROOT) not in sys.path:
     sys.path.insert(0, str(_IMPORT_ROOT))
 
-from experiments.interleaved_shannon._compat import bind_reference_project
+from experiments.interleaved_shannon._compat import reference_context
+from workflow.interleaved import runner
 
-bind_reference_project()
 
-from workflow.interleaved import runner as _implementation
+def main(argv: list[str] | None = None) -> int:
+    return runner.main(argv, context=reference_context())
+
 
 if __name__ == "__main__":
-    raise SystemExit(_implementation.main())
-
-sys.modules[__name__] = _implementation
+    raise SystemExit(main())

@@ -9,9 +9,6 @@ and imports no feature package.
 
 from __future__ import annotations
 
-import hashlib
-import json
-
 from core.easycrypt.proof_state_compiler.contracts import (
     ApplicationCandidate,
     ApplicationSignature,
@@ -24,6 +21,10 @@ from core.easycrypt.proof_state_compiler.contracts import (
     ProofResource,
     ResourceAssessment,
     SlotResolution,
+)
+from core.easycrypt.proof_state_compiler.contracts.digest import (
+    canonical_json,
+    text_sha256,
 )
 from core.easycrypt.proof_state_compiler.middle_end.contributions import (
     AnalysisContribution,
@@ -107,25 +108,18 @@ def native_application_descriptor_contribution(
         evidence_refs=evidence,
     )
     target = descriptor.result.procedure or descriptor.result.text
-    descriptor_material = json.dumps(
-        descriptor.to_payload(),
-        ensure_ascii=False,
-        separators=(",", ":"),
-        sort_keys=True,
-    )
-    material = hashlib.sha256(
-        (
-            resource.resource_id
-            + "\0"
-            + target
-            + "\0"
-            + operation
-            + "\0"
-            + application_term
-            + "\0"
-            + descriptor_material
-        ).encode("utf-8")
-    ).hexdigest()[:20]
+    descriptor_material = canonical_json(descriptor.to_payload())
+    material = text_sha256(
+        resource.resource_id
+        + "\0"
+        + target
+        + "\0"
+        + operation
+        + "\0"
+        + application_term
+        + "\0"
+        + descriptor_material
+    )[:20]
     binding = BindingResolution(
         binding_id=f"{identity_namespace}-binding:{material}",
         producer_id=producer_id,

@@ -31,16 +31,15 @@ from core.easycrypt.proof_text import (
     unchecked_proof_constructs,
 )
 from workflow.interleaved.project import InterleavedProject
-from workflow.interleaved.runtime import load_runtime_settings
+from workflow.interleaved.runtime import ProjectContext
 
 
-ROOT = _IMPORT_ROOT
 IMPORT_SCOPE = "target_lemma_under_declared_dependencies"
 
 
-def import_verification_environment() -> dict[str, str]:
-    """Keep current project binding; the child owns native toolchain selection."""
-    environment = os.environ.copy()
+def import_verification_environment(ctx: ProjectContext) -> dict[str, str]:
+    """Bind the child to this project; it owns native toolchain selection."""
+    environment = ctx.child_environment(os.environ)
     # A cached native environment must not replace the current project binding.
     # Suppress status injection: collect already holds the registry lock.
     environment.pop("INTERLEAVED_RUN_DIR", None)
@@ -106,20 +105,20 @@ def verify_lemma_import(
 
 
 def check_import_with_project_verifier(
-    *, root: Path, project: InterleavedProject, candidate: Path,
-    lemma: str, output: Path,
+    ctx: ProjectContext, *, candidate: Path, lemma: str, output: Path,
 ) -> dict[str, Any]:
     """Call the configured verifier; unsupported import mode fails closed.
 
     Consume only this process's JSON response, never a prior output artifact.
     A custom verifier must explicitly implement the scoped import contract.
     """
+    root = ctx.root
     try:
         checked = subprocess.run(
-            [sys.executable, str(root / (project.verifier or "workflow/interleaved/verify.py")),
+            [sys.executable, str(root / ctx.verifier),
              "--check-import", "--candidate", str(candidate.relative_to(root)),
              "--lemma", lemma, "--output", str(output.relative_to(root))],
-            cwd=root, env=import_verification_environment(), text=True,
+            cwd=root, env=import_verification_environment(ctx), text=True,
             stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=660, check=False,
         )
         try:
@@ -165,10 +164,13 @@ def _easycrypt_command(executable: Path, project: InterleavedProject) -> list[st
     return command
 
 
-def verify(mode: str, *, candidate: Path | None = None, lemma: str | None = None) -> tuple[int, dict[str, Any]]:
-    project = load_runtime_settings().project
+def verify(
+    ctx: ProjectContext, mode: str, *,
+    candidate: Path | None = None, lemma: str | None = None,
+) -> tuple[int, dict[str, Any]]:
+    project = ctx.project
     errors: list[str] = []
-    target = ROOT / project.target_file
+    target = ctx.target
     source_path = candidate if mode == "import" else target
     if mode == "import" and (candidate is None or not lemma):
         raise ValueError("import verification requires candidate and lemma")
@@ -186,7 +188,7 @@ def verify(mode: str, *, candidate: Path | None = None, lemma: str | None = None
 
     bootstrap = subprocess.run(
         [sys.executable, "tools/bootstrap_easycrypt.py", "--verify-only"],
-        cwd=ROOT,
+        cwd=ctx.root,
         text=True,
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
@@ -199,7 +201,7 @@ def verify(mode: str, *, candidate: Path | None = None, lemma: str | None = None
     elif mode == "import":
         if not errors:
             payload = verify_lemma_import(
-                root=ROOT, candidate=candidate, lemma=lemma, target=target,
+                root=ctx.root, candidate=candidate, lemma=lemma, target=target,
                 include_dirs=project.include_dirs, check_dir=candidate.parent / "collect_check",
             )
             payload.update(mode=mode, project_identity_sha256=project.identity_sha256)
@@ -217,7 +219,7 @@ def verify(mode: str, *, candidate: Path | None = None, lemma: str | None = None
             discard_sibling_eco(target)
             replay = subprocess.run(
                 command,
-                cwd=ROOT,
+                cwd=ctx.root,
                 env=environment,
                 text=True,
                 stdout=subprocess.PIPE,
@@ -246,7 +248,12 @@ def verify(mode: str, *, candidate: Path | None = None, lemma: str | None = None
     return (0 if not errors else 1), payload
 
 
-def main() -> int:
+def main(
+    argv: list[str] | None = None,
+    *,
+    context: ProjectContext | None = None,
+) -> int:
+    ctx = context or ProjectContext.from_environment()
     parser = argparse.ArgumentParser()
     modes = parser.add_mutually_exclusive_group(required=True)
     modes.add_argument("--preflight", action="store_true")
@@ -256,13 +263,13 @@ def main() -> int:
     parser.add_argument("--candidate")
     parser.add_argument("--lemma")
     parser.add_argument("--output")
-    args = parser.parse_args()
+    args = parser.parse_args(argv)
     mode = "import" if args.check_import else "final" if args.final else "check" if args.check else "preflight"
     if bool(args.check_import) != bool(args.candidate and args.lemma) or (not args.check_import and (args.candidate or args.lemma)):
         parser.error("--candidate and --lemma are required only with --check-import")
     try:
-        candidate = candidate_path(ROOT, args.candidate) if args.check_import else None
-        code, payload = verify(mode, candidate=candidate, lemma=args.lemma)
+        candidate = candidate_path(ctx.root, args.candidate) if args.check_import else None
+        code, payload = verify(ctx, mode, candidate=candidate, lemma=args.lemma)
     except ValueError as exc:
         parser.error(str(exc))
     rendered = json.dumps(payload, indent=2, sort_keys=True)
@@ -270,7 +277,7 @@ def main() -> int:
         output = Path(args.output)
         if output.is_absolute() or ".." in output.parts:
             parser.error("--output must be repository-relative")
-        _write(ROOT / output, payload)
+        _write(ctx.root / output, payload)
     print(rendered)
     return code
 

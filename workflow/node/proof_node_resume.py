@@ -30,6 +30,7 @@ from core.easycrypt.committed_history import (
     read_committed_transactions,
 )
 from core.easycrypt.proof_lifecycle import has_discharged_goals
+from core.easycrypt.proof_text import split_ec_commands
 from workflow.proof_management.common import node_memory_slug
 from workflow.proof_management.checkpoint_store import (
     normalize_checkpoint_state_payload,
@@ -178,12 +179,7 @@ def _history_commands(history_file: Path) -> list[str]:
     text = _read_text(history_file)
     if not text:
         return []
-    try:
-        from core.easycrypt.ec_daemon import _split_ec_commands
-
-        return [item.strip() for item in _split_ec_commands(text) if item.strip()]
-    except Exception:
-        return [line.strip() for line in text.splitlines() if line.strip()]
+    return [item.strip() for item in split_ec_commands(text) if item.strip()]
 
 
 def _git_commit(cwd: Path) -> str:

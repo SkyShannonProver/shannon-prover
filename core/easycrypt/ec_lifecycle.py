@@ -18,102 +18,26 @@ from __future__ import annotations
 
 import logging
 import os
-import re
 import select
 import subprocess
 import time
 from dataclasses import dataclass
 from typing import Callable, Optional
 
+from core.easycrypt.ec_prompt import PROMPT_BYTES_RE
 from core.easycrypt.ec_proc import spawn_emacs_pipe
-from core.easycrypt.lemma_decls import mask_comments
+from core.easycrypt.proof_text import split_ec_commands, strip_comments
 
 logger = logging.getLogger("ec_lifecycle")
 
-# The ``-emacs`` prompt is ``[<step>|<mode>]>``; it appears at end-of-line and
-# marks the end of EC's output for one command. Canonical definition —
-# ``ec_daemon`` imports it from here.
-PROMPT_RE = re.compile(rb"\[\d+\|[a-zA-Z]+\]>")
+class ECProtocolDesync(RuntimeError):
+    """The EC pipe can no longer pair a command with its own reply.
 
-
-def split_ec_commands(text: str) -> list[str]:
-    """Split EC source text into a list of complete statements.
-
-    An EC statement ends at a ``.`` that's at end-of-line, outside of
-    a string literal and outside block comments. This matches what
-    EC's toplevel treats as one command in ``-emacs`` mode.
-
-    The splitter is intentionally conservative: unusual constructs
-    (strings with dots, nested comments) are handled by tracking the
-    paren-brace-bracket depth and comment nesting. Blank lines and
-    comment-only lines are included with the next command so offsets
-    stay consistent.
+    Raised for every use of a process after a read timed out, the process
+    closed its output or exited, a write failed, or a reply was left unread.
+    The late or extra prompt is still in the pipe, so the next read would
+    return the previous command's reply. The only recovery is a new process.
     """
-    out: list[str] = []
-    cur: list[str] = []
-    in_block_comment = 0  # depth of (* ... *)
-    in_string = False
-    i = 0
-    n = len(text)
-    while i < n:
-        ch = text[i]
-        nxt = text[i + 1] if i + 1 < n else ""
-        cur.append(ch)
-        # Handle line comment "(* *)"-style only. EC has no // line comments,
-        # but we can still flag newline ending.
-        if in_block_comment > 0:
-            if ch == '(' and nxt == '*':
-                in_block_comment += 1
-                cur.append(nxt)
-                i += 2
-                continue
-            if ch == '*' and nxt == ')':
-                in_block_comment -= 1
-                cur.append(nxt)
-                i += 2
-                continue
-            i += 1
-            continue
-        if in_string:
-            if ch == '"' and (i == 0 or text[i - 1] != "\\"):
-                in_string = False
-            i += 1
-            continue
-        if ch == '(' and nxt == '*':
-            in_block_comment = 1
-            cur.append(nxt)
-            i += 2
-            continue
-        if ch == '"':
-            in_string = True
-            i += 1
-            continue
-        if ch == '.':
-            # Is this end-of-statement? It is iff followed by whitespace
-            # or EOF — not a qualifier like ``M.proc`` where the next char
-            # is alphanumeric.
-            if not nxt or nxt in " \t\n\r":
-                # Flush current buffer as one statement (include the dot
-                # and trailing newline if present).
-                # Gobble following whitespace up to but not including the
-                # next non-whitespace char.
-                j = i + 1
-                while j < n and text[j] in " \t":
-                    cur.append(text[j])
-                    j += 1
-                # Include a single trailing newline if present.
-                if j < n and text[j] == "\n":
-                    cur.append("\n")
-                    j += 1
-                out.append("".join(cur))
-                cur = []
-                i = j
-                continue
-        i += 1
-    tail = "".join(cur).strip()
-    if tail:
-        out.append(tail)
-    return out
 
 
 @dataclass
@@ -133,7 +57,11 @@ class ECSessionLifecycle:
     SIGTERM->SIGKILL wait budget) plus ``_resolve_env`` (how to obtain the spawn
     environment). The reader preserves ``self._buffer`` across reads — correct
     for the persistent process and equivalent for ephemerals (which read exactly
-    one prompt per send, so no bytes are ever left buffered)."""
+    one prompt per send, so no bytes are ever left buffered).
+
+    Any failed read or write leaves the process desynchronized: it refuses
+    further I/O with ``ECProtocolDesync`` until it is respawned, and the owner
+    must replace it (``desynchronized`` reports this)."""
 
     _label = "EC"
     _drain_timeout = 30.0
@@ -146,7 +74,7 @@ class ECSessionLifecycle:
         self._env = env
         self.proc: Optional[subprocess.Popen] = None
         self._buffer = b""
-        self._last_prompt_text = ""
+        self._desync: Optional[str] = None
 
     # -- spawn environment -----------------------------------------------------
     def _resolve_env(self):
@@ -162,26 +90,64 @@ class ECSessionLifecycle:
         startup banner up to the first prompt. ``why3_socket`` is passed through
         unchanged — never re-defaulted — so concurrent arms never share a socket.
         """
+        self._buffer = b""
+        self._desync = None
         self.proc = spawn_emacs_pipe(
             self.include_dirs, self.why3_socket, env=self._resolve_env(),
         )
         self._read_until_prompt(timeout=self._drain_timeout)
 
+    # -- synchronization --------------------------------------------------------
+    @property
+    def desynchronized(self) -> bool:
+        return self._desync is not None
+
+    def _mark_desynchronized(self, reason: str) -> None:
+        if self._desync is None:
+            self._desync = reason
+            logger.warning("%s pipe desynchronized: %s", self._label, reason)
+
+    def _require_synchronized(self) -> None:
+        if self._desync is not None:
+            raise ECProtocolDesync(
+                f"{self._label} pipe is out of step with its commands "
+                f"({self._desync}); the process must be replaced"
+            )
+
+    def interrupt(self) -> None:
+        """Kill the EC process but keep the handle, so a reader blocked on the
+        pipe in another thread sees end-of-file and returns; the owner still
+        tears the process down."""
+        proc = self.proc
+        if proc is not None and proc.poll() is None:
+            try:
+                proc.kill()
+            except OSError:
+                pass
+
     # -- I/O primitives ---------------------------------------------------------
     def _read_until_prompt(self, timeout: float = _RESPONSE_TIMEOUT_DEFAULT) -> bytes:
         """Read stdout until a ``[N|mode]>`` prompt; return the block since the
         previous prompt. Buffer-preserving: any bytes past the prompt stay in
-        ``self._buffer`` for the next read."""
+        ``self._buffer`` for the next read. A failed read desynchronizes the
+        process: the reply it missed may still arrive."""
+        self._require_synchronized()
+        try:
+            return self._read_prompt_block(timeout)
+        except BaseException as exc:
+            self._mark_desynchronized(f"read failed: {type(exc).__name__}: {exc}")
+            raise
+
+    def _read_prompt_block(self, timeout: float) -> bytes:
         assert self.proc is not None and self.proc.stdout is not None
         deadline = time.monotonic() + timeout
         out = bytearray()
         fileno = self.proc.stdout.fileno()
         while True:
-            m = PROMPT_RE.search(self._buffer)
+            m = PROMPT_BYTES_RE.search(self._buffer)
             if m:
                 out.extend(self._buffer[: m.end()])
                 self._buffer = self._buffer[m.end():]
-                self._last_prompt_text = out[-80:].decode("utf-8", errors="replace")
                 return bytes(out)
             remaining = deadline - time.monotonic()
             if remaining <= 0:
@@ -206,31 +172,60 @@ class ECSessionLifecycle:
                 )
             self._buffer += chunk
 
+    def _collect_ready_output(self) -> None:
+        """Buffer output that has already arrived, without waiting."""
+        if self.proc is None or self.proc.stdout is None:
+            return
+        fileno = self.proc.stdout.fileno()
+        while select.select([fileno], [], [], 0)[0]:
+            chunk = os.read(fileno, 8192)
+            if not chunk:
+                return
+            self._buffer += chunk
+
     def _send(self, line: str) -> None:
-        """Write a command line to EC (newline-terminated)."""
+        """Write a command line to EC (newline-terminated).
+
+        A prompt that has arrived by now answers no pending command, so the
+        reply to this one would be read as the previous one's."""
+        self._require_synchronized()
+        self._collect_ready_output()
+        if PROMPT_BYTES_RE.search(self._buffer):
+            self._mark_desynchronized(
+                f"unread reply before send: {self._buffer[-200:]!r}"
+            )
+        self._require_synchronized()
         assert self.proc is not None and self.proc.stdin is not None
         if not line.endswith("\n"):
             line += "\n"
         try:
             self.proc.stdin.write(line.encode("utf-8"))
             self.proc.stdin.flush()
-        except BrokenPipeError as e:
-            raise RuntimeError(f"{self._label} subprocess stdin broken: {e}") from e
+        except BaseException as e:
+            self._mark_desynchronized(f"write failed: {type(e).__name__}: {e}")
+            if isinstance(e, BrokenPipeError):
+                raise RuntimeError(f"{self._label} subprocess stdin broken: {e}") from e
+            raise
 
     def send_and_drain(self, text: str, *, timeout: float,
-                       is_error: Callable[[str], object]) -> str:
+                       is_error: Callable[[str], object],
+                       whole_transaction: bool = False) -> str:
         """Drain every native sentence in one logical transaction.
 
         Stop at the first native rejection and return that response; otherwise
         return the final sentence's response (the current goal, not an earlier
         intermediate goal). The caller owns rollback of a partially run block.
+        ``timeout`` bounds each sentence, or with ``whole_transaction`` the
+        transaction as a whole.
         """
+        deadline = time.monotonic() + timeout if whole_transaction else None
         raw = ""
         for command in split_ec_commands(text):
-            if not mask_comments(command).strip():
+            if not strip_comments(command).strip():
                 continue  # A comment-only tail produces no native response.
             self._send(command)
-            raw = self._read_until_prompt(timeout=timeout).decode("utf-8", errors="replace")
+            wait = timeout if deadline is None else max(0.0, deadline - time.monotonic())
+            raw = self._read_until_prompt(timeout=wait).decode("utf-8", errors="replace")
             if is_error(raw):
                 break
         if not raw:

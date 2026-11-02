@@ -82,8 +82,6 @@ def route_family_score_adjustment(route_family: RouteFamilyEvidence) -> tuple[fl
         return 2.0, "route_family=top_level_seq_route"
     if family == "call_boundary_route":
         return 1.0, "route_family=call_boundary_route"
-    if family == "pure_tail_repair":
-        return 0.5, "route_family=pure_tail_repair"
     if family == "procedure_local_route":
         return -0.5, "route_family=procedure_local_route"
     return 0.0, ""

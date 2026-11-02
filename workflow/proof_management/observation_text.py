@@ -31,8 +31,6 @@ def _read_only_result_text(label: str, status: str) -> str:
         )
     if label == "managed_goal_view":
         return "The manager produced the authoritative current goal envelope."
-    if label == "episode_view":
-        return "The manager produced the authoritative session timeline."
     return "The manager completed the read-only backend operation."
 
 

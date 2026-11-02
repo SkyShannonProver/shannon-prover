@@ -37,7 +37,18 @@ python3 core/easycrypt/session_cli.py -d SESSION \
 
 python3 core/easycrypt/session_cli.py -d SESSION \
   -tactic-exec undo
+
+python3 core/easycrypt/session_cli.py -d SESSION \
+  -tactic-exec undo --keep-commands N
 ```
+
+`undo` takes back the latest transaction; the daemon does it with EasyCrypt's
+`undo <level>.` and a fresh batch replay is used only when it cannot.
+`--keep-commands N` rewinds to the first `N` committed commands with one daemon
+`undo`, and changes nothing (`tactic.undone` status `unavailable`) when that is
+not possible: `N` inside a transaction, a `pragma` in the journal, a target
+state without an open goal, or no daemon session in step with the journal.
+The manager then restarts and replays.
 
 `ReplSessionManager` is the only production caller authorized to start, mutate,
 undo, restart, or replay a managed session. Direct commands are for bounded

@@ -1,15 +1,14 @@
-"""Load .env from the project root into os.environ (no extra dependencies).
+"""The single source of truth for parsing boolean environment knobs.
 
-Also the single source of truth for parsing boolean environment knobs.
 :func:`env_bool` gives one vocabulary and a strict mode that fails loudly on
-unrecognized values.
+unrecognized values; :func:`warn_unknown_shannon_env` flags misspelled
+``SHANNON_*`` knob names.
 """
 
 from __future__ import annotations
 
 import logging
 import os
-from pathlib import Path
 
 logger = logging.getLogger("core.env_loader")
 
@@ -31,7 +30,7 @@ KNOWN_ENV_FLAGS = frozenset({
     "SHANNON_EASYCRYPT_SOURCE_MANIFEST",
     "SHANNON_EVAL_CONFINEMENT_MANIFEST", "SHANNON_EVAL_CONFINEMENT_REQUIRED",
     "SHANNON_FINISH_WITH_ADMIT_ALLOW_AFTER", "SHANNON_GIVE_UP_ALLOW_AFTER",
-    "SHANNON_GIVE_UP_WINDOW_S",
+    "SHANNON_GIVE_UP_WINDOW_S", "SHANNON_MANAGER_STALL_WATCHDOG",
     "SHANNON_MCP_DEBUG_LOG", "SHANNON_MCP_READY_TIMEOUT_S",
     "SHANNON_MCP_SPAWN_RETRIES", "SHANNON_NODE_DEADLINE_EPOCH",
     "SHANNON_PANEL_INVARIANTS", "SHANNON_RECENT_REASONING_K",
@@ -92,24 +91,3 @@ def warn_unknown_shannon_env() -> list[str]:
             "core.env_loader.KNOWN_ENV_FLAGS.", name,
         )
     return unknown
-
-
-def load_env(env_path: Path | None = None) -> None:
-    """Read a .env file and set os.environ for keys that are not already set.
-
-    Lines are stripped. Empty lines and lines starting with # are skipped.
-    Format: KEY=VALUE (first '=' separates key from value; value is not quoted).
-    """
-    if env_path is None:
-        env_path = Path(__file__).resolve().parent.parent / ".env"
-    if not env_path.exists():
-        return
-    for line in env_path.read_text().splitlines():
-        line = line.strip()
-        if not line or line.startswith("#"):
-            continue
-        if "=" in line:
-            key, _, value = line.partition("=")
-            key, value = key.strip(), value.strip()
-            if key:
-                os.environ[key] = value

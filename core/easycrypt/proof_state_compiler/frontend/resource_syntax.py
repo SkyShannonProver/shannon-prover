@@ -4,14 +4,15 @@ from __future__ import annotations
 
 import re
 
+from core.easycrypt.proof_state_compiler.delimiters import (
+    PARENTHESES,
+    find_top_level,
+    matching_close,
+)
+
 
 _DECLARATION_START = re.compile(
     r"^\s*(?:(?:local\s+)?lemma|(?:declare\s+)?axiom)\s+([A-Za-z_][\w']*)\b",
-    re.MULTILINE,
-)
-_CLONE_INSTANCE_START = re.compile(
-    r"^\s*clone\s+(?:import\s+|include\s+)?"
-    r"([A-Za-z_][\w'.]*)\s+as\s+([A-Za-z_][\w']*)\b",
     re.MULTILINE,
 )
 
@@ -25,13 +26,44 @@ def declarations(text: str) -> tuple[tuple[str, str], ...]:
         if not match:
             index += 1
             continue
-        parts = [lines[index].strip()]
-        while not parts[-1].rstrip().endswith(".") and index + 1 < len(lines):
+        parts = []
+        depth = 0
+        while True:
+            line = lines[index]
+            end, depth = _last_code_end(line, depth)
+            if line[:end].endswith("."):
+                # A comment after the final period is not declaration text,
+                # and the next line already starts another sentence.
+                parts.append(line[:end].strip())
+                break
+            parts.append(line.strip())
+            if index + 1 >= len(lines):
+                break
             index += 1
-            parts.append(lines[index].strip())
         found.append((match.group(1), " ".join(parts)))
         index += 1
     return tuple(found)
+
+
+def _last_code_end(line: str, depth: int) -> tuple[int, int]:
+    """Return the end of ``line``'s last non-comment character and the
+    ``(* *)`` nesting depth after it, starting inside ``depth`` comments."""
+
+    end = 0
+    index = 0
+    while index < len(line):
+        pair = line[index:index + 2]
+        if pair == "(*":
+            depth += 1
+            index += 2
+        elif pair == "*)" and depth:
+            depth -= 1
+            index += 2
+        else:
+            if not depth and not line[index].isspace():
+                end = index + 1
+            index += 1
+    return end, depth
 
 
 def normalized_declaration(text: str) -> str:
@@ -39,27 +71,6 @@ def normalized_declaration(text: str) -> str:
 
     match = _DECLARATION_START.search(text)
     return text[match.start():].strip() if match is not None else text.strip()
-
-
-def clone_instances(text: str) -> tuple[tuple[str, str], ...]:
-    """Return ordered ``(source_theory, local_alias)`` clone instances."""
-
-    return tuple(
-        (match.group(1), match.group(2))
-        for match in _CLONE_INSTANCE_START.finditer(text)
-    )
-
-
-def top_level_colon(text: str) -> int:
-    depth = 0
-    for index, char in enumerate(text):
-        if char in "({[":
-            depth += 1
-        elif char in ")}]":
-            depth = max(0, depth - 1)
-        elif char == ":" and depth == 0:
-            return index
-    return -1
 
 
 def module_parameters(header: str) -> tuple[str, ...]:
@@ -75,7 +86,7 @@ def module_parameter_specs(header: str) -> tuple[tuple[str, str], ...]:
         if header[index] != "(":
             index += 1
             continue
-        end = matching_paren(header, index)
+        end = matching_close(header, index, openers=PARENTHESES)
         if end < 0:
             break
         content = header[index + 1:end].strip()
@@ -100,7 +111,7 @@ def consume_leading_forall_module_parameters(
     remaining = proposition.strip()
     parameters: list[tuple[str, str]] = []
     while remaining.startswith("forall "):
-        comma = top_level_comma(remaining)
+        comma = find_top_level(remaining, ",")
         if comma < 0:
             return None
         binder_clause = remaining[len("forall "):comma].strip()
@@ -124,7 +135,7 @@ def exact_module_parameter_specs(text: str) -> tuple[tuple[str, str], ...]:
             break
         if text[index] != "(":
             return ()
-        end = matching_paren(text, index)
+        end = matching_close(text, index, openers=PARENTHESES)
         if end < 0:
             return ()
         content = text[index + 1:end].strip()
@@ -134,47 +145,3 @@ def exact_module_parameter_specs(text: str) -> tuple[tuple[str, str], ...]:
         parameters.append((match.group(1), match.group(2).strip()))
         index = end + 1
     return tuple(parameters)
-
-
-def matching_paren(text: str, opening: int) -> int:
-    depth = 0
-    for index in range(opening, len(text)):
-        if text[index] == "(":
-            depth += 1
-        elif text[index] == ")":
-            depth -= 1
-            if depth == 0:
-                return index
-    return -1
-
-
-def top_level_comma(text: str) -> int:
-    depth = 0
-    for index, char in enumerate(text):
-        if char in "({[":
-            depth += 1
-        elif char in ")}]":
-            depth = max(0, depth - 1)
-        elif char == "," and depth == 0:
-            return index
-    return -1
-
-
-def split_top_level_implications(text: str) -> tuple[str, ...]:
-    parts = []
-    start = 0
-    depth = 0
-    index = 0
-    while index < len(text) - 1:
-        char = text[index]
-        if char in "({[":
-            depth += 1
-        elif char in ")}]":
-            depth = max(0, depth - 1)
-        elif text[index:index + 2] == "=>" and depth == 0:
-            parts.append(text[start:index].strip())
-            start = index + 2
-            index += 1
-        index += 1
-    parts.append(text[start:].strip())
-    return tuple(parts)

@@ -19,7 +19,11 @@ from core.easycrypt.ec_env import (
     get_ec_env,
 )
 from core.easycrypt.ec_runtime_identity import EasyCryptRuntimeIdentity
-from core.easycrypt.toolchain import load_easycrypt_lock, load_toolchain_receipt
+from core.easycrypt.toolchain import (
+    load_easycrypt_lock,
+    load_toolchain_receipt,
+    sha256_file,
+)
 
 
 NATIVE_COMPANION_PROTOCOL_VERSION = 2
@@ -194,11 +198,11 @@ def build_and_identify_companion(
         )
         if build.returncode != 0 or not executable.is_file():
             raise RuntimeError("native companion build failed")
-        companion_binary_sha256 = _sha256_file(executable)
+        companion_binary_sha256 = sha256_native_dependency(executable)
     receipt = load_toolchain_receipt()
     library_dir = Path(_ocamlfind_query(ocamlfind, env, "%d"))
     library_archive = library_dir / "ecLib.cmxa"
-    library_sha256 = _sha256_file(library_archive)
+    library_sha256 = sha256_native_dependency(library_archive)
     if runtime_identity.build_id != receipt.build_id or (
         runtime_identity.binary_sha256 != receipt.executable_sha256
     ):
@@ -212,7 +216,7 @@ def build_and_identify_companion(
         easycrypt_toolchain_build_id=receipt.build_id,
         easycrypt_library_sha256=library_sha256,
         companion_binary_sha256=companion_binary_sha256,
-        why3_config_sha256=_sha256_file(why3_config),
+        why3_config_sha256=sha256_native_dependency(why3_config),
     )
 
 
@@ -234,12 +238,9 @@ def _ocamlfind_query(
     return value
 
 
-def _sha256_file(path: Path) -> str:
-    digest = hashlib.sha256()
+def sha256_native_dependency(path: Path) -> str:
+    """SHA-256 of a native companion input; an unreadable file is a RuntimeError."""
     try:
-        with path.open("rb") as stream:
-            for chunk in iter(lambda: stream.read(1024 * 1024), b""):
-                digest.update(chunk)
+        return sha256_file(path)
     except OSError as exc:
         raise RuntimeError(f"cannot hash native dependency {path.name}") from exc
-    return digest.hexdigest()

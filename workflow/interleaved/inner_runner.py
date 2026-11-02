@@ -20,10 +20,7 @@ _IMPORT_ROOT = Path(__file__).resolve().parents[2]
 if str(_IMPORT_ROOT) not in sys.path:
     sys.path.insert(0, str(_IMPORT_ROOT))
 
-from core.easycrypt.eval_source_prep import (
-    find_target_proof_block,
-    prepare_eval_source,
-)
+from core.easycrypt.eval_source_prep import prepare_eval_source
 from core.easycrypt.ec_lifecycle import split_ec_commands
 from core.easycrypt.proof_text import unchecked_proof_constructs
 from workflow.interleaved.agent_config import (
@@ -33,6 +30,7 @@ from workflow.interleaved.agent_config import (
     provider_identity_projection,
     provider_identity_sha256,
 )
+from workflow.interleaved.proof_source import proof_body_span
 from workflow.interleaved.resume_contract import (
     CONTINUATION_NOTE_MAX_CHARS,
     directory_content_sha256,
@@ -45,7 +43,12 @@ from workflow.proof_tool.easycrypt_source_resource import (
 from workflow.interleaved.warm_handoff import (
     prepare_outer_proof_handoff,
 )
-from workflow.interleaved.runtime import load_runtime_settings
+from workflow.interleaved.runtime import ProjectContext
+from workflow.proc_lifecycle import (
+    WORKER_PGID_MANIFEST_ENV,
+    reap_worker_pgid_manifest,
+    record_worker_pgid,
+)
 from workflow.schemas.prover_result import (
     PROVER_RUN_INCOMPLETE,
     PROVER_RUN_INFRASTRUCTURE_INVALID,
@@ -54,12 +57,6 @@ from workflow.schemas.prover_result import (
 )
 
 
-_SETTINGS = load_runtime_settings()
-ROOT = _SETTINGS.root
-TARGET = _SETTINGS.project.target_file
-INCLUDE_DIR = _SETTINGS.project.include_dirs[0]
-ARTIFACT_ROOT = _SETTINGS.project.artifact_root
-ANSWER_SOURCE = _SETTINGS.answer_source or ROOT / ".interleaved-no-answer-source"
 LEMMA = re.compile(r"^[A-Za-z_][A-Za-z0-9_']*$")
 INVOCATION_ID = re.compile(r"^[A-Za-z0-9_-]{8,64}$")
 INVOCATION_RECEIPT_KIND = "interleaved_shannon_invocation_receipt"
@@ -103,13 +100,13 @@ def prepare_shannon_eval_source(
     )
 
 
-def run_directory() -> tuple[Path, Path]:
+def run_directory(ctx: ProjectContext) -> tuple[Path, Path]:
     raw = os.environ.get("INTERLEAVED_RUN_DIR", "")
     relative = Path(raw)
     if not raw or relative.is_absolute() or ".." in relative.parts:
         raise SystemExit("INTERLEAVED_RUN_DIR must be a safe repository-relative path")
-    resolved = (ROOT / relative).resolve()
-    allowed = (ROOT / ARTIFACT_ROOT).resolve()
+    resolved = (ctx.root / relative).resolve()
+    allowed = (ctx.root / ctx.project.artifact_root).resolve()
     if not resolved.is_relative_to(allowed):
         raise SystemExit("INTERLEAVED_RUN_DIR is outside the project artifact root")
     if not resolved.is_dir():
@@ -138,6 +135,7 @@ def _canonical_json_sha256(value: dict[str, object]) -> str:
 
 
 def _load_invocation_receipt(
+    ctx: ProjectContext,
     *,
     run_rel: Path,
     run_dir: Path,
@@ -152,7 +150,7 @@ def _load_invocation_receipt(
     relative = Path(raw_path)
     if relative.is_absolute() or ".." in relative.parts:
         raise ValueError("invocation receipt path must be repository-relative")
-    path = (ROOT / relative).resolve()
+    path = (ctx.root / relative).resolve()
     allowed = (run_dir / "job_input" / invocation_id).resolve()
     if not path.is_relative_to(allowed) or not path.is_file():
         raise ValueError("invocation receipt is outside its scheduler-owned job input")
@@ -290,26 +288,6 @@ def _identity_mismatches(
     ]
 
 
-def _proof_body_span(content: str, lemma: str) -> tuple[str, tuple[int, int]]:
-    block = find_target_proof_block(content, lemma)
-    if block is None:
-        raise ValueError(f"could not find proof block for {lemma}")
-    start, end = block
-    block_text = content[start:end]
-    # The delegated proof body is every byte between the proof opener and
-    # ``qed.``.  In particular, leading whitespace belongs to the body: proof
-    # agents commonly indent their first tactic even when the admit shell was
-    # unindented.  Excluding that whitespace manufactured an outside-body
-    # drift during the final confined merge.
-    proof = re.search(r"(?i)\bproof\s*\.", block_text)
-    qed = list(re.finditer(r"(?i)\bqed\s*\.", block_text))
-    if proof is None or not qed or qed[-1].start() < proof.end():
-        raise ValueError(f"{lemma} has no proof./qed. block")
-    body_start = start + proof.end()
-    body_end = start + qed[-1].start()
-    return content[body_start:body_end], (body_start, body_end)
-
-
 def _merge_verified_proof(
     *,
     isolated_file: Path,
@@ -322,8 +300,8 @@ def _merge_verified_proof(
     current = target_file.read_text(encoding="utf-8")
     if _sha256_bytes(current.encode("utf-8")) != expected_target_sha256:
         raise ValueError("canonical lane target drifted while Shannon was running")
-    proof_body, (isolated_start, isolated_end) = _proof_body_span(isolated, lemma)
-    _, (prepared_start, prepared_end) = _proof_body_span(prepared_source, lemma)
+    proof_body, (isolated_start, isolated_end) = proof_body_span(isolated, lemma)
+    _, (prepared_start, prepared_end) = proof_body_span(prepared_source, lemma)
     isolated_projection = (
         isolated[:isolated_start] + "<TARGET-PROOF>" + isolated[isolated_end:]
     )
@@ -336,7 +314,7 @@ def _merge_verified_proof(
         raise ValueError("confined source drifted outside the delegated proof body")
     if unchecked_proof_constructs(proof_body):
         raise ValueError("confined verified proof still contains admit")
-    _, (body_start, body_end) = _proof_body_span(current, lemma)
+    _, (body_start, body_end) = proof_body_span(current, lemma)
     merged = current[:body_start] + proof_body + current[body_end:]
     temporary = target_file.with_suffix(target_file.suffix + ".shannon.tmp")
     temporary.write_text(merged, encoding="utf-8")
@@ -680,7 +658,8 @@ def _wrapper_handback(
 def build_shannon_command(
     profile: AgentProfile,
     *,
-    target: str = TARGET,
+    target: str,
+    include_dir: str,
     lemma: str,
     timeout_minutes: int,
     output: Path,
@@ -696,7 +675,7 @@ def build_shannon_command(
         "--lemma",
         lemma,
         "--include-dir",
-        INCLUDE_DIR,
+        include_dir,
         "--surface-profile",
         "proof_state_compiler",
         "--agent-backend",
@@ -722,18 +701,46 @@ def build_shannon_command(
 def _run_orchestrator_process(
     command: list[str],
     *,
+    cwd: Path,
     environment: dict[str, str],
     interruption_requested: Callable[[], bool],
     grace_seconds: float = 60.0,
 ) -> tuple[int, str]:
-    """Run one isolated orchestrator and preserve its checkpoint on SIGTERM."""
+    """Run one isolated orchestrator and preserve its checkpoint on SIGTERM.
 
+    The orchestrator and the tree workers it starts each lead a process group
+    of their own, so stopping this process does not stop them. When the
+    scheduler names a process-group manifest, the orchestrator's group is
+    recorded there next to the tree workers the orchestrator records itself.
+    Once the orchestrator has exited, any group still alive is stopped here;
+    if this process is killed first, the scheduler stops them instead.
+    """
+
+    manifest = environment.get(WORKER_PGID_MANIFEST_ENV)
     process = subprocess.Popen(
         command,
-        cwd=ROOT,
+        cwd=cwd,
         env=environment,
         start_new_session=True,
     )
+    record_worker_pgid(manifest, process.pid)
+    try:
+        return _wait_for_orchestrator(
+            process,
+            interruption_requested=interruption_requested,
+            grace_seconds=grace_seconds,
+        )
+    finally:
+        if process.poll() is not None:
+            reap_worker_pgid_manifest(manifest)
+
+
+def _wait_for_orchestrator(
+    process: subprocess.Popen[bytes],
+    *,
+    interruption_requested: Callable[[], bool],
+    grace_seconds: float,
+) -> tuple[int, str]:
     interrupt_sent = False
     interrupt_deadline: float | None = None
     while True:
@@ -775,7 +782,10 @@ def _run_orchestrator_process(
             )
 
 
-def _prepare_outer_handoff_with_daemon_cleanup(**kwargs: object) -> Path:
+def _prepare_outer_handoff_with_daemon_cleanup(
+    ctx: ProjectContext,
+    **kwargs: object,
+) -> Path:
     """Prepare one warm handoff without leaking its bootstrap EC daemon.
 
     Handoff certification runs before the inner orchestrator configures and
@@ -790,7 +800,7 @@ def _prepare_outer_handoff_with_daemon_cleanup(**kwargs: object) -> Path:
 
     socket_path = default_socket_path()
     try:
-        return prepare_outer_proof_handoff(**kwargs)
+        return prepare_outer_proof_handoff(ctx, **kwargs)
     finally:
         _shutdown_ec_daemon(
             reason="outer proof handoff preparation finished",
@@ -798,7 +808,12 @@ def _prepare_outer_handoff_with_daemon_cleanup(**kwargs: object) -> Path:
         )
 
 
-def main() -> int:
+def main(
+    argv: list[str] | None = None,
+    *,
+    context: ProjectContext | None = None,
+) -> int:
+    ctx = context or ProjectContext.from_environment()
     parser = argparse.ArgumentParser()
     parser.add_argument("--lemma", required=True)
     parser.add_argument("--timeout-minutes", type=int, required=True)
@@ -836,13 +851,13 @@ def main() -> int:
         "--continuation-note",
         help=argparse.SUPPRESS,
     )
-    args = parser.parse_args()
+    args = parser.parse_args(argv)
     if not LEMMA.fullmatch(args.lemma):
         parser.error("--lemma is not a valid EasyCrypt identifier")
-    if not 1 <= args.timeout_minutes <= _SETTINGS.project.max_inner_minutes:
+    if not 1 <= args.timeout_minutes <= ctx.project.max_inner_minutes:
         parser.error(
             "--timeout-minutes must be between 1 and "
-            f"{_SETTINGS.project.max_inner_minutes}"
+            f"{ctx.project.max_inner_minutes}"
         )
     if args.handoff_current and not args.strategy_note:
         parser.error("--handoff-current requires --strategy-note")
@@ -857,9 +872,11 @@ def main() -> int:
             "--strategy-note/--resource-anchors/--candidate-source require "
             "--handoff-current"
         )
-    run_rel, run_dir = run_directory()
+    root = ctx.root
+    run_rel, run_dir = run_directory(ctx)
     try:
         receipt, receipt_path, receipt_sha256 = _load_invocation_receipt(
+            ctx,
             run_rel=run_rel,
             run_dir=run_dir,
         )
@@ -882,7 +899,7 @@ def main() -> int:
         anchor_relative = Path(args.resource_anchors)
         if anchor_relative.is_absolute() or ".." in anchor_relative.parts:
             parser.error("resource anchors path is not repository-relative")
-        anchor_path = (ROOT / anchor_relative).resolve()
+        anchor_path = (root / anchor_relative).resolve()
         if (
             not anchor_path.is_file()
             or _sha256_bytes(anchor_path.read_bytes())
@@ -895,7 +912,7 @@ def main() -> int:
         resume_relative = Path(args.resume_capsule)
         if resume_relative.is_absolute() or ".." in resume_relative.parts:
             parser.error("resume capsule path is not repository-relative")
-        resume_manifest = (ROOT / resume_relative).resolve()
+        resume_manifest = (root / resume_relative).resolve()
         allowed_resume = (
             run_dir / "job_input" / invocation_id / "resume_capsule"
         ).resolve()
@@ -913,7 +930,7 @@ def main() -> int:
         note_relative = Path(args.continuation_note)
         if note_relative.is_absolute() or ".." in note_relative.parts:
             parser.error("continuation note path is not repository-relative")
-        note_path = (ROOT / note_relative).resolve()
+        note_path = (root / note_relative).resolve()
         allowed_note = (
             run_dir / "job_input" / invocation_id / "continuation_note.md"
         ).resolve()
@@ -955,12 +972,12 @@ def main() -> int:
         or expected_provider_identity.get("model") != inner_profile.model
     ):
         parser.error("invocation receipt provider identity does not match inner profile")
-    target_path = ROOT / TARGET
+    target_path = ctx.target
     if _sha256_bytes(target_path.read_bytes()) != receipt.get("target_sha256"):
         parser.error("lane target does not match the scheduler submission")
     current_commit = subprocess.run(
         ["git", "rev-parse", "HEAD"],
-        cwd=ROOT,
+        cwd=root,
         text=True,
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
@@ -971,10 +988,10 @@ def main() -> int:
         or current_commit.stdout.strip() != receipt.get("source_commit")
     ):
         parser.error("lane commit does not match the scheduler submission")
-    if ANSWER_SOURCE.exists():
+    if ctx.answer_source_visible():
         parser.error("answer-bearing source is visible before Shannon launch")
     output = run_rel / "shannon" / args.lemma / invocation_id
-    output_root = ROOT / output
+    output_root = root / output
     output_root.mkdir(parents=True, exist_ok=False)
     prepared = prepare_shannon_eval_source(
         target_path=target_path,
@@ -982,11 +999,12 @@ def main() -> int:
         output_root=output_root,
     )
     prepared_source = prepared.isolated_file.read_text(encoding="utf-8")
-    managed_target = prepared.isolated_file.relative_to(ROOT).as_posix()
+    managed_target = prepared.isolated_file.relative_to(root).as_posix()
     source_manifest = output_root / "eval_source" / "source_manifest.json"
     command = build_shannon_command(
         inner_profile,
         target=managed_target,
+        include_dir=ctx.project.session_include_dir,
         lemma=args.lemma,
         timeout_minutes=args.timeout_minutes,
         output=output,
@@ -1004,10 +1022,10 @@ def main() -> int:
             parser.error(f"managed checkpoint rebind failed: {exc}")
         command.extend([
             "--resume-capsule",
-            str(resume_manifest.relative_to(ROOT)),
+            str(resume_manifest.relative_to(root)),
         ])
     audit = run_dir / "shannon_invocations.jsonl"
-    answer_source_visible_before = ANSWER_SOURCE.exists()
+    answer_source_visible_before = ctx.answer_source_visible()
     answer_source_visible_during = False
     exit_code: int | None = None
     error = ""
@@ -1036,7 +1054,7 @@ def main() -> int:
         try:
             if args.handoff_current:
                 handoff_path = _prepare_outer_handoff_with_daemon_cleanup(
-                    root=ROOT,
+                    ctx,
                     run_rel=run_rel,
                     lemma=args.lemma,
                     strategy_note=str(args.strategy_note),
@@ -1045,7 +1063,7 @@ def main() -> int:
                     runtime_target_file=managed_target,
                 )
                 command.extend(
-                    ["--outer-proof-handoff", str(handoff_path.relative_to(ROOT))]
+                    ["--outer-proof-handoff", str(handoff_path.relative_to(root))]
                 )
             append_audit(
                 audit,
@@ -1057,13 +1075,13 @@ def main() -> int:
                     "timeout_minutes": args.timeout_minutes,
                     "inner_agent": inner_profile.base_dict(),
                     "expected_provider_identity": expected_provider_identity,
-                    "invocation_receipt": str(receipt_path.relative_to(ROOT)),
+                    "invocation_receipt": str(receipt_path.relative_to(root)),
                     "invocation_receipt_sha256": receipt_sha256,
-                    "source_manifest": str(source_manifest.relative_to(ROOT)),
+                    "source_manifest": str(source_manifest.relative_to(root)),
                     "managed_target": managed_target,
                     "command": command,
                     "outer_proof_handoff": (
-                        str(handoff_path.relative_to(ROOT)) if handoff_path else None
+                        str(handoff_path.relative_to(root)) if handoff_path else None
                     ),
                     "resume_from_job_id": receipt.get("resume_from_job_id"),
                     "resume_from_run_directory": receipt.get(
@@ -1072,10 +1090,10 @@ def main() -> int:
                     "resume_checkpoint_id": receipt.get("resume_checkpoint_id"),
                     "has_continuation_note": bool(continuation_note),
                     "answer_source_visible_before": answer_source_visible_before,
-                    "answer_source_visible_during_trusted_call": ANSWER_SOURCE.exists(),
+                    "answer_source_visible_during_trusted_call": ctx.answer_source_visible(),
                 },
             )
-            answer_source_visible_during = ANSWER_SOURCE.exists()
+            answer_source_visible_during = ctx.answer_source_visible()
             environment = os.environ.copy()
             # The explicit output directory above is the experiment-owned
             # complete audit artifact. Suppress the orchestrator's additional
@@ -1083,10 +1101,11 @@ def main() -> int:
             # cannot dirty the confined outer-agent worktree.
             environment["SHANNON_SUITE_WILL_BUNDLE"] = "1"
             environment[SOURCE_RESOURCE_MANIFEST_ENV] = str(
-                source_manifest.relative_to(ROOT)
+                source_manifest.relative_to(root)
             )
             exit_code, process_error = _run_orchestrator_process(
                 command,
+                cwd=root,
                 environment=environment,
                 interruption_requested=lambda: interruption_requested,
             )
@@ -1108,9 +1127,9 @@ def main() -> int:
                 "error": error,
                 "interruption_requested": interruption_requested,
                 "outer_proof_handoff": (
-                    str(handoff_path.relative_to(ROOT)) if handoff_path else None
+                    str(handoff_path.relative_to(root)) if handoff_path else None
                 ),
-                "answer_source_visible_after": ANSWER_SOURCE.exists(),
+                "answer_source_visible_after": ctx.answer_source_visible(),
             },
         )
     handback = _wrapper_handback(
@@ -1127,7 +1146,7 @@ def main() -> int:
         expected_source_manifest=source_manifest,
         answer_source_visible_before=answer_source_visible_before,
         answer_source_visible_during=answer_source_visible_during,
-        answer_source_visible_after=ANSWER_SOURCE.exists(),
+        answer_source_visible_after=ctx.answer_source_visible(),
     )
     if handback["verified"]:
         try:
@@ -1159,7 +1178,7 @@ def main() -> int:
             "status": handback["status"],
             "verified": handback["verified"],
             "prover_result_id": handback["prover_result_id"],
-            "wrapper_result": str(handback_path.relative_to(ROOT)),
+            "wrapper_result": str(handback_path.relative_to(root)),
         },
     )
     print(json.dumps(handback, indent=2, sort_keys=True))

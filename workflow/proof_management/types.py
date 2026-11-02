@@ -7,6 +7,7 @@ manager implementation.
 """
 from __future__ import annotations
 
+from collections.abc import Mapping
 from dataclasses import dataclass, field
 from enum import Enum
 from typing import Any
@@ -93,24 +94,6 @@ class NodeHealthEvent:
         }
 
 
-@dataclass(frozen=True)
-class NodeProgressSummary:
-    node_id: str
-    session_tag: str
-    state_version: int
-    goal_hash: str
-    proof_status: str
-
-    def to_dict(self) -> dict[str, Any]:
-        return {
-            "node_id": self.node_id,
-            "session_tag": self.session_tag,
-            "state_version": self.state_version,
-            "goal_hash": self.goal_hash,
-            "proof_status": self.proof_status,
-        }
-
-
 class TurnDirective(str, Enum):
     """Serving control emitted by one manager turn.
 
@@ -143,3 +126,93 @@ class ManagedTurn:
     # Worker-serving control only.  Never interpret this as proof closedness or
     # whole-run success; those facts retain their separate canonical owners.
     directive: TurnDirective = TurnDirective.CONTINUE
+
+
+@dataclass(frozen=True)
+class ExactTacticPreflight:
+    """Typed evidence from one exact ``-try`` of a candidate tactic.
+
+    The manager's action record for an exact preflight carries this record
+    next to (not inside) the observation text, and compiler certification
+    reads only this record.  It is built from the current call's event-bound
+    ``tactic.preflight.produced`` artifact and is empty when that artifact is
+    missing or failed its binding.
+    """
+
+    candidate: str = ""
+    source_proof_state: Mapping[str, Any] = field(default_factory=dict)
+    runnable_evidence: Mapping[str, Any] | None = None
+    error_summary: str = ""
+
+    @classmethod
+    def from_artifact(
+        cls,
+        artifact: Mapping[str, Any] | None,
+        *,
+        error_summary: str,
+    ) -> "ExactTacticPreflight":
+        if not isinstance(artifact, Mapping) or not artifact:
+            return cls(error_summary=error_summary)
+        candidate = artifact.get("tactic")
+        proof_state = artifact.get("proof_state")
+        evidence = artifact.get("runnable_evidence")
+        return cls(
+            candidate=candidate if isinstance(candidate, str) else "",
+            source_proof_state=(
+                dict(proof_state) if isinstance(proof_state, Mapping) else {}
+            ),
+            runnable_evidence=(
+                dict(evidence) if isinstance(evidence, Mapping) else None
+            ),
+            error_summary=error_summary,
+        )
+
+    @classmethod
+    def from_action(cls, action: object) -> "ExactTacticPreflight":
+        """Read the record from a manager action; absent means empty."""
+
+        action = action if isinstance(action, Mapping) else {}
+        payload = action.get("preflight_evidence")
+        if isinstance(payload, Mapping):
+            return cls.from_artifact(
+                {
+                    "tactic": payload.get("candidate"),
+                    "proof_state": payload.get("source_proof_state"),
+                    "runnable_evidence": payload.get("runnable_evidence"),
+                },
+                error_summary=str(payload.get("error_summary") or ""),
+            )
+        # Compiler-diff recordings made before this record existed carry the
+        # same evidence inside the observation; they are its only source.
+        observation = action.get("agent_observation")
+        observation = observation if isinstance(observation, Mapping) else {}
+        content = observation.get("content")
+        return cls.from_artifact(
+            {
+                "tactic": content.get("candidate"),
+                "proof_state": content.get("proof_state"),
+                "runnable_evidence": content.get("runnable_evidence"),
+            }
+            if isinstance(content, Mapping) and content
+            else None,
+            error_summary=str(observation.get("error_summary") or ""),
+        )
+
+    def to_payload(self) -> dict[str, Any]:
+        return {
+            "candidate": self.candidate,
+            "source_proof_state": dict(self.source_proof_state),
+            "runnable_evidence": (
+                dict(self.runnable_evidence)
+                if self.runnable_evidence is not None
+                else None
+            ),
+            "error_summary": self.error_summary,
+        }
+
+    @property
+    def source_goal_identity(self) -> str:
+        goal = self.source_proof_state.get("goal")
+        if not isinstance(goal, Mapping):
+            return ""
+        return str(goal.get("active_goal_hash") or "")

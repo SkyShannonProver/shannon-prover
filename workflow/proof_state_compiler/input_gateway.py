@@ -266,11 +266,6 @@ def attach_compiler_resources(
             "manager compiler resource result is invalid: "
             + "; ".join(validation.errors)
         )
-    if manager_result.get("history_unchanged") is not True or (
-        manager_result.get("state_version_before")
-        != manager_result.get("state_version_after")
-    ):
-        raise ValueError("compiler resource loading changed manager proof state")
     if raw.get("request_id") != expected_request_id:
         raise ValueError("compiler resource result has another request identity")
     if raw.get("source_snapshot_id") != initial.source_snapshot_id:
@@ -344,11 +339,6 @@ def native_state_snapshot(
     request = raw.get("request")
     if type(request) is not dict or request.get("request_id") != expected_request_id:
         raise ValueError("native state result does not match planned request")
-    if manager_result.get("history_unchanged") is not True or (
-        manager_result.get("state_version_before")
-        != manager_result.get("state_version_after")
-    ):
-        raise ValueError("native state query changed manager proof state")
     state = raw.get("state")
     if type(state) is not dict or any((
         state.get("session_id") != expected_state.session_id,
@@ -427,11 +417,6 @@ def native_semantic_observations(
             "manager native semantic batch result is invalid: "
             + "; ".join(validation.errors)
         )
-    if manager_result.get("history_unchanged") is not True or (
-        manager_result.get("state_version_before")
-        != manager_result.get("state_version_after")
-    ):
-        raise ValueError("native semantic batch changed manager proof state")
 
     raw_request = raw.get("request")
     state = raw.get("state")

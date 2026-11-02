@@ -16,8 +16,6 @@ never ranked.
 
 from __future__ import annotations
 
-import hashlib
-import json
 from dataclasses import dataclass
 
 from core.easycrypt.proof_state_compiler.contracts import (
@@ -33,7 +31,11 @@ from core.easycrypt.proof_state_compiler.contracts import (
     ProofIR,
     valid_namespace_spelling_arguments,
 )
-from core.easycrypt.proof_state_compiler.features.operation_binding_repair.contracts import (
+from core.easycrypt.proof_state_compiler.contracts.digest import (
+    json_sha256,
+    text_sha256,
+)
+from core.easycrypt.proof_state_compiler.features.operation_binding_repair.ids import (
     OPERATION_BINDING_REPAIR_ANALYSIS_PRODUCER_ID,
 )
 from core.easycrypt.proof_state_compiler.features.operation_binding_repair.classification import (
@@ -112,14 +114,7 @@ def _request_for_sketch(
         arguments=sketch.arguments,
         written_name=sketch.written_name,
     )
-    digest = hashlib.sha256(
-        json.dumps(
-            query.to_payload(),
-            ensure_ascii=False,
-            sort_keys=True,
-            separators=(",", ":"),
-        ).encode("utf-8")
-    ).hexdigest()[:20]
+    digest = json_sha256(query.to_payload())[:20]
     return NativeSemanticRequest(
         state_ref=proof_ir.state_ref,
         request_id=f"operation-binding-b1:{digest}",
@@ -187,15 +182,13 @@ def analyze_native_namespace_repair(
     evidence = tuple(dict.fromkeys(
         sketch.evidence_refs + (native_evidence,)
     ))
-    material = hashlib.sha256(
-        (
-            request.request_id
-            + "\0"
-            + spelling.resolved_identity
-            + "\0"
-            + spelling.application_term
-        ).encode("utf-8")
-    ).hexdigest()[:20]
+    material = text_sha256(
+        request.request_id
+        + "\0"
+        + spelling.resolved_identity
+        + "\0"
+        + spelling.application_term
+    )[:20]
     return AnalysisContribution(applications=(ApplicationCandidate(
         candidate_id=f"operation-binding-repair:{material}",
         producer_id=OPERATION_BINDING_REPAIR_ANALYSIS_PRODUCER_ID,

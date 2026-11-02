@@ -387,28 +387,6 @@ def _run_ec_daemon_socket_root(
     return fallback
 
 
-def _shutdown_repo_ec_daemons(*, reason: str = "") -> int:
-    socket_root = _run_ec_daemon_socket_root()
-    if not socket_root.exists():
-        return 0
-    stopped = 0
-    for sock in sorted(socket_root.glob("*.sock")):
-        if _shutdown_ec_daemon(reason=reason, socket_path=str(sock)):
-            stopped += 1
-    for lock in sorted(socket_root.glob("*.sock.spawn_lock")):
-        sock = Path(str(lock)[: -len(".spawn_lock")])
-        if not sock.exists():
-            try:
-                lock.unlink()
-            except Exception as exc:
-                logger.warning(
-                    "Could not remove orphan EasyCrypt daemon lock %s: %s",
-                    lock,
-                    exc,
-                )
-    return stopped
-
-
 def _hard_kill_ec_daemon(socket_path: str) -> bool:
     """Force-kill a daemon that ignored cooperative shutdown, via its PID file.
 

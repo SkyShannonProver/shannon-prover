@@ -43,15 +43,6 @@ def drop_empty(value: dict[str, Any]) -> dict[str, Any]:
     return {key: item for key, item in value.items() if item not in (None, "", [], {})}
 
 
-def as_dict_list(value: Any) -> list[dict[str, Any]]:
-    """The dict items of `value` when it is a list, else `[]`. Returns the
-    SAME item objects (no copy — the copy-on-return variant stays with its
-    workflow callers)."""
-    if not isinstance(value, list):
-        return []
-    return [item for item in value if isinstance(item, dict)]
-
-
 def first_text(*values: Any, default: str) -> str:
     """First value that is a non-blank string (stripped), else the first
     non-empty value stringified, else `default` (keyword-required)."""

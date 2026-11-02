@@ -27,6 +27,7 @@ from workflow.proof_management import (
     LemmaLineageStore,
     ManagedTurn,
     NodeHealthEvent,
+    NodeTurnState,
     ProofCheckpointManager,
     ProofEventManager,
     ProofNodeLifecycleManager,
@@ -44,9 +45,6 @@ from workflow.proof_management.compiler_turn_adapter import (
 from workflow.proof_management.checkpoint_surface import (
     history_hash as _history_hash,
 )
-from workflow.proof_management.repl_session import (
-    session_dir_path as _session_dir_path,
-)
 from workflow.proof_tool.proof_tool_contract import (
     ProofToolContractManifest,
     resolve_proof_tool_contract,
@@ -55,6 +53,7 @@ from workflow.proof_tool.proof_tool_contract import (
 from workflow.proof_state_compiler.configuration import (
     compiler_service_for_profile,
 )
+from workflow.proof_state_compiler.service import CompilerReadOnlyViolation
 from workflow.proof_state_compiler.profile_registry import (
     normalize_runtime_surface_profile_id,
 )
@@ -104,6 +103,9 @@ class ProofNodeManager:
             self.surface_profile,
             self.repl,
         )
+        # Every service below receives its collaborators explicitly; the one
+        # mutable per-node state they share is ``self.state``.
+        self.state = NodeTurnState()
         self.workspace = ManagedGoalViewManager()
         self.lineage = LemmaLineageStore(run_dir=self.run_dir)
         self.events = ProofEventManager(
@@ -123,14 +125,13 @@ class ProofNodeManager:
                 self.proof_tool_manifest.effective_profile_intents
             ),
             events=self.events,
-            state_version=lambda: self.repl.state_version,
-            committed_history=lambda: self.repl.committed_history(),
+            repl=self.repl,
             audit=self._audit,
         )
         self.compiler = CompilerTurnAdapter(
             node_id=self.node_id,
             service=self.compiler_service,
-            session_id=lambda: str(self.session_path),
+            repl=self.repl,
             audit=self._audit,
         )
         self.projection = ProofProjectionPipeline(
@@ -140,61 +141,54 @@ class ProofNodeManager:
         self.lifecycle = ProofNodeLifecycleManager(
             node_id=self.node_id,
             session_tag=self.session_tag,
+            state=self.state,
             repl=self.repl,
             projection=self.projection,
+            checkpoints=self.checkpoints,
+            events=self.events,
             lineage=self.lineage,
             workspace=self.workspace,
-            run_dir=lambda: self.run_dir,
             audit=self._audit,
             surface_profile=self.surface_profile,
         )
         self.recovery = ProofRecoveryIntentHandler(
             node_id=self.node_id,
+            state=self.state,
             checkpoints=self.checkpoints,
             repl=self.repl,
-            committed_tactics=lambda: self.repl.committed_history(),
-            replay_prefix_count=lambda: self._replay_prefix_count,
-            resumed_lineage=lambda: self._resumed_from_prefix,
-            clear_replay_prefix=self._clear_replay_prefix,
         )
         self.turns = ProofTurnExecutor(
             node_id=self.node_id,
+            state=self.state,
             repl=self.repl,
             events=self.events,
             lineage=self.lineage,
-            latest_snapshot=lambda: self.latest_snapshot,
-            latest_view=lambda: self.latest_view,
-            set_latest_view=self._set_latest_view,
-            project=lambda snapshot, latest: self._project(
-                snapshot,
-                latest_observation=latest,
-            ),
+            project=self._project,
             audit=self._audit,
-            run_dir=lambda: self.run_dir,
             surface_profile=self.surface_profile,
         )
 
     @property
     def latest_snapshot(self) -> ProofStateSnapshot | None:
-        return self.lifecycle.latest_snapshot
+        return self.state.latest_snapshot
 
     @latest_snapshot.setter
     def latest_snapshot(self, value: ProofStateSnapshot | None) -> None:
-        self.lifecycle.latest_snapshot = value
+        self.state.latest_snapshot = value
 
     @property
     def latest_view(self) -> dict[str, Any]:
-        return self.lifecycle.latest_view
+        return self.state.latest_view
 
     @latest_view.setter
     def latest_view(self, value: dict[str, Any]) -> None:
-        self.lifecycle.latest_view = dict(value) if isinstance(value, dict) else {}
+        self.state.latest_view = dict(value) if isinstance(value, dict) else {}
 
     @property
     def latest_full_view(self) -> dict[str, Any]:
-        """The complete unprofiled view, or empty until one was projected here."""
+        """The view as last projected, before any observation overlay."""
 
-        return self.lifecycle.latest_full_view
+        return self.state.latest_full_view
 
     @property
     def state_version(self) -> int:
@@ -206,10 +200,7 @@ class ProofNodeManager:
     def session_path(self) -> Path:
         """Resolved backend session identity exposed without leaking REPL access."""
 
-        return _session_dir_path(
-            self.repl.session_dir,
-            self.repl.project_root,
-        ).resolve()
+        return self.repl.session_path
 
     def close_session(self) -> bool:
         """Close this manager's backend session through the public lifecycle facade."""
@@ -221,23 +212,6 @@ class ProofNodeManager:
         """Current recoverable protocol-error streak, owned by admission."""
 
         return self.admission.malformed_count
-
-    @property
-    def _resumed_from_prefix(self) -> bool:
-        """Durable resumed-lineage marker (survives a rewind-below-floor clear)."""
-        return bool(getattr(self.lifecycle, "resumed_from_prefix", False))
-
-    @property
-    def _replay_prefix_count(self) -> int:
-        return self.lifecycle.replay_prefix_count
-
-    @_replay_prefix_count.setter
-    def _replay_prefix_count(self, value: int) -> None:
-        try:
-            count = int(value or 0)
-        except (TypeError, ValueError):
-            count = 0
-        self.lifecycle.replay_prefix_count = max(0, count)
 
     def adopt_bootstrap(self, bootstrap: dict[str, Any]) -> None:
         """Adopt a session that was already bootstrapped by this manager layer.
@@ -379,6 +353,11 @@ class ProofNodeManager:
             return self._deadline_failure(
                 replace(turn, committed_tactics=spine.tactics)
             )
+        except CompilerReadOnlyViolation as exc:
+            return self._compiler_read_only_failure(
+                replace(turn, committed_tactics=spine.tactics),
+                exc,
+            )
 
     def _compile_bootstrap_markdown(self) -> str:
         snapshot = self.latest_snapshot
@@ -428,16 +407,32 @@ class ProofNodeManager:
             directive=TurnDirective.NODE_UNHEALTHY,
         )
 
-    def _clear_replay_prefix(self) -> None:
-        self.lifecycle.clear_replay_prefix()
-
-    def _set_latest_view(self, view: dict[str, Any]) -> None:
-        self.lifecycle.set_latest_view(view)
+    def _compiler_read_only_failure(
+        self,
+        completed: ManagedTurn,
+        exc: CompilerReadOnlyViolation,
+    ) -> ManagedTurn:
+        # The spine and snapshot were bound before the compiler ran and no
+        # longer describe the session; the node must stop serving them.
+        health = NodeHealthEvent(
+            node_id=self.node_id,
+            status="compiler_read_only_violation",
+            message=(
+                "the read-only proof-state compiler changed the proof "
+                f"session ({str(exc)[:300]}); the node is fail-closed"
+            ),
+            state_version=self.repl.state_version,
+        )
+        return replace(
+            completed,
+            ok=False,
+            health_event=health,
+            directive=TurnDirective.NODE_UNHEALTHY,
+        )
 
     def _project(
         self,
         snapshot: ProofStateSnapshot,
-        *,
         latest_observation: dict[str, Any] | None = None,
     ) -> dict[str, Any]:
         self.admission.observe_projection(snapshot, latest_observation)
@@ -447,7 +442,6 @@ class ProofNodeManager:
         )
 
     def _audit(self, record: dict[str, Any]) -> None:
-        self.events.run_dir = self.run_dir
         self.events.audit(record)
 
 

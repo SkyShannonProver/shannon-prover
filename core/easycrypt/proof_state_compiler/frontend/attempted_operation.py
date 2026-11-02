@@ -2,9 +2,6 @@
 
 from __future__ import annotations
 
-import hashlib
-import json
-
 from core.easycrypt.proof_state_compiler.contracts.evidence import EvidenceRef
 from core.easycrypt.proof_state_compiler.contracts.failure import (
     AttemptedOperationIR,
@@ -18,6 +15,10 @@ from core.easycrypt.proof_state_compiler.contracts.native_semantics import (
 )
 from core.easycrypt.proof_state_compiler.contracts.frozen_json import (
     freeze_json_object,
+)
+from core.easycrypt.proof_state_compiler.contracts.digest import (
+    canonical_json,
+    text_sha256,
 )
 
 
@@ -69,12 +70,7 @@ def parse_attempted_operation(
             )
         ):
             continue
-        material = json.dumps(
-            descriptor.to_payload(),
-            ensure_ascii=False,
-            separators=(",", ":"),
-            sort_keys=True,
-        )
+        material = canonical_json(descriptor.to_payload())
         candidates.setdefault(material, (descriptor, item))
     if len(candidates) != 1:
         return None
@@ -91,19 +87,12 @@ def parse_attempted_operation(
         observation.evidence_ref,
         native_evidence,
     )))
-    material = json.dumps(
-        descriptor.to_payload(),
-        ensure_ascii=False,
-        separators=(",", ":"),
-        sort_keys=True,
+    material = canonical_json(descriptor.to_payload())
+    attempt_id = text_sha256(
+        observation.occurrence_identity
+        + "\0"
+        + material
     )
-    attempt_id = hashlib.sha256(
-        (
-            observation.occurrence_identity
-            + "\0"
-            + material
-        ).encode("utf-8")
-    ).hexdigest()
     recovery_handoff = None
     if (
         isinstance(descriptor, NativeTacticPrefixDiagnosticDescriptor)

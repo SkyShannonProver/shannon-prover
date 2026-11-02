@@ -2,22 +2,19 @@
 
 from __future__ import annotations
 
-import hashlib
-
 from core.easycrypt.proof_state_compiler.contracts.environment import (
     CompilationEnvironment,
 )
 from core.easycrypt.proof_state_compiler.contracts.evidence import EvidenceRef
 from core.easycrypt.proof_state_compiler.contracts.proof_ir import ProofFact
+from core.easycrypt.proof_state_compiler.contracts.digest import text_sha256
+from core.easycrypt.proof_state_compiler.delimiters import find_top_level
 from core.easycrypt.proof_state_compiler.frontend.declaration_stream import (
     declaration_inputs,
 )
 from core.easycrypt.proof_state_compiler.syntax.formulas import (
     normalize_formula,
     parse_proof_judgment,
-)
-from core.easycrypt.proof_state_compiler.frontend.resource_syntax import (
-    top_level_colon,
 )
 
 
@@ -40,7 +37,7 @@ def _source_declaration_facts(
 ) -> tuple[ProofFact, ...]:
     values = []
     for item in declaration_inputs(environment):
-        colon = top_level_colon(item.declaration)
+        colon = find_top_level(item.declaration, ":")
         if colon < 0:
             continue
         proposition = normalize_formula(
@@ -62,10 +59,10 @@ def _fact(
     origin: str,
     evidence: EvidenceRef,
 ) -> ProofFact:
-    digest = hashlib.sha256(
+    digest = text_sha256(
         f"{origin}\0{name}\0{normalize_formula(proposition)}\0"
-        f"{evidence.source_sha256}".encode()
-    ).hexdigest()[:20]
+        f"{evidence.source_sha256}"
+    )[:20]
     return ProofFact(
         fact_id=f"proof-fact:{digest}",
         name=name,

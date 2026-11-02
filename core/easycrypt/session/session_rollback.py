@@ -1,19 +1,18 @@
 """Pre-commit file transaction for a managed EasyCrypt session.
 
-Extracted from ``session_runtime.Session`` (a cut of the Session god-object
-decomposition). ``append_block`` SPECULATIVELY appends the candidate tactic to
-``history.ec`` and runs EC; the append must be undone in two cases — EC accepted
-the tactic but it produced no goal change (no-progress auto-revert), or the
-daemon REJECTED it. Both undo the SAME multi-file transaction, which was
-previously DUPLICATED inline in ``Session._apply_no_progress_rollback`` and the
-daemon-reject branch of ``Session._try_daemon_path``.
+``Session.append_block`` SPECULATIVELY appends the candidate tactic to
+``history.ec`` and runs EC; the append must be undone in two cases — EasyCrypt
+rejected the tactic, or it accepted it but the goal did not change
+(no-progress auto-revert). Both undo the SAME multi-file transaction, in
+``Session._roll_back``.
 
 This owns that snapshot+restore over ``{history, steps, curr}``, keyed on
 ``prev.hist`` (the pre-append ``history`` snapshot) and ``prev.out`` (the
 pre-tactic ``curr`` — which is ALSO the prior post-commit state; the two
-meanings coincide by construction, so one file serves both). Daemon-cache
-invalidation is deliberately NOT here: it is REPL lifecycle owned by the
-Session, and each caller invalidates after restoring (EC has no undo).
+meanings coincide by construction, so one file serves both). Bringing the
+daemon back to the restored journal is deliberately NOT here: it is REPL
+lifecycle owned by the Session, which undoes the daemon (or drops its session
+when it cannot) after restoring.
 """
 from __future__ import annotations
 
@@ -72,8 +71,8 @@ class RollbackJournal:
         placeholders" emitted ``subgoals 5->1`` after the history rolled back).
         Hedged: this same curr<-prev / false-PROGRESS mechanism may also be what
         drove Run 13's ~12-min toxic loop, rather than the earlier fingerprint /
-        regression framings. The caller invalidates the daemon afterward (EC has
-        no undo).
+        regression framings. The session brings the daemon back to the
+        restored journal afterward.
         """
         if self._prev_hist.exists():
             self._history.write_bytes(self._prev_hist.read_bytes())

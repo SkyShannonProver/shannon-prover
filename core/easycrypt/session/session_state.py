@@ -11,10 +11,10 @@ import re
 from dataclasses import dataclass
 from pathlib import Path
 
+from core.easycrypt.ec_prompt import PROMPT_RE, check_prompt_uid
+
 
 REMAINING_UNKNOWN = -1
-_CHECK_PROMPT_RE = re.compile(r"\[(\d+)\|check\]>")
-_ANY_PROMPT_RE = re.compile(r"\[\d+\|[^\]]+\]>")
 _CURRENT_GOAL_MARKER_RE = re.compile(
     r"^\s*Current goal(?:\s*\(remaining:\s*(\d+)\))?\s*$",
 )
@@ -45,10 +45,6 @@ class TargetLemmaMetadata:
     status: str
     lemma: str = ""
     source_file: str = ""
-
-    @property
-    def usable(self) -> bool:
-        return self.status in {"target_lemma", "full_file"}
 
 
 def read_session_state(
@@ -216,9 +212,9 @@ def extract_active_goal_block(raw_text: str) -> tuple[str, int]:
     lines = raw_text.splitlines()
     check_lines: list[tuple[int, int]] = []
     for i, line in enumerate(lines):
-        m = _CHECK_PROMPT_RE.search(line)
-        if m:
-            check_lines.append((int(m.group(1)), i))
+        uid = check_prompt_uid(line)
+        if uid is not None:
+            check_lines.append((uid, i))
 
     if not check_lines:
         if latest_state_is_closed(raw_text):
@@ -251,7 +247,7 @@ def extract_active_goal_block(raw_text: str) -> tuple[str, int]:
     if goal_start == highest_idx:
         forward_end = len(lines)
         for i in range(highest_idx + 1, len(lines)):
-            if _ANY_PROMPT_RE.search(lines[i]):
+            if PROMPT_RE.search(lines[i]):
                 forward_end = i
                 break
         for i in range(highest_idx + 1, forward_end):
@@ -272,7 +268,7 @@ def extract_active_goal_block(raw_text: str) -> tuple[str, int]:
     n_remaining = REMAINING_UNKNOWN
     scan_end = -1
     for j in range(highest_idx - 1, -1, -1):
-        if _CHECK_PROMPT_RE.search(lines[j]):
+        if check_prompt_uid(lines[j]) is not None:
             scan_end = j
             break
     for i in range(highest_idx - 1, scan_end, -1):
@@ -330,7 +326,7 @@ def _is_current_goal_marker(line: str) -> bool:
 
 def latest_state_section(raw_text: str) -> str:
     """Return the prompt-delimited section containing the latest state."""
-    prompts = list(_ANY_PROMPT_RE.finditer(raw_text))
+    prompts = list(PROMPT_RE.finditer(raw_text))
     if not prompts:
         return raw_text[-500:]
     last = prompts[-1]
@@ -361,10 +357,9 @@ def latest_state_is_closed(raw_text: str) -> bool:
     lines = raw_text.splitlines()
     prompt_lines: list[tuple[int, int]] = []
     for i, line in enumerate(lines):
-        m = _ANY_PROMPT_RE.search(line)
+        m = PROMPT_RE.search(line)
         if m:
-            num_match = re.search(r"\[(\d+)\|", m.group(0))
-            prompt_lines.append((int(num_match.group(1)) if num_match else i, i))
+            prompt_lines.append((int(m.group(1)), i))
 
     if prompt_lines:
         _, highest_idx = max(prompt_lines, key=lambda x: x[0])
@@ -404,4 +399,4 @@ def extract_goal_body(raw_text: str) -> str:
         goal_text = "\n".join(lines[start:])
     else:
         goal_text = "\n".join(lines[-80:])
-    return _ANY_PROMPT_RE.sub("", goal_text)
+    return PROMPT_RE.sub("", goal_text)

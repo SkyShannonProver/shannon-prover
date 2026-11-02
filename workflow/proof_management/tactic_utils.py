@@ -5,7 +5,11 @@ import re
 
 
 def strip_easycrypt_comments(text: str) -> str:
-    """Remove nested EasyCrypt comments before classifying a submitted tactic."""
+    """Remove nested EasyCrypt comments before classifying a submitted tactic.
+
+    Kept for the interleaved warm handoff, which imports it; callers in this
+    component use ``core.easycrypt.proof_text`` instead.
+    """
 
     out: list[str] = []
     index = 0
@@ -37,7 +41,13 @@ def is_product_budget_seq(tactic: str) -> bool:
         return False
     if "[<=" in text or "pr[" in text:
         return True
-    has_budget_marker = "%r" in text or "order" in text or "q" in text
+    # A query budget is an identifier such as ``q`` or ``qD``; a bare
+    # substring test would match the ``seq`` head itself.
+    has_budget_marker = (
+        "%r" in text
+        or "order" in text
+        or re.search(r"\bq\w*", text) is not None
+    )
     has_event_marker = (
         "has " in text
         or " mu " in text

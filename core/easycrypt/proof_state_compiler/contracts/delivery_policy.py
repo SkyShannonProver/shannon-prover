@@ -8,8 +8,6 @@ the composition root and are immutable thereafter.
 
 from __future__ import annotations
 
-import hashlib
-import json
 from dataclasses import dataclass, field
 
 from core.easycrypt.proof_state_compiler.contracts.delivery import (
@@ -19,6 +17,7 @@ from core.easycrypt.proof_state_compiler.contracts.delivery import (
 from core.easycrypt.proof_state_compiler.contracts.strategy import (
     ROUTE_SELECTING,
 )
+from core.easycrypt.proof_state_compiler.contracts.digest import json_sha256
 
 
 DELIVERY_LIFETIME_SUPPRESSED = "delivery_lifetime_suppressed"
@@ -215,7 +214,7 @@ class ResolvedDeliveryPlan:
                 ),
             ),
         )
-        object.__setattr__(self, "plan_sha256", _sha256(self.to_dict()))
+        object.__setattr__(self, "plan_sha256", json_sha256(self.to_dict()))
 
     @property
     def policy_ids(self) -> tuple[str, ...]:
@@ -228,10 +227,6 @@ class ResolvedDeliveryPlan:
     @property
     def admitted_strategy_classes(self) -> tuple[str, ...]:
         return tuple(sorted({item.rule.strategy_class for item in self.policies}))
-
-    @property
-    def delivery_rules(self) -> tuple[DeliveryRule, ...]:
-        return tuple(item.rule for item in self.policies)
 
     def policy_for_feature(self, feature_id: str) -> DeliveryPolicyDefinition | None:
         policy_by_id = {item.policy_id: item for item in self.policies}
@@ -305,13 +300,3 @@ def empty_delivery_plan(profile_id: str) -> ResolvedDeliveryPlan:
         policies=(),
         feature_policy_bindings=(),
     )
-
-
-def _sha256(value: dict[str, object]) -> str:
-    encoded = json.dumps(
-        value,
-        ensure_ascii=False,
-        sort_keys=True,
-        separators=(",", ":"),
-    ).encode("utf-8")
-    return hashlib.sha256(encoded).hexdigest()

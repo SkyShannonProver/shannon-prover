@@ -1,9 +1,9 @@
 """Checkpoint domain objects.
 
-CheckpointIndex is the shared coordinate system for menus, structural
-checkpoint panels, restore anchors, route-health repairs, and resume
-boundaries. CheckpointOption is the immutable boundary object used by the
-manager and renderer; dict conversion happens only at the rendered surface.
+CheckpointIndex holds the rewind-menu options, with the pre-rewind restore
+option first when one exists. CheckpointOption is the immutable boundary
+object used by the manager; dict conversion happens only at the rendered
+surface.
 """
 from __future__ import annotations
 
@@ -15,18 +15,6 @@ from typing import Any
 class CheckpointOption:
     payload: dict[str, Any]
 
-    @property
-    def checkpoint_id(self) -> str:
-        return str(self.payload.get("checkpoint_id") or "")
-
-    @property
-    def semantic_ids(self) -> list[str]:
-        values = self.payload.get("semantic_ids")
-        if isinstance(values, list):
-            return [str(item) for item in values if str(item).strip()]
-        semantic_id = str(self.payload.get("semantic_id") or "").strip()
-        return [semantic_id] if semantic_id else []
-
     def to_dict(self) -> dict[str, Any]:
         return dict(self.payload)
 
@@ -34,21 +22,6 @@ class CheckpointOption:
 @dataclass(frozen=True)
 class CheckpointIndex:
     menu_options: list[CheckpointOption] = field(default_factory=list)
-    structural_items: list[CheckpointOption] = field(default_factory=list)
-    restore_option: CheckpointOption | None = None
 
     def menu_surface(self) -> list[dict[str, Any]]:
         return [item.to_dict() for item in self.menu_options]
-
-    def structural_surface(self) -> list[dict[str, Any]]:
-        return [item.to_dict() for item in self.structural_items]
-
-    def to_dict(self) -> dict[str, Any]:
-        return {
-            "menu_options": self.menu_surface(),
-            "structural_items": self.structural_surface(),
-            "restore_option": (
-                self.restore_option.to_dict()
-                if self.restore_option is not None else {}
-            ),
-        }

@@ -1,25 +1,22 @@
 """Feature definition for selected tactic-dialect repair."""
 
-from core.easycrypt.proof_state_compiler.contracts import (
-    COMMITMENT_RELATIVE,
-    StrategyContract,
-)
 from core.easycrypt.proof_state_compiler.features.registry import (
     ExperimentGate,
     FeatureDefinition,
     FeatureSpec,
 )
-
-
-TACTIC_DIALECT_REPAIR_FEATURE_ID = "tactic_dialect_repair"
-TACTIC_DIALECT_REPAIR_STRATEGY_CONTRACT = StrategyContract(
-    strategy_class=COMMITMENT_RELATIVE,
-    rationale=(
-        "the agent already selected eager while; the feature preserves its "
-        "submitted invariant candidates and changes only native tactic dialect"
-    ),
-    required_commitment="agent_supplied_eager_while_operation",
+from core.easycrypt.proof_state_compiler.features.failed_commit import (
+    attempt_diagnostic_producer,
+    failed_commit_gate,
 )
+from .ids import (
+    TACTIC_DIALECT_REPAIR_FEATURE_ID,
+    TACTIC_DIALECT_REPAIR_STRATEGY_CONTRACT,
+)
+from .analysis import analyze_eager_while_dialect
+from .realization import EAGER_WHILE_DIALECT_CODEC
+from .surface_lowering import lower_tactic_dialect_repair
+from .syntax import is_candidate_eager_while
 
 
 def tactic_dialect_repair_feature_spec() -> FeatureSpec:
@@ -62,14 +59,6 @@ def tactic_dialect_repair_feature_spec() -> FeatureSpec:
 
 
 def tactic_dialect_repair_feature() -> FeatureDefinition:
-    from core.easycrypt.proof_state_compiler.features.failed_commit import (
-        attempt_diagnostic_producer,
-        failed_commit_gate,
-    )
-    from .analysis import analyze_eager_while_dialect
-    from .realization import EAGER_WHILE_DIALECT_CODEC
-    from .surface_lowering import lower_tactic_dialect_repair
-    from .syntax import is_candidate_eager_while
 
     return FeatureDefinition(
         spec=tactic_dialect_repair_feature_spec(),

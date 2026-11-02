@@ -7,8 +7,6 @@ own the rejected occurrence and parsed operation identity.
 
 from __future__ import annotations
 
-import hashlib
-import json
 import re
 from dataclasses import dataclass
 
@@ -21,6 +19,11 @@ from core.easycrypt.proof_state_compiler.contracts.native_semantics import (
     NativeApplicationHeadDescriptor,
 )
 from core.easycrypt.proof_state_compiler.contracts.state_ref import StateRef
+from core.easycrypt.proof_state_compiler.contracts.digest import (
+    json_sha256,
+    text_sha256,
+)
+from core.easycrypt.proof_state_compiler.delimiters import balanced
 
 
 _OPERATION_FAMILY_RE = re.compile(r"^[a-z][a-z_]*$")
@@ -46,6 +49,41 @@ RECOVERY_PRESERVATION_WITNESS_KINDS = frozenset({
     NATIVE_ARGUMENT_REALIZATION_WITNESS,
     NATIVE_TACTIC_PREFIX_WITNESS,
 })
+
+
+def compound_prefix_remainder(source: str, prefix: str) -> str | None:
+    """Return what ``source`` runs after ``prefix`` and its top-level ``;``.
+
+    Both arguments are complete tactics ending in ``.``.  ``source`` must spell
+    the body of ``prefix``, optional whitespace, a ``;`` outside every
+    bracket, and at least one more stage.  EasyCrypt ignores whitespace around
+    ``;``, so ``wp;t.``, ``wp; t.`` and ``wp ; t.`` share one boundary.  The
+    stripped remaining stages are returned without the final ``.``; ``None``
+    means ``source`` does not extend ``prefix`` by further stages.
+
+    This is one bounded spelling check shared by every pass that relates a
+    compound to its prefix.  EasyCrypt alone decides whether either parses.
+    """
+
+    if (
+        not source.endswith(".")
+        or not prefix.endswith(".")
+        or source != source.strip()
+    ):
+        return None
+    prefix_body = prefix[:-1].rstrip()
+    source_body = source[:-1]
+    if (
+        not prefix_body
+        or not source_body.startswith(prefix_body)
+        or not balanced(prefix_body)
+    ):
+        return None
+    rest = source_body[len(prefix_body):].lstrip()
+    if not rest.startswith(";"):
+        return None
+    remainder = rest[1:].strip()
+    return remainder or None
 
 
 @dataclass(frozen=True)
@@ -78,8 +116,6 @@ class RecoveryHandoff:
             self.accepted_prefix_tactic,
             self.derived_rejected_tactic,
         )
-        prefix_body = self.accepted_prefix_tactic[:-1].rstrip()
-        source_body = self.source_rejected_tactic[:-1].strip()
         if (
             self.handoff_kind != "native_compound_boundary"
             or not self.source_feature_id
@@ -95,8 +131,9 @@ class RecoveryHandoff:
                 for item in tactics
             )
             or self.source_rejected_tactic == self.derived_rejected_tactic
-            or not prefix_body
-            or not source_body.startswith(prefix_body + ";")
+            or compound_prefix_remainder(
+                self.source_rejected_tactic, self.accepted_prefix_tactic
+            ) is None
             or not self.native_failure_kind
             or not self.native_error_message
         ):
@@ -204,7 +241,7 @@ class RecoveryActionRealization:
         if not self.exact_tactic.endswith(".") or not self.evidence_refs:
             raise ValueError("recovery realization requires tactic and evidence")
         if self.witness.witness_kind != EXACT_OPERATION_RESOURCE_WITNESS and (
-            hashlib.sha256(self.exact_tactic.encode("utf-8")).hexdigest()
+            text_sha256(self.exact_tactic)
             != self.witness.realization_sha256
         ):
             raise ValueError("recovery realization changed its witnessed tactic")
@@ -221,12 +258,7 @@ def exact_operation_resource_witness(
         "operation_family": operation_family,
         "selected_resource": selected_resource,
     }
-    identity = hashlib.sha256(json.dumps(
-        payload,
-        ensure_ascii=False,
-        sort_keys=True,
-        separators=(",", ":"),
-    ).encode("utf-8")).hexdigest()
+    identity = json_sha256(payload)
     return RecoveryPreservationWitness(
         witness_kind=EXACT_OPERATION_RESOURCE_WITNESS,
         witness_id=identity,
@@ -246,10 +278,8 @@ def native_argument_realization_witness(
 ) -> RecoveryPreservationWitness:
     """Bind one native-identified agent argument to one tactic realization."""
 
-    argument_sha256 = hashlib.sha256(
-        committed_argument.encode("utf-8")
-    ).hexdigest()
-    realization_sha256 = hashlib.sha256(exact_tactic.encode("utf-8")).hexdigest()
+    argument_sha256 = text_sha256(committed_argument)
+    realization_sha256 = text_sha256(exact_tactic)
     payload = {
         "witness_kind": NATIVE_ARGUMENT_REALIZATION_WITNESS,
         "source_operation_family": source_operation_family,
@@ -258,12 +288,7 @@ def native_argument_realization_witness(
         "native_family": native_family,
         "realization_sha256": realization_sha256,
     }
-    identity = hashlib.sha256(json.dumps(
-        payload,
-        ensure_ascii=False,
-        sort_keys=True,
-        separators=(",", ":"),
-    ).encode("utf-8")).hexdigest()
+    identity = json_sha256(payload)
     return RecoveryPreservationWitness(
         witness_kind=NATIVE_ARGUMENT_REALIZATION_WITNESS,
         witness_id=identity,
@@ -282,12 +307,8 @@ def native_tactic_prefix_witness(
 ) -> RecoveryPreservationWitness:
     """Bind one exact failed compound tactic to a native-accepted prefix."""
 
-    committed_sha256 = hashlib.sha256(
-        rejected_tactic.encode("utf-8")
-    ).hexdigest()
-    realization_sha256 = hashlib.sha256(
-        exact_prefix_tactic.encode("utf-8")
-    ).hexdigest()
+    committed_sha256 = text_sha256(rejected_tactic)
+    realization_sha256 = text_sha256(exact_prefix_tactic)
     payload = {
         "witness_kind": NATIVE_TACTIC_PREFIX_WITNESS,
         "source_operation_family": "compound_tactic",
@@ -296,12 +317,7 @@ def native_tactic_prefix_witness(
         "native_family": "accepted_proper_source_prefix",
         "realization_sha256": realization_sha256,
     }
-    identity = hashlib.sha256(json.dumps(
-        payload,
-        ensure_ascii=False,
-        sort_keys=True,
-        separators=(",", ":"),
-    ).encode("utf-8")).hexdigest()
+    identity = json_sha256(payload)
     return RecoveryPreservationWitness(
         witness_kind=NATIVE_TACTIC_PREFIX_WITNESS,
         witness_id=identity,
@@ -514,13 +530,7 @@ class AttemptedOperationIR:
             "side": self.side,
             "positions": self.positions,
         }
-        encoded = json.dumps(
-            payload,
-            ensure_ascii=False,
-            sort_keys=True,
-            separators=(",", ":"),
-        ).encode("utf-8")
-        return hashlib.sha256(encoded).hexdigest()
+        return json_sha256(payload)
 
 
 @dataclass(frozen=True)
@@ -580,6 +590,39 @@ class RecoveryClaim:
                 raise ValueError("recovery witness resource drifted")
         elif self.resource_match_kind != "none" or self.selected_resource:
             raise ValueError("cross-operation witness cannot claim a resource")
+
+
+def recovery_claim_for(
+    attempted: AttemptedOperationIR,
+    *,
+    feature_id: str,
+    allowed_output_kinds: tuple[str, ...],
+    preservation_witness: RecoveryPreservationWitness,
+    selected_resource: str = "",
+    resource_match_kind: str = "none",
+    operation_family: str = "",
+) -> RecoveryClaim:
+    """Claim the exact failed occurrence ``attempted`` for ``feature_id``.
+
+    The claim copies the attempt's identity, trigger and evidence verbatim.
+    ``operation_family`` overrides the attempted family only for a claim on
+    a different view of the same occurrence (the compound-boundary
+    fallback); a resource-free claim leaves both resource arguments unset.
+    """
+
+    return RecoveryClaim(
+        feature_id=feature_id,
+        recovery_key=attempted.recovery_key,
+        attempt_id=attempted.attempt_id,
+        occurrence_identity=attempted.occurrence_identity,
+        trigger_id=attempted.trigger_id,
+        operation_family=operation_family or attempted.operation_family,
+        selected_resource=selected_resource,
+        resource_match_kind=resource_match_kind,
+        allowed_output_kinds=allowed_output_kinds,
+        preservation_witness=preservation_witness,
+        evidence_refs=attempted.evidence_refs,
+    )
 
 
 @dataclass(frozen=True)

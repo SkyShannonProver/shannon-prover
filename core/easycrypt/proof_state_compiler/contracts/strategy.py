@@ -67,7 +67,3 @@ class StrategyContract:
                 raise ValueError(
                     "route-selecting output cannot claim a prior commitment"
                 )
-
-    @property
-    def strategy_entangled(self) -> bool:
-        return self.strategy_class == ROUTE_SELECTING

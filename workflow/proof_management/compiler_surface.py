@@ -1,7 +1,7 @@
 """Proof-state-compiler RPC client extracted from ``ReplSessionManager``.
 
-``CompilerSurface`` owns the six read-only compiler backend calls (exact
-preflight/certification, compiler input, resource loads, native semantic
+``CompilerSurface`` owns the five read-only compiler backend calls (exact
+tactic certification, compiler input, resource loads, native semantic
 batches, and native state projection).  It deliberately holds a reference to
 its ``ReplSessionManager`` instead of copied dependencies: every call must
 share the manager's live ``_lock`` (mutual exclusion with session lifecycle
@@ -12,13 +12,16 @@ mutates the session; ``ReplSessionManager`` keeps one-line delegates so the
 """
 from __future__ import annotations
 
-import json
+from collections.abc import Iterator
+from contextlib import contextmanager
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
 from core.easycrypt.session.session_events import event_payload
+from workflow.proof_state_compiler.service import require_runtime_unchanged
 
 from .backend_actions import AuthoritativeViewResolution
+from .backend_request import BackendRequest
 from .backend_invocation import (
     capture_backend_invocation,
     resolve_backend_invocation,
@@ -38,35 +41,6 @@ class CompilerSurface:
 
     def __init__(self, session: "ReplSessionManager") -> None:
         self._session = session
-
-    def read_only_tactic_preflight(
-        self,
-        tactic: str,
-        *,
-        timeout: int = 30,
-    ) -> dict[str, Any]:
-        """Check one exact compiler tactic through event-bound preflight.
-
-        This is manager-internal WP8a plumbing.  It does not refresh or mutate
-        the committed session, and it returns only the backend action whose
-        preflight artifact was bound to this exact invocation.
-        """
-        session = self._session
-        candidate = str(tactic or "").strip()
-        if not candidate:
-            return {}
-        with session._lock:
-            actions: list[dict[str, Any]] = []
-            try:
-                session._run_backend(
-                    "exact_tactic_preflight",
-                    ["-try", "-c", candidate],
-                    actions=actions,
-                    timeout=timeout,
-                )
-            except (ReplBackendTimeout, ReplBackendError):
-                pass
-            return dict(actions[-1]) if actions else {}
 
     def certify_exact_tactic(
         self,
@@ -95,18 +69,18 @@ class CompilerSurface:
                 action_name="try",
                 mutates_proof_state=False,
             )
-            history_before = tuple(session.committed_history())
-            state_version_before = session.state_version
             actions: list[dict[str, Any]] = []
-            try:
-                session._run_backend(
-                    "exact_tactic_preflight",
-                    ["-try", "-c", candidate],
-                    actions=actions,
-                    timeout=timeout,
-                )
-            except (ReplBackendTimeout, ReplBackendError):
-                pass
+            with _read_only_backend_call(
+                session, "exact tactic certification"
+            ) as state_version_before:
+                try:
+                    session._run_backend(
+                        BackendRequest.try_tactic(candidate),
+                        actions=actions,
+                        timeout=timeout,
+                    )
+                except (ReplBackendTimeout, ReplBackendError):
+                    pass
             action = dict(actions[-1]) if actions else {}
             window = resolve_backend_invocation(
                 boundary,
@@ -125,16 +99,15 @@ class CompilerSurface:
                     "artifact_hash": str(payload.get("artifact_hash") or ""),
                     "hash_algorithm": "sha1",
                 }
-            history_after = tuple(session.committed_history())
-            state_version_after = session.state_version
             return {
                 "tactic": candidate,
                 "action": action,
                 "authority": authority,
                 "contract_error": produced_error,
-                "history_unchanged": history_before == history_after,
+                # Reported for callers outside the compiler; the guard above
+                # has already raised if the call changed the session.
+                "history_unchanged": True,
                 "state_version_before": state_version_before,
-                "state_version_after": state_version_after,
             }
 
     def read_compiler_input_v2(
@@ -153,18 +126,13 @@ class CompilerSurface:
         with session._lock:
             actions: list[dict[str, Any]] = []
             authoritative_resolutions: list[AuthoritativeViewResolution] = []
-            backend_args = [
-                "-compiler-input-v2",
-                "--manager-state-version",
-                str(session.state_version),
-            ]
-            payload = session._run_backend(
-                "compiler_input_v2",
-                backend_args,
-                actions=actions,
-                timeout=timeout,
-                authoritative_resolutions=authoritative_resolutions,
-            )
+            with _read_only_backend_call(session, "compiler input"):
+                payload = session._run_backend(
+                    BackendRequest.compiler_input(session.state_version),
+                    actions=actions,
+                    timeout=timeout,
+                    authoritative_resolutions=authoritative_resolutions,
+                )
             if not isinstance(payload, dict) or payload.get("ok") is not True:
                 raise ReplBackendError(actions[-1] if actions else {
                     "label": "compiler_input_v2",
@@ -178,8 +146,12 @@ class CompilerSurface:
                 raise ValueError("compiler input target is missing")
             if target.get("lemma") != session.lemma_name:
                 raise ValueError("compiler input target lemma drifted")
-            if Path(str(target.get("source_file") or "")).resolve() != Path(
-                session.file_path
+            # Relative paths are project-relative (the backend runs there),
+            # never relative to this process's working directory.
+            project_root = Path(session.project_root)
+            reported_source = project_root / str(target.get("source_file") or "")
+            if reported_source.resolve() != (
+                project_root / session.file_path
             ).resolve():
                 raise ValueError("compiler input target source drifted")
             state = payload.get("state")
@@ -242,23 +214,17 @@ class CompilerSurface:
             "requests": [item.runtime_payload() for item in load_requests],
         }
         with session._lock:
-            history_before = tuple(session.committed_history())
-            state_version_before = session.state_version
             actions: list[dict[str, Any]] = []
             resolutions: list[AuthoritativeViewResolution] = []
-            payload = session._run_backend(
-                "compiler_resource_load_v2",
-                [
-                    "-compiler-resource-load-v2",
-                    "--manager-state-version",
-                    str(session.state_version),
-                    "--compiler-resource-load-request-json",
-                    json.dumps(request, sort_keys=True, separators=(",", ":")),
-                ],
-                actions=actions,
-                timeout=timeout,
-                authoritative_resolutions=resolutions,
-            )
+            with _read_only_backend_call(session, "compiler resource load"):
+                payload = session._run_backend(
+                    BackendRequest.compiler_resource_load(
+                        session.state_version, request
+                    ),
+                    actions=actions,
+                    timeout=timeout,
+                    authoritative_resolutions=resolutions,
+                )
             if not isinstance(payload, dict) or payload.get("ok") is not True:
                 raise ReplBackendError(actions[-1] if actions else {
                     "label": "compiler_resource_load_v2",
@@ -281,8 +247,6 @@ class CompilerSurface:
                 or resolution.event_sequence <= 0
             ):
                 raise ValueError("compiler resource occurrence identity drifted")
-            history_after = tuple(session.committed_history())
-            state_version_after = session.state_version
             return {
                 "result": payload,
                 "authority": {
@@ -292,9 +256,6 @@ class CompilerSurface:
                     "artifact_ref": str(produced.get("artifact") or ""),
                     "artifact_sha256": str(produced.get("result_sha256") or ""),
                 },
-                "history_unchanged": history_before == history_after,
-                "state_version_before": state_version_before,
-                "state_version_after": state_version_after,
             }
 
     def execute_native_semantic_batch(
@@ -316,27 +277,17 @@ class CompilerSurface:
             "members": [dict(item) for item in requests],
         }
         with session._lock:
-            history_before = tuple(session.committed_history())
-            state_version_before = session.state_version
             actions: list[dict[str, Any]] = []
             authoritative_resolutions: list[AuthoritativeViewResolution] = []
-            payload = session._run_backend(
-                "native_semantic_batch",
-                [
-                    "-native-semantic-batch-json",
-                    "--manager-state-version",
-                    str(session.state_version),
-                    "--native-semantic-batch-request-json",
-                    json.dumps(
-                        request,
-                        sort_keys=True,
-                        separators=(",", ":"),
+            with _read_only_backend_call(session, "native semantic batch"):
+                payload = session._run_backend(
+                    BackendRequest.native_semantic_batch(
+                        session.state_version, request
                     ),
-                ],
-                actions=actions,
-                timeout=timeout,
-                authoritative_resolutions=authoritative_resolutions,
-            )
+                    actions=actions,
+                    timeout=timeout,
+                    authoritative_resolutions=authoritative_resolutions,
+                )
             if not isinstance(payload, dict) or payload.get("ok") is not True:
                 raise ReplBackendError(actions[-1] if actions else {
                     "label": "native_semantic_batch",
@@ -376,16 +327,6 @@ class CompilerSurface:
                 raise ValueError(
                     "native semantic batch event authority does not match result"
                 )
-            history_after = tuple(session.committed_history())
-            state_version_after = session.state_version
-            if history_after != history_before:
-                raise RuntimeError(
-                    "native semantic batch changed committed proof history"
-                )
-            if state_version_after != state_version_before:
-                raise RuntimeError(
-                    "native semantic batch changed manager state version"
-                )
             return {
                 "result": payload,
                 "authority": {
@@ -395,9 +336,6 @@ class CompilerSurface:
                     "artifact_ref": str(produced.get("artifact") or ""),
                     "artifact_sha256": str(produced.get("result_sha256") or ""),
                 },
-                "history_unchanged": True,
-                "state_version_before": state_version_before,
-                "state_version_after": state_version_after,
             }
 
     def project_native_state(
@@ -419,23 +357,17 @@ class CompilerSurface:
             "max_depth": max_depth,
         }
         with session._lock:
-            history_before = tuple(session.committed_history())
-            state_version_before = session.state_version
             actions: list[dict[str, Any]] = []
             authoritative_resolutions: list[AuthoritativeViewResolution] = []
-            payload = session._run_backend(
-                "native_state_projection",
-                [
-                    "-native-state-projection-json",
-                    "--manager-state-version",
-                    str(session.state_version),
-                    "--native-state-projection-request-json",
-                    json.dumps(request, sort_keys=True, separators=(",", ":")),
-                ],
-                actions=actions,
-                timeout=timeout,
-                authoritative_resolutions=authoritative_resolutions,
-            )
+            with _read_only_backend_call(session, "native state query"):
+                payload = session._run_backend(
+                    BackendRequest.native_state_projection(
+                        session.state_version, request
+                    ),
+                    actions=actions,
+                    timeout=timeout,
+                    authoritative_resolutions=authoritative_resolutions,
+                )
             if not isinstance(payload, dict) or payload.get("ok") is not True:
                 raise ReplBackendError(actions[-1] if actions else {
                     "label": "native_state_projection",
@@ -470,12 +402,6 @@ class CompilerSurface:
                 or resolution.event_sequence <= 0
             ):
                 raise ValueError("native state event authority does not match result")
-            history_after = tuple(session.committed_history())
-            state_version_after = session.state_version
-            if history_after != history_before:
-                raise RuntimeError("native state query changed committed proof history")
-            if state_version_after != state_version_before:
-                raise RuntimeError("native state query changed manager state version")
             return {
                 "result": payload,
                 "authority": {
@@ -485,7 +411,30 @@ class CompilerSurface:
                     "artifact_ref": str(produced.get("artifact") or ""),
                     "artifact_sha256": str(produced.get("result_sha256") or ""),
                 },
-                "history_unchanged": True,
-                "state_version_before": state_version_before,
-                "state_version_after": state_version_after,
             }
+
+
+@contextmanager
+def _read_only_backend_call(
+    session: "ReplSessionManager",
+    label: str,
+) -> Iterator[int]:
+    """Fail closed when one read-only backend call changed the session.
+
+    Every compiler backend call is read-only by contract.  The check runs
+    when the call returns or raises, before any payload validation, so a
+    mutation is never hidden behind an ordinary compiler failure.  Yields the
+    manager state version the call was bound to.
+    """
+
+    history_before = tuple(session.committed_history())
+    state_version_before = session.state_version
+    try:
+        yield state_version_before
+    finally:
+        require_runtime_unchanged(
+            session,
+            history_before=history_before,
+            state_version_before=state_version_before,
+            label=label,
+        )

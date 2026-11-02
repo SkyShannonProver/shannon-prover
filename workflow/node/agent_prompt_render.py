@@ -333,7 +333,9 @@ def _agent_safe_action_summaries(actions: list[dict[str, Any]]) -> list[dict[str
     for action in actions:
         if not isinstance(action, dict):
             continue
-        if action.get("label") == "managed_goal_view":
+        # The goal view is rendered separately, and an in-place rewind that
+        # falls back to restart+replay shows the agent only that replay.
+        if action.get("label") in {"managed_goal_view", "daemon_undo_fallback"}:
             continue
         observation = action.get("agent_observation")
         observation = observation if isinstance(observation, dict) else {}

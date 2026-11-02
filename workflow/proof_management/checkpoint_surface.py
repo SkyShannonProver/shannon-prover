@@ -35,67 +35,6 @@ def parse_checkpoint_id(value: str) -> tuple[int, str] | None:
     return int(match.group(1)), match.group(2)
 
 
-def structural_checkpoints_surface(
-    tactics: list[str],
-    *,
-    replay_prefix_count: int = 0,
-) -> list[dict[str, Any]]:
-    if not tactics:
-        return []
-    digest = history_hash(tactics)
-    overrides = semantic_checkpoint_overrides(
-        tactics,
-        replay_prefix_count=replay_prefix_count,
-    )
-    items: list[dict[str, Any]] = []
-    for idx in ordered_checkpoint_indices(tactics, overrides):
-        override = overrides.get(idx) or {}
-        if 1 <= idx <= len(tactics):
-            items.append(checkpoint_surface_item(
-                tactics,
-                digest,
-                idx,
-                override=override,
-            ))
-    return items[:8]
-
-
-def checkpoint_surface_item(
-    tactics: list[str],
-    history_digest: str,
-    tactic_index: int,
-    *,
-    override: dict[str, Any] | None = None,
-) -> dict[str, Any]:
-    tactic = tactics[tactic_index - 1]
-    semantics = checkpoint_semantics(tactic)
-    override = override or {}
-    semantic_ids = _string_list(override.get("semantic_ids"))
-    if not semantic_ids and override.get("semantic_id"):
-        semantic_ids = [str(override.get("semantic_id"))]
-    cid = checkpoint_id(history_digest, tactic_index)
-    return _drop_empty({
-        "checkpoint_id": cid,
-        "semantic_id": semantic_ids[0] if semantic_ids else "",
-        "semantic_ids": semantic_ids,
-        "label": override.get("label") or checkpoint_label_for_tactic(tactic, tactic_index),
-        "committed_step_index": tactic_index,
-        "committed_tactic": tactic,
-        "restored_proof_layer": override.get("restored_proof_layer") or restored_layer_for_tactic(tactic),
-        "restored_affordances": override.get("restored_affordances"),
-        "undo_scope": override.get("undo_scope") or undo_scope_for_tactic(tactic),
-        "why_checkpoint": override.get("why_checkpoint") or semantics["why_checkpoint"],
-        "effect_if_selected": (
-            f"Undo committed tactic #{tactic_index} and every committed "
-            "tactic after it in this node."
-        ),
-        "submit": {
-            "intent": "undo_to_checkpoint",
-            "payload": {"checkpoint_id": cid},
-        },
-    })
-
-
 def checkpoint_options(
     tactics: list[str],
     *,

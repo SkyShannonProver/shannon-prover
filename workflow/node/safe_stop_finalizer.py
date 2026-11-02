@@ -147,16 +147,11 @@ def _write_finalization_audit(
 
 def finalize_safe_stop_checkpoint(
     *,
-    project_root: Path,
     run_dir: Path,
     target_file: str,
     lemma: str,
-    include_dir: str,
     committed_prefix: Iterable[str],
-    committed_transactions: Iterable[str] | None = None,
     existing_capsules: Iterable[str] = (),
-    surface_profile: str | None = None,
-    agent_report: dict[str, Any] | None = None,
     trigger: str = "run_terminal",
 ) -> SafeStopFinalization:
     """Finalize one interrupted run without synchronously replaying its spine.
@@ -176,10 +171,6 @@ def finalize_safe_stop_checkpoint(
         if isinstance(tactic, str) and tactic.strip()
     )
     allowed_root = run_dir / "resume_capsules"
-    # Retain the parameter for call-site/source compatibility.  Transaction
-    # boundaries matter when a later resume replays a capsule; they are not a
-    # reason to execute the proof again while sealing a terminal result.
-    del project_root, include_dir, committed_transactions, surface_profile, agent_report
 
     if not prefix:
         result = SafeStopFinalization(

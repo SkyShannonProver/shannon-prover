@@ -7,7 +7,7 @@ import re
 import time
 from collections.abc import Callable, Collection, Mapping
 from dataclasses import dataclass, field
-from typing import Any, Literal
+from typing import TYPE_CHECKING, Any, Literal
 
 from .checkpoint_surface import checkpoint_id, history_hash
 from .protocol_repair import (
@@ -28,6 +28,10 @@ from .turn_view import (
     selection_menu_action,
 )
 from .types import ManagedTurn, NodeHealthEvent, ProofStateSnapshot, TurnDirective
+
+if TYPE_CHECKING:
+    from .event_store import ProofEventManager
+    from .repl_session import ReplSessionManager
 
 
 DEFAULT_GIVE_UP_WINDOW_S = float(
@@ -86,9 +90,8 @@ class IntentAdmissionController:
         node_id: str,
         surface_profile: str | None,
         effective_profile_intents: Collection[str],
-        events: Any,
-        state_version: Callable[[], int],
-        committed_history: Callable[[], list[str]],
+        events: "ProofEventManager",
+        repl: "ReplSessionManager",
         audit: Callable[[dict[str, Any]], None],
         give_up_window_s: float = DEFAULT_GIVE_UP_WINDOW_S,
         give_up_allow_after: int = DEFAULT_GIVE_UP_ALLOW_AFTER,
@@ -98,8 +101,8 @@ class IntentAdmissionController:
         self.surface_profile = surface_profile
         self.effective_profile_intents = frozenset(effective_profile_intents)
         self.events = events
-        self._state_version = state_version
-        self._committed_history = committed_history
+        # Read for the live state version and committed history only.
+        self.repl = repl
         self._audit = audit
         self.give_up_window_s = float(give_up_window_s)
         self.give_up_allow_after = max(1, int(give_up_allow_after))
@@ -192,7 +195,7 @@ class IntentAdmissionController:
             self.events.record_intent_received(
                 intent=intent.intent,
                 payload=intent.payload,
-                state_version=self._state_version(),
+                state_version=self.repl.state_version,
             )
         blocked = self._committed_admit_gate(
             intent,
@@ -264,7 +267,7 @@ class IntentAdmissionController:
         """Project admit debt from session-owned history without reading files."""
 
         if tactics is None:
-            tactics = self._committed_history()
+            tactics = self.repl.committed_history()
         clean = [str(item or "") for item in tactics]
         digest = history_hash(clean) if clean else ""
         records: list[dict[str, Any]] = []
@@ -314,7 +317,7 @@ class IntentAdmissionController:
                 "the shared proof-tool turn deadline expired; the node is "
                 "fail-closed and will not accept another proof intent"
             ),
-            state_version=self._state_version(),
+            state_version=self.repl.state_version,
         )
         self._audit({
             "kind": "manager_turn.deadline_exceeded",
@@ -355,7 +358,7 @@ class IntentAdmissionController:
             self.events.record_malformed_intent(
                 error=parsed.error,
                 malformed_count=self.malformed_count,
-                state_version=self._state_version(),
+                state_version=self.repl.state_version,
             )
             self._audit({
                 "kind": "agent_intent.malformed",
@@ -391,9 +394,15 @@ class IntentAdmissionController:
         latest_view: dict[str, Any],
         latest_snapshot: ProofStateSnapshot | None,
     ) -> ManagedTurn | None:
+        # Admits block every completion claim.  `finish` while goals remain
+        # open is a give-up, not a claim, and keeps its ordinary give-up gate;
+        # final success is decided offline, never by `finish`.
         if not (
-            intent.intent == "finish"
-            or intent_is_standalone_qed(intent.intent, intent.payload)
+            intent_is_standalone_qed(intent.intent, intent.payload)
+            or (
+                intent.intent == "finish"
+                and not _finish_is_give_up(latest_view)
+            )
         ):
             return None
         debt = [
@@ -470,17 +479,9 @@ class IntentAdmissionController:
         *,
         latest_view: dict[str, Any],
     ) -> IntentPreflightDecision:
-        if intent.intent != "finish":
+        if intent.intent != "finish" or not _finish_is_give_up(latest_view):
             return IntentPreflightDecision()
-        proof_status = (
-            latest_view.get("proof_status")
-            if isinstance(latest_view.get("proof_status"), dict)
-            else {}
-        )
-        status = str(proof_status.get("status") or "")
-        remaining = proof_status.get("remaining_goals")
-        if not (status == "open" and remaining != 0):
-            return IntentPreflightDecision()
+        remaining = _proof_status(latest_view).get("remaining_goals")
         now = self._clock()
         self._give_up_times = [
             when
@@ -619,3 +620,18 @@ def _tactic_has_admit(tactic: str) -> bool:
 def _short_tactic(tactic: str) -> str:
     flattened = " ".join(str(tactic or "").split())
     return flattened if len(flattened) <= 60 else flattened[:59] + "…"
+
+
+def _proof_status(latest_view: dict[str, Any]) -> dict[str, Any]:
+    proof_status = latest_view.get("proof_status")
+    return proof_status if isinstance(proof_status, dict) else {}
+
+
+def _finish_is_give_up(latest_view: dict[str, Any]) -> bool:
+    """Whether `finish` now stops with goals open instead of claiming success."""
+
+    proof_status = _proof_status(latest_view)
+    return (
+        str(proof_status.get("status") or "") == "open"
+        and proof_status.get("remaining_goals") != 0
+    )

@@ -7,8 +7,7 @@ only owner of committed-history reading and closure detection. Both public
 readers return complete EasyCrypt commands: a manager commit may span several
 physical lines, so line-oriented parsing is not a valid proof-prefix model.
 
-Leaf module: stdlib-only at import time (the command splitter is
-late-bound from ``ec_lifecycle``).
+Leaf module: imports only the lexical splitter in ``proof_text``.
 """
 from __future__ import annotations
 
@@ -17,12 +16,14 @@ import json
 import re
 from pathlib import Path
 
+from core.easycrypt.proof_text import split_ec_commands
+
 # Sentence-final ``qed.`` token at the end of a committed line. A proof can
 # close via a compound step that packs the last tactic and the save command
-# into one commit — e.g. ``by move=> &hr _. qed.`` (pr_sample_double,
-# 2026-07-15) — so closure detection cannot require a standalone ``qed``
-# line. The lookbehind rejects identifier tails such as ``my_qed.`` (EC
-# identifiers may contain ``_`` and ``'``).
+# into one commit — e.g. ``by move=> &hr _. qed.`` — so closure detection
+# cannot require a standalone ``qed`` line. The lookbehind rejects
+# identifier tails such as ``my_qed.`` (EC identifiers may contain ``_`` and
+# ``'``).
 _TRAILING_QED = re.compile(r"(?i)(?<![a-z0-9_'])qed\s*\.\s*$")
 
 
@@ -75,8 +76,8 @@ def read_committed_commands(session_dir: str | Path) -> list[str]:
     commands (``wp; skip. qed.`` is two commands). Prefix counts, replay,
     projection, and closure detection must therefore use the EasyCrypt command
     splitter rather than ``splitlines()``. Returns [] if the history cannot be
-    read or parsed; silently degrading to physical lines would manufacture a
-    different proof prefix.
+    read; silently degrading to physical lines would manufacture a different
+    proof prefix.
     """
     path = history_path(session_dir)
     try:
@@ -85,12 +86,7 @@ def read_committed_commands(session_dir: str | Path) -> list[str]:
         text = path.read_text(encoding="utf-8", errors="replace")
     except Exception:
         return []
-    try:
-        from core.easycrypt.ec_lifecycle import split_ec_commands
-
-        return [c.strip() for c in split_ec_commands(text) if c.strip()]
-    except Exception:
-        return []
+    return [c.strip() for c in split_ec_commands(text) if c.strip()]
 
 
 def read_committed_tactics(session_dir: str | Path) -> list[str]:
@@ -115,17 +111,12 @@ def flatten_committed_transactions(
     commands whose bullet scope is meaningful only when submitted together.
     """
 
-    try:
-        from core.easycrypt.ec_lifecycle import split_ec_commands
-
-        return [
-            command.strip()
-            for transaction in transactions
-            for command in split_ec_commands(str(transaction))
-            if command.strip()
-        ]
-    except Exception:
-        return []
+    return [
+        command.strip()
+        for transaction in transactions
+        for command in split_ec_commands(str(transaction))
+        if command.strip()
+    ]
 
 
 def read_committed_transactions(session_dir: str | Path) -> list[str]:

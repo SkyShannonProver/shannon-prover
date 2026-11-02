@@ -33,10 +33,6 @@ def allowed_runtime_intents(profile_id: str | None) -> frozenset[str]:
     return frozenset(ensure_current_surface_profile(profile_id).allowed_intents)
 
 
-def runtime_surface_uses_goal_only(profile_id: str | None) -> bool:
-    return ensure_current_surface_profile(profile_id).base_surface == "goal_only"
-
-
 def current_surface_profile_names() -> list[str]:
     return sorted(CURRENT_SURFACE_PROFILES)
 

@@ -62,6 +62,19 @@ CI runs the same commands on every pull request. A few tests that depend on
 unpublished research material run only in the maintainers' repository, and
 maintainers run them before accepting a change.
 
+Tests live under `tests/public/<area>/`, where the area follows the code under
+test: `core/` (EasyCrypt runtime and sessions), `compiler/` (proof-state
+compiler), `workflow/` (orchestrator, proof-node manager, agents, providers),
+`eval/` (benchmark runner, metrics, reports), `interleaved/` (project-level
+runs) and `repo/` (repository-wide contracts). Shared builders and fakes
+belong in `tests/helpers/`, and fixtures in `tests/public/fixtures/`. Name a
+test after the behaviour it guarantees, not the incident that motivated it;
+that history belongs in the commit message.
+
+A test that needs the EasyCrypt toolchain carries `@pytest.mark.easycrypt`
+(or a module `pytestmark`). Without the toolchain, `uv run python -m pytest -q -m "not
+easycrypt" tests` runs the rest; CI runs everything.
+
 ## Design principles
 
 A few rules shape almost every change; [AGENTS.md](AGENTS.md) and

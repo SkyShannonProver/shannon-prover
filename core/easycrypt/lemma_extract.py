@@ -19,13 +19,15 @@ from __future__ import annotations
 import argparse
 import re
 import sys
+from bisect import bisect_right
 from pathlib import Path
 
+from core.easycrypt.lemma_decls import DECLARATION_KEYWORDS, lemma_declarations
 from core.easycrypt.proof_syntax import inline_proof
-from core.easycrypt.lemma_decls import mask_comments
+from core.easycrypt.proof_text import comment_spans, easycrypt_code, strip_comments
 
 
-DECL_KINDS_RE = r"lemma|equiv|hoare|phoare"
+_PROOF_SENTENCE_RE = re.compile(r"proof\s*\.(?!\S)")
 
 
 def _enclosing_block_closers(lines: list[str]) -> list[str]:
@@ -36,7 +38,7 @@ def _enclosing_block_closers(lines: list[str]) -> list[str]:
     Clone substitutions (``theory T <- ...``) do not open a block.
     """
     stack: list[tuple[str, str]] = []
-    for line in mask_comments("\n".join(lines)).splitlines():
+    for line in strip_comments("\n".join(lines)).splitlines():
         stripped = line.strip()
         if match := re.fullmatch(r"section(?:\s+(\w+))?\s*\.", stripped):
             stack.append(("section", match.group(1) or ""))
@@ -51,89 +53,6 @@ def _enclosing_block_closers(lines: list[str]) -> list[str]:
     return [(f"end section {name}." if name else "end section.")
             if kind == "section" else f"end {name}."
             for kind, name in reversed(stack)]
-
-
-def _is_decl_start(stripped: str) -> bool:
-    proof_decl = re.match(
-        rf"^(?:local\s+)?(?:{DECL_KINDS_RE})\s+[A-Za-z_][\w']*(?:[\s:]|$)",
-        stripped,
-    )
-    other_decl = re.match(
-        r"^(?:local\s+)?(?:axiom|op|type|module|clone|section\b|end\s+section)",
-        stripped,
-    )
-    return bool(proof_decl or other_decl)
-
-
-def _find_target_proof(lines: list[str], lemma_line: int) -> dict[str, int | str | None]:
-    """Find the proof form that belongs to the target declaration.
-
-    EasyCrypt files in the workflow can mark an unproved lemma either as a
-    normal proof block (`proof. admit. qed.`) or as a bare one-line proof
-    (`admit.`).  The extractor must not keep scanning into the next lemma and
-    mistake that lemma's `proof.` for the target proof start.
-    """
-    limit = min(lemma_line + 500, len(lines))
-    statement_end = lemma_line
-
-    for i in range(lemma_line, limit):
-        stripped = lines[i].strip()
-
-        if i > lemma_line and _is_decl_start(stripped):
-            break
-
-        inline = inline_proof(lines[i])
-        if inline is not None:
-            return {
-                "kind": "proof",
-                "proof_line": i,
-                "qed_line": i,
-                "statement_end": max(lemma_line, i - 1),
-            }
-
-        if (
-            stripped == 'proof.'
-            or stripped.startswith('proof.')
-            or (stripped.endswith(' proof.') and 'qed.' not in stripped)
-        ):
-            qed_line = None
-            for j in range(i + 1, min(i + 500, len(lines))):
-                s = lines[j].strip()
-                if s == 'qed.' or s.startswith('qed.'):
-                    qed_line = j
-                    break
-            return {
-                "kind": "proof",
-                "proof_line": i,
-                "qed_line": qed_line,
-                "statement_end": max(lemma_line, i - 1),
-            }
-
-        if i > lemma_line and stripped == 'admit.':
-            return {
-                "kind": "admit",
-                "proof_line": i,
-                "qed_line": i,
-                "statement_end": max(lemma_line, i - 1),
-            }
-
-        if i > lemma_line and stripped.startswith('by ') and stripped.endswith('.'):
-            return {
-                "kind": "by",
-                "proof_line": i,
-                "qed_line": i,
-                "statement_end": max(lemma_line, i - 1),
-            }
-
-        if stripped.endswith('.'):
-            statement_end = i
-
-    return {
-        "kind": "none",
-        "proof_line": None,
-        "qed_line": None,
-        "statement_end": statement_end,
-    }
 
 
 def _close_previous_statement_line(result: list[str]) -> None:
@@ -153,8 +72,8 @@ def _emit_admit_proof(result: list[str], indent: str = "") -> None:
 
 
 def _replace_proofs_with_admit(lines: list[str], keep_open_line: int | None = None,
-                               keep_intact_line: int | None = None) -> list[str]:
-    """Replace multi-line proof bodies with `admit.`, except at keep_open_line/keep_intact_line.
+                               keep_intact: range | None = None) -> list[str]:
+    """Replace multi-line proof bodies with `admit.`, except the target's.
 
     Rules:
     - Single-line proofs like `proof. tactic. qed.` are left as-is
@@ -162,25 +81,44 @@ def _replace_proofs_with_admit(lines: list[str], keep_open_line: int | None = No
     - `realize name. body. qed.` blocks are left as-is (clone proof obligations).
     - Multi-line `proof. ... qed.` blocks get body replaced with `admit.`.
     - At keep_open_line: proof is left open (no admit, no qed) for session_cli.
-    - At keep_intact_line: entire proof block (proof. ... qed.) is kept as-is.
+    - Lines in keep_intact (the target's declaration and proof) are kept as-is.
+
+    Structure is read from comment-masked lines, so text in a comment is
+    never taken for a proof marker or a `by`. A line holding only comment is
+    kept verbatim and changes no state: comments can hold commented-out
+    lemmas, and rewriting their text could leave a comment unterminated. The
+    rest of a comment goes with the line that opens it when that line is
+    dropped or rewritten, so no closer is left without its opener.
     """
+    text = "\n".join(lines)
+    masked = strip_comments(text).split("\n")
+    line_starts = [0]
+    for line in lines[:-1]:
+        line_starts.append(line_starts[-1] + len(line) + 1)
+    opened_on: dict[int, int] = {}
+    for start, end in comment_spans(text):
+        first = bisect_right(line_starts, start) - 1
+        for line in range(first + 1, bisect_right(line_starts, end - 1)):
+            opened_on[line] = first
+    kept: set[int] = set()
     result: list[str] = []
+
+    def keep(index: int) -> None:
+        result.append(lines[index])
+        kept.add(index)
+
     in_proof = False
     in_lemma_stmt = False  # True when we've seen a lemma/equiv declaration but no proof. yet
-    comment_depth = 0  # nesting depth of (* ... *) comments; never transform inside one
     i = 0
     while i < len(lines):
-        stripped = lines[i].strip()
-
-        # Comment-aware guard: lines inside (or opening) a `(* ... *)` comment are
-        # passed through verbatim. EasyCrypt comments can wrap commented-out lemmas
-        # (e.g. `(* lemma foo. proof. ... qed. *)`); without this, the proof->admit
-        # rewrite below would mangle them and drop the closing `*)`, producing an
-        # unterminated comment that wedges the persistent EC reader (no prompt ever
-        # emitted -> daemon read times out -> orphaned EC -> MANAGER WORKER STOP).
-        if comment_depth > 0 or stripped.startswith('(*'):
-            result.append(lines[i])
-            comment_depth = max(0, comment_depth + lines[i].count('(*') - lines[i].count('*)'))
+        if keep_intact is not None and i in keep_intact:
+            keep(i)
+            i += 1
+            continue
+        stripped = masked[i].strip()
+        if not stripped and lines[i].strip():
+            if i not in opened_on or opened_on[i] in kept:
+                keep(i)
             i += 1
             continue
 
@@ -196,22 +134,18 @@ def _replace_proofs_with_admit(lines: list[str], keep_open_line: int | None = No
                     _emit_admit_proof(result, indent)
                 else:
                     # Keep simple by-proofs (by case, by auto, etc.)
-                    result.append(lines[i])
+                    keep(i)
                 i += 1
                 continue
 
             # Check for single-line proof (proof. ... qed. on the same line).
             # Opening the target keeps only the declaration/proof prefix; the
             # body and qed are removed just like a multi-line target proof.
-            inline = inline_proof(lines[i])
+            inline = inline_proof(lines[i], masked_source=masked[i])
             if inline is not None:
                 in_lemma_stmt = False
                 if i == keep_open_line:
                     result.append(inline.open_line(lines[i]))
-                    i += 1
-                    continue
-                if i == keep_intact_line:
-                    result.append(lines[i])
                     i += 1
                     continue
                 # Single-line proof — keep if no smt, replace if smt
@@ -220,7 +154,7 @@ def _replace_proofs_with_admit(lines: list[str], keep_open_line: int | None = No
                     result.append("    admit.")
                     result.append("  qed.")
                 else:
-                    result.append(lines[i])
+                    keep(i)
                 i += 1
                 continue
 
@@ -232,40 +166,28 @@ def _replace_proofs_with_admit(lines: list[str], keep_open_line: int | None = No
                 in_lemma_stmt = False
                 if i == keep_open_line:
                     # Target lemma — keep proof. line, skip body + qed, leave open
-                    result.append(lines[i])
+                    keep(i)
                     i += 1
                     while i < len(lines):
-                        s = lines[i].strip()
+                        s = masked[i].strip()
                         if s == 'qed.' or s.startswith('qed.'):
                             i += 1  # skip qed
                             break
                         i += 1
                     continue
-                elif i == keep_intact_line:
-                    # Target lemma — keep proof. AND body AND qed. all intact
-                    result.append(lines[i])  # keep proof. line
-                    i += 1
-                    while i < len(lines):
-                        result.append(lines[i])
-                        s = lines[i].strip()
-                        if s == 'qed.' or s.startswith('qed.'):
-                            i += 1
-                            break
-                        i += 1
-                    continue
-                else:
-                    # Other lemma — replace body with admit
-                    result.append(lines[i])  # keep proof. line
-                    result.append("    admit.")
-                    in_proof = True
-                    i += 1
-                    continue
+                # Other lemma — replace body with admit
+                keep(i)  # keep proof. line
+                result.append("    admit.")
+                in_proof = True
+                i += 1
+                continue
 
             # Check for inline proof with smt on same line as lemma declaration
-            if (re.match(rf'^\s*(local\s+)?(?:{DECL_KINDS_RE}|axiom)\b', stripped) and
-                    'by smt' in stripped and i != keep_open_line and i != keep_intact_line):
+            if (re.match(rf'^\s*(local\s+)?(?:{DECLARATION_KEYWORDS}|axiom)\b', stripped) and
+                    'by smt' in stripped and i != keep_open_line):
                 in_lemma_stmt = False
-                before_by = lines[i].split(' by ')[0].rstrip()
+                by = masked[i].find(' by ')
+                before_by = (lines[i][:by] if by >= 0 else lines[i]).rstrip()
                 if not before_by.endswith('.'):
                     before_by += '.'
                 result.append(before_by)
@@ -275,23 +197,28 @@ def _replace_proofs_with_admit(lines: list[str], keep_open_line: int | None = No
                 continue
 
             # Track when we enter a lemma/equiv statement (may span multiple lines)
-            if re.match(rf'^\s*(local\s+)?(?:{DECL_KINDS_RE})\b', stripped):
+            if re.match(rf'^\s*(local\s+)?(?:{DECLARATION_KEYWORDS})\b', stripped):
                 in_lemma_stmt = True
             elif in_lemma_stmt and stripped == '':
                 # Blank line after lemma without proof — probably not a lemma continuation
                 in_lemma_stmt = False
 
             # Not a proof line — keep as-is
-            result.append(lines[i])
+            keep(i)
         else:
             # Inside a replaced proof body — skip until qed.
             if stripped == 'qed.' or stripped.startswith('qed.'):
-                result.append(lines[i])  # keep qed.
+                keep(i)  # keep qed.
                 in_proof = False
 
         i += 1
 
     return result
+
+
+def _line_of(text: str, offset: int) -> int:
+    """0-based line of ``offset`` in ``text``."""
+    return text.count("\n", 0, offset)
 
 
 def extract_lemma(ec_file: Path, lemma_name: str, open_proof: bool = False,
@@ -303,56 +230,74 @@ def extract_lemma(ec_file: Path, lemma_name: str, open_proof: bool = False,
         ec_file: path to the .ec file
         lemma_name: name of the lemma/equiv to extract
         open_proof: if True, leave target proof open (for session_cli -f)
-        verify_proof: if True, keep target proof intact and cut file after its qed.
-            Other proofs are replaced with admit. This allows verifying just this
-            lemma without triggering SMT-dependent lemmas that appear later in
-            the source file.
-        decl_line: 0-based line of the declaration to extract. Required to
-            disambiguate when ``lemma_name`` is declared more than once —
-            the default scan takes the FIRST match, which may not be the
-            declaration the caller's write-back targeted. Raises ValueError
-            if that line does not declare ``lemma_name``.
+        verify_proof: if True, keep target declaration and proof intact and
+            cut the file after the proof. Other proofs are replaced with
+            admit. This allows verifying just this lemma without triggering
+            SMT-dependent lemmas that appear later in the source file.
+            Raises ValueError when the target's proof is not closed by
+            `qed.` or a one-line `by`: EasyCrypt accepts a proof left open
+            at the end of a file, so the extract would verify nothing.
+        decl_line: 0-based line on which the declaration to extract starts.
+            Required to disambiguate when ``lemma_name`` is declared more
+            than once — the default takes the first declaration, which may
+            not be the declaration the caller's write-back targeted. Raises
+            ValueError if no declaration of ``lemma_name`` starts there.
 
     Returns:
         standalone .ec file content as a string
     """
     text = ec_file.read_text(encoding="utf-8")
     lines = text.split('\n')
+    masked_lines = strip_comments(text).split('\n')
 
-    # Find the target lemma
-    lemma_line = None
-    lemma_pat = re.compile(
-        rf'^\s*(local\s+)?(?:{DECL_KINDS_RE})\s+{re.escape(lemma_name)}(?:[\s:]|$)'
-    )
+    # Find the target declaration and its own proof.
+    declarations = lemma_declarations(text, lemma_name)
     if decl_line is not None:
-        if 0 <= decl_line < len(lines) and lemma_pat.match(lines[decl_line]):
-            lemma_line = decl_line
-        else:
+        declaration = next(
+            (d for d in declarations if _line_of(text, d.start) == decl_line), None,
+        )
+        if declaration is None:
             raise ValueError(
                 f"decl_line {decl_line} does not declare '{lemma_name}' "
                 f"in {ec_file}"
             )
+    elif declarations:
+        declaration = declarations[0]
     else:
-        for i, line in enumerate(lines):
-            if lemma_pat.match(line):
-                lemma_line = i
-                break
-
-    if lemma_line is None:
         raise ValueError(f"Lemma '{lemma_name}' not found in {ec_file}")
 
-    proof_info = _find_target_proof(lines, lemma_line)
-    proof_kind = str(proof_info["kind"])
-    proof_line = proof_info["proof_line"]
-    qed_line = proof_info["qed_line"]
-    statement_end = int(proof_info["statement_end"] or lemma_line)
+    proof = declaration.proof
+    if verify_proof and (proof is None or proof.kind == "open"):
+        raise ValueError(
+            f"Lemma '{lemma_name}' in {ec_file} has no proof closed by "
+            "`qed.` or `by` to verify"
+        )
+    lemma_line = _line_of(text, declaration.start)
+    statement_end = (
+        _line_of(text, declaration.statement_end - 1)
+        if declaration.statement_end is not None else len(lines) - 1
+    )
+    # "proof" is a block starting with a `proof.` sentence; "bare" is one
+    # without it, such as `admit.` alone. `qed_line` is None when no `qed.`
+    # closes the block.
+    proof_kind = "none"
+    proof_line = qed_line = opener = None
+    if proof is not None:
+        proof_line = _line_of(text, proof.start)
+        if proof.kind == "by":
+            proof_kind = "by"
+            qed_line = statement_end
+        else:
+            opener = _PROOF_SENTENCE_RE.match(easycrypt_code(text[proof.start:proof.end]))
+            proof_kind = "proof" if opener else "bare"
+            qed_line = _line_of(text, proof.end - 1) if proof.kind == "qed" else None
 
     # Find the section containing this lemma (if any)
     section_start = None
 
     sections: list[tuple[int, int]] = []
     stack: list[int] = []
-    for i, line in enumerate(lines):
+    for i, line in enumerate(masked_lines):
         stripped = line.strip()
         if re.match(r'^section\b', stripped):
             stack.append(i)
@@ -366,95 +311,64 @@ def extract_lemma(ec_file: Path, lemma_name: str, open_proof: bool = False,
             if section_start is None or start > section_start:
                 section_start = start
 
+    # Cut through the target's `proof.` when opening it, else through its
+    # proof. Opening a `by` proof cuts the statement before `by`; the
+    # statement is then closed and a `proof.` line added below, as for a
+    # target without a `proof.` sentence.
+    if open_proof and proof_kind == "proof":
+        target_lines = lines[:proof_line + 1]
+        # Drop the target's own tactics written after `proof.` on that line;
+        # a one-line `proof. ... qed.` is opened by the rewrite below.
+        column = proof.start + opener.end() - (text.rfind("\n", 0, proof.start) + 1)
+        rest = masked_lines[proof_line][column:]
+        if rest.strip() and inline_proof(lines[proof_line], masked_source=masked_lines[proof_line]) is None:
+            target_lines[-1] = lines[proof_line][:column]
+    elif open_proof and proof_kind == "by":
+        column = proof.start - (text.rfind("\n", 0, proof.start) + 1)
+        target_lines = lines[:proof_line] + [lines[proof_line][:column]]
+        if not target_lines[-1].strip():
+            target_lines.pop()
+    elif not open_proof and qed_line is not None:
+        target_lines = lines[:qed_line + 1]
+    elif not open_proof and proof_line is not None:
+        target_lines = lines[:proof_line + 1]
+    else:
+        target_lines = lines[:statement_end + 1]
+
     if section_start is not None:
         # Lemma is inside a section.
-        # Include: everything before the section + section content up to after qed of target
+        # Include: everything before the section + section content up to the cut
         # Replace all proof bodies with admit, except target (left open or intact).
-
-        # Determine cut point: include up to the target's qed/proof marker.
-        # Bare `admit.` / `by ...` proofs are converted to an open `proof.`
-        # below when open_proof=True.
-        generated_keep_open_line = None
-        if open_proof:
-            if proof_kind == "proof" and isinstance(proof_line, int):
-                cut_line = proof_line + 1  # include proof. line
-            else:
-                cut_line = statement_end + 1
-        elif isinstance(qed_line, int):
-            cut_line = qed_line + 1
-        elif isinstance(proof_line, int):
-            cut_line = proof_line + 1
-        else:
-            cut_line = statement_end + 1
-
-        # Take lines: everything before section + section header + section body up to cut
         taken = lines[:section_start]
         taken.append("section.")  # anonymous section (drop original name)
-        taken.extend(lines[section_start + 1: cut_line])
-        if open_proof and proof_kind != "proof":
-            _close_previous_statement_line(taken)
-            generated_keep_open_line = len(taken)
-            indent = re.match(r'^(\s*)', lines[lemma_line]).group(1)
-            taken.append(f"{indent}proof.")
-        taken.append("")
-        if not open_proof:
-            taken.extend(_enclosing_block_closers(taken))
-
-        # Replace all proof bodies with admit, keeping target open or intact
-        if verify_proof:
-            result_lines = _replace_proofs_with_admit(
-                taken,
-                keep_intact_line=proof_line if isinstance(proof_line, int) else None,
-            )
-        else:
-            keep_line = (
-                proof_line
-                if open_proof and proof_kind == "proof" and isinstance(proof_line, int)
-                else generated_keep_open_line
-            )
-            result_lines = _replace_proofs_with_admit(taken, keep_open_line=keep_line)
-
-        return '\n'.join(result_lines)
+        taken.extend(target_lines[section_start + 1:])
     else:
-        # Lemma is NOT in a section
-        generated_keep_open_line = None
-        if open_proof:
-            if proof_kind == "proof" and isinstance(proof_line, int):
-                cut_line = proof_line + 1
-            else:
-                cut_line = statement_end + 1
-        else:
-            if isinstance(qed_line, int):
-                cut_line = qed_line + 1
-            elif isinstance(proof_line, int):
-                cut_line = proof_line + 1
-            else:
-                cut_line = statement_end + 1
+        taken = list(target_lines)
 
-        taken = lines[:cut_line]
-        if open_proof and proof_kind != "proof":
-            _close_previous_statement_line(taken)
-            generated_keep_open_line = len(taken)
-            indent = re.match(r'^(\s*)', lines[lemma_line]).group(1)
-            taken.append(f"{indent}proof.")
+    generated_keep_open_line = None
+    if open_proof and proof_kind != "proof":
+        _close_previous_statement_line(taken)
+        generated_keep_open_line = len(taken)
+        indent = re.match(r'^(\s*)', lines[lemma_line]).group(1)
+        taken.append(f"{indent}proof.")
+    if section_start is not None:
+        taken.append("")
+    if not open_proof:
+        taken.extend(_enclosing_block_closers(taken))
 
-        if not open_proof:
-            taken.extend(_enclosing_block_closers(taken))
+    if verify_proof:
+        result_lines = _replace_proofs_with_admit(
+            taken, keep_intact=range(lemma_line, len(target_lines)),
+        )
+    else:
+        keep_line = (
+            proof_line
+            if open_proof and proof_kind == "proof"
+            else generated_keep_open_line
+        )
+        result_lines = _replace_proofs_with_admit(taken, keep_open_line=keep_line)
 
-        if verify_proof:
-            result_lines = _replace_proofs_with_admit(
-                taken,
-                keep_intact_line=proof_line if isinstance(proof_line, int) else None,
-            )
-        else:
-            keep_line = (
-                proof_line
-                if open_proof and proof_kind == "proof" and isinstance(proof_line, int)
-                else generated_keep_open_line
-            )
-            result_lines = _replace_proofs_with_admit(taken, keep_open_line=keep_line)
-
-        return '\n'.join(result_lines)
+    return '\n'.join(result_lines)
 
 
 def main():

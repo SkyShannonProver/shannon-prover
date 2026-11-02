@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-import hashlib
-
 from core.easycrypt.proof_state_compiler.contracts import (
     CompilerInvocationContext,
     NativePlanningBudget,
@@ -13,6 +11,7 @@ from core.easycrypt.proof_state_compiler.contracts import (
     ProofCoordinate,
     ProofIR,
 )
+from core.easycrypt.proof_state_compiler.contracts.digest import text_sha256
 from .syntax import compound_prefix_candidates
 
 
@@ -42,9 +41,7 @@ def plan_native_compound_prefix_attempt(
         return NativeSemanticRequestProduction.not_applicable(
             COMPOUND_PREFIX_NATIVE_PRODUCER_ID
         )
-    digest = hashlib.sha256(
-        (failure.occurrence_identity + "\0" + tactic).encode("utf-8")
-    ).hexdigest()[:20]
+    digest = text_sha256(failure.occurrence_identity + "\0" + tactic)[:20]
     return NativeSemanticRequestProduction.ready(
         COMPOUND_PREFIX_NATIVE_PRODUCER_ID,
         (NativeSemanticRequest(

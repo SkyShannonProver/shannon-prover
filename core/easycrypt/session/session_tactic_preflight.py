@@ -14,13 +14,11 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
-from core.easycrypt.action_evidence_vocabulary import (
-    ACTION_EVIDENCE_SCHEMA_VERSION,
-)
 from core.easycrypt.session.session_artifact_io import (
     read_bound_current_json_artifact_event,
     write_confined_text_artifact,
 )
+from core.easycrypt.session.session_display import TryResult
 from core.easycrypt.session.session_events import record_authoritative_artifact_event
 from core.easycrypt.session.session_goal_authority import (
     authoritative_open_goal_errors,
@@ -32,6 +30,8 @@ TACTIC_PREFLIGHT_SCHEMA_VERSION = 1
 TACTIC_PREFLIGHT_KIND = "exact_tactic_preflight"
 TACTIC_PREFLIGHT_EVENT_TYPE = "tactic.preflight.produced"
 TACTIC_PREFLIGHT_ARTIFACT_SUBDIR = "tactic_preflights"
+# Version of the runnable-evidence record that compiler certification reads.
+ACTION_EVIDENCE_SCHEMA_VERSION = 1
 
 
 class TacticPreflightValidation(ValidationResult):
@@ -101,29 +101,21 @@ def accepted_runnable_preflight_evidence(
 def build_tactic_preflight_artifact(
     *,
     proof_state: dict[str, Any],
-    result: dict[str, Any],
-    raw_report: str = "",
+    result: TryResult,
 ) -> dict[str, Any]:
-    """Build the sole current artifact shape from a parsed ``-try`` result."""
+    """Build the sole current artifact shape from one ``-try`` result."""
 
-    tactic = str(result.get("tactic") or "").strip()
-    accepted_value = result.get("accepted")
-    accepted = accepted_value if type(accepted_value) is bool else None
-    no_progress = bool(result.get("no_progress_predicted"))
-    closed_value = result.get("goal_after_closed")
-    closed = closed_value if type(closed_value) is bool else None
-    remaining_value = result.get("goal_after_remaining")
-    remaining = (
-        remaining_value
-        if type(remaining_value) is int and remaining_value >= 0
-        else None
-    )
+    tactic = result.tactic.strip()
+    accepted = result.accepted
+    no_progress = result.no_progress_predicted
+    closed = result.goal_after_closed
+    remaining = result.goal_after_remaining
     outcome_known = bool(
         accepted is True
         and not no_progress
         and (
-            (closed is True and remaining in {None, 0})
-            or (closed is False and remaining is not None)
+            (closed and remaining in {None, 0})
+            or (not closed and remaining is not None)
         )
     )
     runnable_evidence = (
@@ -138,7 +130,7 @@ def build_tactic_preflight_artifact(
     data = {
         "schema_version": TACTIC_PREFLIGHT_SCHEMA_VERSION,
         "kind": TACTIC_PREFLIGHT_KIND,
-        "ok": not bool(result.get("tool_error")),
+        "ok": not result.tool_error,
         "tactic": tactic,
         "proof_state": dict(proof_state),
         "accepted": accepted,
@@ -146,11 +138,11 @@ def build_tactic_preflight_artifact(
         "goal_after_closed": closed,
         "goal_after_remaining": remaining,
         "outcome_known": outcome_known,
-        "error_kind": str(result.get("error_kind") or ""),
-        "tool_error": bool(result.get("tool_error")),
+        "error_kind": result.error_kind,
+        "tool_error": result.tool_error,
         "runnable_evidence": runnable_evidence,
         "raw_report_sha256": hashlib.sha256(
-            str(raw_report).encode("utf-8", errors="replace")
+            result.report.encode("utf-8", errors="replace")
         ).hexdigest(),
     }
     validation = validate_tactic_preflight_artifact(data)

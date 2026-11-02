@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-import hashlib
-import json
 from dataclasses import dataclass, replace
 from typing import Protocol
 
@@ -26,9 +24,16 @@ from core.easycrypt.proof_state_compiler.syntax.attempted_operation import (
     single_operation_identity,
 )
 from core.easycrypt.proof_state_compiler.contracts.failure import (
+    compound_prefix_remainder,
+)
+from core.easycrypt.proof_state_compiler.contracts.failure import (
     EXACT_OPERATION_RESOURCE_WITNESS,
     NATIVE_ARGUMENT_REALIZATION_WITNESS,
     NATIVE_TACTIC_PREFIX_WITNESS,
+)
+from core.easycrypt.proof_state_compiler.contracts.digest import (
+    json_sha256,
+    text_sha256,
 )
 from core.easycrypt.proof_state_compiler.backend.recovery_handoff_lowering import (
     present_recovery_handoff,
@@ -235,13 +240,7 @@ def _recovery_diagnostic_lifetime_scope(
             "" if handoff is None else handoff.accepted_prefix_effect
         ),
     }
-    encoded = json.dumps(
-        material,
-        ensure_ascii=False,
-        sort_keys=True,
-        separators=(",", ":"),
-    ).encode("utf-8")
-    return hashlib.sha256(encoded).hexdigest()
+    return json_sha256(material)
 
 
 def _preserves_attempted_operation(
@@ -274,30 +273,20 @@ def _preserves_attempted_operation(
             item.recovery_witness_id == witness.witness_id
             and item.correction is not None
             and tactic.startswith(witness.target_operation_family + " ")
-            and hashlib.sha256(tactic.encode("utf-8")).hexdigest()
+            and text_sha256(tactic)
             == witness.realization_sha256
             and "\n" not in tactic
             and "\r" not in tactic
         )
     if witness.witness_kind == NATIVE_TACTIC_PREFIX_WITNESS:
         rejected = str(getattr(attempted, "rejected_tactic", "") or "")
-        if (
-            not tactic.endswith(".")
-            or not rejected.endswith(".")
-            or hashlib.sha256(rejected.encode("utf-8")).hexdigest()
-            != witness.committed_argument_sha256
-        ):
-            return False
-        prefix_body = tactic[:-1].rstrip()
-        rejected_body = rejected[:-1]
-        remainder = rejected_body[len(prefix_body):]
         return bool(
             item.recovery_witness_id == witness.witness_id
             and item.correction is not None
-            and prefix_body
-            and rejected_body.startswith(prefix_body)
-            and remainder.lstrip().startswith(";")
-            and hashlib.sha256(tactic.encode("utf-8")).hexdigest()
+            and text_sha256(rejected)
+            == witness.committed_argument_sha256
+            and compound_prefix_remainder(rejected, tactic) is not None
+            and text_sha256(tactic)
             == witness.realization_sha256
         )
     if witness.witness_kind != EXACT_OPERATION_RESOURCE_WITNESS:

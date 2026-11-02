@@ -2,13 +2,13 @@
 
 from __future__ import annotations
 
-import json
 from dataclasses import dataclass
 
 from core.easycrypt.proof_state_compiler.contracts.evidence import EvidenceRef
 from core.easycrypt.proof_state_compiler.contracts.presentation import (
     MAX_INTERNAL_PRESENTATION_BYTES,
 )
+from core.easycrypt.proof_state_compiler.contracts.digest import canonical_json
 
 
 HAS_PLACEHOLDERS = "has_placeholders"
@@ -90,9 +90,4 @@ class StructuredDiagnostic:
 
     @property
     def identity_payload_bytes(self) -> int:
-        return len(json.dumps(
-            self.identity_payload(),
-            ensure_ascii=False,
-            sort_keys=True,
-            separators=(",", ":"),
-        ).encode("utf-8"))
+        return len(canonical_json(self.identity_payload()).encode("utf-8"))

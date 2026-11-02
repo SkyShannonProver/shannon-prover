@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-import hashlib
-
 from core.easycrypt.proof_state_compiler.contracts import (
     CompilationEnvironment,
     CompilerInvocationContext,
@@ -11,6 +9,7 @@ from core.easycrypt.proof_state_compiler.contracts import (
     ProjectedProofState,
     ProofIR,
 )
+from core.easycrypt.proof_state_compiler.contracts.digest import text_sha256
 
 
 OPERATION_BINDING_REPAIR_LOAD_PRODUCER_ID = (
@@ -31,13 +30,11 @@ def request_attempted_resource_declaration(
         attempted.resource,
         attempted.resource_basename,
     )))
-    digest = hashlib.sha256(
-        (
-            OPERATION_BINDING_REPAIR_LOAD_PRODUCER_ID
-            + "\0symbol_declarations\0"
-            + "|".join(symbols)
-        ).encode("utf-8")
-    ).hexdigest()[:20]
+    digest = text_sha256(
+        OPERATION_BINDING_REPAIR_LOAD_PRODUCER_ID
+        + "\0symbol_declarations\0"
+        + "|".join(symbols)
+    )[:20]
     return (DeclarationLoadRequest(
         request_id=f"attempted-resource:{digest}",
         producer_id=OPERATION_BINDING_REPAIR_LOAD_PRODUCER_ID,

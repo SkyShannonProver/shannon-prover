@@ -89,13 +89,6 @@ class ActivationPlan:
     def compiler_enabled(self) -> bool:
         return bool(self.pass_feature_ids)
 
-    def mode_for(self, feature_id: str) -> str:
-        try:
-            return dict(self.feature_modes)[feature_id]
-        except KeyError as exc:
-            message = f"feature {feature_id!r} is absent from activation plan"
-            raise KeyError(message) from exc
-
     def to_dict(self) -> dict[str, object]:
         return {
             "profile_id": self.profile_id,

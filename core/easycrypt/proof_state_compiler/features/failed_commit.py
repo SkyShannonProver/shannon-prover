@@ -9,7 +9,6 @@ its audit reasons.
 
 from __future__ import annotations
 
-import hashlib
 from typing import Callable
 
 from core.easycrypt.proof_state_compiler.contracts import (
@@ -23,6 +22,7 @@ from core.easycrypt.proof_state_compiler.contracts import (
     ProofCoordinate,
     ProofIR,
 )
+from core.easycrypt.proof_state_compiler.contracts.digest import text_sha256
 from core.easycrypt.proof_state_compiler.features.execution import (
     FeatureExecutionEligibility,
     FeatureExecutionGate,
@@ -110,9 +110,7 @@ def attempt_diagnostic_producer(
         tactic = str(failure.payload.to_dict().get("tactic") or "").strip()
         if not prefilter(tactic):
             return NativeSemanticRequestProduction.not_applicable(producer_id)
-        digest = hashlib.sha256(
-            (failure.occurrence_identity + "\0" + tactic).encode("utf-8")
-        ).hexdigest()[:20]
+        digest = text_sha256(failure.occurrence_identity + "\0" + tactic)[:20]
         return NativeSemanticRequestProduction.ready(
             producer_id,
             (NativeSemanticRequest(

@@ -16,11 +16,11 @@ from __future__ import annotations
 
 import hashlib
 import json
-import re
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
+from core.easycrypt.ec_prompt import PROMPT_LINE_RE
 from core.easycrypt.committed_history import (
     committed_tactics_have_qed,
     history_path,
@@ -50,9 +50,6 @@ from core.easycrypt.session.session_state import (
     extract_active_goal_block,
     read_session_state,
 )
-
-
-_EC_PROMPT_LINE_RE = re.compile(r"(?m)^\[\d+\|[^\]\n]*\]>\s*$")
 
 
 @dataclass(frozen=True)
@@ -223,24 +220,6 @@ class GoalProjection:
         }
         if include_raw:
             data["active_goal_text"] = raw_text
-        return data
-
-    def to_display_dict(
-        self,
-        *,
-        include_raw: bool = False,
-        raw_text: str = "",
-    ) -> dict[str, Any]:
-        """Return goal presentation fields without duplicating identity.
-
-        ``ProofStateProjection.goal.active_goal_hash`` is the identity owner.
-        Display projections deliberately omit that field so a downstream
-        consumer cannot accidentally promote a presentation alias into a
-        second authority path.
-        """
-
-        data = self.to_dict(include_raw=include_raw, raw_text=raw_text)
-        data.pop("active_goal_hash", None)
         return data
 
 
@@ -714,7 +693,7 @@ def _canonical_goal_hash_text(raw: str) -> str:
     prompt is transport state, not proof state, so resume capsules must not
     drift merely because one path captured the prompt line and another did not.
     """
-    return _EC_PROMPT_LINE_RE.sub("", str(raw or "")).rstrip()
+    return PROMPT_LINE_RE.sub("", str(raw or "")).rstrip()
 
 
 def active_goal_hash_from_raw(raw: str) -> str:
@@ -791,7 +770,7 @@ def _build_candidate_close_authority(
     semantic_indices = [
         index
         for index, event in enumerate(events)
-        if event.get("type") in {"tactic.result", "tactic.undone"}
+        if event.get("type") == "tactic.result" or _changed_history_by_undo(event)
     ]
     if not semantic_indices:
         return CandidateCloseAuthorityProjection()
@@ -941,6 +920,19 @@ def _candidate_close_authority(
     )
 
 
+def _changed_history_by_undo(event: dict[str, Any]) -> bool:
+    """A ``tactic.undone`` event that is a proof transition.
+
+    A rewind the daemon could not perform by ``undo`` reports ``unavailable``
+    and changes nothing (the manager restarts instead), so it neither ends
+    the latest transition nor breaks a close-authority chain.
+    """
+    return (
+        event.get("type") == "tactic.undone"
+        and event_payload(event).get("status") != "unavailable"
+    )
+
+
 def _build_latest_transition(events: list[dict[str, Any]]) -> TransitionProjection:
     latest_result: dict[str, Any] | None = None
     latest_undo: dict[str, Any] | None = None
@@ -952,7 +944,7 @@ def _build_latest_transition(events: list[dict[str, Any]]) -> TransitionProjecti
         if typ == "tactic.result":
             latest_result = event_payload(event)
             latest_result_idx = idx
-        elif typ == "tactic.undone":
+        elif _changed_history_by_undo(event):
             latest_undo = event_payload(event)
             latest_undo_idx = idx
 

@@ -106,10 +106,6 @@ def snapshot_surface(snapshot: Any) -> dict[str, Any]:
     return {}
 
 
-def clean_manager_actions(actions: list[Any]) -> list[dict[str, Any]]:
-    return [action for action in actions if isinstance(action, dict)]
-
-
 def intent_payload_surface(intent: AgentIntent) -> dict[str, Any]:
     payload = dict(intent.payload)
     allowed = {

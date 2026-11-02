@@ -9,7 +9,6 @@ identity.  It deliberately does not lower the result into compiler IR.
 
 from __future__ import annotations
 
-import hashlib
 import json
 import re
 import subprocess
@@ -25,6 +24,7 @@ from core.easycrypt.native_semantics.companion import (
     NativeCompanionIdentity,
     build_and_identify_companion,
     parse_companion_result_frame,
+    sha256_native_dependency,
 )
 from core.easycrypt.session.session_projection import active_goal_hash_from_raw
 
@@ -595,16 +595,5 @@ def _require_exact_keys(value: dict[str, Any], keys: set[str], label: str) -> No
 
 
 def _validate_file_hash(path: Path, expected: str, label: str) -> None:
-    if not path.is_file() or _sha256_file(path) != expected:
+    if not path.is_file() or sha256_native_dependency(path) != expected:
         raise RuntimeError(f"native state {label} file changed")
-
-
-def _sha256_file(path: Path) -> str:
-    digest = hashlib.sha256()
-    try:
-        with path.open("rb") as stream:
-            for chunk in iter(lambda: stream.read(1024 * 1024), b""):
-                digest.update(chunk)
-    except OSError as exc:
-        raise RuntimeError(f"cannot hash native dependency {path.name}") from exc
-    return digest.hexdigest()

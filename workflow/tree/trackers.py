@@ -82,7 +82,6 @@ def _handle_stream_event(
         _report_tool_call(agent_name, tool_name, tool_input, on_tool_call)
 
     elif event_type == "result":
-        cost_usd = event.get("cost_usd", 0)
         duration = event.get("duration_ms", 0)
         if duration:
             status(agent_name, f"Done ({duration/1000:.0f}s)", _GREEN)
@@ -314,7 +313,8 @@ class _ProverTracker:
         # `not supervisor_killed` — a supervisor kill already made a decision and
         # must not be silently resurrected.
         self.supervisor_killed = False
-        self._lines: list[str] = []
+        # Bytes of an incomplete stdout line carried between reads.
+        self._stdout_partial = b""
         self._cwd = cwd
         self._session_dir = session_dir
         self.session_snapshot: WorkflowSessionSnapshot | None = None
@@ -344,10 +344,6 @@ class _ProverTracker:
                 self.last_activity_time,
                 snapshot.last_readonly_tool_at,
             )
-        self._on_commit_response(snapshot)
-
-    def _on_commit_response(self, snapshot: WorkflowSessionSnapshot) -> None:
-        return None
 
     def _refresh_completion_candidate(self) -> None:
         if self.completion_candidate_ready:
@@ -436,33 +432,75 @@ class _ProverTracker:
         except OSError:
             return None
 
+    def _process_stdout_bytes(self, chunk: bytes) -> None:
+        """Process every complete line in ``chunk``; keep a trailing partial."""
+        lines = (self._stdout_partial + chunk).split(b"\n")
+        self._stdout_partial = lines.pop()
+        for raw in lines:
+            self._process_line(raw.decode("utf-8", "replace").strip())
+
+    def _drain_exited_stdout(self) -> None:
+        """Process what an exited worker left in its stdout pipe.
+
+        Reads only what is already available: a descendant that inherited the
+        pipe can keep it open past the worker's exit, and a blocking read
+        would then stall the supervisor.
+        """
+        import select
+        stdout = self.proc.stdout
+        if stdout is not None:
+            try:
+                fd = stdout.fileno()
+            except (ValueError, OSError):
+                fd = None
+            while fd is not None:
+                try:
+                    ready, _, _ = select.select([fd], [], [], 0)
+                    if not ready:
+                        break
+                    chunk = os.read(fd, 65536)
+                except (ValueError, OSError):
+                    break
+                if not chunk:
+                    break
+                self._process_stdout_bytes(chunk)
+        if self._stdout_partial:
+            partial, self._stdout_partial = self._stdout_partial, b""
+            self._process_line(partial.decode("utf-8", "replace").strip())
+
     def poll_lines(self):
-        """Non-blocking read of available stdout lines."""
+        """Non-blocking read of available stdout lines.
+
+        stdout is read from its file descriptor, never through the text
+        wrapper: ``readline`` would pull several lines into Python's buffer,
+        where ``select`` cannot see them, leaving all but the first
+        unprocessed until the worker happened to write again.
+        """
         import select
         self._drain_stderr()  # keep stderr drained every poll (deadlock-safe + captured)
         while True:
             # Check if data available (non-blocking)
             if self.proc.stdout is None or self.proc.poll() is not None:
                 # Process finished — drain remaining stdout + stderr, then persist.
-                if self.proc.stdout:
-                    for line in self.proc.stdout:
-                        self._process_line(line.strip())
+                self._drain_exited_stdout()
                 self._drain_stderr()
                 self.persist_stderr(reason="worker_exit",
                                     returncode=getattr(self.proc, "returncode", None))
                 self.finished = True
                 return
             try:
-                ready, _, _ = select.select([self.proc.stdout], [], [], 0.1)
+                fd = self.proc.stdout.fileno()
+                ready, _, _ = select.select([fd], [], [], 0.1)
                 if ready:
-                    line = self.proc.stdout.readline()
-                    if not line:
+                    chunk = os.read(fd, 65536)
+                    if not chunk:
+                        self._drain_exited_stdout()
                         self._drain_stderr()
                         self.persist_stderr(reason="worker_eof",
                                             returncode=getattr(self.proc, "returncode", None))
                         self.finished = True
                         return
-                    self._process_line(line.strip())
+                    self._process_stdout_bytes(chunk)
                 else:
                     self._refresh_completion_candidate()
                     return  # no data available right now
@@ -599,17 +637,15 @@ class _TreeProverTracker(_ProverTracker):
         self.max_committed_count_seen: int = 0
         # Sticky: latched once the committed count drops below its high-water
         # mark, i.e. the agent rewound. A forward-only proof's history only
-        # grows; ANY rewind — `undo_last_step` OR `undo_to_checkpoint`
-        # (force-restart + shorter replay) — truncates history.ec, so the count
-        # dips below the max ever seen. This is the resume-drift-gate's
-        # authoritative "agent owns the prefix now" signal, because it is a
-        # stable state both undo intents produce — unlike `last_undo_time`,
-        # which is only set on a `tactic.undone` event that `undo_to_checkpoint`
-        # never emits.
+        # grows; ANY rewind — `undo_last_step` OR `undo_to_checkpoint` —
+        # truncates history.ec, so the count dips below the max ever seen.
+        # This is the resume-drift-gate's authoritative "agent owns the prefix
+        # now" signal, because it is a stable state both undo intents produce.
+        # `last_undo_time` is set on `tactic.undone`, which an in-place daemon
+        # rewind emits but a rewind that falls back to restart+replay does not.
         self.history_ever_shrank: bool = False
         # Compose-first tracking
         self.chain_attempts: int = 0          # structured commit-chain results
-        self.chain_tactic_estimate: int = 0   # attempted tactics in latest chain
         # Layer-1 deterministic progress metric: read from history.ec so we
         # know what EC actually accepted, not what the prover submitted.
         # Cached with a short TTL to avoid stat()-ing on every kill check.
@@ -631,19 +667,13 @@ class _TreeProverTracker(_ProverTracker):
         # frontier and avoid this exact failed move, instead of replaying from
         # the first high-level strategy tactic.
         self.recent_failed_tactic: str = ""
-        self.recent_failed_time: float = 0.0
         self.unsafe_session_shell_command: str = ""
-        self.unsafe_session_shell_time: float = 0.0
-        self.lossy_session_cli_command: str = ""
-        self.lossy_session_cli_time: float = 0.0
         self.lossy_session_cli_count: int = 0
         self.background_session_cli_command: str = ""
         self.background_session_cli_time: float = 0.0
         self.background_session_cli_notice_time: float = 0.0
         self.background_session_cli_count: int = 0
         self.forbidden_information_source_count: int = 0
-        self.forbidden_information_source_last: str = ""
-        self.forbidden_information_source_reason: str = ""
         self.information_source_audit: list[dict[str, str]] = []
         self.unsafe_information_source_reason: str = ""
         self.payload_audit = payload_audit
@@ -748,7 +778,6 @@ class _TreeProverTracker(_ProverTracker):
                     len(snapshot.history_tactics or []) + max(1, undone_lines),
                 )
                 self.recent_failed_tactic = undone
-                self.recent_failed_time = time.time()
                 if first_word in STRUCTURAL_COMMIT_OPENERS:
                     self.last_structural_undo_time = self.last_undo_time
                     self.structural_undo_branch = (
@@ -770,14 +799,12 @@ class _TreeProverTracker(_ProverTracker):
         attempted = attempted if isinstance(attempted, list) else []
         if response.get("command") == "commit_chain":
             self.chain_attempts += 1
-            self.chain_tactic_estimate = int(mutation.get("attempted_count") or 0)
         accepted = mutation.get("accepted_count")
         accepted = accepted if isinstance(accepted, int) else 0
         status = str(response.get("status") or "")
         failed_tactic = str(mutation.get("failed_tactic") or "").strip()
         if failed_tactic:
             self.recent_failed_tactic = failed_tactic
-            self.recent_failed_time = time.time()
         if accepted > 0 and status in {"ok", "partial_success"}:
             self.errors_since_last_accept = 0
             self.stuck_handled = False
@@ -793,7 +820,6 @@ class _TreeProverTracker(_ProverTracker):
                 self.structural_undo_branch_time = 0.0
             if status == "ok" and not failed_tactic:
                 self.recent_failed_tactic = ""
-                self.recent_failed_time = 0.0
         elif status == "failed":
             self.errors += 1
             self.errors_since_last_accept = max(
@@ -1278,13 +1304,10 @@ class _TreeProverTracker(_ProverTracker):
             return
         if pending_unsafe:
             self.unsafe_session_shell_command = pending_unsafe
-            self.unsafe_session_shell_time = time.time()
             self.unsafe_information_source_reason = pending_unsafe_reason
             return
         if pending_forbidden:
             self.forbidden_information_source_count += 1
-            self.forbidden_information_source_last = pending_forbidden
-            self.forbidden_information_source_reason = pending_forbidden_reason
             # (B) A forbidden READ never hard-kills the tree. A read mutates
             # nothing — at worst it pollutes reasoning, which an escalating warn
             # corrects and the payload audit records for post-hoc validity checks.
@@ -1306,14 +1329,8 @@ class _TreeProverTracker(_ProverTracker):
             return
         if pending_non_forbidden:
             self.forbidden_information_source_count = 0
-            self.forbidden_information_source_last = ""
-            self.forbidden_information_source_reason = ""
         if pending_lossy:
             self.forbidden_information_source_count = 0
-            self.forbidden_information_source_last = ""
-            self.forbidden_information_source_reason = ""
-            self.lossy_session_cli_command = pending_lossy
-            self.lossy_session_cli_time = time.time()
             self.lossy_session_cli_count += 1
             if (
                 pending_lossy_policy is not None
@@ -1328,8 +1345,6 @@ class _TreeProverTracker(_ProverTracker):
         if pending_background and _is_background_tool_result(result_text):
             now = time.time()
             self.forbidden_information_source_count = 0
-            self.forbidden_information_source_last = ""
-            self.forbidden_information_source_reason = ""
             self.background_session_cli_command = pending_background
             self.background_session_cli_time = now
             self.background_session_cli_notice_time = now

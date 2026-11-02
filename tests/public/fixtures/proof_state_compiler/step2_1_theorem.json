@@ -1,0 +1,24 @@
+{
+  "case_id": "step2_1_after_ler_trans",
+  "source_file": "eval/examples/ChaChaPoly/chacha_poly.ec",
+  "lemma": "step2_1",
+  "symbol": "CCA_UFCMA.CCA_CPA_UFCMA",
+  "declaration": "lemma CCA_CPA_UFCMA:\n  forall (St0 <: StLOrcls{-Mem, -StLSke}),\n    equiv[ St0.init  ~ St0.init :\n            true ==> (glob St0){1} = (glob St0){2} /\\ res{1} = res{2}] =>\n    hoare[ St0.kg : true ==> true ] =>\n    forall (A0(O : CCA_Oracles) <: CCA_Adv{-Mem, -StLSke, -St0}),\n      (forall (O <: CCA_Oracles{-A0}),\n         islossless O.enc => islossless O.dec => islossless A0(O).main) =>\n      forall &m,\n        Pr[CCA_game(A0, RealOrcls(StLSke(St0))).main() @ &m : res] <=\n        Pr[CPA_game(CCA_CPA_Adv(A0), RealOrcls(StLSke(St0))).main() @ &m :\n           res] +\n        Pr[UFCMA(A0, St0).main() @ &m :\n           exists (c : ciphertext),\n             (c \\in Mem.lc) /\\ dec StLSke.gs Mem.k c <> None].",
+  "goal_lines": [
+    "Current goal (remaining: 2)",
+    "",
+    "Type variables: <none>",
+    "",
+    "&m: {}",
+    "------------------------------------------------------------------------",
+    "Pr[CCA_game(A, RealOrcls(StLSke(St))).main() @ &m : res] <=",
+    "Pr[CPA_game(CCA_CPA_Adv(A), RealOrcls(StLSke(St))).main() @ &m : res] +",
+    "Pr[UFCMA(A, St).main() @ &m :",
+    "   exists (c : ciphertext), (c \\in Mem.lc) /\\ dec StLSke.gs Mem.k c <> None]",
+    "[293|check]>"
+  ],
+  "replay_prefix": [
+    "apply (ler_trans Pr[CCA_game(A, RealOrcls(StLSke(St))).main() @ &m : res]); first last."
+  ],
+  "expected_tactic": "apply (CCA_UFCMA.CCA_CPA_UFCMA St _ _ A _ &m)."
+}

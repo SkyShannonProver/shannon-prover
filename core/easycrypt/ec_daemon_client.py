@@ -3,25 +3,53 @@
 
 Usage:
 
-    from ec_daemon_client import ECDaemonClient
+    from core.easycrypt.ec_daemon_client import ECDaemonClient
     with ECDaemonClient() as cli:
-        goal = cli.open_session("my_sess", "/path/file.ec", ["-I", "..."], "lemma_foo")
+        goal = cli.open_session("my_sess", "/path/file.ec", ["/path/theories"], "lemma_foo")
         r = cli.commit("my_sess", "proc.")
         t = cli.try_tactic("my_sess", "apply some_lemma.")
         cli.close_session("my_sess")
 
-Each call is synchronous. Connections are pooled lazily; each call
-opens+closes a socket (simple, cheap locally).
+``include_dirs`` is a list of directories; the daemon adds the ``-I`` flags.
+Each call is synchronous and opens and closes its own socket; there is no
+connection pool.
 """
 
 from __future__ import annotations
 
 import hashlib
 import json
+import math
 import os
 import socket
 from pathlib import Path
 from typing import Any, Optional
+
+
+# EasyCrypt's limit on one committed or replayed transaction on the daemon.
+# The manager gives a commit call 180 s
+# (``repl_session.COMMIT_CALL_TIMEOUT_SECONDS``) and passes that budget less a
+# margin for process start-up and the reply in ``STEP_TIMEOUT_ENV``; this
+# default is the same value, so direct ``session_cli`` use behaves alike.
+STEP_TIMEOUT_ENV = "SHANNON_EC_STEP_TIMEOUT"
+DEFAULT_STEP_TIMEOUT_SECONDS = 170.0
+# The client waits this much longer than the step limit: on a timeout the
+# daemon stops EasyCrypt and drops the session before it replies.
+_COMMIT_REPLY_SLACK_SECONDS = 15.0
+
+
+def step_timeout_seconds() -> float:
+    """The per-transaction limit from ``STEP_TIMEOUT_ENV``, else the default.
+
+    A value that is not a positive finite number is ignored."""
+    raw = os.environ.get(STEP_TIMEOUT_ENV, "").strip()
+    try:
+        value = float(raw)
+    except ValueError:
+        return DEFAULT_STEP_TIMEOUT_SECONDS
+    if not math.isfinite(value) or value <= 0:
+        return DEFAULT_STEP_TIMEOUT_SECONDS
+    return value
 
 
 def default_socket_path() -> str:
@@ -46,7 +74,12 @@ def default_socket_path() -> str:
 
 
 class ECDaemonError(RuntimeError):
-    pass
+    """A structured error reply. ``kind`` names a failure the daemon reports
+    as a class (``"setup_rejected"``), else it is ``None``."""
+
+    def __init__(self, message: object = "", kind: Optional[str] = None) -> None:
+        super().__init__(message)
+        self.kind = kind
 
 
 class ECDaemonConnectionLost(ECDaemonError):
@@ -106,7 +139,7 @@ class ECDaemonClient:
             sock.close()
         if resp.get("status") == "ok":
             return resp.get("result")
-        raise ECDaemonError(resp.get("error", "unknown"))
+        raise ECDaemonError(resp.get("error", "unknown"), kind=resp.get("kind"))
 
     # -----------------------------------------------------------------
     # High-level API
@@ -132,27 +165,53 @@ class ECDaemonClient:
     def list_sessions(self) -> list[str]:
         return self._call("list_sessions")
 
-    def commit(self, session_id: str, tactic: str, timeout: float = 120.0) -> dict:
-        return self._call("commit", session_id=session_id,
-                          params={"tactic": tactic}, timeout=timeout)
+    def commit(self, session_id: str, tactic: str,
+               timeout: Optional[float] = None) -> dict:
+        """Commit ``tactic``; EasyCrypt gets ``timeout`` seconds for it
+        (default ``step_timeout_seconds()``).
+
+        When EasyCrypt does not finish in time the reply is
+        ``{"accepted": False, "timed_out": True, ...}`` and the daemon has
+        dropped the session. A daemon that predates the limit ignores it."""
+        limit = step_timeout_seconds() if timeout is None else float(timeout)
+        return self._call(
+            "commit", session_id=session_id,
+            params={"tactic": tactic, "timeout": limit},
+            timeout=limit + _COMMIT_REPLY_SLACK_SECONDS,
+        )
+
+    def rewind(self, session_id: str, keep: int, *, keep_identity: str,
+               held_identity: Optional[str] = None,
+               require_open_goal: bool = False,
+               timeout: float = 120.0) -> dict:
+        """Undo the session back to its first ``keep`` committed transactions.
+
+        Returns ``{"rewound": False, "reason"}`` when the daemon refuses
+        (nothing changed), else ``{"rewound": True, "kept", "undone",
+        "raw_output", "goal_after", "level"}``."""
+        return self._call(
+            "rewind",
+            session_id=session_id,
+            params={
+                "keep": int(keep),
+                "keep_identity": keep_identity,
+                "held_identity": held_identity,
+                "require_open_goal": bool(require_open_goal),
+            },
+            timeout=timeout,
+        )
 
     def try_tactic(self, session_id: str, tactic: str,
                    timeout: float = 120.0) -> dict:
         return self._call("try_tactic", session_id=session_id,
                           params={"tactic": tactic}, timeout=timeout)
 
-    def batch_try(self, session_id: str, tactics: list[str],
-                  timeout: float = 600.0) -> list[dict]:
-        return self._call("batch_try", session_id=session_id,
-                          params={"tactics": tactics}, timeout=timeout)
-
     def try_chain(self, session_id: str, tactics: list[str],
                   timeout: float = 600.0) -> dict:
         """Run ``tactics`` as a sequence in one ephemeral EC. Stops at
         the first failure. Returns
         ``{accepted, final_closed, final_goal, steps, failed_at, error}``.
-        Unlike ``batch_try`` (which tries each tactic independently),
-        this runs them as a chain: step N sees the state after step N-1."""
+        Step N sees the state after step N-1."""
         return self._call("try_chain", session_id=session_id,
                           params={"tactics": tactics}, timeout=timeout)
 

@@ -8,59 +8,43 @@ from core.easycrypt.proof_state_compiler.contracts.proof_ir import (
     FormulaRelation,
     ProofJudgment,
 )
+from core.easycrypt.proof_state_compiler.delimiters import (
+    find_top_level,
+    matching_close,
+    parenthesized,
+    top_level_indices,
+)
 
 
 def normalize_formula(value: str) -> str:
     text = " ".join(value.strip().split())
-    while _has_balanced_outer_parentheses(text):
+    while parenthesized(text):
         text = " ".join(text[1:-1].strip().split())
     return text
 
 
-def _has_balanced_outer_parentheses(value: str) -> bool:
-    if not (value.startswith("(") and value.endswith(")")):
-        return False
-    depth = 0
-    for index, char in enumerate(value):
-        if char == "(":
-            depth += 1
-        elif char == ")":
-            depth -= 1
-            if depth == 0 and index != len(value) - 1:
-                return False
-            if depth < 0:
-                return False
-    return depth == 0
-
-
 def parse_top_level_relation(value: str) -> FormulaRelation | None:
     text = normalize_formula(value)
-    depth = 0
-    index = 0
     operators = ("<=>", "<=", ">=", "=", "<", ">")
     non_relation_tokens = ("==>", "=>", "<:", "<>")
-    while index < len(text):
-        char = text[index]
-        if char in "([{":
-            depth += 1
-        elif char in ")]}":
-            depth = max(0, depth - 1)
-        elif depth == 0:
-            ignored = next((
-                token
-                for token in non_relation_tokens
-                if text.startswith(token, index)
-            ), "")
-            if ignored:
-                index += len(ignored)
-                continue
-            for operator in operators:
-                if text.startswith(operator, index):
-                    left = normalize_formula(text[:index])
-                    right = normalize_formula(text[index + len(operator):])
-                    if left and right:
-                        return FormulaRelation(operator, left, right)
-        index += 1
+    resume = 0
+    for index in top_level_indices(text):
+        if index < resume:
+            continue
+        ignored = next((
+            token
+            for token in non_relation_tokens
+            if text.startswith(token, index)
+        ), "")
+        if ignored:
+            resume = index + len(ignored)
+            continue
+        for operator in operators:
+            if text.startswith(operator, index):
+                left = normalize_formula(text[:index])
+                right = normalize_formula(text[index + len(operator):])
+                if left and right:
+                    return FormulaRelation(operator, left, right)
     return None
 
 
@@ -111,18 +95,12 @@ def parse_proof_judgment(value: str) -> ProofJudgment:
 
 
 def _bracket_subject(value: str) -> str:
+    """The text before the first top-level ``:`` inside the first ``[...]``."""
+
     opening = value.find("[")
     if opening < 0:
         return ""
-    depth = 0
-    for index in range(opening + 1, len(value)):
-        char = value[index]
-        if char in "([{":
-            depth += 1
-        elif char in ")]}":
-            if depth == 0:
-                break
-            depth -= 1
-        elif char == ":" and depth == 0:
-            return normalize_formula(value[opening + 1:index])
-    return ""
+    closing = matching_close(value, opening)
+    scope = value if closing < 0 else value[:closing]
+    colon = find_top_level(scope, ":", start=opening + 1)
+    return "" if colon < 0 else normalize_formula(value[opening + 1:colon])

@@ -72,17 +72,6 @@ def analyze_proof_ir(
             for contribution in contributions
             for item in contribution.application_applicabilities
         ),
-        scope=tuple(
-            item for contribution in contributions for item in contribution.scope
-        ),
-        boundary_contracts=tuple(
-            item
-            for contribution in contributions
-            for item in contribution.boundary_contracts
-        ),
-        transforms=tuple(
-            item for contribution in contributions for item in contribution.transforms
-        ),
         diagnostics=tuple(
             item for contribution in contributions for item in contribution.diagnostics
         ),

@@ -23,7 +23,7 @@ from pathlib import Path
 
 from core.easycrypt.ec_env import easycrypt_command, get_ec_env
 from core.easycrypt.session.session_events import read_events
-from core.easycrypt.toolchain import load_easycrypt_lock
+from core.easycrypt.toolchain import load_easycrypt_lock, sha256_file
 
 
 EASYCRYPT_RUNTIME_IDENTITY_SCHEMA_VERSION = 1
@@ -111,7 +111,7 @@ def discover_easycrypt_runtime_identity() -> EasyCryptRuntimeIdentity:
     if not binary_name:
         raise RuntimeError("EasyCrypt executable is unavailable")
     binary_path = Path(binary_name).resolve()
-    binary_sha256 = _sha256_file(binary_path)
+    binary_sha256 = sha256_file(binary_path)
     try:
         result = subprocess.run(
             easycrypt_command("config", binary=str(binary_path)),
@@ -177,11 +177,3 @@ def verified_session_runtime_identity(
             "EasyCrypt runtime changed after session start; restart the session"
         )
     return observed
-
-
-def _sha256_file(path: Path) -> str:
-    digest = hashlib.sha256()
-    with path.open("rb") as stream:
-        for chunk in iter(lambda: stream.read(1024 * 1024), b""):
-            digest.update(chunk)
-    return digest.hexdigest()

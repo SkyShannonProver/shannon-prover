@@ -4,13 +4,19 @@ from __future__ import annotations
 import time
 from collections.abc import Callable
 from dataclasses import replace
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
-from workflow.proof_state_compiler.service import CompilerServiceSkipped
+from workflow.proof_state_compiler.service import (
+    CompilerReadOnlyViolation,
+    CompilerServiceSkipped,
+)
 from workflow.proof_state_compiler.turn_evidence import compiler_turn_evidence
 
 from .turn_spine import CommittedTurnSpine
 from .types import ManagedTurn
+
+if TYPE_CHECKING:
+    from .repl_session import ReplSessionManager
 
 
 class CompilerTurnDeadlineExceeded(RuntimeError):
@@ -22,8 +28,9 @@ class CompilerTurnAdapter:
 
     The adapter consumes the immutable post-turn spine; it does not read proof
     history or derive proof lifecycle facts.  Ordinary compiler failure remains
-    an abstention, while an expired shared turn deadline is propagated so the
-    manager can fail the node closed.
+    an abstention, while an expired shared turn deadline or a broken read-only
+    contract (``CompilerReadOnlyViolation``) is propagated so the manager can
+    fail the node closed.
     """
 
     def __init__(
@@ -31,13 +38,14 @@ class CompilerTurnAdapter:
         *,
         node_id: str,
         service: Any | None,
-        session_id: Callable[[], str],
+        repl: "ReplSessionManager",
         audit: Callable[[dict[str, Any]], None],
         clock: Callable[[], float] = time.time,
     ) -> None:
         self.node_id = node_id
         self.service = service
-        self._session_id = session_id
+        # Read for the session identity turn evidence is bound to.
+        self.repl = repl
         self._audit = audit
         self._clock = clock
 
@@ -55,11 +63,19 @@ class CompilerTurnAdapter:
         if turn is not None and spine is not None:
             evidence = compiler_turn_evidence(
                 turn,
-                session_id=self._session_id(),
+                session_id=str(self.repl.session_path),
                 committed_history=spine.tactics,
             )
         try:
             result = self.service.compile_current_state(turn_evidence=evidence)
+        except CompilerReadOnlyViolation as exc:
+            self._audit({
+                "kind": "proof_state_compiler.read_only_violation",
+                "node": self.node_id,
+                "error_type": type(exc).__name__,
+                "error": str(exc)[:600],
+            })
+            raise
         except Exception as exc:
             self._audit({
                 "kind": "proof_state_compiler.failed",

@@ -5,7 +5,7 @@ from core.easycrypt.proof_state_compiler.contracts import (
     CompilerInvocationContext,
     ProofCoordinate,
     ProofIR,
-    RecoveryClaim,
+    recovery_claim_for,
     StructuredDiagnostic,
     exact_operation_resource_witness,
 )
@@ -15,7 +15,7 @@ from core.easycrypt.proof_state_compiler.middle_end.contributions import (
 from core.easycrypt.proof_state_compiler.compound_boundary_text import (
     checked_goal_reference,
 )
-from .feature import PHL_TRANSITIVITY_BOUNDARY_REPAIR_FEATURE_ID
+from .ids import PHL_TRANSITIVITY_BOUNDARY_REPAIR_FEATURE_ID
 from .realization import phl_transitivity_boundary_of
 
 
@@ -85,18 +85,11 @@ def analyze_phl_transitivity_boundary(
         attempted.operation_family,
         attempted.exact_resource,
     )
-    claim = RecoveryClaim(
+    claim = recovery_claim_for(
+        attempted,
         feature_id=PHL_TRANSITIVITY_BOUNDARY_REPAIR_FEATURE_ID,
-        recovery_key=attempted.recovery_key,
-        attempt_id=attempted.attempt_id,
-        occurrence_identity=attempted.occurrence_identity,
-        trigger_id=attempted.trigger_id,
-        operation_family=attempted.operation_family,
-        selected_resource="",
-        resource_match_kind="none",
         allowed_output_kinds=("diagnostic",),
         preservation_witness=witness,
-        evidence_refs=attempted.evidence_refs,
     )
     return AnalysisContribution(
         diagnostics=(diagnostic,),

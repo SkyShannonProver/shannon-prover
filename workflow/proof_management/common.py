@@ -2,7 +2,6 @@
 from __future__ import annotations
 
 import json
-import re
 from pathlib import Path
 from typing import Any
 
@@ -32,21 +31,6 @@ def _preview(text: str, *, limit: int) -> str:
     return one_line[: max(0, limit - 3)].rstrip() + "..."
 
 
-def _dedupe_dicts(items: list[dict[str, Any]]) -> list[dict[str, Any]]:
-    out: list[dict[str, Any]] = []
-    seen: set[str] = set()
-    for item in items:
-        if not isinstance(item, dict):
-            continue
-        compact = _drop_empty(item)
-        key = json.dumps(compact, sort_keys=True, default=str)
-        if key in seen:
-            continue
-        seen.add(key)
-        out.append(compact)
-    return out
-
-
 def _drop_empty(value: Any) -> Any:
     if isinstance(value, dict):
         out: dict[str, Any] = {}
@@ -60,22 +44,6 @@ def _drop_empty(value: Any) -> Any:
         return [
             item
             for item in (_drop_empty(item) for item in value)
-            if item not in (None, "", [], {})
-        ]
-    return value
-
-
-def _drop_empty_precheck(value: Any) -> Any:
-    if isinstance(value, dict):
-        return {
-            key: _drop_empty_precheck(item)
-            for key, item in value.items()
-            if item not in (None, "", [], {})
-        }
-    if isinstance(value, list):
-        return [
-            _drop_empty_precheck(item)
-            for item in value
             if item not in (None, "", [], {})
         ]
     return value
@@ -101,14 +69,6 @@ def coerce_string_list(value: Any) -> list[str]:
         return [str(item) for item in value if str(item or "").strip()]
     text = str(value or "").strip()
     return [text] if text else []
-
-
-def goal_text_contains_call_site(text: str) -> bool:
-    """Whether verifier-visible goal text contains a procedure call site."""
-    value = str(text or "")
-    return "<@" in value or bool(
-        re.search(r"\bcall\s+[A-Za-z_][A-Za-z0-9_.'`]*", value)
-    )
 
 
 def read_jsonl(path: Path) -> list[dict[str, Any]]:

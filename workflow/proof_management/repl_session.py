@@ -13,6 +13,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
 from core.easycrypt import committed_history
+from core.easycrypt.ec_daemon_client import STEP_TIMEOUT_ENV
 from core.easycrypt.ec_env import get_ec_env
 from core.easycrypt.session.session_state import read_target_lemma_metadata
 
@@ -25,7 +26,9 @@ from .backend_actions import (
     resolve_authoritative_view_invocation,
     timeout_backend_action_record,
 )
+from .backend_request import BackendRequest
 from workflow.proof_management.managed_turn_outcome import classify_manager_action_outcome
+from workflow.proc_lifecycle import run_in_process_group
 from .protocol_repair import AgentIntent
 from .types import ProofStateSnapshot
 
@@ -34,6 +37,13 @@ if TYPE_CHECKING:
 
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
+
+# One commit call (an agent tactic or one replayed transaction) gets this long.
+COMMIT_CALL_TIMEOUT_SECONDS = 180.0
+# EasyCrypt's own limit on that transaction leaves room in the call for
+# session_cli's start-up, the daemon's reply and the session's bookkeeping, so
+# a tactic slower than this is rejected instead of timing out the call.
+EC_STEP_TIMEOUT_SECONDS = COMMIT_CALL_TIMEOUT_SECONDS - 10.0
 
 # Aggregate wall-clock budget (seconds) for the per-tactic replay loop of a
 # restart+replay-all restore (rewind / restore_committed_tactics / resume). Each
@@ -170,6 +180,12 @@ class ReplSessionManager:
     def state_version(self) -> int:
         return self._state_version
 
+    @property
+    def session_path(self) -> Path:
+        """Resolved backend session identity."""
+
+        return session_dir_path(self.session_dir, self.project_root).resolve()
+
     def adopt_versions(self, state_version: int, session_epoch: int) -> None:
         """Adopt version counters recovered from a bootstrap/capsule snapshot
         (never lowers either counter). The lifecycle service calls this
@@ -254,15 +270,17 @@ class ReplSessionManager:
         self,
         tactic_index: int,
     ) -> tuple[ProofStateSnapshot, list[dict[str, Any]]]:
+        """Rewind to just before committed command ``tactic_index`` (1-based).
+
+        The live session is undone in place (one EasyCrypt ``undo``); the
+        kept commands are not re-run. See ``_rewind_and_replay_locked``.
+        """
         with self._lock:
-            tactics = committed_history.read_committed_tactics(
-                session_dir_path(self.session_dir, self.project_root)
-            )
+            tactics = self.committed_history()
             keep_count = max(0, min(len(tactics), int(tactic_index) - 1))
-            return self._start_locked(
-                replay_prefix=tactics[:keep_count],
+            return self._rewind_and_replay_locked(
+                tactics[:keep_count],
                 label="undo_to_checkpoint",
-                force_restart=True,
             )
 
     def restore_committed_tactics(
@@ -271,12 +289,11 @@ class ReplSessionManager:
         *,
         label: str = "restore_pre_rewind",
     ) -> tuple[ProofStateSnapshot, list[dict[str, Any]]]:
+        """Make the session hold ``tactics``: undo to the longest prefix it
+        shares with the current history, then replay the rest
+        (skip-and-continue, reporting any divergence)."""
         with self._lock:
-            return self._start_locked(
-                replay_prefix=list(tactics),
-                label=label,
-                force_restart=True,
-            )
+            return self._rewind_and_replay_locked(list(tactics), label=label)
 
     def restart_with_edited_prefix(
         self,
@@ -284,23 +301,119 @@ class ReplSessionManager:
         *,
         label: str = "restart_replay_edit",
     ) -> tuple[ProofStateSnapshot, list[dict[str, Any]]]:
-        """Restart from the lemma and replay an EDITED tactic prefix, STOPPING at
-        the first tactic that no longer applies.
+        """Replay an EDITED tactic prefix, STOPPING at the first tactic that no
+        longer applies.
 
         For the agent's "fix an earlier step and replay the rest" recovery: the
-        caller hands the committed history with one step amended. Unlike
-        ``restore_committed_tactics`` (skip-and-continue, for replaying a known-good
-        prefix on fork/respawn), this stops at the first step the edit invalidated
-        and leaves the session there, so the agent continues from the divergence
-        point instead of later tactics landing in a now-wrong state.
+        caller hands the committed history with one step amended. The session
+        is undone to the commands before the amended step and the rest is
+        replayed. Unlike ``restore_committed_tactics`` (skip-and-continue, for
+        replaying a known-good prefix on fork/respawn), this stops at the first
+        step the edit invalidated and leaves the session there, so the agent
+        continues from the divergence point instead of later tactics landing in
+        a now-wrong state.
         """
         with self._lock:
-            return self._start_locked(
-                replay_prefix=list(edited_tactics),
+            return self._rewind_and_replay_locked(
+                list(edited_tactics),
                 label=label,
-                force_restart=True,
                 stop_at_first_drop=True,
             )
+
+    def _rewind_and_replay_locked(
+        self,
+        target: list[str],
+        *,
+        label: str,
+        stop_at_first_drop: bool = False,
+    ) -> tuple[ProofStateSnapshot, list[dict[str, Any]]]:
+        """Bring the live session to ``target`` without restarting it.
+
+        The session keeps the longest prefix it shares with ``target``: the
+        commands after it are undone by one ``undo`` on the daemon's committed
+        process and the rest of ``target`` is committed. Kept commands are not
+        re-run. The rewind call is refused without change when the daemon
+        cannot undo (no live session in step with the journal, a ``pragma`` in
+        the undone range, a level mismatch, a non-transaction boundary), and
+        any refusal, error or history mismatch falls back to the canonical
+        restart+replay of the whole ``target``. Caller holds the lock.
+        """
+        target = [str(t).strip() for t in target if str(t).strip()]
+        current = self.committed_history()
+        common = _common_prefix_length(current, target)
+        actions: list[dict[str, Any]] = []
+        if common < len(current):
+            if not self._rewind_locked(
+                common,
+                label=label,
+                expected=current[:common],
+                actions=actions,
+            ):
+                return self._start_locked(
+                    replay_prefix=target,
+                    label=label,
+                    force_restart=True,
+                    preamble_actions=actions,
+                    stop_at_first_drop=stop_at_first_drop,
+                )
+        else:
+            actions.append(_kept_prefix_action(label, common))
+        self._session_epoch += 1
+        self._replay_locked(
+            target[common:],
+            first_index=common + 1,
+            actions=actions,
+            stop_at_first_drop=stop_at_first_drop,
+        )
+        self._record_replay_divergence(target, actions)
+        snapshot = self._snapshot_from_managed_goal_view(actions=actions)
+        return snapshot, actions
+
+    def _rewind_locked(
+        self,
+        keep_commands: int,
+        *,
+        label: str,
+        expected: list[str],
+        actions: list[dict[str, Any]],
+    ) -> bool:
+        """Undo the session to its first ``keep_commands`` commands.
+
+        True only when the backend reports the state changed and the
+        session's history is exactly ``expected`` afterwards. Otherwise the
+        attempt's action is replaced by a non-mutating fallback record and
+        the caller restarts and replays.
+        """
+        reason = ""
+        try:
+            self._run_backend(
+                BackendRequest.undo(label, keep_commands=keep_commands),
+                actions=actions,
+                timeout=120,
+            )
+        except (ReplBackendTimeout, ReplBackendError) as exc:
+            reason = str(exc)
+        attempt = dict(actions[-1]) if actions else {}
+        if not reason:
+            if (
+                attempt.get("proof_state_changed") is True
+                and self.committed_history() == expected
+            ):
+                return True
+            reason = _attempt_reason(attempt) or (
+                "the session history does not match the kept prefix"
+            )
+        fallback = _undo_fallback_action(
+            label=label,
+            keep_commands=keep_commands,
+            reason=reason,
+            attempt=attempt,
+        )
+        if actions:
+            actions[-1] = fallback
+        else:
+            actions.append(fallback)
+        return False
 
     def _attach_locked(
         self,
@@ -398,14 +511,17 @@ class ReplSessionManager:
     ) -> tuple[ProofStateSnapshot, list[dict[str, Any]]]:
         actions: list[dict[str, Any]] = list(preamble_actions or [])
         self._session_epoch += 1
-        start_args = ["-start"]
-        if force_restart:
-            start_args.append("--force-restart")
-        start_args.extend(["-f", self.file_path])
-        for inc in self._include_dirs():
-            start_args.extend(["-I", inc])
-        start_args.extend(["-lemma", self.lemma_name])
-        self._run_backend(label, start_args, actions=actions, timeout=180)
+        self._run_backend(
+            BackendRequest.start(
+                label,
+                file_path=self.file_path,
+                include_dirs=self._include_dirs(),
+                lemma_name=self.lemma_name,
+                force_restart=force_restart,
+            ),
+            actions=actions,
+            timeout=180,
+        )
 
         replay_prefix = [str(t).strip() for t in (replay_prefix or []) if str(t).strip()]
         execution_prefix = list(replay_prefix)
@@ -421,12 +537,44 @@ class ReplSessionManager:
                     "replay transactions do not flatten to the requested "
                     "committed prefix"
                 )
-        total = len(execution_prefix)
         # The public prefix count remains the semantic command count even when
         # fewer atomic manager transactions are issued to preserve bullets.
-        agg_budget = replay_aggregate_budget_seconds(len(replay_prefix))
+        self._replay_locked(
+            execution_prefix,
+            first_index=1,
+            actions=actions,
+            stop_at_first_drop=stop_at_first_drop,
+            budget_prefix_len=len(replay_prefix),
+        )
+        self._record_replay_divergence(replay_prefix, actions)
+        snapshot = self._snapshot_from_managed_goal_view(actions=actions)
+        return snapshot, actions
+
+    def _replay_locked(
+        self,
+        execution_prefix: list[str],
+        *,
+        first_index: int,
+        actions: list[dict[str, Any]],
+        stop_at_first_drop: bool = False,
+        budget_prefix_len: int | None = None,
+    ) -> None:
+        """Commit ``execution_prefix`` one backend call per entry.
+
+        Step labels are ``replay_prefix_step_<n>`` where ``n`` counts from
+        ``first_index``, the position of the first entry in the requested
+        prefix (1 after a restart, ``kept + 1`` after an in-place rewind).
+        Caller holds the lock.
+        """
+        total = len(execution_prefix)
+        kept = first_index - 1
+        requested_total = kept + total
+        agg_budget = replay_aggregate_budget_seconds(
+            total if budget_prefix_len is None else budget_prefix_len
+        )
         replay_started = time.perf_counter()
-        for index, tactic in enumerate(execution_prefix, start=1):
+        for offset, tactic in enumerate(execution_prefix):
+            index = first_index + offset
             # Aggregate budget check BEFORE issuing the next backend call: a long
             # kept prefix must not hold the bridge lock indefinitely. Each step
             # records its own action, so `actions` already carries replay
@@ -444,26 +592,27 @@ class ReplSessionManager:
                         "timeout_seconds": agg_budget,
                         "duration_ms": int(elapsed * 1000),
                         "mutates_proof_state": True,
-                        "replay_steps_completed": index - 1,
+                        "replay_steps_completed": offset,
                         "replay_steps_total": total,
                         "agent_observation": {
                             "label": "replay_prefix_aggregate_budget",
                             "error_summary": (
                                 f"restart+replay restore exceeded aggregate "
                                 f"budget of {agg_budget:g}s after "
-                                f"{index - 1}/{total} kept tactics; aborting "
+                                f"{offset}/{total} kept tactics; aborting "
                                 "before replaying the remainder to avoid "
                                 "holding the manager bridge lock for minutes."
                             ),
                         },
                     }
+                    if kept:
+                        aggregate_action["replay_kept_prefix_count"] = kept
                     actions.append(aggregate_action)
                     raise ReplBackendTimeout(aggregate_action)
             self._run_backend(
-                f"replay_prefix_step_{index}",
-                ["-tactic-exec", "commit", "-c", tactic],
+                BackendRequest.commit(f"replay_prefix_step_{index}", tactic),
                 actions=actions,
-                timeout=180,
+                timeout=COMMIT_CALL_TIMEOUT_SECONDS,
             )
             if stop_at_first_drop:
                 # edit-and-replay: stop at the FIRST replayed tactic that no longer
@@ -475,9 +624,7 @@ class ReplSessionManager:
                 # dropped step is invisible to _run_backend — detect it by the
                 # committed history failing to grow to `index`. (Normal fork/respawn
                 # replay keeps the skip-and-continue safety net below; this is opt-in.)
-                kept_now = committed_history.read_committed_tactics(
-                    session_dir_path(self.session_dir, self.project_root)
-                )
+                kept_now = self.committed_history()
                 if len(kept_now) < index:
                     actions.append({
                         "label": "replay_prefix_stopped_at_divergence",
@@ -486,7 +633,7 @@ class ReplSessionManager:
                         "mutates_proof_state": False,
                         "replay_stopped_at_step": index,
                         "replay_kept_count": len(kept_now),
-                        "replay_requested_count": total,
+                        "replay_requested_count": requested_total,
                         "stopped_tactic": tactic,
                         "agent_observation": {
                             "label": "replay_prefix_stopped_at_divergence",
@@ -500,43 +647,45 @@ class ReplSessionManager:
                     })
                     break
 
-        if replay_prefix:
-            # A replay step can be ACCEPTED by EasyCrypt yet auto-reverted by
-            # the no-progress detector (exit 0 either way), so the loop above
-            # cannot tell a kept step from a dropped one. Compare the
-            # session's actual history against the request and surface any
-            # divergence as a dedicated action — without this, downstream
-            # records that echo the request misnumber every later step
-            # (step4_1 r2 respawn, 2026-06-09: one dropped hypothesis-rewrite
-            # shifted all live step numbers by +1 in replay audits).
-            committed = committed_history.read_committed_tactics(
-                session_dir_path(self.session_dir, self.project_root)
-            )
-            if committed != replay_prefix:
-                divergence = replay_prefix_divergence(replay_prefix, committed)
-                actions.append({
-                    "label": "replay_prefix_divergence",
-                    "argv": ["<post-replay history comparison>"],
-                    "exit_code": 0,
-                    "mutates_proof_state": False,
-                    "replay_requested_count": len(replay_prefix),
-                    "replay_committed_count": len(committed),
-                    "replay_divergence": divergence,
-                    "agent_observation": {
-                        "label": "replay_prefix_divergence",
-                        "result": (
-                            f"Prefix replay kept {len(committed)} of "
-                            f"{len(replay_prefix)} requested tactics; the "
-                            "session's history.ec is the authority for the "
-                            "node's starting state. Dropped steps were "
-                            "accepted by EasyCrypt but auto-reverted as "
-                            "no-progress during replay."
-                        ),
-                    },
-                })
-
-        snapshot = self._snapshot_from_managed_goal_view(actions=actions)
-        return snapshot, actions
+    def _record_replay_divergence(
+        self,
+        replay_prefix: list[str],
+        actions: list[dict[str, Any]],
+    ) -> None:
+        if not replay_prefix:
+            return
+        # A replay step can be ACCEPTED by EasyCrypt yet auto-reverted by
+        # the no-progress detector (exit 0 either way), so the replay loop
+        # cannot tell a kept step from a dropped one. Compare the
+        # session's actual history against the request and surface any
+        # divergence as a dedicated action — without this, downstream
+        # records that echo the request misnumber every later step
+        # (step4_1 r2 respawn, 2026-06-09: one dropped hypothesis-rewrite
+        # shifted all live step numbers by +1 in replay audits).
+        committed = self.committed_history()
+        if committed == replay_prefix:
+            return
+        divergence = replay_prefix_divergence(replay_prefix, committed)
+        actions.append({
+            "label": "replay_prefix_divergence",
+            "argv": ["<post-replay history comparison>"],
+            "exit_code": 0,
+            "mutates_proof_state": False,
+            "replay_requested_count": len(replay_prefix),
+            "replay_committed_count": len(committed),
+            "replay_divergence": divergence,
+            "agent_observation": {
+                "label": "replay_prefix_divergence",
+                "result": (
+                    f"Prefix replay kept {len(committed)} of "
+                    f"{len(replay_prefix)} requested tactics; the "
+                    "session's history.ec is the authority for the "
+                    "node's starting state. Dropped steps were "
+                    "accepted by EasyCrypt but auto-reverted as "
+                    "no-progress during replay."
+                ),
+            },
+        })
 
     def handle_intent(
         self,
@@ -547,22 +696,15 @@ class ReplSessionManager:
             if intent.intent == "commit_tactic":
                 tactic = intent.payload["tactic"].strip()
                 self._run_backend(
-                    "commit_tactic",
-                    ["-tactic-exec", "commit", "-c", tactic],
+                    BackendRequest.commit("commit_tactic", tactic),
                     actions=actions,
-                    timeout=180,
+                    timeout=COMMIT_CALL_TIMEOUT_SECONDS,
                 )
             elif intent.intent == "undo_last_step":
                 self._run_backend(
-                    "undo_last_step",
-                    ["-tactic-exec", "undo"],
+                    BackendRequest.undo("undo_last_step"),
                     actions=actions,
                     timeout=120,
-                )
-            elif intent.intent == "fresh_restart":
-                return self._start_locked(
-                    label="fresh_restart",
-                    force_restart=True,
                 )
             else:
                 raise ValueError(
@@ -585,14 +727,6 @@ class ReplSessionManager:
 
             self._compiler_surface = CompilerSurface(self)
         return self._compiler_surface
-
-    def read_only_tactic_preflight(
-        self,
-        tactic: str,
-        *,
-        timeout: int = 30,
-    ) -> dict[str, Any]:
-        return self.compiler.read_only_tactic_preflight(tactic, timeout=timeout)
 
     def certify_exact_tactic(
         self,
@@ -658,14 +792,9 @@ class ReplSessionManager:
         *,
         actions: list[dict[str, Any]],
     ) -> ProofStateSnapshot:
-        label = "managed_goal_view"
-        args = ["-managed-goal-view"]
-        payload = self._run_backend(
-            label,
-            args,
-            actions=actions,
-            timeout=60,
-        )
+        request = BackendRequest.managed_goal_view()
+        label = request.label
+        payload = self._run_backend(request, actions=actions, timeout=60)
         # The snapshot is decoded only from the current invocation's strictly
         # event-bound workspace artifact. Stdout is human/debug display and can
         # neither forge nor replace the manager's semantic state.
@@ -781,25 +910,18 @@ class ReplSessionManager:
 
     def _run_backend(
         self,
-        label: str,
-        args: list[str],
+        request: BackendRequest,
         *,
         actions: list[dict[str, Any]],
         timeout: float,
         authoritative_resolutions: list[AuthoritativeViewResolution] | None = None,
     ) -> str | dict[str, Any]:
-        retired_tactic_flags = {"-next", "-prev", "-chain"}
-        if retired_tactic_flags.intersection(args):
-            raise ValueError(
-                "ReplSessionManager accepts tactic mutations only through "
-                "-tactic-exec commit|commit_chain|undo"
-            )
         cmd = [
             sys.executable,
             "core/easycrypt/session_cli.py",
             "-d",
             self.session_dir,
-            *args,
+            *request.args,
         ]
         deadline = getattr(self._turn_deadline, "value", None)
         if deadline is not None:
@@ -807,7 +929,7 @@ class ReplSessionManager:
             if remaining <= 0:
                 exc = subprocess.TimeoutExpired(cmd=cmd, timeout=0.0)
                 action = timeout_backend_action_record(
-                    label,
+                    request,
                     cmd,
                     exc,
                     0.0,
@@ -821,30 +943,37 @@ class ReplSessionManager:
         resolved_session_dir = session_dir_path(self.session_dir, self.project_root)
         tactic_preflight_boundary = capture_tactic_preflight_invocation(
             resolved_session_dir,
-            cmd,
+            request,
         )
         tactic_execution_boundary = capture_tactic_execution_invocation(
             resolved_session_dir,
-            cmd,
+            request,
         )
         authoritative_view_boundary = capture_authoritative_view_invocation(
             resolved_session_dir,
-            cmd,
+            request,
         )
+        # Mark the call with the timeout it actually enforces, so the stall
+        # watchdog can tell a bounded backend wait from a manager hang.
+        from .backend_call_boundary import backend_call
+
         start_time = time.perf_counter()
         try:
-            result = subprocess.run(
-                cmd,
-                cwd=str(self.project_root),
-                env=self._env(),
-                capture_output=True,
-                text=True,
-                timeout=timeout,
-            )
+            # A timed-out session_cli is stopped with its whole process
+            # group: the EasyCrypt it ran must not keep the CPU after the call.
+            with backend_call(request.label, timeout):
+                result = run_in_process_group(
+                    cmd,
+                    cwd=str(self.project_root),
+                    env=self._env(),
+                    capture_output=True,
+                    text=True,
+                    timeout=timeout,
+                )
         except subprocess.TimeoutExpired as exc:
             duration_ms = int((time.perf_counter() - start_time) * 1000)
             action = timeout_backend_action_record(
-                label, cmd, exc, timeout, duration_ms,
+                request, cmd, exc, timeout, duration_ms,
             )
             actions.append(action)
             raise ReplBackendTimeout(action) from exc
@@ -860,7 +989,7 @@ class ReplSessionManager:
         ):
             authoritative_resolutions.append(authoritative_view_resolution)
         action = backend_action_record(
-            label, cmd, result, duration_ms,
+            request, cmd, result, duration_ms,
             tactic_preflight_boundary=tactic_preflight_boundary,
             tactic_execution_boundary=tactic_execution_boundary,
             authoritative_view_boundary=authoritative_view_boundary,
@@ -880,6 +1009,7 @@ class ReplSessionManager:
     def _env(self) -> dict[str, str]:
         env = get_ec_env()
         env["EC_SESSION_DIR"] = self.session_dir
+        env[STEP_TIMEOUT_ENV] = f"{EC_STEP_TIMEOUT_SECONDS:g}"
         return env
 
     def include_dirs(self) -> list[str]:
@@ -896,6 +1026,93 @@ class ReplSessionManager:
 def session_dir_path(session_dir: str | Path, project_root: Path) -> Path:
     path = Path(session_dir)
     return path if path.is_absolute() else Path(project_root) / path
+
+
+def _common_prefix_length(current: list[str], target: list[str]) -> int:
+    length = 0
+    for held, wanted in zip(current, target):
+        if held != wanted:
+            break
+        length += 1
+    return length
+
+
+def _kept_prefix_action(label: str, kept: int) -> dict[str, Any]:
+    """Record a recovery that needed no undo: the session already ended with
+    the kept prefix, so only the rest of the target is replayed."""
+    return {
+        "label": label,
+        "argv": ["<kept committed prefix>"],
+        "exit_code": 0,
+        "duration_ms": 0,
+        "mutates_proof_state": False,
+        "replay_steps_avoided": kept,
+        **classify_manager_action_outcome(
+            status="ok",
+            ok=True,
+            read_only=False,
+            mutates_proof_state=False,
+            state_changed=False,
+        ).to_dict(),
+        "agent_observation": {
+            "label": label,
+            "result": (
+                f"Kept the {kept} committed tactic(s) the session already "
+                "holds; replaying only the tactics after them."
+            ),
+        },
+    }
+
+
+def _attempt_reason(attempt: dict[str, Any]) -> str:
+    authority = attempt.get("execution_authority")
+    if isinstance(authority, dict):
+        error = str(authority.get("structured_error") or "").strip()
+        if error:
+            return error
+    observation = attempt.get("agent_observation")
+    if isinstance(observation, dict):
+        return str(observation.get("error_summary") or "").strip()
+    return ""
+
+
+def _undo_fallback_action(
+    *,
+    label: str,
+    keep_commands: int,
+    reason: str,
+    attempt: dict[str, Any],
+) -> dict[str, Any]:
+    """Replace a refused or failed rewind-by-undo attempt.
+
+    The attempt left the proof state unchanged (or uncertain, which the
+    restart that follows resolves), so the record is non-mutating and needs
+    no attention; the attempt's own verdict is kept for audit."""
+    return {
+        "label": "daemon_undo_fallback",
+        "argv": list(attempt.get("argv") or ["<daemon undo>"]),
+        "exit_code": attempt.get("exit_code"),
+        "duration_ms": int(attempt.get("duration_ms") or 0),
+        "mutates_proof_state": False,
+        "outcome_kind": "fallback",
+        "proof_state_effect": "unchanged",
+        "proof_state_changed": False,
+        "needs_attention": False,
+        "daemon_undo": {
+            "requested_label": label,
+            "keep_commands": int(keep_commands),
+            "reason": reason[:400],
+            "attempt_outcome_kind": str(attempt.get("outcome_kind") or ""),
+            "attempt_timed_out": bool(attempt.get("timed_out")),
+        },
+        "agent_observation": {
+            "label": "daemon_undo_fallback",
+            "result": (
+                "The session could not be rewound in place; restoring via "
+                "the canonical restart+replay path."
+            ),
+        },
+    }
 
 
 def replay_prefix_divergence(

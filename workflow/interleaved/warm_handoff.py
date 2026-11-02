@@ -26,12 +26,10 @@ from workflow.node.outer_proof_handoff import (
 )
 from workflow.node.proof_node_manager import ProofNodeManager
 from workflow.proof_management.tactic_utils import strip_easycrypt_comments
-from workflow.interleaved.runtime import load_runtime_settings
+from workflow.interleaved.proof_source import lemma_prefix_projection
+from workflow.interleaved.runtime import ProjectContext
 
 
-_SETTINGS = load_runtime_settings()
-TARGET = _SETTINGS.project.target_file
-INCLUDE_DIR = _SETTINGS.project.include_dirs[0]
 _CLOSER = re.compile(
     r"(?i)^\s*(?:[+*\-]\s*)?(?:qed|admit|abort|exit)\s*\.\s*$"
 )
@@ -54,6 +52,12 @@ def _write_json(path: Path, payload: dict[str, Any]) -> None:
 
 
 def _proof_body(content: str, lemma: str) -> tuple[str, tuple[int, int]]:
+    """Return the lemma's proof body and its span in ``content``.
+
+    Unlike ``proof_source.proof_body_span``, the body starts after the whitespace that
+    follows ``proof.``: a candidate's tactics are replayed command by command,
+    and the warm-handoff sentinel splices its command at the first tactic.
+    """
     block = find_target_proof_block(content, lemma)
     if block is None:
         raise ValueError(f"could not find proof block for {lemma}")
@@ -63,33 +67,21 @@ def _proof_body(content: str, lemma: str) -> tuple[str, tuple[int, int]]:
     qed = list(re.finditer(r"(?i)\bqed\s*\.", text))
     if proof is None or not qed or qed[-1].start() < proof.end():
         raise ValueError(f"{lemma} does not have a proof./qed. candidate block")
-    return text[proof.end():qed[-1].start()], block
-
-
-def _lemma_prefix_projection(content: str, lemma: str) -> str:
-    """Normalize the delegated proof and ignore declarations after it.
-
-    A continuation may replace later, not-yet-proved lemmas with admit shells
-    solely to keep the current target loadable.  Those later declarations
-    cannot participate in the proof of ``lemma``.  Binding the handoff through
-    the end of the selected lemma therefore preserves every relevant source
-    byte while allowing a loadable continuation seed to differ in its suffix.
-    """
-    block = find_target_proof_block(content, lemma)
-    if block is None:
-        raise ValueError(f"could not project proof block for {lemma}")
-    start, _ = block
-    return content[:start] + "proof.\n  admit.\nqed."
+    return (
+        text[proof.end():qed[-1].start()],
+        (start + proof.end(), start + qed[-1].start()),
+    )
 
 
 def _resolve_candidate(
+    ctx: ProjectContext,
     *,
-    root: Path,
     run_dir: Path,
     candidate_source: str | None,
 ) -> Path:
+    root = ctx.root
     if not candidate_source:
-        return (root / TARGET).resolve()
+        return (root / ctx.project.target_file).resolve()
     relative = Path(candidate_source)
     if relative.is_absolute() or ".." in relative.parts:
         raise ValueError("handoff candidate must be a safe repository-relative path")
@@ -125,8 +117,8 @@ def _resolve_strategy_note(*, root: Path, run_dir: Path, raw: str) -> tuple[Path
 
 
 def _resolve_resource_anchors(
+    ctx: ProjectContext,
     *,
-    root: Path,
     run_dir: Path,
     raw: str | None,
     context_source: str,
@@ -138,6 +130,7 @@ def _resolve_resource_anchors(
 
     if not raw:
         return None, []
+    root = ctx.root
     relative = Path(raw)
     if relative.is_absolute() or ".." in relative.parts:
         raise ValueError("resource anchors must be a safe repository-relative path")
@@ -216,10 +209,10 @@ def _resolve_resource_anchors(
                 symbols=tuple(symbols),
             ),),
             context_file=context_file,
-            include_dirs=(
-                root / "easycrypt-src" / "theories",
+            include_dirs=tuple(dict.fromkeys((
+                *(root / item for item in ctx.project.include_dirs),
                 source_dir,
-            ),
+            ))),
         )
     finally:
         try:
@@ -305,8 +298,8 @@ def _candidate_commands(body: str) -> list[str]:
 
 
 def _certify_fresh_replay(
+    ctx: ProjectContext,
     *,
-    root: Path,
     lemma: str,
     replay_commands: list[str],
     expected_committed_spine: list[str],
@@ -317,13 +310,13 @@ def _certify_fresh_replay(
 
     session_tag = f"prover_{uuid.uuid4().hex[:12]}_tree_0_0"
     manager = ProofNodeManager(
-        file_path=TARGET,
+        file_path=ctx.project.target_file,
         lemma_name=lemma,
-        include_dir=INCLUDE_DIR,
+        include_dir=ctx.project.session_include_dir,
         session_tag=session_tag,
         node_id="Tree-0.0-replay-certification",
         run_dir=run_dir,
-        project_root=root,
+        project_root=ctx.root,
         surface_profile="proof_state_compiler",
     )
     try:
@@ -396,14 +389,14 @@ def _resolve_handoff_boundary(
 
 
 def prepare_outer_proof_handoff(
+    ctx: ProjectContext,
     *,
-    root: Path,
     run_rel: Path,
     lemma: str,
     strategy_note: str,
     resource_anchors: str | None = None,
     candidate_source: str | None = None,
-    runtime_target_file: str = TARGET,
+    runtime_target_file: str | None = None,
 ) -> Path:
     """Natively certify an outer candidate boundary and its briefing.
 
@@ -413,13 +406,13 @@ def prepare_outer_proof_handoff(
     proof prefix exists.
     """
 
-    root = root.resolve()
+    root = ctx.root.resolve()
     run_dir = (root / run_rel).resolve()
     if not run_dir.is_dir():
         raise ValueError(f"run directory does not exist: {run_dir}")
-    target_path = (root / TARGET).resolve()
+    target_path = (root / ctx.project.target_file).resolve()
     candidate_path = _resolve_candidate(
-        root=root,
+        ctx,
         run_dir=run_dir,
         candidate_source=candidate_source,
     )
@@ -429,14 +422,14 @@ def prepare_outer_proof_handoff(
     target_text = target_path.read_text(encoding="utf-8")
     candidate_text = candidate_path.read_text(encoding="utf-8")
     body, _ = _proof_body(candidate_text, lemma)
-    if _sha256_text(_lemma_prefix_projection(target_text, lemma)) != _sha256_text(
-        _lemma_prefix_projection(candidate_text, lemma)
+    if _sha256_text(lemma_prefix_projection(target_text, lemma)) != _sha256_text(
+        lemma_prefix_projection(candidate_text, lemma)
     ):
         raise ValueError(
             "candidate and current target differ before or at the delegated lemma"
         )
     resource_anchor_path, resolved_resource_anchors = _resolve_resource_anchors(
-        root=root,
+        ctx,
         run_dir=run_dir,
         raw=resource_anchors,
         context_source=candidate_text,
@@ -453,9 +446,9 @@ def prepare_outer_proof_handoff(
     prepare_dir.mkdir(parents=True, exist_ok=False)
     session_tag = f"prover_{uuid.uuid4().hex[:12]}_tree_0_0"
     manager = ProofNodeManager(
-        file_path=TARGET,
+        file_path=ctx.project.target_file,
         lemma_name=lemma,
-        include_dir=INCLUDE_DIR,
+        include_dir=ctx.project.session_include_dir,
         session_tag=session_tag,
         node_id="Tree-0.0",
         run_dir=prepare_dir,
@@ -512,7 +505,7 @@ def prepare_outer_proof_handoff(
     replay_certify_dir = handoff_dir / "manager_replay_certify"
     replay_certify_dir.mkdir(parents=True, exist_ok=False)
     _certify_fresh_replay(
-        root=root,
+        ctx,
         lemma=lemma,
         replay_commands=accepted_commands,
         expected_committed_spine=committed_spine,
@@ -536,7 +529,10 @@ def prepare_outer_proof_handoff(
         # Preparation is certified against the canonical lane target above.
         # The managed proof node may run against a proof-stripped projection;
         # replay verifies that the recorded boundary is unchanged there.
-        "target": {"file": runtime_target_file, "lemma": lemma},
+        "target": {
+            "file": runtime_target_file or ctx.project.target_file,
+            "lemma": lemma,
+        },
         "source": {
             "commit": commit,
             "outer_run_dir": run_rel.as_posix(),
@@ -544,10 +540,10 @@ def prepare_outer_proof_handoff(
             "candidate_sha256": _sha256_bytes(candidate_path.read_bytes()),
             "projection_scope": "through_delegated_lemma",
             "candidate_projection_sha256": _sha256_text(
-                _lemma_prefix_projection(candidate_text, lemma)
+                lemma_prefix_projection(candidate_text, lemma)
             ),
             "current_projection_sha256": _sha256_text(
-                _lemma_prefix_projection(target_text, lemma)
+                lemma_prefix_projection(target_text, lemma)
             ),
             "strategy_note": str(strategy_path.relative_to(root)),
             "resource_anchors": (

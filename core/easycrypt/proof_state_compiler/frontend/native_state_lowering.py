@@ -7,8 +7,6 @@ recover proof kind, formulas, locals, or program structure.
 
 from __future__ import annotations
 
-import hashlib
-
 from core.easycrypt.proof_state_compiler.contracts.evidence import EvidenceRef
 from core.easycrypt.proof_state_compiler.contracts.frozen_json import (
     FrozenJsonArray,
@@ -26,6 +24,7 @@ from core.easycrypt.proof_state_compiler.contracts.proof_ir import (
     ProofJudgment,
     TypedTermIR,
 )
+from core.easycrypt.proof_state_compiler.contracts.digest import text_sha256
 
 
 _GOAL_KINDS = {
@@ -160,9 +159,9 @@ def lower_native_current_facts(
         name = _string(declaration["name"], "local hypothesis name")
         formula = _term(_object(declaration["formula"], "local formula"))
         evidence = _evidence(native, f"local_declarations/{index}/formula")
-        identity = hashlib.sha256(
-            f"{name}\0{formula.text}\0{evidence.source_sha256}".encode()
-        ).hexdigest()[:20]
+        identity = text_sha256(
+            f"{name}\0{formula.text}\0{evidence.source_sha256}"
+        )[:20]
         facts.append(ProofFact(
             fact_id=f"proof-fact:{identity}",
             name=name,
@@ -281,9 +280,7 @@ def _contains_kind(formula: TypedTermIR, kind: str) -> bool:
 
 
 def _evidence(native: NativeProofStateSnapshot, anchor: str) -> EvidenceRef:
-    identity = hashlib.sha256(
-        f"{native.provenance.source_sha256}\0{anchor}".encode()
-    ).hexdigest()[:16]
+    identity = text_sha256(f"{native.provenance.source_sha256}\0{anchor}")[:16]
     return EvidenceRef(
         evidence_id=f"p2.native.{identity}",
         source_kind="native_typed_state",

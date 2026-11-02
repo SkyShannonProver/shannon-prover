@@ -9,7 +9,7 @@ import: ``prover.py`` -> ``prover_prompt.py`` (no cycle).
 from __future__ import annotations
 
 import re
-from typing import Any, Optional
+from typing import Any
 
 from workflow.proof_tool.easycrypt_source_resource import (
     SOURCE_RESOURCE_MANIFEST_ENV,
@@ -80,10 +80,6 @@ def bind_authoritative_managed_handoff(
     return prompt.replace(block, replacement, 1)
 
 
-def _session_dir_for_tag(session_tag: str) -> str:
-    return f".ec_session_{session_tag}"
-
-
 def _agent_visible_workspace_view(
     view: dict[str, Any],
     surface_profile: str | None,
@@ -98,7 +94,6 @@ def _agent_visible_workspace_view(
 
 
 def _render_managed_session_handoff(
-    session_dir: str,
     managed_session: dict[str, Any] | None,
     *,
     surface_profile: str | None = None,
@@ -190,17 +185,11 @@ def _source_access_prompt(*, eval_mode: bool) -> str:
 def _build_prover_prompt(
     file_path: str,
     lemma_name: str,
-    include_dir: str,
-    session_tag: Optional[str] = None,
+    *,
     managed_session: dict[str, Any] | None = None,
     surface_profile: str | None = None,
 ) -> str:
     """Build the task prompt for the selected managed prover agent."""
-
-    # Sanitize lemma name for shell safety (e.g., ExpPsample_Exp' has a quote)
-    safe_lemma = lemma_name.replace("'", "_prime")
-    session_tag = session_tag or f"prover_{safe_lemma}"
-    session_dir = _session_dir_for_tag(session_tag)
 
     import os as _os
     eval_mode = _os.environ.get("EVAL_TARGET_LEMMA", "").strip() == lemma_name
@@ -236,7 +225,6 @@ cross-file summaries, research context, or structural diffs.
     )
 
     managed_session_section = _render_managed_session_handoff(
-        session_dir,
         managed_session,
         surface_profile=surface_profile,
     )
@@ -253,8 +241,6 @@ cross-file summaries, research context, or structural diffs.
 def _build_child_prover_prompt(
     file_path: str,
     lemma_name: str,
-    include_dir: str,
-    session_tag: str,
     *,
     layer_move_action: dict | None = None,
     managed_session: dict[str, Any] | None = None,
@@ -267,8 +253,6 @@ def _build_child_prover_prompt(
     facts, actions, failures, and replay affordances come from the manager's
     current-turn handoff below.
     """
-    session_dir = _session_dir_for_tag(session_tag)
-
     import os as _os
     eval_mode = _os.environ.get("EVAL_TARGET_LEMMA", "").strip() == lemma_name
     source_access = _source_access_prompt(eval_mode=eval_mode)
@@ -297,7 +281,6 @@ If the authoritative surface makes that direction inapplicable, follow the
 proof state rather than forcing the branch label.
 """
     managed_session_section = _render_managed_session_handoff(
-        session_dir,
         managed_session,
         surface_profile=surface_profile,
     )

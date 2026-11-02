@@ -49,7 +49,7 @@
 # SIGHUP is ignored so the queue survives terminal close even without nohup
 # (children that reset their own handlers may still need nohup).
 #
-# Tested by tests/test_run_queue.py. Documented in TESTING.md.
+# Tested by tests/public/repo/test_run_queue.py. Documented in TESTING.md.
 
 set -u
 

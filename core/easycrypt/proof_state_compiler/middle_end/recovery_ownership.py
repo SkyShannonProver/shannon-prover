@@ -12,6 +12,7 @@ from core.easycrypt.proof_state_compiler.contracts.failure import (
     RECOVERY_OWNED,
     RECOVERY_UNCLAIMED,
     RecoveryClaim,
+    recovery_claim_for,
     RecoveryOwnership,
     native_tactic_prefix_witness,
 )
@@ -34,21 +35,15 @@ def complete_recovery_claims(
     handoff = None if attempted is None else attempted.recovery_handoff
     if claims or attempted is None or handoff is None:
         return claims
-    return (RecoveryClaim(
+    return (recovery_claim_for(
+        attempted,
         feature_id=handoff.source_feature_id,
-        recovery_key=attempted.recovery_key,
-        attempt_id=attempted.attempt_id,
-        occurrence_identity=attempted.occurrence_identity,
-        trigger_id=attempted.trigger_id,
-        operation_family="compound_tactic",
-        selected_resource="",
-        resource_match_kind="none",
         allowed_output_kinds=("diagnostic",),
         preservation_witness=native_tactic_prefix_witness(
             rejected_tactic=handoff.source_rejected_tactic,
             exact_prefix_tactic=handoff.accepted_prefix_tactic,
         ),
-        evidence_refs=attempted.evidence_refs,
+        operation_family="compound_tactic",
     ),)
 
 

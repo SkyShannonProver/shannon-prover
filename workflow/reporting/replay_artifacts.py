@@ -173,10 +173,6 @@ class AuditReport:
             "failed_next": list(self.failed_next),
         }
 
-    @property
-    def audit_tool_calls(self) -> int:
-        return self.command_counts.get("audit_tool", 0)
-
 
 @dataclass(frozen=True)
 class ReplayArtifact:
@@ -317,16 +313,6 @@ def _int_dict(value: Any) -> dict[str, int]:
     if not isinstance(value, dict):
         return {}
     return {str(k): _as_int(v) for k, v in value.items()}
-
-
-def dig(value: Any, *keys: str) -> Any:
-    """Walk nested dicts by key; None on any non-dict hop."""
-    cur = value
-    for key in keys:
-        if not isinstance(cur, dict):
-            return None
-        cur = cur.get(key)
-    return cur
 
 
 def node_id_from_dir(path: Path) -> str:

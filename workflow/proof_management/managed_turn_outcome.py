@@ -157,6 +157,71 @@ def observation_with_action_outcome(
     return out
 
 
+_REPLAY_SHORTFALL_LABELS = frozenset({
+    "replay_prefix_stopped_at_divergence",
+    "replay_prefix_divergence",
+})
+_REPLAY_SHORTFALL_FIELDS = (
+    "replay_stopped_at_step",
+    "replay_kept_count",
+    "replay_committed_count",
+    "replay_requested_count",
+)
+
+
+def observation_with_recovery_outcome(
+    observation: dict[str, Any],
+    actions: list[dict[str, Any]],
+) -> dict[str, Any]:
+    """Attach the outcome of one rewind/restore/amend/restart recovery.
+
+    A recovery's first backend action says nothing about the restored state
+    as a whole: it is the ``-start`` acknowledgement of a restart, or the
+    in-place ``undo`` of a rewind, possibly preceded by a fallback note. Its
+    replay steps, when any, are per-command commits. The recovery as a whole
+    moved the session to a chosen prefix, so it changed the proof state. When
+    the replay stopped early or dropped steps, the result is partial and the
+    backend's own account of where it stopped is added to the agent-visible
+    result.
+    """
+    out = dict(observation) if isinstance(observation, dict) else {}
+    shortfalls = [
+        action
+        for action in actions
+        if isinstance(action, dict)
+        and action.get("label") in _REPLAY_SHORTFALL_LABELS
+    ]
+    if not shortfalls:
+        out.update(
+            ManagerActionOutcome("accepted", PROOF_STATE_CHANGED, True).to_dict()
+        )
+        return out
+    notes: list[str] = []
+    for action in shortfalls:
+        for field in _REPLAY_SHORTFALL_FIELDS:
+            if field in action:
+                out[field] = action[field]
+        agent_observation = action.get("agent_observation")
+        if isinstance(agent_observation, dict):
+            note = str(agent_observation.get("result") or "").strip()
+            if note:
+                notes.append(note)
+    if notes:
+        summary = str(
+            out.get("result") or out.get("message") or out.get("notice") or ""
+        ).strip()
+        out["result"] = "\n".join([summary, *notes] if summary else notes)
+    out.update(
+        ManagerActionOutcome(
+            "partial_success",
+            PROOF_STATE_CHANGED,
+            True,
+            True,
+        ).to_dict()
+    )
+    return out
+
+
 def proof_state_changed_for_turn(
     actions: list[dict[str, Any]],
     view: dict[str, Any],

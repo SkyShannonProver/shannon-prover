@@ -1,15 +1,15 @@
 """Warm ephemeral EC prober — fast read-only tactic probing via run-then-undo.
 
-A daemon read-only probe (``ECDaemon.try_tactic``) spawns a fresh ``easycrypt
--emacs`` subprocess, replays the setup commands + every committed tactic, runs
-ONE tactic, and kills the process. That costs ~1.4 s/probe — dominated by theory
-loading, NOT the tactic — and it grows with proof depth (O(setup + committed)).
+A spawn-fresh read-only probe (``ECSubprocess._try_tactic_fresh`` in
+``ec_daemon``) starts a new ``easycrypt -emacs`` subprocess, replays the setup
+commands + every committed tactic, runs ONE tactic, and kills the process.
+That costs ~1.4 s/probe — dominated by theory loading, NOT the tactic — and it
+grows with proof depth (O(setup + committed)).
 
 This module keeps ONE warm ephemeral process stopped at the committed state and
 probes each tactic by running it and rolling back with ``undo <N>.`` — the
-step-numbered ProofGeneral backtrack. (Note: the bare ``undo.`` / ``Undo.``
-parse-error in ``-emacs`` mode, which is why ``ECDaemon`` concluded there was no
-in-place rollback and fell back to spawn-fresh; the step-numbered form works.)
+step-numbered ProofGeneral backtrack. (The bare ``undo.`` / ``Undo.``
+are parse errors in ``-emacs`` mode; the step-numbered form works.)
 The ``-emacs`` prompt ``[N|check]`` exposes the step number N; after a probe the
 counter is at N+1 (or the goal changed), and ``undo <base>.`` returns it to the
 committed base step. Measured: ~0.02 s/probe after a one-time ~1.4 s warm-up —
@@ -17,33 +17,26 @@ committed base step. Measured: ~0.02 s/probe after a one-time ~1.4 s warm-up —
 
 Isolation/safety: the warm process is a DEDICATED ephemeral, never the daemon's
 committed ``self.proc`` — so a probe can never corrupt the real proof state (the
-reason ``ECDaemon`` spawned fresh). On any *drift* (a probe whose ``undo`` does
+reason the spawn-fresh path exists). On any *drift* (a probe whose ``undo`` does
 not return to the base step) or process failure, the prober marks itself dead via
 ``alive`` so the caller falls back to spawn-fresh. It is invalidated whenever the
 committed state changes (a new commit → re-``open`` to replay the new prefix).
 
-STANDALONE: this is not yet wired into ``ECDaemon``. It isolates the mechanism +
-its safety tests so it can be validated across tactic types (smt, multi-subgoal,
-goal-closing, long runs) before integration. See ``tests/test_ec_warm_prober.py``.
+``ECSubprocess.try_tactic`` / ``try_chain`` in ``ec_daemon`` use this prober
+by default and fall back to spawn-fresh when it is disabled (``EC_WARM_PROBE=0``),
+cannot be built, or drifts. See ``tests/public/core/test_ec_warm_prober.py`` and
+``tests/public/core/test_ec_warm_batch_integration.py``.
 """
 from __future__ import annotations
 
-import re
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Optional
 
-from core.easycrypt.ec_lifecycle import split_ec_commands as _split_ec_commands
 from core.easycrypt.ec_lifecycle import ECSessionLifecycle
+from core.easycrypt.proof_text import split_ec_commands
 from core.easycrypt.ec_diagnostics import error_text, parse_error
-
-# The `-emacs` prompt is `[<step>|<mode>]>`; the step number is the rollback key.
-_STEP_RE = re.compile(r"\[(\d+)\|")
-
-
-def _last_step(raw: str) -> Optional[int]:
-    found = _STEP_RE.findall(raw or "")
-    return int(found[-1]) if found else None
+from core.easycrypt.ec_prompt import last_prompt_uid
 
 
 def _goal_text(raw: str) -> str:
@@ -67,14 +60,11 @@ def _error_text(raw: str) -> str:
 
 @dataclass
 class ProbeResult:
-    """Outcome of one warm probe. ``advanced`` iff the proof state changed (the
-    step counter moved or the goal closed) — the authoritative "did it apply"
-    signal, and what decides whether a rollback is needed. ``accepted`` is a
-    best-effort flag for standalone use (a caller with EC's own error parser
-    should re-derive accepted/goal/no_progress from ``raw`` instead). ``raw`` is
-    the full EC output the probe produced, before the rollback."""
+    """Outcome of one warm probe. ``accepted`` is a best-effort flag for
+    standalone use (a caller with EC's own error parser should re-derive
+    accepted/goal from ``raw`` instead). ``raw`` is the full EC output the probe
+    produced, before the rollback."""
     accepted: bool
-    advanced: bool = False
     error: str = ""
     goal_after: str = ""
     raw: str = ""
@@ -95,7 +85,6 @@ class WarmProber(ECSessionLifecycle):
     def __init__(self, include_dirs, why3_socket: Optional[str] = None, env=None):
         super().__init__(include_dirs, why3_socket, env=env)
         self._base_step: Optional[int] = None
-        self._base_goal: str = ""
         self._dead = True
 
     # ── lifecycle ────────────────────────────────────────────────────────────
@@ -108,10 +97,6 @@ class WarmProber(ECSessionLifecycle):
     @property
     def base_step(self) -> Optional[int]:
         return self._base_step
-
-    @property
-    def base_goal(self) -> str:
-        return self._base_goal
 
     def open(self, file_path, lemma_name: str, committed_tactics=(),
              setup_commands=None, timeout: float = 120.0) -> bool:
@@ -126,7 +111,7 @@ class WarmProber(ECSessionLifecycle):
         try:
             if setup_commands is None:
                 from core.easycrypt.lemma_extract import extract_lemma  # type: ignore
-                setup_commands = _split_ec_commands(
+                setup_commands = split_ec_commands(
                     extract_lemma(Path(file_path), lemma_name, open_proof=True))
             self.spawn()   # spawn + drain banner (shared lifecycle base)
             setup = [c for c in setup_commands if c and c.strip()]
@@ -136,12 +121,11 @@ class WarmProber(ECSessionLifecycle):
                 if parse_error(last):
                     self.close()
                     return False
-            step = _last_step(last) if last else _last_step(self._send_recv("pragma noop.", timeout))
+            step = last_prompt_uid(last) if last else last_prompt_uid(self._send_recv("pragma noop.", timeout))
             if step is None:
                 self.close()
                 return False
             self._base_step = step
-            self._base_goal = _goal_text(last)
             self._dead = False
             return True
         except Exception:
@@ -185,7 +169,7 @@ class WarmProber(ECSessionLifecycle):
         except Exception as exc:
             self._dead = True
             return ProbeResult(accepted=False, error=f"{type(exc).__name__}: {exc}")
-        step = _last_step(raw)
+        step = last_prompt_uid(raw)
         # advanced = the proof state changed (counter moved or the goal closed,
         # which drops the `[N|check]` prompt). A rejected or no-progress tactic
         # leaves the step where it was. advanced decides whether to roll back.
@@ -197,13 +181,13 @@ class WarmProber(ECSessionLifecycle):
                 back = self._send_recv(f"undo {self._base_step}.", timeout)
             except Exception as exc:
                 self._dead = True
-                return ProbeResult(accepted=accepted, advanced=advanced,
+                return ProbeResult(accepted=accepted,
                                    error=f"undo failed: {type(exc).__name__}: {exc}",
                                    goal_after=goal_after, raw=raw)
-            if _last_step(back) != self._base_step:
+            if last_prompt_uid(back) != self._base_step:
                 self._dead = True   # drift: could not restore the base step
         return ProbeResult(
-            accepted=accepted, advanced=advanced,
+            accepted=accepted,
             error="" if accepted else _error_text(raw),
             goal_after=goal_after, raw=raw)
 
@@ -230,7 +214,7 @@ class WarmProber(ECSessionLifecycle):
                 self._dead = True
                 return raws, False
             raws.append(raw)
-            step = _last_step(raw)
+            step = last_prompt_uid(raw)
             if step is None or "No more goals" in raw:   # goal closed -> stop
                 advanced_any = True
                 break
@@ -242,7 +226,7 @@ class WarmProber(ECSessionLifecycle):
             except Exception:
                 self._dead = True
                 return raws, False
-            if _last_step(back) != self._base_step:
+            if last_prompt_uid(back) != self._base_step:
                 self._dead = True
                 return raws, False
         return raws, True

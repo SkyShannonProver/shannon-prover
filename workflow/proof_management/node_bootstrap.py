@@ -1,16 +1,15 @@
 """Proof-node bootstrap and replay bookkeeping state.
 
-This module owns the mutable node-lifecycle facts that are not proof strategy:
-latest snapshot/view, replay-prefix metadata, bootstrap/adopt handoff, and
-projection bookkeeping.  Renamed from ``lifecycle.py``: it never touches OS
+This module owns the node-lifecycle operations that are not proof strategy:
+bootstrap/adopt handoff, replay-prefix metadata and projection bookkeeping.
+They write the node's shared ``NodeTurnState``.  Renamed from ``lifecycle.py``: it never touches OS
 processes, so the old name misleadingly mirrored ``workflow/proc_lifecycle.py``
 (OS process primitives).
 """
 from __future__ import annotations
 
 from collections.abc import Callable, Mapping
-from pathlib import Path
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from core.easycrypt.value_shapes import as_dict_copy as _dict
 from workflow.proof_state_compiler.surface_profiles import (
@@ -19,7 +18,15 @@ from workflow.proof_state_compiler.surface_profiles import (
 )
 from workflow.node.continuation_brief import normalize_continuation_brief
 
-from .types import NodeProgressSummary, ProofStateSnapshot
+from .node_state import NodeTurnState
+from .types import ProofStateSnapshot
+
+if TYPE_CHECKING:
+    from .checkpoint_store import ProofCheckpointManager
+    from .event_store import ProofEventManager
+    from .lineage import LemmaLineageStore
+    from .projection import ProofProjectionPipeline
+    from .repl_session import ReplSessionManager
 
 # A resume that restores materially fewer tactics than it was asked to replay
 # is a paid-for-prefix loss the operator must see immediately (observed
@@ -250,47 +257,38 @@ def replay_prefix_shortfall(
 
 
 class ProofNodeLifecycleManager:
-    """Owns per-node lifecycle state for the public manager facade."""
+    """Bootstraps, adopts and projects the node for the manager facade."""
 
     def __init__(
         self,
         *,
         node_id: str,
         session_tag: str,
-        repl: Any,
-        projection: Any,
-        lineage: Any,
+        state: NodeTurnState,
+        repl: "ReplSessionManager",
+        projection: "ProofProjectionPipeline",
+        checkpoints: ProofCheckpointManager,
+        events: ProofEventManager,
+        lineage: "LemmaLineageStore",
         workspace: Any,
-        run_dir: Callable[[], Path | None],
         audit: Callable[[dict[str, Any]], None],
         surface_profile: str | None = None,
     ) -> None:
         self.node_id = node_id
         self.session_tag = session_tag
+        self.state = state
         self.repl = repl
         self.projection = projection
+        # The node's durable checkpoint and route-event stores: a resume
+        # capsule's restore anchor and route history are seeded into them.
+        self.checkpoints = checkpoints
+        self.events = events
         self.lineage = lineage
         self.workspace = workspace
-        self._run_dir = run_dir
         self._audit = audit
         self.surface_profile = ensure_current_surface_profile(
             surface_profile
         ).name
-        self.latest_snapshot: ProofStateSnapshot | None = None
-        self.latest_view: dict[str, Any] = {}
-        self.latest_full_view: dict[str, Any] = {}
-        self.replay_prefix_count = 0
-        self.replay_prefix: list[str] = []
-        # Durable "this node was resumed from an inherited prefix" marker.
-        # Unlike ``replay_prefix_count`` (the transient resume FLOOR, which a
-        # rewind below it deliberately clears so the shorter history reads as
-        # fully agent-owned), this is a write-once LINEAGE fact: a respawn/
-        # resume child stays a resumed node for its whole life. The
-        # amend_and_replay guard keys off this so a rewind-into-prefix can't
-        # silently re-enable amend on a resumed node (it edits + replays the
-        # inherited prefix from the lemma, which the resumed-node contract
-        # forbids — the agent uses the rewind menu instead).
-        self.resumed_from_prefix = False
 
     def adopt_bootstrap(self, bootstrap: dict[str, Any]) -> None:
         """Adopt a manager bootstrap record without restarting EasyCrypt."""
@@ -307,12 +305,12 @@ class ProofNodeLifecycleManager:
         )
         self._adopt_replay_prefix_metadata(bootstrap)
         view = bootstrap["workspace_view"]
-        self.latest_view = dict(view)
+        self.state.latest_view = dict(view)
         snapshot_obj = bootstrap["snapshot"]
         state_version = snapshot_obj["state_version"]
         session_epoch = snapshot_obj["session_epoch"]
         self.repl.adopt_versions(state_version, session_epoch)
-        self.latest_snapshot = ProofStateSnapshot(
+        self.state.latest_snapshot = ProofStateSnapshot(
             node_id=snapshot_obj["node_id"],
             session_tag=snapshot_obj["session_tag"],
             session_dir=snapshot_obj["session_dir"],
@@ -322,7 +320,7 @@ class ProofNodeLifecycleManager:
             goal_identity_required=snapshot_obj["goal_identity_required"],
             workspace_view_artifact=snapshot_obj["workspace_view_artifact"],
             execution_refs=dict(snapshot_obj["execution_refs"]),
-            raw_workspace_view=dict(self.latest_view),
+            raw_workspace_view=dict(self.state.latest_view),
         )
 
     def bootstrap(
@@ -337,8 +335,8 @@ class ProofNodeLifecycleManager:
             if str(tactic).strip()
         ]
         resume_context = dict(resume_context or {})
-        self.replay_prefix = list(replay_prefix)
-        self.replay_prefix_count = _semantic_resume_prefix_count(
+        self.state.replay_prefix = list(replay_prefix)
+        self.state.replay_prefix_count = _semantic_resume_prefix_count(
             resume_context,
             replayed_count=len(replay_prefix),
         )
@@ -346,34 +344,16 @@ class ProofNodeLifecycleManager:
         replay_transactions = resume_context.get("replay_transactions")
         if replay_transactions is not None and not isinstance(replay_transactions, list):
             raise ValueError("resume_context.replay_transactions must be a list")
-        if daemon_attach and replay_transactions is not None:
-            # Worker-death attach (SHANNON_EC_DAEMON=1): the Layer-3
-            # respawn names the dead node's session dir; the repl tries to
-            # adopt its still-live daemon EC session (zero replay) and
-            # falls back to the canonical restart+replay restore on any
-            # failure. With the flag off `_daemon_attach_request` returns
-            # None and the same restart+replay call is used.
-            snapshot, actions = self.repl.start(
-                replay_prefix=replay_prefix,
-                replay_transactions=replay_transactions,
-                daemon_attach=daemon_attach,
-            )
-        elif daemon_attach:
-            snapshot, actions = self.repl.start(
-                replay_prefix=replay_prefix,
-                daemon_attach=daemon_attach,
-            )
-        elif replay_transactions is not None:
-            snapshot, actions = self.repl.start(
-                replay_prefix=replay_prefix,
-                replay_transactions=replay_transactions,
-            )
-        else:
-            # Preserve the baseline ReplSessionManager.start call shape when
-            # no transaction-aware resume was requested. Besides keeping the
-            # ordinary path minimal, this is the compatibility contract used
-            # by lifecycle adapters that implement only replay_prefix.
-            snapshot, actions = self.repl.start(replay_prefix=replay_prefix)
+        # Worker-death attach (SHANNON_EC_DAEMON=1): the Layer-3 respawn
+        # names the dead node's session dir; the repl tries to adopt its
+        # still-live daemon EC session (zero replay) and falls back to the
+        # canonical restart+replay restore on any failure. With the flag off
+        # `_daemon_attach_request` returns None and the restore is ordinary.
+        snapshot, actions = self.repl.start(
+            replay_prefix=replay_prefix,
+            replay_transactions=replay_transactions,
+            daemon_attach=daemon_attach,
+        )
         # The recorded prefix must be the session's ACTUAL starting history,
         # not an echo of the request: a replayed step that EasyCrypt accepts
         # but the no-progress detector auto-reverts never reaches history.ec,
@@ -382,13 +362,13 @@ class ProofNodeLifecycleManager:
         # 2026-06-09: 73 requested vs 72 committed shifted all audits by +1).
         requested_prefix = list(replay_prefix)
         committed_prefix = self._committed_start_history()
-        self.replay_prefix = list(committed_prefix)
-        self.replay_prefix_count = _semantic_resume_prefix_count(
+        self.state.replay_prefix = list(committed_prefix)
+        self.state.replay_prefix_count = _semantic_resume_prefix_count(
             resume_context,
             replayed_count=len(committed_prefix),
         )
-        if committed_prefix or self.replay_prefix_count > 0:
-            self.resumed_from_prefix = True
+        if committed_prefix or self.state.replay_prefix_count > 0:
+            self.state.resumed_from_prefix = True
         self._seed_resume_context(snapshot, resume_context)
         view = self.project(snapshot)
         record = {
@@ -400,8 +380,8 @@ class ProofNodeLifecycleManager:
             "file": self.repl.file_path,
             "lemma": self.repl.lemma_name,
             "include_dirs": self.repl.include_dirs(),
-            "replay_prefix_count": self.replay_prefix_count,
-            "replay_prefix": list(self.replay_prefix),
+            "replay_prefix_count": self.state.replay_prefix_count,
+            "replay_prefix": list(self.state.replay_prefix),
             "replay_prefix_requested_count": len(requested_prefix),
             "manager_actions": actions,
             "snapshot": snapshot.to_dict(),
@@ -467,37 +447,22 @@ class ProofNodeLifecycleManager:
             surface_profile=self.surface_profile,
         )
         self._audit(record)
-        self.lineage.run_dir = self._run_dir()
         self.lineage.record_node_bootstrap(
             node_id=self.node_id,
             session_tag=self.session_tag,
             session_dir=snapshot.session_dir,
-            replay_prefix_count=self.replay_prefix_count,
+            replay_prefix_count=self.state.replay_prefix_count,
         )
         return record
-
-    def clear_replay_prefix(self) -> None:
-        # Clears the transient resume FLOOR only. ``resumed_from_prefix`` is a
-        # durable lineage fact and is intentionally left untouched: a rewind
-        # below the floor lifts the floor but does not turn a resumed node into
-        # a from-scratch one (see the field doc in __init__).
-        self.replay_prefix_count = 0
-        self.replay_prefix = []
 
     def _committed_start_history(self) -> list[str]:
         """Return the session's authoritative post-replay history.
 
         A requested replay prefix describes intent, not committed state.  The
-        lifecycle therefore requires the production REPL contract here and
-        never manufactures history from the request when the reader is
-        missing, fails, or reports an empty session.
+        lifecycle therefore never manufactures history from the request when
+        the reader fails or reports an empty session.
         """
-        reader = getattr(self.repl, "committed_history", None)
-        if not callable(reader):
-            raise TypeError(
-                "proof-node REPL must provide committed_history()"
-            )
-        committed = reader()
+        committed = self.repl.committed_history()
         if type(committed) is not list or any(
             type(tactic) is not str for tactic in committed
         ):
@@ -505,24 +470,6 @@ class ProofNodeLifecycleManager:
                 "proof-node REPL committed_history() must return list[str]"
             )
         return list(committed)
-
-    def progress_summary(self) -> NodeProgressSummary:
-        snapshot = self.latest_snapshot
-        view = self.latest_view
-        proof_status = (
-            view.get("proof_status")
-            if isinstance(view.get("proof_status"), dict) else {}
-        )
-        return NodeProgressSummary(
-            node_id=self.node_id,
-            session_tag=self.session_tag,
-            state_version=snapshot.state_version if snapshot else 0,
-            goal_hash=snapshot.goal_hash if snapshot else "",
-            proof_status=str(proof_status.get("status") or ""),
-        )
-
-    def set_latest_view(self, view: dict[str, Any]) -> None:
-        self.latest_view = dict(view)
 
     def project(
         self,
@@ -533,15 +480,11 @@ class ProofNodeLifecycleManager:
         result = self.projection.project(
             snapshot=snapshot,
             latest_observation=latest_observation,
-            replay_prefix=self.replay_prefix,
-            replay_prefix_count=self.replay_prefix_count,
-            file_path=self.repl.file_path,
-            project_root=str(self.repl.project_root),
         )
         view = result.view
-        self.latest_snapshot = snapshot
-        self.latest_view = view
-        self.latest_full_view = result.full_view
+        self.state.latest_snapshot = snapshot
+        self.state.latest_view = view
+        self.state.latest_full_view = result.full_view
         self._audit({
             "kind": "workspace_view.projected",
             "node": self.node_id,
@@ -553,13 +496,13 @@ class ProofNodeLifecycleManager:
         return view
 
     def _adopt_replay_prefix_metadata(self, bootstrap: dict[str, Any]) -> None:
-        self.replay_prefix = list(bootstrap["replay_prefix"])
-        self.replay_prefix_count = bootstrap["replay_prefix_count"]
+        self.state.replay_prefix = list(bootstrap["replay_prefix"])
+        self.state.replay_prefix_count = bootstrap["replay_prefix_count"]
         # The worker manager never calls bootstrap(); it adopts a handoff.
         # Stamp the durable resumed-lineage marker here so the amend guard
         # holds in the very process that serves the agent's turns.
-        if self.replay_prefix_count > 0 or self.replay_prefix:
-            self.resumed_from_prefix = True
+        if self.state.replay_prefix_count > 0 or self.state.replay_prefix:
+            self.state.resumed_from_prefix = True
 
     def _seed_resume_context(
         self,
@@ -574,12 +517,8 @@ class ProofNodeLifecycleManager:
             for item in list(resume_context.get("route_event_facts") or [])
             if isinstance(item, dict)
         ]
-        checkpoints = getattr(self.projection, "checkpoints", None)
-        if checkpoints is not None and hasattr(checkpoints, "seed_resume_payload"):
-            checkpoints.seed_resume_payload(checkpoint_payload)
-        events = getattr(self.projection, "events", None)
-        if events is not None and hasattr(events, "seed_resume_route_events"):
-            events.seed_resume_route_events(route_events)
+        self.checkpoints.seed_resume_payload(checkpoint_payload)
+        self.events.seed_resume_route_events(route_events)
 
 
 def _daemon_attach_request(resume_context: dict[str, Any]) -> dict[str, Any] | None:

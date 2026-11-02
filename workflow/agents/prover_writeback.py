@@ -12,6 +12,8 @@ import logging
 import json
 import os
 import re
+import secrets
+import stat
 import subprocess
 from dataclasses import dataclass
 from pathlib import Path
@@ -20,11 +22,12 @@ from core.easycrypt.ec_env import easycrypt_command
 from core.easycrypt.committed_history import (
     closed_history_tactics,
     read_committed_commands,
-    read_committed_transactions,
     split_trailing_qed,
 )
+from core.easycrypt.lemma_decls import lemma_declarations, target_declaration
 from core.easycrypt.proof_text import (
     discard_sibling_eco as _discard_sibling_eco,
+    easycrypt_code,
     file_wide_unchecked_constructs as _file_wide_unchecked_constructs,
     tactics_contain_admit as _tactics_contain_admit,
     unchecked_proof_constructs as _unchecked_proof_constructs,
@@ -45,6 +48,7 @@ if TYPE_CHECKING:
 _PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
 
 _EC_SPINNER_RE = re.compile(r'^\[[-\\|/]\]\s+\[\d+\]\s+\d+\.\d+%')
+_EC_DIAGNOSTIC_RE = re.compile(r"\[(?:critical|error)\b")
 
 
 @dataclass(frozen=True)
@@ -116,41 +120,19 @@ def _extract_partial_tactics_from_sessions(
     return max(candidates, key=len)
 
 
-def _extract_partial_transactions_from_sessions(
-    *,
-    session_dirs: list[str] | tuple[str, ...],
-    committed_prefix: list[str] | tuple[str, ...],
-    resume_capsules: list[str] | None = None,
-) -> list[str]:
-    """Return transaction boundaries for the selected partial prefix.
-
-    The public/reporting prefix is command-oriented, but replay must retain
-    the manager commit boundaries recorded by ``steps.log`` so EasyCrypt
-    bullet blocks remain atomic.
-    """
-
-    expected = list(committed_prefix)
-    for session_dir in session_dirs:
-        path = Path(session_dir)
-        if read_committed_commands(path) == expected:
-            transactions = read_committed_transactions(path)
-            if transactions:
-                return transactions
-    for raw_capsule in resume_capsules or []:
-        try:
-            from workflow.node.proof_node_resume import load_resume_capsule
-
-            capsule = load_resume_capsule(raw_capsule)
-        except Exception:
-            continue
-        if capsule.replay_prefix == expected:
-            return list(capsule.replay_transactions)
-    return []
-
-
 def _has_why3_error(stderr: str) -> bool:
     """Check if stderr contains a why3server connection error."""
     return "cannot start & connect to why3server" in stderr
+
+
+def _reports_checking_failure(stderr: str) -> bool:
+    """True when EasyCrypt ran and itself rejected the checked file.
+
+    A failed check prints a ``[critical]`` (or ``[error-…]``) diagnostic. A
+    why3server connection failure, a process that could not start or timed
+    out, or an extraction error carries no verdict on the proof.
+    """
+    return bool(_EC_DIAGNOSTIC_RE.search(stderr)) and not _has_why3_error(stderr)
 
 
 def _distill_ec_stderr(stderr: str, max_lines: int = 20) -> str:
@@ -311,10 +293,17 @@ def _verify_lemma_extracted(
         extracted = extract_lemma(ec_path, lemma_name, verify_proof=True,
                                   decl_line=decl_line)
 
-        tmp_path = _claude_scratch_path(f"verify_{lemma_name}_extracted.ec")
-        tmp_path.write_text(extracted, encoding="utf-8")
-
-        return _verify_extracted_file(tmp_path, ec_path, include_dir=include_dir)
+        # Runs sharing a checkout can verify a same-named lemma at the same
+        # time; a shared path would let one run check the other's proof.
+        tmp_path = _claude_scratch_path(
+            f"verify_{lemma_name}_{secrets.token_hex(6)}_extracted.ec"
+        )
+        try:
+            tmp_path.write_text(extracted, encoding="utf-8")
+            return _verify_extracted_file(tmp_path, ec_path, include_dir=include_dir)
+        finally:
+            tmp_path.unlink(missing_ok=True)
+            tmp_path.with_suffix(".eco").unlink(missing_ok=True)
     except Exception as e:
         logger.error("Extracted-lemma verification error: %s", e)
         return False, str(e)
@@ -358,96 +347,60 @@ def _emit_verification_status(
 def _resolve_lemma_decl_start(content: str, lemma_name: str) -> int | None:
     """Resolve the target declaration of `lemma_name` to a byte offset.
 
-    When multiple lemmas share the same name (e.g., one inside a section
-    and one outside), prefer the one that needs proving (has admit or
-    empty proof body) over an already-proved one.
+    With several declarations of the name, the first that still needs a
+    proof is the target (`lemma_decls.target_declaration`).
 
-    The offset is a STABLE declaration identity: resolve it ONCE per
-    write-back cycle and pass it to `_find_proof_block`,
-    extraction, and `_proof_body_has_admit` so they all
-    target the same declaration. Without this, the prefer-needs-proving
-    heuristic re-runs after the write-back fills one declaration and
-    resolves to the OTHER still-admitted duplicate, whose `admit` then
-    reverts a genuinely proved lemma (xorK1 in ChaChaPoly/chacha_poly.ec,
-    2026-06-11). Offsets stay valid across the write-back because the
-    replacement happens strictly after the declaration start.
+    The offset is a stable declaration identity: resolve it once per
+    write-back cycle and pass it to `_find_proof_block`, extraction and
+    `_proof_body_has_admit`, so they all target the same declaration.
+    Resolving again after the write-back fills one declaration would pick a
+    still-admitted duplicate and revert a proved lemma. Offsets stay valid
+    across the write-back because the replacement happens strictly after
+    the declaration start.
     """
-    from core.easycrypt.lemma_decls import lemma_decl_matches
-
-    all_matches = lemma_decl_matches(content, lemma_name)
-    if not all_matches:
-        return None
-
-    def _needs_proving(match):
-        """Check if this lemma occurrence has admit or empty proof."""
-        after = content[match.end():match.end() + 500]
-        return bool(re.search(r'\badmit\b', after[:300])) or \
-               bool(re.search(r'proof\.\s*(?:\(\*.*?\*\)\s*)?qed\.', after[:300], re.DOTALL))
-
-    # Prefer the match that needs proving; fall back to first match
-    lemma_match = next((m for m in all_matches if _needs_proving(m)), all_matches[0])
-    return lemma_match.start()
+    declaration = target_declaration(content, lemma_name)
+    return declaration.start if declaration is not None else None
 
 
 def _find_proof_block(
     content: str, lemma_name: str, decl_start: int | None = None,
 ) -> tuple[int, int] | None:
-    """Find the byte range of a lemma's proof block (proof. ... qed. or admit.).
+    """Find the span of a lemma's own proof block to replace.
 
-    Returns (start, end) positions in content, or None if not found.
-    Uses line-by-line scanning to avoid regex issues with dots in expressions
-    like P(F).main().
+    The block is the declaration's `proof. ... qed.` sentences, or the
+    sentences no `qed.` closes (such as a bare `admit.`), as
+    `lemma_decls` resolves them; a one-line `by` proof has no block. A
+    block whose first sentence and `qed.` each start a line is replaced
+    from the start of its first line, so the rewritten block starts there.
 
-    `decl_start` pins the lookup to the declaration at that byte offset (as
+    `decl_start` pins the lookup to the declaration at that offset (as
     returned by `_resolve_lemma_decl_start`); if no declaration of
     `lemma_name` starts there, returns None rather than silently targeting
-    a different same-name declaration. When omitted, the
-    prefer-needs-proving heuristic picks the declaration.
+    a different same-name declaration. When omitted, the declaration
+    `_resolve_lemma_decl_start` picks is used.
     """
-    from core.easycrypt.lemma_decls import lemma_decl_matches
-
     if decl_start is None:
-        decl_start = _resolve_lemma_decl_start(content, lemma_name)
-        if decl_start is None:
-            return None
+        declaration = target_declaration(content, lemma_name)
     else:
-        all_matches = lemma_decl_matches(content, lemma_name)
-        if not any(m.start() == decl_start for m in all_matches):
-            return None
-
-    rest = content[decl_start:]
-
-    # Bound search: stop at next top-level declaration to avoid matching
-    # a different lemma's proof block.
-    # Match only top-level declarations (at most 2 spaces indent).
-    # Deeper indentation (e.g., "    equiv [D4.sample ...]" inside a type) is NOT a new decl.
-    next_decl = re.search(
-        r'^[ ]{0,2}(?:local\s+)?(?:lemma|theorem|axiom|op\s|type\s|module\s|clone\s|section\b|end\s+section)',
-        rest[1:],  # skip current lemma
-        re.MULTILINE,
-    )
-    if next_decl:
-        rest = rest[:1 + next_decl.start()]
-
-    # Find 'proof.' on its own line (possibly indented, possibly with trailing comment)
-    proof_match = re.search(r'^([ \t]*)proof\..*$', rest, re.MULTILINE)
-    if proof_match:
-        # Find matching qed.
-        after_proof = rest[proof_match.end():]
-        qed_match = re.search(r'^[ \t]*qed\.', after_proof, re.MULTILINE)
-        if qed_match:
-            abs_start = decl_start + proof_match.start()
-            abs_end = decl_start + proof_match.end() + qed_match.end()
-            return abs_start, abs_end
-
-    # No proof./qed. — look for standalone admit.
-    admit_match = re.search(r'^[ \t]*admit\.[ \t]*$', rest, re.MULTILINE)
-    if admit_match:
-        abs_start = decl_start + admit_match.start()
-        abs_end = decl_start + admit_match.end()
-        return abs_start, abs_end
-
-    return None
+        declaration = next(
+            (d for d in lemma_declarations(content, lemma_name)
+             if d.start == decl_start),
+            None,
+        )
+    if declaration is None or declaration.proof is None:
+        return None
+    proof = declaration.proof
+    if proof.kind == "by":
+        return None
+    line_start = content.rfind("\n", 0, proof.start) + 1
+    if content[line_start:proof.start].strip():
+        return proof.start, proof.end
+    if proof.kind == "qed":
+        qed = proof.start + easycrypt_code(content[proof.start:proof.end]).rfind("qed")
+        qed_line_start = content.rfind("\n", 0, qed) + 1
+        if qed_line_start <= proof.start or content[qed_line_start:qed].strip():
+            return proof.start, proof.end
+    return line_start, proof.end
 
 
 def _extract_prover_notes(output_text: str) -> str:
@@ -564,12 +517,13 @@ def _write_and_verify_proof(
     completion_candidate: "SessionClosureCandidate",
     include_dir: str = "",
 ) -> ProofVerificationEvidence:
-    """Write proof tactics into the .ec file (replacing admit) and verify.
+    """Verify proof tactics in place of the target's proof, then write them.
 
     Args:
         completion_candidate: exact content-bound tree/session handoff.
 
-    Returns typed verification evidence. Reverts on failure.
+    Returns typed verification evidence. ``ec_path`` changes only when the
+    new content passed every check; on any failure it keeps its old text.
     """
     if ec_path.resolve() != Path(completion_candidate.target_file).resolve():
         logger.error("Completion candidate target file identity does not match writeback")
@@ -666,79 +620,109 @@ def _write_and_verify_proof(
 
     new_content = content[:start] + proof_text + content[end:]
 
-    ec_path.write_text(new_content, encoding="utf-8")
-    logger.info("Wrote proof to %s", ec_path)
+    # Verify a copy and move it over the target only after it passes, so the
+    # source never holds an unverified proof, even if the run is interrupted
+    # mid-check. The copy sits beside the target so EasyCrypt resolves its
+    # `require`s exactly as it would for the target.
+    target_path = ec_path.resolve()
+    copy_path = target_path.with_name(
+        f".{target_path.stem}.shannon-verify-{secrets.token_hex(6)}"
+        f"{target_path.suffix}"
+    )
 
-    # Verify: try full-file first, then extracted. A session close is only
-    # a candidate signal; offline verification remains the acceptance gate.
-    ok, stderr = _verify_ec_file(ec_path, include_dir=include_dir)
-    full_file_error_excerpt = _distill_ec_stderr(stderr, max_lines=8)[:3000] if not ok else ""
-    extracted_error_excerpt = ""
-    verified_reason = "full_file"
-    if ok:
-        # Safety net: even if EC accepts the file, reject proofs whose body
-        # contains `admit.` — EasyCrypt's admit adds an axiom, so the file
-        # verifies but the subgoal is unproved. See ChaChaPoly step3 Run 2.
-        if _proof_body_has_admit(new_content, lemma_name, decl_start=decl_start):
-            logger.error(
-                "Post-verify admit check failed for %s — proof body contains "
-                "admit. Reverting.", lemma_name,
-            )
-            ec_path.write_text(content, encoding="utf-8")
-            return ProofVerificationEvidence(
-                status="fail", event_contract=candidate_gate,
-                error="verified proof body contains admit",
-            )
-    else:
-        # Full-file failed (common: other lemmas' smt timeouts).
-        # Try extracted verification — isolates our lemma.
-        logger.info("Full-file verification failed; trying extracted lemma verification")
-        extracted_ok, extracted_stderr = _verify_lemma_extracted(
-            ec_path, lemma_name, include_dir=include_dir, decl_line=decl_line)
-        extracted_error_excerpt = _distill_ec_stderr(extracted_stderr, max_lines=8)[:3000] if not extracted_ok else ""
-        if extracted_ok:
-            ok = True
-            verified_reason = "extracted_lemma"
+    def _excerpt(stderr: str) -> str:
+        # Diagnostics name the copy; report them against the user's file.
+        stderr = stderr.replace(str(copy_path), str(ec_path))
+        stderr = stderr.replace(copy_path.name, ec_path.name)
+        return _distill_ec_stderr(stderr, max_lines=8)[:3000]
 
-    if ok:
-        _emit_verification_status(
-            completion_candidate.session_dir,
-            lemma_name=lemma_name,
-            status="pass",
-            ec_path=ec_path,
-            reason=verified_reason,
-            **(
-                {
-                    "full_file_status": "fail",
-                    "full_file_error_excerpt": full_file_error_excerpt,
-                    "extracted_status": "pass",
-                }
-                if verified_reason == "extracted_lemma" else {}
-            ),
-        )
-        acceptance_gate = _acceptance_gate_for_session(
-            completion_candidate.session_dir
-        )
-        if acceptance_gate is None or not acceptance_gate.ok:
-            detail = (
-                acceptance_gate.error_summary() if acceptance_gate is not None
-                else "event-contract checker unavailable"
+    try:
+        copy_path.write_text(new_content, encoding="utf-8")
+
+        # Verify: try full-file first, then extracted. A session close is only
+        # a candidate signal; offline verification remains the acceptance gate.
+        ok, stderr = _verify_ec_file(copy_path, include_dir=include_dir)
+        full_file_error_excerpt = _excerpt(stderr) if not ok else ""
+        extracted_error_excerpt = ""
+        verified_reason = "full_file"
+        if ok:
+            # Safety net: even if EC accepts the file, reject proofs whose body
+            # contains `admit.` — EasyCrypt's admit adds an axiom, so the file
+            # verifies but the subgoal is unproved. See ChaChaPoly step3 Run 2.
+            if _proof_body_has_admit(new_content, lemma_name, decl_start=decl_start):
+                logger.error(
+                    "Post-verify admit check failed for %s — proof body "
+                    "contains admit. Leaving %s unchanged.", lemma_name, ec_path,
+                )
+                return ProofVerificationEvidence(
+                    status="fail", event_contract=candidate_gate,
+                    error="verified proof body contains admit",
+                )
+        else:
+            # Full-file failed (common: other lemmas' smt timeouts).
+            # Try extracted verification — isolates our lemma.
+            logger.info("Full-file verification failed; trying extracted lemma verification")
+            extracted_ok, extracted_stderr = _verify_lemma_extracted(
+                copy_path, lemma_name, include_dir=include_dir, decl_line=decl_line)
+            extracted_error_excerpt = (
+                _excerpt(extracted_stderr) if not extracted_ok else ""
             )
-            logger.error(
-                "Offline verifier passed for %s, but final event contract "
-                "failed (%s). Reverting.",
-                lemma_name, detail,
+            if extracted_ok:
+                ok = True
+                verified_reason = "extracted_lemma"
+
+        if ok:
+            _emit_verification_status(
+                completion_candidate.session_dir,
+                lemma_name=lemma_name,
+                status="pass",
+                ec_path=ec_path,
+                reason=verified_reason,
+                **(
+                    {
+                        "full_file_status": "fail",
+                        "full_file_error_excerpt": full_file_error_excerpt,
+                        "extracted_status": "pass",
+                    }
+                    if verified_reason == "extracted_lemma" else {}
+                ),
             )
-            ec_path.write_text(content, encoding="utf-8")
+            acceptance_gate = _acceptance_gate_for_session(
+                completion_candidate.session_dir
+            )
+            if acceptance_gate is None or not acceptance_gate.ok:
+                detail = (
+                    acceptance_gate.error_summary() if acceptance_gate is not None
+                    else "event-contract checker unavailable"
+                )
+                logger.error(
+                    "Offline verifier passed for %s, but final event contract "
+                    "failed (%s). Leaving %s unchanged.",
+                    lemma_name, detail, ec_path,
+                )
+                return ProofVerificationEvidence(
+                    status="fail", event_contract=acceptance_gate,
+                    error="final verification event contract failed",
+                )
+            install_error = _install_verified_copy(copy_path, ec_path, content)
+            if install_error:
+                logger.error(
+                    "Verified proof for %s was not written: %s",
+                    lemma_name, install_error,
+                )
+                return ProofVerificationEvidence(
+                    status="fail", event_contract=acceptance_gate,
+                    error=install_error,
+                )
+            logger.info("Wrote verified proof to %s", ec_path)
             return ProofVerificationEvidence(
-                status="fail", event_contract=acceptance_gate,
-                error="final verification event contract failed",
+                status="pass",
+                method=verified_reason,
+                event_contract=acceptance_gate,
             )
-        return ProofVerificationEvidence(
-            status="pass",
-            method=verified_reason,
-            event_contract=acceptance_gate,
-        )
+    finally:
+        copy_path.unlink(missing_ok=True)
+        copy_path.with_suffix(".eco").unlink(missing_ok=True)
 
     _emit_verification_status(
         completion_candidate.session_dir,
@@ -753,14 +737,11 @@ def _write_and_verify_proof(
 
     logger.error(
         "Session completion candidate %s for %s failed offline verification; "
-        "session closure is not final proof truth.",
+        "session closure is not final proof truth. %s is unchanged.",
         completion_candidate.candidate_id,
         lemma_name,
+        ec_path,
     )
-
-    # Nothing confirms the proof — revert.
-    ec_path.write_text(content, encoding="utf-8")
-    logger.info("Reverted %s to original", ec_path)
     return ProofVerificationEvidence(
         status="fail",
         method="full_file_and_extracted_failed",
@@ -768,3 +749,21 @@ def _write_and_verify_proof(
                f"full_file: {full_file_error_excerpt or 'no diagnostic'}; "
                f"extracted_lemma: {extracted_error_excerpt or 'no diagnostic'}"),
     )
+
+
+def _install_verified_copy(copy_path: Path, ec_path: Path, content: str) -> str:
+    """Atomically replace ``ec_path`` with ``copy_path``; return an error or "".
+
+    A target that changed since write-back read it is left alone: replacing
+    it would discard those edits, and the verified copy was built from the
+    old text.
+    """
+    target_path = ec_path.resolve()
+    try:
+        if target_path.read_text(encoding="utf-8") != content:
+            return "target source changed during verification; proof not written"
+        os.chmod(copy_path, stat.S_IMODE(target_path.stat().st_mode))
+        os.replace(copy_path, target_path)
+    except OSError as exc:
+        return f"could not write the verified proof: {exc}"
+    return ""

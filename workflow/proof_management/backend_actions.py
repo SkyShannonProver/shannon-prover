@@ -2,12 +2,12 @@
 from __future__ import annotations
 
 import json
-import re
 import subprocess
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
+from core.easycrypt.proof_text import split_tactic_chain
 from core.easycrypt.session.session_tactic_execution_artifacts import (
     read_bound_tactic_execution_event,
 )
@@ -21,9 +21,6 @@ from core.easycrypt.session.session_native_semantics import (
     read_bound_native_semantic_batch_event,
 )
 from core.easycrypt.session.session_native_state import read_bound_native_state_event
-from core.easycrypt.session.session_episode_timeline import (
-    read_bound_episode_timeline_event,
-)
 from core.easycrypt.session.session_workspace_artifact import (
     read_bound_prover_workspace_event,
 )
@@ -53,6 +50,8 @@ from workflow.proof_management.backend_invocation import (
     capture_backend_invocation,
     resolve_backend_invocation,
 )
+from workflow.proof_management.backend_request import BackendRequest
+from workflow.proof_management.types import ExactTacticPreflight
 
 def _iter_json_objects(text: str):
     """Yield every top-level decodable JSON object in ``text``, in order.
@@ -86,8 +85,8 @@ def extract_json_object(text: str) -> dict[str, Any]:
     """First decodable JSON object. Heuristic — prefer marker/shape selection.
 
     Retained for commands whose current transport is one unambiguous typed JSON
-    envelope (notably start). Tactic execution, exact preflight, workspace, and episode
-    content are read only through their event-bound artifacts.
+    envelope (notably start). Tactic execution, exact preflight, workspace, and
+    compiler content are read only through their event-bound artifacts.
     """
     for obj in _iter_json_objects(text):
         return obj
@@ -95,8 +94,8 @@ def extract_json_object(text: str) -> dict[str, Any]:
 
 
 def backend_action_record(
-    label: str,
-    cmd: list[str],
+    request: BackendRequest,
+    argv: list[str],
     result: subprocess.CompletedProcess[str],
     duration_ms: int = 0,
     *,
@@ -105,14 +104,16 @@ def backend_action_record(
     authoritative_view_boundary: AuthoritativeViewInvocationBoundary | None = None,
     authoritative_view_resolution: AuthoritativeViewResolution | None = None,
 ) -> dict[str, Any]:
+    """Record one completed backend call; ``argv`` is kept for audit only."""
+
     stdout = result.stdout or ""
     stderr = result.stderr or ""
-    mutates = backend_args_mutate_proof_state(cmd)
-    requires_preflight = _backend_args_require_tactic_preflight(cmd)
+    label = request.label
+    mutates = request.mutates_proof_state
     preflight_resolution = _tactic_preflight_from_invocation(
         tactic_preflight_boundary,
         exit_code=result.returncode,
-        required=requires_preflight,
+        required=request.requires_tactic_preflight,
     )
     tactic_execution_resolution = _tactic_execution_from_invocation(
         tactic_execution_boundary,
@@ -122,16 +123,14 @@ def backend_action_record(
         resolve_authoritative_view_invocation(
             authoritative_view_boundary,
             exit_code=result.returncode,
-            required=_backend_args_require_authoritative_view(cmd),
+            required=request.authoritative_view is not None,
         )
     )
-    requires_execution_result = _backend_args_require_tactic_execution_result(cmd)
     outcome = _backend_action_outcome(
-        label,
+        request,
         stdout=stdout,
         exit_code=result.returncode,
-        mutates_proof_state=mutates,
-        requires_execution_result=requires_execution_result,
+        requires_execution_result=request.requires_tactic_execution_result,
         tactic_execution_result=tactic_execution_resolution.result,
         authoritative_payload=aggregate_resolution.payload,
     )
@@ -163,9 +162,28 @@ def backend_action_record(
     execution_authority = _tactic_execution_authority(
         tactic_execution_resolution
     )
+    observation = agent_observation_for_request(
+        request,
+        stdout=stdout,
+        stderr=stderr,
+        exit_code=result.returncode,
+        tactic_preflight_resolution=preflight_resolution,
+        tactic_execution_resolution=tactic_execution_resolution,
+        authoritative_view_resolution=aggregate_resolution,
+    )
+    preflight_evidence = (
+        _exact_tactic_preflight(
+            preflight_resolution,
+            # The one error summary this call produced, shared with the
+            # observation rather than derived a second way.
+            error_summary=str(observation.get("error_summary") or ""),
+        )
+        if request.requires_tactic_preflight
+        else None
+    )
     return {
         "label": label,
-        "argv": cmd,
+        "argv": argv,
         "exit_code": result.returncode,
         "duration_ms": int(duration_ms),
         "mutates_proof_state": mutates,
@@ -175,16 +193,12 @@ def backend_action_record(
             if execution_authority
             else {}
         ),
-        "agent_observation": agent_observation_from_command(
-            label,
-            cmd,
-            stdout=stdout,
-            stderr=stderr,
-            exit_code=result.returncode,
-            tactic_preflight_resolution=preflight_resolution,
-            tactic_execution_resolution=tactic_execution_resolution,
-            authoritative_view_resolution=aggregate_resolution,
+        **(
+            {"preflight_evidence": preflight_evidence.to_payload()}
+            if preflight_evidence is not None
+            else {}
         ),
+        "agent_observation": observation,
         "stdout_chars": len(stdout),
         "stdout_lines": len(stdout.splitlines()),
         "stderr_chars": len(stderr),
@@ -197,15 +211,15 @@ def backend_action_record(
 
 
 def timeout_backend_action_record(
-    label: str,
-    cmd: list[str],
+    request: BackendRequest,
+    argv: list[str],
     exc: subprocess.TimeoutExpired,
     timeout: int,
     duration_ms: int = 0,
 ) -> dict[str, Any]:
     stdout = _timeout_stream_text(exc.output)
     stderr = _timeout_stream_text(exc.stderr)
-    mutates = backend_args_mutate_proof_state(cmd)
+    mutates = request.mutates_proof_state
     outcome = classify_manager_action_outcome(
         status="timeout",
         ok=False,
@@ -215,15 +229,15 @@ def timeout_backend_action_record(
         timed_out=True,
     ).to_dict()
     return {
-        "label": label,
-        "argv": cmd,
+        "label": request.label,
+        "argv": argv,
         "exit_code": None,
         "timed_out": True,
         "timeout_seconds": timeout,
         "duration_ms": int(duration_ms),
         "mutates_proof_state": mutates,
         **outcome,
-        "agent_observation": _timeout_observation(label, cmd, timeout),
+        "agent_observation": _timeout_observation(request, timeout),
         "stdout_chars": len(stdout),
         "stdout_lines": len(stdout.splitlines()),
         "stderr_chars": len(stderr),
@@ -294,25 +308,19 @@ class AuthoritativeViewResolution:
     event_payload: dict[str, Any] | None = None
 
 
-def _backend_args_require_tactic_preflight(cmd: list[str]) -> bool:
-    return not backend_args_mutate_proof_state(cmd) and "-try" in cmd
-
-
 def capture_tactic_preflight_invocation(
     session_dir: Any,
-    cmd: list[str],
+    request: BackendRequest,
 ) -> TacticPreflightInvocationBoundary | None:
     """Capture the lower event bound and exact tactic for one ``-try`` call.
 
     The artifact is trusted only when produced inside the matching backend-call
     event window. Capturing the byte offset avoids timestamp and mtime races.
     """
-    if not _backend_args_require_tactic_preflight(cmd) or not session_dir:
+    if not request.requires_tactic_preflight or not session_dir:
         return None
-    tactic = _command_arg_after(cmd, "-c") or _command_arg_after(
-        cmd, "--command"
-    )
-    if not tactic.strip():
+    tactic = request.tactic.strip()
+    if not tactic:
         return None
     return TacticPreflightInvocationBoundary(
         invocation=capture_backend_invocation(
@@ -320,19 +328,17 @@ def capture_tactic_preflight_invocation(
             action_name="try",
             mutates_proof_state=False,
         ),
-        expected_tactic=tactic.strip(),
+        expected_tactic=tactic,
     )
 
 
 def capture_tactic_execution_invocation(
     session_dir: Any,
-    cmd: list[str],
+    request: BackendRequest,
 ) -> TacticExecutionInvocationBoundary | None:
     """Capture the only legal lower bound for a mutating TER occurrence."""
 
-    if not _backend_args_require_tactic_execution_result(cmd):
-        return None
-    contract = _tactic_execution_request_contract(cmd)
+    contract = _tactic_execution_request_contract(request)
     if contract is None or not session_dir:
         return None
     action_name, expected_mode, expected_command, expected_tactics, allow_prefix = contract
@@ -351,14 +357,14 @@ def capture_tactic_execution_invocation(
 
 def capture_authoritative_view_invocation(
     session_dir: Any,
-    cmd: list[str],
+    request: BackendRequest,
 ) -> AuthoritativeViewInvocationBoundary | None:
     """Capture one artifact-backed, read-only authoritative occurrence."""
 
-    contract = _authoritative_view_contract(cmd)
-    if contract is None or not session_dir or backend_args_mutate_proof_state(cmd):
+    contract = request.authoritative_view
+    if contract is None or not session_dir:
         return None
-    _, action_name, event_type = contract
+    action_name, event_type = contract
     return AuthoritativeViewInvocationBoundary(
         invocation=capture_backend_invocation(
             session_dir,
@@ -369,101 +375,30 @@ def capture_authoritative_view_invocation(
     )
 
 
-def _authoritative_view_contract(
-    cmd: list[str],
-) -> tuple[str, str, str] | None:
-    parts = [str(part) for part in cmd]
-    return next((item for item in (
-        (
-            "-managed-goal-view",
-            "managed-goal-view",
-            "prover.workspace_view.produced",
-        ),
-        ("-episode-view", "episode-view", "episode.timeline.produced"),
-        (
-            "-compiler-input-v2",
-            "compiler-input-v2",
-            "compiler.input.produced",
-        ),
-        (
-            "-compiler-resource-load-v2",
-            "compiler-resource-load-v2",
-            "compiler.resources.loaded",
-        ),
-        (
-            "-native-semantic-batch-json",
-            "native-semantic-batch",
-            "native.semantic.batch.produced",
-        ),
-        (
-            "-native-state-projection-json",
-            "native-state-projection",
-            "native.state.produced",
-        ),
-    ) if item[0] in parts), None)
-
-
-def _backend_args_require_authoritative_view(cmd: list[str]) -> bool:
-    return (
-        not backend_args_mutate_proof_state(cmd)
-        and _authoritative_view_contract(cmd) is not None
-    )
-
-
-def _tactic_execution_action_name(cmd: list[str]) -> str:
-    parts = [str(part) for part in cmd]
-    if "-tactic-exec" not in parts:
-        return ""
-    index = parts.index("-tactic-exec")
-    mode = parts[index + 1] if index + 1 < len(parts) else ""
-    return {
-        "commit": "commit",
-        "commit_chain": "commit_chain",
-        "undo": "undo",
-    }.get(mode, "")
-
-
 def _tactic_execution_request_contract(
-    cmd: list[str],
+    request: BackendRequest,
 ) -> tuple[str, str, str, tuple[str, ...] | None, bool] | None:
     """Return the exact manager request a TER must describe.
 
-    ``None`` tactics means the invocation did not carry an inspectable tactic
-    source (for example, an unsupported stdin-only caller). Manager-owned live
-    commits always use ``-c`` and therefore bind the submitted text exactly.
+    ``None`` tactics means the request carried no tactic text, which the
+    reader rejects. Manager-owned commits bind the submitted text exactly.
     Chain failures report only the attempted prefix, so that one mode permits
     a prefix of the requested chain while successful chains must still match
     the whole request.
     """
 
-    action_name = _tactic_execution_action_name(cmd)
-    if not action_name:
+    if not request.requires_tactic_execution_result:
         return None
-    mode, command = {
-        "commit": ("commit", "commit"),
-        "commit_chain": ("commit_chain", "commit_chain"),
-        "undo": ("undo", "undo"),
-    }[action_name]
-    if action_name == "undo":
-        return action_name, mode, command, (), False
-    raw = _command_arg_after(cmd, "-c") or _command_arg_after(cmd, "--command")
+    # Backend action name, TER mode and TER command coincide for every kind.
+    name = request.kind
+    if name == "undo":
+        return name, name, name, (), False
+    raw = request.tactic.strip()
     if not raw:
-        return action_name, mode, command, None, action_name == "commit_chain"
-    if action_name == "commit_chain":
-        tactics = _split_chain_tactics(raw)
-        return action_name, mode, command, tuple(tactics), True
-    return action_name, mode, command, (raw.strip(),), False
-
-
-def _split_chain_tactics(text: str) -> list[str]:
-    """Mirror the backend chain parser for request/result binding."""
-
-    tactics: list[str] = []
-    for part in re.split(r"\.\s", str(text or "").strip()):
-        normalized = part.strip().rstrip(".")
-        if normalized:
-            tactics.append(normalized + ".")
-    return tactics
+        return name, name, name, None, name == "commit_chain"
+    if name == "commit_chain":
+        return name, name, name, tuple(split_tactic_chain(raw)), True
+    return name, name, name, (raw,), False
 
 
 def _event_payload(event: dict[str, Any]) -> dict[str, Any]:
@@ -588,11 +523,6 @@ def resolve_authoritative_view_invocation(
         return AuthoritativeViewResolution(required=True, error=error)
     if boundary.event_type == "prover.workspace_view.produced":
         binding = read_bound_prover_workspace_event(
-            boundary.invocation.session_dir,
-            produced_event,
-        )
-    elif boundary.event_type == "episode.timeline.produced":
-        binding = read_bound_episode_timeline_event(
             boundary.invocation.session_dir,
             produced_event,
         )
@@ -734,7 +664,9 @@ def _tactic_execution_from_invocation(
         undo_status = str(_event_payload(undo_event).get("status") or "")
         result_block = _event_payload(result_events[0])
         expected_status = "undone" if undo_status == "ok" else "no_progress"
-        if undo_status not in {"ok", "empty"}:
+        # ``unavailable``: a multi-step rewind that could not be done by
+        # EasyCrypt's undo; nothing changed and the manager restarts instead.
+        if undo_status not in {"ok", "empty", "unavailable"}:
             return _TacticExecutionResolution(
                 required=True,
                 error=f"unsupported tactic.undone status: {undo_status!r}",
@@ -827,12 +759,24 @@ def _tactic_execution_authority(
     }
 
 
+def _exact_tactic_preflight(
+    resolution: _TacticPreflightResolution,
+    *,
+    error_summary: str,
+) -> ExactTacticPreflight:
+    """Project the validated preflight artifact certification depends on."""
+
+    return ExactTacticPreflight.from_artifact(
+        None if resolution.error else resolution.artifact,
+        error_summary=error_summary,
+    )
+
+
 def _backend_action_outcome(
-    label: str,
+    request: BackendRequest,
     *,
     stdout: str,
     exit_code: int | None,
-    mutates_proof_state: bool,
     requires_execution_result: bool,
     tactic_execution_result: dict[str, Any] | None = None,
     authoritative_payload: dict[str, Any] | None = None,
@@ -881,15 +825,14 @@ def _backend_action_outcome(
     return classify_manager_action_outcome(
         status=status,
         ok=ok,
-        read_only=_is_read_only_backend_action(label),
-        mutates_proof_state=mutates_proof_state,
+        read_only=request.read_only,
+        mutates_proof_state=request.mutates_proof_state,
         state_changed=state_changed,
     ).to_dict()
 
 
-def agent_observation_from_command(
-    label: str,
-    cmd: list[str],
+def agent_observation_for_request(
+    request: BackendRequest,
     *,
     stdout: str,
     stderr: str,
@@ -899,10 +842,11 @@ def agent_observation_from_command(
     authoritative_view_resolution: AuthoritativeViewResolution | None = None,
 ) -> dict[str, Any]:
     # Mutating proof actions consume the event-bound TER; exact compiler checks
-    # consume their tactic-preflight artifact; aggregate workspace/timeline
+    # consume their tactic-preflight artifact; aggregate workspace and compiler
     # actions consume their event-bound artifacts. Typed stdout is semantic
     # transport only for commands without an artifact contract (notably start).
-    requires_execution_result = _backend_args_require_tactic_execution_result(cmd)
+    label = request.label
+    requires_execution_result = request.requires_tactic_execution_result
     tactic_resolution = (
         tactic_execution_resolution or _TacticExecutionResolution()
     )
@@ -911,7 +855,7 @@ def agent_observation_from_command(
             required=True,
             error="missing pre-call authoritative view event boundary",
         )
-        if _backend_args_require_authoritative_view(cmd)
+        if request.authoritative_view is not None
         else AuthoritativeViewResolution()
     )
     if requires_execution_result:
@@ -935,15 +879,15 @@ def agent_observation_from_command(
             required=True,
             error="missing pre-call tactic-preflight event boundary",
         )
-        if _backend_args_require_tactic_preflight(cmd)
+        if request.requires_tactic_preflight
         else _TacticPreflightResolution()
     )
     if resolution.required:
-        # The event-bound artifact is the sole verdict/content authority.
+        # The event-bound artifact is the sole verdict authority; its evidence
+        # travels as the action's preflight_evidence, not in this observation.
         payload = {}
         if resolution.artifact is not None:
             payload["ok"] = bool(resolution.artifact.get("ok"))
-            payload["tactic_preflight"] = resolution.artifact
     structured_contract_error = resolution.error or aggregate_resolution.error
     result = _dict(payload.get("result"))
     execution = _dict(payload.get("execution"))
@@ -965,7 +909,7 @@ def agent_observation_from_command(
         ok = False
     else:
         ok = exit_code == 0
-    read_only_action = _is_read_only_backend_action(label)
+    read_only_action = request.read_only
     if structured_contract_error:
         observation = {
             "manager_action": label,
@@ -994,19 +938,9 @@ def agent_observation_from_command(
             "effect": _action_effect(label, execution),
             "proof_state": _proof_state_observation(label, execution, status),
         }
-    # A missing or invalid current-call preflight artifact is a contract failure. Raw
-    # stdout remains backend/human debug evidence and is not promoted into the
-    # agent-visible context surface as a substitute.
-    content = (
-        {}
-        if structured_contract_error
-        else content_observation_from_payload(label, payload)
-    )
-    if content:
-        observation["content"] = content
     tactic = _first_text(
         _first_list_text(execution.get("submitted_tactics")),
-        _command_arg_after(cmd, "-c"),
+        request.tactic.strip(),
         default="",
     )
     if tactic:
@@ -1014,67 +948,17 @@ def agent_observation_from_command(
     error_summary = _error_summary(payload, stderr, ok=ok)
     if error_summary:
         observation["error_summary"] = error_summary
-    return _compact_agent_observation(observation)
+    return _drop_empty(observation)
 
 
-def content_observation_from_payload(
-    label: str,
-    payload: dict[str, Any],
-) -> dict[str, Any]:
-    """Expose only exact-preflight evidence needed by certification."""
-
-    if label != "exact_tactic_preflight":
-        return {}
-    preflight = _dict(payload.get("tactic_preflight"))
-    if not preflight:
-        return {}
+def _timeout_observation(request: BackendRequest, timeout: int) -> dict[str, Any]:
     return _drop_empty({
-        "candidate": preflight.get("tactic"),
-        "accepted": preflight.get("accepted"),
-        "outcome_known": preflight.get("outcome_known"),
-        "proof_state": preflight.get("proof_state"),
-        "runnable_evidence": preflight.get("runnable_evidence"),
-    })
-
-
-def _is_read_only_backend_action(label: str) -> bool:
-    return label in {
-        "exact_tactic_preflight",
-        "managed_goal_view",
-        "episode_view",
-        "compiler_input_v2",
-        "native_semantic_batch",
-        "native_state_projection",
-        "verify",
-    }
-
-
-def _compact_context_content(content: dict[str, Any]) -> dict[str, Any]:
-    return dict(content)
-
-
-def _compact_agent_observation(observation: dict[str, Any]) -> dict[str, Any]:
-    """Compact an observation without erasing nested schema-required fields."""
-
-    content = observation.get("content")
-    clean = _drop_empty({
-        key: value
-        for key, value in observation.items()
-        if key != "content"
-    })
-    if isinstance(content, dict) and content:
-        clean["content"] = _compact_context_content(content)
-    return clean
-
-
-def _timeout_observation(label: str, cmd: list[str], timeout: int) -> dict[str, Any]:
-    return _drop_empty({
-        "manager_action": label,
+        "manager_action": request.label,
         "result": "The manager action timed out before producing a new completed view.",
         "effect": (
             "The attempted action may have touched the backend; the manager "
             "returned the last completed workspace view."
-            if backend_args_mutate_proof_state(cmd)
+            if request.mutates_proof_state
             else (
                 "This was a read-only manager request; it did not change the "
                 "EasyCrypt proof state."
@@ -1082,23 +966,12 @@ def _timeout_observation(label: str, cmd: list[str], timeout: int) -> dict[str, 
         ),
         "proof_state": (
             "The manager could not confirm a new proof state before the timeout."
-            if backend_args_mutate_proof_state(cmd)
+            if request.mutates_proof_state
             else "The committed EasyCrypt proof state was not changed."
         ),
-        "tactic": _command_arg_after(cmd, "-c"),
+        "tactic": request.tactic.strip(),
         "timeout_seconds": timeout,
     })
-
-
-def _command_arg_after(cmd: list[str], flag: str) -> str:
-    try:
-        idx = cmd.index(flag)
-    except ValueError:
-        return ""
-    try:
-        return str(cmd[idx + 1]).strip()
-    except IndexError:
-        return ""
 
 
 def _first_list_text(value: Any) -> str:
@@ -1110,29 +983,9 @@ def _first_list_text(value: Any) -> str:
     return ""
 
 
-
 def _timeout_stream_text(value: Any) -> str:
     if value is None:
         return ""
     if isinstance(value, bytes):
         return value.decode("utf-8", errors="replace")
     return str(value)
-
-
-def backend_args_mutate_proof_state(cmd: list[str]) -> bool:
-    flags = set(str(part) for part in cmd)
-    if "-tactic-exec" in flags:
-        return True
-    return "-start" in flags
-
-
-def _backend_args_require_tactic_execution_result(
-    cmd: list[str],
-) -> bool:
-    """Whether this action uses the current per-tactic execution contract.
-
-    Session start mutates lifecycle state but is not a tactic submission; it
-    has its own response contract.
-    """
-
-    return "-tactic-exec" in {str(part) for part in cmd}

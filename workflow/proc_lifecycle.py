@@ -44,8 +44,9 @@ from typing import Optional
 _HANDLERS_INSTALLED = False
 
 # Env var naming the file where the orchestrator records each tree worker's
-# process-group id, so a supervisor that had to SIGKILL a *wedged* orchestrator
-# (its own cleanup finally never ran) can still reap the detached worker groups.
+# process-group id and its EasyCrypt daemon socket, so a supervisor that had to
+# SIGKILL a *wedged* orchestrator (its own cleanup finally never ran) can still
+# reap the detached worker groups and the daemon.
 WORKER_PGID_MANIFEST_ENV = "SHANNON_WORKER_PGID_MANIFEST"
 
 
@@ -78,6 +79,25 @@ def install_terminal_signal_handlers() -> bool:
     return True
 
 
+def _foreign_pgid(pid: int) -> Optional[int]:
+    """Process group of ``pid`` when it is safe to signal as a whole.
+
+    A child that is not a session leader shares the caller's group; signalling
+    that group would hit the caller itself, so such children (and children
+    whose group cannot be read) are signalled by PID only.
+    """
+    try:
+        pgid = os.getpgid(pid)
+    except (AttributeError, ProcessLookupError, PermissionError, OSError):
+        return None
+    try:
+        if pgid == os.getpgrp():
+            return None
+    except (AttributeError, OSError):
+        return None
+    return pgid
+
+
 def terminate_subprocess_tree(
     proc: subprocess.Popen,
     *,
@@ -102,11 +122,7 @@ def terminate_subprocess_tree(
     if proc.poll() is not None:
         return
 
-    pgid: Optional[int] = None
-    try:
-        pgid = os.getpgid(proc.pid)
-    except (AttributeError, ProcessLookupError, PermissionError, OSError):
-        pgid = None
+    pgid = _foreign_pgid(proc.pid)
 
     def _signal_group_or_proc(sig: int) -> None:
         if pgid is not None:
@@ -136,6 +152,41 @@ def terminate_subprocess_tree(
         return
 
 
+def run_in_process_group(
+    cmd: list[str],
+    *,
+    timeout: float,
+    grace_seconds: float = 2.0,
+    capture_output: bool = False,
+    **popen_kwargs,
+) -> subprocess.CompletedProcess:
+    """``subprocess.run`` for a child that starts children of its own.
+
+    The child leads a new process group. When ``timeout`` runs out, or the
+    caller is interrupted, :func:`terminate_subprocess_tree` stops the whole
+    group rather than the child alone, so an ``easycrypt`` the child started
+    does not keep running unobserved. Grandchildren that detach into their
+    own session, such as the EasyCrypt daemon, are not in the group.
+    """
+    if capture_output:
+        popen_kwargs["stdout"] = subprocess.PIPE
+        popen_kwargs["stderr"] = subprocess.PIPE
+    with subprocess.Popen(cmd, start_new_session=True, **popen_kwargs) as proc:
+        try:
+            stdout, stderr = proc.communicate(timeout=timeout)
+        except subprocess.TimeoutExpired as exc:
+            terminate_subprocess_tree(proc, grace_seconds=grace_seconds)
+            try:
+                exc.stdout, exc.stderr = proc.communicate(timeout=grace_seconds)
+            except subprocess.TimeoutExpired:
+                pass  # a detached grandchild still holds a pipe
+            raise
+        except BaseException:
+            terminate_subprocess_tree(proc, grace_seconds=grace_seconds)
+            raise
+    return subprocess.CompletedProcess(cmd, proc.returncode, stdout, stderr)
+
+
 def terminate_pgid_bounded(pid: int, *, grace_seconds: float = 3.0) -> None:
     """Tear down a detached session-leader process we hold only a PID for.
 
@@ -147,10 +198,7 @@ def terminate_pgid_bounded(pid: int, *, grace_seconds: float = 3.0) -> None:
     block run-level cleanup. Use :func:`terminate_subprocess_tree` instead when a
     ``Popen`` handle is available.
     """
-    try:
-        pgid: Optional[int] = os.getpgid(pid)
-    except (ProcessLookupError, OSError):
-        pgid = None
+    pgid = _foreign_pgid(pid)
 
     def _sig(sig: int) -> None:
         try:
@@ -193,19 +241,62 @@ def record_worker_pgid(manifest_path: Optional[str], pid: int) -> None:
         pass
 
 
+_DAEMON_SOCKET_LINE = "daemon-socket "
+
+
+def record_daemon_socket(manifest_path: Optional[str], socket_path: str) -> None:
+    """Name a run's EasyCrypt daemon socket in the manifest (best-effort).
+
+    The daemon is spawned later, by whichever session first needs it, into a
+    session of its own, so no recorded group contains it. Reaping finds it
+    through the ``<socket>.pid`` file it writes. No-op when no manifest path
+    is configured.
+    """
+    if not manifest_path:
+        return
+    try:
+        with open(manifest_path, "a", encoding="utf-8") as fh:
+            fh.write(f"{_DAEMON_SOCKET_LINE}{socket_path}\n")
+    except OSError:
+        pass
+
+
+def _ec_daemon_pid(socket_path: str) -> Optional[int]:
+    """PID of the EasyCrypt daemon still serving ``socket_path``, else ``None``.
+
+    A pid file left by a daemon that died can name a recycled pid, so the
+    process must still be an ``ec_daemon``.
+    """
+    try:
+        with open(socket_path + ".pid", "r", encoding="utf-8") as fh:
+            pid = int(fh.read().strip())
+    except (OSError, ValueError):
+        return None
+    try:
+        command = subprocess.run(
+            ["ps", "-o", "command=", "-p", str(pid)],
+            capture_output=True, text=True, timeout=5,
+        ).stdout
+    except (OSError, subprocess.SubprocessError):
+        return None
+    return pid if "ec_daemon" in command else None
+
+
 def reap_worker_pgid_manifest(
     manifest_path: Optional[str],
     *,
     grace_seconds: float = 8.0,
 ) -> int:
-    """Kill every process group listed in a worker-PGID manifest, then delete it.
+    """Kill every process group and daemon listed in a manifest, then delete it.
 
     Backstop reaping for when a supervisor had to SIGKILL a wedged orchestrator
     whose own ``finally`` never reaped its detached worker groups. SIGTERM each
-    recorded group, wait ``grace_seconds``, SIGKILL survivors. A group that is
+    recorded group, wait ``grace_seconds``, SIGKILL survivors; then stop the
+    EasyCrypt daemon of each recorded socket that still runs. A group that is
     already gone is skipped (its leader pid no longer resolves), which keeps the
     common case — orchestrator exited cleanly and self-reaped — a safe no-op.
-    Returns the number of groups that were still alive when first signalled.
+    Returns the number of groups and daemons that were still alive when first
+    signalled.
 
     Call this ONLY after the orchestrator has exited (cleanly or killed): a live
     group whose leader pid was recycled is the only PID-reuse risk, and it is
@@ -214,11 +305,14 @@ def reap_worker_pgid_manifest(
     if not manifest_path or not os.path.exists(manifest_path):
         return 0
     pgids: list[int] = []
+    daemon_sockets: list[str] = []
     try:
         with open(manifest_path, "r", encoding="utf-8") as fh:
             for line in fh:
                 line = line.strip()
-                if line:
+                if line.startswith(_DAEMON_SOCKET_LINE):
+                    daemon_sockets.append(line[len(_DAEMON_SOCKET_LINE):])
+                elif line:
                     try:
                         pgids.append(int(line))
                     except ValueError:
@@ -251,8 +345,14 @@ def reap_worker_pgid_manifest(
                     os.killpg(pgid, signal.SIGKILL)
                 except (ProcessLookupError, OSError):
                     pass
+    stopped_daemons = 0
+    for socket_path in dict.fromkeys(daemon_sockets):
+        pid = _ec_daemon_pid(socket_path)
+        if pid is not None:
+            terminate_pgid_bounded(pid)
+            stopped_daemons += 1
     try:
         os.unlink(manifest_path)
     except OSError:
         pass
-    return len(live)
+    return len(live) + stopped_daemons

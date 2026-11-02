@@ -39,10 +39,6 @@ from core.easycrypt.proof_state_compiler.frontend import (
     project_authoritative_state,
 )
 from core.easycrypt.proof_state_compiler.compiler import ProofStateCompiler
-from core.easycrypt.proof_state_compiler.serialization import (
-    bundle_json,
-    serialize_bundle,
-)
 
 __all__ = [
     "ActionSurface",
@@ -73,6 +69,4 @@ __all__ = [
     "StrategyContract",
     "TypedTermIR",
     "project_authoritative_state",
-    "bundle_json",
-    "serialize_bundle",
 ]

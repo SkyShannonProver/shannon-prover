@@ -8,51 +8,16 @@ same tactic auto-reverts as no-effect
 (step3 Run 9 Tree-0.0 incident, see ``detect_no_progress``).
 
 Pure goal-text analysis: no EC execution, no file I/O, no ``Session`` state — only
-``re`` plus delegation to ``session_state`` and the goal parser.
+the goal-text readers of ``session_state``.
 """
 from __future__ import annotations
 
-import re
+from core.easycrypt.session.session_state import extract_goal_body, infer_goal_count
 
 
 def _extract_goal_body(text: str) -> str:
-    """Extract the goal body from EC output for comparison.
-
-    Strips prompt markers ([N|check]>) and 'Current goal' headers so that
-    only the mathematical content remains. Used to detect no-progress tactics.
-    """
-    try:
-        from core.easycrypt.session.session_state import extract_goal_body  # type: ignore
-        return extract_goal_body(text).strip()
-    except Exception:
-        pass
-    lines = text.strip().splitlines()
-    # Header at index 0 counts as found (compressed displays start with
-    # it), and the header usually carries a "(remaining: N)" suffix.
-    # Treating either case as not-found degrades to a tail-window
-    # comparison blind to hypothesis-level changes — see
-    # session_state.extract_goal_body.
-    start = -1
-    for idx, line in enumerate(lines):
-        stripped_header = line.strip()
-        if (
-            stripped_header == "Current goal"
-            or stripped_header.startswith("Current goal (remaining:")
-        ):
-            start = idx
-    goal_lines = lines[start:] if start >= 0 else lines[-30:]
-    # Strip prompt markers and blank lines for stable comparison
-    cleaned = []
-    for ln in goal_lines:
-        stripped = ln.strip()
-        if re.match(r"^\[\d+\|[^\]]*\]>", stripped):
-            continue
-        if stripped.startswith("Current goal"):
-            continue
-        if stripped.startswith("(remaining:"):
-            continue
-        cleaned.append(stripped)
-    return "\n".join(cleaned).strip()
+    """The active goal body with prompt markers removed, for comparison."""
+    return extract_goal_body(text).strip()
 
 
 def _structural_fingerprint(text: str) -> tuple[str, ...] | None:
@@ -111,22 +76,14 @@ def detect_no_progress(
     # truly idempotent tactic (`sp` with no effect — count unchanged) is still
     # flagged. Best-effort: if counts can't be inferred, fall through unchanged.
     try:
-        from core.easycrypt.session.session_state import infer_goal_count  # type: ignore
+        _prev_n, _ = infer_goal_count(prev_raw)
+        _curr_n, _ = infer_goal_count(curr_raw)
     except Exception:
-        try:
-            from core.easycrypt.session.session_state import infer_goal_count  # type: ignore
-        except Exception:
-            infer_goal_count = None  # type: ignore
-    if infer_goal_count is not None:
-        try:
-            _prev_n, _ = infer_goal_count(prev_raw)
-            _curr_n, _ = infer_goal_count(curr_raw)
-        except Exception:
-            _prev_n, _curr_n = -1, -1
-        # Only trust a strict increase between two successfully-parsed,
-        # non-sentinel counts. (-1 means parse failed / not in a proof.)
-        if _prev_n >= 0 and _curr_n >= 0 and _curr_n > _prev_n:
-            return False, ""
+        _prev_n, _curr_n = -1, -1
+    # Only trust a strict increase between two successfully-parsed,
+    # non-sentinel counts. (-1 means parse failed / not in a proof.)
+    if _prev_n >= 0 and _curr_n >= 0 and _curr_n > _prev_n:
+        return False, ""
     # Cheap text-equality check first
     prev_goal = _extract_goal_body(prev_raw)
     curr_goal = _extract_goal_body(curr_raw)

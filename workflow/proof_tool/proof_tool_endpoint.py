@@ -162,6 +162,23 @@ class ProofToolEndpointServer:
             self._ready_registration = None
             self._ready_condition.notify_all()
 
+    def serving_thread_alive(self) -> bool | None:
+        """Whether the accept loop is alive; ``None`` when not serving.
+
+        ``False`` means the loop died while the endpoint was supposed to be
+        serving: the socket stays bound, so provider calls would queue until
+        their transport timeout instead of failing.
+        """
+
+        thread = self._thread
+        if thread is None or thread.ident is None or self._httpd is None:
+            return None  # not started yet, or already closed
+        if thread.is_alive():
+            return True
+        # ``close`` clears ``_thread`` before stopping the loop; a loop that
+        # ended because of ``close`` is not a dead endpoint.
+        return None if self._thread is not thread else False
+
     def expect_launch(self, launch_id: str) -> None:
         """Arm readiness for exactly one provider invocation before it starts.
 

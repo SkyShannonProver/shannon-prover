@@ -2,20 +2,19 @@
 
 from __future__ import annotations
 
-import hashlib
-
 from core.easycrypt.proof_state_compiler.contracts import (
     CompilerInvocationContext,
     ProofCoordinate,
     ProofIR,
     RecoveryActionRealization,
-    RecoveryClaim,
+    recovery_claim_for,
     native_argument_realization_witness,
 )
+from core.easycrypt.proof_state_compiler.contracts.digest import text_sha256
 from core.easycrypt.proof_state_compiler.middle_end.contributions import (
     AnalysisContribution,
 )
-from .feature import INTRO_PATTERN_REPAIR_FEATURE_ID
+from .ids import INTRO_PATTERN_REPAIR_FEATURE_ID
 from .realization import intro_pattern_realization_of
 
 
@@ -50,9 +49,11 @@ def analyze_intro_pattern_repair(
         native_family="deep_flatten_intro_pattern",
         exact_tactic=descriptor.candidate_tactic,
     )
-    realization_id = "intro-pattern-repair:" + hashlib.sha256(
-        (attempted.recovery_key + "\0" + committed_binders).encode("utf-8")
-    ).hexdigest()[:20]
+    realization_id = "intro-pattern-repair:" + text_sha256(
+        attempted.recovery_key
+        + "\0"
+        + committed_binders
+    )[:20]
     reason = (
         "EasyCrypt accepts the same destruct and ordered binders in "
         "deep-flatten form; no binder or proof step changes."
@@ -68,18 +69,11 @@ def analyze_intro_pattern_repair(
         reason=reason,
         evidence_refs=attempted.evidence_refs,
     )
-    claim = RecoveryClaim(
+    claim = recovery_claim_for(
+        attempted,
         feature_id=INTRO_PATTERN_REPAIR_FEATURE_ID,
-        recovery_key=attempted.recovery_key,
-        attempt_id=attempted.attempt_id,
-        occurrence_identity=attempted.occurrence_identity,
-        trigger_id=attempted.trigger_id,
-        operation_family=attempted.operation_family,
-        selected_resource="",
-        resource_match_kind="none",
         allowed_output_kinds=("action",),
         preservation_witness=witness,
-        evidence_refs=attempted.evidence_refs,
     )
     return AnalysisContribution(
         recovery_action_realizations=(realization,),

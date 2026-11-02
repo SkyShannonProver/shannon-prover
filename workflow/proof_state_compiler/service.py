@@ -69,7 +69,42 @@ from workflow.proof_state_compiler.lifetime import DeliveryLifetimeLedger
 from workflow.proof_state_compiler.telemetry import compilation_telemetry
 
 
+class CompilerReadOnlyViolation(RuntimeError):
+    """A compiler call changed committed proof history or state version.
+
+    The compiler is read-only.  Unlike an ordinary compiler failure, which is
+    an abstention, this means the session no longer matches the state the
+    manager serves, so the node must fail closed.
+    """
+
+
+def require_runtime_unchanged(
+    runtime: "CompilerRuntime",
+    *,
+    history_before: tuple[str, ...],
+    state_version_before: int,
+    label: str,
+) -> None:
+    """The one read-only check, used per backend call and per compilation."""
+
+    if tuple(runtime.committed_history()) != history_before:
+        raise CompilerReadOnlyViolation(
+            f"{label} changed committed proof history"
+        )
+    if runtime.state_version != state_version_before:
+        raise CompilerReadOnlyViolation(
+            f"{label} changed manager state version"
+        )
+
+
 class CompilerRuntime(Protocol):
+    """Read-only EasyCrypt access for the compiler.
+
+    A call that changed committed history or the manager state version
+    raises ``CompilerReadOnlyViolation``; a returned result therefore always
+    describes the unchanged session.
+    """
+
     state_version: int
 
     def committed_history(self) -> list[str]: ...
@@ -296,10 +331,11 @@ class ProofStateCompilerService:
             else self._observation_cache.get(cache_key)
         )
         if cached is not None:
-            _require_runtime_unchanged(
+            require_runtime_unchanged(
                 self.runtime,
                 history_before=history_before,
                 state_version_before=state_version_before,
+                label="compiler service",
             )
             core = cached.value
             admission_started = time.perf_counter_ns()
@@ -706,10 +742,11 @@ class ProofStateCompilerService:
             previously_presented=self._delivery_lifetime.snapshot(),
         )
         admission_done = time.perf_counter_ns()
-        _require_runtime_unchanged(
+        require_runtime_unchanged(
             self.runtime,
             history_before=history_before,
             state_version_before=state_version_before,
+            label="compiler service",
         )
         result = CompilerServiceResult(
             bundle=bundle,
@@ -985,18 +1022,6 @@ def _certifications_cover_origin_candidates(
 
 def _elapsed_ms(start: int, end: int) -> int:
     return max(0, int((end - start) / 1_000_000))
-
-
-def _require_runtime_unchanged(
-    runtime: CompilerRuntime,
-    *,
-    history_before: tuple[str, ...],
-    state_version_before: int,
-) -> None:
-    if tuple(runtime.committed_history()) != history_before:
-        raise RuntimeError("compiler service changed committed proof history")
-    if runtime.state_version != state_version_before:
-        raise RuntimeError("compiler service changed manager state version")
 
 
 def _validate_resource_load_response(

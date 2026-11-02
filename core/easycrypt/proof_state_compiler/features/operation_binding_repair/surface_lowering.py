@@ -1,7 +1,5 @@
 """Lower one mutually exclusive same-resource action or diagnostic."""
 
-import hashlib
-import json
 from dataclasses import replace
 
 from core.easycrypt.proof_state_compiler.backend.application_lowering import (
@@ -15,22 +13,21 @@ from core.easycrypt.proof_state_compiler.contracts import (
     AttemptedOperationIR,
     CompilerInvocationContext,
     CorrectionPresentation,
-    DiagnosticCandidate,
     DO_YOU_MEAN,
 )
 from core.easycrypt.proof_state_compiler.features.operation_binding_repair.classification import (
     classify_operation_binding_failure,
 )
-from core.easycrypt.proof_state_compiler.features.operation_binding_repair.contracts import (
+from core.easycrypt.proof_state_compiler.features.operation_binding_repair.ids import (
     OPERATION_BINDING_REPAIR_ANALYSIS_PRODUCER_ID,
-)
-from core.easycrypt.proof_state_compiler.features.operation_binding_repair.feature import (
     OPERATION_BINDING_REPAIR_FEATURE_ID,
     OPERATION_BINDING_REPAIR_STRATEGY_CONTRACT,
 )
-
-
-OPERATION_BINDING_REPAIR_CERTIFICATION_POLICY = "exact_tactic_preflight"
+from core.easycrypt.proof_state_compiler.features.recovery_lowering import (
+    EXACT_TACTIC_PREFLIGHT,
+    attempt_diagnostic_candidate,
+    attempt_diagnostics,
+)
 
 
 def lower_operation_binding_repair(
@@ -47,17 +44,15 @@ def lower_operation_binding_repair(
         item for item in state.applications
         if item.producer_id == OPERATION_BINDING_REPAIR_ANALYSIS_PRODUCER_ID
     )
-    diagnostics = tuple(
-        item for item in state.diagnostics
-        if item.producer_id == OPERATION_BINDING_REPAIR_ANALYSIS_PRODUCER_ID
-        and item.trigger_id == attempted.trigger_id
+    diagnostics = attempt_diagnostics(
+        state, OPERATION_BINDING_REPAIR_ANALYSIS_PRODUCER_ID,
     )
     if len(applications) == 1 and not diagnostics:
         application = applications[0]
         action = lower_application_action(
             application,
             feature_id=OPERATION_BINDING_REPAIR_FEATURE_ID,
-            certification_policy=OPERATION_BINDING_REPAIR_CERTIFICATION_POLICY,
+            certification_policy=EXACT_TACTIC_PREFLIGHT,
             strategy_contract=OPERATION_BINDING_REPAIR_STRATEGY_CONTRACT,
         )
         witness = state.recovery_ownership.preservation_witness
@@ -89,20 +84,11 @@ def lower_operation_binding_repair(
             ),
         ),))
     if not applications and len(diagnostics) == 1:
-        diagnostic = diagnostics[0]
-        material = json.dumps(
-            diagnostic.identity_payload(),
-            ensure_ascii=False,
-            sort_keys=True,
-            separators=(",", ":"),
-        )
-        candidate_id = "operation-binding-diagnostic:" + hashlib.sha256(
-            (attempted.recovery_key + "\0" + material).encode("utf-8")
-        ).hexdigest()[:20]
-        return SurfaceContribution(diagnostics=(DiagnosticCandidate(
-            candidate_id=candidate_id,
+        return SurfaceContribution(diagnostics=(attempt_diagnostic_candidate(
+            attempted,
+            diagnostics[0],
+            id_prefix="operation-binding-diagnostic",
             feature_id=OPERATION_BINDING_REPAIR_FEATURE_ID,
-            diagnostic=diagnostic,
             strategy_contract=OPERATION_BINDING_REPAIR_STRATEGY_CONTRACT,
         ),))
     # Action/diagnostic overlap, duplicate results, and ambiguous ownership

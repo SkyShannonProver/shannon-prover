@@ -12,10 +12,8 @@ from workflow.proof_state_compiler.surface_profiles import (
 
 @dataclass(frozen=True)
 class ProofProjectionResult:
-    view: dict[str, Any]            # surface-profiled (lean) view — drives the agent markdown
-    state: Any
-    evidence: Any
-    full_view: dict[str, Any]       # complete view — for the audit JSON
+    view: dict[str, Any]            # current goal envelope; may later carry overlays
+    full_view: dict[str, Any]       # independent copy of ``view`` as projected
 
 
 class ProofProjectionPipeline:
@@ -37,10 +35,6 @@ class ProofProjectionPipeline:
         snapshot: Any,
         *,
         latest_observation: dict[str, Any] | None = None,
-        replay_prefix: list[str] | None = None,
-        replay_prefix_count: int = 0,
-        file_path: str | None = None,
-        project_root: str | None = None,
     ) -> ProofProjectionResult:
         raw_view = snapshot.raw_workspace_view
         base_view = self.workspace.project(
@@ -53,9 +47,4 @@ class ProofProjectionPipeline:
         view.pop("view_hash", None)
         view["view_hash"] = self.workspace.view_hash(view)
         view = self.workspace.order_workspace_view(view)
-        return ProofProjectionResult(
-            view=view,
-            state=None,
-            evidence=None,
-            full_view=dict(view),
-        )
+        return ProofProjectionResult(view=view, full_view=dict(view))

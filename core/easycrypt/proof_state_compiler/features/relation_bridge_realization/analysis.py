@@ -2,26 +2,25 @@
 
 from __future__ import annotations
 
-import hashlib
-
 from core.easycrypt.proof_state_compiler.contracts import (
     CHOICE_REQUIRED,
     CompilerInvocationContext,
     ProofCoordinate,
     ProofIR,
     RecoveryActionRealization,
-    RecoveryClaim,
+    recovery_claim_for,
     StructuredDiagnostic,
     exact_operation_resource_witness,
     native_argument_realization_witness,
 )
+from core.easycrypt.proof_state_compiler.contracts.digest import text_sha256
 from core.easycrypt.proof_state_compiler.middle_end.contributions import (
     AnalysisContribution,
 )
 from core.easycrypt.proof_state_compiler.compound_boundary_text import (
     checked_goal_reference,
 )
-from .feature import RELATION_BRIDGE_REALIZATION_FEATURE_ID
+from .ids import RELATION_BRIDGE_REALIZATION_FEATURE_ID
 from .realization import relation_bridge_choice_of, relation_bridge_of
 
 
@@ -43,7 +42,7 @@ _REASONS = {
     ),
 }
 
-_CHOICE_PRODUCER_ID = "relation_bridge_realization.choice_analysis"
+RELATION_BRIDGE_CHOICE_PRODUCER_ID = "relation_bridge_realization.choice_analysis"
 
 
 def _strict_relation_choice(
@@ -83,7 +82,7 @@ def _strict_relation_choice(
     )
     try:
         diagnostic = StructuredDiagnostic(
-            producer_id=_CHOICE_PRODUCER_ID,
+            producer_id=RELATION_BRIDGE_CHOICE_PRODUCER_ID,
             code="real_lt_choice",
             primary=primary,
             notes=(),
@@ -99,18 +98,11 @@ def _strict_relation_choice(
         attempted.operation_family,
         "",
     )
-    claim = RecoveryClaim(
+    claim = recovery_claim_for(
+        attempted,
         feature_id=RELATION_BRIDGE_REALIZATION_FEATURE_ID,
-        recovery_key=attempted.recovery_key,
-        attempt_id=attempted.attempt_id,
-        occurrence_identity=attempted.occurrence_identity,
-        trigger_id=attempted.trigger_id,
-        operation_family=attempted.operation_family,
-        selected_resource="",
-        resource_match_kind="none",
         allowed_output_kinds=("diagnostic",),
         preservation_witness=witness,
-        evidence_refs=attempted.evidence_refs,
     )
     return AnalysisContribution(
         diagnostics=(diagnostic,),
@@ -157,9 +149,11 @@ def analyze_relation_bridge_realization(
         native_family=bridge.relation_family,
         exact_tactic=bridge.candidate_tactic,
     )
-    realization_id = "relation-bridge-realization:" + hashlib.sha256(
-        (attempted.recovery_key + "\0" + witness.witness_id).encode("utf-8")
-    ).hexdigest()[:20]
+    realization_id = "relation-bridge-realization:" + text_sha256(
+        attempted.recovery_key
+        + "\0"
+        + witness.witness_id
+    )[:20]
     reason = _REASONS[(bridge.relation_family, bridge.failure_kind)]
     if "{goal}" in reason:
         reason = reason.format(
@@ -176,18 +170,11 @@ def analyze_relation_bridge_realization(
         reason=reason,
         evidence_refs=attempted.evidence_refs,
     )
-    claim = RecoveryClaim(
+    claim = recovery_claim_for(
+        attempted,
         feature_id=RELATION_BRIDGE_REALIZATION_FEATURE_ID,
-        recovery_key=attempted.recovery_key,
-        attempt_id=attempted.attempt_id,
-        occurrence_identity=attempted.occurrence_identity,
-        trigger_id=attempted.trigger_id,
-        operation_family=attempted.operation_family,
-        selected_resource="",
-        resource_match_kind="none",
         allowed_output_kinds=("action",),
         preservation_witness=witness,
-        evidence_refs=attempted.evidence_refs,
     )
     return AnalysisContribution(
         recovery_action_realizations=(realization,),

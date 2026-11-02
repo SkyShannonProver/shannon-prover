@@ -163,6 +163,40 @@ Delegation is nonblocking, but an active boundary lease prevents the outer
 agent from silently editing the same proof body while a job is working on its
 snapshot. The ChaChaPoly reference contract fixes capacity at two.
 
+### Project binding
+
+Each entry point (`python -m workflow.interleaved`, the runner, the job CLI and
+worker, the inner runner, the generic verifier and the reference adapter's
+commands) builds one `ProjectContext` from the project contract and passes it
+to every function that needs the project; no module reads the project at
+import time. A child process that runs interleaved code receives the same
+binding through `ProjectContext.child_environment` and resolves it against its
+own checkout. A job lane therefore checks out the contract file next to the
+target and include directories.
+
+### Job lifecycle
+
+`workflow/interleaved/job_record.py` defines the job statuses, the allowed
+transitions and the `JobRecord` schema of `job.json`; the scheduler checks
+every write against the transition table.
+
+```text
+queued     -> starting | cancelled
+starting   -> running | cancelled | infrastructure_invalid (launch failed)
+running    -> verified | incomplete | infrastructure_invalid
+              | cancelling | cancelled
+cancelling -> cancelled | infrastructure_invalid
+verified   -> merged | stale_merge            (collect)
+```
+
+A job whose worker has stopped is closed only by `finalize_job`, whether the
+worker records its own result or the scheduler finds it dead during reconcile
+or after a cancel. It first stops the process groups the job's inner runner
+recorded (the orchestrator and its tree workers, each in a session of its
+own), then the lane's fallback EasyCrypt daemon, then removes the lane, and
+only then records the terminal status. A terminal status is never replaced,
+except that collect merges a verified job or finds it stale.
+
 ## Layer 4: artifacts, evidence and browsing
 
 The repository currently has three distinct artifact shapes. They should not

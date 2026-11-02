@@ -1,9 +1,9 @@
-"""Tactic precheck — sanitization + policy guards at the head of a commit.
+"""Tactic precheck — policy guards at the head of a commit.
 
 Extracted from ``session_runtime.Session.append_block`` (a cut of the Session
-god-object decomposition). Pure text → outcome: it normalizes shell-quoting
-artifacts and command termination, and refuses two classes of input that would
-corrupt the manager-owned proof history —
+god-object decomposition). Pure text → outcome: it normalizes command
+termination, and refuses two classes of input that would corrupt the
+manager-owned proof history —
 
   * REPL-only library-query meta-commands (``search``/``print``/``locate``),
     which EC silently accepts in the REPL but the batch compiler later rejects;
@@ -14,6 +14,11 @@ No ``Session`` state is touched: the only session-specific inputs are the sessio
 dir name (for the redirect hints) and an ``emit`` callback so audit events fire
 inline at the same point they did before, and the result carries either the
 normalized ``block_text`` or a ``refusal`` string for the caller to return.
+
+The tactic text itself is never rewritten. The manager passes it as one argv
+element, so there is no shell residue to clean, and ``-try`` certifies the
+text as submitted: any rewrite here would commit something other than what
+was checked (``[|head tail ih]`` and ``a /\\!b`` are valid EasyCrypt).
 """
 from __future__ import annotations
 
@@ -21,19 +26,6 @@ import re
 import sys
 from dataclasses import dataclass
 from typing import Callable, Optional
-
-_SHELL_FILTER_ARTIFACT_RE = re.compile(
-    r"'?\s*(?:2>&1|>&\d+)\s*(?:\|\s*(?:head|tail|grep|sed|awk|jq)\b.*)?$"
-    r"|"
-    r"'?\s*\|\s*(?:head|tail|grep|sed|awk|jq)\b.*$"
-)
-
-
-def _strip_shell_filter_artifact(block_text: str) -> tuple[str, bool]:
-    """Strip shell filter/redirect tails that leaked into a tactic string."""
-    original = block_text.rstrip()
-    cleaned = _SHELL_FILTER_ARTIFACT_RE.sub("", original)
-    return cleaned, cleaned != original
 
 
 @dataclass
@@ -58,33 +50,10 @@ def precheck_tactic(
     block_text: str,
     emit: Callable[[str, dict], None],
 ) -> PrecheckOutcome:
-    """Sanitize + guard a tactic block before it is committed.
+    """Guard a tactic block and terminate it with ``.`` before it is committed.
 
     ``emit`` is the session's event sink (called inline on a refusal, exactly
     where the mutation would otherwise begin)."""
-    # Fix zsh escaping: zsh converts ! to \! even in single quotes.
-    # EasyCrypt uses ! for repeat (rewrite !H, do !split, [#] !->>).
-    block_text = block_text.replace('\\!', '!')
-
-    # Fix shell apostrophe escaping: when a tactic is passed via -c '...' and
-    # a primed EC name (Exp', G', H') appears in the tactic or session dir, the
-    # shell may terminate the single-quote string early and append redirect
-    # fragments like "' 2>&1" or "'2>&1" to the tactic string.
-    # These are never valid EasyCrypt syntax — detect and strip them.
-    cleaned, stripped_shell_artifact = _strip_shell_filter_artifact(block_text)
-    if stripped_shell_artifact:
-        sys.stderr.write(
-            f"[session_cli] Warning: shell filter/redirect artifact stripped from tactic.\n"
-            f"  Original:  {block_text.rstrip()!r}\n"
-            f"  Cleaned:   {cleaned!r}\n"
-            f"  Cause: apostrophe in a primed EC name (Exp', G', H') broke\n"
-            f"         -c '...' shell quoting, leaking shell syntax into the tactic.\n"
-            f"  Fix:   pass the tactic as a direct argument:\n"
-            f"           python3 session_cli.py -tactic-exec commit "
-            f"-c 'your tactic.'\n"
-        )
-        block_text = cleaned
-
     # Detect unbalanced parentheses — a strong signal that the tactic was
     # truncated by shell single-quote processing (e.g. PIR.s' ends the shell
     # string early, leaving an incomplete tactic like `while (big ... PIR.s`).

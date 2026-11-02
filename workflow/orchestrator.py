@@ -138,6 +138,27 @@ def _duplicate_lemma_error(config: RunConfig) -> Optional[str]:
     )
 
 
+def _create_run_dir(output_root: Path, lemma: str) -> Path:
+    """Create a run directory that belongs to this run alone.
+
+    The run's EasyCrypt daemon and why3server sockets are named after its
+    directory, so a second run sharing it would stop the first run's
+    servers. A run started in the same minute as another run of the same
+    lemma gets a numeric suffix; ``mkdir`` without ``exist_ok`` makes the
+    choice atomic between concurrent runs.
+    """
+    output_root.mkdir(parents=True, exist_ok=True)
+    base = f"{datetime.now().strftime('%Y-%m-%d_%H%M')}_{lemma}"
+    index = 1
+    while True:
+        run_dir = output_root / (base if index == 1 else f"{base}_{index}")
+        try:
+            run_dir.mkdir()
+            return run_dir
+        except FileExistsError:
+            index += 1
+
+
 @_restore_eval_env_on_exit
 def run(config: RunConfig) -> dict:
     """Execute one managed proof-construction run.
@@ -161,11 +182,7 @@ def run(config: RunConfig) -> dict:
         perror("Orchestrator", dup_error)
         return {"error": dup_error}
 
-    # Create run directory
-    date_str = datetime.now().strftime("%Y-%m-%d_%H%M")
-    run_name = f"{date_str}_{config.lemma}"
-    run_dir = _PROJECT_ROOT / config.output_dir / run_name
-    run_dir.mkdir(parents=True, exist_ok=True)
+    run_dir = _create_run_dir(_PROJECT_ROOT / config.output_dir, config.lemma)
     config.save(run_dir / "config.json")
     (run_dir / "surface_profile_manifest.json").write_text(
         json.dumps(
@@ -192,12 +209,6 @@ def run(config: RunConfig) -> dict:
     # prompt/rendering code can enforce target-lemma retrieval guards.
     if getattr(config, "eval_mode", False):
         os.environ["EVAL_TARGET_LEMMA"] = config.lemma
-        # In eval mode we stop after the prover, so retries add no value.
-        if config.max_iterations != 1:
-            status("Orchestrator",
-                   f"EVAL MODE: clamping max_iterations "
-                   f"{config.max_iterations} → 1", "\033[35m")
-            config.max_iterations = 1
         status("Orchestrator",
                f"EVAL MODE: blinding prover to concrete proofs of {config.lemma}",
                "\033[35m")
@@ -215,7 +226,6 @@ def run(config: RunConfig) -> dict:
     print()
     status("Orchestrator", f"Starting run for {config.file}:{config.lemma}")
     status("Orchestrator", f"Run directory: {run_dir}")
-    status("Orchestrator", f"Max prove attempts: {config.max_iterations}")
     if getattr(config, "resume_capsules", None):
         status("Orchestrator",
                f"Proof-node resume mode: "
@@ -359,9 +369,9 @@ def main():
     parser.add_argument("--lemma", type=str, help="Lemma name")
     parser.add_argument("--include-dir", type=str, default="",
                         help="EC include directory")
-    parser.add_argument("--human-proof-dir", type=str, default=None)
     parser.add_argument("--max-iterations", type=int, default=None,
-                        help="Max prove failures before stopping (default: 2)")
+                        help="Accepted for compatibility and ignored: every "
+                             "run is a single prove pass.")
     parser.add_argument("--prover-effort", type=str, default=None,
                         help="Reasoning effort for the prover agent session "
                              "(low/medium/high; default from ProverConfig).")
@@ -459,7 +469,6 @@ def main():
             file=args.file,
             lemma=args.lemma,
             include_dir=args.include_dir or "",
-            human_proof_dir=args.human_proof_dir,
         )
     else:
         parser.error("Either --config or (--file and --lemma) required")

@@ -13,11 +13,9 @@ from core.easycrypt.proof_state_compiler.contracts.proof_ir import (
     ArgumentSlot,
     ProofResource,
 )
+from core.easycrypt.proof_state_compiler.delimiters import find_top_level
 from core.easycrypt.proof_state_compiler.frontend.declaration_stream import (
     DeclarationInput,
-)
-from core.easycrypt.proof_state_compiler.frontend.resource_syntax import (
-    top_level_colon,
 )
 from core.easycrypt.proof_state_compiler.syntax.formulas import (
     parse_proof_judgment,
@@ -27,7 +25,7 @@ from core.easycrypt.proof_state_compiler.syntax.formulas import (
 def parse_probability_theorem_declaration(
     item: DeclarationInput,
 ) -> ProofResource | None:
-    colon = top_level_colon(item.declaration)
+    colon = find_top_level(item.declaration, ":")
     if colon < 0:
         return None
     proposition = item.declaration[colon + 1:].strip()
@@ -65,7 +63,7 @@ def _application_parts(
     premises: list[str] = []
     proof_index = 0
     while remaining.startswith("forall "):
-        comma = _top_level_comma(remaining)
+        comma = find_top_level(remaining, ",")
         if comma < 0:
             return None
         binder = remaining[len("forall "):comma].strip()
@@ -146,28 +144,8 @@ def _binder_slot(
     return None
 
 
-def _top_level_comma(value: str) -> int:
-    depth = 0
-    for index, char in enumerate(value):
-        if char in "([{":
-            depth += 1
-        elif char in ")]}":
-            depth = max(0, depth - 1)
-        elif char == "," and depth == 0:
-            return index
-    return -1
-
-
 def _first_top_level_implication(value: str) -> tuple[str, str] | None:
-    depth = 0
-    index = 0
-    while index < len(value) - 1:
-        char = value[index]
-        if char in "([{":
-            depth += 1
-        elif char in ")]}":
-            depth = max(0, depth - 1)
-        elif value[index:index + 2] == "=>" and depth == 0:
-            return value[:index].strip(), value[index + 2:].strip()
-        index += 1
-    return None
+    index = find_top_level(value, "=>")
+    if index < 0:
+        return None
+    return value[:index].strip(), value[index + 2:].strip()

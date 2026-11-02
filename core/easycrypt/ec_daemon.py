@@ -4,8 +4,9 @@ per session alive across tactic submissions, enabling fast speculative
 execution (try tactic → rollback) without the 5-15s per-call re-spawn +
 history-replay overhead session_cli currently pays.
 
-Transport: Unix socket at ``/tmp/ec_daemon.sock``. Framing:
-    newline-delimited JSON objects, one request/response per line.
+Transport: Unix socket at ``ec_daemon_client.default_socket_path()``
+(``EC_DAEMON_SOCKET``, else a per-checkout ``/tmp/ec_daemon_<hash>.sock``).
+Framing: newline-delimited JSON objects, one request/response per line.
 
 Multi-prover: a daemon holds N concurrent sessions, one EC subprocess
 each (indexed by session_id string). Different sessions can execute
@@ -19,31 +20,39 @@ Protocol (minimal JSON-RPC-ish):
 
 Methods:
     open_session(file_path, include_dirs, lemma_name): create EC
-        subprocess, load context.ec from the matching session_dir, step
-        into the lemma's proof, return current goal state.
-    commit(tactic): advance permanently, append to history, return new
-        goal state.
-    try_tactic(tactic): execute, capture outcome, auto-undo. Return
-        {accepted, error, goal_state_preview}. Session state unchanged.
-    batch_try([tactic1, ...]): each tactic tried independently, all
-        undone. Returns list of per-tactic results.
+        subprocess, load ``file_path`` up to the lemma's ``proof.`` (via
+        ``lemma_extract``), return current goal state.
+    commit(tactic, timeout): advance permanently, append to history, return
+        new goal state. A rejected transaction leaves the session at its
+        pre-commit level (sentences it ran are undone) or, when that cannot
+        be shown, discards the session. A transaction EasyCrypt does not
+        finish within ``timeout`` seconds is rejected with ``timed_out`` and
+        the session is discarded.
+    rewind(keep, keep_identity, held_identity): return the committed
+        process to the level recorded after its first ``keep`` committed
+        transactions with EasyCrypt's ``undo <level>.``, without re-running
+        anything. It refuses (and changes nothing) when the identities do
+        not describe what the session holds or the undone range contains a
+        command whose effect ``undo`` does not revert; see ``rewind``.
+    try_tactic(tactic) / try_chain(tactics): run read-only and return
+        the outcome; the committed session is never touched.
     get_goal(): current goal state.
-    undo(): revert the last committed tactic.
+    adopt_session(new_session_id) / session_info(): rename a live session,
+        report its liveness and committed count.
     list_sessions(): active session ids.
     close_session(): terminate EC subprocess.
     shutdown(): stop daemon.
 
 Errors: if EC hits an error line (e.g. ``[error-N-M]cannot ...``), the
-response's ``error`` field carries:
+response's ``error`` field carries ``ec_diagnostics.parse_error``'s
     {kind: "unification_fail"|"no_progress"|"unknown_lemma"|
            "type_error"|"other",
-     raw: str, location: dict?}
+     raw: str, severity: str}
 
-Rollback semantics: ``try_tactic`` always runs ``undo.`` after the
-tactic, regardless of whether the tactic succeeded. If EC considers a
-failing tactic as "no state change", the undo becomes a no-op; if EC
-did advance state briefly before reporting an error, the undo brings it
-back. Either way, history is unchanged.
+Read-only probes: ``try_tactic`` / ``try_chain`` run on a separate warm
+process stopped at the committed state and rolled back with the
+step-numbered ``undo <N>.`` (``ec_warm_prober``), or, when that is disabled
+or drifts, on a fresh ephemeral EC that replays setup + committed tactics.
 
 Scope for this initial version: single-host, trust all local clients,
 no auth. Persistence across daemon restart is NOT supported — a
@@ -55,6 +64,7 @@ from __future__ import annotations
 import argparse
 import json
 import logging
+import math
 import os
 import re
 import signal
@@ -75,10 +85,13 @@ _PKG_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__fi
 if _PKG_ROOT not in sys.path:
     sys.path.insert(0, _PKG_ROOT)
 
-from core.easycrypt.ec_lifecycle import (  # noqa: E402
-    PROMPT_RE,
-    ECSessionLifecycle,
-    split_ec_commands as _split_ec_commands,
+from core.easycrypt.committed_history import committed_prefix_identity  # noqa: E402
+from core.easycrypt.ec_lifecycle import ECSessionLifecycle  # noqa: E402
+from core.easycrypt.ec_prompt import PROMPT_RE  # noqa: E402
+from core.easycrypt.proof_text import (  # noqa: E402
+    split_ec_commands,
+    strip_comments,
+    undo_unsafe_sentence,
 )
 from core.easycrypt.ec_env import get_ec_env  # noqa: E402
 from core.easycrypt.ec_daemon_client import default_socket_path  # noqa: E402
@@ -86,6 +99,52 @@ from core.easycrypt.ec_diagnostics import parse_error  # noqa: E402
 
 
 logger = logging.getLogger("ec_daemon")
+
+# The interleaved warm handoff still imports the splitter under this name.
+_split_ec_commands = split_ec_commands
+
+
+def _with_final_dot(tactic: str) -> str:
+    """End ``tactic`` with a dot unless its code (not a comment) already does."""
+    if strip_comments(tactic).rstrip().endswith("."):
+        return tactic
+    return tactic.rstrip() + "."
+
+
+def _prompt_level(raw: str) -> Optional[tuple[int, str]]:
+    """``(level, mode)`` of the last ``[level|mode]>`` prompt in ``raw``."""
+    found = None
+    for match in PROMPT_RE.finditer(raw or ""):
+        found = (int(match.group(1)), match.group(2))
+    return found
+
+
+@dataclass(frozen=True)
+class _Level:
+    """EasyCrypt's undo level after setup or after one committed transaction.
+
+    ``undoable`` says whether ``undo`` can take this transaction back: it ran
+    no command whose effect ``undo`` does not revert, and it raised the level.
+    ``open_goal`` says whether EasyCrypt's reply showed an open goal.
+    """
+
+    level: int
+    mode: str
+    undoable: bool = True
+    open_goal: bool = False
+
+
+class RewindRefused(RuntimeError):
+    """The session cannot be rewound by ``undo``; nothing was sent to EC."""
+
+
+class SetupRejected(RuntimeError):
+    """EasyCrypt rejected a command of the lemma's context. Opening the same
+    source again fails the same way."""
+
+
+def _shows_open_goal(goal: "GoalState") -> bool:
+    return bool(not goal.is_closed and goal.remaining >= 1)
 
 
 class _EphemeralEC(ECSessionLifecycle):
@@ -124,11 +183,7 @@ class TacticOutcome:
     accepted: bool
     raw_output: str               # full output since command
     goal_after: GoalState
-    error: Optional[dict] = None  # {kind, raw, location?}
-    # When the tactic is accepted but produces no state change, EC
-    # stays at the same prompt/goal. Callers may treat that as a
-    # "no_progress" error depending on their policy.
-    no_progress: bool = False
+    error: Optional[dict] = None  # {kind, raw, severity?}
 
 
 @dataclass
@@ -163,10 +218,6 @@ class ECSubprocess(ECSessionLifecycle):
 
     def __init__(self, include_dirs: list[str], why3_socket: Optional[str] = None):
         super().__init__(include_dirs, why3_socket)
-        # Last known open-goal count (EC `(remaining: N)`); -1 = unknown. Used by
-        # `execute` to treat a `case`/split that ADDS a subgoal as progress even
-        # when the prompt-tail text is unchanged (panel-defect #3).
-        self._last_remaining = -1
         self.file_path: Optional[Path] = None
         self.lemma_name: Optional[str] = None
         # Number of tactics committed via ``execute``. Used for
@@ -180,9 +231,18 @@ class ECSubprocess(ECSessionLifecycle):
         # History of committed tactics (the proof body so far). Used
         # as replay input for ephemeral EC.
         self._committed_tactics: list[str] = []
+        # The client's transaction texts exactly as submitted, so a rewind can
+        # check the client's committed-prefix identity against what this
+        # process actually ran.
+        self._committed_requests: list[str] = []
+        # Undo levels: one after setup, then one per committed transaction.
+        # Empty when the setup level is unknown; rewinds are then refused.
+        self._levels: list[_Level] = []
+        # The level and mode of the last prompt read from the process.
+        self._prompt: Optional[tuple[int, str]] = None
         # A warm ephemeral EC kept at the committed state for fast read-only
         # batch probing (run-then-``undo``, ~0.02 s/probe vs ~1.4 s spawn-fresh).
-        # Lazily built, invalidated on every commit. See ``batch_try``.
+        # Lazily built, invalidated on every commit. See ``try_tactic``.
         self._warm = None
 
     # -----------------------------------------------------------------
@@ -238,7 +298,7 @@ class ECSubprocess(ECSessionLifecycle):
         self._invalidate_warm()   # new proof context; any warm prober is stale
         from core.easycrypt.lemma_extract import extract_lemma  # type: ignore
         extracted = extract_lemma(file_path, lemma_name, open_proof=True)
-        commands = [c for c in _split_ec_commands(extracted) if c.strip()]
+        commands = [c for c in split_ec_commands(extracted) if c.strip()]
         self._setup_commands = list(commands)
         final_output = b""
         for cmd in commands:
@@ -248,75 +308,213 @@ class ECSubprocess(ECSessionLifecycle):
                 final_output.decode("utf-8", errors="replace")
             )
             if err is not None:
-                raise RuntimeError(
+                raise SetupRejected(
                     f"EC rejected setup command {cmd!r} for lemma "
                     f"{lemma_name!r}: {err}"
                 )
-        entered = self._parse_goal_state(
-            final_output.decode("utf-8", errors="replace")
+        text = final_output.decode("utf-8", errors="replace")
+        self._prompt = _prompt_level(text)
+        goal = self._parse_goal_state(text)
+        self._levels = (
+            [_Level(*self._prompt, open_goal=_shows_open_goal(goal))]
+            if self._prompt is not None else []
         )
-        # Seed the open-goal count so the first committed tactic's progress check
-        # (panel-defect #3) has a valid baseline.
-        self._last_remaining = entered.remaining
-        return entered
+        return goal
 
     # -----------------------------------------------------------------
     # Tactic execution
     # -----------------------------------------------------------------
 
-    def execute(self, tactic: str) -> TacticOutcome:
+    def execute(self, tactic: str, timeout: Optional[float] = None) -> TacticOutcome:
         """Send one tactic, return the outcome. Tactic is appended to
         history if accepted. Callers should hold the session lock.
+
+        ``timeout`` (default ``_RESPONSE_TIMEOUT_DEFAULT``) bounds the whole
+        transaction. When it runs out, ``TimeoutError`` propagates and the
+        process is desynchronized.
         """
-        from core.easycrypt.lemma_decls import mask_comments
-        if not mask_comments(tactic).rstrip().endswith("."):
-            tactic = tactic.rstrip() + "."
-        before_prompt = self._last_prompt_text
-        before_remaining = self._last_remaining
+        request = tactic
+        tactic = _with_final_dot(tactic)
+        before = self._prompt
         # A manager transaction may contain several EC sentences. Drain one
         # response per sentence, exactly as bootstrap does; otherwise a later
         # call can consume an earlier sentence's buffered prompt. Commit to the
-        # journal only if the entire transaction succeeds. On rejection the
-        # owning session rolls back the transaction and invalidates this daemon.
-        raw = self.send_and_drain(tactic, timeout=self._RESPONSE_TIMEOUT_DEFAULT,
-                                  is_error=self._parse_error)
+        # journal only if the entire transaction succeeds.
+        raw = self.send_and_drain(
+            tactic,
+            timeout=self._RESPONSE_TIMEOUT_DEFAULT if timeout is None else timeout,
+            is_error=self._parse_error,
+            whole_transaction=True,
+        )
+        self._prompt = _prompt_level(raw)
         goal = self._parse_goal_state(raw)
         err = self._parse_error(raw)
         if err is None:
             self.committed_count += 1
-            self._committed_tactics.append(
-                tactic if tactic.endswith("\n") else tactic
-            )
+            self._committed_tactics.append(tactic)
+            self._committed_requests.append(request)
+            self._record_level(request, goal)
             self._invalidate_warm()   # committed state moved; warm prober is stale
-            # Panel-defect #3 (docs/reports/insights/l4_panel_defects_equiv_step4.md):
-            # a `case`/split that ADDS a subgoal (and a hypothesis) is genuine
-            # progress even if the prompt-tail text is unchanged. Treat an increase
-            # in EC's open-goal count (`remaining`) as progress. A truly idempotent
-            # tactic leaves the count unchanged and is still flagged.
-            goal_count_increased = (
-                before_remaining >= 0
-                and goal.remaining > before_remaining
-            )
-            no_progress = (
-                self._last_prompt_text == before_prompt
-                and not goal.is_closed
-                and not goal_count_increased
-            )
-            self._last_remaining = goal.remaining
             return TacticOutcome(
                 accepted=True,
                 raw_output=raw,
                 goal_after=goal,
                 error=None,
-                no_progress=no_progress,
             )
+        self._restore_after_rejection(request, before)
         return TacticOutcome(
             accepted=False,
             raw_output=raw,
             goal_after=goal,
             error=err,
-            no_progress=False,
         )
+
+    # -----------------------------------------------------------------
+    # Undo levels and rewind
+    # -----------------------------------------------------------------
+
+    def _record_level(self, request: str, goal: "GoalState") -> None:
+        """Record the level an accepted transaction left the process at."""
+        if not self._levels or len(self._levels) != len(self._committed_requests):
+            # The setup level is unknown or an earlier entry is missing.
+            self._levels = []
+            return
+        if self._prompt is None:
+            self._levels = []
+            return
+        level, mode = self._prompt
+        undoable = (
+            level > self._levels[-1].level and not undo_unsafe_sentence(request)
+        )
+        self._levels.append(_Level(level, mode, undoable, _shows_open_goal(goal)))
+
+    def _restore_after_rejection(
+        self,
+        request: str,
+        before: Optional[tuple[int, str]],
+    ) -> None:
+        """Leave the process at its pre-commit level after a rejection.
+
+        EasyCrypt does not push a level for a failed sentence, but sentences
+        before it in the same transaction did run. They are undone here. A
+        rejected transaction that ran a command ``undo`` cannot revert, or a
+        level that cannot be accounted for, desynchronizes the process, so
+        the session is discarded and the client reopens it.
+        """
+        after = self._prompt
+        if before is not None and after == before:
+            if undo_unsafe_sentence(request):
+                self._mark_desynchronized(
+                    "rejected transaction ran a command undo cannot revert"
+                )
+            return
+        if (
+            before is None
+            or after is None
+            or after[0] < before[0]
+            or undo_unsafe_sentence(request)
+        ):
+            self._mark_desynchronized(
+                f"rejected transaction left level {after} after {before}"
+            )
+            return
+        try:
+            raw = self.send_and_drain(
+                f"undo {before[0]}.",
+                timeout=self._RESPONSE_TIMEOUT_DEFAULT,
+                is_error=self._parse_error,
+            )
+        except Exception as exc:  # the pipe is already marked desynchronized
+            self._mark_desynchronized(f"undo after rejection failed: {exc}")
+            return
+        self._prompt = _prompt_level(raw)
+        if self._prompt != before or self._parse_error(raw) is not None:
+            self._mark_desynchronized(
+                f"undo after rejection reached {self._prompt}, expected {before}"
+            )
+
+    def rewind(
+        self,
+        keep: int,
+        *,
+        keep_identity: str,
+        held_identity: Optional[str] = None,
+        require_open_goal: bool = False,
+    ) -> dict:
+        """Return to the level recorded after the first ``keep`` transactions.
+
+        ``keep_identity`` must be the committed-prefix identity of those
+        transactions and ``held_identity``, when given, that of everything
+        this process committed; both are checked against the texts it
+        actually ran. Every undone transaction must be undoable and the
+        recorded levels must rise strictly; with ``require_open_goal`` the
+        target level must have shown an open goal. Raises ``RewindRefused``
+        before sending anything when a check fails. Sends ``undo <level>.``
+        and requires EasyCrypt's prompt to report exactly that level and
+        mode; otherwise the process is desynchronized and the session is
+        discarded.
+
+        Kept transactions are not re-run: the restored scope is the one
+        EasyCrypt built when it accepted them.
+        """
+        held = len(self._committed_requests)
+        if (
+            held_identity is not None
+            and committed_prefix_identity(self._committed_requests) != held_identity
+        ):
+            raise RewindRefused("held_identity_mismatch")
+        if type(keep) is not int or keep < 0 or keep > held:
+            raise RewindRefused("keep_out_of_range")
+        if committed_prefix_identity(self._committed_requests[:keep]) != keep_identity:
+            raise RewindRefused("keep_identity_mismatch")
+        if len(self._levels) != held + 1:
+            raise RewindRefused("undo_levels_unknown")
+        target = self._levels[keep]
+        if require_open_goal and not target.open_goal:
+            raise RewindRefused("target_state_has_no_open_goal")
+        for index in range(keep + 1, held + 1):
+            entry = self._levels[index]
+            if not entry.undoable or entry.level <= self._levels[index - 1].level:
+                raise RewindRefused(f"transaction_{index}_not_undoable")
+        if keep == held:
+            return {"kept": keep, "undone": 0, "raw": "", "level": target.level}
+        raw = self.send_and_drain(
+            f"undo {target.level}.",
+            timeout=self._RESPONSE_TIMEOUT_DEFAULT,
+            is_error=self._parse_error,
+        )
+        self._prompt = _prompt_level(raw)
+        if (
+            self._prompt != (target.level, target.mode)
+            or self._parse_error(raw) is not None
+        ):
+            self._mark_desynchronized(
+                f"undo {target.level} reached {self._prompt}"
+            )
+            raise RuntimeError(
+                f"undo {target.level} reached {self._prompt}; session discarded"
+            )
+        del self._committed_tactics[keep:]
+        del self._committed_requests[keep:]
+        del self._levels[keep + 1:]
+        self.committed_count = keep
+        self._invalidate_warm()   # committed state moved; warm prober is stale
+        return {
+            "kept": keep,
+            "undone": held - keep,
+            "raw": raw,
+            "level": target.level,
+        }
+
+    def reprint_goal(self) -> str:
+        """Make EasyCrypt print the current state with a query that does not
+        change it (``locate Int.``). The query raises the level by one;
+        recorded levels stay valid because ``undo`` pops to an absolute
+        level."""
+        self._send("locate Int.")
+        raw = self._read_until_prompt().decode("utf-8", errors="replace")
+        self._prompt = _prompt_level(raw) or self._prompt
+        return raw
 
     # -----------------------------------------------------------------
     # Warm read-only batch probing (run-then-undo)
@@ -347,12 +545,9 @@ class ECSubprocess(ECSessionLifecycle):
         if not self.file_path or not self.lemma_name:
             return None
         try:
-            from core.easycrypt.ec_warm_prober import WarmProber  # type: ignore
+            from core.easycrypt.ec_warm_prober import WarmProber
         except Exception:
-            try:
-                from core.easycrypt.ec_warm_prober import WarmProber
-            except Exception:
-                return None
+            return None
         try:
             wp = WarmProber(self.include_dirs, self.why3_socket,
                             env=self._get_ec_env())
@@ -373,63 +568,20 @@ class ECSubprocess(ECSessionLifecycle):
     def _probe_to_outcome(self, res) -> "TacticOutcome":
         """Convert a warm ``ProbeResult`` to a ``TacticOutcome`` using EC's OWN
         parsers on the probe's raw output, so warm and spawn-fresh agree exactly
-        on accepted / goal / error; ``advanced`` gives no_progress."""
+        on accepted / goal / error."""
         raw = res.raw or ""
         err = self._parse_error(raw)
         goal = self._parse_goal_state(raw)
-        # Panel-defect #3: a `case`/split that adds a subgoal is progress even if
-        # `advanced` were ever computed as False; if the probe's open-goal count
-        # exceeds the committed count, never flag no_progress. (`advanced` already
-        # catches the counter move; this is defense-in-depth and keeps the warm and
-        # committed paths agreeing on count-based progress.)
-        goal_count_increased = (
-            self._last_remaining >= 0
-            and goal.remaining > self._last_remaining
-        )
-        no_progress = (
-            (err is None)
-            and (not res.advanced)
-            and (not goal.is_closed)
-            and (not goal_count_increased)
-        )
         return TacticOutcome(
-            accepted=(err is None), raw_output=raw, goal_after=goal,
-            error=err, no_progress=no_progress)
+            accepted=(err is None), raw_output=raw, goal_after=goal, error=err)
 
-    def batch_try(self, tactics: list[str],
-                  timeout: float = 180.0) -> "list[TacticOutcome]":
-        """Probe each tactic read-only and independently. Uses a warm ephemeral
-        (run-then-undo; ~0.02 s/probe after a one-time ~1.4 s warm-up) when
-        available, falling back to spawn-fresh ``try_tactic`` per tactic if the
-        warm build fails or the prober drifts mid-batch. Result order matches
-        ``tactics``; callers hold the session lock."""
-        wp = self._ensure_warm()
-        out: "list[TacticOutcome]" = []
-        for tac in tactics:
-            done = False
-            if wp is not None and wp.alive:
-                try:
-                    res = wp.probe(tac, timeout=timeout)
-                except Exception:
-                    res = None
-                if res is not None and wp.alive:
-                    out.append(self._probe_to_outcome(res))
-                    done = True
-                else:
-                    self._invalidate_warm()   # drift -> spawn-fresh for the rest
-                    wp = None
-            if not done:
-                out.append(self._try_tactic_fresh(tac, timeout=timeout))
-        return out
-
-    # Note: EC in ``-emacs`` mode does NOT accept ``undo.`` / ``Undo.``
-    # — those produce parse errors. ``abort.`` exits proof mode but
-    # can't be re-entered for the same lemma. Consequently, there's
-    # no primitive in EC's toplevel that rolls the current proof back
-    # one tactic. For speculative execution we fall back to
-    # "ephemeral EC": spawn a fresh subprocess, replay setup + all
-    # committed tactics, run the speculative tactic, terminate. See
-    # ``try_tactic`` below.
+    # Note: EC in ``-emacs`` mode rejects a bare ``undo.`` / ``Undo.`` as a
+    # parse error, and ``abort.`` cannot re-enter the same lemma. The
+    # level-numbered ``undo <N>.`` does work: the warm prober uses it after
+    # every probe and ``rewind`` uses it on the committed process. Probes never
+    # run on the committed process; without the warm prober a probe spawns an
+    # ephemeral EC, replays setup + all committed tactics, runs the speculative
+    # tactic and terminates. See ``try_tactic``.
 
     def try_tactic(self, tactic: str,
                    timeout: float = 180.0) -> TacticOutcome:
@@ -501,10 +653,7 @@ class ECSubprocess(ECSessionLifecycle):
                     },
                 )
             # Try the tactic
-            tac = tactic
-            from core.easycrypt.lemma_decls import mask_comments
-            if not mask_comments(tac).rstrip().endswith("."):
-                tac = tac.rstrip() + "."
+            tac = _with_final_dot(tactic)
             raw = eph.send_and_drain(tac, timeout=timeout, is_error=self._parse_error)
             goal = self._parse_goal_state(raw)
             err = self._parse_error(raw)
@@ -605,10 +754,7 @@ class ECSubprocess(ECSessionLifecycle):
             chain_error: Optional[dict] = None
             final_raw = ""
             for idx, tac in enumerate(tactics):
-                t_norm = tac.strip()
-                from core.easycrypt.lemma_decls import mask_comments
-                if not mask_comments(t_norm).rstrip().endswith("."):
-                    t_norm = t_norm + "."
+                t_norm = _with_final_dot(tac.strip())
                 raw = eph.send_and_drain(t_norm, timeout=timeout, is_error=self._parse_error)
                 final_raw = raw
                 goal = self._parse_goal_state(raw)
@@ -656,14 +802,9 @@ class ECSubprocess(ECSessionLifecycle):
             remaining = int(m.group(1))
         elif re.search(r"\bCurrent goal\b", raw) and not is_closed:
             remaining = 1
-        pm = None
-        for m in PROMPT_RE.finditer(raw.encode("utf-8")):
-            pm = m
         last_prompt = ""
-        if pm:
-            last_prompt = raw.encode("utf-8")[pm.start():pm.end()].decode(
-                "utf-8", errors="replace"
-            )
+        for m in PROMPT_RE.finditer(raw):
+            last_prompt = m.group(0)
         return GoalState(
             raw=raw, remaining=remaining,
             is_closed=is_closed, last_prompt=last_prompt,
@@ -701,29 +842,62 @@ class SessionManager:
         lemma_name: str,
         why3_socket: Optional[str] = None,
     ) -> GoalState:
+        ec = ECSubprocess(include_dirs=include_dirs,
+                          why3_socket=why3_socket)
+        # The id is reserved at once, but its lock is held from before
+        # registration until bootstrap ends, so no request can reach a
+        # half-initialised EC; a failed bootstrap unregisters and stops it.
+        lock = threading.Lock()
+        with lock:
+            with self._registry_lock:
+                if session_id in self._sessions:
+                    raise ValueError(
+                        f"session {session_id!r} already open; close it first"
+                    )
+                self._sessions[session_id] = ec
+                self._locks[session_id] = lock
+                self._last_used[session_id] = time.time()
+            try:
+                ec.spawn()
+                return ec.load_context_and_enter_proof(file_path, lemma_name)
+            except BaseException:
+                self._discard(ec)
+                raise
+
+    def _discard(self, ec: ECSubprocess) -> None:
+        """Unregister ``ec`` under whatever id it now has and stop it. The
+        caller holds its session lock, so no request is using the pipe."""
         with self._registry_lock:
-            if session_id in self._sessions:
-                raise ValueError(
-                    f"session {session_id!r} already open; close it first"
-                )
-            ec = ECSubprocess(include_dirs=include_dirs,
-                              why3_socket=why3_socket)
-            self._sessions[session_id] = ec
-            self._locks[session_id] = threading.Lock()
-            self._last_used[session_id] = time.time()
-        # Hold the session lock while bootstrapping.
-        with self._locks[session_id]:
-            ec.spawn()
-            goal = ec.load_context_and_enter_proof(file_path, lemma_name)
-        return goal
+            for sid in [k for k, v in self._sessions.items() if v is ec]:
+                self._sessions.pop(sid, None)
+                self._locks.pop(sid, None)
+                self._last_used.pop(sid, None)
+        ec.close()
+
+    def _is_registered(self, ec: ECSubprocess) -> bool:
+        with self._registry_lock:
+            return any(v is ec for v in self._sessions.values())
 
     def close(self, session_id: str) -> None:
         with self._registry_lock:
             ec = self._sessions.pop(session_id, None)
-            self._locks.pop(session_id, None)
+            lock = self._locks.pop(session_id, None)
             self._last_used.pop(session_id, None)
-        if ec is not None:
+        if ec is None:
+            return
+        if lock is None:
             ec.close()
+            return
+        # A request still running on this session owns the pipe. Kill EC so it
+        # fails at once instead of finishing its sentence, and tear down only
+        # after it has let go of the lock.
+        if not lock.acquire(blocking=False):
+            ec.interrupt()
+            lock.acquire()
+        try:
+            ec.close()
+        finally:
+            lock.release()
 
     def adopt(self, old_id: str, new_id: str) -> bool:
         """Rename a live session ``old_id`` -> ``new_id`` (registry-only).
@@ -775,11 +949,6 @@ class SessionManager:
             ),
         }
 
-    def touch(self, session_id: str) -> None:
-        with self._registry_lock:
-            if session_id in self._sessions:
-                self._last_used[session_id] = time.time()
-
     def reap_idle(self, ttl_seconds: float) -> list[str]:
         """Close sessions idle for more than ``ttl_seconds``. Returns the
         reaped ids. ``ttl_seconds <= 0`` disables reaping."""
@@ -820,6 +989,7 @@ class _SessionCtx:
         self.mgr = mgr
         self.sid = session_id
         self._lock: Optional[threading.Lock] = None
+        self._ec: Optional[ECSubprocess] = None
 
     def __enter__(self) -> ECSubprocess:
         with self.mgr._registry_lock:
@@ -830,11 +1000,23 @@ class _SessionCtx:
         if ec is None or lock is None:
             raise KeyError(f"session {self.sid!r} not open")
         lock.acquire()
+        # The previous holder may have discarded or closed this session.
+        if not self.mgr._is_registered(ec):
+            lock.release()
+            raise KeyError(f"session {self.sid!r} not open")
         self._lock = lock
+        self._ec = ec
         return ec
 
     def __exit__(self, *a):
-        if self._lock is not None:
+        if self._lock is None:
+            return
+        try:
+            # A timed-out or failed exchange leaves a late reply in the pipe;
+            # drop the session so the client reopens and replays it.
+            if getattr(self._ec, "desynchronized", False):
+                self.mgr._discard(self._ec)
+        finally:
             self._lock.release()
 
 
@@ -958,8 +1140,11 @@ def _ok_resp(result: Any) -> dict:
     return {"status": "ok", "result": result}
 
 
-def _err_resp(msg: str) -> dict:
-    return {"status": "error", "error": msg}
+def _err_resp(msg: str, kind: Optional[str] = None) -> dict:
+    response = {"status": "error", "error": msg}
+    if kind:
+        response["kind"] = kind
+    return response
 
 
 def _goal_to_dict(g: GoalState) -> dict:
@@ -974,7 +1159,6 @@ def _goal_to_dict(g: GoalState) -> dict:
 def _outcome_to_dict(o: TacticOutcome) -> dict:
     return {
         "accepted": o.accepted,
-        "no_progress": o.no_progress,
         "raw_output": o.raw_output,
         "goal_after": _goal_to_dict(o.goal_after),
         "error": o.error,
@@ -991,7 +1175,11 @@ def _h_open(srv: DaemonServer, sid: str, p: dict) -> dict:
     include_dirs = p.get("include_dirs", []) or []
     lemma_name = p["lemma_name"]
     why3 = p.get("why3_socket")
-    goal = srv.mgr.open(sid, file_path, include_dirs, lemma_name, why3)
+    try:
+        goal = srv.mgr.open(sid, file_path, include_dirs, lemma_name, why3)
+    except SetupRejected as exc:
+        # Say so as a class: the client stops reopening the same source.
+        return _err_resp(f"{type(exc).__name__}: {exc}", kind="setup_rejected")
     return _ok_resp(_goal_to_dict(goal))
 
 
@@ -1004,11 +1192,76 @@ def _h_list(srv: DaemonServer, sid: str, p: dict) -> dict:
     return _ok_resp(srv.mgr.list())
 
 
+# A client's limit for one transaction is capped at a batch run's
+# (``ec_backend.BATCH_TIMEOUT_SECONDS``).
+_MAX_COMMIT_TIMEOUT_SECONDS = 600.0
+
+
+def _commit_timeout(value: Any) -> float:
+    """The client's limit for one transaction, capped. A request without a
+    usable limit (an older client) keeps ``_RESPONSE_TIMEOUT_DEFAULT``."""
+    if (
+        isinstance(value, bool)
+        or not isinstance(value, (int, float))
+        or not math.isfinite(value)
+        or value <= 0
+    ):
+        return ECSubprocess._RESPONSE_TIMEOUT_DEFAULT
+    return min(float(value), _MAX_COMMIT_TIMEOUT_SECONDS)
+
+
 def _h_commit(srv: DaemonServer, sid: str, p: dict) -> dict:
+    """Commit ``params.tactic``, giving EasyCrypt ``params.timeout`` seconds.
+
+    A transaction EasyCrypt does not finish in time is a verdict, not an
+    error: ``{"accepted": False, "timed_out": True, ...}``. The process still
+    owes the late reply, so leaving the session context discards it and the
+    client reopens and replays."""
     tactic = p["tactic"]
+    timeout = _commit_timeout(p.get("timeout"))
     with srv.mgr.with_session(sid) as ec:
-        outcome = ec.execute(tactic)
+        try:
+            outcome = ec.execute(tactic, timeout=timeout)
+        except TimeoutError:
+            ec._mark_desynchronized(f"transaction timed out after {timeout:g}s")
+            message = f"EasyCrypt did not finish this transaction within {timeout:g} s"
+            return _ok_resp({
+                "accepted": False,
+                "timed_out": True,
+                "timeout": timeout,
+                "raw_output": "",
+                "goal_after": _goal_to_dict(GoalState(raw="")),
+                "error": {"kind": "timeout", "raw": message},
+            })
     return _ok_resp(_outcome_to_dict(outcome))
+
+
+def _h_rewind(srv: DaemonServer, sid: str, p: dict) -> dict:
+    """Undo the committed process back to ``params.keep`` transactions.
+
+    A refusal is a structured ``{"rewound": False, "reason": ...}`` reply and
+    leaves the session untouched; a failed ``undo`` discards the session and
+    is reported as an error."""
+    keep = p["keep"]
+    with srv.mgr.with_session(sid) as ec:
+        try:
+            result = ec.rewind(
+                keep,
+                keep_identity=str(p["keep_identity"]),
+                held_identity=p.get("held_identity"),
+                require_open_goal=bool(p.get("require_open_goal")),
+            )
+        except RewindRefused as refused:
+            return _ok_resp({"rewound": False, "reason": str(refused)})
+    goal = ECSubprocess._parse_goal_state(result["raw"])
+    return _ok_resp({
+        "rewound": True,
+        "kept": result["kept"],
+        "undone": result["undone"],
+        "raw_output": result["raw"],
+        "goal_after": _goal_to_dict(goal),
+        "level": result["level"],
+    })
 
 
 def _h_try(srv: DaemonServer, sid: str, p: dict) -> dict:
@@ -1016,13 +1269,6 @@ def _h_try(srv: DaemonServer, sid: str, p: dict) -> dict:
     with srv.mgr.with_session(sid) as ec:
         outcome = ec.try_tactic(tactic)
     return _ok_resp(_outcome_to_dict(outcome))
-
-
-def _h_batch_try(srv: DaemonServer, sid: str, p: dict) -> dict:
-    tactics = p["tactics"]
-    with srv.mgr.with_session(sid) as ec:
-        outcomes = ec.batch_try(tactics)
-    return _ok_resp([_outcome_to_dict(o) for o in outcomes])
 
 
 def _h_try_chain(srv: DaemonServer, sid: str, p: dict) -> dict:
@@ -1062,20 +1308,9 @@ def _h_shutdown(srv: DaemonServer, sid: str, p: dict) -> dict:
 def _h_goal(srv: DaemonServer, sid: str, p: dict) -> dict:
     """Return the latest goal state from the main EC (no tactic run)."""
     with srv.mgr.with_session(sid) as ec:
-        # We don't have a dedicated "get goal" command in EC's -emacs
-        # protocol; the goal emitted after the last commit is
-        # already the current state. Re-send a no-op comment-only
-        # line? Better: just return what we have. For now, we issue
-        # a trivial non-effect query — ``pragma Goals.`` or send an
-        # empty line. Neither is guaranteed universal. As a safe
-        # option we simply re-send the last committed tactic output
-        # from internal cache... but we don't cache raw. So for now,
-        # re-send a no-op: ``locate Int.`` which always works and
-        # leaves state unchanged, then parse the goal out of the
-        # next prompt's output. This is a temporary stopgap; a
-        # better primitive can be added later.
-        ec._send("locate Int.")
-        raw = ec._read_until_prompt().decode("utf-8", errors="replace")
+        # EC's -emacs protocol has no "print goal" command; a query that
+        # leaves the state unchanged makes it print the current goal.
+        raw = ec.reprint_goal()
     return _ok_resp({"raw": raw})
 
 
@@ -1084,8 +1319,8 @@ _METHOD_TABLE = {
     "close_session": _h_close,
     "list_sessions": _h_list,
     "commit": _h_commit,
+    "rewind": _h_rewind,
     "try_tactic": _h_try,
-    "batch_try": _h_batch_try,
     "try_chain": _h_try_chain,
     "get_goal": _h_goal,
     "adopt_session": _h_adopt,

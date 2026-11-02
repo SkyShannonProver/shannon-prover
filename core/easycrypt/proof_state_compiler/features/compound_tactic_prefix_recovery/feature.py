@@ -1,28 +1,21 @@
 """Commitment-relative compound-tactic accepted-prefix diagnostic slice."""
 
-from core.easycrypt.proof_state_compiler.contracts import (
-    COMMITMENT_RELATIVE,
-    StrategyContract,
-)
 from core.easycrypt.proof_state_compiler.features.registry import (
     ExperimentGate,
     FeatureDefinition,
     FeatureSpec,
 )
-
-
-COMPOUND_TACTIC_PREFIX_RECOVERY_FEATURE_ID = (
-    "compound_tactic_prefix_recovery"
+from core.easycrypt.proof_state_compiler.features.failed_commit import (
+    failed_commit_gate,
 )
-COMPOUND_TACTIC_PREFIX_RECOVERY_STRATEGY_CONTRACT = StrategyContract(
-    strategy_class=COMMITMENT_RELATIVE,
-    rationale=(
-        "the agent already selected and ordered the compound tactic; native "
-        "EasyCrypt reports the longest contiguous accepted source prefix "
-        "without asking the agent to commit that prefix alone"
-    ),
-    required_commitment="exact_rejected_compound_tactic_and_source_order",
+from .ids import (
+    COMPOUND_TACTIC_PREFIX_RECOVERY_FEATURE_ID,
+    COMPOUND_TACTIC_PREFIX_RECOVERY_STRATEGY_CONTRACT,
 )
+from .analysis import analyze_compound_tactic_prefix_recovery
+from .native_attempt import plan_native_compound_prefix_attempt
+from .surface_lowering import lower_compound_tactic_prefix_recovery
+from .syntax import compound_prefix_candidates
 
 
 def compound_tactic_prefix_recovery_feature_spec() -> FeatureSpec:
@@ -84,13 +77,6 @@ def compound_tactic_prefix_recovery_feature_spec() -> FeatureSpec:
 
 
 def compound_tactic_prefix_recovery_feature() -> FeatureDefinition:
-    from core.easycrypt.proof_state_compiler.features.failed_commit import (
-        failed_commit_gate,
-    )
-    from .analysis import analyze_compound_tactic_prefix_recovery
-    from .native_attempt import plan_native_compound_prefix_attempt
-    from .surface_lowering import lower_compound_tactic_prefix_recovery
-    from .syntax import compound_prefix_candidates
 
     def has_prefix_candidates(tactic: str) -> bool:
         return bool(compound_prefix_candidates(tactic))

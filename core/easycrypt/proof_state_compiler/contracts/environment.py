@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import hashlib
 from dataclasses import dataclass
 
 from core.easycrypt.ec_runtime_identity import EasyCryptRuntimeIdentity
@@ -11,6 +10,7 @@ from core.easycrypt.proof_state_compiler.contracts.native_semantics import (
     NativeSemanticObservation,
 )
 from core.easycrypt.proof_state_compiler.contracts.state_ref import StateRef
+from core.easycrypt.proof_state_compiler.contracts.digest import text_sha256
 
 
 @dataclass(frozen=True)
@@ -22,7 +22,7 @@ class LoadedSourceUnit:
     def __post_init__(self) -> None:
         if not self.source_ref:
             raise ValueError("loaded source unit requires source_ref")
-        digest = hashlib.sha256(self.text.encode("utf-8")).hexdigest()
+        digest = text_sha256(self.text)
         if self.source_sha256 != digest:
             raise ValueError("loaded source unit hash does not match its text")
 
@@ -39,7 +39,7 @@ class LoadedDeclaration:
     def __post_init__(self) -> None:
         if not self.symbol or not self.source_ref or not self.declaration:
             raise ValueError("loaded declaration requires symbol, source, and text")
-        digest = hashlib.sha256(self.declaration.encode("utf-8")).hexdigest()
+        digest = text_sha256(self.declaration)
         if self.declaration_sha256 != digest:
             raise ValueError("loaded declaration hash does not match its text")
 
@@ -186,18 +186,6 @@ class CompilationEnvironment:
                 "compilation environment contains duplicate native observations"
             )
 
-    def with_loaded_declarations(
-        self,
-        declarations: tuple[LoadedDeclaration, ...],
-    ) -> "CompilationEnvironment":
-        return CompilationEnvironment(
-            environment_id=self.environment_id,
-            source_units=self.source_units,
-            loaded_declarations=self.loaded_declarations + declarations,
-            easycrypt_runtime=self.easycrypt_runtime,
-            native_semantic_observations=self.native_semantic_observations,
-        )
-
     def with_native_semantic_observations(
         self,
         observations: tuple[NativeSemanticObservation, ...],
@@ -211,7 +199,3 @@ class CompilationEnvironment:
                 self.native_semantic_observations + observations
             ),
         )
-
-
-def empty_compilation_environment() -> CompilationEnvironment:
-    return CompilationEnvironment(environment_id="empty", source_units=())

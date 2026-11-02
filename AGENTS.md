@@ -232,6 +232,11 @@ Before a compiler checkpoint:
 5. record architecture/evidence status truthfully; and
 6. run live agent experiments only from a clean committed worktree.
 
+Place a new test under `tests/public/<area>/` only when it imports public
+code alone and carries no private research material; otherwise use
+`tests/private/<area>/`. `tests/public/repo/test_test_layout.py` lists the
+areas.
+
 After any terminal/session/tree/finalization change, also run the no-model
 `workflow.validation.proof_terminal_outcome_sentinel` before a live agent
 experiment.

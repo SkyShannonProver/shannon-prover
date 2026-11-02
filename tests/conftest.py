@@ -4,9 +4,9 @@ Ensures the project root is on ``sys.path`` so pytest-style test
 files can ``from workflow.agents import prover`` etc. without each
 test file having to repeat the path-setup boilerplate.
 
-Standalone test scripts (``python3 tests/test_foo.py``) typically do
-their own ``sys.path.insert(0, ROOT)`` — this conftest only matters
-when pytest is the runner.
+Run tests through pytest (``python -m pytest tests/public/core/test_x.py``);
+test modules no longer bootstrap ``sys.path`` themselves. The layout of the
+tree is documented and enforced in ``tests/public/repo/test_test_layout.py``.
 
 It also owns the lifetime of every EasyCrypt daemon the suite starts; see
 ``_ec_daemon_hygiene``.

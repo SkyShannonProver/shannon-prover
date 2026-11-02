@@ -67,6 +67,12 @@ def _parser() -> argparse.ArgumentParser:
     parser.add_argument("-I", "--include-dir", action="append", default=[], dest="include_dirs")
     parser.add_argument("-deltas-only", action="store_true")
     parser.add_argument("--keep-on-fail", action="store_true")
+    parser.add_argument(
+        "--keep-commands",
+        type=int,
+        default=None,
+        help="with -tactic-exec undo: rewind to this many committed commands",
+    )
     parser.add_argument("--manager-state-version", type=int, default=None)
     parser.add_argument("--compiler-resource-load-request-json", default="{}")
     parser.add_argument("--native-semantic-batch-request-json", default="{}")

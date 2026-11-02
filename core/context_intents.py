@@ -110,13 +110,7 @@ _BASE_INTENT_SPECS: dict[str, IntentSpec] = {
 
 INTENT_REGISTRY: dict[str, IntentSpec] = dict(_BASE_INTENT_SPECS)
 
-MANAGER_INTENTS = frozenset(
-    name for name, spec in INTENT_REGISTRY.items() if spec.advertised
-)
 PROTOCOL_INTENTS = frozenset(INTENT_REGISTRY)
-READ_ONLY_INTENTS = frozenset(
-    name for name, spec in INTENT_REGISTRY.items() if spec.read_only
-)
 NONEMPTY_STRING_PAYLOAD_FIELDS = frozenset({
     "tactic",
     "checkpoint_id",
@@ -140,20 +134,6 @@ def persistent_control_specs() -> tuple[IntentSpec, ...]:
 
 def persistent_control_names() -> frozenset[str]:
     return frozenset(spec.name for spec in persistent_control_specs())
-
-
-def persistent_control_catalog() -> tuple[dict[str, Any], ...]:
-    """Serializable proof-control metadata for agent and human clients."""
-    return tuple(
-        {
-            "intent": spec.name,
-            "label": spec.display_label or spec.name,
-            "description": spec.description,
-            "interaction": spec.control_interaction,
-            "requires_input": list(spec.control_requires_input),
-        }
-        for spec in persistent_control_specs()
-    )
 
 
 def control_menu_intents() -> frozenset[str]:
@@ -183,11 +163,6 @@ def intent_is_read_only(intent: Any) -> bool:
 def intent_may_mutate_proof_state(intent: Any) -> bool:
     spec = intent_spec(intent)
     return bool(spec and spec.may_mutate_proof_state)
-
-
-def intent_payload_fields(intent: Any) -> tuple[str, ...]:
-    spec = intent_spec(intent)
-    return spec.payload_fields if spec else ()
 
 
 def canonicalize_intent_payload(payload: dict[str, Any]) -> dict[str, Any]:
@@ -237,31 +212,3 @@ def intent_payload_contract_error(
     ):
         return "missing_required_payload_fields"
     return ""
-
-
-def intents_by_class(
-    intents: set[str] | frozenset[str] | list[str] | tuple[str, ...],
-    intent_cls: str,
-) -> list[str]:
-    return sorted(
-        name for name in intents
-        if intent_class(name) == intent_cls
-    )
-
-
-def add_intent_contract(request: dict[str, Any]) -> dict[str, Any]:
-    """Attach the public intent taxonomy to an intent-shaped request object."""
-    if not isinstance(request, dict):
-        return {}
-    out = dict(request)
-    raw_intent = str(out.get("intent") or "").strip()
-    spec = intent_spec(raw_intent)
-    if spec is None:
-        return out
-    out["intent_class"] = spec.intent_class
-    out["read_only"] = spec.read_only
-    if spec.payload_fields:
-        out["payload_fields"] = list(spec.payload_fields)
-    elif "payload_fields" in out:
-        out.pop("payload_fields", None)
-    return out

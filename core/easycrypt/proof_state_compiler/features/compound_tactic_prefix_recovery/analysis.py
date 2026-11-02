@@ -9,7 +9,7 @@ from core.easycrypt.proof_state_compiler.contracts import (
     NativeTacticPrefixDiagnosticDescriptor,
     ProofCoordinate,
     ProofIR,
-    RecoveryClaim,
+    recovery_claim_for,
     StructuredDiagnostic,
     native_tactic_prefix_witness,
 )
@@ -20,7 +20,7 @@ from core.easycrypt.proof_state_compiler.compound_boundary_text import (
     compound_boundary_continuation,
     compound_boundary_summary,
 )
-from .feature import COMPOUND_TACTIC_PREFIX_RECOVERY_FEATURE_ID
+from .ids import COMPOUND_TACTIC_PREFIX_RECOVERY_FEATURE_ID
 from .native_attempt import COMPOUND_PREFIX_NATIVE_PRODUCER_ID
 from .syntax import (
     compound_accepted_prefix_extension,
@@ -116,18 +116,11 @@ def analyze_compound_tactic_prefix_recovery(
     )
     if diagnostic is None:
         return AnalysisContribution()
-    claim = RecoveryClaim(
+    claim = recovery_claim_for(
+        attempted,
         feature_id=COMPOUND_TACTIC_PREFIX_RECOVERY_FEATURE_ID,
-        recovery_key=attempted.recovery_key,
-        attempt_id=attempted.attempt_id,
-        occurrence_identity=attempted.occurrence_identity,
-        trigger_id=attempted.trigger_id,
-        operation_family=attempted.operation_family,
-        selected_resource="",
-        resource_match_kind="none",
         allowed_output_kinds=("diagnostic",),
         preservation_witness=witness,
-        evidence_refs=attempted.evidence_refs,
     )
     return AnalysisContribution(
         diagnostics=(diagnostic,),

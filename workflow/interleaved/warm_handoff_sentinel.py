@@ -6,42 +6,37 @@ import json
 from pathlib import Path
 from typing import Any
 
+from workflow.interleaved.runtime import ProjectContext
 from workflow.interleaved.warm_handoff import (
-    TARGET,
     _proof_body,
     prepare_outer_proof_handoff,
 )
 
 
-from workflow.interleaved.runtime import load_runtime_settings
-
-
-_SETTINGS = load_runtime_settings()
-ROOT = _SETTINGS.root
-SENTINEL_LEMMA = _SETTINGS.project.warm_handoff_sentinel_lemma
-SENTINEL_COMMAND = _SETTINGS.project.warm_handoff_sentinel_command
-
-
-def run_warm_handoff_sentinel(*, run_dir: Path) -> dict[str, Any]:
+def run_warm_handoff_sentinel(ctx: ProjectContext, *, run_dir: Path) -> dict[str, Any]:
     """Replay one multiline command through both real manager preparations."""
 
-    if not SENTINEL_LEMMA:
+    sentinel_lemma = ctx.project.warm_handoff_sentinel_lemma
+    sentinel_command = ctx.project.warm_handoff_sentinel_command
+    if not sentinel_lemma:
         return {"required": False, "passed": True}
 
     from core.easycrypt.ec_daemon_client import default_socket_path
     from workflow.agents.ec_services import _shutdown_ec_daemon
 
+    root = ctx.root
     run_dir = run_dir.resolve()
-    if not run_dir.is_relative_to(ROOT):
+    if not run_dir.is_relative_to(root):
         raise ValueError("warm-handoff sentinel run directory must be in the repo")
     sentinel_dir = run_dir / "warm_handoff_preflight"
     sentinel_dir.mkdir(parents=True, exist_ok=False)
 
-    target = ROOT / TARGET
-    source = target.read_text(encoding="utf-8")
-    original_body, _ = _proof_body(source, SENTINEL_LEMMA)
-    candidate_body = f"\n{SENTINEL_COMMAND}\n\nadmit.\n"
-    candidate = source.replace(original_body, candidate_body, 1)
+    source = ctx.target.read_text(encoding="utf-8")
+    # Splice by position: an identical body, such as another lemma's admit
+    # shell, may occur earlier in the file.
+    _, (body_start, body_end) = _proof_body(source, sentinel_lemma)
+    candidate_body = f"\n{sentinel_command}\n\nadmit.\n"
+    candidate = source[:body_start] + candidate_body + source[body_end:]
     if candidate == source:
         raise RuntimeError("warm-handoff sentinel could not build its candidate")
 
@@ -55,11 +50,11 @@ def run_warm_handoff_sentinel(*, run_dir: Path) -> dict[str, Any]:
     socket_path = default_socket_path()
     try:
         manifest_path = prepare_outer_proof_handoff(
-            root=ROOT,
-            run_rel=sentinel_dir.relative_to(ROOT),
-            lemma=SENTINEL_LEMMA,
-            strategy_note=str(note_path.relative_to(ROOT)),
-            candidate_source=str(candidate_path.relative_to(ROOT)),
+            ctx,
+            run_rel=sentinel_dir.relative_to(root),
+            lemma=sentinel_lemma,
+            strategy_note=str(note_path.relative_to(root)),
+            candidate_source=str(candidate_path.relative_to(root)),
         )
     finally:
         # The sentinel runs before prover.run assigns a per-run socket.  It
@@ -73,7 +68,7 @@ def run_warm_handoff_sentinel(*, run_dir: Path) -> dict[str, Any]:
     replay = manifest.get("replay") or {}
     boundary = manifest.get("boundary") or {}
     commands = replay.get("commands") or []
-    if commands != [SENTINEL_COMMAND]:
+    if commands != [sentinel_command]:
         raise RuntimeError("warm-handoff sentinel changed the multiline command")
     if replay.get("accepted_command_count") != 1:
         raise RuntimeError("warm-handoff sentinel did not certify its command")
@@ -91,9 +86,9 @@ def run_warm_handoff_sentinel(*, run_dir: Path) -> dict[str, Any]:
         raise RuntimeError("warm-handoff sentinel did not preserve an open goal")
     return {
         "passed": True,
-        "lemma": SENTINEL_LEMMA,
+        "lemma": sentinel_lemma,
         "accepted_command_count": 1,
         "committed_spine_count": 1,
         "boundary_goal_hash": boundary["goal_hash"],
-        "manifest": str(manifest_path.relative_to(ROOT)),
+        "manifest": str(manifest_path.relative_to(root)),
     }

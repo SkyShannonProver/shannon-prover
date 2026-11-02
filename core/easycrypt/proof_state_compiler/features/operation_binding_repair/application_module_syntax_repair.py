@@ -8,7 +8,6 @@ EasyCrypt's ``(<: M)`` module grammar around that term.
 
 from __future__ import annotations
 
-import hashlib
 from dataclasses import dataclass
 
 from core.easycrypt.proof_state_compiler.contracts import (
@@ -23,10 +22,18 @@ from core.easycrypt.proof_state_compiler.contracts import (
     ProofIR,
     ProofResource,
 )
+from core.easycrypt.proof_state_compiler.contracts.digest import text_sha256
+from core.easycrypt.proof_state_compiler.delimiters import (
+    PARENTHESES,
+    balanced,
+    matching_close,
+    parenthesized,
+    top_level_indices,
+)
 from core.easycrypt.proof_state_compiler.features.operation_binding_repair.classification import (
     classify_operation_binding_failure,
 )
-from core.easycrypt.proof_state_compiler.features.operation_binding_repair.contracts import (
+from core.easycrypt.proof_state_compiler.features.operation_binding_repair.ids import (
     OPERATION_BINDING_REPAIR_ANALYSIS_PRODUCER_ID,
 )
 from core.easycrypt.proof_state_compiler.middle_end.contributions import (
@@ -115,8 +122,8 @@ def realize_application_module_syntax(
     if (
         not module_term
         or "<:" in module_term
-        or not _balanced_delimiters(module_term)
-        or not _balanced_delimiters(suffix)
+        or not balanced(module_term)
+        or not balanced(suffix)
         or (
             not was_parenthesized
             and suffix.startswith(("(", "."))
@@ -211,13 +218,11 @@ def plan_native_application_module_syntax_repair(
         return NativeSemanticRequestProduction.not_applicable(
             APPLICATION_MODULE_SYNTAX_NATIVE_PRODUCER_ID
         )
-    digest = hashlib.sha256(
-        (
-            sketch.resource.resource_id
-            + "\0"
-            + sketch.realization.candidate_application_term
-        ).encode("utf-8")
-    ).hexdigest()[:20]
+    digest = text_sha256(
+        sketch.resource.resource_id
+        + "\0"
+        + sketch.realization.candidate_application_term
+    )[:20]
     return NativeSemanticRequestProduction.ready(
         APPLICATION_MODULE_SYNTAX_NATIVE_PRODUCER_ID,
         (NativeSemanticRequest(
@@ -293,31 +298,15 @@ def analyze_native_application_module_syntax_repair(
 
 
 def _outer_parenthesized_body(value: str) -> str | None:
-    if len(value) < 2 or value[0] != "(" or value[-1] != ")":
-        return None
-    depth = 0
-    for index, character in enumerate(value):
-        if character == "(":
-            depth += 1
-        elif character == ")":
-            depth -= 1
-            if depth < 0 or (depth == 0 and index != len(value) - 1):
-                return None
-    return value[1:-1].strip() if depth == 0 else None
+    return value[1:-1].strip() if parenthesized(value) else None
 
 
 def _first_top_level_space(value: str) -> int | None:
-    depth = 0
-    for index, character in enumerate(value):
-        if character == "(":
-            depth += 1
-        elif character == ")":
-            depth -= 1
-            if depth < 0:
-                return None
-        elif character.isspace() and depth == 0:
-            return index
-    return None
+    return next((
+        index
+        for index in top_level_indices(value, openers=PARENTHESES)
+        if value[index].isspace()
+    ), None)
 
 
 def _first_application_argument(
@@ -327,41 +316,11 @@ def _first_application_argument(
     if not text:
         return None
     if text[0] == "(":
-        depth = 0
-        for index, character in enumerate(text):
-            if character == "(":
-                depth += 1
-            elif character == ")":
-                depth -= 1
-                if depth < 0:
-                    return None
-                if depth == 0:
-                    return (
-                        text[1:index].strip(),
-                        text[index + 1:].strip(),
-                        True,
-                    )
-        return None
-    depth = 0
-    for index, character in enumerate(text):
-        if character == "(":
-            depth += 1
-        elif character == ")":
-            depth -= 1
-            if depth < 0:
-                return None
-        elif character.isspace() and depth == 0:
-            return text[:index].strip(), text[index:].strip(), False
-    return (text, "", False) if depth == 0 else None
-
-
-def _balanced_delimiters(value: str) -> bool:
-    pairs = {")": "(", "]": "[", "}": "{"}
-    stack: list[str] = []
-    for character in value:
-        if character in "([{":
-            stack.append(character)
-        elif character in pairs:
-            if not stack or stack.pop() != pairs[character]:
-                return False
-    return not stack
+        end = matching_close(text, 0, openers=PARENTHESES)
+        if end < 0:
+            return None
+        return text[1:end].strip(), text[end + 1:].strip(), True
+    space = _first_top_level_space(text)
+    if space is None:
+        return text, "", False
+    return text[:space].strip(), text[space:].strip(), False

@@ -86,27 +86,14 @@ def emit_workflow_verification_event(
     return append_event(path, "verification.completed", data, source="workflow.prover")
 
 
-def validate_goal_discharge_contract(
-    session_dir: str | Path | None,
-) -> EventContractGate:
-    """Require exact current authority that EasyCrypt discharged the goals."""
-    gate, _projection = _read_projection_gate(
-        session_dir,
-        require_goals_discharged=True,
-        require_session_completion_candidate=False,
-        require_offline_verified=False,
-    )
-    return gate
-
-
 def validate_acceptance_event_contract(
     session_dir: str | Path | None,
 ) -> EventContractGate:
     """Require a valid event stream for final proof acceptance.
 
-    This is intentionally stricter than goal-discharge tracking: final
-    acceptance requires committed ``qed.``, a session completion candidate,
-    and a passing verification event in the same projection.
+    Final acceptance requires discharged goals, committed ``qed.``, a
+    session completion candidate, and a passing verification event in the
+    same projection.
     """
     gate, _projection = _read_projection_gate(
         session_dir,

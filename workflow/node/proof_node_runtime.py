@@ -52,6 +52,12 @@ from workflow.proof_tool.proof_tool_launch import (
     proof_tool_timing_for_prefix,
 )
 from workflow.proof_tool.proof_tool_session import ProofToolSession
+from workflow.proof_tool.manager_stall_watchdog import (
+    ManagerStallWatchdog,
+    append_audit_record,
+    manager_stall_watchdog_mode,
+    stall_headline,
+)
 from workflow.provider.provider_sessions import (
     ClaudeRunResult,
     agent_session_class,
@@ -240,8 +246,12 @@ class ProofNodeRuntime:
         replay_prefix_length = (
             len(replay_prefix) if isinstance(replay_prefix, list) else 0
         )
+        # Sized for the longest history a turn of this node can replay, not
+        # just the bootstrap prefix: a recovery replay of a history grown
+        # past the prefix must not hit the turn deadline mid-replay.
         self.proof_tool_timing = proof_tool_timing_for_prefix(
-            replay_prefix_length
+            replay_prefix_length,
+            turn_allowance=max_turns,
         )
         self.eval_confinement = EvalAgentConfinement.from_environment(
             project_root=self.project_root,
@@ -268,6 +278,22 @@ class ProofNodeRuntime:
             for tactic in (replay_prefix or [])
             if isinstance(tactic, str) and tactic.strip()
         )
+        # Out-of-band hang detection for this node's manager.  It reads only
+        # backend-call boundary marks and the serving window, never the
+        # session locks; agent and endpoint are bound late because they are
+        # constructed below.
+        stall_mode = manager_stall_watchdog_mode()
+        self._stall_watchdog = (
+            None
+            if stall_mode == "off"
+            else ManagerStallWatchdog(
+                node_id=self.node_id,
+                mode=stall_mode,
+                emit=self._record_manager_stall,
+                close_agent=lambda reason: self.agent.close(reason),
+                endpoint_alive=lambda: self.endpoint.serving_thread_alive(),
+            )
+        )
         self.tool_session = ProofToolSession(
             node_id=self.node_id,
             manifest=self.proof_tool_manifest,
@@ -286,6 +312,7 @@ class ProofNodeRuntime:
                 if isinstance(tactic, str) and tactic.strip()
             ),
             emit=self.emit,
+            turn_monitor=self._stall_watchdog,
         )
         self.endpoint = ProofToolEndpointServer(
             session=self.tool_session,
@@ -319,6 +346,7 @@ class ProofNodeRuntime:
             ),
         )
         self._safe_stop_requested = threading.Event()
+        self._safe_stop_drain = threading.Lock()
         self._safe_stop_finalized = threading.Event()
         self._safe_stop_reason = ""
         self._safe_stop_checkpoint_count = 0
@@ -365,6 +393,23 @@ class ProofNodeRuntime:
                     "checkpoint_count": len(capsules),
                 })
         return rendered
+
+    def _record_manager_stall(self, record: dict[str, Any]) -> None:
+        """Persist one stall record without the worker event lock.
+
+        The stalled thread may hold ``emit``'s lock (for example while blocked
+        on a full stdout pipe), so the record goes straight to the run's
+        manager audit file, and a one-line summary goes to stderr, which the
+        supervisor shows in its crash line and keeps in ``worker_stderr.log``.
+        """
+
+        try:
+            append_audit_record(
+                self.run_dir / "proof_node_manager_audit.jsonl",
+                record,
+            )
+        finally:
+            print(stall_headline(record), file=sys.stderr, flush=True)
 
     def _system_anchor(self, source_resource) -> str:
         """The durable system prompt; arms that never show compiler output
@@ -438,6 +483,22 @@ class ProofNodeRuntime:
             })
             return ()
 
+    def mark_safe_stop_requested(self, reason: str) -> None:
+        """Record an external stop request; safe to call from a signal handler.
+
+        It sets only the request event, which no thread waits on, so it cannot
+        block on a lock the interrupted thread holds.  The lock-taking drain
+        and checkpoint belong to ``request_safe_stop`` on an ordinary thread.
+        """
+
+        requested = getattr(self, "_safe_stop_requested", None)
+        if requested is None:
+            requested = self._safe_stop_requested = threading.Event()
+        if requested.is_set():
+            return
+        self._safe_stop_reason = str(reason or "external stop requested").strip()
+        requested.set()
+
     def request_safe_stop(self, reason: str) -> None:
         """Drain the current manager call and checkpoint before provider exit.
 
@@ -448,15 +509,17 @@ class ProofNodeRuntime:
         Run-level finalization falls back to the newest earlier compatible
         checkpoint, or publishes the accepted prefix without a checkpoint.  It
         never replays the archived spine merely to make the job terminal.
+
+        It waits on the turn lock and emits events, so it must not run inside
+        a signal handler; see ``mark_safe_stop_requested``.
         """
 
-        requested = getattr(self, "_safe_stop_requested", None)
-        if requested is None:
-            requested = self._safe_stop_requested = threading.Event()
-        if requested.is_set():
-            return
-        requested.set()
-        self._safe_stop_reason = str(reason or "external stop requested").strip()
+        drain = getattr(self, "_safe_stop_drain", None)
+        if drain is None:
+            drain = self._safe_stop_drain = threading.Lock()
+        if not drain.acquire(blocking=False):
+            return  # one drain per node; it is never released
+        self.mark_safe_stop_requested(reason)
         boundary = self.tool_session.request_stop(self._safe_stop_reason)
         capsules = self._checkpoint_resume_capsules()
         self._safe_stop_checkpoint_count = len(capsules or ())
@@ -503,9 +566,9 @@ class ProofNodeRuntime:
             handoff = reasoning_section + "\n\n" + handoff
         # FIX #2: the reopening must be SMALL (spec §Handoff ~≤15k tokens) so the
         # fresh session starts near the post-compact floor. We keep the runtime /
-        # tool-protocol block (the fresh session still needs it) but drop the heavy
-        # turn-0 bootstrap (`self.prompt` = full lemma source + sibling lemmas +
-        # KB). A thin pointer lets the agent re-read source on demand via tools.
+        # tool-protocol block (the fresh session still needs it) but drop the
+        # turn-0 bootstrap (`self.prompt` = target pointer plus the turn-0
+        # handoff surface, now stale). A thin pointer names the target instead.
         pointer = (
             f"Target lemma `{self.lemma_name}` lives in `{self.file_path}`"
             if self.lemma_name or self.file_path else ""
@@ -593,6 +656,25 @@ class ProofNodeRuntime:
         return True
 
     def run(self) -> ClaudeRunResult:
+        """Serve the node; the stall watchdog spans every serving read.
+
+        The watchdog stays armed through the post-run reads of the tool
+        session, because those wait on the serving lock that a stalled turn
+        still holds.  An enforced stall never returns from here: it exits the
+        process with the dedicated stall code instead of publishing a result.
+        """
+
+        watchdog = getattr(self, "_stall_watchdog", None)
+        if watchdog is None:
+            return self._serve()
+        watchdog.start()
+        try:
+            return self._serve()
+        finally:
+            watchdog.stop()
+            watchdog.hand_off_exit()
+
+    def _serve(self) -> ClaudeRunResult:
         eval_confinement = getattr(self, "eval_confinement", None)
         source_resource = getattr(self, "source_resource", None)
         if eval_confinement is not None:

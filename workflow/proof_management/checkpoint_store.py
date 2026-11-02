@@ -1,7 +1,7 @@
 """Proof-node checkpoint and restore state.
 
-This service owns checkpoint domain state for one proof node: structural
-checkpoint indexing, pending rewind confirmations, and the pre-rewind restore
+This service owns checkpoint domain state for one proof node: checkpoint
+indexing, pending rewind confirmations, and the pre-rewind restore
 anchor. It renders manager-control checkpoint options, but it
 does not execute EasyCrypt commands.
 """
@@ -21,7 +21,6 @@ from .checkpoint_surface import (
     parse_checkpoint_id,
     rewind_leaves_current_call_scope,
     structural_recovery_available,
-    structural_checkpoints_surface,
 )
 from core.easycrypt.value_shapes import as_dict_copy as _dict_or_empty
 from core.easycrypt.value_shapes import drop_empty as _drop_empty
@@ -442,7 +441,6 @@ class ProofCheckpointManager:
         self,
         *,
         menu_options: list[dict[str, Any]] | None = None,
-        structural_items: list[dict[str, Any]] | None = None,
         restore_option: dict[str, Any] | None = None,
     ) -> CheckpointIndex:
         restore = (
@@ -457,18 +455,7 @@ class ProofCheckpointManager:
         ]
         if restore is not None:
             menu = [restore, *menu]
-        structural = [
-            CheckpointOption(dict(item))
-            for item in (structural_items or [])
-            if isinstance(item, dict)
-        ]
-        if restore is not None:
-            structural = [restore, *structural]
-        return CheckpointIndex(
-            menu_options=menu,
-            structural_items=structural,
-            restore_option=restore,
-        )
+        return CheckpointIndex(menu_options=menu)
 
     def pre_rewind_restore_option(self) -> dict[str, Any]:
         return pre_rewind_restore_option(self.pre_rewind_restore_anchor)
@@ -483,17 +470,6 @@ class ProofCheckpointManager:
         replay_prefix_count: int = 0,
     ) -> list[dict[str, Any]]:
         return checkpoint_options(
-            tactics,
-            replay_prefix_count=replay_prefix_count,
-        )
-
-    def structural_surface(
-        self,
-        tactics: list[str],
-        *,
-        replay_prefix_count: int = 0,
-    ) -> list[dict[str, Any]]:
-        return structural_checkpoints_surface(
             tactics,
             replay_prefix_count=replay_prefix_count,
         )

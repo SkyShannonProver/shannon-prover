@@ -2,6 +2,14 @@
 
 from __future__ import annotations
 
+from core.easycrypt.proof_state_compiler.contracts.failure import (
+    compound_prefix_remainder,
+)
+from core.easycrypt.proof_state_compiler.delimiters import (
+    balanced,
+    top_level_indices,
+)
+
 
 MAX_COMPOUND_TACTIC_BYTES = 16_384
 MAX_COMPOUND_PREFIX_CANDIDATES = 8
@@ -28,23 +36,16 @@ def compound_prefix_candidates(tactic: str) -> tuple[str, ...]:
     ):
         return ()
     body = text[:-1]
-    if not body.strip():
+    if not body.strip() or not balanced(body):
         return ()
-    opening = {"(": ")", "[": "]", "{": "}"}
-    closing = set(opening.values())
-    stack: list[str] = []
-    cut_offsets: list[int] = []
-    for offset, char in enumerate(body):
-        if char in opening:
-            stack.append(opening[char])
-        elif char in closing:
-            if not stack or stack.pop() != char:
-                return ()
-        elif char == ";" and not stack:
-            cut_offsets.append(offset)
-            if len(cut_offsets) > MAX_COMPOUND_PREFIX_CANDIDATES:
-                return ()
-    if stack or not cut_offsets or not body[cut_offsets[-1] + 1 :].strip():
+    cut_offsets = [
+        offset for offset in top_level_indices(body) if body[offset] == ";"
+    ]
+    if (
+        not cut_offsets
+        or len(cut_offsets) > MAX_COMPOUND_PREFIX_CANDIDATES
+        or not body[cut_offsets[-1] + 1 :].strip()
+    ):
         return ()
     stage_boundaries = (-1, *cut_offsets, len(body))
     if any(
@@ -92,14 +93,7 @@ def compound_accepted_prefix_extension(
         if index + 1 < len(candidate_prefixes)
         else tactic
     )
-    prefix_body = accepted_prefix[:-1].rstrip()
-    next_body = next_attempt[:-1]
-    if not prefix_body or not next_body.startswith(prefix_body):
-        return ""
-    remainder = next_body[len(prefix_body):].lstrip()
-    if not remainder.startswith(";"):
-        return ""
-    extension = remainder[1:].strip()
-    if not extension:
+    extension = compound_prefix_remainder(next_attempt, accepted_prefix)
+    if extension is None:
         return ""
     return extension + "."

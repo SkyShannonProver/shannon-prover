@@ -2,9 +2,8 @@
 
 from __future__ import annotations
 
-import hashlib
-import json
 from dataclasses import dataclass
+from typing import Literal
 
 from core.easycrypt.proof_state_compiler.contracts.action_surface import (
     ActionSurface,
@@ -14,7 +13,11 @@ from core.easycrypt.proof_state_compiler.contracts.action_surface import (
     VerifiedAction,
 )
 from core.easycrypt.proof_state_compiler.contracts.candidate_surface import (
+    ActionCandidate,
+    BindingReferenceCandidate,
     CandidateSurface,
+    DiagnosticCandidate,
+    ResourceReferenceCandidate,
 )
 from core.easycrypt.proof_state_compiler.contracts.certification import (
     CertificationResult,
@@ -44,7 +47,12 @@ from core.easycrypt.proof_state_compiler.backend.presentation import (
     RenderedCompilerMarkdown,
     render_action_surface,
 )
+from core.easycrypt.proof_state_compiler.contracts.state_ref import (
+    ProvenanceRef,
+    StateRef,
+)
 from core.easycrypt.proof_state_compiler.contracts.strategy import COMMITMENT_RELATIVE
+from core.easycrypt.proof_state_compiler.contracts.digest import json_sha256
 from core.easycrypt.proof_state_compiler.derived_provenance import derived_provenance
 
 
@@ -146,6 +154,24 @@ class AdmissionResult:
         return self.presentation.utf8_bytes
 
 
+CandidateKind = Literal["action", "binding", "diagnostic", "resource"]
+SurfaceCandidate = (
+    ResourceReferenceCandidate
+    | BindingReferenceCandidate
+    | ActionCandidate
+    | DiagnosticCandidate
+)
+SurfaceItem = ResourceReference | BindingReference | VerifiedAction | NeutralDiagnostic
+
+
+@dataclass(frozen=True)
+class _Admitted:
+    """One admitted surface item and the policy whose budget it consumes."""
+
+    item: SurfaceItem
+    policy_id: str
+
+
 def admit_action_surface(
     candidates: CandidateSurface,
     certifications: tuple[CertificationResult, ...],
@@ -154,6 +180,12 @@ def admit_action_surface(
     triggers: tuple[CompilerTrigger, ...],
     previously_presented: frozenset[str] = frozenset(),
 ) -> AdmissionResult:
+    """Admit candidates in a fixed order, each judged against those before it.
+
+    A candidate is admitted only when the surface with it added renders
+    within every budget; a rejected candidate leaves no trace on the surface.
+    """
+
     if not triggers:
         raise ValueError("delivery requires at least one trigger")
     if any(trigger.state_ref != candidates.state_ref for trigger in triggers):
@@ -169,209 +201,78 @@ def admit_action_surface(
     certified = {item.candidate_id: item for item in certifications}
     if len(certified) != len(certifications):
         raise ValueError("certification results contain duplicate candidate IDs")
-    decisions: list[AdmissionDecision] = []
-    resources: list[ResourceReference] = []
-    bindings: list[BindingReference] = []
-    actions: list[VerifiedAction] = []
-    diagnostics: list[NeutralDiagnostic] = []
-    presented_delivery_ids: list[str] = []
-    resource_policy_ids: list[str] = []
-    binding_policy_ids: list[str] = []
-    action_policy_ids: list[str] = []
-    diagnostic_policy_ids: list[str] = []
-
-    ordered = [
-        *(('resource', item) for item in candidates.resource_references),
-        *(('binding', item) for item in candidates.binding_references),
-        *(('action', item) for item in candidates.actions),
-        *(('diagnostic', item) for item in candidates.diagnostics),
-    ]
+    plan = manifest.delivery_plan
     feature_order = {
         feature_id: index
         for index, feature_id in enumerate(manifest.admitted_feature_ids)
     }
-    ordered.sort(key=lambda pair: (
-        feature_order.get(pair[1].feature_id, len(feature_order)),
-        pair[0],
-        pair[1].candidate_id,
-    ))
+    provenance = derived_provenance(
+        "p4.action_surface", candidates.state_ref, candidates.provenance
+    )
+    decisions: list[AdmissionDecision] = []
+    admitted: list[_Admitted] = []
+    presented_delivery_ids: list[str] = []
 
-    def current_surface() -> ActionSurface:
-        return ActionSurface(
-            state_ref=candidates.state_ref,
-            provenance=derived_provenance(
-                "p4.action_surface", candidates.state_ref, candidates.provenance
-            ),
-            resource_references=tuple(resources),
-            binding_references=tuple(bindings),
-            actions=tuple(actions),
-            diagnostics=tuple(diagnostics),
+    for candidate in sorted(_candidates(candidates), key=lambda item: (
+        feature_order.get(item.feature_id, len(feature_order)),
+        _kind_of(item),
+        item.candidate_id,
+    )):
+        kind = _kind_of(candidate)
+        dependencies = _delivery_dependencies(candidate)
+        reason = _eligibility_rejection(
+            candidate, dependencies, feature_order, manifest,
         )
-
-    for kind, candidate in ordered:
-        if candidate.feature_id not in feature_order:
-            decisions.append(AdmissionDecision(
-                candidate_id=candidate.candidate_id,
-                feature_id=candidate.feature_id,
-                admitted=False,
-                reason="feature_not_admitted",
-            ))
-            continue
-        delivery_dependencies = getattr(
-            candidate, "delivery_dependency_feature_ids", ()
-        )
-        if not set(delivery_dependencies).issubset(feature_order):
-            decisions.append(AdmissionDecision(
-                candidate_id=candidate.candidate_id,
-                feature_id=candidate.feature_id,
-                admitted=False,
-                reason="delivery_dependency_not_admitted",
-            ))
-            continue
-        if (
-            candidate.strategy_contract.strategy_class
-            not in manifest.admitted_strategy_classes
-        ):
-            decisions.append(AdmissionDecision(
-                candidate_id=candidate.candidate_id,
-                feature_id=candidate.feature_id,
-                admitted=False,
-                reason="strategy_class_not_admitted",
-            ))
-            continue
-        binding = _delivery_binding_for(
+        binding = None if reason else _delivery_binding_for(
             candidate,
             refresh=refreshes[0],
             trigger_by_id=trigger_by_id,
-            manifest=manifest,
+            plan=plan,
         )
         if binding is None:
             decisions.append(AdmissionDecision(
                 candidate_id=candidate.candidate_id,
                 feature_id=candidate.feature_id,
                 admitted=False,
-                reason="delivery_trigger_not_admitted",
+                reason=reason or "delivery_trigger_not_admitted",
             ))
             continue
         trigger, policy = binding
-        rule = policy.rule
         certification = (
-            certified.get(candidate.candidate_id) if kind == "action" else None
+            certified.get(candidate.candidate_id)
+            if isinstance(candidate, ActionCandidate) else None
         )
         delivery = _delivery_presentation(
-            kind,
-            candidate,
-            certification,
-            trigger,
-            policy,
+            candidate, kind, certification, trigger, policy,
         )
-        if (
-            delivery.presentation_id in previously_presented
-            or delivery.presentation_id in presented_delivery_ids
-        ):
+        reason = _budget_rejection(
+            delivery,
+            policy,
+            admitted,
+            plan,
+            presented=previously_presented.union(presented_delivery_ids),
+        )
+        item = None if reason else _surface_item(
+            candidate, delivery, certification, candidates.state_ref,
+        )
+        if reason or item is None:
             decisions.append(_policy_rejection(
                 candidate,
                 policy,
-                DELIVERY_LIFETIME_SUPPRESSED,
+                reason or CERTIFICATION_MISSING_OR_REJECTED,
                 trigger_id=trigger.trigger_id,
             ))
             continue
-        if _policy_item_count(
-            policy.policy_id,
-            resource_policy_ids,
-            binding_policy_ids,
-            action_policy_ids,
-            diagnostic_policy_ids,
-        ) >= policy.max_items:
-            decisions.append(_policy_rejection(
-                candidate,
-                policy,
-                CARDINALITY_BUDGET_EXHAUSTED,
-                trigger_id=trigger.trigger_id,
-            ))
-            continue
-        if _surface_item_count(resources, bindings, actions, diagnostics) >= (
-            manifest.delivery_plan.aggregate_max_items
-        ):
-            decisions.append(_policy_rejection(
-                candidate,
-                policy,
-                SURFACE_CARDINALITY_BUDGET_EXHAUSTED,
-                trigger_id=trigger.trigger_id,
-            ))
-            continue
-
-        if kind == "resource":
-            value = ResourceReference(
-                feature_id=candidate.feature_id,
-                resource_id=candidate.resource_id,
-                label=candidate.label,
-                strategy_contract=candidate.strategy_contract,
-                delivery=delivery,
-                evidence_ids=_evidence_ids(candidate),
-            )
-            resources.append(value)
-            resource_policy_ids.append(policy.policy_id)
-        elif kind == "binding":
-            value = BindingReference(
-                feature_id=candidate.feature_id,
-                resource_id=candidate.resource_id,
-                resolved=candidate.resolved,
-                unresolved=candidate.unresolved,
-                strategy_contract=candidate.strategy_contract,
-                delivery=delivery,
-                evidence_ids=_evidence_ids(candidate),
-            )
-            bindings.append(value)
-            binding_policy_ids.append(policy.policy_id)
-        elif kind == "diagnostic":
-            value = NeutralDiagnostic(
-                feature_id=candidate.feature_id,
-                diagnostic=candidate.diagnostic,
-                strategy_contract=candidate.strategy_contract,
-                delivery=delivery,
-                evidence_ids=_evidence_ids(candidate),
-            )
-            diagnostics.append(value)
-            diagnostic_policy_ids.append(policy.policy_id)
-        else:
-            if not _certification_matches(candidates, candidate, certification):
-                decisions.append(_policy_rejection(
-                    candidate,
-                    policy,
-                    CERTIFICATION_MISSING_OR_REJECTED,
-                    trigger_id=trigger.trigger_id,
-                ))
-                continue
-            actions.append(VerifiedAction(
-                feature_id=candidate.feature_id,
-                intent=candidate.intent,
-                payload=candidate.payload,
-                unresolved_premises=candidate.unresolved_premises,
-                verification_ref=certification.verification_ref,
-                checked_effect=certification.checked_effect,
-                strategy_contract=candidate.strategy_contract,
-                delivery=delivery,
-                evidence_ids=_evidence_ids(candidate),
-                recovery_witness_id=candidate.recovery_witness_id,
-                correction=candidate.correction,
-            ))
-            action_policy_ids.append(policy.policy_id)
-
         try:
             candidate_presentation = render_action_surface(
-                _last_item_surface(current_surface(), kind)
+                _surface(candidates.state_ref, provenance, (item,))
             )
-            surface_presentation = render_action_surface(current_surface())
+            surface_presentation = render_action_surface(_surface(
+                candidates.state_ref,
+                provenance,
+                (*(entry.item for entry in admitted), item),
+            ))
         except PresentationContractError:
-            _pop_last(kind, resources, bindings, actions, diagnostics)
-            _pop_last(
-                kind,
-                resource_policy_ids,
-                binding_policy_ids,
-                action_policy_ids,
-                diagnostic_policy_ids,
-            )
             decisions.append(_policy_rejection(
                 candidate,
                 policy,
@@ -379,60 +280,26 @@ def admit_action_surface(
                 trigger_id=trigger.trigger_id,
             ))
             continue
-        candidate_markdown_bytes = candidate_presentation.utf8_bytes
-        surface_markdown_bytes = surface_presentation.utf8_bytes
-        effective_max_markdown_bytes = (
-            manifest.delivery_plan.candidate_max_markdown_bytes(
+        byte_accounting = {
+            "candidate_markdown_bytes": candidate_presentation.utf8_bytes,
+            "effective_max_markdown_bytes": plan.candidate_max_markdown_bytes(
                 candidate.feature_id,
-                delivery_dependencies,
-            )
-        )
-        if candidate_markdown_bytes > effective_max_markdown_bytes:
-            _pop_last(kind, resources, bindings, actions, diagnostics)
-            _pop_last(
-                kind,
-                resource_policy_ids,
-                binding_policy_ids,
-                action_policy_ids,
-                diagnostic_policy_ids,
-            )
+                dependencies,
+            ),
+            "surface_markdown_bytes": surface_presentation.utf8_bytes,
+            "surface_max_markdown_bytes": plan.aggregate_max_markdown_bytes,
+        }
+        reason = _markdown_rejection(**byte_accounting)
+        if reason:
             decisions.append(_policy_rejection(
                 candidate,
                 policy,
-                MARKDOWN_BYTE_BUDGET_EXCEEDED,
+                reason,
                 trigger_id=trigger.trigger_id,
-                candidate_markdown_bytes=candidate_markdown_bytes,
-                effective_max_markdown_bytes=effective_max_markdown_bytes,
-                surface_markdown_bytes=surface_markdown_bytes,
-                surface_max_markdown_bytes=(
-                    manifest.delivery_plan.aggregate_max_markdown_bytes
-                ),
+                **byte_accounting,
             ))
             continue
-        if surface_markdown_bytes > (
-            manifest.delivery_plan.aggregate_max_markdown_bytes
-        ):
-            _pop_last(kind, resources, bindings, actions, diagnostics)
-            _pop_last(
-                kind,
-                resource_policy_ids,
-                binding_policy_ids,
-                action_policy_ids,
-                diagnostic_policy_ids,
-            )
-            decisions.append(_policy_rejection(
-                candidate,
-                policy,
-                SURFACE_MARKDOWN_BYTE_BUDGET_EXCEEDED,
-                trigger_id=trigger.trigger_id,
-                candidate_markdown_bytes=candidate_markdown_bytes,
-                effective_max_markdown_bytes=effective_max_markdown_bytes,
-                surface_markdown_bytes=surface_markdown_bytes,
-                surface_max_markdown_bytes=(
-                    manifest.delivery_plan.aggregate_max_markdown_bytes
-                ),
-            ))
-            continue
+        admitted.append(_Admitted(item, policy.policy_id))
         presented_delivery_ids.append(delivery.presentation_id)
         decisions.append(AdmissionDecision(
             candidate_id=candidate.candidate_id,
@@ -442,15 +309,14 @@ def admit_action_surface(
             trigger_id=trigger.trigger_id,
             delivery_id=delivery.presentation_id,
             policy_id=policy.policy_id,
-            candidate_markdown_bytes=candidate_markdown_bytes,
-            effective_max_markdown_bytes=effective_max_markdown_bytes,
-            surface_markdown_bytes=surface_markdown_bytes,
-            surface_max_markdown_bytes=(
-                manifest.delivery_plan.aggregate_max_markdown_bytes
-            ),
+            **byte_accounting,
         ))
 
-    surface = current_surface()
+    surface = _surface(
+        candidates.state_ref,
+        provenance,
+        tuple(entry.item for entry in admitted),
+    )
     presentation = render_action_surface(surface)
     return AdmissionResult(
         action_surface=surface,
@@ -460,12 +326,57 @@ def admit_action_surface(
     )
 
 
+def _candidates(candidates: CandidateSurface) -> tuple[SurfaceCandidate, ...]:
+    return (
+        *candidates.resource_references,
+        *candidates.binding_references,
+        *candidates.actions,
+        *candidates.diagnostics,
+    )
+
+
+def _kind_of(candidate: SurfaceCandidate) -> CandidateKind:
+    if isinstance(candidate, ActionCandidate):
+        return "action"
+    if isinstance(candidate, DiagnosticCandidate):
+        return "diagnostic"
+    if isinstance(candidate, BindingReferenceCandidate):
+        return "binding"
+    return "resource"
+
+
+def _delivery_dependencies(candidate: SurfaceCandidate) -> tuple[str, ...]:
+    if isinstance(candidate, (ActionCandidate, DiagnosticCandidate)):
+        return candidate.delivery_dependency_feature_ids
+    return ()
+
+
+def _eligibility_rejection(
+    candidate: SurfaceCandidate,
+    dependencies: tuple[str, ...],
+    feature_order: dict[str, int],
+    manifest: AdmissionManifest,
+) -> str:
+    """The manifest-level reason this candidate cannot be delivered, if any."""
+
+    if candidate.feature_id not in feature_order:
+        return "feature_not_admitted"
+    if not set(dependencies).issubset(feature_order):
+        return "delivery_dependency_not_admitted"
+    if (
+        candidate.strategy_contract.strategy_class
+        not in manifest.admitted_strategy_classes
+    ):
+        return "strategy_class_not_admitted"
+    return ""
+
+
 def _delivery_binding_for(
-    candidate,
+    candidate: SurfaceCandidate,
     *,
     refresh: CompilerTrigger,
     trigger_by_id: dict[str, CompilerTrigger],
-    manifest: AdmissionManifest,
+    plan: ResolvedDeliveryPlan,
 ) -> tuple[CompilerTrigger, DeliveryPolicyDefinition] | None:
     if candidate.strategy_contract.strategy_class == COMMITMENT_RELATIVE:
         if not candidate.trigger_id:
@@ -477,7 +388,7 @@ def _delivery_binding_for(
         if candidate.trigger_id:
             return None
         trigger = refresh
-    policy = manifest.delivery_plan.policy_for_feature(candidate.feature_id)
+    policy = plan.policy_for_feature(candidate.feature_id)
     if (
         policy is None
         or policy.rule.strategy_class
@@ -488,30 +399,140 @@ def _delivery_binding_for(
     return trigger, policy
 
 
+def _budget_rejection(
+    delivery: DeliveryPresentation,
+    policy: DeliveryPolicyDefinition,
+    admitted: list[_Admitted],
+    plan: ResolvedDeliveryPlan,
+    *,
+    presented: frozenset[str],
+) -> str:
+    """The lifetime or cardinality reason this delivery cannot be added."""
+
+    if delivery.presentation_id in presented:
+        return DELIVERY_LIFETIME_SUPPRESSED
+    if sum(
+        entry.policy_id == policy.policy_id for entry in admitted
+    ) >= policy.max_items:
+        return CARDINALITY_BUDGET_EXHAUSTED
+    if len(admitted) >= plan.aggregate_max_items:
+        return SURFACE_CARDINALITY_BUDGET_EXHAUSTED
+    return ""
+
+
+def _markdown_rejection(
+    *,
+    candidate_markdown_bytes: int,
+    effective_max_markdown_bytes: int,
+    surface_markdown_bytes: int,
+    surface_max_markdown_bytes: int,
+) -> str:
+    if candidate_markdown_bytes > effective_max_markdown_bytes:
+        return MARKDOWN_BYTE_BUDGET_EXCEEDED
+    if surface_markdown_bytes > surface_max_markdown_bytes:
+        return SURFACE_MARKDOWN_BYTE_BUDGET_EXCEEDED
+    return ""
+
+
+def _surface_item(
+    candidate: SurfaceCandidate,
+    delivery: DeliveryPresentation,
+    certification: CertificationResult | None,
+    state_ref: StateRef,
+) -> SurfaceItem | None:
+    """The admitted form of ``candidate``; ``None`` when an action is uncertified."""
+
+    evidence_ids = tuple(item.evidence_id for item in candidate.evidence_refs)
+    if isinstance(candidate, ActionCandidate):
+        if certification is None or not _certification_matches(
+            state_ref, candidate, certification,
+        ):
+            return None
+        return VerifiedAction(
+            feature_id=candidate.feature_id,
+            intent=candidate.intent,
+            payload=candidate.payload,
+            unresolved_premises=candidate.unresolved_premises,
+            verification_ref=certification.verification_ref,
+            checked_effect=certification.checked_effect,
+            strategy_contract=candidate.strategy_contract,
+            delivery=delivery,
+            evidence_ids=evidence_ids,
+            recovery_witness_id=candidate.recovery_witness_id,
+            correction=candidate.correction,
+        )
+    if isinstance(candidate, DiagnosticCandidate):
+        return NeutralDiagnostic(
+            feature_id=candidate.feature_id,
+            diagnostic=candidate.diagnostic,
+            strategy_contract=candidate.strategy_contract,
+            delivery=delivery,
+            evidence_ids=evidence_ids,
+        )
+    if isinstance(candidate, BindingReferenceCandidate):
+        return BindingReference(
+            feature_id=candidate.feature_id,
+            resource_id=candidate.resource_id,
+            resolved=candidate.resolved,
+            unresolved=candidate.unresolved,
+            strategy_contract=candidate.strategy_contract,
+            delivery=delivery,
+            evidence_ids=evidence_ids,
+        )
+    return ResourceReference(
+        feature_id=candidate.feature_id,
+        resource_id=candidate.resource_id,
+        label=candidate.label,
+        strategy_contract=candidate.strategy_contract,
+        delivery=delivery,
+        evidence_ids=evidence_ids,
+    )
+
+
+def _surface(
+    state_ref: StateRef,
+    provenance: ProvenanceRef,
+    items: tuple[SurfaceItem, ...],
+) -> ActionSurface:
+    return ActionSurface(
+        state_ref=state_ref,
+        provenance=provenance,
+        resource_references=tuple(
+            item for item in items if isinstance(item, ResourceReference)
+        ),
+        binding_references=tuple(
+            item for item in items if isinstance(item, BindingReference)
+        ),
+        actions=tuple(item for item in items if isinstance(item, VerifiedAction)),
+        diagnostics=tuple(
+            item for item in items if isinstance(item, NeutralDiagnostic)
+        ),
+    )
+
+
 def _delivery_presentation(
-    kind: str,
-    candidate,
-    certification,
+    candidate: SurfaceCandidate,
+    kind: CandidateKind,
+    certification: CertificationResult | None,
     trigger: CompilerTrigger,
     policy: DeliveryPolicyDefinition,
 ) -> DeliveryPresentation:
     rule = policy.rule
     recovery_scope = (
         candidate.recovery_lifetime_scope_id
-        if kind == "diagnostic"
+        if isinstance(candidate, DiagnosticCandidate)
         else ""
     )
+    material_state = {
+        "goal_identity": trigger.state_ref.goal_identity,
+        "goal_identity_required": trigger.state_ref.goal_identity_required,
+        "committed_prefix_identity": (
+            trigger.state_ref.committed_prefix_identity
+        ),
+    }
     if recovery_scope:
-        content = {
-            "material_state": {
-                "goal_identity": trigger.state_ref.goal_identity,
-                "goal_identity_required": (
-                    trigger.state_ref.goal_identity_required
-                ),
-                "committed_prefix_identity": (
-                    trigger.state_ref.committed_prefix_identity
-                ),
-            },
+        content: dict[str, object] = {
+            "material_state": material_state,
             "kind": kind,
             "feature_id": candidate.feature_id,
             "strategy_class": candidate.strategy_contract.strategy_class,
@@ -521,23 +542,17 @@ def _delivery_presentation(
         }
     else:
         content = {
-            "material_state": {
-                "goal_identity": trigger.state_ref.goal_identity,
-                "goal_identity_required": trigger.state_ref.goal_identity_required,
-                "committed_prefix_identity": (
-                    trigger.state_ref.committed_prefix_identity
-                ),
-            },
+            "material_state": material_state,
             "kind": kind,
             "candidate_id": candidate.candidate_id,
             "feature_id": candidate.feature_id,
-            "delivery_dependency_feature_ids": list(getattr(
-                candidate, "delivery_dependency_feature_ids", ()
-            )),
+            "delivery_dependency_feature_ids": list(
+                _delivery_dependencies(candidate)
+            ),
             "strategy_class": candidate.strategy_contract.strategy_class,
             "presentation_kind": rule.presentation_kind,
             "policy_id": policy.policy_id,
-            "content": _candidate_content(kind, candidate),
+            "content": _candidate_content(candidate),
             "checked_effect": (
                 certification.checked_effect.to_dict()
                 if certification is not None else {}
@@ -549,14 +564,8 @@ def _delivery_presentation(
             trigger.commitment_anchor.anchor_id
             if trigger.commitment_anchor is not None else ""
         )
-    encoded = json.dumps(
-        content,
-        ensure_ascii=False,
-        sort_keys=True,
-        separators=(",", ":"),
-    ).encode("utf-8")
     return DeliveryPresentation(
-        presentation_id=hashlib.sha256(encoded).hexdigest(),
+        presentation_id=json_sha256(content),
         presentation_kind=rule.presentation_kind,
         lifetime=rule.lifetime,
         trigger_kind=trigger.trigger_kind,
@@ -566,16 +575,16 @@ def _delivery_presentation(
     )
 
 
-def _candidate_content(kind: str, candidate) -> dict[str, object]:
-    if kind == "resource":
+def _candidate_content(candidate: SurfaceCandidate) -> dict[str, object]:
+    if isinstance(candidate, ResourceReferenceCandidate):
         return {"resource_id": candidate.resource_id, "label": candidate.label}
-    if kind == "binding":
+    if isinstance(candidate, BindingReferenceCandidate):
         return {
             "resource_id": candidate.resource_id,
             "resolved": candidate.resolved.to_dict(),
             "unresolved": list(candidate.unresolved),
         }
-    if kind == "diagnostic":
+    if isinstance(candidate, DiagnosticCandidate):
         return candidate.diagnostic.identity_payload()
     return {
         "intent": candidate.intent,
@@ -584,11 +593,14 @@ def _candidate_content(kind: str, candidate) -> dict[str, object]:
     }
 
 
-def _certification_matches(candidates, candidate, result) -> bool:
+def _certification_matches(
+    state_ref: StateRef,
+    candidate: ActionCandidate,
+    result: CertificationResult,
+) -> bool:
     return bool(
-        result is not None
-        and result.candidate_id == candidate.candidate_id
-        and result.state_ref == candidates.state_ref
+        result.candidate_id == candidate.candidate_id
+        and result.state_ref == state_ref
         and result.policy == candidate.certification_policy
         and result.intent == candidate.intent
         and result.payload_sha256 == frozen_json_sha256(candidate.payload)
@@ -596,20 +608,8 @@ def _certification_matches(candidates, candidate, result) -> bool:
     )
 
 
-def _evidence_ids(candidate: object) -> tuple[str, ...]:
-    return tuple(item.evidence_id for item in candidate.evidence_refs)
-
-
-def _policy_item_count(policy_id: str, *collections: list[str]) -> int:
-    return sum(item == policy_id for collection in collections for item in collection)
-
-
-def _surface_item_count(*collections: list[object]) -> int:
-    return sum(len(collection) for collection in collections)
-
-
 def _policy_rejection(
-    candidate,
+    candidate: SurfaceCandidate,
     policy: DeliveryPolicyDefinition,
     reason: str,
     *,
@@ -636,27 +636,3 @@ def _policy_rejection(
         surface_markdown_bytes=surface_markdown_bytes,
         surface_max_markdown_bytes=surface_max_markdown_bytes,
     )
-
-
-def _last_item_surface(surface: ActionSurface, kind: str) -> ActionSurface:
-    """Return the just-added candidate alone for standalone policy sizing."""
-
-    return ActionSurface(
-        state_ref=surface.state_ref,
-        provenance=surface.provenance,
-        resource_references=(
-            (surface.resource_references[-1],) if kind == "resource" else ()
-        ),
-        binding_references=(
-            (surface.binding_references[-1],) if kind == "binding" else ()
-        ),
-        actions=((surface.actions[-1],) if kind == "action" else ()),
-        diagnostics=(
-            (surface.diagnostics[-1],) if kind == "diagnostic" else ()
-        ),
-    )
-
-
-def _pop_last(kind, resources, bindings, actions, diagnostics) -> None:
-    {"resource": resources, "binding": bindings, "action": actions,
-     "diagnostic": diagnostics}[kind].pop()

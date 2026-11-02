@@ -1,28 +1,22 @@
 """Feature definition for PHL transitivity form/current-goal repair."""
 
-from core.easycrypt.proof_state_compiler.contracts import (
-    COMMITMENT_RELATIVE,
-    StrategyContract,
-)
 from core.easycrypt.proof_state_compiler.features.registry import (
     ExperimentGate,
     FeatureDefinition,
     FeatureSpec,
 )
-
-
-PHL_TRANSITIVITY_BOUNDARY_REPAIR_FEATURE_ID = (
-    "phl_transitivity_boundary_repair"
+from core.easycrypt.proof_state_compiler.features.failed_commit import (
+    attempt_diagnostic_producer,
+    failed_commit_gate,
 )
-PHL_TRANSITIVITY_BOUNDARY_REPAIR_STRATEGY_CONTRACT = StrategyContract(
-    strategy_class=COMMITMENT_RELATIVE,
-    rationale=(
-        "the diagnostic explains the native boundary required by the written "
-        "PHL transitivity form and leaves boundary, side, and intermediate "
-        "selection to the agent"
-    ),
-    required_commitment="agent_supplied_phl_transitivity_form",
+from .ids import (
+    PHL_TRANSITIVITY_BOUNDARY_REPAIR_FEATURE_ID,
+    PHL_TRANSITIVITY_BOUNDARY_REPAIR_STRATEGY_CONTRACT,
 )
+from .analysis import analyze_phl_transitivity_boundary
+from .realization import PHL_TRANSITIVITY_BOUNDARY_CODEC
+from .surface_lowering import lower_phl_transitivity_boundary
+from .syntax import is_candidate_phl_transitivity
 
 
 def phl_transitivity_boundary_repair_feature_spec() -> FeatureSpec:
@@ -66,14 +60,6 @@ def phl_transitivity_boundary_repair_feature_spec() -> FeatureSpec:
 
 
 def phl_transitivity_boundary_repair_feature() -> FeatureDefinition:
-    from core.easycrypt.proof_state_compiler.features.failed_commit import (
-        attempt_diagnostic_producer,
-        failed_commit_gate,
-    )
-    from .analysis import analyze_phl_transitivity_boundary
-    from .realization import PHL_TRANSITIVITY_BOUNDARY_CODEC
-    from .surface_lowering import lower_phl_transitivity_boundary
-    from .syntax import is_candidate_phl_transitivity
 
     return FeatureDefinition(
         spec=phl_transitivity_boundary_repair_feature_spec(),

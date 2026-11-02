@@ -805,11 +805,11 @@ class CodexAgentSession(_ProviderAgentSessionBase):
         resume_session_id = self.session_id
         self.last_turn_had_tool_call = False
         if not resume_session_id:
-            # A fresh thread is a fresh generation. A RESUMED turn must keep
-            # the detector's hot-turn streak and the reasoning ring buffer —
-            # run() fires once per Codex turn, so resetting here made the
-            # 2-consecutive-hot-turns debounce unreachable (watermark could
-            # never trip on the Codex backend).
+            # A fresh thread is a fresh generation; a resumed turn keeps the
+            # detector's hot-turn streak and the reasoning ring buffer. Today
+            # the watermark cannot trip on Codex at all:
+            # context_tokens_from_codex_event abstains (always None), so
+            # ctx_pressure stays False and Layer-1 respawn is Claude-only.
             self.ctx_pressure = False
             self._recent_reasoning = []
             self._ctx_detector.reset()

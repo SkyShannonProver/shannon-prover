@@ -13,6 +13,7 @@ import argparse
 import json
 import signal
 import sys
+import threading
 import traceback
 from pathlib import Path
 
@@ -20,6 +21,12 @@ from workflow.node.proof_node_runtime import (
     PROJECT_ROOT,
     ProofNodeRuntime,
 )
+
+# Below the supervisor's 30 s termination grace, so the final result event
+# still goes out before SIGKILL.
+_SAFE_STOP_JOIN_SECONDS = 25.0
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--prompt-file", required=True)
@@ -61,13 +68,15 @@ def main(argv: list[str] | None = None) -> int:
             emit=_emit,
         )
         previous_handlers: dict[int, object] = {}
+        stop_reasons: list[str] = []
+        stop_wakeup = threading.Event()
 
-        def request_safe_stop(signum: int, _frame: object) -> None:
-            signal_name = signal.Signals(signum).name
+        def drain_on_stop() -> None:
+            stop_wakeup.wait()
+            if not stop_reasons:
+                return
             try:
-                runtime.request_safe_stop(
-                    f"worker received {signal_name}"
-                )
+                runtime.request_safe_stop(stop_reasons[0])
             except BaseException as exc:
                 # The run coordinator owns lossless accepted-prefix handback.
                 # Preserve a bounded event here instead of letting an optional
@@ -79,6 +88,23 @@ def main(argv: list[str] | None = None) -> int:
                     "reason": f"{type(exc).__name__}: {exc}",
                 })
 
+        def request_safe_stop(signum: int, _frame: object) -> None:
+            # A handler runs on the main thread between bytecodes, possibly
+            # while that thread holds the runtime's event lock or is blocked
+            # writing to a full stdout pipe. Draining the turn, checkpointing
+            # and emitting all take locks, so the handler only records the
+            # request and the stop thread does the work.
+            reason = f"worker received {signal.Signals(signum).name}"
+            stop_reasons.append(reason)
+            runtime.mark_safe_stop_requested(reason)
+            stop_wakeup.set()
+
+        stop_thread = threading.Thread(
+            target=drain_on_stop,
+            name="proof-node-safe-stop",
+            daemon=True,
+        )
+        stop_thread.start()
         for stop_signal in (signal.SIGTERM, signal.SIGINT):
             previous_handlers[stop_signal] = signal.signal(
                 stop_signal,
@@ -89,6 +115,11 @@ def main(argv: list[str] | None = None) -> int:
         finally:
             for stop_signal, previous in previous_handlers.items():
                 signal.signal(stop_signal, previous)
+            if stop_reasons:
+                # The live checkpoint must land before the final result event.
+                stop_thread.join(timeout=_SAFE_STOP_JOIN_SECONDS)
+            else:
+                stop_wakeup.set()
     except Exception as exc:
         # The traceback is the only way to tell a corrupt bootstrap file from
         # a runtime wiring error — never reduce it to one line.

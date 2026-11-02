@@ -5,7 +5,7 @@ from __future__ import annotations
 import re
 from dataclasses import dataclass
 
-from core.easycrypt.lemma_decls import mask_comments
+from core.easycrypt.proof_text import strip_comments
 
 
 _PROOF_MARKER_RE = re.compile(r"(?<![A-Za-z0-9_'])proof\.")
@@ -33,7 +33,7 @@ def inline_proof(
     masked_source: str | None = None,
 ) -> InlineProof | None:
     """Locate a single-line proof without matching markers inside comments."""
-    masked = mask_comments(source) if masked_source is None else masked_source
+    masked = strip_comments(source) if masked_source is None else masked_source
     proof = _PROOF_MARKER_RE.search(masked)
     if proof is None:
         return None

@@ -7,6 +7,7 @@ import argparse
 import hashlib
 import json
 import os
+import re
 import shutil
 import signal
 import subprocess
@@ -32,7 +33,6 @@ from workflow.interleaved.agent_config import (
 from workflow.interleaved.jobs import (
     INNER_PROVIDER_ENV,
     INNER_PROVIDER_IDENTITY_ENV,
-    MAX_PARALLEL,
     cancel_jobs_in_run,
     continuation_resume_options,
     private_job_records,
@@ -41,10 +41,11 @@ from workflow.interleaved.jobs import (
 from workflow.interleaved.inner_runner import (
     prepare_shannon_eval_source,
 )
+from workflow.interleaved.job_record import JobRecord, JobStatus
 from workflow.interleaved.warm_handoff_sentinel import (
     run_warm_handoff_sentinel,
 )
-from workflow.interleaved.runtime import load_runtime_settings
+from workflow.interleaved.runtime import ProjectContext
 from workflow.interleaved.prompt import render_default_prompt
 from workflow.proof_tool.easycrypt_source_resource import (
     EasyCryptSourceResource,
@@ -61,19 +62,8 @@ from workflow.validation.claude_required_mcp_sentinel import (
 )
 
 
-_SETTINGS = load_runtime_settings()
-ROOT = _SETTINGS.root
-PROJECT = _SETTINGS.project
-PRODUCT = ROOT / "workflow" / "interleaved"
-PROJECT_ASSETS = (
-    (ROOT / PROJECT.prompt_file).parent if PROJECT.prompt_file else PRODUCT
-)
-TARGET_REL = PROJECT.target_file
-FINAL_LEMMA = PROJECT.final_lemma
-ARTIFACT_ROOT = PROJECT.artifact_root
-VERIFIER = PROJECT.verifier or "workflow/interleaved/verify.py"
-ANSWER_SOURCE = _SETTINGS.answer_source or ROOT / ".interleaved-no-answer-source"
-DEFAULT_TIMEOUT_SECONDS = PROJECT.outer_timeout_seconds
+PRODUCT = Path(__file__).resolve().parent
+GIT_OBJECT_ID = re.compile(r"[0-9a-f]{40}(?:[0-9a-f]{24})?")
 OUTER_CLAUDE_DISABLED_TOOLS = (
     "Agent(*)",
     "Task(*)",
@@ -95,6 +85,11 @@ OUTER_CLAUDE_REQUIRED_OPTIONS = (
     "--strict-mcp-config",
     "--verbose",
 )
+# Options the outer command uses that `claude --help` does not list, with a
+# valid sample value for the acceptance probe.
+OUTER_CLAUDE_UNLISTED_OPTIONS = {
+    "--max-turns": "1",
+}
 INNER_CLAUDE_REQUIRED_OPTIONS = (
     "--append-system-prompt",
     "--dangerously-skip-permissions",
@@ -112,10 +107,16 @@ def now() -> str:
     return datetime.now(timezone.utc).astimezone().isoformat(timespec="seconds")
 
 
-def run(command: list[str]) -> subprocess.CompletedProcess[str]:
+def run(
+    ctx: ProjectContext,
+    command: list[str],
+    *,
+    env: dict[str, str] | None = None,
+) -> subprocess.CompletedProcess[str]:
     return subprocess.run(
         command,
-        cwd=ROOT,
+        cwd=ctx.root,
+        env=env,
         text=True,
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
@@ -138,10 +139,15 @@ def experiment_environment(
     return environment, removed
 
 
-def claude_auth_summary(claude: str, environment: dict[str, str]) -> dict[str, Any]:
+def claude_auth_summary(
+    claude: str,
+    environment: dict[str, str],
+    *,
+    cwd: Path,
+) -> dict[str, Any]:
     result = subprocess.run(
         [claude, "auth", "status", "--json"],
-        cwd=ROOT,
+        cwd=cwd,
         env=environment,
         text=True,
         stdout=subprocess.PIPE,
@@ -162,10 +168,15 @@ def claude_auth_summary(claude: str, environment: dict[str, str]) -> dict[str, A
     }
 
 
-def codex_auth_summary(codex: str, environment: dict[str, str]) -> dict[str, Any]:
+def codex_auth_summary(
+    codex: str,
+    environment: dict[str, str],
+    *,
+    cwd: Path,
+) -> dict[str, Any]:
     result = subprocess.run(
         [codex, "login", "status"],
-        cwd=ROOT,
+        cwd=cwd,
         env=environment,
         text=True,
         stdout=subprocess.PIPE,
@@ -197,12 +208,13 @@ def claude_capability_error(
     *,
     require_outer: bool,
     require_inner: bool,
+    cwd: Path,
 ) -> str | None:
     """Return a preflight error when Claude lacks a role-critical option."""
 
     result = subprocess.run(
         [claude, "--help"],
-        cwd=ROOT,
+        cwd=cwd,
         env=environment,
         text=True,
         stdout=subprocess.PIPE,
@@ -221,6 +233,22 @@ def claude_capability_error(
         option for option in sorted(required)
         if option not in help_text
     ]
+    if require_outer:
+        for option, sample in OUTER_CLAUDE_UNLISTED_OPTIONS.items():
+            # A subcommand still validates the top-level options, so a CLI
+            # that dropped the option rejects it here without starting a
+            # model session.
+            probe = subprocess.run(
+                [claude, option, sample, "auth", "status", "--json"],
+                cwd=cwd,
+                env=environment,
+                text=True,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                check=False,
+            )
+            if f"unknown option '{option}'" in probe.stdout + probe.stderr:
+                missing.append(option)
     if missing:
         return "installed Claude lacks required selected-role capabilities: " + ", ".join(
             missing
@@ -233,6 +261,7 @@ def build_outer_command(
     executable: str,
     *,
     rendered_prompt: str,
+    cwd: Path,
     codex_features: set[str] | frozenset[str] = frozenset(),
 ) -> tuple[list[str], bool]:
     """Return one provider command and whether its prompt is written to stdin."""
@@ -280,7 +309,7 @@ def build_outer_command(
             "--color",
             "never",
             "--cd",
-            str(ROOT),
+            str(cwd),
             "--sandbox",
             "danger-full-access",
             "--model",
@@ -329,18 +358,20 @@ def provider_runtime_identity(
     }
 
 
-def source_bundle_preflight(*, run_dir: Path) -> dict[str, Any]:
+def source_bundle_preflight(ctx: ProjectContext, *, run_dir: Path) -> dict[str, Any]:
     """Prepare and validate the exact platform-neutral Shannon input shape."""
 
+    root = ctx.root
+    project = ctx.project
     prepared = prepare_shannon_eval_source(
-        target_path=ROOT / TARGET_REL,
-        lemma=FINAL_LEMMA,
+        target_path=ctx.target,
+        lemma=project.final_lemma,
         output_root=run_dir / "source_preflight",
     )
     manifest_path = run_dir / "source_preflight" / "eval_source" / "source_manifest.json"
     manifest = prepared.manifest
-    expected_files = set(PROJECT.expected_task_files) or {
-        path.name for path in (ROOT / TARGET_REL).parent.iterdir()
+    expected_files = set(project.expected_task_files) or {
+        path.name for path in ctx.target.parent.iterdir()
         if path.suffix in {".ec", ".eca"}
     }
     actual_files = {
@@ -352,25 +383,25 @@ def source_bundle_preflight(*, run_dir: Path) -> dict[str, Any]:
         manifest.get("kind") != "eval_source_prep"
         or manifest.get("source_contract") != "proof_stripped_project"
         or manifest.get("strip_proofs") is not True
-        or manifest.get("target_lemma") != FINAL_LEMMA
+        or manifest.get("target_lemma") != project.final_lemma
         or actual_files != expected_files
         or not prepared.isolated_file.is_file()
-        or ANSWER_SOURCE.exists()
+        or ctx.answer_source_visible()
     ):
         raise RuntimeError("platform-neutral Shannon source preflight failed")
     source_resource = EasyCryptSourceResource.from_environment(
-        project_root=ROOT,
-        source_file=prepared.isolated_file.relative_to(ROOT),
-        target_lemma=FINAL_LEMMA,
-        include_dir=PROJECT.include_dirs[0],
+        project_root=root,
+        source_file=prepared.isolated_file.relative_to(root),
+        target_lemma=project.final_lemma,
+        include_dir=project.session_include_dir,
         environ={
-            SOURCE_RESOURCE_MANIFEST_ENV: str(manifest_path.relative_to(ROOT)),
+            SOURCE_RESOURCE_MANIFEST_ENV: str(manifest_path.relative_to(root)),
         },
     )
     if source_resource is None:
         raise RuntimeError("manager-owned source resource was not enabled")
     source_read = source_resource.read({
-        "path": prepared.isolated_file.relative_to(ROOT).as_posix(),
+        "path": prepared.isolated_file.relative_to(root).as_posix(),
         "start_line": 1,
         "end_line": 1,
     }, call_id="interleaved-source-preflight")
@@ -379,20 +410,20 @@ def source_bundle_preflight(*, run_dir: Path) -> dict[str, Any]:
             f"manager-owned source resource preflight failed: {source_read.text}"
         )
     source_search = source_resource.search({
-        "query": PROJECT.source_probe_symbol or FINAL_LEMMA,
+        "query": project.source_probe_symbol or project.final_lemma,
         "scope": "task",
         "max_results": 5,
     }, call_id="interleaved-search-preflight")
     if (
         source_search.is_error
-        or f"{Path(TARGET_REL).name}:" not in source_search.text
+        or f"{ctx.target.name}:" not in source_search.text
     ):
         raise RuntimeError(
             "manager-owned source search preflight failed: "
             f"{source_search.text}"
         )
     declaration = source_resource.resolve_declaration({
-        "symbol": PROJECT.source_probe_symbol or FINAL_LEMMA,
+        "symbol": project.source_probe_symbol or project.final_lemma,
     }, call_id="interleaved-resolve-preflight")
     if declaration.is_error or "EasyCrypt-native declaration resolved" not in (
         declaration.text
@@ -404,10 +435,10 @@ def source_bundle_preflight(*, run_dir: Path) -> dict[str, Any]:
     return {
         "passed": True,
         "source_contract": "proof_stripped_project",
-        "target_lemma": FINAL_LEMMA,
+        "target_lemma": project.final_lemma,
         "stripped_files": sorted(actual_files),
         "proofs_replaced_total": manifest.get("proofs_replaced_total"),
-        "manifest": str(manifest_path.relative_to(ROOT)),
+        "manifest": str(manifest_path.relative_to(root)),
         "manifest_sha256": sha256(manifest_path),
         "answer_source_visible": False,
         "source_navigation": {
@@ -417,11 +448,11 @@ def source_bundle_preflight(*, run_dir: Path) -> dict[str, Any]:
                 "read_easycrypt_source",
                 "resolve_easycrypt_declaration",
             ],
-            "native_resolution_symbol": PROJECT.source_probe_symbol or FINAL_LEMMA,
+            "native_resolution_symbol": project.source_probe_symbol or project.final_lemma,
             "target_path": source_resource.target_path,
             "target_sha256": source_resource.target_sha256,
         },
-        "warm_handoff_sentinel": run_warm_handoff_sentinel(run_dir=run_dir),
+        "warm_handoff_sentinel": run_warm_handoff_sentinel(ctx, run_dir=run_dir),
     }
 
 
@@ -431,46 +462,85 @@ def write_json(path: Path, payload: dict[str, Any]) -> None:
     temporary.replace(path)
 
 
-def preserve_partial_candidate(*, target: Path, run_dir: Path) -> dict[str, str]:
+def preserve_partial_candidate(
+    ctx: ProjectContext,
+    *,
+    target: Path,
+    run_dir: Path,
+) -> dict[str, str]:
     """Save the current candidate when a run does not verify successfully."""
 
     snapshot = run_dir / "partial_candidate.ec"
     shutil.copy2(target, snapshot)
     return {
-        "path": str(snapshot.relative_to(ROOT)),
+        "path": str(snapshot.relative_to(ctx.root)),
         "sha256": sha256(snapshot),
     }
 
 
+def accepted_job_source_commits(
+    ctx: ProjectContext,
+    jobs: list[JobRecord],
+    *,
+    start_commit: str,
+) -> frozenset[str]:
+    """Return the commits a job lane may run without leaving the run's code.
+
+    A lane checks out the commit HEAD names at submission and then replaces
+    only the target with the submitted snapshot. The outer agent can commit,
+    so without this check a job could have run a prover, verifier or
+    dependency the run did not start with, even when the final checkout
+    matches the starting commit again.
+    """
+
+    accepted = {start_commit}
+    target = Path(ctx.project.target_file).as_posix()
+    for commit in {str(job.source_commit or "") for job in jobs} - accepted:
+        if GIT_OBJECT_ID.fullmatch(commit) is None:
+            continue
+        changed = run(
+            ctx,
+            ["git", "diff", "--name-only", "--no-renames", start_commit, commit, "--"],
+        )
+        if changed.returncode == 0 and all(
+            path == target for path in changed.stdout.splitlines() if path
+        ):
+            accepted.add(commit)
+    return frozenset(accepted)
+
+
 def fixed_inner_config_mismatches(
-    jobs: list[dict[str, Any]],
+    jobs: list[JobRecord],
     *,
     inner_profile: AgentProfile,
     expected_inner_profile_sha256: str,
     expected_identity_sha256: str,
+    accepted_source_commits: frozenset[str],
 ) -> list[str]:
     """Return jobs that drift from the single runner-selected inner profile."""
 
     return [
-        str(job.get("job_id") or "unknown")
+        job.job_id or "unknown"
         for job in jobs
-        if job.get("inner_provider") != inner_profile.key
-        or job.get("inner_model") != inner_profile.model
-        or job.get("inner_effort") != inner_profile.effort
-        or job.get("inner_profile_sha256") != expected_inner_profile_sha256
-        or job.get("expected_provider_identity_sha256")
-        != expected_identity_sha256
+        if job.source_commit not in accepted_source_commits
+        or job.inner_provider != inner_profile.key
+        or job.inner_model != inner_profile.model
+        or job.inner_effort != inner_profile.effort
+        or job.inner_profile_sha256 != expected_inner_profile_sha256
+        or job.expected_provider_identity_sha256 != expected_identity_sha256
         or (
-            job.get("actual_provider_identity_sha256")
-            and job.get("actual_provider_identity_sha256")
-            != job.get("expected_provider_identity_sha256")
+            job.actual_provider_identity_sha256
+            and job.actual_provider_identity_sha256
+            != job.expected_provider_identity_sha256
         )
         or (
-            job.get("status") in {"verified", "incomplete", "merged"}
+            job.status in {
+                JobStatus.VERIFIED, JobStatus.INCOMPLETE, JobStatus.MERGED,
+            }
             and (
-                not job.get("invocation_receipt_sha256")
-                or not job.get("actual_provider_identity_sha256")
-                or not job.get("eval_source_manifest_sha256")
+                not job.invocation_receipt_sha256
+                or not job.actual_provider_identity_sha256
+                or not job.eval_source_manifest_sha256
             )
         )
     ]
@@ -494,36 +564,39 @@ def is_premature_agent_stop(
     )
 
 
-def require_official_start() -> str:
-    status = run(["git", "status", "--porcelain=v1", "--untracked-files=all"])
+def require_official_start(ctx: ProjectContext) -> str:
+    status = run(ctx, ["git", "status", "--porcelain=v1", "--untracked-files=all"])
     if status.returncode != 0:
         raise SystemExit("could not inspect Git status: " + status.stderr.strip())
     if status.stdout:
         raise SystemExit("official runs require a clean worktree:\n" + status.stdout)
-    if _SETTINGS.answer_source is not None:
-        branch = run(["git", "symbolic-ref", "-q", "HEAD"])
+    if ctx.answer_source is not None:
+        branch = run(ctx, ["git", "symbolic-ref", "-q", "HEAD"])
         if branch.returncode == 0:
             raise SystemExit(
                 "answer-confined reference runs require a detached worktree; "
                 "use the adapter's workspace preparation command"
             )
-        if ANSWER_SOURCE.exists():
-            raise SystemExit(f"answer-bearing EasyCrypt source is visible: {ANSWER_SOURCE}")
+        if ctx.answer_source_visible():
+            raise SystemExit(
+                f"answer-bearing EasyCrypt source is visible: {ctx.answer_source}"
+            )
 
         forbidden_roots = ("eval", "agent_view_runs", "docs", "tests")
-        visible = [name for name in forbidden_roots if (ROOT / name).exists()]
+        visible = [name for name in forbidden_roots if (ctx.root / name).exists()]
         if visible:
             raise SystemExit(
                 f"answer-bearing or unnecessary roots remain visible: {visible}"
             )
 
-    commit = run(["git", "rev-parse", "HEAD"])
+    commit = run(ctx, ["git", "rev-parse", "HEAD"])
     if commit.returncode != 0:
         raise SystemExit("could not resolve HEAD: " + commit.stderr.strip())
     return commit.stdout.strip()
 
 
 def resolve_continuation(
+    ctx: ProjectContext,
     raw: str | None,
 ) -> tuple[
     Path | None,
@@ -535,8 +608,8 @@ def resolve_continuation(
     relative = Path(raw)
     if relative.is_absolute() or ".." in relative.parts:
         raise SystemExit("--continuation-of must be a safe repository-relative path")
-    resolved = (ROOT / relative).resolve()
-    allowed = (ROOT / ARTIFACT_ROOT).resolve()
+    resolved = (ctx.root / relative).resolve()
+    allowed = (ctx.root / ctx.project.artifact_root).resolve()
     if not resolved.is_relative_to(allowed) or not resolved.is_dir():
         raise SystemExit("--continuation-of is not an existing interleaved run directory")
     manifest = resolved / "manifest.json"
@@ -584,7 +657,30 @@ def resolve_continuation(
     }, providers
 
 
+def continuation_checkpoint_options(
+    ctx: ProjectContext,
+    prior_run_dir: Path,
+    *,
+    source_text: str,
+) -> tuple[list[dict[str, Any]], str]:
+    """List prior-run checkpoints, or say why the disclosed ancestry has none.
+
+    A missing or altered ancestor run disables resuming across runs, which
+    ``submit --resume-job`` refuses on its own; it does not invalidate the
+    continuation itself.
+    """
+
+    try:
+        return (
+            continuation_resume_options(ctx, prior_run_dir, source_text=source_text),
+            "",
+        )
+    except (OSError, ValueError) as exc:
+        return [], f"{type(exc).__name__}: {exc}"
+
+
 def resolve_continuation_candidate(
+    ctx: ProjectContext,
     raw: str | None,
     continuation_rel: Path | None,
 ) -> tuple[Path | None, dict[str, Any] | None]:
@@ -595,8 +691,8 @@ def resolve_continuation_candidate(
     relative = Path(raw)
     if relative.is_absolute() or ".." in relative.parts:
         raise SystemExit("--continuation-candidate must be repository-relative")
-    resolved = (ROOT / relative).resolve()
-    prior = (ROOT / continuation_rel).resolve()
+    resolved = (ctx.root / relative).resolve()
+    prior = (ctx.root / continuation_rel).resolve()
     if not resolved.is_relative_to(prior) or not resolved.is_file():
         raise SystemExit(
             "--continuation-candidate must be an existing file inside the "
@@ -630,15 +726,21 @@ def select_agent_providers(
     return selected
 
 
-def invoke_verifier(mode: str, output: Path) -> subprocess.CompletedProcess[str]:
+def invoke_verifier(
+    ctx: ProjectContext,
+    mode: str,
+    output: Path,
+) -> subprocess.CompletedProcess[str]:
     return run(
+        ctx,
         [
             sys.executable,
-            str(ROOT / VERIFIER),
+            str(ctx.root / ctx.verifier),
             f"--{mode}",
             "--output",
-            output.relative_to(ROOT).as_posix(),
-        ]
+            output.relative_to(ctx.root).as_posix(),
+        ],
+        env=ctx.child_environment(os.environ),
     )
 
 
@@ -665,7 +767,7 @@ def toolchain_fingerprint() -> dict[str, str]:
 
 
 def checkout_integrity_violations(
-    *, start_commit: str, start_toolchain: dict[str, str],
+    ctx: ProjectContext, *, start_commit: str, start_toolchain: dict[str, str],
 ) -> list[str]:
     """List changes that would let the final check run code the agent wrote.
 
@@ -676,12 +778,12 @@ def checkout_integrity_violations(
     target may not be the reviewed one.
     """
     violations: list[str] = []
-    changed = run(["git", "diff", "--name-only", "--no-renames", start_commit, "--"])
-    untracked = run(["git", "ls-files", "--others", "--exclude-standard"])
+    changed = run(ctx, ["git", "diff", "--name-only", "--no-renames", start_commit, "--"])
+    untracked = run(ctx, ["git", "ls-files", "--others", "--exclude-standard"])
     if changed.returncode != 0 or untracked.returncode != 0:
         violations.append("could not compare the checkout with the starting commit")
-    artifact_prefix = Path(ARTIFACT_ROOT).as_posix().rstrip("/") + "/"
-    target = Path(TARGET_REL).as_posix()
+    artifact_prefix = Path(ctx.project.artifact_root).as_posix().rstrip("/") + "/"
+    target = Path(ctx.project.target_file).as_posix()
     violations.extend(
         f"modified {path}" for path in changed.stdout.splitlines()
         if path and path != target
@@ -711,7 +813,101 @@ def terminate_group(process: subprocess.Popen[str]) -> None:
                 pass
 
 
-def main() -> int:
+class TerminationSignals:
+    """Send SIGTERM and SIGHUP down the Ctrl-C path until finalization.
+
+    The outer agent and the Shannon workers run in sessions of their own,
+    so the default action, which ends only the runner, would leave them
+    running with no cancel, final check or verdict. A SIGHUP that nohup set
+    to ignore stays ignored. After the first signal, or once finalization
+    has started, a signal is only recorded, so it cannot abort the cleanup
+    and verdict.
+    """
+
+    def __init__(self) -> None:
+        self.received: list[str] = []
+        self._raise_next = True
+        self._previous: dict[int, Any] = {}
+
+    def install(self) -> None:
+        for signum in (signal.SIGTERM, signal.SIGHUP):
+            previous = signal.getsignal(signum)
+            if signum == signal.SIGHUP and previous == signal.SIG_IGN:
+                continue
+            try:
+                signal.signal(signum, self._handle)
+            except ValueError:
+                # Only the main thread can install handlers.
+                return
+            self._previous[signum] = previous
+
+    def restore(self) -> None:
+        for signum, previous in self._previous.items():
+            # None means a handler installed outside Python.
+            signal.signal(signum, signal.SIG_DFL if previous is None else previous)
+        self._previous.clear()
+
+    def finalizing(self) -> None:
+        self._raise_next = False
+
+    def _handle(self, signum: int, _frame: object) -> None:
+        name = signal.Signals(signum).name
+        self.received.append(name)
+        if self._raise_next:
+            self._raise_next = False
+            raise KeyboardInterrupt(f"received {name}")
+
+
+def record_unfinished_run(
+    manifest_path: Path,
+    manifest: dict[str, Any],
+    error: BaseException,
+) -> None:
+    """Give a run that stopped before its verdict a terminal manifest status."""
+
+    if manifest.get("status") == "preflight_running":
+        manifest["status"] = "preflight_failed"
+    elif manifest.get("status") == "running":
+        manifest["status"] = "runner_failed"
+    else:
+        return
+    message = (
+        error.code
+        if isinstance(error, SystemExit) and isinstance(error.code, str)
+        else f"{type(error).__name__}: {error}"
+    )
+    manifest["runner_error"] = message[:4000]
+    manifest["finished_at"] = now()
+    write_json(manifest_path, manifest)
+
+
+def main(
+    argv: list[str] | None = None,
+    *,
+    context: ProjectContext | None = None,
+) -> int:
+    ctx = context or ProjectContext.from_environment()
+    run_state: dict[str, Any] = {}
+    termination = TerminationSignals()
+    termination.install()
+    try:
+        return _run_project(ctx, argv, run_state, termination)
+    except BaseException as exc:
+        if "manifest" in run_state:
+            record_unfinished_run(run_state["manifest_path"], run_state["manifest"], exc)
+        raise
+    finally:
+        termination.restore()
+
+
+def _run_project(
+    ctx: ProjectContext,
+    argv: list[str] | None,
+    run_state: dict[str, Any],
+    termination: TerminationSignals,
+) -> int:
+    root = ctx.root
+    project = ctx.project
     profiles, defaults = load_agent_profiles()
     parser = argparse.ArgumentParser()
     parser.add_argument("--preflight-only", action="store_true")
@@ -734,7 +930,7 @@ def main() -> int:
     parser.add_argument(
         "--timeout-seconds",
         type=int,
-        default=DEFAULT_TIMEOUT_SECONDS,
+        default=project.outer_timeout_seconds,
         help=(
             "external runner watchdog/observation cutoff; this does not change "
             "the project contract's model-facing task budget"
@@ -747,12 +943,12 @@ def main() -> int:
         action="store_true",
         help="explicitly permit a continuation to change its prior provider arm",
     )
-    args = parser.parse_args()
+    args = parser.parse_args(argv)
     if args.timeout_seconds <= 0:
         parser.error("--timeout-seconds must be positive")
-    commit = require_official_start()
+    commit = require_official_start(ctx)
     continuation_rel, continuation, inherited_providers = resolve_continuation(
-        args.continuation_of
+        ctx, args.continuation_of
     )
     try:
         selected_providers = select_agent_providers(
@@ -774,6 +970,7 @@ def main() -> int:
     inner_profile = agent_config.inner
     continuation_candidate_rel, continuation_candidate = (
         resolve_continuation_candidate(
+            ctx,
             args.continuation_candidate,
             continuation_rel,
         )
@@ -783,12 +980,43 @@ def main() -> int:
         kind = "preflight"
     else:
         kind = "continuation" if continuation is not None else "official"
-    run_rel = Path(ARTIFACT_ROOT) / f"{kind}_{stamp}"
-    run_dir = ROOT / run_rel
+    run_rel = Path(project.artifact_root) / f"{kind}_{stamp}"
+    run_dir = root / run_rel
     run_dir.mkdir(parents=True, exist_ok=False)
+    # Write the manifest before any check that can fail, so every run
+    # directory says how its run ended.
+    manifest_path = run_dir / "manifest.json"
+    manifest: dict[str, Any] = {
+        "schema_version": 4,
+        "product": "interleaved_shannon",
+        "project_contract": ctx.project_path.relative_to(root).as_posix(),
+        "project_identity_sha256": project.identity_sha256,
+        "reference_answer_confinement": ctx.answer_source is not None,
+        "experiment": "interleaved_phase2_phase3_shannon",
+        "experiment_family": "interleaved_phase2_phase3_shannon",
+        "arm_id": f"outer_{outer_profile.key}_inner_{inner_profile.key}",
+        "commit": commit,
+        "started_at": now(),
+        "run_directory": run_rel.as_posix(),
+        "run_kind": kind,
+        "continuation": continuation,
+        "continuation_candidate": continuation_candidate,
+        "status": "preflight_running",
+        "source_preflight_passed": False,
+        "provider_preflight_passed": False,
+        "preflight_passed": False,
+        "model_process_launched": False,
+        "agent_selection": {
+            "outer_provider": outer_profile.key,
+            "inner_provider": inner_profile.key,
+            "continuation_provider_change_allowed": args.allow_provider_change,
+        },
+    }
+    run_state.update(manifest=manifest, manifest_path=manifest_path)
+    write_json(manifest_path, manifest)
 
     preflight_path = run_dir / "preflight_verification.json"
-    preflight = invoke_verifier("preflight", preflight_path)
+    preflight = invoke_verifier(ctx, "preflight", preflight_path)
     if preflight.returncode != 0:
         print(preflight.stdout, file=sys.stderr)
         print(preflight.stderr, file=sys.stderr)
@@ -814,7 +1042,7 @@ def main() -> int:
         if executable:
             version = subprocess.run(
                 [executable, "--version"],
-                cwd=ROOT,
+                cwd=root,
                 env=outer_environment,
                 text=True,
                 stdout=subprocess.PIPE,
@@ -840,12 +1068,14 @@ def main() -> int:
                 runtime["auth"] = claude_auth_summary(
                     executable,
                     outer_environment,
+                    cwd=root,
                 )
                 claude_error = claude_capability_error(
                     executable,
                     outer_environment,
                     require_outer=provider == outer_profile.key,
                     require_inner=provider == inner_profile.key,
+                    cwd=root,
                 )
                 if claude_error:
                     runtime["capability_error"] = "; ".join(
@@ -860,6 +1090,7 @@ def main() -> int:
                 runtime["auth"] = codex_auth_summary(
                     executable,
                     outer_environment,
+                    cwd=root,
                 )
                 try:
                     discovered = discover_codex_capabilities(
@@ -877,24 +1108,87 @@ def main() -> int:
         provider_runtime[provider] = runtime
 
     outer_runtime = provider_runtime[outer_profile.key]
+    public_provider_runtimes = {
+        provider: {
+            "version": runtime["version"],
+            "auth": runtime["auth"],
+            "provider_identity": runtime["provider_identity"],
+            "codex_capabilities": runtime["codex_capabilities"],
+            "capability_error": runtime["capability_error"],
+        }
+        for provider, runtime in provider_runtime.items()
+    }
+    manifest["provider_runtimes"] = public_provider_runtimes
 
-    shannon_source_preflight = source_bundle_preflight(run_dir=run_dir)
+    # Provider checks are cheap; the source preflight runs EasyCrypt.
+    preflight_errors: list[str] = []
+    for provider in sorted(agent_config.required_provider_keys):
+        selected = profiles[provider]
+        runtime = provider_runtime[provider]
+        if runtime["executable"] is None:
+            preflight_errors.append(
+                f"{selected.binary_name} CLI is not installed or not on PATH"
+            )
+            continue
+        required_auth_method = "claude.ai" if provider == "claude" else "chatgpt"
+        auth = runtime["auth"]
+        if (
+            not auth.get("logged_in")
+            or auth.get("auth_method") != required_auth_method
+        ):
+            preflight_errors.append(
+                f"{selected.binary_name} OAuth is not logged in via "
+                f"{required_auth_method}; refusing an ambiguous auth fallback"
+            )
+        if runtime["provider_identity"] is None:
+            preflight_errors.append(
+                f"{selected.binary_name} runtime identity could not be bound"
+            )
+        if runtime["capability_error"]:
+            preflight_errors.append(str(runtime["capability_error"]))
+    if preflight_errors:
+        manifest["status"] = "preflight_provider_failed"
+        manifest["preflight_provider_errors"] = preflight_errors
+        write_json(manifest_path, manifest)
+        raise SystemExit("; ".join(preflight_errors))
+
+    inner_launch_identity = {
+        "model": inner_profile.model,
+        **provider_cli_identity(inner_profile.backend),
+    }
+    if provider_identity_projection(inner_launch_identity) != (
+        provider_identity_projection(
+            provider_runtime[inner_profile.key]["provider_identity"]
+        )
+    ):
+        manifest["status"] = "preflight_provider_failed"
+        manifest["preflight_provider_errors"] = [
+            "inner provider launch identity differs from runner preflight identity"
+        ]
+        write_json(manifest_path, manifest)
+        raise SystemExit(manifest["preflight_provider_errors"][0])
+
+    shannon_source_preflight = source_bundle_preflight(ctx, run_dir=run_dir)
 
     prompt_template = (
-        ROOT / PROJECT.prompt_file if PROJECT.prompt_file else PRODUCT / "prompt.py"
+        root / project.prompt_file if project.prompt_file else PRODUCT / "prompt.py"
     )
     prompt_text = (
         prompt_template.read_text(encoding="utf-8")
-        if PROJECT.prompt_file
-        else render_default_prompt(PROJECT)
+        if project.prompt_file
+        else render_default_prompt(project)
     )
     if continuation_rel is None:
         continuation_context = ""
     else:
-        resume_options = continuation_resume_options(
-            ROOT / continuation_rel,
-            source_text=(ROOT / TARGET_REL).read_text(encoding="utf-8"),
+        assert continuation is not None
+        resume_options, resume_options_error = continuation_checkpoint_options(
+            ctx,
+            root / continuation_rel,
+            source_text=ctx.target.read_text(encoding="utf-8"),
         )
+        if resume_options_error:
+            continuation["resume_checkpoints_error"] = resume_options_error
         if resume_options:
             rendered_options = "\n".join(
                 "- `--lemma {lemma} --resume-job {job_id}`: {tactic_count} "
@@ -913,7 +1207,6 @@ For a matching still-promising lemma, submit that exact `--resume-job` before
 starting a fresh handoff. The scheduler copies and revalidates the capsule in
 this run and records the prior run directory in the invocation receipt.
 """
-            assert continuation is not None
             continuation["resume_checkpoints"] = resume_options
         else:
             resume_instruction = ""
@@ -976,45 +1269,13 @@ resuming large construction-mode edits.
     rendered_path = run_dir / "prompt.rendered.md"
     rendered_path.write_text(rendered_prompt, encoding="utf-8")
 
-    public_provider_runtimes = {
-        provider: {
-            "version": runtime["version"],
-            "auth": runtime["auth"],
-            "provider_identity": runtime["provider_identity"],
-            "codex_capabilities": runtime["codex_capabilities"],
-            "capability_error": runtime["capability_error"],
-        }
-        for provider, runtime in provider_runtime.items()
-    }
-    manifest: dict[str, Any] = {
-        "schema_version": 4,
-        "product": "interleaved_shannon",
-        "project_contract": _SETTINGS.project_path.relative_to(ROOT).as_posix(),
-        "project_identity_sha256": PROJECT.identity_sha256,
-        "reference_answer_confinement": _SETTINGS.answer_source is not None,
-        "experiment": "interleaved_phase2_phase3_shannon",
-        "experiment_family": "interleaved_phase2_phase3_shannon",
-        "arm_id": f"outer_{outer_profile.key}_inner_{inner_profile.key}",
-        "commit": commit,
+    manifest.update({
         "toolchain_fingerprint_at_start": start_toolchain,
-        "started_at": now(),
-        "run_directory": run_rel.as_posix(),
-        "run_kind": kind,
-        "continuation": continuation,
-        "continuation_candidate": continuation_candidate,
         "source_preflight_passed": True,
-        "provider_preflight_passed": False,
-        "preflight_passed": False,
-        "model_process_launched": False,
         "shannon_source_preflight": shannon_source_preflight,
         "claude_required_mcp_preflight": {
             "required": inner_profile.backend == "claude",
             "passed": None if inner_profile.backend == "claude" else True,
-        },
-        "agent_selection": {
-            "outer_provider": outer_profile.key,
-            "inner_provider": inner_profile.key,
-            "continuation_provider_change_allowed": args.allow_provider_change,
         },
         "profiles": {
             provider: profiles[provider].outer_dict()
@@ -1033,7 +1294,7 @@ resuming large construction-mode edits.
             "timeout_seconds": args.timeout_seconds,
             "deadline_at": watchdog_deadline,
             "timing_contract": "project_model_budget_external_watchdog",
-            "model_visible_task_budget_seconds": DEFAULT_TIMEOUT_SECONDS,
+            "model_visible_task_budget_seconds": project.outer_timeout_seconds,
             "watchdog_timeout_seconds": args.timeout_seconds,
             "watchdog_deadline_at": watchdog_deadline,
             "prior_active_elapsed_seconds": prior_active_elapsed,
@@ -1057,7 +1318,7 @@ resuming large construction-mode edits.
             "outer_warm_handoff": True,
             "job_scheduler": {
                 "nonblocking": True,
-                "max_parallel": MAX_PARALLEL,
+                "max_parallel": project.max_parallel,
             },
         },
         "input_hashes": {
@@ -1065,7 +1326,7 @@ resuming large construction-mode edits.
             "agent_config_loader": sha256(PRODUCT / "agent_config.py"),
             "prompt_template": sha256(prompt_template),
             "rendered_prompt": sha256(rendered_path),
-            "target": sha256(ROOT / TARGET_REL),
+            "target": sha256(ctx.target),
             "runner": sha256(Path(__file__)),
             "shannon_job_scheduler": sha256(PRODUCT / "jobs.py"),
             "shannon_wrapper": sha256(PRODUCT / "inner_runner.py"),
@@ -1074,66 +1335,18 @@ resuming large construction-mode edits.
                 PRODUCT / "warm_handoff_sentinel.py"
             ),
             "claude_required_mcp_sentinel": sha256(
-                ROOT
+                root
                 / "workflow"
                 / "validation"
                 / "claude_required_mcp_sentinel.py"
             ),
             "outer_handoff_contract": sha256(
-                ROOT / "workflow" / "node" / "outer_proof_handoff.py"
+                root / "workflow" / "node" / "outer_proof_handoff.py"
             ),
-            "verifier": sha256(ROOT / VERIFIER),
+            "verifier": sha256(root / ctx.verifier),
         },
-    }
-    manifest_path = run_dir / "manifest.json"
+    })
     write_json(manifest_path, manifest)
-
-    preflight_errors: list[str] = []
-    for provider in sorted(agent_config.required_provider_keys):
-        selected = profiles[provider]
-        runtime = provider_runtime[provider]
-        if runtime["executable"] is None:
-            preflight_errors.append(
-                f"{selected.binary_name} CLI is not installed or not on PATH"
-            )
-            continue
-        required_auth_method = "claude.ai" if provider == "claude" else "chatgpt"
-        auth = runtime["auth"]
-        if (
-            not auth.get("logged_in")
-            or auth.get("auth_method") != required_auth_method
-        ):
-            preflight_errors.append(
-                f"{selected.binary_name} OAuth is not logged in via "
-                f"{required_auth_method}; refusing an ambiguous auth fallback"
-            )
-        if runtime["provider_identity"] is None:
-            preflight_errors.append(
-                f"{selected.binary_name} runtime identity could not be bound"
-            )
-        if runtime["capability_error"]:
-            preflight_errors.append(str(runtime["capability_error"]))
-    if preflight_errors:
-        manifest["status"] = "preflight_provider_failed"
-        manifest["preflight_provider_errors"] = preflight_errors
-        write_json(manifest_path, manifest)
-        raise SystemExit("; ".join(preflight_errors))
-
-    inner_launch_identity = {
-        "model": inner_profile.model,
-        **provider_cli_identity(inner_profile.backend),
-    }
-    if provider_identity_projection(inner_launch_identity) != (
-        provider_identity_projection(
-            provider_runtime[inner_profile.key]["provider_identity"]
-        )
-    ):
-        manifest["status"] = "preflight_provider_failed"
-        manifest["preflight_provider_errors"] = [
-            "inner provider launch identity differs from runner preflight identity"
-        ]
-        write_json(manifest_path, manifest)
-        raise SystemExit(manifest["preflight_provider_errors"][0])
 
     if inner_profile.backend == "claude":
         claude_mcp_preflight = run_claude_required_mcp_sentinel(
@@ -1142,7 +1355,7 @@ resuming large construction-mode edits.
             ),
             model=inner_profile.model,
             output_path=run_dir / "claude_required_mcp_preflight.json",
-            project_root=ROOT,
+            project_root=root,
         )
         manifest["claude_required_mcp_preflight"] = {
             "required": True,
@@ -1173,6 +1386,7 @@ resuming large construction-mode edits.
         outer_profile,
         str(outer_runtime["executable"]),
         rendered_prompt=rendered_prompt,
+        cwd=root,
         codex_features=outer_runtime["codex_features"],
     )
     manifest["command"] = (
@@ -1182,6 +1396,7 @@ resuming large construction-mode edits.
     )
     manifest["prompt_transport"] = "stdin" if prompt_via_stdin else "argument"
     manifest["model_process_launched"] = True
+    manifest["status"] = "running"
     write_json(manifest_path, manifest)
 
     events_path = run_dir / "outer_agent_events.jsonl"
@@ -1205,7 +1420,7 @@ resuming large construction-mode edits.
         with events_path.open("w", encoding="utf-8") as events, stderr_path.open(
             "w", encoding="utf-8"
         ) as stderr:
-            environment = outer_environment.copy()
+            environment = ctx.child_environment(outer_environment)
             environment["INTERLEAVED_RUN_DIR"] = run_rel.as_posix()
             environment[INNER_PROVIDER_ENV] = inner_profile.key
             environment["INTERLEAVED_INNER_PROFILE_SHA256"] = (
@@ -1223,7 +1438,7 @@ resuming large construction-mode edits.
                 )
             process = subprocess.Popen(
                 command,
-                cwd=ROOT,
+                cwd=root,
                 env=environment,
                 text=True,
                 stdin=subprocess.PIPE if prompt_via_stdin else subprocess.DEVNULL,
@@ -1248,11 +1463,17 @@ resuming large construction-mode edits.
                 interrupted = True
                 terminate_group(process)
                 exit_code = process.returncode
+    except KeyboardInterrupt:
+        interrupted = True
     finally:
+        termination.finalizing()
         if process is not None:
             terminate_group(process)
+            if exit_code is None:
+                exit_code = process.poll()
         try:
             scheduler_cleanup = cancel_jobs_in_run(
+                ctx,
                 run_rel=run_rel,
                 run_dir=run_dir,
                 dispatch_after=False,
@@ -1264,11 +1485,11 @@ resuming large construction-mode edits.
         elapsed = time.monotonic() - start
 
     integrity_violations = checkout_integrity_violations(
-        start_commit=commit, start_toolchain=start_toolchain,
+        ctx, start_commit=commit, start_toolchain=start_toolchain,
     )
     final_path = run_dir / "final_verification.json"
-    final = invoke_verifier("final", final_path)
-    shannon_summary = public_job_summary(run_dir)
+    final = invoke_verifier(ctx, "final", final_path)
+    shannon_summary = public_job_summary(ctx, run_dir)
     private_jobs = private_job_records(run_dir)
     expected_inner_identity = provider_identity_sha256(
         provider_runtime[inner_profile.key]["provider_identity"]
@@ -1278,6 +1499,9 @@ resuming large construction-mode edits.
         inner_profile=inner_profile,
         expected_inner_profile_sha256=agent_profile_sha256(inner_profile),
         expected_identity_sha256=expected_inner_identity,
+        accepted_source_commits=accepted_job_source_commits(
+            ctx, private_jobs, start_commit=commit,
+        ),
     )
     orphan_invocation_audit = run_dir / "shannon_invocations.jsonl"
     if orphan_invocation_audit.exists():
@@ -1298,7 +1522,7 @@ resuming large construction-mode edits.
     partial_candidate = (
         None
         if final_passed
-        else preserve_partial_candidate(target=ROOT / TARGET_REL, run_dir=run_dir)
+        else preserve_partial_candidate(ctx, target=ctx.target, run_dir=run_dir)
     )
     manifest.update(
         {
@@ -1308,6 +1532,7 @@ resuming large construction-mode edits.
             "outer_exit_code": exit_code,
             "timed_out": timed_out,
             "interrupted": interrupted,
+            "termination_signals": termination.received,
             "shannon_job_cleanup": scheduler_cleanup,
             "shannon_job_cleanup_error": scheduler_cleanup_error,
             "shannon_job_summary": shannon_summary,
@@ -1316,9 +1541,9 @@ resuming large construction-mode edits.
             "final_verification_passed": final_passed,
             "premature_agent_stop": premature_agent_stop,
             "partial_candidate": partial_candidate,
-            "answer_source_visible_at_finish": ANSWER_SOURCE.exists(),
+            "answer_source_visible_at_finish": ctx.answer_source_visible(),
             "final_git_status": run(
-                ["git", "status", "--porcelain=v1", "--untracked-files=all"]
+                ctx, ["git", "status", "--porcelain=v1", "--untracked-files=all"]
             ).stdout.splitlines(),
             "status": (
                 "proved"

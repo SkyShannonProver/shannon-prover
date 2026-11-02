@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-import hashlib
-import json
 from dataclasses import replace
 
 from core.easycrypt.proof_state_compiler.contracts.analyzed_state import (
@@ -23,6 +21,10 @@ from core.easycrypt.proof_state_compiler.contracts.frozen_json import (
 )
 from core.easycrypt.proof_state_compiler.contracts.diagnostics import (
     EXPLANATION_ONLY,
+)
+from core.easycrypt.proof_state_compiler.contracts.digest import (
+    canonical_json,
+    text_sha256,
 )
 from core.easycrypt.proof_state_compiler.compound_boundary_text import (
     compound_boundary_continuation,
@@ -133,21 +135,16 @@ def _present_action(
         )
         if complete_tactic is None:
             return None, False
-        identity_material = json.dumps(
-            {
-                "source_candidate_id": item.candidate_id,
-                "handoff": handoff.to_payload(),
-                "complete_tactic": complete_tactic,
-            },
-            ensure_ascii=False,
-            sort_keys=True,
-            separators=(",", ":"),
-        )
+        identity_material = canonical_json({
+            "source_candidate_id": item.candidate_id,
+            "handoff": handoff.to_payload(),
+            "complete_tactic": complete_tactic,
+        })
         presented_item = replace(
             item,
-            candidate_id="compound-boundary-action:" + hashlib.sha256(
-                identity_material.encode("utf-8")
-            ).hexdigest()[:20],
+            candidate_id="compound-boundary-action:" + text_sha256(
+                identity_material
+            )[:20],
             payload=freeze_json_object({"tactic": complete_tactic}),
         )
     reason = (

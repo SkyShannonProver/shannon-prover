@@ -8,8 +8,6 @@ trigger or suppressed because the same content was already presented.
 
 from __future__ import annotations
 
-import hashlib
-import json
 import re
 from dataclasses import dataclass
 
@@ -28,15 +26,17 @@ from core.easycrypt.proof_state_compiler.contracts.strategy import (
     ROUTE_SELECTING,
     STRATEGY_CLASSES,
 )
+from core.easycrypt.proof_state_compiler.contracts.digest import (
+    json_sha256,
+    text_sha256,
+)
 
 
 STATE_REFRESH = "state_refresh"
-EXPLICIT_CONTEXT_REQUEST = "explicit_context_request"
 AGENT_SELECTED_OPERATION = "agent_selected_operation"
 CURRENT_STATE_FAILURE = "current_state_failure"
 TRIGGER_KINDS = frozenset({
     STATE_REFRESH,
-    EXPLICIT_CONTEXT_REQUEST,
     AGENT_SELECTED_OPERATION,
     CURRENT_STATE_FAILURE,
 })
@@ -99,7 +99,7 @@ class CompilerTrigger:
             raise ValueError(f"unsupported compiler trigger {self.trigger_kind!r}")
         if not isinstance(self.state_ref, StateRef):
             raise TypeError("compiler trigger requires an exact StateRef")
-        if self.trigger_kind in {STATE_REFRESH, EXPLICIT_CONTEXT_REQUEST}:
+        if self.trigger_kind == STATE_REFRESH:
             if self.commitment_anchor is not None:
                 raise ValueError(
                     "state/context triggers cannot claim a proof commitment"
@@ -415,13 +415,7 @@ class CompilerInvocationContext:
                 if trigger.trigger_kind != STATE_REFRESH
             ],
         }
-        encoded = json.dumps(
-            payload,
-            ensure_ascii=False,
-            sort_keys=True,
-            separators=(",", ":"),
-        ).encode("utf-8")
-        return hashlib.sha256(encoded).hexdigest()
+        return json_sha256(payload)
 
 
 def compiler_invocation_context(
@@ -456,24 +450,15 @@ def compiler_invocation_context(
         "payload": turn_evidence.payload.to_dict(),
         "structured_error": turn_evidence.structured_error,
     })
-    semantic_digest = hashlib.sha256(
-        json.dumps(
-            subject.to_dict(),
-            ensure_ascii=False,
-            sort_keys=True,
-            separators=(",", ":"),
-        ).encode("utf-8")
-    ).hexdigest()
+    semantic_digest = json_sha256(subject.to_dict())
     rejected = turn_evidence.outcome_kind in {"rejected", "no_progress"}
-    occurrence_digest = hashlib.sha256(
-        (
-            turn_evidence.source_event_id
-            + "\0"
-            + str(turn_evidence.source_event_sequence)
-            + "\0"
-            + semantic_digest
-        ).encode("utf-8")
-    ).hexdigest()
+    occurrence_digest = text_sha256(
+        turn_evidence.source_event_id
+        + "\0"
+        + str(turn_evidence.source_event_sequence)
+        + "\0"
+        + semantic_digest
+    )
     anchor = CommitmentAnchor(
         anchor_id=("rejected-operation:" if rejected else "accepted-operation:")
         + occurrence_digest[:24],
@@ -496,14 +481,7 @@ def compiler_invocation_context(
     )
     failure_observation = None
     if rejected:
-        evidence_digest = hashlib.sha256(
-            json.dumps(
-                turn_evidence.identity_payload(),
-                ensure_ascii=False,
-                sort_keys=True,
-                separators=(",", ":"),
-            ).encode("utf-8")
-        ).hexdigest()
+        evidence_digest = json_sha256(turn_evidence.identity_payload())
         failure_observation = FailureObservation(
             observation_id=f"failure-observation:{occurrence_digest[:24]}",
             occurrence_identity=occurrence_digest,

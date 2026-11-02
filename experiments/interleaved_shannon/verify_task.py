@@ -22,6 +22,11 @@ from core.easycrypt.proof_text import discard_sibling_eco
 from experiments.interleaved_shannon.source_projection import (
     ANSWER_SOURCE,
 )
+from workflow.interleaved.job_record import (
+    BOUNDARY_LEASE_STATUSES,
+    TERMINAL_STATUSES,
+    JobStatus,
+)
 
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -134,8 +139,9 @@ def _source_policy_mode(mode: str) -> str:
 def editable_region_forbidden_words(mode: str, scratch: str, proof: str) -> list[str]:
     """Return constructs forbidden in editable regions for one verifier mode.
 
-    Development checks deliberately allow temporary ``admit`` shells so Opus
-    can coarse-check a loadable file while constructing later declarations.
+    Development checks deliberately allow temporary ``admit`` shells so the
+    outer agent can coarse-check a loadable file while constructing later
+    declarations.
     Every other escape construct remains forbidden, and final acceptance adds
     ``admit`` back to the forbidden set.
     """
@@ -182,7 +188,7 @@ def active_shannon_job_errors(mode: str, summary: dict[str, Any]) -> list[str]:
         str(item.get("job_id") or "unknown")
         for item in jobs
         if isinstance(item, dict)
-        and item.get("status") in {"queued", "starting", "running"}
+        and item.get("status") in BOUNDARY_LEASE_STATUSES
     ]
     if not active:
         return errors
@@ -201,13 +207,10 @@ def shannon_terminal_alerts(summary: dict[str, Any]) -> list[dict[str, Any]]:
         return []
     alerts: list[dict[str, Any]] = []
     for item in jobs:
-        if not isinstance(item, dict) or item.get("status") not in {
-            "verified",
-            "incomplete",
-            "infrastructure_invalid",
-            "cancelled",
-            "stale_merge",
-        }:
+        # A merged job needs no further attention from the outer agent.
+        if not isinstance(item, dict) or item.get("status") not in (
+            TERMINAL_STATUSES - {JobStatus.MERGED}
+        ):
             continue
         alert: dict[str, Any] = {
             key: str(item.get(key) or "")
@@ -424,11 +427,14 @@ def verify(
             and candidate_run.is_dir()
         ):
             try:
-                from experiments.interleaved_shannon.shannon_jobs import (
-                    public_job_summary,
+                from experiments.interleaved_shannon._compat import (
+                    reference_context,
                 )
+                from workflow.interleaved.jobs import public_job_summary
 
-                report["shannon_jobs"] = public_job_summary(candidate_run)
+                report["shannon_jobs"] = public_job_summary(
+                    reference_context(), candidate_run
+                )
                 report["shannon_terminal_alerts"] = shannon_terminal_alerts(
                     report["shannon_jobs"]
                 )
@@ -567,7 +573,7 @@ def _replay_check(
     return ec_stdout, ec_stderr
 
 
-def main() -> int:
+def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser()
     modes = parser.add_mutually_exclusive_group(required=True)
     modes.add_argument("--preflight", action="store_true")
@@ -595,7 +601,7 @@ def main() -> int:
     parser.add_argument("--candidate", type=Path)
     parser.add_argument("--lemma")
     parser.add_argument("--output", type=Path)
-    args = parser.parse_args()
+    args = parser.parse_args(argv)
     mode = (
         "import"
         if args.check_import

@@ -360,7 +360,7 @@ matching, and result/goal convertibility remain EasyCrypt-owned.
 
 N2a connects the first production consumer. M05 performs only bounded lexical
 resource/application discovery, asks EasyCrypt to elaborate the exact
-`Alossless_F` application, and admits a binding only when the native head,
+losslessness-lemma application, and admits a binding only when the native head,
 module/proof slots, one residual losslessness premise and canonical result
 procedure satisfy the frozen feature policy. Source-local syntax is query
 spelling, never identity authority. The old M05 feature-local semantic binder
@@ -888,7 +888,6 @@ core/easycrypt/proof_state_compiler/
                                    from failed_commit.py
 
   compiler.py                      pure P1-P4 orchestration
-  serialization.py
 
 workflow/proof_state_compiler/
   activation.py                    off/audit/treatment profile + derived plan
@@ -2030,6 +2029,11 @@ This routing prevents evidence items from becoming top-level fields. For
 example, M12, M21, and M25 share the same `ProgramStatement`, `ProofCoordinate`,
 `BoundaryContractAssessment`, and `TransformAssessment` vocabulary; they do
 not create three parallel panel architectures.
+
+`ScopeAssessment`, `BoundaryContractAssessment` and `TransformAssessment` are
+design vocabulary for these held modules. No feature produces them, so the
+code defines no such types; a module that needs one adds it with its first
+producer.
 
 ## 9. Binding is one shared middle-end subsystem
 

@@ -2,58 +2,27 @@
 from __future__ import annotations
 
 import json
-import re
 import subprocess
 import sys
 from pathlib import Path
 
+from core.easycrypt.lemma_decls import lemma_declarations
 from core.easycrypt.proof_text import (
     discard_sibling_eco,
-    easycrypt_code,
     file_wide_unchecked_constructs,
     unchecked_proof_constructs,
 )
 
 
 _VERIFY_TIMEOUT_SECONDS = 600
-_TOKEN_EDGE = r"(?<![A-Za-z0-9_'])"
-_QED_RE = re.compile(rf"{_TOKEN_EDGE}qed\s*\.")
-_BY_RE = re.compile(rf"{_TOKEN_EDGE}by(?![A-Za-z0-9_'])")
-# EasyCrypt ends a sentence at a dot followed by a blank, newline or the end.
-_SENTENCE_END_RE = re.compile(r"\.(?=[ \t\r\n]|$)")
-
-
-def _target_region(content: str, lemma: str) -> str | None:
-    """Return the text from the last declaration of ``lemma`` to the end."""
-
-    pattern = re.compile(
-        r"(?m)^\s*(?:local\s+)?(?:lemma|theorem|equiv|hoare|phoare|ehoare)\s+"
-        + re.escape(lemma) + r"(?=[\s:(\[]|$)"
-    )
-    matches = list(pattern.finditer(easycrypt_code(content)))
-    return content[matches[-1].start():] if matches else None
-
-
-def _proof_closed(region: str) -> bool:
-    """Whether the proof in ``region`` ends, by `qed` or a one-line `by`.
-
-    EasyCrypt accepts a proof left open at the end of a file, so an open
-    proof must not pass as checked.
-    """
-
-    code = easycrypt_code(region)
-    if _QED_RE.search(code):
-        return True
-    end = _SENTENCE_END_RE.search(code)
-    return bool(_BY_RE.search(code[:end.start()] if end else code))
 
 
 def handle_verify_lemma(session, args) -> int:
     """Verify one extracted lemma with the pinned EasyCrypt runtime."""
 
+    from core.easycrypt.committed_history import committed_history_has_qed
     from core.easycrypt.lemma_extract import extract_lemma
-    from core.easycrypt.session.session_common import get_ec_env
-    from core.easycrypt.ec_env import easycrypt_command
+    from core.easycrypt.ec_env import easycrypt_command, get_ec_env
 
     def emit(status: str, **payload) -> None:
         session.emit_event(
@@ -85,10 +54,9 @@ def handle_verify_lemma(session, args) -> int:
         if session.history.exists()
         else ""
     )
-    use_session_proof = any(
-        line.strip().lower().rstrip(".").strip() == "qed"
-        for line in history.splitlines()
-    )
+    # committed_history owns closure syntax: a session may close with a
+    # compound step such as `TAC. qed.` on one line.
+    use_session_proof = committed_history_has_qed(session.dir)
     try:
         extracted = extract_lemma(
             file_path,
@@ -107,14 +75,15 @@ def handle_verify_lemma(session, args) -> int:
     if use_session_proof:
         content += ("" if content.endswith("\n") else "\n") + history
     # The extract replaces every other proof with admit, so only the target
-    # proof is checked for constructs that skip goals.
-    target_proof = history if use_session_proof else _target_region(
-        content, args.verify_lemma,
-    )
-    if target_proof is None:
+    # proof is checked for constructs that skip goals. The target is the
+    # last declaration: the extract ends with it.
+    declarations = lemma_declarations(content, args.verify_lemma)
+    if not declarations:
         emit("fail", reason="target_not_found")
         sys.stdout.write("[verify] FAILED: target declaration not found in the extract\n")
         return 1
+    declaration = declarations[-1]
+    target_proof = history if use_session_proof else content[declaration.start:]
     skipped = unchecked_proof_constructs(target_proof)
     skipped.extend(file_wide_unchecked_constructs(content))
     if skipped:
@@ -122,7 +91,9 @@ def handle_verify_lemma(session, args) -> int:
         emit("fail", reason="unchecked_proof", constructs=reasons)
         sys.stdout.write("[verify] FAILED: proof is not checked (" + ", ".join(reasons) + ")\n")
         return 1
-    if not _proof_closed(target_proof):
+    # EasyCrypt accepts a proof left open at the end of a file, so an open
+    # proof must not pass as checked.
+    if declaration.proof is None or declaration.proof.kind == "open":
         emit("fail", reason="proof_not_closed")
         sys.stdout.write("[verify] FAILED: proof is not closed\n")
         return 1

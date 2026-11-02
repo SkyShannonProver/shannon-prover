@@ -2,9 +2,6 @@
 
 from __future__ import annotations
 
-import hashlib
-import json
-
 from core.easycrypt.proof_state_compiler.contracts import (
     CompilerInvocationContext,
     NativePlanningBudget,
@@ -15,6 +12,10 @@ from core.easycrypt.proof_state_compiler.contracts import (
     NativeSemanticRequestProduction,
     ProofCoordinate,
     ProofIR,
+)
+from core.easycrypt.proof_state_compiler.contracts.digest import (
+    canonical_json,
+    text_sha256,
 )
 from core.easycrypt.proof_state_compiler.features.operation_binding_repair.classification import (
     classify_operation_binding_failure,
@@ -101,20 +102,13 @@ def plan_native_selected_application_binding_set(
         selected_resource=attempted.resource,
         module_candidates=candidates,
     )
-    digest = hashlib.sha256(
-        (
-            attempted.occurrence_identity
-            + "\0"
-            + attempted.recovery_key
-            + "\0"
-            + json.dumps(
-                query.to_payload(),
-                ensure_ascii=False,
-                sort_keys=True,
-                separators=(",", ":"),
-            )
-        ).encode("utf-8")
-    ).hexdigest()[:20]
+    digest = text_sha256(
+        attempted.occurrence_identity
+        + "\0"
+        + attempted.recovery_key
+        + "\0"
+        + canonical_json(query.to_payload())
+    )[:20]
     request = NativeSemanticRequest(
         state_ref=proof_ir.state_ref,
         request_id=f"selected-application-bindings:{digest}",

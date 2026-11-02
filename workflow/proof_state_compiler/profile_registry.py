@@ -165,13 +165,6 @@ PRODUCTION_TURN_PROFILES: Mapping[str, SurfaceProfile] = MappingProxyType({
     for profile_id, registration in PRODUCTION_PROFILE_REGISTRATIONS.items()
 })
 
-# Existing runtime projection names now intentionally mean production only.
-CURRENT_PROFILE_REGISTRATIONS = PRODUCTION_PROFILE_REGISTRATIONS
-CURRENT_PROFILE_IDS = PRODUCTION_PROFILE_IDS
-CURRENT_COMPILER_PROFILES = PRODUCTION_COMPILER_PROFILES
-CURRENT_TURN_PROFILES = PRODUCTION_TURN_PROFILES
-
-
 _RESEARCH_PACKAGE = "workflow.proof_state_compiler.research"
 _RESEARCH_REGISTRY_MODULE = (
     f"{_RESEARCH_PACKAGE}.proof_state_compiler_research_profile_registry"

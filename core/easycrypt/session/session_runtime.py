@@ -12,23 +12,20 @@ import shutil
 import tempfile
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Optional
 
 from core.easycrypt.session.session_common import (
     trim_after_last_prompt as _trim_after_last_prompt,
 )
 from core.easycrypt.session.session_display import (
+    TryResult,
     compress_current_state,
-    format_try_chain,
-    format_try_single,
+    try_tool_error,
 )
 
 from core.easycrypt.session.session_no_progress import detect_no_progress  # no-progress detection (extracted)
 from core.easycrypt.session.session_tactic_precheck import precheck_tactic  # tactic precheck (extracted)
-from core.easycrypt.ec_backend import ECBackend, ECResult  # EC execution (extracted)
+from core.easycrypt.ec_backend import BatchBackend, CommitOutcome
 from core.easycrypt.session.session_rollback import RollbackJournal  # pre-commit file txn (extracted)
-
-from core.easycrypt.session.session_display import reorder_display as _reorder_display
 
 from core.easycrypt.session.session_events import append_error_event as _append_error_event
 from core.easycrypt.session.session_events import append_event as _append_event
@@ -37,23 +34,67 @@ from core.easycrypt.session.session_events import events_path as _events_path
 
 @dataclass(frozen=True)
 class UndoStepResult:
-    """Concrete outcome of one requested history rewind."""
+    """Concrete outcome of one requested history rewind.
+
+    ``status`` is ``ok`` (history rewound), ``empty`` (nothing to undo) or
+    ``unavailable`` (a multi-step rewind the daemon could not perform by
+    ``undo``; nothing changed and ``reason`` says why, so the manager uses
+    its restart+replay path). ``backend`` names how the state was rebuilt:
+    ``daemon_undo`` or ``batch_replay``.
+    """
 
     output: str
     status: str
     undone_tactic: str
     remaining_steps: int
+    undone_count: int = 0
+    backend: str = ""
+    reason: str = ""
 
     @property
     def state_changed(self) -> bool:
         return self.status == "ok"
 
 
+@dataclass(frozen=True)
+class CommitResult:
+    """Outcome of one ``append_block``, as its ``tactic.result`` event records it.
+
+    ``status`` is ``ok``, ``error``, ``no_progress_reverted``,
+    ``not_committed`` or ``refused``; only ``ok`` leaves the transaction in
+    the journal. ``output`` is the state (or refusal) text shown for it.
+    """
+
+    status: str
+    history_committed: bool
+    latest_error: str
+    no_progress_reason: str
+    output: str
+
+
+@dataclass(frozen=True)
+class _Fallback:
+    """Why the daemon did not judge a commit, so the batch backend must."""
+
+    route: str
+    detail: str = ""
+
+
+def _exception_detail(exc: BaseException) -> str:
+    return f"{type(exc).__name__}: {exc}"
+
+
 class Session:
-    def __init__(self, session_dir: Path, include_dirs: list[str] | None = None):
+    def __init__(
+        self,
+        session_dir: Path,
+        include_dirs: list[str] | None = None,
+        *,
+        batch: BatchBackend | None = None,
+    ):
         self.dir = session_dir
         self.dir.mkdir(parents=True, exist_ok=True)
-        self._ec_backend = ECBackend(self.dir)  # batch EC execution (daemon path TBD)
+        self._batch = batch or BatchBackend(self.dir)
         self._include_file = self.dir / "include_dirs.txt"
         # Merge: CLI args override, but also load persisted dirs from previous invocations
         persisted = []
@@ -84,15 +125,8 @@ class Session:
                 p.write_text("")
         # Daemon backend: lazy-initialized on the first managed commit when
         # session_meta.json supplies (file, lemma). Gracefully falls back
-        # to the subprocess path on any failure. See daemon_backend.py.
+        # to the batch backend on any failure. See daemon_backend.py.
         self._daemon_backend = None  # type: ignore[assignment]
-        # Set by _try_daemon_path when the latest commit went through the
-        # daemon. It is audit metadata and may also be consulted by explicit
-        # read-only inspections that require a synchronized daemon.
-        self._last_commit_via_daemon = False
-        # Why the last commit routed daemon-vs-batch (one of the _route()
-        # reasons) — surfaced as an `ec.routing` event for audit visibility.
-        self._last_routing_reason = ""
 
     def emit_event(
         self, event_type: str, payload: dict | None = None,
@@ -128,168 +162,237 @@ class Session:
             return None, None
         return fpath, lname
 
-    def _apply_no_progress_rollback(self) -> None:
-        """Restore the session to its pre-tactic state after a tactic
-        was accepted by EC but produced no goal change.
+    def _roll_back(self) -> None:
+        """Undo the appended transaction: ``history.ec``, ``steps.log`` and
+        ``current.out`` return to their pre-commit state.
 
-        Called by `append_block` when the hook registry's mutation
-        aggregate has `request_rollback=True` (set by
-        `tactic_no_effect_trigger`). The rollback restores
-        history.ec from prev_hist, pops the last step from
-        steps.log, restores curr.out from prev.out, and invalidates
-        the daemon cache. Without the daemon invalidation, the
-        in-memory EC state would be ahead of the file state and
-        downstream tactics would be applied on top of a phantom
-        committed tactic.
+        The daemon must then hold exactly the restored journal. A rejected
+        transaction already left it there (the daemon undoes the sentences a
+        rejected transaction ran); an accepted no-op is taken back with
+        EasyCrypt's ``undo``. When neither can be shown the daemon session is
+        dropped, and the next commit reopens and replays it; it is dropped
+        even when the restore fails.
         """
-        self._rollback.restore_pre_commit()
-        # EC has no undo; the daemon session must be dropped and
-        # replayed on the next commit. Invalidate the cache.
-        self._invalidate_daemon()
+        restored = False
+        try:
+            self._rollback.restore_pre_commit()
+            restored = True
+        finally:
+            if not restored or self._daemon_undo_to_journal() is None:
+                self._invalidate_daemon()
 
-    def _route(
-        self,
-        reason: str,
-        took_daemon: bool,
-        *,
-        rejection_error: str = "",
-        detail: str = "",
-    ) -> "ECResult":
-        """Record WHY the latest commit routed daemon-vs-batch (one of the fixed
-        reason strings) and return the routing outcome. The reason is surfaced by
-        ``append_block`` as an ``ec.routing`` audit event; the daemon-reject error
-        (if any) travels inline in the result rather than via a side-channel attr.
-        ``_last_routing_reason`` is kept as a Session attr for an external test
-        reader (``test_ec_routing_characterization``)."""
-        self._last_routing_reason = reason
-        return ECResult(
-            took_daemon=took_daemon,
-            reason=reason,
-            rejection_error=rejection_error,
-            detail=detail,
+    def _journal_transactions(self) -> list[str] | None:
+        """The committed transactions, or ``None`` when ``history.ec`` holds
+        commands that ``steps.log`` cannot split into transactions (a rewind
+        must not mistake an unreadable journal for an empty one)."""
+        from core.easycrypt.committed_history import (
+            read_committed_commands,
+            read_committed_transactions,
         )
 
-    def _try_daemon_path(self) -> "ECResult":
-        """Replace the two ``_run_ec`` calls with a daemon round-trip
-        when possible. Writes daemon's pre-commit goal raw to ``prev``
-        and post-commit raw to ``curr`` so downstream diff / parsing /
-        hooks run unchanged. Returns an ``ECResult``: ``took_daemon`` is True when
-        the daemon handled the commit (accept OR reject), False when the caller
-        must fall back to the batch subprocess; a daemon reject's EC error rides
-        back inline in ``rejection_error``."""
         try:
-            from core.easycrypt.daemon_backend import DaemonBackend, is_disabled
-            from core.easycrypt.committed_history import read_committed_transactions
-        except Exception as exc:
-            return self._route(
-                "import_fail", False, detail=f"{type(exc).__name__}: {exc}"
-            )
+            transactions = read_committed_transactions(self.dir)
+            if not transactions and read_committed_commands(self.dir):
+                return None
+        except Exception:
+            return None
+        return transactions
+
+    def _daemon_for_meta(self):
+        """``(DaemonBackend, file, lemma)`` when the session can use the
+        daemon, else ``None``."""
+        from core.easycrypt.daemon_backend import DaemonBackend, is_disabled
+
         if is_disabled():
-            return self._route("disabled", False)
+            return None
         fpath, lname = self._get_daemon_meta()
-        if not fpath or not lname:
-            return self._route("no_meta", False)
-        try:
-            fp = Path(fpath)
-            if not fp.exists():
-                return self._route("file_gone", False)
-        except Exception as exc:
-            return self._route(
-                "file_gone", False, detail=f"{type(exc).__name__}: {exc}"
-            )
+        if not fpath or not lname or not Path(fpath).exists():
+            return None
         if self._daemon_backend is None:
-            try:
-                self._daemon_backend = DaemonBackend(self.dir, self._include_dirs)
-            except Exception as exc:
-                return self._route(
-                    "construct_fail", False, detail=f"{type(exc).__name__}: {exc}"
-                )
+            self._daemon_backend = DaemonBackend(self.dir, self._include_dirs)
+        return self._daemon_backend, Path(fpath), lname
+
+    def _daemon_undo_to(
+        self,
+        transactions: list[str],
+        *,
+        require_open_goal: bool = False,
+    ):
+        """Bring the daemon back to ``transactions`` by ``undo`` only.
+
+        Returns ``(DaemonRewind, "")`` when the daemon now holds exactly
+        ``transactions``, else ``(None, reason)``. Never reopens or replays.
+        """
         try:
-            tactics = read_committed_transactions(self.dir)
-        except Exception as exc:
-            return self._route(
-                "history_read_fail", False, detail=f"{type(exc).__name__}: {exc}"
+            target = self._daemon_for_meta()
+            if target is None:
+                return None, "daemon unavailable for this session"
+            backend, file_path, lemma = target
+            reply = backend.rewind_to(
+                file_path,
+                lemma,
+                list(transactions),
+                require_open_goal=require_open_goal,
             )
-        # steps.log, not command splitting, owns the atomic submission. Splitting
-        # the new block makes its first commands look like already accepted
-        # history and can turn a native rejection into a batch fallback.
-        if not tactics:
-            return self._route("empty_tactics", False)
-        # Pre-commit goal state for no-progress diffing. In subprocess
-        # mode `_run_ec(prev_hist, prev)` recomputes it by re-running
-        # EC on the history-minus-last-tactic. In daemon mode we can
-        # skip that round-trip entirely: at the end of the PRIOR
-        # append_block, ``self.prev`` was set to the prior ``self.curr``
-        # (post-commit state), which is exactly the pre-commit state
-        # for this tactic. For the first commit after start, ``self.prev``
-        # is empty and ``self.curr`` holds the post-context state from
-        # ``-start`` — use that.
+        except Exception as exc:
+            return None, _exception_detail(exc)
+        if reply is None:
+            return None, str(backend.last_error or "daemon rewind unavailable")
+        return reply, ""
+
+    def _daemon_undo_to_journal(self):
+        transactions = self._journal_transactions()
+        if transactions is None:
+            return None
+        return self._daemon_undo_to(transactions)[0]
+
+    def _write_curr_from_daemon(self, raw: str) -> None:
+        """Write the daemon's state reply as ``current.out``, re-printing the
+        goal when the reply carries only a prompt (as after a commit)."""
+        self._write_curr_compressed(raw)
+        try:
+            if self.read_state().num_remaining < 0 and self._daemon_backend:
+                fresh = self._daemon_backend.get_goal_raw()
+                if fresh:
+                    self._write_curr_compressed(fresh)
+        except Exception:
+            pass
+
+    def _pre_commit_bytes(self) -> bytes:
+        """The state the journal's latest transaction starts from.
+
+        The prior commit left its post-commit state in ``prev.out``
+        (``_commit_display``); right after -start ``prev.out`` is empty and
+        ``current.out`` holds the opened goal.
+        """
         try:
             pre_bytes = self.prev.read_bytes() if self.prev.exists() else b""
             if not pre_bytes.strip() and self.curr.exists():
                 pre_bytes = self.curr.read_bytes()
         except Exception:
             pre_bytes = b""
-        try:
-            result = self._daemon_backend.try_commit_latest(fp, lname, tactics)
-        except Exception as exc:
-            return self._route(
-                "commit_exception", False, detail=f"{type(exc).__name__}: {exc}"
-            )
-        if result is None:
-            return self._route(
-                "commit_none",
-                False,
-                detail=str(getattr(self._daemon_backend, "last_error", "") or ""),
-            )
-        # --- round-trip body delegated to ECBackend: it writes prev + the
-        #     compressed post_raw to curr; on a daemon REJECT it rolls back via
-        #     the journal, synthesizes the [error] line, and invalidates the
-        #     daemon cache. The daemon HANDLE, the routing record, and the
-        #     accept-path force-flush stay here on Session. ---
-        outcome = self._ec_backend.commit_via_daemon(
-            result=result,
-            pre_bytes=pre_bytes,
-            prev=self.prev,
-            rollback=self._rollback,
-            write_curr_compressed=self._write_curr_compressed,
-            invalidate=self._invalidate_daemon,
+        return pre_bytes
+
+    def _execute(self) -> CommitOutcome:
+        """Have EasyCrypt judge the journal's latest transaction.
+
+        The daemon judges it when it can; otherwise the batch backend replays
+        the journal. The route is recorded as an ``ec.routing`` event before
+        a batch run starts. Either way ``prev.out`` receives the pre-commit
+        state, against which the session counts goals and detects no-ops.
+        """
+        pre_bytes = self._pre_commit_bytes()
+        attempt = self._commit_on_daemon(pre_bytes)
+        if isinstance(attempt, CommitOutcome):
+            self._emit_routing("daemon", attempt.route)
+            return attempt
+        self._emit_routing("batch", attempt.route, attempt.detail)
+        self.prev.write_bytes(pre_bytes)
+        return self._batch.commit(
+            history=self.history,
+            curr=self.curr,
+            include_dirs=self._include_dirs,
+            route=attempt.route,
+            detail=attempt.detail,
         )
-        if outcome.write_failed:
-            return self._route("write_fail", False)
-        if not outcome.accepted:
-            self._last_commit_via_daemon = False
-            return self._route(
-                "daemon_reject", True, rejection_error=outcome.rejection_error,
+
+    def _emit_routing(self, backend: str, route: str, detail: str = "") -> None:
+        routing_event = {"backend": backend, "reason": route}
+        if detail:
+            routing_event["detail"] = detail[:400]
+        self.emit_event("ec.routing", routing_event)
+
+    def _commit_on_daemon(self, pre_bytes: bytes) -> CommitOutcome | _Fallback:
+        """Commit the journal's latest transaction on the daemon.
+
+        Writes ``pre_bytes`` to ``prev.out`` and the daemon's reply,
+        compressed, to ``current.out``; a rejection is left for the caller to
+        roll back. Returns the fallback route when the daemon cannot judge
+        the commit.
+        """
+        try:
+            from core.easycrypt.daemon_backend import DaemonBackend, is_disabled
+            from core.easycrypt.committed_history import read_committed_transactions
+        except Exception as exc:
+            return _Fallback("import_fail", _exception_detail(exc))
+        if is_disabled():
+            return _Fallback("disabled")
+        fpath, lname = self._get_daemon_meta()
+        if not fpath or not lname:
+            return _Fallback("no_meta")
+        try:
+            fp = Path(fpath)
+            if not fp.exists():
+                return _Fallback("file_gone")
+        except Exception as exc:
+            return _Fallback("file_gone", _exception_detail(exc))
+        if self._daemon_backend is None:
+            try:
+                self._daemon_backend = DaemonBackend(self.dir, self._include_dirs)
+            except Exception as exc:
+                return _Fallback("construct_fail", _exception_detail(exc))
+        try:
+            tactics = read_committed_transactions(self.dir)
+        except Exception as exc:
+            return _Fallback("history_read_fail", _exception_detail(exc))
+        # steps.log, not command splitting, owns the atomic submission. Splitting
+        # the new block makes its first commands look like already accepted
+        # history and can turn a native rejection into a batch fallback.
+        if not tactics:
+            return _Fallback("empty_tactics")
+        try:
+            reply = self._daemon_backend.commit_latest(fp, lname, tactics)
+        except Exception as exc:
+            return _Fallback("commit_exception", _exception_detail(exc))
+        finally:
+            self._emit_daemon_unavailable()
+        if reply is None:
+            return _Fallback(
+                "commit_none",
+                str(getattr(self._daemon_backend, "last_error", "") or ""),
             )
+        try:
+            self.prev.write_bytes(pre_bytes)
+            # Keep only the current state section of the daemon's output
+            # (avoids leaking context-processing errors into curr). A
+            # rejection's error stays out of current.out: it would become
+            # the next commit's prev.out.
+            self._write_curr_compressed(reply.post_raw)
+        except Exception:
+            return _Fallback("write_fail")
+        if not reply.accepted:
+            return CommitOutcome("daemon", "daemon_reject", reply.error)
         # Force-flush: some tactic combos (e.g. `rewrite X; smt(...)` that
         # close one subgoal and transition goal type) leave EC's post-commit
         # output at just `[N|check]>` without a `Current goal` / `No more
         # goals` header. Probe the daemon for fresh state so the agent sees the
-        # real current goal. ChaChaPoly step3 (2026-04-24): agent burned ~40s
-        # in a qed/auto/trivial/smt loop because curr.out held `[380|check]>`
-        # for three tactics before EC flushed. NOTE: the default-False read of
-        # `accepted` here is intentional and ASYMMETRIC with the backend's
-        # reject test (default-True) — preserved verbatim.
+        # real current goal.
         try:
-            if bool(result.get("accepted", False)):
-                _state_after = self.read_state()
-                if _state_after.num_remaining < 0:
-                    fresh = self._daemon_backend.get_goal_raw()
-                    if fresh:
-                        # daemon's get_goal output includes a synthetic
-                        # `locate Int.` echo plus the real state — compress
-                        # to extract just the state section.
-                        self._write_curr_compressed(fresh)
+            if self.read_state().num_remaining < 0:
+                fresh = self._daemon_backend.get_goal_raw()
+                if fresh:
+                    # daemon's get_goal output includes a synthetic
+                    # `locate Int.` echo plus the real state — compress
+                    # to extract just the state section.
+                    self._write_curr_compressed(fresh)
         except Exception:
             pass
-        self._last_commit_via_daemon = bool(result.get("accepted", False))
-        return self._route("daemon_accept", True)
+        return CommitOutcome("daemon", "daemon_accept")
+
+    def _emit_daemon_unavailable(self) -> None:
+        """Record each daemon failure the backend just started to skip the
+        daemon for."""
+        notices = getattr(self._daemon_backend, "unavailable_notices", None)
+        if not notices:
+            return
+        for notice in list(notices):
+            self.emit_event("ec.daemon_unavailable", notice)
+        notices.clear()
 
     def _invalidate_daemon(self) -> None:
         """Close any daemon session associated with this session dir.
-        Called on start and undo where EC state must be rebuilt."""
-        self._last_commit_via_daemon = False
+        Called on start, and when an undo or rollback could not be mirrored
+        on the daemon by ``undo``, so the next commit reopens and replays."""
         if self._daemon_backend is not None:
             try:
                 self._daemon_backend.invalidate()
@@ -306,174 +409,65 @@ class Session:
         except Exception:
             pass
 
-    def try_speculative(self, tactic: str) -> str:
-        """Run one or more tactics against the current daemon-backed
-        session state WITHOUT committing any of them. Returns a
-        human-readable report.
+    def try_speculative(self, tactic: str) -> TryResult:
+        """Check one or more tactics against the committed state WITHOUT
+        committing any of them.
 
-        Single-tactic input (one ``.``-terminated statement): uses
-        ``daemon.try_tactic`` — fast, reports accepted + error (or
-        goal_after).
-
-        Multi-tactic input (two or more ``.``-terminated statements):
-        uses ``daemon.try_chain`` — sends them in sequence within one
-        ephemeral EC; stops at first failure. Reports per-step
-        acceptance + final state. Use for verifying UNFOLD plans
-        (``proc. call <pivot>. auto.``) without commit-and-rollback.
+        One ``.``-terminated statement runs as the daemon's ``try_tactic``
+        and is also checked for progress, as a commit would be. Several run
+        in sequence as ``try_chain``, which stops at the first failure; use it
+        for multi-step plans (``proc. call <pivot>. auto.``) without
+        commit-and-rollback.
 
         Requires ``session_meta.json`` to have both ``file`` and
         ``lemma``. Committed history must replay cleanly (no failed
         tactics in it)."""
         try:
-            from core.easycrypt.daemon_backend import DaemonBackend, _split_tactics, is_disabled
+            from core.easycrypt.daemon_backend import DaemonBackend, is_disabled
             from core.easycrypt.committed_history import read_committed_transactions
         except Exception as e:
-            return (f"[TRY] error: daemon_backend import failed: {e}\n"
-                    "       -try requires the EC daemon.\n")
+            return try_tool_error(
+                tactic,
+                f"[TRY] error: daemon_backend import failed: {e}\n"
+                "       -try requires the EC daemon.\n",
+            )
         if is_disabled():
-            return ("[TRY] EC_DAEMON_DISABLE is set; -try requires the daemon.\n"
-                    "       Unset the env var and retry.\n")
+            return TryResult(
+                tactic=tactic.strip(),
+                report=("[TRY] EC_DAEMON_DISABLE is set; -try requires the daemon.\n"
+                        "       Unset the env var and retry.\n"),
+            )
         fpath, lname = self._get_daemon_meta()
         if not fpath or not lname:
-            return ("[TRY] error: session_meta.json is missing file/lemma; "
-                    "re-run `-start -f <file> -lemma <name>` first.\n"
-                    "       -try is daemon-only and needs both to open a session.\n")
+            return try_tool_error(
+                tactic,
+                "[TRY] error: session_meta.json is missing file/lemma; "
+                "re-run `-start -f <file> -lemma <name>` first.\n"
+                "       -try is daemon-only and needs both to open a session.\n",
+            )
         fp = Path(fpath)
         if not fp.exists():
-            return f"[TRY] error: file not found: {fpath}\n"
+            return try_tool_error(tactic, f"[TRY] error: file not found: {fpath}\n")
 
         if self._daemon_backend is None:
             self._daemon_backend = DaemonBackend(self.dir, self._include_dirs)
-        tactics = read_committed_transactions(self.dir)
-
-        if not self._daemon_backend._sync_to(fp, lname, tactics):
-            detail = getattr(self._daemon_backend, "last_error", "") or "unknown"
-            return ("[TRY] error: could not sync daemon to committed "
-                    "history (daemon spawn / session open / replay failed). "
-                    "If a committed tactic fails on replay, -try is "
-                    "unavailable until that tactic is removed through the "
-                    "manager undo control.\n"
-                    f"[TRY] sync_detail: {detail}\n")
-        cli = self._daemon_backend._ensure_daemon()
-        if cli is None:
-            return "[TRY] error: daemon connection lost.\n"
-
-        # Split into 1+ tactics. _split_tactics handles ``.``-boundary
-        # parsing for the requested probe only, not committed history. If the caller
-        # passes one tactic without a trailing dot, add one.
-        raw_in = tactic.strip()
-        if not raw_in:
-            return "[TRY] error: empty tactic.\n"
-        if not raw_in.endswith("."):
-            raw_in = raw_in + "."
-        tactic_list = [t.strip() for t in _split_tactics(raw_in) if t.strip()]
-        if not tactic_list:
-            return "[TRY] error: no parseable tactic (check the trailing '.').\n"
-
-        # Snapshot the goal state BEFORE the speculative call so we can
-        # run the same no-progress detection that ``append_block`` runs
-        # on commit. Without this, ``-try`` would say "accepted" for a
-        # tactic that a managed commit would auto-revert as no-effect — and the
-        # agent would chase the inconsistency. See ``detect_no_progress``.
+        committed = read_committed_transactions(self.dir)
         try:
-            prev_raw_for_progress = self.read_state().raw_current
+            prev_raw = self.read_state().raw_current
         except Exception:
-            prev_raw_for_progress = ""
-
+            prev_raw = ""
         try:
-            from core.easycrypt.ec_daemon_client import ECDaemonConnectionLost
-        except Exception:  # pragma: no cover - import shim
-            ECDaemonConnectionLost = ()  # type: ignore[assignment]
-
-        def _run_probe(client: Any) -> tuple[str, Any]:
-            if len(tactic_list) == 1:
-                return "single", client.try_tactic(
-                    self._daemon_backend._session_id, tactic_list[0])
-            return "chain", client.try_chain(
-                self._daemon_backend._session_id, tactic_list)
-
-        verb = "try_tactic" if len(tactic_list) == 1 else "try_chain"
-        try:
-            kind, r = _run_probe(cli)
-        except ECDaemonConnectionLost:
-            # The daemon dropped the connection mid-probe — its EC subprocess
-            # most likely crashed (a heavy smt/auto on a large goal). `-try` is
-            # speculative (it never mutates committed state), so recovery is
-            # safe: respawn a fresh daemon, replay the committed history, and
-            # retry the probe ONCE. Bounding to a single retry avoids looping
-            # when the tactic itself is what crashes EC.
-            self._daemon_backend._force_fresh_daemon()
-            if not self._daemon_backend._sync_to(fp, lname, tactics):
-                return ("[TRY] error: the daemon dropped the connection "
-                        "mid-probe and the session could not be re-synced. The "
-                        "probe was NOT evaluated and the committed proof state "
-                        "is unchanged — retry, or use a lighter tactic (the "
-                        "goal may be too heavy for smt/auto).\n")
-            cli = self._daemon_backend._ensure_daemon()
-            if cli is None:
-                return ("[TRY] error: the daemon dropped the connection "
-                        "mid-probe and could not be respawned. The committed "
-                        "proof state is unchanged.\n")
-            try:
-                kind, r = _run_probe(cli)
-            except Exception:
-                return ("[TRY] error: this tactic repeatedly drops the "
-                        "EasyCrypt backend connection on the current goal (the "
-                        "daemon crashed again after a fresh respawn + replay) — "
-                        "it is almost certainly too heavy (e.g. a broad "
-                        "smt/auto on a large goal). The probe was NOT evaluated "
-                        "and the committed proof state is unchanged; try a "
-                        "lighter or more targeted tactic.\n")
-        except Exception as e:
-            return f"[TRY] error: daemon {verb} failed: {e}\n"
-
-        if kind == "single":
-            return self._format_try_single(
-                tactic_list[0], r, file_path=self._session_file_path(),
-                prev_raw=prev_raw_for_progress,
+            return self._daemon_backend.try_tactics(
+                fp, lname, committed, tactic, prev_raw,
             )
-        return self._format_try_chain(
-            tactic_list, r, file_path=self._session_file_path(),
-            prev_raw=prev_raw_for_progress,
-        )
-
-
-    def _session_file_path(self) -> Optional[str]:
-        """Return the target file path stored in this session's metadata."""
-        try:
-            meta_path = self.dir / "session_meta.json"
-            if not meta_path.exists():
-                return None
-            with open(meta_path, "r") as f:
-                data = json.load(f)
-            fp = data.get("file")
-            return fp if isinstance(fp, str) and fp else None
-        except Exception:
-            return None
-
-    @staticmethod
-    def _format_try_single(
-        tactic: str, r: dict, file_path: Optional[str] = None,
-        prev_raw: str = "",
-    ) -> str:
-        return format_try_single(tactic, r, file_path, prev_raw)
-
-    @staticmethod
-    def _format_try_chain(
-        tactics: list, chain: dict, file_path: Optional[str] = None,
-        prev_raw: str = "",
-    ) -> str:
-        return format_try_chain(tactics, chain, file_path, prev_raw)
-
-    @staticmethod
-    def _compress_current_state(text: str) -> str:
-        return compress_current_state(text)
+        finally:
+            self._emit_daemon_unavailable()
 
     def _write_curr_compressed(self, raw: bytes | str) -> None:
         """Write the compressed current state to ``self.curr``.
 
         Takes raw EC output (bytes or str), compresses to just the current
-        state section via ``_compress_current_state``, and writes it. Used
+        state section via ``compress_current_state``, and writes it. Used
         in place of ``self.curr.write_text(raw)`` / ``self.curr.write_bytes(raw)``
         everywhere the prior code dumped the full replay transcript.
         """
@@ -486,15 +480,12 @@ class Session:
                 return
         else:
             text = raw or ""
-        self.curr.write_text(
-            Session._compress_current_state(text), encoding="utf-8"
-        )
+        self.curr.write_text(compress_current_state(text), encoding="utf-8")
 
     def _compress_curr_inplace(self) -> None:
         """Re-read ``self.curr`` and rewrite it with only the current state
-        section. Use after subprocess-path ``_run_ec(_, self.curr)`` calls
-        which dump the full EC transcript (including context-processing
-        errors) to the file.
+        section. Use after a batch run, which dumps the full EC transcript
+        (including context-processing output) to the file.
         """
         try:
             if not self.curr.exists():
@@ -503,11 +494,15 @@ class Session:
         except Exception:
             return
         try:
-            self.curr.write_text(
-                Session._compress_current_state(raw), encoding="utf-8"
-            )
+            self.curr.write_text(compress_current_state(raw), encoding="utf-8")
         except Exception:
             pass
+
+    def replay_current(self) -> None:
+        """Replay the journal in a fresh EasyCrypt and keep its latest state
+        in ``current.out``."""
+        self._batch.run(self.history, self.curr, self._include_dirs)
+        self._compress_curr_inplace()
 
     def start(self) -> dict:
         # Close any daemon session tied to this dir BEFORE we wipe the
@@ -522,16 +517,11 @@ class Session:
         # goal-info confusion, losing 28 committed tactics of real progress
         # silently. The prover should be able to restart, but also be
         # equipped to replay if they realize the restart was a mistake.
-        committed_tactics: list[str] = []
-        if self.dir.exists() and self.history.exists():
-            try:
-                committed_tactics = [
-                    line.strip()
-                    for line in self.history.read_text(encoding="utf-8").splitlines()
-                    if line.strip()
-                ]
-            except Exception:
-                committed_tactics = []
+        # One entry per EasyCrypt command, not per physical line: a command
+        # may span lines and one line may hold several commands.
+        from core.easycrypt.committed_history import read_committed_tactics
+
+        committed_tactics = read_committed_tactics(self.dir)
 
         # Save a pre-restart checkpoint before wiping — BEFORE shutil.rmtree
         # erases everything. Stored OUTSIDE the session dir so rmtree won't
@@ -583,15 +573,6 @@ class Session:
             "lines": len(text.splitlines()),
         })
 
-    def _run_ec(self, input_path: Path, output_path: Path, include_dirs: list[str] | None = None):
-        """Batch (spawn-per-call) EC execution. Thin delegate to ``ECBackend``;
-        kept as a ``Session`` method because external callers (session_commands,
-        proof replay and the undo path) and tests patch/call
-        ``Session._run_ec`` directly."""
-        return self._ec_backend.run_batch(
-            input_path, output_path, include_dirs or self._include_dirs,
-        )
-
     @staticmethod
     def _count_lines(p: Path) -> int:
         try:
@@ -618,14 +599,16 @@ class Session:
             for n in steps:
                 s.write(f"{n}\n")
 
-    def append_block(self, block_text: str, deltas_only: bool = False) -> str:
-        _pc = precheck_tactic(block_text, self.emit_event)
-        if _pc.refusal is not None:
-            return _pc.refusal
-        block_text = _pc.block_text
-        trimmed = _pc.trimmed  # downstream events/display/qed-detect use this form
+    def append_block(self, block_text: str, deltas_only: bool = False) -> CommitResult:
+        """Commit one tactic transaction: precheck it, append it to the
+        journal, have EasyCrypt judge it, roll back a rejection or an
+        accepted no-op, and record the transition."""
+        precheck = precheck_tactic(block_text, self.emit_event)
+        if precheck.refusal is not None:
+            return CommitResult("refused", False, "", "", precheck.refusal)
+        block_text = precheck.block_text
+        trimmed = precheck.trimmed  # downstream events/display/qed-detect use this form
 
-        # Prepare previous history snapshot (before append)
         total_before = self._count_lines(self.history)
         self._rollback.snapshot_pre_commit(total_before)
         self.emit_event("tactic.submitted", {
@@ -634,100 +617,38 @@ class Session:
             "history_lines_before": total_before,
             "line_count": len(block_text.splitlines()),
         })
-
-        # Append block and record step length
         block_lines = block_text.splitlines()
-        # Ensure trailing newline
         if not block_text.endswith("\n"):
             block_text += "\n"
         self.history.write_text(self.history.read_text() + block_text)
         with self.steps.open("a", encoding="utf-8") as s:
             s.write(f"{len(block_lines)}\n")
-        # Run EC: prefer the daemon fast-path (persistent EC process,
-        # ~50-100 ms per commit). Falls back to spawn-per-call
-        # subprocesses on any daemon failure or when session_meta.json
-        # lacks (file, lemma). Disable entirely with EC_DAEMON_DISABLE=1.
-        _ec = self._try_daemon_path()
-        took_daemon = _ec.took_daemon
-        # Surface the daemon-vs-batch routing decision (and WHY) as an audit
-        # event — previously a fully silent boolean (#3 Step 5, visibility).
-        routing_event = {
-            "backend": "daemon" if took_daemon else "batch",
-            "reason": _ec.reason,
-        }
-        if _ec.detail:
-            routing_event["detail"] = _ec.detail[:400]
-        self.emit_event("ec.routing", routing_event)
-        batch_rejection_error = ""
-        if not took_daemon:
-            self._last_commit_via_daemon = False
-            self._run_ec(self.prev_hist, self.prev)
-            returncode = self._run_ec(self.history, self.curr)
-            # Emacs-mode EC can continue after an error and print a later goal
-            # or closure. Decide acceptance from the *whole current call*
-            # before presentation drops earlier responses.
-            raw_batch = self.curr.read_text(encoding="utf-8", errors="replace")
-            from core.easycrypt.ec_diagnostics import error_text
-            diagnostic = error_text(raw_batch)
-            errors = [diagnostic] if diagnostic else []
-            if returncode not in (None, 0):
-                errors.append(f"[error] EasyCrypt batch exited with status {returncode}")
-            if errors:
-                batch_rejection_error = "\n".join(errors)
-                self._rollback.restore_pre_commit()
-                self._invalidate_daemon()
-            # Strip context-processing transcript from current.out so
-            # agents reading the file see the current goal state, not a
-            # noisy replay log. See `_compress_current_state` docstring.
+
+        outcome = self._execute()
+        if not outcome.accepted:
+            self._roll_back()
+        if outcome.backend == "batch":
+            # A batch run prints the whole replay. Keep the latest state only,
+            # also when the rollback copied that replay back from prev.out.
             self._compress_curr_inplace()
 
-        # ── Goal-state diff detection (ARCH-001) ──
-        # Compare goal output (including hypotheses) before and after tactic.
-        # If identical, the tactic was accepted but had no effect — the session
-        # will auto-rollback (see below) to keep the invariant that
-        # "committed history only contains state-changing tactics".
-        # Note: `have _: X by tac.` with anonymous `_` genuinely produces no visible
-        # change (EC discards the hypothesis). This is correctly flagged as NO_PROGRESS
-        # since `have _` is a no-op. Use named hypotheses (`have H: ...`) instead.
-        no_progress = False
         prev_raw = self.prev.read_text(encoding="utf-8", errors="replace")
         curr_raw = self.curr.read_text(encoding="utf-8", errors="replace")
-        # Only check if there's no new error (errors change output even if goal unchanged).
-        # Match EC's severity prefixes: [error, [critical, [fatal. Earlier we only
-        # matched [error, which missed "[critical] nothing to rewrite" from conditional
-        # rewrites with unmatched preconditions — those fell through to NO_PROGRESS and
-        # got auto-committed as ghost tactics.
-        from core.easycrypt.ec_diagnostics import ERROR_LINE_RE
-        _prev_lines_set = set(prev_raw.splitlines())
-        _curr_lines = curr_raw.splitlines()
-        _new_error_lines = [
-            ln.strip()
-            for ln in _curr_lines
-            if ln not in _prev_lines_set
-            if ERROR_LINE_RE.match(ln.lstrip())
-        ]
-        has_new_error = bool(_new_error_lines)
-        # Daemon-side rejection delivers the error via instance state
-        # rather than curr.out (writing it to curr would pollute next
-        # commit's prev_raw and break downstream goal-substring checks).
-        # Append the rejection error to curr_raw in memory for the typed
-        # execution result, while leaving on-disk current.out untouched.
-        rejection_err = _ec.rejection_error or batch_rejection_error
-        if rejection_err:
-            has_new_error = True
-            if rejection_err.strip():
-                _new_error_lines.append(rejection_err.strip())
-            curr_raw = curr_raw + "\n" + rejection_err + "\n"
-        # Keep the rejection error around for the typed rejection display.
-        _rejection_for_display = rejection_err
-        # No-progress detection: shared with -try via Session.detect_no_progress
-        # (single source of truth — see step3 Run 9 Tree-0.0 incident notes
-        # in detect_no_progress' docstring).
-        no_progress, _np_reason = detect_no_progress(
+        has_new_error = not outcome.accepted
+        error_lines: list[str] = []
+        if has_new_error:
+            if outcome.error.strip():
+                error_lines.append(outcome.error.strip())
+            # Goal counting reads the rejection after the restored state, as
+            # it appears in the transition record.
+            curr_raw = curr_raw + "\n" + outcome.error + "\n"
+        # An accepted tactic that leaves the goal unchanged is reverted, so
+        # committed history only contains state-changing tactics. `have _: X
+        # by tac.` with an anonymous `_` is such a no-op: EC discards it.
+        no_progress, no_progress_reason = detect_no_progress(
             prev_raw, curr_raw, has_new_error,
         )
 
-        # ── Goal count tracking ──
         # Delegate EC prompt / close-marker parsing to session_state so
         # commit-time events and inspection tools agree on closed-proof
         # shapes such as `No more goals` → `+ added lemma` → prompt.
@@ -739,26 +660,11 @@ class Session:
             prev_count, _ = (-1, False)
             curr_count, no_more = (-1, False)
 
-        display = []
-        rollback_requested = False
-
-        # Block-ends-with-qed signal: when the just-applied block ends with
-        # `qed.` and EC accepted it without error, we treat the proof as
-        # closed even when EC's response landed in async-check mode
-        # ([N|check]> with no goal text). Without this, smt-heavy qed
-        # closures (where EC delegates to why3 asynchronously) silently
-        # fail the [ALL_GOALS_CLOSED] detection — the proof structure IS
-        # closed but the SMT verification is pending. Source of truth for
-        # SMT correctness is the post-extract full-file `easycrypt <file>`
-        # check; we only need a reliable in-loop "the prover finished" signal.
-        # Observed: step1 Run 8 (2026-04-27) — Tree-0.0 closed at 60:38
-        # with `qed.`, but EC went to [365|check]> with no goal text.
-        # goal-count inference returned (-1, False), no [ALL_GOALS_CLOSED]
-        # emitted, no completion candidate was selected, and the orchestrator
-        # never picked
-        # the winner and let everyone run to 70min timeout. The 53-tactic
-        # proof was correct (verified standalone) but discovered only by
-        # the extraction-time history.ec scan, not the loop signal.
+        # An accepted `qed.` whose reply is only an async-check prompt
+        # (`[N|check]>` with no goal text, while why3 finishes the SMT calls)
+        # still closes the proof. Offline verification of the extracted proof
+        # remains the authority for SMT correctness; this is only the in-loop
+        # signal that the prover finished.
         _trim_lower = trimmed.lower().rstrip(".")
         _block_ends_with_qed = (
             _trim_lower.endswith("qed")
@@ -771,12 +677,8 @@ class Session:
             and curr_count == -1
         )
 
-        # Accepted no-op tactics are reverted as a session invariant. This is
-        # proof control, not compiler guidance, so it lives directly in the
-        # commit transaction rather than in the retired hook/panel system.
-        if no_progress and not has_new_error:
-            rollback_requested = True
-            self._apply_no_progress_rollback()
+        if no_progress:
+            self._roll_back()
 
         try:
             history_lines_after = self._count_lines(self.history)
@@ -784,58 +686,68 @@ class Session:
             history_lines_after = total_before
         history_committed = history_lines_after > total_before
         event_no_more = bool(no_more)
-        event_curr_count = curr_count
         candidate_closed = bool(
             (not has_new_error)
-            and (event_no_more or _async_check_close or event_curr_count == 0)
+            and (event_no_more or _async_check_close or curr_count == 0)
         )
         if has_new_error:
             tactic_status = "error"
-        elif rollback_requested:
+        elif no_progress:
             tactic_status = "no_progress_reverted"
         elif not history_committed:
             tactic_status = "not_committed"
         else:
             tactic_status = "ok"
-        event_error_lines = _new_error_lines if tactic_status == "error" else []
-        latest_error = event_error_lines[-1] if event_error_lines else ""
+        latest_error = error_lines[-1] if error_lines else ""
         self.emit_event("goal.changed", {
             "tactic": trimmed,
             "goals_before": prev_count,
-            "goals_after": event_curr_count,
+            "goals_after": curr_count,
             "no_more_goals": event_no_more,
             "async_check_close": bool(_async_check_close),
             "no_progress": bool(no_progress),
-            "no_progress_reason": _np_reason,
+            "no_progress_reason": no_progress_reason,
             "candidate_closed": candidate_closed,
         })
         self.emit_event("tactic.result", {
             "tactic": trimmed,
             "status": tactic_status,
             "goals_before": prev_count,
-            "goals_after": event_curr_count,
+            "goals_after": curr_count,
             "has_new_error": bool(has_new_error),
             "no_progress": bool(no_progress),
-            "no_progress_reason": _np_reason,
-            "rollback_requested": rollback_requested,
+            "no_progress_reason": no_progress_reason,
+            "rollback_requested": bool(no_progress),
             "history_committed": history_committed,
             "history_lines_before": total_before,
             "history_lines_after": history_lines_after,
             "candidate_closed": candidate_closed,
-            "daemon_used": bool(getattr(self, "_last_commit_via_daemon", False)),
-            "daemon_rejection": bool(_rejection_for_display),
-            "error_lines": event_error_lines,
+            "daemon_used": (
+                outcome.backend == "daemon" and outcome.accepted and not no_progress
+            ),
+            "daemon_rejection": has_new_error,
+            "error_lines": error_lines,
             "latest_error": latest_error,
         })
         if candidate_closed:
             self.emit_event("proof.candidate_closed", {
                 "tactic": trimmed,
                 "goals_before": prev_count,
-                "goals_after": event_curr_count,
+                "goals_after": curr_count,
                 "no_more_goals": event_no_more,
                 "async_check_close": bool(_async_check_close),
             })
+        return CommitResult(
+            status=tactic_status,
+            history_committed=history_committed,
+            latest_error=latest_error,
+            no_progress_reason=no_progress_reason,
+            output=self._commit_display(deltas_only),
+        )
 
+    def _commit_display(self, deltas_only: bool) -> str:
+        """Record and return the text shown for a commit, then make the
+        post-commit state the next commit's pre-commit state."""
         if deltas_only:
             # Compute delta as the suffix of current after the longest common prefix
             prev_text = self.prev.read_text(encoding="utf-8", errors="replace").splitlines(keepends=True)
@@ -848,75 +760,53 @@ class Session:
             # Trim anything printed after the last prompt to avoid trailing noise
             delta_text = _trim_after_last_prompt(delta_text)
             self.delta.write_text(delta_text)
-            # Update prev snapshot to current for next calls
             self.prev.write_bytes(self.curr.read_bytes())
-            display.append("Delta:\n")
-            display.append(delta_text)
-            return "".join(_reorder_display(display))
-        else:
-            # Extract the current state snippet from the shared state reader.
-            state = self.read_state()
-            snippet = (
-                state.raw_for_goal_tools
-                or state.active_output
-                or state.raw_current
-            )
-            if snippet and not snippet.endswith("\n"):
-                snippet += "\n"
-            # Trim anything printed after the last prompt to avoid trailing noise
-            snippet = _trim_after_last_prompt(snippet)
-            self.delta.write_text(snippet)
-            # Update prev snapshot to current for next calls
-            self.prev.write_bytes(self.curr.read_bytes())
-            display.append("State:\n")
-            display.append(snippet)
-            return "".join(_reorder_display(display))
+            return "Delta:\n" + delta_text
+        # Extract the current state snippet from the shared state reader.
+        state = self.read_state()
+        snippet = (
+            state.raw_for_goal_tools
+            or state.active_output
+            or state.raw_current
+        )
+        if snippet and not snippet.endswith("\n"):
+            snippet += "\n"
+        # Trim anything printed after the last prompt to avoid trailing noise
+        snippet = _trim_after_last_prompt(snippet)
+        self.delta.write_text(snippet)
+        self.prev.write_bytes(self.curr.read_bytes())
+        return "State:\n" + snippet
+
 
     def read_state(self):
         """Return the structured current session state."""
         from core.easycrypt.session.session_state import read_session_state  # type: ignore
         return read_session_state(self.dir, self.curr, self.prev)
 
-    def get_active_goal_output(self) -> str:
-        """Return only the output from the last tactic (delta), not the full session.
-
-        session.curr contains ALL output from processing context + history.
-        This includes stale goals from context lemma proofs. The delta
-        (curr minus prev) contains only the active goal from the last tactic.
-        """
-        return self.read_state().active_output
-
-    def get_active_goal_block(self) -> tuple[str, int]:
-        """Extract the active goal block and remaining count from session.curr.
-
-        Uses the highest [N|check]> number to find the most recently created
-        goal — this is always from the last tactic, never from stale context
-        processing (which has low numbers like [11]).
-
-        Returns (goal_text, n_remaining) where goal_text is the full block
-        from "Current goal" to "[N|check]>" for the active goal.
-        """
-        if not self.curr.exists():
-            return "", 0
-        state = self.read_state()
-        return state.active_goal_block, state.num_remaining
-
-    def _empty_undo_result(self) -> UndoStepResult:
+    def _empty_undo_result(self, remaining: int = 0) -> UndoStepResult:
         msg = "No steps to undo.\n"
         self.delta.write_text(msg)
         self.emit_event("tactic.undone", {
             "status": "empty",
             "undone_tactic": "",
-            "remaining_steps": 0,
+            "remaining_steps": remaining,
         })
         return UndoStepResult(
             output=msg,
             status="empty",
             undone_tactic="",
-            remaining_steps=0,
+            remaining_steps=remaining,
         )
 
     def step_up(self) -> UndoStepResult:
+        """Undo the latest committed transaction.
+
+        The daemon takes it back with EasyCrypt's ``undo <level>.`` and its
+        reply becomes ``current.out``. When the daemon cannot (no live
+        session in step with the journal, or the transaction ran a command
+        ``undo`` does not revert), the daemon session is dropped and the
+        trimmed journal is replayed in a fresh EasyCrypt instead.
+        """
         self._reconstruct_steps_if_missing()
         if not self.steps.exists() or self.steps.stat().st_size == 0:
             return self._empty_undo_result()
@@ -926,6 +816,10 @@ class Session:
             entries = [int(x.strip()) for x in s if x.strip()]
         if not entries:
             return self._empty_undo_result()
+        transactions = self._journal_transactions()
+        daemon_reply = None
+        if transactions is not None and len(transactions) == len(entries):
+            daemon_reply, _reason = self._daemon_undo_to(transactions[:-1])
         last = entries.pop()
 
         # Capture the text of the command being undone (last block)
@@ -963,17 +857,35 @@ class Session:
             if now_len > 0 and len(lines_hist) >= now_len:
                 now_last_cmd = "\n".join(lines_hist[-now_len:]) + "\n"
 
-        # Undo rewinds history; EC has no undo, so any daemon session
-        # we own is now ahead of the authoritative history. Drop it so
-        # the next commit will reopen+replay from the trimmed history.
-        self._invalidate_daemon()
-        # Run EC on new current history
-        self._run_ec(self.history, self.curr)
-        # Strip context-processing transcript from current.out so agents
-        # reading the file see the current goal state, not the replay log.
-        self._compress_curr_inplace()
+        if daemon_reply is not None and daemon_reply.undone == 1 and daemon_reply.post_raw:
+            backend = "daemon_undo"
+            self._write_curr_from_daemon(daemon_reply.post_raw)
+        else:
+            # The daemon could not mirror the undo: drop its session so the
+            # next commit reopens and replays the trimmed history.
+            backend = "batch_replay"
+            self._invalidate_daemon()
+            self.replay_current()
         self.prev.write_bytes(self.curr.read_bytes())
+        msg = self._undo_message(undone_block, now_last_cmd)
+        self.emit_event("tactic.undone", {
+            "status": "ok",
+            "undone_tactic": undone_block.strip(),
+            "remaining_steps": len(entries),
+            "history_lines_after": self._count_lines(self.history),
+            "undone_count": 1,
+            "backend": backend,
+        })
+        return UndoStepResult(
+            output=msg,
+            status="ok",
+            undone_tactic=undone_block.strip(),
+            remaining_steps=len(entries),
+            undone_count=1,
+            backend=backend,
+        )
 
+    def _undo_message(self, undone_block: str, now_last_cmd: str) -> str:
         state = self.read_state()
         snippet = state.raw_for_goal_tools or state.active_output
         if not snippet:
@@ -992,15 +904,121 @@ class Session:
         ])
         msg = "".join(msg_parts)
         self.delta.write_text(msg)
+        return msg
+
+    def rewind_to_command_count(self, keep_commands: int) -> UndoStepResult:
+        """Rewind the journal to its first ``keep_commands`` commands by
+        undoing the daemon's committed process, in one EasyCrypt command.
+
+        This is the manager's checkpoint rewind (and the rewind half of
+        restore and amend). It changes nothing and reports ``unavailable``
+        unless ``keep_commands`` ends a committed transaction and the daemon
+        holds the journal and can undo every dropped transaction; the manager
+        then restarts and replays instead. Kept transactions are not re-run.
+        """
+        transactions = self._journal_transactions()
+        if transactions is None:
+            return self._unavailable_undo_result("committed journal unreadable", 0)
+        commands_so_far = 0
+        boundaries = {0: 0}
+        from core.easycrypt.committed_history import flatten_committed_transactions
+
+        for index, transaction in enumerate(transactions, start=1):
+            commands_so_far += len(flatten_committed_transactions([transaction]))
+            boundaries[commands_so_far] = index
+        if keep_commands == commands_so_far:
+            return self._empty_undo_result(remaining=len(transactions))
+        if keep_commands < 0 or keep_commands > commands_so_far:
+            return self._unavailable_undo_result(
+                f"keep_commands {keep_commands} outside 0..{commands_so_far}",
+                len(transactions),
+            )
+        keep = boundaries.get(keep_commands)
+        if keep is None:
+            return self._unavailable_undo_result(
+                f"command {keep_commands} does not end a committed transaction",
+                len(transactions),
+            )
+        try:
+            entries = [
+                int(x.strip())
+                for x in self.steps.read_text(encoding="utf-8").splitlines()
+                if x.strip()
+            ]
+            lines = self.history.read_text(encoding="utf-8").splitlines(keepends=True)
+        except (OSError, ValueError) as exc:
+            return self._unavailable_undo_result(
+                f"journal unreadable: {_exception_detail(exc)}", len(transactions)
+            )
+        if len(entries) != len(transactions) or sum(entries) != len(lines):
+            return self._unavailable_undo_result(
+                "steps.log does not split history.ec", len(transactions)
+            )
+        from core.easycrypt.proof_text import undo_unsafe_sentence
+
+        # The daemon refuses to undo across such a command; one in the kept
+        # prefix is refused here too, because restart+replay re-commits that
+        # prefix command by command, where a lone ``pragma`` is reverted as a
+        # no-op. Falling back keeps this rewind identical to that path.
+        unsafe = next(
+            (found for found in map(undo_unsafe_sentence, transactions) if found),
+            "",
+        )
+        if unsafe:
+            return self._unavailable_undo_result(
+                f"journal contains `{unsafe[:80]}`, which undo cannot revert",
+                len(transactions),
+            )
+        # The target must show an open goal: a rewind to a goals-closed state
+        # emits ``tactic.undone`` where restart+replay re-emits the closing
+        # commit's close events, which a later ``qed`` needs as authority.
+        reply, reason = self._daemon_undo_to(
+            transactions[:keep], require_open_goal=True,
+        )
+        if reply is None or reply.undone != len(transactions) - keep or not reply.post_raw:
+            return self._unavailable_undo_result(
+                reason or "daemon did not undo the requested transactions",
+                len(transactions),
+            )
+        kept_lines = sum(entries[:keep])
+        self.history.write_text("".join(lines[:kept_lines]), encoding="utf-8")
+        self.steps.write_text(
+            "".join(f"{n}\n" for n in entries[:keep]), encoding="utf-8"
+        )
+        self._write_curr_from_daemon(reply.post_raw)
+        self.prev.write_bytes(self.curr.read_bytes())
+        undone_block = "\n".join(transactions[keep:]) + "\n"
+        now_last_cmd = transactions[keep - 1] + "\n" if keep else ""
+        msg = self._undo_message(undone_block, now_last_cmd)
         self.emit_event("tactic.undone", {
             "status": "ok",
             "undone_tactic": undone_block.strip(),
-            "remaining_steps": len(entries),
+            "remaining_steps": keep,
             "history_lines_after": self._count_lines(self.history),
+            "undone_count": len(transactions) - keep,
+            "backend": "daemon_undo",
         })
         return UndoStepResult(
             output=msg,
             status="ok",
             undone_tactic=undone_block.strip(),
-            remaining_steps=len(entries),
+            remaining_steps=keep,
+            undone_count=len(transactions) - keep,
+            backend="daemon_undo",
+        )
+
+    def _unavailable_undo_result(self, reason: str, remaining: int) -> UndoStepResult:
+        msg = f"Rewind by undo unavailable: {reason}\n"
+        self.emit_event("tactic.undone", {
+            "status": "unavailable",
+            "undone_tactic": "",
+            "remaining_steps": remaining,
+            "reason": reason[:400],
+        })
+        return UndoStepResult(
+            output=msg,
+            status="unavailable",
+            undone_tactic="",
+            remaining_steps=remaining,
+            reason=reason,
         )

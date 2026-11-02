@@ -1,10 +1,7 @@
 """Canonical test-data builders shared across the tests/ tree.
 
-Import-safe from both runners:
-
-- pytest puts the project root on ``sys.path`` via ``tests/conftest.py``;
-- standalone scripts (``python3 tests/test_foo.py``) insert the root
-  themselves before importing ``tests.helpers.builders``.
+pytest puts the project root on ``sys.path`` via ``tests/conftest.py``, so
+tests import this module as ``tests.helpers.builders``.
 
 Test files keep local helper names such as ``_start_event`` as thin
 delegates/aliases so call sites stay untouched.

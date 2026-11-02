@@ -5,7 +5,6 @@ from __future__ import annotations
 import json
 from dataclasses import asdict, dataclass, field, fields
 from pathlib import Path
-from typing import Optional
 
 from workflow.tree.policy import DEFAULT_TREE_INITIAL_PROVERS, TREE_MAX_ACTIVE_NODES
 from workflow.proof_state_compiler.profile_ids import (
@@ -42,9 +41,7 @@ def default_model_for_backend(value: str | None) -> str:
 @dataclass
 class ProverConfig:
     timeout_minutes: int = 20
-    max_rounds: int = 40
     max_total_tactics: int = 1000
-    max_stale_rounds: int = 4
     # OpenAI Codex is the canonical proof-node agent. Claude remains an
     # explicit experiment backend, never an implicit runtime default.
     agent_backend: str = "codex"
@@ -88,10 +85,6 @@ class RunConfig:
     file: str  # e.g. "eval/examples/cramer-shoup/cramer_shoup.ec"
     lemma: str  # e.g. "CCA_DDH0"
     include_dir: str = ""
-
-    # Human proof reference (outside project dir for isolation)
-    human_proof_dir: Optional[str] = None
-    # e.g. "../Shannon_Prover_HumanProofs"
 
     # Iteration control. Retained for config back-compat; no longer drives a
     # retry loop (the analyst/improver/regression phases were removed).

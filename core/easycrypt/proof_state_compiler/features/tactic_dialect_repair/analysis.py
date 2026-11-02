@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-import hashlib
-
 from core.easycrypt.proof_state_compiler.contracts import (
     CHOICE_REQUIRED,
     EXPLANATION_ONLY,
@@ -13,17 +11,19 @@ from core.easycrypt.proof_state_compiler.contracts import (
     ProofIR,
     RecoveryActionRealization,
     RecoveryClaim,
+    recovery_claim_for,
     StructuredDiagnostic,
     exact_operation_resource_witness,
     native_argument_realization_witness,
 )
+from core.easycrypt.proof_state_compiler.contracts.digest import text_sha256
 from core.easycrypt.proof_state_compiler.middle_end.contributions import (
     AnalysisContribution,
 )
 from core.easycrypt.proof_state_compiler.compound_boundary_text import (
     checked_goal_reference,
 )
-from .feature import TACTIC_DIALECT_REPAIR_FEATURE_ID
+from .ids import TACTIC_DIALECT_REPAIR_FEATURE_ID
 from .realization import eager_while_dialect_of
 
 
@@ -39,18 +39,11 @@ _PLACEHOLDER = "eager while (<invariant>)."
 
 
 def _claim(attempted, *, output_kind: str, witness) -> RecoveryClaim:
-    return RecoveryClaim(
+    return recovery_claim_for(
+        attempted,
         feature_id=TACTIC_DIALECT_REPAIR_FEATURE_ID,
-        recovery_key=attempted.recovery_key,
-        attempt_id=attempted.attempt_id,
-        occurrence_identity=attempted.occurrence_identity,
-        trigger_id=attempted.trigger_id,
-        operation_family=attempted.operation_family,
-        selected_resource="",
-        resource_match_kind="none",
         allowed_output_kinds=(output_kind,),
         preservation_witness=witness,
-        evidence_refs=attempted.evidence_refs,
     )
 
 
@@ -170,9 +163,11 @@ def analyze_eager_while_dialect(
         native_family="eager_while_invariant",
         exact_tactic=candidate.candidate_tactic,
     )
-    realization_id = "eager-while-dialect-realization:" + hashlib.sha256(
-        (attempted.recovery_key + "\0" + witness.witness_id).encode("utf-8")
-    ).hexdigest()[:20]
+    realization_id = "eager-while-dialect-realization:" + text_sha256(
+        attempted.recovery_key
+        + "\0"
+        + witness.witness_id
+    )[:20]
     realization = RecoveryActionRealization(
         realization_id=realization_id,
         feature_id=TACTIC_DIALECT_REPAIR_FEATURE_ID,

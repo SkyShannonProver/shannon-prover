@@ -42,7 +42,11 @@ from typing import Any
 # Single source of truth for the daemon session id lives in core; re-export the
 # name this module's callers use so the formula is no longer hand-mirrored here
 # (audit §2.5 / backlog #15).
-from core.easycrypt.committed_history import read_committed_tactics, read_committed_transactions
+from core.easycrypt.committed_history import (
+    committed_prefix_identity,
+    read_committed_tactics,
+    read_committed_transactions,
+)
 from core.easycrypt.daemon_backend import (
     session_id_for_dir as daemon_session_id_for_dir,
 )
@@ -204,8 +208,10 @@ def _attempt_daemon_attach_inner(
     meta_file = str(meta.get("file") or "")
     meta_lemma = str(meta.get("lemma") or "")
     try:
+        # Both are project-relative when relative, as the backend wrote them.
         same_file = bool(meta_file) and (
-            Path(meta_file).resolve() == Path(file_path).resolve()
+            (project_root / meta_file).resolve()
+            == (project_root / file_path).resolve()
         )
     except OSError:
         same_file = False
@@ -225,7 +231,12 @@ def _attempt_daemon_attach_inner(
     transaction_count = len(transactions)
     socket_path = str(state.get("socket_path") or "")
     state_lemma = str(state.get("lemma_name") or "")
-    if state_count != transaction_count or state_lemma != str(lemma_name):
+    if (
+        state_count != transaction_count
+        or state.get("committed_prefix_sha256")
+        != committed_prefix_identity(transactions)
+        or state_lemma != str(lemma_name)
+    ):
         # The daemon was not in sync with history.ec when the worker died
         # (e.g. the last commits fell back to the subprocess path, or an
         # undo invalidated the daemon session). The live EC state would

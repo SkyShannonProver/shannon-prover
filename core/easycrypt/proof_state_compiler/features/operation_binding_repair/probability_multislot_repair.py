@@ -8,7 +8,6 @@ matching, holes, residual premises, and the resulting proposition.
 
 from __future__ import annotations
 
-import hashlib
 import re
 from dataclasses import dataclass
 from itertools import product
@@ -26,7 +25,8 @@ from core.easycrypt.proof_state_compiler.contracts import (
     ProofIR,
     ProofResource,
 )
-from core.easycrypt.proof_state_compiler.features.operation_binding_repair.contracts import (
+from core.easycrypt.proof_state_compiler.contracts.digest import text_sha256
+from core.easycrypt.proof_state_compiler.features.operation_binding_repair.ids import (
     OPERATION_BINDING_REPAIR_ANALYSIS_PRODUCER_ID,
 )
 from core.easycrypt.proof_state_compiler.features.operation_binding_repair.classification import (
@@ -353,13 +353,11 @@ def probability_multislot_descriptor_matches(
 
 
 def _request_id(sketch: ProbabilityMultiSlotRepairSketch) -> str:
-    digest = hashlib.sha256(
-        (
-            sketch.resource.resource_id
-            + "\0apply\0"
-            + sketch.application_term
-        ).encode("utf-8")
-    ).hexdigest()[:20]
+    digest = text_sha256(
+        sketch.resource.resource_id
+        + "\0apply\0"
+        + sketch.application_term
+    )[:20]
     return f"operation-binding-b24-probability:{digest}"
 
 

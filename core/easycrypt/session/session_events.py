@@ -80,10 +80,7 @@ class TacticAttempt:
 @dataclass(frozen=True)
 class EventSummary:
     event_counts: dict[str, int]
-    tactic_submitted_count: int
-    tactic_result_count: int
     candidate_closed_count: int
-    result_candidate_closed_count: int
     tactic_status_counts: dict[str, int]
     verification_status: str | None
     latest_attempt: TacticAttempt | None
@@ -238,6 +235,17 @@ EVENT_PAYLOAD_SCHEMAS: dict[str, dict[str, dict[str, _FIELD_TYPE]]] = {
         # The underlying exception behind a fallback reason (e.g. which
         # OSError made the daemon path bail) — reasons alone were unqueryable.
         "optional": {"detail": str},
+    },
+    # A daemon failure the session skips the daemon for until it expires, its
+    # key stops matching or -start; one event when the entry is made.
+    "ec.daemon_unavailable": {
+        "required": {
+            "kind": str,
+            "reason": str,
+            "expires_at": str,
+            "ttl_seconds": (int, float),
+        },
+        "optional": {"prefix_count": int},
     },
     "session.daemon_context_opened": {
         "required": {
@@ -574,6 +582,9 @@ EVENT_PAYLOAD_SCHEMAS: dict[str, dict[str, dict[str, _FIELD_TYPE]]] = {
         },
         "optional": {
             "history_lines_after": int,
+            "undone_count": int,
+            "backend": str,
+            "reason": str,
         },
     },
     "tactic.try_result": {
@@ -1237,10 +1248,6 @@ def candidate_closed_events(
     ]
 
 
-def has_candidate_closed(events: list[dict[str, Any]]) -> bool:
-    return bool(candidate_closed_events(events))
-
-
 def _report_error_excerpt(report: str) -> str:
     text = str(report or "")
     if not text.strip():
@@ -1377,13 +1384,10 @@ def summarize_events(events: list[dict[str, Any]]) -> EventSummary:
     verification_events = events_of_type(events, "verification.completed")
 
     tactic_status_counts: dict[str, int] = {}
-    result_candidate_closed_count = 0
     for event in tactic_result:
         payload = event_payload(event)
         status = str(payload.get("status", "unknown"))
         tactic_status_counts[status] = tactic_status_counts.get(status, 0) + 1
-        if payload.get("candidate_closed"):
-            result_candidate_closed_count += 1
 
     verification_status = None
     if verification_events:
@@ -1391,10 +1395,7 @@ def summarize_events(events: list[dict[str, Any]]) -> EventSummary:
 
     return EventSummary(
         event_counts=count_event_types(events),
-        tactic_submitted_count=len(events_of_type(events, "tactic.submitted")),
-        tactic_result_count=len(tactic_result),
         candidate_closed_count=len(candidate_closed_events(events)),
-        result_candidate_closed_count=result_candidate_closed_count,
         tactic_status_counts=tactic_status_counts,
         verification_status=verification_status,
         latest_attempt=latest_tactic_attempt(events),

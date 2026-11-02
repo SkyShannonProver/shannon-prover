@@ -154,9 +154,6 @@ class ProofEventManager:
             observation=observation,
         ))
 
-    def recent_events(self, limit: int = 40) -> list[dict[str, Any]]:
-        return [event.to_dict() for event in self.events[-max(1, int(limit)):]]
-
     def _route_event_count(self) -> int:
         return sum(1 for event in self.events if event.kind == "route_event")
 
@@ -240,13 +237,20 @@ def _route_event_from_turn(
     observation: dict[str, Any],
 ) -> dict[str, Any]:
     clean_payload = dict(payload) if isinstance(payload, dict) else {}
-    action = next(
-        (
-            item
-            for item in actions
-            if isinstance(item, dict)
-        ),
-        {},
+    # The turn's observation already carries its typed outcome; a recovery
+    # turn's first action is only a session-start acknowledgement, an
+    # in-place undo, or a fallback note.
+    action = (
+        observation
+        if observation.get("outcome_kind")
+        else next(
+            (
+                item
+                for item in actions
+                if isinstance(item, dict)
+            ),
+            {},
+        )
     )
     outcome = action_outcome_from_action(action)
     verdict = route_event_verdict_from_outcome(

@@ -192,7 +192,6 @@ def collect_run_metrics(
     node_failed_turns: Counter[str] = Counter()
     destructive_lowering = 0
     failed_commit_tactics = 0
-    failed_tactic_attempts = 0
     accepted_commits = 0
     commit_attempts = 0
     undo_count = 0
@@ -200,7 +199,9 @@ def collect_run_metrics(
     blocked_by_profile = 0
     handled_turns = 0
     blind_retry_spikes: list[int] = []
-    blind_run = 0
+    # Consecutive failed commit turns per node: concurrent nodes interleave
+    # in the audit log, so one global run would splice nodes together.
+    blind_runs: Counter[str] = Counter()
 
     for record in audit_records:
         kind = str(record.get("kind") or "")
@@ -234,7 +235,6 @@ def collect_run_metrics(
                     destructive_lowering += 1
             else:
                 failed_commit_tactics += 1
-                failed_tactic_attempts += 1
                 failed_tactic_turn = True
         elif intent in {"undo_last_step", "undo_to_checkpoint"}:
             undo_count += 1
@@ -242,14 +242,13 @@ def collect_run_metrics(
             restart_count += 1
 
         if failed_tactic_turn:
-            blind_run += 1
+            blind_runs[node] += 1
             node_failed_turns[node] += 1
         else:
-            if blind_run >= 2:
-                blind_retry_spikes.append(blind_run)
-            blind_run = 0
-    if blind_run >= 2:
-        blind_retry_spikes.append(blind_run)
+            if blind_runs[node] >= 2:
+                blind_retry_spikes.append(blind_runs[node])
+            blind_runs[node] = 0
+    blind_retry_spikes.extend(run for run in blind_runs.values() if run >= 2)
 
     profile = (
         config.get("surface_profile")
@@ -257,11 +256,7 @@ def collect_run_metrics(
         or ""
     )
     best_prefix_depth = max(node_commits.values() or [0])
-    final_proof_length = (
-        best_prefix_depth
-        if prover_result is not None and prover_result.is_verified
-        else None
-    )
+    final_proof_length = _verified_proof_length(prover_result)
     agent_trace = _collect_agent_trace_metrics(iteration_dirs or [run_dir])
     launched_proof_nodes = len(expected_confined_nodes)
     provider_session_count = int(agent_trace.get("session_count") or 0)
@@ -312,7 +307,6 @@ def collect_run_metrics(
             "commit_attempts": commit_attempts,
             "accepted_commits": accepted_commits,
             "failed_commit_tactics": failed_commit_tactics,
-            "failed_tactic_attempts": failed_tactic_attempts,
             "final_proof_length": final_proof_length,
         },
         "navigator": {
@@ -358,6 +352,22 @@ def collect_run_metrics(
             ),
         },
     }
+
+
+def _verified_proof_length(prover_result: ProverResult | None) -> int | None:
+    """Committed tactic count of the verified proof, or None.
+
+    It is the length of the exact session history that was verified and
+    written back (its closing ``qed.`` included). The per-node count of
+    accepted commit turns is not a proof length: it never shrinks on undo.
+    A run verified by precheck has no candidate and so no measured length.
+    """
+    if prover_result is None or not prover_result.is_verified:
+        return None
+    tactic_count = prover_result.completion_candidate.get("tactic_count")
+    if isinstance(tactic_count, bool) or not isinstance(tactic_count, int):
+        return None
+    return tactic_count if tactic_count >= 0 else None
 
 
 def render_markdown(rows: list[dict[str, Any]]) -> str:
@@ -852,8 +862,6 @@ def _collect_source_inspection_economics(
             "tool_use_count": None,
             "source_inspection_tool_count": None,
             "source_read_tool_count": None,
-            "source_tree_search_tool_count": None,
-            "scratch_checker_tool_count": None,
             "source_inspection_result_chars": None,
             "source_inspection_result_lines": None,
             "semantic_policy_count": None,
@@ -867,8 +875,6 @@ def _collect_source_inspection_economics(
             "tool_use_count": len(tool_uses),
             "source_inspection_tool_count": None,
             "source_read_tool_count": None,
-            "source_tree_search_tool_count": None,
-            "scratch_checker_tool_count": None,
             "source_inspection_result_chars": None,
             "source_inspection_result_lines": None,
             "semantic_policy_count": None,
@@ -883,7 +889,7 @@ def _collect_source_inspection_economics(
             continue
         category_counts[kind] += 1
         basis_counts[basis] += 1
-        if kind in {"source_read", "source_tree_search"}:
+        if kind == "source_read":
             tool_use_id = str(record.get("tool_use_id") or "")
             if tool_use_id:
                 source_tool_ids.add(tool_use_id)
@@ -902,15 +908,12 @@ def _collect_source_inspection_economics(
         source_result_lines += int(result.get("lines") or 0)
 
     source_read_count = category_counts["source_read"]
-    source_search_count = category_counts["source_tree_search"]
     return {
         "available": True,
         "unavailable_reason": "",
         "tool_use_count": len(tool_uses),
-        "source_inspection_tool_count": source_read_count + source_search_count,
+        "source_inspection_tool_count": source_read_count,
         "source_read_tool_count": source_read_count,
-        "source_tree_search_tool_count": source_search_count,
-        "scratch_checker_tool_count": category_counts["scratch_checker"],
         "source_inspection_result_chars": source_result_chars,
         "source_inspection_result_lines": source_result_lines,
         "semantic_policy_count": basis_counts["semantic_policy"],
@@ -1516,9 +1519,19 @@ def _intent_payload(value: Any) -> dict[str, Any]:
     return {}
 
 
+# Records that never carry a turn's verdict: the post-action view, and the
+# non-mutating notes a recovery leaves when an in-place shortcut (daemon
+# attach, rewind by undo) was not possible and it restarted instead.
+_NON_PRIMARY_ACTION_LABELS = frozenset({
+    "managed_goal_view",
+    "daemon_attach_fallback",
+    "daemon_undo_fallback",
+})
+
+
 def _primary_action(actions: list[dict[str, Any]]) -> dict[str, Any] | None:
     for action in actions:
-        if str(action.get("label") or "") != "managed_goal_view":
+        if str(action.get("label") or "") not in _NON_PRIMARY_ACTION_LABELS:
             return action
     return actions[0] if actions else None
 
@@ -1532,10 +1545,37 @@ def _action_tactic(action: dict[str, Any] | None) -> str:
     return ""
 
 
+# Typed manager outcomes (workflow.proof_management.managed_turn_outcome)
+# that mean EasyCrypt accepted the action and the manager kept it. A reverted
+# no-op is ``no_progress``; a chain whose suffix failed is ``partial_success``.
+_ACCEPTED_OUTCOME_KINDS = frozenset({
+    "accepted",
+    "accepted_unconfirmed",
+    "read_only",
+})
+
+
 def _action_was_accepted(action: dict[str, Any] | None) -> bool:
-    """Return whether the proof action succeeded at the EasyCrypt layer."""
+    """Return whether the proof action succeeded at the EasyCrypt layer.
+
+    The manager's typed ``outcome_kind`` is the verdict. Records written
+    before that field existed carry only prose, which the legacy reader
+    classifies.
+    """
     if not action:
         return False
+    outcome_kind = action.get("outcome_kind")
+    if isinstance(outcome_kind, str) and outcome_kind:
+        return outcome_kind in _ACCEPTED_OUTCOME_KINDS
+    return _legacy_action_was_accepted(action)
+
+
+def _legacy_action_was_accepted(action: dict[str, Any]) -> bool:
+    """Classify an action record that predates ``outcome_kind``.
+
+    The no-op reversion text says EasyCrypt "accepted" the tactic, so the
+    unchanged-proof-state report must be consulted before that word.
+    """
     observation = action.get("agent_observation")
     if not isinstance(observation, dict):
         return _optional_int_value(action.get("exit_code")) == 0
@@ -1547,13 +1587,13 @@ def _action_was_accepted(action: dict[str, Any] | None) -> bool:
     ).lower()
     if "rejected" in status_text or "could not use" in status_text:
         return False
-    if "accepted" in status_text or observation.get("accepted_tactic"):
-        return True
     if (
         observation.get("manager_action") == "commit_tactic"
         and "not changed" in str(observation.get("proof_state") or "").lower()
     ):
         return False
+    if "accepted" in status_text or observation.get("accepted_tactic"):
+        return True
     return _optional_int_value(action.get("exit_code")) == 0
 
 
@@ -1580,19 +1620,6 @@ def _fmt(value: Any) -> str:
     if isinstance(value, float):
         return f"{value:.2f}"
     return str(value)
-
-
-def _optional_float_value(value: Any) -> float | None:
-    if isinstance(value, bool) or value is None:
-        return None
-    if isinstance(value, (int, float)):
-        return float(value)
-    if isinstance(value, str):
-        try:
-            return float(value.strip())
-        except ValueError:
-            return None
-    return None
 
 
 if __name__ == "__main__":

@@ -11,7 +11,6 @@ from typing import Any
 
 
 PROJECT_SCHEMA_VERSION = 1
-PROJECT_FILENAME = "interleaved_project.json"
 PROJECT_ENV = "SHANNON_INTERLEAVED_PROJECT"
 _IDENTIFIER = re.compile(r"^[A-Za-z_][A-Za-z0-9_']*$")
 
@@ -59,6 +58,11 @@ class InterleavedProject:
             "include_dirs",
             tuple(_safe_relative(item, "include_dir") for item in self.include_dirs),
         )
+        if len(self._library_include_dirs()) > 1:
+            raise ValueError(
+                "include_dirs may name at most one directory besides the "
+                "target's own; a managed proof session accepts only one"
+            )
         if self.verifier:
             object.__setattr__(self, "verifier", _safe_relative(self.verifier, "verifier"))
         if self.prompt_file:
@@ -84,6 +88,22 @@ class InterleavedProject:
             raise ValueError("max_inner_minutes must be between 1 and 1440")
         if self.outer_timeout_seconds < 60:
             raise ValueError("outer_timeout_seconds must be at least 60")
+
+    def _library_include_dirs(self) -> list[str]:
+        target_directory = Path(self.target_file).parent.as_posix()
+        return [item for item in self.include_dirs if item != target_directory]
+
+    @property
+    def session_include_dir(self) -> str:
+        """The include directory a managed proof session receives.
+
+        A session always searches the directory of the file it proves, so the
+        target's own directory is not passed again. An inner session proves a
+        proof-stripped copy of that directory, so passing it would also expose
+        the unstripped sources.
+        """
+        library = self._library_include_dirs()
+        return library[0] if library else ""
 
     def to_dict(self) -> dict[str, Any]:
         return {"schema_version": PROJECT_SCHEMA_VERSION, **asdict(self)}

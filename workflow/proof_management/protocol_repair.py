@@ -9,6 +9,7 @@ from core.easycrypt.proof_lifecycle import (
     allows_qed,
     requires_qed_before_finish,
 )
+from core.easycrypt.proof_text import strip_comments
 
 from core.context_intents import (
     PROTOCOL_INTENTS,
@@ -16,12 +17,9 @@ from core.context_intents import (
     intent_payload_contract_error,
 )
 from workflow.proof_management.managed_turn_outcome import classify_manager_action_outcome
-from workflow.proof_management.tactic_utils import strip_easycrypt_comments
 from core.easycrypt.value_shapes import as_dict_copy as _dict
 from core.easycrypt.value_shapes import drop_empty as _drop_empty
 
-
-AgentIntentName = str
 
 ALLOWED_AGENT_INTENTS: set[str] = set(PROTOCOL_INTENTS)
 
@@ -56,19 +54,6 @@ def repair_prompt_text_for_streak(malformed_count: int) -> str:
         "with exactly ONE JSON intent object (no prose, no extra fields):\n\n"
         f"{base}"
     )
-
-ADMIT_CLARIFICATION_PROMPT = (
-    "You attempted to use `admit.`. The manager did not execute it, and the "
-    "committed EasyCrypt proof state is unchanged.\n\n"
-    "Clarify the purpose by choosing the next proof intent:\n"
-    "- If this was accidental, continue with a real non-admit proof tactic.\n"
-    "- If you wanted to explore later goals, commit a real structural tactic "
-    "and undo it if it does not fit.\n"
-    "- If you are stuck, report the blocker in your final PROVER REPORT or "
-    "try a different proof route.\n\n"
-    "`admit.` is not a proof step for the current target lemma and will not "
-    "be committed."
-)
 
 QED_CLARIFICATION_PROMPT = (
     "You attempted to commit `qed.`, but the latest authoritative session "
@@ -206,9 +191,7 @@ def _undo_to_checkpoint_payload_error(payload: dict[str, Any]) -> str:
 def intent_is_standalone_qed(intent: str, payload: dict[str, Any]) -> bool:
     if intent != "commit_tactic":
         return False
-    tactic = strip_easycrypt_comments(
-        str(_dict(payload).get("tactic") or "")
-    ).strip()
+    tactic = strip_comments(str(_dict(payload).get("tactic") or "")).strip()
     return tactic.lower().rstrip(".").strip() == "qed"
 
 

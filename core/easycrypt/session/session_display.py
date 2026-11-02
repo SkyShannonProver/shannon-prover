@@ -1,46 +1,85 @@
-"""Minimal backend text formatting for the current managed runtime.
+"""Speculative-check results and the session transcript compressor.
 
 Agent-visible presentation belongs to ``workflow.proof_state_compiler``.
-This module only keeps the small, stable textual contract used internally by
-the EasyCrypt daemon preflight adapter and the session transcript compressor.
+``TryResult`` is what one ``-try`` reports; its ``report`` text is the private
+rendering printed by the backend command and kept in the audit event. Nothing
+reads the text back: callers use the typed fields.
 """
 from __future__ import annotations
 
 import re
+from dataclasses import dataclass
 from typing import Any
 
+from core.easycrypt.ec_prompt import is_prompt_line
 from core.easycrypt.session.session_common import trim_after_last_prompt
 from core.easycrypt.session.session_no_progress import detect_no_progress
 
 
-def reorder_display(chunks: list[str]) -> list[str]:
-    """Preserve backend response order without legacy panel layering."""
+@dataclass(frozen=True)
+class TryResult:
+    """EasyCrypt's verdict on one speculative check, which commits nothing.
 
-    return list(chunks)
+    ``accepted`` is ``None`` when no check ran; ``tool_error`` then says
+    whether the check failed (a disabled daemon is reported without one).
+    ``goal_after_remaining`` is the subgoal count after an accepted check,
+    ``0`` once all goals are closed and ``None`` when unknown.
+    """
+
+    tactic: str
+    report: str
+    accepted: bool | None = None
+    goal_after_closed: bool = False
+    goal_after_remaining: int | None = None
+    error_kind: str = ""
+    tool_error: bool = False
+    no_progress_predicted: bool = False
 
 
-def format_try_single(
+def try_tool_error(request: str, report: str) -> TryResult:
+    """A check that could not run; ``report`` starts with ``[TRY] error:``."""
+
+    return TryResult(tactic=request.strip(), report=report, tool_error=True)
+
+
+def _remaining(goal: dict[str, Any]) -> tuple[str, int | None]:
+    value = goal.get("remaining", "?")
+    count = value if type(value) is int and value >= 0 else None
+    return f"{value} subgoal(s) remaining", count
+
+
+def _error_kind(error: dict[str, Any]) -> str:
+    return str(error.get("kind", "unknown"))
+
+
+def single_try_result(
     tactic: str,
-    result: dict[str, Any],
-    file_path: str | None = None,
+    reply: dict[str, Any],
     prev_raw: str = "",
-) -> str:
-    """Render the private preflight fields consumed by the typed adapter."""
+) -> TryResult:
+    """The result of the daemon's ``try_tactic`` reply for one tactic.
 
-    del file_path
-    accepted = bool(result.get("accepted"))
+    An accepted tactic is also checked for progress against ``prev_raw``,
+    the current state, exactly as a commit would be.
+    """
+
+    accepted = bool(reply.get("accepted"))
     lines = [
         f"[TRY] tactic: {tactic}",
         f"[TRY] accepted: {accepted}",
     ]
-    goal = result.get("goal_after")
+    closed = False
+    remaining = None
+    no_progress = False
+    error_kind = ""
+    goal = reply.get("goal_after")
     if accepted and isinstance(goal, dict):
         if goal.get("is_closed"):
             lines.append("[TRY] goal_after: all goals closed.")
+            closed, remaining = True, 0
         else:
-            lines.append(
-                f"[TRY] goal_after: {goal.get('remaining', '?')} subgoal(s) remaining"
-            )
+            text, remaining = _remaining(goal)
+            lines.append(f"[TRY] goal_after: {text}")
         raw = str(goal.get("raw") or "")
         if prev_raw and raw:
             no_progress, _ = detect_no_progress(
@@ -49,22 +88,33 @@ def format_try_single(
             if no_progress:
                 lines.append("[TRY] PRODUCES NO PROGRESS")
     if not accepted:
-        error = result.get("error")
+        error = reply.get("error")
         if isinstance(error, dict):
-            lines.append(f"[TRY] error_kind: {error.get('kind', 'unknown')}")
+            error_kind = _error_kind(error)
+            lines.append(f"[TRY] error_kind: {error_kind}")
     lines.append("[TRY] state_unchanged: true")
-    return "\n".join(lines) + "\n"
+    return TryResult(
+        tactic=tactic,
+        report="\n".join(lines) + "\n",
+        accepted=accepted,
+        goal_after_closed=closed,
+        goal_after_remaining=remaining,
+        error_kind=error_kind.strip(),
+        no_progress_predicted=no_progress,
+    )
 
 
-def format_try_chain(
+def chain_try_result(
+    request: str,
     tactics: list[str],
     chain: dict[str, Any],
-    file_path: str | None = None,
-    prev_raw: str = "",
-) -> str:
-    """Render a compact chain-preflight result for the typed parser."""
+) -> TryResult:
+    """The result of the daemon's ``try_chain`` reply for ``tactics``.
 
-    del file_path, prev_raw
+    The result names the whole ``request``; its goal count is the one after
+    the last accepted step.
+    """
+
     accepted = bool(chain.get("accepted"))
     final_closed = bool(chain.get("final_closed"))
     lines = [
@@ -72,6 +122,8 @@ def format_try_chain(
         f"[TRY-CHAIN] all_accepted: {accepted}",
         f"[TRY-CHAIN] final_closed: {final_closed}",
     ]
+    remaining = 0 if final_closed else None
+    error_kind = ""
     if accepted:
         if final_closed:
             lines.append("[TRY-CHAIN] goal_after: all goals closed.")
@@ -81,17 +133,23 @@ def format_try_chain(
                     continue
                 goal = step.get("goal_after")
                 if isinstance(goal, dict):
-                    lines.append(
-                        "[TRY-CHAIN] goal_after: "
-                        f"{goal.get('remaining', '?')} subgoal(s) remaining"
-                    )
+                    text, remaining = _remaining(goal)
+                    lines.append(f"[TRY-CHAIN] goal_after: {text}")
                 break
     elif chain.get("failed_at") is not None:
         error = chain.get("error")
         if isinstance(error, dict):
-            lines.append(f"[TRY] error_kind: {error.get('kind', 'unknown')}")
+            error_kind = _error_kind(error)
+            lines.append(f"[TRY] error_kind: {error_kind}")
     lines.append("[TRY-CHAIN] state_unchanged: true")
-    return "\n".join(lines) + "\n"
+    return TryResult(
+        tactic=request.strip(),
+        report="\n".join(lines) + "\n",
+        accepted=accepted,
+        goal_after_closed=final_closed,
+        goal_after_remaining=remaining,
+        error_kind=error_kind.strip(),
+    )
 
 
 def compress_current_state(text: str) -> str:
@@ -103,14 +161,13 @@ def compress_current_state(text: str) -> str:
     state_marker = re.compile(
         r"^(?:Current goal(?:\s*\(remaining:\s*\d+\))?|No more goals)\s*$"
     )
-    prompt = re.compile(r"^\[[0-9]+\|[^\]]+\]>\s*$")
     marker_index = -1
     prompt_indices: list[int] = []
     for index, line in enumerate(lines):
         stripped = line.strip()
         if state_marker.match(stripped):
             marker_index = index
-        if prompt.match(stripped):
+        if is_prompt_line(stripped):
             prompt_indices.append(index)
     if marker_index >= 0:
         start = marker_index

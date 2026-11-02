@@ -4,6 +4,187 @@ Notable changes to Shannon Prover, newest first. Each public release from
 0.2.0 on is tagged `vX.Y.Z`. Earlier releases are listed by date and tagged
 together as `v0.1.0`.
 
+## 0.3.2 (2026-11-01)
+
+- LICENSE and README now say that the vendored EasyCrypt's inifiles library
+  is licensed under the LGPL 2.1, whose text ships in `licenses/`.
+- Tests are grouped by subsystem under `tests/public/` (`core`, `compiler`,
+  `workflow`, `eval`, `repo`), with shared builders and fakes in
+  `tests/helpers/`. Run a test through pytest; test modules no longer set
+  up `sys.path` themselves. CONTRIBUTING.md says where a new test goes.
+  Tests that need the EasyCrypt toolchain carry the `easycrypt` marker, so
+  `pytest -m "not easycrypt"` runs the rest without the toolchain.
+- Test fixtures, helpers and comments use synthetic identifiers, and a
+  ChaChaPoly fixture keeps only the fields its test reads.
+- `$prove` and `/prove` no longer replace an existing proof that fails to
+  verify with `admit`. The source file changes only when a verified proof
+  is written back. Write-back now checks a hidden copy next to the file and
+  moves it into place only after it passes, so an interrupted run never
+  leaves an unverified proof behind, and an edit made during the check is
+  kept.
+- The single-lemma precheck runs once the run's why3server is up and
+  ignores declarations in comments and strings. When EasyCrypt gives no
+  verdict on an existing proof (a why3server failure or a timeout), the run
+  stops as `infrastructure_invalid` instead of searching for a lemma that
+  may already be proved. A missing lemma or file is reported without
+  starting a search, `equiv`, `hoare` and `phoare` targets are recognised,
+  and a target without its own `qed.` is no longer reported as verified on
+  the strength of the next lemma's proof.
+- Tactics are committed exactly as submitted. A clean-up meant for shell
+  output cut `elim: s => [|head tail ih].` down to `elim: s => [.` and
+  turned `/\!` into `!`.
+- After a daemon timeout, an EasyCrypt exit or an out-of-step pipe, the
+  session is replaced and replayed from its committed history. Every later
+  reply used to arrive one command late, so the agent could see a goal that
+  did not match its history, or have a valid tactic rejected. A failed
+  session open, a close during a running request, and a failed rollback
+  after a rejection no longer leave a session inconsistent.
+- Batch EasyCrypt runs stop after 600 s, and an EasyCrypt process the
+  manager timed out can no longer overwrite the session's output files.
+- A compound tactic with a space before `;` (`wp ; transitivity y.`) no
+  longer silences the compiler for that turn.
+- A node whose compiler changes the proof session stops as
+  `compiler_read_only_violation` instead of serving inconsistent state.
+- A node restored from a resume capsule gets its route history back, and
+  for the same node id its pre-rewind restore point. Both were silently
+  dropped, so capsule history shrank with each generation.
+- Restart, rewind, restore and amend turns report `accepted` and
+  `changed`; a replay that stops part way reports `partial_success` and the
+  step where it stopped.
+- `finish` while goals are open is accepted as a give-up even after an
+  `admit.` was committed. `qed`, and `finish` once the goals are closed, are
+  still refused while an `admit.` remains.
+- Tree search: a child branch that fails to start no longer ends the whole
+  run. A failed or interrupted start, or an error in the supervisor loop,
+  reaps the workers already started and still archives the session
+  directories, resume capsules and partial prefix. A healthy node is no
+  longer killed to make room at capacity, a node that just exited no
+  longer makes the capacity loop spin, a failed Layer-3 capsule selection
+  is not retried every second, the winner's final output is no longer
+  truncated, no worker is left running at the end, and worker output lines
+  that arrive together are handled in one poll.
+- A worker that receives SIGTERM or SIGINT no longer deadlocks before
+  writing its safe-stop checkpoint.
+- Two runs of the same lemma started in the same minute get separate run
+  directories and no longer shut down each other's EasyCrypt daemon.
+- Eval metrics no longer count a reverted no-op commit, a premature `qed.`
+  the manager never ran, or a commit without an execution result as an
+  accepted commit. Recorded no-op commits already carried an error, which
+  earlier versions counted as a failure, so accepted-commit counts and
+  rejection rates computed from recorded runs do not change. Blind-retry
+  runs are counted per node, and `final_proof_length` is now the tactic
+  count of the verified proof, including a prefix replayed from a resume
+  capsule; for resumed runs it is larger than before.
+- An interrupted or failed eval suite marks its manifest `interrupted` or
+  `failed`, and an `output_dir` outside the working directory no longer
+  stops the suite.
+- `-verify` recognises a session proof that ends with `TAC. qed.`, and
+  `commit_chain` reports the EasyCrypt error of the step that failed.
+- `orchestrator --human-proof-dir` is removed; `--max-iterations` is kept
+  for compatibility and documented as ignored.
+- One EasyCrypt text layer now splits sentences, masks comments and strings,
+  reads prompts and finds a lemma's declaration and proof for every caller.
+  The copies it replaced disagreed. As a result:
+  - `[1 .. 2]` is no longer cut at `..`.
+  - Write-back can no longer overwrite the `equiv` declaration that follows
+    the target.
+  - A commented-out lemma or a clone override is no longer taken for the
+    target.
+  - Opening a target proved by a one-line `by` no longer produces a file
+    EasyCrypt rejects.
+  - The extracted-lemma check no longer admits the target's own `by smt(...)`,
+    which let the precheck report a lemma as verified without running its
+    proof; it also refuses a target whose proof is never closed.
+- A tactic whose text looks like a backend flag is no longer misread as one
+  when the manager classifies its own backend calls.
+- A rewind, restore or amend late in a long proof no longer makes the node
+  unhealthy. The turn budget was fixed at launch from the starting history,
+  while such a turn replays the whole current history. The budget now
+  covers the longest history a node can reach, and Claude receives the same
+  tool timeout as Codex instead of its 30-minute default. Setting
+  `SHANNON_REPLAY_AGG_BUDGET` to 0 or less no longer shrinks every turn to
+  600 s.
+- A proof node now watches its own manager. A turn that spends 300 s
+  outside any EasyCrypt call, a call that runs 30 s past its own timeout,
+  or a dead tool endpoint is recorded as `manager_turn.stalled`, with thread
+  stacks, in the manager audit log. `SHANNON_MANAGER_STALL_WATCHDOG` selects
+  `report` (the default: record only), `enforce` (the node exits with code
+  75 and the tree search respawns it from its last checkpoint) or `off`.
+  Such a hang used to keep the node blocked until the run ended.
+- Rewind, restore and amend no longer restart EasyCrypt and replay the
+  whole kept history: the persistent daemon backtracks with EasyCrypt's
+  `undo`, and restore and amend replay only the part that differs. A
+  rejected or no-progress commit and `undo_last_step` also keep the daemon
+  session instead of rebuilding it. Rewinding a 90-command proof by a few
+  steps takes about 0.2 s instead of 10 s, and a commit after a rejection
+  about 0.2 s instead of 3 s. A history containing a `pragma`, a rewind into
+  a multi-command commit or onto a closed proof, and any mismatch fall back
+  to the old restart and replay. The kept prefix is no longer re-checked,
+  rewinds no longer emit per-step `replay_prefix_step_*` actions, and the
+  tree search now counts a rewind like an undo when it measures progress.
+- A tactic that EasyCrypt needs more than 60 s for no longer gets stuck.
+  The daemon gave each committed or replayed transaction 60 s, while the
+  manager gives a commit call 180 s; past 60 s the commit fell back to batch,
+  which ran the slow tactic twice, and once it was in the history every
+  later commit ran past 180 s. The daemon's limit is now the manager's
+  budget less 10 s (170 s, `SHANNON_EC_STEP_TIMEOUT`), for replays too, and
+  a transaction that runs past it is rejected on the daemon with
+  `EasyCrypt did not finish this transaction within 170 s` instead of
+  falling back to batch. A daemon started by an older version ignores the
+  new limit and falls back as before.
+- A daemon attempt that is known to fail is no longer repeated on every
+  commit. When the daemon cannot be spawned (each attempt waited 10 s), the
+  session does not try again for 5 minutes. When a committed transaction
+  does not replay on the daemon, the session skips the daemon for 10 minutes
+  while the history still starts with that transaction; when EasyCrypt
+  rejects the lemma's context, for 10 minutes while the source file is
+  unchanged. Those
+  commits run in batch as before, with `negative cache: <reason>` in the
+  `ec.routing` detail; each new entry is recorded once as an
+  `ec.daemon_unavailable` event, and `-start` clears them.
+- A commit that runs in batch runs EasyCrypt once instead of twice. The
+  first run only rebuilt the state before the commit, which the session
+  already keeps; goal counts and no-op detection now read that state, as
+  daemon commits always did, with the same results. A reverted no-op in
+  batch now leaves the compressed state in `current.out`, as on the daemon,
+  instead of the whole replay.
+- A manager backend call that times out no longer leaves EasyCrypt running.
+  Only `session_cli` itself was killed, and the `easycrypt` it had started
+  for a batch commit kept the CPU until it finished. `session_cli` now runs
+  in a process group of its own, which is stopped as a whole on a timeout or
+  an interrupt; the daemon, which detaches, is not affected.
+- A supervisor that has to SIGKILL an orchestrator now also stops the run's
+  EasyCrypt daemon. The daemon runs in a session of its own, so reaping the
+  recorded process groups missed it; the orchestrator now names the run's
+  daemon socket in the worker manifest, and reaping stops the daemon that
+  still serves it.
+- Project-level runs:
+  - Cross-run `--resume-job` works for projects whose `artifact_root` is
+    not the ChaChaPoly reference's, and a broken continuation chain no
+    longer crashes the runner.
+  - The runner handles SIGTERM and SIGHUP like Ctrl-C: it stops the
+    overall agent, cancels jobs, runs the final check and writes the
+    verdict.
+  - Each run directory has a manifest from the start (`preflight_running`,
+    `running`, `preflight_failed`, `runner_failed`). A missing or signed-out
+    provider is reported before the EasyCrypt source preflight, and the
+    Claude preflight checks that the CLI accepts `--max-turns`.
+  - `proved` is refused when a job ran from a commit that differs from the
+    starting commit outside the target.
+  - Killed or crashed jobs end as `infrastructure_invalid`, and their lanes
+    (worktree and EasyCrypt daemon) are removed. A reused process id is no
+    longer mistaken for a worker, and worker heartbeats continue while
+    results are collected.
+  - Sessions receive the library include directory, resources resolve
+    against every include directory, and lanes check them out. A project
+    with more than one library include directory is rejected for now.
+  - Auxiliary jobs of the ChaChaPoly reference project start again. Their
+    lanes did not check out the project file, so every job failed at start.
+  - The project is passed explicitly from each entry point instead of being
+    read from an environment variable when modules are imported, job states
+    follow an explicit transition table, a closed job is no longer rewritten
+    by its worker, and a cancel request is no longer lost.
+
 ## 0.3.1 (2026-10-28)
 
 - Installing Shannon Prover no longer installs litellm, anthropic, openai

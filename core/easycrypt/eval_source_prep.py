@@ -5,20 +5,19 @@ before the prover/agent can read them.  This module owns that contract:
 
     original project -> isolated proof-stripped project copy + manifest
 
-Callers should not hand-edit target proof blocks. The suite runner, validation
-tooling, and explicit developer re-proving path share this proof-stripping core.
+Callers should not hand-edit target proof blocks. The suite runner and the
+compiler experiments share this proof-stripping core.
 """
 from __future__ import annotations
 
 import hashlib
 import json
-import re
 import shutil
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
-from core.easycrypt.lemma_decls import lemma_decl_lines, lemma_decl_matches
+from core.easycrypt.lemma_decls import lemma_decl_lines, target_declaration
 from core.easycrypt.proof_strip import replace_proofs
 
 
@@ -146,56 +145,22 @@ def strip_eval_source_tree(root: Path) -> list[dict[str, Any]]:
     return out
 
 
-def replace_target_proof_with_admit(path: Path, lemma_name: str) -> bool:
-    """Replace one target proof with an admit shell.
-
-    This is for the explicit developer re-proving path. Evaluation source
-    preparation uses ``prepare_eval_source(strip_proofs=True)`` instead.
-    """
-    path = Path(path)
-    content = path.read_text(encoding="utf-8")
-    block = find_target_proof_block(content, lemma_name)
-    if block is None:
-        return False
-    start, end = block
-    indent = _leading_indent(content[start:end])
-    replacement = f"{indent}proof.\n{indent}  admit.\n{indent}qed."
-    path.write_text(content[:start] + replacement + content[end:], encoding="utf-8")
-    return True
-
-
 def find_target_proof_block(
     content: str,
     lemma_name: str,
 ) -> tuple[int, int] | None:
-    """Find a target proof block by name in EasyCrypt source text."""
-    matches = lemma_decl_matches(content, lemma_name)
-    if not matches:
+    """Span of the target's own proof block in EasyCrypt source text.
+
+    The block runs from the first sentence after the declaration (normally
+    ``proof.``) through ``qed.``, or covers the sentences no ``qed.`` closes,
+    such as a bare ``admit.``. A one-line ``by`` proof has no block.
+    """
+    declaration = target_declaration(content, lemma_name)
+    if declaration is None or declaration.proof is None:
         return None
-
-    def needs_proving(match: Any) -> bool:
-        after = content[match.end():match.end() + 500]
-        return "admit" in after[:300] or "proof." in after[:300]
-
-    match = next((m for m in matches if needs_proving(m)), matches[0])
-    # Start after the entire declaration head, which can span multiple lines
-    # (for example `local\nlemma target`). Its own `lemma` line must not be
-    # mistaken for the next declaration by the bounded proof search.
-    rest = content[match.end():]
-    next_start = _next_declaration_offset(rest)
-    if next_start is not None:
-        rest = rest[:next_start]
-
-    proof_pos = rest.find("proof.")
-    if proof_pos >= 0:
-        qed_pos = rest.find("qed.", proof_pos)
-        if qed_pos >= 0:
-            return match.end() + proof_pos, match.end() + qed_pos + len("qed.")
-
-    admit_pos = _standalone_admit_offset(rest)
-    if admit_pos is not None:
-        return match.end() + admit_pos[0], match.end() + admit_pos[1]
-    return None
+    if declaration.proof.kind == "by":
+        return None
+    return declaration.proof.start, declaration.proof.end
 
 
 def _copy_isolated_source(
@@ -269,73 +234,6 @@ def _source_manifest(
     }
 
 
-def _next_declaration_offset(text: str) -> int | None:
-    lines = text.splitlines(keepends=True)
-    offset = 0
-    for idx, line in enumerate(lines):
-        if idx > 0 and _is_bounded_declaration_start(line):
-            return offset
-        offset += len(line)
-    return None
-
-
-def _is_bounded_declaration_start(line: str) -> bool:
-    stripped = line.strip()
-    if not stripped:
-        return False
-    if len(line) - len(line.lstrip(" ")) > 2:
-        return False
-    heads = (
-        "local lemma ",
-        "local theorem ",
-        "local equiv ",
-        "local hoare ",
-        "local phoare ",
-        "lemma ",
-        "theorem ",
-        "equiv ",
-        "hoare ",
-        "phoare ",
-        "axiom ",
-        "op ",
-        "type ",
-        "module ",
-        "clone ",
-        "section",
-        "end section",
-    )
-    if not stripped.startswith(heads):
-        return False
-    # A real declaration names what it declares. Statement *continuation*
-    # lines can start with the anonymous judgment forms `equiv [ ... ]`,
-    # `hoare [ ... ]`, `phoare [ ... ]` at low indent (e.g. Perm3.simul_bad's
-    # `initialisation ... => \n equiv [ ... ]`); treating those as the next
-    # declaration truncates the proof-block search before `proof.` and makes
-    # the target look shell-less. Require an identifier after the keyword.
-    m = re.match(
-        r"(?:local\s+)?(?:lemma|theorem|equiv|hoare|phoare)\s+(?P<next>\S)",
-        stripped,
-    )
-    if m and not (m.group("next").isalpha() or m.group("next") == "_"):
-        return False
-    return True
-
-
-def _standalone_admit_offset(text: str) -> tuple[int, int] | None:
-    offset = 0
-    for line in text.splitlines(keepends=True):
-        if line.strip() == "admit.":
-            start = offset + line.index("admit.")
-            return start, start + len("admit.")
-        offset += len(line)
-    return None
-
-
-def _leading_indent(text: str) -> str:
-    line = text.splitlines()[0] if text.splitlines() else ""
-    return line[:len(line) - len(line.lstrip(" \t"))]
-
-
 def _sha256_text(text: str) -> str:
     return hashlib.sha256(text.encode("utf-8")).hexdigest()
 
@@ -348,6 +246,5 @@ __all__ = [
     "assert_unique_eval_target",
     "find_target_proof_block",
     "prepare_eval_source",
-    "replace_target_proof_with_admit",
     "strip_eval_source_tree",
 ]

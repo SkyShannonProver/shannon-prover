@@ -1,25 +1,22 @@
 """Commitment-relative pure-tail recovery vertical slice."""
 
-from core.easycrypt.proof_state_compiler.contracts import (
-    COMMITMENT_RELATIVE,
-    StrategyContract,
-)
 from core.easycrypt.proof_state_compiler.features.registry import (
     ExperimentGate,
     FeatureDefinition,
     FeatureSpec,
 )
-
-
-PURE_TAIL_RECOVERY_FEATURE_ID = "pure_tail_recovery"
-PURE_TAIL_RECOVERY_STRATEGY_CONTRACT = StrategyContract(
-    strategy_class=COMMITMENT_RELATIVE,
-    rationale=(
-        "the agent already selected the rewrite lemma and direction; native "
-        "EasyCrypt identifies one unique current hypothesis target"
-    ),
-    required_commitment="attempted_rewrite_lemma_and_direction",
+from core.easycrypt.proof_state_compiler.features.failed_commit import (
+    attempt_diagnostic_producer,
+    failed_commit_gate,
 )
+from .ids import (
+    PURE_TAIL_RECOVERY_FEATURE_ID,
+    PURE_TAIL_RECOVERY_STRATEGY_CONTRACT,
+)
+from .analysis import analyze_pure_tail_recovery
+from .realization import PURE_TAIL_REWRITE_CODEC
+from .surface_lowering import lower_pure_tail_recovery
+from .syntax import selected_plain_rewrite
 
 
 def pure_tail_recovery_feature_spec() -> FeatureSpec:
@@ -63,14 +60,6 @@ def pure_tail_recovery_feature_spec() -> FeatureSpec:
 
 
 def pure_tail_recovery_feature() -> FeatureDefinition:
-    from core.easycrypt.proof_state_compiler.features.failed_commit import (
-        attempt_diagnostic_producer,
-        failed_commit_gate,
-    )
-    from .analysis import analyze_pure_tail_recovery
-    from .realization import PURE_TAIL_REWRITE_CODEC
-    from .surface_lowering import lower_pure_tail_recovery
-    from .syntax import selected_plain_rewrite
 
     def plain_rewrite(tactic: str) -> bool:
         return selected_plain_rewrite(tactic) is not None

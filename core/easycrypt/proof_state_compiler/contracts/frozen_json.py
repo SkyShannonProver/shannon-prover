@@ -2,12 +2,12 @@
 
 from __future__ import annotations
 
-import hashlib
-import json
 import math
 from collections.abc import Iterator, Mapping, Sequence
 from dataclasses import dataclass
 from typing import Any
+
+from core.easycrypt.proof_state_compiler.contracts.digest import json_sha256
 
 
 @dataclass(frozen=True)
@@ -30,6 +30,13 @@ class FrozenJsonObject(Mapping[str, object]):
 
     def __len__(self) -> int:
         return len(self.entries)
+
+    # Key order is presentation, not content: compare as a Mapping (as
+    # ``frozen_json_sha256`` does) instead of by the ordered ``entries``.
+    __eq__ = Mapping.__eq__
+
+    def __hash__(self) -> int:
+        return hash(frozenset(self.entries))
 
     def to_dict(self) -> dict[str, Any]:
         return {key: thaw_json(value) for key, value in self.entries}
@@ -79,13 +86,6 @@ def freeze_json_object(value: Mapping[str, Any] | None) -> FrozenJsonObject:
     return frozen
 
 
-def freeze_json_array(value: Sequence[Any] | None) -> FrozenJsonArray:
-    frozen = freeze_json(list(value or []))
-    if not isinstance(frozen, FrozenJsonArray):  # pragma: no cover
-        raise TypeError("expected a JSON array")
-    return frozen
-
-
 def thaw_json(value: object) -> Any:
     if isinstance(value, FrozenJsonObject):
         return value.to_dict()
@@ -97,10 +97,4 @@ def thaw_json(value: object) -> Any:
 
 
 def frozen_json_sha256(value: object) -> str:
-    encoded = json.dumps(
-        thaw_json(value),
-        ensure_ascii=False,
-        separators=(",", ":"),
-        sort_keys=True,
-    ).encode("utf-8")
-    return hashlib.sha256(encoded).hexdigest()
+    return json_sha256(thaw_json(value))

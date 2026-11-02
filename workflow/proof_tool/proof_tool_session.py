@@ -49,6 +49,26 @@ TurnRenderer = Callable[
 ]
 
 
+class TurnMonitor(Protocol):
+    """Observer of the serving window (the manager stall watchdog).
+
+    Both calls happen on the serving thread with the session lock held, so a
+    caller queued on the lock is never counted as a stalled turn.
+    """
+
+    def turn_started(self, turn_index: int) -> None: ...
+
+    def turn_finished(self) -> None: ...
+
+
+class _NoTurnMonitor:
+    def turn_started(self, turn_index: int) -> None:
+        return
+
+    def turn_finished(self) -> None:
+        return
+
+
 @dataclass(frozen=True)
 class ProofToolSessionResponse:
     """Exact cached result of one endpoint call."""
@@ -108,6 +128,7 @@ class ProofToolSession:
         initial_committed_tactics: tuple[str, ...] = (),
         emit: Callable[[dict[str, Any]], None] | None = None,
         clock: Callable[[], float] = time.time,
+        turn_monitor: TurnMonitor | None = None,
     ) -> None:
         self.node_id = str(node_id or "").strip()
         if not self.node_id:
@@ -119,6 +140,7 @@ class ProofToolSession:
         self.max_turns = max(1, int(max_turns))
         self._emit = emit or (lambda _event: None)
         self._clock = clock
+        self._turn_monitor: TurnMonitor = turn_monitor or _NoTurnMonitor()
         self._lock = threading.Lock()
         # This event is intentionally separate from the serving lock.  A stop
         # requester sets it immediately, then waits for the current manager
@@ -264,12 +286,18 @@ class ProofToolSession:
 
             manager_completed = False
             next_turn_index = self._turn_index + 1
+            # The serving window opens only now, with the lock held: time spent
+            # queued on the lock is waiting, not a stalled manager.
+            self._turn_monitor.turn_started(next_turn_index)
             try:
                 turn = self._handle_turn(raw_arguments, deadline)
                 manager_completed = True
                 if not isinstance(turn, ManagedTurn):
                     raise TypeError("manager returned a non-ManagedTurn result")
-                self._last_committed_tactics = tuple(turn.committed_tactics)
+                if turn.directive is not TurnDirective.NODE_UNHEALTHY:
+                    # An unhealthy turn may carry no post-turn spine at all;
+                    # keep the last spine the manager actually bound.
+                    self._last_committed_tactics = tuple(turn.committed_tactics)
                 if self._clock() > deadline:
                     self._turn_index = next_turn_index
                     response = self._unhealthy_response(
@@ -331,6 +359,8 @@ class ProofToolSession:
                 if manager_completed:
                     self._emit_completed_turn(self._turn_index)
                 return response
+            finally:
+                self._turn_monitor.turn_finished()
 
     def _apply_directive(self, directive: TurnDirective, turn: ManagedTurn) -> None:
         if directive is TurnDirective.STOP_REQUESTED:

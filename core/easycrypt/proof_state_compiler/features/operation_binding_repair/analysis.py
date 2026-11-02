@@ -15,16 +15,17 @@ from core.easycrypt.proof_state_compiler.contracts import (
     ProofCoordinate,
     ProofIR,
     RecoveryClaim,
+    recovery_claim_for,
     StructuredDiagnostic,
     exact_operation_resource_witness,
 )
 from core.easycrypt.proof_state_compiler.middle_end.contributions import (
     AnalysisContribution,
 )
-from core.easycrypt.proof_state_compiler.features.operation_binding_repair.feature import (
+from core.easycrypt.proof_state_compiler.features.operation_binding_repair.ids import (
     OPERATION_BINDING_REPAIR_FEATURE_ID,
 )
-from core.easycrypt.proof_state_compiler.features.operation_binding_repair.contracts import (
+from core.easycrypt.proof_state_compiler.features.operation_binding_repair.ids import (
     OPERATION_BINDING_REPAIR_ANALYSIS_PRODUCER_ID,
 )
 from core.easycrypt.proof_state_compiler.features.operation_binding_repair.classification import (
@@ -76,23 +77,16 @@ def analyze_operation_binding_repair(
     failure_class = classify_operation_binding_failure(attempted)
     if attempted is None or failure_class is None:
         return AnalysisContribution()
-    claim = RecoveryClaim(
+    claim = recovery_claim_for(
+        attempted,
         feature_id=OPERATION_BINDING_REPAIR_FEATURE_ID,
-        recovery_key=attempted.recovery_key,
-        attempt_id=attempted.attempt_id,
-        occurrence_identity=attempted.occurrence_identity,
-        trigger_id=attempted.trigger_id,
-        operation_family=attempted.operation_family,
-        selected_resource=attempted.exact_resource,
-        resource_match_kind=(
-            "basename" if failure_class == "B1" else "exact"
-        ),
         allowed_output_kinds=("action", "diagnostic"),
         preservation_witness=exact_operation_resource_witness(
             attempted.operation_family,
             attempted.exact_resource,
         ),
-        evidence_refs=attempted.evidence_refs,
+        selected_resource=attempted.exact_resource,
+        resource_match_kind="basename" if failure_class == "B1" else "exact",
     )
     contribution = AnalysisContribution()
     any_checked_application = False

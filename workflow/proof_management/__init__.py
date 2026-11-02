@@ -15,6 +15,7 @@ from .lineage import (
     lineage_briefing_markdown,
 )
 from .node_bootstrap import ProofNodeLifecycleManager
+from .node_state import NodeTurnState
 from .health import backend_failure_health_event, timeout_health_event
 from .intent_admission import (
     IntentAdmission,
@@ -24,7 +25,6 @@ from .intent_admission import (
 from .protocol_repair import (
     ALLOWED_AGENT_INTENTS,
     AgentIntent,
-    AgentIntentName,
     parse_agent_intent,
     view_allows_qed,
     view_requires_qed_before_finish,
@@ -49,15 +49,14 @@ from .route_family import (
     route_family_score_adjustment,
 )
 from .backend_actions import (
-    agent_observation_from_command,
+    agent_observation_for_request,
     backend_action_record,
-    content_observation_from_payload,
     extract_json_object,
     timeout_backend_action_record,
 )
+from .backend_request import BackendRequest
 from .turn_executor import ProofTurnExecutor
 from .turn_view import (
-    clean_manager_actions,
     intent_effect,
     intent_payload_surface,
     latest_observation_for_view,
@@ -70,7 +69,6 @@ from .turn_spine import CommittedTurnSpine
 from .types import (
     ManagedTurn,
     NodeHealthEvent,
-    NodeProgressSummary,
     ProofStateSnapshot,
     TurnDirective,
 )
@@ -78,7 +76,7 @@ from .types import (
 __all__ = [
     "ALLOWED_AGENT_INTENTS",
     "AgentIntent",
-    "AgentIntentName",
+    "BackendRequest",
     "CheckpointIndex",
     "CheckpointOption",
     "CommittedTurnSpine",
@@ -88,7 +86,7 @@ __all__ = [
     "LemmaLineageStore",
     "ManagedTurn",
     "NodeHealthEvent",
-    "NodeProgressSummary",
+    "NodeTurnState",
     "ProofCheckpointManager",
     "ProofEvent",
     "ProofEventManager",
@@ -106,12 +104,10 @@ __all__ = [
     "ResumeRouteCandidate",
     "RouteFamilyEvidence",
     "TurnDirective",
-    "agent_observation_from_command",
+    "agent_observation_for_request",
     "backend_action_record",
     "backend_failure_health_event",
     "build_resume_diversity_index",
-    "content_observation_from_payload",
-    "clean_manager_actions",
     "extract_json_object",
     "intent_effect",
     "intent_payload_surface",

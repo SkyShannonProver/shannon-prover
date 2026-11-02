@@ -5,12 +5,14 @@ from workflow.proof_state_compiler.input_gateway import (
     live_compiler_input,
 )
 from workflow.proof_state_compiler.service import (
+    CompilerReadOnlyViolation,
     CompilerServiceSkipped,
     CompilerServiceResult,
     ProofStateCompilerService,
 )
 
 __all__ = [
+    "CompilerReadOnlyViolation",
     "CompilerServiceSkipped",
     "CompilerServiceResult",
     "LiveCompilerInput",

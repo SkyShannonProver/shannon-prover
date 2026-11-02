@@ -80,16 +80,43 @@ class ProofToolTimingBudget:
         }
 
 
-def proof_tool_timing_for_prefix(prefix_length: int) -> ProofToolTimingBudget:
+def _sizing_replay_seconds(prefix_length: int) -> float:
+    """Replay ceiling used to size turn budgets.
+
+    ``SHANNON_REPLAY_AGG_BUDGET <= 0`` removes the replay cap; it must not
+    also shrink the turn budget to its floor, so size such a replay at the
+    default per-tactic rate.
+    """
+
+    seconds = replay_aggregate_budget_seconds(prefix_length)
+    return seconds if seconds > 0 else max(600.0, 15.0 * max(0, int(prefix_length)))
+
+
+def proof_tool_timing_for_prefix(
+    prefix_length: int,
+    *,
+    turn_allowance: int = 0,
+) -> ProofToolTimingBudget:
     """Resolve the one request budget from the session replay ceiling.
+
+    The budget is fixed when the provider launches, but a single turn may
+    restart and replay the whole current history (rewind, restore, amend),
+    whose replay ceiling grows with that history.  The history starts at
+    ``prefix_length`` commands and each of the node's ``turn_allowance``
+    tool turns commits at most one transaction (one command, unless it is a
+    bullet transaction), so the default budget covers the replay ceiling of
+    ``prefix_length + turn_allowance`` commands.  Every
+    backend call keeps its own cap and the replay its own aggregate budget,
+    so this only bounds how long a turn may run, never how long it does.
 
     The extra phase allowance covers authoritative refresh, turn-spine binding,
     compiler work, memory persistence, and rendering after the slowest replay.
-    A single explicit override replaces the complete manager-operation budget;
-    transport/provider ceilings are still derived and cannot drift below it.
+    A single explicit override replaces the complete manager-operation budget
+    (it must still cover the bootstrap replay); transport/provider ceilings
+    are still derived and cannot drift below it.
     """
 
-    replay_seconds = replay_aggregate_budget_seconds(prefix_length)
+    bootstrap_replay_seconds = _sizing_replay_seconds(prefix_length)
     raw = os.environ.get("SHANNON_MANAGER_OPERATION_TIMEOUT_S", "").strip()
     if raw:
         try:
@@ -99,8 +126,10 @@ def proof_tool_timing_for_prefix(prefix_length: int) -> ProofToolTimingBudget:
                 "SHANNON_MANAGER_OPERATION_TIMEOUT_S must be numeric"
             ) from exc
     else:
-        manager_seconds = replay_seconds + 600.0
-    if manager_seconds < replay_seconds:
+        manager_seconds = _sizing_replay_seconds(
+            prefix_length + max(0, int(turn_allowance))
+        ) + 600.0
+    if manager_seconds < bootstrap_replay_seconds:
         raise ValueError(
             "manager operation timeout cannot be below the replay budget"
         )
@@ -200,6 +229,10 @@ def render_claude_mcp_config(
                 # nothing and exits without ever producing the invocation-bound
                 # READY receipt.  Required manager tools must be eager.
                 "alwaysLoad": True,
+                # Claude Code otherwise aborts a tool call after its default
+                # idle timeout (30 min), below the budget a long in-turn
+                # replay may use; Codex gets the same ceiling below.
+                "timeout": int(math.ceil(spec.timing.provider_tool_seconds * 1000)),
                 "command": command,
                 "args": list(arguments),
                 "env": env,

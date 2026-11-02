@@ -72,8 +72,7 @@ def handle_start(session, args) -> int:
             session.load_context(extracted_path)
         else:
             session.load_context(file_path)
-        session._run_ec(session.history, session.curr)
-        session._compress_curr_inplace()
+        session.replay_current()
 
     metadata = {
         "file": resolved_file,

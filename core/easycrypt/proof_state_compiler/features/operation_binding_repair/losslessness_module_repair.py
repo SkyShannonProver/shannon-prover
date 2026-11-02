@@ -10,7 +10,6 @@ implication for Shannon to decompose.
 
 from __future__ import annotations
 
-import hashlib
 from dataclasses import dataclass
 
 from core.easycrypt.proof_state_compiler.contracts import (
@@ -24,7 +23,8 @@ from core.easycrypt.proof_state_compiler.contracts import (
     ProofIR,
     ProofResource,
 )
-from core.easycrypt.proof_state_compiler.features.operation_binding_repair.contracts import (
+from core.easycrypt.proof_state_compiler.contracts.digest import text_sha256
+from core.easycrypt.proof_state_compiler.features.operation_binding_repair.ids import (
     OPERATION_BINDING_REPAIR_ANALYSIS_PRODUCER_ID,
 )
 from core.easycrypt.proof_state_compiler.features.operation_binding_repair.classification import (
@@ -84,15 +84,13 @@ def plan_native_losslessness_module_repair(
         return NativeSemanticRequestProduction.not_applicable(
             LOSSLESSNESS_MODULE_REPAIR_NATIVE_PRODUCER_ID
         )
-    digest = hashlib.sha256(
-        (
-            sketch.resource.resource_id
-            + "\0"
-            + sketch.target_procedure
-            + "\0apply\0"
-            + sketch.application_term
-        ).encode("utf-8")
-    ).hexdigest()[:20]
+    digest = text_sha256(
+        sketch.resource.resource_id
+        + "\0"
+        + sketch.target_procedure
+        + "\0apply\0"
+        + sketch.application_term
+    )[:20]
     request = NativeSemanticRequest(
         state_ref=proof_ir.state_ref,
         request_id=f"operation-binding-b2-losslessness:{digest}",

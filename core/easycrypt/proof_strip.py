@@ -16,12 +16,17 @@ prior layering inversion (audit re-audit §4.1).
 
 import re
 
-from core.easycrypt.lemma_decls import mask_comments
+from core.easycrypt.lemma_decls import DECLARATION_KEYWORDS
 from core.easycrypt.proof_syntax import inline_proof
+from core.easycrypt.proof_text import (
+    has_unterminated_comment,
+    sentence_ends,
+    strip_comments,
+)
 
 _DECL_RE = re.compile(
     r"^(?P<indent>\s*)"
-    r"(?P<kind>(?:local\s+)?(?:lemma|theorem|equiv|hoare|phoare))\b"
+    rf"(?P<kind>(?:local\s+)?(?:{DECLARATION_KEYWORDS}))\b"
 )
 
 
@@ -48,31 +53,21 @@ _SOURCE_TOKEN = re.compile(r'"(?:\\.|[^"\\])*"|[A-Za-z_][A-Za-z0-9_\']*|\.\.|[^\
 
 
 def _source_tokens(content: str):
-    """Lexical offsets only: skip nested comments and keep strings opaque."""
-    i = 0
-    depth = 0
-    while i < len(content):
-        pair = content[i:i + 2]
-        if pair == "(*":
-            depth += 1
-            i += 2
-        elif depth:
-            if pair == "*)":
-                depth -= 1
-                i += 2
-            else:
-                i += 1
-        elif content[i].isspace():
-            i += 1
-        else:
-            token = _SOURCE_TOKEN.match(content, i)
-            assert token is not None
-            if token.group() == '"':
-                raise ValueError("Cannot strip proofs from an unterminated string")
-            yield token.group(), token.start(), token.end()
-            i = token.end()
-    if depth:
+    """Lexical offsets only: skip comments and keep strings opaque."""
+    if has_unterminated_comment(content):
         raise ValueError("Cannot strip proofs from an unterminated comment")
+    code = strip_comments(content)
+    i = 0
+    while i < len(code):
+        if code[i].isspace():
+            i += 1
+            continue
+        token = _SOURCE_TOKEN.match(code, i)
+        assert token is not None
+        if token.group() == '"':
+            raise ValueError("Cannot strip proofs from an unterminated string")
+        yield token.group(), token.start(), token.end()
+        i = token.end()
 
 
 def _redact_by_clauses(content: str) -> tuple[str, int]:
@@ -138,10 +133,10 @@ def _redact_by_clauses(content: str) -> tuple[str, int]:
             raise ValueError("Cannot strip an unterminated clone/realize proof command")
 
     command: list[tuple[str, int, int]] = []
+    final_dots = set(sentence_ends(content))
     for token in _source_tokens(content):
-        word, _, end = token
         command.append(token)
-        if word == "." and (end == len(content) or content[end].isspace()):
+        if token[0] == "." and token[2] in final_dots:
             collect(command, complete=True)
             command = []
     if command:
@@ -171,7 +166,7 @@ def _redact_residual_proof_text(content: str) -> tuple[str, int]:
     """
     content, replaced = _redact_by_clauses(content)
     lines = content.splitlines(keepends=True)
-    mlines = mask_comments(content).splitlines(keepends=True)
+    mlines = strip_comments(content).splitlines(keepends=True)
     out: list[str] = []
     i = 0
     n = len(lines)
@@ -230,7 +225,7 @@ def replace_proofs(content: str) -> tuple[str, int]:
     commented-out proof blocks pass through byte-identical.
     """
     lines = content.splitlines(keepends=True)
-    mlines = mask_comments(content).splitlines(keepends=True)
+    mlines = strip_comments(content).splitlines(keepends=True)
     out: list[str] = []
     n_replaced = 0
     i = 0

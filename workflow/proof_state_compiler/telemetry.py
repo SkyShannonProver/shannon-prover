@@ -21,7 +21,6 @@ from core.easycrypt.proof_state_compiler.contracts import (
     NativeSemanticObservation,
     NativeSemanticPlan,
     NativeSemanticRequest,
-    EXPLICIT_CONTEXT_REQUEST,
     STATE_REFRESH,
     TRIGGER_KINDS,
 )
@@ -196,7 +195,7 @@ def validate_delivery_telemetry(value: object) -> tuple[str, ...]:
             errors.append(f"delivery trigger {index} requires source_event_id")
         if trigger_kind not in TRIGGER_KINDS:
             errors.append(f"delivery trigger {index} has an invalid trigger_kind")
-        if trigger_kind in {STATE_REFRESH, EXPLICIT_CONTEXT_REQUEST}:
+        if trigger_kind == STATE_REFRESH:
             if any(value not in (None, "") for value in (
                 anchor_id,
                 anchor_kind,

@@ -4,6 +4,12 @@ from __future__ import annotations
 
 import re
 
+from core.easycrypt.proof_state_compiler.delimiters import (
+    balanced,
+    matching_close,
+    top_level_indices,
+)
+
 
 _OPERATION_HEAD = re.compile(
     r"^\s*(apply|exact|call|conseq)\s+\(*\s*"
@@ -14,8 +20,6 @@ _REWRITE_OPERATION = re.compile(
     r"([A-Za-z_][A-Za-z0-9_']*(?:\.[A-Za-z_][A-Za-z0-9_']*)*)"
     r"(?:\s+in\s+[A-Za-z_][A-Za-z0-9_']*)?\s*\.\s*$"
 )
-_OPEN_TO_CLOSE = {"(": ")", "[": "]", "{": "}"}
-_CLOSE_TO_OPEN = {value: key for key, value in _OPEN_TO_CLOSE.items()}
 
 
 def operation_resource(tactic: str) -> tuple[str, str] | None:
@@ -75,7 +79,7 @@ def operation_head_arguments(tactic: str) -> tuple[str, str, str] | None:
         return None
     term = body[len(operation):].strip()
     parenthesized = False
-    while term.startswith("(") and _closing_index(term) == len(term) - 1:
+    while term.startswith("(") and matching_close(term, 0) == len(term) - 1:
         term = term[1:-1].strip()
         parenthesized = True
     if term == resource:
@@ -87,18 +91,6 @@ def operation_head_arguments(tactic: str) -> tuple[str, str, str] | None:
     ):
         return None
     return operation, resource, term[len(resource):].strip()
-
-
-def _closing_index(term: str) -> int:
-    depth = 0
-    for index, char in enumerate(term):
-        if char in _OPEN_TO_CLOSE:
-            depth += 1
-        elif char in _CLOSE_TO_OPEN:
-            depth -= 1
-            if depth == 0:
-                return index
-    return -1
 
 
 def _is_single_bounded_tactic(tactic: str) -> bool:
@@ -117,24 +109,16 @@ def _is_single_bounded_tactic(tactic: str) -> bool:
     ):
         return False
     body = tactic[:-1]
-    if not body.strip():
+    if not body.strip() or not balanced(body):
         return False
-    delimiters: list[str] = []
-    for index, char in enumerate(body):
-        if char in _OPEN_TO_CLOSE:
-            delimiters.append(char)
-            continue
-        if char in _CLOSE_TO_OPEN:
-            if not delimiters or delimiters.pop() != _CLOSE_TO_OPEN[char]:
-                return False
-            continue
-        if char != "." or delimiters:
+    for index in top_level_indices(body):
+        if body[index] != ".":
             continue
         previous = body[index - 1] if index else ""
         following = body[index + 1] if index + 1 < len(body) else ""
         if not (_identifier_char(previous) and _identifier_start(following)):
             return False
-    return not delimiters
+    return True
 
 
 def _identifier_start(char: str) -> bool:
@@ -143,6 +127,3 @@ def _identifier_start(char: str) -> bool:
 
 def _identifier_char(char: str) -> bool:
     return bool(char) and (char.isalnum() or char in "_'")
-
-
-OPERATION_HEAD_PATTERN = _OPERATION_HEAD.pattern

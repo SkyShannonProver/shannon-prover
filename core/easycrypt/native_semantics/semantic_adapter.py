@@ -10,7 +10,6 @@ candidate selection, admission, and presentation remain outside this module.
 
 from __future__ import annotations
 
-import hashlib
 import json
 import re
 import subprocess
@@ -26,6 +25,7 @@ from core.easycrypt.native_semantics.companion import (
     NativeCompanionIdentity,
     build_and_identify_companion,
     parse_companion_result_frame,
+    sha256_native_dependency,
 )
 from core.easycrypt.session.session_projection import active_goal_hash_from_raw
 
@@ -346,7 +346,7 @@ def _binary_fingerprint(path: Path) -> tuple[int, int, str] | None:
     if not path.is_file():
         return None
     stat = path.stat()
-    return stat.st_mtime_ns, stat.st_size, _sha256_file(path)
+    return stat.st_mtime_ns, stat.st_size, sha256_native_dependency(path)
 
 
 def _validated_member(
@@ -1165,16 +1165,5 @@ def _validate_resolved_head(value: object) -> None:
 
 
 def _validate_file_hash(path: Path, expected: str, label: str) -> None:
-    if not path.is_file() or _sha256_file(path) != expected:
+    if not path.is_file() or sha256_native_dependency(path) != expected:
         raise RuntimeError(f"native proof-term {label} file changed")
-
-
-def _sha256_file(path: Path) -> str:
-    digest = hashlib.sha256()
-    try:
-        with path.open("rb") as stream:
-            for chunk in iter(lambda: stream.read(1024 * 1024), b""):
-                digest.update(chunk)
-    except OSError as exc:
-        raise RuntimeError(f"cannot hash native dependency {path.name}") from exc
-    return digest.hexdigest()

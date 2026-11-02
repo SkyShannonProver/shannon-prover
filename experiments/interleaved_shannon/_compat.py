@@ -5,14 +5,22 @@ from __future__ import annotations
 import os
 
 from workflow.interleaved.project import PROJECT_ENV
-from workflow.interleaved.runtime import ANSWER_SOURCE_ENV
+from workflow.interleaved.runtime import ANSWER_SOURCE_ENV, ProjectContext
 
 
-def bind_reference_project() -> None:
-    os.environ.setdefault(
-        PROJECT_ENV, "experiments/interleaved_shannon/project.json"
-    )
-    os.environ.setdefault(
-        ANSWER_SOURCE_ENV,
-        "easycrypt-src/examples/ChaChaPoly/chacha_poly.ec",
-    )
+REFERENCE_PROJECT = "experiments/interleaved_shannon/project.json"
+REFERENCE_ANSWER_SOURCE = "easycrypt-src/examples/ChaChaPoly/chacha_poly.ec"
+
+
+def reference_context() -> ProjectContext:
+    """Return the ChaChaPoly reference binding.
+
+    A binding already in the environment wins, as it does for a child that
+    the runner started with the reference project.
+    """
+
+    return ProjectContext.from_environment({
+        PROJECT_ENV: REFERENCE_PROJECT,
+        ANSWER_SOURCE_ENV: REFERENCE_ANSWER_SOURCE,
+        **os.environ,
+    })

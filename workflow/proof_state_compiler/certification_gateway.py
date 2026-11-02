@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from collections.abc import Mapping
 from dataclasses import dataclass
 from typing import Any, Protocol
 
@@ -13,6 +14,7 @@ from core.easycrypt.proof_state_compiler.contracts import (
     freeze_json_object,
     frozen_json_sha256,
 )
+from workflow.proof_management.types import ExactTacticPreflight
 
 
 EXACT_TACTIC_PREFLIGHT = "exact_tactic_preflight"
@@ -99,33 +101,26 @@ def certify_exact_tactic(
         or any(char not in "0123456789abcdef" for char in artifact_hash)
     ):
         return None
-    outcome = exact_tactic_outcome(runtime_result.get("action"), tactic.strip())
-    action = runtime_result.get("action")
-    action = action if isinstance(action, dict) else {}
-    observation = action.get("agent_observation")
-    observation = observation if isinstance(observation, dict) else {}
-    content = observation.get("content")
-    content = content if isinstance(content, dict) else {}
-    proof_state = content.get("proof_state")
-    proof_state = proof_state if isinstance(proof_state, dict) else {}
-    goal = proof_state.get("goal")
-    goal = goal if isinstance(goal, dict) else {}
-    preflight_goal_identity = str(goal.get("active_goal_hash") or "")
-    source_goal_open = has_authoritative_open_goal(proof_state)
+    preflight = ExactTacticPreflight.from_action(runtime_result.get("action"))
+    outcome = exact_preflight_outcome(preflight, tactic.strip())
+    source_goal_open = has_authoritative_open_goal(
+        dict(preflight.source_proof_state)
+    )
     same_goal = (
         request.state_ref.goal_identity_required
-        and preflight_goal_identity == request.state_ref.goal_identity
+        and preflight.source_goal_identity == request.state_ref.goal_identity
         and source_goal_open
     )
-    unchanged = bool(runtime_result.get("history_unchanged")) and (
+    # The runtime raises on a read-only violation, so a returned check ran on
+    # an unchanged session; it must still be the state this candidate targets.
+    same_state = (
         runtime_result.get("state_version_before")
-        == runtime_result.get("state_version_after")
         == request.state_ref.state_version
     )
     accepted = bool(
         outcome["accepted"]
         and outcome["outcome_known"]
-        and unchanged
+        and same_state
         and same_goal
     )
     return CertificationResult(
@@ -140,24 +135,30 @@ def certify_exact_tactic(
         ),
         checked_effect=freeze_json_object({
             **outcome,
-            "history_unchanged": bool(runtime_result.get("history_unchanged")),
+            "history_unchanged": True,
             "source_goal_authoritatively_open": source_goal_open,
             "goal_identity_matches": same_goal,
-            "error_summary": str(observation.get("error_summary") or "")[:1200],
+            "error_summary": preflight.error_summary[:1200],
             "contract_error": str(runtime_result.get("contract_error") or "")[:1200],
         }),
     )
 
 
 def exact_tactic_outcome(action: object, tactic: str) -> dict[str, Any]:
+    """The checked outcome of ``tactic`` from one exact-preflight action."""
+
+    return exact_preflight_outcome(ExactTacticPreflight.from_action(action), tactic)
+
+
+def exact_preflight_outcome(
+    preflight: ExactTacticPreflight,
+    tactic: str,
+) -> dict[str, Any]:
     """Read only the bound exact-submit evidence from a preflight artifact."""
 
-    action = action if isinstance(action, dict) else {}
-    observation = action.get("agent_observation")
-    content = observation.get("content") if isinstance(observation, dict) else None
-    if isinstance(content, dict) and content.get("candidate") == tactic:
-        evidence = content.get("runnable_evidence")
-        if isinstance(evidence, dict):
+    if preflight.candidate == tactic:
+        evidence = preflight.runnable_evidence
+        if isinstance(evidence, Mapping):
             submit = evidence.get("exact_submit")
             payload = submit.get("payload") if isinstance(submit, dict) else None
             if not (
@@ -169,7 +170,7 @@ def exact_tactic_outcome(action: object, tactic: str) -> dict[str, Any]:
                 and evidence.get("no_progress_status") == "progress"
             ):
                 evidence = None
-        if isinstance(evidence, dict):
+        if isinstance(evidence, Mapping):
             preview = evidence.get("previewed_effect")
             preview = preview if isinstance(preview, dict) else {}
             closed_value = preview.get("goal_after_closed")

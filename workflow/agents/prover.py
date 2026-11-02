@@ -14,7 +14,6 @@ import hashlib
 import json
 import logging
 import os
-import re
 import secrets
 import subprocess
 import sys
@@ -22,11 +21,9 @@ import time
 from pathlib import Path
 from typing import Any, Optional
 
-from core.easycrypt.proof_text import (
-    easycrypt_code,
-    file_wide_unchecked_constructs,
-    unchecked_proof_constructs,
-)
+from core.easycrypt.ec_prompt import PROMPT_RE
+from core.easycrypt.lemma_decls import has_checked_proof, lemma_declarations
+from core.easycrypt.proof_text import file_wide_unchecked_constructs
 from workflow.schemas.config import ProverConfig, normalize_agent_backend
 from workflow.agents.ec_services import (
     _configure_run_ec_daemon_socket,
@@ -36,11 +33,12 @@ from workflow.agents.ec_services import (
     _shutdown_run_why3server,
 )
 from workflow.agents.prover_writeback import (
+    _distill_ec_stderr,
     _extract_partial_tactics_from_sessions,
-    _extract_partial_transactions_from_sessions,
     _extract_prover_notes,
     _extract_prover_report,
     _extract_tactics_from_candidate,
+    _reports_checking_failure,
     _verify_ec_file,
     _verify_lemma_extracted,
     _write_and_verify_proof,
@@ -140,10 +138,6 @@ def _create_run_session_namespace(run_dir: Path) -> str:
 
 _PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
 
-# why3server we started for THIS run (per-run socket, see
-# _configure_run_why3_socket). Held so the run can tear it down at the end
-# instead of leaking it for the next run's global pkill to find. None when no
-# server was started by us (e.g. a responsive one was already running).
 
 def _append_manager_bootstrap_audit(
     run_dir: Path | None,
@@ -190,7 +184,7 @@ def _bootstrap_opened_real_proof(
     cg = view.get("current_goal") or {}
     lines = cg.get("lines") or []
     has_real_goal = any(
-        str(ln).strip() and "check]>" not in str(ln) for ln in lines
+        str(ln).strip() and not PROMPT_RE.search(str(ln)) for ln in lines
     )
     return bool(has_real_goal)
 
@@ -203,7 +197,7 @@ def _warn_replay_prefix_shortfall(
     """Loud operator warning when a resume restored far fewer tactics than
     requested (divergence rollback during prefix replay). The detail lives in
     the bootstrap record; this is the headline so a "restored 24/90" never
-    again hides inside a JSON blob (observed 2026-06-11, upto_X1_X2)."""
+    again hides inside a JSON blob."""
     shortfall = bootstrap.get("replay_prefix_shortfall")
     if not isinstance(shortfall, dict) or not shortfall:
         return
@@ -360,115 +354,40 @@ def _archive_ec_session_dirs(
 # Pre-check: does the lemma already have a proof?
 # ---------------------------------------------------------------------------
 
-# Match a lemma declaration followed by its proof block (proof. ... qed.)
-# or just admit.
-_LEMMA_PROOF_RE_TEMPLATE = (
-    r"((?:local\s+)?(?:lemma|theorem)\s+{lemma}\b[^.]*\.)"  # declaration
-    r"\s*"
-    r"(proof\.\s*(?:(?!(?:^(?:local\s+)?(?:lemma|theorem|axiom)\s))[\s\S])*?qed\."  # full proof
-    r"|admit\.)"  # or just admit
-)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 def _precheck_lemma(ec_path: Path, lemma_name: str, include_dir: str = "") -> str:
     """Check the state of a lemma in the .ec file.
 
     Returns:
         "has_admit"             — lemma has `admit.` (normal case, go prove)
         "proved_and_verified"   — lemma has a real proof and file verifies
-        "has_proof_but_fails"   — lemma has a real proof but file doesn't verify
+        "has_proof_but_fails"   — lemma has a real proof that EasyCrypt rejects
+        "verification_unavailable" — lemma has a real proof, but EasyCrypt
+                                  gave no verdict on it (environment failure)
         "unchecked_source"      — file weakens checking (`exit` or a pragma)
-        "not_found"             — lemma not found in file
+        "not_found"             — no file, or no declaration of the lemma
     """
-    if not ec_path.exists():
+    if not ec_path.is_file():
         return "not_found"
 
     content = ec_path.read_text(encoding="utf-8")
     if file_wide_unchecked_constructs(content):
         return "unchecked_source"
 
-    # Check if the lemma exists.
-    # When multiple lemmas share the same name (e.g., inside/outside section),
-    # prefer the one that needs proving (has admit or empty proof).
-    lemma_re = re.compile(
-        r"(?:local\s+)?(?:lemma|theorem)\s+" + re.escape(lemma_name) + r"(?=[\s:(\[]|$)",
-    )
-    all_matches = list(lemma_re.finditer(content))
-    if not all_matches:
+    # Declarations are matched as EasyCrypt reads the file, so a
+    # commented-out old copy or a string is not a declaration.
+    declarations = lemma_declarations(content, lemma_name)
+    if not declarations:
         return "not_found"
     # A second declaration of the same name can follow an `abort` of the
     # first, so the file can verify without proving the one requested. Runs
     # reject duplicate names at startup; never certify such a file here.
-    if len(all_matches) > 1:
+    if len(declarations) > 1:
         return "has_admit"
-
-    def _match_needs_proving(m):
-        after = content[m.end():m.end() + 500]
-        return bool(re.search(r'\badmit\b', after[:300])) or \
-               bool(re.search(r'proof\.\s*(?:\(\*.*?\*\)\s*)?qed\.', after[:300], re.DOTALL))
-
-    # Prefer the match that needs proving; fall back to last match
-    decl_match = next((m for m in all_matches if _match_needs_proving(m)), all_matches[-1])
-    decl_pos = decl_match.start()
-
-    # Find the proof body: text between "proof." and "qed." for this lemma.
-    # Using index('.') is fragile (matches dots inside expressions like A).main()).
-    # Instead, find the "proof." keyword explicitly.
-    after_decl = content[decl_pos:]
-    # Search the text as EasyCrypt reads it, so a commented-out `qed.` does
-    # not end the body early. Masking keeps positions.
-    code = easycrypt_code(after_decl)
-    proof_kw = re.search(r'\bproof\.', code)
-    if not proof_kw:
-        return "not_found"
-    proof_body = after_decl[proof_kw.end():]
-
-    # Check if the proof body contains admit or is empty (before the qed).
-    # EasyCrypt accepts a proof left open at the end of the file, so a proof
-    # without qed still needs proving even when the file compiles.
-    qed_match = re.search(r'\bqed\.', code[proof_kw.end():])
-    if not qed_match:
-        return "has_admit"
-    body_to_qed = proof_body[:qed_match.start()]
-    if unchecked_proof_constructs(body_to_qed):
-        return "has_admit"
-    # Detect empty proofs: only whitespace/comments between proof. and qed.
-    stripped = re.sub(r'\(\*.*?\*\)', '', body_to_qed, flags=re.DOTALL)
-    if not stripped.strip():
+    declaration = declarations[0]
+    # Only the target's own closed proof counts: a later lemma's `qed.`
+    # closes that lemma, and EasyCrypt accepts a proof left open at the end
+    # of a file.
+    if not has_checked_proof(content, declaration):
         return "has_admit"
 
     # Has a real proof (no admit before qed) — verify the file
@@ -476,12 +395,26 @@ def _precheck_lemma(ec_path: Path, lemma_name: str, include_dir: str = "") -> st
     if ok:
         return "proved_and_verified"
 
-    # Full-file failed — always try extracted verification as fallback
+    # Full-file failed — always try extracted verification as fallback,
+    # pinned to the declaration found above.
     logger.info("Full-file verification failed; trying extracted lemma verification")
-    extracted_ok, _ = _verify_lemma_extracted(ec_path, lemma_name, include_dir=include_dir)
+    extracted_ok, extracted_stderr = _verify_lemma_extracted(
+        ec_path, lemma_name, include_dir=include_dir,
+        decl_line=content.count("\n", 0, declaration.start),
+    )
     if extracted_ok:
         return "proved_and_verified"
 
+    # Only EasyCrypt rejecting the isolated lemma shows the proof fails. A
+    # why3server failure, a check that did not run or finish, or a failed
+    # extraction is no verdict, and calling it a failing proof would start a
+    # search for a lemma that may already be proved.
+    if not _reports_checking_failure(extracted_stderr):
+        logger.warning(
+            "No EasyCrypt verdict on the existing proof of %s: %s",
+            lemma_name, _distill_ec_stderr(extracted_stderr, max_lines=8),
+        )
+        return "verification_unavailable"
     return "has_proof_but_fails"
 
 
@@ -589,58 +522,14 @@ def run(
             "Stopped an older EasyCrypt daemon for this exact run",
         )
     logger.info("Using per-run EasyCrypt daemon socket: %s", run_ec_daemon_socket)
+    # The daemon runs in a session of its own; a supervisor that has to
+    # SIGKILL this process finds it through the manifest.
+    from workflow.proc_lifecycle import WORKER_PGID_MANIFEST_ENV, record_daemon_socket
 
-    # --- Pre-check: does the lemma already have a proof? ---
-    ec_full_path = _PROJECT_ROOT / file_path
-    precheck = _precheck_lemma(ec_full_path, lemma_name, include_dir=include_dir)
+    record_daemon_socket(
+        os.environ.get(WORKER_PGID_MANIFEST_ENV), run_ec_daemon_socket,
+    )
 
-    if precheck == "unchecked_source":
-        constructs = ", ".join(sorted(set(file_wide_unchecked_constructs(
-            ec_full_path.read_text(encoding="utf-8")
-        ))))
-        message = (
-            f"{file_path} weakens proof checking ({constructs}), so no proof "
-            f"of {lemma_name} in it can be verified. Remove it and retry."
-        )
-        pstatus("Prover", message, "\033[31m")
-        result = ProverResult(status=PROVER_RUN_INCOMPLETE, error=message)
-        result.save(run_dir / "prover_run_result.json")
-        return result
-
-    if precheck == "proved_and_verified":
-        pstatus(
-            "Prover",
-            f"{lemma_name} already has a verified proof. Skipping. To try the "
-            "prover on it, replace its proof with `admit.` in a copy, or run "
-            "the demo suite eval_suite/suites/demo_pir.json, which proves a "
-            "proof-stripped copy.",
-            "\033[32m",
-        )
-        result = ProverResult(
-            status=PROVER_RUN_VERIFIED,
-            skipped=True,
-            verification={
-                "status": "pass",
-                "method": "preexisting_source_verification",
-                "target_file": str(ec_full_path.resolve()),
-                "target_lemma": lemma_name,
-            },
-        )
-        result.save(run_dir / "prover_run_result.json")
-        return result
-
-    if precheck == "has_proof_but_fails":
-        pstatus("Prover",
-                f"{lemma_name} has a proof but it doesn't verify. "
-                f"Replacing with admit and re-proving.", "\033[33m")
-        from core.easycrypt.eval_source_prep import replace_target_proof_with_admit
-
-        if replace_target_proof_with_admit(ec_full_path, lemma_name):
-            logger.info("Replaced proof of %s with admit.", lemma_name)
-        else:
-            logger.warning("Could not find proof block for %s to replace.", lemma_name)
-
-    # If precheck == "has_admit", normal flow — go prove it.
     resume_capsules = list(resume_capsules or [])
     loaded_outer_handoff = None
     if outer_proof_handoff:
@@ -759,13 +648,113 @@ def run(
     else:
         pstatus("Prover", "why3server not available — smt() will fail. Continuing anyway.", "\033[33m")
 
+    # --- Pre-check: does the lemma already have a proof? ---
+    # Runs only once the run's why3server is up, so a proof that needs smt()
+    # is checked in the same environment the search and write-back use. It
+    # never writes the source: the managed session opens the target at its
+    # proof whatever that proof holds, and write-back replaces the proof
+    # only with one that verifies.
+    ec_full_path = _PROJECT_ROOT / file_path
+    try:
+        precheck = _precheck_lemma(ec_full_path, lemma_name, include_dir=include_dir)
+    except BaseException:
+        _shutdown_run_why3server()
+        raise
+
+    def _stop_before_search(result):
+        _shutdown_run_why3server()
+        result.save(run_dir / "prover_run_result.json")
+        return result
+
+    if precheck == "not_found":
+        message = (
+            f"{lemma_name} is not declared in {file_path} (outside comments)."
+            if ec_full_path.is_file()
+            else f"{file_path} is not a file."
+        ) + " Check the file and lemma name; no proof search was started."
+        pstatus("Prover", message, "\033[31m")
+        return _stop_before_search(
+            ProverResult(status=PROVER_RUN_INCOMPLETE, error=message)
+        )
+
+    if precheck == "unchecked_source":
+        constructs = ", ".join(sorted(set(file_wide_unchecked_constructs(
+            ec_full_path.read_text(encoding="utf-8")
+        ))))
+        message = (
+            f"{file_path} weakens proof checking ({constructs}), so no proof "
+            f"of {lemma_name} in it can be verified. Remove it and retry."
+        )
+        pstatus("Prover", message, "\033[31m")
+        return _stop_before_search(
+            ProverResult(status=PROVER_RUN_INCOMPLETE, error=message)
+        )
+
+    if precheck == "proved_and_verified":
+        pstatus(
+            "Prover",
+            f"{lemma_name} already has a verified proof. Skipping. To try the "
+            "prover on it, replace its proof with `admit.` in a copy, or run "
+            "the demo suite eval_suite/suites/demo_pir.json, which proves a "
+            "proof-stripped copy.",
+            "\033[32m",
+        )
+        return _stop_before_search(ProverResult(
+            status=PROVER_RUN_VERIFIED,
+            skipped=True,
+            verification={
+                "status": "pass",
+                "method": "preexisting_source_verification",
+                "target_file": str(ec_full_path.resolve()),
+                "target_lemma": lemma_name,
+            },
+        ))
+
+    if precheck == "verification_unavailable":
+        message = (
+            f"Could not check the existing proof of {lemma_name} in "
+            f"{file_path}: EasyCrypt gave no verdict on it (see the log for "
+            "its output). This is usually the EasyCrypt or why3server "
+            "environment; fix it and retry. No proof search was started and "
+            "the file is unchanged."
+        )
+        pstatus("Prover", message, "\033[31m")
+        return _stop_before_search(ProverResult(
+            status=PROVER_RUN_INFRASTRUCTURE_INVALID,
+            error=message,
+            infrastructure_errors=[message],
+        ))
+
+    if precheck == "has_proof_but_fails" and eval_mode:
+        # Eval mode keeps the agent blind to the target's proof, and the run
+        # no longer hides that proof by editing the source.
+        message = (
+            f"{lemma_name} in {file_path} has a proof that does not verify, "
+            "and eval mode must not show it to the agent. Evaluate a "
+            "proof-stripped copy instead (eval_suite prepares one). No proof "
+            "search was started and the file is unchanged."
+        )
+        pstatus("Prover", message, "\033[31m")
+        return _stop_before_search(
+            ProverResult(status=PROVER_RUN_INCOMPLETE, error=message)
+        )
+
+    if precheck == "has_proof_but_fails":
+        pstatus(
+            "Prover",
+            f"{lemma_name} has a proof that does not verify; proving it "
+            f"again. {file_path} keeps that proof unless a verified proof "
+            "replaces it.",
+            "\033[33m",
+        )
+
+    # If precheck == "has_admit", normal flow — go prove it.
+
     if mode != "tree":
         raise ValueError("unsupported prover mode; only 'tree' is current")
 
     tree_max_concurrent = cap_tree_max_concurrent(tree_max_concurrent)
     tree_initial_provers = max(1, min(int(tree_initial_provers), tree_max_concurrent))
-
-    from workflow.run_ui import status as pstatus
 
     start_time = time.time()
 
@@ -811,62 +800,10 @@ def run(
                         f"starts from the shorter prefix.",
                         "\033[31m",
                     )
-                handoff_notes = "\n".join(
-                    f"- {note}" for note in ckpt.handoff_notes
-                )
-                recent_window_lines = []
-                for item in ckpt.recent_tactics[-8:]:
-                    status = str(item.get("status") or "unknown")
-                    before = item.get("goals_before")
-                    after = item.get("goals_after")
-                    tactic = str(item.get("tactic") or "").strip()
-                    if len(tactic) > 180:
-                        tactic = tactic[:177].rstrip() + "..."
-                    goal_delta = (
-                        f" goals {before}->{after}"
-                        if before is not None and after is not None else
-                        ""
-                    )
-                    recent_window_lines.append(
-                        f"- {status}{goal_delta}: {tactic}"
-                    )
-                recent_window = "\n".join(recent_window_lines)
-                tail_hints = (
-                    "\n\nResume handoff notes:\n"
-                    f"{handoff_notes}\n"
-                    if handoff_notes else
-                    ""
-                )
-                parent_goal_state = (
-                    f"Resume capsule: {ckpt.path}\n"
-                    f"source session: {ckpt.session_name}\n"
-                    f"accepted prefix tactics: {ckpt.tactic_count}\n"
-                    f"capsule score: {ckpt.score}\n"
-                    f"resume root policy: {resume_root_policy}\n"
-                    f"route family: {ckpt.route_family or 'unknown'}\n"
-                    f"score reasons: {', '.join(ckpt.reasons)}\n"
-                    f"current goal hash: {ckpt.current_goal_hash}\n\n"
-                    + (
-                        "Resume handoff notes:\n"
-                        f"{handoff_notes}\n\n"
-                        if handoff_notes else
-                        ""
-                    )
-                    + (
-                        "Recent tactic window before capsule:\n"
-                        f"{recent_window}\n\n"
-                        if recent_window else
-                        ""
-                    )
-                    +
-                    f"{ckpt.current_goal_preview}"
-                    f"{tail_hints}"
-                )
                 resume_initial_branches.append({
                     "replay_prefix": ckpt.replay_prefix,
                     "resume_context": ckpt.resume_context,
                     "negative_signal": [],
-                    "parent_goal_state": parent_goal_state,
                     "expected_goal_hash": ckpt.current_goal_hash,
                     "goal_identity_required": ckpt.goal_identity_required,
                     "capsule_path": str(ckpt.path),
@@ -885,7 +822,6 @@ def run(
                     "outer_proof_handoff": loaded_outer_handoff.manager_context(),
                 },
                 "negative_signal": [],
-                "parent_goal_state": loaded_outer_handoff.current_goal_preview,
                 "expected_goal_hash": loaded_outer_handoff.boundary_goal_hash,
                 "goal_identity_required": loaded_outer_handoff.goal_identity_required,
                 "capsule_path": str(loaded_outer_handoff.path),
@@ -895,7 +831,7 @@ def run(
                 "route_family": {},
             })
 
-        def _build_tree_cmd(session_tag, node_id, replay_prefix, negative_signal,
+        def _build_tree_cmd(session_tag, node_id, replay_prefix,
                             layer_move_action=None, resume_context=None):
             resolved_resume_context = (
                 dict(resume_context) if isinstance(resume_context, dict) else {}
@@ -955,8 +891,7 @@ def run(
                 )
             if replay_prefix or isinstance(outer_context, dict):
                 prompt = _build_child_prover_prompt(
-                    file_path, lemma_name, include_dir,
-                    session_tag,
+                    file_path, lemma_name,
                     layer_move_action=layer_move_action,
                     managed_session=managed_session,
                     surface_profile=surface_profile,
@@ -964,8 +899,7 @@ def run(
                 )
             else:
                 prompt = _build_prover_prompt(
-                    file_path, lemma_name, include_dir,
-                    session_tag=session_tag,
+                    file_path, lemma_name,
                     managed_session=managed_session,
                     surface_profile=surface_profile,
                 )
@@ -1057,17 +991,13 @@ def run(
             if _shutdown_ec_daemon(reason="tree prover finished"):
                 pstatus("Prover", "Stopped EasyCrypt daemon after tree prover")
             _shutdown_run_why3server()
-        output_text = tree_result.output_text
-        returncode = tree_result.returncode
+        output_text = tree_result.output_text or ""
         winner_node = tree_result.selected_node_id
         pstatus("Prover", f"Selected tree result: Tree-{winner_node}")
 
-    stdout = output_text
-    stderr = ""
     elapsed = time.time() - start_time
 
     # Save raw output
-    output_text = stdout or ""
     (run_dir / "prover_output.txt").write_text(output_text[:50000], encoding="utf-8")
 
     # TreeRunResult is the one typed tree/run boundary. Function attributes and
@@ -1210,11 +1140,6 @@ def run(
             session_dirs=archived_ec_sessions,
             resume_capsules=resume_capsules,
         )
-        partial_transactions = _extract_partial_transactions_from_sessions(
-            session_dirs=archived_ec_sessions,
-            committed_prefix=partial_tactics,
-            resume_capsules=resume_capsules,
-        )
         # One synchronous terminal boundary owns timeout, outer interruption,
         # and ordinary worker exit.  It preserves the exact accepted reporting
         # prefix and reuses the newest compatible checkpoint minted at a prior
@@ -1226,16 +1151,11 @@ def run(
             )
 
             stop_finalization = finalize_safe_stop_checkpoint(
-                project_root=_PROJECT_ROOT,
                 run_dir=run_dir,
                 target_file=file_path,
                 lemma=lemma_name,
-                include_dir=include_dir,
                 committed_prefix=partial_tactics,
-                committed_transactions=partial_transactions or None,
                 existing_capsules=resume_capsules,
-                surface_profile=surface_profile,
-                agent_report=prover_report,
                 trigger=(
                     tree_result.termination_reason
                     or (
@@ -1375,12 +1295,3 @@ def run(
     )
     result.save(run_dir / "prover_run_result.json")
     return result
-
-
-
-
-
-
-# ---------------------------------------------------------------------------
-# EC file verification
-# ---------------------------------------------------------------------------

@@ -88,6 +88,20 @@ verified.
   manager/backend work must stop before loopback and provider deadlines.  If
   termination cannot be confirmed, the node becomes unhealthy and accepts no
   retry.
+- The turn deadline is a safety net, not hang detection.  A manager that
+  stops making progress inside a turn is caught out of band by the manager
+  stall watchdog (`workflow/proof_tool/manager_stall_watchdog.py`).  It reads
+  only the backend-call boundary marks that `_run_backend` records around
+  each EasyCrypt subprocess and the serving window that `ProofToolSession`
+  opens after acquiring its lock, on a monotonic clock: a call still running
+  30 s past its own timeout, or 300 s inside a turn with no call in flight and
+  no boundary, is a stall; so is a dead endpoint accept loop.
+  `SHANNON_MANAGER_STALL_WATCHDOG=off|report|enforce` (default `report`):
+  `report` appends one `manager_turn.stalled` record (with thread stacks) to
+  the run's manager audit and changes nothing else; `enforce` closes the
+  agent, emits the record best-effort, and exits the worker with code 75,
+  which the tree supervisor admits to Layer-3 crash respawn even for a
+  non-degraded node.  The watchdog never takes the session locks.
 - Committed tactics cross the manager boundary only as an immutable,
   post-state-bound turn spine obtained once through `ReplSessionManager`.
   Infrastructure does not reread session files or infer proof closure from a

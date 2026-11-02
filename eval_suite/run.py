@@ -188,6 +188,42 @@ def _preflight_eval_agent_confinement(
 
 
 def main(argv: list[str] | None = None) -> int:
+    open_execution: dict[str, Any] = {}
+    try:
+        return _main(argv, open_execution)
+    except BaseException as exc:
+        _close_unfinished_execution_manifest(open_execution, exc)
+        raise
+
+
+def _close_unfinished_execution_manifest(
+    open_execution: dict[str, Any],
+    exc: BaseException,
+) -> None:
+    """Give a suite that stopped early a terminal manifest status.
+
+    Without this an interrupted or crashed suite left ``"running"`` behind,
+    indistinguishable from one that is still executing.
+    """
+    path = open_execution.get("path")
+    manifest = open_execution.get("manifest")
+    if path is None or manifest is None or manifest.get("status") != "running":
+        return
+    interrupted = isinstance(exc, KeyboardInterrupt)
+    manifest.update({
+        "finished_at": _utc_now(),
+        "status": "interrupted" if interrupted else "failed",
+        "overall_returncode": 130 if interrupted else None,
+        "error": f"{type(exc).__name__}: {exc}"[:1200],
+        "recorded_run_count": len(manifest["runs"]),
+    })
+    try:
+        _write_execution_manifest(path, manifest)
+    except OSError:
+        pass
+
+
+def _main(argv: list[str] | None, open_execution: dict[str, Any]) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--suite", required=True, type=Path)
     parser.add_argument(
@@ -353,6 +389,10 @@ def main(argv: list[str] | None = None) -> int:
             _write_execution_manifest(
                 execution_manifest_path,
                 execution_manifest,
+            )
+            open_execution.update(
+                path=execution_manifest_path,
+                manifest=execution_manifest,
             )
 
     # (cmd, prepare_error, output_dir, target, profile, repeat) per run.
@@ -989,11 +1029,21 @@ def evaluation_artifact_inventory(run_dir: Path) -> list[dict[str, Any]]:
 
 
 def file_identity(path: Path, *, root: Path) -> dict[str, Any]:
+    """Size and hash of ``path``, named relative to ``root`` when inside it.
+
+    A file outside ``root`` (for example a suite ``output_dir`` outside the
+    working directory) is named by its absolute path; the hash, not the
+    name, is the identity.
+    """
     resolved_path = path.resolve()
     resolved_root = root.resolve()
     payload = resolved_path.read_bytes()
+    if resolved_path.is_relative_to(resolved_root):
+        name = str(resolved_path.relative_to(resolved_root))
+    else:
+        name = str(resolved_path)
     return {
-        "path": str(resolved_path.relative_to(resolved_root)),
+        "path": name,
         "size_bytes": len(payload),
         "sha256": hashlib.sha256(payload).hexdigest(),
     }

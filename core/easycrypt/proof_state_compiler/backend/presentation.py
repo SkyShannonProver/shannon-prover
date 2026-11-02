@@ -9,8 +9,8 @@ second time.
 
 from __future__ import annotations
 
-import hashlib
 import json
+import re
 from dataclasses import dataclass
 from typing import Any
 
@@ -24,12 +24,17 @@ from core.easycrypt.proof_state_compiler.contracts.delivery import (
     COMMITMENT_RESULT,
     FAILURE_LINKED_REPAIR,
     OPTIONAL_ADVISORY,
+    PRESENTATION_KINDS,
 )
 from core.easycrypt.proof_state_compiler.contracts.presentation import (
     MAX_INTERNAL_PRESENTATION_BYTES,
 )
 from core.easycrypt.proof_state_compiler.contracts.strategy import (
     COMMITMENT_RELATIVE,
+)
+from core.easycrypt.proof_state_compiler.contracts.digest import (
+    canonical_json,
+    text_sha256,
 )
 
 
@@ -43,13 +48,6 @@ OPTIONAL_CHECKED_FACT_NOTICE = (
     "and changes the remaining proof obligations, so decide whether it fits the "
     "proof route you want to pursue."
 )
-
-_PRESENTATION_KINDS = frozenset({
-    CHANGED_FACT,
-    COMMITMENT_RESULT,
-    FAILURE_LINKED_REPAIR,
-    OPTIONAL_ADVISORY,
-})
 
 
 class PresentationContractError(ValueError):
@@ -73,7 +71,7 @@ class RenderedCompilerMarkdown:
             raise ValueError(
                 "compiler Markdown character measurement is inconsistent"
             )
-        if self.sha256 != hashlib.sha256(encoded).hexdigest():
+        if self.sha256 != text_sha256(self.text):
             raise ValueError("compiler Markdown hash is inconsistent")
 
 
@@ -155,7 +153,7 @@ def render_action_surface_payload(
         text=text,
         utf8_bytes=len(encoded),
         characters=len(text),
-        sha256=hashlib.sha256(encoded).hexdigest(),
+        sha256=text_sha256(text),
     )
 
 
@@ -234,7 +232,7 @@ def _render_action(action: dict[str, Any]) -> str:
     if premises:
         blocks.append(
             "Remaining premises after the action:\n"
-            + "\n".join(f"- `{_escape_inline_code(item)}`" for item in premises)
+            + "\n".join(f"- {_inline_code(item)}" for item in premises)
         )
     return "\n\n".join(blocks)
 
@@ -242,7 +240,7 @@ def _render_action(action: dict[str, Any]) -> str:
 def _render_resources(resources: list[dict[str, Any]]) -> str:
     rows = ["## Relevant resources"]
     rows.extend(
-        f"- `{_escape_inline_code(item['resource_id'])}`: {item['label']}"
+        f"- {_inline_code(item['resource_id'])}: {item['label']}"
         for item in resources
     )
     return "\n".join(rows)
@@ -251,12 +249,12 @@ def _render_resources(resources: list[dict[str, Any]]) -> str:
 def _render_bindings(bindings: list[dict[str, Any]]) -> str:
     rows = ["## Native resource bindings"]
     for item in bindings:
-        rows.append(f"- Resource: `{_escape_inline_code(item['resource_id'])}`")
+        rows.append(f"- Resource: {_inline_code(item['resource_id'])}")
         if item["unresolved"]:
             rows.append(
                 "  - Remaining unresolved slots: "
                 + ", ".join(
-                    f"`{_escape_inline_code(value)}`"
+                    _inline_code(value)
                     for value in item["unresolved"]
                 )
             )
@@ -298,12 +296,7 @@ def _validate_payload(payload: object) -> None:
     )
     if payload["schema_version"] != ACTION_SURFACE_PAYLOAD_SCHEMA_VERSION:
         raise PresentationContractError("unsupported presentation schema version")
-    encoded = json.dumps(
-        payload,
-        ensure_ascii=False,
-        sort_keys=True,
-        separators=(",", ":"),
-    ).encode("utf-8")
+    encoded = canonical_json(payload).encode("utf-8")
     if len(encoded) > MAX_INTERNAL_PRESENTATION_BYTES:
         raise PresentationContractError(
             "presentation payload exceeds the internal safety bound"
@@ -345,7 +338,7 @@ def _validate_action(item: object) -> None:
         label="action presentation",
     )
     _require_nonempty_strings(item, "intent", "presentation_kind")
-    if item["presentation_kind"] not in _PRESENTATION_KINDS:
+    if item["presentation_kind"] not in PRESENTATION_KINDS:
         raise PresentationContractError("unknown action presentation kind")
     try:
         validate_compiler_action(item["intent"], item["payload"])
@@ -431,7 +424,15 @@ def _require_string_list(value: object, label: str) -> None:
         raise PresentationContractError(f"{label} must be a string array")
 
 
-def _escape_inline_code(value: str) -> str:
-    # Values are still readable/copyable while a future backtick cannot break
-    # the surrounding Markdown structure.
-    return value.replace("`", "\\`")
+def _inline_code(value: str) -> str:
+    # CommonMark has no escapes inside a code span; a backtick in the value
+    # (EasyCrypt's `|x|`) is kept verbatim by a longer fence instead.  One
+    # space of padding is stripped by the renderer, so a value that touches
+    # the fence with a backtick, or is space-padded itself, keeps its text.
+    longest = max((len(run) for run in re.findall(r"`+", value)), default=0)
+    fence = "`" * (longest + 1)
+    if value[:1] == "`" or value[-1:] == "`" or (
+        value[:1] == " " and value[-1:] == " "
+    ):
+        value = f" {value} "
+    return f"{fence}{value}{fence}"

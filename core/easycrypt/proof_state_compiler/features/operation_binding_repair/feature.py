@@ -1,24 +1,41 @@
 """Evidence-gated B1/B2/B4 operation-binding repair vertical slice."""
 
-from core.easycrypt.proof_state_compiler.contracts import (
-    COMMITMENT_RELATIVE,
-    StrategyContract,
-)
 from core.easycrypt.proof_state_compiler.features.registry import (
     ExperimentGate,
     FeatureDefinition,
     FeatureSpec,
 )
-
-
-OPERATION_BINDING_REPAIR_FEATURE_ID = "operation_binding_repair"
-OPERATION_BINDING_REPAIR_STRATEGY_CONTRACT = StrategyContract(
-    strategy_class=COMMITMENT_RELATIVE,
-    rationale=(
-        "the correction preserves the exact operation and semantic resource "
-        "from one authoritative failed occurrence"
-    ),
-    required_commitment="attempted_same_operation_and_resource",
+from core.easycrypt.proof_state_compiler.features.failed_commit import (
+    attempt_diagnostic_producer,
+    failed_commit_gate,
+)
+from core.easycrypt.proof_state_compiler.syntax.attempted_operation import (
+    operation_resource,
+)
+from .ids import (
+    OPERATION_BINDING_REPAIR_FEATURE_ID,
+    OPERATION_BINDING_REPAIR_STRATEGY_CONTRACT,
+)
+from .analysis import analyze_operation_binding_repair
+from .realization import APPLICATION_SYNTAX_REPAIR_CODEC
+from .resource_discovery import discover_attempted_operation_resources
+from .resource_loading import request_attempted_resource_declaration
+from .surface_lowering import lower_operation_binding_repair
+from .namespace_repair import plan_native_namespace_repair
+from .losslessness_module_repair import (
+    plan_native_losslessness_module_repair,
+)
+from .losslessness_call_repair import (
+    plan_native_losslessness_call_repair,
+)
+from .application_module_syntax_repair import (
+    plan_native_application_module_syntax_repair,
+)
+from .probability_multislot_repair import (
+    plan_native_probability_multislot_repair,
+)
+from .selected_application_binding_set import (
+    plan_native_selected_application_binding_set,
 )
 
 
@@ -102,34 +119,6 @@ def operation_binding_repair_feature_spec() -> FeatureSpec:
 
 
 def operation_binding_repair_feature() -> FeatureDefinition:
-    from .analysis import analyze_operation_binding_repair
-    from .realization import APPLICATION_SYNTAX_REPAIR_CODEC
-    from .resource_discovery import discover_attempted_operation_resources
-    from .resource_loading import request_attempted_resource_declaration
-    from .surface_lowering import lower_operation_binding_repair
-    from .namespace_repair import plan_native_namespace_repair
-    from .losslessness_module_repair import (
-        plan_native_losslessness_module_repair,
-    )
-    from .losslessness_call_repair import (
-        plan_native_losslessness_call_repair,
-    )
-    from .application_module_syntax_repair import (
-        plan_native_application_module_syntax_repair,
-    )
-    from .probability_multislot_repair import (
-        plan_native_probability_multislot_repair,
-    )
-    from .selected_application_binding_set import (
-        plan_native_selected_application_binding_set,
-    )
-    from core.easycrypt.proof_state_compiler.features.failed_commit import (
-        attempt_diagnostic_producer,
-        failed_commit_gate,
-    )
-    from core.easycrypt.proof_state_compiler.syntax.attempted_operation import (
-        operation_resource,
-    )
 
     def names_a_resource(tactic: str) -> bool:
         # Work avoidance only: native EasyCrypt owns the parse and the

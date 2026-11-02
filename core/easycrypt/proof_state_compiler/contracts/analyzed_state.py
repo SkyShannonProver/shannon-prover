@@ -190,55 +190,6 @@ class ApplicationCandidate:
 
 
 @dataclass(frozen=True)
-class ScopeAssessment:
-    name: str
-    status: str
-    evidence_refs: tuple[EvidenceRef, ...] = ()
-
-    def __post_init__(self) -> None:
-        if not self.name:
-            raise ValueError("scope name is required")
-        if self.status not in {"live", "consumed", "unavailable", "unknown"}:
-            raise ValueError(f"unsupported scope status {self.status!r}")
-        if self.status != "unknown" and not self.evidence_refs:
-            raise ValueError("non-unknown scope status requires evidence")
-
-
-@dataclass(frozen=True)
-class BoundaryContractAssessment:
-    boundary_kind: str
-    position: str
-    required_slots: tuple[str, ...]
-    unresolved_semantic_choices: tuple[str, ...] = ()
-    evidence_refs: tuple[EvidenceRef, ...] = ()
-
-    def __post_init__(self) -> None:
-        if not self.boundary_kind or not self.position:
-            raise ValueError("boundary contract requires kind and position")
-        if not self.evidence_refs:
-            raise ValueError("boundary contract requires evidence")
-
-
-@dataclass(frozen=True)
-class TransformAssessment:
-    transform: str
-    status: str
-    missing_conditions: tuple[str, ...] = ()
-    blocker: str = ""
-    evidence_refs: tuple[EvidenceRef, ...] = ()
-
-    def __post_init__(self) -> None:
-        if not self.transform:
-            raise ValueError("transform name is required")
-        if self.status not in {
-            "applicable", "blocked", "checked_no_progress", "unknown"
-        }:
-            raise ValueError(f"unsupported transform status {self.status!r}")
-        if self.status != "unknown" and not self.evidence_refs:
-            raise ValueError("non-unknown transform status requires evidence")
-
-
-@dataclass(frozen=True)
 class AnalyzedProofState:
     """State-local shared facts only; no feature-shaped result fields."""
 
@@ -250,9 +201,6 @@ class AnalyzedProofState:
     bindings: tuple[BindingResolution, ...] = ()
     applications: tuple[ApplicationCandidate, ...] = ()
     application_applicabilities: tuple[ApplicationApplicability, ...] = ()
-    scope: tuple[ScopeAssessment, ...] = ()
-    boundary_contracts: tuple[BoundaryContractAssessment, ...] = ()
-    transforms: tuple[TransformAssessment, ...] = ()
     diagnostics: tuple[StructuredDiagnostic, ...] = ()
     recovery_action_realizations: tuple[RecoveryActionRealization, ...] = ()
     recovery_claims: tuple[RecoveryClaim, ...] = ()

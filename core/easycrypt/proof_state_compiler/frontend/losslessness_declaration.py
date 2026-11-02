@@ -10,14 +10,16 @@ from core.easycrypt.proof_state_compiler.contracts import (
     ProofJudgment,
     ProofResource,
 )
+from core.easycrypt.proof_state_compiler.delimiters import (
+    find_top_level,
+    split_top_level,
+)
 from core.easycrypt.proof_state_compiler.frontend.declaration_stream import (
     DeclarationInput,
 )
 from core.easycrypt.proof_state_compiler.frontend.resource_syntax import (
     consume_leading_forall_module_parameters,
     module_parameter_specs,
-    split_top_level_implications,
-    top_level_colon,
 )
 from core.easycrypt.proof_state_compiler.syntax.module_terms import (
     ModuleTermParseError,
@@ -37,7 +39,7 @@ def parse_losslessness_declaration(
     symbol = item.symbol
     declaration = item.declaration
     evidence = item.evidence
-    colon = top_level_colon(declaration)
+    colon = find_top_level(declaration, ":")
     if colon < 0:
         return None
     header = declaration[:colon]
@@ -53,7 +55,7 @@ def parse_losslessness_declaration(
     module_names = tuple(name for name, _restriction in required_modules)
     if len(module_names) != len(set(module_names)):
         return None
-    clauses = split_top_level_implications(proposition)
+    clauses = split_top_level(proposition, "=>")
     if len(clauses) < 2:
         return None
     procedures = [_lossless_procedure(clause) for clause in clauses]

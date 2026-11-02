@@ -2,23 +2,22 @@
 
 from __future__ import annotations
 
-import hashlib
-
 from core.easycrypt.proof_state_compiler.contracts import (
     CompilerInvocationContext,
     ProofCoordinate,
     ProofIR,
     RecoveryActionRealization,
-    RecoveryClaim,
+    recovery_claim_for,
     exact_operation_resource_witness,
 )
+from core.easycrypt.proof_state_compiler.contracts.digest import text_sha256
 from core.easycrypt.proof_state_compiler.middle_end.contributions import (
     AnalysisContribution,
 )
 from core.easycrypt.proof_state_compiler.compound_boundary_text import (
     checked_goal_reference,
 )
-from .feature import PURE_TAIL_RECOVERY_FEATURE_ID
+from .ids import PURE_TAIL_RECOVERY_FEATURE_ID
 from .realization import pure_tail_rewrite_of
 
 
@@ -52,9 +51,11 @@ def analyze_pure_tail_recovery(
         attempted.operation_family,
         attempted.exact_resource,
     )
-    realization_id = "pure-tail-rewrite-target:" + hashlib.sha256(
-        (attempted.recovery_key + "\0" + descriptor.target_name).encode("utf-8")
-    ).hexdigest()[:20]
+    realization_id = "pure-tail-rewrite-target:" + text_sha256(
+        attempted.recovery_key
+        + "\0"
+        + descriptor.target_name
+    )[:20]
     goal_context = checked_goal_reference(attempted.recovery_handoff)
     reason = (
         f"The selected rewrite `{attempted.exact_resource}` does not match the "
@@ -73,18 +74,13 @@ def analyze_pure_tail_recovery(
         reason=reason,
         evidence_refs=attempted.evidence_refs,
     )
-    claim = RecoveryClaim(
+    claim = recovery_claim_for(
+        attempted,
         feature_id=PURE_TAIL_RECOVERY_FEATURE_ID,
-        recovery_key=attempted.recovery_key,
-        attempt_id=attempted.attempt_id,
-        occurrence_identity=attempted.occurrence_identity,
-        trigger_id=attempted.trigger_id,
-        operation_family=attempted.operation_family,
-        selected_resource=attempted.exact_resource,
-        resource_match_kind="exact",
         allowed_output_kinds=("action",),
         preservation_witness=witness,
-        evidence_refs=attempted.evidence_refs,
+        selected_resource=attempted.exact_resource,
+        resource_match_kind="exact",
     )
     return AnalysisContribution(
         recovery_action_realizations=(realization,),

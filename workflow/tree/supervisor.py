@@ -27,6 +27,7 @@ from workflow.proof_management.common import (
     node_memory_slug as _shared_node_memory_slug,
 )
 from workflow.tree.session_observer import WorkflowSessionSnapshot
+from workflow.proof_tool.manager_stall_watchdog import MANAGER_STALL_EXIT_CODE
 from workflow.tree.payload_audit import (
     PayloadAuditRecorder,
 )
@@ -67,6 +68,8 @@ from workflow.tree.trackers import (
 )
 
 _RUN_FINALIZATION_DRAIN_SECONDS = 30.0
+# How long the winner may take to exit after its session closed.
+_WINNER_EXIT_GRACE_SECONDS = 300.0
 MANAGED_LIVE_PROGRESS_FILENAME = "managed_live_progress.json"
 MANAGED_LIVE_PROGRESS_KIND = "managed_prover_live_progress"
 MANAGED_LIVE_PROGRESS_SCHEMA_VERSION = 1
@@ -247,6 +250,17 @@ def _terminate_process_tree(
         return
 
 
+def _settled_returncode(proc: subprocess.Popen) -> int | None:
+    """Exit status of a finalized worker, or None if it never exited."""
+    returncode = proc.poll()
+    if returncode is None:
+        try:
+            returncode = proc.wait(timeout=5)
+        except subprocess.TimeoutExpired:
+            return None
+    return returncode or 0
+
+
 def _ctx_min_runway_seconds() -> float:
     """Min wall-clock runway to start a cold Layer-3 replay (env-tunable)."""
     from workflow.provider.ctx_respawn import min_runway_seconds
@@ -379,6 +393,7 @@ def _layer3_gates_pass(
     has_run_dir: bool,
     has_runway: bool,
     has_replay_prefix: bool = False,
+    manager_stalled: bool = False,
 ) -> bool:
     """Pure Layer-3 admission gate (every condition independent, ANDed).
 
@@ -386,6 +401,11 @@ def _layer3_gates_pass(
     ``run_tree_prover`` supervisor closure. Mirrors the inline checks in
     ``_maybe_layer3_crash_respawn`` exactly. Returns True iff a Layer-3 respawn is
     permitted (subject to a capsule actually being found downstream).
+
+    ``manager_stalled`` marks a worker that the manager stall watchdog exited
+    (see ``_worker_exit_is_manager_stall``).  It is still a crash and passes
+    through every other gate; it only waives the degraded-lineage requirement,
+    because a hung manager is an infrastructure fault whatever the lineage.
     """
     if respawn_disabled:
         return False
@@ -405,11 +425,16 @@ def _layer3_gates_pass(
         # is an infra death the agent didn't decide; replay recovers the lost
         # in-process EC state. See docs/design/context_resume_tightened.md.
         return False
-    if int(context_respawn_count or 0) <= 0 and not has_replay_prefix:
+    if (
+        int(context_respawn_count or 0) <= 0
+        and not has_replay_prefix
+        and not manager_stalled
+    ):
         # Degraded-only: the node must have swapped context in-worker OR be a
         # continuation node (Layer-3 child / resume root) that carried a replay
         # prefix — those are by definition from degraded lineage and may exhaust
-        # context before reaching the in-worker watermark.
+        # context before reaching the in-worker watermark. A manager stall is
+        # exempt: the watchdog proved an infra hang, not an agent decision.
         return False
     if int(committed_count or 0) <= 0:  # real progress only
         return False
@@ -420,6 +445,21 @@ def _layer3_gates_pass(
     if not has_runway:  # wall-clock runway near end of run
         return False
     return True
+
+
+def _worker_exit_is_manager_stall(
+    returncode: int | None,
+    *,
+    final_result_emitted: bool,
+) -> bool:
+    """Whether a worker exit is the manager stall watchdog's enforced exit.
+
+    The watchdog exits with ``MANAGER_STALL_EXIT_CODE`` without ever emitting
+    a final ``result`` event.  A worker that returns a provider exit code goes
+    through ``_emit_final`` first, so a coincidental 75 is not a stall.
+    """
+
+    return returncode == MANAGER_STALL_EXIT_CODE and not final_result_emitted
 
 
 def _layer3_select_capsule(
@@ -581,7 +621,6 @@ class ProofTreeNode:
     parent_id: Optional[str]
     tracker: _TreeProverTracker
     replay_prefix: list[str]              # tactics replayed at spawn
-    failed_at_branch: list[str]           # negative signal from parent
     depth: int
     spawn_time: float
     grace_deadline: Optional[float] = None  # set when child is spawned
@@ -629,11 +668,11 @@ def _find_branch_point(
     jump back to the first ``have``/``byequiv`` and replay the whole proof.
     They should recover the verified prefix and explore the current frontier.
 
-    If we know the concrete failed tactic, replay the entire accepted prefix
-    and give that failed tactic as the negative signal.  If we do not know it,
-    still replay the accepted prefix so the child starts where the parent got
-    stuck, but leave the negative signal empty; the layer-move assignment and
-    parent goal state then provide the divergence pressure.
+    The child always replays the entire accepted prefix. The parent's last
+    failed tactic, when known, is returned as the failed suffix: it keys the
+    spawn budget, feeds the layer classifier, and is recorded in the lineage.
+    It is not passed to the child; the layer-move assignment is the
+    divergence pressure.
     """
     prefix = [t for t in tactics if str(t).strip()]
     if len(prefix) < 2:
@@ -642,34 +681,6 @@ def _find_branch_point(
     if failed:
         return prefix, [failed]
     return prefix, []
-
-
-def _probability_budget_blocked_shape(
-    tactic: str,
-    parent_goal: str,
-) -> str:
-    """Return a shape-level block label for product-budget failures."""
-
-    raw = str(tactic or "").strip()
-    lower = raw.lower()
-    context = f"{raw}\n{parent_goal}".lower()
-    probability_context = (
-        "bound" in context
-        and "[<=]" in context
-        and "/" in context
-        and ("*" in context or "^" in context)
-    )
-    if not probability_context:
-        return ""
-    if re.search(r"\bcall\s*\(\s*_:\s*true\s*\)\s*\.", lower):
-        return "probability_budget:direct_call_true_under_le_bound"
-    if not re.match(r"\s*seq\s+\d+\b", lower):
-        return ""
-    if "size " in lower and ("*" in lower or "^" in lower or "/" in lower):
-        return "probability_budget:product_budget_side_fact_seq"
-    if "1%r" in lower and not (r"\in" in lower or " in " in lower):
-        return "probability_budget:bad_unit_seq_without_matching_event"
-    return "probability_budget:specific_seq_shape_only"
 
 
 def _resume_replay_gate(
@@ -760,6 +771,21 @@ def _resume_replay_gate(
     return True, ""
 
 
+def _validate_resume_branch(branch: dict) -> None:
+    """Reject a resume root whose goal-identity promise is inconsistent."""
+    expected_goal_hash = str(branch.get("expected_goal_hash") or "")
+    goal_identity_required = branch.get("goal_identity_required")
+    if type(goal_identity_required) is not bool:
+        raise ValueError(
+            "resume branch is missing boolean goal_identity_required"
+        )
+    if goal_identity_required != bool(expected_goal_hash):
+        raise ValueError(
+            "resume branch goal identity must carry a hash iff "
+            "goal_identity_required is true"
+        )
+
+
 class NodeSupervisor:
     """Owns one tree-search run: spawns/kills/respawns prover nodes and
     selects the winner. Extracted from the former run_tree_prover god-function
@@ -770,7 +796,7 @@ class NodeSupervisor:
 
     def __init__(
         self,
-        build_cmd_fn: Callable,  # (session_tag, node_id, replay_prefix, negative_signal, ...) -> cmd
+        build_cmd_fn: Callable,  # (session_tag, node_id, replay_prefix, ...) -> cmd
         cwd: str,
         timeout: int = 1200,
         max_concurrent: int = 4,
@@ -1101,27 +1127,35 @@ class NodeSupervisor:
         )
 
     def _kill_node(self, node: ProofTreeNode, reason: str):
-        if not node.tracker.finished and node.tracker.proc.poll() is None:
-            self._refresh_node_route_family(node, reason="before_kill")
-            _terminate_process_tree(node.tracker.proc)
+        if node.tracker.finished:
+            return
+        if node.tracker.proc.poll() is not None:
+            # The worker already exited on its own but has not been polled
+            # yet. Record that exit (draining its last output) so the node
+            # leaves the active set; it is a self-exit, not a supervisor kill.
+            node.tracker.poll_lines()
             node.tracker.finished = True
-            # Mark this as a SUPERVISOR kill so the Layer-3 crash-respawn gate
-            # never resurrects it (a kill is a decision, not a crash). All
-            # in-loop supervisor kill paths route through here, so one flag
-            # covers drift/hygiene/destructive/capacity/progress-gap/grace/winner.
-            node.tracker.supervisor_killed = True
-            self.lineage.record_node_killed(
-                node_id=f"Tree-{node.node_id}",
-                reason=reason,
-                committed_count=node.tracker.committed_count,
-                max_committed_count_seen=getattr(
-                    node.tracker,
-                    "max_committed_count_seen",
-                    node.tracker.committed_count,
-                ),
-                route_family=node.route_family,
-            )
-            self.logger.info("Killed %s: %s", node.node_id, reason)
+            return
+        self._refresh_node_route_family(node, reason="before_kill")
+        _terminate_process_tree(node.tracker.proc)
+        node.tracker.finished = True
+        # Mark this as a SUPERVISOR kill so the Layer-3 crash-respawn gate
+        # never resurrects it (a kill is a decision, not a crash). All
+        # in-loop supervisor kill paths route through here, so one flag
+        # covers drift/hygiene/destructive/capacity/progress-gap/grace/winner.
+        node.tracker.supervisor_killed = True
+        self.lineage.record_node_killed(
+            node_id=f"Tree-{node.node_id}",
+            reason=reason,
+            committed_count=node.tracker.committed_count,
+            max_committed_count_seen=getattr(
+                node.tracker,
+                "max_committed_count_seen",
+                node.tracker.committed_count,
+            ),
+            route_family=node.route_family,
+        )
+        self.logger.info("Killed %s: %s", node.node_id, reason)
 
     def _in_readonly_backend_window(self, node, window: float = 90.0) -> bool:
         t = node.tracker
@@ -1176,6 +1210,17 @@ class NodeSupervisor:
         worst = min(candidates, key=score)
         self._kill_node(worst, f"capacity (score={score(worst):.1f})")
 
+    def _make_room_for_spawn(self) -> None:
+        """Free one slot when the tree is at capacity.
+
+        The live count is read here because the caller may have killed a node
+        earlier in the same tick; the cached ``_n_active`` would then still
+        count it and a second, healthy node would be killed.
+        """
+        if len(self._active_nodes()) >= self.max_concurrent:
+            self._kill_least_productive()
+        self._n_active = len(self._active_nodes())
+
     def _spawn_node(
         self,
         node_id: str,
@@ -1184,8 +1229,6 @@ class NodeSupervisor:
         negative_signal: list[str],
         depth: int,
         strategy_index: int = 0,
-        parent_goal_state: str = "",
-        blocked_openers: Optional[list[str]] = None,
         layer_move_action: Optional[dict] = None,
         expected_resume_goal_hash: str = "",
         expected_resume_goal_identity_required: bool = True,
@@ -1201,7 +1244,6 @@ class NodeSupervisor:
             session_tag,
             node_id,
             replay_prefix,
-            negative_signal,
             **build_kwargs,
         )
         if "--verbose" not in cmd:
@@ -1255,51 +1297,56 @@ class NodeSupervisor:
             # All retries exhausted — re-raise the last OSError so the
             # orchestrator gets a clear failure rather than a None proc.
             raise last_err if last_err else RuntimeError("subprocess.Popen failed")
-        # Record this detached worker's process group for the supervisor's
-        # backstop reaper (covers the orchestrator-SIGKILL'd-before-finally
-        # case; the normal finally below already reaps via _terminate_process_tree).
-        from workflow.proc_lifecycle import record_worker_pgid, WORKER_PGID_MANIFEST_ENV
-        record_worker_pgid(os.environ.get(WORKER_PGID_MANIFEST_ENV), proc.pid)
-        name = f"Tree-{node_id}"
-        node_memory_dir = _allowed_node_memory_dir(self.payload_audit_path, name)
-        tracker = _TreeProverTracker(
-            proc,
-            name,
-            self.cwd,
-            session_tag=session_tag,
-            payload_audit=self.payload_audit,
-            allowed_source_files=[self.source_file] if self.source_file else [],
-            allowed_node_memory_dirs=[node_memory_dir] if node_memory_dir else [],
-            target_lemma=str(self.target_lemma or ""),
-        )
-        tracker.prefix_credit = len(replay_prefix)
-        inferred_family = dict(route_family or {}) or infer_route_family(
-            list(replay_prefix or []),
-        ).to_dict()
-        node = ProofTreeNode(
-            node_id=node_id,
-            parent_id=parent_id,
-            tracker=tracker,
-            replay_prefix=replay_prefix,
-            failed_at_branch=negative_signal,
-            depth=depth,
-            spawn_time=time.time(),
-            expected_resume_goal_hash=str(expected_resume_goal_hash or ""),
-            expected_resume_goal_identity_required=(
-                expected_resume_goal_identity_required
-            ),
-            resume_replay_gate_required=(
-                bool(str(expected_resume_goal_hash or ""))
-                or spawn_reason in {"resume_root", "layer3_crash_respawn"}
-            ),
-            route_family=inferred_family,
-        )
-        # Credit prefix tactics to the child so it doesn't look like
-        # it's at "0 tactics" while replaying. Without this, children
-        # get killed prematurely by progress gap checks.
-        if replay_prefix:
-            tracker.accepted_tactics = len(replay_prefix)
-        self.nodes[node_id] = node
+        try:
+            # Record this detached worker's process group for the supervisor's
+            # backstop reaper (covers the orchestrator-SIGKILL'd-before-finally
+            # case; the normal finally below already reaps via _terminate_process_tree).
+            from workflow.proc_lifecycle import record_worker_pgid, WORKER_PGID_MANIFEST_ENV
+            record_worker_pgid(os.environ.get(WORKER_PGID_MANIFEST_ENV), proc.pid)
+            name = f"Tree-{node_id}"
+            node_memory_dir = _allowed_node_memory_dir(self.payload_audit_path, name)
+            tracker = _TreeProverTracker(
+                proc,
+                name,
+                self.cwd,
+                session_tag=session_tag,
+                payload_audit=self.payload_audit,
+                allowed_source_files=[self.source_file] if self.source_file else [],
+                allowed_node_memory_dirs=[node_memory_dir] if node_memory_dir else [],
+                target_lemma=str(self.target_lemma or ""),
+            )
+            tracker.prefix_credit = len(replay_prefix)
+            inferred_family = dict(route_family or {}) or infer_route_family(
+                list(replay_prefix or []),
+            ).to_dict()
+            node = ProofTreeNode(
+                node_id=node_id,
+                parent_id=parent_id,
+                tracker=tracker,
+                replay_prefix=replay_prefix,
+                depth=depth,
+                spawn_time=time.time(),
+                expected_resume_goal_hash=str(expected_resume_goal_hash or ""),
+                expected_resume_goal_identity_required=(
+                    expected_resume_goal_identity_required
+                ),
+                resume_replay_gate_required=(
+                    bool(str(expected_resume_goal_hash or ""))
+                    or spawn_reason in {"resume_root", "layer3_crash_respawn"}
+                ),
+                route_family=inferred_family,
+            )
+            # Credit prefix tactics to the child so it doesn't look like
+            # it's at "0 tactics" while replaying. Without this, children
+            # get killed prematurely by progress gap checks.
+            if replay_prefix:
+                tracker.accepted_tactics = len(replay_prefix)
+            self.nodes[node_id] = node
+        except BaseException:
+            # The worker runs in its own process group; one that never
+            # reaches self.nodes would escape every later reap.
+            _terminate_process_tree(proc)
+            raise
         self.lineage.record_node_spawned(
             node_id=f"Tree-{node_id}",
             parent_id=f"Tree-{parent_id}" if parent_id and parent_id != "root" else parent_id,
@@ -1317,6 +1364,63 @@ class NodeSupervisor:
         )
         self._refresh_node_route_family(node, reason="spawn")
         return node
+
+    def _spawn_child(
+        self,
+        parent: ProofTreeNode,
+        child_id: str,
+        replay_prefix: list[str],
+        failed_suffix: list[str],
+        *,
+        spawn_reason: str,
+        **spawn_kwargs,
+    ) -> bool:
+        """Spawn one repair branch; a failed spawn fails only that branch.
+
+        ``_spawn_node`` bootstraps the child's managed session (EasyCrypt
+        start plus a full prefix replay) before the worker exists, and that
+        bootstrap can time out or fail. The parent and its siblings are
+        healthy, so the failure is recorded and the run continues instead of
+        tearing down every node and losing their progress.
+        """
+        try:
+            self._spawn_node(
+                child_id,
+                parent.node_id,
+                replay_prefix,
+                failed_suffix,
+                depth=parent.depth + 1,
+                spawn_reason=spawn_reason,
+                resume_context=self._replay_transaction_context(
+                    parent,
+                    replay_prefix,
+                ),
+                **spawn_kwargs,
+            )
+        except Exception as exc:
+            error = f"{type(exc).__name__}: {exc}"
+            status(
+                "Orchestrator",
+                f"Spawn of Tree-{child_id} from Tree-{parent.node_id} failed "
+                f"({error}); continuing without this branch.",
+                _YELLOW,
+            )
+            self.logger.warning(
+                "child spawn failed for Tree-%s: %s", child_id, error,
+            )
+            self.payload_audit.record(
+                "child_spawn_failed",
+                node=f"Tree-{parent.node_id}",
+                child=f"Tree-{child_id}",
+                spawn_reason=spawn_reason,
+                error=error[:1200],
+                replay_prefix_count=len(replay_prefix),
+            )
+            # Consume the child id so a later branch never reuses the session
+            # tag (and possibly half-started session) of this failed bootstrap.
+            parent.children.append(child_id)
+            return False
+        return True
 
     def _maybe_layer3_crash_respawn(self, node: ProofTreeNode) -> bool:
         """Worker-exit fallback (Layer 3): supervisor respawn + replay.
@@ -1361,7 +1465,7 @@ class NodeSupervisor:
             self.timeout - _ctx_min_runway_seconds()
         )
         # CRASH-ONLY signal: the worker's managed `_emit_final` (in
-        # workflow/managed_prover_worker.py) prints a `result` event on EVERY
+        # workflow/node/managed_prover_worker.py) prints a `result` event on EVERY
         # graceful exit (clean finish, give-up, or caught runtime exception),
         # which sets `final_result_emitted`. A hard crash (SIGKILL/OOM/segfault,
         # exit 137/143) dies before reaching it, so no `result` event arrives.
@@ -1377,8 +1481,14 @@ class NodeSupervisor:
             (rc is not None and rc != 0)
             or not bool(getattr(t, "final_result_emitted", False))
         )
-        # A real qed is honored upstream (winner block, before this loop); a
-        # A session completion candidate never reaches here. Degraded-only: the node must
+        # The stall watchdog's enforced exit is a crash that also qualifies a
+        # non-degraded node (see `_layer3_gates_pass`).
+        manager_stalled = _worker_exit_is_manager_stall(
+            rc,
+            final_result_emitted=bool(getattr(t, "final_result_emitted", False)),
+        )
+        # A session completion candidate is honored upstream (winner block,
+        # before this loop) and never reaches here. Degraded-only: the node must
         # have actually swapped context in-worker, else it is an ordinary give-up we
         # must honor. committed_count>0: replaying zero tactics is pointless. depth
         # cap + one-shot (layer3_respawned) round out the gate.
@@ -1395,8 +1505,13 @@ class NodeSupervisor:
             has_run_dir=run_dir is not None,
             has_runway=has_runway,
             has_replay_prefix=bool(node.replay_prefix),
+            manager_stalled=manager_stalled,
         ):
             return False
+        # One shot per dead node from here on: a capsule that cannot be
+        # selected or loaded now will not appear later, and retrying would
+        # re-mint a live capsule on every loop iteration until the run ends.
+        node.layer3_respawned = True
         session_tag = self._session_tag(node.node_id)
         selected = _layer3_select_capsule(
             cwd=self.cwd,
@@ -1415,7 +1530,6 @@ class NodeSupervisor:
         replay_prefix = list(getattr(loaded, "replay_prefix", []) or [])
         if not replay_prefix:
             return False
-        node.layer3_respawned = True
         child_id = f"{node.node_id}.r{int(getattr(t, 'context_respawn_count', 0))}"
         # Surface the physical death cause: the exit code (137=SIGKILL/OOM-killer,
         # 143=SIGTERM, 139=SIGSEGV) plus the last stderr line, and persist the full
@@ -1424,6 +1538,8 @@ class NodeSupervisor:
         t.persist_stderr(reason="layer3_crash", returncode=rc)
         _stderr_tail = (getattr(t, "_stderr_tail", "") or "").strip()
         _rc_hint = f" (exit {rc})" if rc not in (None, 0) else ""
+        if manager_stalled:
+            _rc_hint += " [manager stall watchdog]"
         _last = _stderr_tail.splitlines()[-1][:160] if _stderr_tail else ""
         _tail_hint = f" last stderr: {_last}" if _last else " (no stderr captured)"
         status(
@@ -1466,8 +1582,8 @@ class NodeSupervisor:
         # even though a healthy live capsule existed on disk). Any failure here
         # must degrade to "no respawn" so the supervisor loop continues and the
         # run terminates cleanly (capsules/bundles still written), never
-        # propagate and kill `run_tree_prover`. `layer3_respawned` stays True:
-        # the attempt consumed this node's one shot either way.
+        # propagate and kill `run_tree_prover`. `layer3_respawned` was set
+        # once the gates passed: the attempt consumed this node's one shot.
         try:
             self._spawn_node(
                 child_id,
@@ -1475,7 +1591,6 @@ class NodeSupervisor:
                 replay_prefix,
                 [],
                 depth=node.depth + 1,
-                parent_goal_state=str(getattr(loaded, "current_goal_preview", "") or ""),
                 expected_resume_goal_hash=str(loaded.current_goal_hash or ""),
                 expected_resume_goal_identity_required=(
                     loaded.goal_identity_required
@@ -1559,44 +1674,13 @@ class NodeSupervisor:
         child_idx = len(node.children)
         child_id = f"{node.node_id}.{child_idx}"
 
-        # A': accumulate blocked openers. Probability-budget tactics
-        # need shape-level memory: a bad side-fact `seq` should not
-        # become a blanket ban on every event-preserving `seq`.
-        prefix_len = len(prefix)
-        blocked = list(self.branch_blocked_openers.get(prefix_len, []))
-        if failed_suffix:
-            fs0 = failed_suffix[0].strip()
-            probability_label = _probability_budget_blocked_shape(
-                fs0,
-                parent_goal,
-            )
-            if probability_label and probability_label not in blocked:
-                blocked.append(probability_label)
-            elif fs0 and fs0 not in blocked:
-                blocked.append(fs0)
-            # Also add the first-word "opener" (e.g. "byequiv") to the
-            # blocked list so the child rejects both the specific
-            # failed tactic AND generic variants of it. For product
-            # probability `seq`/`call` failures, keep the memory at
-            # tactic-shape granularity so valid boundaries survive.
-            first_word = "" if probability_label else (
-                fs0.split()[0].rstrip(".;") if fs0 else ""
-            )
-            if first_word and first_word not in blocked:
-                blocked.append(first_word)
-        self.branch_blocked_openers[prefix_len] = blocked
-
-        # Make room if needed
-        if self._n_active >= self.max_concurrent:
-            self._kill_least_productive()
-            self._n_active = len(self._active_nodes())
+        self._make_room_for_spawn()
 
         status("Orchestrator",
                f"⚡ {reason_msg} "
                f"Spawning Tree-{child_id} from Tree-{node.node_id} "
                f"(prefix: {len(prefix)} tactics, "
                f"failed: {failed_suffix[0][:40] if failed_suffix else '?'}..."
-               + (f", blocked: {len(blocked)} openers" if blocked else "")
                + (
                    f", action: {current_layer}->{selected_action['move']}"
                    if selected_action else ""
@@ -1604,15 +1688,15 @@ class NodeSupervisor:
                + ")",
                _YELLOW)
 
-        self._spawn_node(
-            child_id, node.node_id, prefix, failed_suffix,
-            depth=node.depth + 1,
-            parent_goal_state=parent_goal,
-            blocked_openers=blocked,
+        if not self._spawn_child(
+            node,
+            child_id,
+            prefix,
+            failed_suffix,
             layer_move_action=selected_action,
             spawn_reason=reason_msg,
-            resume_context=self._replay_transaction_context(node, prefix),
-        )
+        ):
+            return False
         self.lineage.record_repair_branch_created(
             parent_id=f"Tree-{node.node_id}",
             child_id=f"Tree-{child_id}",
@@ -1647,9 +1731,9 @@ class NodeSupervisor:
                 # the prefix is no longer authoritative — don't drift-kill.
                 # Primary signal: history truncation (a stable state BOTH
                 # undo intents produce). `last_undo_time` is kept only as
-                # redundancy — it is set on `tactic.undone`, which
-                # `undo_to_checkpoint` (force-restart) never emits, so on its
-                # own it misses the very intent the prover is steered toward.
+                # redundancy — it is set on `tactic.undone`, which a rewind
+                # that falls back to restart+replay never emits, so on its
+                # own it would miss that case.
                 agent_has_rewound=(
                     getattr(node.tracker, "history_ever_shrank", False)
                     or getattr(node.tracker, "last_undo_time", 0.0) > 0
@@ -1666,7 +1750,7 @@ class NodeSupervisor:
                 )
                 self._kill_node(node, "resume capsule drift")
 
-    def _tick_session_hygiene(self, active, elapsed) -> "str | None":
+    def _tick_session_hygiene(self, active) -> "str | None":
         """Destructive-action watchdog + per-node session hygiene kills.
         Returns "break" to abort the run, "continue" to skip this periodic
         pass, None to proceed."""
@@ -1811,7 +1895,6 @@ class NodeSupervisor:
                         and node.depth < self.max_depth
                         and len(prefix) >= 1):  # need at least 1 tactic as prefix
                     parent_goal = self._read_parent_goal(node)
-                    sess_dir = Path(self.cwd) / f".ec_session_{t.session_tag}"
                     snapshot = t.session_snapshot
                     goal_hash = str(snapshot.goal_hash or "") if snapshot else ""
                     current_layer = self._infer_branch_layer(
@@ -1849,9 +1932,7 @@ class NodeSupervisor:
                     )
                     child_idx = len(node.children)
                     child_id = f"{node.node_id}.{child_idx}"
-                    if self._n_active >= self.max_concurrent:
-                        self._kill_least_productive()
-                        self._n_active = len(self._active_nodes())
+                    self._make_room_for_spawn()
                     status("Orchestrator",
                            f"⚡ Structural undo by Tree-{node.node_id} "
                            f"(undid {failed[0][:30] if failed else '?'}). "
@@ -1859,17 +1940,21 @@ class NodeSupervisor:
                            f"(prefix: {len(prefix)} tactics, "
                            f"action: {current_layer}->{selected_action['move']})",
                            _YELLOW)
-                    self._spawn_node(
-                        child_id, node.node_id, prefix, failed,
-                        depth=node.depth + 1,
-                        parent_goal_state=parent_goal,
+                    spawned = self._spawn_child(
+                        node,
+                        child_id,
+                        prefix,
+                        failed,
                         layer_move_action=selected_action,
                         spawn_reason="structural_undo_repair_branch",
-                        resume_context=self._replay_transaction_context(
-                            node,
-                            prefix,
-                        ),
                     )
+                    if not spawned:
+                        # The saved branch is consumed either way; retrying
+                        # the same failing bootstrap every tick would only
+                        # stall supervision of the healthy nodes.
+                        t.structural_undo_branch = None
+                        t.structural_undo_branch_time = 0.0
+                        continue
                     self.lineage.record_repair_branch_created(
                         parent_id=f"Tree-{node.node_id}",
                         child_id=f"Tree-{child_id}",
@@ -1972,7 +2057,7 @@ class NodeSupervisor:
                         rebalance_spawned = True
                     self._n_active = len(self._active_nodes())
 
-    def _tick_error_accumulation(self, active) -> None:
+    def _tick_error_accumulation(self) -> None:
         """Trigger 3 (fallback): spawn from nodes accumulating rejects while idle."""
         for node in list(self._active_nodes()):
             t = node.tracker
@@ -2050,23 +2135,98 @@ class NodeSupervisor:
                 else:
                     node.grace_deadline = None
 
+    def _await_winner_exit(self, node: ProofTreeNode, *, timeout: float) -> None:
+        """Let the winner finish while its pipes keep draining.
+
+        A bare ``proc.wait`` stops reading the worker's stdout/stderr; a
+        winner whose final output overflows the pipe then blocks in write and
+        can never exit, so the wait burns the whole grace period and the
+        output is lost.
+        """
+        tracker = node.tracker
+        deadline = time.time() + timeout
+        while tracker.proc.poll() is None and time.time() < deadline:
+            tracker.poll_lines()
+            if tracker.finished:
+                # stdout reached EOF; only the process exit is outstanding.
+                time.sleep(0.05)
+        if tracker.proc.poll() is None:
+            _terminate_process_tree(tracker.proc)
+        tracker.poll_lines()
+
+    def _spawn_initial_provers(
+        self,
+        resume_branches: list[dict],
+        n_initial: int,
+    ) -> None:
+        """Start the root provers (children of the virtual root node)."""
+        if resume_branches:
+            status("Orchestrator",
+                   f"Tree prover: resuming {n_initial} checkpoint root(s)")
+            for i, branch in enumerate(resume_branches[:n_initial]):
+                expected_goal_hash = str(branch.get("expected_goal_hash") or "")
+                goal_identity_required = branch["goal_identity_required"]
+                node_id = f"0.{i}"
+                self.lineage.record_resume_root_chosen(
+                    node_id=f"Tree-{node_id}",
+                    capsule_path=str(branch.get("capsule_path") or ""),
+                    capsule_score=float(branch.get("capsule_score") or 0.0),
+                    tactic_count=len(list(branch.get("replay_prefix") or [])),
+                    route_family=(
+                        branch.get("route_family")
+                        if isinstance(branch.get("route_family"), dict) else {}
+                    ),
+                    resume_diversity=(
+                        branch.get("resume_diversity")
+                        if isinstance(branch.get("resume_diversity"), dict) else {}
+                    ),
+                    resume_root_policy=str(
+                        branch.get("resume_root_policy") or "score"
+                    ),
+                )
+                self._spawn_node(
+                    node_id,
+                    "root",
+                    list(branch.get("replay_prefix") or []),
+                    list(branch.get("negative_signal") or []),
+                    depth=0,
+                    strategy_index=i,
+                    layer_move_action=branch.get("layer_move_action"),
+                    expected_resume_goal_hash=expected_goal_hash,
+                    expected_resume_goal_identity_required=goal_identity_required,
+                    spawn_reason="resume_root",
+                    route_family=(
+                        branch.get("route_family")
+                        if isinstance(branch.get("route_family"), dict) else {}
+                    ),
+                    resume_context=(
+                        branch.get("resume_context")
+                        if isinstance(branch.get("resume_context"), dict) else {}
+                    ),
+                )
+        else:
+            status("Orchestrator",
+                   f"Tree prover: starting {n_initial} provers from root")
+            for i in range(n_initial):
+                self._spawn_node(
+                    f"0.{i}",
+                    "root",
+                    [],
+                    [],
+                    depth=0,
+                    strategy_index=i,
+                    spawn_reason="initial_root",
+                )
+
     def run(self) -> TreeRunResult:
         # Rebind config onto locals so the monitor body below reads as it did in
         # the former run_tree_prover (the body uses bare `cwd`/`timeout`/... ; the
         # methods read self.*).
-        build_cmd_fn = self.build_cmd_fn
         cwd = self.cwd
         timeout = self.timeout
         max_concurrent = self.max_concurrent
         initial_provers = self.initial_provers
-        stuck_errors = self.stuck_errors
-        stuck_idle_seconds = self.stuck_idle_seconds
-        grace_seconds = self.grace_seconds
-        max_depth = self.max_depth
-        min_alive_seconds = self.min_alive_seconds
         check_interval = self.check_interval
-        progress_gap_ratio = self.progress_gap_ratio
-        progress_gap_idle = self.progress_gap_idle
         structural_undo_spawn_delay_seconds = self.structural_undo_spawn_delay_seconds
         undo_repair_protection_seconds = self.undo_repair_protection_seconds
         source_file = self.source_file
@@ -2123,6 +2283,10 @@ class NodeSupervisor:
             len(resume_branches) if resume_branches else initial_provers,
             max_concurrent,
         )
+        # A malformed resume plan is a caller error; reject it before any
+        # worker exists rather than after some roots are already running.
+        for branch in resume_branches[:n_initial]:
+            _validate_resume_branch(branch)
         # self.start_time must be assigned BEFORE the initial self._spawn_node calls
         # below: self._spawn_node reads self.start_time to compute the
         # SHANNON_NODE_DEADLINE_EPOCH child-env value. Assigning it after the spawns
@@ -2131,94 +2295,10 @@ class NodeSupervisor:
         # true run start (including the few seconds of spawn/setup), which is correct.
         self.start_time = time.time()
         start_time = self.start_time
-        _set_status_bar_active(True)
-        if resume_branches:
-            status("Orchestrator",
-                   f"Tree prover: resuming {n_initial} checkpoint root(s)")
-            for i, branch in enumerate(resume_branches[:n_initial]):
-                expected_goal_hash = str(branch.get("expected_goal_hash") or "")
-                goal_identity_required = branch.get("goal_identity_required")
-                if type(goal_identity_required) is not bool:
-                    raise ValueError(
-                        "resume branch is missing boolean goal_identity_required"
-                    )
-                if goal_identity_required != bool(expected_goal_hash):
-                    raise ValueError(
-                        "resume branch goal identity must carry a hash iff "
-                        "goal_identity_required is true"
-                    )
-                node_id = f"0.{i}"
-                lineage.record_resume_root_chosen(
-                    node_id=f"Tree-{node_id}",
-                    capsule_path=str(branch.get("capsule_path") or ""),
-                    capsule_score=float(branch.get("capsule_score") or 0.0),
-                    tactic_count=len(list(branch.get("replay_prefix") or [])),
-                    route_family=(
-                        branch.get("route_family")
-                        if isinstance(branch.get("route_family"), dict) else {}
-                    ),
-                    resume_diversity=(
-                        branch.get("resume_diversity")
-                        if isinstance(branch.get("resume_diversity"), dict) else {}
-                    ),
-                    resume_root_policy=str(
-                        branch.get("resume_root_policy") or "score"
-                    ),
-                )
-                self._spawn_node(
-                    node_id,
-                    "root",
-                    list(branch.get("replay_prefix") or []),
-                    list(branch.get("negative_signal") or []),
-                    depth=0,
-                    strategy_index=i,
-                    parent_goal_state=str(branch.get("parent_goal_state") or ""),
-                    blocked_openers=list(branch.get("blocked_openers") or []),
-                    layer_move_action=branch.get("layer_move_action"),
-                    expected_resume_goal_hash=expected_goal_hash,
-                    expected_resume_goal_identity_required=goal_identity_required,
-                    spawn_reason="resume_root",
-                    route_family=(
-                        branch.get("route_family")
-                        if isinstance(branch.get("route_family"), dict) else {}
-                    ),
-                    resume_context=(
-                        branch.get("resume_context")
-                        if isinstance(branch.get("resume_context"), dict) else {}
-                    ),
-                )
-        else:
-            status("Orchestrator",
-                   f"Tree prover: starting {n_initial} provers from root")
-            for i in range(n_initial):
-                self._spawn_node(
-                    f"0.{i}",
-                    "root",
-                    [],
-                    [],
-                    depth=0,
-                    strategy_index=i,
-                    spawn_reason="initial_root",
-                )
-
-        # start_time is now assigned earlier (before the initial spawns); see the
-        # note there. Only keep the derived bookkeeping here.
         last_check = start_time
         self._winner: Optional[ProofTreeNode] = None
         self._destructive_action_detected = False
         self._destructive_action_reason = ""
-
-        # Capture source-file mtime up-front. Any change to this file by a
-        # subagent (Edit/Write that bypassed the deny list) is treated as a
-        # corrupting action and aborts the run. None means "skip this check"
-        # (used in tests / non-orchestrator callers).
-        self._source_file_path = Path(source_file) if source_file else None
-        self._source_mtime_at_start: Optional[float] = None
-        if self._source_file_path is not None and self._source_file_path.exists():
-            try:
-                self._source_mtime_at_start = self._source_file_path.stat().st_mtime
-            except Exception:
-                self._source_mtime_at_start = None
 
         # Track which session dirs have been observed at least once. The
         # destructive-action watchdog only fires on "this run-owned dir was
@@ -2234,13 +2314,33 @@ class NodeSupervisor:
         # one monitoring tick can be respawned on the next tick with only trivial
         # tactic-syntax variation.
         self.exhausted_branches: dict[tuple[object, str], int] = {}
-        exhausted_branches = self.exhausted_branches
-        self.branch_blocked_openers: dict[int, list[str]] = {}
-        branch_blocked_openers = self.branch_blocked_openers
 
         interrupted_reason = ""
         termination_reason = ""
+        search_error = ""
+        _set_status_bar_active(True)
         try:
+            # Inside the try so a failed or interrupted startup still reaps
+            # the roots that already started (each owns a process group).
+            self._spawn_initial_provers(resume_branches, n_initial)
+
+            # Capture source-file mtime up-front. Any change to this file by a
+            # subagent (Edit/Write that bypassed the deny list) is treated as a
+            # corrupting action and aborts the run. None means "skip this check"
+            # (used in tests / non-orchestrator callers).
+            self._source_file_path = Path(source_file) if source_file else None
+            self._source_mtime_at_start: Optional[float] = None
+            if (
+                self._source_file_path is not None
+                and self._source_file_path.exists()
+            ):
+                try:
+                    self._source_mtime_at_start = (
+                        self._source_file_path.stat().st_mtime
+                    )
+                except Exception:
+                    self._source_mtime_at_start = None
+
             while True:
                 elapsed = time.time() - start_time
 
@@ -2284,12 +2384,10 @@ class NodeSupervisor:
                         if node is not self._winner:
                             self._kill_node(node, "winner found")
                     # Wait for winner to finish (write proof, etc.)
-                    try:
-                        self._winner.tracker.proc.wait(timeout=300)
-                    except subprocess.TimeoutExpired:
-                        _terminate_process_tree(self._winner.tracker.proc)
-                    # Drain remaining output
-                    self._winner.tracker.poll_lines()
+                    self._await_winner_exit(
+                        self._winner,
+                        timeout=_WINNER_EXIT_GRACE_SECONDS,
+                    )
                     break
 
                 # Check for finished provers (result event)
@@ -2324,7 +2422,7 @@ class NodeSupervisor:
                 # this watchdog is the first to catch a future regression),
                 # we abort the run and surface state to a human for
                 # debugging — don't let API tokens burn on a bad path.
-                flow = self._tick_session_hygiene(active, elapsed)
+                flow = self._tick_session_hygiene(active)
                 if flow == "break":
                     break
                 if flow == "continue":
@@ -2355,7 +2453,7 @@ class NodeSupervisor:
                 self._tick_progress_gap(active)
 
                 # --- Trigger 3: Error accumulation (fallback) ---
-                self._tick_error_accumulation(active)
+                self._tick_error_accumulation()
 
                 # --- Grace period enforcement ---
                 self._tick_grace_enforcement()
@@ -2377,19 +2475,41 @@ class NodeSupervisor:
                 "managed checkpoint.",
                 _YELLOW,
             )
+        except Exception as exc:
+            # A supervision failure is an infrastructure terminal, but the
+            # nodes' sessions and checkpoints are still the run's progress:
+            # return them in the typed result instead of discarding them.
+            search_error = f"tree search failed: {type(exc).__name__}: {exc}"
+            logger.exception("Tree search failed; preserving node progress")
+            status("Orchestrator", search_error, _RED)
 
         finally:
             # Timeout and outer interruption share the same worker signal
             # boundary.  Give the worker enough time to drain its one current
             # manager turn and mint a live checkpoint; the run coordinator
             # replays the archived prefix if this bounded drain still fails.
+            # A worker that already emitted its result can still be alive, so
+            # liveness, not the result flag, decides who is terminated.
             for node in nodes.values():
-                if not node.tracker.finished and node.tracker.proc.poll() is None:
+                if node.tracker.proc.poll() is None:
                     _terminate_process_tree(
                         node.tracker.proc,
                         grace_seconds=_RUN_FINALIZATION_DRAIN_SECONDS,
                     )
-                    node.tracker.finished = True
+                node.tracker.finished = True
+            _set_status_bar_active(False)
+
+        early_errors = [
+            message
+            for message in (
+                (
+                    "tree search interrupted: " + interrupted_reason
+                    if interrupted_reason else ""
+                ),
+                search_error,
+            )
+            if message
+        ]
 
         self._publish_live_progress(phase="finalizing")
 
@@ -2419,16 +2539,19 @@ class NodeSupervisor:
                            f"({self._winner.tracker.committed_count} tactics)",
                            _YELLOW)
             else:
-                # Should not happen
+                # Only reachable when startup failed before any root started.
                 return TreeRunResult(
                     returncode=1,
-                    infrastructure_errors=("tree produced no result node",),
+                    infrastructure_errors=tuple(
+                        early_errors + ["tree produced no result node"]
+                    ),
                     payload_audit_path=str(payload_audit_path or ""),
                 )
 
-        rc = (self._winner.tracker.proc.wait(timeout=5)
-              if self._winner.tracker.proc.poll() is None
-              else (self._winner.tracker.proc.returncode or 0))
+        rc = _settled_returncode(self._winner.tracker.proc)
+        winner_exited = rc is not None
+        if rc is None:
+            rc = 1
 
         # Store winner's session_id
         for node in nodes.values():
@@ -2508,12 +2631,11 @@ class NodeSupervisor:
             termination_reason=termination_reason,
         )
 
-        _set_status_bar_active(False)
         completion_candidate = None
-        infrastructure_errors: list[str] = []
-        if interrupted_reason:
+        infrastructure_errors: list[str] = list(early_errors)
+        if not winner_exited:
             infrastructure_errors.append(
-                "tree search interrupted: " + interrupted_reason
+                "selected proof worker did not exit after termination"
             )
         if self._winner.tracker.completion_candidate_ready:
             snapshot = _session_snapshot(cwd, self._winner.tracker._session_dir)
@@ -2556,7 +2678,7 @@ class NodeSupervisor:
 
 
 def run_tree_prover(
-    build_cmd_fn: Callable,  # (session_tag, node_id, replay_prefix, negative_signal, ...) -> cmd
+    build_cmd_fn: Callable,  # (session_tag, node_id, replay_prefix, ...) -> cmd
     cwd: str,
     timeout: int = 1200,
     max_concurrent: int = 4,
@@ -2581,19 +2703,23 @@ def run_tree_prover(
     """Recursive tree prover: spawn children at branch points when provers get stuck.
 
     Starts with `initial_provers` independent root provers exploring different
-    paths simultaneously. When any prover gets stuck, spawns a child at the
-    last good branch point with negative signal about what was tried.
+    paths simultaneously. When any prover gets stuck, spawns a child that
+    replays the parent's accepted prefix under a layer-move assignment.
 
     Args:
-        build_cmd_fn: Callback (session_tag, node_id, replay_prefix, negative_signal) -> cmd list
+        build_cmd_fn: Callback (session_tag, node_id, replay_prefix, *,
+            layer_move_action, resume_context=...) -> cmd list
         cwd: Working directory for subprocesses
         timeout: Total wall-clock timeout in seconds
         max_concurrent: Max active provers at any time
         initial_provers: Number of root provers to start simultaneously
         initial_branches: Optional replayed roots for proof-node resume runs.
-            Each branch may contain replay_prefix, parent_goal_state,
-            negative_signal, blocked_openers, layer_move_action, and
-            expected_goal_hash.
+            Each branch carries replay_prefix, expected_goal_hash and
+            goal_identity_required, and may carry resume_context,
+            negative_signal (recorded in the lineage only),
+            layer_move_action and resume provenance (capsule_path,
+            capsule_score, route_family, resume_diversity,
+            resume_root_policy).
         session_namespace: Run-owned identity prefix. Production callers must
             provide one so concurrently executing runs cannot share session
             paths; direct tests may omit it.

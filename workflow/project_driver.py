@@ -17,8 +17,7 @@ Usage:
     python3 -m workflow.project_driver \\
         --file eval/examples/ChaChaPoly/chacha_poly.ec \\
         --include-dir easycrypt-src/theories \\
-        --time-cap 900 \\
-        --skip-regression
+        --time-cap 900
 """
 
 from __future__ import annotations
@@ -224,7 +223,6 @@ def run_one_lemma(
     except OSError:
         pass
 
-    rc = None
     killed = False
     crash_msg = ""
     try:
@@ -242,7 +240,6 @@ def run_one_lemma(
                 )
                 try:
                     proc.wait(timeout=time_cap_sec)
-                    rc = proc.returncode
                 except subprocess.TimeoutExpired:
                     # Time cap hit. Cooperatively stop the orchestrator's whole
                     # process group (SIGTERM → grace → SIGKILL) so ITS finally

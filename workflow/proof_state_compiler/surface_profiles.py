@@ -8,16 +8,11 @@ from __future__ import annotations
 
 from typing import Any
 
-from core.context_intents import intent_spec
 from workflow.proof_state_compiler.profile_registry import (
     PRODUCTION_TURN_PROFILES as CURRENT_SURFACE_PROFILES,  # noqa: F401  (public name)
     runtime_profile_registration,
 )
 from workflow.proof_state_compiler.surface_contract import SurfaceProfile
-
-
-def current_surface_profile(profile_id: str | None) -> SurfaceProfile:
-    return runtime_profile_registration(profile_id).turn_profile
 
 
 def ensure_current_surface_profile(profile_id: str | None) -> SurfaceProfile:
@@ -84,18 +79,3 @@ def require_current_workspace_view(
     if not isinstance(view.get("view_hash"), str) or not view.get("view_hash"):
         raise ValueError(f"{label}.view_hash must be non-empty")
     return view
-
-
-def current_surface_profile_allows_intent(
-    profile_id: str,
-    intent: str,
-) -> tuple[bool, str]:
-    profile = ensure_current_surface_profile(profile_id)
-    if intent_spec(intent) is None:
-        return False, f"Unknown manager intent `{intent}`."
-    if intent not in profile.allowed_intents:
-        return False, (
-            f"Surface profile `{profile.name}` exposes only the matched "
-            f"proof-control protocol; intent `{intent}` is unavailable."
-        )
-    return True, ""

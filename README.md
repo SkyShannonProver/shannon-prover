@@ -325,7 +325,8 @@ source-access policy. See the [benchmark guide](eval_suite/README.md) and
 ## License and citation
 
 Shannon Prover is released under the [MIT License](LICENSE).
-The vendored EasyCrypt source has its own MIT license.
+The vendored EasyCrypt source has its own license; its inifiles library is
+under the LGPL 2.1, whose text is in [`licenses/`](licenses/LGPL-2.1.txt).
 If you use Shannon Prover in research, please cite [CITATION.cff](CITATION.cff):
 
 ```bibtex
