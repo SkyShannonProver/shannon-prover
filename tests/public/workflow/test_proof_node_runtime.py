@@ -24,11 +24,8 @@ from workflow.node.manager_followup_render import render_manager_followup
 from workflow.node.no_progress_guidance import NoProgressGuidance
 from workflow.node.node_memory import NodeMemory
 from workflow.node.proof_node_runtime import ProofNodeRuntime
-from workflow.proof_management import (
-    ManagedTurn,
-    NodeHealthEvent,
-    parse_agent_intent,
-)
+from workflow.proof_management.protocol_repair import parse_agent_intent
+from workflow.proof_management.types import ManagedTurn, NodeHealthEvent
 from workflow.proof_state_compiler.managed_goal_view_manager import (
     ManagedGoalViewManager,
 )

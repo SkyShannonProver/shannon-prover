@@ -20,6 +20,7 @@ import traceback
 from dataclasses import dataclass
 from typing import Any, Mapping
 
+from core.jsonio import strict_json_loads
 from workflow.proof_management.types import TurnDirective
 from workflow.proof_tool.easycrypt_source_resource import (
     EasyCryptSourceResponse,
@@ -220,7 +221,7 @@ class ProofToolEndpointServer:
         if not raw:
             return self._error("empty_request", "proof-tool endpoint request was empty")
         try:
-            value = _strict_json_loads(raw.decode("utf-8"))
+            value = strict_json_loads(raw.decode("utf-8"))
         except (UnicodeDecodeError, json.JSONDecodeError, ValueError):
             return self._error("invalid_json", "proof-tool endpoint request was not JSON")
         if not isinstance(value, dict):
@@ -583,7 +584,7 @@ class ProofToolEndpointClient:
         if not response:
             raise ProofToolEndpointError("proof-tool endpoint closed without a response")
         try:
-            value = _strict_json_loads(response.decode("utf-8"))
+            value = strict_json_loads(response.decode("utf-8"))
         except (UnicodeDecodeError, json.JSONDecodeError, ValueError) as exc:
             raise ProofToolEndpointError(
                 "proof-tool endpoint returned invalid JSON"
@@ -614,13 +615,6 @@ def _canonical_json_bytes(value: Mapping[str, Any]) -> bytes:
         separators=(",", ":"),
         allow_nan=False,
     ).encode("utf-8")
-
-
-def _strict_json_loads(text: str) -> Any:
-    def reject_constant(value: str) -> Any:
-        raise ValueError(f"non-finite JSON number is forbidden: {value}")
-
-    return json.loads(text, parse_constant=reject_constant)
 
 
 def _read_bounded(sock: socket.socket, limit: int) -> bytes:

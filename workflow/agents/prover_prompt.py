@@ -16,9 +16,9 @@ from workflow.proof_tool.easycrypt_source_resource import (
 )
 
 from workflow.proof_state_compiler.current_turn_presentation import (
+    canonical_current_workspace_view,
     compose_current_surface_turn,
     render_current_surface_turn_markdown,
-    require_current_workspace_view,
 )
 from workflow.proof_state_compiler.profile_registry import (
     normalize_runtime_surface_profile_id,
@@ -86,7 +86,7 @@ def _agent_visible_workspace_view(
 ) -> dict[str, Any]:
     """Validate the current lean view before including it in a handoff."""
 
-    return require_current_workspace_view(
+    return canonical_current_workspace_view(
         view,
         profile_id=normalize_runtime_surface_profile_id(surface_profile),
         label="prover prompt current handoff workspace view",

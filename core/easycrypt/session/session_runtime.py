@@ -519,9 +519,9 @@ class Session:
         # equipped to replay if they realize the restart was a mistake.
         # One entry per EasyCrypt command, not per physical line: a command
         # may span lines and one line may hold several commands.
-        from core.easycrypt.committed_history import read_committed_tactics
+        from core.easycrypt.committed_history import read_committed_commands
 
-        committed_tactics = read_committed_tactics(self.dir)
+        committed_tactics = read_committed_commands(self.dir)
 
         # Save a pre-restart checkpoint before wiping — BEFORE shutil.rmtree
         # erases everything. Stored OUTSIDE the session dir so rmtree won't
@@ -599,7 +599,7 @@ class Session:
             for n in steps:
                 s.write(f"{n}\n")
 
-    def append_block(self, block_text: str, deltas_only: bool = False) -> CommitResult:
+    def append_block(self, block_text: str) -> CommitResult:
         """Commit one tactic transaction: precheck it, append it to the
         journal, have EasyCrypt judge it, roll back a rejection or an
         accepted no-op, and record the transition."""
@@ -613,7 +613,6 @@ class Session:
         self._rollback.snapshot_pre_commit(total_before)
         self.emit_event("tactic.submitted", {
             "tactic": block_text,
-            "deltas_only": deltas_only,
             "history_lines_before": total_before,
             "line_count": len(block_text.splitlines()),
         })
@@ -742,26 +741,12 @@ class Session:
             history_committed=history_committed,
             latest_error=latest_error,
             no_progress_reason=no_progress_reason,
-            output=self._commit_display(deltas_only),
+            output=self._commit_display(),
         )
 
-    def _commit_display(self, deltas_only: bool) -> str:
+    def _commit_display(self) -> str:
         """Record and return the text shown for a commit, then make the
         post-commit state the next commit's pre-commit state."""
-        if deltas_only:
-            # Compute delta as the suffix of current after the longest common prefix
-            prev_text = self.prev.read_text(encoding="utf-8", errors="replace").splitlines(keepends=True)
-            curr_text = self.curr.read_text(encoding="utf-8", errors="replace").splitlines(keepends=True)
-            lcp = 0
-            max_lcp = min(len(prev_text), len(curr_text))
-            while lcp < max_lcp and prev_text[lcp] == curr_text[lcp]:
-                lcp += 1
-            delta_text = "".join(curr_text[lcp:])
-            # Trim anything printed after the last prompt to avoid trailing noise
-            delta_text = _trim_after_last_prompt(delta_text)
-            self.delta.write_text(delta_text)
-            self.prev.write_bytes(self.curr.read_bytes())
-            return "Delta:\n" + delta_text
         # Extract the current state snippet from the shared state reader.
         state = self.read_state()
         snippet = (

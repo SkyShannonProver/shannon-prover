@@ -53,12 +53,6 @@ def has_discharged_goals(status: str) -> bool:
     }
 
 
-def is_verified(status: str) -> bool:
-    """Whether offline verification authority has been recorded."""
-
-    return status == VERIFIED
-
-
 __all__ = [
     "CLOSED_UNTRUSTED",
     "ERROR",
@@ -72,6 +66,5 @@ __all__ = [
     "allows_qed",
     "has_discharged_goals",
     "is_session_completion_candidate",
-    "is_verified",
     "requires_qed_before_finish",
 ]

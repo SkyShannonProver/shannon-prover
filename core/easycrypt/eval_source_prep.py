@@ -10,13 +10,13 @@ compiler experiments share this proof-stripping core.
 """
 from __future__ import annotations
 
-import hashlib
 import json
 import shutil
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
+from core.digests import sha256_text
 from core.easycrypt.lemma_decls import lemma_decl_lines, target_declaration
 from core.easycrypt.proof_strip import replace_proofs
 
@@ -139,8 +139,8 @@ def strip_eval_source_tree(root: Path) -> list[dict[str, Any]]:
         out.append({
             "path": str(path.relative_to(root)),
             "proofs_replaced": int(count),
-            "raw_sha256": _sha256_text(raw),
-            "stripped_sha256": _sha256_text(stripped),
+            "raw_sha256": sha256_text(raw),
+            "stripped_sha256": sha256_text(stripped),
         })
     return out
 
@@ -232,10 +232,6 @@ def _source_manifest(
         ),
         "stripped_files": stripped_files,
     }
-
-
-def _sha256_text(text: str) -> str:
-    return hashlib.sha256(text.encode("utf-8")).hexdigest()
 
 
 __all__ = [

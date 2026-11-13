@@ -39,6 +39,7 @@ import os
 import signal
 import subprocess
 import time
+from collections.abc import Sequence
 from typing import Optional
 
 _HANDLERS_INSTALLED = False
@@ -114,10 +115,9 @@ def terminate_subprocess_tree(
     unavailable (non-POSIX, or the child was not a session leader). Safe to call
     on an already-exited process (no-op).
 
-    This is the entry-to-orchestrator analogue of
-    ``workflow.tree.supervisor._terminate_process_tree`` (which the orchestrator
-    uses internally to reap its tree workers); kept here so the operator-facing
-    drivers do not have to import the heavy supervisor module.
+    The tree supervisor reaps its workers through this function as well, with
+    a shorter grace; it lives here so operator-facing drivers do not have to
+    import the heavy supervisor module.
     """
     if proc.poll() is not None:
         return
@@ -150,6 +150,40 @@ def terminate_subprocess_tree(
         proc.wait(timeout=grace_seconds)
     except subprocess.TimeoutExpired:
         return
+
+
+def signal_group_ladder(
+    proc: subprocess.Popen,
+    steps: Sequence[tuple[int, Optional[float]]],
+) -> Optional[int]:
+    """Signal the process group ``proc`` leads, one step at a time, until it exits.
+
+    ``proc`` must have been started with ``start_new_session=True``. Each step
+    sends its signal to the whole group, then waits for the child: up to that
+    many seconds, without limit for ``None``, not at all for ``0``. The ladder
+    returns the exit status as soon as a wait sees the child exit. A wait that
+    runs out moves to the next step, except on the last step, where
+    ``subprocess.TimeoutExpired`` propagates; a ladder whose last step does not
+    wait returns ``None``. A group that no longer exists is not an error: the
+    step still waits, which reaps the exited child. An already-exited child is
+    not signalled at all.
+    """
+    if proc.poll() is not None:
+        return proc.returncode
+    last = len(steps) - 1
+    for index, (sig, wait_seconds) in enumerate(steps):
+        try:
+            os.killpg(proc.pid, sig)
+        except ProcessLookupError:
+            pass
+        if wait_seconds == 0:
+            continue
+        try:
+            return proc.wait(timeout=wait_seconds)
+        except subprocess.TimeoutExpired:
+            if index == last:
+                raise
+    return None
 
 
 def run_in_process_group(

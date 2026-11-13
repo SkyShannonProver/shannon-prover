@@ -13,12 +13,13 @@
 # QUEUE_FILE: one bash command per line; blank lines and '#' comments ignored.
 #   Per-step env overrides go inline on the line, e.g.:
 #     WHY3EC_SOCKET=/tmp/why3ec_a.sock uv run python -m eval_suite.run --suite tmp/a.json > tmp/a.log 2>&1
-#     SHANNON_DISABLE_PROBE=1 WHY3EC_SOCKET=/tmp/why3ec_b.sock uv run python -m workflow.orchestrator ... > tmp/b.log 2>&1
+#     WHY3EC_SOCKET=/tmp/why3ec_b.sock uv run python -m workflow.orchestrator ... > tmp/b.log 2>&1
 #   Give every EasyCrypt-running step its own WHY3EC_SOCKET — parallel lanes
 #   sharing /tmp/why3ec.sock is a known confound. Redirect each step's bulk
 #   output to its own log; anything not redirected goes to the queue .out log.
-#   The environment is inherited: run `eval "$(opam env --switch=easycrypt)"`
-#   before launching, or put it on the queue line.
+#   The environment is inherited. Python entry points select the managed
+#   EasyCrypt toolchain themselves; a step that calls easycrypt directly needs
+#   `eval "$(uv run python tools/bootstrap_easycrypt.py --print-env)"` first.
 #
 # Options:
 #   --worktree DIR      cd here before everything (default: current dir).
@@ -49,7 +50,8 @@
 # SIGHUP is ignored so the queue survives terminal close even without nohup
 # (children that reset their own handlers may still need nohup).
 #
-# Tested by tests/public/repo/test_run_queue.py. Documented in TESTING.md.
+# Tested by tests/public/repo/test_run_queue.py. Maintainers' usage notes are
+# in TESTING.md, which is not part of the public tree.
 
 set -u
 

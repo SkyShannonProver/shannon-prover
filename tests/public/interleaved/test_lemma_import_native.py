@@ -16,6 +16,7 @@ def check_candidate(tmp_path, candidate, target):
     )
 
 
+@pytest.mark.easycrypt
 @pytest.mark.parametrize("proof,passed", [("trivial.", True), ("invalid.", False),
                                          ("admit.", False), ("abort.", False)])
 def test_native_import_ignores_broken_suffix_but_checks_target(tmp_path, proof, passed):
@@ -52,6 +53,7 @@ def test_collect_does_not_overwrite_concurrent_source_edit(tmp_path, monkeypatch
     assert "concurrent outer work" in target.read_text()
 
 
+@pytest.mark.easycrypt
 @pytest.mark.parametrize("nesting", [
     ("theory T.\nsection Outer.\nsection Inner.\n", "end section Inner.\nend section Outer.\nend T.\n"),
     ("section Outer.\nsection Inner.\n", "end section Inner.\nend section Outer.\n"),

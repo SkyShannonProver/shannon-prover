@@ -9,9 +9,13 @@ reads each bundle's own timeline_report.json on demand.
 TIER (public vs private) is FAIL-CLOSED: a bundle is `public` ONLY when its source
 file is on the PUBLIC_SOURCE allowlist below; everything else -> `private` (the
 private held-out corpus, the private benchmark repo, absolute paths,
-unknown/empty source). `--public` drops private bundles entirely so a hosted build
-can never leak them. Locally (no flag) private bundles are kept and the browser
-badges them with a lock. REVIEW the allowlist before any public/hosted build.
+unknown/empty source). When the scanned root carries the website export policy
+(bundle_browser/export_policy.json, in a development checkout), a bundle must
+also be one of its curated `public_bundles`; an export omits that file and
+holds only curated bundles. `--public` drops private bundles entirely so a
+hosted build can never leak them. Locally (no flag) private bundles are kept
+and the browser badges them with a lock. REVIEW the allowlist before any
+public/hosted build.
 
   python3 bundle_browser/build_manifest.py            # local: all bundles
   python3 bundle_browser/build_manifest.py --public   # hosted: public tier-A only
@@ -54,6 +58,18 @@ def tier_of(source_file: str) -> str:
     s = source_file or ""
     return "public" if any(p in s for p in PUBLIC_SOURCE) else "private"
 # ----------------------------------------------------------------------------
+
+EXPORT_POLICY = os.path.join("bundle_browser", "export_policy.json")
+
+
+def curated_bundles(root: str) -> frozenset[str] | None:
+    """The export policy's curated bundle dirs under ``root``, or None without one."""
+    path = os.path.join(root, EXPORT_POLICY)
+    if not os.path.isfile(path):
+        return None
+    with open(path, encoding="utf-8") as fh:
+        return frozenset(json.load(fh)["public_bundles"])
+
 
 PROFILE = {
     "l1_goal_projection": "L1",
@@ -102,11 +118,15 @@ def view_roots(bundle_abs: str) -> list[str]:
     return roots
 
 
-def record(meta: dict, bundle_dir: str, bundle_abs: str) -> dict:
+def record(meta: dict, bundle_dir: str, bundle_abs: str,
+           curated: frozenset[str] | None = None) -> dict:
     cps = meta.get("committed_proofs") or []
     src = meta.get("source_file") or ""
     prof = meta.get("surface_profile") or ""
     out = meta.get("outcome") or ""
+    tier = tier_of(src)
+    if curated is not None and bundle_dir.replace(os.sep, "/") not in curated:
+        tier = "private"
     return {
         "id": bundle_dir.replace("/", "__"),
         "dir": bundle_dir,                       # relative to agent_view_runs/
@@ -121,7 +141,7 @@ def record(meta: dict, bundle_dir: str, bundle_abs: str) -> dict:
         "timestamp": meta.get("timestamp") or "",
         "commit": meta.get("commit") or "",
         "eval_mode": bool(meta.get("eval_mode")),
-        "tier": tier_of(src),
+        "tier": tier,
         "proved": out == "proved",
         "view_roots": view_roots(bundle_abs),
         "per_tree": [
@@ -137,6 +157,7 @@ def record(meta: dict, bundle_dir: str, bundle_abs: str) -> dict:
 
 def build(root: str, public_only: bool) -> dict:
     recs: list[dict] = []
+    curated = curated_bundles(root)
     pattern = os.path.join(root, RUNS_DIR, "*", "*", "run_meta.json")
     for mp in sorted(glob.glob(pattern)):
         try:
@@ -146,7 +167,7 @@ def build(root: str, public_only: bool) -> dict:
             continue
         bundle_abs = os.path.dirname(mp)
         bundle_dir = os.path.relpath(bundle_abs, os.path.join(root, RUNS_DIR))
-        recs.append(record(meta, bundle_dir, bundle_abs))
+        recs.append(record(meta, bundle_dir, bundle_abs, curated))
     if public_only:
         recs = [r for r in recs if r["tier"] == "public"]
     recs.sort(key=lambda r: r["timestamp"], reverse=True)
@@ -171,6 +192,7 @@ def build_multi(roots: list, public_only: bool) -> dict:
     seen: set[str] = set()
     merged: list[dict] = []
     for base_url, root in roots:
+        curated = curated_bundles(root)
         pattern = os.path.join(root, RUNS_DIR, "*", "*", "run_meta.json")
         for mp in sorted(glob.glob(pattern)):
             bundle_abs = os.path.dirname(mp)
@@ -184,7 +206,7 @@ def build_multi(roots: list, public_only: bool) -> dict:
                 print(f"skip {mp}: {exc}", file=sys.stderr)
                 continue
             seen.add(bid)
-            rec = record(meta, bundle_dir, bundle_abs)
+            rec = record(meta, bundle_dir, bundle_abs, curated)
             rec["base"] = base_url
             merged.append(rec)
     if public_only:

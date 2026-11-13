@@ -28,17 +28,6 @@ SESSION_CLI_AGENT_FORBIDDEN_LIFECYCLE_FLAGS = frozenset({
     "--force-restart",
 })
 
-SESSION_CLI_READONLY_FLAGS = frozenset({
-    "-try",
-    "-episode-view",
-    "-managed-goal-view",
-    "-compiler-input-v2",
-    "-compiler-resource-load-v2",
-    "-native-semantic-batch-json",
-    "-native-state-projection-json",
-    "-verify",
-})
-
 _SESSION_CLI_INVOKE_RE = re.compile(
     r"(?<!\S)(?:python3?|python)\s+\S*session_cli\.py\b"
     r"|"
@@ -71,6 +60,8 @@ _PATHLIKE_SUFFIXES = (
     ".txt",
 )
 
+# Basenames of manager/runtime bridge modules under workflow/ (any depth). A
+# test checks that each name still exists there.
 _FRAMEWORK_ESCAPE_FILES = frozenset({
     "managed_prover_worker.py",
     "manager_followup_render.py",
@@ -78,8 +69,9 @@ _FRAMEWORK_ESCAPE_FILES = frozenset({
     "proof_node_manager.py",
     "proof_node_mcp_server.py",
     "proof_node_runtime.py",
-    "proof_node_runtime_cli.py",
-    "proof_node_runtime_client.py",
+    "proof_tool_endpoint.py",
+    "proof_tool_launch.py",
+    "proof_tool_session.py",
     "provider_sessions.py",
 })
 
@@ -126,7 +118,6 @@ class TargetProofExposure:
             "path": self.path,
             "line": self.line,
         }
-
 
 
 def has_unquoted_shell_pipe(cmd: str) -> bool:
@@ -478,8 +469,8 @@ def classify_read_path(
             audit_code="read.active_target_source",
         )
     if project_root and (
-        _path_is_relative_to(resolved, project_root / "tmp")
-        or _path_is_relative_to(resolved, project_root / "worktrees")
+        resolved.is_relative_to(project_root / "tmp")
+        or resolved.is_relative_to(project_root / "worktrees")
     ):
         return InformationSourceDecision(
             decision="deny",
@@ -539,7 +530,7 @@ def classify_read_path(
     run_source_root = _current_run_source_root(allowed_source_files, cwd)
     if run_source_root is not None and (
         resolved == run_source_root
-        or _path_is_relative_to(resolved, run_source_root)
+        or resolved.is_relative_to(run_source_root)
     ):
         if resolved.suffix in (".ec", ".eca") and (
             _target_source_answer_safety(resolved, target_lemma)[0]
@@ -587,19 +578,21 @@ def classify_read_path(
             ),
             audit_code="read.run_artifact_escape",
         )
-    if f"/workflow/{Path(normalized).name}" in normalized:
-        name = Path(normalized).name
-        if name in _FRAMEWORK_ESCAPE_FILES:
-            return InformationSourceDecision(
-                decision="deny",
-                source_type="framework_bridge_code_read",
-                authority="framework_private_code",
-                reason=(
-                    "The prover agent tried to inspect manager/runtime bridge "
-                    "implementation details instead of using proof intents."
-                ),
-                audit_code="read.framework_bridge_code",
-            )
+    # Bridge modules live in layer subpackages (workflow/node, workflow/proof_tool,
+    # workflow/provider), so match the basename anywhere under workflow/.
+    if Path(normalized).name in _FRAMEWORK_ESCAPE_FILES and (
+        "/workflow/" in f"/{normalized}" or "/workflow/" in resolved.as_posix()
+    ):
+        return InformationSourceDecision(
+            decision="deny",
+            source_type="framework_bridge_code_read",
+            authority="framework_private_code",
+            reason=(
+                "The prover agent tried to inspect manager/runtime bridge "
+                "implementation details instead of using proof intents."
+            ),
+            audit_code="read.framework_bridge_code",
+        )
     if "/tool-results/" in normalized:
         return InformationSourceDecision(
             decision="allow",
@@ -935,17 +928,18 @@ def destructive_tool_denylist(
             patterns.append(_abs_fs_rule(tool, pattern))
         for pattern in framework_write_rel:
             patterns.append(f"{tool}({pattern})")
-    # MANAGER-OWNED EC-MUTATION BOUNDARY (audit §6.1 / backlog #4). The prover's
-    # protocol is its ProverWorkspaceView + the MCP intents; the EasyCrypt session
-    # is manager-owned. Turn the post-hoc node-kill (``_track_session_hygiene...``)
-    # into PREVENTION by hard-denying the MUTATING ``session_cli.py`` flags and any
-    # write into the manager's ``.ec_session_*`` dirs at the tool boundary.
-    # Current read-only compiler/validation transports stay allowed: a prover
-    # that reaches for one is the intentional
-    # ``session_cli.agent_call_debug_signal`` ("the view was insufficient" — see
-    # repository Session CLI Policy); blocking it would erase that signal. EC lemma
-    # names and ``.ec_session_<tag>`` dirs contain no ``-<flag>`` substrings, so the
-    # mutating-flag globs do not false-match a read-only invocation.
+    # MANAGER-OWNED EC-MUTATION BOUNDARY (audit §6.1 / backlog #4). The prover
+    # interacts with proof state only through the MCP intents; ``session_cli.py``
+    # and the EasyCrypt session are backend-private. Turn the post-hoc node-kill
+    # into PREVENTION for mutation by hard-denying the MUTATING
+    # ``session_cli.py`` flags and any write into the manager's
+    # ``.ec_session_*`` dirs at the tool boundary. Other session_cli calls are
+    # not denied here, but ``classify_bash_command`` classifies every agent
+    # session_cli call as ``node_fatal`` (audit code
+    # ``session_cli.agent_call_debug_signal``), so the tree supervisor kills
+    # the node once such a call runs. EC lemma names and ``.ec_session_<tag>`` dirs
+    # contain no ``-<flag>`` substrings, so the mutating-flag globs do not
+    # false-match another invocation.
     patterns.extend(
         f"Bash(*session_cli*{flag}*)"
         for flag in sorted(
@@ -956,9 +950,7 @@ def destructive_tool_denylist(
     # tactic-submission API
     # whose commit/commit_chain/undo modes mutate committed proof state. It lives
     # in its own argparse ``dest`` (not in SESSION_CLI_MUTATING_FLAGS), so deny it
-    # explicitly. Unlike the read-only transports it is not part of the
-    # agent's debug-signal vocabulary, so blocking every mode erases no signal
-    # (the agent submits tactics through the MCP intent, never this).
+    # explicitly (the agent submits tactics through the MCP intent, never this).
     patterns.append("Bash(*session_cli*-tactic-exec*)")
     patterns.extend([
         "Edit(**/.ec_session_*/**)",
@@ -1059,7 +1051,7 @@ def _is_allowed_node_memory_file(
         return False
     for candidate in allowed_node_memory_dirs:
         root = _resolve_path(cwd, str(candidate))
-        if resolved == root or _path_is_relative_to(resolved, root):
+        if resolved == root or resolved.is_relative_to(root):
             return True
     return False
 
@@ -1192,11 +1184,3 @@ def _target_lemma_proof_span(text: str, lemma: str) -> tuple[int, int] | None:
     if span is None:
         return declaration.name_end, declaration.name_end
     return span
-
-
-def _path_is_relative_to(path: Path, parent: Path) -> bool:
-    try:
-        path.relative_to(parent)
-        return True
-    except ValueError:
-        return False

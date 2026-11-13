@@ -8,7 +8,8 @@ import shutil
 import uuid
 from pathlib import Path
 
-from core.easycrypt.committed_history import read_committed_tactics
+from core.paths import REPO_ROOT
+from core.easycrypt.committed_history import read_committed_commands
 from workflow.agents.prover_writeback import (
     _extract_tactics_from_candidate,
     _write_and_verify_proof,
@@ -21,7 +22,7 @@ from workflow.tree.result import SessionClosureCandidate
 from workflow.reporting.run_report_bundle import _outcome
 
 
-_REPO_ROOT = Path(__file__).resolve().parents[2]
+_REPO_ROOT = REPO_ROOT
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -32,7 +33,7 @@ def main(argv: list[str] | None = None) -> int:
 
     run_dir = _resolve_repo_path(args.run_dir)
     artifacts_root = (_REPO_ROOT / "artifacts").resolve()
-    if not _is_relative_to(run_dir, artifacts_root):
+    if not run_dir.is_relative_to(artifacts_root):
         parser.error("--run-dir must resolve under repository artifacts/")
     if run_dir.exists() and any(run_dir.iterdir()):
         parser.error("--run-dir must be absent or empty")
@@ -100,7 +101,7 @@ def main(argv: list[str] | None = None) -> int:
             target_file=str(source),
             target_lemma=lemma,
         )
-        history_before_finalization = read_committed_tactics(session_dir)
+        history_before_finalization = read_committed_commands(session_dir)
         tactics = _extract_tactics_from_candidate(candidate)
         verification_evidence = _write_and_verify_proof(
             source, lemma, tactics, candidate, include_dir=args.include_dir,
@@ -108,7 +109,7 @@ def main(argv: list[str] | None = None) -> int:
         verified = bool(
             verification_evidence and verification_evidence.passed
         )
-        history_after_finalization = read_committed_tactics(session_dir)
+        history_after_finalization = read_committed_commands(session_dir)
         result = ProverResult(
             status=PROVER_RUN_VERIFIED if verified else "infrastructure_invalid",
             completion_candidate=candidate.to_dict(),
@@ -208,7 +209,7 @@ def main(argv: list[str] | None = None) -> int:
         }
     finally:
         manager.close_session()
-        if _is_relative_to(session_dir, _REPO_ROOT) and session_dir.name.startswith(
+        if session_dir.is_relative_to(_REPO_ROOT) and session_dir.name.startswith(
             ".ec_session_proof_terminal_outcome_"
         ):
             shutil.rmtree(session_dir, ignore_errors=True)
@@ -230,14 +231,6 @@ def _proof_status(workspace_view: dict) -> str:
 
 def _resolve_repo_path(path: Path) -> Path:
     return path.resolve() if path.is_absolute() else (_REPO_ROOT / path).resolve()
-
-
-def _is_relative_to(path: Path, parent: Path) -> bool:
-    try:
-        path.relative_to(parent)
-    except ValueError:
-        return False
-    return True
 
 
 if __name__ == "__main__":

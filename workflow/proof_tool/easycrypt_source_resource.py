@@ -7,7 +7,6 @@ EasyCrypt itself against that prepared environment.
 """
 from __future__ import annotations
 
-import hashlib
 import json
 import os
 import re
@@ -15,6 +14,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Callable, Mapping
 
+from core.digests import sha256_bytes
 from core.easycrypt.eval_source_prep import (
     PROOF_STRIPPED_PROJECT_CONTRACT,
     SOURCE_PREP_KIND,
@@ -154,7 +154,7 @@ class EasyCryptSourceResource:
             if (
                 not candidate.is_file()
                 or not candidate.is_relative_to(isolated_root)
-                or _sha256_bytes(candidate.read_bytes()) != digest
+                or sha256_bytes(candidate.read_bytes()) != digest
             ):
                 raise EasyCryptSourceResourceError(
                     "source resource stripped-file ledger drifted"
@@ -315,7 +315,7 @@ class EasyCryptSourceResource:
             "status": "served",
             "call_id": str(call_id),
             "query": payload["query"],
-            "query_sha256": _sha256_bytes(payload["query"].encode("utf-8")),
+            "query_sha256": sha256_bytes(payload["query"].encode("utf-8")),
             "scope": payload["scope"],
             "path": payload["path"],
             "files_scanned": payload["files_scanned"],
@@ -467,7 +467,7 @@ class EasyCryptSourceResource:
             "end_line": actual_end,
             "total_lines": total_lines,
             "has_more": actual_end < total_lines,
-            "content_sha256": _sha256_bytes(excerpt.encode("utf-8")),
+            "content_sha256": sha256_bytes(excerpt.encode("utf-8")),
             "content": excerpt,
         }
 
@@ -636,7 +636,7 @@ class EasyCryptSourceResource:
         if containing_root == self.isolated_root:
             key = candidate.relative_to(self.isolated_root).as_posix()
             expected = self.stripped_sha256.get(key)
-            if expected is None or _sha256_bytes(raw) != expected:
+            if expected is None or sha256_bytes(raw) != expected:
                 raise EasyCryptSourceResourceError(
                     "proof-stripped source file is absent from or drifted against its manifest"
                 )
@@ -737,10 +737,6 @@ def _render_source_matches(payload: Mapping[str, Any]) -> str:
         "candidate name to `resolve_easycrypt_declaration`."
     )
     return "\n\n".join(blocks)
-
-
-def _sha256_bytes(value: bytes) -> str:
-    return hashlib.sha256(value).hexdigest()
 
 
 __all__ = [

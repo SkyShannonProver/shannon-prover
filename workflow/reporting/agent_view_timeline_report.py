@@ -20,7 +20,7 @@ from datetime import datetime, timedelta
 from pathlib import Path
 from workflow.reporting.replay_artifacts import node_id_from_dir as _node_id_from_dir
 from workflow.reporting.agent_thinking_trace import intent_payload_key
-from workflow.proof_management.common import read_jsonl as _read_jsonl
+from core.jsonio import read_json_object_or_empty, read_jsonl
 from typing import Any
 
 
@@ -266,7 +266,7 @@ def _build_node_rows(
     first_action_at: datetime | None,
 ) -> list[dict[str, Any]]:
     entries = [
-        item for item in _read_jsonl(node_dir / "timeline.jsonl")
+        item for item in read_jsonl(node_dir / "timeline.jsonl")
         if item.get("kind") == "manager_turn"
     ]
     entries.sort(key=lambda item: _int(item.get("turn")))
@@ -286,8 +286,8 @@ def _build_node_rows(
         result_path = node_dir / "manager_results" / f"turn_{turn:03d}.json"
         result_view_path = node_dir / "workspace_views" / f"turn_{turn:03d}.json"
         result_followup_path = node_dir / "followups" / f"turn_{turn:03d}.md"
-        manager_result = _read_json(result_path)
-        result_workspace_view = _read_json(result_view_path)
+        manager_result = read_json_object_or_empty(result_path)
+        result_workspace_view = read_json_object_or_empty(result_view_path)
         node_id = str(entry.get("node") or _node_id_from_dir(node_dir))
         intent = _dict(manager_result.get("handled_intent") or entry.get("intent"))
         audit_record, audit_index = _next_matching_audit_record(
@@ -559,7 +559,7 @@ def _node_memory_dirs(run_dir: Path) -> list[Path]:
 def _first_manager_turn_submit_time(node_dirs: list[Path]) -> datetime | None:
     first: datetime | None = None
     for node_dir in node_dirs:
-        for entry in _read_jsonl(node_dir / "timeline.jsonl"):
+        for entry in read_jsonl(node_dir / "timeline.jsonl"):
             if entry.get("kind") != "manager_turn":
                 continue
             result_at = _parse_time(str(entry.get("time") or ""))
@@ -568,16 +568,6 @@ def _first_manager_turn_submit_time(node_dirs: list[Path]) -> datetime | None:
             if submitted_at is not None and (first is None or submitted_at < first):
                 first = submitted_at
     return first
-
-
-def _read_json(path: Path) -> dict[str, Any]:
-    if not path.exists():
-        return {}
-    try:
-        value = json.loads(path.read_text(encoding="utf-8"))
-    except json.JSONDecodeError:
-        return {}
-    return value if isinstance(value, dict) else {}
 
 
 def _decision_artifacts(
@@ -590,20 +580,24 @@ def _decision_artifacts(
     if turn <= 1:
         initial_view_path = node_dir / "initial_workspace_view.json"
         initial_followup_path = node_dir / "initial_followup.md"
-        initial_view = _read_json(initial_view_path)
+        initial_view = read_json_object_or_empty(initial_view_path)
         if initial_view:
             return initial_view_path, initial_followup_path, initial_view
         bootstrap_view, bootstrap_path = _bootstrap_workspace_view(run_dir, node_id)
         return bootstrap_path, initial_followup_path, bootstrap_view
     previous_stem = f"turn_{turn - 1:03d}"
     view_path = node_dir / "workspace_views" / f"{previous_stem}.json"
-    return view_path, node_dir / "followups" / f"{previous_stem}.md", _read_json(view_path)
+    return (
+        view_path,
+        node_dir / "followups" / f"{previous_stem}.md",
+        read_json_object_or_empty(view_path),
+    )
 
 
 def _thinking_index(node_dir: Path) -> dict[int, dict[str, Any]]:
     """Map turn -> recorded thinking metadata from ``thinking/index.json`` (written
     by ``agent_thinking_trace``). Empty when no reasoning was extracted."""
-    raw = _read_json(node_dir / "thinking" / "index.json")
+    raw = read_json_object_or_empty(node_dir / "thinking" / "index.json")
     out: dict[int, dict[str, Any]] = {}
     for item in _list(raw.get("turns")):
         record = _dict(item)
@@ -641,7 +635,7 @@ def _thinking_path_for_turn(
 def _usage_index(node_dir: Path) -> dict[int, dict[str, Any]]:
     """Map turn -> full index record (incl. real token usage) from thinking/index.json,
     for ALL turns (unlike _thinking_index, which keeps only turns with a thinking file)."""
-    raw = _read_json(node_dir / "thinking" / "index.json")
+    raw = read_json_object_or_empty(node_dir / "thinking" / "index.json")
     out: dict[int, dict[str, Any]] = {}
     for item in _list(raw.get("turns")):
         record = _dict(item)
@@ -684,12 +678,12 @@ def _usage_scope_for_turn(
 def _bootstrap_workspace_view(run_dir: Path, node_id: str) -> tuple[dict[str, Any], Path]:
     bootstrap_path = _bootstrap_file_for_node(run_dir, node_id)
     if bootstrap_path.exists():
-        record = _read_json(bootstrap_path)
+        record = read_json_object_or_empty(bootstrap_path)
         view = _dict(record.get("workspace_view"))
         if view:
             return view, bootstrap_path
     jsonl_path = run_dir / "manager_session_bootstrap.jsonl"
-    for record in _read_jsonl(jsonl_path):
+    for record in read_jsonl(jsonl_path):
         if str(record.get("node_id") or "") == node_id:
             view = _dict(record.get("workspace_view"))
             if view:
@@ -903,7 +897,7 @@ def _handled_audit_records_for_node(
 ) -> list[dict[str, Any]]:
     records = []
     audit_path = run_dir / "proof_node_manager_audit.jsonl"
-    for item in _read_jsonl(audit_path):
+    for item in read_jsonl(audit_path):
         if item.get("kind") != "agent_intent.handled":
             continue
         if str(item.get("node") or "") != node_id:

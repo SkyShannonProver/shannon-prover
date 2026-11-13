@@ -12,8 +12,12 @@ from contextlib import contextmanager
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
+from core.paths import REPO_ROOT
 from core.easycrypt import committed_history
-from core.easycrypt.ec_daemon_client import STEP_TIMEOUT_ENV
+from core.easycrypt.ec_daemon_client import (
+    DEFAULT_STEP_TIMEOUT_SECONDS,
+    STEP_TIMEOUT_ENV,
+)
 from core.easycrypt.ec_env import get_ec_env
 from core.easycrypt.session.session_state import read_target_lemma_metadata
 
@@ -36,14 +40,13 @@ if TYPE_CHECKING:
     from .compiler_surface import CompilerSurface
 
 
-PROJECT_ROOT = Path(__file__).resolve().parents[2]
+PROJECT_ROOT = REPO_ROOT
 
-# One commit call (an agent tactic or one replayed transaction) gets this long.
-COMMIT_CALL_TIMEOUT_SECONDS = 180.0
-# EasyCrypt's own limit on that transaction leaves room in the call for
-# session_cli's start-up, the daemon's reply and the session's bookkeeping, so
-# a tactic slower than this is rejected instead of timing out the call.
-EC_STEP_TIMEOUT_SECONDS = COMMIT_CALL_TIMEOUT_SECONDS - 10.0
+# One commit call (an agent tactic or one replayed transaction) gets
+# EasyCrypt's own limit on that transaction plus room for session_cli's
+# start-up, the daemon's reply and the session's bookkeeping, so a tactic
+# slower than the limit is rejected instead of timing out the call.
+COMMIT_CALL_TIMEOUT_SECONDS = DEFAULT_STEP_TIMEOUT_SECONDS + 10.0
 
 # Aggregate wall-clock budget (seconds) for the per-tactic replay loop of a
 # restart+replay-all restore (rewind / restore_committed_tactics / resume). Each
@@ -255,7 +258,7 @@ class ReplSessionManager:
         instead of echoing the request (step4_1 r2 respawn divergence,
         2026-06-09).
         """
-        return committed_history.read_committed_tactics(
+        return committed_history.read_committed_commands(
             session_dir_path(self.session_dir, self.project_root)
         )
 
@@ -1009,7 +1012,7 @@ class ReplSessionManager:
     def _env(self) -> dict[str, str]:
         env = get_ec_env()
         env["EC_SESSION_DIR"] = self.session_dir
-        env[STEP_TIMEOUT_ENV] = f"{EC_STEP_TIMEOUT_SECONDS:g}"
+        env[STEP_TIMEOUT_ENV] = f"{DEFAULT_STEP_TIMEOUT_SECONDS:g}"
         return env
 
     def include_dirs(self) -> list[str]:

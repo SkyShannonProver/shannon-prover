@@ -1,6 +1,6 @@
 # Shannon Prover: proof-construction architecture and boundaries
 
-Status: release-candidate architecture for the reusable Phase-II/III product
+Status: current architecture for the reusable Phase-II/III product
 and its ChaChaPoly reference adapter, updated 2026-09-05.
 
 This is a contributor reference. For project setup and interpreting results,
@@ -236,17 +236,11 @@ Use these outcome labels consistently:
 
 ## Release boundary
 
-The selected release-candidate surface is the **interleaved product plus one
-reference adapter**: `workflow/interleaved/`, this architecture document, the
-exact `experiments/interleaved_shannon/` subtree, its pinned three-file
-ChaChaPoly task, and existing locked runtime dependencies. The allowlist does
-not make the rest of `experiments/` public.
-
-Raw `artifacts/interleaved_shannon/` directories, historical development
-reports and all unrelated experiment scaffolding are outside this surface.
-The bundle browser continues to support managed single-lemma bundles only; it
-must not flatten an outer/inner run into that schema. Publication still
-requires forbidden-content verification, built-export link checking and fresh
-export preflights for both the product entry point and the reference adapter.
-These checks establish packaging and reproducibility; they do not show that
-every decomposition succeeds or make a causal speed claim.
+The interleaved product ships in every runtime release, together with this
+document, the `experiments/interleaved_shannon/` reference adapter and its
+pinned three-file ChaChaPoly task. The rest of `experiments/`, raw
+`artifacts/interleaved_shannon/` directories and historical development
+reports stay outside the public tree. The bundle browser supports managed
+single-lemma bundles only; it must not flatten an outer/inner run into that
+schema. Release checks establish packaging and reproducibility; they do not
+show that every decomposition succeeds or make a causal speed claim.

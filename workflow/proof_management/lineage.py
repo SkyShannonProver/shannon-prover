@@ -12,6 +12,7 @@ import time
 from pathlib import Path
 from typing import Any
 
+from core.jsonio import append_jsonl
 from workflow.proof_management.route_family import (
     RouteFamilyEvidence,
     infer_route_family,
@@ -249,10 +250,7 @@ class LemmaLineageStore:
             **dict(event),
         }
         try:
-            self.run_dir.mkdir(parents=True, exist_ok=True)
-            path = self.run_dir / "lemma_lineage.jsonl"
-            with path.open("a", encoding="utf-8") as handle:
-                handle.write(json.dumps(payload, sort_keys=True) + "\n")
+            append_jsonl(self.run_dir / "lemma_lineage.jsonl", payload)
         except Exception as exc:
             logger.warning("failed to write lemma lineage event: %s", exc)
 

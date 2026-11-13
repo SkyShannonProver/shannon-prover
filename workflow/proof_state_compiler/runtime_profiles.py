@@ -15,18 +15,13 @@ from core.context_intents import (
     intent_spec,
     persistent_control_names,
 )
+from core.easycrypt.session.session_prover_workspace_schema import (
+    PROVER_WORKSPACE_VIEW_KEYS,
+)
+from workflow.proof_state_compiler.profile_registry import PRODUCTION_TURN_PROFILES
 from workflow.proof_state_compiler.surface_profiles import (
-    CURRENT_SURFACE_PROFILES,
     ensure_current_surface_profile,
 )
-
-
-def resolve_runtime_surface_profile(profile_id: str | None) -> Any:
-    return ensure_current_surface_profile(profile_id)
-
-
-def ensure_supported_runtime_surface_profile(profile_id: str | None) -> Any:
-    return ensure_current_surface_profile(profile_id)
 
 
 def allowed_runtime_intents(profile_id: str | None) -> frozenset[str]:
@@ -34,24 +29,12 @@ def allowed_runtime_intents(profile_id: str | None) -> frozenset[str]:
 
 
 def current_surface_profile_names() -> list[str]:
-    return sorted(CURRENT_SURFACE_PROFILES)
+    return sorted(PRODUCTION_TURN_PROFILES)
 
 
 def effective_runtime_surface_manifest(profile_id: str | None) -> dict[str, Any]:
     current = ensure_current_surface_profile(profile_id)
     allowed = frozenset(current.allowed_intents)
-    workspace_keys = {
-        "schema_version",
-        "kind",
-        "ok",
-        "proof_status",
-        "last_result",
-        "current_goal",
-        "latest_observation",
-        "view_hash",
-        "based_on_state_version",
-        "session_epoch",
-    }
     controls = persistent_control_names()
     return {
         "schema_version": 1,
@@ -72,12 +55,5 @@ def effective_runtime_surface_manifest(profile_id: str | None) -> dict[str, Any]
             and intent_spec(intent).intent_class == INTENT_CLASS_PROOF_CONTROL
         ),
         "persistent_controls": sorted(controls),
-        "workspace_keys": sorted(workspace_keys),
-        "first_ab_excluded_intents": [],
-        "treatment_notes": {
-            "replay_suffix_mutation_exposed": False,
-            "finish_with_admit_nudge": False,
-            "checkpoint_menu_overlay": False,
-            "structural_checkpoint_facts": False,
-        },
+        "workspace_keys": sorted(PROVER_WORKSPACE_VIEW_KEYS),
     }

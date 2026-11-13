@@ -692,13 +692,13 @@ class _LoopAgent:
         self.session_id = "sess-fixed"
 
     def run(self, prompt, *, system_prompt="", mcp_launch_spec=None):
-        from workflow.provider.provider_sessions import ClaudeRunResult
+        from workflow.provider.provider_sessions import AgentRunResult
 
         assert mcp_launch_spec is not None
         self.run_calls += 1
         rc, pressure = self._script.pop(0) if self._script else (0, False)
         self.ctx_pressure = pressure
-        return ClaudeRunResult(text="", session_id=self.session_id, returncode=rc)
+        return AgentRunResult(text="", session_id=self.session_id, returncode=rc)
 
     def close(self, reason):
         self.close_calls += 1
@@ -2130,7 +2130,3 @@ def test_real_loop_layer3_keeps_other_non_degraded_exits_final(
     )
     assert capture.get("select_calls", []) == []
     assert scr.spawned_node_ids == ["0.0"]
-
-
-if __name__ == "__main__":
-    raise SystemExit(pytest.main([__file__, "-v"]))

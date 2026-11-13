@@ -73,7 +73,6 @@ mode choices through this skill.
      --file <FILE> \
      --lemma <LEMMA> \
      --include-dir easycrypt-src/theories \
-     --max-iterations 1 \
      --prover-timeout-minutes 30 \
      --surface-profile proof_state_compiler \
      --agent-backend codex \

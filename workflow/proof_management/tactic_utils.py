@@ -4,31 +4,6 @@ from __future__ import annotations
 import re
 
 
-def strip_easycrypt_comments(text: str) -> str:
-    """Remove nested EasyCrypt comments before classifying a submitted tactic.
-
-    Kept for the interleaved warm handoff, which imports it; callers in this
-    component use ``core.easycrypt.proof_text`` instead.
-    """
-
-    out: list[str] = []
-    index = 0
-    depth = 0
-    while index < len(text):
-        if text.startswith("(*", index):
-            depth += 1
-            index += 2
-            continue
-        if depth and text.startswith("*)", index):
-            depth -= 1
-            index += 2
-            continue
-        if depth == 0:
-            out.append(text[index])
-        index += 1
-    return "".join(out)
-
-
 def tactic_head(tactic: str) -> str:
     text = str(tactic or "").strip()
     match = re.match(r"([A-Za-z_][A-Za-z0-9_]*)", text)

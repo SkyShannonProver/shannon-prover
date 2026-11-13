@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from tests.helpers.builders import make_manager
-from workflow.proof_management import AgentIntent
+from workflow.proof_management.protocol_repair import AgentIntent
 
 
 def test_preflight_does_not_intercept_admit() -> None:

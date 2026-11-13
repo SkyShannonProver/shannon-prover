@@ -18,7 +18,6 @@ from __future__ import annotations
 
 import os
 import subprocess
-import sys
 from pathlib import Path
 
 import pytest
@@ -254,7 +253,3 @@ def test_charact_three_sites_share_identical_replay_prefix(fake_spawn):
 
     tactic_pre, chain_pre, warm_pre = (fakes[0].sent[:5], fakes[1].sent[:5], fakes[2].sent[:5])
     assert tactic_pre == chain_pre == warm_pre == PREFIX
-
-
-if __name__ == "__main__":
-    raise SystemExit(pytest.main([__file__, "-v"]))

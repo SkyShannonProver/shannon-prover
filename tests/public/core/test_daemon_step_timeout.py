@@ -149,9 +149,9 @@ def test_the_step_limit_takes_only_a_positive_finite_value(monkeypatch, raw, exp
     assert step_timeout_seconds() == expected
 
 
-def test_the_core_default_is_the_managers_commit_budget_less_its_margin():
-    assert DEFAULT_STEP_TIMEOUT_SECONDS == repl_session.EC_STEP_TIMEOUT_SECONDS
-    assert 0 < repl_session.EC_STEP_TIMEOUT_SECONDS < repl_session.COMMIT_CALL_TIMEOUT_SECONDS
+def test_the_managers_commit_budget_is_the_core_step_limit_plus_a_margin():
+    assert DEFAULT_STEP_TIMEOUT_SECONDS == 170.0
+    assert repl_session.COMMIT_CALL_TIMEOUT_SECONDS == 180.0
 
 
 @pytest.mark.easycrypt
@@ -160,7 +160,7 @@ def test_the_manager_hands_the_step_limit_to_session_cli(monkeypatch):
     env = repl_session.ReplSessionManager._env(SimpleNamespace(session_dir="sess"))
     assert env[STEP_TIMEOUT_ENV] == "170"
     monkeypatch.setenv(STEP_TIMEOUT_ENV, env[STEP_TIMEOUT_ENV])
-    assert step_timeout_seconds() == repl_session.EC_STEP_TIMEOUT_SECONDS
+    assert step_timeout_seconds() == DEFAULT_STEP_TIMEOUT_SECONDS
 
 
 def test_the_client_sends_the_limit_and_waits_a_little_longer(monkeypatch):

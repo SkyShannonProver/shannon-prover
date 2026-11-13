@@ -470,8 +470,8 @@ def test_policy_marks_bridge_and_run_artifact_escapes_node_fatal(tmp_path: Path)
         / "iteration_1"
         / "manager_bootstrap_0_1.json"
     )
-    framework_code = tmp_path / "workflow" / "proof_node_runtime_client.py"
-    mcp_server_code = tmp_path / "workflow" / "proof_node_mcp_server.py"
+    framework_code = tmp_path / "workflow" / "node" / "node_memory.py"
+    mcp_server_code = tmp_path / "workflow" / "proof_tool" / "proof_node_mcp_server.py"
     mcp_config = (
         tmp_path
         / "workflow"
@@ -550,11 +550,23 @@ def test_policy_marks_bridge_and_run_artifact_escapes_node_fatal(tmp_path: Path)
     assert legal_node_memory_ls.audit_code == "shell_node_memory.inspect"
     assert legal_node_memory_cat.decision == "allow"
     assert legal_node_memory_cat.source_type == "shell_current_node_memory"
-    assert classify_read_path(str(framework_code)).decision == "deny"
-    assert classify_read_path(str(mcp_server_code)).decision == "deny"
+    for path in (framework_code, mcp_server_code):
+        decision = classify_read_path(str(path))
+        assert decision.decision == "deny"
+        assert decision.audit_code == "read.framework_bridge_code"
+    relative = classify_read_path("workflow/node/proof_node_manager.py", cwd=tmp_path)
+    assert relative.audit_code == "read.framework_bridge_code"
     mcp_config_read = classify_read_path(str(mcp_config), cwd=tmp_path)
     assert mcp_config_read.decision == "deny"
     assert mcp_config_read.audit_code == "read.manager_bridge_mcp_config"
+
+
+def test_framework_escape_files_name_existing_bridge_modules() -> None:
+    from workflow.provider import prover_io_policy
+
+    workflow_dir = Path(prover_io_policy.__file__).resolve().parents[1]
+    present = {path.name for path in workflow_dir.rglob("*.py")}
+    assert prover_io_policy._FRAMEWORK_ESCAPE_FILES <= present
 
 
 def test_hard_denylist_leaves_manager_boundary_to_policy() -> None:

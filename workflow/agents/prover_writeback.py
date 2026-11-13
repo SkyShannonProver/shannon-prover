@@ -18,6 +18,7 @@ import subprocess
 from dataclasses import dataclass
 from pathlib import Path
 from typing import TYPE_CHECKING, Optional
+from core.paths import REPO_ROOT
 from core.easycrypt.ec_env import easycrypt_command
 from core.easycrypt.committed_history import (
     closed_history_tactics,
@@ -45,7 +46,7 @@ if TYPE_CHECKING:
     from workflow.proof_acceptance import EventContractGate
     from workflow.tree.result import SessionClosureCandidate
 
-_PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
+_PROJECT_ROOT = REPO_ROOT
 
 _EC_SPINNER_RE = re.compile(r'^\[[-\\|/]\]\s+\[\d+\]\s+\d+\.\d+%')
 _EC_DIAGNOSTIC_RE = re.compile(r"\[(?:critical|error)\b")
@@ -498,16 +499,12 @@ def _proof_body_has_admit(
     return bool(_unchecked_proof_constructs(content[start:end]))
 
 
-
-
 def _build_proof_text(old_block: str, tactics: list[str]) -> str:
     """Format a proof block with the given tactics, preserving the COMPLETE THIS comment."""
     proof_tactics = [t for t in tactics if t.strip().lower().rstrip(".").strip() != "qed"]
     comment_match = re.search(r'(\(\*.*?COMPLETE\s+THIS.*?\*\))', old_block, re.DOTALL)
     comment_line = (comment_match.group(1) + "\n") if comment_match else ""
     return "proof.\n" + comment_line + "\n".join(f"  {t}" for t in proof_tactics) + "\nqed."
-
-
 
 
 def _write_and_verify_proof(

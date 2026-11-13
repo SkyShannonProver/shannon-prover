@@ -8,6 +8,7 @@ import re
 from collections import Counter
 from datetime import datetime
 from pathlib import Path
+from core.jsonio import read_jsonl
 from workflow.schemas.prover_result import (
     PROVER_RUN_INFRASTRUCTURE_INVALID,
     ProverResult,
@@ -83,13 +84,13 @@ def collect_run_metrics(
     audit_records = [
         record
         for audit in audit_paths
-        for record in _read_jsonl(audit)
+        for record in read_jsonl(audit)
     ]
     payload_records = [
         record
         for iteration in iteration_dirs
         for audit in iteration.glob("payload_audit.jsonl")
-        for record in _read_jsonl(audit)
+        for record in read_jsonl(audit)
     ]
     target_proof_exposures = [
         dict(record.get("target_proof_exposure") or {})
@@ -459,23 +460,6 @@ def _read_json(path: Path) -> dict[str, Any]:
         return {}
     data = json.loads(path.read_text(encoding="utf-8"))
     return data if isinstance(data, dict) else {}
-
-
-def _read_jsonl(path: Path) -> list[dict[str, Any]]:
-    if not path.is_file():
-        return []
-    rows: list[dict[str, Any]] = []
-    for line in path.read_text(encoding="utf-8").splitlines():
-        line = line.strip()
-        if not line:
-            continue
-        try:
-            item = json.loads(line)
-        except json.JSONDecodeError:
-            continue
-        if isinstance(item, dict):
-            rows.append(item)
-    return rows
 
 
 def _intent_identity(value: dict[str, Any]) -> str:
@@ -1136,7 +1120,7 @@ def _agent_session_records(iteration_dirs: list[Path]) -> list[dict[str, Any]]:
             for registry in sorted(
                 iteration_dir.glob("node_memory/*/agent_sessions.jsonl")
             )
-            for record in _read_jsonl(registry)
+            for record in read_jsonl(registry)
             if record.get("session_id")
         ]
         records.extend(node_records)
@@ -1275,7 +1259,7 @@ def _parse_codex_rollout_usage(path: Path) -> tuple[dict[str, int] | None, int]:
 
     latest: dict[str, int] | None = None
     checkpoint_count = 0
-    for event in _read_jsonl(path):
+    for event in read_jsonl(path):
         if str(event.get("type") or "") != "event_msg":
             continue
         payload = event.get("payload")
@@ -1324,7 +1308,7 @@ def _parse_codex_trace(
     }
     reasoning_tokens = 0
     open_turns = 0
-    for event in _read_jsonl(path):
+    for event in read_jsonl(path):
         event_type = str(event.get("type") or "")
         if event_type == "turn.started":
             open_turns += 1

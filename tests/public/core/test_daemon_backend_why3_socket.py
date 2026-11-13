@@ -9,7 +9,6 @@ daemon-spawned EC inherits the orchestrator's persistent why3 server.
 from __future__ import annotations
 
 import os
-import sys
 import tempfile
 from pathlib import Path
 from unittest import mock
@@ -31,14 +30,3 @@ def test_resolve_why3_socket_returns_path_when_file_exists() -> None:
 def test_resolve_why3_socket_returns_none_when_missing() -> None:
     with mock.patch("os.path.exists", return_value=False):
         assert _resolve_why3_socket() is None
-
-
-def main() -> int:
-    test_resolve_why3_socket_returns_path_when_file_exists()
-    test_resolve_why3_socket_returns_none_when_missing()
-    print("PASS test_daemon_backend_why3_socket")
-    return 0
-
-
-if __name__ == "__main__":
-    raise SystemExit(main())

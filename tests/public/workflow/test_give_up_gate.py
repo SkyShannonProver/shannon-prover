@@ -4,7 +4,7 @@ from __future__ import annotations
 import time
 
 from tests.helpers.builders import make_manager
-from workflow.proof_management import AgentIntent
+from workflow.proof_management.protocol_repair import AgentIntent
 from workflow.proof_management.intent_admission import (
     DEFAULT_GIVE_UP_ALLOW_AFTER,
     DEFAULT_GIVE_UP_WINDOW_S,

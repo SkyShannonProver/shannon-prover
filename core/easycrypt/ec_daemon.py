@@ -86,6 +86,7 @@ if _PKG_ROOT not in sys.path:
     sys.path.insert(0, _PKG_ROOT)
 
 from core.easycrypt.committed_history import committed_prefix_identity  # noqa: E402
+from core.easycrypt.ec_backend import BATCH_TIMEOUT_SECONDS  # noqa: E402
 from core.easycrypt.ec_lifecycle import ECSessionLifecycle  # noqa: E402
 from core.easycrypt.ec_prompt import PROMPT_RE  # noqa: E402
 from core.easycrypt.proof_text import (  # noqa: E402
@@ -99,10 +100,6 @@ from core.easycrypt.ec_diagnostics import parse_error  # noqa: E402
 
 
 logger = logging.getLogger("ec_daemon")
-
-# The interleaved warm handoff still imports the splitter under this name.
-_split_ec_commands = split_ec_commands
-
 
 def _with_final_dot(tactic: str) -> str:
     """End ``tactic`` with a dot unless its code (not a comment) already does."""
@@ -210,11 +207,6 @@ class ECSubprocess(ECSessionLifecycle):
     one session and is NOT thread-safe on its own; the daemon wraps it
     with a per-session lock.
     """
-
-    # Recognize EC prompts to know when it's done producing output.
-    # EC prompts on its own line. Our read loop detects the prompt and
-    # stops reading for that turn.
-    _RESPONSE_TIMEOUT_DEFAULT = 60.0  # seconds
 
     def __init__(self, include_dirs: list[str], why3_socket: Optional[str] = None):
         super().__init__(include_dirs, why3_socket)
@@ -1192,14 +1184,10 @@ def _h_list(srv: DaemonServer, sid: str, p: dict) -> dict:
     return _ok_resp(srv.mgr.list())
 
 
-# A client's limit for one transaction is capped at a batch run's
-# (``ec_backend.BATCH_TIMEOUT_SECONDS``).
-_MAX_COMMIT_TIMEOUT_SECONDS = 600.0
-
-
 def _commit_timeout(value: Any) -> float:
     """The client's limit for one transaction, capped. A request without a
-    usable limit (an older client) keeps ``_RESPONSE_TIMEOUT_DEFAULT``."""
+    usable limit (an older client) keeps ``_RESPONSE_TIMEOUT_DEFAULT``; no
+    limit exceeds a batch run's (``ec_backend.BATCH_TIMEOUT_SECONDS``)."""
     if (
         isinstance(value, bool)
         or not isinstance(value, (int, float))
@@ -1207,7 +1195,7 @@ def _commit_timeout(value: Any) -> float:
         or value <= 0
     ):
         return ECSubprocess._RESPONSE_TIMEOUT_DEFAULT
-    return min(float(value), _MAX_COMMIT_TIMEOUT_SECONDS)
+    return min(float(value), BATCH_TIMEOUT_SECONDS)
 
 
 def _h_commit(srv: DaemonServer, sid: str, p: dict) -> dict:

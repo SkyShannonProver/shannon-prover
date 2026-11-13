@@ -12,7 +12,6 @@ from __future__ import annotations
 
 import os
 import socket
-import sys
 import tempfile
 import threading
 from pathlib import Path
@@ -89,14 +88,6 @@ def test_responsive_probe_returns_true_for_live_listener() -> None:
                 os.unlink(path)
             except Exception:
                 pass
-
-
-if __name__ == "__main__":
-    test_responsive_probe_returns_false_for_missing_path()
-    test_responsive_probe_returns_false_for_stale_socket_file()
-    test_responsive_probe_returns_false_for_orphan_socket_inode()
-    test_responsive_probe_returns_true_for_live_listener()
-    print("PASS test_why3server_health")
 
 
 def test_responsive_probe_refuses_a_listener_owned_by_another_user(monkeypatch) -> None:

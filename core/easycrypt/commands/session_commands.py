@@ -11,7 +11,7 @@ from pathlib import Path
 def handle_start(session, args) -> int:
     """Create a fresh manager-owned EasyCrypt session."""
 
-    from core.easycrypt.committed_history import read_committed_tactics
+    from core.easycrypt.committed_history import read_committed_commands
     from core.easycrypt.ec_runtime_identity import discover_easycrypt_runtime_identity
 
     meta_path = session.dir / "session_meta.json"
@@ -24,7 +24,7 @@ def handle_start(session, args) -> int:
         except Exception:
             previous_restart_count = 0
 
-    committed = read_committed_tactics(session.dir)
+    committed = read_committed_commands(session.dir)
     if committed and not getattr(args, "force_restart", False):
         sys.stderr.write(
             "Refusing to discard a non-empty managed session without "

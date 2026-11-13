@@ -49,7 +49,7 @@ def _mock_repl(monkeypatch, drop_step: int):
     repl._run_backend = fake_backend                 # type: ignore[assignment]
     monkeypatch.setattr(
         rs.committed_history,
-        "read_committed_tactics",
+        "read_committed_commands",
         lambda sd: list(state["committed"]),
     )
     return repl, calls

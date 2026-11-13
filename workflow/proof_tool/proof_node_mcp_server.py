@@ -18,6 +18,7 @@ from typing import Any, BinaryIO, Callable, Mapping
 from dataclasses import dataclass
 from enum import Enum
 
+from core.jsonio import strict_json_loads
 from workflow.proof_tool.proof_tool_contract import (
     DECLARATION_RESOLVE_TOOL_IDENTITY,
     PROOF_TOOL_IDENTITY,
@@ -50,7 +51,7 @@ def main(argv: list[str] | None = None) -> int:
 
     try:
         manifest = ProofToolContractManifest.from_dict(
-            _strict_json_loads(args.manifest_json)
+            strict_json_loads(args.manifest_json)
         )
         adapter = ProofToolMcpAdapter(
             host=args.host,
@@ -247,7 +248,7 @@ def _read_message(
         return None
     if len(first) > max_bytes:
         raise ValueError("MCP message exceeded its size limit")
-    message = _strict_json_loads(first.decode("utf-8"))
+    message = strict_json_loads(first.decode("utf-8"))
     if not isinstance(message, dict):
         raise ValueError("MCP message must be an object")
     return message
@@ -298,15 +299,6 @@ def _optional_deadline(value: float | None) -> float | None:
     if not math.isfinite(deadline) or deadline <= 0:
         raise ValueError("proof-tool node deadline must be finite and positive")
     return deadline
-
-
-def _strict_json_loads(text: str) -> Any:
-    def reject_constant(value: str) -> Any:
-        raise ValueError(f"non-finite JSON number is forbidden: {value}")
-
-    return json.loads(text, parse_constant=reject_constant)
-
-
 
 
 # ---------------------------------------------------------------------------

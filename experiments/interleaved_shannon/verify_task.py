@@ -427,7 +427,7 @@ def verify(
             and candidate_run.is_dir()
         ):
             try:
-                from experiments.interleaved_shannon._compat import (
+                from experiments.interleaved_shannon.reference import (
                     reference_context,
                 )
                 from workflow.interleaved.jobs import public_job_summary

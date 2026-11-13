@@ -1093,8 +1093,6 @@ def _orchestrator_cmd(
         str(target["lemma"]),
         "--include-dir",
         str(prepared.get("include_dir") or defaults.get("include_dir") or ""),
-        "--max-iterations",
-        "1",  # eval mode is single-pass; the orchestrator clamps to 1 anyway
         "--prover-timeout-minutes",
         str(
             timeout_minutes

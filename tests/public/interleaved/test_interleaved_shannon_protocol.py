@@ -68,6 +68,7 @@ from experiments.interleaved_shannon.verify_task import (
     shannon_terminal_alerts,
     validate_upto_location,
 )
+from core.jsonio import read_json_object
 from tests.helpers.interleaved import (
     demo_context,
     job_record,
@@ -1028,7 +1029,7 @@ def test_scheduler_rejects_stale_heartbeat_for_missing_worker(
         phase="running",
     )
     heartbeat_path = jobs._worker_heartbeat_path(run_dir, job_id)
-    heartbeat = jobs._read_json(heartbeat_path)
+    heartbeat = read_json_object(heartbeat_path)
     heartbeat["updated_at_epoch"] -= (
         jobs.WORKER_HEARTBEAT_STALE_SECONDS + 1
     )
@@ -2556,7 +2557,7 @@ def test_warm_handoff_preparation_always_stops_its_scoped_daemon(
         lambda: "/tmp/ec_daemon_warm_handoff_test.sock",
     )
     monkeypatch.setattr(
-        "workflow.agents.ec_services._shutdown_ec_daemon",
+        "workflow.agents.ec_services.shutdown_ec_daemon",
         lambda *, reason, socket_path: stopped.append((reason, socket_path)),
     )
 
@@ -2588,7 +2589,7 @@ def test_warm_handoff_preparation_stops_daemon_after_failure(
         lambda: "/tmp/ec_daemon_warm_handoff_failure.sock",
     )
     monkeypatch.setattr(
-        "workflow.agents.ec_services._shutdown_ec_daemon",
+        "workflow.agents.ec_services.shutdown_ec_daemon",
         lambda *, reason, socket_path: stopped.append(socket_path),
     )
 
@@ -2625,7 +2626,7 @@ def test_warm_handoff_sentinel_stops_checkout_daemon_after_failure(
         lambda: "/tmp/ec_daemon_warm_sentinel_test.sock",
     )
     monkeypatch.setattr(
-        "workflow.agents.ec_services._shutdown_ec_daemon",
+        "workflow.agents.ec_services.shutdown_ec_daemon",
         lambda *, reason, socket_path: stopped.append((reason, socket_path)),
     )
 
@@ -2659,7 +2660,7 @@ def test_warm_handoff_sentinel_edits_its_own_lemma_not_an_identical_body(
 
     monkeypatch.setattr(warm_handoff_sentinel, "prepare_outer_proof_handoff", capture)
     monkeypatch.setattr(
-        "workflow.agents.ec_services._shutdown_ec_daemon", lambda **_kwargs: None
+        "workflow.agents.ec_services.shutdown_ec_daemon", lambda **_kwargs: None
     )
 
     with pytest.raises(RuntimeError, match="captured"):
@@ -2718,7 +2719,7 @@ def test_warm_handoff_sentinel_keeps_multiline_command_as_one_spine_step(
         lambda: "/tmp/ec_daemon_warm_sentinel_test.sock",
     )
     monkeypatch.setattr(
-        "workflow.agents.ec_services._shutdown_ec_daemon",
+        "workflow.agents.ec_services.shutdown_ec_daemon",
         lambda **_kwargs: None,
     )
 
@@ -3071,7 +3072,7 @@ def test_lane_default_daemon_cleanup_targets_exact_lane_socket(
 
     monkeypatch.setattr(
         ec_services,
-        "_shutdown_ec_daemon",
+        "shutdown_ec_daemon",
         lambda **kwargs: calls.append(kwargs) or True,
     )
 

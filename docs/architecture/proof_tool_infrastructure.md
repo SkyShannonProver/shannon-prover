@@ -60,7 +60,8 @@ verified.
   object without requiring or enumerating fields so malformed submissions can
   reach manager-owned protocol repair.  The manager is the only semantic
   intent decoder and admission authority.
-- Eval nodes may additionally advertise `search_easycrypt_source`,
+- Nodes with source navigation enabled (eval nodes and interleaved inner
+  nodes) additionally advertise `search_easycrypt_source`,
   `read_easycrypt_source`, and `resolve_easycrypt_declaration`. Search performs
   bounded literal matching over the attested task files and configured theory
   roots and returns copy-ready paths and line numbers. Read takes one exact

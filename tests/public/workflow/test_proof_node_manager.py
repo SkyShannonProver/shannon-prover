@@ -19,18 +19,17 @@ _RESUME_LEAK_RE = re.compile(
     re.IGNORECASE,
 )
 
-from workflow.proof_management import (  # noqa: E402
-    ProofStateSnapshot,
+from workflow.proof_management.repl_session import (
     ReplBackendError,
     ReplBackendTimeout,
     ReplSessionManager,
-    TurnDirective,
 )
+from workflow.proof_management.types import ProofStateSnapshot, TurnDirective
 from workflow.node.proof_node_manager import (  # noqa: E402
     ProofNodeManager,
 )
 from workflow.proof_management.backend_request import BackendRequest  # noqa: E402
-from workflow.proof_management import AgentIntent, parse_agent_intent  # noqa: E402
+from workflow.proof_management.protocol_repair import AgentIntent, parse_agent_intent  # noqa: E402
 from tests.helpers.builders import make_manager  # noqa: E402
 
 
@@ -536,7 +535,7 @@ def test_adopt_bootstrap_seeds_latest_view_without_restart() -> None:
 def test_resume_bootstrap_seeds_restore_anchor_and_route_events(
     tmp_path: Path,
 ) -> None:
-    from workflow.proof_management import ProofProjectionResult
+    from workflow.proof_management.projection import ProofProjectionResult
     from workflow.proof_management.events import (
         RESUME_ROUTE_EVENT_SCHEMA_VERSION,
     )

@@ -27,8 +27,7 @@ def test_project_driver_usage_example_uses_only_real_options():
 
 def test_orchestrator_help_does_not_promise_dead_options():
     text = _help("workflow.orchestrator")
-    # Nothing reads human_proof_dir, and nothing in the repository passes it.
-    assert "--human-proof-dir" not in text
-    # Skills and eval_suite still pass --max-iterations, which drives nothing.
-    assert "--max-iterations MAX_ITERATIONS Accepted for compatibility and ignored" in text
-    assert "default: 2" not in text
+    # Nothing reads these retired options, and nothing in the repository
+    # passes them.
+    options = set(re.findall(r"--[a-z][a-z-]+", text))
+    assert not options & {"--human-proof-dir", "--max-iterations", "--prover-mode"}

@@ -26,6 +26,7 @@ def _context(root: Path, project: InterleavedProject) -> ProjectContext:
 ROOT = Path(__file__).resolve().parents[3]
 
 
+@pytest.mark.easycrypt
 def test_native_verifiers_use_managed_solver_config_over_project_config(tmp_path, monkeypatch):
     from core.easycrypt.ec_env import get_ec_env
     from experiments.interleaved_shannon import verify_task as reference
@@ -157,6 +158,7 @@ def test_import_rejects_stale_or_incompatible_verifier_response(tmp_path, monkey
     assert json.loads(output.read_text())["passed"] is False
 
 
+@pytest.mark.easycrypt
 def test_generic_cli_import_ignores_unfinished_suffix_but_final_rejects():
     (ROOT / "artifacts").mkdir(exist_ok=True)
     with tempfile.TemporaryDirectory(prefix="import-contract-", dir=ROOT / "artifacts") as directory:

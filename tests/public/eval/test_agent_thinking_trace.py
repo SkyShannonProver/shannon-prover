@@ -213,6 +213,43 @@ def test_session_chain_resolves_from_canonical_registry_without_scan(
     assert index["turns"][3]["turn"] == 4
 
 
+def test_recent_node_never_sweeps_claude_transcripts(tmp_path: Path) -> None:
+    """A node from after registration-at-creation (2026-07-23) trusts its
+    registry even when it covers only part of the timeline: the sweep of
+    ~/.claude could only attach the user's unrelated sessions."""
+    import workflow.reporting.agent_thinking_trace as att
+
+    node_dir = tmp_path / "node_memory" / "Tree_0_0"
+    tactics = [f"tac_{i}." for i in range(1, 5)]
+    _write_jsonl(node_dir / "timeline.jsonl", [
+        {"kind": "manager_turn", "node": "Tree-0.0", "turn": i,
+         "time": f"2026-11-10T10:0{i}:00Z",
+         "intent": {"intent": "commit_tactic", "payload": {"tactic": tac}},
+         "ok": True}
+        for i, tac in enumerate(tactics, start=1)
+    ])
+    sess1 = tmp_path / "sess1.jsonl"
+    _write_jsonl(sess1, [
+        _assistant(f"2026-11-10T10:0{i}:00Z", _thinking(f"think {i}"),
+                   _submit("commit_tactic", tactic=tac))
+        for i, tac in enumerate(tactics[:2], start=1)
+    ])
+    _write_jsonl(node_dir / "agent_sessions.jsonl", [
+        {"kind": "agent_session", "session_id": "sess1", "transcript_path": str(sess1)},
+    ])
+
+    def _no_scan(*a, **k):
+        raise AssertionError("a recent node must not sweep ~/.claude transcripts")
+
+    real_pool = att._candidate_pool
+    att._candidate_pool = _no_scan
+    try:
+        result = write_node_thinking(node_dir)
+    finally:
+        att._candidate_pool = real_pool
+    assert result.discovery.startswith("recorded_session_id")
+
+
 def test_codex_registry_never_falls_back_to_claude_transcript_scan(
     tmp_path: Path, monkeypatch
 ) -> None:

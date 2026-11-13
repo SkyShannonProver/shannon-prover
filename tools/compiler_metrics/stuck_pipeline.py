@@ -36,7 +36,6 @@ Usage:
 import json, os, glob, hashlib, sys, subprocess, re
 from collections import Counter, defaultdict
 
-HOME = os.path.expanduser("~")
 ROOT = os.path.dirname(os.path.abspath(__file__))
 COLL = os.path.join(ROOT, "bundles")          # deduped symlink collection
 OUT  = os.path.join(ROOT, "stuck_out")
@@ -442,8 +441,6 @@ def chart():
     print("chart ->", png, "| paired lemmas:", lemmas)
 
 # ============================================================ COMBINE (interim: fold wrong_path + cause dist)
-FACT_CAUSES = ["missing_lemma", "unknown_tactic_form", "wrong_direction", "structure_confusion"]
-SEMANTIC_CAUSES = ["weak_invariant"]
 
 def combine():
     import matplotlib; matplotlib.use("Agg"); import matplotlib.pyplot as plt; import numpy as np

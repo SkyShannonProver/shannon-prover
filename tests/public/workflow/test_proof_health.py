@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from workflow.proof_management import AgentIntent
+from workflow.proof_management.protocol_repair import AgentIntent
 from workflow.proof_management.health import (
     backend_failure_health_event,
     timeout_health_event,

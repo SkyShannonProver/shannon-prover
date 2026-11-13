@@ -7,10 +7,11 @@ from collections.abc import Mapping
 from dataclasses import dataclass
 from pathlib import Path
 
+from core.paths import REPO_ROOT
 from workflow.interleaved.project import InterleavedProject, PROJECT_ENV
 
 
-ROOT = Path(__file__).resolve().parents[2]
+ROOT = REPO_ROOT
 ANSWER_SOURCE_ENV = "SHANNON_INTERLEAVED_ANSWER_SOURCE"
 DEFAULT_VERIFIER = "workflow/interleaved/verify.py"
 

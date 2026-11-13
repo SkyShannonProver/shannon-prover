@@ -6,26 +6,11 @@ the compiler.
 """
 
 from core.easycrypt.proof_state_compiler.contracts import (
-    ActionSurface,
-    AnalyzedProofState,
-    CandidateSurface,
-    CompilationBundle,
     CompilationEnvironment,
-    DeclarationLoadRequest,
     LoadedDeclaration,
     LoadedSourceUnit,
-    NativeSemanticObservation,
-    NativeProofTermDescriptor,
-    NativeSemanticPlan,
-    NativeSemanticRequest,
-    NativeProofStateSnapshot,
-    ProjectedProofState,
-    ResourceLoadPlan,
-    ProofIR,
     ProvenanceRef,
     StateRef,
-    StrategyContract,
-    TypedTermIR,
 )
 from core.easycrypt.proof_state_compiler.features import (
     ExperimentGate,
@@ -35,38 +20,21 @@ from core.easycrypt.proof_state_compiler.features import (
 )
 from core.easycrypt.proof_state_compiler.frontend import (
     AuthoritativeSnapshotInput,
-    RuntimeSnapshotInput,
     project_authoritative_state,
 )
 from core.easycrypt.proof_state_compiler.compiler import ProofStateCompiler
 
 __all__ = [
-    "ActionSurface",
-    "AnalyzedProofState",
     "AuthoritativeSnapshotInput",
-    "RuntimeSnapshotInput",
-    "CompilationBundle",
     "CompilationEnvironment",
-    "DeclarationLoadRequest",
-    "CandidateSurface",
     "ExperimentGate",
     "FeatureCatalog",
     "FeatureDefinition",
     "FeatureSpec",
-    "ProjectedProofState",
-    "ResourceLoadPlan",
     "LoadedSourceUnit",
     "LoadedDeclaration",
-    "NativeSemanticObservation",
-    "NativeProofTermDescriptor",
-    "NativeSemanticPlan",
-    "NativeSemanticRequest",
-    "NativeProofStateSnapshot",
-    "ProofIR",
     "ProofStateCompiler",
     "ProvenanceRef",
     "StateRef",
-    "StrategyContract",
-    "TypedTermIR",
     "project_authoritative_state",
 ]

@@ -13,7 +13,6 @@ from unittest.mock import patch
 
 ROOT = Path(__file__).resolve().parents[3]
 
-import sys
 
 from core.easycrypt.session.session_runtime import Session  # type: ignore  # noqa: E402
 from core.easycrypt.session.session_events import (  # type: ignore  # noqa: E402
@@ -869,7 +868,6 @@ def test_replay_chain_uses_structured_session_summary() -> None:
         assert summary["projection_consistency_errors"] == []
 
 
-
 def test_meta_command_refusal_emits_events_without_ec() -> None:
     with tempfile.TemporaryDirectory() as td:
         session = Session(Path(td))
@@ -1030,24 +1028,3 @@ def test_all_emitted_event_types_are_registered() -> None:
     for required in ("ec.routing", "session.daemon_context_opened",
                      "session.daemon_context_open_failed"):
         assert required in EVENT_PAYLOAD_SCHEMAS, required
-
-
-if __name__ == "__main__":
-    test_append_event_jsonl_contract()
-    test_goal_discharge_reader_requires_current_projection_authority()
-    test_event_summary_and_latest_error_helpers()
-    test_validate_event_payload_schema()
-    test_validate_event_stream_accepts_realistic_replay_flow()
-    test_validate_event_stream_detects_pairing_and_fake_close()
-    test_validate_event_stream_detects_tool_name_mismatch()
-    test_proof_acceptance_gate_requires_valid_candidate_contract()
-    test_proof_acceptance_gate_requires_verification_event()
-    test_progress_goal_state_text_is_diagnostic_only()
-    test_meta_command_refusal_emits_events_without_ec()
-    test_raw_proof_control_refusal_emits_events_without_ec()
-    test_tactic_exec_is_counted_as_a_cli_action()
-    test_closed_post_qed_prompt_is_goal_info_closed_state()
-    test_session_state_extracts_latest_current_goal()
-    test_session_state_default_previous_path_is_prev_out()
-    test_infer_goal_count_handles_post_qed_added_lemma_prompt()
-    print("PASS test_session_events")

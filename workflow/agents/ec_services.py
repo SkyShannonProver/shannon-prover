@@ -16,9 +16,11 @@ import time
 from pathlib import Path
 from typing import Optional
 
+from core.paths import REPO_ROOT
+
 logger = logging.getLogger("workflow.agents.prover")
 
-_PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
+_PROJECT_ROOT = REPO_ROOT
 _AF_UNIX_SOCKET_PATH_LIMIT = 100
 _EC_DAEMON_SOCKET_NAME_TEMPLATE = "ec_000000000000.sock"
 
@@ -412,7 +414,7 @@ def _hard_kill_ec_daemon(socket_path: str) -> bool:
     return True
 
 
-def _shutdown_ec_daemon(
+def shutdown_ec_daemon(
     *,
     reason: str = "",
     socket_path: Optional[str] = None,

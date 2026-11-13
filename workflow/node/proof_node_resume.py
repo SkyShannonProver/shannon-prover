@@ -24,6 +24,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Iterable
 
+from core.jsonio import read_json_object_or_empty
 from core.easycrypt.committed_history import (
     flatten_committed_transactions,
     read_committed_commands,
@@ -122,14 +123,6 @@ def _read_text(path: Path, *, max_chars: int | None = None) -> str:
     return text
 
 
-def _read_json(path: Path) -> dict[str, Any]:
-    try:
-        data = json.loads(path.read_text(encoding="utf-8"))
-    except Exception:
-        return {}
-    return data if isinstance(data, dict) else {}
-
-
 def _read_jsonl_tail(path: Path, *, limit: int) -> list[dict[str, Any]]:
     rows: list[dict[str, Any]] = []
     try:
@@ -192,7 +185,6 @@ def _git_commit(cwd: Path) -> str:
         ).strip()
     except Exception:
         return ""
-
 
 
 def _safe_int(value: Any) -> int:
@@ -278,7 +270,7 @@ def _resume_prefix_count_from_handoff(
 
 
 def _latest_workspace_view(memory_dir: Path) -> dict[str, Any]:
-    return _read_json(memory_dir / "latest_workspace_view.json")
+    return read_json_object_or_empty(memory_dir / "latest_workspace_view.json")
 
 
 def _goal_preview_from_view(view: dict[str, Any], fallback: str) -> str:
@@ -345,7 +337,7 @@ def _checkpoint_payload_for_node(run_dir: Path, node_id: str) -> dict[str, Any]:
         return {}
     slug = _sidecar_node_slug(node_id)
     return _current_checkpoint_payload(
-        _read_json(
+        read_json_object_or_empty(
             run_dir / "checkpoint_state" / f"{slug}_checkpoint_state.json"
         ),
         expected_node_id=node_id,
@@ -366,7 +358,7 @@ def _current_checkpoint_payload(
 
 
 def _lineage_briefing_payload(run_dir: Path) -> dict[str, Any]:
-    return _read_json(run_dir / "lemma_lineage_briefing.json")
+    return read_json_object_or_empty(run_dir / "lemma_lineage_briefing.json")
 
 
 def _copy_if_exists(src: Path, dst: Path) -> str:
@@ -497,7 +489,7 @@ def _attach_resume_diversity_handoff(
     diversity_markdown = resume_diversity_markdown(diversity_index)
     for candidate in candidates:
         manifest_path = Path(str(candidate.path))
-        manifest = _read_json(manifest_path)
+        manifest = read_json_object_or_empty(manifest_path)
         if not manifest:
             continue
         note = resume_diversity_handoff_note(
@@ -599,7 +591,7 @@ def create_resume_capsules(
         )
         recent_tactics = _recent_tactics(manager_route_events, limit=16)
         prior_brief = (
-            _read_json(memory_dir / "continuation_brief.json")
+            read_json_object_or_empty(memory_dir / "continuation_brief.json")
             if memory_dir
             else {}
         )
@@ -626,7 +618,7 @@ def create_resume_capsules(
         if not goal_identity.goal_identity_required:
             open_path = output_dir / rank_name / "resume.json"
             if open_path.is_file():
-                prior = _read_json(open_path)
+                prior = read_json_object_or_empty(open_path)
                 target = prior.get("target", {})
                 replay = prior.get("replay", {})
                 if (target.get("file") == target_file and target.get("lemma") == lemma
@@ -748,7 +740,7 @@ def create_resume_capsules(
     candidates = [
         resume_route_candidate_from_manifest(
             path=str(path),
-            manifest=_read_json(path),
+            manifest=read_json_object_or_empty(path),
             fallback_score=score,
         )
         for score, path in created
@@ -834,7 +826,7 @@ def load_resume_capsule(path: str | Path) -> ProofNodeResumeCapsule:
     replay_prefix = _history_commands(history_file)
     transaction_file_name = str(replay.get("transaction_file") or "").strip()
     if transaction_file_name:
-        transaction_payload = _read_json(root / transaction_file_name)
+        transaction_payload = read_json_object_or_empty(root / transaction_file_name)
         raw_transactions = transaction_payload.get("transactions")
         if (
             transaction_payload.get("kind") != "proof_replay_transactions"
@@ -862,7 +854,7 @@ def load_resume_capsule(path: str | Path) -> ProofNodeResumeCapsule:
         # remain loadable; each already-split command is its own transaction.
         replay_transactions = list(replay_prefix)
     checkpoint_path = root / "checkpoint_state.json"
-    raw_checkpoint_payload = _read_json(checkpoint_path)
+    raw_checkpoint_payload = read_json_object_or_empty(checkpoint_path)
     if checkpoint_path.is_file() and not raw_checkpoint_payload:
         raise ValueError(
             f"current resume capsule {manifest_path} has invalid "

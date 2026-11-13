@@ -38,9 +38,10 @@ import sys
 from pathlib import Path
 from typing import Any
 
+from core.paths import REPO_ROOT
 from core.easycrypt.committed_history import committed_tactics_have_qed
 
-_REPO_ROOT = Path(__file__).resolve().parents[2]
+_REPO_ROOT = REPO_ROOT
 # Rewrite the timeline report's absolute artifact links → local bundle copies so
 # every link resolves on GitHub (and no machine-specific /Users path leaks).
 _LINK_VIEW = re.compile(

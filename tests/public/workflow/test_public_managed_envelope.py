@@ -1,99 +1,19 @@
 from __future__ import annotations
 
-import json
 from pathlib import Path
-import subprocess
-import sys
-import textwrap
 
 from workflow.node.proof_node_manager import ProofNodeManager
 from workflow.proof_management.repl_session import ReplSessionManager
 from workflow.proof_state_compiler.configuration import (
-    COMPILER_PROFILES,
     compiler_assembly_for_profile,
 )
 from workflow.proof_state_compiler.managed_goal_view_manager import (
     ManagedGoalViewManager,
 )
 from workflow.proof_state_compiler.profile_registry import PRODUCTION_PROFILE_REGISTRATIONS
-from workflow.proof_state_compiler.surface_profiles import CURRENT_SURFACE_PROFILES
 
 
 ROOT = Path(__file__).resolve().parents[3]
-
-def test_fresh_current_manager_process_does_not_load_legacy_compiler_modules() -> None:
-    script = textwrap.dedent(
-        """
-        import json
-        import sys
-        import tempfile
-        from workflow.node.proof_node_manager import ProofNodeManager
-
-        with tempfile.TemporaryDirectory() as project_root:
-            ProofNodeManager(
-                file_path="target.ec",
-                lemma_name="target",
-                include_dir=".",
-                session_tag="neutral-import-audit",
-                node_id="Tree-neutral-import-audit",
-                project_root=project_root,
-                surface_profile="l1_goal_projection",
-            )
-
-        forbidden_prefixes = (
-            "core.easycrypt.analysis",
-            "workflow.proof_management.analyzers",
-        )
-        forbidden_exact = {
-            "core.easycrypt.session_agent_view",
-            "core.easycrypt.session_prover_workspace_view",
-            "core.easycrypt.session_workspace_view_manager",
-        }
-        loaded = sorted(
-            name
-            for name in sys.modules
-            if name in forbidden_exact
-            or any(name.startswith(prefix) for prefix in forbidden_prefixes)
-        )
-        print(json.dumps(loaded))
-        """
-    )
-    result = subprocess.run(
-        [sys.executable, "-c", script],
-        cwd=ROOT,
-        check=True,
-        capture_output=True,
-        text=True,
-    )
-    assert json.loads(result.stdout) == []
-
-def test_fresh_current_worker_and_mcp_imports_do_not_load_legacy_presentation() -> None:
-    script = textwrap.dedent(
-        """
-        import json
-        import sys
-        import workflow.node.proof_node_runtime
-        import workflow.proof_tool.proof_node_mcp_server
-
-        forbidden_exact = {
-            "core.easycrypt.session_workspace_view_manager",
-            "workflow.surface_profiles",
-            "workflow.surface_turn_model",
-            "workflow.surface_composer",
-            "workflow.surface_model",
-        }
-        loaded = sorted(name for name in sys.modules if name in forbidden_exact)
-        print(json.dumps(loaded))
-        """
-    )
-    result = subprocess.run(
-        [sys.executable, "-c", script],
-        cwd=ROOT,
-        check=True,
-        capture_output=True,
-        text=True,
-    )
-    assert json.loads(result.stdout) == []
 
 def test_l1_manager_does_not_assemble_any_legacy_view_component(
     tmp_path: Path,
@@ -145,11 +65,7 @@ def test_current_repl_start_explicitly_skips_historical_debug_view(
     ]
 
 def test_runtime_profiles_have_one_structural_composition_root() -> None:
-    assert set(PRODUCTION_PROFILE_REGISTRATIONS) == set(COMPILER_PROFILES)
-    assert set(PRODUCTION_PROFILE_REGISTRATIONS) == set(CURRENT_SURFACE_PROFILES)
     for profile_id, registration in PRODUCTION_PROFILE_REGISTRATIONS.items():
-        assert COMPILER_PROFILES[profile_id] is registration.compiler_profile
-        assert CURRENT_SURFACE_PROFILES[profile_id] is registration.turn_profile
         assembly = compiler_assembly_for_profile(profile_id)
         if registration.compiler_profile.activations:
             assert assembly is not None
@@ -170,18 +86,6 @@ def test_runtime_profiles_have_one_structural_composition_root() -> None:
         ROOT / "workflow/proof_state_compiler/profile_ids.py"
     ).read_text(encoding="utf-8")
     assert "profile_registry" not in identity_source
-
-def test_retired_compiler_source_trees_are_physically_absent() -> None:
-    removed = (
-        "core/easycrypt/analysis",
-        "core/easycrypt/audit",
-        "core/easycrypt/search",
-        "workflow/proof_management/analyzers",
-        "tools/audit_harness",
-        "tools/panel_audit",
-        "playground",
-    )
-    assert [path for path in removed if (ROOT / path).exists()] == []
 
 def test_codex_and_claude_prove_launchers_share_one_canonical_workflow() -> None:
     skill = (ROOT / ".agents/skills/prove/SKILL.md").read_text(encoding="utf-8")

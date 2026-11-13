@@ -3,7 +3,7 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Any
 
-from workflow.proof_management import AgentIntent
+from workflow.proof_management.protocol_repair import AgentIntent
 from workflow.proof_management.repl_session import ReplBackendError
 from workflow.proof_management.turn_executor import ProofTurnExecutor
 from workflow.proof_management.node_state import NodeTurnState

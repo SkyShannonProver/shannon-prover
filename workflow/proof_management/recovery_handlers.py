@@ -249,8 +249,7 @@ class ProofRecoveryIntentHandler:
             # The target step index itself is gone (unparseable id, or the
             # committed proof is now shorter than that index). This is genuinely
             # unreachable from the current scope — say so EXPLICITLY rather than
-            # returning a silent identical re-prompt (panel-defect #2,
-            # docs/reports/insights/l4_panel_defects_equiv_step4.md).
+            # returning a silent identical re-prompt.
             return self.checkpoint_selection_plan(
                 intent,
                 notice=(

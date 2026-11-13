@@ -5,9 +5,9 @@ from core.easycrypt.proof_state_compiler.backend.presentation import (
 )
 from workflow.node.proof_node_runtime import ProofNodeRuntime
 from workflow.proof_state_compiler.current_turn_presentation import (
+    canonical_current_workspace_view,
     compose_current_surface_turn,
     render_current_surface_turn_markdown,
-    require_current_workspace_view,
 )
 
 
@@ -46,7 +46,7 @@ def _compiler_markdown(*, actions: list[dict] | None = None) -> str:
 
 
 def test_current_view_contract_needs_no_legacy_carrier_panels() -> None:
-    view = require_current_workspace_view(
+    view = canonical_current_workspace_view(
         _view(),
         profile_id="l1_goal_projection",
         label="test current view",

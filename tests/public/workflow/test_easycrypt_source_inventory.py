@@ -44,6 +44,27 @@ proof. apply helper. qed.
     assert dependencies["helper"]["can_prove"]
 
 
+def test_operator_sections_are_proof_text_not_comments() -> None:
+    # A comment regex once paired the two `(*)` operators, shrank this body
+    # below the trivial-proof length and invented a dependency on `helper`.
+    source = """
+lemma helper : true.
+proof. admit. qed.
+
+lemma target : true.
+proof.
+  have h := (*) (*) 2 3.
+  admit.
+qed.
+"""
+    declarations = extract_declarations(source)
+
+    dependencies = detect_admit_dependencies(source, declarations)
+
+    assert dependencies["target"]["deps"] == []
+    assert dependencies["target"]["can_prove"]
+
+
 def test_project_driver_consumes_static_inventory(tmp_path) -> None:
     source = tmp_path / "Project.ec"
     source.write_text(

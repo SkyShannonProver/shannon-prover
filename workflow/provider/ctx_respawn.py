@@ -1,7 +1,8 @@
 """Fresh-context continuation (auto context-respawn) — shared logic.
 
 This module holds the small, pure, testable pieces of the fresh-context
-continuation feature designed in ``docs/design/fresh_context_continuation.md``:
+continuation feature, which swaps in a fresh agent context against the same
+manager and EasyCrypt session when the context window fills up:
 
 - env-knob resolution (one place, so defaults stay centralized),
 - the per-turn token-watermark detector (Layer 1 detection), and

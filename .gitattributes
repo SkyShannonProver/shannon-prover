@@ -2,3 +2,7 @@
 # contains intentional/historical trailing whitespace; Shannon's source lock
 # hashes those exact bytes.
 easycrypt-src/** whitespace=-trailing-space,-blank-at-eof
+
+# Parallel branches each add changelog entries; a union merge keeps both sides
+# instead of conflicting. tests/public/repo/test_changelog.py checks the result.
+CHANGELOG.md merge=union

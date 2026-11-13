@@ -232,6 +232,36 @@ def test_outer_only_codex_discovery_does_not_probe_resume(monkeypatch) -> None:
     assert ("exec", "resume", "--help") not in calls
 
 
+def test_codex_features_marked_removed_are_never_disabled(monkeypatch) -> None:
+    """codex-cli 0.166 lists unified_exec_zsh_fork as removed and answers
+    --disable for it with a notice before turn start (live smoke 2026-11-12)."""
+    listing = "\n".join([
+        "apps                         stable             true",
+        "apply_patch_freeform         removed            false",
+        "unified_exec_zsh_fork        removed            false",
+        "standalone_web_search        under development  false",
+        "web_search_cached            deprecated         false",
+    ])
+
+    def fake_probe(_binary, arguments, _timeout):
+        if arguments == ("features", "list"):
+            return listing
+        return "codex-cli test" if arguments == ("--version",) else ""
+
+    monkeypatch.setattr(
+        "workflow.proof_tool.proof_tool_launch._probe",
+        fake_probe,
+    )
+    capabilities = discover_codex_capabilities("codex", probe_resume=False)
+    assert "unified_exec_zsh_fork" not in capabilities.features
+    assert "apply_patch_freeform" not in capabilities.features
+    assert "web_search_cached" in capabilities.features
+    disabled = codex_feature_disable_args(capabilities)
+    assert disabled == [
+        "--disable", "apps", "--disable", "standalone_web_search",
+    ]
+
+
 def test_every_provider_receives_the_provider_ceiling(tmp_path: Path) -> None:
     base = _spec(tmp_path)
     spec = ProofMcpLaunchSpec(

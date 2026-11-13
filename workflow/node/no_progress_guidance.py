@@ -5,7 +5,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Any
 
-from workflow.proof_management import ManagedTurn
+from workflow.proof_management.types import ManagedTurn
 
 
 @dataclass

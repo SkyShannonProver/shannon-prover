@@ -10,15 +10,21 @@ Maintainer branch and release work follows RELEASING.md where that file exists.
 ## Non-negotiable boundaries
 
 - Work only inside this repository.
-- In eval mode, never retrieve a cached or public proof of the target lemma.
-  Reading the proof-stripped target source and allowed sibling declarations is
-  permitted.
+- Eval mode is active when `[EVAL MODE ACTIVE]` appears or
+  `EVAL_TARGET_LEMMA` is set. In eval mode, never retrieve a cached or public
+  proof of the target lemma: no public internet or GitHub, no prior traces,
+  replay artifacts, cached proofs or hints for the target, and no sibling or
+  stale `.ec_session_*` directories. Reading the proof-stripped target source,
+  its sibling lemmas, the EasyCrypt theories under `easycrypt-src/theories/`
+  and the tactic examples under `easycrypt-src/tests/` is permitted. Do not
+  invent lemmas or axioms; use only declarations visible in source or in the
+  manager-provided context.
 - The agent interacts with proof state only through the manager-owned
   `submit_proof_intent` MCP tool. `session_cli.py`, sockets, tokens, and raw
   session artifacts are backend/private.
 - OpenAI Codex is the default proof-node agent. New interleaved runs also
   default to Codex for both outer and inner roles, as configured in
-  `workflow/interleaved/agent_profiles.json` when that product is included.
+  `workflow/interleaved/agent_profiles.json`.
   Claude is available through an explicit provider selection.
 - Only managed tree mode is current. Do not add fallback routing for retired
   run modes or surface profiles.
@@ -91,7 +97,9 @@ Current proof controls include `undo_last_step`, `undo_to_checkpoint`,
 `amend_and_replay`, `fresh_restart`, and `finish` when the manager advertises
 them. The agent must copy the exact advertised payload for conditional or
 confirmation-bearing controls. It never supplies node, request, view, goal, or
-state identities; the manager binds those.
+state identities; the manager binds those. Runtime-generated MCP metadata and
+the current surface are the only authority for available intents; no document
+keeps a static intent menu.
 
 There is no generic `inspect_context`, `lookup_symbol`, standing tactic menu,
 rich panel, or raw workspace JSON contract. If a feature needs information, it
@@ -143,8 +151,8 @@ certification, and admission work:
 
 Feature removal must not require changes to manager, service, shared pass
 driver, renderer, or another feature. Strategy-selecting outputs are not
-present. The one historical proactive feature is archived outside the
-released tree.
+present. L1 constructs no compiler service. The one historical proactive
+feature is archived outside the released tree.
 
 ## EasyCrypt-native semantic boundary
 
@@ -167,35 +175,37 @@ analysis fallback may substitute for a missing native result.
 
 ## Backend developer interface
 
-`core/easycrypt/session_cli.py` is a manager/backend tool. Its current command
-surface is intentionally small:
+`core/easycrypt/session_cli.py` is a manager/backend tool. The manager
+(`workflow/proof_management/backend_request.py`) sends only these commands:
 
 ```text
 -start
--tactic-exec commit|commit_chain|undo
+-tactic-exec commit|undo
 -try
 -managed-goal-view
--episode-view
 -compiler-input-v2
 -compiler-resource-load-v2
 -native-semantic-batch-json
 -native-state-projection-json
--verify
 ```
+
+`-tactic-exec commit_chain` and `-episode-view` remain for developers and
+tests; the manager never sends them, and final proof
+acceptance is the offline verification in `workflow/agents/prover_writeback.py`.
 
 Do not restore `-agent-view`, `-goal-info`, `-where`, `-members`, search or
 tactic-form menus, `-next/-prev/-chain`, or old inspect wrappers.
 
-EasyCrypt is repository-locked to `r2026.06`. Bootstrap or verify it with
-`uv run python tools/bootstrap_easycrypt.py [--verify-only]`; Python runtime
-entry points select this managed environment through `core/easycrypt/ec_env.py`
-and never fall back to an ambient opam switch. Use
+EasyCrypt is repository-locked to `r2026.06`. Install it as described in
+[README.md#install](README.md#install) (`tools/bootstrap_easycrypt.py`,
+including the solver and Alt-Ergo steps). Python runtime entry points select
+this managed environment through `core/easycrypt/ec_env.py`, bind its solver
+configuration, and never fall back to an ambient opam switch. Use
 `eval "$(uv run python tools/bootstrap_easycrypt.py --print-env)"` only for a
 developer command that invokes `easycrypt` directly; that command must also pass
-`-why3 "$SHANNON_WHY3_CONFIG"`. Python entry points bind this configuration
-automatically. When SMT/Why3 is blocked
-by the OS sandbox, run the bounded backend check with the required permission
-rather than adding semantic fallbacks.
+`-why3 "$SHANNON_WHY3_CONFIG"`. When the OS sandbox blocks `why3server` or its
+`nice()` call, rerun the bounded command with the required permission rather
+than adding a parser, stdout, ambient-opam or stale-file fallback.
 
 The `uv` launcher must live outside the project `.venv` it manages. Never use
 `.venv/bin/uv` to recreate that same `.venv`: synchronization can remove the
@@ -231,6 +241,10 @@ Before a compiler checkpoint:
    retired compiler module/profile;
 5. record architecture/evidence status truthfully; and
 6. run live agent experiments only from a clean committed worktree.
+
+Keep each commit inside one module (the runtime, the interleaved product, eval,
+the EasyCrypt toolchain, release tooling) where you can; when a change must
+span modules, say so in the commit message.
 
 Place a new test under `tests/public/<area>/` only when it imports public
 code alone and carries no private research material; otherwise use

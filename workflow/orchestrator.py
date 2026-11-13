@@ -19,6 +19,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import Optional
 
+from core.paths import REPO_ROOT
 from workflow.schemas.config import (
     DEFAULT_CLAUDE_MODEL,
     DEFAULT_CODEX_MODEL,
@@ -39,7 +40,7 @@ from workflow.proof_state_compiler.profile_registry import (
 # Project paths
 # ---------------------------------------------------------------------------
 
-_PROJECT_ROOT = Path(__file__).resolve().parent.parent
+_PROJECT_ROOT = REPO_ROOT
 logger = logging.getLogger("workflow.orchestrator")
 
 # ---------------------------------------------------------------------------
@@ -165,8 +166,7 @@ def run(config: RunConfig) -> dict:
 
     Single-pass. The old analyst/improver/regression/lab-note phases and their
     retry loop were removed; every run now measures raw proof-construction
-    ability and stops after the prover. ``config.max_iterations`` is retained
-    for config back-compat (it no longer drives a loop).
+    ability and stops after the prover.
     """
     # ── Precheck: target lemma name must be unique in the target file ────
     # A duplicated lemma name is structurally unwinnable: the prover's
@@ -245,10 +245,9 @@ def run(config: RunConfig) -> dict:
     # Precheck, search, writeback, and offline verification all belong to the
     # run-level prover owner; the orchestrator never constructs a second proof
     # verdict.
-    prove_mode = config.prover.mode
     prove_count = config.prover.tree_initial_provers
     phase_start("PROVE")
-    status("orchestrator", f"{prove_mode} mode, {prove_count} provers")
+    status("orchestrator", f"tree mode, {prove_count} provers")
     prover_result = run_prover(config, iter_dir)
 
     elapsed_prove = prover_result.elapsed_seconds
@@ -369,9 +368,6 @@ def main():
     parser.add_argument("--lemma", type=str, help="Lemma name")
     parser.add_argument("--include-dir", type=str, default="",
                         help="EC include directory")
-    parser.add_argument("--max-iterations", type=int, default=None,
-                        help="Accepted for compatibility and ignored: every "
-                             "run is a single prove pass.")
     parser.add_argument("--prover-effort", type=str, default=None,
                         help="Reasoning effort for the prover agent session "
                              "(low/medium/high; default from ProverConfig).")
@@ -400,10 +396,6 @@ def main():
         default="",
         help=argparse.SUPPRESS,
     )
-    parser.add_argument("--prover-mode",
-                        choices=["tree"],
-                        default=None,
-                        help="Proof-search topology mode. Currently `tree`.")
     parser.add_argument("--tree-initial-provers", type=int, default=None,
                         help="Number of root proof nodes to start in tree mode.")
     parser.add_argument("--tree-max-concurrent", type=int, default=None,
@@ -473,8 +465,6 @@ def main():
     else:
         parser.error("Either --config or (--file and --lemma) required")
 
-    if args.max_iterations is not None:
-        config.max_iterations = args.max_iterations
     if args.agent_backend:
         prior_model = config.prover.model
         config.prover.agent_backend = normalize_agent_backend(args.agent_backend)
@@ -501,8 +491,6 @@ def main():
         config.surface_profile = normalize_research_surface_profile_id(
             args.research_surface_profile
         )
-    if args.prover_mode:
-        config.prover.mode = args.prover_mode
     if args.tree_initial_provers is not None:
         config.prover.tree_initial_provers = args.tree_initial_provers
     if args.tree_max_concurrent is not None:

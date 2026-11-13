@@ -102,8 +102,7 @@ def detect_admit_dependencies(
             if other != name and re.search(rf"\b{re.escape(other)}\b", body)
         ]
 
-        body_without_comments = re.sub(r"\(\*.*?\*\)", "", body)
-        if not dependencies and len(body_without_comments.strip()) < 20:
+        if not dependencies and len(body.strip()) < 20:
             dependencies = [
                 other
                 for other in admitted

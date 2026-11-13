@@ -567,7 +567,7 @@ class _Exited(Exception):
 
 def test_runtime_never_returns_a_result_after_an_enforced_stall(tmp_path) -> None:
     from workflow.node.proof_node_runtime import ProofNodeRuntime
-    from workflow.provider.provider_sessions import ClaudeRunResult
+    from workflow.provider.provider_sessions import AgentRunResult
 
     clock = FakeClock()
     exits: list[int] = []
@@ -587,14 +587,14 @@ def test_runtime_never_returns_a_result_after_an_enforced_stall(tmp_path) -> Non
     runtime = ProofNodeRuntime.__new__(ProofNodeRuntime)
     runtime._stall_watchdog = watchdog
 
-    def serve() -> ClaudeRunResult:
+    def serve() -> AgentRunResult:
         # The watchdog thread decides to exit while the main thread is still
         # serving; in production its os._exit would win this race.
         watchdog.turn_started(1)
         clock.advance(301)
         with pytest.raises(_Exited):
             watchdog.check()
-        return ClaudeRunResult(text="give up", session_id="s", returncode=0)
+        return AgentRunResult(text="give up", session_id="s", returncode=0)
 
     runtime._serve = serve
     with pytest.raises(_Exited):
@@ -689,7 +689,7 @@ def test_post_run_lock_read_behind_a_stalled_turn_exits_for_respawn(
 
 def test_runtime_returns_normally_when_no_stall(tmp_path) -> None:
     from workflow.node.proof_node_runtime import ProofNodeRuntime
-    from workflow.provider.provider_sessions import ClaudeRunResult
+    from workflow.provider.provider_sessions import AgentRunResult
 
     watchdog = ManagerStallWatchdog(
         node_id="Tree-stall",
@@ -701,7 +701,7 @@ def test_runtime_returns_normally_when_no_stall(tmp_path) -> None:
     )
     runtime = ProofNodeRuntime.__new__(ProofNodeRuntime)
     runtime._stall_watchdog = watchdog
-    expected = ClaudeRunResult(text="done", session_id="s", returncode=0)
+    expected = AgentRunResult(text="done", session_id="s", returncode=0)
     runtime._serve = lambda: expected
     assert runtime.run() is expected
     assert watchdog._thread is not None and not watchdog._thread.is_alive()

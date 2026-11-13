@@ -57,7 +57,6 @@ def _parser() -> argparse.ArgumentParser:
     actions.add_argument("-compiler-resource-load-v2", action="store_true")
     actions.add_argument("-native-semantic-batch-json", action="store_true")
     actions.add_argument("-native-state-projection-json", action="store_true")
-    actions.add_argument("-verify", dest="verify_lemma")
 
     parser.add_argument("--force-restart", action="store_true")
     parser.add_argument("-c", "--command")
@@ -65,7 +64,6 @@ def _parser() -> argparse.ArgumentParser:
     parser.add_argument("-f", "--file")
     parser.add_argument("-lemma")
     parser.add_argument("-I", "--include-dir", action="append", default=[], dest="include_dirs")
-    parser.add_argument("-deltas-only", action="store_true")
     parser.add_argument("--keep-on-fail", action="store_true")
     parser.add_argument(
         "--keep-commands",
@@ -196,10 +194,6 @@ def main(argv=None) -> int:
         return _run_action(
             session, args, "native-state-projection", handle_native_state_projection_json, mutates=False
         )
-    if args.verify_lemma:
-        from core.easycrypt.commands.validation_commands import handle_verify_lemma
-
-        return _run_action(session, args, "verify", handle_verify_lemma, mutates=False)
     raise AssertionError("unreachable action dispatch")
 
 

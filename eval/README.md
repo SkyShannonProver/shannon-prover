@@ -10,8 +10,6 @@ suite configuration JSONs live in [`eval_suite/suites/`](../eval_suite/suites/).
   These files contain complete reference proofs; eval-mode runs never show
   them to the prover — `eval_suite.run` copies the target per run and strips
   proofs to `admit.` (`strip_proofs`, on by default).
-- `CLAUDE.md` — eval-mode leakage rules for agents working in this repo
-  (what may and may not be read while a target lemma is being proved).
 
 To run a target, see `eval_suite/README.md`; the shortest path is
 

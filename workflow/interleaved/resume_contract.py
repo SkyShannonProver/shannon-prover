@@ -9,12 +9,12 @@ directory copied by the scheduler for a later continuation job.
 
 from __future__ import annotations
 
-import hashlib
 import json
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Iterable
 
+from core.digests import sha256_bytes
 from workflow.node.proof_node_resume import (
     ProofNodeResumeCapsule,
     load_resume_capsule,
@@ -27,12 +27,8 @@ GOAL_PREVIEW_MAX_CHARS = 6000
 CONTINUATION_NOTE_MAX_CHARS = 8000
 
 
-def _sha256_bytes(value: bytes) -> str:
-    return hashlib.sha256(value).hexdigest()
-
-
 def _canonical_json_sha256(value: dict[str, object]) -> str:
-    return _sha256_bytes(
+    return sha256_bytes(
         json.dumps(
             value,
             ensure_ascii=False,
@@ -59,7 +55,7 @@ def directory_content_sha256(root: Path) -> str:
         entries.append({
             "path": relative,
             "byte_count": len(raw),
-            "sha256": _sha256_bytes(raw),
+            "sha256": sha256_bytes(raw),
         })
     if not entries or not (root / "resume.json").is_file():
         raise ValueError("resume capsule directory is incomplete")
@@ -105,7 +101,7 @@ def checkpoint_projection(
         "kind": CHECKPOINT_KIND,
         "authority": "manager_owned_resume_capsule",
         "tactic_count": capsule.tactic_count,
-        "accepted_prefix_sha256": _sha256_bytes(prefix.encode("utf-8")),
+        "accepted_prefix_sha256": sha256_bytes(prefix.encode("utf-8")),
         "goal": {
             "identity": capsule.current_goal_hash,
             "identity_required": True,
@@ -240,7 +236,7 @@ def rebind_resume_capsule(
         "checkpoint_id": checkpoint_id,
         "target_rebound_for_fresh_isolated_replay": True,
         "continuation_note_sha256": (
-            _sha256_bytes(note.encode("utf-8")) if note else ""
+            sha256_bytes(note.encode("utf-8")) if note else ""
         ),
     }
     manifest_path.write_text(

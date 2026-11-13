@@ -14,20 +14,19 @@ import time
 from pathlib import Path
 from typing import Any
 
-from workflow.proof_management.common import read_jsonl
+from core.jsonio import append_jsonl, read_jsonl
+from core.paths import REPO_ROOT
 from workflow.proof_management.common import (
     node_memory_slug as _shared_node_memory_slug,
 )
-from workflow.proof_management import (
-    ManagedTurn,
-)
+from workflow.proof_management.types import ManagedTurn
 from workflow.proof_management.node_bootstrap import (
     require_proof_node_manager_bootstrap,
 )
 from workflow.proof_state_compiler.current_turn_presentation import (
+    canonical_current_workspace_view,
     compose_current_surface_turn,
     render_current_surface_turn_markdown,
-    require_current_workspace_view,
 )
 from workflow.proof_state_compiler.profile_registry import (
     normalize_runtime_surface_profile_id,
@@ -47,7 +46,7 @@ from workflow.node.continuation_brief import (
     render_continuation_brief_markdown,
 )
 
-PROJECT_ROOT = Path(__file__).resolve().parents[2]
+PROJECT_ROOT = REPO_ROOT
 
 
 class NodeMemory:
@@ -208,7 +207,7 @@ class NodeMemory:
     ) -> None:
         """Persist the initial current-state view before Claude's first turn."""
         raw_view = bootstrap["workspace_view"]
-        canonical_view = require_current_workspace_view(
+        canonical_view = canonical_current_workspace_view(
             raw_view,
             profile_id=self.surface_profile,
             label="bootstrap current workspace view",
@@ -422,8 +421,7 @@ class NodeMemory:
             **record,
         })
         with self._lock:
-            with path.open("a", encoding="utf-8") as handle:
-                handle.write(json.dumps(clean, sort_keys=True) + "\n")
+            append_jsonl(path, clean)
 
     @staticmethod
     def _read_jsonl(path: Path) -> list[dict[str, Any]]:

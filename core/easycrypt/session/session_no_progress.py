@@ -63,8 +63,7 @@ def detect_no_progress(
     """
     if has_new_error:
         return False, ""
-    # Panel-defect #3 (docs/reports/insights/l4_panel_defects_equiv_step4.md):
-    # a context-splitting / hypothesis-adding tactic (`case (cond)`, `if`,
+    # A context-splitting / hypothesis-adding tactic (`case (cond)`, `if`,
     # `split`, `elim`) increases the number of OPEN GOALS while leaving the
     # printed FIRST-goal program/conclusion text unchanged. The text-equal and
     # structural-fingerprint checks below see only the first goal's body, so

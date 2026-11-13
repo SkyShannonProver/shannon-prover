@@ -8,8 +8,10 @@ from __future__ import annotations
 
 from typing import Any
 
+from core.easycrypt.session.session_prover_workspace_schema import (
+    PROVER_WORKSPACE_VIEW_KEYS,
+)
 from workflow.proof_state_compiler.profile_registry import (
-    PRODUCTION_TURN_PROFILES as CURRENT_SURFACE_PROFILES,  # noqa: F401  (public name)
     runtime_profile_registration,
 )
 from workflow.proof_state_compiler.surface_contract import SurfaceProfile
@@ -23,21 +25,18 @@ def project_current_workspace_view(
     view: dict[str, Any],
     profile_id: str,
 ) -> dict[str, Any]:
-    """Erase durable carrier fields without invoking a legacy surface pass."""
+    """Erase durable carrier fields without invoking a legacy surface pass.
+
+    ``view_hash`` is dropped too: it covers the unprojected view, so the
+    caller recomputes it over the projected one.
+    """
 
     ensure_current_surface_profile(profile_id)
-    allowed = {
-        "schema_version",
-        "kind",
-        "ok",
-        "proof_status",
-        "last_result",
-        "current_goal",
-        "latest_observation",
-        "based_on_state_version",
-        "session_epoch",
+    return {
+        key: value
+        for key, value in view.items()
+        if key in PROVER_WORKSPACE_VIEW_KEYS and key != "view_hash"
     }
-    return {key: value for key, value in view.items() if key in allowed}
 
 
 def require_current_workspace_view(
@@ -49,19 +48,7 @@ def require_current_workspace_view(
     ensure_current_surface_profile(profile_id)
     if not isinstance(view, dict):
         raise TypeError(f"{label} must be an object")
-    allowed = {
-        "schema_version",
-        "kind",
-        "ok",
-        "proof_status",
-        "last_result",
-        "current_goal",
-        "latest_observation",
-        "view_hash",
-        "based_on_state_version",
-        "session_epoch",
-    }
-    unsupported = sorted(set(view) - allowed)
+    unsupported = sorted(set(view) - PROVER_WORKSPACE_VIEW_KEYS)
     if unsupported:
         raise ValueError(
             f"{label} contains unsupported current-envelope fields: "

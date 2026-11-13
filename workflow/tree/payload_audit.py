@@ -193,8 +193,6 @@ def _summarize_tool_input(tool_name: str, tool_input: Any) -> dict[str, Any]:
             "intent": str(tool_input.get("intent") or ""),
             "tactic_head": tactic[:300],
             "tactic_chars": len(tactic),
-            "topic": payload.get("topic"),
-            "symbol": payload.get("symbol"),
         }
     keys = sorted(str(key) for key in tool_input.keys())
     return {"keys": keys}

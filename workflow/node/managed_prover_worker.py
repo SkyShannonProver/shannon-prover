@@ -44,7 +44,6 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--effort", default="high")
     parser.add_argument("--max-turns", type=int, default=1000)
     parser.add_argument("--surface-profile", dest="surface_profile", default="")
-    parser.add_argument("--verbose", action="store_true")
     args = parser.parse_args(argv)
 
     try:

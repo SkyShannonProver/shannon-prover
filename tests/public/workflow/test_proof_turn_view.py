@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from workflow.proof_management import AgentIntent
+from workflow.proof_management.protocol_repair import AgentIntent
 from workflow.proof_management.turn_view import (
     intent_effect,
     intent_payload_surface,

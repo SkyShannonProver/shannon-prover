@@ -21,6 +21,7 @@ _IMPORT_ROOT = Path(__file__).resolve().parents[2]
 if str(_IMPORT_ROOT) not in sys.path:
     sys.path.insert(0, str(_IMPORT_ROOT))
 
+from workflow.proc_lifecycle import signal_group_ladder
 from workflow.interleaved.agent_config import (
     agent_profile_sha256,
     PROFILE_PATH,
@@ -798,19 +799,9 @@ def checkout_integrity_violations(
 
 
 def terminate_group(process: subprocess.Popen[str]) -> None:
-    if process.poll() is not None:
-        return
-    for sig, delay in ((signal.SIGINT, 10), (signal.SIGTERM, 10), (signal.SIGKILL, 0)):
-        try:
-            os.killpg(process.pid, sig)
-        except ProcessLookupError:
-            return
-        if delay:
-            try:
-                process.wait(timeout=delay)
-                return
-            except subprocess.TimeoutExpired:
-                pass
+    signal_group_ladder(
+        process, ((signal.SIGINT, 10), (signal.SIGTERM, 10), (signal.SIGKILL, 0))
+    )
 
 
 class TerminationSignals:

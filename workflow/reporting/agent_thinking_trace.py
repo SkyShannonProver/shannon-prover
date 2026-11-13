@@ -428,6 +428,17 @@ def _match_at(
     return score
 
 
+# Since adae13811 (2026-07-23) the runtime registers every Claude session when
+# it starts, so a newer node's registry is complete and an mtime sweep of
+# ~/.claude/projects could only attach the user's unrelated sessions.
+_REGISTRY_COMPLETE_SINCE = _ts_to_epoch("2026-07-23T00:00:00+00:00")
+
+
+def _predates_complete_registry(node_dir: Path) -> bool:
+    start = _ts_to_epoch(_node_time_window(node_dir)[0])
+    return 0.0 < start < _REGISTRY_COMPLETE_SINCE
+
+
 def _candidate_pool(node_dir: Path, *, window_pad_s: float = 1800.0) -> list[Path]:
     """Recorded transcripts PLUS every transcript whose mtime overlaps the node's
     timeline window. The recorded pointers are not trusted to be complete: a
@@ -523,7 +534,8 @@ def assemble_session_chain(
     (``agent_sessions.jsonl``) first — a run whose runtime registered every
     session resolves entirely from it. The mtime-window sweep over
     ``~/.claude/projects`` is only a fallback for historical bundles whose
-    registry predates registration-at-creation and is incomplete.
+    registry predates registration-at-creation (before 2026-07-23) and is
+    incomplete; a newer node's registry is trusted as it stands.
     """
     node_intents = _node_intents(node_dir)
     recorded = _resolve_recorded_transcripts(node_dir)
@@ -537,7 +549,7 @@ def assemble_session_chain(
     # Primary: the canonical registry alone.
     chain = _assemble_chain(recorded, node_intents, cache)
     covered = sum(len(t) for _, t in chain)
-    if covered < len(node_intents):
+    if covered < len(node_intents) and _predates_complete_registry(node_dir):
         # Historical fallback: registry + transcripts whose mtime overlaps the
         # node's window (older runs registered only the first session).
         pool = _assemble_chain(_candidate_pool(node_dir), node_intents, cache)

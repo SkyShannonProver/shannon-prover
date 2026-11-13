@@ -16,7 +16,6 @@ its API surface here.
 from __future__ import annotations
 
 import json
-import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[3]
@@ -56,27 +55,23 @@ def test_denylist_leaves_manager_boundary_to_policy_and_blocks_task_outputs() ->
     assert not any("/worktrees/**" in pattern for pattern in patterns)
 
 
-def test_denylist_prevents_mutating_session_cli_but_keeps_readonly_signal() -> None:
+def test_denylist_prevents_mutating_session_cli() -> None:
     # Backlog #4 / audit §6.1: the manager-owned EC-mutation invariant is enforced
     # at the TOOL boundary (prevention), not only by the post-hoc node-kill. The
-    # MUTATING session_cli flags + writes into a `.ec_session_*` dir are hard-denied;
-    # READ-ONLY session_cli stays allowed so the `session_cli.agent_call_debug_signal`
-    # ("the view was insufficient") is preserved.
+    # MUTATING session_cli flags + writes into a `.ec_session_*` dir are hard-denied.
+    # No other session_cli invocation is denied here; classify_bash_command makes
+    # any agent session_cli call node_fatal instead.
     from workflow.provider.prover_io_policy import (
         SESSION_CLI_AGENT_FORBIDDEN_LIFECYCLE_FLAGS,
         SESSION_CLI_MUTATING_FLAGS,
-        SESSION_CLI_READONLY_FLAGS,
     )
     patterns = _destructive_tool_denylist("/tmp/x.ec")
-    for flag in SESSION_CLI_MUTATING_FLAGS | SESSION_CLI_AGENT_FORBIDDEN_LIFECYCLE_FLAGS:
-        assert f"Bash(*session_cli*{flag}*)" in patterns, flag
     # `-tactic-exec commit|commit_chain|undo` mutates committed state but lives in
     # its own argparse dest (not in SESSION_CLI_MUTATING_FLAGS) — deny it too.
-    assert "Bash(*session_cli*-tactic-exec*)" in patterns
-    # read-only flags must NOT be denied — that path is the intentional debug signal
-    for flag in SESSION_CLI_READONLY_FLAGS:
-        assert f"Bash(*session_cli*{flag}*)" not in patterns, flag
-        assert not any(("session_cli" in p and flag in p) for p in patterns), flag
+    assert {p for p in patterns if "session_cli" in p} == {
+        f"Bash(*session_cli*{flag}*)"
+        for flag in SESSION_CLI_MUTATING_FLAGS | SESSION_CLI_AGENT_FORBIDDEN_LIFECYCLE_FLAGS
+    } | {"Bash(*session_cli*-tactic-exec*)"}
     # writes into a manager-owned session dir are denied (Edit/Write/MultiEdit)
     assert "Edit(**/.ec_session_*/**)" in patterns
     assert "Write(**/.ec_session_*/**)" in patterns
@@ -943,7 +938,7 @@ def test_tree_tracker_records_mcp_submit_intent_semantics(tmp_path: Path) -> Non
                 "id": tool_id,
                 "name": "mcp__proof_node_manager__submit_proof_intent",
                 "input": {
-                    "intent": "goal_info",
+                    "intent": "undo_last_step",
                     "payload": {},
                 },
             }],
@@ -963,9 +958,12 @@ def test_tree_tracker_records_mcp_submit_intent_semantics(tmp_path: Path) -> Non
     rows = _jsonl(audit_path)
     assert rows[0]["event"] == "tool_use"
     assert rows[0]["tool_name"].endswith("submit_proof_intent")
-    assert rows[0]["input"]["intent"] == "goal_info"
-    assert rows[0]["input"]["topic"] is None
-    assert rows[0]["description"] == "submit_proof_intent goal_info"
+    assert rows[0]["input"] == {
+        "intent": "undo_last_step",
+        "tactic_head": "",
+        "tactic_chars": 0,
+    }
+    assert rows[0]["description"] == "submit_proof_intent undo_last_step"
     assert rows[1]["event"] == "tool_result"
 
 
@@ -997,33 +995,6 @@ def test_tree_tracker_marks_empty_mcp_intent_as_malformed(tmp_path: Path) -> Non
     assert rows[0]["event"] == "tool_use"
     assert rows[0]["input"]["intent"] == ""
     assert rows[0]["description"] == "submit_proof_intent malformed: missing intent"
-
-
-def main() -> int:
-    test_denylist_blocks_rm_in_all_forms()
-    test_denylist_leaves_manager_boundary_to_policy_and_blocks_task_outputs()
-    test_denylist_blocks_edit_and_write_on_source_file()
-    test_denylist_uses_resolved_absolute_path()
-    test_run_tree_prover_advertises_destructive_abort_attribute()
-    test_session_cli_shell_detector_blocks_any_agent_session_cli()
-    test_denied_unsafe_session_command_does_not_mark_tree_polluted(Path("/tmp"))
-    test_executed_filtered_session_command_marks_tree_polluted(Path("/tmp"))
-    test_readonly_filtered_session_cli_marks_tree_polluted(Path("/tmp"))
-    test_shell_raw_session_artifact_does_not_mark_tree_polluted(Path("/tmp"))
-    test_legal_source_grep_is_audited_not_polluted(Path("/tmp"))
-    test_forbidden_session_transcript_read_never_kills(Path("/tmp"))
-    test_forbidden_session_transcript_grep_never_kills(Path("/tmp"))
-    test_legal_source_read_resets_forbidden_source_streak(Path("/tmp"))
-    test_raw_session_artifact_read_does_not_mark_tree_polluted(Path("/tmp"))
-    test_backgrounded_mutating_session_command_waits_instead_of_polluting(Path("/tmp"))
-    test_backgrounded_mutating_session_clears_after_structured_result(Path("/tmp"))
-    test_non_background_mutating_session_command_marks_tree_polluted(Path("/tmp"))
-    print("PASS test_destructive_action_guard")
-    return 0
-
-
-if __name__ == "__main__":
-    raise SystemExit(main())
 
 
 def test_denylist_blocks_framework_code_and_ec_source_writes() -> None:

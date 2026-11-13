@@ -13,7 +13,6 @@ import types
 
 import pytest
 
-from core.easycrypt.commands import validation_commands
 from core.easycrypt.ec_env import easycrypt_command, get_ec_env
 from core.easycrypt.proof_text import (
     discard_sibling_eco,
@@ -221,97 +220,35 @@ def test_writeback_refuses_a_file_that_weakens_proof_checking(tmp_path, monkeypa
     assert path.read_text(encoding="utf-8") == original
 
 
-# -- session_cli -verify ------------------------------------------------------
+# -- offline verification -----------------------------------------------------
 
-class _Session:
-    def __init__(self, root, history: str):
-        self.dir = root
-        self.history = root / "history.ec"
-        self.history.write_text(history, encoding="utf-8")
-        self._include_dirs = []
-        self.events = []
-
-    def emit_event(self, name, payload):
-        self.events.append((name, payload))
-
-
-def _verify(tmp_path, monkeypatch, *, history="", extracted, run=None):
+def _offline_verify(tmp_path, monkeypatch, run):
     source = tmp_path / "T.ec"
-    source.write_text(extracted if isinstance(extracted, str) else "", encoding="utf-8")
-    import core.easycrypt.ec_env as ec_env
-    import core.easycrypt.lemma_extract as lemma_extract
+    source.write_text("lemma t : true.\nproof. trivial. qed.\n", encoding="utf-8")
+    monkeypatch.setattr(prover_writeback.subprocess, "run", run)
+    monkeypatch.setattr(prover_writeback, "_get_opam_env", lambda: {})
+    import core.easycrypt.ec_proc as ec_proc
 
-    def fake_extract(*args, open_proof=False, verify_proof=False, **kwargs):
-        if callable(extracted):
-            return extracted(open_proof=open_proof, verify_proof=verify_proof)
-        return extracted
-
-    monkeypatch.setattr(lemma_extract, "extract_lemma", fake_extract)
-    monkeypatch.setattr(ec_env, "get_ec_env", lambda: {})
-    monkeypatch.setattr(ec_env, "easycrypt_command", lambda *a, **k: ["easycrypt", *a])
-    calls = []
-
-    def fake_run(command, **kwargs):
-        calls.append(command)
-        if run is None:
-            raise AssertionError("an unchecked proof must not reach EasyCrypt")
-        return run(command, **kwargs)
-
-    monkeypatch.setattr(validation_commands.subprocess, "run", fake_run)
-    session = _Session(tmp_path, history)
-    args = types.SimpleNamespace(file=str(source), verify_lemma="t")
-    return validation_commands.handle_verify_lemma(session, args), session, calls
+    monkeypatch.setattr(ec_proc, "why3_socket_from_env", lambda: None)
+    return prover_writeback._verify_ec_file(source)
 
 
-def test_verify_rejects_an_admit_in_the_session_proof(tmp_path, monkeypatch):
-    code, session, _ = _verify(
-        tmp_path, monkeypatch,
-        history="admit; trivial.\nqed.\n", extracted="lemma t : false.\nproof.\n",
-    )
-    assert code == 1
-    assert session.events[-1][1]["reason"] == "unchecked_proof"
-
-
-def test_verify_rejects_a_proof_left_open(tmp_path, monkeypatch):
-    code, session, _ = _verify(
-        tmp_path, monkeypatch, extracted="lemma t : true.\nproof. trivial.\n",
-    )
-    assert code == 1
-    assert session.events[-1][1]["reason"] == "proof_not_closed"
-
-
-def test_verify_fails_when_easycrypt_exits_nonzero_without_an_error_line(
+def test_offline_verification_fails_when_easycrypt_exits_nonzero_without_an_error_line(
     tmp_path, monkeypatch,
 ):
-    code, session, calls = _verify(
-        tmp_path, monkeypatch, extracted="lemma t : true.\nproof. trivial. qed.\n",
-        run=lambda command, **kwargs: subprocess.CompletedProcess(command, -9),
+    ok, _ = _offline_verify(
+        tmp_path, monkeypatch,
+        lambda command, **kwargs: subprocess.CompletedProcess(command, -9, "", ""),
     )
-    assert code == 1
-    assert session.events[-1][1]["returncode"] == -9
-    assert calls[0][:2] == ["easycrypt", "compile"]
+    assert not ok
 
 
-def test_verify_fails_on_timeout(tmp_path, monkeypatch):
+def test_offline_verification_fails_on_timeout(tmp_path, monkeypatch):
     def hang(command, **kwargs):
-        assert kwargs["timeout"] == validation_commands._VERIFY_TIMEOUT_SECONDS
         raise subprocess.TimeoutExpired(command, kwargs["timeout"])
 
-    code, session, _ = _verify(
-        tmp_path, monkeypatch, extracted="lemma t : true.\nproof. trivial. qed.\n",
-        run=hang,
-    )
-    assert code == 1
-    assert session.events[-1][1]["reason"] == "timeout"
-
-
-def test_verify_passes_a_closed_checked_proof(tmp_path, monkeypatch):
-    code, session, _ = _verify(
-        tmp_path, monkeypatch, extracted="lemma t : true.\nproof. trivial. qed.\n",
-        run=lambda command, **kwargs: subprocess.CompletedProcess(command, 0),
-    )
-    assert code == 0
-    assert session.events[-1][1]["status"] == "pass"
+    ok, _ = _offline_verify(tmp_path, monkeypatch, hang)
+    assert not ok
 
 
 @pytest.mark.parametrize("tactics", [
@@ -359,76 +296,3 @@ def test_verification_discards_a_forged_eco_before_compiling(tmp_path, monkeypat
 
 def test_discard_sibling_eco_tolerates_a_missing_cache(tmp_path):
     discard_sibling_eco(tmp_path / "Absent.ec")
-
-
-def _source_proof(*, open_proof: bool, verify_proof: bool) -> str:
-    # The source file's own proof is closed and clean; the session's is not.
-    return "lemma t : true.\nproof.\n" if open_proof else "lemma t : true.\nproof. trivial. qed.\n"
-
-
-def test_verify_checks_a_session_proof_that_ends_with_a_compound_qed(tmp_path, monkeypatch):
-    code, session, calls = _verify(
-        tmp_path, monkeypatch, history="admit. qed.\n", extracted=_source_proof,
-        run=lambda command, **kwargs: subprocess.CompletedProcess(command, 0),
-    )
-    assert code == 1
-    assert session.events[-1][1]["reason"] == "unchecked_proof"
-    assert calls == []
-
-
-def test_verify_compiles_the_session_proof_not_the_source_proof(tmp_path, monkeypatch):
-    code, session, calls = _verify(
-        tmp_path, monkeypatch, history="move=> _.\nby trivial. qed.\n",
-        extracted=_source_proof,
-        run=lambda command, **kwargs: subprocess.CompletedProcess(command, 0),
-    )
-    assert code == 0, session.events
-    compiled = (tmp_path / "verify_tmp.ec").read_text(encoding="utf-8")
-    assert compiled == "lemma t : true.\nproof.\nmove=> _.\nby trivial. qed.\n"
-
-
-def test_verify_passes_a_one_line_by_proof(tmp_path, monkeypatch):
-    code, session, _ = _verify(
-        tmp_path, monkeypatch, extracted="lemma t : true by trivial.\n",
-        run=lambda command, **kwargs: subprocess.CompletedProcess(command, 0),
-    )
-    assert code == 0, session.events
-
-
-def test_verify_rejects_tactics_after_the_statement_left_open(tmp_path, monkeypatch):
-    code, session, _ = _verify(
-        tmp_path, monkeypatch, extracted="lemma t : true.\nby trivial.\n",
-    )
-    assert code == 1
-    assert session.events[-1][1]["reason"] == "proof_not_closed"
-
-
-def test_verify_rejects_exit_in_the_extract(tmp_path, monkeypatch):
-    code, session, _ = _verify(
-        tmp_path, monkeypatch, extracted="exit.\nlemma t : false.\nproof. smt(). qed.\n",
-    )
-    assert code == 1
-    assert session.events[-1][1]["reason"] == "unchecked_proof"
-
-
-def test_verify_fails_when_the_target_is_missing_from_the_extract(tmp_path, monkeypatch):
-    code, session, _ = _verify(
-        tmp_path, monkeypatch, extracted="lemma other : true.\nproof. trivial. qed.\n",
-    )
-    assert code == 1
-    assert session.events[-1][1]["reason"] == "target_not_found"
-
-
-def test_verify_discards_a_forged_eco_next_to_its_scratch_file(tmp_path, monkeypatch):
-    forged = tmp_path / "verify_tmp.eco"
-    forged.write_text("forged", encoding="utf-8")
-    seen = []
-
-    def run(command, **kwargs):
-        seen.append(forged.exists())
-        return subprocess.CompletedProcess(command, 0)
-
-    code, _, _ = _verify(
-        tmp_path, monkeypatch, extracted="lemma t : true.\nproof. trivial. qed.\n", run=run,
-    )
-    assert code == 0 and seen == [False]

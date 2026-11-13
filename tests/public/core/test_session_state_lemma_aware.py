@@ -14,7 +14,6 @@ authoritative "+ added lemma: `<target>'" signal instead.
 from __future__ import annotations
 
 import json
-import sys
 import tempfile
 from pathlib import Path
 
@@ -227,32 +226,3 @@ def test_read_session_state_explicit_empty_target_disables_lemma_aware() -> None
         state = read_session_state(Path(td), target_lemma="")
     # Legacy heuristic kicks in; the helper's "No more goals" wins.
     assert state.proof_candidate_closed is True
-
-
-def main() -> int:
-    tests = [
-        test_target_lemma_added_detects_exact_quoting,
-        test_target_lemma_added_distinguishes_targets,
-        test_target_lemma_added_empty_target_returns_false,
-        test_target_lemma_added_handles_regex_special_chars_in_name,
-        test_read_target_lemma_metadata_present,
-        test_read_target_lemma_metadata_missing_file,
-        test_read_target_lemma_metadata_missing_field_is_invalid,
-        test_read_target_lemma_metadata_non_string_file_is_invalid,
-        test_read_target_lemma_metadata_padded_lemma_is_invalid,
-        test_read_target_lemma_metadata_explicit_full_file,
-        test_read_session_state_target_open_overrides_helper_no_more_goals,
-        test_read_session_state_target_closed_when_added_signal_present,
-        test_read_session_state_debug_mode_retains_full_file_fallback,
-        test_read_session_state_full_file_metadata_enables_close_detection,
-        test_read_session_state_explicit_target_overrides_meta,
-        test_read_session_state_explicit_empty_target_disables_lemma_aware,
-    ]
-    for t in tests:
-        t()
-    print("PASS test_session_state_lemma_aware")
-    return 0
-
-
-if __name__ == "__main__":
-    raise SystemExit(main())

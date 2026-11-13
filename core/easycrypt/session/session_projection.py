@@ -25,7 +25,7 @@ from core.easycrypt.committed_history import (
     committed_tactics_have_qed,
     history_path,
     read_committed_transactions,
-    read_committed_tactics,
+    read_committed_commands,
 )
 from core.easycrypt.proof_lifecycle import (
     CLOSED_UNTRUSTED,
@@ -492,7 +492,7 @@ def _read_history(session_dir: Path) -> HistoryProjection:
             tactic_count=0,
             has_qed=False,
         )
-    lines = read_committed_tactics(session_dir)
+    lines = read_committed_commands(session_dir)
     return HistoryProjection(
         path=str(path),
         exists=True,

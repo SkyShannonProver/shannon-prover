@@ -184,25 +184,3 @@ TESTS = [
     test_is_poison_error_markers,
     test_sync_recovers_from_poisoned_daemon,
 ]
-
-
-def main():
-    print("Running daemon_backend poison-recovery tests")
-    print("  (requires `easycrypt` on PATH via opam switch)")
-    print()
-    failed = 0
-    for fn in TESTS:
-        try:
-            fn()
-        except Exception as e:  # noqa: BLE001
-            failed += 1
-            print(f"  ✗ {fn.__name__}: {type(e).__name__}: {e}")
-            import traceback
-            traceback.print_exc()
-    print()
-    print(f"{len(TESTS) - failed}/{len(TESTS)} tests passed")
-    return 0 if failed == 0 else 1
-
-
-if __name__ == "__main__":
-    raise SystemExit(main())

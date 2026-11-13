@@ -7,7 +7,6 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[3]
 
-import sys
 
 from core.easycrypt.session.session_commit_response import (  # type: ignore  # noqa: E402
     COMMIT_RESPONSE_KIND,
@@ -146,14 +145,3 @@ def test_dangling_mutating_call_still_fails_closed() -> None:
             d, command="commit", status="ok", attempted_tactics=["x."],
             accepted_count=1, live_tool_name="commit", ok=True)
         assert response["proof_state"]["event_contract"]["ok"] is False
-
-
-def main() -> int:
-    test_commit_response_builds_and_writes_artifact()
-    test_commit_response_validation_rejects_bad_counts()
-    print("PASS test_session_commit_response")
-    return 0
-
-
-if __name__ == "__main__":
-    raise SystemExit(main())

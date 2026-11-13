@@ -1,7 +1,6 @@
 """Prepare a current-project outer-to-inner proof handoff."""
 from __future__ import annotations
 
-import hashlib
 import json
 import os
 import re
@@ -12,12 +11,13 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
+from core.digests import sha256_bytes, sha256_text
 from core.easycrypt.compiler_resource_loader import (
     RuntimeDeclarationRequest,
     load_requested_declarations,
 )
-from core.easycrypt.ec_daemon import _split_ec_commands
 from core.easycrypt.eval_source_prep import find_target_proof_block
+from core.easycrypt.proof_text import split_ec_commands, strip_comments
 from workflow.node.outer_proof_handoff import (
     HANDOFF_KIND,
     HANDOFF_VERSION,
@@ -25,7 +25,6 @@ from workflow.node.outer_proof_handoff import (
     proof_command_sequence_sha256,
 )
 from workflow.node.proof_node_manager import ProofNodeManager
-from workflow.proof_management.tactic_utils import strip_easycrypt_comments
 from workflow.interleaved.proof_source import lemma_prefix_projection
 from workflow.interleaved.runtime import ProjectContext
 
@@ -33,14 +32,6 @@ from workflow.interleaved.runtime import ProjectContext
 _CLOSER = re.compile(
     r"(?i)^\s*(?:[+*\-]\s*)?(?:qed|admit|abort|exit)\s*\.\s*$"
 )
-
-
-def _sha256_bytes(value: bytes) -> str:
-    return hashlib.sha256(value).hexdigest()
-
-
-def _sha256_text(value: str) -> str:
-    return _sha256_bytes(value.encode("utf-8"))
 
 
 def _write_json(path: Path, payload: dict[str, Any]) -> None:
@@ -187,7 +178,7 @@ def _resolve_resource_anchors(
     if proof is None:
         raise ValueError(f"resource-anchor context for {lemma} has no proof opener")
     active_context = context_source[: start + proof.end()]
-    active_context_sha256 = _sha256_text(active_context)
+    active_context_sha256 = sha256_text(active_context)
     descriptor, raw_context = tempfile.mkstemp(
         prefix="shannon_outer_handoff_", suffix=".ec"
     )
@@ -282,7 +273,7 @@ def _candidate_commands(body: str) -> list[str]:
     """
 
     commands: list[str] = []
-    for item in _split_ec_commands(body):
+    for item in split_ec_commands(body):
         command = item.strip()
         if not command:
             continue
@@ -290,7 +281,7 @@ def _candidate_commands(body: str) -> list[str]:
         # next EasyCrypt command.  Detect closers on the semantic command, not
         # the byte-preserving replay text, so the standard eval placeholder
         # ``(* PROVE THIS ... *)\n  admit.`` cannot be replayed as a candidate.
-        semantic_command = strip_easycrypt_comments(command).strip()
+        semantic_command = strip_comments(command).strip()
         if _CLOSER.fullmatch(semantic_command) is not None:
             break
         commands.append(command)
@@ -422,7 +413,7 @@ def prepare_outer_proof_handoff(
     target_text = target_path.read_text(encoding="utf-8")
     candidate_text = candidate_path.read_text(encoding="utf-8")
     body, _ = _proof_body(candidate_text, lemma)
-    if _sha256_text(lemma_prefix_projection(target_text, lemma)) != _sha256_text(
+    if sha256_text(lemma_prefix_projection(target_text, lemma)) != sha256_text(
         lemma_prefix_projection(candidate_text, lemma)
     ):
         raise ValueError(
@@ -537,12 +528,12 @@ def prepare_outer_proof_handoff(
             "commit": commit,
             "outer_run_dir": run_rel.as_posix(),
             "candidate_source": str(candidate_path.relative_to(root)),
-            "candidate_sha256": _sha256_bytes(candidate_path.read_bytes()),
+            "candidate_sha256": sha256_bytes(candidate_path.read_bytes()),
             "projection_scope": "through_delegated_lemma",
-            "candidate_projection_sha256": _sha256_text(
+            "candidate_projection_sha256": sha256_text(
                 lemma_prefix_projection(candidate_text, lemma)
             ),
-            "current_projection_sha256": _sha256_text(
+            "current_projection_sha256": sha256_text(
                 lemma_prefix_projection(target_text, lemma)
             ),
             "strategy_note": str(strategy_path.relative_to(root)),

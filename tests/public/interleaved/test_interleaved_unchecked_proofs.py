@@ -33,6 +33,7 @@ UNCHECKED_AUXILIARY = {
 }
 
 
+@pytest.mark.easycrypt
 @pytest.mark.parametrize("name", sorted(UNCHECKED_AUXILIARY))
 def test_final_check_rejects_a_target_that_skips_a_goal(name):
     (ROOT / "artifacts").mkdir(exist_ok=True)
@@ -104,6 +105,7 @@ def test_reference_final_policy_forbids_the_admitted_proof_end():
     ) == []
 
 
+@pytest.mark.easycrypt
 def test_final_check_discards_a_cache_next_to_the_target():
     (ROOT / "artifacts").mkdir(exist_ok=True)
     with tempfile.TemporaryDirectory(prefix="eco-final-", dir=ROOT / "artifacts") as directory:

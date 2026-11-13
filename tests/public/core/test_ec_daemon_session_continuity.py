@@ -1035,6 +1035,26 @@ def test_release_without_daemon_state_is_false(
     assert da.release_daemon_session(empty, tmp_path) is False
 
 
+def test_attach_client_is_the_package_client(
+    tmp_path: Path, ec_file: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    # The client half once put core/easycrypt on sys.path and imported a second
+    # copy of ec_daemon_client by its bare name, so its errors were not the
+    # package's ECDaemonError and every core module became importable bare.
+    ec_dir = str(REPO_ROOT / "core" / "easycrypt")
+    monkeypatch.setattr(sys, "path", [p for p in sys.path if p != ec_dir])
+    monkeypatch.delitem(sys.modules, "ec_daemon_client", raising=False)
+    with _ServerHarness() as h:
+        donor = _donor_dir(tmp_path, ec_file=ec_file, socket_path=h.sock)
+        _register(h.mgr, da.daemon_session_id_for_dir(donor), _FakeEC())
+
+        assert da.close_daemon_session(donor, tmp_path) is True
+
+    assert h.mgr.list() == []
+    assert ec_dir not in sys.path
+    assert "ec_daemon_client" not in sys.modules
+
+
 # ---------------------------------------------------------------------------
 # 4. Flag gating in ReplSessionManager / lifecycle
 # ---------------------------------------------------------------------------

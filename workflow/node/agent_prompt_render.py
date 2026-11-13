@@ -18,9 +18,6 @@ from core.context_intents import (
 from workflow.proof_state_compiler.profile_registry import (
     profile_exposes_compiler_output,
 )
-from workflow.proof_state_compiler.runtime_profiles import (
-    resolve_runtime_surface_profile,
-)
 from workflow.proof_tool.proof_tool_contract import (
     DECLARATION_RESOLVE_TOOL_IDENTITY,
     SOURCE_READ_TOOL_IDENTITY,
@@ -84,11 +81,11 @@ def render_long_lived_agent_prompt(
 
     The trailing ``{profile_safe_prompt}`` block is the lean turn-0 bootstrap
     (target pointer plus the typed handoff surface). When ``compact`` is set
-    (the fresh-context continuation reopening — see FIX #2 /
-    docs/design/fresh_context_continuation.md §Handoff) that heavy block is
-    dropped and replaced by a thin ``compact_pointer`` so the fresh session opens
-    near the post-compact floor, not the degraded ceiling. The runtime/tool
-    protocol block above is ALWAYS kept — the fresh session still needs it.
+    (the fresh-context continuation reopening the node in a new agent context)
+    that heavy block is dropped and replaced by a thin ``compact_pointer`` so the
+    fresh session opens near the post-compact floor, not the degraded ceiling. The
+    runtime/tool protocol block above is ALWAYS kept — the fresh session still
+    needs it.
     """
     manifest = validate_proof_tool_contract(proof_tool_manifest)
     current_intents = list(manifest.effective_profile_intents)
@@ -229,51 +226,37 @@ def _profile_safe_original_prompt(
     *,
     tool_name: str,
 ) -> str:
-    profile = resolve_runtime_surface_profile(surface_profile)
-    if profile is None or profile.stage == "full":
-        return prompt
-    if profile.base_surface == "goal_only":
-        # L1 is the barest baseline by framework design: the lemma statement and
-        # nothing else. The file-content context, the manager-usage section, and
-        # the view-interpretation guidance all belong to the higher rungs' static
-        # surface, so they are dropped here. The runtime wrapper and the appended
-        # profile-safe protocol carry the interaction mechanics the agent needs.
-        m = re.search(
-            r"You are (?:proving|continuing a proof of) EasyCrypt lemma[^\n]*",
-            prompt,
-        )
-        lemma_line = m.group(0) if m else ""
-        guard = prompt[: m.start()].rstrip() if m else ""  # eval guard, if present
-        head = ((guard + "\n\n") if guard else "") + lemma_line
-        # Preserve the marked handoff so the worker can replace its provisional
-        # goal-only rendering with the authoritative manager-bound turn-0
-        # surface after adoption. L1 still receives only its goal projection;
-        # retaining the marker does not admit any L4 fields.
-        from workflow.agents.prover_prompt import managed_handoff_block
-
-        handoff = managed_handoff_block(prompt)
-        blocks = [head.rstrip()]
-        if handoff:
-            blocks.append(handoff)
-        blocks.append(
-            _profile_safe_protocol(
-                tool_name=tool_name,
-                compiler_output_visible=_exposes_compiler_output(surface_profile),
-            )
-        )
-        return "\n\n".join(block for block in blocks if block)
-    cut_markers = [
-        "\n## What you can reason about vs what you need EC for",
-        "\n## Prove from the branch point",
-        "\n### Mode 1: Choose the next proof intent",
-    ]
-    cut_points = [prompt.find(marker) for marker in cut_markers]
-    cut_points = [point for point in cut_points if point >= 0]
-    head = prompt[: min(cut_points)].rstrip() if cut_points else prompt.rstrip()
-    return head + "\n\n" + _profile_safe_protocol(
-        tool_name=tool_name,
-        compiler_output_visible=_exposes_compiler_output(surface_profile),
+    # Every current profile, L1 and compiler arms alike, uses the goal-only
+    # envelope, so the static prompt keeps only the eval guard and the lemma
+    # statement. The file-content context, the manager-usage section, and the
+    # view-interpretation guidance are dropped here. The runtime wrapper and
+    # the appended profile-safe protocol carry the interaction mechanics the
+    # agent needs; compiler output, when a profile delivers any, arrives only
+    # through the manager-bound turn surface.
+    compiler_output_visible = _exposes_compiler_output(surface_profile)
+    m = re.search(
+        r"You are (?:proving|continuing a proof of) EasyCrypt lemma[^\n]*",
+        prompt,
     )
+    lemma_line = m.group(0) if m else ""
+    guard = prompt[: m.start()].rstrip() if m else ""  # eval guard, if present
+    head = ((guard + "\n\n") if guard else "") + lemma_line
+    # Preserve the marked handoff so the worker can replace its provisional
+    # goal-only rendering with the authoritative manager-bound turn-0
+    # surface after adoption.
+    from workflow.agents.prover_prompt import managed_handoff_block
+
+    handoff = managed_handoff_block(prompt)
+    blocks = [head.rstrip()]
+    if handoff:
+        blocks.append(handoff)
+    blocks.append(
+        _profile_safe_protocol(
+            tool_name=tool_name,
+            compiler_output_visible=compiler_output_visible,
+        )
+    )
+    return "\n\n".join(block for block in blocks if block)
 
 
 def _exposes_compiler_output(surface_profile: str | None) -> bool:

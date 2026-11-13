@@ -2,7 +2,6 @@
 from __future__ import annotations
 
 import inspect
-import sys
 import tempfile
 from pathlib import Path
 
@@ -256,13 +255,3 @@ def test_extract_partial_tactics_without_qed_is_reporting_only() -> None:
 
         assert closed == []
         assert partial == ["proc.", "wp."]
-
-
-if __name__ == "__main__":
-    test_write_and_verify_rejects_missing_event_contract()
-    test_write_and_verify_emits_final_acceptance_event()
-    test_write_and_verify_records_extracted_fallback_hygiene()
-    test_extract_tactics_requires_validated_winner_session_history()
-    test_final_tactic_extraction_cannot_fall_back_to_sibling_or_prose()
-    test_extract_partial_tactics_without_qed_is_reporting_only()
-    print("PASS test_prover_acceptance")

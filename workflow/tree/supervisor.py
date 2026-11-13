@@ -10,7 +10,6 @@ from __future__ import annotations
 import json
 import os
 import re
-import signal
 import subprocess
 import time
 from dataclasses import dataclass, field
@@ -23,6 +22,7 @@ from core.easycrypt.committed_history import (
 )
 from core.easycrypt.proof_lifecycle import has_discharged_goals
 from workflow.schemas.config import PROVER_DEFAULTS
+from workflow.proc_lifecycle import terminate_subprocess_tree
 from workflow.proof_management.common import (
     node_memory_slug as _shared_node_memory_slug,
 )
@@ -202,52 +202,10 @@ def _terminate_process_tree(
     *,
     grace_seconds: float = 5.0,
 ) -> None:
-    """Terminate a worker and its descendants when it owns a process group.
-
-    Tree workers launch Claude, MCP stdio servers, and bridge helpers. Killing
-    only the worker PID can orphan those children, which is exactly what the
-    2026-05-12 step3 interrupted run exposed.  Workers are spawned in a new
-    session below, so the normal path sends signals to the process group; the
-    fallback remains PID-only for tests or platforms where process groups are
-    unavailable.
-    """
-    if proc.poll() is not None:
-        return
-
-    pgid: int | None = None
-    try:
-        candidate = os.getpgid(proc.pid)
-        if candidate != os.getpgrp():
-            pgid = candidate
-    except (AttributeError, ProcessLookupError, PermissionError, OSError):
-        pgid = None
-
-    def _signal_group_or_proc(sig: int) -> None:
-        if pgid is not None:
-            try:
-                os.killpg(pgid, sig)
-                return
-            except ProcessLookupError:
-                return
-            except (PermissionError, OSError):
-                pass
-        if sig == signal.SIGTERM:
-            proc.terminate()
-        else:
-            proc.kill()
-
-    _signal_group_or_proc(signal.SIGTERM)
-    try:
-        proc.wait(timeout=grace_seconds)
-        return
-    except subprocess.TimeoutExpired:
-        pass
-
-    _signal_group_or_proc(signal.SIGKILL)
-    try:
-        proc.wait(timeout=grace_seconds)
-    except subprocess.TimeoutExpired:
-        return
+    """Terminate a worker and its descendants (Claude, MCP stdio servers,
+    bridge helpers) through its process group; killing only the worker PID can
+    orphan them. Tree workers get a shorter grace than operator drivers."""
+    terminate_subprocess_tree(proc, grace_seconds=grace_seconds)
 
 
 def _settled_returncode(proc: subprocess.Popen) -> int | None:
@@ -423,7 +381,7 @@ def _layer3_gates_pass(
         # decision and must END the run, never be respawned. Only an ABNORMAL
         # worker death (non-zero/killed exit OR no clean final-result emitted)
         # is an infra death the agent didn't decide; replay recovers the lost
-        # in-process EC state. See docs/design/context_resume_tightened.md.
+        # in-process EC state.
         return False
     if (
         int(context_respawn_count or 0) <= 0
@@ -789,7 +747,7 @@ def _validate_resume_branch(branch: dict) -> None:
 class NodeSupervisor:
     """Owns one tree-search run: spawns/kills/respawns prover nodes and
     selects the winner. Extracted from the former run_tree_prover god-function
-    with identical behavior (audit: docs/audit_node_supervisor_refactor_2026-06-22.md);
+    with identical behavior;
     run_tree_prover is now a thin wrapper. The former nested closures are the
     private methods on this class; run() is the monitor loop driving them.
     """
@@ -1246,8 +1204,6 @@ class NodeSupervisor:
             replay_prefix,
             **build_kwargs,
         )
-        if "--verbose" not in cmd:
-            cmd = cmd + ["--verbose"]
         # Inject EC_SESSION_DIR so this tree's session_cli calls default to
         # the correct dir and reject any `-d <other>` typo (e.g., the default
         # `.ec_session` or a sibling tree's dir).
@@ -1258,8 +1214,7 @@ class NodeSupervisor:
         # ProofNodeRuntime._wall_deadline() can refrain from starting an in-worker
         # respawn that cannot finish before the supervisor kills the run. The
         # supervisor enforces `timeout` seconds from `start_time`; without this the
-        # worker has no deadline and guard #5 is dead. See
-        # docs/design/fresh_context_continuation.md.
+        # worker has no deadline and guard #5 is dead.
         child_env["SHANNON_NODE_DEADLINE_EPOCH"] = repr(self.start_time + float(self.timeout))
         # Retry on `OSError: [Errno 8] Exec format error` — the `claude`
         # binary is a ~215MB Mach-O bundle that gets atomically replaced
@@ -1454,7 +1409,6 @@ class NodeSupervisor:
         recorded goal hash (which, for a fresh capsule, come from the SAME live
         state, so they are consistent). Heavily gated and one-shot per dead node.
         Returns True iff a respawn was launched.
-        See docs/design/fresh_context_continuation.md.
         """
         t = node.tracker
         run_dir = (

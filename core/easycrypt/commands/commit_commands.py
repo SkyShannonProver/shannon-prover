@@ -37,7 +37,7 @@ def handle_commit(session, args) -> int:
     if not data.strip():
         sys.stderr.write("No tactic provided for -tactic-exec commit.\n")
         return 2
-    result = session.append_block(data, deltas_only=args.deltas_only)
+    result = session.append_block(data)
     command_ok = result.status == "ok"
     _finalize_tactic_execution(
         session,
@@ -183,7 +183,7 @@ def handle_commit_chain(session, args) -> int:
 
     accepted = 0
     for i, tac in enumerate(tactics):
-        result = session.append_block(tac, deltas_only=False)
+        result = session.append_block(tac)
         if result.status != "ok":
             return _handle_commit_chain_failure(
                 session, args, tactics, tac, accepted, i, result,

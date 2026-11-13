@@ -10,6 +10,7 @@ import json
 from pathlib import Path
 from typing import Any
 
+from core.jsonio import append_jsonl
 from core.easycrypt.value_shapes import drop_empty as _drop_empty
 from workflow.proof_management.managed_turn_outcome import action_outcome_from_action
 from workflow.proof_management.tactic_utils import tactic_head as _tactic_head
@@ -165,10 +166,7 @@ class ProofEventManager:
         if self.run_dir is None:
             return
         try:
-            self.run_dir.mkdir(parents=True, exist_ok=True)
-            path = self.run_dir / "proof_node_manager_audit.jsonl"
-            with path.open("a", encoding="utf-8") as handle:
-                handle.write(json.dumps(record, sort_keys=True) + "\n")
+            append_jsonl(self.run_dir / "proof_node_manager_audit.jsonl", record)
         except Exception as exc:
             raise ProofEventStoreError(
                 "failed to write current proof node manager audit"
@@ -178,10 +176,7 @@ class ProofEventManager:
         if self.run_dir is None:
             return
         try:
-            self.run_dir.mkdir(parents=True, exist_ok=True)
-            path = self.run_dir / "proof_node_events.jsonl"
-            with path.open("a", encoding="utf-8") as handle:
-                handle.write(json.dumps(event.to_dict(), sort_keys=True) + "\n")
+            append_jsonl(self.run_dir / "proof_node_events.jsonl", event.to_dict())
         except Exception as exc:
             raise ProofEventStoreError(
                 "failed to write current proof node event"

@@ -21,6 +21,8 @@ import time
 from pathlib import Path
 from typing import Any, Optional
 
+from core.paths import REPO_ROOT
+from core.jsonio import append_jsonl
 from core.easycrypt.ec_prompt import PROMPT_RE
 from core.easycrypt.lemma_decls import has_checked_proof, lemma_declarations
 from core.easycrypt.proof_text import file_wide_unchecked_constructs
@@ -29,7 +31,7 @@ from workflow.agents.ec_services import (
     _configure_run_ec_daemon_socket,
     _configure_run_why3_socket,
     _ensure_why3server,
-    _shutdown_ec_daemon,
+    shutdown_ec_daemon,
     _shutdown_run_why3server,
 )
 from workflow.agents.prover_writeback import (
@@ -43,8 +45,8 @@ from workflow.agents.prover_writeback import (
     _verify_lemma_extracted,
     _write_and_verify_proof,
 )
-from workflow.proof_state_compiler.runtime_profiles import (
-    ensure_supported_runtime_surface_profile,
+from workflow.proof_state_compiler.surface_profiles import (
+    ensure_current_surface_profile,
 )
 from workflow.proof_management.node_bootstrap import (
     replay_prefix_shortfall,
@@ -98,7 +100,7 @@ def _prepare_run_ec_daemon_socket(run_dir: Path) -> tuple[str, bool]:
     distinct socket name, so only that exact socket is stale for this run.
     """
     socket_path = _configure_run_ec_daemon_socket(run_dir)
-    stopped = _shutdown_ec_daemon(
+    stopped = shutdown_ec_daemon(
         reason="per-run pre-run cleanup",
         socket_path=socket_path,
     )
@@ -136,7 +138,7 @@ def _create_run_session_namespace(run_dir: Path) -> str:
 # Project paths
 # ---------------------------------------------------------------------------
 
-_PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
+_PROJECT_ROOT = REPO_ROOT
 
 
 def _append_manager_bootstrap_audit(
@@ -146,10 +148,7 @@ def _append_manager_bootstrap_audit(
     if run_dir is None:
         return
     try:
-        run_dir.mkdir(parents=True, exist_ok=True)
-        path = run_dir / "manager_session_bootstrap.jsonl"
-        with path.open("a", encoding="utf-8") as f:
-            f.write(json.dumps(record, sort_keys=True) + "\n")
+        append_jsonl(run_dir / "manager_session_bootstrap.jsonl", record)
     except Exception as exc:
         logger.warning("Failed to write manager bootstrap audit: %s", exc)
 
@@ -445,9 +444,8 @@ def run(
     29-keyword signature kept a second copy of every default, and six of them
     had silently drifted from the schema (e.g. tree_grace_seconds 120 vs 300).
 
-    Long-lived managed prover mode:
-    - "tree": Start one or more proof nodes, each with its own long-lived
-      agent runtime.
+    Managed tree search starts one or more proof nodes, each with its own
+    long-lived agent runtime.
     """
     prover = prover if prover is not None else ProverConfig()
     agent_backend = normalize_agent_backend(prover.agent_backend)
@@ -456,7 +454,6 @@ def run(
     max_turns = prover.max_total_tactics
     timeout_minutes = prover.timeout_minutes
     resume_root_policy = prover.resume_root_policy
-    mode = prover.mode
     tree_initial_provers = prover.tree_initial_provers
     tree_max_concurrent = prover.tree_max_concurrent
     tree_stuck_errors = prover.tree_stuck_errors
@@ -478,9 +475,7 @@ def run(
         PROVER_RUN_VERIFIED,
         ProverResult,
     )
-    profile = ensure_supported_runtime_surface_profile(surface_profile)
-    if profile is not None:
-        surface_profile = profile.name
+    surface_profile = ensure_current_surface_profile(surface_profile).name
     run_dir = run_dir or (_PROJECT_ROOT / "workflow" / "runs" / "scratch")
     run_dir.mkdir(parents=True, exist_ok=True)
     run_session_namespace = _create_run_session_namespace(run_dir)
@@ -634,7 +629,7 @@ def run(
         os.environ.pop("EVAL_TARGET_LEMMA", None)
 
     # --- Pre-flight: start from a clean persistent EC daemon. ---
-    if _shutdown_ec_daemon(reason="pre-run cleanup"):
+    if shutdown_ec_daemon(reason="pre-run cleanup"):
         pstatus("Prover", "Stopped stale EasyCrypt daemon from a previous run")
 
     # --- Pre-flight: ensure why3server is running for smt() ---
@@ -750,250 +745,245 @@ def run(
 
     # If precheck == "has_admit", normal flow — go prove it.
 
-    if mode != "tree":
-        raise ValueError("unsupported prover mode; only 'tree' is current")
-
     tree_max_concurrent = cap_tree_max_concurrent(tree_max_concurrent)
     tree_initial_provers = max(1, min(int(tree_initial_provers), tree_max_concurrent))
 
     start_time = time.time()
 
-    if mode == "tree":
-        # --- Tree mode: recursive branch-and-explore ---
-        from workflow.tree.supervisor import (
-            MANAGED_LIVE_PROGRESS_FILENAME,
-            run_tree_prover,
-        )
-        resume_initial_branches = []
-        if loaded_resume_capsules:
-            try:
-                current_commit = subprocess.check_output(
-                    ["git", "rev-parse", "HEAD"],
-                    cwd=str(_PROJECT_ROOT),
-                    text=True,
-                    stderr=subprocess.DEVNULL,
-                ).strip()
-            except Exception:
-                current_commit = ""
-            for ckpt in loaded_resume_capsules:
-                if ckpt.commit and current_commit and ckpt.commit != current_commit:
-                    pstatus(
-                        "Prover",
-                        f"Checkpoint {ckpt.path} was captured at "
-                        f"{ckpt.commit[:12]}, current commit is "
-                        f"{current_commit[:12]}; replay will verify whether "
-                        "the prefix still reaches the same state.",
-                        "\033[33m",
-                    )
-                capsule_shortfall = replay_prefix_shortfall(
-                    ckpt.recorded_tactic_count, ckpt.tactic_count,
-                )
-                if capsule_shortfall is not None:
-                    pstatus(
-                        "Orchestrator",
-                        f"⚠ RESUME CAPSULE SHORTFALL: {ckpt.path} records "
-                        f"tactic_count={ckpt.recorded_tactic_count} but its "
-                        f"history.ec only yields {ckpt.tactic_count} replayable "
-                        f"tactics (lost "
-                        f"{round(capsule_shortfall['lost_ratio'] * 100)}%). "
-                        f"The capsule is internally inconsistent; the resume "
-                        f"starts from the shorter prefix.",
-                        "\033[31m",
-                    )
-                resume_initial_branches.append({
-                    "replay_prefix": ckpt.replay_prefix,
-                    "resume_context": ckpt.resume_context,
-                    "negative_signal": [],
-                    "expected_goal_hash": ckpt.current_goal_hash,
-                    "goal_identity_required": ckpt.goal_identity_required,
-                    "capsule_path": str(ckpt.path),
-                    "capsule_score": ckpt.score,
-                    "resume_root_policy": resume_root_policy,
-                    "resume_diversity": dict(ckpt.resume_diversity or {}),
-                    "route_family": {
-                        "family": ckpt.route_family,
-                    } if ckpt.route_family else {},
-                })
-        elif loaded_outer_handoff is not None:
-            resume_initial_branches.append({
-                "replay_prefix": list(loaded_outer_handoff.replay_commands),
-                "resume_context": {
-                    "resume_prefix_count": len(loaded_outer_handoff.replay_commands),
-                    "outer_proof_handoff": loaded_outer_handoff.manager_context(),
-                },
-                "negative_signal": [],
-                "expected_goal_hash": loaded_outer_handoff.boundary_goal_hash,
-                "goal_identity_required": loaded_outer_handoff.goal_identity_required,
-                "capsule_path": str(loaded_outer_handoff.path),
-                "capsule_score": 0.0,
-                "resume_root_policy": "same_run_outer_handoff",
-                "resume_diversity": {},
-                "route_family": {},
-            })
-
-        def _build_tree_cmd(session_tag, node_id, replay_prefix,
-                            layer_move_action=None, resume_context=None):
-            resolved_resume_context = (
-                dict(resume_context) if isinstance(resume_context, dict) else {}
-            )
-            outer_context = resolved_resume_context.get("outer_proof_handoff")
-            if isinstance(outer_context, dict):
-                from workflow.node.continuation_brief import (
-                    continuation_brief_from_outer_handoff,
-                )
-
-                resolved_resume_context["continuation_brief"] = (
-                    continuation_brief_from_outer_handoff(outer_context)
-                )
-            managed_session = _prepare_managed_session(
-                file_path=file_path,
-                lemma_name=lemma_name,
-                include_dir=include_dir,
-                session_tag=session_tag,
-                replay_prefix=list(replay_prefix or []),
-                run_dir=run_dir,
-                node_label=f"Tree-{node_id}",
-                surface_profile=surface_profile,
-                resume_context=resolved_resume_context or None,
-            )
-            if isinstance(outer_context, dict):
-                from workflow.node.outer_proof_handoff import (
-                    proof_command_sequence_sha256,
-                )
-
-                status = managed_session.get("workspace_view", {}).get(
-                    "proof_status", {}
-                )
-                actual_hash = str(status.get("goal_hash") or "")
-                expected_hash = str(outer_context.get("boundary_goal_hash") or "")
-                actual_prefix = list(managed_session.get("replay_prefix") or [])
-                actual_spine_hash = proof_command_sequence_sha256(actual_prefix)
-                expected_spine_hash = str(
-                    outer_context.get("committed_spine_sha256") or ""
-                )
-                if actual_spine_hash != expected_spine_hash:
-                    raise RuntimeError(
-                        "outer proof handoff replay changed the committed proof spine"
-                    )
-                if actual_hash != expected_hash:
-                    raise RuntimeError(
-                        "outer proof handoff goal identity drifted after replay: "
-                        f"{actual_hash or '<missing>'} != {expected_hash or '<missing>'}"
-                    )
-                # This is manager-owned durable construction context, not a
-                # proof-state claim. The runtime validates and repeats it in
-                # every followup/system anchor so context compaction cannot
-                # silently erase an explicitly handed-over declaration.
-            continuation_brief = managed_session.get("continuation_brief")
-            if isinstance(continuation_brief, dict):
-                managed_session["resource_anchors"] = list(
-                    continuation_brief.get("resource_anchors") or []
-                )
-            if replay_prefix or isinstance(outer_context, dict):
-                prompt = _build_child_prover_prompt(
-                    file_path, lemma_name,
-                    layer_move_action=layer_move_action,
-                    managed_session=managed_session,
-                    surface_profile=surface_profile,
-                    outer_proof_handoff=outer_context,
-                )
-            else:
-                prompt = _build_prover_prompt(
-                    file_path, lemma_name,
-                    managed_session=managed_session,
-                    surface_profile=surface_profile,
-                )
-            prompt_path = run_dir / "prover_prompt.md"
-            node_slug = str(node_id).replace(".", "_")
-            node_prompt_path = run_dir / f"prover_prompt_{node_slug}.md"
-            node_bootstrap_path = run_dir / f"manager_bootstrap_{node_slug}.json"
-            node_prompt_path.write_text(prompt, encoding="utf-8")
-            node_bootstrap_path.write_text(
-                json.dumps(managed_session, indent=2, sort_keys=True),
-                encoding="utf-8",
-            )
-            if node_id in {"root", "0.0"} or not prompt_path.exists():
-                prompt_path.write_text(prompt, encoding="utf-8")
-            return [
-                sys.executable,
-                "-m",
-                "workflow.node.managed_prover_worker",
-                "--prompt-file",
-                str(node_prompt_path),
-                "--bootstrap-file",
-                str(node_bootstrap_path),
-                "--file",
-                file_path,
-                "--lemma",
-                lemma_name,
-                "--include-dir",
-                include_dir,
-                "--session-tag",
-                session_tag,
-                "--node-id",
-                f"Tree-{node_id}",
-                "--run-dir",
-                str(run_dir),
-                "--agent-backend",
-                agent_backend,
-                "--model",
-                model,
-                "--effort",
-                effort,
-                "--max-turns",
-                str(max_turns),
-                "--surface-profile",
-                surface_profile or "",
-            ]
-
-        pstatus("Prover", f"Tree mode for {lemma_name} "
-                f"(agent={agent_backend}, model={model}, "
-                f"timeout={timeout_minutes}min, "
-                f"initial_roots={tree_initial_provers}, "
-                f"max_concurrent={tree_max_concurrent})")
+    from workflow.tree.supervisor import (
+        MANAGED_LIVE_PROGRESS_FILENAME,
+        run_tree_prover,
+    )
+    resume_initial_branches = []
+    if loaded_resume_capsules:
         try:
-            tree_result = run_tree_prover(
-                build_cmd_fn=_build_tree_cmd,
+            current_commit = subprocess.check_output(
+                ["git", "rev-parse", "HEAD"],
                 cwd=str(_PROJECT_ROOT),
-                timeout=timeout_minutes * 60,
-                max_concurrent=tree_max_concurrent,
-                initial_provers=tree_initial_provers,
-                stuck_errors=tree_stuck_errors,
-                stuck_idle_seconds=tree_stuck_idle_seconds,
-                grace_seconds=tree_grace_seconds,
-                max_depth=tree_max_depth,
-                min_alive_seconds=tree_min_alive_seconds,
-                progress_gap_ratio=tree_progress_gap_ratio,
-                progress_gap_idle=tree_progress_gap_idle,
-                structural_undo_spawn_delay_seconds=(
-                    tree_structural_undo_spawn_delay_seconds
-                ),
-                undo_repair_protection_seconds=(
-                    tree_undo_repair_protection_seconds
-                ),
-                source_file=str(file_path),
-                target_lemma=lemma_name,
-                initial_branches=resume_initial_branches or None,
-                payload_audit_path=run_dir / "payload_audit.jsonl",
-                session_namespace=run_session_namespace,
-                live_progress_path=run_dir / MANAGED_LIVE_PROGRESS_FILENAME,
+                text=True,
+                stderr=subprocess.DEVNULL,
+            ).strip()
+        except Exception:
+            current_commit = ""
+        for ckpt in loaded_resume_capsules:
+            if ckpt.commit and current_commit and ckpt.commit != current_commit:
+                pstatus(
+                    "Prover",
+                    f"Checkpoint {ckpt.path} was captured at "
+                    f"{ckpt.commit[:12]}, current commit is "
+                    f"{current_commit[:12]}; replay will verify whether "
+                    "the prefix still reaches the same state.",
+                    "\033[33m",
+                )
+            capsule_shortfall = replay_prefix_shortfall(
+                ckpt.recorded_tactic_count, ckpt.tactic_count,
             )
-        except Exception as exc:  # terminal owner records infrastructure failure
-            logger.exception("Tree search failed before producing a typed result")
-            tree_result = TreeRunResult(
-                returncode=1,
-                infrastructure_errors=(
-                    f"tree search failed: {type(exc).__name__}: {exc}",
-                ),
-                payload_audit_path=str(run_dir / "payload_audit.jsonl"),
+            if capsule_shortfall is not None:
+                pstatus(
+                    "Orchestrator",
+                    f"⚠ RESUME CAPSULE SHORTFALL: {ckpt.path} records "
+                    f"tactic_count={ckpt.recorded_tactic_count} but its "
+                    f"history.ec only yields {ckpt.tactic_count} replayable "
+                    f"tactics (lost "
+                    f"{round(capsule_shortfall['lost_ratio'] * 100)}%). "
+                    f"The capsule is internally inconsistent; the resume "
+                    f"starts from the shorter prefix.",
+                    "\033[31m",
+                )
+            resume_initial_branches.append({
+                "replay_prefix": ckpt.replay_prefix,
+                "resume_context": ckpt.resume_context,
+                "negative_signal": [],
+                "expected_goal_hash": ckpt.current_goal_hash,
+                "goal_identity_required": ckpt.goal_identity_required,
+                "capsule_path": str(ckpt.path),
+                "capsule_score": ckpt.score,
+                "resume_root_policy": resume_root_policy,
+                "resume_diversity": dict(ckpt.resume_diversity or {}),
+                "route_family": {
+                    "family": ckpt.route_family,
+                } if ckpt.route_family else {},
+            })
+    elif loaded_outer_handoff is not None:
+        resume_initial_branches.append({
+            "replay_prefix": list(loaded_outer_handoff.replay_commands),
+            "resume_context": {
+                "resume_prefix_count": len(loaded_outer_handoff.replay_commands),
+                "outer_proof_handoff": loaded_outer_handoff.manager_context(),
+            },
+            "negative_signal": [],
+            "expected_goal_hash": loaded_outer_handoff.boundary_goal_hash,
+            "goal_identity_required": loaded_outer_handoff.goal_identity_required,
+            "capsule_path": str(loaded_outer_handoff.path),
+            "capsule_score": 0.0,
+            "resume_root_policy": "same_run_outer_handoff",
+            "resume_diversity": {},
+            "route_family": {},
+        })
+
+    def _build_tree_cmd(session_tag, node_id, replay_prefix,
+                        layer_move_action=None, resume_context=None):
+        resolved_resume_context = (
+            dict(resume_context) if isinstance(resume_context, dict) else {}
+        )
+        outer_context = resolved_resume_context.get("outer_proof_handoff")
+        if isinstance(outer_context, dict):
+            from workflow.node.continuation_brief import (
+                continuation_brief_from_outer_handoff,
             )
-        finally:
-            if _shutdown_ec_daemon(reason="tree prover finished"):
-                pstatus("Prover", "Stopped EasyCrypt daemon after tree prover")
-            _shutdown_run_why3server()
-        output_text = tree_result.output_text or ""
-        winner_node = tree_result.selected_node_id
-        pstatus("Prover", f"Selected tree result: Tree-{winner_node}")
+
+            resolved_resume_context["continuation_brief"] = (
+                continuation_brief_from_outer_handoff(outer_context)
+            )
+        managed_session = _prepare_managed_session(
+            file_path=file_path,
+            lemma_name=lemma_name,
+            include_dir=include_dir,
+            session_tag=session_tag,
+            replay_prefix=list(replay_prefix or []),
+            run_dir=run_dir,
+            node_label=f"Tree-{node_id}",
+            surface_profile=surface_profile,
+            resume_context=resolved_resume_context or None,
+        )
+        if isinstance(outer_context, dict):
+            from workflow.node.outer_proof_handoff import (
+                proof_command_sequence_sha256,
+            )
+
+            status = managed_session.get("workspace_view", {}).get(
+                "proof_status", {}
+            )
+            actual_hash = str(status.get("goal_hash") or "")
+            expected_hash = str(outer_context.get("boundary_goal_hash") or "")
+            actual_prefix = list(managed_session.get("replay_prefix") or [])
+            actual_spine_hash = proof_command_sequence_sha256(actual_prefix)
+            expected_spine_hash = str(
+                outer_context.get("committed_spine_sha256") or ""
+            )
+            if actual_spine_hash != expected_spine_hash:
+                raise RuntimeError(
+                    "outer proof handoff replay changed the committed proof spine"
+                )
+            if actual_hash != expected_hash:
+                raise RuntimeError(
+                    "outer proof handoff goal identity drifted after replay: "
+                    f"{actual_hash or '<missing>'} != {expected_hash or '<missing>'}"
+                )
+            # This is manager-owned durable construction context, not a
+            # proof-state claim. The runtime validates and repeats it in
+            # every followup/system anchor so context compaction cannot
+            # silently erase an explicitly handed-over declaration.
+        continuation_brief = managed_session.get("continuation_brief")
+        if isinstance(continuation_brief, dict):
+            managed_session["resource_anchors"] = list(
+                continuation_brief.get("resource_anchors") or []
+            )
+        if replay_prefix or isinstance(outer_context, dict):
+            prompt = _build_child_prover_prompt(
+                file_path, lemma_name,
+                layer_move_action=layer_move_action,
+                managed_session=managed_session,
+                surface_profile=surface_profile,
+                outer_proof_handoff=outer_context,
+            )
+        else:
+            prompt = _build_prover_prompt(
+                file_path, lemma_name,
+                managed_session=managed_session,
+                surface_profile=surface_profile,
+            )
+        prompt_path = run_dir / "prover_prompt.md"
+        node_slug = str(node_id).replace(".", "_")
+        node_prompt_path = run_dir / f"prover_prompt_{node_slug}.md"
+        node_bootstrap_path = run_dir / f"manager_bootstrap_{node_slug}.json"
+        node_prompt_path.write_text(prompt, encoding="utf-8")
+        node_bootstrap_path.write_text(
+            json.dumps(managed_session, indent=2, sort_keys=True),
+            encoding="utf-8",
+        )
+        if node_id in {"root", "0.0"} or not prompt_path.exists():
+            prompt_path.write_text(prompt, encoding="utf-8")
+        return [
+            sys.executable,
+            "-m",
+            "workflow.node.managed_prover_worker",
+            "--prompt-file",
+            str(node_prompt_path),
+            "--bootstrap-file",
+            str(node_bootstrap_path),
+            "--file",
+            file_path,
+            "--lemma",
+            lemma_name,
+            "--include-dir",
+            include_dir,
+            "--session-tag",
+            session_tag,
+            "--node-id",
+            f"Tree-{node_id}",
+            "--run-dir",
+            str(run_dir),
+            "--agent-backend",
+            agent_backend,
+            "--model",
+            model,
+            "--effort",
+            effort,
+            "--max-turns",
+            str(max_turns),
+            "--surface-profile",
+            surface_profile or "",
+        ]
+
+    pstatus("Prover", f"Tree mode for {lemma_name} "
+            f"(agent={agent_backend}, model={model}, "
+            f"timeout={timeout_minutes}min, "
+            f"initial_roots={tree_initial_provers}, "
+            f"max_concurrent={tree_max_concurrent})")
+    try:
+        tree_result = run_tree_prover(
+            build_cmd_fn=_build_tree_cmd,
+            cwd=str(_PROJECT_ROOT),
+            timeout=timeout_minutes * 60,
+            max_concurrent=tree_max_concurrent,
+            initial_provers=tree_initial_provers,
+            stuck_errors=tree_stuck_errors,
+            stuck_idle_seconds=tree_stuck_idle_seconds,
+            grace_seconds=tree_grace_seconds,
+            max_depth=tree_max_depth,
+            min_alive_seconds=tree_min_alive_seconds,
+            progress_gap_ratio=tree_progress_gap_ratio,
+            progress_gap_idle=tree_progress_gap_idle,
+            structural_undo_spawn_delay_seconds=(
+                tree_structural_undo_spawn_delay_seconds
+            ),
+            undo_repair_protection_seconds=(
+                tree_undo_repair_protection_seconds
+            ),
+            source_file=str(file_path),
+            target_lemma=lemma_name,
+            initial_branches=resume_initial_branches or None,
+            payload_audit_path=run_dir / "payload_audit.jsonl",
+            session_namespace=run_session_namespace,
+            live_progress_path=run_dir / MANAGED_LIVE_PROGRESS_FILENAME,
+        )
+    except Exception as exc:  # terminal owner records infrastructure failure
+        logger.exception("Tree search failed before producing a typed result")
+        tree_result = TreeRunResult(
+            returncode=1,
+            infrastructure_errors=(
+                f"tree search failed: {type(exc).__name__}: {exc}",
+            ),
+            payload_audit_path=str(run_dir / "payload_audit.jsonl"),
+        )
+    finally:
+        if shutdown_ec_daemon(reason="tree prover finished"):
+            pstatus("Prover", "Stopped EasyCrypt daemon after tree prover")
+        _shutdown_run_why3server()
+    output_text = tree_result.output_text or ""
+    winner_node = tree_result.selected_node_id
+    pstatus("Prover", f"Selected tree result: Tree-{winner_node}")
 
     elapsed = time.time() - start_time
 
@@ -1034,7 +1024,7 @@ def run(
     # the manager-owned accepted prefix.
     prover_report = _extract_prover_report(output_text)
     resume_capsules: list[str] = []
-    if mode == "tree" and archived_ec_sessions:
+    if archived_ec_sessions:
         try:
             from workflow.node.proof_node_resume import create_resume_capsules
 

@@ -20,22 +20,22 @@ from dataclasses import replace
 from pathlib import Path
 from typing import Any
 
-from workflow.proof_management import (
-    CommittedTurnSpine,
-    IntentAdmission,
-    IntentAdmissionController,
-    LemmaLineageStore,
+from core.paths import REPO_ROOT
+from workflow.proof_management.checkpoint_store import ProofCheckpointManager
+from workflow.proof_management.event_store import ProofEventManager
+from workflow.proof_management.intent_admission import IntentAdmission, IntentAdmissionController
+from workflow.proof_management.lineage import LemmaLineageStore
+from workflow.proof_management.node_bootstrap import ProofNodeLifecycleManager
+from workflow.proof_management.node_state import NodeTurnState
+from workflow.proof_management.projection import ProofProjectionPipeline
+from workflow.proof_management.recovery_handlers import ProofRecoveryIntentHandler
+from workflow.proof_management.repl_session import ReplSessionManager
+from workflow.proof_management.turn_executor import ProofTurnExecutor
+from workflow.proof_management.turn_spine import CommittedTurnSpine
+from workflow.proof_management.types import (
     ManagedTurn,
     NodeHealthEvent,
-    NodeTurnState,
-    ProofCheckpointManager,
-    ProofEventManager,
-    ProofNodeLifecycleManager,
     ProofStateSnapshot,
-    ProofProjectionPipeline,
-    ProofRecoveryIntentHandler,
-    ProofTurnExecutor,
-    ReplSessionManager,
     TurnDirective,
 )
 from workflow.proof_management.compiler_turn_adapter import (
@@ -61,7 +61,7 @@ from workflow.proof_state_compiler.managed_goal_view_manager import (
     ManagedGoalViewManager,
 )
 
-PROJECT_ROOT = Path(__file__).resolve().parents[2]
+PROJECT_ROOT = REPO_ROOT
 
 
 class ProofNodeManager:

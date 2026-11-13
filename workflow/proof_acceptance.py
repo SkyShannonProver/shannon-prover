@@ -7,11 +7,11 @@ requirements; it never re-summarizes event history into a second close fact.
 """
 from __future__ import annotations
 
-import hashlib
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
+from core.digests import sha256_file
 from core.easycrypt.committed_history import history_path
 from core.easycrypt.session.session_events import (
     EVENTS_FILENAME,
@@ -135,10 +135,10 @@ def validate_completion_candidate_contract(
         if expected_occurrence != actual_occurrence:
             errors.append("completion candidate close occurrence identity drifted")
         history = history_path(path)
-        if not history.is_file() or _sha256_file(history) != candidate.history_sha256:
+        if not history.is_file() or sha256_file(history) != candidate.history_sha256:
             errors.append("completion candidate history hash drifted")
         source = Path(candidate.target_file).resolve()
-        if not source.is_file() or _sha256_file(source) != (
+        if not source.is_file() or sha256_file(source) != (
             candidate.target_file_sha256
         ):
             errors.append("completion candidate target source hash drifted")
@@ -238,11 +238,3 @@ def _resolve_session_dir(session_dir: str | Path | None) -> Path | None:
     if not session_dir:
         return None
     return Path(session_dir).expanduser()
-
-
-def _sha256_file(path: Path) -> str:
-    digest = hashlib.sha256()
-    with path.open("rb") as stream:
-        for chunk in iter(lambda: stream.read(1024 * 1024), b""):
-            digest.update(chunk)
-    return digest.hexdigest()

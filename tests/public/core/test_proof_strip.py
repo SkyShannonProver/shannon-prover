@@ -4,7 +4,7 @@ from pathlib import Path
 
 import pytest
 
-from core.easycrypt.proof_strip import replace_proofs
+from core.easycrypt.proof_strip import _is_admit_only_proof, replace_proofs
 
 
 ROOT = Path(__file__).resolve().parents[3]
@@ -130,6 +130,16 @@ def test_clear_is_a_tactic_not_a_clone_clause_boundary():
 def test_commented_out_by_proofs_are_byte_identical():
     source = "(* proof p by\n (trivial). (* nested *) realize x by hidden. *)\n"
     assert replace_proofs(source) == (source, 0)
+
+
+@pytest.mark.parametrize("body, admit_only", [
+    ("proof. (* a (* b *) c *) admit. qed.", True),
+    ("proof. (* a *) admit. qed.", True),
+    ("proof. (* admit. *) qed.", False),
+    ("proof.\n  smt().\n  admit.\nqed.", False),
+])
+def test_admit_only_proof_reads_comments_as_easycrypt_does(body, admit_only):
+    assert _is_admit_only_proof(body) is admit_only
 
 
 @pytest.mark.parametrize("source", [

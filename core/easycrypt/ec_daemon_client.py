@@ -27,10 +27,10 @@ from typing import Any, Optional
 
 
 # EasyCrypt's limit on one committed or replayed transaction on the daemon.
-# The manager gives a commit call 180 s
-# (``repl_session.COMMIT_CALL_TIMEOUT_SECONDS``) and passes that budget less a
-# margin for process start-up and the reply in ``STEP_TIMEOUT_ENV``; this
-# default is the same value, so direct ``session_cli`` use behaves alike.
+# This default is the one owner of the value: the manager passes it to
+# session_cli in ``STEP_TIMEOUT_ENV`` and gives the whole commit call a margin
+# on top of it (``repl_session.COMMIT_CALL_TIMEOUT_SECONDS``), so direct
+# ``session_cli`` use behaves alike.
 STEP_TIMEOUT_ENV = "SHANNON_EC_STEP_TIMEOUT"
 DEFAULT_STEP_TIMEOUT_SECONDS = 170.0
 # The client waits this much longer than the step limit: on a timeout the

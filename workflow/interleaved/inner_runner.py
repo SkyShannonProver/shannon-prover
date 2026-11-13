@@ -4,7 +4,6 @@
 from __future__ import annotations
 
 import argparse
-import hashlib
 import json
 import os
 import re
@@ -20,6 +19,8 @@ _IMPORT_ROOT = Path(__file__).resolve().parents[2]
 if str(_IMPORT_ROOT) not in sys.path:
     sys.path.insert(0, str(_IMPORT_ROOT))
 
+from core.digests import sha256_bytes
+from core.jsonio import append_jsonl
 from core.easycrypt.eval_source_prep import prepare_eval_source
 from core.easycrypt.ec_lifecycle import split_ec_commands
 from core.easycrypt.proof_text import unchecked_proof_constructs
@@ -48,6 +49,7 @@ from workflow.proc_lifecycle import (
     WORKER_PGID_MANIFEST_ENV,
     reap_worker_pgid_manifest,
     record_worker_pgid,
+    signal_group_ladder,
 )
 from workflow.schemas.prover_result import (
     PROVER_RUN_INCOMPLETE,
@@ -114,17 +116,8 @@ def run_directory(ctx: ProjectContext) -> tuple[Path, Path]:
     return relative, resolved
 
 
-def append_audit(path: Path, payload: dict[str, object]) -> None:
-    with path.open("a", encoding="utf-8") as stream:
-        stream.write(json.dumps(payload, sort_keys=True) + "\n")
-
-
-def _sha256_bytes(value: bytes) -> str:
-    return hashlib.sha256(value).hexdigest()
-
-
 def _canonical_json_sha256(value: dict[str, object]) -> str:
-    return _sha256_bytes(
+    return sha256_bytes(
         json.dumps(
             value,
             ensure_ascii=False,
@@ -155,7 +148,7 @@ def _load_invocation_receipt(
     if not path.is_relative_to(allowed) or not path.is_file():
         raise ValueError("invocation receipt is outside its scheduler-owned job input")
     raw = path.read_bytes()
-    if _sha256_bytes(raw) != claimed_sha256:
+    if sha256_bytes(raw) != claimed_sha256:
         raise ValueError("invocation receipt byte hash mismatch")
     receipt = json.loads(raw)
     if not isinstance(receipt, dict):
@@ -268,7 +261,7 @@ def _canonical_source_boundary(
         "source_contract": "proof_stripped_project",
         "target_lemma": expected_lemma,
         "source_manifest": str(expected_source_manifest.resolve()),
-        "source_manifest_sha256": _sha256_bytes(expected_source_manifest.read_bytes()),
+        "source_manifest_sha256": sha256_bytes(expected_source_manifest.read_bytes()),
         "answer_source_visible_before": False,
         "answer_source_visible_during": False,
         "answer_source_visible_after": False,
@@ -298,7 +291,7 @@ def _merge_verified_proof(
 ) -> dict[str, str]:
     isolated = isolated_file.read_text(encoding="utf-8")
     current = target_file.read_text(encoding="utf-8")
-    if _sha256_bytes(current.encode("utf-8")) != expected_target_sha256:
+    if sha256_bytes(current.encode("utf-8")) != expected_target_sha256:
         raise ValueError("canonical lane target drifted while Shannon was running")
     proof_body, (isolated_start, isolated_end) = proof_body_span(isolated, lemma)
     _, (prepared_start, prepared_end) = proof_body_span(prepared_source, lemma)
@@ -320,9 +313,9 @@ def _merge_verified_proof(
     temporary.write_text(merged, encoding="utf-8")
     temporary.replace(target_file)
     return {
-        "isolated_source_sha256": _sha256_bytes(isolated.encode("utf-8")),
-        "merged_target_sha256": _sha256_bytes(merged.encode("utf-8")),
-        "proof_body_sha256": _sha256_bytes(proof_body.encode("utf-8")),
+        "isolated_source_sha256": sha256_bytes(isolated.encode("utf-8")),
+        "merged_target_sha256": sha256_bytes(merged.encode("utf-8")),
+        "proof_body_sha256": sha256_bytes(proof_body.encode("utf-8")),
     }
 
 
@@ -396,7 +389,7 @@ def _terminal_progress(
             prefix_text = prefix_bytes.decode("utf-8")
             if (
                 len(prefix_bytes) != metadata["byte_count"]
-                or _sha256_bytes(prefix_bytes) != metadata["sha256"]
+                or sha256_bytes(prefix_bytes) != metadata["sha256"]
             ):
                 raise ValueError("manager partial-prefix bytes do not match metadata")
             accepted_commands = tuple(
@@ -412,7 +405,7 @@ def _terminal_progress(
                 raise ValueError("manager partial prefix contains a terminal escape")
             accepted_prefix: dict[str, object] = {
                 "tactic_count": metadata["tactic_count"],
-                "sha256": _sha256_bytes(prefix_bytes),
+                "sha256": sha256_bytes(prefix_bytes),
                 "byte_count": len(prefix_bytes),
                 "authority": "manager_committed_history_reporting_artifact",
                 "replay_required_before_use": True,
@@ -440,7 +433,7 @@ def _terminal_progress(
             prefix_bytes = selected.prefix_text.encode("utf-8")
             accepted_prefix = {
                 "tactic_count": selected.capsule.tactic_count,
-                "sha256": _sha256_bytes(prefix_bytes),
+                "sha256": sha256_bytes(prefix_bytes),
                 "byte_count": len(prefix_bytes),
                 "authority": "manager_committed_history_reporting_artifact",
                 "replay_required_before_use": True,
@@ -685,8 +678,6 @@ def build_shannon_command(
         "--prover-effort",
         profile.effort,
         "--eval-mode",
-        "--max-iterations",
-        "1",
         "--prover-timeout-minutes",
         str(timeout_minutes),
         "--tree-initial-provers",
@@ -764,18 +755,9 @@ def _wait_for_orchestrator(
                 or time.monotonic() < interrupt_deadline
             ):
                 continue
-            try:
-                os.killpg(process.pid, signal.SIGTERM)
-            except ProcessLookupError:
-                pass
-            try:
-                exit_code = process.wait(timeout=4.0)
-            except subprocess.TimeoutExpired:
-                try:
-                    os.killpg(process.pid, signal.SIGKILL)
-                except ProcessLookupError:
-                    pass
-                exit_code = process.wait()
+            exit_code = signal_group_ladder(
+                process, ((signal.SIGTERM, 4.0), (signal.SIGKILL, None))
+            )
             return exit_code, (
                 "managed safe-stop handback exceeded its cooperative "
                 "shutdown grace"
@@ -796,13 +778,13 @@ def _prepare_outer_handoff_with_daemon_cleanup(
     """
 
     from core.easycrypt.ec_daemon_client import default_socket_path
-    from workflow.agents.ec_services import _shutdown_ec_daemon
+    from workflow.agents.ec_services import shutdown_ec_daemon
 
     socket_path = default_socket_path()
     try:
         return prepare_outer_proof_handoff(ctx, **kwargs)
     finally:
-        _shutdown_ec_daemon(
+        shutdown_ec_daemon(
             reason="outer proof handoff preparation finished",
             socket_path=socket_path,
         )
@@ -902,7 +884,7 @@ def main(
         anchor_path = (root / anchor_relative).resolve()
         if (
             not anchor_path.is_file()
-            or _sha256_bytes(anchor_path.read_bytes())
+            or sha256_bytes(anchor_path.read_bytes())
             != receipt.get("resource_anchors_sha256")
         ):
             parser.error("invocation receipt resource-anchor hash mismatch")
@@ -937,7 +919,7 @@ def main(
         if note_path != allowed_note or not note_path.is_file():
             parser.error("continuation note is outside scheduler-owned job input")
         note_bytes = note_path.read_bytes()
-        if _sha256_bytes(note_bytes) != receipt.get("continuation_note_sha256"):
+        if sha256_bytes(note_bytes) != receipt.get("continuation_note_sha256"):
             parser.error("invocation receipt continuation-note hash mismatch")
         try:
             continuation_note = note_bytes.decode("utf-8")
@@ -973,7 +955,7 @@ def main(
     ):
         parser.error("invocation receipt provider identity does not match inner profile")
     target_path = ctx.target
-    if _sha256_bytes(target_path.read_bytes()) != receipt.get("target_sha256"):
+    if sha256_bytes(target_path.read_bytes()) != receipt.get("target_sha256"):
         parser.error("lane target does not match the scheduler submission")
     current_commit = subprocess.run(
         ["git", "rev-parse", "HEAD"],
@@ -1038,7 +1020,7 @@ def main(
 
     try:
         if args.handoff_current:
-            append_audit(
+            append_jsonl(
                 audit,
                 {
                     "event": "handoff_preparing",
@@ -1065,7 +1047,7 @@ def main(
                 command.extend(
                     ["--outer-proof-handoff", str(handoff_path.relative_to(root))]
                 )
-            append_audit(
+            append_jsonl(
                 audit,
                 {
                     "event": "started",
@@ -1116,7 +1098,7 @@ def main(
     except BaseException as exc:
         error = f"{type(exc).__name__}: {exc}"
     finally:
-        append_audit(
+        append_jsonl(
             audit,
             {
                 "event": "finished",
@@ -1168,7 +1150,7 @@ def main(
         json.dumps(handback, indent=2, sort_keys=True) + "\n",
         encoding="utf-8",
     )
-    append_audit(
+    append_jsonl(
         audit,
         {
             "event": "canonical_result_projected",

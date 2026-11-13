@@ -40,13 +40,9 @@ def _make_admit_block(indent: str) -> list[str]:
 
 
 def _is_admit_only_proof(body_text: str) -> bool:
-    non_boilerplate = re.sub(
-        r"(proof\.|qed\.|admit\.|\(\*.*?\*\))",
-        "",
-        body_text,
-        flags=re.DOTALL,
-    ).strip()
-    return "admit." in body_text and not non_boilerplate
+    code = strip_comments(body_text)
+    non_boilerplate = re.sub(r"proof\.|qed\.|admit\.", "", code).strip()
+    return "admit." in code and not non_boilerplate
 
 
 _SOURCE_TOKEN = re.compile(r'"(?:\\.|[^"\\])*"|[A-Za-z_][A-Za-z0-9_\']*|\.\.|[^\s]', re.DOTALL)

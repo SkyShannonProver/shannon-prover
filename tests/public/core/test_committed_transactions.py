@@ -4,7 +4,6 @@ import pytest
 from core.easycrypt.committed_history import (
     flatten_committed_transactions,
     read_committed_commands,
-    read_committed_tactics,
     read_committed_transactions,
 )
 
@@ -14,7 +13,6 @@ def test_multiline_commands_retain_manager_transaction(tmp_path):
     (tmp_path / "history.ec").write_text(block + "\n")
     (tmp_path / "steps.log").write_text("3\n")
     assert read_committed_transactions(tmp_path) == [block]
-    assert read_committed_tactics(tmp_path) == read_committed_commands(tmp_path)
     assert flatten_committed_transactions([block]) == read_committed_commands(tmp_path)
 
 

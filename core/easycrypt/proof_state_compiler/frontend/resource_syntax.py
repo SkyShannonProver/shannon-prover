@@ -9,6 +9,7 @@ from core.easycrypt.proof_state_compiler.delimiters import (
     find_top_level,
     matching_close,
 )
+from core.easycrypt.proof_text import easycrypt_code, sentence_ends
 
 
 _DECLARATION_START = re.compile(
@@ -18,20 +19,33 @@ _DECLARATION_START = re.compile(
 
 
 def declarations(text: str) -> tuple[tuple[str, str], ...]:
-    lines = text.splitlines()
+    """Return ``(name, declaration)`` for each lemma or axiom of ``text``.
+
+    A declaration runs from its keyword to the line whose last code character
+    is a sentence-final dot. Comments and strings are read as EasyCrypt reads
+    them (``proof_text``), so a declaration inside a comment is not one, and a
+    comment inside a declaration stays in its text.
+    """
+
+    code = easycrypt_code(text)
+    final_dots = set(sentence_ends(text, code))
+    lines = []
+    offset = 0
+    for line in text.splitlines(keepends=True):
+        lines.append((offset, line, code[offset:offset + len(line)]))
+        offset += len(line)
     found = []
     index = 0
     while index < len(lines):
-        match = _DECLARATION_START.match(lines[index])
+        match = _DECLARATION_START.match(lines[index][2])
         if not match:
             index += 1
             continue
         parts = []
-        depth = 0
         while True:
-            line = lines[index]
-            end, depth = _last_code_end(line, depth)
-            if line[:end].endswith("."):
+            start, line, line_code = lines[index]
+            end = len(line_code.rstrip())
+            if start + end in final_dots:
                 # A comment after the final period is not declaration text,
                 # and the next line already starts another sentence.
                 parts.append(line[:end].strip())
@@ -45,36 +59,11 @@ def declarations(text: str) -> tuple[tuple[str, str], ...]:
     return tuple(found)
 
 
-def _last_code_end(line: str, depth: int) -> tuple[int, int]:
-    """Return the end of ``line``'s last non-comment character and the
-    ``(* *)`` nesting depth after it, starting inside ``depth`` comments."""
-
-    end = 0
-    index = 0
-    while index < len(line):
-        pair = line[index:index + 2]
-        if pair == "(*":
-            depth += 1
-            index += 2
-        elif pair == "*)" and depth:
-            depth -= 1
-            index += 2
-        else:
-            if not depth and not line[index].isspace():
-                end = index + 1
-            index += 1
-    return end, depth
-
-
 def normalized_declaration(text: str) -> str:
     """Strip verifier display headers while preserving declaration syntax."""
 
     match = _DECLARATION_START.search(text)
     return text[match.start():].strip() if match is not None else text.strip()
-
-
-def module_parameters(header: str) -> tuple[str, ...]:
-    return tuple(name for name, _ in module_parameter_specs(header))
 
 
 def module_parameter_specs(header: str) -> tuple[tuple[str, str], ...]:

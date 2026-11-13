@@ -16,7 +16,6 @@ from workflow.proof_state_compiler.delivery_policies import (
     default_delivery_policy_catalog,
 )
 from workflow.proof_state_compiler.profile_registry import (
-    PRODUCTION_COMPILER_PROFILES as COMPILER_PROFILES,  # noqa: F401  (public name)
     PRODUCTION_PROFILE_IDS,
     runtime_profile_registration,
 )

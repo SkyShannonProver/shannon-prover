@@ -10,10 +10,7 @@ from core.easycrypt.committed_history import (
 )
 from workflow.node.managed_prover_worker import _emit_final
 from workflow.node.manager_followup_render import render_manager_followup
-from workflow.proof_management import (
-    ManagedTurn,
-    NodeHealthEvent,
-)
+from workflow.proof_management.types import ManagedTurn, NodeHealthEvent
 from workflow.proof_state_compiler.managed_goal_view_manager import (
     ManagedGoalViewManager,
 )
@@ -466,7 +463,7 @@ def test_worker_mirrors_agent_exit_reason_to_stderr(
     tmp_path: Path,
     capsys,
 ) -> None:
-    from workflow.provider.provider_sessions import ClaudeRunResult
+    from workflow.provider.provider_sessions import AgentRunResult
 
     text = (
         "provider attempted a disabled tool: claude:ToolSearch\n"
@@ -475,7 +472,7 @@ def test_worker_mirrors_agent_exit_reason_to_stderr(
     returncode = _run_worker_with_result(
         monkeypatch,
         tmp_path,
-        ClaudeRunResult(text=text, session_id="s-1", returncode=2, turns=3),
+        AgentRunResult(text=text, session_id="s-1", returncode=2, turns=3),
     )
 
     assert returncode == 2
@@ -500,7 +497,7 @@ def test_worker_exit_reason_on_stderr_is_bounded(
     tmp_path: Path,
     capsys,
 ) -> None:
-    from workflow.provider.provider_sessions import ClaudeRunResult
+    from workflow.provider.provider_sessions import AgentRunResult
 
     text = (
         "agent final message\n" + "x" * 10_000
@@ -509,7 +506,7 @@ def test_worker_exit_reason_on_stderr_is_bounded(
     _run_worker_with_result(
         monkeypatch,
         tmp_path,
-        ClaudeRunResult(text=text, session_id="", returncode=2),
+        AgentRunResult(text=text, session_id="", returncode=2),
     )
 
     captured = capsys.readouterr()
@@ -527,12 +524,12 @@ def test_worker_clean_exit_writes_no_stderr(
     tmp_path: Path,
     capsys,
 ) -> None:
-    from workflow.provider.provider_sessions import ClaudeRunResult
+    from workflow.provider.provider_sessions import AgentRunResult
 
     returncode = _run_worker_with_result(
         monkeypatch,
         tmp_path,
-        ClaudeRunResult(text="gave up", session_id="", returncode=0),
+        AgentRunResult(text="gave up", session_id="", returncode=0),
     )
 
     assert returncode == 0
@@ -545,7 +542,7 @@ _SIGNAL_DURING_EMIT_WORKER = r'''
 import json, os, signal, sys, threading
 
 from workflow.node import managed_prover_worker as worker
-from workflow.provider.provider_sessions import ClaudeRunResult
+from workflow.provider.provider_sessions import AgentRunResult
 
 
 class Runtime:
@@ -569,9 +566,9 @@ class Runtime:
         with self.emit_lock:
             os.kill(os.getpid(), signal.SIGTERM)
         if not self.drained.wait(10):
-            return ClaudeRunResult(text="not drained", session_id="",
+            return AgentRunResult(text="not drained", session_id="",
                                    returncode=3)
-        return ClaudeRunResult(text="stopped", session_id="", returncode=0)
+        return AgentRunResult(text="stopped", session_id="", returncode=0)
 
 
 worker.ProofNodeRuntime = Runtime

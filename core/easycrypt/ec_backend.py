@@ -18,8 +18,7 @@ from core.easycrypt.ec_diagnostics import error_text
 from core.easycrypt.ec_proc import emacs_command, why3_socket_from_env
 from core.easycrypt.ec_env import get_ec_env
 
-# A batch run still going after this long is killed and reported as an error;
-# -verify gives a whole compile the same bound.
+# A batch run still going after this long is killed and reported as an error.
 BATCH_TIMEOUT_SECONDS = 600.0
 
 

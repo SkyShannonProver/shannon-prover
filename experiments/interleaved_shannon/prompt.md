@@ -210,7 +210,7 @@ infrastructure, `workflow/`, `core/`, `tools/`, or `easycrypt-src/`. Read only t
 `easycrypt-src/theories`, fixed Shannon infrastructure, and public same-run artifacts. Do not read history,
 other worktrees, excluded or answer-bearing sources, related implementations, caches, or the web. Do not
 use ambient EasyCrypt, opam, `session_cli.py`, raw session interfaces, `source_projection.py`,
-`workflow.orchestrator`, or `run_shannon.py`.
+or `workflow.orchestrator`.
 
 Keep `{{RUN_DIR}}/notes.md` concise: proved facts, next work, useful jobs, and
 abandoned routes. You have the fixed 12-hour task budget. Treat it as a work

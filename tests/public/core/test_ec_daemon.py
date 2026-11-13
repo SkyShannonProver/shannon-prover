@@ -335,25 +335,3 @@ TESTS = [
     test_session_isolation_on_try,
     test_double_open_rejected,
 ]
-
-
-def main():
-    print("Running ec_daemon integration tests")
-    print("  (requires `easycrypt` on PATH via opam switch)")
-    print()
-    failed = 0
-    for fn in TESTS:
-        try:
-            fn()
-        except Exception as e:
-            failed += 1
-            print(f"  ✗ {fn.__name__}: {type(e).__name__}: {e}")
-            import traceback
-            traceback.print_exc()
-    print()
-    print(f"{len(TESTS) - failed}/{len(TESTS)} tests passed")
-    return 0 if failed == 0 else 1
-
-
-if __name__ == "__main__":
-    raise SystemExit(main())

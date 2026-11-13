@@ -594,13 +594,6 @@ class ProofCheckpointManager:
         })
 
 
-
-def _string_list(value: Any) -> list[str]:
-    if not isinstance(value, list):
-        return []
-    return [str(item) for item in value if str(item).strip()]
-
-
 def pre_rewind_restore_option(anchor: dict[str, Any]) -> dict[str, Any]:
     restore_id = str(_dict_or_empty(anchor).get("restore_id") or "").strip()
     if not restore_id:

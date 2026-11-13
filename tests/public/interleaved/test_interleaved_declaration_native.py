@@ -11,6 +11,7 @@ from workflow.interleaved import jobs
 from workflow.interleaved.verify import verify_lemma_import
 
 
+@pytest.mark.easycrypt
 @pytest.mark.parametrize("head,claim,tactic", [
     ("local lemma", "true", "trivial."),
     ("local\nlemma", "true", "trivial."),

@@ -11,7 +11,7 @@ import dataclasses
 from pathlib import Path
 from typing import Any
 
-from experiments.interleaved_shannon._compat import reference_context
+from experiments.interleaved_shannon.reference import reference_context
 from workflow.interleaved import jobs
 from workflow.interleaved.job_record import JobRecord
 from workflow.interleaved.project import InterleavedProject

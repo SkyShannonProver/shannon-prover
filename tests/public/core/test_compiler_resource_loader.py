@@ -218,6 +218,27 @@ def test_source_declaration_ends_at_its_period_before_a_comment() -> None:
     )
 
 
+def test_source_declarations_read_comments_and_strings_as_easycrypt_does() -> None:
+    # `(*)` is the multiplication operator, not a comment opener; a comment
+    # opener inside a string opens nothing; a commented-out lemma is not one.
+    source = (
+        "lemma foo : (*) = (*) by smt.\n"
+        "lemma bar : true.\n"
+        "(*\n"
+        "lemma ghost : false.\n"
+        "*)\n"
+        'lemma quoted : f "(*" = x.\n'
+        "lemma last : false.\n"
+    )
+
+    assert declarations(source) == (
+        ("foo", "lemma foo : (*) = (*) by smt."),
+        ("bar", "lemma bar : true."),
+        ("quoted", 'lemma quoted : f "(*" = x.'),
+        ("last", "lemma last : false."),
+    )
+
+
 def test_native_namespace_probe_queries_after_complete_source_without_abort(
     tmp_path: Path,
 ) -> None:

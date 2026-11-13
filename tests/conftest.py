@@ -30,6 +30,27 @@ ROOT = Path(__file__).resolve().parent.parent
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
+from tests.helpers import quarantine as _quarantine  # noqa: E402
+
+
+# ---------------------------------------------------------------------------
+# Quarantined flaky tests (tests/quarantine.json; see tests/helpers/quarantine.py)
+# ---------------------------------------------------------------------------
+
+def pytest_collection_modifyitems(config, items):
+    entries, errors = _quarantine.load()
+    if errors:
+        raise pytest.UsageError("\n".join(errors))
+    if os.environ.get("SHANNON_RUN_QUARANTINED") == "1":
+        deselected = [item for item in items if item.nodeid not in entries]
+        if deselected:
+            config.hook.pytest_deselected(items=deselected)
+        items[:] = [item for item in items if item.nodeid in entries]
+        return
+    for item in items:
+        if item.nodeid in entries:
+            item.add_marker(pytest.mark.skip(reason=entries[item.nodeid]))
+
 
 # ---------------------------------------------------------------------------
 # EasyCrypt daemon hygiene
@@ -38,7 +59,7 @@ if str(ROOT) not in sys.path:
 # ``session_cli.py`` lazily spawns a detached ``ec_daemon.py``
 # (``start_new_session=True``) at the default socket and, by design, leaves it
 # running for later short-lived calls; only a prover run's cleanup
-# (``ec_services._shutdown_ec_daemon``) stops it.  A test that drives
+# (``ec_services.shutdown_ec_daemon``) stops it.  A test that drives
 # ``session_cli`` has no prover run, so its daemon outlived pytest as a PID-1
 # orphan, and the per-checkout default socket let a later run reuse a daemon
 # still executing older code.  The suite therefore owns that lifecycle without
@@ -154,9 +175,9 @@ def _ec_daemon_hygiene(request, _ec_daemon_socket_root):
     else:
         os.environ["EC_DAEMON_SOCKET"] = previous
     if os.path.exists(socket_path):
-        from workflow.agents.ec_services import _shutdown_ec_daemon
+        from workflow.agents.ec_services import shutdown_ec_daemon
 
-        _shutdown_ec_daemon(
+        shutdown_ec_daemon(
             reason=f"pytest module {request.module.__name__}",
             socket_path=socket_path,
         )

@@ -52,7 +52,6 @@ def test_run_one_lemma_invokes_orchestrator_via_config(tmp_path, monkeypatch):
     assert config.file == str(target)
     assert config.include_dir == "theories"
     assert config.eval_mode is True
-    assert config.max_iterations == 1
     assert config.prover.timeout_minutes == max(5, 600 // 60 - 2)
     assert config.output_dir.endswith("L.orchestrator_runs")
 

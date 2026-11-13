@@ -103,7 +103,7 @@ def test_prepare_run_ec_daemon_socket_cleans_only_selected_run(
         calls.append((reason, socket_path))
         return True
 
-    monkeypatch.setattr(prover, "_shutdown_ec_daemon", fake_shutdown)
+    monkeypatch.setattr(prover, "shutdown_ec_daemon", fake_shutdown)
 
     socket_path, stopped = prover._prepare_run_ec_daemon_socket(tmp_path / "run")
 
@@ -119,7 +119,7 @@ def test_shutdown_ec_daemon_removes_stale_socket(tmp_path: Path) -> None:
     sock.write_text("not a unix socket", encoding="utf-8")
     lock.write_text("old lock", encoding="utf-8")
 
-    stopped = prover._shutdown_ec_daemon(socket_path=str(sock), wait_seconds=0)
+    stopped = prover.shutdown_ec_daemon(socket_path=str(sock), wait_seconds=0)
 
     assert stopped is False
     assert not sock.exists()
@@ -151,7 +151,7 @@ def test_shutdown_ec_daemon_uses_client_for_responsive_socket(
     )
     monkeypatch.setattr(ec_daemon_client, "ECDaemonClient", DummyClient)
 
-    stopped = prover._shutdown_ec_daemon(socket_path=str(sock), wait_seconds=0)
+    stopped = prover.shutdown_ec_daemon(socket_path=str(sock), wait_seconds=0)
 
     assert stopped is True
     assert not sock.exists()
@@ -182,7 +182,7 @@ def test_shutdown_ec_daemon_treats_mid_response_close_as_stopped(
     )
     monkeypatch.setattr(ec_daemon_client, "ECDaemonClient", ClosingClient)
 
-    stopped = prover._shutdown_ec_daemon(socket_path=str(sock), wait_seconds=0)
+    stopped = prover.shutdown_ec_daemon(socket_path=str(sock), wait_seconds=0)
 
     assert stopped is True
     assert not sock.exists()

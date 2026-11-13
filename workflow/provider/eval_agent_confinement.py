@@ -90,14 +90,6 @@ def _resolve_from_project(value: object, project_root: Path) -> Path:
     return path.resolve()
 
 
-def _is_relative_to(path: Path, root: Path) -> bool:
-    try:
-        path.relative_to(root)
-        return True
-    except ValueError:
-        return False
-
-
 def _repository_mount_root(project_root: Path) -> Path:
     """Return the shared repository root that must disappear in the sandbox.
 
@@ -253,7 +245,7 @@ class EvalAgentConfinement:
             ("node memory", Path(node_memory_dir).resolve()),
             ("runtime private directory", Path(private_dir).resolve()),
         ):
-            if not _is_relative_to(path, root):
+            if not path.is_relative_to(root):
                 raise EvalAgentConfinementError(
                     f"{label} escapes the current project root: {path}"
                 )
@@ -266,7 +258,7 @@ class EvalAgentConfinement:
                 "evaluation confinement requires a distinct existing original "
                 "source path for the negative visibility probe"
             )
-        if not _is_relative_to(isolated_file, isolated_root):
+        if not isolated_file.is_relative_to(isolated_root):
             raise EvalAgentConfinementError(
                 f"isolated source file escapes isolated root: {isolated_file}"
             )
@@ -278,9 +270,7 @@ class EvalAgentConfinement:
             )
         for raw in _SYSTEM_READ_PATHS:
             system_path = Path(raw)
-            if system_path.is_dir() and _is_relative_to(
-                root, system_path.resolve()
-            ):
+            if system_path.is_dir() and root.is_relative_to(system_path.resolve()):
                 raise EvalAgentConfinementError(
                     "evaluation project is below a system path that must be "
                     f"mounted into the agent namespace: {system_path}"
@@ -297,8 +287,8 @@ class EvalAgentConfinement:
                 isolated_root,
                 root / "easycrypt-src",
             )
-            if _is_relative_to(include, root) and not any(
-                _is_relative_to(include, allowed_root)
+            if include.is_relative_to(root) and not any(
+                include.is_relative_to(allowed_root)
                 for allowed_root in allowed_include_roots
             ):
                 raise EvalAgentConfinementError(
@@ -307,7 +297,7 @@ class EvalAgentConfinement:
                 )
             # Project-local safe include directories are admitted explicitly.
             # System includes are already covered by the runtime allow-list.
-            if _is_relative_to(include, root):
+            if include.is_relative_to(root):
                 include_dirs.append(include)
 
         return cls(
@@ -477,13 +467,13 @@ class EvalAgentConfinement:
 
         def covered(path: Path) -> bool:
             return any(
-                path == destination or _is_relative_to(path, destination)
+                path == destination or path.is_relative_to(destination)
                 for destination in mounted_destinations
             )
 
         def host_content_visible(path: Path) -> bool:
             return any(
-                path == destination or _is_relative_to(path, destination)
+                path == destination or path.is_relative_to(destination)
                 for destination in bound_destinations
             )
 
@@ -561,7 +551,7 @@ class EvalAgentConfinement:
         # never re-expose a prefix that contains the project itself.
         runtime_prefix = Path(sys.prefix).resolve()
         if not host_content_visible(runtime_prefix):
-            if _is_relative_to(self.project_root, runtime_prefix):
+            if self.project_root.is_relative_to(runtime_prefix):
                 raise EvalAgentConfinementError(
                     "refusing to expose a Python runtime prefix that contains "
                     f"the evaluation project: {runtime_prefix}"
@@ -586,13 +576,13 @@ class EvalAgentConfinement:
             base_runtime_prefix != runtime_prefix
             and not host_content_visible(base_runtime_prefix)
         ):
-            if _is_relative_to(self.project_root, base_runtime_prefix):
+            if self.project_root.is_relative_to(base_runtime_prefix):
                 raise EvalAgentConfinementError(
                     "refusing to expose a Python base runtime prefix that "
                     f"contains the evaluation project: {base_runtime_prefix}"
                 )
             if not (
-                _is_relative_to(python_executable, base_runtime_prefix)
+                python_executable.is_relative_to(base_runtime_prefix)
                 and (base_runtime_prefix / "lib").is_dir()
             ):
                 raise EvalAgentConfinementError(
@@ -609,9 +599,7 @@ class EvalAgentConfinement:
 
         ro_bind(self.isolated_root)
         for include in self.include_dirs:
-            if include != self.isolated_root and not _is_relative_to(
-                include, self.isolated_root
-            ):
+            if include != self.isolated_root and not include.is_relative_to(self.isolated_root):
                 ro_bind(include)
         rw_bind(self.node_memory_dir)
         rw_bind(self.private_dir)
@@ -635,7 +623,7 @@ class EvalAgentConfinement:
                     home / ".codex" / "packages" / "standalone",
                     writable=False,
                 )
-            if _is_relative_to(executable, host_codex):
+            if executable.is_relative_to(host_codex):
                 bind_path(executable, executable, writable=False)
         elif backend == "claude":
             claude_home = (self.state_root / "claude_home").resolve()
@@ -652,7 +640,7 @@ class EvalAgentConfinement:
                 home / ".claude.json",
                 writable=True,
             )
-            if _is_relative_to(executable, host_claude):
+            if executable.is_relative_to(host_claude):
                 bind_path(executable, executable, writable=False)
         else:
             raise EvalAgentConfinementError(
@@ -691,7 +679,7 @@ class EvalAgentConfinement:
             try:
                 for child in sorted(worktrees.iterdir()):
                     resolved = child.resolve()
-                    if _is_relative_to(self.project_root, resolved):
+                    if self.project_root.is_relative_to(resolved):
                         continue
                     sibling_paths.append(resolved)
                     if len(sibling_paths) >= 4:
@@ -721,7 +709,7 @@ class EvalAgentConfinement:
             try:
                 for child in sorted(host_tmp.iterdir()):
                     resolved = child.resolve()
-                    if _is_relative_to(self.project_root, resolved):
+                    if self.project_root.is_relative_to(resolved):
                         continue
                     tmp_paths.append(resolved)
                     if len(tmp_paths) >= 4:

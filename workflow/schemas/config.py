@@ -47,8 +47,7 @@ class ProverConfig:
     agent_backend: str = "codex"
     model: str = ""
     effort: str = "high"
-    mode: str = "tree"
-    # Tree mode parameters (only used when mode == "tree")
+    # Managed tree search parameters.
     # root provers to start simultaneously
     tree_initial_provers: int = DEFAULT_TREE_INITIAL_PROVERS
     tree_max_concurrent: int = TREE_MAX_ACTIVE_NODES  # max active provers at once
@@ -73,8 +72,6 @@ class ProverConfig:
         self.agent_backend = normalize_agent_backend(self.agent_backend)
         if not str(self.model or "").strip():
             self.model = default_model_for_backend(self.agent_backend)
-        if self.mode != "tree":
-            raise ValueError("unsupported prover mode; only 'tree' is current")
 
 
 @dataclass
@@ -85,10 +82,6 @@ class RunConfig:
     file: str  # e.g. "eval/examples/cramer-shoup/cramer_shoup.ec"
     lemma: str  # e.g. "CCA_DDH0"
     include_dir: str = ""
-
-    # Iteration control. Retained for config back-compat; no longer drives a
-    # retry loop (the analyst/improver/regression phases were removed).
-    max_iterations: int = 2
 
     # Agent configs
     prover: ProverConfig = field(default_factory=ProverConfig)
@@ -104,7 +97,7 @@ class RunConfig:
     # Current proof-state surface profile. This controls only the
     # agent-facing proof-state surface and manager intents; EasyCrypt remains
     # the verifier, and tree/search topology is configured separately through
-    # ``prover.mode`` and ``prover.tree_initial_provers``.
+    # ``prover.tree_initial_provers`` and ``prover.tree_max_concurrent``.
     surface_profile: str = DEFAULT_CURRENT_SURFACE_PROFILE
 
     # Proof-node resume capsules. These are produced by failed/interrupted
@@ -135,8 +128,9 @@ class RunConfig:
         data = json.loads(path.read_text(encoding="utf-8"))
         prover_data = data.pop("prover", {})
         # Drop keys not on the current schema so configs saved by older versions
-        # (e.g. the removed `regression`/`analyst_mode` fields) still load
-        # instead of raising TypeError on an unexpected keyword argument.
+        # (e.g. the removed `regression`/`analyst_mode`/`max_iterations` and
+        # `prover.mode` fields) still load instead of raising TypeError on an
+        # unexpected keyword argument.
         known = {f.name for f in fields(cls)}
         data = {k: v for k, v in data.items() if k in known}
         prover_known = {f.name for f in fields(ProverConfig)}

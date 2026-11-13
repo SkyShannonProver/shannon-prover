@@ -6,7 +6,7 @@ import json
 from typing import Any
 
 from workflow.proof_state_compiler.surface_profiles import (
-    require_current_workspace_view as _require_profile_workspace_view,
+    require_current_workspace_view,
 )
 
 
@@ -15,13 +15,13 @@ SURFACE_TURN_SCHEMA_VERSION = 1
 _RUNTIME_ONLY_FIELDS = frozenset({"_l1_surface_notice", "surface_turn"})
 
 
-def require_current_workspace_view(
+def canonical_current_workspace_view(
     view: object,
     *,
     profile_id: str,
     label: str,
 ) -> dict[str, Any]:
-    """Validate one lean current workspace view."""
+    """Drop runtime-only fields, validate the lean view, return a JSON copy."""
 
     if not isinstance(view, dict):
         raise TypeError(f"{label} must be an object")
@@ -30,7 +30,7 @@ def require_current_workspace_view(
         for key, value in view.items()
         if key not in _RUNTIME_ONLY_FIELDS
     }
-    _require_profile_workspace_view(
+    require_current_workspace_view(
         data,
         profile_id=profile_id,
         label=label,

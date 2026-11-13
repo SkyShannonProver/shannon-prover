@@ -7,7 +7,7 @@ agent-facing tool. The proof agent uses only the manager-owned
 ## Current command surface
 
 ```text
-python3 core/easycrypt/session_cli.py -d SESSION \
+uv run python core/easycrypt/session_cli.py -d SESSION \
   (-start |
    -tactic-exec commit|commit_chain|undo |
    -try |
@@ -16,11 +16,10 @@ python3 core/easycrypt/session_cli.py -d SESSION \
    -compiler-input-v2 |
    -compiler-resource-load-v2 |
    -native-semantic-batch-json |
-   -native-state-projection-json |
-   -verify LEMMA)
+   -native-state-projection-json)
 ```
 
-Run `python3 core/easycrypt/session_cli.py --help` for request fields. New
+Run `uv run python core/easycrypt/session_cli.py --help` for request fields. New
 workflow code must not depend on retired `-next/-prev/-chain`, rich
 `-agent-view`, goal analysis, inspect/search/lookup, or tactic-form commands.
 
@@ -29,16 +28,16 @@ workflow code must not depend on retired `-next/-prev/-chain`, rich
 The canonical manager mutation entry is:
 
 ```bash
-python3 core/easycrypt/session_cli.py -d SESSION \
+uv run python core/easycrypt/session_cli.py -d SESSION \
   -tactic-exec commit -c 'TAC.'
 
-python3 core/easycrypt/session_cli.py -d SESSION \
+uv run python core/easycrypt/session_cli.py -d SESSION \
   -tactic-exec commit_chain --keep-on-fail -c 'T1. T2.'
 
-python3 core/easycrypt/session_cli.py -d SESSION \
+uv run python core/easycrypt/session_cli.py -d SESSION \
   -tactic-exec undo
 
-python3 core/easycrypt/session_cli.py -d SESSION \
+uv run python core/easycrypt/session_cli.py -d SESSION \
   -tactic-exec undo --keep-commands N
 ```
 
@@ -65,7 +64,6 @@ developer diagnosis.
 | `-native-semantic-batch-json` | One bounded, ordered batch of tagged EasyCrypt-native semantic descriptors |
 | `-native-state-projection-json` | EasyCrypt-native typed current-state projection |
 | `-try` | Exact tactic preflight in the unchanged current state |
-| `-verify LEMMA` | Final source/lemma verification |
 
 Every semantic result is a unique current-call produced artifact. Stdout is
 only a human display. It cannot replace, repair, or override the event-bound
@@ -117,34 +115,10 @@ semantic fallback.
 
 ## Environment
 
-EasyCrypt is provided by the repository-managed `r2026.06` toolchain selected
-and verified by `ec_env.py`. Bootstrap once and verify before backend work:
-
-```bash
-uv run python tools/bootstrap_easycrypt.py
-uv run python tools/bootstrap_easycrypt.py --verify-only
-```
-
-Keep the `uv` launcher outside the project `.venv`. In particular,
-`.venv/bin/uv` must not be used to recreate the same environment. After an
-environment is synchronized, use `.venv/bin/python
-tools/bootstrap_easycrypt.py --verify-only` when no stable external `uv` is
-available.
-
-Python entry points select the environment and solver configuration
-automatically. For developer-only direct EasyCrypt commands, export the
-verified environment and pass the configuration explicitly:
-
-```bash
-eval "$(uv run python tools/bootstrap_easycrypt.py --print-env)"
-easycrypt -why3 "$SHANNON_WHY3_CONFIG" config
-```
-
-Pass `-why3 "$SHANNON_WHY3_CONFIG"` to every direct EasyCrypt command.
-
-`why3server` may fail under an OS sandbox that blocks `nice()`. Rerun the
-bounded backend test with the required permission. Do not change compiler
-semantics to accommodate a sandbox failure.
+The backend runs the repository-managed `r2026.06` toolchain that
+`ec_env.py` selects and verifies. Install it as described in
+[README.md#install](../../README.md#install) (`tools/bootstrap_easycrypt.py`).
+AGENTS.md states the rules for direct `easycrypt` commands and OS sandboxes.
 
 ## Developer rules
 

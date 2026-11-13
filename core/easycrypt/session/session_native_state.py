@@ -10,10 +10,11 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
+from core.digests import sha256_file
 from core.easycrypt.committed_history import (
     committed_prefix_identity,
     history_path,
-    read_committed_tactics,
+    read_committed_commands,
 )
 from core.easycrypt.ec_runtime_identity import (
     EasyCryptRuntimeIdentity,
@@ -36,7 +37,6 @@ from core.easycrypt.session.session_artifact_io import (
 )
 from core.easycrypt.session.session_events import record_authoritative_artifact_event
 from core.easycrypt.session.session_projection import read_proof_state_projection
-from core.easycrypt.toolchain import sha256_file
 
 
 NATIVE_STATE_SCHEMA_VERSION = 2
@@ -86,7 +86,7 @@ def build_native_state_projection(
     context_sha256 = _sha256_file(context)
     history_sha256 = _sha256_file(history)
     prefix_identity = committed_prefix_identity(
-        tuple(read_committed_tactics(path))
+        tuple(read_committed_commands(path))
     )
     runtime_identity = verified_session_runtime_identity(path)
     request = NativeStateProjectionRequest(

@@ -24,12 +24,10 @@ def test_tree_initial_root_defaults_are_consistent() -> None:
 def test_prove_mode_and_count_are_config_driven_not_difficulty_driven() -> None:
     # The orchestrator no longer branches search topology on plan difficulty:
     # the old ``_prove_mode_and_count_for_difficulty`` helper was removed in
-    # favour of reading ``config.prover.mode`` / ``config.prover.tree_initial_provers``
-    # directly (see orchestrator.run_orchestrator, "Adaptive mode + prover count").
+    # favour of reading ``config.prover.tree_initial_provers`` directly.
     # Difficulty now only feeds the progress display, not the topology choice.
     assert not hasattr(orchestrator, "_prove_mode_and_count_for_difficulty")
 
     # Defaults still resolve to the two-root tree, independent of any difficulty.
     config = ProverConfig()
-    assert config.mode == "tree"
     assert config.tree_initial_provers == DEFAULT_TREE_INITIAL_PROVERS

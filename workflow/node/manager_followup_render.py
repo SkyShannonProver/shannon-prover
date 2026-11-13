@@ -14,14 +14,12 @@ from workflow.node.agent_prompt_render import (
     _drop_empty,
 )
 from workflow.node.node_memory import NodeMemory
-from workflow.proof_management import (
-    ManagedTurn,
-)
+from workflow.proof_management.types import ManagedTurn
 from workflow.proof_state_compiler.current_turn_presentation import (
+    canonical_current_workspace_view,
     compose_current_surface_turn,
     current_proof_surface_from_turn,
     render_current_surface_turn_markdown,
-    require_current_workspace_view,
 )
 from workflow.proof_state_compiler.profile_registry import (
     normalize_runtime_surface_profile_id,
@@ -51,7 +49,7 @@ def render_manager_followup(
 ) -> str:
     surface_profile = normalize_runtime_surface_profile_id(surface_profile)
     canonical_view = (
-        require_current_workspace_view(
+        canonical_current_workspace_view(
             turn.workspace_view,
             profile_id=surface_profile,
             label="managed current turn workspace view",
@@ -60,7 +58,7 @@ def render_manager_followup(
         else {}
     )
     audit_view = (
-        require_current_workspace_view(
+        canonical_current_workspace_view(
             full_view,
             profile_id=surface_profile,
             label="managed current full workspace view",

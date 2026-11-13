@@ -1,7 +1,6 @@
 """Pure tests for tree scheduler policy keys."""
 from __future__ import annotations
 
-import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[3]
@@ -116,18 +115,3 @@ def test_scheduler_falls_back_to_failed_tactic_without_fact() -> None:
         "byequiv (_: ={glob A} ==> ={res}).",
     )
     assert key == ("prefix:3", "byequiv (_: ={glob A} ==> ={res})."[:40])
-
-
-def main() -> int:
-    test_tree_capacity_caps_active_nodes_at_four()
-    test_undo_repair_mode_uses_high_water_progress()
-    test_layer_move_action_key_distinguishes_layer_moves()
-    test_layer_move_action_key_ignores_failure_memory_for_spawn_dedupe()
-    test_layer_classifier_uses_goal_surface_only()
-    test_scheduler_falls_back_to_failed_tactic_without_fact()
-    print("PASS test_tree_scheduler_facts")
-    return 0
-
-
-if __name__ == "__main__":
-    raise SystemExit(main())

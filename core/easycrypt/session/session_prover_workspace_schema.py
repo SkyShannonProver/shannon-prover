@@ -23,31 +23,23 @@ PROVER_WORKSPACE_VIEW_REQUIRED_FIELDS = (
     "current_goal",
 )
 
-UNSUPPORTED_PROVER_WORKSPACE_KEYS = frozenset({
-    "decision_context",
-    "facts_and_gaps",
-    "next_actions",
-    "proof_frontier",
-    "proof_position",
-    "recent_diagnostics",
-    "rewind_route_memory",
-    "suggested_next_steps",
-    "want_more_context",
-    # Retired rich-view/panel carrier fields.  Current compiler output crosses
-    # the manager boundary separately as a bounded ActionSurface.
-    "program_frontier",
-    "application_context",
-    "facts_and_diagnostics",
-    "candidate_moves",
-    "inspect_lookup_handles",
-    "call_site_surface",
-    "seq_cut_surface",
-    "pure_tail_surface",
-    "frame_obligation_ledger",
-    "recovery_diagnosis_surface",
-    "structural_checkpoints",
-    "route_replay_memory",
-    "proof_ir",
+# The complete top-level key set of a current workspace view.  The core
+# writer emits schema_version, kind, ok, last_result, proof_status and
+# current_goal; the workflow manager projection adds latest_observation,
+# based_on_state_version, session_epoch and view_hash.  Any other key, such as
+# a retired rich-view panel, is rejected; current compiler output crosses the
+# manager boundary separately as a bounded ActionSurface.
+PROVER_WORKSPACE_VIEW_KEYS = frozenset({
+    "schema_version",
+    "kind",
+    "ok",
+    "proof_status",
+    "last_result",
+    "current_goal",
+    "latest_observation",
+    "view_hash",
+    "based_on_state_version",
+    "session_epoch",
 })
 
 
@@ -117,11 +109,13 @@ def validate_prover_workspace_view(
             errors.append("open ProverWorkspaceView requires proof_status.goal_hash")
         if not goal_identity_required and goal_hash:
             errors.append("closed ProverWorkspaceView cannot carry proof_status.goal_hash")
-    forbidden = sorted(_all_keys(data) & UNSUPPORTED_PROVER_WORKSPACE_KEYS)
-    if forbidden:
+    unsupported = sorted(
+        str(key) for key in data if key not in PROVER_WORKSPACE_VIEW_KEYS
+    )
+    if unsupported:
         errors.append(
             "ProverWorkspaceView contains unsupported key(s): "
-            + ", ".join(forbidden)
+            + ", ".join(unsupported)
         )
     return ProverWorkspaceViewValidation(errors=errors)
 
@@ -191,15 +185,3 @@ def validate_prover_workspace_event_binding(
         errors=errors,
         warnings=list(validation.warnings),
     )
-
-
-def _all_keys(value: Any) -> set[str]:
-    keys: set[str] = set()
-    if isinstance(value, dict):
-        for key, nested in value.items():
-            keys.add(str(key))
-            keys.update(_all_keys(nested))
-    elif isinstance(value, list):
-        for item in value:
-            keys.update(_all_keys(item))
-    return keys

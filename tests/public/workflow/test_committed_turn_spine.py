@@ -1,6 +1,7 @@
 from __future__ import annotations
 
-from workflow.proof_management import CommittedTurnSpine, ProofStateSnapshot
+from workflow.proof_management.turn_spine import CommittedTurnSpine
+from workflow.proof_management.types import ProofStateSnapshot
 
 
 def _snapshot() -> ProofStateSnapshot:

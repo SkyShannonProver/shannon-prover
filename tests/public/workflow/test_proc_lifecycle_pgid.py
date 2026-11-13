@@ -22,6 +22,7 @@ ROOT = Path(__file__).resolve().parents[3]
 
 import workflow.proc_lifecycle as proc_lifecycle  # noqa: E402
 from workflow.proc_lifecycle import (  # noqa: E402
+    signal_group_ladder,
     terminate_pgid_bounded,
     terminate_subprocess_tree,
 )
@@ -129,5 +130,69 @@ def test_terminate_subprocess_tree_still_signals_a_session_leader_group(
         proc.wait()
 
 
-if __name__ == "__main__":
-    raise SystemExit(pytest.main([__file__, "-v"]))
+def _alive(pid: int) -> bool:
+    try:
+        os.kill(pid, 0)
+    except ProcessLookupError:
+        return False
+    return True
+
+
+def test_signal_group_ladder_stops_at_the_first_signal_the_child_honours():
+    proc = subprocess.Popen(["sleep", "30"], start_new_session=True)
+    try:
+        t0 = time.monotonic()
+        assert signal_group_ladder(
+            proc, ((signal.SIGTERM, 5.0), (signal.SIGKILL, 5.0))
+        ) == -signal.SIGTERM
+        assert time.monotonic() - t0 < 3.0
+    finally:
+        if proc.poll() is None:
+            proc.kill()
+            proc.wait()
+
+
+def test_signal_group_ladder_escalates_and_reaches_the_whole_group():
+    """Child and grandchild ignore SIGINT and SIGTERM (an ignored disposition
+    survives exec), so only the final SIGKILL to the group stops both."""
+    code = (
+        "import signal, subprocess, time\n"
+        "signal.signal(signal.SIGINT, signal.SIG_IGN)\n"
+        "signal.signal(signal.SIGTERM, signal.SIG_IGN)\n"
+        "grandchild = subprocess.Popen(['sleep', '30'])\n"
+        "print(grandchild.pid, flush=True)\n"
+        "time.sleep(30)\n"
+    )
+    proc = subprocess.Popen(
+        [sys.executable, "-c", code],
+        start_new_session=True,
+        stdout=subprocess.PIPE,
+        text=True,
+    )
+    try:
+        grandchild = int(proc.stdout.readline())
+        t0 = time.monotonic()
+        status = signal_group_ladder(
+            proc,
+            ((signal.SIGINT, 0.3), (signal.SIGTERM, 0.3), (signal.SIGKILL, 5.0)),
+        )
+        elapsed = time.monotonic() - t0
+        assert status == -signal.SIGKILL
+        assert 0.5 < elapsed < 4.0
+        deadline = time.monotonic() + 3.0
+        while _alive(grandchild) and time.monotonic() < deadline:
+            time.sleep(0.05)
+        assert not _alive(grandchild)
+    finally:
+        if proc.poll() is None:
+            proc.kill()
+            proc.wait()
+        proc.stdout.close()
+
+
+def test_signal_group_ladder_does_not_signal_an_exited_child(monkeypatch):
+    proc = subprocess.Popen(["true"], start_new_session=True)
+    proc.wait()
+    group_calls = _record_group_signals(monkeypatch)
+    assert signal_group_ladder(proc, ((signal.SIGTERM, 1.0),)) == 0
+    assert group_calls == []

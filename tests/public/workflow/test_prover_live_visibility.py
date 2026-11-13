@@ -347,16 +347,3 @@ def test_tree_branching_does_not_restart_at_first_strategy_tactic() -> None:
     branch = _find_branch_point(tactics)
 
     assert branch == (tactics, [])
-
-
-if __name__ == "__main__":
-    test_prover_prompt_omits_session_cli_as_agent_interface()
-    test_prover_prompt_embeds_manager_handoff_view()
-    test_progress_summary_uses_shell_tokenized_tactic_arg()
-    test_progress_summary_uses_shell_tokenized_chain_arg()
-    test_tree_tracker_exposes_session_tag_alias()
-    test_tree_tracker_activity_updates_on_mcp_tool_use_without_commit()
-    test_node_new_commit_count_discounts_replay_prefix()
-    test_tree_branching_replays_current_frontier_with_failed_tactic()
-    test_tree_branching_does_not_restart_at_first_strategy_tactic()
-    print("PASS test_prover_live_visibility")

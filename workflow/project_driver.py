@@ -34,6 +34,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import Optional
 
+from core.paths import REPO_ROOT
 from workflow.schemas.config import RunConfig
 from workflow.proc_lifecycle import (
     WORKER_PGID_MANIFEST_ENV,
@@ -44,7 +45,7 @@ from workflow.proc_lifecycle import (
 
 logger = logging.getLogger("workflow.project_driver")
 
-_PROJECT_ROOT = Path(__file__).resolve().parent.parent
+_PROJECT_ROOT = REPO_ROOT
 
 
 # ---------------------------------------------------------------------------
@@ -197,7 +198,6 @@ def run_one_lemma(
         file=str(file_path),
         lemma=lemma,
         include_dir=include_dir,
-        max_iterations=1,
         output_dir=str(orchestrator_output),
         eval_mode=eval_mode,
     )

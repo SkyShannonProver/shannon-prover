@@ -79,20 +79,15 @@ def runtime_turn_profile(
     profile_id: str,
     *,
     stage: str,
-    description: str,
     paper_level: str,
-    paper_role: str = "paper",
 ) -> SurfaceProfile:
     """Build the common goal-only turn envelope for one registered arm."""
 
     return SurfaceProfile(
         name=profile_id,
         stage=stage,
-        description=description,
         allowed_intents=_CONTROL_INTENTS,
         paper_level=paper_level,
-        paper_role=paper_role,
-        base_surface="goal_only",
     )
 
 
@@ -129,10 +124,6 @@ _PRODUCTION_REGISTRATIONS = (
         turn_profile=runtime_turn_profile(
             ALL_CANDIDATE_TREATMENT_PROFILE,
             stage="l4_proof_state_compiler_v2",
-            description=(
-                "Curated compiler treatment. Every enabled feature may expose "
-                "at most its admitted, bounded result."
-            ),
             paper_level="L4",
         ),
     ),
@@ -142,7 +133,6 @@ _PRODUCTION_REGISTRATIONS = (
         turn_profile=runtime_turn_profile(
             L1_CONTROL_PROFILE,
             stage="l1_goal_projection",
-            description="Goal-only managed runtime with the compiler disabled.",
             paper_level="L1",
         ),
     ),

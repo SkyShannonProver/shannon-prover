@@ -21,9 +21,10 @@ import subprocess
 from dataclasses import dataclass
 from pathlib import Path
 
+from core.digests import sha256_file
 from core.easycrypt.ec_env import easycrypt_command, get_ec_env
 from core.easycrypt.session.session_events import read_events
-from core.easycrypt.toolchain import load_easycrypt_lock, sha256_file
+from core.easycrypt.toolchain import load_easycrypt_lock
 
 
 EASYCRYPT_RUNTIME_IDENTITY_SCHEMA_VERSION = 1

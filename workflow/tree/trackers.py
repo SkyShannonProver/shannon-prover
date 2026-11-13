@@ -15,7 +15,7 @@ import subprocess
 import time
 from pathlib import Path
 from typing import Optional
-from core.easycrypt.committed_history import read_committed_tactics
+from core.easycrypt.committed_history import read_committed_commands
 from core.easycrypt.value_shapes import drop_empty as _shallow_drop_empty
 from workflow.tree.session_observer import WorkflowSessionSnapshot, observe_session
 from workflow.provider.prover_io_policy import (
@@ -925,7 +925,7 @@ class _TreeProverTracker(_ProverTracker):
             self._hist_lines_cache = []
             self._hist_cache_until = now + 2.0
             return self._hist_lines_cache
-        lines = read_committed_tactics(
+        lines = read_committed_commands(
             _session_dir(self._cwd, self._session_tag)
         )
         self._hist_lines_cache = lines
@@ -1009,8 +1009,7 @@ class _TreeProverTracker(_ProverTracker):
         # idle / errors-since-accept timers are claude-PROCESS-scoped, so the brief
         # stream gap while the new child boots must NOT be read as a stall or
         # idle-give-up. Completion-candidate state and accepted tactics derive
-        # from the surviving EC snapshot and are deliberately left untouched. See
-        # docs/design/fresh_context_continuation.md.
+        # from the surviving EC snapshot and are deliberately left untouched.
         if event_type == "system" and event.get("context_respawn"):
             now = time.time()
             self.last_activity_time = now

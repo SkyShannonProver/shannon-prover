@@ -14,7 +14,6 @@ import pytest
 
 ROOT = Path(__file__).resolve().parents[3]
 
-import sys
 
 from core.easycrypt.session.session_commit_response import write_commit_response_artifact  # noqa: E402
 from core.easycrypt.session.session_events import append_event  # noqa: E402
@@ -975,28 +974,3 @@ def test_supervisor_winner_selection_requires_structured_success() -> None:
     winner, succeeded = _select_tree_run_result([raw_qed, structured])
     assert winner is structured
     assert succeeded is True
-
-
-def main() -> int:
-    test_observer_reads_failed_commit_response()
-    test_observer_reads_candidate_closed_projection()
-    test_observer_flags_bad_commit_response_hash()
-    test_observer_reads_tactic_execution_result()
-    test_observer_rejects_v1_workspace_view()
-    test_observer_rejects_stale_workspace_event_schema_version()
-    test_observer_rejects_workspace_missing_required_field()
-    test_observer_tolerates_live_readonly_tool_call()
-    test_resume_replay_gate_rejects_goal_hash_drift()
-    test_resume_replay_gate_accepts_matching_prefix_and_hash()
-    test_resume_replay_gate_waits_for_active_mutating_tool()
-    test_resume_replay_gate_waits_for_replay_transition()
-    test_progress_tracker_refreshes_from_observer_snapshot()
-    test_progress_tracker_never_promotes_raw_or_history_text_to_success()
-    test_progress_tracker_ignores_bash_tactic_argv()
-    test_supervisor_winner_selection_requires_structured_success()
-    print("PASS test_session_observer")
-    return 0
-
-
-if __name__ == "__main__":
-    raise SystemExit(main())

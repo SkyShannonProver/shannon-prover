@@ -18,7 +18,7 @@ from typing import Any
 
 from core.easycrypt.committed_history import (
     committed_prefix_identity,
-    read_committed_tactics,
+    read_committed_commands,
 )
 from core.easycrypt.ec_runtime_identity import (
     EasyCryptRuntimeIdentity,
@@ -94,7 +94,7 @@ def build_compiler_input(
     goal_identity = "" if closed else projection.goal.active_goal_hash
     if not closed and not goal_identity:
         raise ValueError("open compiler input requires a canonical goal identity")
-    history = tuple(read_committed_tactics(path))
+    history = tuple(read_committed_commands(path))
     history_identity = committed_prefix_identity(history)
     state_version = (
         _event_count(path)

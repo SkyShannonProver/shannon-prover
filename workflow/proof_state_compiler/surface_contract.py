@@ -8,9 +8,5 @@ from dataclasses import dataclass
 class SurfaceProfile:
     name: str
     stage: str
-    description: str
     allowed_intents: frozenset[str]
-    supported: bool = True
     paper_level: str | None = None
-    paper_role: str = "paper"
-    base_surface: str = "compiled"

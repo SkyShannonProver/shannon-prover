@@ -4,6 +4,62 @@ Notable changes to Shannon Prover, newest first. Each public release from
 0.2.0 on is tagged `vX.Y.Z`. Earlier releases are listed by date and tagged
 together as `v0.1.0`.
 
+## Unreleased
+
+## 0.3.3 (2026-11-12)
+
+- Managed Codex proof nodes no longer pass `--disable` for features that
+  `codex features list` marks removed. codex-cli 0.166 answers that flag for
+  `unified_exec_zsh_fork` with a notice before the turn starts, which the
+  provider event guard rejects, so every Codex proof node stopped before its
+  first turn.
+- In eval mode, an agent read of a manager or proof-tool bridge module
+  (for example `workflow/node/node_memory.py`) is denied again. The check
+  matched only the flat `workflow/<name>` layout that the 2026-08
+  restructure replaced with layer subpackages, so such reads were recorded
+  as allowed sources.
+- EasyCrypt comments are read with EasyCrypt's own rules (nesting, strings,
+  the `(*)` operator) everywhere a proof or declaration is located: an
+  admit-only proof hidden by a nested comment is detected, and a lemma
+  inside a comment or after a `(*)` operator is no longer taken for a
+  declaration or swallowed.
+- The run report attaches Claude transcripts found by time only for nodes
+  that predate session registration. Before, a crashed Claude session in a
+  current run could attach unrelated Claude sessions of the same user.
+- The `SHANNON_*` settings registry matches the code: real settings such as
+  `SHANNON_WHY3_CONFIG` no longer draw an unknown-setting warning, and seven
+  settings nothing reads now do.
+- `session_cli -verify` is removed. Nothing in the runtime called it, and it
+  was a second implementation of single-lemma verification that wrote the
+  same `verification.completed` event as the authoritative offline
+  verification in `workflow/agents/prover_writeback.py`; readers take the
+  latest such event, so a manual `-verify` could change a session's reported
+  verification status. Use the prover's offline verification instead.
+- `session_cli -deltas-only` is removed; nothing passed it.
+- `orchestrator --max-iterations` and `--prover-mode` are removed; neither
+  changed a run. A saved `config.json` that still carries `max_iterations` or
+  `prover.mode` loads as before.
+- Package `__init__` modules re-export only the names imported through
+  them, so importing a small module such as
+  `workflow.proof_state_compiler.profile_ids` no longer loads the compiler
+  service. Import other names from their defining submodules.
+- The interleaved runner, its inner job workers and the inner runner stop
+  their children through one shared signal ladder with unchanged signals and
+  grace periods; a runner that finds its child's process group already gone
+  now reaps the exited child.
+- A flaky test can be quarantined in `tests/quarantine.json` with a reason, an
+  issue and an expiry date; normal runs skip it, and an expired or incomplete
+  entry fails the suite.
+- Repository tests lock the interleaved product's boundaries: nothing outside
+  `workflow/interleaved/` imports it, and it uses only a declared set of
+  runtime modules and no private names. `ec_services.shutdown_ec_daemon`
+  replaces the private `_shutdown_ec_daemon`, and the warm handoff splits and
+  strips EasyCrypt text with the shared `proof_text` layer.
+- Documentation: `docs/ARCHITECTURE.md` is the single architecture map and
+  now describes the proof-node turn and the change rules; README#install is
+  the only installation guide; public files no longer link documents the
+  public tree leaves out.
+
 ## 0.3.2 (2026-11-01)
 
 - LICENSE and README now say that the vendored EasyCrypt's inifiles library

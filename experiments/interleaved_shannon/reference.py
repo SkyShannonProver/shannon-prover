@@ -1,4 +1,4 @@
-"""Bind the historical ChaChaPoly command paths to the product runtime."""
+"""The ChaChaPoly reference project binding used by this adapter's entry points."""
 
 from __future__ import annotations
 

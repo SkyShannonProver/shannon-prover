@@ -19,7 +19,8 @@ import time
 from pathlib import Path
 from typing import Any, Callable
 
-from workflow.proof_management import ManagedTurn
+from core.paths import REPO_ROOT
+from workflow.proof_management.types import ManagedTurn
 from workflow.proof_management.node_bootstrap import (
     require_proof_node_manager_bootstrap,
 )
@@ -59,7 +60,7 @@ from workflow.proof_tool.manager_stall_watchdog import (
     stall_headline,
 )
 from workflow.provider.provider_sessions import (
-    ClaudeRunResult,
+    AgentRunResult,
     agent_session_class,
 )
 from workflow.provider.eval_agent_confinement import EvalAgentConfinement
@@ -79,7 +80,7 @@ from workflow.node.agent_prompt_render import (
     render_long_lived_agent_prompt,
 )
 from workflow.agents.prover_prompt import bind_authoritative_managed_handoff
-PROJECT_ROOT = Path(__file__).resolve().parents[2]
+PROJECT_ROOT = REPO_ROOT
 _MCP_SPAWN_RETRIES = max(0, int(
     os.environ.get("SHANNON_MCP_SPAWN_RETRIES", "2")))
 def _prover_system_anchor(
@@ -621,7 +622,7 @@ class ProofNodeRuntime:
 
         return self.tool_session.turn_index >= self.max_turns
 
-    def _should_respawn(self, result: ClaudeRunResult, *, baseline: int) -> bool:
+    def _should_respawn(self, result: AgentRunResult, *, baseline: int) -> bool:
         """All-of guard for the in-worker fresh-context swap (Layer 1 ONLY).
 
         Resume fires ONLY on context pressure (the token watermark tripped while
@@ -631,7 +632,7 @@ class ProofNodeRuntime:
         give-up papers over the decision AND corrupts the give-up-rate
         measurement. So there is NO premature-give-up branch here (removed): a
         give-up with no ctx_pressure → False → the generation loop breaks → the
-        run ends on the give-up. See docs/design/context_resume_tightened.md.
+        run ends on the give-up.
         """
         if respawn_disabled():
             return False
@@ -655,7 +656,7 @@ class ProofNodeRuntime:
             return False
         return True
 
-    def run(self) -> ClaudeRunResult:
+    def run(self) -> AgentRunResult:
         """Serve the node; the stall watchdog spans every serving read.
 
         The watchdog stays armed through the post-run reads of the tool
@@ -674,7 +675,7 @@ class ProofNodeRuntime:
             watchdog.stop()
             watchdog.hand_off_exit()
 
-    def _serve(self) -> ClaudeRunResult:
+    def _serve(self) -> AgentRunResult:
         eval_confinement = getattr(self, "eval_confinement", None)
         source_resource = getattr(self, "source_resource", None)
         if eval_confinement is not None:
@@ -762,7 +763,7 @@ class ProofNodeRuntime:
                         mcp_launch_spec=self.mcp_launch_spec,
                     )
                 if getattr(self.agent, "mcp_failed_to_start", False):
-                    result = ClaudeRunResult(
+                    result = AgentRunResult(
                         text=(
                             "proof-tool MCP failed to become ready after "
                             f"{attempt + 1} provider launch attempt(s)"
@@ -873,7 +874,7 @@ class ProofNodeRuntime:
             and self._safe_stop_requested.is_set()
         )
         if safe_stop_requested:
-            result = ClaudeRunResult(
+            result = AgentRunResult(
                 text=(
                     result.text.strip()
                     + "\n\nMANAGER WORKER STOP: safe-stop drain completed; "
@@ -888,12 +889,12 @@ class ProofNodeRuntime:
                 "\n\nMANAGER WORKER ERROR: proof node became unhealthy: "
                 f"{health}"
             )
-            result = ClaudeRunResult(
+            result = AgentRunResult(
                 text=(result.text.strip() + suffix).strip(),
                 session_id=result.session_id,
                 returncode=2,
             )
-        return ClaudeRunResult(
+        return AgentRunResult(
             text=result.text,
             session_id=result.session_id,
             returncode=result.returncode,

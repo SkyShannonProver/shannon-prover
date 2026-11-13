@@ -19,6 +19,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Callable
 
+from core.paths import REPO_ROOT
 from workflow.provider.claude_event_normalizer import ClaudeEventNormalizer
 from workflow.provider.codex_event_normalizer import (
     CodexEventNormalizer,
@@ -47,7 +48,7 @@ from workflow.provider.ctx_respawn import (
     context_tokens_from_codex_event,
 )
 
-_PROJECT_ROOT = Path(__file__).resolve().parents[2]
+_PROJECT_ROOT = REPO_ROOT
 CLAUDE_BIN = shutil.which("claude") or "claude"
 CODEX_BIN = shutil.which("codex") or "codex"
 
@@ -105,16 +106,11 @@ def provider_cli_identity(agent_backend: str) -> dict[str, str]:
 
 
 @dataclass(frozen=True)
-class ClaudeRunResult:
+class AgentRunResult:
     text: str
     session_id: str
     returncode: int
     turns: int = 0
-
-
-# Provider-neutral name for new code; retain the historical import for tests
-# and downstream tooling that still imports ``ClaudeRunResult``.
-AgentRunResult = ClaudeRunResult
 
 
 # How many of the agent's most-recent assistant message texts to keep in the
@@ -172,7 +168,7 @@ class _ProviderAgentSessionBase:
         # `SHANNON_CTX_WATERMARK_TURNS` consecutive assistant turns, we gracefully
         # end the loop BETWEEN turns and surface `ctx_pressure` so the runtime can
         # swap in a fresh Claude context against the SAME bridge/manager/EC
-        # session (zero replay). See docs/design/fresh_context_continuation.md.
+        # session (zero replay).
         # The default watermark scales with this model's context window.
         self._ctx_detector = CtxWatermarkDetector(model=model)
         self.ctx_pressure = False
@@ -458,7 +454,7 @@ class ClaudeAgentSession(_ProviderAgentSessionBase):
         *,
         system_prompt: str = "",
         mcp_launch_spec: ProofMcpLaunchSpec | None = None,
-    ) -> ClaudeRunResult:
+    ) -> AgentRunResult:
         launch_id = self._mint_launch(mcp_launch_spec)
         mcp_config_path: Path | None = None
         if mcp_launch_spec is not None:
@@ -664,7 +660,7 @@ class ClaudeAgentSession(_ProviderAgentSessionBase):
             stderr_thread=stderr_thread,
             watchdog=watchdog,
         )
-        return ClaudeRunResult(
+        return AgentRunResult(
             text=result_text,
             session_id=self.session_id,
             returncode=returncode,

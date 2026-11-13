@@ -11,11 +11,11 @@ metrics, and a reproducible bundle under `agent_view_runs/`.
 ## Current boundary
 
 Normal use discovers only the production profiles registered by
-`workflow/proof_state_compiler/profile_registry.py`. Where the research registry
-is present, the suite runner can also resolve exact research identities from
-`workflow/proof_state_compiler/research/proof_state_compiler_research_profile_registry.py`
-and pass them through an eval-only hidden transport. That registry is excluded
-from the public source release and is not needed for public suites. Ordinary
+`workflow/proof_state_compiler/profile_registry.py`. Where the maintainers'
+research registry is present, the suite runner can also resolve exact research
+identities from it and pass them through an eval-only hidden transport. That
+registry is not part of the public source release and is not needed for public
+suites. Ordinary
 config files and the public `--surface-profile` option cannot select those
 audit or ablation profiles.
 

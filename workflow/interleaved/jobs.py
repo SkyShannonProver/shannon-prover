@@ -33,6 +33,8 @@ _IMPORT_ROOT = Path(__file__).resolve().parents[2]
 if str(_IMPORT_ROOT) not in sys.path:
     sys.path.insert(0, str(_IMPORT_ROOT))
 
+from core.digests import sha256_bytes, sha256_text
+from core.jsonio import read_json_object
 from core.easycrypt.eval_source_prep import find_target_proof_block
 from core.easycrypt.lemma_decls import lemma_decl_matches
 from core.easycrypt.proof_text import unchecked_proof_constructs
@@ -85,6 +87,7 @@ from workflow.node.proof_node_resume import load_resume_capsule
 from workflow.proc_lifecycle import (
     WORKER_PGID_MANIFEST_ENV,
     reap_worker_pgid_manifest,
+    signal_group_ladder,
 )
 from workflow.tree.supervisor import (
     MANAGED_LIVE_PROGRESS_FILENAME,
@@ -106,14 +109,6 @@ JOB_ID = re.compile(r"^[a-f0-9]{16}$")
 
 def _now() -> str:
     return datetime.now(timezone.utc).astimezone().isoformat(timespec="seconds")
-
-
-def _sha256_bytes(value: bytes) -> str:
-    return hashlib.sha256(value).hexdigest()
-
-
-def _sha256_text(value: str) -> str:
-    return _sha256_bytes(value.encode("utf-8"))
 
 
 def _canonical_json_bytes(value: dict[str, Any]) -> bytes:
@@ -175,7 +170,7 @@ def _invocation_receipt(
         "has_continuation_note": bool(record.has_continuation_note),
         "continuation_note_sha256": str(record.continuation_note_sha256 or ""),
     }
-    receipt["content_sha256"] = _sha256_bytes(_canonical_json_bytes(receipt))
+    receipt["content_sha256"] = sha256_bytes(_canonical_json_bytes(receipt))
     return receipt
 
 
@@ -194,13 +189,6 @@ def _atomic_bytes(path: Path, payload: bytes) -> None:
     temporary = path.with_suffix(path.suffix + ".tmp")
     temporary.write_bytes(payload)
     temporary.replace(path)
-
-
-def _read_json(path: Path) -> dict[str, Any]:
-    data = json.loads(path.read_text(encoding="utf-8"))
-    if not isinstance(data, dict):
-        raise ValueError(f"expected JSON object: {path}")
-    return data
 
 
 def _jobs_root(run_dir: Path) -> Path:
@@ -223,7 +211,7 @@ def _latest_terminal_sequence(run_dir: Path) -> int:
     latest = 0
     for path in _jobs_root(run_dir).glob("*/job.json"):
         try:
-            item = _read_json(path)
+            item = read_json_object(path)
         except (OSError, ValueError, json.JSONDecodeError):
             continue
         latest = max(latest, int(item.get("terminal_event_sequence") or 0))
@@ -231,7 +219,7 @@ def _latest_terminal_sequence(run_dir: Path) -> int:
 
 
 def _read_job(path: Path, *, job_id: str, label: object) -> JobRecord:
-    value = _read_json(path)
+    value = read_json_object(path)
     try:
         record = JobRecord.from_dict(value)
     except ValueError as exc:
@@ -271,7 +259,7 @@ def _save_job(run_dir: Path, record: JobRecord) -> None:
             "status": record.status.value,
             "previous_status": prior.value if prior else "",
         }
-        event["event_id"] = _sha256_bytes(_canonical_json_bytes(event))
+        event["event_id"] = sha256_bytes(_canonical_json_bytes(event))
         record.terminal_event_sequence = sequence
         record.terminal_event_at = at
         record.terminal_event_id = event["event_id"]
@@ -323,11 +311,11 @@ def _registry_lock(run_dir: Path) -> Iterator[None]:
 def _source_contract(content: str, lemma: str) -> dict[str, str]:
     body, _ = proof_body_span(content, lemma)
     return {
-        "target_sha256": _sha256_text(content),
-        "lemma_prefix_sha256": _sha256_text(
+        "target_sha256": sha256_text(content),
+        "lemma_prefix_sha256": sha256_text(
             lemma_prefix_projection(content, lemma)
         ),
-        "proof_body_sha256": _sha256_text(body),
+        "proof_body_sha256": sha256_text(body),
     }
 
 
@@ -550,7 +538,7 @@ def _validated_progress(
                 not isinstance(text, str)
                 or len(text.encode("utf-8")) > PARTIAL_PREFIX_MAX_BYTES
                 or len(text.encode("utf-8")) != accepted["byte_count"]
-                or _sha256_text(text) != accepted["sha256"]
+                or sha256_text(text) != accepted["sha256"]
                 or re.search(r"(?i)\b(?:admit|qed)\s*\.", text)
             ):
                 raise ValueError(
@@ -892,7 +880,7 @@ def _worker_heartbeat_is_fresh(run_dir: Path, record: JobRecord) -> bool:
     if JOB_ID.fullmatch(job_id) is None or pid <= 0:
         return False
     try:
-        heartbeat = _read_json(_worker_heartbeat_path(run_dir, job_id))
+        heartbeat = read_json_object(_worker_heartbeat_path(run_dir, job_id))
         updated_at = float(heartbeat.get("updated_at_epoch"))
     except (OSError, TypeError, ValueError, json.JSONDecodeError):
         return False
@@ -1171,7 +1159,7 @@ def _disclosed_continuation_run_dir(
     manifest_path = run_dir / "manifest.json"
     if not manifest_path.is_file():
         return None
-    manifest = _read_json(manifest_path)
+    manifest = read_json_object(manifest_path)
     continuation = manifest.get("continuation")
     if not isinstance(continuation, dict):
         return None
@@ -1187,9 +1175,9 @@ def _disclosed_continuation_run_dir(
     prior_events = resolved / "outer_agent_events.jsonl"
     if not prior_manifest.is_file() or not prior_events.is_file():
         raise ValueError("disclosed continuation audit inputs are unavailable")
-    if _sha256_bytes(prior_manifest.read_bytes()) != str(
+    if sha256_bytes(prior_manifest.read_bytes()) != str(
         continuation.get("manifest_sha256") or ""
-    ) or _sha256_bytes(prior_events.read_bytes()) != str(
+    ) or sha256_bytes(prior_events.read_bytes()) != str(
         continuation.get("outer_events_sha256") or ""
     ):
         raise ValueError("disclosed continuation audit hash drifted")
@@ -1272,9 +1260,9 @@ def _validate_prior_run_parent(
     without_hash.pop("content_sha256", None)
     if (
         copied_receipt != receipt
-        or _sha256_bytes(receipt_bytes)
+        or sha256_bytes(receipt_bytes)
         != str(parent.invocation_receipt_sha256 or "")
-        or _sha256_bytes(_canonical_json_bytes(without_hash))
+        or sha256_bytes(_canonical_json_bytes(without_hash))
         != str(receipt.get("content_sha256") or "")
         or receipt.get("run_directory") != parent_run_rel.as_posix()
         or receipt.get("job_id") != job_id
@@ -1287,7 +1275,7 @@ def _validate_prior_run_parent(
         raise ValueError("prior-run scheduler input is unavailable")
     input_bytes = input_target.read_bytes()
     if (
-        _sha256_bytes(input_bytes) != str(receipt.get("target_sha256") or "")
+        sha256_bytes(input_bytes) != str(receipt.get("target_sha256") or "")
         or _source_contract(input_bytes.decode("utf-8"), lemma)
         != dict(parent.source_contract or {})
     ):
@@ -1303,7 +1291,7 @@ def _validate_prior_run_parent(
     )
     if not wrapper_path.is_file():
         raise ValueError("prior-run wrapper result is unavailable")
-    wrapper = _read_json(wrapper_path)
+    wrapper = read_json_object(wrapper_path)
     wrapper_progress = wrapper.get("progress")
     wrapper_checkpoint = (
         wrapper_progress.get("checkpoint")
@@ -1637,12 +1625,12 @@ def submit_job(
         has_resource_anchors=resource_anchor_bytes is not None,
         has_continuation_note=continuation_note_bytes is not None,
         continuation_note_sha256=(
-            _sha256_bytes(continuation_note_bytes)
+            sha256_bytes(continuation_note_bytes)
             if continuation_note_bytes is not None
             else ""
         ),
         resource_anchors_sha256=(
-            _sha256_bytes(resource_anchor_bytes)
+            sha256_bytes(resource_anchor_bytes)
             if resource_anchor_bytes is not None
             else ""
         ),
@@ -1678,7 +1666,7 @@ def submit_job(
     )
     receipt = _invocation_receipt(record=record, run_rel=run_rel)
     record.invocation_receipt = receipt
-    record.invocation_receipt_sha256 = _sha256_bytes(
+    record.invocation_receipt_sha256 = sha256_bytes(
         json.dumps(receipt, indent=2, sort_keys=True).encode("utf-8") + b"\n"
     )
     with _registry_lock(run_dir):
@@ -1825,10 +1813,10 @@ def _lane_default_ec_daemon_socket(lane: Path) -> str:
 def _shutdown_lane_default_ec_daemon(lane: Path) -> bool:
     """Best-effort backstop for bootstrap work that used the fallback route."""
 
-    from workflow.agents.ec_services import _shutdown_ec_daemon
+    from workflow.agents.ec_services import shutdown_ec_daemon
 
     try:
-        return _shutdown_ec_daemon(
+        return shutdown_ec_daemon(
             reason="detached Shannon lane finished",
             socket_path=_lane_default_ec_daemon_socket(lane),
         )
@@ -1852,17 +1840,7 @@ def _request_inner_process_stop(process: subprocess.Popen[bytes]) -> None:
 
 
 def _stop_inner_process(process: subprocess.Popen[bytes]) -> None:
-    if process.poll() is not None:
-        return
-    _request_inner_process_stop(process)
-    try:
-        process.wait(timeout=8)
-    except subprocess.TimeoutExpired:
-        try:
-            os.killpg(process.pid, signal.SIGKILL)
-        except ProcessLookupError:
-            pass
-        process.wait(timeout=2)
+    signal_group_ladder(process, ((signal.SIGTERM, 8), (signal.SIGKILL, 2)))
 
 
 def _copy_lane_artifacts(lane_run_dir: Path, destination: Path) -> None:
@@ -1885,7 +1863,7 @@ def _worker_result(
     wrapper_path = (
         lane_run_dir / "shannon" / lemma / job_id / "wrapper_result.json"
     )
-    wrapper = _read_json(wrapper_path)
+    wrapper = read_json_object(wrapper_path)
     if wrapper.get("kind") != "interleaved_shannon_wrapper_result":
         raise ValueError("worker received an invalid Shannon wrapper result")
     if wrapper.get("invocation_id") != job_id or wrapper.get("lemma") != lemma:
@@ -1999,7 +1977,7 @@ def _worker_result(
         if (
             projected.get("checkpoint_id") != checkpoint.get("checkpoint_id")
             or projected.get("tactic_count") != checkpoint.get("tactic_count")
-            or _sha256_text(prefix_text)
+            or sha256_text(prefix_text)
             != checkpoint.get("accepted_prefix_sha256")
         ):
             raise ValueError("Shannon checkpoint artifact identity mismatch")
@@ -2066,7 +2044,7 @@ def _worker_result(
             proved,
         )
         result.proved_source_contract = _source_contract(proved_text, lemma)
-        result.proved_proof_body_sha256 = _sha256_text(proof_body)
+        result.proved_proof_body_sha256 = sha256_text(proof_body)
     return result
 
 
@@ -2099,7 +2077,7 @@ def _refresh_live_job_progress(
         return
     source = candidates[0]
     try:
-        progress = _validated_live_progress(_read_json(source), lemma=lemma)
+        progress = _validated_live_progress(read_json_object(source), lemma=lemma)
     except (OSError, ValueError, json.JSONDecodeError):
         # Live telemetry is explicitly non-authoritative for proof outcome.
         # The canonical terminal wrapper still validates all result evidence.
@@ -2166,7 +2144,7 @@ def run_worker(ctx: ProjectContext, job_id: str) -> int:
         lane_input.mkdir(parents=True, exist_ok=True)
         receipt_path = lane_input / "invocation_receipt.json"
         _atomic_json(receipt_path, dict(record.invocation_receipt or {}))
-        receipt_sha256 = _sha256_bytes(receipt_path.read_bytes())
+        receipt_sha256 = sha256_bytes(receipt_path.read_bytes())
         if receipt_sha256 != record.invocation_receipt_sha256:
             raise ValueError("scheduler invocation receipt hash drifted")
         command = [
@@ -2190,7 +2168,7 @@ def run_worker(ctx: ProjectContext, job_id: str) -> int:
             if resource_anchor_input.is_file():
                 anchors = lane_input / "resource_anchors.json"
                 anchors.write_bytes(resource_anchor_input.read_bytes())
-                if _sha256_bytes(anchors.read_bytes()) != record.resource_anchors_sha256:
+                if sha256_bytes(anchors.read_bytes()) != record.resource_anchors_sha256:
                     raise ValueError("scheduler resource anchors hash drifted")
                 command.extend([
                     "--resource-anchors",
@@ -2224,7 +2202,7 @@ def run_worker(ctx: ProjectContext, job_id: str) -> int:
                     continuation_note_input.read_bytes()
                 )
                 if (
-                    _sha256_bytes(continuation_note_lane.read_bytes())
+                    sha256_bytes(continuation_note_lane.read_bytes())
                     != record.continuation_note_sha256
                 ):
                     raise ValueError("scheduler continuation note hash drifted")
@@ -2408,7 +2386,7 @@ def collect_job(ctx: ProjectContext, job_id: str) -> dict[str, Any]:
         record.merged_at = _now()
         record.collect_status = "merged_and_checked"
         record.collect_verification_scope = "target_lemma_under_declared_dependencies"
-        record.merged_target_sha256 = _sha256_text(merged)
+        record.merged_target_sha256 = sha256_text(merged)
         record.error = ""
         _save_job(run_dir, record)
         _dispatch_locked(ctx, run_rel=run_rel, run_dir=run_dir)

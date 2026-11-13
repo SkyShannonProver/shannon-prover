@@ -20,6 +20,9 @@ from dataclasses import dataclass
 from functools import lru_cache
 from pathlib import Path
 
+from core.digests import sha256_file
+from core.paths import REPO_ROOT
+
 
 EASYCRYPT_LOCK_SCHEMA_VERSION = 1
 EASYCRYPT_RECEIPT_SCHEMA_VERSION = 1
@@ -28,7 +31,7 @@ _COMMIT_RE = re.compile(r"^[0-9a-f]{40}$")
 _OPAM_ENV_RE = re.compile(
     r"^([A-Za-z_][A-Za-z0-9_]*)='([^']*)'; export \1;$"
 )
-_PROJECT_ROOT = Path(__file__).resolve().parents[2]
+_PROJECT_ROOT = REPO_ROOT
 EASYCRYPT_LOCK_PATH = Path(__file__).with_name("easycrypt.lock.json")
 
 # These values route live EasyCrypt work and are deliberately configured after
@@ -401,14 +404,6 @@ def managed_easycrypt_environment() -> dict[str, str]:
         else:
             env[name] = value
     return env
-
-
-def sha256_file(path: Path) -> str:
-    digest = hashlib.sha256()
-    with path.open("rb") as stream:
-        for chunk in iter(lambda: stream.read(1024 * 1024), b""):
-            digest.update(chunk)
-    return digest.hexdigest()
 
 
 def _canonical_json_sha256(value: object) -> str:

@@ -197,7 +197,3 @@ def test_ec_routing_event_is_emitted(monkeypatch, tmp_path):
 
     o_daemon = _drive(monkeypatch, _make_session(tmp_path / "d"), commit_result=ACCEPT)
     assert o_daemon["routing"] == [{"backend": "daemon", "reason": "daemon_accept"}]
-
-
-if __name__ == "__main__":
-    raise SystemExit(pytest.main([__file__, "-v"]))

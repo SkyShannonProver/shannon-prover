@@ -18,6 +18,7 @@ from workflow.proof_state_compiler.surface_profiles import (
 )
 from workflow.node.continuation_brief import normalize_continuation_brief
 
+from .daemon_attach import daemon_session_attach_enabled
 from .node_state import NodeTurnState
 from .types import ProofStateSnapshot
 
@@ -537,10 +538,6 @@ def _daemon_attach_request(resume_context: dict[str, Any]) -> dict[str, Any] | N
         return None
     expected_goal_hash = str(request.get("expected_goal_hash") or "").strip()
     if goal_identity_required != bool(expected_goal_hash):
-        return None
-    try:
-        from .daemon_attach import daemon_session_attach_enabled
-    except ImportError:
         return None
     if not daemon_session_attach_enabled():
         return None

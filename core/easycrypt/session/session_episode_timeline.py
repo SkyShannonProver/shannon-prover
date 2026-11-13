@@ -22,11 +22,7 @@ from core.easycrypt.proof_lifecycle import (
     is_session_completion_candidate,
 )
 
-from core.easycrypt.session.session_artifact_io import (
-    BoundJsonArtifactRead,
-    read_bound_current_json_artifact_event,
-    write_confined_text_artifact,
-)
+from core.easycrypt.session.session_artifact_io import write_confined_text_artifact
 from core.easycrypt.session.session_events import (
     event_payload,
     record_authoritative_artifact_event,
@@ -285,68 +281,6 @@ def episode_timeline_event_payload_fields(
         "note_count": len(_list(data.get("notes"))),
         "error_count": len(_list(data.get("errors"))),
     }
-
-
-def validate_episode_timeline_event_binding(
-    data: dict[str, Any],
-    payload: dict[str, Any],
-    *,
-    artifact_hash: str,
-    expected_session_dir: str,
-) -> SessionEpisodeTimelineValidation:
-    """Validate a produced-event mirror against its exact timeline bytes."""
-
-    validation = validate_session_episode_timeline(data)
-    errors = list(validation.errors)
-    expected = episode_timeline_event_payload_fields(
-        data,
-        artifact=str(payload.get("artifact") or ""),
-        timeline_hash=artifact_hash,
-    )
-    for key, expected_value in expected.items():
-        if payload.get(key) != expected_value:
-            errors.append(
-                f"episode.timeline.produced {key} does not match its artifact: "
-                f"expected {expected_value!r}, got {payload.get(key)!r}"
-            )
-    if data.get("session_dir") != expected_session_dir:
-        errors.append(
-            "episode timeline session_dir does not match the current session"
-        )
-    return SessionEpisodeTimelineValidation(
-        errors=errors,
-        warnings=list(validation.warnings),
-    )
-
-
-def read_bound_episode_timeline_event(
-    session_dir: str | Path,
-    event: dict[str, Any],
-) -> BoundJsonArtifactRead:
-    """Read one live episode timeline only through its produced event."""
-
-    expected_session = str(Path(session_dir).resolve())
-
-    def _validate(
-        data: dict[str, Any],
-        payload: dict[str, Any],
-        artifact_hash: str,
-    ) -> tuple[list[str], list[str]]:
-        validation = validate_episode_timeline_event_binding(
-            data,
-            payload,
-            artifact_hash=artifact_hash,
-            expected_session_dir=expected_session,
-        )
-        return list(validation.errors), list(validation.warnings)
-
-    return read_bound_current_json_artifact_event(
-        session_dir,
-        event,
-        event_type="episode.timeline.produced",
-        subdir="episode_timelines",
-        validate_binding=_validate,
-    )
 
 
 def record_session_episode_timeline(

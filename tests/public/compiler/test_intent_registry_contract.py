@@ -2,8 +2,10 @@ from core.context_intents import (
     intent_spec,
     persistent_control_specs,
 )
-from workflow.proof_state_compiler.runtime_profiles import allowed_runtime_intents
-from workflow.proof_state_compiler.surface_profiles import CURRENT_SURFACE_PROFILES
+from workflow.proof_state_compiler.runtime_profiles import (
+    allowed_runtime_intents,
+    current_surface_profile_names,
+)
 
 
 def test_persistent_control_catalog_is_registry_owned() -> None:
@@ -37,5 +39,5 @@ def test_persistent_controls_carry_the_rendered_labels() -> None:
 
 
 def test_amend_and_replay_is_available_in_every_managed_profile() -> None:
-    for profile in CURRENT_SURFACE_PROFILES:
+    for profile in current_surface_profile_names():
         assert "amend_and_replay" in allowed_runtime_intents(profile)

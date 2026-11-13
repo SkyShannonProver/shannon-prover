@@ -1,21 +1,5 @@
-"""Manager-owned runtime facade for the proof-state compiler."""
+"""Manager-owned runtime facade for the proof-state compiler.
 
-from workflow.proof_state_compiler.input_gateway import (
-    LiveCompilerInput,
-    live_compiler_input,
-)
-from workflow.proof_state_compiler.service import (
-    CompilerReadOnlyViolation,
-    CompilerServiceSkipped,
-    CompilerServiceResult,
-    ProofStateCompilerService,
-)
-
-__all__ = [
-    "CompilerReadOnlyViolation",
-    "CompilerServiceSkipped",
-    "CompilerServiceResult",
-    "LiveCompilerInput",
-    "ProofStateCompilerService",
-    "live_compiler_input",
-]
+Import from the submodules (``service``, ``input_gateway``, ...); the package
+re-exports nothing, so a profile lookup does not load the compiler service.
+"""

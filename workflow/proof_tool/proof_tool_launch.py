@@ -478,11 +478,20 @@ def _option_names(help_text: str) -> set[str]:
 
 
 def _feature_names(features_text: str) -> set[str]:
+    """Feature names from ``codex features list``, minus those marked removed.
+
+    A removed feature is already inert, and Codex answers ``--disable`` for one
+    with a deprecation notice that arrives before the turn starts; the provider
+    event guard rejects that, so the node would die before its first turn.
+    """
     names: set[str] = set()
     for line in features_text.splitlines():
         fields = line.split()
-        if fields and not fields[0].startswith("WARNING"):
-            names.add(fields[0])
+        if not fields or fields[0].startswith("WARNING"):
+            continue
+        if len(fields) > 1 and fields[1] == "removed":
+            continue
+        names.add(fields[0])
     return names
 
 

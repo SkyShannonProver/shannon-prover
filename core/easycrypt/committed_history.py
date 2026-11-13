@@ -89,18 +89,6 @@ def read_committed_commands(session_dir: str | Path) -> list[str]:
     return [c.strip() for c in split_ec_commands(text) if c.strip()]
 
 
-def read_committed_tactics(session_dir: str | Path) -> list[str]:
-    """All committed tactics as complete EasyCrypt commands; [] if unreadable.
-
-    This compatibility name remains the canonical reader used across the
-    manager and projection layers. It deliberately has command, not physical-
-    line, semantics. Replay code that must retain a multi-command manager
-    submission uses :func:`read_committed_transactions` as the stronger view.
-    """
-
-    return read_committed_commands(session_dir)
-
-
 def flatten_committed_transactions(
     transactions: list[str] | tuple[str, ...],
 ) -> list[str]:
@@ -177,7 +165,7 @@ def committed_history_has_qed(session_dir: str | Path) -> bool:
     final lines such as ``TAC. qed.``. Projection and workflow layers must not
     rederive the fact from physical lines.
     """
-    return committed_tactics_have_qed(read_committed_tactics(session_dir))
+    return committed_tactics_have_qed(read_committed_commands(session_dir))
 
 
 def committed_tactics_have_qed(tactics: list[str]) -> bool:
@@ -195,7 +183,7 @@ def closed_history_tactics(session_dir: str | Path) -> list[str]:
     history is never mistaken for a proof. A compound closer is normalized
     via ``split_trailing_qed`` so downstream qed handling sees a standalone
     ``qed.`` entry."""
-    tactics = split_trailing_qed(read_committed_tactics(session_dir))
+    tactics = split_trailing_qed(read_committed_commands(session_dir))
     if committed_tactics_have_qed(tactics):
         return tactics
     return []

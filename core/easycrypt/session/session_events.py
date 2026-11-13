@@ -15,6 +15,8 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Callable, Union
 
+from core.jsonio import append_jsonl
+
 
 SCHEMA_VERSION = 1
 EVENTS_FILENAME = "events.jsonl"
@@ -290,7 +292,6 @@ EVENT_PAYLOAD_SCHEMAS: dict[str, dict[str, dict[str, _FIELD_TYPE]]] = {
             "has_command": bool,
             "as_json": bool,
             "logged_after": bool,
-            "verify_lemma": str,
         },
     },
     "tool.result": {
@@ -307,7 +308,6 @@ EVENT_PAYLOAD_SCHEMAS: dict[str, dict[str, dict[str, _FIELD_TYPE]]] = {
             "from_file": (str, _NONE_TYPE),
             "has_command": bool,
             "as_json": bool,
-            "verify_lemma": str,
         },
     },
     "tactic.preflight.produced": {
@@ -488,9 +488,7 @@ EVENT_PAYLOAD_SCHEMAS: dict[str, dict[str, dict[str, _FIELD_TYPE]]] = {
             "history_lines_before": int,
             "line_count": int,
         },
-        "optional": {
-            "deltas_only": bool,
-        },
+        "optional": {},
     },
     "goal.changed": {
         "required": {
@@ -658,12 +656,10 @@ def append_event(
     """Append one JSONL event. Returns False on logging failure."""
     try:
         session_dir.mkdir(parents=True, exist_ok=True)
-        path = events_path(session_dir)
         event = make_event(
             session_dir, event_type, payload, source=source,
         )
-        with path.open("a", encoding="utf-8") as f:
-            f.write(json.dumps(event, sort_keys=True) + "\n")
+        append_jsonl(events_path(session_dir), event)
         return True
     except Exception:
         return False

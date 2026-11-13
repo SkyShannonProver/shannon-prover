@@ -88,9 +88,6 @@ experiments/      all other private research micro/sentinel/evaluator
                   scaffolding — never imported by production code
 ```
 
-Module basenames are unique across the tree and did not change in the
-2026-08-19 restructure; only their directories did.
-
 The retained manager/session/event foundation is not the old compiler. The old
 rich workspace, panel, text-derived semantic analysis, inspect/search, analyzer,
 and `workflow/surface_*` source paths have been physically removed. Historical
@@ -105,3 +102,34 @@ The goal-only no-compiler profile is an experiment control.
 Compiler features are independently removable vertical slices with atomic
 off/audit/treatment activation. EasyCrypt owns parsing, typing, resolution,
 matching, proof-term elaboration, and tactic acceptance.
+
+## Proof-node turn
+
+The long-lived proof agent submits exactly one manager intent per turn. The
+manager:
+
+1. validates the intent grammar exposed for this turn;
+2. binds node, session, request, state, and goal identities;
+3. executes the manager-owned operation;
+4. refreshes the exact event-bound managed goal;
+5. optionally calls the single compiler service for the active profile;
+6. composes a small result, goal/status, controls, and bounded ActionSurface;
+7. persists current node memory and audit events; and
+8. returns the new turn to the same agent session.
+
+Malformed input produces a repair turn without changing proof state. Repeated
+protocol failures become node-health evidence for the orchestrator; they do
+not give the manager proof-strategy ownership. The presenter only renders that
+turn: it does not know feature names, run producers, select routes, or expose
+audit items.
+
+## Change rules
+
+A runtime change is acceptable only if:
+
+- identity has one owner across manager/session/compiler;
+- a read-only call is event-bound and demonstrably non-mutating;
+- unsupported old modes fail instead of silently translating;
+- the experiment control remains compiler-free and goal-only;
+- features remain removable without manager/presenter edits; and
+- deterministic tests cover both valid and fail-closed paths.

@@ -42,14 +42,16 @@ from typing import Any
 # Single source of truth for the daemon session id lives in core; re-export the
 # name this module's callers use so the formula is no longer hand-mirrored here
 # (audit §2.5 / backlog #15).
+from core.jsonio import read_json_object_or_empty
 from core.easycrypt.committed_history import (
     committed_prefix_identity,
-    read_committed_tactics,
+    read_committed_commands,
     read_committed_transactions,
 )
 from core.easycrypt.daemon_backend import (
     session_id_for_dir as daemon_session_id_for_dir,
 )
+from core.easycrypt.ec_daemon_client import ECDaemonClient
 from core.easycrypt.session.session_events import append_event
 from core.easycrypt.session.session_projection import active_goal_hash_from_raw
 
@@ -74,16 +76,8 @@ def daemon_session_attach_enabled() -> bool:
     return value in ("1", "true", "yes", "on")
 
 
-def _read_json(path: Path) -> dict[str, Any]:
-    try:
-        data = json.loads(path.read_text(encoding="utf-8"))
-    except (OSError, json.JSONDecodeError):
-        return {}
-    return data if isinstance(data, dict) else {}
-
-
 def _read_history_tactics(session_dir: Path) -> list[str]:
-    return read_committed_tactics(session_dir)
+    return read_committed_commands(session_dir)
 
 
 def _socket_listening(socket_path: str) -> bool:
@@ -98,20 +92,6 @@ def _socket_listening(socket_path: str) -> bool:
             probe.close()
     except Exception:
         return False
-
-
-def _daemon_client(socket_path: str):
-    """Late-bound ``ECDaemonClient`` import (core/easycrypt is not a
-    package root for these modules; mirror daemon_backend's sys.path
-    convention)."""
-    import sys
-
-    ec_dir = str(Path(__file__).resolve().parents[2] / "core" / "easycrypt")
-    if ec_dir not in sys.path:
-        sys.path.insert(0, ec_dir)
-    from ec_daemon_client import ECDaemonClient  # type: ignore
-
-    return ECDaemonClient(socket_path)
 
 
 def _fail(reason: str, **extra: Any) -> dict[str, Any]:
@@ -204,7 +184,7 @@ def _attempt_daemon_attach_inner(
             requested_count=len(requested),
         )
 
-    meta = _read_json(donor / "session_meta.json")
+    meta = read_json_object_or_empty(donor / "session_meta.json")
     meta_file = str(meta.get("file") or "")
     meta_lemma = str(meta.get("lemma") or "")
     try:
@@ -223,7 +203,7 @@ def _attempt_daemon_attach_inner(
             meta_lemma=meta_lemma,
         )
 
-    state = _read_json(donor / "daemon_state.json")
+    state = read_json_object_or_empty(donor / "daemon_state.json")
     state_count = int(state.get("committed_count") or 0)
     transactions = read_committed_transactions(donor)
     if not transactions:
@@ -276,7 +256,7 @@ def _attempt_daemon_attach_inner(
 
     donor_sid = str(state.get("session_id") or daemon_session_id_for_dir(donor))
     target_sid = daemon_session_id_for_dir(target)
-    client = _daemon_client(socket_path)
+    client = ECDaemonClient(socket_path)
     try:
         live_sessions = client.list_sessions()
     except Exception as exc:
@@ -427,12 +407,12 @@ def close_daemon_session(
     succeeded."""
     try:
         session_path = _resolve_dir(session_dir, Path(project_root))
-        state = _read_json(session_path / "daemon_state.json")
+        state = read_json_object_or_empty(session_path / "daemon_state.json")
         socket_path = str(state.get("socket_path") or "")
         if not _socket_listening(socket_path):
             return False
         sid = str(state.get("session_id") or daemon_session_id_for_dir(session_path))
-        client = _daemon_client(socket_path)
+        client = ECDaemonClient(socket_path)
         client.close_session(sid)
         try:
             (session_path / "daemon_state.json").unlink()

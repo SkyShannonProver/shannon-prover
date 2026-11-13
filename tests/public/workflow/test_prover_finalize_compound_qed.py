@@ -252,11 +252,3 @@ def test_split_trailing_qed_edge_cases() -> None:
     # Identifier tails must not be mistaken for the qed keyword.
     assert split_trailing_qed(["rewrite my_qed."]) == ["rewrite my_qed."]
     assert split_trailing_qed(["apply foo'qed."]) == ["apply foo'qed."]
-
-
-if __name__ == "__main__":
-    test_compound_closer_history_counts_as_closed()
-    test_finalize_reports_proved_after_rejected_extra_qed_and_undo()
-    test_write_and_verify_normalizes_embedded_qed_directly()
-    test_split_trailing_qed_edge_cases()
-    print("PASS test_prover_finalize_compound_qed")

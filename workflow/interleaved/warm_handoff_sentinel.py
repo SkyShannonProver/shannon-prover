@@ -22,7 +22,7 @@ def run_warm_handoff_sentinel(ctx: ProjectContext, *, run_dir: Path) -> dict[str
         return {"required": False, "passed": True}
 
     from core.easycrypt.ec_daemon_client import default_socket_path
-    from workflow.agents.ec_services import _shutdown_ec_daemon
+    from workflow.agents.ec_services import shutdown_ec_daemon
 
     root = ctx.root
     run_dir = run_dir.resolve()
@@ -60,7 +60,7 @@ def run_warm_handoff_sentinel(ctx: ProjectContext, *, run_dir: Path) -> dict[str
         # The sentinel runs before prover.run assigns a per-run socket.  It
         # therefore owns the checkout-scoped fallback daemon used by this
         # bootstrap and must stop it on both success and failure.
-        _shutdown_ec_daemon(
+        shutdown_ec_daemon(
             reason="warm-handoff sentinel finished",
             socket_path=socket_path,
         )

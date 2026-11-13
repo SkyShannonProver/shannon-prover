@@ -28,7 +28,6 @@ from core.easycrypt.session.session_no_progress import detect_no_progress  # noq
 from core.easycrypt.session.session_state import extract_goal_body  # noqa: E402
 from core.easycrypt.committed_history import (  # noqa: E402
     read_committed_commands,
-    read_committed_tactics,
 )
 from workflow.proof_management.repl_session import (  # noqa: E402
     replay_prefix_divergence,
@@ -132,4 +131,3 @@ def test_committed_history_keeps_multiline_tactic_as_one_step(
 
     expected = [multiline, "by smt()."]
     assert read_committed_commands(session_dir) == expected
-    assert read_committed_tactics(session_dir) == expected

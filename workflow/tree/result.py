@@ -14,20 +14,13 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Literal
 
+from core.digests import sha256_file
 from core.easycrypt.committed_history import history_path
 from workflow.tree.session_observer import WorkflowSessionSnapshot
 
 
 TREE_RUN_TERMINATION_WALL_CLOCK_TIMEOUT = "wall_clock_timeout"
 TreeRunTerminationReason = Literal["", "wall_clock_timeout"]
-
-
-def _sha256_file(path: Path) -> str:
-    digest = hashlib.sha256()
-    with path.open("rb") as stream:
-        for chunk in iter(lambda: stream.read(1024 * 1024), b""):
-            digest.update(chunk)
-    return digest.hexdigest()
 
 
 @dataclass(frozen=True)
@@ -85,9 +78,9 @@ class SessionClosureCandidate:
             "session_dir": str(session),
             "session_status": snapshot.status,
             "target_file": str(source),
-            "target_file_sha256": _sha256_file(source),
+            "target_file_sha256": sha256_file(source),
             "target_lemma": str(target_lemma),
-            "history_sha256": _sha256_file(history),
+            "history_sha256": sha256_file(history),
             "tactic_count": int(snapshot.tactic_count),
             **identities,
         }
