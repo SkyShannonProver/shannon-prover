@@ -125,7 +125,12 @@ def _snapshot(
     )
 
 
-def _turn(state_ref: StateRef, tactic: str) -> CompilerTurnEvidence:
+def _turn(
+    state_ref: StateRef,
+    tactic: str,
+    *,
+    structured_error: str = "native rejected relation realization",
+) -> CompilerTurnEvidence:
     return CompilerTurnEvidence(
         source_event_id="relation-bridge-failure",
         source_event_sequence=8,
@@ -138,7 +143,7 @@ def _turn(state_ref: StateRef, tactic: str) -> CompilerTurnEvidence:
         payload=freeze_json_object({"tactic": tactic}),
         outcome_kind="rejected",
         proof_state_effect="unchanged",
-        structured_error="native rejected relation realization",
+        structured_error=structured_error,
     )
 
 
@@ -264,9 +269,15 @@ def _compile_relation_handoff(
     rejected = (
         prefix_tactic[:-1].rstrip() + "; transitivity 0%r."
     )
+    # A compound boundary is shown only when EasyCrypt reported its error
+    # for the whole commit; the manager keeps at most 1200 characters.
     invocation = compiler_invocation_context(
         state_ref,
-        _turn(state_ref, rejected),
+        _turn(
+            state_ref,
+            rejected,
+            structured_error=("[error] " + native_error_message)[:1200],
+        ),
     )
     compiler = ProofStateCompiler(features=(
         compound_tactic_prefix_recovery_feature(),
@@ -791,16 +802,23 @@ def test_real_lt_choice_preserves_intermediate_without_ranking() -> None:
     assert len(bundle.candidate_surface.diagnostics) == 1
     diagnostic = bundle.candidate_surface.diagnostics[0].diagnostic
     assert diagnostic.applicability == "choice_required"
+    # EasyCrypt has no formula-level transitivity: ``transitivity`` is a
+    # program-logic tactic and does not parse on a formula goal.
     assert diagnostic.primary == (
-        "`transitivity 0%r` is formula-level equality transitivity, but the "
-        "current goal is a real strict inequality `x < y`."
+        "`transitivity` is EasyCrypt's program-logic tactic; it does not "
+        "apply to the current goal, the real strict inequality `x < y`."
     )
+    # A single tactic has no "failing stage"; only a compound boundary does.
     assert diagnostic.help == (
-        "EasyCrypt checked these exact bridge alternatives for the failing "
-        "stage. Which bridge do you mean?\n"
-        "- `apply (ler_lt_trans 0%r); first last.`: `x <= 0%r`, `0%r < y`\n"
-        "- `apply (ltr_le_trans 0%r); first last.`: `x < 0%r`, `0%r <= y`\n"
-        "- `apply (ltr_trans 0%r); first last.`: `x < 0%r`, `0%r < y`\n"
+        "EasyCrypt checked these exact bridge alternatives. "
+        "Which bridge do you mean?\n"
+        # Goals in the order ``first last`` leaves them.
+        "- `apply (ler_lt_trans 0%r); first last.`: leaves `0%r < y`, then "
+        "`x <= 0%r`\n"
+        "- `apply (ltr_le_trans 0%r); first last.`: leaves `0%r <= y`, then "
+        "`x < 0%r`\n"
+        "- `apply (ltr_trans 0%r); first last.`: leaves `0%r < y`, then "
+        "`x < 0%r`\n"
         "Choose one only if it fits the proof route you want; the compiler "
         "selected none."
     )

@@ -105,11 +105,14 @@ def _turn(state_ref: StateRef, tactic: str) -> CompilerTurnEvidence:
     )
 
 
-def _compile():
+def _compile(
+    rejected_tactic: str = REJECTED_TACTIC,
+    candidate_tactic: str = CANDIDATE_TACTIC,
+):
     state_ref = _state_ref()
     snapshot = _snapshot(state_ref)
     invocation = compiler_invocation_context(
-        state_ref, _turn(state_ref, REJECTED_TACTIC)
+        state_ref, _turn(state_ref, rejected_tactic)
     )
     compiler = ProofStateCompiler(features=(intro_pattern_repair_feature(),))
     environment = CompilationEnvironment("intro-pattern-environment", (), ())
@@ -120,7 +123,7 @@ def _compile():
         surface_operation="move",
         attempted_pattern_kind="nested_case",
         binder_names=("ha", "hb", "hc", "hd"),
-        candidate_tactic=CANDIDATE_TACTIC,
+        candidate_tactic=candidate_tactic,
         failure_kind="intro_pattern_structure_mismatch",
         selected_pattern_count=1,
     )
@@ -207,3 +210,17 @@ def test_treatment_exposes_and_audit_hides_certified_intro_repair() -> None:
     )
     assert len(treated.action_surface.actions) == 1
     assert hidden.action_surface.empty
+
+
+def test_unspaced_move_arrow_keeps_its_checked_repair() -> None:
+    """``move=>`` is the common spelling; the P4 identity check used to
+    require a blank after ``move`` and dropped the checked repair."""
+
+    _invocation, bundle = _compile(
+        rejected_tactic="move=> [ha hb [hc hd]].",
+        candidate_tactic="move=> [# ha hb hc hd].",
+    )
+
+    assert [item.payload.to_dict() for item in bundle.candidate_surface.actions] == [
+        {"tactic": "move=> [# ha hb hc hd]."}
+    ]

@@ -134,7 +134,12 @@ class ProofStateCompiler:
             (feature, feature.execution_gate.evaluate(turn_evidence))
             for feature in self.features
         )
-        handoff_scheduled = any(
+        # A failing sentence of a multi-sentence commit forms no typed handoff:
+        # its consumers would analyse and recompose without the sentences
+        # that ran before it.
+        handoff_scheduled = (
+            turn_evidence is None or turn_evidence.failed_sentence is None
+        ) and any(
             eligibility.eligible
             and feature.execution_gate.produces_recovery_handoff
             for feature, eligibility in evaluated
@@ -438,6 +443,9 @@ def _native_producer_bindings(
         NativeSemanticProducerBinding(
             feature_id=feature.spec.feature_id,
             producer=producer,
+            accepts_failing_sentence=(
+                feature.execution_gate.accepts_failing_sentence
+            ),
         )
         for feature in features
         for producer in feature.native_semantic_request_producers

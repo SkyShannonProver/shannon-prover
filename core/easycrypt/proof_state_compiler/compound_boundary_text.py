@@ -22,12 +22,23 @@ def compound_boundary_summary(
     accepted_stage_count: int,
     rejected_extension: str,
     native_error: str,
+    parse_error: bool = False,
+    sentence: tuple[int, int] | None = None,
 ) -> str:
     """Describe rollback, the accepted prefix, and the first failed stage.
 
     The accepted prefix is quoted exactly once: the agent already holds the
     tactic it submitted, and repeating a long prefix is what pushed real
-    boundaries past their delivery budget.
+    boundaries past their delivery budget.  The account ends with EasyCrypt's
+    report: it lists no continuations, which the agent already knows.
+
+    When the tactic does not parse, EasyCrypt ran none of it: the prefix ran
+    only on its own, and what follows it is the text that does not parse,
+    possibly several stages, rather than one failing stage.
+
+    ``sentence`` is ``(index, count)`` when the stages belong to the sentence
+    EasyCrypt rejected in a multi-sentence commit: they ran after the
+    sentences before it.
     """
 
     if accepted_stage_count == 1:
@@ -36,43 +47,50 @@ def compound_boundary_summary(
     else:
         accepted = f"the first {accepted_stage_count} stages, which"
         verb = "change" if accepted_effect == "accepted_changed" else "do not change"
+    if sentence is not None:
+        index, count = sentence
+        before = (
+            "" if index == 1
+            else " after the sentence before it" if index == 2
+            else f" after the {index - 1} sentences before it"
+        )
+        subject = f"Sentence {index} of your {count}-sentence commit"
+        where = f"In sentence {index},{before}, " if before else (
+            f"In sentence {index}, "
+        )
+    else:
+        subject = "Your compound tactic"
+        where = ""
+    if parse_error:
+        opening = (
+            f"{subject} does not parse, so EasyCrypt ran none of it; "
+            "nothing was committed.\n\n"
+            f"{where}on its own, EasyCrypt can execute {accepted} {verb} the "
+            "goal:"
+            if where else
+            f"{subject} does not parse, so EasyCrypt ran none of it; "
+            "nothing was committed.\n\n"
+            f"On its own, EasyCrypt can execute {accepted} {verb} the goal:"
+        )
+        failing = "The rest does not parse:"
+    else:
+        opening = (
+            f"{subject} failed and the commit was rolled back; nothing was "
+            "committed.\n\n"
+            f"{where}EasyCrypt can execute {accepted} {verb} the goal:"
+            if sentence is not None else
+            "Your compound tactic failed and was rolled back; nothing was "
+            "committed.\n\n"
+            f"EasyCrypt can execute {accepted} {verb} the goal:"
+        )
+        failing = "The next stage fails:"
     return (
-        "Your compound tactic failed and was rolled back; nothing was "
-        "committed.\n\n"
-        f"EasyCrypt can execute {accepted} {verb} the goal:\n\n"
+        f"{opening}\n\n"
         f"{_indented_block(accepted_prefix)}\n\n"
-        "The next stage fails:\n\n"
+        f"{failing}\n\n"
         f"{_indented_block(rejected_extension)}\n\n"
         "EasyCrypt reports:\n\n"
         f"{_indented_block(native_error)}"
-    )
-
-
-def compound_boundary_continuation(
-    *,
-    accepted_effect: str,
-    accepted_stage_count: int,
-) -> str:
-    """State strategy-preserving options after an explanation-only result.
-
-    The boundary summary above always quotes the prefix, so this text refers
-    to it rather than repeating it.
-    """
-
-    stages, it = (
-        ("that stage", "it") if accepted_stage_count == 1
-        else ("those stages", "them")
-    )
-    if accepted_effect == "accepted_changed":
-        return (
-            f"To continue from the goal after {stages}, submit {it} alone, "
-            "or fix the failing suffix and resubmit the compound. The "
-            "compiler does not choose between these options."
-        )
-    return (
-        f"Submitting {stages} alone would not change the goal; fix the "
-        "failing suffix or choose a different tactic. The compiler does not "
-        "choose between these options."
     )
 
 
@@ -109,4 +127,5 @@ def checked_state_reference(handoff: RecoveryHandoff | None) -> str:
 
 
 def _indented_block(value: str) -> str:
-    return "  " + value.replace("\n", "\n  ")
+    lines = value.replace("\r\n", "\n").replace("\r", "\n")
+    return "  " + lines.replace("\n", "\n  ")

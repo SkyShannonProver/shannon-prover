@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import re
+
 from pathlib import Path
 import subprocess
 
@@ -31,6 +33,55 @@ def managed_why3_config_path(env: dict[str, str]) -> Path:
     return path.resolve()
 
 
+# Every proof check runs the same smt portfolio: the provers below that the
+# managed Why3 configuration registers, all at once. EasyCrypt's own default
+# list does not include CVC5, so with this toolchain every check ran Z3
+# alone (plus Alt-Ergo only where it is installed). Measured on the step4_1 failures
+# and four verified proofs, adding provers proved goals Z3 could not (in
+# 0.1-0.4 s) while longer timeouts proved none. The manager's session and
+# final verification must share the set: a session step that only CVC5 proves
+# is otherwise rejected by verification. The session timeout bounds a failing
+# smt call the agent waits for; verification allows more under load.
+SMT_PORTFOLIO = ("Z3", "CVC5", "Alt-Ergo")
+SESSION_SMT_TIMEOUT_SECONDS = 3
+VERIFICATION_SMT_TIMEOUT_SECONDS = 30
+SMT_PROVERS_ENV = "SHANNON_SMT_PROVERS"
+SMT_TIMEOUT_ENV = "SHANNON_SMT_TIMEOUT"
+_PROVER_NAME = re.compile(r'^\s*name\s*=\s*"([^"]+)"\s*$')
+_PROVER_SECTION = re.compile(r"^\s*\[(?:partial_)?prover\]\s*$")
+
+
+def managed_smt_provers() -> tuple[str, ...]:
+    """The portfolio provers the managed Why3 configuration registers."""
+
+    try:
+        lines = managed_why3_config_file().read_text(encoding="utf-8").splitlines()
+    except OSError:
+        return ()
+    registered: set[str] = set()
+    in_prover = False
+    for line in lines:
+        if line.strip().startswith("["):
+            in_prover = bool(_PROVER_SECTION.match(line))
+            continue
+        match = _PROVER_NAME.match(line) if in_prover else None
+        if match:
+            registered.add(match.group(1))
+    return tuple(name for name in SMT_PORTFOLIO if name in registered)
+
+
+def smt_arguments(timeout: int) -> list[str]:
+    """``-p`` per portfolio prover, all run together, and the smt timeout."""
+
+    provers = managed_smt_provers()
+    arguments: list[str] = []
+    for name in provers:
+        arguments += ["-p", name]
+    if provers:
+        arguments += ["-max-provers", str(len(provers))]
+    return arguments + ["-timeout", str(int(timeout))]
+
+
 def easycrypt_command(*args: str, binary: str = "easycrypt") -> list[str]:
     """Bind CLI processes to the same config as native companions.
 
@@ -51,6 +102,9 @@ def get_ec_env() -> dict[str, str]:
 
     env = managed_easycrypt_environment()
     env[MANAGED_WHY3_CONFIG_ENV] = str(managed_why3_config_path(env))
+    # Native companions run smt in-process; they read the same portfolio.
+    env[SMT_PROVERS_ENV] = ",".join(managed_smt_provers())
+    env[SMT_TIMEOUT_ENV] = str(SESSION_SMT_TIMEOUT_SECONDS)
     return env
 
 

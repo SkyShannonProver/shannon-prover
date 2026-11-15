@@ -8,7 +8,7 @@ import re
 from collections import Counter
 from datetime import datetime
 from pathlib import Path
-from core.jsonio import read_jsonl
+from core.jsonio import canonical_json, read_jsonl
 from workflow.schemas.prover_result import (
     PROVER_RUN_INFRASTRUCTURE_INVALID,
     ProverResult,
@@ -465,11 +465,8 @@ def _read_json(path: Path) -> dict[str, Any]:
 def _intent_identity(value: dict[str, Any]) -> str:
     payload = value.get("payload")
     payload = payload if isinstance(payload, dict) else {}
-    return json.dumps(
-        {"intent": str(value.get("intent") or ""), "payload": payload},
-        ensure_ascii=False,
-        sort_keys=True,
-        separators=(",", ":"),
+    return canonical_json(
+        {"intent": str(value.get("intent") or ""), "payload": payload}
     )
 
 

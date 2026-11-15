@@ -20,7 +20,7 @@ from dataclasses import dataclass
 from functools import lru_cache
 from pathlib import Path
 
-from core.digests import sha256_file
+from core.digests import sha256_file, sha256_json
 from core.paths import REPO_ROOT
 
 
@@ -40,6 +40,9 @@ EASYCRYPT_LOCK_PATH = Path(__file__).with_name("easycrypt.lock.json")
 _RUNTIME_ROUTE_ENV_NAMES = (
     "EC_DAEMON_SOCKET",
     "WHY3EC_SOCKET",
+    # Daemon or batch: a cached value would route a later caller's commits
+    # through whichever backend the first caller chose.
+    "EC_DAEMON_DISABLE",
 )
 
 
@@ -82,7 +85,7 @@ class EasyCryptLock:
 
     @property
     def identity_sha256(self) -> str:
-        return _canonical_json_sha256(self.payload())
+        return sha256_json(self.payload())
 
 
 @dataclass(frozen=True)
@@ -404,13 +407,3 @@ def managed_easycrypt_environment() -> dict[str, str]:
         else:
             env[name] = value
     return env
-
-
-def _canonical_json_sha256(value: object) -> str:
-    encoded = json.dumps(
-        value,
-        ensure_ascii=False,
-        separators=(",", ":"),
-        sort_keys=True,
-    ).encode("utf-8")
-    return hashlib.sha256(encoded).hexdigest()

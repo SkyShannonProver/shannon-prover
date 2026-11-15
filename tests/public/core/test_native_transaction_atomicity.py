@@ -80,10 +80,27 @@ def test_rejected_transaction_is_atomic_then_valid_proof_verifies(
         def submit(tactic):
             return manager.handle_agent_message(json.dumps({"intent": "commit_tactic", "payload": {"tactic": tactic}}))
         before = observe_session(manager.session_path)
-        submit(bad)
+        rejected = submit(bad)
         verdict = [e["payload"] for e in read_events(manager.session_path)
                    if e["type"] == "tactic.result"][-1]
         assert verdict["status"] == "error"
+        # The REPL stops at the rejected sentence and says which one it was;
+        # a batch replay judges the transaction as a whole.
+        index = 1 if bad.startswith("definitely_invalid_tactic") else 2
+        reported = json.dumps(rejected.manager_actions, ensure_ascii=False)
+        if batch:
+            assert "failed_sentence" not in verdict
+            assert "at sentence" not in reported
+        else:
+            assert verdict["failed_sentence"] == {
+                "index": index,
+                "count": 2,
+                "sentence": "definitely_invalid_tactic.",
+            }
+            assert (
+                "EasyCrypt rejected the committed tactic at sentence "
+                f"{index} of 2: `definitely_invalid_tactic.`"
+            ) in reported
         assert read_committed_commands(manager.session_path) == []
         after = observe_session(manager.session_path)
         assert not after.session_completion_candidate

@@ -112,7 +112,12 @@ The repair changes the contract, not merely the failing status string:
 
 One manager submission is an atomic transaction, including multi-sentence
 blocks. Native transport drains each sentence and stops at its first error;
-the session commits all or rolls back the whole block. Batch acceptance checks
+the session commits all or rolls back the whole block. When the daemon rejects
+a block of two or more sentences, it records which one (`failed_sentence`:
+index, count and text) through the CommitResponse and TacticExecutionResult,
+and the manager's result says "rejected the committed tactic at sentence k of
+n" and that sentences 1..k-1 ran before the rollback. A batch replay judges
+the block as a whole and records no index. Batch acceptance checks
 the complete current-call output before display compression. Warm/fresh probes
 use the same sentence-draining boundary; replay rejects native failures rather
 than trusting a history label. Daemon synchronization and adoption count

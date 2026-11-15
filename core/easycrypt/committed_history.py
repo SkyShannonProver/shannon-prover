@@ -158,18 +158,13 @@ def read_committed_transactions(session_dir: str | Path) -> list[str]:
     return transactions
 
 
-def committed_history_has_qed(session_dir: str | Path) -> bool:
-    """Whether committed history contains a terminal ``qed`` command.
+def committed_tactics_have_qed(tactics: list[str]) -> bool:
+    """Whether an already-read tactic list contains a terminal ``qed``.
 
     This module is the sole owner of history closure syntax, including compound
     final lines such as ``TAC. qed.``. Projection and workflow layers must not
     rederive the fact from physical lines.
     """
-    return committed_tactics_have_qed(read_committed_commands(session_dir))
-
-
-def committed_tactics_have_qed(tactics: list[str]) -> bool:
-    """Canonical closure-syntax predicate for an already-read tactic list."""
     return any(
         _is_standalone_qed(tactic)
         for tactic in split_trailing_qed(list(tactics))

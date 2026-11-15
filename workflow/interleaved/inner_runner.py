@@ -19,7 +19,7 @@ _IMPORT_ROOT = Path(__file__).resolve().parents[2]
 if str(_IMPORT_ROOT) not in sys.path:
     sys.path.insert(0, str(_IMPORT_ROOT))
 
-from core.digests import sha256_bytes
+from core.digests import sha256_bytes, sha256_json
 from core.jsonio import append_jsonl
 from core.easycrypt.eval_source_prep import prepare_eval_source
 from core.easycrypt.ec_lifecycle import split_ec_commands
@@ -116,17 +116,6 @@ def run_directory(ctx: ProjectContext) -> tuple[Path, Path]:
     return relative, resolved
 
 
-def _canonical_json_sha256(value: dict[str, object]) -> str:
-    return sha256_bytes(
-        json.dumps(
-            value,
-            ensure_ascii=False,
-            sort_keys=True,
-            separators=(",", ":"),
-        ).encode("utf-8")
-    )
-
-
 def _load_invocation_receipt(
     ctx: ProjectContext,
     *,
@@ -164,7 +153,7 @@ def _load_invocation_receipt(
     # stable and self-authenticating without recursive serialization.
     without_hash = dict(receipt)
     without_hash.pop("content_sha256", None)
-    if _canonical_json_sha256(without_hash) != str(
+    if sha256_json(without_hash) != str(
         receipt.get("content_sha256") or ""
     ):
         raise ValueError("invocation receipt content hash mismatch")

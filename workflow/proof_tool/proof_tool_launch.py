@@ -15,6 +15,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
+from core.jsonio import canonical_json
 from workflow.proof_tool.proof_tool_contract import ProofToolContractManifest
 from workflow.proof_management.repl_session import replay_aggregate_budget_seconds
 
@@ -183,12 +184,7 @@ class ProofMcpLaunchSpec:
             "--launch-id",
             invocation,
             "--manifest-json",
-            json.dumps(
-                self.manifest.to_dict(),
-                ensure_ascii=False,
-                sort_keys=True,
-                separators=(",", ":"),
-            ),
+            canonical_json(self.manifest.to_dict()),
             "--manager-timeout-seconds",
             str(self.timing.manager_operation_seconds),
             "--endpoint-timeout-seconds",

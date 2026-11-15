@@ -153,6 +153,22 @@ def sentence_ends(text: str, code: str | None = None) -> Iterator[int]:
         index += 1
 
 
+def terminated_tactic(tactic: str) -> str:
+    """The text EasyCrypt runs for a submitted tactic.
+
+    A final ``.`` is added when the code, comments aside, does not end with
+    one, so EasyCrypt does not wait for a terminating period. A tactic whose
+    last sentence ends before a trailing comment is run as written: a ``.``
+    after the comment would be a sentence the agent never wrote. Commit,
+    ``-try`` and the compiler all read the tactic through this one rule.
+    """
+
+    trimmed = str(tactic or "").rstrip()
+    if trimmed and not strip_comments(trimmed).rstrip().endswith("."):
+        return trimmed + "."
+    return trimmed
+
+
 def split_ec_commands(text: str) -> list[str]:
     """Split EC source text into a list of complete statements.
 

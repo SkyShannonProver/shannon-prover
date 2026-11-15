@@ -91,21 +91,19 @@ from core.easycrypt.ec_lifecycle import ECSessionLifecycle  # noqa: E402
 from core.easycrypt.ec_prompt import PROMPT_RE  # noqa: E402
 from core.easycrypt.proof_text import (  # noqa: E402
     split_ec_commands,
-    strip_comments,
+    terminated_tactic,
     undo_unsafe_sentence,
 )
 from core.easycrypt.ec_env import get_ec_env  # noqa: E402
 from core.easycrypt.ec_daemon_client import default_socket_path  # noqa: E402
-from core.easycrypt.ec_diagnostics import parse_error  # noqa: E402
+from core.easycrypt.ec_diagnostics import FailedSentence, parse_error  # noqa: E402
 
 
 logger = logging.getLogger("ec_daemon")
 
 def _with_final_dot(tactic: str) -> str:
     """End ``tactic`` with a dot unless its code (not a comment) already does."""
-    if strip_comments(tactic).rstrip().endswith("."):
-        return tactic
-    return tactic.rstrip() + "."
+    return terminated_tactic(tactic)
 
 
 def _prompt_level(raw: str) -> Optional[tuple[int, str]]:
@@ -181,6 +179,8 @@ class TacticOutcome:
     raw_output: str               # full output since command
     goal_after: GoalState
     error: Optional[dict] = None  # {kind, raw, severity?}
+    # The rejected sentence of a multi-sentence transaction.
+    failed_sentence: Optional[FailedSentence] = None
 
 
 @dataclass
@@ -332,12 +332,13 @@ class ECSubprocess(ECSessionLifecycle):
         # response per sentence, exactly as bootstrap does; otherwise a later
         # call can consume an earlier sentence's buffered prompt. Commit to the
         # journal only if the entire transaction succeeds.
-        raw = self.send_and_drain(
+        drained = self.drain_transaction(
             tactic,
             timeout=self._RESPONSE_TIMEOUT_DEFAULT if timeout is None else timeout,
             is_error=self._parse_error,
             whole_transaction=True,
         )
+        raw = drained.raw
         self._prompt = _prompt_level(raw)
         goal = self._parse_goal_state(raw)
         err = self._parse_error(raw)
@@ -359,6 +360,14 @@ class ECSubprocess(ECSessionLifecycle):
             raw_output=raw,
             goal_after=goal,
             error=err,
+            failed_sentence=(
+                FailedSentence(
+                    index=drained.last_index,
+                    count=drained.sentence_count,
+                    sentence=drained.last_sentence,
+                )
+                if drained.sentence_count > 1 else None
+            ),
         )
 
     # -----------------------------------------------------------------
@@ -1149,12 +1158,15 @@ def _goal_to_dict(g: GoalState) -> dict:
 
 
 def _outcome_to_dict(o: TacticOutcome) -> dict:
-    return {
+    result = {
         "accepted": o.accepted,
         "raw_output": o.raw_output,
         "goal_after": _goal_to_dict(o.goal_after),
         "error": o.error,
     }
+    if o.failed_sentence is not None:
+        result["failed_sentence"] = o.failed_sentence.to_payload()
+    return result
 
 
 # ---------------------------------------------------------------------------

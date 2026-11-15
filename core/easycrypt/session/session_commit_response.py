@@ -14,6 +14,7 @@ import re
 from pathlib import Path
 from typing import Any
 
+from core.easycrypt.ec_diagnostics import FailedSentence
 from core.easycrypt.session.session_artifact_io import write_confined_text_artifact
 from core.easycrypt.session.session_events import record_authoritative_artifact_event
 from core.easycrypt.validation_result import ValidationResult
@@ -41,6 +42,7 @@ def build_commit_response(
     accepted_count: int = 0,
     failed_tactic: str = "",
     failure_reason: str = "",
+    failed_sentence: FailedSentence | None = None,
     keep_on_fail: bool = False,
     rollback_count: int = 0,
     live_tool_name: str | None = None,
@@ -83,6 +85,12 @@ def build_commit_response(
             "failure_reason": failure_reason,
             "keep_on_fail": bool(keep_on_fail),
             "rollback_count": int(rollback_count),
+            # Present only for a rejected multi-sentence transaction.
+            **(
+                {"failed_sentence": failed_sentence.to_payload()}
+                if failed_sentence is not None and not command_ok
+                else {}
+            ),
         },
         "notes": [],
         "errors": errors,
@@ -231,6 +239,10 @@ def validate_commit_response(data: dict[str, Any]) -> CommitResponseValidation:
             errors.append(f"mutation.{field_name} must be a string")
     if not isinstance(mutation.get("keep_on_fail"), bool):
         errors.append("mutation.keep_on_fail must be a bool")
+    if "failed_sentence" in mutation and (
+        FailedSentence.from_payload(mutation["failed_sentence"]) is None
+    ):
+        errors.append("mutation.failed_sentence must be one complete record")
 
     for field_name in ("notes", "errors"):
         items = data.get(field_name)

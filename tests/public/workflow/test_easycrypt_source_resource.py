@@ -240,8 +240,11 @@ def test_manager_exact_declaration_resolution_is_native_and_non_mutating(
     _project, _prepared, resource, events = _resource(tmp_path)
     calls: list[tuple[tuple[str, ...], Path, tuple[Path, ...]]] = []
 
+    contexts: list[str] = []
+
     def resolve(symbols, context_file, include_dirs, *, timeout=60.0):
         calls.append((tuple(symbols), context_file, tuple(include_dirs)))
+        contexts.append(Path(context_file).read_text(encoding="utf-8"))
         return {
             "Distr.mu_ge0": {
                 "requested": "Distr.mu_ge0",
@@ -283,7 +286,13 @@ def test_manager_exact_declaration_resolution_is_native_and_non_mutating(
     assert invalid.is_error
     assert "exact EasyCrypt identifier" in invalid.text
     assert calls[0][0] == ("Distr.mu_ge0",)
-    assert calls[0][1] == resource.isolated_file
+    # Names resolve where the agent's proof is open, as in the manager's
+    # context: the target file cut at the target's ``proof.``, which is
+    # removed again after the query.
+    assert calls[0][1] != resource.isolated_file
+    assert not calls[0][1].exists()
+    assert contexts[0].rstrip().endswith("lemma target : true.\nproof.")
+    assert "lemma helper" in contexts[0]
     assert calls[0][2] == (resource.isolated_root, *resource.include_roots)
     assert [event["status"] for event in events] == [
         "resolved", "miss", "rejected"

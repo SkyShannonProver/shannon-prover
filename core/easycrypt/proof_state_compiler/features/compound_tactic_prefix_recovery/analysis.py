@@ -17,7 +17,6 @@ from core.easycrypt.proof_state_compiler.middle_end.contributions import (
     AnalysisContribution,
 )
 from core.easycrypt.proof_state_compiler.compound_boundary_text import (
-    compound_boundary_continuation,
     compound_boundary_summary,
 )
 from .ids import COMPOUND_TACTIC_PREFIX_RECOVERY_FEATURE_ID
@@ -36,7 +35,7 @@ COMPOUND_PREFIX_DIAGNOSTIC_PRODUCER_ID = (
 def analyze_compound_tactic_prefix_recovery(
     proof_ir: ProofIR,
     _coordinate: ProofCoordinate,
-    _invocation: CompilerInvocationContext,
+    invocation: CompilerInvocationContext,
 ) -> AnalysisContribution:
     attempted = proof_ir.attempted_operation
     handoff = None if attempted is None else attempted.recovery_handoff
@@ -49,6 +48,7 @@ def analyze_compound_tactic_prefix_recovery(
             accepted_stage_count=handoff.accepted_prefix_stage_count,
             rejected_extension=handoff.derived_rejected_tactic,
             native_error=handoff.native_error_message,
+            parse_error=handoff.native_failure_kind == "parse_error",
             trigger_id=attempted.trigger_id,
             evidence_refs=attempted.evidence_refs,
         )
@@ -69,7 +69,9 @@ def analyze_compound_tactic_prefix_recovery(
         or attempted.positions
     ):
         return AnalysisContribution()
-    candidates = compound_prefix_candidates(attempted.rejected_tactic)
+    lexical_candidates = compound_prefix_candidates(attempted.rejected_tactic)
+    # EasyCrypt keeps the leading lexical cuts its own parse delimits; a cut
+    # inside a greedy ``by``/``first`` body never reaches this point.
     matches = tuple(
         item.descriptor
         for item in proof_ir.native_semantic_observations
@@ -78,11 +80,13 @@ def analyze_compound_tactic_prefix_recovery(
         and item.status == "accepted"
         and isinstance(item.descriptor, NativeTacticPrefixDiagnosticDescriptor)
         and item.descriptor.rejected_tactic == attempted.rejected_tactic
-        and item.descriptor.candidate_prefixes == candidates
+        and item.descriptor.candidate_prefixes
+        == lexical_candidates[:len(item.descriptor.candidate_prefixes)]
     )
     if len(matches) != 1:
         return AnalysisContribution()
     descriptor = matches[0]
+    candidates = descriptor.candidate_prefixes
     accepted = descriptor.accepted_prefixes
     if (
         not accepted
@@ -111,6 +115,8 @@ def analyze_compound_tactic_prefix_recovery(
         accepted_stage_count=len(accepted),
         rejected_extension=extension,
         native_error=descriptor.boundary_error_message,
+        parse_error=descriptor.boundary_failure_kind == "parse_error",
+        sentence=_failing_sentence(invocation),
         trigger_id=attempted.trigger_id,
         evidence_refs=attempted.evidence_refs,
     )
@@ -137,21 +143,18 @@ def _compound_boundary_diagnostic(
     native_error: str,
     trigger_id: str,
     evidence_refs: tuple[EvidenceRef, ...],
+    parse_error: bool = False,
+    sentence: tuple[int, int] | None = None,
 ) -> StructuredDiagnostic | None:
     try:
-        primary = (
-            compound_boundary_summary(
-                accepted_prefix=accepted_prefix,
-                accepted_effect=accepted_effect,
-                accepted_stage_count=accepted_stage_count,
-                rejected_extension=rejected_extension,
-                native_error=native_error,
-            )
-            + "\n\n"
-            + compound_boundary_continuation(
-                accepted_effect=accepted_effect,
-                accepted_stage_count=accepted_stage_count,
-            )
+        primary = compound_boundary_summary(
+            sentence=sentence,
+            accepted_prefix=accepted_prefix,
+            accepted_effect=accepted_effect,
+            accepted_stage_count=accepted_stage_count,
+            rejected_extension=rejected_extension,
+            native_error=native_error,
+            parse_error=parse_error,
         )
         return StructuredDiagnostic(
             producer_id=COMPOUND_PREFIX_DIAGNOSTIC_PRODUCER_ID,
@@ -166,3 +169,13 @@ def _compound_boundary_diagnostic(
     except ValueError:
         # A long source prefix/error does not fit the bounded agent surface.
         return None
+
+
+def _failing_sentence(
+    invocation: CompilerInvocationContext,
+) -> tuple[int, int] | None:
+    """``(index, count)`` of the rejected sentence of a multi-sentence commit."""
+
+    failure = invocation.failure_observation
+    scope = None if failure is None else failure.sentence_scope
+    return None if scope is None else (scope.index, scope.count)

@@ -69,10 +69,11 @@ def lower_operation_binding_repair(
         else:
             reason_code = "selected_operation_argument_realization"
             repair = (
-                "EasyCrypt accepts one corrected form of your selected "
+                "EasyCrypt accepts this corrected form of your selected "
                 f"`{application.operation}`. It keeps the operation and "
-                "theorem you chose and changes only how its module arguments "
-                "are written or supplied."
+                "theorem you chose and changes only how its arguments are "
+                "written or supplied: module arguments, and `_` for a proof "
+                "left as a goal."
             )
         return SurfaceContribution(actions=(replace(
             action,

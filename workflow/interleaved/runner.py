@@ -21,6 +21,7 @@ _IMPORT_ROOT = Path(__file__).resolve().parents[2]
 if str(_IMPORT_ROOT) not in sys.path:
     sys.path.insert(0, str(_IMPORT_ROOT))
 
+from core.jsonio import canonical_json
 from workflow.proc_lifecycle import signal_group_ladder
 from workflow.interleaved.agent_config import (
     agent_profile_sha256,
@@ -1417,11 +1418,8 @@ resuming large construction-mode edits.
             environment["INTERLEAVED_INNER_PROFILE_SHA256"] = (
                 agent_profile_sha256(inner_profile)
             )
-            environment[INNER_PROVIDER_IDENTITY_ENV] = json.dumps(
-                provider_runtime[inner_profile.key]["provider_identity"],
-                ensure_ascii=False,
-                sort_keys=True,
-                separators=(",", ":"),
+            environment[INNER_PROVIDER_IDENTITY_ENV] = canonical_json(
+                provider_runtime[inner_profile.key]["provider_identity"]
             )
             if continuation_rel is not None:
                 environment["INTERLEAVED_CONTINUATION_OF"] = (

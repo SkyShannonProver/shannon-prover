@@ -23,6 +23,7 @@ from core.paths import REPO_ROOT
 from workflow.schemas.config import (
     DEFAULT_CLAUDE_MODEL,
     DEFAULT_CODEX_MODEL,
+    PROVER_DEFAULTS,
     RunConfig,
     default_model_for_backend,
     normalize_agent_backend,
@@ -424,12 +425,10 @@ def main():
     )
     parser.add_argument("--prover-timeout-minutes", type=int, default=None,
                         help="Override the prover's internal timeout (default: "
-                             "config.prover.timeout_minutes = 20). Increase when "
-                             "your driver's per-lemma cap is larger than 20 min — "
-                             "otherwise the prover hits 20-min and dies even if "
-                             "the driver cap allows more. Observed failure: "
-                             "ChaChaPoly step1 Run 5 was 90%% done at minute 20:00 "
-                             "but hit the 20-min prover cap before closing.")
+                             f"config.prover.timeout_minutes = {PROVER_DEFAULTS.timeout_minutes}). "
+                             "Increase it when your driver's per-lemma cap is "
+                             "larger; otherwise the prover stops at its own cap "
+                             "even if the driver allows more.")
     parser.add_argument("--output-dir", type=str, default=None,
                         help="Override RunConfig.output_dir for suite runners.")
     parser.add_argument("--verbose", "-v", action="store_true")

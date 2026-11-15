@@ -2,10 +2,9 @@
 
 from __future__ import annotations
 
-import hashlib
-import json
 from dataclasses import dataclass, field, replace
 
+from core.digests import sha256_json
 from core.easycrypt.proof_state_compiler.contracts import CompilerTurnEvidence
 from core.easycrypt.proof_state_compiler.features.execution import (
     FeatureExecutionDecision,
@@ -83,10 +82,4 @@ def _occurrence_key(
         "gate_id": decision.gate_id,
         "turn_evidence": turn_evidence.identity_payload(),
     }
-    encoded = json.dumps(
-        payload,
-        ensure_ascii=False,
-        separators=(",", ":"),
-        sort_keys=True,
-    ).encode("utf-8")
-    return hashlib.sha256(encoded).hexdigest()
+    return sha256_json(payload)

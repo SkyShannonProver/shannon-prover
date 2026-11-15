@@ -186,17 +186,23 @@ def _rejection_agrees_with_layout(
     return beyond or not _syntax_fits(argument, slots[argument.position - 1])
 
 
+# Rows listed per table. A theorem's slots and the agent's arguments are
+# short lines; truncating at four hid the very slot an "Argument 6 has no
+# corresponding slot" diagnosis rests on.
+_LISTED_ROWS = 8
+
+
 def _expected_arguments(
     slots: tuple[NativeApplicationSlotDescriptor, ...],
 ) -> str:
     rows = []
-    for slot in slots[:4]:
+    for slot in slots[:_LISTED_ROWS]:
         detail = _slot_expectation(slot)
         if not detail:
             return ""
         rows.append(f"{slot.position}. {detail}")
     if len(slots) > len(rows):
-        rows.append(f"{len(rows) + 1}. plus {len(slots) - len(rows)} more")
+        rows.append(f"(and {len(slots) - len(rows)} more)")
     return "\n".join(rows)
 
 
@@ -226,7 +232,7 @@ def _supplied_arguments_list(
     arguments: tuple[NativeInputArgument, ...],
 ) -> str:
     rows = []
-    for argument in arguments[:4]:
+    for argument in arguments[:_LISTED_ROWS]:
         spelling = _bounded_exact_text(argument.source_spelling)
         if not spelling:
             return ""
@@ -234,9 +240,7 @@ def _supplied_arguments_list(
         # names are listed without a kind label.
         rows.append(f"{argument.position}. `{spelling}`")
     if len(arguments) > len(rows):
-        rows.append(
-            f"{len(rows) + 1}. plus {len(arguments) - len(rows)} more"
-        )
+        rows.append(f"(and {len(arguments) - len(rows)} more)")
     return "\n".join(rows)
 
 

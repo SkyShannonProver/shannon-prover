@@ -24,6 +24,12 @@ from core.easycrypt.proof_state_compiler.contracts.digest import (
     text_sha256,
 )
 from core.easycrypt.proof_state_compiler.delimiters import balanced
+from core.easycrypt.ec_diagnostics import FailedSentence
+from core.easycrypt.proof_text import (
+    split_ec_commands,
+    strip_comments,
+    terminated_tactic,
+)
 
 
 _OPERATION_FAMILY_RE = re.compile(r"^[a-z][a-z_]*$")
@@ -138,6 +144,23 @@ class RecoveryHandoff:
             or not self.native_error_message
         ):
             raise ValueError("recovery handoff is invalid")
+
+    @property
+    def later_stages(self) -> str:
+        """The stages the agent wrote after the failing one, without the dot.
+
+        Empty when the failing stage is the last. A repair recomposes them so
+        that it changes only the failing stage of the agent's tactic.
+        """
+
+        after_prefix = compound_prefix_remainder(
+            self.source_rejected_tactic, self.accepted_prefix_tactic
+        )
+        if after_prefix is None:
+            return ""
+        return compound_prefix_remainder(
+            after_prefix + ".", self.derived_rejected_tactic
+        ) or ""
 
     def to_payload(self) -> dict[str, object]:
         return {
@@ -344,6 +367,15 @@ class FailureObservation:
     outcome_kind: str
     structured_error: str
     evidence_ref: EvidenceRef
+    # The rejected sentence of a multi-sentence commit, as the manager saw it.
+    failed_sentence: FailedSentence | None = None
+
+    @property
+    def sentence_scope(self) -> FailingSentenceScope | None:
+        return failing_sentence_scope(
+            str(self.payload.to_dict().get("tactic") or ""),
+            self.failed_sentence,
+        )
 
     def __post_init__(self) -> None:
         if not self.observation_id or not self.occurrence_identity:
@@ -373,6 +405,58 @@ class FailureObservation:
             raise ValueError("failure observation requires a rejected outcome")
         if not isinstance(self.evidence_ref, EvidenceRef):
             raise TypeError("failure observation requires authoritative evidence")
+        if self.failed_sentence is not None and (
+            not isinstance(self.failed_sentence, FailedSentence)
+            or self.outcome_kind != "rejected"
+        ):
+            raise ValueError("failure observation failed sentence is invalid")
+
+
+@dataclass(frozen=True)
+class FailingSentenceScope:
+    """The rejected sentence of a multi-sentence commit and those before it.
+
+    The manager ran the commit sentence by sentence and stopped at
+    ``sentence`` (``index`` of ``count``, from 1); ``prior_sentences`` ran
+    first and were rolled back with it. A feature that opts in analyses
+    ``sentence`` in the native state those sentences reach.
+    """
+
+    prior_sentences: tuple[str, ...]
+    sentence: str
+    index: int
+    count: int
+
+
+def failing_sentence_scope(
+    tactic: str,
+    failed: FailedSentence | None,
+) -> FailingSentenceScope | None:
+    """Split the commit as the manager did; ``None`` unless it agrees.
+
+    The manager split the terminated tactic with ``split_ec_commands`` and
+    skipped comment-only commands; the same split must give the recorded
+    sentence count and the recorded sentence at its index.
+    """
+
+    if failed is None:
+        return None
+    sentences = [
+        command.strip()
+        for command in split_ec_commands(terminated_tactic(tactic))
+        if strip_comments(command).strip()
+    ]
+    if (
+        len(sentences) != failed.count
+        or sentences[failed.index - 1] != failed.sentence.strip()
+    ):
+        return None
+    return FailingSentenceScope(
+        prior_sentences=tuple(sentences[:failed.index - 1]),
+        sentence=sentences[failed.index - 1],
+        index=failed.index,
+        count=failed.count,
+    )
 
 
 @dataclass(frozen=True)

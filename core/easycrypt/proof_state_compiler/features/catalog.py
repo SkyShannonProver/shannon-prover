@@ -3,6 +3,9 @@
 from core.easycrypt.proof_state_compiler.features.compound_tactic_prefix_recovery import (
     compound_tactic_prefix_recovery_feature,
 )
+from core.easycrypt.proof_state_compiler.features.hypothesis_scope_diagnosis import (
+    hypothesis_scope_diagnosis_feature,
+)
 from core.easycrypt.proof_state_compiler.features.intro_pattern_repair import (
     intro_pattern_repair_feature,
 )
@@ -18,6 +21,9 @@ from core.easycrypt.proof_state_compiler.features.phl_transitivity_boundary_repa
 from core.easycrypt.proof_state_compiler.features.relation_bridge_realization import (
     relation_bridge_realization_feature,
 )
+from core.easycrypt.proof_state_compiler.features.smt_failure_localization import (
+    smt_failure_localization_feature,
+)
 from core.easycrypt.proof_state_compiler.features.tactic_dialect_repair import (
     tactic_dialect_repair_feature,
 )
@@ -29,11 +35,13 @@ def production_feature_catalog() -> FeatureCatalog:
 
     definitions = (
         compound_tactic_prefix_recovery_feature(),
+        hypothesis_scope_diagnosis_feature(),
         intro_pattern_repair_feature(),
         operation_binding_repair_feature(),
         phl_transitivity_boundary_repair_feature(),
         pure_tail_recovery_feature(),
         relation_bridge_realization_feature(),
+        smt_failure_localization_feature(),
         tactic_dialect_repair_feature(),
     )
     catalog = FeatureCatalog(

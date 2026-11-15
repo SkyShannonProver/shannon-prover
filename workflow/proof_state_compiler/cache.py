@@ -2,11 +2,10 @@
 
 from __future__ import annotations
 
-import hashlib
-import json
 from dataclasses import dataclass, field
 from typing import Generic, TypeVar
 
+from core.digests import sha256_json
 from core.easycrypt.proof_state_compiler.compiler import ProofStateCompiler
 from core.easycrypt.proof_state_compiler.contracts import (
     CandidateSurface,
@@ -22,6 +21,7 @@ from core.easycrypt.proof_state_compiler.contracts.frozen_json import (
     FrozenJsonObject,
     freeze_json_object,
 )
+from core.easycrypt.proof_state_compiler.features import FeatureDefinition
 from workflow.proof_state_compiler.input_gateway import LiveCompilerInput
 from workflow.proof_state_compiler.activation import ActivationPlan
 
@@ -254,18 +254,8 @@ def exact_observation_cache_key(
         ),
         "compiler_features": [
             {
-                "feature_id": item.spec.feature_id,
-                "gate_status": item.spec.gate.status,
-                "experiment_id": item.spec.gate.experiment_id,
+                **_feature_gate_payload(item),
                 "certification_policy": item.spec.certification_policy,
-                "execution_gate_id": item.execution_gate.gate_id,
-                "execution_lifetime": item.execution_gate.lifetime,
-                "produces_recovery_handoff": (
-                    item.execution_gate.produces_recovery_handoff
-                ),
-                "accepts_recovery_handoff": (
-                    item.execution_gate.accepts_recovery_handoff
-                ),
             }
             for item in compiler.features
         ],
@@ -279,13 +269,7 @@ def exact_observation_cache_key(
             ),
         },
     }
-    encoded = json.dumps(
-        payload,
-        ensure_ascii=False,
-        separators=(",", ":"),
-        sort_keys=True,
-    ).encode("utf-8")
-    return hashlib.sha256(encoded).hexdigest()
+    return sha256_json(payload)
 
 
 def material_proof_state_fingerprint(
@@ -347,7 +331,7 @@ def material_proof_state_fingerprint(
             include_request_identity=False,
         ),
     }
-    return MaterialProofStateFingerprint(_sha256_json(payload))
+    return MaterialProofStateFingerprint(sha256_json(payload))
 
 
 def material_certification_cache_key(
@@ -375,7 +359,7 @@ def material_certification_cache_key(
             if item.feature_id in eligible
         ],
     }
-    return _sha256_json(payload)
+    return sha256_json(payload)
 
 
 def material_resource_environment_cache_key(
@@ -418,39 +402,35 @@ def material_resource_environment_cache_key(
         ],
         "pass_feature_ids": list(activation_plan.pass_feature_ids),
         "compiler_features": [
-            {
-                "feature_id": item.spec.feature_id,
-                "gate_status": item.spec.gate.status,
-                "experiment_id": item.spec.gate.experiment_id,
-                "execution_gate_id": item.execution_gate.gate_id,
-                "execution_lifetime": item.execution_gate.lifetime,
-                "produces_recovery_handoff": (
-                    item.execution_gate.produces_recovery_handoff
-                ),
-                "accepts_recovery_handoff": (
-                    item.execution_gate.accepts_recovery_handoff
-                ),
-            }
-            for item in compiler.features
+            _feature_gate_payload(item) for item in compiler.features
         ],
     }
-    encoded = json.dumps(
-        payload,
-        ensure_ascii=False,
-        separators=(",", ":"),
-        sort_keys=True,
-    ).encode("utf-8")
-    return hashlib.sha256(encoded).hexdigest()
+    return sha256_json(payload)
 
 
-def _sha256_json(value: object) -> str:
-    encoded = json.dumps(
-        value,
-        ensure_ascii=False,
-        separators=(",", ":"),
-        sort_keys=True,
-    ).encode("utf-8")
-    return hashlib.sha256(encoded).hexdigest()
+def _feature_gate_payload(feature: FeatureDefinition) -> dict[str, object]:
+    """The gate fields every key that depends on the feature set binds.
+
+    A new execution-gate field that changes what a feature runs on belongs
+    here, so no cache key is left without it.
+    """
+
+    return {
+        "feature_id": feature.spec.feature_id,
+        "gate_status": feature.spec.gate.status,
+        "experiment_id": feature.spec.gate.experiment_id,
+        "execution_gate_id": feature.execution_gate.gate_id,
+        "execution_lifetime": feature.execution_gate.lifetime,
+        "produces_recovery_handoff": (
+            feature.execution_gate.produces_recovery_handoff
+        ),
+        "accepts_recovery_handoff": (
+            feature.execution_gate.accepts_recovery_handoff
+        ),
+        "accepts_failing_sentence": (
+            feature.execution_gate.accepts_failing_sentence
+        ),
+    }
 
 
 def _native_semantic_payloads(

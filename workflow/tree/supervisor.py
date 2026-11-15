@@ -1827,8 +1827,23 @@ class NodeSupervisor:
         # Status bar
         _update_status_bar(_build_tree_status(self.nodes, elapsed))
 
+    def _heuristic_spawns_enabled(self) -> bool:
+        """Whether stuck and structural-undo spawns may run.
+
+        With room for only one node, either spawn kills the sole node before
+        its replacement starts: the child replays the same accepted prefix
+        with a fresh agent and none of the parent's context, and a failed
+        child bootstrap ends the run. Measured on recent and historical runs,
+        about 94% of nodes meeting the stuck condition recovered on their own
+        and no structural-undo spawn helped, so single-node runs keep only
+        crash respawn. Multi-node runs keep both heuristics.
+        """
+        return self.max_concurrent > 1
+
     def _tick_spawn_on_structural_undo(self, active) -> None:
         """Trigger 1: defer-then-spawn a sibling when a node structurally undoes."""
+        if not self._heuristic_spawns_enabled():
+            return
         for node in list(active):
             t = node.tracker
             if t.structural_undo_branch is not None:
@@ -2013,6 +2028,8 @@ class NodeSupervisor:
 
     def _tick_error_accumulation(self) -> None:
         """Trigger 3 (fallback): spawn from nodes accumulating rejects while idle."""
+        if not self._heuristic_spawns_enabled():
+            return
         for node in list(self._active_nodes()):
             t = node.tracker
             alive_time = time.time() - node.spawn_time

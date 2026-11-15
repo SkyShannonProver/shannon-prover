@@ -36,6 +36,15 @@ def plan_native_compound_prefix_attempt(
             COMPOUND_PREFIX_NATIVE_PRODUCER_ID
         )
     tactic = str(failure.payload.to_dict().get("tactic") or "").strip()
+    # In a multi-sentence commit EasyCrypt rejected one sentence; the
+    # middle end runs this query after the sentences before it.
+    if failure.failed_sentence is not None:
+        scope = failure.sentence_scope
+        if scope is None:
+            return NativeSemanticRequestProduction.not_applicable(
+                COMPOUND_PREFIX_NATIVE_PRODUCER_ID
+            )
+        tactic = scope.sentence
     candidates = compound_prefix_candidates(tactic)
     if not candidates:
         return NativeSemanticRequestProduction.not_applicable(

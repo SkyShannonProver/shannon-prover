@@ -5,6 +5,8 @@ from __future__ import annotations
 from pathlib import PurePosixPath
 
 from core.easycrypt.committed_history import committed_prefix_identity
+from core.easycrypt.ec_diagnostics import FailedSentence
+from core.easycrypt.proof_text import terminated_tactic
 from core.easycrypt.proof_state_compiler.contracts import (
     CompilerTurnEvidence,
     StateRef,
@@ -135,12 +137,21 @@ def compiler_turn_evidence_from_action(
             hash_algorithm=str(authority.get("hash_algorithm") or ""),
             post_state_ref=post_state_ref,
             intent=intent_kind,
-            payload=freeze_json_object(payload),
+            # The compiler explains the tactic EasyCrypt ran, which carries
+            # the final ``.`` the manager adds to an unterminated tactic.
+            payload=freeze_json_object({
+                **payload,
+                "tactic": terminated_tactic(tactic.strip()),
+            }),
             outcome_kind=outcome_kind,
             proof_state_effect=proof_state_effect,
             structured_error=str(
                 authority.get("structured_error") or ""
             )[:1200],
+            failed_sentence=(
+                FailedSentence.from_payload(authority.get("failed_sentence"))
+                if outcome_kind == "rejected" else None
+            ),
         )
     except (TypeError, ValueError):
         return None

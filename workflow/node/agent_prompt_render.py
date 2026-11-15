@@ -58,11 +58,15 @@ def _mcp_tools_section(
             f"- `{SOURCE_READ_TOOL_IDENTITY.tool}` — read up to 400 numbered "
             "lines from one returned `.ec`/`.eca` path.\n"
             f"- `{DECLARATION_RESOLVE_TOOL_IDENTITY.tool}` — ask EasyCrypt to "
-            "resolve and print one exact candidate symbol. Use this when "
-            "namespace identity matters; it is not fuzzy search.\n\n"
+            "resolve and print one exact name as it is in scope at your proof; "
+            "a theory or clone name prints its members. Names that `clone` or "
+            "`subtype ... rename` generate may appear nowhere in the source, so "
+            "use it when a literal search finds nothing or EasyCrypt reports an "
+            "unknown name; it is not fuzzy search.\n\n"
             "These tools do not inspect or mutate proof state. A normal route is "
-            "search → resolve if needed → read nearby source. Then still submit "
-            "exactly one proof intent before ending the turn."
+            "search → resolve when a name is unknown or generated → read nearby "
+            "source. Then still submit exactly one proof intent before ending "
+            "the turn."
         )
     return "\n\n".join(sections)
 

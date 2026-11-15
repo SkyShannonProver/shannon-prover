@@ -2,10 +2,9 @@
 
 from __future__ import annotations
 
-import hashlib
-import json
 from dataclasses import dataclass, field
 
+from core.digests import sha256_json
 from core.easycrypt.proof_state_compiler.features.registry import FeatureCatalog
 
 
@@ -83,7 +82,7 @@ class ActivationPlan:
             raise ValueError(
                 "certification feature IDs must equal the active pass set"
             )
-        object.__setattr__(self, "plan_sha256", _plan_sha256(self.to_dict()))
+        object.__setattr__(self, "plan_sha256", sha256_json(self.to_dict()))
 
     @property
     def compiler_enabled(self) -> bool:
@@ -128,13 +127,3 @@ def build_activation_plan(
         pass_feature_ids=pass_feature_ids,
         certification_feature_ids=pass_feature_ids,
     )
-
-
-def _plan_sha256(value: dict[str, object]) -> str:
-    encoded = json.dumps(
-        value,
-        ensure_ascii=False,
-        separators=(",", ":"),
-        sort_keys=True,
-    ).encode("utf-8")
-    return hashlib.sha256(encoded).hexdigest()

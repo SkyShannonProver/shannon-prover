@@ -18,8 +18,13 @@ import re
 from typing import Any
 
 
+# Hygiene cap on simultaneously active proof nodes; a request above it is clamped.
 TREE_MAX_ACTIVE_NODES = 4
-DEFAULT_TREE_INITIAL_PROVERS = 2
+# Default topology: one proof node. Multi-node search is opt-in
+# (--tree-initial-provers / --tree-max-concurrent); recent single-node runs
+# proved every target they were given.
+DEFAULT_TREE_INITIAL_PROVERS = 1
+DEFAULT_TREE_MAX_CONCURRENT = 1
 DEFAULT_STRUCTURAL_UNDO_SPAWN_DELAY_SECONDS = 300
 DEFAULT_UNDO_REPAIR_PROTECTION_SECONDS = 900
 

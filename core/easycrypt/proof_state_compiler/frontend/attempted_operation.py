@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import re
+
 from core.easycrypt.proof_state_compiler.contracts.evidence import EvidenceRef
 from core.easycrypt.proof_state_compiler.contracts.failure import (
     AttemptedOperationIR,
@@ -30,9 +32,11 @@ def parse_attempted_operation(
 ) -> AttemptedOperationIR | None:
     """Join one exact failure to one native parse/applicability descriptor.
 
-    Raw error text is intentionally absent from this function. Multiple
-    feature consumers may receive fan-out observations for the same native
-    semantic unit; byte-identical descriptors are deduplicated, while any
+    Raw error text never classifies anything here. Its one use is a veto: a
+    native compound boundary must report the same error EasyCrypt reported
+    for the whole commit, or no compound IR is formed. Multiple feature
+    consumers may receive fan-out observations for the same native semantic
+    unit; byte-identical descriptors are deduplicated, while any
     disagreement fails closed.
     """
 
@@ -41,6 +45,13 @@ def parse_attempted_operation(
     rejected_tactic = str(
         observation.payload.to_dict().get("tactic") or ""
     ).strip()
+    # A multi-sentence commit that EasyCrypt rejected at one sentence: a
+    # feature that opts in analysed that sentence after the earlier ones.
+    sentence_scope = observation.sentence_scope
+    if observation.failed_sentence is not None:
+        if sentence_scope is None:
+            return None
+        rejected_tactic = sentence_scope.sentence
     candidates: dict[
         str,
         tuple[
@@ -75,6 +86,22 @@ def parse_attempted_operation(
     if len(candidates) != 1:
         return None
     descriptor, native_observation = next(iter(candidates.values()))
+    prefix_population = isinstance(
+        descriptor, NativeTacticPrefixDiagnosticDescriptor
+    )
+    # A native companion contract error is not an EasyCrypt rejection, and a
+    # boundary must fail with the error EasyCrypt reported for the commit.
+    if prefix_population and (
+        "contract_error" in {
+            descriptor.native_failure_kind,
+            descriptor.boundary_failure_kind,
+        }
+        or not manager_reports_same_error(
+            descriptor.boundary_error_message,
+            observation.structured_error,
+        )
+    ):
+        return None
     native_evidence = EvidenceRef(
         evidence_id=(
             "native-attempt:" + native_observation.provenance.source_event_id
@@ -94,9 +121,12 @@ def parse_attempted_operation(
         + material
     )
     recovery_handoff = None
+    # A failing sentence forms no typed handoff: its consumers would neither
+    # run after nor recompose with the sentences before it.
     if (
-        isinstance(descriptor, NativeTacticPrefixDiagnosticDescriptor)
+        prefix_population
         and descriptor.boundary_attempt is not None
+        and sentence_scope is None
     ):
         if not native_observation.feature_id:
             return None
@@ -114,7 +144,7 @@ def parse_attempted_operation(
             native_error_message=descriptor.boundary_error_message,
         )
         descriptor = descriptor.boundary_attempt
-    elif isinstance(descriptor, NativeTacticPrefixDiagnosticDescriptor):
+    elif prefix_population:
         return AttemptedOperationIR(
             attempt_id=attempt_id,
             failure_observation_id=observation.observation_id,
@@ -171,3 +201,36 @@ def parse_attempted_operation(
         evidence_refs=evidence_refs,
         recovery_handoff=recovery_handoff,
     )
+
+
+# The manager keeps at most this many characters of EasyCrypt's error
+# (workflow/proof_management/backend_actions.py); a text that long may be cut.
+MANAGER_ERROR_TEXT_LIMIT = 1200
+_SEVERITY_HEADER = re.compile(r"^\[(?:error|critical|fatal)(?:-[0-9\-]+)?\]\s*")
+_LOCATION_HEADER = re.compile(
+    r"^\[[^\]\n]*: line \d+ \([^)\n]*\)(?: to line \d+ \([^)\n]*\))?\]:?\s*"
+)
+
+
+def _reported_error_text(value: str) -> str:
+    text = _SEVERITY_HEADER.sub("", str(value or "").strip(), count=1)
+    text = _LOCATION_HEADER.sub("", text, count=1)
+    return " ".join(text.split())
+
+
+def manager_reports_same_error(native_error: str, manager_error: str) -> bool:
+    """Whether EasyCrypt's own report for the commit is the native error.
+
+    Only the severity/location header and line breaking may differ: the
+    native companion and the toplevel print the same EasyCrypt message with
+    different margins. A manager text at its length limit is compared as a
+    prefix. An empty side never matches.
+    """
+
+    native = _reported_error_text(native_error)
+    manager = _reported_error_text(manager_error)
+    if not native or not manager:
+        return False
+    if len(str(manager_error or "")) >= MANAGER_ERROR_TEXT_LIMIT:
+        return native.startswith(manager)
+    return native == manager

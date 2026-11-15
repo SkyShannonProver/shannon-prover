@@ -10,6 +10,9 @@ from __future__ import annotations
 import json
 import os
 import re
+import tempfile
+from collections.abc import Iterator
+from contextlib import contextmanager
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Callable, Mapping
@@ -62,6 +65,8 @@ class EasyCryptSourceResource:
     include_roots: tuple[Path, ...]
     stripped_sha256: Mapping[str, str]
     emit: Callable[[dict[str, Any]], None]
+    # The lemma whose proof is open: names resolve as they do at its proof.
+    target_lemma: str = ""
 
     @classmethod
     def from_environment(
@@ -191,7 +196,45 @@ class EasyCryptSourceResource:
             include_roots=tuple(include_roots),
             stripped_sha256=stripped,
             emit=emit or (lambda _event: None),
+            target_lemma=str(target_lemma),
         )
+
+    @contextmanager
+    def _target_environment(self) -> Iterator[Path]:
+        """The target file cut at its open proof, as the manager's context is.
+
+        A name resolves here exactly when it does inside the agent's proof:
+        section-local declarations are visible, declarations after the target
+        are not. Resolving after the whole file got both wrong.
+        """
+
+        if not self.target_lemma:
+            raise EasyCryptSourceResourceError(
+                "source resource has no target lemma to resolve against"
+            )
+        from core.easycrypt.lemma_extract import extract_lemma
+
+        try:
+            text = extract_lemma(
+                self.isolated_file, self.target_lemma, open_proof=True,
+            )
+        except ValueError as exc:
+            raise EasyCryptSourceResourceError(
+                f"cannot prepare the target environment: {exc}"
+            ) from exc
+        descriptor, raw_path = tempfile.mkstemp(
+            prefix="shannon_resolve_context_", suffix=".ec",
+        )
+        path = Path(raw_path)
+        try:
+            with os.fdopen(descriptor, "w", encoding="utf-8") as stream:
+                stream.write(text)
+            yield path
+        finally:
+            try:
+                path.unlink()
+            except OSError:
+                pass
 
     @property
     def allowed_roots(self) -> tuple[Path, ...]:
@@ -360,12 +403,13 @@ class EasyCryptSourceResource:
                 load_exact_declarations,
             )
 
-            result = load_exact_declarations(
-                [requested],
-                self.isolated_file,
-                (self.isolated_root, *self.include_roots),
-                timeout=max(0.001, min(60.0, float(timeout_seconds))),
-            ).get(requested)
+            with self._target_environment() as context_file:
+                result = load_exact_declarations(
+                    [requested],
+                    context_file,
+                    (self.isolated_root, *self.include_roots),
+                    timeout=max(0.001, min(60.0, float(timeout_seconds))),
+                ).get(requested)
             if not isinstance(result, Mapping):
                 raise EasyCryptSourceResourceError(
                     "EasyCrypt returned no declaration result"
@@ -375,9 +419,11 @@ class EasyCryptSourceResource:
                 response = EasyCryptSourceResponse(
                     text=(
                         f"EasyCrypt did not resolve the exact declaration "
-                        f"`{requested}` in the prepared target environment. "
-                        "Use `search_easycrypt_source` to find lexical candidates; "
-                        "a lexical match is not a resolved declaration."
+                        f"`{requested}` where the target's proof is open. "
+                        "Resolving a theory or clone name (for example the "
+                        "qualifier before the last `.`) prints the names it "
+                        "provides; `search_easycrypt_source` finds literal "
+                        "source text."
                     )
                 )
             elif status == "resolved":
@@ -709,7 +755,10 @@ def _render_source_matches(payload: Mapping[str, Any]) -> str:
         return (
             header
             + "\nNo lexical match was found. This is not an EasyCrypt namespace "
-            "resolution result."
+            "resolution result: names that `clone` or `subtype ... rename` "
+            "generate may appear nowhere in the source. "
+            "`resolve_easycrypt_declaration` asks EasyCrypt for an exact name, "
+            "or for the members of a theory or clone."
         )
     blocks = [header]
     context_lines = int(payload["context_lines"])

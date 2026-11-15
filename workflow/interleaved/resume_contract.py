@@ -14,7 +14,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Iterable
 
-from core.digests import sha256_bytes
+from core.digests import sha256_bytes, sha256_json
 from workflow.node.proof_node_resume import (
     ProofNodeResumeCapsule,
     load_resume_capsule,
@@ -25,17 +25,6 @@ CHECKPOINT_KIND = "interleaved_shannon_managed_checkpoint"
 CHECKPOINT_SCHEMA_VERSION = 1
 GOAL_PREVIEW_MAX_CHARS = 6000
 CONTINUATION_NOTE_MAX_CHARS = 8000
-
-
-def _canonical_json_sha256(value: dict[str, object]) -> str:
-    return sha256_bytes(
-        json.dumps(
-            value,
-            ensure_ascii=False,
-            separators=(",", ":"),
-            sort_keys=True,
-        ).encode("utf-8")
-    )
 
 
 def directory_content_sha256(root: Path) -> str:
@@ -59,7 +48,7 @@ def directory_content_sha256(root: Path) -> str:
         })
     if not entries or not (root / "resume.json").is_file():
         raise ValueError("resume capsule directory is incomplete")
-    return _canonical_json_sha256({"files": entries})
+    return sha256_json({"files": entries})
 
 
 def _prefix_text(capsule: ProofNodeResumeCapsule) -> str:
@@ -113,7 +102,7 @@ def checkpoint_projection(
     rejection = _boundary_rejection(capsule)
     if rejection:
         checkpoint["boundary_rejection"] = rejection
-    checkpoint["checkpoint_id"] = _canonical_json_sha256(checkpoint)
+    checkpoint["checkpoint_id"] = sha256_json(checkpoint)
     return checkpoint, prefix
 
 

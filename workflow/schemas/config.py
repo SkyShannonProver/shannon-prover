@@ -6,7 +6,7 @@ import json
 from dataclasses import asdict, dataclass, field, fields
 from pathlib import Path
 
-from workflow.tree.policy import DEFAULT_TREE_INITIAL_PROVERS, TREE_MAX_ACTIVE_NODES
+from workflow.tree.policy import DEFAULT_TREE_INITIAL_PROVERS, DEFAULT_TREE_MAX_CONCURRENT
 from workflow.proof_state_compiler.profile_ids import (
     DEFAULT_CURRENT_SURFACE_PROFILE,
 )
@@ -40,7 +40,7 @@ def default_model_for_backend(value: str | None) -> str:
 
 @dataclass
 class ProverConfig:
-    timeout_minutes: int = 20
+    timeout_minutes: int = 30
     max_total_tactics: int = 1000
     # OpenAI Codex is the canonical proof-node agent. Claude remains an
     # explicit experiment backend, never an implicit runtime default.
@@ -50,11 +50,13 @@ class ProverConfig:
     # Managed tree search parameters.
     # root provers to start simultaneously
     tree_initial_provers: int = DEFAULT_TREE_INITIAL_PROVERS
-    tree_max_concurrent: int = TREE_MAX_ACTIVE_NODES  # max active provers at once
+    tree_max_concurrent: int = DEFAULT_TREE_MAX_CONCURRENT  # max active provers at once
     tree_stuck_errors: int = 4         # errors since last accept to trigger spawn
     tree_stuck_idle_seconds: int = 180  # idle since last accept to trigger spawn
     tree_grace_seconds: int = 300      # grace period for stuck prover after child spawns
-    tree_max_depth: int = 6            # max recursion depth (safety cap)
+    # Max recursion depth (safety cap). Crash respawns also add a level, so
+    # one long single-node run can need several.
+    tree_max_depth: int = 8
     tree_min_alive_seconds: int = 300  # min time before stuck detection (5 min)
     tree_progress_gap_ratio: float = 3.0  # kill laggard only if leader has 3x tactics
     tree_progress_gap_idle: int = 180  # ...and laggard idle for at least 3 min

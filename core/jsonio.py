@@ -1,4 +1,4 @@
-"""JSON and JSONL file helpers shared by the runtime.
+"""JSON and JSONL helpers shared by the runtime.
 
 There are two read contracts on purpose. ``read_json_object`` is strict: a
 missing, unreadable, malformed or non-object file raises. ``read_json_object_or_empty``
@@ -61,3 +61,17 @@ def _reject_constant(value: str) -> Any:
 def strict_json_loads(text: str) -> Any:
     """``json.loads`` that rejects ``NaN``, ``Infinity`` and ``-Infinity``."""
     return json.loads(text, parse_constant=_reject_constant)
+
+
+def canonical_json(value: Any) -> str:
+    """The one spelling of a JSON value behind identities and wire payloads.
+
+    Sorted keys, compact separators and non-ASCII kept, so equal content gives
+    equal text however it was built. ``core.digests.sha256_json`` hashes it.
+    """
+    return json.dumps(
+        value,
+        ensure_ascii=False,
+        sort_keys=True,
+        separators=(",", ":"),
+    )

@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import json
 import re
 from typing import Any
 
@@ -30,6 +29,7 @@ from core.easycrypt.proof_state_compiler.contracts.delivery_policy import (
 from core.easycrypt.proof_state_compiler.features.execution import (
     FeatureExecutionPlan,
 )
+from core.jsonio import canonical_json
 from workflow.proof_state_compiler.activation import ActivationPlan
 
 
@@ -310,12 +310,9 @@ def compilation_telemetry(
         item.candidate_id: item for item in all_candidates
     }
     presentation_payload = action_surface_payload(admission.action_surface)
-    presentation_payload_bytes = len(json.dumps(
-        presentation_payload,
-        ensure_ascii=False,
-        sort_keys=True,
-        separators=(",", ":"),
-    ).encode("utf-8"))
+    presentation_payload_bytes = len(
+        canonical_json(presentation_payload).encode("utf-8")
+    )
     delivery = {
         "schema_version": DELIVERY_TELEMETRY_SCHEMA_VERSION,
         "state_refresh_trigger": {

@@ -886,6 +886,14 @@ core/easycrypt/proof_state_compiler/
       surface_lowering.py          one certified `Do you mean?` action
       feature.py                   removable SC1 slice; gate and native request
                                    from failed_commit.py
+    smt_failure_localization/
+      syntax.py                    one-tactic smt-mention lexical gate; sequences
+                                   and multi-sentence commits only via handoff
+      realization.py               typed native first-failing-smt-call fact
+      analysis.py                  strict-error veto, facts-only explanation
+      surface_lowering.py          one explanation-only diagnostic
+      feature.py                   removable failure-linked slice; also a
+                                   recovery-handoff consumer
 
   compiler.py                      pure P1-P4 orchestration
 
@@ -1265,6 +1273,14 @@ of `blocker`, `no_blocker`, or `indeterminate` plus any EasyCrypt-derived error
 kind. It does not relabel the manager outcome. In particular, `no_progress`
 must not be used as an instruction to skip native diagnosis, and manager error
 text must not classify B1/B2/B4.
+
+Manager error text has one other use: a veto. A native compound boundary
+(`compound_tactic_prefix_recovery`) explains the commit only if its error is
+the error EasyCrypt reported for the whole commit, up to the severity or
+location header, line breaking, and a truncated tail. A `;` sequence runs its
+stages in order, so a true boundary fails with exactly that error; a
+difference means the native check and the toplevel disagree, and P2 forms no
+compound IR. The text never selects a family, an owner, or an output.
 
 An EasyCrypt/native assertion is represented explicitly as `indeterminate`,
 not as an absent error. Feature analysis owns whether a `blocker` belongs to
@@ -2084,9 +2100,24 @@ The evidence taxonomy deliberately maps to several resolver families:
 | B2 module/functor arguments | Which explicit or implicit module slots instantiate this declaration? | candidate resource/application plus qualified module spelling | native `EcProofTerm`/`EcTyping` module resolution, signature, and restriction checks; Python structure may narrow | native-derived per-slot `BindingResolution` | none unless a narrow feature consumes the complete resolution |
 | B3 concrete procedure target | Which fully applied procedure is at the tactic-active call site? | `ProgramStatement.procedure` and procedure-bearing resource conclusion | procedure binding | structural procedure resolution | internal applicability evidence |
 | B4 application kind/arity | Does each supplied object inhabit the required module, term, formula, type, memory, or proof slot? | exact candidate application request | native proof-term elaboration | resolved/implicit/residual slots or structured native error | exact/pull candidate only after native validation |
-| B5 proof-fact and local binder liveness | Which current/source fact can inhabit a proof slot, and is a local name or memory decoration verifier-visible here? | lexical `ProofFact` candidate index plus current proof environment | native local/global lookup and `pf_form_match`; Shannon scope/provenance transport | native-resolved proof slot, `ScopeAssessment`, or blocker | checked local application only |
+| B5 proof-fact and local binder liveness | Which current/source fact can inhabit a proof slot, and is a local name or memory decoration verifier-visible here? | lexical `ProofFact` candidate index plus current proof environment | native local/global lookup and `pf_form_match`; Shannon scope/provenance transport | native-resolved proof slot, `ScopeAssessment`, or blocker | checked local application only; failure-linked scope facts for a rejected name (`hypothesis_scope_diagnosis`) |
 | B6 frame/restriction slots | Which frame facts and write restrictions remain valid across this proof boundary? | coordinate, program effects, and visible hypotheses | boundary-contract analysis | `BoundaryContractAssessment` | hold/pull; never inferred from lexical application matching |
 | B7 transform input/applicability | Are the operands and prerequisites of `sim`, `inline`, rewrite, or another transform present? | goal/program IR plus resolved resources and scope | transform analysis | `TransformAssessment` | one checked action or diagnostic, never a standing menu |
+
+B5 status (2026-11-13): local binder liveness has its first consumer,
+`hypothesis_scope_diagnosis`. After a rejected `smt(...)` or `rewrite ... in
+H`, native EasyCrypt names the failing reference (the located smt hint, or the
+first rejected rewrite-item prefix) and establishes that the name is a
+hypothesis of the checked goal but does not resolve in that operation's lookup
+scope: global declarations for an smt hint (`EcEnv.Ax.lookup_opt`), the
+context before `H` for a rewrite proof term (`LDecl.local_hyps`). The slice
+states those facts only, plus, for smt, the agent's call without that one hint
+when EasyCrypt accepts it and exact preflight certifies it. It needs no
+`ScopeAssessment` type: the facts travel in its own realization, and the
+proof-fact half of B5 (proof-slot candidates and `pf_form_match`) remains
+unimplemented. B1 stays disjoint by native predicate: its namespace spelling
+set is empty whenever the written name is a goal hypothesis, and this slice
+requires one.
 
 This table defines ownership rather than implementation priority. B1-B4 are
 the core application-binding request/transport subsystem, backed by native

@@ -2,11 +2,12 @@
 
 from __future__ import annotations
 
-import hashlib
 import json
 from dataclasses import asdict, dataclass, field
 from pathlib import Path
 from typing import Any
+
+from core.digests import sha256_json
 
 
 PROVER_RUN_VERIFIED = "verified"
@@ -68,14 +69,7 @@ class ProverResult:
 
     @property
     def result_id(self) -> str:
-        payload = self._payload()
-        encoded = json.dumps(
-            payload,
-            ensure_ascii=False,
-            separators=(",", ":"),
-            sort_keys=True,
-        ).encode("utf-8")
-        return hashlib.sha256(encoded).hexdigest()
+        return sha256_json(self._payload())
 
     def _payload(self) -> dict[str, Any]:
         return asdict(self)

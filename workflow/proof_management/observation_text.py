@@ -11,6 +11,9 @@ from __future__ import annotations
 
 from typing import Any
 
+from core.easycrypt.ec_diagnostics import FailedSentence
+from core.easycrypt.proof_text import strip_comments
+from core.markdown_text import inline_code
 from core.easycrypt.value_shapes import first_text as _first_text
 
 from workflow.proof_management.common import (
@@ -34,7 +37,48 @@ def _read_only_result_text(label: str, status: str) -> str:
     return "The manager completed the read-only backend operation."
 
 
-def _manager_result_text(label: str, status: str, ok: bool) -> str:
+_SENTENCE_QUOTE_LIMIT = 160
+
+
+def _rejected_sentence_text(value: object) -> str:
+    """Which sentence of a multi-sentence commit EasyCrypt rejected.
+
+    The REPL runs the sentences in order and stops at the first rejection;
+    the manager then rolls the whole transaction back.
+    """
+
+    failed = FailedSentence.from_payload(value)
+    if failed is None:
+        return ""
+    # The comments the agent wrote before a sentence travel with it; the
+    # quote names the sentence EasyCrypt rejected, code only.
+    quoted = " ".join(strip_comments(failed.sentence).split())
+    if not quoted:
+        return ""
+    if len(quoted) > _SENTENCE_QUOTE_LIMIT:
+        quoted = quoted[:_SENTENCE_QUOTE_LIMIT - 1].rstrip() + "…"
+    text = (
+        "EasyCrypt rejected the committed tactic at sentence "
+        f"{failed.index} of {failed.count}: {inline_code(quoted)} "
+    )
+    if failed.index == 1:
+        return text + "The whole commit was rolled back; nothing was committed."
+    ran = (
+        "Sentence 1 ran" if failed.index == 2
+        else f"Sentences 1-{failed.index - 1} ran"
+    )
+    return (
+        text + f"{ran} before it; the whole commit was rolled back, so "
+        "nothing was committed."
+    )
+
+
+def _manager_result_text(
+    label: str,
+    status: str,
+    ok: bool,
+    failed_sentence: object = None,
+) -> str:
     normalized = str(status or "").strip()
     if label == "commit_tactic":
         if normalized == "partial_success":
@@ -47,10 +91,11 @@ def _manager_result_text(label: str, status: str, ok: bool) -> str:
                 "EasyCrypt accepted the tactic but the manager reverted it "
                 "as a no-op because it did not change the goal."
             )
+        if ok:
+            return "EasyCrypt accepted the committed tactic."
         return (
-            "EasyCrypt accepted the committed tactic."
-            if ok
-            else "EasyCrypt rejected the committed tactic."
+            _rejected_sentence_text(failed_sentence)
+            or "EasyCrypt rejected the committed tactic."
         )
     if label == "fresh_restart":
         return (
@@ -142,7 +187,9 @@ def _error_summary(payload: dict[str, Any], stderr: str, *, ok: bool = False) ->
     # summary" with none present (root-caused by EC replay, MEE-CBC L1/L4 2026-06-06).
     structured = _first_text(result.get("error"), result.get("failure_reason"), default="")
     if structured.strip():
-        return _preview(structured.strip(), limit=280)
+        # The agent's only copy of EasyCrypt's rejection: keep as much of it
+        # as the compiler receives (a type error's expected type comes last).
+        return _preview(structured.strip(), limit=1200)
     raw_excerpt = _first_text(result.get("raw_excerpt"), default="")
     extracted = _extract_error_excerpt(raw_excerpt)
     if extracted:

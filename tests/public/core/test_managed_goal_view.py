@@ -39,7 +39,8 @@ def test_managed_goal_view_contains_no_legacy_analysis_panels(
     view = _managed_goal_view(tmp_path)
 
     require_prover_workspace_view(view, label="test managed goal view")
-    assert view["current_goal"]["lines"] == GOAL.splitlines()
+    # The trailing ``[7|check]>`` prompt is transport state, not goal text.
+    assert view["current_goal"]["lines"] == GOAL.splitlines()[:-1]
     assert view["proof_status"]["goal_identity_required"] is True
     assert view["proof_status"]["goal_hash"]
     assert "program_frontier" not in view

@@ -286,7 +286,8 @@ def test_long_lived_prompt_describes_source_navigation_without_new_proof_control
     assert "do not inspect or mutate proof state" in prompt
     assert "copy-ready paths, line numbers" in prompt
     assert "lexical, not a resolved declaration" in prompt
-    assert "search → resolve if needed → read nearby source" in prompt
+    assert "search → resolve when a name is unknown or generated → read nearby" in prompt
+    assert "a theory or clone name prints its members" in prompt
     assert "still submit exactly one proof intent" in prompt
     assert "`inspect_context`" not in prompt
 

@@ -2,27 +2,14 @@
 
 All JSON identities hash one canonical spelling (sorted keys, compact
 separators, non-ASCII kept) so equal content yields equal IDs however it was
-built.  Text is hashed as UTF-8.
+built.  Text is hashed as UTF-8.  These are the runtime's shared spelling and
+digests under the names compiler code imports.
 """
 
 from __future__ import annotations
 
-import hashlib
-import json
+from core.digests import sha256_json as json_sha256
+from core.digests import sha256_text as text_sha256
+from core.jsonio import canonical_json
 
-
-def canonical_json(value: object) -> str:
-    return json.dumps(
-        value,
-        ensure_ascii=False,
-        sort_keys=True,
-        separators=(",", ":"),
-    )
-
-
-def text_sha256(text: str) -> str:
-    return hashlib.sha256(text.encode("utf-8")).hexdigest()
-
-
-def json_sha256(value: object) -> str:
-    return text_sha256(canonical_json(value))
+__all__ = ["canonical_json", "json_sha256", "text_sha256"]

@@ -23,6 +23,9 @@ from core.easycrypt.proof_state_compiler.contracts import (
     ProofIR,
 )
 from core.easycrypt.proof_state_compiler.contracts.digest import text_sha256
+from core.easycrypt.proof_state_compiler.contracts.failure import (
+    failing_sentence_scope,
+)
 from core.easycrypt.proof_state_compiler.features.execution import (
     FeatureExecutionEligibility,
     FeatureExecutionGate,
@@ -42,11 +45,14 @@ def failed_commit_gate(
     missing_tactic_reason: str = "",
     produces_recovery_handoff: bool = False,
     accepts_recovery_handoff: bool = False,
+    accepts_failing_sentence: bool = False,
 ) -> FeatureExecutionGate:
     """Run once per failed-commit occurrence whose tactic passes ``prefilter``.
 
     With ``missing_tactic_reason``, a missing or blank tactic is reported
-    under that reason before the prefilter runs.
+    under that reason before the prefilter runs. When EasyCrypt rejected one
+    sentence of a multi-sentence commit, only a gate that
+    ``accepts_failing_sentence`` runs, and its prefilter sees that sentence.
     """
 
     def eligibility(
@@ -65,6 +71,19 @@ def failed_commit_gate(
         ):
             return FeatureExecutionEligibility(False, "turn_did_not_fail")
         tactic = turn_evidence.payload.to_dict().get("tactic")
+        if turn_evidence.failed_sentence is not None:
+            if not accepts_failing_sentence:
+                return FeatureExecutionEligibility(
+                    False, "failing_sentence_not_accepted"
+                )
+            scope = failing_sentence_scope(
+                str(tactic or ""), turn_evidence.failed_sentence
+            )
+            if scope is None:
+                return FeatureExecutionEligibility(
+                    False, "failing_sentence_unmatched"
+                )
+            tactic = scope.sentence
         if missing_tactic_reason and (
             not isinstance(tactic, str) or not tactic.strip()
         ):
@@ -81,6 +100,7 @@ def failed_commit_gate(
         lifetime=ONCE_PER_TURN_OCCURRENCE,
         produces_recovery_handoff=produces_recovery_handoff,
         accepts_recovery_handoff=accepts_recovery_handoff,
+        accepts_failing_sentence=accepts_failing_sentence,
     )
 
 

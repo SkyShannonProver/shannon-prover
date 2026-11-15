@@ -11,6 +11,7 @@ from __future__ import annotations
 import re
 from dataclasses import dataclass
 
+from core.easycrypt.ec_diagnostics import FailedSentence
 from core.easycrypt.proof_state_compiler.contracts.frozen_json import (
     FrozenJsonObject,
     freeze_json_object,
@@ -246,6 +247,8 @@ class CompilerTurnEvidence:
     outcome_kind: str
     proof_state_effect: str
     structured_error: str = ""
+    # Set when EasyCrypt rejected one sentence of a multi-sentence commit.
+    failed_sentence: FailedSentence | None = None
 
     def __post_init__(self) -> None:
         if (
@@ -291,6 +294,11 @@ class CompilerTurnEvidence:
                 )
             if self.outcome_kind == "accepted" and self.structured_error:
                 raise ValueError("accepted turn evidence cannot carry an error")
+            if self.failed_sentence is not None and (
+                not isinstance(self.failed_sentence, FailedSentence)
+                or self.outcome_kind != "rejected"
+            ):
+                raise ValueError("turn evidence failed sentence is invalid")
         elif (
             self.outcome_kind != "read_only"
             or self.proof_state_effect != "read_only"
@@ -312,6 +320,10 @@ class CompilerTurnEvidence:
             "outcome_kind": self.outcome_kind,
             "proof_state_effect": self.proof_state_effect,
             "structured_error": self.structured_error,
+            **(
+                {"failed_sentence": self.failed_sentence.to_payload()}
+                if self.failed_sentence is not None else {}
+            ),
         }
 
 
@@ -493,6 +505,7 @@ def compiler_invocation_context(
             payload=turn_evidence.payload,
             outcome_kind=turn_evidence.outcome_kind,
             structured_error=turn_evidence.structured_error,
+            failed_sentence=turn_evidence.failed_sentence,
             evidence_ref=EvidenceRef(
                 evidence_id=f"rejected-turn.{evidence_digest[:16]}",
                 source_kind=turn_evidence.authority_kind,

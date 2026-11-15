@@ -5,6 +5,7 @@ import hashlib
 import json
 from typing import Any
 
+from core.jsonio import canonical_json
 from workflow.proof_state_compiler.surface_profiles import (
     require_current_workspace_view,
 )
@@ -96,13 +97,7 @@ def goal_surface(view: dict[str, Any]) -> dict[str, Any]:
 def content_hash(data: dict[str, Any], field: str) -> str:
     payload = dict(data)
     payload.pop(field, None)
-    encoded = json.dumps(
-        payload,
-        ensure_ascii=False,
-        sort_keys=True,
-        separators=(",", ":"),
-    )
-    return hashlib.sha1(encoded.encode("utf-8")).hexdigest()
+    return hashlib.sha1(canonical_json(payload).encode("utf-8")).hexdigest()
 
 
 def as_dict(value: object) -> dict[str, Any]:

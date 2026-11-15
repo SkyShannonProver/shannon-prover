@@ -31,6 +31,7 @@ from core.easycrypt.session.session_tactic_execution_artifacts import (
     validate_linked_workspace_artifact,
     validate_linked_workspace_event,
 )
+from core.easycrypt.ec_diagnostics import FailedSentence
 from core.easycrypt.value_shapes import as_dict as _dict, drop_empty as _drop_empty, as_list as _list
 
 
@@ -107,6 +108,7 @@ def build_tactic_execution_result(
         "rollback_count": rollback_count,
         "failed_tactic": str(mutation.get("failed_tactic") or ""),
         "failure_reason": str(mutation.get("failure_reason") or ""),
+        "failed_sentence": _dict(mutation.get("failed_sentence")),
         "keep_on_fail": bool(mutation.get("keep_on_fail")),
         "state_changed": state_changed,
         "history_committed": history_committed,
@@ -490,6 +492,15 @@ def validate_tactic_execution_result(
             errors.append(
                 "partial_success requires at least one accepted tactic"
             )
+    if "failed_sentence" in execution and (
+        mode != "commit"
+        or status != "error"
+        or FailedSentence.from_payload(execution["failed_sentence"]) is None
+    ):
+        errors.append(
+            "execution.failed_sentence must be one complete record of a "
+            "rejected commit"
+        )
     workspace = _dict(data.get("workspace"))
     view = _dict(workspace.get("view"))
     view_validation = validate_prover_workspace_view(view)

@@ -179,8 +179,8 @@ def test_multiple_checked_invariants_are_listed_without_ranking() -> None:
     diagnostic = bundle.candidate_surface.diagnostics[0].diagnostic
     assert diagnostic.applicability == "choice_required"
     assert diagnostic.help == (
-        "EasyCrypt checked these exact invariant alternatives for the failing "
-        "stage. Which invariant do you mean?\n"
+        "EasyCrypt checked these exact invariant alternatives. "
+        "Which invariant do you mean?\n"
         "- `eager while (true).`\n"
         "- `eager while (={x}).`\n"
         "Choose one only if it fits the proof route you want; the compiler "

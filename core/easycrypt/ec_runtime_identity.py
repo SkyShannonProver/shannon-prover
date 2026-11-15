@@ -13,7 +13,6 @@ reinterpret it.
 
 from __future__ import annotations
 
-import hashlib
 import json
 import re
 import shutil
@@ -21,7 +20,7 @@ import subprocess
 from dataclasses import dataclass
 from pathlib import Path
 
-from core.digests import sha256_file
+from core.digests import sha256_file, sha256_json
 from core.easycrypt.ec_env import easycrypt_command, get_ec_env
 from core.easycrypt.session.session_events import read_events
 from core.easycrypt.toolchain import load_easycrypt_lock
@@ -59,13 +58,7 @@ class EasyCryptRuntimeIdentity:
 
     @property
     def semantic_identity_sha256(self) -> str:
-        encoded = json.dumps(
-            self.identity_payload(),
-            ensure_ascii=False,
-            separators=(",", ":"),
-            sort_keys=True,
-        ).encode("utf-8")
-        return hashlib.sha256(encoded).hexdigest()
+        return sha256_json(self.identity_payload())
 
     def to_payload(self) -> dict[str, object]:
         return {

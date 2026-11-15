@@ -19,15 +19,11 @@ from core.easycrypt.proof_state_compiler.contracts.failure import RecoveryHandof
 from core.easycrypt.proof_state_compiler.contracts.frozen_json import (
     freeze_json_object,
 )
-from core.easycrypt.proof_state_compiler.contracts.diagnostics import (
-    EXPLANATION_ONLY,
-)
 from core.easycrypt.proof_state_compiler.contracts.digest import (
     canonical_json,
     text_sha256,
 )
 from core.easycrypt.proof_state_compiler.compound_boundary_text import (
-    compound_boundary_continuation,
     compound_boundary_summary,
 )
 
@@ -116,6 +112,7 @@ def recovery_handoff_message(handoff: RecoveryHandoff) -> str:
         accepted_stage_count=handoff.accepted_prefix_stage_count,
         rejected_extension=handoff.derived_rejected_tactic,
         native_error=handoff.native_error_message,
+        parse_error=handoff.native_failure_kind == "parse_error",
     )
 
 
@@ -127,11 +124,17 @@ def _present_action(
     base = recovery_handoff_message(handoff)
     existing = item.correction
     presented_item = item
-    if handoff.prefix_changes_state:
+    if handoff.prefix_changes_state or handoff.later_stages:
+        # The action is the agent's tactic with only the failing stage
+        # replaced: a state-changing prefix and every later stage stay.
         suffix_tactic = str(item.payload.to_dict().get("tactic") or "").strip()
         complete_tactic = compose_recovery_handoff_action(
-            handoff.accepted_prefix_tactic,
+            (
+                handoff.accepted_prefix_tactic
+                if handoff.prefix_changes_state else ""
+            ),
             suffix_tactic,
+            handoff.later_stages,
         )
         if complete_tactic is None:
             return None, False
@@ -191,24 +194,38 @@ def _present_action(
 def compose_recovery_handoff_action(
     accepted_prefix_tactic: str,
     repaired_suffix_tactic: str,
+    later_stages: str = "",
 ) -> str | None:
-    """Join two exact tactics without interpreting either tactic family."""
+    """Join exact tactics without interpreting any tactic family.
 
-    values = (accepted_prefix_tactic, repaired_suffix_tactic)
+    ``accepted_prefix_tactic`` is empty when the accepted prefix is a no-op
+    and stays out of the action. ``later_stages`` are the agent's stages
+    after the failing one (no final dot), kept so that the action changes
+    only the failing stage. The agent's own spelling, line breaks included,
+    is kept; only the joining ``; `` is normalized.
+    """
+
+    tactics = (
+        (accepted_prefix_tactic,) if accepted_prefix_tactic else ()
+    ) + (repaired_suffix_tactic,)
     if any(
         not value
         or value != value.strip()
         or not value.endswith(".")
-        or "\n" in value
-        or "\r" in value
-        for value in values
-    ):
+        for value in tactics
+    ) or later_stages != later_stages.strip() or later_stages.endswith("."):
         return None
-    prefix = accepted_prefix_tactic[:-1].rstrip()
     suffix = repaired_suffix_tactic[:-1].strip()
-    if not prefix or not suffix:
+    if not suffix:
         return None
-    return f"{prefix}; {suffix}."
+    parts = [
+        *((accepted_prefix_tactic[:-1].rstrip(),) if accepted_prefix_tactic else ()),
+        suffix,
+        *((later_stages,) if later_stages else ()),
+    ]
+    if any(not part for part in parts):
+        return None
+    return "; ".join(parts) + "."
 
 
 def recovery_handoff_action_suffix(
@@ -217,19 +234,30 @@ def recovery_handoff_action_suffix(
 ) -> str | None:
     """Recover the exact feature-owned suffix from one presented action."""
 
-    if handoff is None or not handoff.prefix_changes_state:
+    if handoff is None:
         return presented_tactic
-    prefix = handoff.accepted_prefix_tactic[:-1].rstrip()
-    marker = prefix + "; "
-    if (
-        not presented_tactic.endswith(".")
-        or not presented_tactic.startswith(marker)
-    ):
+    if not presented_tactic.endswith("."):
         return None
-    suffix = presented_tactic[len(marker):]
-    if not suffix or compose_recovery_handoff_action(
-        handoff.accepted_prefix_tactic,
+    body = presented_tactic[:-1]
+    prefix_tactic = (
+        handoff.accepted_prefix_tactic if handoff.prefix_changes_state else ""
+    )
+    if prefix_tactic:
+        marker = prefix_tactic[:-1].rstrip() + "; "
+        if not body.startswith(marker):
+            return None
+        body = body[len(marker):]
+    later = handoff.later_stages
+    if later:
+        ending = "; " + later
+        if not body.endswith(ending):
+            return None
+        body = body[:-len(ending)]
+    suffix = body + "."
+    if not body or compose_recovery_handoff_action(
+        prefix_tactic,
         suffix,
+        later,
     ) != presented_tactic:
         return None
     return suffix
@@ -241,21 +269,9 @@ def _present_diagnostic(
 ) -> tuple[DiagnosticCandidate | None, bool]:
     base = recovery_handoff_message(handoff)
     diagnostic = item.diagnostic
-    continuation = (
-        compound_boundary_continuation(
-            accepted_effect=handoff.accepted_prefix_effect,
-            accepted_stage_count=handoff.accepted_prefix_stage_count,
-        )
-        if diagnostic.applicability == EXPLANATION_ONLY
-        else ""
-    )
     primary = base + "\n\n" + diagnostic.primary
     try:
-        composed = replace(
-            diagnostic,
-            primary=primary,
-            terminal=continuation,
-        )
+        composed = replace(diagnostic, primary=primary)
     except ValueError:
         return None, True
     return (

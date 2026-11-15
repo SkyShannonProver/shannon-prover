@@ -8,13 +8,11 @@ is the only layer allowed to produce a verified run outcome.
 
 from __future__ import annotations
 
-import hashlib
-import json
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Literal
 
-from core.digests import sha256_file
+from core.digests import sha256_file, sha256_json
 from core.easycrypt.committed_history import history_path
 from workflow.tree.session_observer import WorkflowSessionSnapshot
 
@@ -86,14 +84,7 @@ class SessionClosureCandidate:
         }
         if not payload["node_id"] or not payload["target_lemma"]:
             raise ValueError("completion candidate target identity is incomplete")
-        candidate_id = hashlib.sha256(
-            json.dumps(
-                payload,
-                ensure_ascii=False,
-                separators=(",", ":"),
-                sort_keys=True,
-            ).encode("utf-8")
-        ).hexdigest()
+        candidate_id = sha256_json(payload)
         return cls(candidate_id=candidate_id, **payload)
 
     def to_dict(self) -> dict[str, Any]:

@@ -15,6 +15,9 @@ from core.context_intents import persistent_control_names
 from core.easycrypt.proof_state_compiler.features.compound_tactic_prefix_recovery import (
     COMPOUND_TACTIC_PREFIX_RECOVERY_FEATURE_ID,
 )
+from core.easycrypt.proof_state_compiler.features.hypothesis_scope_diagnosis import (
+    HYPOTHESIS_SCOPE_DIAGNOSIS_FEATURE_ID,
+)
 from core.easycrypt.proof_state_compiler.features.intro_pattern_repair import (
     INTRO_PATTERN_REPAIR_FEATURE_ID,
 )
@@ -30,6 +33,9 @@ from core.easycrypt.proof_state_compiler.features.pure_tail_recovery import (
 from core.easycrypt.proof_state_compiler.features.relation_bridge_realization import (
     RELATION_BRIDGE_REALIZATION_FEATURE_ID,
 )
+from core.easycrypt.proof_state_compiler.features.smt_failure_localization import (
+    SMT_FAILURE_LOCALIZATION_FEATURE_ID,
+)
 from core.easycrypt.proof_state_compiler.features.tactic_dialect_repair import (
     TACTIC_DIALECT_REPAIR_FEATURE_ID,
 )
@@ -40,11 +46,13 @@ from workflow.proof_state_compiler.activation import (
 )
 from workflow.proof_state_compiler.delivery_policies import (
     COMPOUND_TACTIC_PREFIX_RECOVERY_ONCE_POLICY_ID,
+    HYPOTHESIS_SCOPE_DIAGNOSIS_ONCE_POLICY_ID,
     INTRO_PATTERN_REPAIR_ONCE_POLICY_ID,
     OPERATION_BINDING_REPAIR_ONCE_POLICY_ID,
     PHL_TRANSITIVITY_BOUNDARY_ONCE_POLICY_ID,
     PURE_TAIL_RECOVERY_ONCE_POLICY_ID,
     RELATION_BRIDGE_ONCE_POLICY_ID,
+    SMT_FAILURE_LOCALIZATION_ONCE_POLICY_ID,
     TACTIC_DIALECT_REPAIR_ONCE_POLICY_ID,
 )
 from workflow.proof_state_compiler.profile_ids import (
@@ -100,6 +108,9 @@ _PRODUCTION_REGISTRATIONS = (
                 FeatureActivation(
                     COMPOUND_TACTIC_PREFIX_RECOVERY_FEATURE_ID, TREATMENT
                 ),
+                FeatureActivation(
+                    HYPOTHESIS_SCOPE_DIAGNOSIS_FEATURE_ID, TREATMENT
+                ),
                 FeatureActivation(INTRO_PATTERN_REPAIR_FEATURE_ID, TREATMENT),
                 FeatureActivation(OPERATION_BINDING_REPAIR_FEATURE_ID, TREATMENT),
                 FeatureActivation(
@@ -109,15 +120,18 @@ _PRODUCTION_REGISTRATIONS = (
                 FeatureActivation(
                     RELATION_BRIDGE_REALIZATION_FEATURE_ID, TREATMENT
                 ),
+                FeatureActivation(SMT_FAILURE_LOCALIZATION_FEATURE_ID, TREATMENT),
                 FeatureActivation(TACTIC_DIALECT_REPAIR_FEATURE_ID, TREATMENT),
             ),
             delivery_policy_ids=(
                 COMPOUND_TACTIC_PREFIX_RECOVERY_ONCE_POLICY_ID,
+                HYPOTHESIS_SCOPE_DIAGNOSIS_ONCE_POLICY_ID,
                 INTRO_PATTERN_REPAIR_ONCE_POLICY_ID,
                 OPERATION_BINDING_REPAIR_ONCE_POLICY_ID,
                 PHL_TRANSITIVITY_BOUNDARY_ONCE_POLICY_ID,
                 PURE_TAIL_RECOVERY_ONCE_POLICY_ID,
                 RELATION_BRIDGE_ONCE_POLICY_ID,
+                SMT_FAILURE_LOCALIZATION_ONCE_POLICY_ID,
                 TACTIC_DIALECT_REPAIR_ONCE_POLICY_ID,
             ),
         ),

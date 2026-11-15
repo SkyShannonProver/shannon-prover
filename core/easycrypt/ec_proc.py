@@ -45,9 +45,15 @@ def emacs_command(
     socket never turns into a hard ``-server`` connect failure — then ``-I
     <dir>`` per include dir, then any ``extra_args``.
     """
-    from core.easycrypt.ec_env import easycrypt_command
+    from core.easycrypt.ec_env import (
+        SESSION_SMT_TIMEOUT_SECONDS,
+        easycrypt_command,
+        smt_arguments,
+    )
 
-    cmd = easycrypt_command("-emacs")
+    cmd = easycrypt_command(
+        "-emacs", *smt_arguments(SESSION_SMT_TIMEOUT_SECONDS)
+    )
     if why3_socket and os.path.exists(why3_socket):
         cmd.extend(["-server", why3_socket])
     for d in include_dirs or ():

@@ -9,6 +9,7 @@ from core.easycrypt.proof_state_compiler.delimiters import (
     balanced,
     top_level_indices,
 )
+from core.easycrypt.proof_text import sentence_ends
 
 
 MAX_COMPOUND_TACTIC_BYTES = 16_384
@@ -21,6 +22,11 @@ def compound_prefix_candidates(tactic: str) -> tuple[str, ...]:
     This is only a lexical work bound.  EasyCrypt still parses the full tactic,
     diagnoses its rejection, and checks every returned candidate.  Ambiguous
     strings/comments and unbalanced delimiters abstain instead of guessing.
+
+    The text must be one EasyCrypt sentence: its only sentence-final dot is
+    the last character.  The manager runs a multi-sentence commit sentence by
+    sentence, while the native check parses one global action, so a
+    semicolon cut across sentences has no native meaning.
     """
 
     text = str(tactic or "")
@@ -33,6 +39,7 @@ def compound_prefix_candidates(tactic: str) -> tuple[str, ...]:
         or "(*" in text
         or "*)" in text
         or "\x00" in text
+        or list(sentence_ends(text)) != [len(text)]
     ):
         return ()
     body = text[:-1]

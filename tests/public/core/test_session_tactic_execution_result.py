@@ -735,3 +735,67 @@ def test_finalizer_does_not_emit_invalid_ter_after_workspace_failure(
         event_types = [event_type for event_type, _, _ in session.events]
         assert "tactic.execution.produced" not in event_types
         assert not (session.dir / "tactic_execution_results").exists()
+
+
+def _rejected_commit_response(failed_sentence: dict | None) -> dict:
+    response = _commit_response(
+        status="error",
+        ok=False,
+        attempted=["wp. bad."],
+        accepted_count=0,
+        failed_tactic="wp. bad.",
+        failure_reason="[error] parse error",
+    )
+    response["latest_transition"] = {"history_committed": False}
+    if failed_sentence is not None:
+        response["mutation"]["failed_sentence"] = failed_sentence
+    return response
+
+
+def test_rejected_commit_carries_its_failed_sentence() -> None:
+    sentence = {"index": 2, "count": 2, "sentence": "bad."}
+    result = build_tactic_execution_result(
+        mode="commit",
+        command="commit",
+        commit_response=_rejected_commit_response(sentence),
+        workspace_view=_workspace_view(),
+    )
+
+    assert result["execution"]["failed_sentence"] == sentence
+    assert validate_tactic_execution_result(result).ok
+
+
+def test_one_sentence_commit_has_no_failed_sentence_field() -> None:
+    result = build_tactic_execution_result(
+        mode="commit",
+        command="commit",
+        commit_response=_rejected_commit_response(None),
+        workspace_view=_workspace_view(),
+    )
+
+    assert "failed_sentence" not in result["execution"]
+    assert validate_tactic_execution_result(result).ok
+
+
+@pytest.mark.parametrize(
+    "failed_sentence",
+    (
+        {"index": 2, "count": 1, "sentence": "bad."},
+        {"index": 1, "count": 2},
+    ),
+)
+def test_incomplete_failed_sentence_is_a_contract_error(
+    failed_sentence: dict,
+) -> None:
+    result = build_tactic_execution_result(
+        mode="commit",
+        command="commit",
+        commit_response=_rejected_commit_response(None),
+        workspace_view=_workspace_view(),
+    )
+    result["execution"]["failed_sentence"] = failed_sentence
+
+    assert any(
+        "failed_sentence" in error
+        for error in validate_tactic_execution_result(result).errors
+    )

@@ -49,6 +49,20 @@ class ReplayFail:
     raw: str
 
 
+@dataclass(frozen=True)
+class DrainedTransaction:
+    """EasyCrypt's response to a transaction and the sentence it answers.
+
+    ``last_index`` (from 1) is the last sentence sent: the rejected one when
+    EasyCrypt rejected the transaction, otherwise the final sentence.
+    """
+
+    raw: str
+    sentence_count: int
+    last_index: int
+    last_sentence: str
+
+
 class ECSessionLifecycle:
     """Owns one ``easycrypt -emacs`` subprocess's pipe lifecycle.
 
@@ -210,19 +224,33 @@ class ECSessionLifecycle:
     def send_and_drain(self, text: str, *, timeout: float,
                        is_error: Callable[[str], object],
                        whole_transaction: bool = False) -> str:
+        """EasyCrypt's response to the transaction; see ``drain_transaction``."""
+        return self.drain_transaction(
+            text, timeout=timeout, is_error=is_error,
+            whole_transaction=whole_transaction,
+        ).raw
+
+    def drain_transaction(self, text: str, *, timeout: float,
+                          is_error: Callable[[str], object],
+                          whole_transaction: bool = False) -> DrainedTransaction:
         """Drain every native sentence in one logical transaction.
 
         Stop at the first native rejection and return that response; otherwise
         return the final sentence's response (the current goal, not an earlier
-        intermediate goal). The caller owns rollback of a partially run block.
+        intermediate goal). The result also names the sentence whose response
+        it is. The caller owns rollback of a partially run block.
         ``timeout`` bounds each sentence, or with ``whole_transaction`` the
         transaction as a whole.
         """
         deadline = time.monotonic() + timeout if whole_transaction else None
+        # A comment-only tail produces no native response.
+        sentences = [
+            command for command in split_ec_commands(text)
+            if strip_comments(command).strip()
+        ]
         raw = ""
-        for command in split_ec_commands(text):
-            if not strip_comments(command).strip():
-                continue  # A comment-only tail produces no native response.
+        index = 0
+        for index, command in enumerate(sentences, start=1):
             self._send(command)
             wait = timeout if deadline is None else max(0.0, deadline - time.monotonic())
             raw = self._read_until_prompt(timeout=wait).decode("utf-8", errors="replace")
@@ -230,7 +258,12 @@ class ECSessionLifecycle:
                 break
         if not raw:
             raise ValueError("empty EasyCrypt transaction")
-        return raw
+        return DrainedTransaction(
+            raw=raw,
+            sentence_count=len(sentences),
+            last_index=index,
+            last_sentence=sentences[index - 1].strip(),
+        )
 
     # -- replay prefix ----------------------------------------------------------
     def replay_prefix(

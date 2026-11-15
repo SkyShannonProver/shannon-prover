@@ -10,6 +10,7 @@ from workflow.proof_management.managed_turn_outcome import (
     proof_state_changed_for_turn,
     turn_needs_attention,
 )
+from core.markdown_text import inline_code
 from workflow.proof_management.types import has_agent_observation_kind
 from workflow.proof_state_compiler.current_turn_contract import (
     SURFACE_TURN_SCHEMA_VERSION,
@@ -158,7 +159,7 @@ def _turn_outcome(
         result = repair_prompt
     elif tactic:
         result = (
-            f"Last action: `{_short(tactic, 80)}` -- "
+            f"Last action: {inline_code(_short(tactic, 80))} -- "
             f"{result or '(no result reported)'}"
         )
     if error and outcome_kind != "no_progress" and "EasyCrypt error:" not in result:

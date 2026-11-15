@@ -49,6 +49,7 @@ class NativeSemanticProducerBinding:
 
     feature_id: str
     producer: NativeSemanticRequestProducer
+    accepts_failing_sentence: bool = False
 
     def __post_init__(self) -> None:
         if not self.feature_id or not callable(self.producer):
@@ -137,12 +138,22 @@ def plan_native_semantics(
                 if proof_ir.attempted_operation is None
                 else proof_ir.attempted_operation.recovery_handoff
             )
-            evaluation_prefix = (
-                ()
-                if handoff is None
-                or binding.feature_id == handoff.source_feature_id
-                else (handoff.accepted_prefix_tactic,)
+            # A feature that analyses the rejected sentence of a multi-sentence
+            # commit runs after the sentences before it, as the manager did.
+            scope = (
+                None
+                if invocation.failure_observation is None
+                else invocation.failure_observation.sentence_scope
             )
+            if scope is not None and binding.accepts_failing_sentence:
+                evaluation_prefix = scope.prior_sentences
+            else:
+                evaluation_prefix = (
+                    ()
+                    if handoff is None
+                    or binding.feature_id == handoff.source_feature_id
+                    else (handoff.accepted_prefix_tactic,)
+                )
             request = replace(
                 produced_request,
                 feature_id=binding.feature_id,

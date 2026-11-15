@@ -60,6 +60,9 @@ class FeatureExecutionGate:
     lifetime: str = REPEATABLE
     produces_recovery_handoff: bool = False
     accepts_recovery_handoff: bool = False
+    # The feature analyses the rejected sentence of a multi-sentence commit,
+    # in the native state the earlier sentences reach.
+    accepts_failing_sentence: bool = False
 
     def __post_init__(self) -> None:
         if not self.gate_id:

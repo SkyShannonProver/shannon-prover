@@ -28,7 +28,7 @@ def test_production_manifest_contains_only_treatment_activations() -> None:
     manifest = production_release_manifest()
     assert manifest.profile_ids == tuple(sorted(PRODUCTION_PROFILE_IDS))
     assert manifest.feature_ids
-    assert len(manifest.feature_ids) == 7
+    assert len(manifest.feature_ids) == 9
     assert set(manifest.feature_ids) <= set(production_feature_catalog().feature_ids)
 
 def test_production_import_does_not_load_research_registry() -> None:

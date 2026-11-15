@@ -7,6 +7,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
+from core.easycrypt.ec_diagnostics import FailedSentence
 from core.easycrypt.proof_text import split_tactic_chain
 from core.easycrypt.session.session_tactic_execution_artifacts import (
     read_bound_tactic_execution_event,
@@ -756,6 +757,13 @@ def _tactic_execution_authority(
             result.get("failure_reason"),
             default="",
         )[:1200],
+        # The rejected sentence of a multi-sentence commit, when recorded.
+        **(
+            {"failed_sentence": dict(execution["failed_sentence"])}
+            if FailedSentence.from_payload(execution.get("failed_sentence"))
+            is not None
+            else {}
+        ),
     }
 
 
@@ -934,7 +942,9 @@ def agent_observation_for_request(
     else:
         observation = {
             "manager_action": label,
-            "result": _manager_result_text(label, status, ok),
+            "result": _manager_result_text(
+                label, status, ok, execution.get("failed_sentence"),
+            ),
             "effect": _action_effect(label, execution),
             "proof_state": _proof_state_observation(label, execution, status),
         }

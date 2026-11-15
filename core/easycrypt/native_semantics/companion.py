@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import fcntl
-import hashlib
 import json
 import re
 import shutil
@@ -14,6 +13,7 @@ from contextlib import contextmanager
 from dataclasses import dataclass
 from pathlib import Path
 
+from core.digests import sha256_json
 from core.easycrypt.ec_env import (
     MANAGED_WHY3_CONFIG_ENV,
     get_ec_env,
@@ -122,13 +122,7 @@ class NativeCompanionIdentity:
 
     @property
     def semantic_identity_sha256(self) -> str:
-        encoded = json.dumps(
-            self.identity_payload(),
-            ensure_ascii=False,
-            separators=(",", ":"),
-            sort_keys=True,
-        ).encode("utf-8")
-        return hashlib.sha256(encoded).hexdigest()
+        return sha256_json(self.identity_payload())
 
 
 @contextmanager

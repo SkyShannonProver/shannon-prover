@@ -25,6 +25,7 @@ from core.easycrypt.session.session_display import (
 from core.easycrypt.session.session_no_progress import detect_no_progress  # no-progress detection (extracted)
 from core.easycrypt.session.session_tactic_precheck import precheck_tactic  # tactic precheck (extracted)
 from core.easycrypt.ec_backend import BatchBackend, CommitOutcome
+from core.easycrypt.ec_diagnostics import FailedSentence
 from core.easycrypt.session.session_rollback import RollbackJournal  # pre-commit file txn (extracted)
 
 from core.easycrypt.session.session_events import append_error_event as _append_error_event
@@ -70,6 +71,8 @@ class CommitResult:
     latest_error: str
     no_progress_reason: str
     output: str
+    # The rejected sentence of a multi-sentence transaction, when known.
+    failed_sentence: FailedSentence | None = None
 
 
 @dataclass(frozen=True)
@@ -361,7 +364,10 @@ class Session:
         except Exception:
             return _Fallback("write_fail")
         if not reply.accepted:
-            return CommitOutcome("daemon", "daemon_reject", reply.error)
+            return CommitOutcome(
+                "daemon", "daemon_reject", reply.error,
+                failed_sentence=reply.failed_sentence,
+            )
         # Force-flush: some tactic combos (e.g. `rewrite X; smt(...)` that
         # close one subgoal and transition goal type) leave EC's post-commit
         # output at just `[N|check]>` without a `Current goal` / `No more
@@ -727,6 +733,11 @@ class Session:
             "daemon_rejection": has_new_error,
             "error_lines": error_lines,
             "latest_error": latest_error,
+            **(
+                {"failed_sentence": outcome.failed_sentence.to_payload()}
+                if has_new_error and outcome.failed_sentence is not None
+                else {}
+            ),
         })
         if candidate_closed:
             self.emit_event("proof.candidate_closed", {
@@ -742,6 +753,9 @@ class Session:
             latest_error=latest_error,
             no_progress_reason=no_progress_reason,
             output=self._commit_display(),
+            failed_sentence=(
+                outcome.failed_sentence if has_new_error else None
+            ),
         )
 
     def _commit_display(self) -> str:

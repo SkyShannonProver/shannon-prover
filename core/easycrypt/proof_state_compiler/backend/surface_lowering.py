@@ -31,6 +31,9 @@ from core.easycrypt.proof_state_compiler.contracts.failure import (
     NATIVE_ARGUMENT_REALIZATION_WITNESS,
     NATIVE_TACTIC_PREFIX_WITNESS,
 )
+from core.easycrypt.proof_state_compiler.contracts.diagnostics import (
+    EXPLANATION_ONLY,
+)
 from core.easycrypt.proof_state_compiler.contracts.digest import (
     json_sha256,
     text_sha256,
@@ -229,10 +232,16 @@ def _recovery_diagnostic_lifetime_scope(
         "witness_kind": witness.witness_kind,
         "native_family": witness.native_family,
         # For a compound-prefix diagnostic this is the exact accepted prefix;
-        # a strictly longer/different boundary receives a new scope.  The full
-        # rejected compound is intentionally absent, so suffix spelling churn
-        # at one goal does not create new agent-facing information.
+        # a strictly longer/different boundary receives a new scope.
         "realization_sha256": witness.realization_sha256,
+        # An explanation is not repeated for another spelling of the same
+        # failure. A choice set or typed placeholder carries the agent's own
+        # terms, which the agent copies: another term is new information.
+        "diagnostic_sha256": (
+            ""
+            if item.diagnostic.applicability == EXPLANATION_ONLY
+            else json_sha256(item.diagnostic.identity_payload())
+        ),
         "boundary_prefix": (
             "" if handoff is None else handoff.accepted_prefix_tactic
         ),
@@ -241,6 +250,23 @@ def _recovery_diagnostic_lifetime_scope(
         ),
     }
     return json_sha256(material)
+
+
+def _starts_with_operation(tactic: str, family: str) -> bool:
+    """The tactic begins with the keyword ``family`` as a whole word.
+
+    ``move=> [a b].`` begins with ``move`` as much as ``move => [a b].``;
+    requiring a blank after the keyword dropped the common spelling.
+    """
+
+    return bool(
+        family
+        and tactic.startswith(family)
+        and not (
+            tactic[len(family):len(family) + 1].isalnum()
+            or tactic[len(family):len(family) + 1] in {"_", "'"}
+        )
+    )
 
 
 def _preserves_attempted_operation(
@@ -272,7 +298,9 @@ def _preserves_attempted_operation(
         return bool(
             item.recovery_witness_id == witness.witness_id
             and item.correction is not None
-            and tactic.startswith(witness.target_operation_family + " ")
+            and _starts_with_operation(
+                tactic, witness.target_operation_family
+            )
             and text_sha256(tactic)
             == witness.realization_sha256
             and "\n" not in tactic

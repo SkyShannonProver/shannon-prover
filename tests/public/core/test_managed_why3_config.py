@@ -45,7 +45,13 @@ def test_environment_binds_local_config_without_redirecting_credentials(
 
     environment = ec_env.get_ec_env()
 
-    assert environment == {**base, "SHANNON_WHY3_CONFIG": str(local)}
+    # The configuration registers no portfolio prover: an empty list.
+    assert environment == {
+        **base,
+        "SHANNON_WHY3_CONFIG": str(local),
+        "SHANNON_SMT_PROVERS": "",
+        "SHANNON_SMT_TIMEOUT": "3",
+    }
     assert base == {"HOME": "/user/home", "XDG_CONFIG_HOME": "/user/config", "CODEX_HOME": "/user/codex"}
     assert emacs_command()[-2:] == ["-why3", str(local)]
 
@@ -151,3 +157,52 @@ def test_real_detection_and_cli_ignore_global_and_project_config(
     assert (local.read_bytes(), local.stat().st_mtime_ns) == managed_before
     assert user_config.read_text() == "user configuration must remain untouched\n"
     assert user_config.stat().st_mtime_ns == before
+
+
+WHY3_CONF_WITH_PROVERS = """\
+[main]
+magic = 14
+
+[partial_prover]
+name = "CVC5"
+path = "/opt/homebrew/bin/cvc5"
+version = "1.2.1"
+
+[partial_prover]
+name = "Z3"
+path = "/opt/homebrew/bin/z3"
+version = "4.15.4"
+
+[partial_prover]
+name = "Eprover"
+path = "/usr/bin/eprover"
+version = "2.6"
+"""
+
+
+def test_every_check_runs_the_registered_portfolio(tmp_path, monkeypatch) -> None:
+    """Session, verification and companion use one prover set, all at once.
+
+    EasyCrypt's default list lacks CVC5, so with this toolchain smt ran Z3
+    alone; a session step only CVC5 proves was then rejected by the final
+    verification, which also ran Z3 alone."""
+
+    local = tmp_path / "why3.conf"
+    local.write_text(WHY3_CONF_WITH_PROVERS)
+    _bind_config(monkeypatch, local)
+    monkeypatch.setattr(ec_env, "managed_easycrypt_environment", lambda: {})
+
+    # Portfolio order; a registered prover outside the portfolio stays out.
+    assert ec_env.managed_smt_provers() == ("Z3", "CVC5")
+    session = ["-p", "Z3", "-p", "CVC5", "-max-provers", "2", "-timeout", "3"]
+    assert ec_env.smt_arguments(ec_env.SESSION_SMT_TIMEOUT_SECONDS) == session
+    assert ec_env.smt_arguments(ec_env.VERIFICATION_SMT_TIMEOUT_SECONDS)[-2:] == [
+        "-timeout", "30",
+    ]
+    command = emacs_command()
+    assert command[:2] == ["easycrypt", "-emacs"]
+    assert command[2:2 + len(session)] == session
+    assert command[-2:] == ["-why3", str(local)]
+    environment = ec_env.get_ec_env()
+    assert environment["SHANNON_SMT_PROVERS"] == "Z3,CVC5"
+    assert environment["SHANNON_SMT_TIMEOUT"] == "3"

@@ -9,6 +9,9 @@ from core.easycrypt.proof_state_compiler.contracts import (
     failure_linked_repair_rule,
     intrinsic_changed_fact_rule,
 )
+from core.easycrypt.proof_state_compiler.features.hypothesis_scope_diagnosis import (
+    HYPOTHESIS_SCOPE_DIAGNOSIS_FEATURE_ID,
+)
 from core.easycrypt.proof_state_compiler.features.intro_pattern_repair import (
     INTRO_PATTERN_REPAIR_FEATURE_ID,
 )
@@ -24,6 +27,9 @@ from core.easycrypt.proof_state_compiler.features.phl_transitivity_boundary_repa
 from core.easycrypt.proof_state_compiler.features.relation_bridge_realization import (
     RELATION_BRIDGE_REALIZATION_FEATURE_ID,
 )
+from core.easycrypt.proof_state_compiler.features.smt_failure_localization import (
+    SMT_FAILURE_LOCALIZATION_FEATURE_ID,
+)
 from core.easycrypt.proof_state_compiler.features.tactic_dialect_repair import (
     TACTIC_DIALECT_REPAIR_FEATURE_ID,
 )
@@ -36,10 +42,12 @@ INTRINSIC_CHANGED_FACT_POLICY_ID = "intrinsic_changed_fact"
 SELECTED_OPERATION_ONCE_POLICY_ID = "selected_operation_once"
 OPERATION_BINDING_REPAIR_ONCE_POLICY_ID = "operation_binding_repair_once"
 INTRO_PATTERN_REPAIR_ONCE_POLICY_ID = "intro_pattern_repair_once"
+HYPOTHESIS_SCOPE_DIAGNOSIS_ONCE_POLICY_ID = "hypothesis_scope_diagnosis_once"
 RELATION_BRIDGE_ONCE_POLICY_ID = "relation_bridge_once"
 PHL_TRANSITIVITY_BOUNDARY_ONCE_POLICY_ID = "phl_transitivity_boundary_once"
 TACTIC_DIALECT_REPAIR_ONCE_POLICY_ID = "tactic_dialect_repair_once"
 PURE_TAIL_RECOVERY_ONCE_POLICY_ID = "pure_tail_recovery_once"
+SMT_FAILURE_LOCALIZATION_ONCE_POLICY_ID = "smt_failure_localization_once"
 COMPOUND_TACTIC_PREFIX_RECOVERY_ONCE_POLICY_ID = (
     "compound_tactic_prefix_recovery_once"
 )
@@ -92,6 +100,21 @@ def default_delivery_policy_catalog() -> DeliveryPolicyCatalog:
             ),
         ),
         DeliveryPolicyDefinition(
+            policy_id=HYPOTHESIS_SCOPE_DIAGNOSIS_ONCE_POLICY_ID,
+            rule=failure_linked_repair_rule(),
+            max_items=1,
+            max_markdown_bytes=700,
+            compatible_feature_ids=(HYPOTHESIS_SCOPE_DIAGNOSIS_FEATURE_ID,),
+            compatibility_contract=(
+                "one exact CurrentStateFailure, the complete native scope "
+                "facts for the one failing written name, or the agent's smt "
+                "call without that hint as one exact checked action"
+            ),
+            rejection_audit_reasons=BASE_POLICY_REJECTION_REASONS + (
+                CERTIFICATION_MISSING_OR_REJECTED,
+            ),
+        ),
+        DeliveryPolicyDefinition(
             policy_id=PURE_TAIL_RECOVERY_ONCE_POLICY_ID,
             rule=failure_linked_repair_rule(),
             max_items=1,
@@ -131,6 +154,20 @@ def default_delivery_policy_catalog() -> DeliveryPolicyCatalog:
                 "one exact CurrentStateFailure, complete native-established "
                 "PHL function/statement boundary mismatch, and every "
                 "strategy-neutral boundary alternative"
+            ),
+            rejection_audit_reasons=BASE_POLICY_REJECTION_REASONS,
+        ),
+        DeliveryPolicyDefinition(
+            policy_id=SMT_FAILURE_LOCALIZATION_ONCE_POLICY_ID,
+            rule=failure_linked_repair_rule(),
+            max_items=1,
+            max_markdown_bytes=600,
+            compatible_feature_ids=(SMT_FAILURE_LOCALIZATION_FEATURE_ID,),
+            compatibility_contract=(
+                "one exact CurrentStateFailure or delegated failing part, "
+                "EasyCrypt's first failing smt call quoted from the tactic, "
+                "its report-mode failed-goal count, and the native kind of "
+                "its first failed goal when established; facts only"
             ),
             rejection_audit_reasons=BASE_POLICY_REJECTION_REASONS,
         ),

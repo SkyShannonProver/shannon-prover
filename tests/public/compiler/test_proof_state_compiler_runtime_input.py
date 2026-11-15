@@ -142,7 +142,10 @@ def test_runtime_snapshot_is_narrow_hashed_and_self_consistent(
         "source_sha256": hashlib.sha256(source.read_bytes()).hexdigest(),
         "lemma": "target",
     }
-    assert data["state"]["goal_lines"] == GOAL.splitlines()
+    # The trailing EasyCrypt prompt is transport state, not goal text.
+    assert data["state"]["goal_lines"] == [
+        line for line in GOAL.splitlines() if not line.endswith("|check]>")
+    ]
     assert data["state"]["goal_identity_required"] is True
     assert len(data["state"]["committed_prefix_identity"]) == 64
     assert "workspace" not in data

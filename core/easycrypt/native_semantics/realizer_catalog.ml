@@ -3,10 +3,12 @@
    the companion.  Order is not semantic: every requested realizer runs. *)
 
 let all : Realizer.t list = List.concat [
+  Hypothesis_scope_diagnosis.realizers;
   Intro_pattern_repair.realizers;
   Operation_binding_repair.realizers;
   Phl_transitivity_boundary_repair.realizers;
   Pure_tail_recovery.realizers;
   Relation_bridge_realization.realizers;
+  Smt_failure_localization.realizers;
   Tactic_dialect_repair.realizers;
 ]

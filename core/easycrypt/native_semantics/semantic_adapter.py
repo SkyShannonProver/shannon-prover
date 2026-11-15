@@ -10,7 +10,6 @@ candidate selection, admission, and presentation remain outside this module.
 
 from __future__ import annotations
 
-import json
 import re
 import subprocess
 import time
@@ -28,6 +27,7 @@ from core.easycrypt.native_semantics.companion import (
     sha256_native_dependency,
 )
 from core.easycrypt.session.session_projection import active_goal_hash_from_raw
+from core.jsonio import canonical_json
 
 
 NATIVE_SEMANTIC_PROTOCOL_VERSION = 20
@@ -245,12 +245,7 @@ def run_native_semantic_batch(
         if before_build is not None and before_build == after_build
         else "cold"
     )
-    payload = json.dumps(
-        request.runtime_payload(),
-        ensure_ascii=False,
-        separators=(",", ":"),
-        sort_keys=True,
-    )
+    payload = canonical_json(request.runtime_payload())
     execution_started = time.perf_counter()
     try:
         process = subprocess.run(
@@ -512,7 +507,12 @@ def validate_tactic_prefix_descriptor(
     *,
     query: NativeSemanticQuery,
 ) -> dict[str, Any]:
-    """Validate a complete native result for one bounded prefix population."""
+    """Validate a complete native result for one bounded prefix population.
+
+    EasyCrypt keeps only the leading lexical candidates that its own parse
+    delimits as top-level tactic boundaries, so the result's candidates are
+    a nonempty prefix of the query's.
+    """
 
     required = {
         "rejected_tactic",
@@ -528,6 +528,7 @@ def validate_tactic_prefix_descriptor(
         "goal_kind",
     }
     candidates = value.get("candidate_prefixes")
+    query_candidates = query.payload.get("candidate_prefixes")
     effects = value.get("prefix_effects")
     accepted = value.get("accepted_prefixes")
     boundary_tactic = value.get("boundary_tactic")
@@ -537,8 +538,9 @@ def validate_tactic_prefix_descriptor(
         or query.query_kind != "tactic_prefix_diagnostic"
         or value.get("rejected_tactic")
         != query.payload.get("rejected_tactic")
-        or candidates != query.payload.get("candidate_prefixes")
         or type(candidates) is not list
+        or type(query_candidates) is not list
+        or candidates != query_candidates[:len(candidates)]
         or not 1 <= len(candidates) <= 8
         or any(type(item) is not str for item in candidates)
         or len(candidates) != len(set(candidates))

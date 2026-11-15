@@ -10,7 +10,7 @@ from workflow.tree.policy import DEFAULT_TREE_INITIAL_PROVERS
 
 
 def test_tree_initial_root_defaults_are_consistent() -> None:
-    assert DEFAULT_TREE_INITIAL_PROVERS == 2
+    assert DEFAULT_TREE_INITIAL_PROVERS == 1
     assert ProverConfig().tree_initial_provers == DEFAULT_TREE_INITIAL_PROVERS
     # prover.run no longer carries per-knob keyword defaults that could drift
     # from the schema: all tree/model/budget knobs travel in one ProverConfig.
@@ -28,6 +28,6 @@ def test_prove_mode_and_count_are_config_driven_not_difficulty_driven() -> None:
     # Difficulty now only feeds the progress display, not the topology choice.
     assert not hasattr(orchestrator, "_prove_mode_and_count_for_difficulty")
 
-    # Defaults still resolve to the two-root tree, independent of any difficulty.
+    # Defaults resolve to the single-node topology, independent of any difficulty.
     config = ProverConfig()
     assert config.tree_initial_provers == DEFAULT_TREE_INITIAL_PROVERS

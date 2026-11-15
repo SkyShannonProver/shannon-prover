@@ -257,7 +257,9 @@ def extract_active_goal_block(raw_text: str) -> tuple[str, int]:
     if goal_start > highest_idx:
         block = "\n".join(lines[goal_start:])
     else:
-        block = "\n".join(lines[goal_start:highest_idx + 1])
+        # The prompt that follows the goal is transport state, not goal text:
+        # kept here it ended the agent's goal display with ``[5|check]>``.
+        block = "\n".join(lines[goal_start:highest_idx]).rstrip("\n")
 
     if goal_start == highest_idx:
         for i in range(highest_idx - 1, -1, -1):

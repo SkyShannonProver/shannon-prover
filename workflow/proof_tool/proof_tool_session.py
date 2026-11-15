@@ -8,7 +8,6 @@ decide whether a proof succeeded.
 """
 from __future__ import annotations
 
-import json
 import math
 import threading
 import time
@@ -16,6 +15,7 @@ import traceback
 from dataclasses import dataclass
 from typing import Any, Callable, Protocol
 
+from core.jsonio import canonical_json
 from workflow.proof_management.types import ManagedTurn, TurnDirective
 from workflow.proof_tool.proof_tool_contract import ProofToolContractManifest
 
@@ -313,7 +313,7 @@ class ProofToolSession:
                 )
                 self._memory.record_turn(
                     turn_index=next_turn_index,
-                    raw_text=_canonical_arguments_text(raw_arguments),
+                    raw_text=canonical_json(raw_arguments),
                     handled_intent=handled_intent,
                     turn=turn,
                 )
@@ -429,12 +429,3 @@ def _absolute_deadline(value: float) -> float:
     if not math.isfinite(deadline) or deadline <= 0:
         raise ValueError("proof-tool absolute deadline must be finite and positive")
     return deadline
-
-
-def _canonical_arguments_text(raw_arguments: Any) -> str:
-    return json.dumps(
-        raw_arguments,
-        ensure_ascii=False,
-        sort_keys=True,
-        separators=(",", ":"),
-    )

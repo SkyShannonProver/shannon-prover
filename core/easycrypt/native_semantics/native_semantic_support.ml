@@ -568,10 +568,17 @@ let parse_attempted_tactic tactic_text =
       end
   | _ -> raise (Contract_error "unsupported attempted operation family")
 
+(* [smt] runs as the toplevel runs it: the scope's prover settings, plus the
+   options and lemma hints of [smt(L1 L2)], resolved in the current
+   environment (an unknown name is "cannot find lemma"). *)
 let run_tactics tactics =
   let scope = EcCommands.current () in
   let ttenv = {
-    EcHiGoal.tt_provers = (fun _ -> EcProvers.dft_prover_infos);
+    EcHiGoal.tt_provers = (function
+      | None -> scope_prover_infos ()
+      | Some options ->
+          EcScope.Prover.pprover_infos_to_prover_infos
+            (EcScope.env scope) (scope_prover_infos ()) options);
     EcHiGoal.tt_smtmode = `Strict;
     EcHiGoal.tt_implicits = EcScope.Options.get_implicits scope;
     EcHiGoal.tt_oldip = EcScope.Options.get scope "oldip";
@@ -609,15 +616,33 @@ let rec tactic_rejection_json ~invalid_shape = function
     ])
   | (EcEnv.LDecl.LdeclError _ | EcCoreGoal.ClearError _) as exn ->
       Some (local_context_error_json exn)
+  (* e.g. an [smt(L)] hint that names no lemma.  The toplevel prints the
+     message without its location; so does the companion. *)
+  | EcScope.HiScopeError (_, message) -> Some (`Assoc [
+      "code", `String "scope_error";
+      "message", `String message;
+    ])
   | _ -> None
 
 let native_tactic_execution tactic =
   let before = current_proof () in
   try
     let after = run_tactics (parse_tactics tactic) in
+    (* The manager calls a tactic a no-op when EasyCrypt prints the same
+       goal before and after.  Rebuilt hypotheses or a renamed binder
+       ([move=> x; move: x]) are not physically equal yet print the same, so
+       compare EasyCrypt's own goal printing when the cheap check fails. *)
+    let printed_goal goal =
+      let hyps = goal.EcCoreGoal.g_hyps in
+      Format.asprintf "%a"
+        (EcPrinting.pp_goal1
+           (EcPrinting.PPEnv.ofenv (EcEnv.LDecl.toenv hyps)))
+        (EcEnv.LDecl.tohyps hyps, goal.EcCoreGoal.g_concl)
+    in
     let same_open_goal left right =
-      left.EcCoreGoal.g_hyps == right.EcCoreGoal.g_hyps
-      && EcFol.f_equal left.EcCoreGoal.g_concl right.EcCoreGoal.g_concl
+      (left.EcCoreGoal.g_hyps == right.EcCoreGoal.g_hyps
+       && EcFol.f_equal left.EcCoreGoal.g_concl right.EcCoreGoal.g_concl)
+      || String.equal (printed_goal left) (printed_goal right)
     in
     let effect =
       if List.equal same_open_goal

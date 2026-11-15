@@ -77,8 +77,12 @@ def _placeholder_diagnostic(attempted) -> AnalysisContribution:
 
 def _choice_diagnostic(attempted, candidates) -> AnalysisContribution:
     help_text = (
-        "EasyCrypt checked these exact invariant alternatives for the failing "
-        "stage. Which invariant do you mean?\n"
+        "EasyCrypt checked these exact invariant alternatives"
+        + (
+            " for the failing stage"
+            if attempted.recovery_handoff is not None else ""
+        )
+        + ". Which invariant do you mean?\n"
         + "\n".join(f"- `{item.candidate_tactic}`" for item in candidates)
         + "\nChoose one only if it fits the proof route you want; the compiler "
         "selected none."
@@ -177,9 +181,10 @@ def analyze_eager_while_dialect(
         exact_tactic=candidate.candidate_tactic,
         reason_code="eager_while_dialect_mismatch",
         reason=(
-            "`eager while` takes only an invariant formula. This action "
-            "preserves the one submitted invariant that EasyCrypt accepted "
-            f"for {checked_goal_reference(attempted.recovery_handoff)}."
+            "`eager while` takes only an invariant formula; EasyCrypt takes "
+            "the swapped statement from the goal, not from the tactic. Of the "
+            "formulas you wrote, this is the one EasyCrypt accepted as the "
+            f"invariant for {checked_goal_reference(attempted.recovery_handoff)}."
         ),
         evidence_refs=attempted.evidence_refs,
     )

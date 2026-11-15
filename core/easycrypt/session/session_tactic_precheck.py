@@ -27,6 +27,8 @@ import sys
 from dataclasses import dataclass
 from typing import Callable, Optional
 
+from core.easycrypt.proof_text import terminated_tactic
+
 
 @dataclass
 class PrecheckOutcome:
@@ -173,11 +175,6 @@ def precheck_tactic(
             + ". Nothing was applied; session state unchanged."
         ))
 
-    # Ensure the command block ends with a '.' (last non-whitespace char)
-    # so EasyCrypt doesn't wait for a terminating period.
-    if trimmed and not trimmed.endswith('.'):
-        block_text = trimmed + '.'
-    else:
-        block_text = trimmed
-
-    return PrecheckOutcome(block_text=block_text, trimmed=trimmed)
+    return PrecheckOutcome(
+        block_text=terminated_tactic(trimmed), trimmed=trimmed,
+    )

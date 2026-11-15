@@ -14,7 +14,7 @@ import tempfile
 from dataclasses import dataclass
 from pathlib import Path
 
-from core.easycrypt.ec_diagnostics import error_text
+from core.easycrypt.ec_diagnostics import FailedSentence, error_text
 from core.easycrypt.ec_proc import emacs_command, why3_socket_from_env
 from core.easycrypt.ec_env import get_ec_env
 
@@ -31,12 +31,15 @@ class CommitOutcome:
     behind a batch fallback. ``error`` is EasyCrypt's rejection, empty when
     it accepted the transaction. ``prev.out`` holds the state before the
     transaction and ``current.out`` the output of the backend that ran.
+    ``failed_sentence`` names the rejected sentence of a multi-sentence
+    transaction when the backend that ran knows it (the daemon does).
     """
 
     backend: str
     route: str
     error: str = ""
     detail: str = ""
+    failed_sentence: FailedSentence | None = None
 
     @property
     def accepted(self) -> bool:

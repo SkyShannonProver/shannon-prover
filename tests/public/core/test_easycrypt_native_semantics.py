@@ -811,7 +811,7 @@ def test_native_intro_pattern_repair_abstains_on_local_name_clash() -> None:
 
 
 def test_native_companion_has_a_realizer_for_every_feature_kind() -> None:
-    assert len(ALL_REALIZER_KINDS) == 7
+    assert len(ALL_REALIZER_KINDS) == 9
     request = _diagnostic_request(
         request_id="native-every-realizer-kind",
         context_file=FIXTURES / "nested_clash_goal.ec",
@@ -1415,6 +1415,176 @@ def test_native_tactic_prefix_diagnostic_renders_typing_errors(
     assert result.descriptor["accepted_prefixes"] == ["idtac."]
     assert result.descriptor["native_failure_kind"] == "typing_error"
     assert result.descriptor["native_error_message"] == message
+
+
+def _compound_prefix_result(
+    request_id: str,
+    rejected: str,
+    prefixes: tuple[str, ...],
+    *,
+    fixture: str = "compound_prefix_goal.ec",
+):
+    request = _prefix_request(
+        request_id=request_id,
+        context_file=FIXTURES / fixture,
+        history_file=FIXTURES / "empty_history.ec",
+        rejected_tactic=rejected,
+        candidate_prefixes=prefixes,
+        expected_goal_identity=active_goal_hash_from_raw(
+            COMPOUND_PREFIX_GOAL
+        ),
+    )
+    return run_native_semantic_batch(
+        request,
+        runtime_identity=discover_easycrypt_runtime_identity(),
+    ).results[0]
+
+
+def test_native_tactic_prefix_keeps_only_easycrypt_tactic_separators() -> None:
+    """``by`` takes every later ``;``: a cut inside its body is no prefix.
+
+    Recorded failure: the boundary ``first by move=> t Ht.`` was reported
+    with ``[by]: cannot close goals`` while EasyCrypt reported another error
+    for the whole tactic.
+    """
+
+    rejected = "move=> x _; first by rewrite /eps; smt()."
+    result = _compound_prefix_result(
+        "compound-prefix-greedy-by",
+        rejected,
+        ("move=> x _.", "move=> x _; first by rewrite /eps."),
+    )
+
+    assert result.status == "accepted"
+    descriptor = result.descriptor
+    assert descriptor["candidate_prefixes"] == ["move=> x _."]
+    assert descriptor["accepted_prefixes"] == ["move=> x _."]
+    assert descriptor["boundary_tactic"] == "first by rewrite /eps; smt()."
+    assert descriptor["boundary_error_message"] == (
+        descriptor["native_error_message"]
+    )
+
+
+def test_native_tactic_prefix_without_a_separator_fails_closed() -> None:
+    result = _compound_prefix_result(
+        "compound-prefix-no-separator",
+        "by move=> x _; smt().",
+        ("by move=> x _.",),
+    )
+
+    assert result.status == "rejected"
+    assert result.structured_error["code"] == "contract_error"
+
+
+def test_native_tactic_prefix_rejects_a_multi_sentence_attempt() -> None:
+    """The manager runs sentences one by one; one native action cannot."""
+
+    result = _compound_prefix_result(
+        "compound-prefix-multi-sentence",
+        "move=> x _.\nsmt().",
+        ("move=> x _.",),
+    )
+
+    assert result.status == "rejected"
+    assert result.structured_error == {
+        "code": "contract_error",
+        "message": "request did not parse as one global action",
+    }
+
+
+def test_native_smt_resolves_its_hints_like_easycrypt() -> None:
+    """``smt(L)`` gives L to the provers; an unknown L is EasyCrypt's error."""
+
+    unknown = _compound_prefix_result(
+        "compound-prefix-smt-unknown-hint",
+        "move=> x _; smt(nosuchlemma).",
+        ("move=> x _.",),
+    )
+    assert unknown.status == "accepted"
+    assert unknown.descriptor["boundary_failure_kind"] == "scope_error"
+    assert unknown.descriptor["boundary_error_message"] == (
+        "cannot find lemma `nosuchlemma'"
+    )
+
+    hinted = _compound_prefix_result(
+        "compound-prefix-smt-hint",
+        "move=> x _; split; 2: smt(holds_all); rewrite nosuchlemma.",
+        (
+            "move=> x _.",
+            "move=> x _; split.",
+            "move=> x _; split; 2: smt(holds_all).",
+        ),
+    )
+    assert hinted.status == "accepted"
+    assert hinted.descriptor["accepted_prefixes"] == [
+        "move=> x _.",
+        "move=> x _; split.",
+        "move=> x _; split; 2: smt(holds_all).",
+    ]
+    assert hinted.descriptor["boundary_tactic"] == "rewrite nosuchlemma."
+
+
+@pytest.mark.parametrize(
+    ("fixture", "smt_effect"),
+    (
+        # No prover left: EasyCrypt's smt fails, and so must the companion's.
+        ("compound_prefix_no_z3_goal.ec", "rejected"),
+        # A theory's prover settings end with the theory.
+        ("compound_prefix_theory_prover_goal.ec", "accepted_changed"),
+    ),
+)
+def test_native_smt_follows_the_files_prover_settings(
+    fixture: str, smt_effect: str,
+) -> None:
+    result = _compound_prefix_result(
+        "compound-prefix-prover-settings",
+        "move=> x _; split; 1: smt(); rewrite nosuchlemma.",
+        (
+            "move=> x _.",
+            "move=> x _; split.",
+            "move=> x _; split; 1: smt().",
+        ),
+        fixture=fixture,
+    )
+
+    assert result.status == "accepted"
+    assert result.descriptor["prefix_effects"] == [
+        "accepted_changed", "accepted_changed", smt_effect,
+    ]
+
+
+def test_prefix_that_prints_the_same_goal_is_a_no_op() -> None:
+    """``move=> x; move: x`` rebuilds the context but EasyCrypt prints the
+    same goal, which the manager calls a no-op; so must the companion."""
+
+    result = _compound_prefix_result(
+        "compound-prefix-printed-no-op",
+        "move=> x; move: x; rewrite nosuchlemma.",
+        ("move=> x.", "move=> x; move: x."),
+    )
+
+    assert result.status == "accepted"
+    assert result.descriptor["prefix_effects"] == [
+        "accepted_changed", "accepted_no_progress",
+    ]
+
+
+def test_native_smt_runs_the_scope_provers() -> None:
+    """``dft_prover_infos`` names no prover: smt used to prove nothing."""
+
+    result = _compound_prefix_result(
+        "compound-prefix-smt-provers",
+        "move=> x _; split; 1: smt(); rewrite nosuchlemma.",
+        (
+            "move=> x _.",
+            "move=> x _; split.",
+            "move=> x _; split; 1: smt().",
+        ),
+    )
+
+    assert result.status == "accepted"
+    assert result.descriptor["prefix_effects"] == ["accepted_changed"] * 3
+    assert result.descriptor["boundary_tactic"] == "rewrite nosuchlemma."
 
 
 def test_native_no_progress_prefix_reuses_full_attempt_dispatch_for_suffix() -> None:

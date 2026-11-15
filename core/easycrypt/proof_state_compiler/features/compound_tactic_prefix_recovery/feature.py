@@ -58,8 +58,10 @@ def compound_tactic_prefix_recovery_feature_spec() -> FeatureSpec:
             "do not commit, invent, reorder, rewrite, or replay any tactic token"
         ),
         lexical_prefilter_contract=(
+            "in one EasyCrypt sentence (a single sentence-final dot), "
             "balanced top-level semicolons enumerate at most eight proper "
-            "source prefixes; lexical text never establishes parsing, "
+            "source prefixes; a multi-sentence commit abstains; lexical "
+            "text never establishes parsing, "
             "acceptance, progress, or failure localization"
         ),
         required_ir_capabilities=(
@@ -89,6 +91,7 @@ def compound_tactic_prefix_recovery_feature() -> FeatureDefinition:
             not_prefiltered_reason="compound_tactic_not_prefiltered",
             eligible_reason="candidate_compound_tactic_failure",
             produces_recovery_handoff=True,
+            accepts_failing_sentence=True,
         ),
         native_semantic_request_producers=(
             plan_native_compound_prefix_attempt,

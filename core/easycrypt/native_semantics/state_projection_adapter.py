@@ -27,6 +27,7 @@ from core.easycrypt.native_semantics.companion import (
     sha256_native_dependency,
 )
 from core.easycrypt.session.session_projection import active_goal_hash_from_raw
+from core.jsonio import canonical_json
 
 
 NATIVE_STATE_PROJECTION_PROTOCOL_VERSION = 2
@@ -127,12 +128,7 @@ def run_native_state_projection(
         "native_state_projection_adapter",
         runtime_identity,
     )
-    payload = json.dumps(
-        request.runtime_payload(),
-        ensure_ascii=False,
-        separators=(",", ":"),
-        sort_keys=True,
-    )
+    payload = canonical_json(request.runtime_payload())
     started = time.perf_counter()
     try:
         process = subprocess.run(

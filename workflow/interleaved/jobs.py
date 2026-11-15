@@ -33,7 +33,7 @@ _IMPORT_ROOT = Path(__file__).resolve().parents[2]
 if str(_IMPORT_ROOT) not in sys.path:
     sys.path.insert(0, str(_IMPORT_ROOT))
 
-from core.digests import sha256_bytes, sha256_text
+from core.digests import sha256_bytes, sha256_json, sha256_text
 from core.jsonio import read_json_object
 from core.easycrypt.eval_source_prep import find_target_proof_block
 from core.easycrypt.lemma_decls import lemma_decl_matches
@@ -111,15 +111,6 @@ def _now() -> str:
     return datetime.now(timezone.utc).astimezone().isoformat(timespec="seconds")
 
 
-def _canonical_json_bytes(value: dict[str, Any]) -> bytes:
-    return json.dumps(
-        value,
-        ensure_ascii=False,
-        sort_keys=True,
-        separators=(",", ":"),
-    ).encode("utf-8")
-
-
 def _expected_provider_identity(
     *,
     profile: Any,
@@ -170,7 +161,7 @@ def _invocation_receipt(
         "has_continuation_note": bool(record.has_continuation_note),
         "continuation_note_sha256": str(record.continuation_note_sha256 or ""),
     }
-    receipt["content_sha256"] = sha256_bytes(_canonical_json_bytes(receipt))
+    receipt["content_sha256"] = sha256_json(receipt)
     return receipt
 
 
@@ -259,7 +250,7 @@ def _save_job(run_dir: Path, record: JobRecord) -> None:
             "status": record.status.value,
             "previous_status": prior.value if prior else "",
         }
-        event["event_id"] = sha256_bytes(_canonical_json_bytes(event))
+        event["event_id"] = sha256_json(event)
         record.terminal_event_sequence = sequence
         record.terminal_event_at = at
         record.terminal_event_id = event["event_id"]
@@ -1262,7 +1253,7 @@ def _validate_prior_run_parent(
         copied_receipt != receipt
         or sha256_bytes(receipt_bytes)
         != str(parent.invocation_receipt_sha256 or "")
-        or sha256_bytes(_canonical_json_bytes(without_hash))
+        or sha256_json(without_hash)
         != str(receipt.get("content_sha256") or "")
         or receipt.get("run_directory") != parent_run_rel.as_posix()
         or receipt.get("job_id") != job_id

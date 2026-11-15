@@ -2,11 +2,12 @@
 
 from __future__ import annotations
 
-import hashlib
 import json
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
+
+from core.digests import sha256_json
 
 
 PROFILE_PATH = Path(__file__).with_name("agent_profiles.json")
@@ -61,26 +62,14 @@ def provider_identity_projection(value: dict[str, Any]) -> dict[str, str]:
 
 def provider_identity_sha256(value: dict[str, Any]) -> str:
     projected = provider_identity_projection(value)
-    encoded = json.dumps(
-        projected,
-        ensure_ascii=False,
-        sort_keys=True,
-        separators=(",", ":"),
-    ).encode("utf-8")
-    return hashlib.sha256(encoded).hexdigest()
+    return sha256_json(projected)
 
 
 def agent_profile_sha256(value: "AgentProfile | dict[str, Any]") -> str:
     """Hash only the selected role profile, not unrelated config entries."""
 
     profile = value.base_dict() if isinstance(value, AgentProfile) else dict(value)
-    encoded = json.dumps(
-        profile,
-        ensure_ascii=False,
-        sort_keys=True,
-        separators=(",", ":"),
-    ).encode("utf-8")
-    return hashlib.sha256(encoded).hexdigest()
+    return sha256_json(profile)
 
 
 @dataclass(frozen=True)

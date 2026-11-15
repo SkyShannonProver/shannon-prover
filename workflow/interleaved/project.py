@@ -2,12 +2,13 @@
 
 from __future__ import annotations
 
-import hashlib
 import json
 import re
 from dataclasses import asdict, dataclass
 from pathlib import Path
 from typing import Any
+
+from core.digests import sha256_json
 
 
 PROJECT_SCHEMA_VERSION = 1
@@ -110,10 +111,7 @@ class InterleavedProject:
 
     @property
     def identity_sha256(self) -> str:
-        payload = json.dumps(
-            self.to_dict(), ensure_ascii=False, sort_keys=True, separators=(",", ":")
-        ).encode("utf-8")
-        return hashlib.sha256(payload).hexdigest()
+        return sha256_json(self.to_dict())
 
     def write(self, path: Path) -> None:
         path.parent.mkdir(parents=True, exist_ok=True)

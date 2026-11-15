@@ -6,6 +6,117 @@ together as `v0.1.0`.
 
 ## Unreleased
 
+## 0.3.4 (2026-11-14)
+
+- Proof search defaults to one proof node: `tree_initial_provers` and
+  `tree_max_concurrent` default to 1 (they were 2 and 4). `$prove`, `/prove`,
+  the interleaved inner nodes and the bundled suites already passed 1. The
+  change reaches `project_driver`, a bare `python -m workflow.orchestrator`
+  and a `--config` without tree fields, which now start one node; resume runs
+  size the search to their capsule count instead of at least 4, and outer
+  handoff runs use one slot instead of 4. Pass
+  `--tree-initial-provers N --tree-max-concurrent N` (up to 4) for a
+  multi-node search. With room for one node, the supervisor no longer
+  replaces a stuck node or a node that undid a structural step: it used to
+  kill the node first and restart from the same position with a fresh agent,
+  and nodes in that state recovered on their own in about 94% of recorded
+  cases. Crash respawn is unchanged. The default prover timeout is 30 minutes
+  (was 20) and the tree depth cap 8 (was 6), since each crash respawn uses a
+  level.
+- The native EasyCrypt companion now runs `smt` with the scope's provers and
+  with the hints written in `smt(L1 L2)`. It used to run no prover at all,
+  so every native check containing `smt` failed with "cannot prove goal",
+  and an unknown hint was not reported as EasyCrypt's "cannot find lemma".
+- The compound-tactic diagnostic ("EasyCrypt can execute the first N
+  stages … The next stage fails …") no longer contradicts EasyCrypt. In a
+  recorded step4_1 run 15 of its 17 diagnostics did. It no longer reads a
+  commit of several sentences as one compound (11 of the 15 reported
+  "request did not parse as one global action", a companion error, as
+  EasyCrypt's verdict). When the manager names the rejected sentence (next
+  item) and that sentence is a compound, the diagnostic covers that sentence
+  alone, checked after the sentences before it ("Sentence 2 of your
+  3-sentence commit failed ... In sentence 2, after the sentence before it,
+  EasyCrypt can execute the first 2 stages"); a multi-sentence commit with
+  no sentence index, as in a batch replay, gets none. It never cuts inside a
+  `by`, `first`, `last` or `expect` body, which takes the rest of the
+  tactic; and it is shown only when the failing stage's error is the error
+  EasyCrypt reported.
+- When EasyCrypt rejects one sentence of a multi-sentence commit, the
+  manager says which: "EasyCrypt rejected the committed tactic at sentence
+  2 of 3: `inline A B.` Sentence 1 ran before it; the whole commit was
+  rolled back, so nothing was committed." It used to say only that the
+  commit was rejected. Every arm sees this, the L1 control included. The
+  `EasyCrypt error:` line is unchanged, and a batch replay (daemon
+  unavailable) reports no index. In a recorded step4_1 run, 41 of 47
+  rejections were multi-sentence commits.
+- `EC_DAEMON_DISABLE` set after the first EasyCrypt call now takes effect:
+  the cached toolchain environment kept the first caller's value, so a
+  test's batch variant ran on the daemon after a daemon case.
+- Every EasyCrypt check runs one smt portfolio: Z3, CVC5 and Alt-Ergo, those
+  the managed Why3 configuration registers, all at once (`-p ... -max-provers
+  N`). EasyCrypt's default prover list lacks CVC5, so with this toolchain the
+  manager's session, the native companion and the final verification ran Z3
+  alone. On the 14 smt failures of a recorded step4_1 run and 13 failing smt
+  calls in four verified proofs, Z3+CVC5 proved 6 and 9 (in 0.1-0.4 s) while
+  raising the timeout to 5, 10 or 30 s proved none; with Alt-Ergo, 8 and 13.
+  Accepted proofs ran no slower. The session keeps a 3 s timeout and the
+  final verification 30 s, with the same provers, so a step that only CVC5
+  proves in the session is not rejected at verification (the Z3-only
+  verification rejected 6 of 7 such proofs). `resolve_easycrypt_declaration`
+  and the compiler's declaration loading replay the proofs before the target
+  with the session's provers and timeout too; without them a proof that
+  needs CVC5 stopped the query with an error for every requested name, and
+  a theory listing left out each lemma whose proof failed. Alt-Ergo, part of
+  the README install, is used once it is installed in the managed switch.
+- Two new candidate compiler slices, in treatment in `proof_state_compiler`:
+  - `hypothesis_scope_diagnosis`: after a rejected `smt(...)` or
+    `rewrite ... in H` (also under a closing `by`, or as a compound's failing
+    stage), the compiler says when the name EasyCrypt could not find is a
+    hypothesis of the goal: an `smt` hint is looked up only among global
+    lemmas, axioms and theories, and the goal's hypotheses already go to smt;
+    `rewrite ... in H` resolves names only in the context before `H`. For
+    `smt` it offers, as `Do you mean?`, the same call without that hint when
+    EasyCrypt accepts it (`move: H18; rewrite mem_set /=; smt().`). In a
+    recorded step4_1 run 3 of 9 name failures were of this kind.
+  - `smt_failure_localization`: when a commit fails because an smt call
+    cannot prove a goal, the companion reruns the exact tactic in
+    EasyCrypt's report and strict modes, and the compiler reports, as facts
+    only, which smt call failed first, on how many goals, and whether the
+    first failed goal is a program judgment (which smt treats as an opaque
+    proposition) or a formula. It stays silent unless the strict run stops at
+    the same call with the error EasyCrypt reported, and for a lone smt call.
+- Probe cases run through the real manager and compiler, and independent
+  audits of every output against EasyCrypt, found and fixed:
+  - the native companion ignored a file's `prover [...]` settings and could
+    report that a prefix EasyCrypt rejects executes;
+  - a prefix that EasyCrypt prints unchanged (`move=> x; move: x`) was said
+    to change the goal;
+  - a "Do you mean?" for a failing stage dropped the stages after it
+    (`; done`), and a prefix written over several lines produced nothing;
+  - intro repairs of `move=> [...]` were dropped (only `move => [...]` was
+    shown);
+  - relation-bridge text claimed a formula-level, equality-only
+    `transitivity`, which EasyCrypt does not have; its choice list gave
+    premises in the opposite order to the goals `first last` leaves;
+  - a valid tactic ending in a comment after its final dot was rejected, the
+    manager having appended a `.` after the comment;
+  - output containing `[error]` (for example `idtac "[error] x"`) counted as a
+    rejection;
+  - the goal block ended with EasyCrypt's `[N|check]>` prompt;
+  - the EasyCrypt error line was cut at 280 characters (now 1200);
+  - an unterminated compound got no compound diagnosis;
+  - a compound that does not parse was described as if its stages ran.
+- resolve_easycrypt_declaration and the compiler's declaration loading now
+  resolve operators, types and labelled axioms (they missed every one), keep
+  a batch in order, and resolve where the target's proof is open
+  (section-local names were missed, later declarations found). The tool is
+  described as the way to reach names that clones generate, which literal
+  search cannot find.
+- The compound-tactic diagnostic ends with EasyCrypt's report. It no longer
+  closes with "submit them alone, or fix the failing suffix and resubmit the
+  compound. The compiler does not choose between these options.", which
+  agents never acted on (0 of 17 in the step4_1 run).
+
 ## 0.3.3 (2026-11-12)
 
 - Managed Codex proof nodes no longer pass `--disable` for features that

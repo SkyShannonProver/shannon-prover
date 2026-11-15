@@ -69,12 +69,13 @@ from typing import Callable, Optional
 
 from core.env_loader import env_bool
 from core.easycrypt.committed_history import committed_prefix_identity
+from core.easycrypt.ec_diagnostics import FailedSentence
 from core.easycrypt.ec_daemon_client import (
     ECDaemonClient,
     ECDaemonConnectionLost,
     step_timeout_seconds,
 )
-from core.easycrypt.proof_text import split_ec_commands
+from core.easycrypt.proof_text import split_ec_commands, terminated_tactic
 from core.easycrypt.session.session_display import (
     TryResult,
     chain_try_result,
@@ -152,10 +153,13 @@ class DaemonCommit:
 
     ``post_raw`` is EasyCrypt's output for the transaction and ``error`` its
     rejection, empty when the daemon accepted and committed it.
+    ``failed_sentence`` names the rejected sentence of a multi-sentence
+    transaction.
     """
 
     post_raw: str
     error: str = ""
+    failed_sentence: FailedSentence | None = None
 
     @property
     def accepted(self) -> bool:
@@ -903,7 +907,11 @@ class DaemonBackend:
             self._forget_state()
             return DaemonCommit(post_raw, _rejection(r.get("error"), post_raw))
         if not bool(r.get("accepted", False)):
-            return DaemonCommit(post_raw, _rejection(r.get("error"), post_raw))
+            return DaemonCommit(
+                post_raw,
+                _rejection(r.get("error"), post_raw),
+                FailedSentence.from_payload(r.get("failed_sentence")),
+            )
         state = self._load_state()
         state["committed_count"] = len(all_tactics)
         state["committed_prefix_sha256"] = committed_prefix_identity(all_tactics)
@@ -940,8 +948,7 @@ class DaemonBackend:
         raw_in = request.strip()
         if not raw_in:
             return try_tool_error(request, "[TRY] error: empty tactic.\n")
-        if not raw_in.endswith("."):
-            raw_in = raw_in + "."
+        raw_in = terminated_tactic(raw_in)
         tactic_list = [t.strip() for t in split_ec_commands(raw_in) if t.strip()]
         if not tactic_list:
             return try_tool_error(

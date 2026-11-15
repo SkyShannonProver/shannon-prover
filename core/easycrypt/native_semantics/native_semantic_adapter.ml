@@ -394,12 +394,43 @@ let exact_stage_after accepted_prefix next_attempt =
           if stage = "" then None else Some (stage ^ ".")
   | _ -> None
 
+(* Keep the leading lexical candidates whose cuts EasyCrypt's own grammar
+   treats as top-level tactic separators.  Candidate [index] has [index + 1]
+   lexical stages.  The parser decides how to read a [;] before it reads
+   what follows, so appending [; idtac] yields [index + 2] top-level tactics
+   exactly when every cut of the candidate, and the one after it, separates
+   tactics -- in the attempt too, whatever follows, even text that does not
+   parse.  A [;] inside a right-greedy [by], [first], [last] or [expect]
+   body belongs to that body, as does every later [;], so it fails here
+   along with every later candidate. *)
+let structural_candidate_prefixes candidate_prefixes =
+  let separates index prefix =
+    let length = String.length prefix in
+    length > 1 && prefix.[length - 1] = '.'
+    && (try
+          List.length (parse_tactics
+            (String.sub prefix 0 (length - 1) ^ "; idtac.")) = index + 2
+        with EcParsetree.ParseError _ | Contract_error _ -> false)
+  in
+  let rec leading index = function
+    | prefix :: rest when separates index prefix ->
+        prefix :: leading (index + 1) rest
+    | _ -> []
+  in
+  match leading 0 candidate_prefixes with
+  | [] -> raise (Contract_error
+      "no lexical prefix ends at a top-level tactic separator")
+  | structural -> structural
+
 let tactic_prefix_diagnostic_descriptor ~kinds tactic_text
     candidate_prefixes =
+  let candidate_prefixes = structural_candidate_prefixes candidate_prefixes in
   let _, execution_error = native_tactic_execution tactic_text in
   match execution_error with
   | None -> raise (Contract_error
       "manager rejected the compound tactic but native diagnosis accepted it")
+  | Some error when error_code error = "contract_error" ->
+      raise (Contract_error (error_message error))
   | Some error ->
       let prefix_results = List.map (fun candidate ->
         let effect, candidate_error = native_tactic_execution candidate in
@@ -414,6 +445,8 @@ let tactic_prefix_diagnostic_descriptor ~kinds tactic_text
         | Some (_, _, Some candidate_error) -> candidate_error
         | _ -> error
       in
+      if error_code boundary_error = "contract_error" then
+        raise (Contract_error (error_message boundary_error));
       let rec longest_contiguous last remaining =
         match remaining with
         | (candidate, effect, _) :: tail when effect <> "rejected" ->

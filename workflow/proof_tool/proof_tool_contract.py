@@ -275,10 +275,14 @@ def declaration_resolve_tool_definition() -> dict[str, Any]:
     return {
         "name": DECLARATION_RESOLVE_TOOL_IDENTITY.tool,
         "description": (
-            "Ask EasyCrypt to resolve and print one exact candidate declaration "
-            "in the prepared target environment. Use this after lexical source "
-            "search when namespace identity matters. This is not fuzzy search "
-            "and does not inspect or mutate the current proof state."
+            "Ask EasyCrypt to resolve and print one exact name (lemma, axiom, "
+            "operator, type, module or theory) as it is in scope where the "
+            "target's proof is open. A theory or clone name prints its "
+            "members. Names that `clone` or `subtype ... rename` generate, "
+            "such as `C.ofintdK`, may appear nowhere in the source text: use "
+            "this when a literal search finds nothing or EasyCrypt reports an "
+            "unknown lemma or symbol. This is not fuzzy search and does not "
+            "inspect or mutate the current proof state."
         ),
         "inputSchema": {
             "type": "object",

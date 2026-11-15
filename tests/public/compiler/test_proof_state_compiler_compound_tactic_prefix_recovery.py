@@ -18,7 +18,6 @@ from core.easycrypt.proof_state_compiler.backend.recovery_handoff_lowering impor
     recovery_handoff_message,
 )
 from core.easycrypt.proof_state_compiler.compound_boundary_text import (
-    compound_boundary_continuation,
     compound_boundary_summary,
 )
 from core.easycrypt.proof_state_compiler.contracts import (
@@ -63,6 +62,10 @@ from core.easycrypt.proof_state_compiler.features.tactic_dialect_repair import (
 from core.easycrypt.proof_state_compiler.contracts.failure import (
     compound_prefix_remainder,
 )
+from core.easycrypt.proof_state_compiler.frontend.attempted_operation import (
+    MANAGER_ERROR_TEXT_LIMIT,
+    manager_reports_same_error,
+)
 from tests.helpers.compiler_feature_assembly import feature_assembly
 from tests.helpers.proof_state_compiler import (
     realization_of,
@@ -91,6 +94,8 @@ from core.easycrypt.proof_state_compiler.features.tactic_dialect_repair.realizat
 
 REJECTED_TACTIC = "move=> &hr _; rewrite /eps; smt(sum_le_bound mu_bounded)."
 PREFIXES = ("move=> &hr _.", "move=> &hr _; rewrite /eps.")
+# EasyCrypt's own report for the whole commit; a native boundary must match it.
+BOUNDARY_ERROR = "the first rejected extension failed"
 
 
 def test_shared_compound_narration_safely_wraps_dynamic_text() -> None:
@@ -101,17 +106,12 @@ def test_shared_compound_narration_safely_wraps_dynamic_text() -> None:
         rejected_extension="rewrite H.\nsmt().",
         native_error="first line\nsecond line",
     )
-    continuation = compound_boundary_continuation(
-        accepted_effect="accepted_changed",
-        accepted_stage_count=1,
-    )
 
     assert summary.count("move=> `x`.") == 1
     assert "  move=> `x`.\n\nThe next stage fails:" in summary
     assert "  rewrite H.\n  smt()." in summary
-    assert "  first line\n  second line" in summary
-    assert "move=> `x`" not in continuation
-    assert "after that stage, submit it alone" in continuation
+    # The account ends with EasyCrypt's report; it offers no continuations.
+    assert summary.endswith("EasyCrypt reports:\n\n  first line\n  second line")
 
 
 def test_long_real_prefix_is_quoted_once_and_fits_the_owner_budget() -> None:
@@ -130,15 +130,11 @@ def test_long_real_prefix_is_quoted_once_and_fits_the_owner_budget() -> None:
         "accepted_effect": "accepted_changed",
         "accepted_stage_count": 3,
     }
-    text = (
-        compound_boundary_summary(
-            **args,
-            accepted_prefix=prefix,
-            rejected_extension="smt(get_setE mem_set domE).",
-            native_error="cannot prove goal (strict)",
-        )
-        + "\n\n"
-        + compound_boundary_continuation(**args)
+    text = compound_boundary_summary(
+        **args,
+        accepted_prefix=prefix,
+        rejected_extension="smt(get_setE mem_set domE).",
+        native_error="cannot prove goal (strict)",
     )
     markdown = "## Compiler diagnostic\n\n" + text
     policy = next(
@@ -195,6 +191,7 @@ def _turn(
     outcome_kind: str = "rejected",
     source_event_id: str = "compound-prefix-failure",
     source_event_sequence: int = 10,
+    structured_error: str = "[error] " + BOUNDARY_ERROR,
 ) -> CompilerTurnEvidence:
     return CompilerTurnEvidence(
         source_event_id=source_event_id,
@@ -208,7 +205,7 @@ def _turn(
         payload=freeze_json_object({"tactic": tactic}),
         outcome_kind=outcome_kind,
         proof_state_effect="unchanged",
-        structured_error="later compound stage failed",
+        structured_error=structured_error,
     )
 
 
@@ -222,10 +219,23 @@ def _compile(
     source_event_id: str = "compound-prefix-failure",
     source_event_sequence: int = 10,
     features=None,
+    native_candidates: tuple[str, ...] | None = None,
+    native_boundary_failure_kind: str = "native_user_error",
+    manager_error: str | None = None,
 ):
+    if manager_error is None:
+        manager_error = "[error] " + (
+            BOUNDARY_ERROR
+            if boundary_attempt is None
+            else boundary_attempt.native_error_message
+        )
     state_ref = _state_ref()
     snapshot = _snapshot(state_ref)
-    candidates = compound_prefix_candidates(rejected_tactic)
+    lexical_candidates = compound_prefix_candidates(rejected_tactic)
+    # EasyCrypt keeps the leading lexical cuts its parse delimits.
+    candidates = (
+        lexical_candidates if native_candidates is None else native_candidates
+    )
     accepted_prefixes = (
         candidates if accepted_prefixes is None else accepted_prefixes
     )
@@ -237,6 +247,7 @@ def _compile(
             outcome_kind=outcome_kind,
             source_event_id=source_event_id,
             source_event_sequence=source_event_sequence,
+            structured_error=manager_error,
         ),
     )
     compiler = ProofStateCompiler(
@@ -250,6 +261,7 @@ def _compile(
     assert len(plan.requests) == 1
     request = plan.requests[0]
     assert isinstance(request.query, NativeTacticPrefixDiagnosticQuery)
+    assert request.query.candidate_prefixes == lexical_candidates
     prefix_effects = tuple(
         accepted_effect if item in accepted_prefixes else "rejected"
         for item in candidates
@@ -273,12 +285,12 @@ def _compile(
         native_failure_kind="native_user_error",
         native_error_message="the full compound failed later",
         boundary_failure_kind=(
-            "native_user_error"
+            native_boundary_failure_kind
             if boundary_attempt is None
             else boundary_attempt.native_failure_kind
         ),
         boundary_error_message=(
-            "the first rejected extension failed"
+            BOUNDARY_ERROR
             if boundary_attempt is None
             else boundary_attempt.native_error_message
         ),
@@ -389,10 +401,7 @@ def test_longest_contiguous_native_prefix_becomes_one_owned_diagnostic() -> None
             "The next stage fails:\n\n"
             "  smt(sum_le_bound mu_bounded).\n\n"
             "EasyCrypt reports:\n\n"
-            "  the first rejected extension failed\n\n"
-            "To continue from the goal after those stages, submit them alone, "
-            "or fix the failing suffix and resubmit the compound. The "
-            "compiler does not choose between these options."
+            "  the first rejected extension failed"
         ),
         "applicability": "explanation_only",
     }
@@ -605,12 +614,11 @@ def test_state_changing_eager_explanation_names_temporary_goal_and_ends_terminal
         diagnostic.primary
     )
     assert "current while guards" not in diagnostic.primary
-    assert diagnostic.terminal.endswith(
-        "The compiler does not choose between these options."
-    )
+    # The compound boundary adds no continuation menu after the owner's help.
+    assert diagnostic.terminal == ""
     markdown = _render_candidate_diagnostic(bundle)
-    assert markdown.index("Help:") < markdown.index(diagnostic.terminal)
-    assert markdown.endswith(diagnostic.terminal)
+    assert "does not choose between" not in markdown
+    assert "submit it alone" not in markdown
 
 
 def test_state_changing_pure_tail_action_names_temporary_goal() -> None:
@@ -704,7 +712,7 @@ def test_state_changing_eager_action_names_temporary_goal() -> None:
         "tactic": "move=> H; eager while (true)."
     }
     assert action.correction is not None
-    assert "accepted for the temporary goal produced by that accepted stage" in (
+    assert "invariant for the temporary goal produced by that accepted stage" in (
         action.correction.reason
     )
     assert "unchanged state" not in action.correction.reason
@@ -753,9 +761,10 @@ def test_state_changing_phl_boundary_is_explanation_without_undo() -> None:
     assert "undo" not in diagnostic.help.lower()
     assert "Both are proof-strategy choices" in diagnostic.help
     assert "The compiler selected neither" in diagnostic.help
+    # The owner's help ends the panel; the boundary adds no continuation.
+    assert diagnostic.terminal == ""
     markdown = _render_candidate_diagnostic(bundle)
-    assert markdown.index("Help:") < markdown.index(diagnostic.terminal)
-    assert markdown.endswith(diagnostic.terminal)
+    assert markdown.rstrip().endswith("The compiler selected neither.")
 
 
 @pytest.mark.parametrize("consumer_layout", ("absent", "before", "after"))
@@ -800,8 +809,9 @@ def test_unhandled_typed_suffix_falls_back_to_compound_boundary_diagnostic(
     assert len(bundle.candidate_surface.diagnostics) == 1
     diagnostic = bundle.candidate_surface.diagnostics[0].diagnostic
     assert diagnostic.code == "compound_prefix_diagnostic"
-    assert diagnostic.primary.startswith(
-        recovery_handoff_message(attempted.recovery_handoff) + "\n\n"
+    # The fallback is the shared boundary account and nothing after it.
+    assert diagnostic.primary == recovery_handoff_message(
+        attempted.recovery_handoff
     )
     assert (
         "EasyCrypt can execute the first stage, which changes the goal:"
@@ -896,9 +906,7 @@ def test_typed_suffix_argument_diagnostic_replaces_generic_fallback(
     assert "binding search" not in (
         diagnostic.primary + diagnostic.help + diagnostic.terminal
     ).lower()
-    assert diagnostic.terminal.endswith(
-        "The compiler does not choose between these options."
-    )
+    assert diagnostic.terminal == ""
 
 
 def test_no_progress_failure_reaches_owned_diagnostic() -> None:
@@ -996,3 +1004,369 @@ def test_descriptor_rejects_noncanonical_accepted_prefix_order() -> None:
             boundary_error_message="boundary failure",
             goal_kind="formula",
         )
+
+
+# --- one sentence, EasyCrypt boundaries, EasyCrypt's own error -------------
+
+
+@pytest.mark.parametrize(
+    "tactic",
+    (
+        "proc; sp; if => //.\ninline A B.\nwp.",
+        "move: H18; rewrite mem_set /=. case=> [[-> _] // | Hmem].",
+        "move=> x; smt(). done.",
+        "wp; sp.\tauto.",
+    ),
+)
+def test_multi_sentence_commit_has_no_prefix_population(tactic: str) -> None:
+    """The manager runs a multi-sentence commit sentence by sentence; the
+    native check parses one global action, so no cut across sentences."""
+
+    assert compound_prefix_candidates(tactic) == ()
+    gate = compound_tactic_prefix_recovery_feature().execution_gate
+    eligibility = gate.evaluate(_turn(_state_ref(), tactic))
+    assert eligibility.eligible is False
+
+
+@pytest.mark.parametrize(
+    ("tactic", "prefixes"),
+    (
+        ("move=> x\n; smt().", ("move=> x.",)),
+        ("rewrite p{2}.`1 M.f; smt().", ("rewrite p{2}.`1 M.f.",)),
+        ("rewrite m.[x] get_setE; smt().", ("rewrite m.[x] get_setE.",)),
+        ("swap{1} [1..2] 3; wp.", ("swap{1} [1..2] 3.",)),
+        ("have := H x.`2; smt().", ("have := H x.`2.",)),
+    ),
+)
+def test_dots_inside_one_sentence_keep_the_population(
+    tactic: str, prefixes: tuple[str, ...]
+) -> None:
+    assert compound_prefix_candidates(tactic) == prefixes
+
+
+def test_easycrypt_boundaries_narrow_cuts_inside_a_greedy_by() -> None:
+    """``by`` takes every later ``;``: only ``split.`` is a real prefix."""
+
+    tactic = "split; first by move=> t Ht; exact: poly_out_sub_add."
+    assert compound_prefix_candidates(tactic) == (
+        "split.", "split; first by move=> t Ht.",
+    )
+    _invocation, bundle = _compile(
+        rejected_tactic=tactic,
+        native_candidates=("split.",),
+    )
+
+    assert len(bundle.candidate_surface.diagnostics) == 1
+    primary = bundle.candidate_surface.diagnostics[0].diagnostic.primary
+    assert "EasyCrypt can execute the first stage" in primary
+    assert (
+        "The next stage fails:\n\n"
+        "  first by move=> t Ht; exact: poly_out_sub_add.\n\n"
+    ) in primary
+    assert "  " + BOUNDARY_ERROR in primary
+
+
+def test_native_candidates_must_lead_the_lexical_population() -> None:
+    _invocation, bundle = _compile(
+        native_candidates=(PREFIXES[1],),
+    )
+
+    assert not bundle.candidate_surface.diagnostics
+    assert not bundle.analyzed_state.recovery_ownership.owner_feature_id
+
+
+@pytest.mark.parametrize(
+    "manager_error",
+    (
+        "[error] cannot find lemma `H4'",
+        "[error] " + BOUNDARY_ERROR + " later",
+        "",
+        "[error] daemon rejection",
+    ),
+)
+def test_boundary_error_must_be_easycrypt_report(manager_error: str) -> None:
+    """A boundary whose error EasyCrypt did not report forms no compound IR."""
+
+    _invocation, bundle = _compile(manager_error=manager_error)
+
+    assert bundle.proof_ir.attempted_operation is None
+    assert not bundle.candidate_surface.diagnostics
+    assert not bundle.analyzed_state.recovery_ownership.owner_feature_id
+
+
+def test_typed_handoff_also_requires_easycrypt_report() -> None:
+    boundary = NativeAttemptedOperationDescriptor(
+        operation_family="transitivity",
+        rejected_tactic="transitivity y.",
+        exact_resource="",
+        argument_kinds=("formula",),
+        side="",
+        positions=(),
+        native_diagnostic_status="blocker",
+        native_failure_kind="native_user_error",
+        native_error_message=BOUNDARY_ERROR,
+        attempt_outcome="rejected",
+        goal_kind="formula",
+    )
+
+    _invocation, bundle = _compile(
+        rejected_tactic="wp; transitivity y.",
+        accepted_effect="accepted_no_progress",
+        boundary_attempt=boundary,
+        manager_error="[error] some other failure",
+    )
+
+    assert bundle.proof_ir.attempted_operation is None
+
+
+@pytest.mark.parametrize(
+    "manager_error",
+    (
+        BOUNDARY_ERROR,
+        "[error] " + BOUNDARY_ERROR,
+        "[error-12-40] " + BOUNDARY_ERROR,
+        "[critical] the first rejected\n  extension   failed",
+        "[error] [Target.ec: line 3 (4-9)] " + BOUNDARY_ERROR,
+    ),
+)
+def test_report_comparison_ignores_header_and_line_breaking(
+    manager_error: str,
+) -> None:
+    _invocation, bundle = _compile(manager_error=manager_error)
+
+    assert len(bundle.candidate_surface.diagnostics) == 1
+
+
+def test_bracketed_easycrypt_message_matches_without_severity() -> None:
+    assert manager_reports_same_error(
+        "[by]: cannot close goals", "[by]: cannot close goals"
+    )
+    assert not manager_reports_same_error(
+        "[by]: cannot close goals", "[error] cannot prove goal (strict)"
+    )
+
+
+def test_manager_text_at_its_limit_compares_as_prefix() -> None:
+    native = "cannot unify " + "x" * 1400
+    manager = ("[error] " + native)[:MANAGER_ERROR_TEXT_LIMIT]
+
+    assert manager_reports_same_error(native, manager)
+    assert not manager_reports_same_error(native, manager[:-200])
+    assert not manager_reports_same_error(
+        "cannot unify " + "y" * 1400, manager
+    )
+
+
+def test_native_contract_error_is_never_an_easycrypt_rejection() -> None:
+    _invocation, bundle = _compile(
+        native_boundary_failure_kind="contract_error",
+    )
+
+    assert bundle.proof_ir.attempted_operation is None
+    assert not bundle.candidate_surface.diagnostics
+
+
+@pytest.mark.parametrize(
+    ("prefix", "effect", "expected"),
+    (
+        (
+            "move=> H.",
+            "accepted_changed",
+            "move=> H; rewrite FMap.get_setE in Hupdate; done.",
+        ),
+        # A no-op prefix stays out of the action; the later stage does not.
+        (
+            "idtac.",
+            "accepted_no_progress",
+            "rewrite FMap.get_setE in Hupdate; done.",
+        ),
+        # The agent's line break in the prefix is kept.
+        (
+            "move=>\n  H.",
+            "accepted_changed",
+            "move=>\n  H; rewrite FMap.get_setE in Hupdate; done.",
+        ),
+    ),
+)
+def test_repair_keeps_the_stages_after_the_failing_one(
+    prefix: str, effect: str, expected: str,
+) -> None:
+    """A repair replaces the failing stage only; it never drops ``; done``."""
+
+    rejected_suffix = "rewrite FMap.get_setE."
+    rewrite = NativePureTailRewriteDescriptor(
+        source_operation="rewrite",
+        selected_resource="FMap.get_setE",
+        target_kind="hypothesis",
+        target_name="Hupdate",
+        candidate_tactic="rewrite FMap.get_setE in Hupdate.",
+        failure_kind="rewrite_target_mismatch",
+        accepted_target_count=1,
+    )
+    boundary = NativeAttemptedOperationDescriptor(
+        operation_family="rewrite",
+        rejected_tactic=rejected_suffix,
+        exact_resource="FMap.get_setE",
+        argument_kinds=("rewrite_lemma",),
+        side="",
+        positions=(),
+        native_diagnostic_status="blocker",
+        native_failure_kind="rewrite_target_mismatch",
+        native_error_message="rewrite did not match the conclusion",
+        attempt_outcome="rejected",
+        goal_kind="formula",
+        realization=realization_of(rewrite),
+    )
+
+    _invocation, bundle = _compile(
+        rejected_tactic=prefix[:-1] + "; " + rejected_suffix[:-1] + "; done.",
+        accepted_prefixes=(prefix,),
+        accepted_effect=effect,
+        boundary_attempt=boundary,
+        features=(
+            compound_tactic_prefix_recovery_feature(),
+            pure_tail_recovery_feature(),
+        ),
+    )
+
+    assert bundle.proof_ir.attempted_operation.recovery_handoff.later_stages == (
+        "done"
+    )
+    action = bundle.candidate_surface.actions[0]
+    assert action.payload.to_dict() == {"tactic": expected}
+
+
+def test_unparsable_compound_says_nothing_ran() -> None:
+    """A parse error runs nothing: the prefix ran only on its own, and the
+    rest is the text that does not parse, not one failing stage."""
+
+    summary = compound_boundary_summary(
+        accepted_prefix="move=> x Hx.",
+        accepted_effect="accepted_changed",
+        accepted_stage_count=1,
+        rejected_extension="spli t; smt().",
+        native_error="parse error",
+        parse_error=True,
+    )
+
+    assert summary.startswith(
+        "Your compound tactic does not parse, so EasyCrypt ran none of it"
+    )
+    assert "On its own, EasyCrypt can execute the first stage" in summary
+    assert "The rest does not parse:\n\n  spli t; smt()." in summary
+    assert "The next stage fails" not in summary
+    assert "rolled back" not in summary
+
+
+# --- the rejected sentence of a multi-sentence commit -----------------------
+
+
+def _failing_sentence_turn(state_ref, commit: str, index: int, sentence: str):
+    from dataclasses import replace
+
+    from core.easycrypt.ec_diagnostics import FailedSentence
+
+    return replace(
+        _turn(state_ref, commit),
+        failed_sentence=FailedSentence(index=index, count=2, sentence=sentence),
+    )
+
+
+def test_failing_sentence_is_diagnosed_after_the_sentences_before_it() -> None:
+    commit = "move=> x _.\nmove=> &hr _; rewrite /eps; smt(sum_le_bound mu_bounded)."
+    sentence = REJECTED_TACTIC
+    state_ref = _state_ref()
+    snapshot = _snapshot(state_ref)
+    invocation = compiler_invocation_context(
+        state_ref, _failing_sentence_turn(state_ref, commit, 2, sentence),
+    )
+    compiler = ProofStateCompiler(features=(compound_tactic_prefix_recovery_feature(),))
+    environment = CompilationEnvironment("compound-prefix-environment", (), ())
+
+    plan = compiler.plan_native_semantics(snapshot, environment, invocation)
+
+    # The native query names sentence 2 and runs after sentence 1.
+    assert len(plan.requests) == 1
+    request = plan.requests[0]
+    assert request.query.rejected_tactic == sentence
+    assert request.query.candidate_prefixes == PREFIXES
+    assert request.evaluation_prefix == ("move=> x _.",)
+
+    descriptor = NativeTacticPrefixDiagnosticDescriptor(
+        rejected_tactic=sentence,
+        candidate_prefixes=PREFIXES,
+        prefix_effects=("accepted_changed", "accepted_changed"),
+        accepted_prefixes=PREFIXES,
+        boundary_tactic="smt(sum_le_bound mu_bounded).",
+        native_failure_kind="native_user_error",
+        native_error_message=BOUNDARY_ERROR,
+        boundary_failure_kind="native_user_error",
+        boundary_error_message=BOUNDARY_ERROR,
+        goal_kind="formula",
+    )
+    observation = NativeSemanticObservation.accepted(
+        request=request,
+        batch_id="compound-sentence-batch",
+        batch_index=0,
+        batch_size=1,
+        batch_elapsed_ms=2,
+        result_formula="",
+        descriptor=descriptor,
+        runtime_identity_sha256="d" * 64,
+        companion_identity_sha256="e" * 64,
+        elapsed_ms=2,
+        provenance=ProvenanceRef(
+            producer="test.native_prefix",
+            authority="native.semantic.batch.produced",
+            source_sha256="f" * 64,
+            artifact_ref="native_semantic_batches/compound-sentence.json",
+            source_event_id="native-semantic-compound-sentence",
+            source_event_sequence=11,
+            authoritative=True,
+        ),
+    )
+    environment = environment.with_native_semantic_observations((observation,))
+    bundle = compiler.compile(snapshot, environment, invocation)
+
+    assert bundle.proof_ir.attempted_operation.rejected_tactic == sentence
+    assert bundle.proof_ir.attempted_operation.recovery_handoff is None
+    primary = bundle.candidate_surface.diagnostics[0].diagnostic.primary
+    assert primary.startswith(
+        "Sentence 2 of your 2-sentence commit failed and the commit was "
+        "rolled back; nothing was committed.\n\n"
+        "In sentence 2, after the sentence before it, EasyCrypt can execute "
+        "the first 2 stages"
+    )
+
+
+def test_a_failing_sentence_that_the_split_does_not_reproduce_abstains() -> None:
+    state_ref = _state_ref()
+    invocation = compiler_invocation_context(
+        state_ref,
+        _failing_sentence_turn(
+            state_ref, "move=> x _.\nmove=> &hr _; smt().", 2, "smt().",
+        ),
+    )
+    compiler = ProofStateCompiler(features=(compound_tactic_prefix_recovery_feature(),))
+    environment = CompilationEnvironment("compound-prefix-environment", (), ())
+
+    plan = compiler.plan_native_semantics(
+        _snapshot(state_ref), environment, invocation,
+    )
+
+    assert plan.requests == ()
+
+
+def test_only_an_opted_in_feature_runs_on_a_failing_sentence() -> None:
+    state_ref = _state_ref()
+    turn = _failing_sentence_turn(
+        state_ref,
+        "move=> x _.\nmove=> &hr _; rewrite /eps; smt(sum_le_bound mu_bounded).",
+        2,
+        REJECTED_TACTIC,
+    )
+
+    compound = compound_tactic_prefix_recovery_feature().execution_gate
+    other = pure_tail_recovery_feature().execution_gate
+    assert compound.evaluate(turn).eligible is True
+    assert other.evaluate(turn).reason == "failing_sentence_not_accepted"

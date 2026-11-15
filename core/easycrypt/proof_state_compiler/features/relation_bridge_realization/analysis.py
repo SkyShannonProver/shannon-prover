@@ -26,19 +26,25 @@ from .realization import relation_bridge_choice_of, relation_bridge_of
 
 _REASONS = {
     ("real_le", "formula_transitivity_surface_mismatch"): (
-        "Formula-level transitivity applies to equality, not this real <= goal. "
-        "The intermediate you supplied is preserved; ler_trans realizes the "
-        "same inequality bridge."
+        "`transitivity` is EasyCrypt's program-logic tactic (`transitivity {1} "
+        "...`, `transitivity M.f ...`); it does not apply to a formula such as "
+        "this real <= goal. The intermediate you supplied is preserved; "
+        "ler_trans realizes the same inequality bridge, and `first last` "
+        "leaves the goal from the intermediate first."
     ),
     ("real_le", "change_target_not_convertible"): (
         "`change` can only replace {goal} with a definitionally "
-        "convertible formula. This target is not convertible; the intermediate "
-        "you supplied is preserved and ler_trans introduces it as a bridge."
+        "convertible formula, and this target is not convertible to it. "
+        "Read as an inequality bridge through the target's left-hand side, "
+        "ler_trans keeps your target as the first goal and adds the goal from "
+        "the current left-hand side to that term."
     ),
     ("int_le", "formula_transitivity_surface_mismatch"): (
-        "Formula-level transitivity applies to equality, not this int <= goal. "
-        "The intermediate you supplied is preserved; Int.lez_trans realizes "
-        "the same integer inequality bridge."
+        "`transitivity` is EasyCrypt's program-logic tactic (`transitivity {1} "
+        "...`, `transitivity M.f ...`); it does not apply to a formula such as "
+        "this int <= goal. The intermediate you supplied is preserved; "
+        "Int.lez_trans realizes the same integer inequality bridge, and "
+        "`first last` leaves the goal from the intermediate first."
     ),
 }
 
@@ -59,21 +65,26 @@ def _strict_relation_choice(
         return AnalysisContribution()
     goal_context = checked_goal_reference(attempted.recovery_handoff)
     primary = (
-        f"`transitivity {descriptor.intermediate_text}` is formula-level "
-        f"equality transitivity, but {goal_context} is a real strict "
-        f"inequality `{descriptor.goal_left_text} < "
-        f"{descriptor.goal_right_text}`."
+        f"`transitivity` is EasyCrypt's program-logic tactic; it does not "
+        f"apply to {goal_context}, the real strict inequality "
+        f"`{descriptor.goal_left_text} < {descriptor.goal_right_text}`."
+    )
+    stage = (
+        " for the failing stage"
+        if attempted.recovery_handoff is not None else ""
     )
     help_text = (
-        "EasyCrypt checked these exact bridge alternatives for the failing "
-        "stage. Which bridge do you mean?\n"
+        f"EasyCrypt checked these exact bridge alternatives{stage}. "
+        "Which bridge do you mean?\n"
+        # Goals in the order the tactic leaves them: ``first last`` puts the
+        # second premise first.
         + "\n".join(
             (
-                f"- `{item.candidate_tactic}`: "
-                f"`{descriptor.goal_left_text} {item.left_relation} "
-                f"{descriptor.intermediate_text}`, "
+                f"- `{item.candidate_tactic}`: leaves "
                 f"`{descriptor.intermediate_text} {item.right_relation} "
-                f"{descriptor.goal_right_text}`"
+                f"{descriptor.goal_right_text}`, then "
+                f"`{descriptor.goal_left_text} {item.left_relation} "
+                f"{descriptor.intermediate_text}`"
             )
             for item in descriptor.choices
         )

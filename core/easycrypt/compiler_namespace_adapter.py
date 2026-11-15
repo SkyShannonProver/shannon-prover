@@ -21,18 +21,28 @@ import tempfile
 from pathlib import Path
 from typing import Iterable
 
-from core.easycrypt.ec_env import easycrypt_command, get_ec_env
+from core.easycrypt.ec_env import (
+    SESSION_SMT_TIMEOUT_SECONDS,
+    easycrypt_command,
+    get_ec_env,
+    smt_arguments,
+)
 
 
 _ANCHOR = "__shannon_compiler_namespace_anchor_zXyQ__"
 _IDENTIFIER = re.compile(
     r"^[A-Za-z_][A-Za-z0-9_']*(?:\.[A-Za-z_][A-Za-z0-9_']*)*$"
 )
-_SECTION_HEADER = re.compile(
-    r"^\* In \[(modules|theories|operators or predicates|lemmas or axioms|"
-    r"module types|types)\]:\s*$",
-    re.MULTILINE,
-)
+# EasyCrypt r2026.06's ``print`` section names (ecPrinting.ml, od_name).
+_SECTION_KINDS = {
+    "type declarations": "type",
+    "operators, predicates or exceptions": "operator",
+    "theories": "theory",
+    "lemmas or axioms": "lemma",
+    "modules": "module",
+    "module types": "module_type",
+}
+_SECTION_HEADER = re.compile(r"^\* In \[([^\]\n]+)\]:\s*$", re.MULTILINE)
 _NO_SUCH_OBJECT = re.compile(
     r"^\s*\|?\s*no such object in any category\s*$", re.MULTILINE
 )
@@ -203,7 +213,14 @@ def _run_easycrypt(
     timeout: float,
     emacs: bool,
 ) -> str:
-    command = easycrypt_command("cli", "-emacs") if emacs else easycrypt_command()
+    # The probe replays the proofs in the context file, so it runs smt with
+    # the provers and timeout of the session that accepted them.
+    smt = smt_arguments(SESSION_SMT_TIMEOUT_SECONDS)
+    command = (
+        easycrypt_command("cli", "-emacs", *smt)
+        if emacs
+        else easycrypt_command(*smt)
+    )
     for directory in include_dirs:
         command.extend(("-I", str(directory)))
     if emacs:
@@ -251,10 +268,12 @@ def _split_exact_print_blocks(output: str, count: int) -> list[str]:
             blocks.append(output[start:])
             continue
         between = output[start:anchors[cursor].start()]
-        # A hit contains a printer section before the next anchor. A miss emits
-        # its own no-such-object occurrence, so the region is empty and that
-        # occurrence is consumed as the target before the following anchor.
-        if _SECTION_HEADER.search(between):
+        # A hit prints something before the next anchor. A miss emits its own
+        # no-such-object occurrence, so the region is empty and that occurrence
+        # is consumed as the target before the following anchor. Whether the
+        # printed sections are ones this module classifies does not matter:
+        # treating an unclassified hit as a miss would shift every later block.
+        if between.strip():
             blocks.append(between)
         else:
             blocks.append("")
@@ -268,21 +287,15 @@ def _parse_declaration_block(block: str, symbol: str) -> dict | None:
         rf"\bmodule\s+(?:type\s+)?{re.escape(base)}\s*[\(={{ ]",
         rf"\b(?:local\s+)?theory\s+{re.escape(base)}\.",
         rf"\b(?:local\s+)?(?:op|pred|abbrev)\s+{re.escape(base)}\b",
-        rf"\b(?:local\s+)?(?:lemma|equiv|axiom)\s+{re.escape(base)}[:\s\[]",
+        rf"\b(?:local\s+)?(?:lemma|equiv|axiom)\s+(?:\[[^\]]*\]\s*)?"
+        rf"{re.escape(base)}[:\s\[]",
         rf"\btype\s+{re.escape(base)}\b",
     )
     if not block or not any(re.search(pattern, block) for pattern in patterns):
         return None
     header = _SECTION_HEADER.search(block)
     section = header.group(1) if header else ""
-    kind = {
-        "modules": "module",
-        "theories": "theory",
-        "operators or predicates": "operator",
-        "lemmas or axioms": "lemma",
-        "module types": "module_type",
-        "types": "type",
-    }.get(section, "declaration")
+    kind = _SECTION_KINDS.get(section, "declaration")
     # The ``* In [...]`` line is EasyCrypt display metadata, not declaration
     # syntax. Keep it for kind classification above, but never hand it to a
     # compiler feature or agent as copyable source.

@@ -50,11 +50,13 @@ from workflow.proof_state_compiler.assembly import (
 )
 from workflow.proof_state_compiler.delivery_policies import (
     COMPOUND_TACTIC_PREFIX_RECOVERY_ONCE_POLICY_ID,
+    HYPOTHESIS_SCOPE_DIAGNOSIS_ONCE_POLICY_ID,
     INTRO_PATTERN_REPAIR_ONCE_POLICY_ID,
     OPERATION_BINDING_REPAIR_ONCE_POLICY_ID,
     PHL_TRANSITIVITY_BOUNDARY_ONCE_POLICY_ID,
     PURE_TAIL_RECOVERY_ONCE_POLICY_ID,
     RELATION_BRIDGE_ONCE_POLICY_ID,
+    SMT_FAILURE_LOCALIZATION_ONCE_POLICY_ID,
     TACTIC_DIALECT_REPAIR_ONCE_POLICY_ID,
     default_delivery_policy_catalog,
 )
@@ -405,6 +407,9 @@ def test_production_numerical_budgets_are_one_feature_per_policy() -> None:
         OPERATION_BINDING_REPAIR_ONCE_POLICY_ID: (
             "operation_binding_repair", 700, 0
         ),
+        HYPOTHESIS_SCOPE_DIAGNOSIS_ONCE_POLICY_ID: (
+            "hypothesis_scope_diagnosis", 700, 0
+        ),
         INTRO_PATTERN_REPAIR_ONCE_POLICY_ID: (
             "intro_pattern_repair", 600, 0
         ),
@@ -419,6 +424,9 @@ def test_production_numerical_budgets_are_one_feature_per_policy() -> None:
         ),
         TACTIC_DIALECT_REPAIR_ONCE_POLICY_ID: (
             "tactic_dialect_repair", 800, 0
+        ),
+        SMT_FAILURE_LOCALIZATION_ONCE_POLICY_ID: (
+            "smt_failure_localization", 600, 0
         ),
     }
     policies = {
